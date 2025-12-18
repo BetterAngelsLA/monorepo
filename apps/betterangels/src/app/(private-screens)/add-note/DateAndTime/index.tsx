@@ -77,43 +77,23 @@ export default function DateAndTime(props: IDateAndTimeProps) {
   }, [interactedAt]);
 
   const updateNoteFunction = useRef(
-    debounce(async (key: 'time' | 'date', value: string | Date | undefined) => {
-      if (!noteId) return;
+    debounce(
+      async (key: 'time' | 'date', value: string | Date | null | undefined) => {
+        if (!noteId) return;
 
-      const currentNote = noteRef.current;
+        const currentNote = noteRef.current;
 
-      // If clearing (value is undefined), we need to handle it specially
-      if (value === undefined) {
-        // If clearing date, set interactedAt to null/undefined
-        // If clearing time, keep the date but reset time to start of day or null
-        if (key === 'date') {
-          try {
-            await updateNote({
-              variables: {
-                data: {
-                  id: noteId,
-                  interactedAt: null,
-                },
-              },
-              refetchQueries: [NotesDocument],
-            });
-          } catch (err) {
-            console.error(err);
-          }
-          return;
-        } else if (key === 'time') {
-          // If clearing time but date exists, set time to start of day
-          if (currentNote.date && isValid(currentNote.date)) {
-            const dateWithStartTime = setMinutes(
-              setHours(new Date(currentNote.date), 0),
-              0
-            );
+        // If clearing (value is null or undefined), we need to handle it specially
+        if (value === null || value === undefined) {
+          // If clearing date, set interactedAt to null/undefined
+          // If clearing time, keep the date but reset time to start of day or null
+          if (key === 'date') {
             try {
               await updateNote({
                 variables: {
                   data: {
                     id: noteId,
-                    interactedAt: dateWithStartTime.toISOString(),
+                    interactedAt: null,
                   },
                 },
                 refetchQueries: [NotesDocument],
@@ -121,65 +101,88 @@ export default function DateAndTime(props: IDateAndTimeProps) {
             } catch (err) {
               console.error(err);
             }
+            return;
+          } else if (key === 'time') {
+            // If clearing time but date exists, set time to start of day
+            if (currentNote.date && isValid(currentNote.date)) {
+              const dateWithStartTime = setMinutes(
+                setHours(new Date(currentNote.date), 0),
+                0
+              );
+              try {
+                await updateNote({
+                  variables: {
+                    data: {
+                      id: noteId,
+                      interactedAt: dateWithStartTime.toISOString(),
+                    },
+                  },
+                  refetchQueries: [NotesDocument],
+                });
+              } catch (err) {
+                console.error(err);
+              }
+            }
+            return;
           }
-          return;
         }
-      }
 
-      // Normal update path
-      if (!value) return;
+        // Normal update path
+        if (!value) return;
 
-      const dateValue =
-        key === 'date'
-          ? value
-          : currentNote.date
-          ? new Date(currentNote.date)
-          : new Date();
-      const timeValue =
-        key === 'time'
-          ? value
-          : currentNote.time
-          ? new Date(currentNote.time)
-          : new Date();
-      let updatingField = value;
+        const dateValue =
+          key === 'date'
+            ? value
+            : currentNote.date
+            ? new Date(currentNote.date)
+            : new Date();
+        const timeValue =
+          key === 'time'
+            ? value
+            : currentNote.time
+            ? new Date(currentNote.time)
+            : new Date();
+        let updatingField = value;
 
-      if (
-        timeValue instanceof Date &&
-        dateValue instanceof Date &&
-        isValid(timeValue) &&
-        isValid(dateValue)
-      ) {
-        const hours = timeValue.getHours();
-        const minutes = timeValue.getMinutes();
-        const combinedDateTime = setMinutes(
-          setHours(dateValue, hours),
-          minutes
-        );
+        if (
+          timeValue instanceof Date &&
+          dateValue instanceof Date &&
+          isValid(timeValue) &&
+          isValid(dateValue)
+        ) {
+          const hours = timeValue.getHours();
+          const minutes = timeValue.getMinutes();
+          const combinedDateTime = setMinutes(
+            setHours(dateValue, hours),
+            minutes
+          );
 
-        updatingField = new Date(combinedDateTime).toISOString();
-      } else {
-        throw new Error(
-          'Both timeValue and dateValue should be valid Date objects'
-        );
-      }
+          updatingField = new Date(combinedDateTime).toISOString();
+        } else {
+          throw new Error(
+            'Both timeValue and dateValue should be valid Date objects'
+          );
+        }
 
-      try {
-        await updateNote({
-          variables: {
-            data: {
-              id: noteId,
-              interactedAt: updatingField,
+        try {
+          await updateNote({
+            variables: {
+              data: {
+                id: noteId,
+                interactedAt: updatingField,
+              },
             },
-          },
-          refetchQueries: [NotesDocument],
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    }, 500)
+            refetchQueries: [NotesDocument],
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      },
+      500
+    )
   ).current;
 
-  const onChange = (key: 'date' | 'time', value: Date | undefined) => {
+  const onChange = (key: 'date' | 'time', value: Date | null | undefined) => {
     const updatedDateTime = { ...dateTime, [key]: value };
     setDateTime(updatedDateTime);
     noteRef.current = updatedDateTime;
@@ -212,7 +215,7 @@ export default function DateAndTime(props: IDateAndTimeProps) {
       >
         <DatePicker
           type="numeric"
-          placeholder='Enter date'
+          placeholder="Enter date"
           validRange={{
             endDate: endOfDay,
             startDate: new Date('1900-01-01'),
