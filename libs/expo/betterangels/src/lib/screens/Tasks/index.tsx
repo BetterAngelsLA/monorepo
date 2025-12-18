@@ -1,9 +1,5 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
-import {
-  SearchBar,
-  TextButton,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
+import { SearchBar, TextButton } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -60,14 +56,6 @@ export default function Tasks() {
     setFiltersKey((k) => k + 1); // inc key to trigger remount
   }
 
-  function renderListHeader(visible: number, _total: number | undefined) {
-    return (
-      <View style={styles.resultsHeader}>
-        <TextRegular>{visible} Tasks total</TextRegular>
-      </View>
-    );
-  }
-
   const serverFilters = toTaskFilterValue({
     search,
     ...currentFilters,
@@ -95,7 +83,7 @@ export default function Tasks() {
           onPress={onFilterReset}
           regular
           title="Reset"
-          accessibilityHint="Reset filters"
+          accessibilityHint="Reset search and filters"
         />
       </View>
 
@@ -106,11 +94,7 @@ export default function Tasks() {
         style={styles.filters}
       />
 
-      <TaskList
-        filters={serverFilters}
-        renderItem={renderTaskItem}
-        renderHeader={renderListHeader}
-      />
+      <TaskList filters={serverFilters} renderItem={renderTaskItem} />
     </View>
   );
 }

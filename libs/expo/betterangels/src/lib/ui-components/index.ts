@@ -18,9 +18,11 @@ export { default as FeatureFlagControlled } from './FeatureFlagControlled/Featur
 export { FileThumbnail } from './FileThumbnail/FileThumbnail';
 export * from './Filters';
 export * from './GirpNoteForm';
-export { default as Header } from './Header';
 export { default as HMISLoginForm } from './HMISLoginForm';
+export { default as Header } from './Header';
 export { default as HmisRequestedProvidedServices } from './HmisRequestedProvidedServices';
+export * from './InteractionFilters';
+export * from './InteractionList';
 export * from './Layout';
 export { default as LoginForm } from './LoginForm';
 export { default as MainContainer } from './MainContainer';

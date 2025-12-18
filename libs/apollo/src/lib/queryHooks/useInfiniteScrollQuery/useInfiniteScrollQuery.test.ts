@@ -1,10 +1,11 @@
 /**
  * @vitest-environment jsdom
  */
-import { type TypedDocumentNode } from '@apollo/client';
+import { NetworkStatus, type TypedDocumentNode } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import { act } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { PaginationModeEnum } from '../../cachePolicy/constants';
 import { createUseQueryReturn, renderHookWithApollo } from './testUtils';
 import { useInfiniteScrollQuery } from './useInfiniteScrollQuery';
@@ -31,6 +32,7 @@ vi.mock('../../cacheStore/utils/getQueryPolicyConfigFromCache', () => {
           paginationLimitPath: ['pagination', 'limit'],
         } as const;
       }
+
       if (fieldName === 'records') {
         return {
           paginationMode: PaginationModeEnum.PerPage,
@@ -40,6 +42,7 @@ vi.mock('../../cacheStore/utils/getQueryPolicyConfigFromCache', () => {
           paginationPerPagePath: ['pagination', 'perPage'],
         } as const;
       }
+
       throw new Error(
         `[test] no queryPolicyConfig mock for Query.${fieldName}`
       );
@@ -79,6 +82,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
           filters: { q: 'hello' },
           pagination: { offset: 0, limit: 25 },
         },
+        networkStatus: NetworkStatus.ready,
       })
     );
 
@@ -115,6 +119,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
         },
         variables: { pagination: { offset: 0, limit: 3 } },
         fetchMore,
+        networkStatus: NetworkStatus.ready,
       })
     );
 
@@ -141,6 +146,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
       createUseQueryReturn<TasksData, TasksVars>({
         data: { tasks: { results: [{ id: 1 }], totalCount: 2 } },
         variables: { pagination: { offset: 0, limit: 1 } },
+        networkStatus: NetworkStatus.ready,
       })
     );
 
@@ -166,6 +172,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
         data: { records: { results: [{ id: 1 }, { id: 2 }], totalCount: 4 } },
         variables: { pagination: { page: 1, perPage: 2 } },
         fetchMore,
+        networkStatus: NetworkStatus.ready,
       })
     );
 
@@ -184,5 +191,54 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
     expect(fetchMore).toHaveBeenCalledWith({
       variables: { pagination: { page: 2, perPage: 2 } },
     });
+  });
+
+  it('sets loadingMore=true when Apollo networkStatus is fetchMore', () => {
+    (useQuery as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createUseQueryReturn<TasksData, TasksVars>({
+        data: { tasks: { results: [{ id: 1 }], totalCount: 10 } },
+        variables: { pagination: { offset: 0, limit: 1 } },
+        networkStatus: NetworkStatus.fetchMore,
+      })
+    );
+
+    const { result } = renderHookWithApollo(() =>
+      useInfiniteScrollQuery<{ id: number }, TasksData, TasksVars>({
+        document: TasksDocument,
+        queryFieldName: 'tasks',
+        variables: { pagination: { offset: 0, limit: 1 } },
+        pageSize: 1,
+      })
+    );
+
+    expect(result.current.loadingMore).toBe(true);
+  });
+
+  it('treats setVariables as loading (variable-change in-flight)', () => {
+    (useQuery as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createUseQueryReturn<TasksData, TasksVars>({
+        data: { tasks: { results: [{ id: 1 }], totalCount: 10 } },
+        variables: {
+          filters: { q: 'new' },
+          pagination: { offset: 0, limit: 1 },
+        },
+        networkStatus: NetworkStatus.setVariables,
+      })
+    );
+
+    const { result } = renderHookWithApollo(() =>
+      useInfiniteScrollQuery<{ id: number }, TasksData, TasksVars>({
+        document: TasksDocument,
+        queryFieldName: 'tasks',
+        variables: {
+          filters: { q: 'new' },
+          pagination: { offset: 0, limit: 1 },
+        },
+        pageSize: 1,
+      })
+    );
+
+    expect(result.current.loading).toBe(true);
+    expect(result.current.reloading).toBe(false);
   });
 });
