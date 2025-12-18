@@ -49,7 +49,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.graphql_client.force_login(self.hmis_user)
         self.hmis_client_profile = baker.make(HmisClientProfile, hmis_id="388")
 
     @scrubbed_vcr.use_cassette("test_create_hmis_note_mutation.yaml")
@@ -138,7 +138,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             title="prog note title",
             note="prog note note",
             date="2011-11-11",
-            created_by=self.org_1_case_manager_1,
+            created_by=self.hmis_user,
         )
         provided_services = [baker.make(ServiceRequest, service=OrganizationService.objects.first())]
         requested_services = [baker.make(ServiceRequest, service=OrganizationService.objects.last())]
@@ -326,7 +326,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.graphql_client.force_login(self.hmis_user)
         self.residence_geolocation = [-118.2437207, 34.0521723]
 
         self.hmis_client_profile = baker.make(
@@ -376,7 +376,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
             residence_address="123 Res St",
             residence_geolocation=Point(self.residence_geolocation),
             spoken_languages=[LanguageEnum.ENGLISH, LanguageEnum.SPANISH],
-            created_by=self.org_1_case_manager_1,
+            created_by=self.hmis_user,
         )
         content_type = ContentType.objects.get_for_model(HmisClientProfile)
         PhoneNumber.objects.create(
@@ -470,7 +470,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
             gender=[HmisGenderEnum.NOT_COLLECTED],
             race_ethnicity=[HmisRaceEnum.NOT_COLLECTED],
             veteran=HmisVeteranStatusEnum.NOT_COLLECTED,
-            created_by=self.org_1_case_manager_1,
+            created_by=self.hmis_user,
         )
 
         variables = {
