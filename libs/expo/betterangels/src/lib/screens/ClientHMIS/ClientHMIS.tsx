@@ -56,7 +56,7 @@ export function ClientHMIS(props: TProps) {
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      <HMISClientProfileHeader client={client} />
+      {showHeader && <HMISClientProfileHeader client={client} />}
 
       <Tabs
         tabs={hmisTabs}
