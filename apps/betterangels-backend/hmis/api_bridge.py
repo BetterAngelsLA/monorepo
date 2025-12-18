@@ -3,7 +3,7 @@ import re
 from datetime import timezone
 from enum import Enum
 from http import HTTPMethod
-from typing import Any, Collection, Iterable, Mapping, Optional
+from typing import Any, Collection, Iterable, Mapping, Optional, cast
 from zoneinfo import ZoneInfo
 
 import jwt
@@ -91,6 +91,27 @@ BA_CLIENT_FIELDS = {
 BA_NOTE_FIELDS = {"hmisId", "createdBy", "hmisClientProfile"}
 
 
+HMIS_COOKIEJAR_SESSION_KEY = "hmis_cookiejar"
+HMIS_REFRESH_URL_SESSION_KEY = "hmis_refresh_url"
+_REFRESH_TIMEOUT = 10.0
+
+
+def _cookiejar_to_dict(jar: requests.cookies.RequestsCookieJar) -> dict[str, str]:
+    """
+    Serialize cookie jar to a simple dict (name -> value).
+    Note: This drops domain/path/expires metadata, but is often sufficient for single-host usage.
+    """
+    return cast(dict[str, str], requests.utils.dict_from_cookiejar(jar))
+
+
+def _cookiejar_from_dict(data: Mapping[str, str]) -> requests.cookies.RequestsCookieJar:
+    """
+    Hydrate a cookie jar from a dict (name -> value).
+    """
+    jar = requests.utils.cookiejar_from_dict(dict(data), cookiejar=None, overwrite=True)
+    return cast(requests.cookies.RequestsCookieJar, jar)
+
+
 class HmisApiBridge:
     """Utility class for interfacing with HMIS REST API."""
 
@@ -109,6 +130,9 @@ class HmisApiBridge:
         token = self._get_auth_token()
         auth_header = {"Authorization": f"Bearer {token}"} if token else {}
 
+        self.http = requests.Session()
+        self._rehydrate_cookies()
+
         self.headers = {
             "Accept": "application/json, text/plain, */*",
             "Host": HMIS_HOST,
@@ -116,55 +140,37 @@ class HmisApiBridge:
             **auth_header,
         }
 
+        if token:
+            self.http.cookies.set("auth_token", token)
+
+        self._persist_cookies()
+
+    def _rehydrate_cookies(self) -> None:
+        stored: Optional[dict[str, str]] = self.session.get(HMIS_COOKIEJAR_SESSION_KEY)
+        if stored:
+            self.http.cookies = _cookiejar_from_dict(stored)
+
+    def _persist_cookies(self) -> None:
+        self.session[HMIS_COOKIEJAR_SESSION_KEY] = _cookiejar_to_dict(self.http.cookies)
+        self.session.modified = True
+
     def _handle_token_refresh(self, resp: requests.Response) -> None:
-        if new_token := resp.cookies.get("auth_token"):
+        new_token = None
+
+        jar_token = self.http.cookies.get("auth_token")
+        if jar_token:
+            new_token = str(jar_token)
+
+        if not new_token:
+            resp_token = resp.cookies.get("auth_token")
+            if resp_token:
+                new_token = str(resp_token)
+
+        if new_token:
             self._set_auth_token(new_token)
-
-    def _handle_error_response(self, resp: requests.Response) -> None:
-        if resp.status_code == 200:
-            return
-
-        if resp.status_code == 401:
-            raise UnauthenticatedGQLError()
-
-        if resp.status_code == 403:
-            raise PermissionDenied("Unauthorized.")
-
-        if resp.status_code == 404:
-            raise ObjectDoesNotExist("The requested Object does not exist.")
-
-        if resp.status_code == 422:
-            errors = [
-                {
-                    "field": f"{k}",
-                    "location": None,
-                    "errorCode": "422",
-                    "message": f"{v}",
-                }
-                for k, v in resp.json()["messages"].items()
-            ]
-
-            raise GraphQLError("Validation Errors", extensions={"errors": errors})
-
-    def _make_request(
-        self,
-        path: str,
-        body: dict[str, Any],
-        method: HTTPMethod = HTTPMethod.GET,
-        timeout: Optional[float] = None,
-    ) -> requests.Response:
-        request_args = {
-            "url": f"{self.endpoint}{path}",
-            "headers": self.headers,
-            "json": body,
-            "timeout": timeout,
-        }
-        resp = requests.request(method, **request_args)  # type: ignore
-
-        self._handle_error_response(resp)
-        self._handle_token_refresh(resp)
-
-        return resp
+            self.headers["Authorization"] = f"Bearer {new_token}"
+            self.http.cookies.set("auth_token", new_token)
+            self._persist_cookies()
 
     def _fernet(self) -> Fernet:
         key = getattr(settings, "HMIS_TOKEN_KEY", None)
@@ -175,12 +181,8 @@ class HmisApiBridge:
 
     def _set_auth_token(self, token: str) -> None:
         """"""
-        decoded = jwt.decode(token, options={"verify_signature": False})
-        self.session.set_expiry(decoded["exp"] - decoded["iat"] - 1)
-
         f = self._fernet()
         self.session[self.session_key] = f.encrypt(token.encode("utf-8")).decode("utf-8")
-
         self.session.modified = True
 
     def _get_auth_token(self) -> Optional[str]:
@@ -191,7 +193,9 @@ class HmisApiBridge:
 
         try:
             f = self._fernet()
+
             return f.decrypt(enc.encode("utf-8")).decode("utf-8")
+
         except (InvalidToken, ValueError):
             self._clear_auth_token()
 
@@ -202,6 +206,33 @@ class HmisApiBridge:
             del self.session[self.session_key]
 
         self.session.modified = True
+
+    def _refresh_auth_token(self) -> bool:
+        refresh_url = self.session.get(HMIS_REFRESH_URL_SESSION_KEY)
+        if not refresh_url:
+            return False
+
+        headers = self.headers.copy()
+        headers.pop("Host", None)
+
+        resp = self.http.get(
+            refresh_url,
+            headers=headers,
+            timeout=_REFRESH_TIMEOUT,
+            allow_redirects=True,
+        )
+
+        new_token = self.http.cookies.get("auth_token") or resp.cookies.get("auth_token")
+
+        if not new_token:
+            return False
+
+        self._set_auth_token(new_token)
+        self.headers["Authorization"] = f"Bearer {new_token}"
+        self.http.cookies.set("auth_token", new_token)
+        self._persist_cookies()
+
+        return True
 
     def _get_field_dot_paths(
         self,
@@ -360,15 +391,66 @@ class HmisApiBridge:
     def _get_field_str(self, fields: Iterable[str]) -> str:
         return ",".join(fields)
 
+    def _handle_error_response(self, resp: requests.Response) -> None:
+        if resp.status_code == 200:
+            return
+
+        if resp.status_code == 401:
+            raise UnauthenticatedGQLError()
+
+        if resp.status_code == 403:
+            raise PermissionDenied("Unauthorized.")
+
+        if resp.status_code == 404:
+            raise ObjectDoesNotExist("The requested Object does not exist.")
+
+        if resp.status_code == 422:
+            errors = [
+                {
+                    "field": f"{k}",
+                    "location": None,
+                    "errorCode": "422",
+                    "message": f"{v}",
+                }
+                for k, v in resp.json()["messages"].items()
+            ]
+
+            raise GraphQLError("Validation Errors", extensions={"errors": errors})
+
+    def _make_request(
+        self,
+        path: str,
+        body: dict[str, Any],
+        method: HTTPMethod = HTTPMethod.GET,
+        timeout: Optional[float] = None,
+    ) -> requests.Response:
+        request_args = {
+            "url": f"{self.endpoint}{path}",
+            "headers": self.headers,
+            "json": body,
+            "timeout": timeout,
+        }
+        resp = self.http.request(method, **request_args)  # type: ignore
+
+        if resp.status_code == 401:
+            if self._refresh_auth_token():
+                resp = self.http.request(method, **request_args)  # type: ignore
+
+        self._persist_cookies()
+        self._handle_token_refresh(resp)
+        self._handle_error_response(resp)
+
+        return resp
+
     def create_auth_token(self, username: str, password: str) -> None:
         headers = self.headers.copy()
         headers.pop("Host", None)
         login_url = f"{self.endpoint}/login"
 
-        session = requests.Session()
+        http = requests.Session()
 
         try:
-            response = session.get(login_url, headers=headers)
+            response = http.get(login_url, headers=headers)
             response.raise_for_status()
             html = response.text
 
@@ -389,11 +471,26 @@ class HmisApiBridge:
                 "LoginForm[fingerPrint]": "",
             }
 
-            post_response = session.post(url=login_url, data=payload, headers=headers)
+            post_response = http.post(
+                url=login_url,
+                data=payload,
+                headers=headers,
+                allow_redirects=True,
+            )
 
             if post_response.url != login_url and "login" not in post_response.url:
-                if auth_token := post_response.cookies.get("auth_token"):
+                self.session[HMIS_REFRESH_URL_SESSION_KEY] = post_response.url
+                self.session.modified = True
+
+                if auth_token := http.cookies.get("auth_token"):
                     self._set_auth_token(auth_token)
+                    self.headers["Authorization"] = f"Bearer {auth_token}"
+
+                    self.http.cookies.update(http.cookies)
+                    self.http.cookies.set("auth_token", auth_token)
+                    self._persist_cookies()
+
+                    return
 
             elif "Incorrect username or password" in post_response.text:
                 raise PermissionDenied("Login Failed: Invalid credentials.")
