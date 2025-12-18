@@ -91,7 +91,7 @@
     "react-router-dom": "6.29.0",
     "remeda": "^2.20.0",
     "sanitize-html": "^2.17.0",
-    "stylus": "https://github.com/stylus/stylus.git#0.54.4",
+    "stylus": "^0.64.0",
     "supercluster": "^8.0.1",
     "tailwind-merge": "^2.5.5",
     "tslib": "^2.3.0",
