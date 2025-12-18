@@ -5887,7 +5887,7 @@ __metadata:
     sanitize-html: "npm:^2.17.0"
     storybook: "npm:9.1.2"
     storybook-addon-pseudo-states: "npm:9.1.2"
-    stylus: "github:stylus/stylus#0.54.4"
+    stylus: "https://github.com/stylus/stylus.git#0.54.4"
     supercluster: "npm:^8.0.1"
     swc-loader: "npm:0.1.15"
     tailwind-merge: "npm:^2.5.5"
@@ -26294,9 +26294,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylus@github:stylus/stylus#0.54.4":
+"stylus@https://github.com/stylus/stylus.git#0.54.4":
   version: 0.54.4
-  resolution: "stylus@git+ssh://git@github.com/stylus/stylus.git#commit=9d341936eaa56e3758a6b915d5e195423342625b"
+  resolution: "stylus@https://github.com/stylus/stylus.git#commit=9d341936eaa56e3758a6b915d5e195423342625b"
   dependencies:
     css-parse: "npm:1.7.x"
     debug: "npm:*"
