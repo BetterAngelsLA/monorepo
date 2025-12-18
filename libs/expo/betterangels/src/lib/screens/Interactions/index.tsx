@@ -13,8 +13,8 @@ import {
   NoteCard,
   TInteractionFilters,
   nullInteractionFilters,
-  toInteractionFilterValue,
 } from '../../ui-components';
+import { toInteractionFilterValue } from './toInteractionFilterValue';
 
 const paginationLimit = 10;
 

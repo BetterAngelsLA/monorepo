@@ -104,6 +104,11 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
           modelName="note"
           error={!!error}
         />
+        {/* <InteractionListHmis
+          filters={serverFilters}
+          renderItem={renderInteractionItem}
+          paginationLimit={paginationLimit}
+        /> */}
       </MainScrollContainer>
     </>
   );
