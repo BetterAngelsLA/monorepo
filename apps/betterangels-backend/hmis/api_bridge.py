@@ -96,22 +96,6 @@ HMIS_REFRESH_URL_SESSION_KEY = "hmis_refresh_url"
 _REFRESH_TIMEOUT = 10.0
 
 
-def _cookiejar_to_dict(jar: requests.cookies.RequestsCookieJar) -> dict[str, str]:
-    """
-    Serialize cookie jar to a simple dict (name -> value).
-    Note: This drops domain/path/expires metadata, but is often sufficient for single-host usage.
-    """
-    return cast(dict[str, str], requests.utils.dict_from_cookiejar(jar))
-
-
-def _cookiejar_from_dict(data: Mapping[str, str]) -> requests.cookies.RequestsCookieJar:
-    """
-    Hydrate a cookie jar from a dict (name -> value).
-    """
-    jar = requests.utils.cookiejar_from_dict(dict(data), cookiejar=None, overwrite=True)
-    return cast(requests.cookies.RequestsCookieJar, jar)
-
-
 class HmisApiBridge:
     """Utility class for interfacing with HMIS REST API."""
 
@@ -126,8 +110,10 @@ class HmisApiBridge:
 
         self.endpoint = HMIS_REST_ENDPOINT
         self.session_key = HMIS_SESSION_KEY_NAME
+        self.host = HMIS_HOST
 
         token = self._get_auth_token()
+        print(token)
         auth_header = {"Authorization": f"Bearer {token}"} if token else {}
 
         self.http = requests.Session()
@@ -135,41 +121,55 @@ class HmisApiBridge:
 
         self.headers = {
             "Accept": "application/json, text/plain, */*",
-            "Host": HMIS_HOST,
+            "Host": self.host,
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:144.0) Gecko/20100101 Firefox/144.0",
             **auth_header,
         }
 
-        if token:
-            self.http.cookies.set("auth_token", token)
+        # if token:
+        #     self.headers["Authorization"] = f"Bearer {token}"
+        #     self.http.cookies.update(http.cookies)
+        # self.http.cookies.set("auth_token", token, domain=self.host)
 
-        self._persist_cookies()
+        # self._persist_cookies()
+
+    def _cookiejar_to_dict(self, jar: requests.cookies.RequestsCookieJar) -> dict[str, str]:
+        """
+        Serialize cookie jar to a simple dict (name -> value).
+        Note: This drops domain/path/expires metadata, but is often sufficient for single-host usage.
+        """
+        return cast(dict[str, str], requests.utils.dict_from_cookiejar(jar))
+
+    def _cookiejar_from_dict(self, data: Mapping[str, str]) -> requests.cookies.RequestsCookieJar:
+        """
+        Hydrate a cookie jar from a dict (name -> value).
+        """
+        jar = requests.utils.cookiejar_from_dict(dict(data), cookiejar=None, overwrite=True)
+        return cast(requests.cookies.RequestsCookieJar, jar)
 
     def _rehydrate_cookies(self) -> None:
-        stored: Optional[dict[str, str]] = self.session.get(HMIS_COOKIEJAR_SESSION_KEY)
-        if stored:
-            self.http.cookies = _cookiejar_from_dict(stored)
+        if stored := self.session.get(HMIS_COOKIEJAR_SESSION_KEY):
+            self.http.cookies = self._cookiejar_from_dict(stored)
 
     def _persist_cookies(self) -> None:
-        self.session[HMIS_COOKIEJAR_SESSION_KEY] = _cookiejar_to_dict(self.http.cookies)
+        self.session[HMIS_COOKIEJAR_SESSION_KEY] = self._cookiejar_to_dict(self.http.cookies)
         self.session.modified = True
 
     def _handle_token_refresh(self, resp: requests.Response) -> None:
         new_token = None
 
-        jar_token = self.http.cookies.get("auth_token")
-        if jar_token:
-            new_token = str(jar_token)
+        if jar_token := resp.cookies.get("auth_token"):
+            new_token = jar_token
 
         if not new_token:
-            resp_token = resp.cookies.get("auth_token")
-            if resp_token:
+            if resp_token := resp.cookies.get("auth_token"):
                 new_token = str(resp_token)
 
         if new_token:
             self._set_auth_token(new_token)
             self.headers["Authorization"] = f"Bearer {new_token}"
-            self.http.cookies.set("auth_token", new_token)
+            self.http.cookies.update(resp.cookies)
+            # self.http.cookies.set("auth_token", new_token, domain=self.host)
             self._persist_cookies()
 
     def _fernet(self) -> Fernet:
@@ -212,24 +212,27 @@ class HmisApiBridge:
         if not refresh_url:
             return False
 
-        headers = self.headers.copy()
-        headers.pop("Host", None)
+        # headers = self.headers.copy()
+        # headers.pop("Host", None)
 
         resp = self.http.get(
             refresh_url,
-            headers=headers,
+            headers=self.headers,
             timeout=_REFRESH_TIMEOUT,
             allow_redirects=True,
         )
 
-        new_token = self.http.cookies.get("auth_token") or resp.cookies.get("auth_token")
+        new_token = self.http.cookies.get("auth_token")
+        # new_token = resp.cookies.get("auth_token") or self.http.cookies.get("auth_token")
+        # new_token = self.http.cookies.get("auth_token") or resp.cookies.get("auth_token")
 
         if not new_token:
             return False
 
         self._set_auth_token(new_token)
         self.headers["Authorization"] = f"Bearer {new_token}"
-        self.http.cookies.set("auth_token", new_token)
+        self.http.cookies.update(resp.cookies)
+        # self.http.cookies.set("auth_token", new_token, domain=self.host)
         self._persist_cookies()
 
         return True
@@ -433,11 +436,12 @@ class HmisApiBridge:
         resp = self.http.request(method, **request_args)  # type: ignore
 
         if resp.status_code == 401:
+            print("401! " * 20)
             if self._refresh_auth_token():
                 resp = self.http.request(method, **request_args)  # type: ignore
 
-        self._persist_cookies()
-        self._handle_token_refresh(resp)
+        # self._persist_cookies()
+        # self._handle_token_refresh(resp)
         self._handle_error_response(resp)
 
         return resp
@@ -447,10 +451,8 @@ class HmisApiBridge:
         headers.pop("Host", None)
         login_url = f"{self.endpoint}/login"
 
-        http = requests.Session()
-
         try:
-            response = http.get(login_url, headers=headers)
+            response = self.http.get(login_url, headers=headers)
             response.raise_for_status()
             html = response.text
 
@@ -471,7 +473,7 @@ class HmisApiBridge:
                 "LoginForm[fingerPrint]": "",
             }
 
-            post_response = http.post(
+            post_response = self.http.post(
                 url=login_url,
                 data=payload,
                 headers=headers,
@@ -482,12 +484,10 @@ class HmisApiBridge:
                 self.session[HMIS_REFRESH_URL_SESSION_KEY] = post_response.url
                 self.session.modified = True
 
-                if auth_token := http.cookies.get("auth_token"):
+                if auth_token := self.http.cookies.get("auth_token"):
                     self._set_auth_token(auth_token)
                     self.headers["Authorization"] = f"Bearer {auth_token}"
 
-                    self.http.cookies.update(http.cookies)
-                    self.http.cookies.set("auth_token", auth_token)
                     self._persist_cookies()
 
                     return
