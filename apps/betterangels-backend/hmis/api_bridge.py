@@ -13,6 +13,7 @@ from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
 from common.utils import dict_keys_to_snake
 from cryptography.fernet import Fernet, InvalidToken
+from django import http
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from graphql import (
@@ -110,10 +111,8 @@ class HmisApiBridge:
 
         self.endpoint = HMIS_REST_ENDPOINT
         self.session_key = HMIS_SESSION_KEY_NAME
-        self.host = HMIS_HOST
 
         token = self._get_auth_token()
-        print(token)
         auth_header = {"Authorization": f"Bearer {token}"} if token else {}
 
         self.http = requests.Session()
@@ -121,30 +120,16 @@ class HmisApiBridge:
 
         self.headers = {
             "Accept": "application/json, text/plain, */*",
-            "Host": self.host,
+            "Host": HMIS_HOST,
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:144.0) Gecko/20100101 Firefox/144.0",
             **auth_header,
         }
 
-        # if token:
-        #     self.headers["Authorization"] = f"Bearer {token}"
-        #     self.http.cookies.update(http.cookies)
-        # self.http.cookies.set("auth_token", token, domain=self.host)
-
-        # self._persist_cookies()
-
     def _cookiejar_to_dict(self, jar: requests.cookies.RequestsCookieJar) -> dict[str, str]:
-        """
-        Serialize cookie jar to a simple dict (name -> value).
-        Note: This drops domain/path/expires metadata, but is often sufficient for single-host usage.
-        """
-        return cast(dict[str, str], requests.utils.dict_from_cookiejar(jar))
+        return cast(dict[str, str], requests.utils.dict_from_cookiejar(jar))  # type: ignore
 
     def _cookiejar_from_dict(self, data: Mapping[str, str]) -> requests.cookies.RequestsCookieJar:
-        """
-        Hydrate a cookie jar from a dict (name -> value).
-        """
-        jar = requests.utils.cookiejar_from_dict(dict(data), cookiejar=None, overwrite=True)
+        jar = requests.utils.cookiejar_from_dict(dict(data), cookiejar=None, overwrite=True)  # type: ignore
         return cast(requests.cookies.RequestsCookieJar, jar)
 
     def _rehydrate_cookies(self) -> None:
@@ -155,23 +140,6 @@ class HmisApiBridge:
         self.session[HMIS_COOKIEJAR_SESSION_KEY] = self._cookiejar_to_dict(self.http.cookies)
         self.session.modified = True
 
-    def _handle_token_refresh(self, resp: requests.Response) -> None:
-        new_token = None
-
-        if jar_token := resp.cookies.get("auth_token"):
-            new_token = jar_token
-
-        if not new_token:
-            if resp_token := resp.cookies.get("auth_token"):
-                new_token = str(resp_token)
-
-        if new_token:
-            self._set_auth_token(new_token)
-            self.headers["Authorization"] = f"Bearer {new_token}"
-            self.http.cookies.update(resp.cookies)
-            # self.http.cookies.set("auth_token", new_token, domain=self.host)
-            self._persist_cookies()
-
     def _fernet(self) -> Fernet:
         key = getattr(settings, "HMIS_TOKEN_KEY", None)
         if not key:
@@ -181,6 +149,9 @@ class HmisApiBridge:
 
     def _set_auth_token(self, token: str) -> None:
         """"""
+        decoded = jwt.decode(token, options={"verify_signature": False})
+        self.session.set_expiry(decoded["exp"] - decoded["iat"])
+
         f = self._fernet()
         self.session[self.session_key] = f.encrypt(token.encode("utf-8")).decode("utf-8")
         self.session.modified = True
@@ -212,27 +183,24 @@ class HmisApiBridge:
         if not refresh_url:
             return False
 
-        # headers = self.headers.copy()
-        # headers.pop("Host", None)
+        headers = self.headers.copy()
+        headers.pop("Host", None)
+        headers.pop("Authorization", None)
 
         resp = self.http.get(
             refresh_url,
-            headers=self.headers,
+            headers=headers,
             timeout=_REFRESH_TIMEOUT,
             allow_redirects=True,
         )
 
-        new_token = self.http.cookies.get("auth_token")
-        # new_token = resp.cookies.get("auth_token") or self.http.cookies.get("auth_token")
-        # new_token = self.http.cookies.get("auth_token") or resp.cookies.get("auth_token")
+        new_token = resp.cookies.get("auth_token")
 
         if not new_token:
             return False
 
         self._set_auth_token(new_token)
         self.headers["Authorization"] = f"Bearer {new_token}"
-        self.http.cookies.update(resp.cookies)
-        # self.http.cookies.set("auth_token", new_token, domain=self.host)
         self._persist_cookies()
 
         return True
@@ -440,8 +408,6 @@ class HmisApiBridge:
             if self._refresh_auth_token():
                 resp = self.http.request(method, **request_args)  # type: ignore
 
-        # self._persist_cookies()
-        # self._handle_token_refresh(resp)
         self._handle_error_response(resp)
 
         return resp
@@ -452,7 +418,7 @@ class HmisApiBridge:
         login_url = f"{self.endpoint}/login"
 
         try:
-            response = self.http.get(login_url, headers=headers)
+            response = self.http.get(login_url, headers={})
             response.raise_for_status()
             html = response.text
 
@@ -484,13 +450,16 @@ class HmisApiBridge:
                 self.session[HMIS_REFRESH_URL_SESSION_KEY] = post_response.url
                 self.session.modified = True
 
-                if auth_token := self.http.cookies.get("auth_token"):
-                    self._set_auth_token(auth_token)
-                    self.headers["Authorization"] = f"Bearer {auth_token}"
+                auth_token = post_response.cookies.get("auth_token")
+                if not auth_token:
+                    raise ValidationError(f"Status Code: {post_response.status_code}")
 
-                    self._persist_cookies()
+                self._set_auth_token(auth_token)
+                self.headers["Authorization"] = f"Bearer {auth_token}"
 
-                    return
+                self._persist_cookies()
+
+                return
 
             elif "Incorrect username or password" in post_response.text:
                 raise PermissionDenied("Login Failed: Invalid credentials.")
