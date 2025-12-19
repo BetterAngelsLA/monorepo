@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
-from hmis.models import HmisClientProfile
-from hmis.tests.utils import HmisClientProfileBaseTestCase
+from hmis.models import HmisClientProfile, HmisNote
+from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
 from model_bakery import baker
 
 
@@ -107,6 +107,7 @@ class HmisClientProfilePermissionTestCase(HmisClientProfileBaseTestCase):
 
         variables = {
             "id": str(self.hmis_client_profile.pk),
+            "firstName": "Update Me",
             "gender": ["NOT_COLLECTED"],
             "raceEthnicity": ["NOT_COLLECTED"],
         }
@@ -118,6 +119,7 @@ class HmisClientProfilePermissionTestCase(HmisClientProfileBaseTestCase):
             response = self._update_hmis_client_profile_fixture(variables)
 
         self.assertEqual(response["data"]["updateHmisClientProfile"]["uniqueIdentifier"], "654")
+        self.assertEqual(HmisClientProfile.objects.get(pk=self.hmis_client_profile.pk).first_name, "Update Me")
 
     def test_hmis_update_hmis_client_profile_permission_denied(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -132,3 +134,138 @@ class HmisClientProfilePermissionTestCase(HmisClientProfileBaseTestCase):
         self.assertIsNone(response["data"])
         self.assertEqual(len(response["errors"]), 1)
         self.assertEqual(response["errors"][0]["message"], "You do not have access to this resource.")
+        self.assertEqual(
+            HmisClientProfile.objects.get(pk=self.hmis_client_profile.pk).first_name,
+            self.hmis_client_profile.first_name,
+        )
+
+
+class HmisNotePermissionTestCase(HmisNoteBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.hmis_client_profile = baker.make(HmisClientProfile, _fill_optional=["hmis_id"])
+        self.hmis_note = baker.make(HmisNote, hmis_client_profile=self.hmis_client_profile)
+
+    def test_hmis_note_permission_success(self) -> None:
+        self.graphql_client.force_login(self.hmis_user)
+
+        query = """
+            query ($id: ID!) {
+                hmisNote(id: $id) { id }
+            }
+        """
+        variables = {"id": str(self.hmis_note.pk)}
+
+        with patch("hmis.api_bridge.HmisApiBridge.get_note") as _, patch("hmis.schema._get_client_program") as _:
+            response = self.execute_graphql(query, variables)
+
+        self.assertEqual(response["data"]["hmisNote"]["id"], str(self.hmis_note.pk))
+
+    def test_hmis_note_permission_denied(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        query = """
+            query ($id: ID!) {
+                hmisNote(id: $id) { id }
+            }
+        """
+        variables = {"id": str(self.hmis_note.pk)}
+        response = self.execute_graphql(query, variables)
+
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertEqual(response["errors"][0]["message"], "You do not have access to this resource.")
+
+    def test_hmis_notes_permission_success(self) -> None:
+        self.graphql_client.force_login(self.hmis_user)
+
+        query = """
+            query ($pagination: OffsetPaginationInput) {
+                hmisNotes (pagination: $pagination) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        response = self.execute_graphql(query)
+
+        self.assertEqual(response["data"]["hmisNotes"]["totalCount"], 1)
+        self.assertEqual(response["data"]["hmisNotes"]["results"][0]["id"], str(self.hmis_note.pk))
+
+    def test_hmis_notes_permission_denied(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        query = """
+            query ($pagination: OffsetPaginationInput) {
+                hmisNotes (pagination: $pagination) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        response = self.execute_graphql(query)
+
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertEqual(response["errors"][0]["message"], "You do not have access to this resource.")
+
+    def test_hmis_create_hmis_note_permission_success(self) -> None:
+        self.graphql_client.force_login(self.hmis_user)
+
+        variables = {
+            "title": "Create",
+            "note": "Me",
+            "date": "2025-12-18",
+            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+        }
+
+        with patch(
+            "hmis.api_bridge.HmisApiBridge.create_note",
+            return_value={"hmis_id": "123"},
+        ):
+            response = self._create_hmis_note_fixture(variables)
+
+        self.assertEqual(response["data"]["createHmisNote"]["hmisId"], "123")
+
+    def test_hmis_create_hmis_note_permission_denied(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        variables = {
+            "title": "Dont Create",
+            "note": "Me",
+            "date": "2025-12-18",
+            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+        }
+        response = self._create_hmis_note_fixture(variables)
+
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertEqual(response["errors"][0]["message"], "You do not have access to this resource.")
+
+    def test_hmis_update_hmis_note_permission_success(self) -> None:
+        self.graphql_client.force_login(self.hmis_user)
+
+        variables = {"id": str(self.hmis_note.pk), "title": "Update", "note": "Me"}
+
+        with patch(
+            "hmis.api_bridge.HmisApiBridge.update_note",
+            return_value={"title": "Update"},
+        ):
+            response = self._update_hmis_note_fixture(variables)
+
+        self.assertEqual(response["data"]["updateHmisNote"]["title"], "Update")
+        self.assertEqual(HmisNote.objects.get(pk=self.hmis_note.pk).title, "Update")
+
+    def test_hmis_update_hmis_note_permission_denied(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        variables = {"id": str(self.hmis_note.pk), "title": "Dont Update", "note": "Me"}
+        response = self._update_hmis_note_fixture(variables)
+
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertEqual(response["errors"][0]["message"], "You do not have access to this resource.")
+        self.assertEqual(HmisNote.objects.get(pk=self.hmis_note.pk).title, self.hmis_note.title)
