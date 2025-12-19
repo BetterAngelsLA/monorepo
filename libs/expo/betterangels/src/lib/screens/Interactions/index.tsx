@@ -58,10 +58,10 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
     []
   );
 
-  const serverFilters = toInteractionFilterValue({
-    search,
-    ...currentFilters,
-  });
+  // const serverFilters = toInteractionFilterValue({
+  //   search,
+  //   ...currentFilters,
+  // });
 
   return (
     <View style={styles.container}>
@@ -93,10 +93,11 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
           key={filtersKey}
           selected={currentFilters}
           onChange={onFilterChange}
+          // filters={['organizations', 'authors']}
         />
 
         <InteractionList
-          filters={serverFilters}
+          // filters={serverFilters}
           renderItem={renderInteractionItem}
           paginationLimit={paginationLimit}
         />

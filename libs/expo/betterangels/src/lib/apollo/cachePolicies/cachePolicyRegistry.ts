@@ -28,6 +28,10 @@ import {
   InteractionsQueryVariables,
 } from '../../ui-components/InteractionList/__generated__/Interactions.generated';
 import {
+  InteractionListHmisQuery,
+  InteractionListHmisQueryVariables,
+} from '../../ui-components/InteractionListHmis/__generated__/interactionListHmis.generated';
+import {
   TasksQuery,
   TasksQueryVariables,
 } from '../../ui-components/TaskList/__generated__/Tasks.generated';
@@ -62,6 +66,14 @@ const policyFactoryList = [
   getQueryPolicyFactory<InteractionsQuery, InteractionsQueryVariables>({
     key: 'notes',
     entityTypename: 'NoteType',
+    cacheKeyVariables: ['filters', 'ordering'] as const,
+  }),
+  getQueryPolicyFactory<
+    InteractionListHmisQuery,
+    InteractionListHmisQueryVariables
+  >({
+    key: 'hmisNotes',
+    entityTypename: 'HmisNoteType',
     cacheKeyVariables: ['filters', 'ordering'] as const,
   }),
   getQueryPolicyFactory<

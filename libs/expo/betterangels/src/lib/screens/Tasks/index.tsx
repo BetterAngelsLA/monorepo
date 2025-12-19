@@ -3,22 +3,20 @@ import { SearchBar, TextButton } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { TaskType } from '../../apollo';
+import { TaskType, toTaskFilter } from '../../apollo';
 import { useUser } from '../../hooks';
 import { TUser } from '../../providers/user/UserContext';
 import { pagePaddingHorizontal } from '../../static';
 import {
-  TTaskFilters,
+  ModelFilters,
+  TModelFilters,
   TaskCard,
-  TaskFilters,
   TaskList,
-  nullTaskFilters,
-  toTaskFilterValue,
+  toModelFilterValues,
 } from '../../ui-components';
 
-function getInitialFilterValues(user?: TUser) {
+function getInitialFilterValues(user?: TUser): TModelFilters {
   return {
-    ...nullTaskFilters,
     authors: user ? [{ id: user.id, label: 'Me' }] : [],
   };
 }
@@ -27,11 +25,10 @@ export default function Tasks() {
   const { user, isHmisUser } = useUser();
 
   const [search, setSearch] = useState('');
-  const [filtersKey, setFiltersKey] = useState(0);
-
-  const [currentFilters, setCurrentFilters] = useState<TTaskFilters>(
+  const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
     getInitialFilterValues(user)
   );
+  const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
 
   const handleTaskPress = useCallback((task: TaskType) => {
     router.navigate({
@@ -45,29 +42,30 @@ export default function Tasks() {
     [handleTaskPress]
   );
 
-  function onFilterChange(selectedFilters: TTaskFilters) {
+  function onFilterChange(selectedFilters: TModelFilters) {
     setCurrentFilters(selectedFilters);
   }
 
   function onFilterReset() {
     setSearch('');
-    const initial = getInitialFilterValues(user);
-    setCurrentFilters(initial);
+    setCurrentFilters(getInitialFilterValues(user));
     setFiltersKey((k) => k + 1); // inc key to trigger remount
   }
 
-  const serverFilters = toTaskFilterValue({
-    search,
-    ...currentFilters,
-    // Tasks screen shows only tasks w/o notes
+  const serverFilters = toTaskFilter({
+    ...toModelFilterValues(currentFilters),
     note: { isNull: true },
     hmisNote: { isNull: true },
   });
 
-  // must be hmis user to view Task with hmisClientProfile
   if (!isHmisUser) {
     serverFilters.hmisClientProfileLookup = { isNull: true };
   }
+
+  console.log();
+  console.log('| -------------  serverFilters   ------------- |');
+  console.log(JSON.stringify(serverFilters, null, 2));
+  console.log();
 
   return (
     <View style={styles.container}>
@@ -87,11 +85,18 @@ export default function Tasks() {
         />
       </View>
 
-      <TaskFilters
+      <ModelFilters
         key={filtersKey}
         selected={currentFilters}
         onChange={onFilterChange}
         style={styles.filters}
+        filters={[
+          'clientProfiles',
+          'teams',
+          'taskStatus',
+          'authors',
+          'organizations',
+        ]}
       />
 
       <TaskList filters={serverFilters} renderItem={renderTaskItem} />
