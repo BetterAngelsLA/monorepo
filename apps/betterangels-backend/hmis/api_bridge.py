@@ -403,7 +403,6 @@ class HmisApiBridge:
         resp = self.http.request(method, **request_args)  # type: ignore
 
         if resp.status_code == 401:
-            print("401! " * 20)
             if self._refresh_auth_token():
                 resp = self.http.request(method, **request_args)  # type: ignore
 
