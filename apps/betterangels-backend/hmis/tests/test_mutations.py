@@ -577,7 +577,11 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
         self.assertEqual(expected, client)
 
 
-@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
+@override_settings(
+    AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"],
+    HMIS_REST_URL="https://example.com",
+    HMIS_HOST="example.com",
+)
 class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
