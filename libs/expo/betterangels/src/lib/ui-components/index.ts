@@ -21,7 +21,6 @@ export * from './GirpNoteForm';
 export { default as HMISLoginForm } from './HMISLoginForm';
 export { default as Header } from './Header';
 export { default as HmisRequestedProvidedServices } from './HmisRequestedProvidedServices';
-export * from './InteractionFilters';
 export * from './InteractionList';
 export * from './InteractionListHmis';
 export * from './Layout';

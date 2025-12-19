@@ -2,25 +2,23 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { SearchBar, TextButton } from '@monorepo/expo/shared/ui-components';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { NoteType } from '../../apollo';
+import { NoteType, toNoteFilter } from '../../apollo';
 import useUser from '../../hooks/user/useUser';
 import { TUser } from '../../providers/user/UserContext';
 import {
   Header,
   HorizontalContainer,
-  InteractionFilters,
   InteractionList,
+  ModelFilters,
   NoteCard,
-  TInteractionFilters,
-  nullInteractionFilters,
+  TModelFilters,
+  toModelFilterValues,
 } from '../../ui-components';
-import { toInteractionFilterValue } from './toInteractionFilterValue';
 
 const paginationLimit = 10;
 
-function getInitialFilterValues(user?: TUser) {
+function getInitialFilterValues(user?: TUser): TModelFilters {
   return {
-    ...nullInteractionFilters,
     authors: user ? [{ id: user.id, label: 'Me' }] : [],
   };
 }
@@ -29,17 +27,11 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
   const { user } = useUser();
   const [search, setSearch] = useState<string>('');
   const [filtersKey, setFiltersKey] = useState(0);
-  const [currentFilters, setCurrentFilters] = useState<TInteractionFilters>(
+  const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
     getInitialFilterValues(user)
   );
 
-  function onFilterChange(selectedFilters: TInteractionFilters) {
-    console.log();
-    console.log(
-      '| ------------- BA onFilterChange selectedFilters  ------------- |'
-    );
-    console.log(JSON.stringify(selectedFilters, null, 2));
-    console.log();
+  function onFilterChange(selectedFilters: TModelFilters) {
     setCurrentFilters(selectedFilters);
   }
 
@@ -58,10 +50,10 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
     []
   );
 
-  // const serverFilters = toInteractionFilterValue({
-  //   search,
-  //   ...currentFilters,
-  // });
+  const serverFilters = toNoteFilter({
+    search,
+    ...toModelFilterValues(currentFilters),
+  });
 
   return (
     <View style={styles.container}>
@@ -88,16 +80,16 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
           />
         </View>
 
-        <InteractionFilters
-          style={styles.filters}
+        <ModelFilters
           key={filtersKey}
           selected={currentFilters}
           onChange={onFilterChange}
-          // filters={['organizations', 'authors']}
+          filters={['teams', 'authors', 'organizations']}
+          style={styles.filters}
         />
 
         <InteractionList
-          // filters={serverFilters}
+          filters={serverFilters}
           renderItem={renderInteractionItem}
           paginationLimit={paginationLimit}
         />

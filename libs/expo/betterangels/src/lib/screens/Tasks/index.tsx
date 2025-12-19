@@ -53,19 +53,12 @@ export default function Tasks() {
   }
 
   const serverFilters = toTaskFilter({
+    search,
     ...toModelFilterValues(currentFilters),
     note: { isNull: true },
     hmisNote: { isNull: true },
+    hmisClientProfileLookup: isHmisUser ? { isNull: true } : undefined,
   });
-
-  if (!isHmisUser) {
-    serverFilters.hmisClientProfileLookup = { isNull: true };
-  }
-
-  console.log();
-  console.log('| -------------  serverFilters   ------------- |');
-  console.log(JSON.stringify(serverFilters, null, 2));
-  console.log();
 
   return (
     <View style={styles.container}>

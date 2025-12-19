@@ -32,17 +32,6 @@ type TProps = {
   actionItem?: ReactNode;
 };
 
-// input HmisNoteFilter {
-//   hmisClientProfile: ID
-//   createdBy: ID
-//   AND: HmisNoteFilter
-//   OR: HmisNoteFilter
-//   NOT: HmisNoteFilter
-//   DISTINCT: Boolean
-//   authors: [ID!]
-//   search: String
-// }
-
 export function InteractionListHmis(props: TProps) {
   const {
     filters,

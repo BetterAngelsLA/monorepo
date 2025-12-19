@@ -1,10 +1,5 @@
 import { toNonEmptyStringOrUndefined } from '@monorepo/expo/shared/utils';
-import {
-  IdFilterLookup,
-  SelahTeamEnum,
-  TaskFilter,
-  TaskStatusEnum,
-} from '../__generated__/types';
+import { NoteFilter, SelahTeamEnum } from '../__generated__/types';
 import { toEnumArray } from './toEnumArray';
 
 function pruneFilter<T extends Record<string, unknown>>(filter: T): Partial<T> {
@@ -23,7 +18,7 @@ function pruneFilter<T extends Record<string, unknown>>(filter: T): Partial<T> {
       continue;
     }
 
-    // Keep null explicitly
+    // Keep null and bool etc
     pruned[key] = value;
   }
 
@@ -35,45 +30,30 @@ type TProps = {
   authors?: string[];
   organizations?: string[];
   teams?: string[];
-  status?: string[];
-  clientProfiles?: string[];
-  hmisClientProfiles?: string[];
-  hmisNote?: IdFilterLookup;
-  note?: IdFilterLookup;
-  hmisClientProfileLookup?: IdFilterLookup;
-  clientProfileLookup?: IdFilterLookup;
+  clientProfile?: string;
   createdBy?: string;
+  isSubmitted?: boolean;
 };
 
-export function toTaskFilter(props: TProps): TaskFilter {
+export function toNoteFilter(props: TProps): NoteFilter {
   const {
     search,
     authors,
     organizations,
-    clientProfiles,
-    hmisClientProfiles,
     teams,
-    status,
-    hmisNote,
-    note,
-    hmisClientProfileLookup,
-    clientProfileLookup,
+    clientProfile,
     createdBy,
+    isSubmitted,
   } = props;
 
-  const allFilters: TaskFilter = {
+  const allFilters: NoteFilter = {
     search: toNonEmptyStringOrUndefined(search),
     authors,
     organizations,
-    clientProfiles,
-    hmisClientProfiles,
-    hmisNote,
-    note,
-    hmisClientProfileLookup,
-    clientProfileLookup,
-    createdBy,
     teams: toEnumArray<SelahTeamEnum>(SelahTeamEnum, teams),
-    status: toEnumArray<TaskStatusEnum>(TaskStatusEnum, status),
+    clientProfile: toNonEmptyStringOrUndefined(clientProfile),
+    createdBy: toNonEmptyStringOrUndefined(createdBy),
+    isSubmitted,
   };
 
   return pruneFilter(allFilters);

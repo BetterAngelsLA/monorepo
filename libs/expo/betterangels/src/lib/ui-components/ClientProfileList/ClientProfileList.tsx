@@ -50,7 +50,7 @@ export function ClientProfileList({
   style,
   horizontalPadding = pagePaddingHorizontal,
 }: TProps) {
-  const { items, total, loading, loadMore, hasMore, error } =
+  const { items, total, loading, reloading, loadMore, reload, hasMore, error } =
     useInfiniteScrollQuery<
       TClientProfile,
       ClientProfilesQuery,
@@ -102,6 +102,8 @@ export function ClientProfileList({
           styles.listContent,
           { paddingHorizontal: horizontalPadding },
         ]}
+        onRefresh={reload}
+        refreshing={reloading}
       />
     </View>
   );

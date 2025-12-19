@@ -3,25 +3,23 @@ import { SearchBar, TextButton } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { HmisNoteType } from '../../apollo';
+import { HmisNoteType, toHmisNoteFilter } from '../../apollo';
 import useUser from '../../hooks/user/useUser';
 import { TUser } from '../../providers/user/UserContext';
 import {
   Header,
   HorizontalContainer,
-  InteractionFilters,
   InteractionListHmis,
+  ModelFilters,
   ProgramNoteCard,
-  TInteractionFilters,
-  nullInteractionFilters,
+  TModelFilters,
+  toModelFilterValues,
 } from '../../ui-components';
-import { toInteractionFilterValueHmis } from './toInteractionFilterValueHmis';
 
 const paginationLimit = 10;
 
 function getInitialFilterValues(user?: TUser) {
   return {
-    ...nullInteractionFilters,
     authors: user ? [{ id: user.id, label: 'Me' }] : [],
   };
 }
@@ -30,17 +28,11 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
   const { user } = useUser();
   const [search, setSearch] = useState<string>('');
   const [filtersKey, setFiltersKey] = useState(0);
-  const [currentFilters, setCurrentFilters] = useState<TInteractionFilters>(
+  const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
     getInitialFilterValues(user)
   );
 
-  function onFilterChange(selectedFilters: TInteractionFilters) {
-    console.log();
-    console.log(
-      '| ------------- InteractionsHmis onFilterChange selectedFilters  ------------- |'
-    );
-    console.log(JSON.stringify(selectedFilters, null, 2));
-    console.log();
+  function onFilterChange(selectedFilters: TModelFilters) {
     setCurrentFilters(selectedFilters);
   }
 
@@ -68,9 +60,9 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
     []
   );
 
-  const serverFilters = toInteractionFilterValueHmis({
+  const serverFilters = toHmisNoteFilter({
     search,
-    ...currentFilters,
+    ...toModelFilterValues(currentFilters),
   });
 
   return (
@@ -98,12 +90,12 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
           />
         </View>
 
-        <InteractionFilters
-          style={styles.filters}
+        <ModelFilters
           key={filtersKey}
           selected={currentFilters}
           onChange={onFilterChange}
           filters={['authors']}
+          style={styles.filters}
         />
 
         <InteractionListHmis
@@ -131,114 +123,3 @@ const styles = StyleSheet.create({
     marginBottom: Spacings.sm,
   },
 });
-
-// import { useInfiniteScrollQuery } from '@monorepo/apollo';
-// import { Colors } from '@monorepo/expo/shared/static';
-// import { InfiniteList } from '@monorepo/expo/shared/ui-components';
-// import { debounce } from '@monorepo/expo/shared/utils';
-// import { router } from 'expo-router';
-// import { ElementType, useCallback, useMemo, useState } from 'react';
-// import { HmisNoteType } from '../../apollo';
-// import { useUser } from '../../hooks';
-// import {
-//   Header,
-//   MainScrollContainer,
-//   ProgramNoteCard,
-// } from '../../ui-components';
-// import { DEFAULT_PAGINATION_LIMIT } from '../../ui-components/ClientProfileList/constants';
-// import {
-//   HmisNotesDocument,
-//   HmisNotesQuery,
-//   HmisNotesQueryVariables,
-// } from '../ClientHMIS/tabs/ClientInteractionsHmisView/__generated__/ClientInteractionsHmisView.generated';
-// import InteractionsFilters from './InteractionsFiltersHmis';
-// import InteractionsHeader from './InteractionsHeaderHmis';
-// type TFilters = {
-//   authors: { id: string; label: string }[];
-// };
-// export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
-//   const { user } = useUser();
-//   const [search, setSearch] = useState<string>('');
-//   const [filterSearch, setFilterSearch] = useState('');
-//   const [filters, setFilters] = useState<TFilters>({
-//     authors: user ? [{ id: user.id, label: 'Me' }] : [],
-//   });
-
-//   const updateFilters = (newFilters: TFilters) => {
-//     setFilters(newFilters);
-//   };
-//   const onFiltersReset = () => {
-//     setFilters({ authors: [] });
-//     setSearch('');
-//     setFilterSearch('');
-//   };
-//   const debounceFetch = useMemo(
-//     () =>
-//       debounce((text) => {
-//         setFilterSearch(text);
-//       }, 500),
-//     []
-//   );
-//   const onChange = (e: string) => {
-//     setSearch(e);
-//     debounceFetch(e);
-//   };
-//   const authors = filters.authors.map((a) => a.id);
-//   const { items, total, loading, hasMore, loadMore, error } =
-//     useInfiniteScrollQuery<
-//       HmisNoteType,
-//       HmisNotesQuery,
-//       HmisNotesQueryVariables
-//     >({
-//       document: HmisNotesDocument,
-//       queryFieldName: 'hmisNotes',
-//       pageSize: DEFAULT_PAGINATION_LIMIT,
-//       variables: { filters: { authors, search: filterSearch } },
-//       fetchPolicy: 'cache-and-network',
-//       nextFetchPolicy: 'cache-first',
-//     });
-//   if (error) {
-//     console.error(error);
-//   }
-
-//   const renderItemFn = useCallback(
-//     (item: HmisNoteType) => (
-//       <ProgramNoteCard
-//         onPress={() => {
-//           router.navigate({
-//             pathname: `/notes-hmis/${item.id}`,
-//             params: { clientId: item.hmisClientProfile?.id },
-//           });
-//         }}
-//         variant="interactions"
-//         hmisNote={item}
-//       />
-//     ),
-//     []
-//   );
-
-//   return (
-//     <>
-//       <Header title="Notes" Logo={Logo} />
-//       <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-//         <InteractionsHeader
-//           onFiltersReset={onFiltersReset}
-//           search={search}
-//           setSearch={onChange}
-//         />
-//         <InteractionsFilters filters={filters} setFilters={updateFilters} />
-//         <InfiniteList<HmisNoteType>
-//           data={items}
-//           keyExtractor={(item) => item.id ?? ''}
-//           totalItems={total}
-//           renderItem={renderItemFn}
-//           loading={loading}
-//           loadMore={loadMore}
-//           hasMore={hasMore}
-//           modelName="note"
-//           error={!!error}
-//         />
-//       </MainScrollContainer>
-//     </>
-//   );
-// }
