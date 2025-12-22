@@ -126,14 +126,14 @@ describe('toTaskFilter', () => {
   });
 
   it('omits status when undefined', () => {
-    const result = toTaskFilter({ status: undefined });
+    const result = toTaskFilter({ taskStatus: undefined });
 
     expect(result).toEqual({});
     expect('status' in result).toBe(false);
   });
 
   it('omits status when empty array', () => {
-    const result = toTaskFilter({ status: [] });
+    const result = toTaskFilter({ taskStatus: [] });
 
     expect(result).toEqual({});
     expect('status' in result).toBe(false);
@@ -144,7 +144,7 @@ describe('toTaskFilter', () => {
 
     // If your generated enum is empty for some reason, skip safely.
     if (validStatuses.length === 0) {
-      const result = toTaskFilter({ status: ['ANYTHING'] });
+      const result = toTaskFilter({ taskStatus: ['ANYTHING'] });
       expect(result).toEqual({});
       return;
     }
@@ -152,7 +152,7 @@ describe('toTaskFilter', () => {
     const firstValidStatus = validStatuses[0];
 
     const result = toTaskFilter({
-      status: [String(firstValidStatus), 'NOT_A_STATUS'],
+      taskStatus: [String(firstValidStatus), 'NOT_A_STATUS'],
     });
 
     expect(result).toEqual({
@@ -162,7 +162,7 @@ describe('toTaskFilter', () => {
 
   it('omits status if all provided values are invalid', () => {
     const result = toTaskFilter({
-      status: ['NOT_A_STATUS', 'ALSO_NOT_A_STATUS'],
+      taskStatus: ['NOT_A_STATUS', 'ALSO_NOT_A_STATUS'],
     });
 
     expect(result).toEqual({});
@@ -177,7 +177,7 @@ describe('toTaskFilter', () => {
       authors: [],
       organizations: ['org-1'],
       teams: ['ECHO_PARK_ON_SITE', 'NOT_A_TEAM'],
-      status: [],
+      taskStatus: [],
       note,
     });
 
