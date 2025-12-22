@@ -36,7 +36,7 @@ export function ClientInteractionsHmisView(props: TProps) {
       pageSize: DEFAULT_PAGINATION_LIMIT,
       variables: {
         filters: { hmisClientProfile: client?.id },
-        ordering: { date: Ordering.Desc },
+        ordering: [{ date: Ordering.Desc }, { id: Ordering.Desc }],
       },
       fetchPolicy: 'cache-and-network',
       nextFetchPolicy: 'cache-first',

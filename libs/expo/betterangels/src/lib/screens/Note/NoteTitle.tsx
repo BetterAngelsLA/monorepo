@@ -18,6 +18,8 @@ export default function NoteTitle({
       )}
       <TextRegular mb="sm" size="sm">
         {format(new Date(note?.interactedAt), 'MM/dd/yyyy')}
+        {' @ '}
+        {format(new Date(note?.interactedAt), 'hh:mm a')}
       </TextRegular>
       {!!note?.team && (
         <>
