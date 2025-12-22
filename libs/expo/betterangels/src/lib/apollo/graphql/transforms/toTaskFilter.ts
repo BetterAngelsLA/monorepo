@@ -71,7 +71,7 @@ export function toTaskFilter(props: TProps): TaskFilter {
     note,
     hmisClientProfileLookup,
     clientProfileLookup,
-    createdBy,
+    createdBy: toNonEmptyStringOrUndefined(createdBy),
     teams: toEnumArray<SelahTeamEnum>(SelahTeamEnum, teams),
     status: toEnumArray<TaskStatusEnum>(TaskStatusEnum, status),
   };

@@ -30,7 +30,7 @@ type TProps = {
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<ClientProfileFilter>;
-  ordering?: ClientProfileOrder | null;
+  ordering?: ClientProfileOrder | ClientProfileOrder[] | null;
   paginationLimit?: number;
   showAllClientsLink?: boolean;
   renderHeaderText?: (props: ListHeaderProps) => string;

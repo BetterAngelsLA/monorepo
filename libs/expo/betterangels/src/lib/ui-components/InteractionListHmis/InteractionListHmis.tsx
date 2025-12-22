@@ -9,9 +9,9 @@ import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
   HmisNoteFilter,
+  HmisNoteOrdering,
   HmisNoteType,
   InputMaybe,
-  NoteOrder,
 } from '../../apollo';
 import {
   InteractionListHmisDocument,
@@ -25,7 +25,7 @@ type TProps = {
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<HmisNoteFilter>;
-  order?: NoteOrder | null;
+  order?: HmisNoteOrdering | HmisNoteOrdering[] | null;
   paginationLimit?: number;
   headerStyle?: ViewStyle;
   renderHeader?: TRenderListResultsHeader;
@@ -94,7 +94,7 @@ export function InteractionListHmis(props: TProps) {
         loadingMore={loadingMore}
         loadMore={loadMore}
         hasMore={hasMore}
-        modelName="interaction"
+        modelName="note"
         renderResultsHeader={renderHeader}
         onRefresh={reload}
         refreshing={reloading}

@@ -1,4 +1,4 @@
-export function toEnum<TEnum extends string>(
+export function toEnumValue<TEnum extends string>(
   enumObject: Record<string, TEnum>,
   value: string
 ): TEnum | undefined {

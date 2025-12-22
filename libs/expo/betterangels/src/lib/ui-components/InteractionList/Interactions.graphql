@@ -28,10 +28,6 @@ query Interactions(
         point
         pointOfInterest
       }
-      moods {
-        id
-        descriptor
-      }
       providedServices {
         id
         serviceEnum
@@ -57,12 +53,6 @@ query Interactions(
         email
         firstName
         lastName
-        # TODO: displayCaseManager and user required for typecheck. remove in clean up
-        displayCaseManager
-        profilePhoto {
-          name
-          url
-        }
         profilePhoto {
           url
         }

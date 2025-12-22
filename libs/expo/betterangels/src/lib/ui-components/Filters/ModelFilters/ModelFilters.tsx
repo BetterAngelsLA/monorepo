@@ -33,7 +33,7 @@ export function ModelFilters(props: TProps) {
   const { user } = useUser();
 
   const filterConfigs = useMemo(() => {
-    if (!filters || filters.length === 0) {
+    if (!filters?.length) {
       return [];
     }
 

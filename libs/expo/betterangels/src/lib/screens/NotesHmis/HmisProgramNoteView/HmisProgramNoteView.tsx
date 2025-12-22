@@ -11,9 +11,9 @@ import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { MainScrollContainer, NoteTasks } from '../../../ui-components';
-import { ViewHmisNoteDocument } from './__generated__/HmisProgramNoteView.generated';
 import HmisProgramNoteServices from './HmisProgramNoteServices';
 import HmisProgramNoteTitle from './HmisProgramNoteTitle';
+import { ViewHmisNoteDocument } from './__generated__/HmisProgramNoteView.generated';
 
 type TProps = {
   id: string;

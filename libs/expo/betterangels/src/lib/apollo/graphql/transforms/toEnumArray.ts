@@ -1,4 +1,4 @@
-import { toEnum } from './toEnum';
+import { toEnumValue } from './toEnumValue';
 
 export function toEnumArray<T extends string>(
   enumObject: Record<string, T>,
@@ -11,7 +11,7 @@ export function toEnumArray<T extends string>(
   const enumArr: T[] = [];
 
   for (const item of arr) {
-    const validEnum = toEnum<T>(enumObject, item);
+    const validEnum = toEnumValue<T>(enumObject, item);
 
     if (!validEnum) {
       continue;

@@ -55,9 +55,10 @@ export default function Tasks() {
   const serverFilters = toTaskFilter({
     search,
     ...toModelFilterValues(currentFilters),
+    // Tasks screen shows only tasks w/o notes
     note: { isNull: true },
     hmisNote: { isNull: true },
-    hmisClientProfileLookup: isHmisUser ? { isNull: true } : undefined,
+    hmisClientProfileLookup: isHmisUser ? undefined : { isNull: true },
   });
 
   return (
@@ -84,7 +85,7 @@ export default function Tasks() {
         onChange={onFilterChange}
         style={styles.filters}
         filters={[
-          'clientProfiles',
+          isHmisUser ? 'hmisClientProfiles' : 'clientProfiles',
           'teams',
           'taskStatus',
           'authors',
