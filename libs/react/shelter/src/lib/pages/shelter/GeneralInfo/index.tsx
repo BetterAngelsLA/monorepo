@@ -97,9 +97,9 @@ export default function GeneralInfo({
       <div className="gap-2 flex flex-col px-6">
         {shelter.totalBeds && (
           <>
-            <h3 className="text-base font-semibold">Bed Availability</h3>
+            <h3 className="text-base font-semibold">Capacity</h3>
             <div>
-              <p>Capacity: {shelter.totalBeds} beds</p>
+              <p>{shelter.totalBeds} beds</p>
             </div>
           </>
         )}
