@@ -5,7 +5,7 @@ export const DEFAULT_ITEM_GAP = 16;
 
 export const DEFAULT_QUERY_ORDER = [
   {
-    interactedAt: Ordering.AscNullsLast,
+    interactedAt: Ordering.Desc,
   },
   {
     id: Ordering.Desc,

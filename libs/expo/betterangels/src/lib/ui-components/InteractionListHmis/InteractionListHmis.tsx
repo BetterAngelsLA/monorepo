@@ -61,7 +61,7 @@ export function InteractionListHmis(props: TProps) {
     document: InteractionListHmisDocument,
     queryFieldName: 'hmisNotes',
     variables: {
-      filters, // NoteFilter should be invalid; needs HmisNoteFilter?
+      filters,
       ordering: order || undefined,
     },
     pageSize: paginationLimit,
@@ -77,7 +77,7 @@ export function InteractionListHmis(props: TProps) {
 
     return (
       <TextRegular>
-        Sorry, there was an error loading the interaction list.
+        Sorry, there was an error loading the note list.
       </TextRegular>
     );
   }

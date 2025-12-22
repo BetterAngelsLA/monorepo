@@ -2,7 +2,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { SearchBar, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { NoteType, Ordering } from '../../../apollo';
+import { NoteType } from '../../../apollo';
 import { pagePaddingHorizontal } from '../../../static';
 import {
   CreateClientInteractionBtn,
@@ -59,7 +59,6 @@ export default function Interactions({
       />
       <InteractionList
         filters={{ search, clientProfile: client?.clientProfile.id }}
-        order={[{ interactedAt: Ordering.Desc }, { id: Ordering.Desc }]}
         renderHeader={renderListHeader}
         renderItem={renderItemFn}
         paginationLimit={10}
