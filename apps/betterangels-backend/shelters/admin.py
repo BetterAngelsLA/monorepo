@@ -8,19 +8,22 @@ import requests
 from betterangels_backend import settings
 from common.models import Location
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.core.files.base import ContentFile
+from django.db import models, transaction
 from django.db.models import F, OuterRef, QuerySet, Subquery
 from django.db.models.functions import Cast, JSONObject
 from django.forms import BaseFormSet, TimeInput
 from django.http import HttpRequest
-from django.urls import reverse
+from django.shortcuts import redirect
+from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 from django_choices_field import TextChoicesField
 from django_select2.forms import Select2MultipleWidget
 from import_export import resources
@@ -86,7 +89,7 @@ User = get_user_model()
 
 
 class ShelterForm(forms.ModelForm):
-    template_name = "admin/shelters/shelter_change_form.html"  # Specify your custom template path
+    # template_name = "admin/shelters/shelter_change_form.html"  # Specify your custom template path
 
     clear_hero_image = forms.BooleanField(
         required=False,
@@ -602,7 +605,7 @@ class ShelterResource(resources.ModelResource):
 
     def process_many_to_many_import(self, row: Any, rowInDict: dict, column: str) -> None:
         fieldModel = cast(Type[models.Model], Shelter._meta.get_field(column).related_model)
-        fieldModelChoices = cast(TextChoicesField, fieldModel._meta.get_field("name")).choices
+        fieldModelChoices = cast(TextChoicesField, fieldModel._meta.get_field("name")).choices  # type: ignore
         columnSeparateVals = [v.strip() for v in rowInDict[column].split(",")]
         row_vals_choices = {j: i for i, j in fieldModelChoices}  # type: ignore
         for i, indVal in enumerate(columnSeparateVals):
@@ -704,6 +707,8 @@ class ShelterResource(resources.ModelResource):
 class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
     list_select_related = ("organization",)
+    change_form_template = "admin/shelters/shelter/change_form.html"
+    add_form_template = None
 
     inlines = [ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
     fieldsets = (
@@ -1005,3 +1010,84 @@ class ShelterAdmin(ImportExportModelAdmin):
         label = name or (data.get("username") or f"User {uid}")
         url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
         return format_html('<a href="{}">{}</a>', url, label)
+
+    def get_urls(self):  # type: ignore
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "<path:object_id>/clone/",
+                self.admin_site.admin_view(self.clone_view),
+                name="shelters_shelter_clone",
+            ),
+        ]
+        return custom_urls + urls
+
+    def _copy_file_field(self, original_file_field, new_obj: models.Model, field_name: str = "file") -> None:  # type: ignore
+        """Copy a file field to new object with '_copy' suffix."""
+        if not original_file_field or not original_file_field.name:
+            return
+
+        original_file = original_file_field.file
+        original_name = original_file_field.name
+
+        # Add '_copy' suffix before file extension
+        name_parts = original_name.rsplit(".", 1)
+        new_name = f"{name_parts[0]}_copy.{name_parts[1]}" if len(name_parts) == 2 else f"{original_name}_copy"
+
+        # Copy file content
+        original_file.seek(0)
+        content_file = ContentFile(original_file.read(), name=new_name)
+        setattr(new_obj, field_name, content_file)
+        new_obj.save()
+
+    def _clone_file_objects(self, model_class: type[models.Model], original: Shelter, copy: Shelter) -> None:  # type: ignore
+        """Clone all instances of a model with file duplication."""
+        for obj in model_class.objects.filter(shelter=original):  # type: ignore
+            original_file_field = obj.file
+            new_obj = model_class(shelter=copy)  # type: ignore
+            self._copy_file_field(original_file_field, new_obj)
+
+    def _clone_related_photos_and_videos(self, original: Shelter, copy: Shelter) -> None:  # type: ignore
+        """Clone photos and videos with file duplication."""
+        self._clone_file_objects(ExteriorPhoto, original, copy)
+        self._clone_file_objects(InteriorPhoto, original, copy)
+        self._clone_file_objects(Video, original, copy)
+
+    def _clone_related_contacts(self, original: Shelter, copy: Shelter) -> None:  # type: ignore
+        """Clone additional contacts."""
+        for contact in ContactInfo.objects.filter(shelter=original):
+            contact.pk = None
+            contact.shelter = copy
+            contact.save()
+
+    def _clone_many_to_many_fields(self, original: Shelter, copy: Shelter) -> None:  # type: ignore
+        """Copy all many-to-many relationships."""
+        for field in Shelter._meta.get_fields():
+            if isinstance(field, models.ManyToManyField):
+                getattr(copy, field.name).set(getattr(original, field.name).all())
+
+    def clone_view(self, request: HttpRequest, object_id: str):  # type: ignore
+        """Clone a shelter instance with all related objects."""
+        shelter = self.get_object(request, object_id)
+        if shelter is None:
+            return self._get_obj_does_not_exist_redirect(request, self.opts, object_id)
+
+        if not self.has_change_permission(request, shelter):
+            return self._get_obj_does_not_exist_redirect(request, self.opts, object_id)
+
+        with transaction.atomic():
+            # Create a copy of the shelter
+            shelter_copy = Shelter.objects.get(pk=shelter.pk)
+            shelter_copy.pk = None
+            shelter_copy.name = f"{shelter.name} (Copy)"
+            shelter_copy.hero_image_content_type = None
+            shelter_copy.hero_image_object_id = None
+            shelter_copy.save()
+
+            # Clone all related data
+            self._clone_many_to_many_fields(shelter, shelter_copy)
+            self._clone_related_contacts(shelter, shelter_copy)
+            self._clone_related_photos_and_videos(shelter, shelter_copy)
+
+        messages.success(request, _("Shelter '%s' has been cloned successfully.") % shelter.name)
+        return redirect("admin:shelters_shelter_change", shelter_copy.pk)
