@@ -5,7 +5,11 @@ import { IconButton, InfiniteList } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { View } from 'react-native';
-import { HmisClientProfileType, HmisNoteType } from '../../../../apollo';
+import {
+  HmisClientProfileType,
+  HmisNoteType,
+  Ordering,
+} from '../../../../apollo';
 import {
   MainScrollContainer,
   ProgramNoteCard,
@@ -30,7 +34,10 @@ export function ClientInteractionsHmisView(props: TProps) {
       document: HmisNotesDocument,
       queryFieldName: 'hmisNotes',
       pageSize: DEFAULT_PAGINATION_LIMIT,
-      variables: { filters: { hmisClientProfile: client?.id } },
+      variables: {
+        filters: { hmisClientProfile: client?.id },
+        ordering: [{ date: Ordering.Desc }, { id: Ordering.Desc }],
+      },
       fetchPolicy: 'cache-and-network',
       nextFetchPolicy: 'cache-first',
     });

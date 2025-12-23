@@ -1,12 +1,12 @@
 import { View } from 'react-native';
-import { InteractionLocationsModal } from './InteractionLocationsModal';
+import { ClientLocationsHmisViewModal } from './ClientLocationsHmisViewModal';
 import { InteractionsMap } from './map/InteractionsMap';
 
 type TProps = {
   clientProfileId?: string;
 };
 
-export function InteractionLocations(props: TProps) {
+export function ClientLocationsHmisView(props: TProps) {
   const { clientProfileId } = props;
 
   if (!clientProfileId) {
@@ -16,7 +16,7 @@ export function InteractionLocations(props: TProps) {
   return (
     <View style={{ flex: 1 }}>
       <InteractionsMap clientProfileId={clientProfileId} />
-      <InteractionLocationsModal />
+      <ClientLocationsHmisViewModal />
     </View>
   );
 }

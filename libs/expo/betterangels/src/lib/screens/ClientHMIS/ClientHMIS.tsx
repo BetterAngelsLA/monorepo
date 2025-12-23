@@ -13,6 +13,7 @@ import { renderTabComponent } from './tabs/utils/renderTabComponent';
 const hmisTabs: ClientViewTabEnum[] = [
   ClientViewTabEnum.Profile,
   ClientViewTabEnum.Interactions,
+  ClientViewTabEnum.Locations,
   ClientViewTabEnum.Tasks,
 ];
 
@@ -51,9 +52,11 @@ export function ClientHMIS(props: TProps) {
     return null;
   }
 
+  const showHeader = currentTab !== ClientViewTabEnum.Locations;
+
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      <HMISClientProfileHeader client={client} />
+      {showHeader && <HMISClientProfileHeader client={client} />}
 
       <Tabs
         tabs={hmisTabs}

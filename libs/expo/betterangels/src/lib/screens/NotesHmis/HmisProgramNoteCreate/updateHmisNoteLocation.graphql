@@ -1,5 +1,5 @@
-mutation UpdateHmisNote($data: UpdateHmisNoteInput!) {
-  updateHmisNote(data: $data) {
+mutation UpdateHmisNoteLocation($data: UpdateHmisNoteLocationInput!) {
+  updateHmisNoteLocation(data: $data) {
     ... on HmisNoteType {
       id
       addedDate
