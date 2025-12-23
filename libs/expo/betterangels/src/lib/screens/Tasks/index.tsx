@@ -55,9 +55,6 @@ export default function Tasks() {
   const serverFilters = toTaskFilter({
     search,
     ...toModelFilterValues(currentFilters),
-    // Tasks screen shows only tasks w/o notes
-    note: { isNull: true },
-    hmisNote: { isNull: true },
     hmisClientProfileLookup: isHmisUser ? undefined : { isNull: true },
   });
 
