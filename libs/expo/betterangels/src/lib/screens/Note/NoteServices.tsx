@@ -1,8 +1,6 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { PillContainer, TextBold } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { ServiceEnum } from '../../apollo';
-import { enumDisplayServices } from '../../static';
 import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
 
 export default function NoteServices({
@@ -25,12 +23,11 @@ export default function NoteServices({
             maxVisible={5}
             pillVariant={'warning'}
             pills={note['requestedServices']
-              // TODO: remove after cutover
-              .filter((item) => !!item.serviceEnum)
+              .filter((item) => !!item.serviceOther || !!item.service?.label)
               .map((item) =>
-                item.serviceEnum === ServiceEnum.Other
+                item.serviceOther
                   ? item.serviceOther || ''
-                  : enumDisplayServices[item.serviceEnum!]
+                  : item.service?.label || ''
               )}
             variant={'expandable'}
           />
@@ -45,12 +42,11 @@ export default function NoteServices({
             maxVisible={5}
             pillVariant={'success'}
             pills={note['providedServices']
-              // TODO: remove after cutover
-              .filter((item) => !!item.serviceEnum)
+              .filter((item) => !!item.serviceOther || !!item.service?.label)
               .map((item) =>
-                item.serviceEnum === ServiceEnum.Other
+                item.serviceOther
                   ? item.serviceOther || ''
-                  : enumDisplayServices[item.serviceEnum!]
+                  : item.service?.label || ''
               )}
             variant={'expandable'}
           />
