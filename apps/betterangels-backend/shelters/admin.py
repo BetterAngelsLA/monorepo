@@ -18,7 +18,7 @@ from django.db import models, transaction
 from django.db.models import F, OuterRef, QuerySet, Subquery
 from django.db.models.functions import Cast, JSONObject
 from django.forms import BaseFormSet, TimeInput
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import path, reverse
 from django.utils.html import format_html
@@ -84,6 +84,7 @@ from .models import (
 )
 
 T = TypeVar("T", bound=models.Model)
+FileModel = TypeVar("FileModel", ExteriorPhoto, InteriorPhoto, Video)
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
@@ -1011,18 +1012,18 @@ class ShelterAdmin(ImportExportModelAdmin):
         url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
         return format_html('<a href="{}">{}</a>', url, label)
 
-    def get_urls(self):  # type: ignore
+    def get_urls(self) -> list[Any]:
         urls = super().get_urls()
-        custom_urls = [
+        custom_urls: list[Any] = [
             path(
                 "<path:object_id>/clone/",
                 self.admin_site.admin_view(self.clone_view),
                 name="shelters_shelter_clone",
             ),
         ]
-        return custom_urls + urls
+        return cast(list[Any], custom_urls + urls)
 
-    def _copy_file_field(self, original_file_field, new_obj: models.Model, field_name: str = "file") -> None:  # type: ignore
+    def _copy_file_field(self, original_file_field: Any, new_obj: models.Model, field_name: str = "file") -> None:
         """Copy a file field to new object with '_copy' suffix."""
         if not original_file_field or not original_file_field.name:
             return
@@ -1030,50 +1031,51 @@ class ShelterAdmin(ImportExportModelAdmin):
         original_file = original_file_field.file
         original_name = original_file_field.name
 
-        # Add '_copy' suffix before file extension
         name_parts = original_name.rsplit(".", 1)
         new_name = f"{name_parts[0]}_copy.{name_parts[1]}" if len(name_parts) == 2 else f"{original_name}_copy"
 
-        # Copy file content
         original_file.seek(0)
         content_file = ContentFile(original_file.read(), name=new_name)
         setattr(new_obj, field_name, content_file)
         new_obj.save()
 
-    def _clone_file_objects(self, model_class: type[models.Model], original: Shelter, copy: Shelter) -> None:  # type: ignore
+    def _clone_file_objects(self, model_class: Type[FileModel], original: Shelter, copy: Shelter) -> None:
         """Clone all instances of a model with file duplication."""
-        for obj in model_class.objects.filter(shelter=original):  # type: ignore
+        for obj in model_class.objects.filter(shelter=original):
             original_file_field = obj.file
-            new_obj = model_class(shelter=copy)  # type: ignore
+            new_obj = model_class(shelter=copy)
             self._copy_file_field(original_file_field, new_obj)
 
-    def _clone_related_photos_and_videos(self, original: Shelter, copy: Shelter) -> None:  # type: ignore
+    def _clone_related_photos_and_videos(self, original: Shelter, copy: Shelter) -> None:
         """Clone photos and videos with file duplication."""
         self._clone_file_objects(ExteriorPhoto, original, copy)
         self._clone_file_objects(InteriorPhoto, original, copy)
         self._clone_file_objects(Video, original, copy)
 
-    def _clone_related_contacts(self, original: Shelter, copy: Shelter) -> None:  # type: ignore
+    def _clone_related_contacts(self, original: Shelter, copy: Shelter) -> None:
         """Clone additional contacts."""
         for contact in ContactInfo.objects.filter(shelter=original):
             contact.pk = None
             contact.shelter = copy
             contact.save()
 
-    def _clone_many_to_many_fields(self, original: Shelter, copy: Shelter) -> None:  # type: ignore
+    def _clone_many_to_many_fields(self, original: Shelter, copy: Shelter) -> None:
         """Copy all many-to-many relationships."""
         for field in Shelter._meta.get_fields():
             if isinstance(field, models.ManyToManyField):
                 getattr(copy, field.name).set(getattr(original, field.name).all())
 
-    def clone_view(self, request: HttpRequest, object_id: str):  # type: ignore
+    def _handle_object_not_found(self, request: HttpRequest, object_id: str) -> HttpResponseRedirect:
+        """Handle when object is not found or permission denied."""
+        msg = f'{self.opts.verbose_name} with ID "{object_id}" doesn\'t exist.'
+        self.message_user(request, msg, messages.WARNING)
+        return HttpResponseRedirect(reverse("admin:index", current_app=self.admin_site.name))
+
+    def clone_view(self, request: HttpRequest, object_id: str) -> HttpResponseRedirect:
         """Clone a shelter instance with all related objects."""
         shelter = self.get_object(request, object_id)
-        if shelter is None:
-            return self._get_obj_does_not_exist_redirect(request, self.opts, object_id)
-
-        if not self.has_change_permission(request, shelter):
-            return self._get_obj_does_not_exist_redirect(request, self.opts, object_id)
+        if shelter is None or not self.has_change_permission(request, shelter):
+            return self._handle_object_not_found(request, object_id)
 
         with transaction.atomic():
             # Create a copy of the shelter
