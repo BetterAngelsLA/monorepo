@@ -1,19 +1,6 @@
 import { TFilterOption } from '@monorepo/expo/shared/ui-components';
 import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../../static';
-import {
-  TModelFilterFullConfig,
-  TModelFilterType,
-  TModelFilters,
-} from './types';
-
-export const nullModelilters: TModelFilters = {
-  authors: [],
-  clientProfiles: [],
-  hmisClientProfiles: [],
-  taskStatus: [],
-  teams: [],
-  organizations: [],
-};
+import { TModelFilterFullConfig, TModelFilterType } from './types';
 
 export const modelFilterConfigDefault: Record<
   TModelFilterType,

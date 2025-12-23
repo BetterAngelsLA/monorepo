@@ -29,11 +29,14 @@ export default function Interactions({
         return null;
       }
 
+      const text =
+        total === undefined
+          ? `Displaying ${visible} interactions`
+          : `Displaying ${visible} of ${total} interactions`;
+
       return (
         <View style={styles.listHeader}>
-          <TextRegular size="sm">
-            Displaying {visible} of {total} interactions
-          </TextRegular>
+          <TextRegular size="sm">{text}</TextRegular>
 
           <CreateClientInteractionBtn
             clientProfileId={client.clientProfile.id}
