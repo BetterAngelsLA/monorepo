@@ -1,9 +1,9 @@
 import { useQuery } from '@apollo/client/react';
 import { HmisNoteOrdering, Ordering } from '../../apollo';
 import {
-  HmisNotesDocument,
-  HmisNotesQuery,
-} from '../../screens/ClientHMIS/tabs/ClientInteractionsHmisView/__generated__/ClientInteractionsHmisView.generated';
+  InteractionListHmisDocument,
+  InteractionListHmisQuery,
+} from '../../ui-components/InteractionListHmis/__generated__/interactionListHmis.generated';
 
 const defaultSortOrder: HmisNoteOrdering = {
   date: Ordering.Desc,
@@ -17,7 +17,7 @@ type TProps = {
 
 export function useGetHmisClientInteractionsWithLocation(props: TProps) {
   const { id, ordering } = props;
-  const { data, error, loading } = useQuery(HmisNotesDocument, {
+  const { data, error, loading } = useQuery(InteractionListHmisDocument, {
     variables: {
       pagination: { limit: 1000, offset: 0 },
       ordering: ordering || defaultSortOrder,
@@ -29,8 +29,9 @@ export function useGetHmisClientInteractionsWithLocation(props: TProps) {
     nextFetchPolicy: 'cache-first',
   });
 
-  let interactions: HmisNotesQuery['hmisNotes']['results'] | undefined =
-    undefined;
+  let interactions:
+    | InteractionListHmisQuery['hmisNotes']['results']
+    | undefined = undefined;
 
   if (data) {
     interactions =

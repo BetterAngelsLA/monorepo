@@ -7,12 +7,12 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { InputMaybe, TaskFilter, TaskOrder, TaskType } from '../../apollo';
+import { InputMaybe, NoteFilter, NoteOrder, NoteType } from '../../apollo';
 import {
-  TasksDocument,
-  TasksQuery,
-  TasksQueryVariables,
-} from './__generated__/Tasks.generated';
+  InteractionsDocument,
+  InteractionsQuery,
+  InteractionsQueryVariables,
+} from './__generated__/Interactions.generated';
 import {
   DEFAULT_ITEM_GAP,
   DEFAULT_PAGINATION_LIMIT,
@@ -20,18 +20,18 @@ import {
 } from './constants';
 
 type TProps = {
-  renderItem: (task: TaskType) => ReactElement | null;
+  renderItem: (interaction: NoteType) => ReactElement | null;
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
-  filters?: InputMaybe<TaskFilter>;
-  order?: TaskOrder | null;
+  filters?: InputMaybe<NoteFilter>;
+  order?: NoteOrder | NoteOrder[] | null;
   paginationLimit?: number;
   headerStyle?: ViewStyle;
   renderHeader?: TRenderListResultsHeader;
   actionItem?: ReactNode;
 };
 
-export function TaskList(props: TProps) {
+export function InteractionList(props: TProps) {
   const {
     filters,
     order = DEFAULT_QUERY_ORDER,
@@ -42,19 +42,32 @@ export function TaskList(props: TProps) {
     style,
   } = props;
 
-  const { items, total, loading, loadMore, reload, reloading, hasMore, error } =
-    useInfiniteScrollQuery<TaskType, TasksQuery, TasksQueryVariables>({
-      document: TasksDocument,
-      queryFieldName: 'tasks',
-      variables: {
-        filters,
-        ordering: order || undefined,
-      },
-      pageSize: paginationLimit,
-    });
+  const {
+    items,
+    total,
+    loading,
+    loadingMore,
+    reloading,
+    loadMore,
+    reload,
+    hasMore,
+    error,
+  } = useInfiniteScrollQuery<
+    NoteType,
+    InteractionsQuery,
+    InteractionsQueryVariables
+  >({
+    document: InteractionsDocument,
+    queryFieldName: 'notes',
+    variables: {
+      filters,
+      ordering: order || undefined,
+    },
+    pageSize: paginationLimit,
+  });
 
   const renderItemFn = useCallback(
-    (item: TaskType) => renderItem(item),
+    (item: NoteType) => renderItem(item),
     [renderItem]
   );
 
@@ -63,23 +76,24 @@ export function TaskList(props: TProps) {
 
     return (
       <TextRegular>
-        Sorry, there was an error loading the task list.
+        Sorry, there was an error loading the interaction list.
       </TextRegular>
     );
   }
 
   return (
     <View style={[styles.container, style]}>
-      <InfiniteList<TaskType>
+      <InfiniteList<NoteType>
         data={items}
         keyExtractor={(item) => item.id}
         totalItems={total}
         renderItem={renderItemFn}
         itemGap={itemGap}
         loading={loading}
+        loadingMore={loadingMore}
         loadMore={loadMore}
         hasMore={hasMore}
-        modelName="task"
+        modelName="interaction"
         renderResultsHeader={renderHeader}
         onRefresh={reload}
         refreshing={reloading}

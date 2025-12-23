@@ -1,28 +1,22 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
-import {
-  SearchBar,
-  TextButton,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
+import { SearchBar, TextButton } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { TaskType } from '../../apollo';
+import { TaskType, toTaskFilter } from '../../apollo';
 import { useUser } from '../../hooks';
 import { TUser } from '../../providers/user/UserContext';
 import { pagePaddingHorizontal } from '../../static';
 import {
-  TTaskFilters,
+  ModelFilters,
+  TModelFilters,
   TaskCard,
-  TaskFilters,
   TaskList,
-  nullTaskFilters,
-  toTaskFilterValue,
+  toModelFilterValues,
 } from '../../ui-components';
 
-function getInitialFilterValues(user?: TUser) {
+function getInitialFilterValues(user?: TUser): TModelFilters {
   return {
-    ...nullTaskFilters,
     authors: user ? [{ id: user.id, label: 'Me' }] : [],
   };
 }
@@ -31,11 +25,10 @@ export default function Tasks() {
   const { user, isHmisUser } = useUser();
 
   const [search, setSearch] = useState('');
-  const [filtersKey, setFiltersKey] = useState(0);
-
-  const [currentFilters, setCurrentFilters] = useState<TTaskFilters>(
+  const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
     getInitialFilterValues(user)
   );
+  const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
 
   const handleTaskPress = useCallback((task: TaskType) => {
     router.navigate({
@@ -49,37 +42,24 @@ export default function Tasks() {
     [handleTaskPress]
   );
 
-  function onFilterChange(selectedFilters: TTaskFilters) {
+  function onFilterChange(selectedFilters: TModelFilters) {
     setCurrentFilters(selectedFilters);
   }
 
   function onFilterReset() {
     setSearch('');
-    const initial = getInitialFilterValues(user);
-    setCurrentFilters(initial);
+    setCurrentFilters(getInitialFilterValues(user));
     setFiltersKey((k) => k + 1); // inc key to trigger remount
   }
 
-  function renderListHeader(visible: number, _total: number | undefined) {
-    return (
-      <View style={styles.resultsHeader}>
-        <TextRegular>{visible} Tasks total</TextRegular>
-      </View>
-    );
-  }
-
-  const serverFilters = toTaskFilterValue({
+  const serverFilters = toTaskFilter({
     search,
-    ...currentFilters,
+    ...toModelFilterValues(currentFilters),
     // Tasks screen shows only tasks w/o notes
     note: { isNull: true },
     hmisNote: { isNull: true },
+    hmisClientProfileLookup: isHmisUser ? undefined : { isNull: true },
   });
-
-  // must be hmis user to view Task with hmisClientProfile
-  if (!isHmisUser) {
-    serverFilters.hmisClientProfileLookup = { isNull: true };
-  }
 
   return (
     <View style={styles.container}>
@@ -95,22 +75,25 @@ export default function Tasks() {
           onPress={onFilterReset}
           regular
           title="Reset"
-          accessibilityHint="Reset filters"
+          accessibilityHint="Reset search and filters"
         />
       </View>
 
-      <TaskFilters
+      <ModelFilters
         key={filtersKey}
         selected={currentFilters}
         onChange={onFilterChange}
         style={styles.filters}
+        filters={[
+          isHmisUser ? 'hmisClientProfiles' : 'clientProfiles',
+          'teams',
+          'taskStatus',
+          'authors',
+          'organizations',
+        ]}
       />
 
-      <TaskList
-        filters={serverFilters}
-        renderItem={renderTaskItem}
-        renderHeader={renderListHeader}
-      />
+      <TaskList filters={serverFilters} renderItem={renderTaskItem} />
     </View>
   );
 }
