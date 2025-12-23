@@ -602,7 +602,7 @@ class ShelterResource(resources.ModelResource):
 
     def process_many_to_many_import(self, row: Any, rowInDict: dict, column: str) -> None:
         fieldModel = cast(Type[models.Model], Shelter._meta.get_field(column).related_model)
-        fieldModelChoices = cast(TextChoicesField, fieldModel._meta.get_field("name")).choices
+        fieldModelChoices = cast(TextChoicesField, fieldModel._meta.get_field("name")).choices  # type: ignore
         columnSeparateVals = [v.strip() for v in rowInDict[column].split(",")]
         row_vals_choices = {j: i for i, j in fieldModelChoices}  # type: ignore
         for i, indVal in enumerate(columnSeparateVals):
