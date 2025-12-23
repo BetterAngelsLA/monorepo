@@ -25,34 +25,72 @@
  * Use this for:
  * • Nested or leaf types that appear inside other entities
  * • Types that are not the primary result of a list query
- * • Fixing normalization for auxiliary types (e.g. images, metadata, value objects)
+ * • Fixing normalization for auxiliary types (e.g. images, files, metadata)
  *
- * Example: `DjangoImageType`
- * • Cannot safely use `url` as a cache key because it includes volatile query params
- * • Uses `name` as a stable identity instead
+ * ---------------------------------------------------------------------------
+ * URL-backed media types (DjangoImageType / DjangoFileType)
+ * ---------------------------------------------------------------------------
+ * These types do NOT expose a stable `id`, and their `url` field may include
+ * volatile query parameters (e.g. signed URLs, expirations).
  *
- * Why we define a type policy for DjangoImageType?
- * DjangoImageType is returned by multiple queries (e.g. ClientProfile, Interactions)
- * and does not include a stable `id`. Without a type policy, Apollo treats each
- * occurrence as a new inline object, which can cause parent records to appear
- * changed and trigger unnecessary refetches.
+ * To safely normalize them:
+ * • We derive a canonical cache key from `url` by stripping query parameters
+ * • If a stable key cannot be computed, we return `false`
+ *
+ * Returning `false` explicitly tells Apollo:
+ * → "Do not normalize this object; treat it as inline data"
+ *
+ * This avoids:
+ * • Cache key collisions
+ * • Invariant violations
+ * • Accidental cross-entity overwrites
+ *
+ * Warnings are logged when a key cannot be derived to help detect schema or
+ * backend regressions early.
+ *
  * ---------------------------------------------------------------------------
  * Rule of Thumb
  * ---------------------------------------------------------------------------
- * • If the type is the *root item* of a paginated query → queryTypePolicies
- * • If the type is a *nested/helper/value type* → extraTypePolicies
+ * • Root items of paginated queries → queryTypePolicies
+ * • Nested/helper/value objects → extraTypePolicies
+ * • Objects without a guaranteed stable identity → `keyFields: false`
  */
 
-import { TypePolicies } from '@apollo/client';
+import { StoreObject, TypePolicies } from '@apollo/client';
 import { generateCachePolicies } from '@monorepo/apollo';
 import { cachePolicyRegistry } from './cachePolicyRegistry';
+import { toUrlKeyFieldValue } from './utils/toUrlKeyFieldValue';
 
 const extraTypePolicies: TypePolicies = {
   DjangoImageType: {
-    keyFields: ['name'],
+    keyFields: (obj: StoreObject) => {
+      const urlKey = toUrlKeyFieldValue(obj.url);
+
+      if (!urlKey) {
+        console.warn(
+          `[typePolicies: DjangoImageType] missing url keyField: ${JSON.stringify(
+            obj
+          )}`
+        );
+      }
+
+      return urlKey ?? false;
+    },
   },
   DjangoFileType: {
-    keyFields: ['name'],
+    keyFields: (obj: StoreObject) => {
+      const urlKey = toUrlKeyFieldValue(obj.url);
+
+      if (!urlKey) {
+        console.warn(
+          `[typePolicies: DjangoFileType] missing url keyField: ${JSON.stringify(
+            obj
+          )}`
+        );
+      }
+
+      return urlKey ?? false;
+    },
   },
   ClientContactType: {
     keyFields: ['id'],
@@ -88,6 +126,7 @@ const extraTypePolicies: TypePolicies = {
 
 const queryTypePolicies = generateCachePolicies(cachePolicyRegistry);
 
+// TODO: add merge safety to avoid defining policy in both places
 export const baApolloTypePolicies = {
   ...queryTypePolicies,
   ...extraTypePolicies,
