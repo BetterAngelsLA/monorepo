@@ -54,6 +54,7 @@ query Interactions(
         firstName
         lastName
         profilePhoto {
+          name
           url
         }
       }
