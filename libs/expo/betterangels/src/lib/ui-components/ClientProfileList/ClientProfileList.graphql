@@ -1,4 +1,4 @@
-query ClientProfiles(
+query ClientProfileList(
   $filters: ClientProfileFilter
   $pagination: OffsetPaginationInput
   $ordering: [ClientProfileOrder!]! = []
@@ -33,6 +33,7 @@ query ClientProfiles(
       profilePhoto {
         name
         url
+        size
       }
     }
   }

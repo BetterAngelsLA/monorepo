@@ -7,15 +7,16 @@ import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
   ClientProfileFilter,
   ClientProfileOrder,
+  ClientProfileType,
   InputMaybe,
 } from '../../apollo';
 import { pagePaddingHorizontal } from '../../static';
 import { ClientProfileListHeader } from './ClientProfileListHeader';
 import {
-  ClientProfilesDocument,
-  ClientProfilesQuery,
-  ClientProfilesQueryVariables,
-} from './__generated__/ClientProfiles.generated';
+  ClientProfileListDocument,
+  ClientProfileListQuery,
+  ClientProfileListQueryVariables,
+} from './__generated__/ClientProfileList.generated';
 import {
   DEFAULT_ITEM_GAP,
   DEFAULT_PAGINATION_LIMIT,
@@ -23,10 +24,8 @@ import {
 } from './constants';
 import { ListHeaderProps } from './types';
 
-type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
-
 type TProps = {
-  renderItem: (clientProfile: TClientProfile) => ReactElement | null;
+  renderItem: (clientProfile: ClientProfileType) => ReactElement | null;
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<ClientProfileFilter>;
@@ -52,11 +51,11 @@ export function ClientProfileList({
 }: TProps) {
   const { items, total, loading, reloading, loadMore, reload, hasMore, error } =
     useInfiniteScrollQuery<
-      TClientProfile,
-      ClientProfilesQuery,
-      ClientProfilesQueryVariables
+      ClientProfileType,
+      ClientProfileListQuery,
+      ClientProfileListQueryVariables
     >({
-      document: ClientProfilesDocument,
+      document: ClientProfileListDocument,
       queryFieldName: 'clientProfiles',
       variables: { filters, ordering: ordering || undefined },
       pageSize: paginationLimit,
@@ -65,13 +64,13 @@ export function ClientProfileList({
   if (error) console.error(error);
 
   const renderItemFn = useCallback(
-    (item: TClientProfile) => renderItem(item),
+    (item: ClientProfileType) => renderItem(item),
     [renderItem]
   );
 
   return (
     <View style={[styles.container, style]}>
-      <InfiniteList<TClientProfile>
+      <InfiniteList<ClientProfileType>
         data={items}
         keyExtractor={(item) => item.id}
         totalItems={total}
