@@ -232,6 +232,5 @@
   "engines": {
     "node": "22.21.1"
   },
-  "packageManager": "yarn@4.2.2",
-  "type": "module"
+  "packageManager": "yarn@4.2.2"
 }
