@@ -20,18 +20,18 @@ import { privacyPolicyUrl, termsOfServiceUrl } from '../../../config';
 interface TabIconProps {
   focused: boolean;
   color: string;
-  Icon: React.FC<{ color: string }>;
-  InactiveIcon: React.FC<{ color: string }>;
+  Icon: React.ComponentType<{ color: string }>;
+  InactiveIcon: React.ComponentType<{ color: string }>;
   label: string;
 }
 
-const TabIcon: React.FC<TabIconProps> = ({
+const TabIcon = ({
   focused,
   color,
   Icon,
   InactiveIcon,
   label,
-}) => (
+}: TabIconProps): React.ReactElement => (
   <View style={styles.tabIconContainer}>
     {focused ? <Icon color={color} /> : <InactiveIcon color={color} />}
     <TextRegular color={color} size="xs" style={styles.labelText}>
