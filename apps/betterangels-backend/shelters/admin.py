@@ -718,8 +718,6 @@ class ShelterResource(resources.ModelResource):
 class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
     list_select_related = ("organization",)
-    change_form_template = "admin/shelters/shelter/change_form.html"
-    add_form_template = None
 
     inlines = [ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
     fieldsets = (
