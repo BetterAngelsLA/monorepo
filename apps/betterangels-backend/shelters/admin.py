@@ -1100,8 +1100,6 @@ class ShelterAdmin(ImportExportModelAdmin):
             shelter_copy.pk = None
             shelter_copy.name = f"{shelter.name} (Copy)"
             shelter_copy.status = StatusChoices.PENDING
-            shelter_copy.hero_image_content_type = None
-            shelter_copy.hero_image_object_id = None
             shelter_copy.save()
 
             # Clone all related data
