@@ -21,6 +21,7 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django_choices_field import TextChoicesField
 from django_select2.forms import Select2MultipleWidget
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
@@ -600,45 +601,24 @@ class ShelterResource(resources.ModelResource):
             self.skip_or_raise(row, "location")
 
     def process_many_to_many_import(self, row: Any, rowInDict: dict, column: str) -> None:
-        field = Shelter._meta.get_field(column)
-
-        field_model: Any = field.related_model
-
-        if not field_model:
-            return
-
-        name_field = field_model._meta.get_field("name")
-        field_model_choices = getattr(name_field, "choices", [])
-        choice_map = {label: db_val for db_val, label in field_model_choices}
-
-        # Parse CSV values
-        raw_values = [v.strip() for v in rowInDict[column].split(",")]
-        valid_db_names = []
-
-        for val in raw_values:
-            if val in choice_map:
-                db_name = choice_map[val]
-                if db_name == "other" and not rowInDict.get(f"{column}_other"):
-                    self.skip_or_raise(row, column)
-                    return
-                valid_db_names.append(db_name)
-            else:
+        fieldModel = cast(Type[models.Model], Shelter._meta.get_field(column).related_model)
+        fieldModelChoices = cast(TextChoicesField, fieldModel._meta.get_field("name")).choices  # type: ignore
+        columnSeparateVals = [v.strip() for v in rowInDict[column].split(",")]
+        row_vals_choices = {j: i for i, j in fieldModelChoices}  # type: ignore
+        for i, indVal in enumerate(columnSeparateVals):
+            try:
+                if indVal in row_vals_choices:
+                    if row_vals_choices[indVal] == "other" and not rowInDict[f"{column}_other"]:
+                        raise ValueError
+                    brand_new_obj, createdNewObjectInModel = fieldModel.objects.get_or_create(  # type: ignore
+                        name=row_vals_choices[indVal]
+                    )
+                    columnSeparateVals[i] = row_vals_choices[indVal]
+                else:
+                    raise ValueError
+            except ValueError:
                 self.skip_or_raise(row, column)
-                return
-
-        if not valid_db_names:
-            row[column] = ""
-            return
-
-        unique_names = set(valid_db_names)
-        existing_in_db = set(field_model.objects.filter(name__in=unique_names).values_list("name", flat=True))
-
-        missing_names = unique_names - existing_in_db
-
-        if missing_names:
-            field_model.objects.bulk_create([field_model(name=name) for name in missing_names])
-
-        row[column] = ",".join(valid_db_names)
+        row[column] = ",".join(columnSeparateVals)
 
     def process_contact_info(self, row: Any, contact_info_row: str) -> None:
         try:
