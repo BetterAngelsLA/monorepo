@@ -236,12 +236,10 @@ export function HmisProgramNoteEdit(props: TProps) {
               id,
               location: {
                 point: [location.longitude, location.latitude],
-                address: location.formattedAddress
-                  ? {
-                      formattedAddress: location.formattedAddress,
-                      addressComponents: JSON.stringify(location.components),
-                    }
-                  : null,
+                address: {
+                  formattedAddress: location.formattedAddress,
+                  addressComponents: JSON.stringify(location.components),
+                },
               },
             },
           },

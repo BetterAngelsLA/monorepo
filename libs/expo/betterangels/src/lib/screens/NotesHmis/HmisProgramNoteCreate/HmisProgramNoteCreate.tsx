@@ -164,19 +164,16 @@ export function HmisProgramNoteCreate(props: TProps) {
       const hmisNoteId = newNote.id;
 
       if (location) {
-
         await updateHmisNoteLocation({
           variables: {
             data: {
               id: hmisNoteId,
               location: {
                 point: [location.longitude, location.latitude],
-                address: location.formattedAddress
-                  ? {
-                      formattedAddress: location.formattedAddress,
-                      addressComponents: JSON.stringify(location.components),
-                    }
-                  : null,
+                address: {
+                  formattedAddress: location.formattedAddress,
+                  addressComponents: JSON.stringify(location.components),
+                },
               },
             },
           },
