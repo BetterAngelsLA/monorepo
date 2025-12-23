@@ -1,10 +1,10 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { PillContainer } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { HmisNoteType } from '../../apollo';
+import { InteractionListHmisQuery } from '../InteractionListHmis/__generated__/interactionListHmis.generated';
 
 interface IProgramNoteCardServicesProps {
-  note: HmisNoteType;
+  note: InteractionListHmisQuery['hmisNotes']['results'][number];
 }
 
 export default function ProgramNoteCardServices(

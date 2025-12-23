@@ -28,6 +28,7 @@ import {
   CreateHmisServiceRequestDocument,
   RemoveHmisNoteServiceRequestDocument,
 } from './__generated__/HmisServiceRequest.generated';
+import { UpdateHmisNoteLocationDocument } from './__generated__/updateHmisNoteLocation.generated';
 
 type TProps = {
   clientId: string;
@@ -40,12 +41,13 @@ export function HmisProgramNoteCreate(props: TProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [createHmisNote] = useMutation(CreateHmisNoteDocument);
+  const [updateHmisNoteLocation] = useMutation(UpdateHmisNoteLocationDocument);
   const [createTask] = useMutation(CreateTaskDocument);
   const [deleteService] = useMutation(RemoveHmisNoteServiceRequestDocument);
   const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);
 
   async function applyBucket(
-    noteId: string,
+    id: string,
     type: ServiceRequestTypeEnum,
     bucket: any
   ) {
@@ -57,7 +59,7 @@ export function HmisProgramNoteCreate(props: TProps) {
       await createServiceRequest({
         variables: {
           data: {
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
             serviceId: s.serviceId!,
           },
@@ -71,7 +73,7 @@ export function HmisProgramNoteCreate(props: TProps) {
         variables: {
           data: {
             serviceRequestId: s.serviceRequestId!,
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
           },
         },
@@ -83,7 +85,7 @@ export function HmisProgramNoteCreate(props: TProps) {
       await createServiceRequest({
         variables: {
           data: {
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
             serviceOther: o.serviceOther!.trim(),
           },
@@ -97,7 +99,7 @@ export function HmisProgramNoteCreate(props: TProps) {
         variables: {
           data: {
             serviceRequestId: o.serviceRequestId!,
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
           },
         },
@@ -121,10 +123,9 @@ export function HmisProgramNoteCreate(props: TProps) {
 
       // 2. Validate/Parse Note fields
       const payload = HmisProgramNoteFormSchemaOutput.parse(noteFields);
+      const { location, services, ...rest } = payload;
 
       // 3. Create Note
-      const { services, ...rest } = payload;
-
       const createResponse = await createHmisNote({
         variables: {
           data: {
@@ -160,6 +161,24 @@ export function HmisProgramNoteCreate(props: TProps) {
         throw new Error('Failed to create HMIS Note');
       }
 
+      const hmisNoteId = newNote.id;
+
+      if (location) {
+        await updateHmisNoteLocation({
+          variables: {
+            data: {
+              id: hmisNoteId,
+              location: {
+                point: [location.longitude, location.latitude],
+                address: {
+                  formattedAddress: location.formattedAddress,
+                  addressComponents: JSON.stringify(location.components),
+                },
+              },
+            },
+          },
+        });
+      }
       // 4. Create Tasks (Link to the new Note)
       // Eventually we can move this back to HMIS Note creation
       if (draftTasks?.length > 0) {
@@ -173,7 +192,7 @@ export function HmisProgramNoteCreate(props: TProps) {
                   status: task.status,
                   team: task.team,
                   hmisClientProfile: clientId,
-                  hmisNote: newNote.id,
+                  hmisNote: hmisNoteId,
                 },
               },
             })
@@ -181,23 +200,21 @@ export function HmisProgramNoteCreate(props: TProps) {
         );
       }
 
-      // 5. Success - Redirect
-      const noteId = newNote.id;
-
       const draftServices = services ?? {};
 
       await applyBucket(
-        noteId,
+        hmisNoteId,
         ServiceRequestTypeEnum.Provided,
         draftServices[ServiceRequestTypeEnum.Provided]
       );
 
       await applyBucket(
-        noteId,
+        hmisNoteId,
         ServiceRequestTypeEnum.Requested,
         draftServices[ServiceRequestTypeEnum.Requested]
       );
 
+      // 5. Success - Redirect
       router.replace(
         `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
       );

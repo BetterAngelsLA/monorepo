@@ -116,7 +116,7 @@ class AddressInput:
 
 @strawberry_django.type(Location)
 class LocationType:
-    id: ID
+    id: Optional[ID]
     address: AddressType
     point: auto
     point_of_interest: auto
