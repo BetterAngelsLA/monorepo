@@ -2,13 +2,13 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format, parseISO, startOfDay } from 'date-fns';
 import { Pressable, StyleSheet } from 'react-native';
-import { HmisNotesQuery } from '../../screens/ClientHMIS/tabs/ClientInteractionsHmisView/__generated__/ClientInteractionsHmisView.generated';
+import { InteractionListHmisQuery } from '../InteractionListHmis/__generated__/interactionListHmis.generated';
 import ProgramNoteCardClient from './ProgramNoteCardClient';
 import ProgramNoteCardHeader from './ProgramNoteCardHeader';
 import ProgramNoteCardServices from './ProgramNoteCardServices';
 
 interface INoteCardProps {
-  hmisNote: HmisNotesQuery['hmisNotes']['results'][number];
+  hmisNote: InteractionListHmisQuery['hmisNotes']['results'][number];
   variant: 'interactions' | 'clientProfile';
   hasBorder?: boolean;
   onPress?: () => void;

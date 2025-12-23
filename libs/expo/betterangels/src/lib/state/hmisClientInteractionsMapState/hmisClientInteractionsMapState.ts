@@ -1,11 +1,11 @@
 import { atom } from 'jotai';
 import { Region } from 'react-native-maps';
-import { HmisNotesQuery } from '../../screens/ClientHMIS/tabs/ClientInteractionsHmisView/__generated__/ClientInteractionsHmisView.generated';
+import { InteractionListHmisQuery } from '../../ui-components/InteractionListHmis/__generated__/interactionListHmis.generated';
 
 export type THmisClientInteractionsMapState = {
   clientProfileId?: string | null;
   region: Region | null;
-  selectedInteractions: HmisNotesQuery['hmisNotes']['results'];
+  selectedInteractions: InteractionListHmisQuery['hmisNotes']['results'];
 };
 
 export const hmisNullState: THmisClientInteractionsMapState = {

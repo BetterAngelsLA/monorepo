@@ -1,49 +1,20 @@
-import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { IconButton, InfiniteList } from '@monorepo/expo/shared/ui-components';
+import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { View } from 'react-native';
+import { HmisClientProfileType, HmisNoteType } from '../../../../apollo';
 import {
-  HmisClientProfileType,
-  HmisNoteType,
-  Ordering,
-} from '../../../../apollo';
-import {
+  InteractionListHmis,
   MainScrollContainer,
   ProgramNoteCard,
 } from '../../../../ui-components';
-import {
-  HmisNotesDocument,
-  HmisNotesQuery,
-  HmisNotesQueryVariables,
-} from './__generated__/ClientInteractionsHmisView.generated';
-import { DEFAULT_PAGINATION_LIMIT } from './constants';
 
 type TProps = { client?: HmisClientProfileType };
 
 export function ClientInteractionsHmisView(props: TProps) {
   const { client } = props;
-  const { items, total, loading, hasMore, loadMore, error } =
-    useInfiniteScrollQuery<
-      HmisNoteType,
-      HmisNotesQuery,
-      HmisNotesQueryVariables
-    >({
-      document: HmisNotesDocument,
-      queryFieldName: 'hmisNotes',
-      pageSize: DEFAULT_PAGINATION_LIMIT,
-      variables: {
-        filters: { hmisClientProfile: client?.id },
-        ordering: [{ date: Ordering.Desc }, { id: Ordering.Desc }],
-      },
-      fetchPolicy: 'cache-and-network',
-      nextFetchPolicy: 'cache-first',
-    });
-  if (error) {
-    console.error(error);
-  }
 
   const renderItemFn = useCallback(
     (item: HmisNoteType) => (
@@ -80,16 +51,10 @@ export function ClientInteractionsHmisView(props: TProps) {
           <PlusIcon />
         </IconButton>
       </View>
-      <InfiniteList<HmisNoteType>
-        data={items}
-        keyExtractor={(item) => item.id ?? ''}
-        totalItems={total}
+
+      <InteractionListHmis
+        filters={{ hmisClientProfile: client.id }}
         renderItem={renderItemFn}
-        loading={loading}
-        loadMore={loadMore}
-        hasMore={hasMore}
-        modelName="note"
-        error={!!error}
       />
     </MainScrollContainer>
   );

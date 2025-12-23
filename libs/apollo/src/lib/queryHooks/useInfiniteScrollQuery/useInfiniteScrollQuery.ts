@@ -16,8 +16,10 @@
  * • Derives the items array and total count from the result using the configured
  *   `itemsPath` and `totalCountPath`.
  * • Exposes a `loadMore()` function for fetching the next page of results.
+ * • Exposes a `reload()` function for manually refetching the initial page.
  * • Tracks loading state and prevents overlapping `fetchMore` calls.
- * • Refetches automatically when variable dependencies change.
+ * • Resets pagination state when variables change so subsequent `loadMore()` calls
+ *   continue from the correct starting page/offset.
  *
  * ---------------------------------------------------------------------------
  * Usage Example
@@ -43,19 +45,27 @@
  *   - computes the next page’s variables using `buildVariablesForPage`
  *   - calls Apollo’s `fetchMore` with those variables
  *   - updates the internal reference to track the new offset/page
+ * • When `reload()` is called:
+ *   - resets the internal pagination reference back to the initial variables
+ *   - calls Apollo’s `refetch` using the initial variables
  * • Determines `hasMore` by comparing `items.length` to `total`.
- * • Skips redundant fetches via an internal `inFlight` guard.
+ * • Skips redundant `fetchMore` calls via an internal in-flight guard.
+ * • Variable changes are tracked via `NetworkStatus.setVariables` and are treated
+ *   as a "loading" state (distinct from manual `reload()`).
  *
  * ---------------------------------------------------------------------------
  * Returns
  * ---------------------------------------------------------------------------
  * {
- *   items:    TItem[],      // list of items (empty until first data)
- *   total:    number,       // total count reported by server
- *   loading:  boolean,      // true while fetching or refetching
- *   hasMore:  boolean,      // true if more results remain
- *   loadMore: () => void,   // fetches next page
- *   error?:   ApolloError,  // query or network error
+ *   items:       TItem[],      // list of items (empty until first data)
+ *   total:       number,       // total count reported by server
+ *   loading:     boolean,      // true during initial load or variable-change reload
+ *   loadingMore: boolean,      // true while fetching the next page via fetchMore
+ *   reloading:   boolean,      // true while a manual reload() refetch is in flight
+ *   hasMore:     boolean,      // true if more results remain
+ *   loadMore:    () => void,   // fetches next page
+ *   reload:      () => void,   // refetches initial page (manual)
+ *   error?:      ApolloError,  // query or network error
  * }
  *
  * ---------------------------------------------------------------------------
@@ -67,6 +77,9 @@
  *   and Page/PerPage queries.
  * • If the policy config is missing, the hook throws an explicit error.
  * • Compatible with Apollo Client v4 and `TypedDocumentNode` queries.
+ * • With `fetchPolicy: 'cache-and-network'`, variable changes may keep showing
+ *   previous results while the new request is in flight; `loading` will still
+ *   reflect the variable-change network state.
  */
 
 import {
@@ -150,10 +163,6 @@ export function useInfiniteScrollQuery<
 
   const lastVariablesRef = useRef<TVars>(initialVariables);
 
-  useEffect(() => {
-    lastVariablesRef.current = initialVariables;
-  }, [initialVariables]);
-
   // Execute the query
   const {
     data,
@@ -186,37 +195,65 @@ export function useInfiniteScrollQuery<
     });
   }, [data, queryFieldName, queryPolicyConfig]);
 
+  // Reload on manual request
+  const isManualReloadRef = useRef(false);
+
+  const reloadManual = useCallback(async () => {
+    isManualReloadRef.current = true;
+
+    lastVariablesRef.current = initialVariables;
+
+    try {
+      await refetch(initialVariables as Partial<TVars>);
+    } catch (err) {
+      console.error('[useInfiniteScrollQuery] Refetch failed:', err);
+    } finally {
+      isManualReloadRef.current = false;
+    }
+  }, [initialVariables, refetch]);
+
+  const isFetchMoreInFlightRef = useRef(false);
+
+  useEffect(() => {
+    lastVariablesRef.current = initialVariables;
+    isFetchMoreInFlightRef.current = false;
+  }, [initialVariables]);
+
+  // Loading statuses (Apollo + intent)
+  const isLoadingMore = networkStatus === NetworkStatus.fetchMore;
+  const isApolloRefetching = networkStatus === NetworkStatus.refetch;
+  const isApolloInitialLoading = networkStatus === NetworkStatus.loading;
+  const isApolloSettingVariables = networkStatus === NetworkStatus.setVariables;
+
+  const isInitialLoading = items === undefined && isApolloInitialLoading;
+  const isManualReloading = isApolloRefetching && isManualReloadRef.current;
+  const isReloadingFromVariableChange =
+    (isApolloRefetching && !isManualReloadRef.current) ||
+    isApolloSettingVariables;
+
+  // What the UI calls "loading" (initial + variable-change reload)
+  const isLoading = isInitialLoading || isReloadingFromVariableChange;
+
+  // Any in-flight request we want to block loadMore during
+  const isAnyLoading = isLoading || isManualReloading || isLoadingMore;
+
   const currentItemCount = items?.length ?? 0;
   const hasMore = currentItemCount < total;
 
-  const isLoading =
-    items === undefined ||
-    (networkStatus !== NetworkStatus.ready &&
-      networkStatus !== NetworkStatus.setVariables);
-
-  // Prevent overlapping fetchMore calls
-  const inFlightRef = useRef(false);
-
+  // reset network states
   useEffect(() => {
-    if (!isLoading) {
-      inFlightRef.current = false;
+    if (networkStatus !== NetworkStatus.fetchMore) {
+      isFetchMoreInFlightRef.current = false;
     }
-  }, [isLoading]);
-
-  // Auto-refetch on variable changes
-  useEffect(() => {
-    refetch(initialVariables as Partial<TVars>).catch((err) => {
-      console.error('[useInfiniteScrollQuery] Refetch failed:', err);
-    });
-  }, [memoizedVariables]);
+  }, [networkStatus]);
 
   // Load more handler
   const loadMore = useCallback(() => {
-    if (!hasMore || isLoading || inFlightRef.current) {
+    if (!hasMore || isAnyLoading || isFetchMoreInFlightRef.current) {
       return;
     }
 
-    inFlightRef.current = true;
+    isFetchMoreInFlightRef.current = true;
 
     const { paginationMode, paginationPerPagePath, paginationLimitPath } =
       queryPolicyConfig;
@@ -240,16 +277,19 @@ export function useInfiniteScrollQuery<
         lastVariablesRef.current = nextVariables;
       })
       .catch(() => {
-        inFlightRef.current = false;
+        isFetchMoreInFlightRef.current = false;
       });
-  }, [hasMore, isLoading, queryPolicyConfig, pageSize, fetchMore]);
+  }, [hasMore, isAnyLoading, queryPolicyConfig, pageSize, fetchMore]);
 
   return {
     items: items ?? [],
     total,
     loading: isLoading,
+    loadingMore: isLoadingMore,
+    reloading: isManualReloading,
     hasMore,
     loadMore,
+    reload: reloadManual,
     error: queryError,
   };
 }

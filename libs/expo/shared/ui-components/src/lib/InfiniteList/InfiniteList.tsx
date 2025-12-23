@@ -21,6 +21,8 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     renderItem,
     loadMore,
     loading,
+    loadingMore,
+    refreshing,
     hasMore,
     totalItems,
     extraData,
@@ -35,8 +37,11 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     showScrollIndicator = false,
     ItemSeparatorComponent,
     ErrorViewComponent,
+    onRefresh,
     ...rest
   } = props;
+
+  const isAnyLoading = loading || loadingMore || refreshing;
 
   const renderItemStable = useCallback(
     ({ item }: { item: T }) => renderItem(item),
@@ -44,10 +49,10 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
   );
 
   const onEndReached = useCallback(() => {
-    if (!loading && hasMore && loadMore) {
+    if (!isAnyLoading && hasMore && loadMore) {
       loadMore();
     }
-  }, [loading, hasMore, loadMore]);
+  }, [isAnyLoading, hasMore, loadMore]);
 
   const ItemSeparator = useMemo(() => {
     if (ItemSeparatorComponent) {
@@ -62,13 +67,14 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
       return ListFooterComponent;
     }
 
-    if (loading) {
+    // refresh has separate indicator
+    if (loading || loadingMore) {
       return <LoadingListView {...loadingViewOptions} />;
     }
 
     // small footer helps ensure there’s space to hit the end
     return <View style={{ height: Spacings.sm }} />;
-  }, [ListFooterComponent, loading, loadingViewOptions]);
+  }, [ListFooterComponent, loading, loadingMore, loadingViewOptions]);
 
   const ErrorView = useMemo(() => {
     if (ErrorViewComponent) {
@@ -79,7 +85,7 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
   }, [errorTitle, errorMessage, ErrorViewComponent]);
 
   const EmptyView = useMemo(() => {
-    if (loading) {
+    if (isAnyLoading) {
       return null;
     }
 
@@ -88,7 +94,7 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     }
 
     return ListEmptyComponent ?? <EmptyListView />;
-  }, [loading, error, ListEmptyComponent, ErrorView]);
+  }, [isAnyLoading, error, ListEmptyComponent, ErrorView]);
 
   const mergedContentContainerStyle = useMemo(
     () => StyleSheet.flatten([styles.contentContainer, contentContainerStyle]),
@@ -125,6 +131,8 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
         ListFooterComponent={FooterComponent}
         contentContainerStyle={mergedContentContainerStyle}
         showsVerticalScrollIndicator={showScrollIndicator}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
         {...rest}
       />
     </View>

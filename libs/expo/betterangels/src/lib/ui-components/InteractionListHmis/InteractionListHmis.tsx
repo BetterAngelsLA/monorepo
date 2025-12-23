@@ -7,54 +7,68 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { InputMaybe, TaskFilter, TaskOrder, TaskType } from '../../apollo';
 import {
-  TasksDocument,
-  TasksQuery,
-  TasksQueryVariables,
-} from './__generated__/Tasks.generated';
+  HmisNoteFilter,
+  HmisNoteOrdering,
+  HmisNoteType,
+  InputMaybe,
+} from '../../apollo';
 import {
-  DEFAULT_ITEM_GAP,
-  DEFAULT_PAGINATION_LIMIT,
-  DEFAULT_QUERY_ORDER,
-} from './constants';
+  InteractionListHmisDocument,
+  InteractionListHmisQuery,
+  InteractionListHmisQueryVariables,
+} from './__generated__/interactionListHmis.generated';
+import { DEFAULT_PAGINATION_LIMIT, DEFAULT_QUERY_ORDER } from './constants';
 
 type TProps = {
-  renderItem: (task: TaskType) => ReactElement | null;
+  renderItem: (interaction: HmisNoteType) => ReactElement | null;
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
-  filters?: InputMaybe<TaskFilter>;
-  order?: TaskOrder | null;
+  filters?: InputMaybe<HmisNoteFilter>;
+  order?: HmisNoteOrdering | HmisNoteOrdering[] | null;
   paginationLimit?: number;
   headerStyle?: ViewStyle;
   renderHeader?: TRenderListResultsHeader;
   actionItem?: ReactNode;
 };
 
-export function TaskList(props: TProps) {
+export function InteractionListHmis(props: TProps) {
   const {
     filters,
     order = DEFAULT_QUERY_ORDER,
-    itemGap = DEFAULT_ITEM_GAP,
     paginationLimit = DEFAULT_PAGINATION_LIMIT,
+    itemGap,
     renderItem,
     renderHeader,
     style,
   } = props;
 
-  const { items, total, loading, loadMore, reload, reloading, hasMore, error } =
-    useInfiniteScrollQuery<TaskType, TasksQuery, TasksQueryVariables>({
-      document: TasksDocument,
-      queryFieldName: 'tasks',
-      variables: {
-        filters,
-        ordering: order || undefined,
-      },
-      pageSize: paginationLimit,
-    });
+  const {
+    items,
+    total,
+    loading,
+    loadingMore,
+    reloading,
+    loadMore,
+    reload,
+    hasMore,
+    error,
+  } = useInfiniteScrollQuery<
+    HmisNoteType,
+    InteractionListHmisQuery,
+    InteractionListHmisQueryVariables
+  >({
+    document: InteractionListHmisDocument,
+    queryFieldName: 'hmisNotes',
+    variables: {
+      filters,
+      ordering: order || undefined,
+    },
+    pageSize: paginationLimit,
+  });
 
   const renderItemFn = useCallback(
-    (item: TaskType) => renderItem(item),
+    (item: HmisNoteType) => renderItem(item),
     [renderItem]
   );
 
@@ -63,23 +77,24 @@ export function TaskList(props: TProps) {
 
     return (
       <TextRegular>
-        Sorry, there was an error loading the task list.
+        Sorry, there was an error loading the note list.
       </TextRegular>
     );
   }
 
   return (
     <View style={[styles.container, style]}>
-      <InfiniteList<TaskType>
+      <InfiniteList<HmisNoteType>
         data={items}
         keyExtractor={(item) => item.id}
         totalItems={total}
         renderItem={renderItemFn}
         itemGap={itemGap}
         loading={loading}
+        loadingMore={loadingMore}
         loadMore={loadMore}
         hasMore={hasMore}
-        modelName="task"
+        modelName="note"
         renderResultsHeader={renderHeader}
         onRefresh={reload}
         refreshing={reloading}
