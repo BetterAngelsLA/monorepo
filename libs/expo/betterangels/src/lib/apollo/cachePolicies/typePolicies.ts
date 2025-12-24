@@ -61,12 +61,14 @@ import { generateCachePolicies } from '@monorepo/apollo';
 import { cachePolicyRegistry } from './cachePolicyRegistry';
 import { toUrlKeyFieldValue } from './utils/toUrlKeyFieldValue';
 
+const isDevEnv = process.env['NODE_ENV'] !== 'production';
+
 const extraTypePolicies: TypePolicies = {
   DjangoImageType: {
     keyFields: (obj: StoreObject) => {
       const urlKey = toUrlKeyFieldValue(obj.url);
 
-      if (!urlKey) {
+      if (isDevEnv && !urlKey) {
         console.warn(
           `[typePolicies: DjangoImageType] missing url keyField: ${JSON.stringify(
             obj
@@ -81,7 +83,7 @@ const extraTypePolicies: TypePolicies = {
     keyFields: (obj: StoreObject) => {
       const urlKey = toUrlKeyFieldValue(obj.url);
 
-      if (!urlKey) {
+      if (isDevEnv && !urlKey) {
         console.warn(
           `[typePolicies: DjangoFileType] missing url keyField: ${JSON.stringify(
             obj
