@@ -12,10 +12,10 @@ import { FlatList, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TMapView } from '../../../../maps';
 import {
-  getPlaceAutocomplete,
-  getPlaceDetailsById,
   TPlaceLatLng,
   TPlacesPrediction,
+  getPlaceAutocomplete,
+  getPlaceDetailsById,
 } from '../../../../services';
 import { LocationDraft } from '../../HmisProgramNoteForm';
 import Directions from './Directions';
@@ -36,13 +36,13 @@ type locationLongLat = {
 interface ILocationMapModalProps {
   setLocation: (location: LocationDraft) => void;
   location: LocationDraft;
-  onclose?: () => void;
+  onClose?: () => void;
   setValue: (key: string, data: any) => void;
   userLocation: ExpoLocation.LocationObject | null;
 }
 
 export default function LocationMapModal(props: ILocationMapModalProps) {
-  const { location, setLocation, onclose, setValue, userLocation } = props;
+  const { location, setLocation, onClose, setValue, userLocation } = props;
 
   const { baseUrl } = useApiConfig();
   const mapRef = useRef<TMapView>(null);
@@ -379,7 +379,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             setSelected={setSelected}
             onSelectLocation={(loc) => {
               setLocation(loc);
-              onclose?.();
+              onClose?.();
             }}
           />
         )}

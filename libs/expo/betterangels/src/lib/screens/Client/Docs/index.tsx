@@ -40,7 +40,9 @@ export default function Docs({
             showModalScreen({
               presentation: 'fullScreenModal',
               hideHeader: true,
-              content: <UploadModal client={client} />,
+              renderContent: ({ close }) => (
+                <UploadModal client={client} closeModal={close} />
+              ),
             })
           }
           variant="secondary"

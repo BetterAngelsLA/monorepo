@@ -24,18 +24,18 @@ export function FilterHmisClients(props: TProps) {
   } = props;
 
   const [selected, setSelected] = useState<TFilterOption[]>(initialSelected);
-  const { showModalScreen, closeModalScreen } = useModalScreen();
+  const { showModalScreen } = useModalScreen();
 
   function showOptionsScreen() {
     showModalScreen({
       presentation: 'modal',
-      content: () => (
+      renderContent: ({ close }) => (
         <FilterHmisClientOptions
           initialSelected={selected}
           onCommit={(next: TFilterOption[]) => {
             setSelected(next);
             onChange(next);
-            closeModalScreen();
+            close();
           }}
           searchPlaceholder={searchPlaceholder}
         />

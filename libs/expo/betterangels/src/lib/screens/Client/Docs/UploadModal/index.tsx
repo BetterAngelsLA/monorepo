@@ -7,16 +7,13 @@ import { useEffect } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-import { useModalScreen } from '../../../../providers';
 import FileUploadTab from './FileUploadTab';
 import MultipleDocUploads from './MultipleDocUploads';
 import SingleDocUploads from './SingleDocUploads';
 import { Docs, ITab, IUploadModalProps } from './types';
 
 export default function UploadModal(props: IUploadModalProps) {
-  const { client } = props;
-
-  const { closeModalScreen } = useModalScreen();
+  const { client, closeModal } = props;
 
   const [tab, setTab] = React.useState<undefined | ITab>();
   const [docs, setDocs] = React.useState<Docs>({
@@ -178,7 +175,7 @@ export default function UploadModal(props: IUploadModalProps) {
               accessibilityHint="closes the Upload modal"
               accessibilityRole="button"
               accessibilityLabel="close"
-              onPress={closeModalScreen}
+              onPress={closeModal}
             >
               <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
             </Pressable>

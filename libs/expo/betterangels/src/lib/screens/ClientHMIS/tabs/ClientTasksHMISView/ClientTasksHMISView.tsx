@@ -28,8 +28,9 @@ export function ClientTasksHMISView(props: TProps) {
   const [search, setSearch] = useState('');
   const [createTask] = useMutation(CreateTaskDocument);
   const { showSnackbar } = useSnackbar();
+  const { showModalScreen } = useModalScreen();
 
-  const onSubmit = async (task: TaskFormData) => {
+  const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
     if (!client?.id) return;
     try {
       const result = await createTask({
@@ -50,7 +51,7 @@ export function ClientTasksHMISView(props: TProps) {
         console.log(result.data.createTask.messages);
       }
 
-      closeModalScreen();
+      closeForm();
     } catch (e) {
       showSnackbar({
         message: 'Error creating a task.',
@@ -72,8 +73,6 @@ export function ClientTasksHMISView(props: TProps) {
     ),
     [handleTaskPress]
   );
-
-  const { showModalScreen, closeModalScreen } = useModalScreen();
 
   function renderListHeaderText(visible: number, total: number | undefined) {
     return (
@@ -102,13 +101,8 @@ export function ClientTasksHMISView(props: TProps) {
   function openTaskForm() {
     showModalScreen({
       presentation: 'modal',
-      content: (
-        <TaskForm
-          onCancel={() => {
-            closeModalScreen();
-          }}
-          onSubmit={onSubmit}
-        />
+      renderContent: ({ close }) => (
+        <TaskForm onCancel={close} onSubmit={(task) => onSubmit(task, close)} />
       ),
       title: 'Follow-Up Task',
     });

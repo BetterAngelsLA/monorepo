@@ -67,12 +67,13 @@ export default function RequestedProvidedServices(
         showModalScreen({
           presentation: 'fullScreenModal',
           hideHeader: true,
-          content: (
+          renderContent: ({ close }) => (
             <ServicesModal
               noteId={noteId}
               type={type}
               initialServiceRequests={initialServiceRequests}
               refetch={refetch}
+              close={close}
             />
           ),
         })

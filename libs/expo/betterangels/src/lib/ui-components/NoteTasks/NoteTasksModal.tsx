@@ -1,12 +1,6 @@
 import { useMutation } from '@apollo/client/react';
-import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
-import { IconButton } from '@monorepo/expo/shared/ui-components';
-import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SelahTeamEnum, TaskStatusEnum, UpdateTaskInput } from '../../apollo';
 import { useSnackbar } from '../../hooks';
-import { useModalScreen } from '../../providers';
 
 // 1. Import Mutations
 import { CreateTaskDocument } from '../TaskForm/__generated__/createTask.generated';
@@ -18,7 +12,7 @@ import { TaskFormData } from '../TaskForm/TaskForm';
 
 interface INoteTasksModalProps {
   clientProfileId?: string;
-  hmisClientProfileId?: string; // <--- Ensure this is used
+  hmisClientProfileId?: string;
   noteId?: string;
   hmisNoteId?: string;
   refetch: () => void;
@@ -26,6 +20,7 @@ interface INoteTasksModalProps {
   task?: UpdateTaskInput;
   onSubmit?: (data: TaskFormData, existingId?: string) => void;
   onDelete?: (id: string) => void;
+  closeModal: () => void;
 }
 
 export default function NoteTasksModal(props: INoteTasksModalProps) {
@@ -39,11 +34,10 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
     task,
     onSubmit,
     onDelete,
+    closeModal,
   } = props;
 
-  const { closeModalScreen } = useModalScreen();
   const { showSnackbar } = useSnackbar();
-  const { top: topInset } = useSafeAreaInsets();
 
   const [createTask] = useMutation(CreateTaskDocument);
   const [updateTask] = useMutation(UpdateTaskDocument);
@@ -69,10 +63,6 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
       cache.gc();
     },
   });
-
-  const closeModal = () => {
-    closeModalScreen();
-  };
 
   const handleSave = async (formData: TaskFormData) => {
     // A. Draft Mode
@@ -127,27 +117,30 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
   };
 
   const handleDelete = async () => {
-    if (onDelete && task?.id) {
-      onDelete(task.id);
+    if (!task?.id) {
       closeModal();
+
       return;
     }
 
-    if (task?.id) {
-      try {
-        await deleteTask({
-          variables: {
-            id: task.id,
-          },
-        });
-        refetch();
-        closeModal();
-      } catch (error) {
-        console.error('Task delete error:', error);
-        showSnackbar({ message: 'Failed to delete task.', type: 'error' });
-      }
-    } else {
+    if (onDelete) {
+      onDelete(task.id);
       closeModal();
+
+      return;
+    }
+
+    try {
+      await deleteTask({
+        variables: {
+          id: task.id,
+        },
+      });
+      refetch();
+      closeModal();
+    } catch (error) {
+      console.error('Task delete error:', error);
+      showSnackbar({ message: 'Failed to delete task.', type: 'error' });
     }
   };
 
@@ -161,36 +154,11 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
   const showDelete = !!onDelete || !!task?.id;
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: Colors.WHITE,
-        paddingTop: topInset,
-      }}
-    >
-      <View
-        style={{
-          alignItems: 'flex-end',
-          paddingHorizontal: 24,
-          marginBottom: 4,
-        }}
-      >
-        <IconButton
-          onPress={closeModal}
-          accessibilityHint="closes the modal"
-          accessibilityLabel="Close modal"
-          variant="transparent"
-        >
-          <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
-        </IconButton>
-      </View>
-
-      <TaskForm
-        initialValues={initialValues}
-        onSubmit={handleSave}
-        onCancel={closeModal}
-        onDelete={showDelete ? handleDelete : undefined}
-      />
-    </View>
+    <TaskForm
+      initialValues={initialValues}
+      onSubmit={handleSave}
+      onCancel={closeModal}
+      onDelete={showDelete ? handleDelete : undefined}
+    />
   );
 }

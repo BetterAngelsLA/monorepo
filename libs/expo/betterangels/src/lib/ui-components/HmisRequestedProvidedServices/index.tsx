@@ -68,7 +68,7 @@ export default function HmisRequestedProvidedServices(
         showModalScreen({
           presentation: 'fullScreenModal',
           hideHeader: true,
-          content: (
+          renderContent: ({ close }) => (
             <ServicesModal
               onSelect={(e) => {
                 const current = getValues('services') ?? {};
@@ -78,6 +78,7 @@ export default function HmisRequestedProvidedServices(
                   { shouldDirty: true }
                 );
               }}
+              close={close}
               type={type}
               selectedServices={selectedServices || []}
             />

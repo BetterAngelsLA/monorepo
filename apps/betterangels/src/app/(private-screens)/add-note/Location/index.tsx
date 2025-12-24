@@ -94,7 +94,8 @@ export default function LocationComponent(props: ILocationProps) {
   }, [location]);
 
   const isLocation = expanded === FIELD_KEY;
-  const { showModalScreen, closeModalScreen } = useModalScreen();
+
+  const { showModalScreen } = useModalScreen();
 
   // Auto-prefill on NEW notes: no point/address → use current or default location
   useEffect(() => {
@@ -189,12 +190,12 @@ export default function LocationComponent(props: ILocationProps) {
               location: !locationRef.current,
             });
           },
-          content: (
+          renderContent: ({ close }) => (
             <LocationMapModal
               location={location}
               noteId={noteId}
               setLocation={setLocation}
-              onclose={closeModalScreen}
+              onclose={close}
             />
           ),
         });

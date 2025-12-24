@@ -18,7 +18,6 @@ import {
 
 import { ServiceRequestTypeEnum } from '../../apollo';
 import { useSnackbar } from '../../hooks';
-import { useModalScreen } from '../../providers';
 
 import MainScrollContainer from '../MainScrollContainer';
 import OtherCategory from './OtherCategory';
@@ -55,13 +54,13 @@ interface IServicesModalProps {
   selectedServices: SelectedService[];
   type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
   onSelect: (patch: SelectPatch) => void;
+  close: () => void;
 }
 
 export default function ServicesModal(props: IServicesModalProps) {
-  const { selectedServices, type, onSelect } = props;
+  const { selectedServices, type, onSelect, close } = props;
 
   const { data: availableCategories } = useQuery(HmisServiceCategoriesDocument);
-  const { closeModalScreen } = useModalScreen();
   const { showSnackbar } = useSnackbar();
   const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
 
@@ -259,16 +258,16 @@ export default function ServicesModal(props: IServicesModalProps) {
       [type]: { serviceRequests: rows },
     });
 
-    closeModalScreen();
-  }, [rows, type, closeModalScreen, showSnackbar]);
+    close();
+  }, [rows, type, close, showSnackbar]);
 
   // ---------- Close (revert) ----------
   const reset = useCallback(() => setRows(computeInitial()), [computeInitial]);
 
   const closeModal = useCallback(() => {
     reset();
-    closeModalScreen();
-  }, [reset, closeModalScreen]);
+    close();
+  }, [reset, close]);
 
   // ---------- Bootstrap ----------
   useEffect(() => {

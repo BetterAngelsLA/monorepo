@@ -4,8 +4,12 @@ export type noOpFn = () => void;
 
 export type TModalPresentationType = 'modal' | 'card' | 'fullScreenModal';
 
+export type TRenderContentApi = {
+  close: () => void;
+};
+
 export type TShowModalScreenProps = {
-  content: ReactNode | (() => ReactNode);
+  renderContent: (api: TRenderContentApi) => ReactNode;
   presentation?: TModalPresentationType;
   title?: string;
   hideHeader?: boolean;
@@ -13,9 +17,15 @@ export type TShowModalScreenProps = {
 };
 export interface IModalScreenContext {
   showModalScreen: (props: TShowModalScreenProps) => void;
-  closeModalScreen: () => void;
   content: ReactNode | null;
   presentation: TModalPresentationType;
   hideHeader?: boolean;
   title?: string;
 }
+
+export type IModalScreenState = {
+  presentation: TModalPresentationType;
+  title: string;
+  hideHeader: boolean;
+  renderContent: ((api: TRenderContentApi) => ReactNode) | null;
+};

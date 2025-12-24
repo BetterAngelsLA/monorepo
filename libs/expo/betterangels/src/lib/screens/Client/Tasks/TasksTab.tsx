@@ -14,8 +14,8 @@ import { useSnackbar } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
 import { pagePaddingHorizontal } from '../../../static';
 import { TaskCard, TaskForm, TaskList } from '../../../ui-components';
-import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
 import { TaskFormData } from '../../../ui-components/TaskForm/TaskForm';
+import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 
 type TProps = {
@@ -29,8 +29,9 @@ export function TasksTab(props: TProps) {
 
   const [createTask] = useMutation(CreateTaskDocument);
   const { showSnackbar } = useSnackbar();
+  const { showModalScreen } = useModalScreen();
 
-  const onSubmit = async (task: TaskFormData) => {
+  const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
     if (!client?.clientProfile.id) return;
     try {
       const result = await createTask({
@@ -49,7 +50,7 @@ export function TasksTab(props: TProps) {
         console.log(result.data.createTask.messages);
       }
 
-      closeModalScreen();
+      closeForm();
     } catch (e) {
       showSnackbar({
         message: 'Error creating a task.',
@@ -76,8 +77,6 @@ export function TasksTab(props: TProps) {
     ),
     [handleTaskPress]
   );
-
-  const { showModalScreen, closeModalScreen } = useModalScreen();
 
   function renderListHeaderText(visible: number, total: number | undefined) {
     return (
@@ -106,13 +105,8 @@ export function TasksTab(props: TProps) {
   function openTaskForm() {
     showModalScreen({
       presentation: 'modal',
-      content: (
-        <TaskForm
-          onCancel={() => {
-            closeModalScreen();
-          }}
-          onSubmit={onSubmit}
-        />
+      renderContent: ({ close }) => (
+        <TaskForm onCancel={close} onSubmit={(task) => onSubmit(task, close)} />
       ),
       title: 'Follow-Up Task',
     });
