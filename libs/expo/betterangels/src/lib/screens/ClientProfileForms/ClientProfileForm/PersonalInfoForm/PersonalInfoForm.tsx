@@ -25,7 +25,6 @@ import {
   enumDisplayLivingSituation,
   enumDisplayVeteranStatus,
 } from '../../../../static';
-import { ProfilePhotoField } from './ProfilePhotoField/ProfilePhotoField';
 
 const languageOptions = Object.entries(enumDisplayLanguage).map(
   ([enumValue, displayValue]) => {
@@ -116,10 +115,6 @@ export function PersonalInfoForm() {
 
   return (
     <Form>
-      <Form.Field>
-        <ProfilePhotoField clientId={id} />
-      </Form.Field>
-
       <Form.Field title="CA ID#">
         <ActionModal
           title="This client has the same CA ID as another client."
