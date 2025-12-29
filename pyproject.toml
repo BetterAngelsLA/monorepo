@@ -40,7 +40,7 @@ django-stubs-ext = "5.2.8"
 djlint = "^1.36.4"
 django-stubs = { extras = ["compatible-mypy"], version = "5.2.5" }
 celery-types = "^0.23.0"
-vcrpy = "^7.0.0"
+vcrpy = "^8.1.0"
 djangorestframework-stubs = { extras = [
     "compatible-mypy",
 ], version = "^3.16.1" }
