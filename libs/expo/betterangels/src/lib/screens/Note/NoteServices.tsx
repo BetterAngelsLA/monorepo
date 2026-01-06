@@ -23,12 +23,8 @@ export default function NoteServices({
             maxVisible={5}
             pillVariant={'warning'}
             pills={note['requestedServices']
-              .filter((item) => !!item.serviceOther || !!item.service?.label)
-              .map((item) =>
-                item.serviceOther
-                  ? item.serviceOther || ''
-                  : item.service?.label || ''
-              )}
+              .filter((item) => !!item.service?.label)
+              .map((item) => item.service?.label || '')}
             variant={'expandable'}
           />
         </View>
@@ -42,12 +38,8 @@ export default function NoteServices({
             maxVisible={5}
             pillVariant={'success'}
             pills={note['providedServices']
-              .filter((item) => !!item.serviceOther || !!item.service?.label)
-              .map((item) =>
-                item.serviceOther
-                  ? item.serviceOther || ''
-                  : item.service?.label || ''
-              )}
+              .filter((item) => !!item.service?.label)
+              .map((item) => item.service?.label || '')}
             variant={'expandable'}
           />
         </View>

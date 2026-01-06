@@ -59,18 +59,22 @@ export const REVERT_NOTE = gql`
         }
         providedServices {
           id
-          serviceOther
           service {
             id
             label
+            category {
+              id
+            }
           }
         }
         requestedServices {
           id
-          serviceOther
           service {
             id
             label
+            category {
+              id
+            }
           }
         }
         publicDetails

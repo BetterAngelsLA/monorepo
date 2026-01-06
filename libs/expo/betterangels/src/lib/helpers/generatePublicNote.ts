@@ -28,9 +28,6 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
   //     : '';
 
   const providedServicesArray = providedServices.map((item) => {
-    if (item.serviceOther) {
-      return item.serviceOther;
-    }
     return item.service?.label;
   });
 
@@ -53,9 +50,6 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
       : '';
 
   const requestedServicesArray = requestedServices.map((item) => {
-    if (item.serviceOther) {
-      return item.serviceOther;
-    }
     return item.service?.label;
   });
 

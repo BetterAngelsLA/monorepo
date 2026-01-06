@@ -39,16 +39,20 @@ query ViewHmisNote($id: ID!) {
         service {
           id
           label
+          category {
+            id
+          }
         }
-        serviceOther
       }
       requestedServices {
         id
         service {
           id
           label
+          category {
+            id
+          }
         }
-        serviceOther
       }
     }
   }

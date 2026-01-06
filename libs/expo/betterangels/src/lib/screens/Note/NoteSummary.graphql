@@ -40,7 +40,6 @@ query NoteSummary($id: ID!) {
       }
       providedServices {
         id
-        serviceOther
         service {
           id
           label
@@ -48,7 +47,6 @@ query NoteSummary($id: ID!) {
       }
       requestedServices {
         id
-        serviceOther
         service {
           id
           label
