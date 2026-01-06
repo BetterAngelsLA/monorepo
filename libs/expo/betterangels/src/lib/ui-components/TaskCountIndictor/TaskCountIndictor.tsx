@@ -6,15 +6,14 @@ import { TaskCountIndictorDot } from './TaskCountIndictorDot';
 type TProps = {
   filters?: TaskFilter;
   style?: StyleProp<ViewStyle>;
-  disabled?: boolean;
 };
 
 export function TaskCountIndictor(props: TProps) {
-  const { filters, disabled, style } = props;
+  const { filters, style } = props;
 
   const { taskCount, loading } = useTaskCount({ filters });
 
-  if (disabled || (!taskCount && !loading)) {
+  if (!taskCount && !loading) {
     return null;
   }
 

@@ -1,11 +1,11 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { SearchBar, TextButton } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
-import { useAtom } from 'jotai';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { TaskType, toTaskFilter } from '../../apollo';
 import { useUser } from '../../hooks';
+import { useUserTeamPreference } from '../../state';
 import { pagePaddingHorizontal } from '../../static';
 import {
   ModelFilters,
@@ -15,14 +15,10 @@ import {
   toModelFilterValues,
 } from '../../ui-components';
 import { getInitialTaskFilters } from './getInitialTaskFilters';
-import { teamAtom } from './teamAtom';
 
 export default function Tasks() {
   const { user, isHmisUser } = useUser();
-
-  // TODO: replace teamAtom with teamPreferenceAtom
-  const [teamPreference] = useAtom(teamAtom);
-
+  const [teamPreference] = useUserTeamPreference();
   const [search, setSearch] = useState('');
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
     getInitialTaskFilters({ user, teamPreference })

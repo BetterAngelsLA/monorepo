@@ -99,7 +99,8 @@
     "@jest/globals": "*",
     "@expo/metro-config": "*",
     "react-native-nitro-cookies": "*",
-    "react-native-mmkv": "*"
+    "react-native-mmkv": "*",
+    "jotai-family": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",

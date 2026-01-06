@@ -7,12 +7,11 @@ import {
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
-import { useAtom } from 'jotai';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { SelahTeamEnum, TaskFilter, TaskStatusEnum } from '../apollo';
 import { useSignOut, useUser } from '../hooks';
-import { teamAtom } from '../screens/Tasks/teamAtom';
+import { useUserTeamPreference } from '../state';
 import { MainModal } from './MainModal';
 import { TaskCountIndictor } from './TaskCountIndictor';
 
@@ -27,11 +26,12 @@ function TasksLinkBody(props: { team: SelahTeamEnum | null }) {
   return (
     <View style={{ flexDirection: 'row' }}>
       <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>Tasks</TextRegular>
-      <TaskCountIndictor
-        disabled={!team}
-        filters={taskFilters}
-        style={styles.taskCountIndicator}
-      />
+      {!!team && (
+        <TaskCountIndictor
+          filters={taskFilters}
+          style={styles.taskCountIndicator}
+        />
+      )}
     </View>
   );
 }
@@ -45,7 +45,7 @@ export default function NavModal(props: INavModalProps) {
 
   const router = useRouter();
   const { isHmisUser } = useUser();
-  const [team] = useAtom(teamAtom);
+  const [teamPreference] = useUserTeamPreference();
   const [isModalVisible, setModalVisible] = useState(false);
   const { signOut } = useSignOut();
 
@@ -59,7 +59,7 @@ export default function NavModal(props: INavModalProps) {
 
   const ACTIONS = [
     {
-      title: <TasksLinkBody team={team} />,
+      title: <TasksLinkBody team={teamPreference} />,
       Icon: TaskListIcon,
       route: '/tasks',
     },

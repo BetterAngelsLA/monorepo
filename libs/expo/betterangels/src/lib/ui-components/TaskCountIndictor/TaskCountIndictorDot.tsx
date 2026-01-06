@@ -4,7 +4,6 @@ import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 type TProps = {
   style?: StyleProp<ViewStyle>;
   loading?: boolean;
-  disabled?: boolean;
 };
 
 export function TaskCountIndictorDot(props: TProps) {
