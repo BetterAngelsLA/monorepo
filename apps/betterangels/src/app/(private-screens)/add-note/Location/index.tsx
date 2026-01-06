@@ -126,9 +126,7 @@ export default function LocationComponent(props: ILocationProps) {
 
         const url = `${baseUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}`;
         const { data } = await axios.get(url, {
-          params: {
-            withCredentials: true,
-          },
+          withCredentials: true,
         });
 
         const result = data.results?.[0];

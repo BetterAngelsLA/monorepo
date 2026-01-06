@@ -7,6 +7,17 @@ mutation UpdateHmisNote($data: UpdateHmisNoteInput!) {
       title
       note
       date
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
+      }
       refClientProgram
       hmisClientProfile {
         id

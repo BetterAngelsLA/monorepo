@@ -23,9 +23,9 @@ const toDictionary = (
     return acc;
   }, {} as FeatureControlDictionary);
 
-export const FeatureControlProvider: React.FC<FeatureControlProviderProps> = ({
+export const FeatureControlProvider = ({
   children,
-}) => {
+}: FeatureControlProviderProps): React.ReactElement => {
   const [featureControlGroups, setFeatureControlGroups] =
     useState<FeatureControlGroups>({
       flags: {},

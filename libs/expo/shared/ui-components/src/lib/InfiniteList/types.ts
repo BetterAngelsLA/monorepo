@@ -22,6 +22,7 @@ type InfiniteListBaseProps<T> = {
   renderItem: (item: T) => ReactElement | null;
   estimatedItemSize?: number; // rendering optimization. see console message if undefined
   loading?: boolean;
+  loadingMore?: boolean;
   itemGap?: number;
   totalItems?: number;
   modelName?: string; // singular model name to render in ResultsHeader

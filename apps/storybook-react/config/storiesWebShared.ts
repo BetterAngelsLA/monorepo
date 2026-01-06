@@ -1,6 +1,9 @@
-import { join } from 'path';
+import { dirname, join } from 'path';
 import { StoriesSpecifier } from 'storybook/internal/types';
-import { storyFileTypes } from './constants';
+import { fileURLToPath } from 'url';
+import { storyFileTypes } from './constants.ts';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // React Shared Libs
 const REACT_ICON_COMPONENT_DIRS = [

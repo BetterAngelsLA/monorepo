@@ -9,19 +9,20 @@ const createSvgIcon = (
   SvgComponent: React.ComponentType<SvgProps>,
   useStroke = false
 ) => {
-  const IconComponent: React.FC<IIconProps> = ({
-    size = 'md',
-    width,
-    height,
-    color = Colors.PRIMARY_EXTRA_DARK,
-    rotate = '0deg',
-    mb,
-    mt,
-    mr,
-    ml,
-    my,
-    mx,
-  }) => {
+  const IconComponent = (props: IIconProps): React.ReactElement => {
+    const {
+      size = 'md',
+      width,
+      height,
+      color = Colors.PRIMARY_EXTRA_DARK,
+      rotate = '0deg',
+      mb,
+      mt,
+      mr,
+      ml,
+      my,
+      mx,
+    } = props;
     let w = width;
     let h = height;
 
