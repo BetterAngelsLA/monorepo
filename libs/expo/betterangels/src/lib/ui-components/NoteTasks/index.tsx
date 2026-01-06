@@ -14,7 +14,7 @@ import { LocalDraftTask } from '../../screens/NotesHmis/HmisProgramNoteForm/form
 import { CreateTaskDocument } from '../TaskForm/__generated__/createTask.generated';
 import { DeleteTaskDocument } from '../TaskForm/__generated__/deleteTask.generated';
 import { UpdateTaskDocument } from '../TaskForm/__generated__/updateTask.generated';
-import NoteTasksModal from './NoteTaskModal';
+import NoteTasksModal from './NoteTasksModal';
 
 // Define the Form Data Interface Locally if not exported elsewhere
 export interface TaskFormData {
@@ -60,7 +60,7 @@ export default function NoteTasks(props: INoteTasksProps) {
     hideIfEmpty = false,
   } = props;
 
-  const { showModalScreen, closeModalScreen } = useModalScreen();
+  const { showModalScreen } = useModalScreen();
   const { showSnackbar } = useSnackbar();
 
   // --- MUTATIONS ---
@@ -165,15 +165,16 @@ export default function NoteTasks(props: INoteTasksProps) {
       });
       refetch?.();
       showSnackbar({ message: 'Task deleted', type: 'success' });
-      // We often need to close the modal manually if the delete action originated from within it
-      closeModalScreen();
     } catch (err) {
       showSnackbar({ message: 'Failed to delete task', type: 'error' });
     }
   };
 
   const onSave = (data: TaskFormData, existingId?: string) => {
-    if (isDraftMode) return handleDraftSave(data, existingId);
+    if (isDraftMode) {
+      return handleDraftSave(data, existingId);
+    }
+
     return handleLiveSave(data, existingId);
   };
 
@@ -189,9 +190,9 @@ export default function NoteTasks(props: INoteTasksProps) {
       : undefined;
 
     showModalScreen({
-      presentation: 'fullScreenModal',
-      hideHeader: true,
-      content: (
+      presentation: 'modal',
+      title: 'Follow-Up Task',
+      renderContent: ({ close }) => (
         <NoteTasksModal
           clientProfileId={clientProfileId}
           hmisClientProfileId={hmisClientProfileId}
@@ -201,6 +202,7 @@ export default function NoteTasks(props: INoteTasksProps) {
           team={team}
           // ESLint Fix: async fallback
           refetch={refetch || (async () => undefined)}
+          closeModal={close}
           // Unified Submit Handler
           onSubmit={(data) => onSave(data, taskToEdit?.id)}
           // Unified Delete Handler (Show button if ID exists, regardless of mode)

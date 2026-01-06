@@ -1,26 +1,27 @@
 import { useMutation } from '@apollo/client/react';
 import { EditButton, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { TaskStatusEnum } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
 import { TaskForm } from '../../ui-components';
+import { TaskFormData } from '../../ui-components/TaskForm/TaskForm';
 import { DeleteTaskDocument } from '../../ui-components/TaskForm/__generated__/deleteTask.generated';
 import { UpdateTaskDocument } from '../../ui-components/TaskForm/__generated__/updateTask.generated';
-import { TaskFormData } from '../../ui-components/TaskForm/TaskForm';
 import { TaskQuery } from './__generated__/Task.generated';
 
 type TTaskHeaderProps = {
   task: TaskQuery['task'];
   id: string;
+  arrivedFrom?: string;
 };
 
 export default function TaskHeader(props: TTaskHeaderProps) {
-  const { task, id } = props;
+  const { task, id, arrivedFrom } = props;
 
   const { showSnackbar } = useSnackbar();
-  const router = useRouter();
+  const { showModalScreen } = useModalScreen();
 
   const [updateTask] = useMutation(UpdateTaskDocument);
 
@@ -47,9 +48,7 @@ export default function TaskHeader(props: TTaskHeaderProps) {
     },
   });
 
-  const { showModalScreen, closeModalScreen } = useModalScreen();
-
-  const onSubmit = async (task: TaskFormData) => {
+  const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
     if (!id) return;
 
     try {
@@ -69,7 +68,7 @@ export default function TaskHeader(props: TTaskHeaderProps) {
         console.log(result.data.updateTask.messages);
       }
 
-      closeModalScreen();
+      closeForm();
     } catch (e) {
       showSnackbar({
         message: 'Error updating the task.',
@@ -79,14 +78,15 @@ export default function TaskHeader(props: TTaskHeaderProps) {
     }
   };
 
-  const onDelete = async (id: string) => {
+  const onDelete = async (id: string, closeForm: () => void) => {
     try {
       await deleteTask({
         variables: { id },
       });
+
       showSnackbar({ message: 'Task deleted', type: 'success' });
-      router.back();
-      closeModalScreen();
+      closeForm();
+      arrivedFrom ? router.replace(arrivedFrom) : router.back();
     } catch (err) {
       showSnackbar({ message: 'Failed to delete task', type: 'error' });
     }
@@ -95,7 +95,7 @@ export default function TaskHeader(props: TTaskHeaderProps) {
   function openTaskForm() {
     showModalScreen({
       presentation: 'modal',
-      content: (
+      renderContent: ({ close }) => (
         <TaskForm
           initialValues={{
             summary: task.summary || '',
@@ -103,11 +103,9 @@ export default function TaskHeader(props: TTaskHeaderProps) {
             description: task.description || '',
             status: task.status || TaskStatusEnum.ToDo,
           }}
-          onDelete={() => onDelete(id)}
-          onCancel={() => {
-            closeModalScreen();
-          }}
-          onSubmit={onSubmit}
+          onDelete={() => onDelete(id, close)}
+          onSubmit={(task) => onSubmit(task, close)}
+          onCancel={close}
         />
       ),
       title: 'Follow-Up Task',

@@ -34,7 +34,7 @@ export default function HmisLocationComponent(props: ILocationProps) {
   const { expanded, setExpanded, editing, error } = props;
 
   const { baseUrl } = useApiConfig();
-
+  const { showModalScreen } = useModalScreen();
   const { setValue, watch } = useFormContext();
   const location = watch('location');
 
@@ -50,7 +50,6 @@ export default function HmisLocationComponent(props: ILocationProps) {
   };
 
   const isLocation = expanded;
-  const { showModalScreen, closeModalScreen } = useModalScreen();
 
   return (
     <FieldCard
@@ -63,14 +62,13 @@ export default function HmisLocationComponent(props: ILocationProps) {
         showModalScreen({
           presentation: 'modal',
           title: 'Type or Pin Location',
-
-          content: (
+          renderContent: ({ close }) => (
             <LocationMapModal
               userLocation={userLocation}
               setValue={setValue}
               location={location}
               setLocation={setLocation}
-              onclose={closeModalScreen}
+              onClose={close}
             />
           ),
         });
