@@ -1,11 +1,11 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { SearchBar, TextButton } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
+import { useAtom } from 'jotai';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { TaskType, toTaskFilter } from '../../apollo';
 import { useUser } from '../../hooks';
-import { TUser } from '../../providers/user/UserContext';
 import { pagePaddingHorizontal } from '../../static';
 import {
   ModelFilters,
@@ -14,19 +14,18 @@ import {
   TaskList,
   toModelFilterValues,
 } from '../../ui-components';
-
-function getInitialFilterValues(user?: TUser): TModelFilters {
-  return {
-    authors: user ? [{ id: user.id, label: 'Me' }] : [],
-  };
-}
+import { getInitialTaskFilters } from './getInitialTaskFilters';
+import { teamAtom } from './teamAtom';
 
 export default function Tasks() {
   const { user, isHmisUser } = useUser();
 
+  // TODO: replace teamAtom with teamPreferenceAtom
+  const [teamPreference] = useAtom(teamAtom);
+
   const [search, setSearch] = useState('');
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
-    getInitialFilterValues(user)
+    getInitialTaskFilters({ user, teamPreference })
   );
   const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
 
@@ -48,7 +47,7 @@ export default function Tasks() {
 
   function onFilterReset() {
     setSearch('');
-    setCurrentFilters(getInitialFilterValues(user));
+    setCurrentFilters(getInitialTaskFilters({ user, teamPreference }));
     setFiltersKey((k) => k + 1); // inc key to trigger remount
   }
 
