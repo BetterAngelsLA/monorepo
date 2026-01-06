@@ -49,7 +49,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.graphql_client.force_login(self.hmis_user)
         self.hmis_client_profile = baker.make(HmisClientProfile, hmis_id="388")
 
     @scrubbed_vcr.use_cassette("test_create_hmis_note_mutation.yaml")
@@ -82,7 +82,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "lastUpdated": "2025-11-25T01:37:07+00:00",
             "refClientProgram": None,
             "clientProgram": None,
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdBy": {"id": str(self.hmis_user.pk)},
         }
 
         self.assertEqual(expected, note)
@@ -124,7 +124,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
                     "name": "Housing Program 01",
                 },
             },
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdBy": {"id": str(self.hmis_user.pk)},
         }
 
         self.assertEqual(expected, note)
@@ -138,7 +138,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             title="prog note title",
             note="prog note note",
             date="2011-11-11",
-            created_by=self.org_1_case_manager_1,
+            created_by=self.hmis_user,
         )
         provided_services = [baker.make(ServiceRequest, service=OrganizationService.objects.first())]
         requested_services = [baker.make(ServiceRequest, service=OrganizationService.objects.last())]
@@ -198,7 +198,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
                     "name": "Housing Program 01",
                 },
             },
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdBy": {"id": str(self.hmis_user.pk)},
         }
 
         self.assertEqual(expected, note)
@@ -220,7 +220,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "location": location,
         }
 
-        expected_query_count = 19
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_hmis_note_location_fixture(variables)
 
@@ -326,7 +326,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.graphql_client.force_login(self.hmis_user)
         self.residence_geolocation = [-118.2437207, 34.0521723]
 
         self.hmis_client_profile = baker.make(
@@ -376,7 +376,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
             residence_address="123 Res St",
             residence_geolocation=Point(self.residence_geolocation),
             spoken_languages=[LanguageEnum.ENGLISH, LanguageEnum.SPANISH],
-            created_by=self.org_1_case_manager_1,
+            created_by=self.hmis_user,
         )
         content_type = ContentType.objects.get_for_model(HmisClientProfile)
         PhoneNumber.objects.create(
@@ -428,7 +428,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
             "adaAccommodation": None,
             "address": None,
             "californiaId": None,
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdBy": {"id": str(self.hmis_user.pk)},
             "email": None,
             "eyeColor": None,
             "hairColor": None,
@@ -470,7 +470,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
             gender=[HmisGenderEnum.NOT_COLLECTED],
             race_ethnicity=[HmisRaceEnum.NOT_COLLECTED],
             veteran=HmisVeteranStatusEnum.NOT_COLLECTED,
-            created_by=self.org_1_case_manager_1,
+            created_by=self.hmis_user,
         )
 
         variables = {
@@ -552,7 +552,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
             "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
             "address": "3 Amity St.",
             "californiaId": "R0192837",
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdBy": {"id": str(self.hmis_user.pk)},
             "email": "ed@example.com",
             "eyeColor": EyeColorEnum.BROWN.name,
             "hairColor": HairColorEnum.BROWN.name,
@@ -589,6 +589,8 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
     @override_settings(HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=")
     def test_hmis_login_success(self) -> None:
+        self.assertFalse(self.existing_user.groups.filter(name="Hmis User").exists())
+
         token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
 
         with patch(
@@ -612,6 +614,7 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         self.assertEqual(payload["__typename"], "UserType")
         self.assertEqual(payload["id"], str(self.existing_user.pk))
         self.assertEqual(payload["isHmisUser"], True)
+        self.assertTrue(self.existing_user.groups.filter(name="Hmis User").exists())
 
         # Session should now contain the logged-in user
         session = self.graphql_client.session

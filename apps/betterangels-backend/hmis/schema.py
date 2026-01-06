@@ -6,9 +6,9 @@ from accounts.types import UserType
 from accounts.utils import get_user_permission_group
 from betterangels_backend import settings
 from common.models import Location, PhoneNumber
-from common.permissions.utils import IsAuthenticated
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login as django_login
+from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
@@ -18,6 +18,7 @@ from notes.models import ServiceRequest
 from notes.types import ServiceRequestType
 from notes.utils.note_utils import get_service_args
 from strawberry import ID, asdict
+from strawberry.permission import BasePermission
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
@@ -44,13 +45,22 @@ from .types import (
 User = get_user_model()
 
 
+class IsHmisUser(BasePermission):
+    message: str = "You do not have access to this resource."
+
+    def has_permission(self, source: Any, info: Info, **kwargs: Any) -> bool:
+        user = get_current_user(info)
+
+        return user.is_authenticated and user.groups.filter(name="Hmis User").exists()
+
+
 def _get_client_program(program_data: dict[str, Any]) -> HmisClientProgramType:
     return HmisClientProgramType(id=program_data["id"], program=HmisProgramType(**program_data["program"]))
 
 
 @strawberry.type
 class Query:
-    @strawberry_django.field(permission_classes=[IsAuthenticated])
+    @strawberry_django.field(permission_classes=[IsHmisUser])
     def hmis_client_profile(self, info: Info, id: ID) -> HmisClientProfileType:
         try:
             hmis_client_profile = HmisClientProfile.objects.get(pk=id)
@@ -71,10 +81,10 @@ class Query:
         return cast(HmisClientProfileType, hmis_client_profile)
 
     hmis_client_profiles: OffsetPaginated[HmisClientProfileType] = strawberry_django.offset_paginated(
-        permission_classes=[IsAuthenticated],
+        permission_classes=[IsHmisUser],
     )
 
-    @strawberry_django.field(permission_classes=[IsAuthenticated])
+    @strawberry_django.field(permission_classes=[IsHmisUser])
     def hmis_note(self, info: Info, id: ID) -> HmisNoteType:
         try:
             hmis_note = HmisNote.objects.get(pk=id)
@@ -101,7 +111,7 @@ class Query:
 
         return cast(HmisNoteType, hmis_note)
 
-    hmis_notes: OffsetPaginated[HmisNoteType] = strawberry_django.offset_paginated(permission_classes=[IsAuthenticated])
+    hmis_notes: OffsetPaginated[HmisNoteType] = strawberry_django.offset_paginated(permission_classes=[IsHmisUser])
 
     @strawberry.field()
     def hmis_client_programs(
@@ -137,12 +147,15 @@ class Mutation:
         except User.DoesNotExist:
             return HmisLoginError(message="Invalid credentials or HMIS login failed")
 
+        default_group = Group.objects.get(name="Hmis User")
+        user.groups.add(default_group)
+
         backend = settings.AUTHENTICATION_BACKENDS[0]
         django_login(request, user, backend=backend)
 
         return cast(UserType, user)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation(permission_classes=[IsHmisUser])
     def create_hmis_client_profile(self, info: Info, data: CreateHmisClientProfileInput) -> HmisClientProfileType:
         hmis_api_bridge = HmisApiBridge(info=info)
 
@@ -166,7 +179,7 @@ class Mutation:
 
         return cast(HmisClientProfileType, hmis_client_profile)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation(permission_classes=[IsHmisUser])
     def update_hmis_client_profile(self, info: Info, data: UpdateHmisClientProfileInput) -> HmisClientProfileType:
         try:
             hmis_client_profile = HmisClientProfile.objects.get(pk=data.id)
@@ -197,7 +210,7 @@ class Mutation:
 
         return cast(HmisClientProfileType, hmis_client_profile)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation(permission_classes=[IsHmisUser])
     def create_hmis_note(self, info: Info, data: CreateHmisNoteInput) -> HmisNoteType:
         try:
             hmis_client_profile = HmisClientProfile.objects.get(pk=data.hmis_client_profile_id)
@@ -230,7 +243,7 @@ class Mutation:
 
         return cast(HmisNoteType, hmis_note)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation(permission_classes=[IsHmisUser])
     def update_hmis_note(self, info: Info, data: UpdateHmisNoteInput) -> HmisNoteType:
         try:
             hmis_note = HmisNote.objects.get(pk=data.id)
@@ -258,7 +271,7 @@ class Mutation:
 
         return cast(HmisNoteType, hmis_note)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation(permission_classes=[IsHmisUser])
     def create_hmis_client_program(self, info: Info, client_id: int, program_hmis_id: int) -> ProgramEnrollmentType:
         try:
             hmis_client_profile = HmisClientProfile.objects.get(pk=client_id)
@@ -281,7 +294,7 @@ class Mutation:
             ref_client_program=enrollment_data["ref_program"],
         )
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation(permission_classes=[IsHmisUser])
     def update_hmis_note_location(self, info: Info, data: UpdateHmisNoteLocationInput) -> HmisNoteType:
         with transaction.atomic():
             hmis_note = HmisNote.objects.get(id=data.id)
@@ -296,7 +309,7 @@ class Mutation:
 
             return cast(HmisNoteType, hmis_note)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation(permission_classes=[IsHmisUser])
     def create_hmis_note_service_request(
         self, info: Info, data: CreateHmisNoteServiceRequestInput
     ) -> ServiceRequestType:
@@ -336,7 +349,7 @@ class Mutation:
 
             return cast(ServiceRequestType, service_request)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation(permission_classes=[IsHmisUser])
     def remove_hmis_note_service_request(self, info: Info, data: RemoveHmisNoteServiceRequestInput) -> HmisNoteType:
         with transaction.atomic():
             hmis_note = HmisNote.objects.get(pk=data.hmis_note_id)
