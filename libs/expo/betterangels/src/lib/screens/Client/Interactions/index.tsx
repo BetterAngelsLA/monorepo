@@ -2,7 +2,8 @@ import { useQuery } from '@apollo/client/react';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Loading } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { useEffect, useMemo, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { uniqueBy } from 'remeda';
 import { NotesDocument, NotesQuery, Ordering } from '../../../apollo';
@@ -35,6 +36,13 @@ export default function Interactions({
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
+
   const [notes, setNotes] = useState<NotesQuery['notes']['results']>([]);
   const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
   const [refreshing, setRefreshing] = useState(false);
