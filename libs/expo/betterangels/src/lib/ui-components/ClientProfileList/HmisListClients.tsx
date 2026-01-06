@@ -41,7 +41,7 @@ export function HmisListClients(props: TProps) {
     renderItem,
     style,
   } = props;
-  const { items, total, loading, hasMore, loadMore, error } =
+  const { items, total, loading, reloading, hasMore, loadMore, reload, error } =
     useInfiniteScrollQuery<
       THmisClientProfileResult,
       HmisClientProfilesQuery,
@@ -82,6 +82,8 @@ export function HmisListClients(props: TProps) {
         loading={loading}
         loadMore={loadMore}
         hasMore={hasMore}
+        onRefresh={reload}
+        refreshing={reloading}
       />
     </View>
   );

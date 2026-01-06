@@ -5,7 +5,7 @@ import { ComponentType, SVGProps } from 'react';
 type BaseSvgProps = Omit<SVGProps<SVGSVGElement>, 'type'>;
 type TSvg = ComponentType<BaseSvgProps>;
 
-type SvgFC = React.FC<React.SVGProps<SVGSVGElement>>;
+type SvgFC = React.ComponentType<React.SVGProps<SVGSVGElement>>;
 type SvgModule = { default: SvgFC };
 
 const modules = import.meta.glob<SvgModule>('./**/*.svg', {

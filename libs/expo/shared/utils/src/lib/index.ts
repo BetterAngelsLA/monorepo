@@ -8,3 +8,4 @@ export * from './html';
 export * from './image';
 export { showOpenSettingsAlert } from './showOpenSettingsAlert';
 export * from './storage';
+export * from './string';

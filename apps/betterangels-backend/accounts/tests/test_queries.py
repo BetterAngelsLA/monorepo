@@ -10,6 +10,7 @@ from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.test import ignore_warnings, override_settings
+from hmis.api_bridge import HmisApiBridge
 from hmis.tests.test_mutations import LOGIN_MUTATION
 from model_bakery import baker
 from organizations.models import Organization, OrganizationUser
@@ -148,17 +149,26 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         )
         self.assertCountEqual(response["data"]["currentUser"]["organizations"], expected_organizations)
 
-    @override_settings(HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=")
+    @override_settings(
+        HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=",
+        HMIS_REST_URL="https://example.com",
+        HMIS_HOST="example.com",
+    )
     def test_logged_in_hmis_user_query(self) -> None:
         hmis_user = baker.make(get_user_model(), _fill_optional=["email"])
-
         token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
-        success_response = {"data": {"createAuthToken": {"authToken": token}}}
 
         with patch(
-            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
-            return_value=success_response,
-        ):
+            "hmis.api_bridge.HmisApiBridge.create_auth_token",
+            autospec=True,
+        ) as mock_create_auth_token:
+
+            def fake_create_auth_token(self: HmisApiBridge, username: str, password: str) -> None:
+                self._set_auth_token(token)
+                return None
+
+            mock_create_auth_token.side_effect = fake_create_auth_token
+
             self.execute_graphql(
                 LOGIN_MUTATION,
                 variables={"email": hmis_user.email, "password": "anything"},

@@ -5,7 +5,6 @@ import {
   Form,
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
-import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { ScrollView } from 'react-native';
@@ -13,14 +12,15 @@ import { ServiceRequestTypeEnum, UpdateTaskInput } from '../../../apollo';
 import { useHmisClientPrograms } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
 import { GirpNoteForm, NoteTasks } from '../../../ui-components';
+import HmisLocationComponent from '../HmisLocation';
+import HmisProvidedServices from './HmisProvidedServices';
+import HmisRequestedServices from './HmisRequestedServices';
 import { FORM_KEYS } from './constants';
 import {
   LocalDraftTask,
   THmisProgramNoteFormInputs,
   hmisProgramNoteFormEmptyState,
 } from './formSchema';
-import HmisProvidedServices from './HmisProvidedServices';
-import HmisRequestedServices from './HmisRequestedServices';
 import { FieldCardHmisNote } from './shared/FieldCardHmisNote';
 import { renderValue } from './shared/renderValue';
 import { TFormKeys } from './types';
@@ -46,7 +46,6 @@ export function HmisProgramNoteForm(props: TProps) {
     formState: { errors, isSubmitting, submitCount },
   } = useFormContext<THmisProgramNoteFormInputs>();
 
-  const router = useRouter();
   const { showModalScreen } = useModalScreen();
   const [expandedField, setExpandedField] = useState<TFormKeys | null>(null);
   const [enrollmentsError, setProgramsError] = useState<string | undefined>(
@@ -133,7 +132,7 @@ export function HmisProgramNoteForm(props: TProps) {
     showModalScreen({
       presentation: 'card',
       title: 'Note',
-      content: () => (
+      renderContent: ({ close }) => (
         <GirpNoteForm
           note={noteValue}
           disabled={formDisabled}
@@ -144,7 +143,8 @@ export function HmisProgramNoteForm(props: TProps) {
               shouldValidate: true,
               shouldTouch: true,
             });
-            router.back();
+
+            close();
           }}
         />
       ),
@@ -185,6 +185,13 @@ export function HmisProgramNoteForm(props: TProps) {
           }}
         />
       </FieldCardHmisNote>
+
+      <HmisLocationComponent
+        error={errors.location?.message}
+        editing={!!editing}
+        expanded={expandedField === FORM_KEYS.location}
+        setExpanded={setExpandedField}
+      />
 
       <FieldCardHmisNote
         required

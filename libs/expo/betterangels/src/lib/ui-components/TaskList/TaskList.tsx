@@ -42,7 +42,7 @@ export function TaskList(props: TProps) {
     style,
   } = props;
 
-  const { items, total, loading, loadMore, hasMore, error } =
+  const { items, total, loading, loadMore, reload, reloading, hasMore, error } =
     useInfiniteScrollQuery<TaskType, TasksQuery, TasksQueryVariables>({
       document: TasksDocument,
       queryFieldName: 'tasks',
@@ -81,6 +81,8 @@ export function TaskList(props: TProps) {
         hasMore={hasMore}
         modelName="task"
         renderResultsHeader={renderHeader}
+        onRefresh={reload}
+        refreshing={reloading}
       />
     </View>
   );

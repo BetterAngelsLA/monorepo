@@ -18,9 +18,11 @@ export { default as FeatureFlagControlled } from './FeatureFlagControlled/Featur
 export { FileThumbnail } from './FileThumbnail/FileThumbnail';
 export * from './Filters';
 export * from './GirpNoteForm';
-export { default as Header } from './Header';
 export { default as HMISLoginForm } from './HMISLoginForm';
+export { default as Header } from './Header';
 export { default as HmisRequestedProvidedServices } from './HmisRequestedProvidedServices';
+export * from './InteractionList';
+export * from './InteractionListHmis';
 export * from './Layout';
 export { default as LoginForm } from './LoginForm';
 export { default as MainContainer } from './MainContainer';
@@ -38,7 +40,6 @@ export { default as OtherCategory } from './RequestedProvidedServices/OtherCateg
 export { default as SelectStatus } from './SelectStatus';
 export { default as SignInContainer } from './SignInContainer';
 export { default as TaskCard } from './TaskCard';
-export * from './TaskFilters';
 export * from './TaskForm';
 export * from './TaskList';
 export { default as TaskStatusBtn } from './TaskStatusBtn';

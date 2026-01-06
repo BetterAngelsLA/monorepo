@@ -4,10 +4,6 @@ import {
   getQueryPolicyFactory,
 } from '@monorepo/apollo';
 import {
-  HmisNotesQuery,
-  HmisNotesQueryVariables,
-} from '../../screens/ClientHMIS/tabs/ClientInteractionsHmisView/__generated__/ClientInteractionsHmisView.generated';
-import {
   HmisClientProfilesQuery,
   HmisClientProfilesQueryVariables,
 } from '../../ui-components/ClientProfileList/__generated__/HmisListClients.generated';
@@ -23,6 +19,14 @@ import {
   FilterUsersQuery,
   FilterUsersQueryVariables,
 } from '../../ui-components/Filters/FilterUsers/__generated__/filterUsers.generated';
+import {
+  InteractionsQuery,
+  InteractionsQueryVariables,
+} from '../../ui-components/InteractionList/__generated__/Interactions.generated';
+import {
+  InteractionListHmisQuery,
+  InteractionListHmisQueryVariables,
+} from '../../ui-components/InteractionListHmis/__generated__/interactionListHmis.generated';
 import {
   TasksQuery,
   TasksQueryVariables,
@@ -55,19 +59,25 @@ const policyFactoryList = [
     entityTypename: 'TaskType',
     cacheKeyVariables: ['filters', 'ordering'] as const,
   }),
-
+  getQueryPolicyFactory<InteractionsQuery, InteractionsQueryVariables>({
+    key: 'notes',
+    entityTypename: 'NoteType',
+    cacheKeyVariables: ['filters', 'ordering'] as const,
+  }),
+  getQueryPolicyFactory<
+    InteractionListHmisQuery,
+    InteractionListHmisQueryVariables
+  >({
+    key: 'hmisNotes',
+    entityTypename: 'HmisNoteType',
+    cacheKeyVariables: ['filters', 'ordering'] as const,
+  }),
   getQueryPolicyFactory<
     HmisClientProfilesQuery,
     HmisClientProfilesQueryVariables
   >({
     key: 'hmisClientProfiles',
     entityTypename: 'HmisClientProfileType',
-    cacheKeyVariables: ['filters', 'ordering'] as const,
-  }),
-
-  getQueryPolicyFactory<HmisNotesQuery, HmisNotesQueryVariables>({
-    key: 'hmisNotes',
-    entityTypename: 'HmisNoteType',
     cacheKeyVariables: ['filters', 'ordering'] as const,
   }),
 ] as const;
