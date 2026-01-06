@@ -5563,6 +5563,7 @@ __metadata:
     jest-util: "npm:30.2.0"
     jiti: "npm:2.4.2"
     jotai: "npm:^2.12.5"
+    jotai-family: "npm:^1.0.1"
     jsdom: "npm:~22.1.0"
     jsonc-eslint-parser: "npm:^2.1.0"
     libphonenumber-js: "npm:^1.12.6"
@@ -5587,6 +5588,7 @@ __metadata:
     react-native-gesture-handler: "npm:~2.28.0"
     react-native-keyboard-controller: "npm:~1.19.6"
     react-native-maps: "npm:^1.26.20"
+    react-native-mmkv: "npm:^4.1.0"
     react-native-nitro-cookies: "npm:^1.0.0"
     react-native-nitro-modules: "npm:^0.31.10"
     react-native-open-maps: "npm:^0.4.3"
@@ -19241,6 +19243,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jotai-family@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "jotai-family@npm:1.0.1"
+  peerDependencies:
+    jotai: ">=2.9.0"
+  checksum: 10/ef01f9a9f917595bfc4032335a78e3e86e4c6848e9750834e44c3401015b497a47dd8231f5ac31f7d961298fb73b2cdf445ebbd5796be3c2d098213729892258
+  languageName: node
+  linkType: hard
+
 "jotai@npm:^2.12.5":
   version: 2.16.0
   resolution: "jotai@npm:2.16.0"
@@ -23216,6 +23227,17 @@ __metadata:
     react-native-web:
       optional: true
   checksum: 10/7287bc50eabf495e8716fe47cc361011301e1b0586a783c014ab4ef1363d5439745807f29bcf9ca11a8226ba66e578dbf54090c75475cd44994c545d15037434
+  languageName: node
+  linkType: hard
+
+"react-native-mmkv@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "react-native-mmkv@npm:4.1.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: "*"
+  checksum: 10/306b2b1371bb58152ec562326d93f25e5cf173f31a313ce78202d3681c3cc6f5a0ca792726f94d3482d3bd0fa341735b046223bbe4b85baacba006307d76a792
   languageName: node
   linkType: hard
 
