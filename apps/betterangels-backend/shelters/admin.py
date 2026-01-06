@@ -612,7 +612,7 @@ class ShelterResource(resources.ModelResource):
             self.skip_or_raise(row, column)
             return
 
-        field_choices = name_field.choices
+        field_choices = name_field.choices  # type: ignore
         columnSeparateVals = [v.strip() for v in rowInDict[column].split(",")]
         # Build reverse mapping from choice display to choice value
         row_vals_choices: dict = {}

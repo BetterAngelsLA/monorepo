@@ -1,9 +1,12 @@
-from unittest.mock import ANY
 from unittest import skip
+from unittest.mock import ANY
+
 import time_machine
+from accounts.models import User
 from clients.models import ClientProfile
 from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
+from django.contrib.auth.models import Group
 from django.test import ignore_warnings
 from hmis.models import HmisNote
 from model_bakery import baker
@@ -11,8 +14,6 @@ from notes.models import Note
 from tasks.enums import TaskStatusEnum
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
-from django.contrib.auth.models import Group
-from accounts.models import User
 
 
 @ignore_warnings(category=UserWarning)

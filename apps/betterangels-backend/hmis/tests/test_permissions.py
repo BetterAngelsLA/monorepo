@@ -1,5 +1,6 @@
-from unittest.mock import patch
 from unittest import skip
+from unittest.mock import patch
+
 from hmis.models import HmisClientProfile, HmisNote
 from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
 from model_bakery import baker

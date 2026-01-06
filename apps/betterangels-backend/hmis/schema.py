@@ -51,7 +51,7 @@ class IsHmisUser(BasePermission):
     def has_permission(self, source: Any, info: Info, **kwargs: Any) -> bool:
         user = get_current_user(info)
 
-        return user.is_authenticated and user.groups.filter(name="Hmis User").exists()
+        return user.is_authenticated and user.groups.filter(name="Hmis User").exists()  # type: ignore
 
 
 def _get_client_program(program_data: dict[str, Any]) -> HmisClientProgramType:
