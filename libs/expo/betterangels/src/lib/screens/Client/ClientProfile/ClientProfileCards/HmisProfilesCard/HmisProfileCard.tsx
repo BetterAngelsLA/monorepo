@@ -18,12 +18,12 @@ export function HmisProfileCard(props: TProps) {
     return null;
   }
 
-  const { id, agency } = hmisProfile;
+  const { hmisId, agency } = hmisProfile;
 
   const content: TClientProfileCardItem[] = [
     {
       header: ['HMIS ID'],
-      rows: [[id]],
+      rows: [[hmisId]],
     },
   ];
 
