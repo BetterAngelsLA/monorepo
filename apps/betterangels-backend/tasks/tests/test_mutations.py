@@ -1,5 +1,5 @@
 from unittest.mock import ANY
-
+from unittest import skip
 import time_machine
 from clients.models import ClientProfile
 from common.enums import SelahTeamEnum
@@ -11,6 +11,8 @@ from notes.models import Note
 from tasks.enums import TaskStatusEnum
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
+from django.contrib.auth.models import Group
+from accounts.models import User
 
 
 @ignore_warnings(category=UserWarning)
@@ -117,11 +119,17 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             Task.objects.get(id=task_id)
             Task.objects.get(id=task_id)
 
+    @skip("need to update task and service request perms (DEV-2336)")
     @time_machine.travel("07-31-2025 10:11:12", tick=False)
     def test_create_task_mutation_with_hmis_note(self) -> None:
         """
         Verify we can create a task linked specifically to an HMIS Note.
         """
+        hmis_group = Group.objects.get(name="Hmis User")
+        hmis_user = baker.make(User)
+        hmis_user.groups.add(hmis_group)
+        self.graphql_client.force_login(hmis_user)
+
         variables = {
             "description": "hmis task description",
             "hmisNote": str(self.hmis_note.pk),

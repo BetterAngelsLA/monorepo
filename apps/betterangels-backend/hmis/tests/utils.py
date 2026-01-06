@@ -1,11 +1,18 @@
 from typing import Any, Dict
 
+from accounts.models import Group
 from common.tests.utils import GraphQLBaseTestCase
+from hmis.models import User
+from model_bakery import baker
 
 
 class HmisClientProfileBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
+
+        hmis_group = Group.objects.get(name="Hmis User")
+        self.hmis_user = baker.make(User)
+        self.hmis_user.groups.add(hmis_group)
 
         self.hmis_client_profile_fields = """
             id
@@ -93,6 +100,10 @@ class HmisClientProfileBaseTestCase(GraphQLBaseTestCase):
 class HmisNoteBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
+
+        hmis_group = Group.objects.get(name="Hmis User")
+        self.hmis_user = baker.make(User)
+        self.hmis_user.groups.add(hmis_group)
 
         self.hmis_note_fields = """
             id
