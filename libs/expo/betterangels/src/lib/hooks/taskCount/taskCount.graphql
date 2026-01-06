@@ -1,0 +1,5 @@
+query TaskCount($filters: TaskFilter) {
+  tasks(filters: $filters) {
+    totalCount
+  }
+}

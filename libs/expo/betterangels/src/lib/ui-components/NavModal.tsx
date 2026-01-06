@@ -7,21 +7,48 @@ import {
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
+import { useAtom } from 'jotai';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { SelahTeamEnum, TaskFilter, TaskStatusEnum } from '../apollo';
 import { useSignOut, useUser } from '../hooks';
+import { teamAtom } from '../screens/Tasks/teamAtom';
 import { MainModal } from './MainModal';
+import { TaskCountIndictor } from './TaskCountIndictor';
+
+function TasksLinkBody(props: { team: SelahTeamEnum | null }) {
+  const { team } = props;
+
+  const taskFilters: TaskFilter = {
+    teams: team ? [team] : undefined,
+    status: [TaskStatusEnum.InProgress, TaskStatusEnum.ToDo],
+  };
+
+  return (
+    <View style={{ flexDirection: 'row' }}>
+      <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>Tasks</TextRegular>
+      <TaskCountIndictor
+        disabled={!team}
+        filters={taskFilters}
+        style={styles.taskCountIndicator}
+      />
+    </View>
+  );
+}
 
 interface INavModalProps {
   image?: string;
 }
 
 export default function NavModal(props: INavModalProps) {
-  const { isHmisUser } = useUser();
-
   const { image } = props;
-  const [isModalVisible, setModalVisible] = useState(false);
+
   const router = useRouter();
+  const { isHmisUser } = useUser();
+  const [team] = useAtom(teamAtom);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const { signOut } = useSignOut();
+
   const openModal = () => {
     setModalVisible(true);
   };
@@ -29,11 +56,10 @@ export default function NavModal(props: INavModalProps) {
   const closeModal = () => {
     setModalVisible(false);
   };
-  const { signOut } = useSignOut();
 
   const ACTIONS = [
     {
-      title: 'Tasks',
+      title: <TasksLinkBody team={team} />,
       Icon: TaskListIcon,
       route: '/tasks',
     },
@@ -161,5 +187,8 @@ const styles = StyleSheet.create({
     borderRadius: Radiuses.md,
     paddingVertical: 4,
     paddingHorizontal: 12,
+  },
+  taskCountIndicator: {
+    marginTop: 3,
   },
 });
