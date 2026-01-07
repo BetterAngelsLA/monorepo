@@ -1,11 +1,8 @@
-from accounts.models import User
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from hmis.models import HmisClientProfile
 from model_bakery import baker
-from organizations.models import Organization
 from tasks.models import Task
-from unittest_parametrize import parametrize
 
 
 class TaskManagerTestCase(GraphQLBaseTestCase):
@@ -19,7 +16,7 @@ class TaskManagerTestCase(GraphQLBaseTestCase):
 
     def test_tasks_non_hmis_user(self) -> None:
         task_count = Task.objects.count()
-        task_ids = set(Task.objects.tasks_for_user(is_hmis_user=False).values_list("id", flat=True))
+        task_ids = set(Task.objects.tasks_for_user(is_hmis_user=False).values_list("id", flat=True))  # type: ignore
 
         self.assertEqual(task_count, 2)
         self.assertEqual(len(task_ids), 1)
@@ -28,7 +25,7 @@ class TaskManagerTestCase(GraphQLBaseTestCase):
 
     def test_tasks_hmis_user(self) -> None:
         task_count = Task.objects.count()
-        task_ids = set(Task.objects.tasks_for_user(is_hmis_user=True).values_list("id", flat=True))
+        task_ids = set(Task.objects.tasks_for_user(is_hmis_user=True).values_list("id", flat=True))  # type: ignore
 
         self.assertEqual(task_count, 2)
         self.assertEqual(len(task_ids), 1)
