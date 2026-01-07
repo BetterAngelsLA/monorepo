@@ -72,14 +72,14 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self._handle_user_login(user_label)
 
         variables = {
-            "id": self.task_id,
+            "id": self.hmis_task_id,
             "summary": "updated task summary",
         }
         response = self.update_task_fixture(variables)
 
         self.assertIsNotNone(response["data"]["updateTask"]["id"])
 
-        updated = Task.objects.get(pk=self.task_id)
+        updated = Task.objects.get(pk=self.hmis_task_id)
         self.assertEqual(updated.summary, "updated task summary")
 
     @parametrize(
@@ -92,7 +92,7 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def test_update_task_permission_denied(self, user_label: Optional[str]) -> None:
         self._handle_user_login(user_label)
 
-        pre_update = Task.objects.get(pk=self.task_id)
+        pre_update = Task.objects.get(pk=self.ba_task_id)
 
         variables = {
             "id": pre_update.pk,
@@ -120,12 +120,12 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self._handle_user_login(user_label)
 
         task_count = Task.objects.count()
-        response = self.delete_task_fixture(self.task_id)
+        response = self.delete_task_fixture(self.ba_task_id)
 
         if user_label is None:
             self.assertGraphQLUnauthenticated(response)
 
-        self.assertTrue(Task.objects.filter(id=self.task_id).exists() != should_succeed)
+        self.assertTrue(Task.objects.filter(id=self.ba_task_id).exists() != should_succeed)
         if should_succeed:
             self.assertEqual(task_count - 1, Task.objects.count())
         else:
@@ -151,7 +151,7 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 }
             }
         """
-        variables = {"id": self.task_id}
+        variables = {"id": self.ba_task_id}
         response = self.execute_graphql(query, variables)
 
         if should_succeed:
