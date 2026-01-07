@@ -7,11 +7,15 @@ if TYPE_CHECKING:
 
 
 class TaskManager(Manager["Task"]):
-    def get_queryset(self) -> QuerySet["Task"]:
-        return super().get_queryset()
-
     def tasks_for_user(self, is_hmis_user: bool = False) -> QuerySet["Task"]:
-        qs = self.get_queryset()
+        qs = self.get_queryset().select_related(
+            "client_profile",
+            "created_by",
+            "hmis_client_profile",
+            "hmis_note",
+            "note",
+            "organization",
+        )
 
         if is_hmis_user:
             return qs.filter(hmis_client_profile__isnull=False)

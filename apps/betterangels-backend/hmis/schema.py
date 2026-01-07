@@ -49,11 +49,10 @@ class IsHmisUser(BasePermission):
     message: str = "You do not have access to this resource."
 
     def has_permission(self, source: Any, info: Info, **kwargs: Any) -> bool:
-        user = get_current_user(info)
         request = info.context["request"]
         session = request.session
 
-        return user.is_authenticated and bool(session.get(HMIS_SESSION_KEY_NAME, None))
+        return bool(session.get(HMIS_SESSION_KEY_NAME, None))
 
 
 def _get_client_program(program_data: dict[str, Any]) -> HmisClientProgramType:
