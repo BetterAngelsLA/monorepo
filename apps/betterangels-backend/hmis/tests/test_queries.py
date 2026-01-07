@@ -31,12 +31,12 @@ from notes.models import OrganizationService, ServiceRequest
 from test_utils.vcr_config import scrubbed_vcr
 
 
-@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisNoteQueryTests(HmisNoteBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.graphql_client.force_login(self.hmis_user)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
         self.hmis_client_profile = baker.make(HmisClientProfile, hmis_id="388")
         self.hmis_note = baker.make(
@@ -128,12 +128,12 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
         self.assertEqual(expected, hmis_note)
 
 
-@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.graphql_client.force_login(self.hmis_user)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
         self.residence_geolocation = [-118.2437207, 34.0521723]
 
         self.hmis_client_profile = baker.make(

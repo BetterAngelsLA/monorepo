@@ -1,5 +1,4 @@
 import datetime
-from unittest import skip
 from unittest.mock import ANY, patch
 
 from clients.enums import (
@@ -45,12 +44,12 @@ LOGIN_MUTATION = """
 """
 
 
-@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisNoteMutationTests(HmisNoteBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.graphql_client.force_login(self.hmis_user)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
         self.hmis_client_profile = baker.make(HmisClientProfile, hmis_id="388")
 
     @scrubbed_vcr.use_cassette("test_create_hmis_note_mutation.yaml")
@@ -83,7 +82,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "lastUpdated": "2025-11-25T01:37:07+00:00",
             "refClientProgram": None,
             "clientProgram": None,
-            "createdBy": {"id": str(self.hmis_user.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
         }
 
         self.assertEqual(expected, note)
@@ -125,7 +124,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
                     "name": "Housing Program 01",
                 },
             },
-            "createdBy": {"id": str(self.hmis_user.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
         }
 
         self.assertEqual(expected, note)
@@ -139,7 +138,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             title="prog note title",
             note="prog note note",
             date="2011-11-11",
-            created_by=self.hmis_user,
+            created_by=self.org_1_case_manager_1,
         )
         provided_services = [baker.make(ServiceRequest, service=OrganizationService.objects.first())]
         requested_services = [baker.make(ServiceRequest, service=OrganizationService.objects.last())]
@@ -199,12 +198,13 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
                     "name": "Housing Program 01",
                 },
             },
-            "createdBy": {"id": str(self.hmis_user.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
         }
 
         self.assertEqual(expected, note)
 
     def test_update_hmis_note_location_mutation(self) -> None:
+        self._setup_hmis_session()
         self._setup_location()
 
         hmis_note = baker.make(HmisNote, _fill_optional=True)
@@ -221,7 +221,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "location": location,
         }
 
-        expected_query_count = 20
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_hmis_note_location_fixture(variables)
 
@@ -246,7 +246,6 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         location = Location.objects.get(id=hmis_note.location.pk)  # type: ignore
         self.assertEqual(hmis_note, location.hmis_notes.first())
 
-    @skip("need to update task and service request perms (DEV-2336)")
     def test_create_hmis_note_service_request_mutation(self) -> None:
         bag_svc = OrganizationService.objects.get(label="Bag(s)")
         hmis_note = baker.make(HmisNote, _fill_optional=True)
@@ -275,7 +274,6 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         self.assertEqual(service_request.service.label, bag_svc.label)
         self.assertEqual(service_request.service.category, bag_svc.category)
 
-    @skip("need to update task and service request perms (DEV-2336)")
     def test_create_hmis_note_service_request_other_mutation(self) -> None:
         hmis_note = baker.make(HmisNote, _fill_optional=True)
         variables = {
@@ -324,12 +322,12 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         self.assertEqual(hmis_note.requested_services.count(), 1)
 
 
-@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.graphql_client.force_login(self.hmis_user)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
         self.residence_geolocation = [-118.2437207, 34.0521723]
 
         self.hmis_client_profile = baker.make(
@@ -379,7 +377,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
             residence_address="123 Res St",
             residence_geolocation=Point(self.residence_geolocation),
             spoken_languages=[LanguageEnum.ENGLISH, LanguageEnum.SPANISH],
-            created_by=self.hmis_user,
+            created_by=self.org_1_case_manager_1,
         )
         content_type = ContentType.objects.get_for_model(HmisClientProfile)
         PhoneNumber.objects.create(
@@ -431,7 +429,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
             "adaAccommodation": None,
             "address": None,
             "californiaId": None,
-            "createdBy": {"id": str(self.hmis_user.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "email": None,
             "eyeColor": None,
             "hairColor": None,
@@ -473,7 +471,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
             gender=[HmisGenderEnum.NOT_COLLECTED],
             race_ethnicity=[HmisRaceEnum.NOT_COLLECTED],
             veteran=HmisVeteranStatusEnum.NOT_COLLECTED,
-            created_by=self.hmis_user,
+            created_by=self.org_1_case_manager_1,
         )
 
         variables = {
@@ -555,7 +553,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
             "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
             "address": "3 Amity St.",
             "californiaId": "R0192837",
-            "createdBy": {"id": str(self.hmis_user.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "email": "ed@example.com",
             "eyeColor": EyeColorEnum.BROWN.name,
             "hairColor": HairColorEnum.BROWN.name,

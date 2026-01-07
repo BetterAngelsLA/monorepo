@@ -5,10 +5,10 @@ import strawberry_django
 from accounts.types import UserType
 from accounts.utils import get_user_permission_group
 from betterangels_backend import settings
+from common.constants import HMIS_SESSION_KEY_NAME
 from common.models import Location, PhoneNumber
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login as django_login
-from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
@@ -50,8 +50,10 @@ class IsHmisUser(BasePermission):
 
     def has_permission(self, source: Any, info: Info, **kwargs: Any) -> bool:
         user = get_current_user(info)
+        request = info.context["request"]
+        session = request.session
 
-        return user.is_authenticated and user.groups.filter(name="Hmis User").exists()  # type: ignore
+        return user.is_authenticated and bool(session.get(HMIS_SESSION_KEY_NAME, None))
 
 
 def _get_client_program(program_data: dict[str, Any]) -> HmisClientProgramType:
@@ -146,9 +148,6 @@ class Mutation:
             user = User.objects.get(email__iexact=email)
         except User.DoesNotExist:
             return HmisLoginError(message="Invalid credentials or HMIS login failed")
-
-        default_group = Group.objects.get(name="Hmis User")
-        user.groups.add(default_group)
 
         backend = settings.AUTHENTICATION_BACKENDS[0]
         django_login(request, user, backend=backend)
