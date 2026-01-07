@@ -52,3 +52,10 @@ jobs:
     params:
       build_id: ${{ needs.get_ios_build.outputs.build_id }}
       flow_path: ['.maestro/landing.yml']
+
+  call_webhook:
+    needs: [maestro_android_test, maestro_ios_test]
+    type: call-webhook
+    params:
+      webhook_url: ${{ secrets.WEBHOOK_URL }}
+      payload: ${{ steps.prepare-webhook.outputs.payload }}

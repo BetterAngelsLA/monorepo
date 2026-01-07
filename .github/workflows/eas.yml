@@ -7,6 +7,8 @@ on:
     types: [opened, synchronize]
   push:
     branches: [main]
+  repository_dispatch:
+    types: [e2e-tests-complete]
 
 jobs:
   prepare:
@@ -147,35 +149,144 @@ jobs:
           slug: ${{ steps.preview-build.outputs.slug }}
           project-id: ${{ steps.preview-build.outputs.project-id }}
 
+      - name: 📦 Prepare Webhook Payload
+        id: prepare-webhook
+        run: |
+          # Create a JSON payload with all preview outputs for EAS to send back via webhook
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PAYLOAD=$(cat <<EOF
+          {
+            "project": "${{ matrix.project }}",
+            "project-id": "${{ steps.preview-build.outputs.project-id }}",
+            "slug": "${{ steps.preview-build.outputs.slug }}",
+            "android-runtime-version": "${{ steps.preview-build.outputs.android-runtime-version }}",
+            "ios-runtime-version": "${{ steps.preview-build.outputs.ios-runtime-version }}",
+            "android-build-link": "${{ steps.preview-build.outputs.android-build-link }}",
+            "ios-build-link": "${{ steps.preview-build.outputs.ios-build-link }}",
+            "android-distribution": "${{ steps.preview-build.outputs.android-distribution }}",
+            "android-build-profile": "${{ steps.preview-build.outputs.android-build-profile }}",
+            "android-app-version": "${{ steps.preview-build.outputs.android-app-version }}",
+            "android-git-commit": "${{ steps.preview-build.outputs.android-git-commit }}",
+            "ios-distribution": "${{ steps.preview-build.outputs.ios-distribution }}",
+            "ios-build-profile": "${{ steps.preview-build.outputs.ios-build-profile }}",
+            "ios-app-version": "${{ steps.preview-build.outputs.ios-app-version }}",
+            "ios-git-commit": "${{ steps.preview-build.outputs.ios-git-commit }}",
+            "android-update-permalink": "${{ steps.expo-update.outputs.android-update-permalink }}",
+            "android-branch": "${{ steps.expo-update.outputs.android-branch }}",
+            "android-update-runtime-version": "${{ steps.expo-update.outputs.android-runtime-version }}",
+            "android-update-commit": "${{ steps.expo-update.outputs.android-update-commit }}",
+            "android-update-qr-url": "${{ steps.expo-update.outputs.android-update-qr-url }}",
+            "ios-update-permalink": "${{ steps.expo-update.outputs.ios-update-permalink }}",
+            "ios-branch": "${{ steps.expo-update.outputs.ios-branch }}",
+            "ios-update-runtime-version": "${{ steps.expo-update.outputs.ios-runtime-version }}",
+            "ios-update-commit": "${{ steps.expo-update.outputs.ios-update-commit }}",
+            "ios-update-qr-url": "${{ steps.expo-update.outputs.ios-update-qr-url }}",
+            "simulator-ios-build-link": "${{ steps.simulator-build.outputs.ios-build-link }}",
+            "branch-name": "${{ github.head_ref || github.ref_name }}",
+            "github-ref": "${{ github.ref }}",
+            "github-sha": "${{ github.sha }}",
+            "pr-number": "${PR_NUMBER}"
+          }
+          EOF
+          )
+          echo "payload<<EOF" >> $GITHUB_OUTPUT
+          echo "$PAYLOAD" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: 🧪 Run E2E Tests
+        id: run-e2e-tests
         working-directory: apps/${{ matrix.project }}
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_DISPATCH_TOKEN: ${{ secrets.GITHUB_DISPATCH_APP_TOKEN }}
+          PROJECT_NAME: ${{ matrix.project }}
+          WEBHOOK_PAYLOAD: ${{ steps.prepare-webhook.outputs.payload }}
         run: |
           eas workflow:run .eas/workflows/e2e-test.yml --non-interactive
 
+      - name: 🧼 Cleanup .env file
+        if: always()
+        run: |
+          rm -f .env
+        working-directory: apps/${{ matrix.project }}
+
+    outputs:
+      project: ${{ matrix.project }}
+      project-id: ${{ steps.preview-build.outputs.project-id }}
+      slug: ${{ steps.preview-build.outputs.slug }}
+      android-runtime-version: ${{ steps.preview-build.outputs.android-runtime-version }}
+      ios-runtime-version: ${{ steps.preview-build.outputs.ios-runtime-version }}
+      android-build-link: ${{ steps.preview-build.outputs.android-build-link }}
+      ios-build-link: ${{ steps.preview-build.outputs.ios-build-link }}
+      android-distribution: ${{ steps.preview-build.outputs.android-distribution }}
+      android-build-profile: ${{ steps.preview-build.outputs.android-build-profile }}
+      android-app-version: ${{ steps.preview-build.outputs.android-app-version }}
+      android-git-commit: ${{ steps.preview-build.outputs.android-git-commit }}
+      ios-distribution: ${{ steps.preview-build.outputs.ios-distribution }}
+      ios-build-profile: ${{ steps.preview-build.outputs.ios-build-profile }}
+      ios-app-version: ${{ steps.preview-build.outputs.ios-app-version }}
+      ios-git-commit: ${{ steps.preview-build.outputs.ios-git-commit }}
+      android-update-permalink: ${{ steps.expo-update.outputs.android-update-permalink }}
+      android-branch: ${{ steps.expo-update.outputs.android-branch }}
+      android-update-runtime-version: ${{ steps.expo-update.outputs.android-runtime-version }}
+      android-update-commit: ${{ steps.expo-update.outputs.android-update-commit }}
+      android-update-qr-url: ${{ steps.expo-update.outputs.android-update-qr-url }}
+      ios-update-permalink: ${{ steps.expo-update.outputs.ios-update-permalink }}
+      ios-branch: ${{ steps.expo-update.outputs.ios-branch }}
+      ios-update-runtime-version: ${{ steps.expo-update.outputs.ios-runtime-version }}
+      ios-update-commit: ${{ steps.expo-update.outputs.ios-update-commit }}
+      ios-update-qr-url: ${{ steps.expo-update.outputs.ios-update-qr-url }}
+      simulator-ios-build-link: ${{ steps.simulator-build.outputs.ios-build-link }}
+
+  preview-post-e2e:
+    environment: preview
+    env:
+      BRANCH_NAME: ${{ github.event.client_payload.branch_name || github.head_ref || github.ref_name }}
+    runs-on: ubuntu-latest
+    if: github.event_name == 'repository_dispatch' && github.event.action == 'e2e-tests-complete'
+    permissions:
+      pull-requests: write # REQUIRED: Allow comments on PRs
+      contents: read # Required for actions/checkout
+      actions: write # REQUIRED: Allow updating fingerprint in action caches
+    steps:
+      - name: ⚠️ Fail if E2E tests failed
+        if: github.event.client_payload.status != 'success'
+        run: |
+          echo "E2E tests failed with status: ${{ github.event.client_payload.status }}"
+          exit 1
+
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.client_payload.github-sha || github.event.client_payload.github-ref || github.ref }}
+
       - name: 📝 Comment on PR
-        if: github.event_name == 'pull_request'
+        if: github.event.client_payload.pr-number != ''
         uses: edumserrano/find-create-or-update-comment@v3
         with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body-includes: '<!-- continuous-deploy-fingerprint-projectId:${{ steps.preview-build.outputs.project-id }} -->'
+          issue-number: ${{ github.event.client_payload.pr-number }}
+          body-includes: '<!-- continuous-deploy-fingerprint-projectId:${{ github.event.client_payload.project-id }} -->'
           comment-author: 'github-actions[bot]'
           body: |
-            <!-- continuous-deploy-fingerprint-projectId:${{ steps.preview-build.outputs.project-id }} -->
-            🚀 Expo continuous deployment is ready for **${{ matrix.project }}**!
+            <!-- continuous-deploy-fingerprint-projectId:${{ github.event.client_payload.project-id }} -->
+            🚀 Expo continuous deployment is ready for **${{ github.event.client_payload.project }}**!
 
-            - Project → **${{ matrix.project }}**
+            - Project → **${{ github.event.client_payload.project }}**
             - Environment → **Preview**
             - Platforms → **android**, **ios**
-            - Scheme → **${{ steps.preview-build.outputs.slug }}**
+            - Scheme → **${{ github.event.client_payload.slug }}**
 
             &nbsp; | 🤖 Android | 🍎 iOS
             --- | --- | ---
-            Runtime Version | `${{ steps.preview-build.outputs.android-runtime-version }}` | `${{ steps.preview-build.outputs.ios-runtime-version }}`
-            Build Details | [Build Permalink](${{ steps.preview-build.outputs.android-build-link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.preview-build.outputs.android-distribution }}`<br />Build profile: `${{ steps.preview-build.outputs.android-build-profile }}`<br />Runtime version: `${{ steps.preview-build.outputs.android-runtime-version }}`<br />App version: `${{ steps.preview-build.outputs.android-app-version }}`<br />Git commit: `${{ steps.preview-build.outputs.android-git-commit }}`</details> | [Build Permalink](${{ steps.preview-build.outputs.ios-build-link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.preview-build.outputs.ios-distribution }}`<br />Build profile: `${{ steps.preview-build.outputs.ios-build-profile }}`<br />Runtime version: `${{ steps.preview-build.outputs.ios-runtime-version }}`<br />App version: `${{ steps.preview-build.outputs.ios-app-version }}`<br />Git commit: `${{ steps.preview-build.outputs.ios-git-commit }}`</details>
-            Update Details | [Update Permalink](${{ steps.expo-update.outputs.android-update-permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.expo-update.outputs.android-branch }}`<br />Runtime version: `${{ steps.expo-update.outputs.android-runtime-version }}`<br />Git commit: `${{ steps.expo-update.outputs.android-update-commit }}`</details> | [Update Permalink](${{ steps.expo-update.outputs.ios-update-permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.expo-update.outputs.ios-branch }}`<br />Runtime version: `${{ steps.expo-update.outputs.ios-runtime-version }}`<br />Git commit: `${{ steps.expo-update.outputs.ios-update-commit }}`</details>
-            Update QR   | <a href="${{ steps.expo-update.outputs.android-update-qr-url }}"><img src="${{ steps.expo-update.outputs.android-update-qr-url }}" width="250px" height="250px" /></a> | <a href="${{ steps.expo-update.outputs.ios-update-qr-url }}"><img src="${{ steps.expo-update.outputs.ios-update-qr-url }}" width="250px" height="250px" /></a>
+            Runtime Version | `${{ github.event.client_payload.android-runtime-version }}` | `${{ github.event.client_payload.ios-runtime-version }}`
+            Build Details | [Build Permalink](${{ github.event.client_payload.android-build-link }})<br /><details><summary>Details</summary>Distribution: `${{ github.event.client_payload.android-distribution }}`<br />Build profile: `${{ github.event.client_payload.android-build-profile }}`<br />Runtime version: `${{ github.event.client_payload.android-runtime-version }}`<br />App version: `${{ github.event.client_payload.android-app-version }}`<br />Git commit: `${{ github.event.client_payload.android-git-commit }}`</details> | [Build Permalink](${{ github.event.client_payload.ios-build-link }})<br /><details><summary>Details</summary>Distribution: `${{ github.event.client_payload.ios-distribution }}`<br />Build profile: `${{ github.event.client_payload.ios-build-profile }}`<br />Runtime version: `${{ github.event.client_payload.ios-runtime-version }}`<br />App version: `${{ github.event.client_payload.ios-app-version }}`<br />Git commit: `${{ github.event.client_payload.ios-git-commit }}`</details>
+            Update Details | [Update Permalink](${{ github.event.client_payload.android-update-permalink }})<br /><details><summary>Details</summary>Branch: `${{ github.event.client_payload.android-branch }}`<br />Runtime version: `${{ github.event.client_payload.android-update-runtime-version }}`<br />Git commit: `${{ github.event.client_payload.android-update-commit }}`</details> | [Update Permalink](${{ github.event.client_payload.ios-update-permalink }})<br /><details><summary>Details</summary>Branch: `${{ github.event.client_payload.ios-branch }}`<br />Runtime version: `${{ github.event.client_payload.ios-update-runtime-version }}`<br />Git commit: `${{ github.event.client_payload.ios-update-commit }}`</details>
+            Update QR   | <a href="${{ github.event.client_payload.android-update-qr-url }}"><img src="${{ github.event.client_payload.android-update-qr-url }}" width="250px" height="250px" /></a> | <a href="${{ github.event.client_payload.ios-update-qr-url }}"><img src="${{ github.event.client_payload.ios-update-qr-url }}" width="250px" height="250px" /></a>
 
-            **iOS Simulator Build:** [Simulator Build Link](${{ steps.simulator-build.outputs.ios-build-link }})
+            **iOS Simulator Build:** [Simulator Build Link](${{ github.event.client_payload.simulator-ios-build-link }})
           edit-mode: replace
 
       - name: 📝 Set Git Variables
@@ -190,7 +301,7 @@ jobs:
           } >> $GITHUB_OUTPUT
 
       - name: 📣 Post to Slack
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event.client_payload.github-ref == 'refs/heads/main'
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
@@ -201,14 +312,14 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*New code has landed in main for project ${{ matrix.project }}!* \n*Commit:* `${{ steps.set-git-vars.outputs.commit-id }}`\n*Message:* ${{ steps.set-git-vars.outputs.commit-message }}"
+                    "text": "*New code has landed in main for project ${{ github.event.client_payload.project }}!* \n*Commit:* `${{ steps.set-git-vars.outputs.commit-id }}`\n*Message:* ${{ steps.set-git-vars.outputs.commit-message }}"
                   }
                 },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*📱 iOS*\n\n<${{ steps.expo-update.outputs.ios-update-qr-url }}|Update>\n<${{ steps.preview-build.outputs.ios-build-link }}|Build>\n<${{ steps.simulator-build.outputs.ios-build-link }}|Simulator Build>"
+                    "text": "*📱 iOS*\n\n<${{ github.event.client_payload.ios-update-qr-url }}|Update>\n<${{ github.event.client_payload.ios-build-link }}|Build>\n<${{ github.event.client_payload.simulator-ios-build-link }}|Simulator Build>"
                   }
                 },
                 {
@@ -218,7 +329,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*🤖 Android*\n\n<${{ steps.expo-update.outputs.android-update-qr-url }}|Update>\n<${{ steps.preview-build.outputs.android-build-link }}|Build>"
+                    "text": "*🤖 Android*\n\n<${{ github.event.client_payload.android-update-qr-url }}|Update>\n<${{ github.event.client_payload.android-build-link }}|Build>"
                   }
                 }
               ]
@@ -231,7 +342,7 @@ jobs:
         if: always()
         run: |
           rm -f .env
-        working-directory: apps/${{ matrix.project }}
+        working-directory: apps/${{ github.event.client_payload.project }}
 
   production:
     if: |
