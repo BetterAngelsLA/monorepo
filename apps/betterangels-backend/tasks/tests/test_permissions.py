@@ -1,6 +1,9 @@
 from typing import Optional
 
+from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
+from hmis.models import HmisClientProfile
+from model_bakery import baker
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 from unittest_parametrize import parametrize
@@ -11,7 +14,20 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         super().setUp()
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-        self.task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
+        self.client_profile = baker.make(ClientProfile)
+        self.hmis_client_profile = baker.make(HmisClientProfile)
+        self.ba_task_id = self.create_task_fixture(
+            {
+                "summary": "ba task",
+                "clientProfile": str(self.client_profile.pk),
+            }
+        )["data"]["createTask"]["id"]
+        self.hmis_task_id = self.create_task_fixture(
+            {
+                "summary": "ba task",
+                "hmisClientProfile": str(self.hmis_client_profile.pk),
+            }
+        )["data"]["createTask"]["id"]
 
     @parametrize(
         "user_label, should_succeed",
