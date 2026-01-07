@@ -1,13 +1,10 @@
 import { SelahTeamEnum, TaskStatusEnum } from '../../apollo';
-import { TUser } from '../../providers/user/UserContext';
 import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
 import { TModelFilters } from '../../ui-components';
 
 export function getInitialTaskFilters({
-  user,
   teamPreference,
 }: {
-  user?: TUser;
   teamPreference?: SelahTeamEnum | null;
 }): TModelFilters {
   return {
@@ -18,7 +15,6 @@ export function getInitialTaskFilters({
         label: enumDisplayTaskStatus.IN_PROGRESS,
       },
     ],
-    authors: user ? [{ id: user.id, label: 'Me' }] : [],
     teams: teamPreference
       ? [{ id: teamPreference, label: enumDisplaySelahTeam[teamPreference] }]
       : [],

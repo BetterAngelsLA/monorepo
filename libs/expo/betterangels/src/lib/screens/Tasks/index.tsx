@@ -17,11 +17,11 @@ import {
 import { getInitialTaskFilters } from './getInitialTaskFilters';
 
 export default function Tasks() {
-  const { user, isHmisUser } = useUser();
+  const { isHmisUser } = useUser();
   const [teamPreference] = useUserTeamPreference();
   const [search, setSearch] = useState('');
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
-    getInitialTaskFilters({ user, teamPreference })
+    getInitialTaskFilters({ teamPreference })
   );
   const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
 
@@ -43,7 +43,7 @@ export default function Tasks() {
 
   function onFilterReset() {
     setSearch('');
-    setCurrentFilters(getInitialTaskFilters({ user, teamPreference }));
+    setCurrentFilters(getInitialTaskFilters({ teamPreference }));
     setFiltersKey((k) => k + 1); // inc key to trigger remount
   }
 
