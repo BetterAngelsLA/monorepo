@@ -13,7 +13,7 @@ import { SelahTeamEnum, TaskFilter, TaskStatusEnum } from '../apollo';
 import { useSignOut, useUser } from '../hooks';
 import { useUserTeamPreference } from '../state';
 import { MainModal } from './MainModal';
-import { TaskCountIndictor } from './TaskCountIndictor';
+import { TaskCountIndicator } from './TaskCountIndicator';
 
 function TasksLinkBody(props: { team: SelahTeamEnum | null }) {
   const { team } = props;
@@ -27,7 +27,7 @@ function TasksLinkBody(props: { team: SelahTeamEnum | null }) {
     <View style={{ flexDirection: 'row' }}>
       <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>Tasks</TextRegular>
       {!!team && (
-        <TaskCountIndictor
+        <TaskCountIndicator
           filters={taskFilters}
           style={styles.taskCountIndicator}
         />

@@ -40,7 +40,7 @@ export { default as OtherCategory } from './RequestedProvidedServices/OtherCateg
 export { default as SelectStatus } from './SelectStatus';
 export { default as SignInContainer } from './SignInContainer';
 export { default as TaskCard } from './TaskCard';
-export * from './TaskCountIndictor';
+export * from './TaskCountIndicator';
 export * from './TaskForm';
 export * from './TaskList';
 export { default as TaskStatusBtn } from './TaskStatusBtn';

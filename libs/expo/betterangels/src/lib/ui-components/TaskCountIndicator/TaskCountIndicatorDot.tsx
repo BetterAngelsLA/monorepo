@@ -6,7 +6,7 @@ type TProps = {
   loading?: boolean;
 };
 
-export function TaskCountIndictorDot(props: TProps) {
+export function TaskCountIndicatorDot(props: TProps) {
   const { loading, style } = props;
 
   return (
