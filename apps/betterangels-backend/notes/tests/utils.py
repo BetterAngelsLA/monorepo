@@ -64,13 +64,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self._setup_note()
         self._setup_location()
 
-        self.provided_services = [
-            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s)) for s in ["Book", "Food"]
-        ]
-        self.requested_services = [
-            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s)) for s in ["Tarp", "Tent"]
-        ]
-
     def _setup_note(self) -> None:
         # Force login the case manager to create a note
         self.graphql_client.force_login(self.org_1_case_manager_1)

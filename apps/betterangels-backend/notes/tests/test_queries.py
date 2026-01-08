@@ -11,7 +11,12 @@ from deepdiff import DeepDiff
 from django.test import ignore_warnings
 from model_bakery import baker
 from notes.enums import ServiceRequestStatusEnum
-from notes.models import Note, OrganizationService, OrganizationServiceCategory
+from notes.models import (
+    Note,
+    OrganizationService,
+    OrganizationServiceCategory,
+    ServiceRequest,
+)
 from notes.tests.utils import NoteGraphQLBaseTestCase, ServiceRequestGraphQLBaseTestCase
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 from unittest_parametrize import parametrize
@@ -42,6 +47,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         )
         # Add purposes and next steps
         note = Note.objects.get(pk=note_id)
+        self.provided_services = [
+            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s)) for s in ["Book", "Food"]
+        ]
+        self.requested_services = [
+            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s)) for s in ["Tarp", "Tent"]
+        ]
         note.provided_services.set(self.provided_services)
         note.requested_services.set(self.requested_services)
 
@@ -84,13 +95,13 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "providedServices": [
                 {
                     "id": str(self.provided_services[0].id),
-                    "service": {"id": ANY, "label": "Bag(s)"},
+                    "service": {"id": ANY, "label": "Book"},
                     "dueBy": self.provided_services[0].due_by,
                     "status": ServiceRequestStatusEnum(self.provided_services[0].status).name,
                 },
                 {
                     "id": str(self.provided_services[1].id),
-                    "service": {"id": ANY, "label": "Book"},
+                    "service": {"id": ANY, "label": "Food"},
                     "dueBy": self.provided_services[1].due_by,
                     "status": ServiceRequestStatusEnum(self.provided_services[1].status).name,
                 },
@@ -98,13 +109,13 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "requestedServices": [
                 {
                     "id": str(self.requested_services[0].id),
-                    "service": {"id": ANY, "label": "EBT"},
+                    "service": {"id": ANY, "label": "Tent"},
                     "dueBy": self.requested_services[0].due_by,
                     "status": ServiceRequestStatusEnum(self.requested_services[0].status).name,
                 },
                 {
                     "id": str(self.requested_services[1].id),
-                    "service": {"id": ANY, "label": "Food"},
+                    "service": {"id": ANY, "label": "Tarp"},
                     "dueBy": self.requested_services[1].due_by,
                     "status": ServiceRequestStatusEnum(self.requested_services[1].status).name,
                 },
@@ -660,6 +671,11 @@ class InteractionAuthorQueryTestCase(GraphQLBaseTestCase):
         response = self.execute_graphql(query, variables={"filters": filters})
         self.assertEqual(response["data"]["interactionAuthors"]["totalCount"], expected_results_count)
 
+        if expected_authors:
+            authors = response["data"]["interactionAuthors"]["results"]
+            author_ids = set([int(u["id"]) for u in authors])
+            expected_authors_ids = set([self.authors_map[u].pk for u in expected_authors])
+            self.assertEqual(author_ids, expected_authors_ids, f"Not equal, {author_ids, expected_authors_ids}")
         if expected_authors:
             authors = response["data"]["interactionAuthors"]["results"]
             author_ids = set([int(u["id"]) for u in authors])
