@@ -8,6 +8,7 @@ export { default as useNewRelic } from './newRelic/useNewRelic';
 export { default as useInfiniteScroll } from './scroll/useInfiniteScroll';
 export { default as useScrollToScreenTop } from './scroll/useScrollToScreenTop';
 export { default as useSnackbar } from './snackbar/useSnackbar';
+export * from './taskCount';
 export * from './useHmisClientPrograms';
 // user
 export { useInitialLocation } from './useInitialLocation';

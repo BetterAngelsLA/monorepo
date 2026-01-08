@@ -9,7 +9,7 @@ import { MainModalActionBtn } from './MainModalActionBtn';
 import { MainModalCloseBtn } from './MainModalCloseBtn';
 
 export type TMainModalAction = {
-  title: string;
+  title: string | ReactNode;
   Icon: ElementType;
   route?: string;
   params?: Record<string, string>;
@@ -79,11 +79,13 @@ export function MainModal({
         {topSection}
 
         {actions.map((action, idx: number) => {
-          if (isValidElement(action))
+          if (isValidElement(action)) {
             return <Fragment key={idx}>{action}</Fragment>;
+          }
 
           const { title, route, params, Icon, onPress } =
             action as TMainModalAction;
+
           return (
             <MainModalActionBtn
               key={idx}
