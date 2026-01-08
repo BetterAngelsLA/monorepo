@@ -1,5 +1,4 @@
-import { ServiceEnum, ViewNoteQuery } from '../apollo';
-import { enumDisplayServices } from '../static/enumDisplayMapping';
+import { ViewNoteQuery } from '../apollo';
 
 interface IWatchedValue {
   purpose: ViewNoteQuery['note']['purpose'];
@@ -29,10 +28,7 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
   //     : '';
 
   const providedServicesArray = providedServices.map((item) => {
-    if (item.serviceEnum === ServiceEnum.Other) {
-      return item.serviceOther;
-    }
-    return enumDisplayServices[item.serviceEnum!];
+    return item.service?.label;
   });
 
   const serviceIText =
@@ -54,10 +50,7 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
       : '';
 
   const requestedServicesArray = requestedServices.map((item) => {
-    if (item.serviceEnum === ServiceEnum.Other) {
-      return item.serviceOther;
-    }
-    return enumDisplayServices[item.serviceEnum!];
+    return item.service?.label;
   });
 
   const updatedP =

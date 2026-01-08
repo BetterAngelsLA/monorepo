@@ -13,14 +13,12 @@ mutation CreateHmisNote($data: CreateHmisNoteInput!) {
           id
           label
         }
-        serviceOther
       }
       requestedServices {
         service {
           id
           label
         }
-        serviceOther
       }
       hmisClientProfile {
         id

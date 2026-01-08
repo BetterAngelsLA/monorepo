@@ -1,9 +1,13 @@
 import { ServiceRequestTypeEnum } from '../../../../apollo';
 import { HmisRequestedProvidedServices } from '../../../../ui-components';
-import { ViewHmisNoteQuery } from '../../HmisProgramNoteView/__generated__/HmisProgramNoteView.generated';
+import { ServicesDraft } from '../formSchema';
+
+type RequestedServiceRequests = NonNullable<
+  ServicesDraft[ServiceRequestTypeEnum.Requested]
+>['serviceRequests'];
 
 interface IRequestedServicesProps {
-  services?: ViewHmisNoteQuery['hmisNote']['requestedServices'];
+  services?: RequestedServiceRequests | null;
 }
 
 export default function HmisRequestedServices(props: IRequestedServicesProps) {

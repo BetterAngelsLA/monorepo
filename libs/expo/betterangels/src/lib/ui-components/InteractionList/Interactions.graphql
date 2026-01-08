@@ -30,8 +30,6 @@ query Interactions(
       }
       providedServices {
         id
-        serviceEnum
-        serviceOther
         service {
           id
           label
@@ -39,8 +37,6 @@ query Interactions(
       }
       requestedServices {
         id
-        serviceEnum
-        serviceOther
         service {
           id
           label
