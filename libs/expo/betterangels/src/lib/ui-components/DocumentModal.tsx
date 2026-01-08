@@ -18,21 +18,25 @@ import {
 } from '../screens/Client/__generated__/Client.generated';
 import { MainModal } from './MainModal';
 
+type ModalPhase =
+  | 'mainVisible'
+  | 'mainClosing'
+  | 'deleteRequested'
+  | 'deleteVisible';
+
 interface IDocumentModalProps {
   closeModal: () => void;
-  isModalVisible: boolean;
   document: ClientDocumentType;
   clientId: string;
 }
 
 export default function DocumentModal({
-  isModalVisible,
   closeModal,
   document,
   clientId,
 }: IDocumentModalProps) {
   const { showSnackbar } = useSnackbar();
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [modalPhase, setModalPhase] = useState<ModalPhase>('mainVisible');
 
   const [deleteDocument] = useMutation(DeleteClientDocumentDocument, {
     refetchQueries: [
@@ -124,28 +128,45 @@ export default function DocumentModal({
     {
       title: `Delete ${fileTypeText}`,
       Icon: DeleteIcon,
-      onPress: () => setDeleteModalVisible(true),
+      onPress: () => setModalPhase('deleteRequested'),
     },
   ];
 
-  return deleteModalVisible ? (
-    <DeleteModal
-      body={`All data associated with this ${fileTypeText} will be deleted.`}
-      title={`Delete ${fileTypeText}?`}
-      onDelete={deleteFile}
-      onCancel={() => setDeleteModalVisible(false)}
-      isVisible
-      deleteableItemName={fileTypeText}
-    />
-  ) : (
-    <MainModal
-      closeButton
-      vertical
-      actions={ACTIONS}
-      isModalVisible={isModalVisible}
-      closeModal={closeModal}
-      opacity={0.5}
-    />
+  return (
+    <>
+      {modalPhase === 'deleteVisible' && (
+        <DeleteModal
+          isVisible={true}
+          body={`All data associated with this ${fileTypeText} will be deleted.`}
+          title={`Delete ${fileTypeText}?`}
+          onDelete={deleteFile}
+          onCancel={() => setModalPhase('mainVisible')}
+          deleteableItemName={fileTypeText}
+        />
+      )}
+
+      {modalPhase !== 'deleteVisible' && (
+        <MainModal
+          isModalVisible={modalPhase === 'mainVisible'}
+          closeButton
+          vertical
+          actions={ACTIONS}
+          closeModal={() => setModalPhase('mainClosing')}
+          opacity={0.5}
+          onCloseComplete={() => {
+            // onCloseComplete, phase management and setTimeout are needed to avoid
+            // modal stacking context issues, as only one can be vialble at at time
+            if (modalPhase === 'deleteRequested') {
+              setTimeout(() => {
+                setModalPhase('deleteVisible');
+              }, 0);
+            } else {
+              closeModal();
+            }
+          }}
+        />
+      )}
+    </>
   );
 }
 
