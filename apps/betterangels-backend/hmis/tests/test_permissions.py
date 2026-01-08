@@ -1,10 +1,12 @@
 from unittest.mock import patch
 
+from django.test import override_settings
 from hmis.models import HmisClientProfile, HmisNote
 from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
 from model_bakery import baker
 
 
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisClientProfilePermissionTestCase(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
