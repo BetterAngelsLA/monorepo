@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { TaskType, toTaskFilter } from '../../apollo';
 import { useUser } from '../../hooks';
-import { TUser } from '../../providers/user/UserContext';
+import { useUserTeamPreference } from '../../state';
 import { pagePaddingHorizontal } from '../../static';
 import {
   ModelFilters,
@@ -14,19 +14,14 @@ import {
   TaskList,
   toModelFilterValues,
 } from '../../ui-components';
-
-function getInitialFilterValues(user?: TUser): TModelFilters {
-  return {
-    authors: user ? [{ id: user.id, label: 'Me' }] : [],
-  };
-}
+import { getInitialTaskFilters } from './getInitialTaskFilters';
 
 export default function Tasks() {
-  const { user, isHmisUser } = useUser();
-
+  const { isHmisUser } = useUser();
+  const [teamPreference] = useUserTeamPreference();
   const [search, setSearch] = useState('');
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
-    getInitialFilterValues(user)
+    getInitialTaskFilters({ teamPreference })
   );
   const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
 
@@ -48,7 +43,7 @@ export default function Tasks() {
 
   function onFilterReset() {
     setSearch('');
-    setCurrentFilters(getInitialFilterValues(user));
+    setCurrentFilters(getInitialTaskFilters({ teamPreference }));
     setFiltersKey((k) => k + 1); // inc key to trigger remount
   }
 
