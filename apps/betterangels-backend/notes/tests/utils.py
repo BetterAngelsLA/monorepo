@@ -3,7 +3,6 @@ from typing import Any, Dict
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
-from notes.models import OrganizationService, ServiceRequest
 from test_utils.mixins import HasGraphQLProtocol
 
 

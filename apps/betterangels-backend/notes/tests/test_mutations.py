@@ -7,7 +7,6 @@ from common.models import Address, Location
 from django.test import ignore_warnings
 from django.utils import timezone
 from model_bakery import baker
-from notes.enums import ServiceRequestTypeEnum
 from notes.models import Mood, Note, OrganizationService, ServiceRequest
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
