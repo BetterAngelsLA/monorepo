@@ -1,8 +1,10 @@
+import { CombinedGraphQLErrors } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import { Colors } from '@monorepo/expo/shared/static';
 import { LoadingView, Tabs } from '@monorepo/expo/shared/ui-components';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { useSnackbar } from '../../hooks';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
 import { ClientViewTabEnum } from '../Client/ClientTabs';
@@ -24,12 +26,14 @@ type TProps = {
 };
 
 export function ClientHMIS(props: TProps) {
-  const { id, openCard } = props;
+  const { id, arrivedFrom, openCard } = props;
 
   const { activeTab } = useLocalSearchParams<{
     activeTab?: ClientViewTabEnum;
   }>();
 
+  const router = useRouter();
+  const { showSnackbar } = useSnackbar();
   const [currentTab, setCurrentTab] = useState(ClientViewTabEnum.Profile);
 
   useEffect(() => {
@@ -38,12 +42,32 @@ export function ClientHMIS(props: TProps) {
     }
   }, [activeTab]);
 
-  const { data, loading } = useQuery(HmisClientProfileDocument, {
+  const { data, loading, error } = useQuery(HmisClientProfileDocument, {
     variables: { id },
   });
 
   if (loading) {
     return <LoadingView />;
+  }
+
+  if (CombinedGraphQLErrors.is(error)) {
+    const graphQLError = error.errors[0];
+
+    console.error(`[ClientHMIS] error for client id [${id}]:`, graphQLError);
+
+    const { message } = graphQLError;
+
+    // TODO: check for code and not string.
+    if (message.startsWith('The requested Object does not exist')) {
+      showSnackbar({
+        message: 'Sorry, this client profile is no longer available..',
+        type: 'error',
+      });
+
+      router.dismissTo(arrivedFrom || '/');
+
+      return null;
+    }
   }
 
   const client = data?.hmisClientProfile;
