@@ -33,15 +33,12 @@ interface IMainModalProps {
   height?: DimensionValue;
   /** Fired after the modal has fully closed (animation finished, unmounted). */
   onCloseComplete?: () => void;
-  /** Overrides closign animation type. */
-  closeBehavior?: 'animated' | 'immediate';
 }
 
 export function MainModal({
   isModalVisible,
   closeModal,
   onCloseComplete,
-  closeBehavior,
   actions,
   bottomSection,
   topSection,
@@ -60,7 +57,6 @@ export function MainModal({
       isOpen={isModalVisible}
       onClose={closeModal}
       onCloseComplete={onCloseComplete}
-      closeBehavior={closeBehavior}
       variant="sheet"
       direction={vertical ? 'up' : 'right'}
       panelOffset={ml}

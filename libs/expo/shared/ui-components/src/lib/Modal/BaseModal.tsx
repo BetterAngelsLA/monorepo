@@ -46,9 +46,6 @@ export interface IFileViewerModal extends PropsWithChildren {
   useOverlayClose?: boolean;
   overlayCloseColor?: string;
 
-  /** Overrides closign animation type. */
-  closeBehavior?: 'animated' | 'immediate';
-
   /** Fired after the modal has fully closed (animation finished, unmounted). */
   onCloseComplete?: () => void;
 }
@@ -62,7 +59,6 @@ export function BaseModal({
   setIsOpen,
   onClose,
   onCloseComplete,
-  closeBehavior = 'animated',
   children,
   variant = 'fullscreen',
   direction = 'up',
@@ -103,15 +99,10 @@ export function BaseModal({
       requestAnimationFrame(() => animateTo(1));
     } else if (mounted) {
       // Parent-driven close: animate out; do not call onClose to avoid double-callbacks.
-      if (closeBehavior === 'immediate') {
+      animateTo(0, () => {
         setMounted(false);
         onCloseComplete?.();
-      } else {
-        animateTo(0, () => {
-          setMounted(false);
-          onCloseComplete?.();
-        });
-      }
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variant, isOpen]);
@@ -135,14 +126,6 @@ export function BaseModal({
   });
 
   const internalSheetClose = () => {
-    if (closeBehavior === 'immediate') {
-      setMounted(false);
-      setIsOpen?.(false);
-      onClose?.();
-      onCloseComplete?.();
-      return;
-    }
-
     animateTo(0, () => {
       setMounted(false);
       setIsOpen?.(false);
