@@ -3,7 +3,6 @@ from typing import Any, Dict
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
-from notes.enums import ServiceEnum
 from notes.models import OrganizationService, ServiceRequest
 from test_utils.mixins import HasGraphQLProtocol
 
@@ -46,8 +45,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     id
                     label
                 }
-                serviceEnum
-                serviceOther
                 dueBy
                 status
             }
@@ -57,8 +54,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     id
                     label
                 }
-                serviceEnum
-                serviceOther
                 dueBy
                 status
             }
@@ -69,15 +64,11 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self._setup_note()
         self._setup_location()
 
-        ps = [ServiceEnum.BAG, ServiceEnum.BOOK]
-        rs = [ServiceEnum.EBT, ServiceEnum.FOOD]
         self.provided_services = [
-            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s.label), service_enum=s)
-            for s in ps
+            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s)) for s in ["Book", "Food"]
         ]
         self.requested_services = [
-            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s.label), service_enum=s)
-            for s in rs
+            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s)) for s in ["Tarp", "Tent"]
         ]
 
     def _setup_note(self) -> None:
@@ -217,8 +208,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                             id
                             label
                         }
-                        serviceEnum
-                        serviceOther
                         status
                         dueBy
                         completedOn
@@ -304,8 +293,6 @@ class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
                     ... on ServiceRequestType {{
                         id
                         service
-                        serviceEnum
-                        serviceOther
                         status
                         dueBy
                         completedOn

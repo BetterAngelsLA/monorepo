@@ -7,7 +7,7 @@ from common.models import Address, Location
 from django.test import ignore_warnings
 from django.utils import timezone
 from model_bakery import baker
-from notes.enums import ServiceEnum, ServiceRequestTypeEnum
+from notes.enums import ServiceRequestTypeEnum
 from notes.models import Mood, Note, OrganizationService, ServiceRequest
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
@@ -168,65 +168,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         location = Location.objects.get(id=note.location.pk)  # type: ignore
         self.assertEqual(note, location.notes.first())
 
-    def test_create_note_service_request_mutation_from_service_enum(self) -> None:
-        """Verify serviceEnum writes service and service_enum"""
-        variables = {
-            "serviceEnum": ServiceEnum.BLANKET.name,
-            "noteId": self.note["id"],
-            "serviceRequestType": ServiceRequestTypeEnum.PROVIDED.name,
-        }
-
-        initial_org_service_count = OrganizationService.objects.count()
-
-        response = self._create_note_service_request_fixture(variables)
-        self.assertEqual(initial_org_service_count, OrganizationService.objects.count())
-
-        response_service_request = response["data"]["createNoteServiceRequest"]
-        service_request = ServiceRequest.objects.get(id=response_service_request["id"])
-        org_service_id = OrganizationService.objects.get(label=ServiceEnum.BLANKET.label).pk
-        note = Note.objects.get(id=self.note["id"])
-
-        assert service_request.service
-        self.assertIn(service_request, note.provided_services.all())
-
-        self.assertEqual(response_service_request["serviceEnum"], ServiceEnum.BLANKET.name)
-        self.assertEqual(response_service_request["service"]["id"], str(org_service_id))
-
-        self.assertEqual(service_request.service_enum, ServiceEnum.BLANKET)
-        self.assertEqual(service_request.service.id, org_service_id)
-
-    def test_create_note_service_request_mutation_from_service_enum_other(self) -> None:
-        """Verify serviceEnum & serviceOther write service, service_enum, and service_other"""
-        variables = {
-            "serviceEnum": ServiceEnum.OTHER.name,
-            "serviceOther": "another svc",
-            "noteId": self.note["id"],
-            "serviceRequestType": ServiceRequestTypeEnum.PROVIDED.name,
-        }
-
-        initial_org_service_count = OrganizationService.objects.count()
-
-        response = self._create_note_service_request_fixture(variables)
-        self.assertEqual(initial_org_service_count + 1, OrganizationService.objects.count())
-
-        response_service_request = response["data"]["createNoteServiceRequest"]
-        service_request = ServiceRequest.objects.get(id=response_service_request["id"])
-        note = Note.objects.get(id=self.note["id"])
-        org_service_id = OrganizationService.objects.get(label="another svc", organization=self.org_1).pk
-
-        assert service_request.service
-        self.assertIn(service_request, note.provided_services.all())
-
-        self.assertEqual(response_service_request["serviceEnum"], ServiceEnum.OTHER.name)
-        self.assertEqual(response_service_request["service"]["id"], str(org_service_id))
-
-        self.assertEqual(service_request.service_enum, ServiceEnum.OTHER)
-        self.assertEqual(service_request.service.label, "another svc")
-        self.assertEqual(service_request.service.id, org_service_id)
-        self.assertIsNone(service_request.service.category)
-
     def test_create_note_service_request_mutation(self) -> None:
-        """Verify service writes service and service_enum"""
         bag_svc = OrganizationService.objects.get(label="Bag(s)")
 
         variables = {
@@ -254,12 +196,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(service_request.service.label, bag_svc.label)
         self.assertEqual(service_request.service.category, bag_svc.category)
 
-        # TODO: remove after cutover
-        self.assertEqual(service_request.service_enum, ServiceEnum.BAG)
-        self.assertEqual(response_service_request["serviceEnum"], ServiceEnum.BAG.name)
-
     def test_create_note_service_request_mutation_other(self) -> None:
-        """Verify serviceOther populates service, service_enum, and service_other"""
         variables = {
             "serviceOther": "custom org svc",
             "noteId": self.note["id"],
@@ -285,12 +222,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(service_request.service.pk, org_service_id)
         self.assertEqual(service_request.service.label, "custom org svc")
         self.assertIsNone(service_request.service.category)
-
-        # TODO: remove after cutover
-        self.assertEqual(service_request.service_enum, ServiceEnum.OTHER)
-        self.assertEqual(service_request.service_other, "custom org svc")
-        self.assertEqual(response_service_request["serviceEnum"], ServiceEnum.OTHER.name)
-        self.assertEqual(response_service_request["serviceOther"], "custom org svc")
 
     @parametrize(
         "provided_type, expected_type",
@@ -354,42 +285,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
         self.assertEqual(len(updated_note["requestedServices"]), 0)
         self.assertEqual(len(updated_note["providedServices"]), 0)
-
-    # TODO: remove after cutover
-    def test_service_request_mutation_service_to_enum(self) -> None:
-        services = OrganizationService.objects.filter(organization__name="Better Angels")
-
-        for service in services:
-            response = self._create_note_service_request_fixture(
-                {
-                    "noteId": self.note["id"],
-                    "serviceId": service.pk,
-                    "serviceRequestType": "PROVIDED",
-                }
-            )
-
-            self.assertEqual(response["data"]["createNoteServiceRequest"]["service"]["id"], str(service.pk))
-            service_enum = next((choice for choice in ServiceEnum if choice.label == service.label))
-            self.assertEqual(response["data"]["createNoteServiceRequest"]["serviceEnum"], service_enum.name)
-
-    # TODO: remove after cutover
-    def test_service_request_mutation_enum_to_service(self) -> None:
-        sevice_enums = [e for e in ServiceEnum if e != ServiceEnum.OTHER]
-
-        for service_enum in sevice_enums:
-            response = self._create_note_service_request_fixture(
-                {
-                    "noteId": self.note["id"],
-                    "serviceEnum": service_enum.name,
-                    "serviceRequestType": "PROVIDED",
-                }
-            )
-
-            self.assertEqual(
-                response["data"]["createNoteServiceRequest"]["service"]["id"],
-                str(OrganizationService.objects.get(label=service_enum.label).pk),
-            )
-            self.assertEqual(response["data"]["createNoteServiceRequest"]["serviceEnum"], service_enum.name)
 
     @skip("not implemented")
     def test_create_note_mood_mutation(self) -> None:
