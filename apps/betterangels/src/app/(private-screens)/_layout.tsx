@@ -202,6 +202,12 @@ export default function PrivateLayout() {
         })}
       />
       <Stack.Screen
+        name="settings/team/index"
+        options={getDefaultStackNavOptions({
+          title: 'Select Default Team',
+        })}
+      />
+      <Stack.Screen
         name="tasks"
         options={getDefaultStackNavOptions({
           title: 'Tasks',
