@@ -86,7 +86,7 @@ class ServiceRequestType:
 class CreateServiceRequestInput:
     service_id: Optional[ID]
     status: auto
-    service_other: auto
+    service_other: Optional[str]
     client_profile: ID | None
 
 
@@ -101,7 +101,7 @@ class CreateNoteServiceRequestInput:
 @strawberry_django.input(models.ServiceRequest, partial=True)
 class UpdateServiceRequestInput:
     id: ID
-    service_other: auto
+    service_other: Optional[str]
     status: auto
     due_by: auto
 
