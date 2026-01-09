@@ -44,7 +44,7 @@ LOGIN_MUTATION = """
 """
 
 
-@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisNoteMutationTests(HmisNoteBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -204,6 +204,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         self.assertEqual(expected, note)
 
     def test_update_hmis_note_location_mutation(self) -> None:
+        self._setup_hmis_session()
         self._setup_location()
 
         hmis_note = baker.make(HmisNote, _fill_optional=True)
@@ -321,7 +322,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         self.assertEqual(hmis_note.requested_services.count(), 1)
 
 
-@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()

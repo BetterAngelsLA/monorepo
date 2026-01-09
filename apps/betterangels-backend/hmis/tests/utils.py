@@ -6,6 +6,7 @@ from common.tests.utils import GraphQLBaseTestCase
 class HmisClientProfileBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
+        self._setup_hmis_session()
 
         self.hmis_client_profile_fields = """
             id
@@ -93,6 +94,7 @@ class HmisClientProfileBaseTestCase(GraphQLBaseTestCase):
 class HmisNoteBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
+        self._setup_hmis_session()
 
         self.hmis_note_fields = """
             id
