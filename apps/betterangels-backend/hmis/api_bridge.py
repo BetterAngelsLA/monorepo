@@ -110,6 +110,7 @@ class HmisApiBridge:
 
         self.endpoint = HMIS_REST_ENDPOINT
         self.session_key = HMIS_SESSION_KEY_NAME
+        self.token_key = getattr(settings, "HMIS_TOKEN_KEY", None)
 
         token = self._get_auth_token()
         auth_header = {"Authorization": f"Bearer {token}"} if token else {}
@@ -139,37 +140,29 @@ class HmisApiBridge:
         self.session[HMIS_COOKIEJAR_SESSION_KEY] = self._cookiejar_to_dict(self.http.cookies)
         self.session.modified = True
 
-    def _fernet(self) -> Fernet:
-        key = getattr(settings, "HMIS_TOKEN_KEY", None)
-        if not key:
-            raise RuntimeError("HMIS_TOKEN_KEY is not configured")
-
+    def _fernet(self, key: str) -> Fernet:
         return Fernet(key)
 
     def _set_auth_token(self, token: str) -> None:
         """"""
+        if not self.token_key:
+            raise RuntimeError("HMIS_TOKEN_KEY is not configured")
+
         decoded = jwt.decode(token, options={"verify_signature": False})
         self.session.set_expiry(decoded["exp"] - decoded["iat"])
 
-        f = self._fernet()
+        f = self._fernet(self.token_key)
         self.session[self.session_key] = f.encrypt(token.encode("utf-8")).decode("utf-8")
         self.session.modified = True
 
     def _get_auth_token(self) -> Optional[str]:
         enc = self.session.get(self.session_key)
 
-        if not enc:
+        if not enc or not self.token_key:
             return None
 
-        try:
-            f = self._fernet()
-
-            return f.decrypt(enc.encode("utf-8")).decode("utf-8")
-
-        except (InvalidToken, ValueError):
-            self._clear_auth_token()
-
-            return None
+        f = self._fernet(self.token_key)
+        return f.decrypt(enc.encode("utf-8")).decode("utf-8")
 
     def _clear_auth_token(self) -> None:
         if self.session_key in self.session:
