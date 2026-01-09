@@ -161,8 +161,15 @@ class HmisApiBridge:
         if not enc or not self.token_key:
             return None
 
-        f = self._fernet(self.token_key)
-        return f.decrypt(enc.encode("utf-8")).decode("utf-8")
+        try:
+            f = self._fernet(self.token_key)
+
+            return f.decrypt(enc.encode("utf-8")).decode("utf-8")
+
+        except (InvalidToken, ValueError):
+            self._clear_auth_token()
+
+            return None
 
     def _clear_auth_token(self) -> None:
         if self.session_key in self.session:
