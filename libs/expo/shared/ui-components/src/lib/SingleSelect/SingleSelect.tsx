@@ -17,11 +17,13 @@ interface ISingleSelectProps extends TMarginProps {
   items: { displayValue?: string; value: string }[];
   required?: boolean;
   disabled?: boolean;
-  selectedValue?: string;
+  selectedValue?: string | null;
   selectNoneLabel?: string;
   allowSelectNone?: boolean;
   error?: string;
   maxRadioItems?: number;
+  modalTitle?: string;
+  placeholderAsTitle?: boolean;
 }
 
 export function SingleSelect(props: ISingleSelectProps) {
@@ -35,6 +37,8 @@ export function SingleSelect(props: ISingleSelectProps) {
     selectedValue,
     error,
     maxRadioItems = 3,
+    modalTitle,
+    placeholderAsTitle,
     ...rest
   } = props;
 
@@ -44,6 +48,8 @@ export function SingleSelect(props: ISingleSelectProps) {
   if (asSelect) {
     return (
       <Picker
+        placeholderAsTitle={placeholderAsTitle}
+        modalTitle={modalTitle}
         error={error}
         label={label}
         required={required}
