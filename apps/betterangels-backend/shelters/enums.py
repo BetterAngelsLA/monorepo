@@ -143,7 +143,7 @@ class EntryRequirementChoices(models.TextChoices):
 
 
 # Ecosystem Information
-CITY_COUNCIL_DISTRICT_CHOICES = [(i, str(i)) for i in range(1, 16)]
+CITY_COUNCIL_DISTRICT_CHOICES = [(0, "Unincorporated")] + [(i, str(i)) for i in range(1, 16)]
 SUPERVISORIAL_DISTRICT_CHOICES = [(i, str(i)) for i in range(1, 6)]
 
 

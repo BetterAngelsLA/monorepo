@@ -36,11 +36,15 @@ export default function EcosystemInfo({
           )}
         />
 
-        {!!shelter.cityCouncilDistrict && (
-          <div className="flex items-center gap-2">
-            <strong>LACD:</strong> {shelter.cityCouncilDistrict}
-          </div>
-        )}
+        {shelter.cityCouncilDistrict !== null &&
+          shelter.cityCouncilDistrict !== undefined && (
+            <div className="flex items-center gap-2">
+              <strong>LACD:</strong>{' '}
+              {shelter.cityCouncilDistrict === 0
+                ? 'Unincorporated'
+                : shelter.cityCouncilDistrict}
+            </div>
+          )}
 
         {!!shelter.supervisorialDistrict && (
           <div className="flex items-center gap-2">
