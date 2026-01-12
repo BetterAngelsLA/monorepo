@@ -269,3 +269,16 @@ export const enumDisplayFunderChoices: { [key in FunderChoices]: string } = {
   [FunderChoices.Other]: 'Other',
   [FunderChoices.Private]: 'Private',
 };
+
+/**
+ * Maps city council district number to display string.
+ * Value 0 represents "Unincorporated" per CITY_COUNCIL_DISTRICT_CHOICES.
+ */
+export function formatCityCouncilDistrict(
+  district: number | null | undefined
+): string {
+  if (district == null) {
+    return '';
+  }
+  return district === 0 ? 'Unincorporated' : String(district);
+}
