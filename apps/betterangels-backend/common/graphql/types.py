@@ -93,14 +93,14 @@ SCALAR_MAP: Mapping[object, ScalarDefinition] = {
 @strawberry_django.type(PhoneNumber)
 class PhoneNumberType:
     id: ID
-    number: Optional[PhoneNumberScalar]  # type: ignore
+    number: Optional[PhoneNumberScalar]
     is_primary: Optional[bool]
 
 
 @strawberry_django.input(PhoneNumber)
 class PhoneNumberInput:
     id: Optional[ID]
-    number: Optional[PhoneNumberScalar]  # type: ignore
+    number: Optional[PhoneNumberScalar]
     is_primary: Optional[bool] = False
 
 
