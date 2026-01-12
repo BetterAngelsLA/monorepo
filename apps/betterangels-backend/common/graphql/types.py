@@ -83,7 +83,7 @@ SCALAR_MAP: Mapping[object, ScalarDefinition] = {
         parse_value=_parse_non_blank_string,
     ),
     PhoneNumberScalar: strawberry.scalar(
-        name="PhoneNumberScalar",
+        name="PhoneNumber",
         serialize=lambda v: _serialize_phone_number(v) if isinstance(v, DjangoPhoneNumber) else "",
         parse_value=lambda v: _parse_phone_number(v.strip()) if v and v.strip() else None,
     ),
