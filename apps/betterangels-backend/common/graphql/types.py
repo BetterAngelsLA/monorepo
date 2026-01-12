@@ -59,41 +59,34 @@ def _parse_non_blank_string(v: str) -> Optional[str]:
     return v.strip() if v and v.strip() else None
 
 
-# Define scalar types using NewType and scalar configurations for StrawberryConfig.scalar_map
+# Custom scalar types
 LatitudeScalar = NewType("LatitudeScalar", float)
-LatitudeScalarConfig = strawberry.scalar(
-    name="LatitudeScalar",
-    serialize=lambda v: v,
-    parse_value=_parse_latitude,
-)
-
 LongitudeScalar = NewType("LongitudeScalar", float)
-LongitudeScalarConfig = strawberry.scalar(
-    name="LongitudeScalar",
-    serialize=lambda v: v,
-    parse_value=_parse_longitude,
-)
-
 NonBlankString = NewType("NonBlankString", str)
-NonBlankStringConfig = strawberry.scalar(
-    name="NonBlankString",
-    serialize=lambda v: v,
-    parse_value=_parse_non_blank_string,
-)
-
 PhoneNumberScalar = NewType("PhoneNumberScalar", str)
-PhoneNumberScalarConfig = strawberry.scalar(
-    name="PhoneNumberScalar",
-    serialize=lambda v: _serialize_phone_number(v) if isinstance(v, DjangoPhoneNumber) else "",
-    parse_value=lambda v: _parse_phone_number(v.strip()) if v and v.strip() else None,
-)
 
 # Scalar configurations for StrawberryConfig.scalar_map
 SCALAR_MAP: Mapping[object, ScalarDefinition] = {
-    LatitudeScalar: LatitudeScalarConfig,
-    LongitudeScalar: LongitudeScalarConfig,
-    NonBlankString: NonBlankStringConfig,
-    PhoneNumberScalar: PhoneNumberScalarConfig,
+    LatitudeScalar: strawberry.scalar(
+        name="LatitudeScalar",
+        serialize=lambda v: v,
+        parse_value=_parse_latitude,
+    ),
+    LongitudeScalar: strawberry.scalar(
+        name="LongitudeScalar",
+        serialize=lambda v: v,
+        parse_value=_parse_longitude,
+    ),
+    NonBlankString: strawberry.scalar(
+        name="NonBlankString",
+        serialize=lambda v: v,
+        parse_value=_parse_non_blank_string,
+    ),
+    PhoneNumberScalar: strawberry.scalar(
+        name="PhoneNumberScalar",
+        serialize=lambda v: _serialize_phone_number(v) if isinstance(v, DjangoPhoneNumber) else "",
+        parse_value=lambda v: _parse_phone_number(v.strip()) if v and v.strip() else None,
+    ),
 }
 
 
