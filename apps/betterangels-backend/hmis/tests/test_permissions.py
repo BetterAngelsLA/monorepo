@@ -136,6 +136,7 @@ class HmisClientProfilePermissionTestCase(HmisClientProfileBaseTestCase):
         )
 
 
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisNotePermissionTestCase(HmisNoteBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
