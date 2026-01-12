@@ -271,6 +271,12 @@ export const enumDisplayFunderChoices: { [key in FunderChoices]: string } = {
 };
 
 /**
+ * Special value for city council district representing unincorporated areas.
+ * Must match CITY_COUNCIL_DISTRICT_CHOICES in apps/betterangels-backend/shelters/enums.py
+ */
+export const CITY_COUNCIL_DISTRICT_UNINCORPORATED = 0;
+
+/**
  * Maps city council district number to display string.
  * Value 0 represents "Unincorporated" per CITY_COUNCIL_DISTRICT_CHOICES.
  */
@@ -280,5 +286,7 @@ export function formatCityCouncilDistrict(
   if (district == null) {
     return '';
   }
-  return district === 0 ? 'Unincorporated' : String(district);
+  return district === CITY_COUNCIL_DISTRICT_UNINCORPORATED
+    ? 'Unincorporated'
+    : String(district);
 }
