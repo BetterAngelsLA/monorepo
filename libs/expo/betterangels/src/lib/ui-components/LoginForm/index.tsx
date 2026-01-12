@@ -1,16 +1,24 @@
 import { useApiConfig } from '@monorepo/expo/shared/clients';
-import { Colors, Regex } from '@monorepo/expo/shared/static';
+import { Colors, Regex, Spacings, Radiuses } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   Button,
   Loading,
 } from '@monorepo/expo/shared/ui-components';
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import useUser from '../../hooks/user/useUser';
+import { useRememberedEmail } from '../../hooks/useRememberEmail/useRememberEmail';
 
 export default function LoginForm() {
-  const [email, setEmail] = useState('');
+  const {
+    email,
+    setEmail,
+    rememberMe,
+    setRememberMe,
+    persistOnSuccessfulSignIn,
+  } = useRememberedEmail('non-hmis.email');
+
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'initial' | 'otp'>('initial');
@@ -76,6 +84,7 @@ export default function LoginForm() {
       const data = await res.json();
 
       if (res.ok && data?.meta?.is_authenticated) {
+        await persistOnSuccessfulSignIn(email);
         await refetchUser();
       } else {
         handleError('Invalid code. Please try again.');
@@ -86,7 +95,7 @@ export default function LoginForm() {
     } finally {
       setConfirming(false);
     }
-  }, [otp, fetchClient, refetchUser]);
+  }, [otp, email, fetchClient, refetchUser, persistOnSuccessfulSignIn]);
 
   const handlePasswordLogin = useCallback(async () => {
     setLoading(true);
@@ -165,6 +174,28 @@ export default function LoginForm() {
               (isPasswordLogin && !password)
             }
           />
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.rememberRow,
+              pressed && { opacity: 0.7 },
+            ]}
+            onPress={() => setRememberMe((prev) => !prev)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: rememberMe }}
+            hitSlop={8}
+          >
+            <View
+              style={[
+                styles.checkboxBox,
+                rememberMe && styles.checkboxBoxChecked,
+              ]}
+            >
+              {rememberMe && <Text style={styles.checkboxTick}>✓</Text>}
+            </View>
+
+            <Text style={styles.rememberLabel}>Remember me</Text>
+          </Pressable>
         </>
       )}
 
@@ -193,7 +224,22 @@ export default function LoginForm() {
 
           <Button
             mt="md"
-            mb="xs"
+            height="lg"
+            mb="md"
+            borderRadius={50}
+            size="full"
+            variant="primary"
+            accessibilityHint="Confirm OTP and sign in"
+            title="Confirm OTP"
+            icon={
+              confirming ? <Loading size="small" color="white" /> : undefined
+            }
+            onPress={handleConfirmCode}
+            disabled={confirming || !otp.trim()}
+          />
+
+          <Button
+            mt="xl"
             height="lg"
             borderRadius={50}
             size="full"
@@ -206,21 +252,6 @@ export default function LoginForm() {
             onPress={handleSendCode}
             disabled={sendingCode}
           />
-
-          <Button
-            mt="md"
-            height="lg"
-            borderRadius={50}
-            size="full"
-            variant="primary"
-            accessibilityHint="Confirm OTP and sign in"
-            title="Confirm OTP"
-            icon={
-              confirming ? <Loading size="small" color="white" /> : undefined
-            }
-            onPress={handleConfirmCode}
-            disabled={confirming || !otp.trim()}
-          />
         </>
       )}
     </View>
@@ -229,11 +260,52 @@ export default function LoginForm() {
 
 const styles = StyleSheet.create({
   container: { width: '100%' },
-  error: { color: Colors.ERROR, marginTop: 10 },
+
+  error: {
+    color: Colors.ERROR,
+    marginTop: 10,
+  },
+
   info: {
     color: '#555',
     marginTop: 4,
     marginBottom: 10,
     textAlign: 'center',
+  },
+
+  rememberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 45,
+    marginBottom: 8,
+    alignSelf: 'flex-start',
+  },
+
+  checkboxBox: {
+    width: Spacings.sm,
+    height: Spacings.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: Radiuses.xxxs,
+    borderColor: Colors.NEUTRAL_LIGHT,
+  },
+
+  checkboxBoxChecked: {
+    borderColor: Colors.PRIMARY_EXTRA_DARK,
+    backgroundColor: Colors.PRIMARY_EXTRA_DARK,
+  },
+
+  checkboxTick: {
+    color: Colors.WHITE,
+    position: 'absolute',
+  },
+
+  rememberLabel: {
+    marginLeft: 12,
+    fontSize: 14.5,
+    color: Colors.PRIMARY_EXTRA_DARK,
+    fontFamily: 'Poppins',
+    fontWeight: 400
   },
 });

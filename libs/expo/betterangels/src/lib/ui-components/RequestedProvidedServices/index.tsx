@@ -3,6 +3,7 @@ import { FieldCard, Pill } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
 import { ServiceRequestTypeEnum, ViewNoteQuery } from '../../apollo';
+import { normalizeService } from '../../helpers';
 import { useModalScreen } from '../../providers';
 import { enumDisplayServiceType } from '../../static';
 import ServicesModal from './ServicesModal';
@@ -33,6 +34,9 @@ export default function RequestedProvidedServices(
     return null;
   }
 
+  const normalizedServiceRequests =
+    initialServiceRequests?.map(normalizeService) ?? [];
+
   return (
     <FieldCard
       scrollRef={scrollRef}
@@ -50,7 +54,7 @@ export default function RequestedProvidedServices(
                 variant={
                   type === ServiceRequestTypeEnum.Provided
                     ? 'success'
-                    : 'primary'
+                    : 'warning'
                 }
                 key={index}
                 label={item.service?.label || ''}
@@ -67,12 +71,13 @@ export default function RequestedProvidedServices(
         showModalScreen({
           presentation: 'fullScreenModal',
           hideHeader: true,
-          content: (
+          renderContent: ({ close }) => (
             <ServicesModal
               noteId={noteId}
               type={type}
-              initialServiceRequests={initialServiceRequests}
+              initialServiceRequests={normalizedServiceRequests}
               refetch={refetch}
+              close={close}
             />
           ),
         })

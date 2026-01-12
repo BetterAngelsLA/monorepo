@@ -8,18 +8,22 @@ import requests
 from betterangels_backend import settings
 from common.models import Location
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
-from django.db import models
+from django.core.exceptions import FieldDoesNotExist, ValidationError
+from django.core.files.base import ContentFile
+from django.db import models, transaction
+from django.db.models import F, OuterRef, QuerySet, Subquery
+from django.db.models.functions import Cast, JSONObject
 from django.forms import BaseFormSet, TimeInput
-from django.http import HttpRequest
-from django.urls import reverse
+from django.http import HttpRequest, HttpResponseRedirect
+from django.shortcuts import redirect
+from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django_choices_field import TextChoicesField
+from django.utils.translation import gettext_lazy as _
 from django_select2.forms import Select2MultipleWidget
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
@@ -84,7 +88,7 @@ User = get_user_model()
 
 
 class ShelterForm(forms.ModelForm):
-    template_name = "admin/shelters/change_form.html"  # Specify your custom template path
+    template_name = "admin/shelters/shelter/change_form.html"
 
     clear_hero_image = forms.BooleanField(
         required=False,
@@ -398,7 +402,7 @@ class ShelterForm(forms.ModelForm):
             return []
 
         # Retrieve existing objects and their names
-        existing_objects = list(model_class.objects.filter(name__in=choices))  # type: ignore[attr-defined]
+        existing_objects: list[T] = list(model_class.objects.filter(name__in=choices))  # type: ignore[attr-defined]
         existing_entries = {str(obj) for obj in existing_objects}
 
         # Create missing objects
@@ -599,16 +603,28 @@ class ShelterResource(resources.ModelResource):
             self.skip_or_raise(row, "location")
 
     def process_many_to_many_import(self, row: Any, rowInDict: dict, column: str) -> None:
+        """Process many-to-many imports with dynamic field lookup."""
         fieldModel = cast(Type[models.Model], Shelter._meta.get_field(column).related_model)
-        fieldModelChoices = cast(TextChoicesField, fieldModel._meta.get_field("name")).choices
+
+        try:
+            name_field = fieldModel._meta.get_field("name")  # type: ignore
+        except FieldDoesNotExist:
+            self.skip_or_raise(row, column)
+            return
+
+        field_choices = name_field.choices  # type: ignore
         columnSeparateVals = [v.strip() for v in rowInDict[column].split(",")]
-        row_vals_choices = {j: i for i, j in fieldModelChoices}  # type: ignore
+        # Build reverse mapping from choice display to choice value
+        row_vals_choices: dict = {}
+        if field_choices:
+            for choice_value, choice_display in field_choices:
+                row_vals_choices[choice_display] = choice_value
         for i, indVal in enumerate(columnSeparateVals):
             try:
                 if indVal in row_vals_choices:
                     if row_vals_choices[indVal] == "other" and not rowInDict[f"{column}_other"]:
                         raise ValueError
-                    brand_new_obj, createdNewObjectInModel = fieldModel.objects.get_or_create(  # type: ignore
+                    brand_new_obj, createdNewObjectInModel = fieldModel.objects.get_or_create(  # type: ignore[attr-defined]
                         name=row_vals_choices[indVal]
                     )
                     columnSeparateVals[i] = row_vals_choices[indVal]
@@ -701,44 +717,7 @@ class ShelterResource(resources.ModelResource):
 @admin.register(Shelter)
 class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
-
-    def _get_selected_hero(self, formsets: list[BaseFormSet]) -> Optional[Union[Type[models.Model], models.Model]]:
-        return next(
-            (
-                f.instance
-                for fs in formsets
-                for f in fs.forms
-                if f.cleaned_data and not f.cleaned_data.get("DELETE") and f.cleaned_data.get("make_hero_image")
-            ),
-            None,
-        )
-
-    def save_related(
-        self,
-        request: HttpRequest,
-        form: ShelterForm,
-        formsets: list[BaseFormSet],
-        change: bool,
-    ) -> None:
-        super().save_related(request, form, formsets, change)
-
-        if form.cleaned_data.get("clear_hero_image"):
-            form.instance.hero_image_content_type = None
-            form.instance.hero_image_object_id = None
-            form.instance.save()
-
-        if hero := self._get_selected_hero(formsets):
-            ct = ContentType.objects.get_for_model(hero)
-            form.instance.hero_image_content_type = ct
-            form.instance.hero_image_object_id = hero.pk
-            form.instance.save()
-
-    @admin.display(description="Current Hero Image")
-    def display_hero_image(self, obj: Shelter) -> str:
-        if obj.hero_image and obj.hero_image.file:
-            return mark_safe(f'<img src="{obj.hero_image.file.url}" style="max-height: 200px;" />')
-
-        return "No hero image selected"
+    list_select_related = ("organization",)
 
     inlines = [ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
     fieldsets = (
@@ -923,6 +902,17 @@ class ShelterAdmin(ImportExportModelAdmin):
     search_fields = ("name", "organization__name", "description", "subjective_review")
     resource_class = ShelterResource
 
+    def _get_selected_hero(self, formsets: list[BaseFormSet]) -> Optional[Union[Type[models.Model], models.Model]]:
+        return next(
+            (
+                f.instance
+                for fs in formsets
+                for f in fs.forms
+                if f.cleaned_data and not f.cleaned_data.get("DELETE") and f.cleaned_data.get("make_hero_image")
+            ),
+            None,
+        )
+
     def _get_m2m_permissions(self, action: str = "change") -> dict[str, str]:
         """
         Generates a dict of permission names by related_name key for all ManyToManyFields on the Shelter model.
@@ -936,6 +926,18 @@ class ShelterAdmin(ImportExportModelAdmin):
                 permissions_map[field.name] = f"shelters.{permission_codename}"
 
         return permissions_map
+
+    def _create_log_entries(self, user_pk: int, rows: dict) -> None:
+        logentry_map = {
+            RowResult.IMPORT_TYPE_NEW: ADDITION,
+            RowResult.IMPORT_TYPE_UPDATE: CHANGE,
+            RowResult.IMPORT_TYPE_DELETE: DELETION,
+        }
+        for import_type, _instances in rows.items():
+            if import_type not in logentry_map:
+                continue
+            action_flag = logentry_map[import_type]
+            self._create_log_entry(user_pk, rows[import_type], import_type, action_flag)
 
     def get_readonly_fields(
         self, request: HttpRequest, obj: Optional[Shelter] = None
@@ -954,34 +956,156 @@ class ShelterAdmin(ImportExportModelAdmin):
 
         return readonly_fields
 
-    def _create_log_entries(self, user_pk, rows):  # type: ignore
-        logentry_map = {
-            RowResult.IMPORT_TYPE_NEW: ADDITION,
-            RowResult.IMPORT_TYPE_UPDATE: CHANGE,
-            RowResult.IMPORT_TYPE_DELETE: DELETION,
-        }
-        for import_type, _instances in rows.items():
-            if import_type not in logentry_map:
-                continue
-            action_flag = logentry_map[import_type]
-            self._create_log_entry(user_pk, rows[import_type], import_type, action_flag)
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Shelter]:
+        qs: QuerySet[Shelter] = super().get_queryset(request)
 
-    def updated_by(self, obj: Shelter) -> str:
-        last_event = (
-            MiddlewareEvents.objects.filter(
-                pgh_obj_id=obj.id,
+        # Limit events to just the objects in *this* queryset (admin page w/ filters)
+        # This uses pghistory's optimized aggregator instead of scanning all events.
+        scoped_events = (
+            MiddlewareEvents.objects.tracks(qs)
+            .exclude(user__isnull=True)
+            .order_by("pgh_obj_id", "-pgh_created_at")
+            .distinct("pgh_obj_id")
+            .annotate(
+                obj=JSONObject(
+                    user_id=F("user_id"),
+                    created=F("pgh_created_at"),
+                    first=F("user__first_name"),
+                    last=F("user__last_name"),
+                    username=F("user__username"),
+                )
             )
-            .select_related("user")
-            .order_by("-pgh_created_at")
-            .first()
         )
 
-        if last_event and last_event.user:
-            user_admin_url = reverse(
-                f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[last_event.user.id]
+        return qs.annotate(
+            last_event=Subquery(
+                scoped_events.filter(pgh_obj_id=Cast(OuterRef("pk"), output_field=models.TextField())).values("obj")[:1]
             )
-            return format_html(
-                '<a href="{}">{}</a>', user_admin_url, last_event.user.full_name or last_event.user.username
-            )
+        )
 
-        return "No updates yet"
+    def save_related(
+        self,
+        request: HttpRequest,
+        form: ShelterForm,
+        formsets: list[BaseFormSet],
+        change: bool,
+    ) -> None:
+        super().save_related(request, form, formsets, change)
+
+        if form.cleaned_data.get("clear_hero_image"):
+            form.instance.hero_image_content_type = None
+            form.instance.hero_image_object_id = None
+            form.instance.save()
+
+        if hero := self._get_selected_hero(formsets):
+            ct = ContentType.objects.get_for_model(hero)
+            form.instance.hero_image_content_type = ct
+            form.instance.hero_image_object_id = hero.pk
+            form.instance.save()
+
+    @admin.display(description="Current Hero Image")
+    def display_hero_image(self, obj: Shelter) -> str:
+        if obj.hero_image and obj.hero_image.file:
+            return mark_safe(f'<img src="{obj.hero_image.file.url}" style="max-height: 200px;" />')
+
+        return "No hero image selected"
+
+    def updated_by(self, obj: Shelter) -> str:
+        data = getattr(obj, "last_event", None) or {}
+        uid = data.get("user_id")
+        if not uid:
+            return "No updates yet"
+        name = f'{(data.get("first") or "").strip()} {(data.get("last") or "").strip()}'.strip()
+        label = name or (data.get("username") or f"User {uid}")
+        url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
+        return format_html('<a href="{}">{}</a>', url, label)
+
+    def get_urls(self) -> list[Any]:
+        urls = super().get_urls()
+        custom_urls: list[Any] = [
+            path(
+                "<path:object_id>/clone/",
+                self.admin_site.admin_view(self.clone_view),
+                name="shelters_shelter_clone",
+            ),
+        ]
+        return cast(list[Any], custom_urls + urls)
+
+    def _copy_file_field(self, original_file_field: Any) -> Optional[ContentFile]:
+        """Return a duplicated ContentFile with '_copy' suffix, or None if source is empty."""
+        if not original_file_field or not original_file_field.name:
+            return None
+
+        original_file = original_file_field.file
+        original_name = original_file_field.name
+
+        name_parts = original_name.rsplit(".", 1)
+        new_name = f"{name_parts[0]}_copy.{name_parts[1]}" if len(name_parts) == 2 else f"{original_name}_copy"
+
+        original_file.seek(0)
+        return ContentFile(original_file.read(), name=new_name)
+
+    def _clone_objects_with_files(
+        self, queryset: QuerySet[Union[ExteriorPhoto, InteriorPhoto, Video]], copy: Shelter
+    ) -> None:
+        """Clone objects with shelter and file fields, duplicating files."""
+        for obj in queryset:
+            obj.pk = None
+            obj.shelter = copy
+            content_file = self._copy_file_field(obj.file)
+            if content_file:
+                obj.file = content_file
+            obj.save()
+
+    def _clone_related_photos_and_videos(self, original: Shelter, copy: Shelter) -> None:
+        """Clone photos and videos with file duplication and metadata preservation."""
+        for model_class in (ExteriorPhoto, InteriorPhoto, Video):
+            self._clone_objects_with_files(model_class.objects.filter(shelter=original), copy)
+
+    def _clone_related_contacts(self, original: Shelter, copy: Shelter) -> None:
+        """Clone additional contacts."""
+        for contact in ContactInfo.objects.filter(shelter=original):
+            contact.pk = None
+            contact.shelter = copy
+            contact.save()
+
+    def _clone_many_to_many_fields(self, original: Shelter, copy: Shelter) -> None:
+        """Copy all many-to-many relationships."""
+        for field in Shelter._meta.get_fields():
+            if isinstance(field, models.ManyToManyField):
+                getattr(copy, field.name).set(getattr(original, field.name).all())
+
+    def clone_view(self, request: HttpRequest, object_id: str) -> HttpResponseRedirect:
+        """Clone a shelter instance with all related objects."""
+        shelter = self.get_object(request, object_id)
+        if shelter is None or not self.has_change_permission(request, shelter):
+            msg = (
+                f'{self.opts.verbose_name} with ID "{object_id}" is unavailable or you do not have '
+                "permission to access it."
+            )
+            self.message_user(request, msg, messages.WARNING)
+            return HttpResponseRedirect(reverse("admin:index", current_app=self.admin_site.name))
+
+        if not self.has_add_permission(request):
+            msg = (
+                f"You do not have permission to add {self.opts.verbose_name.lower()} instances. "
+                "Cloning requires add permission."
+            )
+            self.message_user(request, msg, messages.WARNING)
+            return HttpResponseRedirect(reverse("admin:index", current_app=self.admin_site.name))
+
+        with transaction.atomic():
+            # Create a copy of the shelter
+            shelter_copy = Shelter.objects.get(pk=shelter.pk)
+            shelter_copy.pk = None
+            shelter_copy.name = f"{shelter.name} (Copy)"
+            shelter_copy.status = StatusChoices.PENDING
+            shelter_copy.save()
+
+            # Clone all related data
+            self._clone_many_to_many_fields(shelter, shelter_copy)
+            self._clone_related_contacts(shelter, shelter_copy)
+            self._clone_related_photos_and_videos(shelter, shelter_copy)
+
+        messages.success(request, _("Shelter '%s' has been cloned successfully.") % shelter.name)
+        return redirect("admin:shelters_shelter_change", shelter_copy.pk)

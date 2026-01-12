@@ -17,9 +17,9 @@ license = "Proprietary"
 include = "betterangels_backend"
 
 [tool.poetry.dependencies]
-python = "3.13.5"
+python = "3.14.2"
 psycopg = "^3.3.2"
-django = "^5.2.7"
+django = "^6.0.1"
 django-environ = "^0.12.0"
 gunicorn = { extras = ["gevent"], version = "^23.0.0" }
 django-extensions = "^4.1"
@@ -54,6 +54,7 @@ djangorestframework = "^3.16.0"
 cryptography = "^46.0.3"
 django-admin-sortable2 = "^2.3"
 pyjwt = "^2.10.1"
+django-cleanup = "^9.0.0"
 
 [build-system]
 requires = ["poetry-core"]

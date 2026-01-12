@@ -9,6 +9,7 @@ from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
 from django.db.models import Prefetch, Q, QuerySet
+from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
     CityChoices,
@@ -30,35 +31,10 @@ from shelters.enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
-from shelters.models import (
-    SPA,
-    Accessibility,
-    City,
-    ContactInfo,
-    Demographic,
-    EntryRequirement,
-    ExteriorPhoto,
-    Funder,
-    GeneralService,
-    HealthService,
-    ImmediateNeed,
-    InteriorPhoto,
-    Parking,
-    Pet,
-    RoomStyle,
-    Shelter,
-    ShelterProgram,
-)
-from shelters.models import ShelterType as ShelterKind
-from shelters.models import (
-    SpecialSituationRestriction,
-    Storage,
-    TrainingService,
-)
 from strawberry import ID, asdict, auto
 
 
-@strawberry_django.type(ContactInfo)
+@strawberry_django.type(models.ContactInfo)
 class ContactInfoType:
     id: ID
     contact_name: auto
@@ -79,87 +55,87 @@ class ShelterPhotoType:
     file: strawberry_django.DjangoFileType
 
 
-@strawberry_django.type(Demographic)
+@strawberry_django.type(models.Demographic)
 class DemographicType:
     name: Optional[DemographicChoices]
 
 
-@strawberry_django.type(SpecialSituationRestriction)
+@strawberry_django.type(models.SpecialSituationRestriction)
 class SpecialSituationRestrictionType:
     name: Optional[SpecialSituationRestrictionChoices]
 
 
-@strawberry_django.type(ShelterKind)
+@strawberry_django.type(models.ShelterType)
 class ShelterTypeType:
     name: Optional[ShelterTypeChoices]
 
 
-@strawberry_django.type(RoomStyle)
+@strawberry_django.type(models.RoomStyle)
 class RoomStyleType:
     name: Optional[RoomStyleChoices]
 
 
-@strawberry_django.type(Accessibility)
+@strawberry_django.type(models.Accessibility)
 class AccessibilityType:
     name: Optional[AccessibilityChoices]
 
 
-@strawberry_django.type(Storage)
+@strawberry_django.type(models.Storage)
 class StorageType:
     name: Optional[StorageChoices]
 
 
-@strawberry_django.type(Pet)
+@strawberry_django.type(models.Pet)
 class PetType:
     name: Optional[PetChoices]
 
 
-@strawberry_django.type(Parking)
+@strawberry_django.type(models.Parking)
 class ParkingType:
     name: Optional[ParkingChoices]
 
 
-@strawberry_django.type(ImmediateNeed)
+@strawberry_django.type(models.ImmediateNeed)
 class ImmediateNeedType:
     name: Optional[ImmediateNeedChoices]
 
 
-@strawberry_django.type(GeneralService)
+@strawberry_django.type(models.GeneralService)
 class GeneralServiceType:
     name: Optional[GeneralServiceChoices]
 
 
-@strawberry_django.type(HealthService)
+@strawberry_django.type(models.HealthService)
 class HealthServiceType:
     name: Optional[HealthServiceChoices]
 
 
-@strawberry_django.type(TrainingService)
+@strawberry_django.type(models.TrainingService)
 class TrainingServiceType:
     name: Optional[TrainingServiceChoices]
 
 
-@strawberry_django.type(EntryRequirement)
+@strawberry_django.type(models.EntryRequirement)
 class EntryRequirementType:
     name: Optional[EntryRequirementChoices]
 
 
-@strawberry_django.type(City)
+@strawberry_django.type(models.City)
 class CityType:
     name: Optional[CityChoices]
 
 
-@strawberry_django.type(SPA)
+@strawberry_django.type(models.SPA)
 class SPAType:
     name: Optional[SPAChoices]
 
 
-@strawberry_django.type(ShelterProgram)
+@strawberry_django.type(models.ShelterProgram)
 class ShelterProgramType:
     name: Optional[ShelterProgramChoices]
 
 
-@strawberry_django.type(Funder)
+@strawberry_django.type(models.Funder)
 class FunderType:
     name: Optional[FunderChoices]
 
@@ -189,12 +165,12 @@ class ShelterPropertyInput:
     parking: Optional[List[ParkingChoices]] = None
 
 
-@strawberry_django.filters.filter(Shelter)
+@strawberry_django.filter_type(models.Shelter)
 class ShelterFilter:
     @strawberry_django.filter_field
     def properties(
         self, queryset: QuerySet, value: Optional[ShelterPropertyInput], prefix: str
-    ) -> Tuple[QuerySet[Shelter], Q]:
+    ) -> Tuple[QuerySet[models.Shelter], Q]:
         if value is None:
             return queryset, Q()
 
@@ -209,7 +185,7 @@ class ShelterFilter:
         queryset: QuerySet,
         value: Optional[MapBoundsInput],
         prefix: str,
-    ) -> Tuple[QuerySet[Shelter], Q]:
+    ) -> Tuple[QuerySet[models.Shelter], Q]:
         if not value:
             return queryset, Q()
 
@@ -226,7 +202,7 @@ class ShelterFilter:
     @strawberry_django.filter_field
     def geolocation(
         self, queryset: QuerySet, value: Optional[GeolocationInput], prefix: str
-    ) -> Tuple[QuerySet[Shelter], Q]:
+    ) -> Tuple[QuerySet[models.Shelter], Q]:
         if value is None:
             return queryset, Q()
 
@@ -240,7 +216,7 @@ class ShelterFilter:
         return queryset, Q()
 
 
-@strawberry_django.ordering.order(Shelter)
+@strawberry_django.order_type(models.Shelter, one_of=False)
 class ShelterOrder:
     name: auto
 
@@ -251,7 +227,7 @@ class TimeRange:
     end: Optional[datetime]
 
 
-@strawberry_django.type(Shelter, filters=ShelterFilter, order=ShelterOrder)  # type: ignore
+@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
 class ShelterType:
     id: ID
     accessibility: List[AccessibilityType]
@@ -313,17 +289,17 @@ class ShelterType:
         prefetch_related=[
             lambda x: Prefetch(
                 "exterior_photos",
-                queryset=ExteriorPhoto.objects.filter(),
+                queryset=models.ExteriorPhoto.objects.filter(),
                 to_attr="_exterior_photos",
             ),
             lambda x: Prefetch(
                 "interior_photos",
-                queryset=InteriorPhoto.objects.filter(),
+                queryset=models.InteriorPhoto.objects.filter(),
                 to_attr="_interior_photos",
             ),
         ],
     )
-    def hero_image(self, root: Shelter) -> Optional[str]:
+    def hero_image(self, root: models.Shelter) -> Optional[str]:
         if self.hero_image:
             return str(self.hero_image.file.url)
 
@@ -335,14 +311,14 @@ class ShelterType:
         return str(photo.file.url) if photo else None
 
     @strawberry_django.field
-    def distance_in_miles(self, root: Shelter) -> Optional[float]:
+    def distance_in_miles(self, root: models.Shelter) -> Optional[float]:
         if distance := getattr(root, "distance", None):
             return float(distance.mi)
 
         return None
 
     @strawberry_django.field
-    def operating_hours(self, root: Shelter) -> Optional[List[Optional[TimeRange]]]:
+    def operating_hours(self, root: models.Shelter) -> Optional[List[Optional[TimeRange]]]:
         ranges: List[Optional[TimeRange]] = []
         if root.operating_hours:
             for start, end in root.operating_hours:

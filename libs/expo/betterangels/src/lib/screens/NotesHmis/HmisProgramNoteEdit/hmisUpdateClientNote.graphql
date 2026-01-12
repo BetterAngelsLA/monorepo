@@ -1,0 +1,41 @@
+mutation UpdateHmisNote($data: UpdateHmisNoteInput!) {
+  updateHmisNote(data: $data) {
+    ... on HmisNoteType {
+      id
+      addedDate
+      lastUpdated
+      title
+      note
+      date
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
+      }
+      refClientProgram
+      hmisClientProfile {
+        id
+        firstName
+        lastName
+      }
+      createdBy {
+        id
+        firstName
+        lastName
+      }
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

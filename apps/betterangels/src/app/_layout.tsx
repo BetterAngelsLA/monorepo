@@ -2,12 +2,10 @@ import 'expo-dev-client';
 
 import {
   AppUpdatePrompt,
+  baApolloTypePolicies,
   BlockingScreenProvider,
-  cachePolicyRegistry,
   ErrorCrashView,
   FeatureControlProvider,
-  FeatureFlagControlled,
-  FeatureFlags,
   KeyboardToolbarProvider,
   ModalScreenProvider,
   NativePaperProvider,
@@ -45,7 +43,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <NativePaperProvider>
         <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-          <ApolloClientProvider policyConfig={cachePolicyRegistry}>
+          <ApolloClientProvider typePolicies={baApolloTypePolicies}>
             <FeatureControlProvider>
               <KeyboardProvider>
                 <KeyboardToolbarProvider>
@@ -53,15 +51,10 @@ export default function RootLayout() {
                     <BlockingScreenProvider>
                       <SnackbarProvider>
                         <ModalScreenProvider>
-                          <FeatureFlagControlled
-                            flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
-                          >
-                            <AppUpdatePrompt />
-                            <StatusBar
-                              style={Platform.OS === 'ios' ? 'light' : 'auto'}
-                            />
-                          </FeatureFlagControlled>
-                          {/* All Stack.Screens in AppRoutesStack */}
+                          <AppUpdatePrompt />
+                          <StatusBar
+                            style={Platform.OS === 'ios' ? 'light' : 'auto'}
+                          />
                           <AppRoutesStack />
                         </ModalScreenProvider>
                       </SnackbarProvider>

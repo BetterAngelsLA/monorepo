@@ -1,0 +1,59 @@
+query hmisClientProfile($id: ID!) {
+  hmisClientProfile(id: $id) {
+    ... on HmisClientProfileType {
+      id
+      hmisId
+      personalId
+      uniqueIdentifier
+      addedDate
+      lastUpdated
+
+      alias
+      birthDate
+
+      dobQuality
+      firstName
+      lastName
+      nameQuality
+      ssn1
+      ssn2
+      ssn3
+      ssnQuality
+
+      age
+      gender
+      genderIdentityText
+      nameMiddle
+      nameSuffix
+      raceEthnicity
+      additionalRaceEthnicityDetail
+      veteran
+
+      adaAccommodation
+      address
+      californiaId
+      email
+      eyeColor
+      hairColor
+      heightInInches
+      importantNotes
+      livingSituation
+      mailingAddress
+      maritalStatus
+      physicalDescription
+      placeOfBirth
+      preferredCommunication
+      preferredLanguage
+      pronouns
+      pronounsOther
+      residenceAddress
+      residenceGeolocation
+      spokenLanguages
+      phoneNumbers {
+        id
+        number
+        isPrimary
+      }
+    }
+  }
+}

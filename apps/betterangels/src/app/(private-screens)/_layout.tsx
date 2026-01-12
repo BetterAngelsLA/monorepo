@@ -147,6 +147,30 @@ export default function PrivateLayout() {
         options={getDefaultStackNavOptions()}
       />
       <Stack.Screen
+        name="notes-hmis/index"
+        options={getDefaultStackNavOptions({
+          title: 'Interactions',
+        })}
+      />
+      <Stack.Screen
+        name="notes-hmis/create/index"
+        options={getDefaultStackNavOptions({
+          title: 'Add Note',
+        })}
+      />
+      <Stack.Screen
+        name="notes-hmis/[id]/index"
+        options={getDefaultStackNavOptions({
+          title: 'Interaction',
+        })}
+      />
+      <Stack.Screen
+        name="notes-hmis/[id]/edit"
+        options={getDefaultStackNavOptions({
+          title: 'Edit Note',
+        })}
+      />
+      <Stack.Screen
         name="file/[id]"
         options={{
           headerTitleAlign: 'center',
@@ -175,6 +199,12 @@ export default function PrivateLayout() {
         name="settings/about/index"
         options={getDefaultStackNavOptions({
           title: 'About App',
+        })}
+      />
+      <Stack.Screen
+        name="settings/team/index"
+        options={getDefaultStackNavOptions({
+          title: 'Select Default Team',
         })}
       />
       <Stack.Screen

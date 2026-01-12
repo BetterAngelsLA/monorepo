@@ -28,7 +28,6 @@
     "expo-constants": "*",
     "expo-updates": "*",
     "newrelic-react-native-agent": "*",
-    "@react-native-cookies/cookies": "*",
     "react-native-maps": "*",
     "@teovilla/react-native-web-maps": "*",
     "@storybook/react-webpack5": "*",
@@ -92,7 +91,16 @@
     "@nx/rollup": "*",
     "@types/geojson": "*",
     "expo-crypto": "*",
-    "expo-image": "*"
+    "expo-image": "*",
+    "sanitize-html": "*",
+    "@graphql-typed-document-node/core": "*",
+    "fast-deep-equal": "*",
+    "@testing-library/react": "*",
+    "@jest/globals": "*",
+    "@expo/metro-config": "*",
+    "react-native-nitro-cookies": "*",
+    "react-native-mmkv": "*",
+    "jotai-family": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",

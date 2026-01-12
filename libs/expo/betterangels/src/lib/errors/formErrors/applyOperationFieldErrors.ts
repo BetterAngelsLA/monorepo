@@ -1,15 +1,16 @@
-type TOperationError = {
-  field?: string | null;
-  message: string;
-};
+import { FieldValues, Path, UseFormSetError } from 'react-hook-form';
+import { OperationMessage } from '../../apollo';
+import { TFieldError } from './types';
 
-export function applyOperationFieldErrors<T>(
-  errors: TOperationError[],
-  setError: (name: keyof T, error: { type: string; message: string }) => void
+export function applyOperationFieldErrors<T extends FieldValues>(
+  errors: TFieldError[] | OperationMessage[],
+  setError: UseFormSetError<T>
 ) {
   errors.forEach(({ field, message }) => {
-    if (field) {
-      setError(field as keyof T, { type: 'manual', message });
+    if (!field) {
+      return;
     }
+
+    setError(field as Path<T>, { type: 'manual', message });
   });
 }

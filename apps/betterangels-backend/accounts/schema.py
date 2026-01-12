@@ -1,5 +1,5 @@
 import uuid
-from typing import cast
+from typing import Optional, cast
 
 import strawberry
 import strawberry_django
@@ -26,10 +26,11 @@ from strawberry_django.utils.query import filter_for_user
 
 from .models import PermissionGroup, User
 from .types import (
-    AuthInput,
     AuthResponse,
     LoginInput,
+    OrganizationMemberOrdering,
     OrganizationMemberType,
+    OrganizationOrder,
     OrganizationType,
     OrgInvitationInput,
     UpdateUserInput,
@@ -72,7 +73,7 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(NotePermissions.ADD)],
     )
-    def caseworker_organizations(self) -> QuerySet[Organization]:
+    def caseworker_organizations(self, ordering: Optional[list[OrganizationOrder]] = None) -> QuerySet[Organization]:
         queryset: QuerySet[Organization] = Organization.objects.filter(
             permission_groups__name__icontains=GroupTemplateNames.CASEWORKER
         )
@@ -105,7 +106,9 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
-    def organization_members(self, info: Info, organization_id: str) -> QuerySet[User]:
+    def organization_members(
+        self, info: Info, organization_id: str, ordering: Optional[list[OrganizationMemberOrdering]] = None
+    ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
         try:
             organization = filter_for_user(
@@ -127,16 +130,6 @@ class Mutation:
 
     @strawberry.mutation
     def login(self, input: LoginInput) -> AuthResponse:
-        # The is a stub and logic is handled client-side by Apollo
-        return AuthResponse(status_code="")
-
-    @strawberry.mutation
-    def google_auth(self, input: AuthInput) -> AuthResponse:
-        # The is a stub and logic is handled client-side by Apollo
-        return AuthResponse(status_code="")
-
-    @strawberry.mutation
-    def apple_auth(self, input: AuthInput) -> AuthResponse:
         # The is a stub and logic is handled client-side by Apollo
         return AuthResponse(status_code="")
 

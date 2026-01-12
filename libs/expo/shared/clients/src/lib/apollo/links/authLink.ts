@@ -1,4 +1,4 @@
-import { setContext } from '@apollo/client/link/context';
+import { SetContextLink } from '@apollo/client/link/context';
 import { Platform } from 'react-native';
 import { CSRF_HEADER_NAME, getCSRFToken } from '../../common';
 
@@ -8,10 +8,13 @@ type TAuthLinkArgs = {
 };
 
 export function createAuthLink({ apiUrl, csrfUrl }: TAuthLinkArgs) {
-  return setContext(async (_, { headers = {} }) => {
+  return new SetContextLink(async (prevContext, _operation) => {
+    const { headers = {}, ...restContext } = prevContext || {};
+
     const token = await getCSRFToken(apiUrl, csrfUrl);
 
     return {
+      ...restContext,
       headers: {
         ...headers,
         ...(token ? { [CSRF_HEADER_NAME]: token } : {}),

@@ -17,20 +17,20 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 
 import {
+  CreateNoteServiceRequestDocument,
+  DeleteServiceRequestDocument,
   ServiceRequestTypeEnum,
-  useCreateNoteServiceRequestMutation,
-  useDeleteServiceRequestMutation,
 } from '../../apollo';
 import { useSnackbar } from '../../hooks';
-import { useModalScreen } from '../../providers';
 
 import MainScrollContainer from '../MainScrollContainer';
 import OtherCategory from './OtherCategory';
 import ServiceCheckbox from './ServiceCheckbox';
 
+import { useMutation, useQuery } from '@apollo/client/react';
 import {
+  ServiceCategoriesDocument,
   ServiceCategoriesQuery,
-  useServiceCategoriesQuery,
 } from './__generated__/services.generated';
 
 type ApiCategory =
@@ -58,14 +58,14 @@ interface IServicesModalProps {
     serviceOther?: string | null;
   }[];
   refetch: () => void;
+  close: () => void;
   type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
 }
 
 export default function ServicesModal(props: IServicesModalProps) {
-  const { initialServiceRequests, noteId, refetch, type } = props;
+  const { initialServiceRequests, noteId, refetch, type, close } = props;
 
-  const { data: availableCategories } = useServiceCategoriesQuery();
-  const { closeModalScreen } = useModalScreen();
+  const { data: availableCategories } = useQuery(ServiceCategoriesDocument);
   const { showSnackbar } = useSnackbar();
   const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
 
@@ -80,8 +80,8 @@ export default function ServicesModal(props: IServicesModalProps) {
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
 
-  const [deleteService] = useDeleteServiceRequestMutation();
-  const [createServiceRequest] = useCreateNoteServiceRequestMutation();
+  const [deleteService] = useMutation(DeleteServiceRequestDocument);
+  const [createServiceRequest] = useMutation(CreateNoteServiceRequestDocument);
 
   // ---------- Pure helpers (native sort + Remeda for map/filter/find) ----------
   const sortCategories = (arr: ApiCategory[]) =>
@@ -265,7 +265,7 @@ export default function ServicesModal(props: IServicesModalProps) {
       }
 
       refetch();
-      closeModalScreen();
+      close();
     } catch (e) {
       console.error('Error during service submission:', e);
       showSnackbar({
@@ -280,7 +280,7 @@ export default function ServicesModal(props: IServicesModalProps) {
     deleteService,
     noteId,
     refetch,
-    closeModalScreen,
+    close,
     serviceRequests,
     serviceRequestsOthers,
     type,
@@ -296,8 +296,8 @@ export default function ServicesModal(props: IServicesModalProps) {
 
   const closeModal = useCallback(() => {
     reset();
-    closeModalScreen();
-  }, [reset, closeModalScreen]);
+    close();
+  }, [reset, close]);
 
   // ---------- Bootstrap ----------
   useEffect(() => {

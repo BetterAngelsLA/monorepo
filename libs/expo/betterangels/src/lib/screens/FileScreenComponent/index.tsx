@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from '@apollo/client/react';
 import {
   Colors,
   MimeTypes,
@@ -25,9 +26,9 @@ import { enumDisplayDocumentType } from '../../static/enumDisplayMapping';
 import { FileThumbnail, MainScrollContainer } from '../../ui-components';
 import {
   ClientProfileDocument,
-  useUpdateClientDocumentMutation,
+  UpdateClientDocumentDocument,
 } from '../Client/__generated__/Client.generated';
-import { useClientDocumentQuery } from './__generated__/Document.generated';
+import { ClientDocumentDocument } from './__generated__/Document.generated';
 import { fileDisplaySizeMap } from './fileDisplaySizeMap';
 
 type TFileView = {
@@ -48,18 +49,23 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
   const navigation = useNavigation();
   const { showSnackbar } = useSnackbar();
   const [fileView, setFileView] = useState<TFileView | null>(null);
-  const { data } = useClientDocumentQuery({ variables: { id } });
-  const [filename, setFilename] = useState('');
-  const [updateClientDocument, { loading }] = useUpdateClientDocumentMutation({
-    refetchQueries: [
-      {
-        query: ClientProfileDocument,
-        variables: {
-          id: clientId,
-        },
-      },
-    ],
+  const { data } = useQuery(ClientDocumentDocument, {
+    variables: { id },
   });
+  const [filename, setFilename] = useState('');
+  const [updateClientDocument, { loading }] = useMutation(
+    UpdateClientDocumentDocument,
+    {
+      refetchQueries: [
+        {
+          query: ClientProfileDocument,
+          variables: {
+            id: clientId,
+          },
+        },
+      ],
+    }
+  );
 
   async function handleUpdateClientDocument() {
     try {

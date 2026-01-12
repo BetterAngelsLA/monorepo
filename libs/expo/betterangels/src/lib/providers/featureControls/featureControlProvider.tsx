@@ -1,5 +1,6 @@
+import { useQuery } from '@apollo/client/react';
 import { useEffect, useMemo, useState } from 'react';
-import { useGetFeatureControlsQuery } from './__generated__/featureControls.generated';
+import { GetFeatureControlsDocument } from './__generated__/featureControls.generated';
 import { FeatureControlContext } from './featureControlContext';
 import { FeatureControlDictionary, FeatureControlGroups } from './interfaces';
 
@@ -22,9 +23,9 @@ const toDictionary = (
     return acc;
   }, {} as FeatureControlDictionary);
 
-export const FeatureControlProvider: React.FC<FeatureControlProviderProps> = ({
+export const FeatureControlProvider = ({
   children,
-}) => {
+}: FeatureControlProviderProps): React.ReactElement => {
   const [featureControlGroups, setFeatureControlGroups] =
     useState<FeatureControlGroups>({
       flags: {},
@@ -32,7 +33,7 @@ export const FeatureControlProvider: React.FC<FeatureControlProviderProps> = ({
       samples: {},
     });
 
-  const { data, refetch } = useGetFeatureControlsQuery();
+  const { data, refetch } = useQuery(GetFeatureControlsDocument);
 
   const clearFeatureFlags = () => {
     setFeatureControlGroups({

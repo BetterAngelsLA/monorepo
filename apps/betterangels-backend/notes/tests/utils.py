@@ -1,9 +1,7 @@
 from typing import Any, Dict
 
 from clients.models import ClientProfile
-from common.models import Address, Location
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.gis.geos import Point
 from model_bakery import baker
 from notes.enums import ServiceEnum
 from notes.models import OrganizationService, ServiceRequest
@@ -94,23 +92,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         )["data"]["createNote"]
         # Logout after setting up the note
         self.graphql_client.logout()
-
-    def _setup_location(self) -> None:
-        self.address = baker.make(
-            Address,
-            street=self.street,
-            city=self.city,
-            state=self.state,
-            zip_code=self.zip_code,
-        )
-        self.point = [-118.2437207, 34.0521723]
-        self.point_of_interest = "An Interesting Point"
-        self.location = baker.make(
-            Location,
-            address=self.address,
-            point=Point(self.point),
-            point_of_interest=self.point_of_interest,
-        )
 
     def _create_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_note_fixture("create", variables)

@@ -1,0 +1,30 @@
+interactions:
+- request:
+    body: '{"query": "\n    query ($personalId: ID!, $dynamicFields: [String]!, $pagination:
+      PaginationInput) {\n        listEnrollments(filter: {personalId: $personalId},
+      dynamicFields: $dynamicFields, pagination: $pagination) {\n            ... on
+      EnrollmentList {\n                items {\n                    personalId\n                    dateCreated\n                    dateUpdated\n                    enrollmentId\n                    entryDate\n                    exitDate\n                    householdId\n                    data
+      {\n                        field\n                        value\n                    }\n                    enrollmentHouseholdMembers
+      {\n                        personalId\n                        enrollmentId\n                    }\n                    project
+      {\n                        projectId\n                        projectName\n                        projectType\n                        dateCreated\n                        dateUpdated\n                    }\n                }\n                meta
+      {\n                    current_page\n                    page_count\n                    per_page\n                    total_count\n                }\n            }\n            \n        }\n    }\n",
+      "variables": {"dynamicFields": ["program_date", "cocCode", "disablingCondition",
+      "relationshipToHoH"], "personalId": "1", "pagination": {"page": 1, "per_page":
+      10}}}'
+    headers: {}
+    method: POST
+    uri: ''
+  response:
+    body:
+      string: '{"data":{"listEnrollments":{"items":[{"personalId":"1","dateCreated":"2025-10-14
+        04:55:25","dateUpdated":"2025-10-14 04:55:25","enrollmentId":"517","entryDate":"2025-10-14","exitDate":null,"householdId":"535","data":[{"field":"program_date","value":"2025-10-14"},{"field":"relationshipToHoH","value":"1"},{"field":"disablingCondition","value":"1"},{"field":"cocCode","value":"Default"}],"enrollmentHouseholdMembers":[{"personalId":"1","enrollmentId":"517"}],"project":{"projectId":"2","projectName":"Housing
+        Program 01","projectType":10,"dateCreated":"2025-08-25 17:43:58","dateUpdated":"2025-08-28
+        08:40:58"}},{"personalId":"1","dateCreated":"2025-10-14 05:00:10","dateUpdated":"2025-10-14
+        05:00:10","enrollmentId":"518","entryDate":"2025-10-14","exitDate":null,"householdId":"536","data":[{"field":"program_date","value":"2025-10-14"},{"field":"relationshipToHoH","value":"1"},{"field":"disablingCondition","value":"0"},{"field":"cocCode","value":"Default"}],"enrollmentHouseholdMembers":[{"personalId":"1","enrollmentId":"518"}],"project":{"projectId":"3","projectName":"Services
+        Program 01","projectType":4,"dateCreated":"2025-08-27 16:59:41","dateUpdated":"2025-08-27
+        17:35:20"}}],"meta":{"current_page":1,"page_count":1,"per_page":10,"total_count":2}}}}'
+    headers: {}
+    status:
+      code: 200
+      message: OK
+version: 1
