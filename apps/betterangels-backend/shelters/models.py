@@ -262,6 +262,7 @@ class Shelter(BaseModel):
 
     # Ecosystem Information
     cities = models.ManyToManyField(City)
+    cities_other = models.CharField(max_length=255, blank=True, null=True)
     spa = models.ManyToManyField(SPA)
     city_council_district = models.PositiveSmallIntegerField(
         choices=CITY_COUNCIL_DISTRICT_CHOICES,

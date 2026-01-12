@@ -263,6 +263,10 @@ class ShelterForm(forms.ModelForm):
         ),
         required=False,
     )
+    cities_other = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": "Please specify..."}),
+    )
     spa = forms.MultipleChoiceField(
         choices=SPAChoices,
         widget=Select2MultipleWidget(
@@ -818,6 +822,7 @@ class ShelterAdmin(ImportExportModelAdmin):
             {
                 "fields": (
                     "cities",
+                    "cities_other",
                     "spa",
                     "city_council_district",
                     "supervisorial_district",
