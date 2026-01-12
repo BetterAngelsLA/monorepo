@@ -37,20 +37,22 @@ export const GET_NOTES = gql`
         }
         providedServices {
           id
-          serviceEnum
-          serviceOther
           service {
             id
             label
+            category {
+              id
+            }
           }
         }
         requestedServices {
           id
-          serviceEnum
-          serviceOther
           service {
             id
             label
+            category {
+              id
+            }
           }
         }
         publicDetails
@@ -110,20 +112,22 @@ export const GET_NOTE = gql`
       }
       providedServices {
         id
-        serviceEnum
-        serviceOther
         service {
           id
           label
+          category {
+            id
+          }
         }
       }
       requestedServices {
         id
-        serviceEnum
-        serviceOther
         service {
           id
           label
+          category {
+            id
+          }
         }
       }
       tasks {
