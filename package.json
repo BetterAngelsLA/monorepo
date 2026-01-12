@@ -216,8 +216,10 @@
     "vitest": "4.0.9"
   },
   "resolutions": {
+    "glob": ">=10.5.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "ws": ">=8.17.1",
     "@expo/config-plugins": ">=54.0.1"
   },
   "expo": {
