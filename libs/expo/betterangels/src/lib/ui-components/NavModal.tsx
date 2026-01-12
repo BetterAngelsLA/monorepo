@@ -9,19 +9,46 @@ import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { SelahTeamEnum, TaskFilter, TaskStatusEnum } from '../apollo';
 import { useSignOut, useUser } from '../hooks';
+import { useUserTeamPreference } from '../state';
 import { MainModal } from './MainModal';
+import { TaskCountIndicator } from './TaskCountIndicator';
+
+function TasksLinkBody(props: { team: SelahTeamEnum | null }) {
+  const { team } = props;
+
+  const taskFilters: TaskFilter = {
+    teams: team ? [team] : undefined,
+    status: [TaskStatusEnum.InProgress, TaskStatusEnum.ToDo],
+  };
+
+  return (
+    <View style={{ flexDirection: 'row' }}>
+      <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>Tasks</TextRegular>
+      {!!team && (
+        <TaskCountIndicator
+          filters={taskFilters}
+          style={styles.taskCountIndicator}
+        />
+      )}
+    </View>
+  );
+}
 
 interface INavModalProps {
   image?: string;
 }
 
 export default function NavModal(props: INavModalProps) {
-  const { isHmisUser } = useUser();
-
   const { image } = props;
-  const [isModalVisible, setModalVisible] = useState(false);
+
   const router = useRouter();
+  const { isHmisUser } = useUser();
+  const [teamPreference] = useUserTeamPreference();
+  const [isModalVisible, setModalVisible] = useState(false);
+  const { signOut } = useSignOut();
+
   const openModal = () => {
     setModalVisible(true);
   };
@@ -29,11 +56,10 @@ export default function NavModal(props: INavModalProps) {
   const closeModal = () => {
     setModalVisible(false);
   };
-  const { signOut } = useSignOut();
 
   const ACTIONS = [
     {
-      title: 'Tasks',
+      title: <TasksLinkBody team={teamPreference} />,
       Icon: TaskListIcon,
       route: '/tasks',
     },
@@ -161,5 +187,8 @@ const styles = StyleSheet.create({
     borderRadius: Radiuses.md,
     paddingVertical: 4,
     paddingHorizontal: 12,
+  },
+  taskCountIndicator: {
+    marginTop: 3,
   },
 });
