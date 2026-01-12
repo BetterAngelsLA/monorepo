@@ -126,7 +126,7 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    @strawberry.django.mutation(
+    @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
         extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
     )
@@ -303,7 +303,7 @@ class Mutation:
             if service_id := service_request_data["service_id"]:
                 org_service = OrganizationService.objects.get(id=str(service_id))
                 enum = next(
-                    (choice for choice in ServiceEnum if choice.label == org_service.label),
+                    (choice for choice in ServiceEnum if str(choice.label) == str(org_service.label)),
                     None,
                 )
                 service_args["service"] = service_id
@@ -311,7 +311,7 @@ class Mutation:
 
             if service_enum := service_request_data.get("service_enum", None):
                 if service_enum != ServiceEnum.OTHER:
-                    service_args["service"] = str(OrganizationService.objects.get(label=service_enum.label).pk)  # type: ignore
+                    service_args["service"] = str(OrganizationService.objects.get(label=str(service_enum.label)).pk)  # type: ignore
 
             if service_other := service_request_data["service_other"]:
                 org_service, _ = OrganizationService.objects.get_or_create(

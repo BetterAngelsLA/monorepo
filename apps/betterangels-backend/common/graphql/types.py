@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Any, NewType, Optional
+from typing import Any, Mapping, NewType, Optional
 
 import strawberry
 import strawberry_django
@@ -11,6 +11,7 @@ from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
 from phonenumber_field.phonenumber import PhoneNumber as DjangoPhoneNumberUtil
 from strawberry import ID, Info, auto
 from strawberry.types.field import StrawberryField
+from strawberry.types.scalar import ScalarDefinition
 
 
 def make_in_filter(field_name: str, value_type: Any) -> StrawberryField:
@@ -40,19 +41,6 @@ def _parse_longitude(v: float) -> float:
     return v
 
 
-LatitudeScalar = strawberry.scalar(
-    NewType("LatitudeScalar", float),
-    serialize=lambda v: v,
-    parse_value=lambda v: _parse_latitude(v),
-)
-
-LongitudeScalar = strawberry.scalar(
-    NewType("LongitudeScalar", float),
-    serialize=lambda v: v,
-    parse_value=lambda v: _parse_longitude(v),
-)
-
-
 def _parse_phone_number(v: str) -> DjangoPhoneNumber:
     if re.match(PHONE_NUMBER_REGEX, v):
         return DjangoPhoneNumberUtil.from_string(v)
@@ -67,30 +55,52 @@ def _serialize_phone_number(v: DjangoPhoneNumber) -> str:
     return str(v.national_number)
 
 
-PhoneNumberScalar: DjangoPhoneNumber | str = strawberry.scalar(
-    DjangoPhoneNumber,
-    parse_value=lambda v: _parse_phone_number(v.strip()) if v.strip() else None,
-    serialize=lambda v: _serialize_phone_number(v) if isinstance(v, DjangoPhoneNumber) else "",
-)
+def _parse_non_blank_string(v: str) -> Optional[str]:
+    return v.strip() if v and v.strip() else None
 
-NonBlankString = strawberry.scalar(
-    NewType("NonBlankString", str),
-    serialize=lambda v: v,
-    parse_value=lambda v: v.strip() if v.strip() else None,
-)
+
+# Custom scalar types
+LatitudeScalar = NewType("LatitudeScalar", float)
+LongitudeScalar = NewType("LongitudeScalar", float)
+NonBlankString = NewType("NonBlankString", str)
+PhoneNumberScalar = NewType("PhoneNumberScalar", str)
+
+# Scalar configurations for StrawberryConfig.scalar_map
+SCALAR_MAP: Mapping[object, ScalarDefinition] = {
+    LatitudeScalar: strawberry.scalar(
+        name="LatitudeScalar",
+        serialize=lambda v: v,
+        parse_value=_parse_latitude,
+    ),
+    LongitudeScalar: strawberry.scalar(
+        name="LongitudeScalar",
+        serialize=lambda v: v,
+        parse_value=_parse_longitude,
+    ),
+    NonBlankString: strawberry.scalar(
+        name="NonBlankString",
+        serialize=lambda v: v,
+        parse_value=_parse_non_blank_string,
+    ),
+    PhoneNumberScalar: strawberry.scalar(
+        name="PhoneNumber",
+        serialize=lambda v: _serialize_phone_number(v) if isinstance(v, DjangoPhoneNumber) else "",
+        parse_value=lambda v: _parse_phone_number(v.strip()) if v and v.strip() else None,
+    ),
+}
 
 
 @strawberry_django.type(PhoneNumber)
 class PhoneNumberType:
     id: ID
-    number: Optional[PhoneNumberScalar]  # type: ignore
+    number: Optional[PhoneNumberScalar]
     is_primary: Optional[bool]
 
 
 @strawberry_django.input(PhoneNumber)
 class PhoneNumberInput:
     id: Optional[ID]
-    number: Optional[PhoneNumberScalar]  # type: ignore
+    number: Optional[PhoneNumberScalar]
     is_primary: Optional[bool] = False
 
 
