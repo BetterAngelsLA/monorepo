@@ -4,23 +4,30 @@ import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
 import { ServiceRequestTypeEnum } from '../../apollo';
 import { useModalScreen } from '../../providers';
-import { ViewHmisNoteQuery } from '../../screens/NotesHmis/HmisProgramNoteView/__generated__/HmisProgramNoteView.generated';
+import { ServicesDraft } from '../../screens/NotesHmis/HmisProgramNoteForm';
 import { enumDisplayServiceType } from '../../static';
 import ServicesModal from './ServicesModal';
 
-type GqlServiceRow = NonNullable<
-  NonNullable<
-    | ViewHmisNoteQuery['hmisNote']['providedServices']
-    | ViewHmisNoteQuery['hmisNote']['requestedServices']
-  >[number]
->;
+type ProvidedServiceRequests = NonNullable<
+  ServicesDraft[ServiceRequestTypeEnum.Provided]
+>['serviceRequests'];
 
-type ServiceRowWithLocal = GqlServiceRow & { markedForDeletion?: boolean };
+type RequestedServiceRequests = NonNullable<
+  ServicesDraft[ServiceRequestTypeEnum.Requested]
+>['serviceRequests'];
 
-interface IRequestedServicesProps {
-  services?: ServiceRowWithLocal[] | null;
-  type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
-}
+type ProvidedRow = ProvidedServiceRequests[number];
+type RequestedRow = RequestedServiceRequests[number];
+
+type IRequestedServicesProps =
+  | {
+      type: ServiceRequestTypeEnum.Provided;
+      services?: ProvidedRow[] | null;
+    }
+  | {
+      type: ServiceRequestTypeEnum.Requested;
+      services?: RequestedRow[] | null;
+    };
 
 export default function HmisRequestedProvidedServices(
   props: IRequestedServicesProps

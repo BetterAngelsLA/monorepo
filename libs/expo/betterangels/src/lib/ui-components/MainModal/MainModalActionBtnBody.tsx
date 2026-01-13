@@ -1,10 +1,15 @@
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { TextRegular } from '@monorepo/expo/shared/ui-components';
-import { ElementType } from 'react';
+import {
+  Colors,
+  FontSizes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
+import { TextOrNode } from '@monorepo/expo/shared/ui-components';
+import { ElementType, ReactNode } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 
 type TProps = {
-  title: string;
+  title: string | ReactNode;
   Icon: ElementType;
   style?: ViewStyle;
 };
@@ -18,7 +23,11 @@ export function MainModalActionBtnBody(props: TProps) {
         <Icon color={Colors.PRIMARY_EXTRA_DARK} />
       </View>
 
-      <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>{title}</TextRegular>
+      <TextOrNode
+        textStyle={{ color: Colors.PRIMARY_EXTRA_DARK, ...FontSizes.md }}
+      >
+        {title}
+      </TextOrNode>
     </View>
   );
 }

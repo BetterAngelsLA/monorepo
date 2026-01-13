@@ -369,7 +369,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             )
 
             self.assertEqual(response["data"]["createNoteServiceRequest"]["service"]["id"], str(service.pk))
-            service_enum = next((choice for choice in ServiceEnum if str(choice.label) == service.label))
+            service_enum = next((choice for choice in ServiceEnum if str(choice.label) == str(service.label)))
             self.assertEqual(response["data"]["createNoteServiceRequest"]["serviceEnum"], service_enum.name)
 
     # TODO: remove after cutover
