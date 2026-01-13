@@ -31,11 +31,14 @@ interface IMainModalProps {
   ml?: number;
   /** Fixed height or 'auto' */
   height?: DimensionValue;
+  /** Fired after the modal has fully closed (animation finished, unmounted). */
+  onCloseComplete?: () => void;
 }
 
 export function MainModal({
   isModalVisible,
   closeModal,
+  onCloseComplete,
   actions,
   bottomSection,
   topSection,
@@ -53,6 +56,7 @@ export function MainModal({
       title={null}
       isOpen={isModalVisible}
       onClose={closeModal}
+      onCloseComplete={onCloseComplete}
       variant="sheet"
       direction={vertical ? 'up' : 'right'}
       panelOffset={ml}
