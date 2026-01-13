@@ -8,6 +8,7 @@ from betterangels_backend import settings
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
 from common.models import Location, PhoneNumber
+from common.permissions.utils import IsAuthenticated
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login as django_login
 from django.contrib.contenttypes.models import ContentType
@@ -50,10 +51,13 @@ class IsHmisAuthenticated(BasePermission):
     message: str = "You must be logged in to HMIS to access this resource."
 
     def has_permission(self, source: Any, info: Info, **kwargs: Any) -> bool:
+        if not IsAuthenticated().has_permission(source, info, **kwargs):
+            IsAuthenticated().on_unauthorized()
+
         request = info.context["request"]
         session = request.session
 
-        return bool(session.get(HMIS_SESSION_KEY_NAME, None))
+        return bool(session.get(HMIS_SESSION_KEY_NAME))
 
     def on_unauthorized(self) -> None:
         error = UnauthenticatedGQLError(message=self.message)
