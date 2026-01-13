@@ -1,8 +1,11 @@
+import { CombinedGraphQLErrors } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
+import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
 import { Colors } from '@monorepo/expo/shared/static';
 import { LoadingView, Tabs } from '@monorepo/expo/shared/ui-components';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { useSnackbar } from '../../hooks';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
 import { ClientViewTabEnum } from '../Client/ClientTabs';
@@ -24,12 +27,13 @@ type TProps = {
 };
 
 export function ClientHMIS(props: TProps) {
-  const { id, openCard } = props;
+  const { id, arrivedFrom, openCard } = props;
 
+  const router = useRouter();
+  const { showSnackbar } = useSnackbar();
   const { activeTab } = useLocalSearchParams<{
     activeTab?: ClientViewTabEnum;
   }>();
-
   const [currentTab, setCurrentTab] = useState(ClientViewTabEnum.Profile);
 
   useEffect(() => {
@@ -38,7 +42,7 @@ export function ClientHMIS(props: TProps) {
     }
   }, [activeTab]);
 
-  const { data, loading } = useQuery(HmisClientProfileDocument, {
+  const { data, loading, error } = useQuery(HmisClientProfileDocument, {
     variables: { id },
   });
 
@@ -46,9 +50,30 @@ export function ClientHMIS(props: TProps) {
     return <LoadingView />;
   }
 
+  if (error) {
+    console.error(`[ClientHMIS] error for client id [${id}]:`, error);
+  }
+
+  const hasClientNotFoundError =
+    CombinedGraphQLErrors.is(error) &&
+    error.errors.some((graphQLError) => {
+      return graphQLError.extensions?.code === API_ERROR_CODES.NOT_FOUND;
+    });
+
   const client = data?.hmisClientProfile;
 
   if (client?.__typename !== 'HmisClientProfileType') {
+    const message = hasClientNotFoundError
+      ? 'Sorry, this client profile is no longer available.'
+      : 'Sorry, something went wrong.';
+
+    showSnackbar({
+      message,
+      type: 'error',
+    });
+
+    router.dismissTo(arrivedFrom || '/');
+
     return null;
   }
 
