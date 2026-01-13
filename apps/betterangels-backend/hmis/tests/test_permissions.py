@@ -41,7 +41,7 @@ class HmisClientProfilePermissionTestCase(HmisClientProfileBaseTestCase):
 
         self.assertIsNone(response["data"])
         self.assertEqual(len(response["errors"]), 1)
-        self.assertEqual(response["errors"][0]["message"], "You do not have access to this resource.")
+        self.assertEqual(response["errors"][0]["message"], "You must be logged in to HMIS to access this resource.")
 
     def test_hmis_client_profiles_permission_success(self) -> None:
         query = """
@@ -74,7 +74,7 @@ class HmisClientProfilePermissionTestCase(HmisClientProfileBaseTestCase):
 
         self.assertIsNone(response["data"])
         self.assertEqual(len(response["errors"]), 1)
-        self.assertEqual(response["errors"][0]["message"], "You do not have access to this resource.")
+        self.assertEqual(response["errors"][0]["message"], "You must be logged in to HMIS to access this resource.")
 
     def test_hmis_create_hmis_client_profile_permission_success(self) -> None:
         variables = {"firstName": "Create", "lastName": "Me", "nameQuality": "FULL"}
@@ -98,7 +98,7 @@ class HmisClientProfilePermissionTestCase(HmisClientProfileBaseTestCase):
 
         self.assertIsNone(response["data"])
         self.assertEqual(len(response["errors"]), 1)
-        self.assertEqual(response["errors"][0]["message"], "You do not have access to this resource.")
+        self.assertEqual(response["errors"][0]["message"], "You must be logged in to HMIS to access this resource.")
 
     def test_hmis_update_hmis_client_profile_permission_success(self) -> None:
         variables = {
@@ -129,7 +129,7 @@ class HmisClientProfilePermissionTestCase(HmisClientProfileBaseTestCase):
 
         self.assertIsNone(response["data"])
         self.assertEqual(len(response["errors"]), 1)
-        self.assertEqual(response["errors"][0]["message"], "You do not have access to this resource.")
+        self.assertEqual(response["errors"][0]["message"], "You must be logged in to HMIS to access this resource.")
         self.assertEqual(
             HmisClientProfile.objects.get(pk=self.hmis_client_profile.pk).first_name,
             self.hmis_client_profile.first_name,
@@ -172,7 +172,7 @@ class HmisNotePermissionTestCase(HmisNoteBaseTestCase):
 
         self.assertIsNone(response["data"])
         self.assertEqual(len(response["errors"]), 1)
-        self.assertEqual(response["errors"][0]["message"], "You do not have access to this resource.")
+        self.assertEqual(response["errors"][0]["message"], "You must be logged in to HMIS to access this resource.")
 
     def test_hmis_notes_permission_success(self) -> None:
         query = """
@@ -205,7 +205,7 @@ class HmisNotePermissionTestCase(HmisNoteBaseTestCase):
 
         self.assertIsNone(response["data"])
         self.assertEqual(len(response["errors"]), 1)
-        self.assertEqual(response["errors"][0]["message"], "You do not have access to this resource.")
+        self.assertEqual(response["errors"][0]["message"], "You must be logged in to HMIS to access this resource.")
 
     def test_hmis_create_hmis_note_permission_success(self) -> None:
         variables = {
@@ -236,7 +236,7 @@ class HmisNotePermissionTestCase(HmisNoteBaseTestCase):
 
         self.assertIsNone(response["data"])
         self.assertEqual(len(response["errors"]), 1)
-        self.assertEqual(response["errors"][0]["message"], "You do not have access to this resource.")
+        self.assertEqual(response["errors"][0]["message"], "You must be logged in to HMIS to access this resource.")
 
     def test_hmis_update_hmis_note_permission_success(self) -> None:
         variables = {"id": str(self.hmis_note.pk), "title": "Update", "note": "Me"}
@@ -258,5 +258,5 @@ class HmisNotePermissionTestCase(HmisNoteBaseTestCase):
 
         self.assertIsNone(response["data"])
         self.assertEqual(len(response["errors"]), 1)
-        self.assertEqual(response["errors"][0]["message"], "You do not have access to this resource.")
+        self.assertEqual(response["errors"][0]["message"], "You must be logged in to HMIS to access this resource.")
         self.assertEqual(HmisNote.objects.get(pk=self.hmis_note.pk).title, self.hmis_note.title)
