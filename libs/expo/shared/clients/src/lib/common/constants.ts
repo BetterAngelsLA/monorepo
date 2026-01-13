@@ -6,3 +6,6 @@ export const API_ERROR_CODES = {
   UNAUTHENTICATED: 'UNAUTHENTICATED',
   NOT_FOUND: 'NOT_FOUND',
 } as const;
+
+export type ApiErrorCode =
+  (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];

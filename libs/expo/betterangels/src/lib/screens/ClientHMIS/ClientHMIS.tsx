@@ -1,10 +1,10 @@
-import { CombinedGraphQLErrors } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
 import { Colors } from '@monorepo/expo/shared/static';
 import { LoadingView, Tabs } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { hasGqlCombinedApiError } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
@@ -54,15 +54,14 @@ export function ClientHMIS(props: TProps) {
     console.error(`[ClientHMIS] error for client id [${id}]:`, error);
   }
 
-  const hasClientNotFoundError =
-    CombinedGraphQLErrors.is(error) &&
-    error.errors.some((graphQLError) => {
-      return graphQLError.extensions?.code === API_ERROR_CODES.NOT_FOUND;
-    });
-
   const client = data?.hmisClientProfile;
 
   if (client?.__typename !== 'HmisClientProfileType') {
+    const hasClientNotFoundError = hasGqlCombinedApiError(
+      API_ERROR_CODES.NOT_FOUND,
+      error
+    );
+
     const message = hasClientNotFoundError
       ? 'Sorry, this client profile is no longer available.'
       : 'Sorry, something went wrong.';
