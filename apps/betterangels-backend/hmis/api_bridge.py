@@ -10,11 +10,11 @@ import jwt
 import requests
 import strawberry
 from common.constants import HMIS_SESSION_KEY_NAME
-from common.errors import UnauthenticatedGQLError
+from common.errors import NotFoundGQLError, UnauthenticatedGQLError
 from common.utils import dict_keys_to_snake
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from graphql import (
     FieldNode,
     FragmentSpreadNode,
@@ -372,7 +372,7 @@ class HmisApiBridge:
             raise PermissionDenied("Unauthorized.")
 
         if resp.status_code == 404:
-            raise ObjectDoesNotExist("The requested Object does not exist.")
+            raise NotFoundGQLError()
 
         if resp.status_code == 422:
             errors = [
