@@ -1,5 +1,4 @@
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
 import React, { useMemo } from 'react';
 import { ViewStyle } from 'react-native';
 import { Input } from '../Input';
@@ -7,7 +6,7 @@ import { TPickerItem } from './types';
 
 type TProps = {
   placeholder: string;
-  placeholderAsTitle?: boolean;
+  placeholderTextColor?: string;
   items: TPickerItem[];
   onFocus: () => void;
   selectedValue?: string | null;
@@ -24,7 +23,7 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
     error,
     selectedValue,
     placeholder,
-    placeholderAsTitle,
+    placeholderTextColor,
     items,
     label,
     required,
@@ -46,9 +45,7 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
       disabled={disabled}
       required={required}
       placeholder={placeholder}
-      placeholderTextColor={
-        placeholderAsTitle ? Colors.PRIMARY_EXTRA_DARK : undefined
-      }
+      placeholderTextColor={placeholderTextColor}
       value={displayValue ?? ''}
       label={label}
       error={!!error}
