@@ -48,6 +48,8 @@ export function ClientHMIS(props: TProps) {
 
   const client = data?.hmisClientProfile;
 
+  // Note: useEffect for showSnackbar and router to avid
+  // render side effects (it can sometimes break)
   useEffect(() => {
     if (!error) {
       return;
