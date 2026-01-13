@@ -57,7 +57,6 @@ from .enums import (
     TrainingServiceChoices,
 )
 from .models import (
-    FIELDS_WITH_OTHER_OPTION,
     SPA,
     Accessibility,
     City,
@@ -80,6 +79,7 @@ from .models import (
     Storage,
     TrainingService,
     Video,
+    get_fields_with_other_option,
 )
 
 T = TypeVar("T", bound=models.Model)
@@ -218,8 +218,11 @@ class ShelterForm(forms.ModelForm):
         cleaned_data = super().clean() or {}
 
         # Process all ManyToMany fields to ensure choices exist in database
+        # EXCEPT for 'cities' which is already a model and handled by Select2MultipleWidget
         many_to_many_fields = [
-            field.name for field in self._meta.model._meta.get_fields() if isinstance(field, models.ManyToManyField)
+            field.name
+            for field in self._meta.model._meta.get_fields()
+            if isinstance(field, models.ManyToManyField) and field.name != "cities"
         ]
 
         for field_name in many_to_many_fields:
@@ -233,7 +236,7 @@ class ShelterForm(forms.ModelForm):
 
     def _validate_other_fields(self, cleaned_data: dict) -> None:
         """Validate that _other fields are filled when 'Other' is selected."""
-        for multi_field in FIELDS_WITH_OTHER_OPTION:
+        for multi_field in get_fields_with_other_option():
             text_field = f"{multi_field}_other"
             multi_values = cleaned_data.get(multi_field, [])
 

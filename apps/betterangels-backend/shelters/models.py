@@ -1,3 +1,4 @@
+from functools import cache
 from typing import Any, Optional
 
 import pghistory
@@ -43,18 +44,6 @@ from .enums import (
     TrainingServiceChoices,
 )
 from .widgets import TimeRangeField
-
-# Fields that have corresponding _other text fields for "Please specify..." pattern
-# Used by both form validation (admin.py) and model validation (clean method)
-# When adding new fields with this pattern, add them to this list
-FIELDS_WITH_OTHER_OPTION = [
-    "demographics",
-    "shelter_types",
-    "room_styles",
-    "exit_policy",
-    "shelter_programs",
-    "funders",
-]
 
 
 # Summary Info
@@ -282,7 +271,6 @@ class Shelter(BaseModel):
 
     # Ecosystem Information
     cities = models.ManyToManyField(City)
-    cities_other = models.CharField(max_length=255, blank=True, null=True)  # Deprecated: migrate to cities M2M
 
     spa = models.ManyToManyField(SPA)
     city_council_district = models.PositiveSmallIntegerField(
@@ -327,7 +315,7 @@ class Shelter(BaseModel):
         super().clean()
         errors = {}
 
-        for field_name in FIELDS_WITH_OTHER_OPTION:
+        for field_name in get_fields_with_other_option():
             other_field_name = f"{field_name}_other"
             other_value = getattr(self, other_field_name, None)
 
@@ -572,3 +560,33 @@ class TrackedShelterProgram(Shelter.shelter_programs.through):  # type: ignore[n
 class TrackedFunder(Shelter.funders.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
+
+
+def _get_fields_with_other_option() -> list[str]:
+    """
+    Auto-detect fields that have the 'other' pattern by finding fields ending with '_other'
+    that have a corresponding M2M field.
+
+    Returns:
+        List of base field names (without '_other' suffix) that have the other pattern
+    """
+    return [
+        field.name[:-6]  # Remove '_other' suffix
+        for field in Shelter._meta.get_fields()
+        if isinstance(field, models.CharField)
+        and field.name.endswith("_other")
+        and hasattr(Shelter, field.name[:-6])  # Check if base M2M field exists
+    ]
+
+
+# Fields that have corresponding _other text fields for "Please specify..." pattern
+# Auto-detected by finding fields ending with '_other' that have a corresponding M2M field
+# Used by both form validation (admin.py) and model validation (clean method)
+@cache
+def get_fields_with_other_option() -> list[str]:
+    """
+    Auto-detect and cache fields with the 'other' pattern (M2M + _other CharField).
+
+    Uses @cache decorator for lazy evaluation and automatic caching without manual state.
+    """
+    return _get_fields_with_other_option()
