@@ -46,17 +46,13 @@ export function ClientHMIS(props: TProps) {
     variables: { id },
   });
 
-  if (loading) {
-    return <LoadingView />;
-  }
-
-  if (error) {
-    console.error(`[ClientHMIS] error for client id [${id}]:`, error);
-  }
-
   const client = data?.hmisClientProfile;
 
-  if (client?.__typename !== 'HmisClientProfileType') {
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+
     const hasClientNotFoundError = hasGqlCombinedApiError(
       API_ERROR_CODES.NOT_FOUND,
       error
@@ -72,7 +68,19 @@ export function ClientHMIS(props: TProps) {
     });
 
     router.dismissTo(arrivedFrom || '/');
+  }, [error, router, showSnackbar, arrivedFrom]);
 
+  if (loading) {
+    return <LoadingView />;
+  }
+
+  if (error) {
+    console.error(`[ClientHMIS] error for client id [${id}]:`, error);
+
+    return null;
+  }
+
+  if (client?.__typename !== 'HmisClientProfileType') {
     return null;
   }
 
