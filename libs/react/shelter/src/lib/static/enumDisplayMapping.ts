@@ -225,6 +225,7 @@ export const enumDisplayCityChoices: { [key in CityChoices]: string } = {
   [CityChoices.WestLosAngeles]: 'West Los Angeles',
   [CityChoices.Whittier]: 'Whittier',
   [CityChoices.Wilmington]: 'Wilmington',
+  [CityChoices.Other]: 'Other',
 };
 
 export const enumDisplaySpaChoices: { [key in SpaChoices]: string } = {
