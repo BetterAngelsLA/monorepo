@@ -168,7 +168,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             accessibility=[Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)[0]],
             cities=[
                 City.objects.get_or_create(
-                    name=CityChoices.AGOURA_HILLS.name, defaults={"display_name": CityChoices.AGOURA_HILLS.label}
+                    name=CityChoices.AGOURA_HILLS.value,
+                    defaults={"display_name": CityChoices.AGOURA_HILLS.label},
                 )[0]
             ],
             demographics=[Demographic.objects.get_or_create(name=DemographicChoices.ALL)[0]],
