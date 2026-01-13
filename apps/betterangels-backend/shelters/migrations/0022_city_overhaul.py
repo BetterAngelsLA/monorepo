@@ -8,8 +8,8 @@ from django.db.migrations.operations.special import SeparateDatabaseAndState
 def migrate_cities(apps, schema_editor):
     City = apps.get_model("shelters", "City")
 
-    # Import CityChoices dynamically to avoid dependency on code changes
-    from shelters.enums import CityChoices
+    # Import CityChoices from deprecated for migration compatibility
+    from ..deprecated.deprecated_enums import CityChoices
 
     enum_by_value = {choice.value: choice.label for choice in CityChoices}
     enum_by_label = {choice.label.lower(): choice.label for choice in CityChoices}

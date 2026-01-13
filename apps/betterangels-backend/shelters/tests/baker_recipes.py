@@ -9,7 +9,6 @@ from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,
     AccessibilityChoices,
-    CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -120,6 +119,18 @@ class related_m2m_unique(related):
         return related_objs
 
 
+def make_cities() -> list[City]:
+    """Create random city objects for testing."""
+    quantity = random.randint(1, 3)
+    cities = []
+    city_names = ["Los Angeles", "Santa Monica", "Pasadena", "Long Beach", "Glendale", "Burbank"]
+    for _ in range(quantity):
+        city_name = random.choice(city_names)
+        city, _ = City.objects.get_or_create(name=city_name)
+        cities.append(city)
+    return cities
+
+
 shelter_contact_recipe = Recipe(
     "ContactInfo",
     contact_name=seq("shelter contact "),  # type: ignore
@@ -159,7 +170,7 @@ shelter_recipe = Recipe(
     total_beds=lambda: round(random.randint(20, 200), -1),
     website=seq("shelter", suffix=".com"),  # type: ignore
     accessibility=related_m2m_unique(Accessibility, AccessibilityChoices),
-    cities=related_m2m_unique(City, CityChoices),
+    cities=make_cities,
     demographics=related_m2m_unique(Demographic, DemographicChoices),
     entry_requirements=related_m2m_unique(EntryRequirement, EntryRequirementChoices),
     funders=related_m2m_unique(Funder, FunderChoices),

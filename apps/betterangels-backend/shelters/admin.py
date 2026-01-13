@@ -401,7 +401,7 @@ class ShelterResource(resources.ModelResource):
     cities = Field(
         column_name="cities",
         attribute="cities",
-        widget=ManyToManyWidget(City, separator=",", field="display_name"),
+        widget=ManyToManyWidget(City, separator=",", field="name"),
     )
     funders = Field(
         column_name="funders",
@@ -986,7 +986,7 @@ class ShelterAdmin(ImportExportModelAdmin):
 class CityAdmin(admin.ModelAdmin):
     """Admin interface for managing cities."""
 
-    list_display = ("display_name", "name", "created_at")
-    search_fields = ("display_name", "name")
+    list_display = ("name", "created_at")
+    search_fields = ("name",)
     readonly_fields = ("created_at",)
-    ordering = ("display_name",)
+    ordering = ("name",)

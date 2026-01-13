@@ -147,14 +147,13 @@ class City(BaseModel):
     """Cities that shelters serve. Users can add new cities directly."""
 
     name = models.CharField(max_length=255, unique=True, db_index=True)
-    display_name = models.CharField(max_length=255, db_index=True)
 
     class Meta:
-        ordering = ["display_name"]
+        ordering = ["name"]
         verbose_name_plural = "Cities"
 
     def __str__(self) -> str:
-        return self.display_name
+        return self.name
 
 
 class SPA(models.Model):

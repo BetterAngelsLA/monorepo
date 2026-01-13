@@ -9,7 +9,6 @@ from model_bakery.recipe import seq
 from places import Places
 from shelters.enums import (
     AccessibilityChoices,
-    CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -94,7 +93,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             totalBeds
             website
             accessibility {name}
-            cities {name displayName}
+            cities {name}
             demographics {name}
             entryRequirements {name}
             funders {name}
@@ -168,8 +167,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             accessibility=[Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)[0]],
             cities=[
                 City.objects.get_or_create(
-                    name=CityChoices.AGOURA_HILLS.value,
-                    defaults={"display_name": CityChoices.AGOURA_HILLS.label},
+                    name="Agoura Hills",
                 )[0]
             ],
             demographics=[Demographic.objects.get_or_create(name=DemographicChoices.ALL)[0]],
@@ -266,7 +264,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "totalBeds": 1,
             "website": "shelter.com",
             "accessibility": [{"name": AccessibilityChoices.WHEELCHAIR_ACCESSIBLE.name}],
-            "cities": [{"name": CityChoices.AGOURA_HILLS.name, "displayName": CityChoices.AGOURA_HILLS.label}],
+            "cities": [{"name": "Agoura Hills"}],
             "demographics": [{"name": DemographicChoices.ALL.name}],
             "entryRequirements": [{"name": EntryRequirementChoices.PHOTO_ID.name}],
             "funders": [{"name": FunderChoices.CITY_OF_LOS_ANGELES.name}],
