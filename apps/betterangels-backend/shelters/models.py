@@ -8,6 +8,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
+from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db import models
 from django_choices_field import IntegerChoicesField, TextChoicesField
@@ -43,6 +44,19 @@ from .enums import (
     TrainingServiceChoices,
 )
 from .widgets import TimeRangeField
+
+# Fields that have corresponding _other text fields for "Please specify..." pattern
+# Used by both form validation (admin.py) and model validation (clean method)
+# When adding new fields with this pattern, add them to this list
+FIELDS_WITH_OTHER_OPTION = [
+    "demographics",
+    "shelter_types",
+    "room_styles",
+    "exit_policy",
+    "cities",
+    "shelter_programs",
+    "funders",
+]
 
 
 # Summary Info
@@ -295,6 +309,34 @@ class Shelter(BaseModel):
 
     def __str__(self) -> str:
         return self.name
+
+    def clean(self) -> None:
+        """
+        Validate and clean _other fields based on whether 'other' is selected in corresponding M2M fields.
+
+        This provides model-level validation as a second layer of defense.
+        Also automatically cleans orphaned _other values.
+        """
+        super().clean()
+        errors = {}
+
+        for field_name in FIELDS_WITH_OTHER_OPTION:
+            other_field_name = f"{field_name}_other"
+            other_value = getattr(self, other_field_name, None)
+
+            # For new instances, we can't check M2M until after save
+            if self.pk:
+                m2m_field = getattr(self, field_name)
+                has_other = m2m_field.filter(name="other").exists()
+
+                if has_other and not other_value:
+                    errors[other_field_name] = f"This field is required when 'Other' is selected in {field_name}."
+                elif not has_other and other_value:
+                    # Automatically clear orphaned other text to maintain data consistency
+                    setattr(self, other_field_name, None)
+
+        if errors:
+            raise ValidationError(errors)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         latitude = self.location.latitude if self.location else None
