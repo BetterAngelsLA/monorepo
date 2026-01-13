@@ -181,10 +181,10 @@ enum CityChoices {
   WEST_LOS_ANGELES
   WHITTIER
   WILMINGTON
-  OTHER
 }
 
 type CityType {
+  id: ID!
   name: CityChoices
   displayName: String!
 }
