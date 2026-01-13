@@ -186,6 +186,7 @@ enum CityChoices {
 
 type CityType {
   name: CityChoices
+  displayName: String!
 }
 
 input ClientContactInput {

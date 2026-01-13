@@ -94,7 +94,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             totalBeds
             website
             accessibility {name}
-            cities {name}
+            cities {name displayName}
             demographics {name}
             entryRequirements {name}
             funders {name}
@@ -166,7 +166,11 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             website="shelter.com",
             location=shelter_location,
             accessibility=[Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)[0]],
-            cities=[City.objects.get_or_create(name=CityChoices.AGOURA_HILLS)[0]],
+            cities=[
+                City.objects.get_or_create(
+                    name=CityChoices.AGOURA_HILLS.name, defaults={"display_name": CityChoices.AGOURA_HILLS.label}
+                )[0]
+            ],
             demographics=[Demographic.objects.get_or_create(name=DemographicChoices.ALL)[0]],
             entry_requirements=[EntryRequirement.objects.get_or_create(name=EntryRequirementChoices.PHOTO_ID)[0]],
             funders=[Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)[0]],
@@ -261,7 +265,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "totalBeds": 1,
             "website": "shelter.com",
             "accessibility": [{"name": AccessibilityChoices.WHEELCHAIR_ACCESSIBLE.name}],
-            "cities": [{"name": CityChoices.AGOURA_HILLS.name}],
+            "cities": [{"name": CityChoices.AGOURA_HILLS.name, "displayName": CityChoices.AGOURA_HILLS.label}],
             "demographics": [{"name": DemographicChoices.ALL.name}],
             "entryRequirements": [{"name": EntryRequirementChoices.PHOTO_ID.name}],
             "funders": [{"name": FunderChoices.CITY_OF_LOS_ANGELES.name}],

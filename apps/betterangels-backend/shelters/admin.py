@@ -36,7 +36,6 @@ from shelters.permissions import ShelterFieldPermissions
 
 from .enums import (
     AccessibilityChoices,
-    CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
@@ -177,13 +176,23 @@ class ShelterForm(forms.ModelForm):
     entry_requirements = create_select2_multiple_field(EntryRequirementChoices, "Select entry requirements...")
 
     # Ecosystem Information
-    cities = create_select2_multiple_field(CityChoices, "Select cities...")
-    cities_other = create_other_text_field()
     spa = create_select2_multiple_field(SPAChoices, "Select SPA...")
     shelter_programs = create_select2_multiple_field(ShelterProgramChoices, "Select shelter programs...")
     shelter_programs_other = create_other_text_field()
     funders = create_select2_multiple_field(FunderChoices, "Select funders...")
     funders_other = create_other_text_field()
+
+    # Cities field with Select2 widget for inline display
+    cities = forms.ModelMultipleChoiceField(
+        queryset=City.objects.all(),
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select cities...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
 
     exit_policy = create_select2_multiple_field(ExitPolicyChoices, "Select exit policies...")
     exit_policy_other = create_other_text_field()
@@ -386,7 +395,7 @@ class ShelterResource(resources.ModelResource):
     cities = Field(
         column_name="cities",
         attribute="cities",
-        widget=ManyToManyWidget(City, separator=",", field="name"),
+        widget=ManyToManyWidget(City, separator=",", field="display_name"),
     )
     funders = Field(
         column_name="funders",
@@ -674,7 +683,6 @@ class ShelterAdmin(ImportExportModelAdmin):
             {
                 "fields": (
                     "cities",
-                    "cities_other",
                     "spa",
                     "city_council_district",
                     "supervisorial_district",
@@ -966,3 +974,13 @@ class ShelterAdmin(ImportExportModelAdmin):
 
         messages.success(request, _("Shelter '%s' has been cloned successfully.") % shelter.name)
         return redirect("admin:shelters_shelter_change", shelter_copy.pk)
+
+
+@admin.register(City)
+class CityAdmin(admin.ModelAdmin):
+    """Admin interface for managing cities."""
+
+    list_display = ("display_name", "name", "created_at")
+    search_fields = ("display_name", "name")
+    readonly_fields = ("created_at",)
+    ordering = ("display_name",)

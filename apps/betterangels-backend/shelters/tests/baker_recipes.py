@@ -105,7 +105,14 @@ class related_m2m_unique(related):
         quantity = random.randint(0, min(len(self.choices_enum), 5))
 
         for i in range(quantity):
-            related_object, _ = self.related_model.objects.get_or_create(name=(list(self.choices_enum)[i]))
+            choice_value = list(self.choices_enum)[i]
+            # For City model, use the enum name and label
+            if self.related_model == City:
+                related_object, _ = self.related_model.objects.get_or_create(
+                    name=choice_value.name, defaults={"display_name": choice_value.label}
+                )
+            else:
+                related_object, _ = self.related_model.objects.get_or_create(name=choice_value)
             related_objs.add(related_object)
 
         return related_objs

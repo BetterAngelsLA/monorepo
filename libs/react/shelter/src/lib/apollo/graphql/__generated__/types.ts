@@ -186,6 +186,7 @@ export enum CityChoices {
 
 export type CityType = {
   __typename?: 'CityType';
+  displayName: Scalars['String']['output'];
   name?: Maybe<CityChoices>;
 };
 

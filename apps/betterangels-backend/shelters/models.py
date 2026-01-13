@@ -22,7 +22,6 @@ from .enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,
     AccessibilityChoices,
-    CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
@@ -53,7 +52,6 @@ FIELDS_WITH_OTHER_OPTION = [
     "shelter_types",
     "room_styles",
     "exit_policy",
-    "cities",
     "shelter_programs",
     "funders",
 ]
@@ -157,10 +155,18 @@ class EntryRequirement(models.Model):
 
 # Ecosystem Information
 class City(models.Model):
-    name = TextChoicesField(choices_enum=CityChoices, unique=True, blank=True, null=True)
+    """Cities that shelters serve. Users can add new cities directly."""
+
+    name = models.CharField(max_length=255, unique=True, db_index=True)  # Enum key or custom identifier
+    display_name = models.CharField(max_length=255, db_index=True)  # Human-readable name
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["display_name"]
+        verbose_name_plural = "Cities"
 
     def __str__(self) -> str:
-        return str(self.name)
+        return self.display_name
 
 
 class SPA(models.Model):
@@ -276,7 +282,8 @@ class Shelter(BaseModel):
 
     # Ecosystem Information
     cities = models.ManyToManyField(City)
-    cities_other = models.CharField(max_length=255, blank=True, null=True)
+    cities_other = models.CharField(max_length=255, blank=True, null=True)  # Deprecated: migrate to cities M2M
+
     spa = models.ManyToManyField(SPA)
     city_council_district = models.PositiveSmallIntegerField(
         choices=CITY_COUNCIL_DISTRICT_CHOICES,
