@@ -25,7 +25,7 @@ export function HmisProgramNoteView(props: TProps) {
   const { id, clientId } = props;
   const scrollRef = useRef<ScrollView>(null);
 
-  const { data, error, loading, refetch } = useQuery(ViewHmisNoteDocument, {
+  const { data, error, loading } = useQuery(ViewHmisNoteDocument, {
     variables: { id },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -71,7 +71,6 @@ export function HmisProgramNoteView(props: TProps) {
     clientProgram,
     providedServices,
     requestedServices,
-    tasks,
   } = hmisNote;
   const { firstName, lastName } = hmisClientProfile || {};
   const { program } = clientProgram || {};
