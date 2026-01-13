@@ -55,7 +55,6 @@ export default function Tasks() {
   const serverFilters = toTaskFilter({
     search,
     ...toModelFilterValues(currentFilters),
-    hmisClientProfileLookup: isHmisUser ? undefined : { isNull: true },
   });
 
   return (
