@@ -9,6 +9,7 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { ServiceRequestTypeEnum } from '../../../apollo';
 import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/extractExtensionFieldErrors';
 import { applyManualFormErrors } from '../../../errors';
+import { normalizeService } from '../../../helpers';
 import { useSnackbar } from '../../../hooks';
 import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import {
@@ -139,8 +140,11 @@ export function HmisProgramNoteEdit(props: TProps) {
       return;
     }
 
-    const existingProvidedServices = existingNote.providedServices || [];
-    const existingRequestedServices = existingNote.requestedServices || [];
+    const existingProvidedServices =
+      existingNote.providedServices?.map(normalizeService) ?? [];
+
+    const existingRequestedServices =
+      existingNote.requestedServices?.map(normalizeService) ?? [];
 
     methods.reset({
       ...hmisProgramNoteFormEmptyState,

@@ -38,9 +38,10 @@ export type Scalars = {
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
   Point: { input: any; output: any };
   /** Time (isoformat) */
-  Time: { input: any; output: any };
-  UUID: { input: any; output: any };
-  Upload: { input: any; output: any };
+  Time: { input: any; output: any; }
+  UUID: { input: any; output: any; }
+  /** Represents a file upload. */
+  Upload: { input: any; output: any; }
 };
 
 export enum AccessibilityChoices {

@@ -2288,6 +2288,7 @@ input UpdateUserInput {
   hasAcceptedPrivacyPolicy: Boolean
 }
 
+"""Represents a file upload."""
 scalar Upload
 
 enum UserOrganizationPermissions {
