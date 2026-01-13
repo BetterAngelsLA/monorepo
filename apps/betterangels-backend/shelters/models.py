@@ -143,12 +143,11 @@ class EntryRequirement(models.Model):
 
 
 # Ecosystem Information
-class City(models.Model):
+class City(BaseModel):
     """Cities that shelters serve. Users can add new cities directly."""
 
-    name = models.CharField(max_length=255, unique=True, db_index=True)  # Enum key or custom identifier
-    display_name = models.CharField(max_length=255, db_index=True)  # Human-readable name
-    created_at = models.DateTimeField(auto_now_add=True)
+    name = models.CharField(max_length=255, unique=True, db_index=True)
+    display_name = models.CharField(max_length=255, db_index=True)
 
     class Meta:
         ordering = ["display_name"]

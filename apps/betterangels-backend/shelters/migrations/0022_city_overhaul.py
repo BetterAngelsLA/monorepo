@@ -42,11 +42,6 @@ def migrate_cities(apps, schema_editor):
         City.objects.get_or_create(name=choice.value, defaults={"display_name": choice.label})
 
 
-def reverse_migrate_cities(apps, schema_editor):
-    # No-op reverse; keeping it simple as data restoration is not straightforward
-    pass
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -64,6 +59,13 @@ class Migration(migrations.Migration):
                     sql=(
                         "ALTER TABLE shelters_city "
                         "ADD COLUMN IF NOT EXISTS created_at timestamp with time zone NOT NULL DEFAULT NOW()"
+                    ),
+                    reverse_sql=migrations.RunSQL.noop,
+                ),
+                migrations.RunSQL(
+                    sql=(
+                        "ALTER TABLE shelters_city "
+                        "ADD COLUMN IF NOT EXISTS updated_at timestamp with time zone NOT NULL DEFAULT NOW()"
                     ),
                     reverse_sql=migrations.RunSQL.noop,
                 ),
@@ -91,8 +93,12 @@ class Migration(migrations.Migration):
                 migrations.AddField(
                     model_name="city",
                     name="created_at",
-                    field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
-                    preserve_default=False,
+                    field=models.DateTimeField(auto_now_add=True),
+                ),
+                migrations.AddField(
+                    model_name="city",
+                    name="updated_at",
+                    field=models.DateTimeField(auto_now=True),
                 ),
                 migrations.AddField(
                     model_name="city",
@@ -107,5 +113,5 @@ class Migration(migrations.Migration):
                 ),
             ],
         ),
-        migrations.RunPython(migrate_cities, reverse_migrate_cities),
+        migrations.RunPython(migrate_cities, migrations.RunPython.noop),
     ]

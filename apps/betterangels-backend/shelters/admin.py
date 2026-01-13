@@ -217,17 +217,20 @@ class ShelterForm(forms.ModelForm):
         """
         cleaned_data = super().clean() or {}
 
-        # Process all ManyToMany fields to ensure choices exist in database
-        # EXCEPT for 'cities' which is already a model and handled by Select2MultipleWidget
-        many_to_many_fields = [
-            field.name
-            for field in self._meta.model._meta.get_fields()
-            if isinstance(field, models.ManyToManyField) and field.name != "cities"
-        ]
+        # Process only ManyToMany fields where the related model uses TextChoices
+        for field in self._meta.model._meta.get_fields():
+            if not isinstance(field, models.ManyToManyField) or not isinstance(field.related_model, type):
+                continue
 
-        for field_name in many_to_many_fields:
-            model_class = self._meta.model._meta.get_field(field_name).related_model
-            cleaned_data[field_name] = self._clean_choices(field_name, model_class)
+            model_class = field.related_model
+            try:
+                name_field = model_class._meta.get_field("name")
+                # Only process if the name field uses an enum (has choices_enum)
+                if hasattr(name_field, "choices_enum"):
+                    cleaned_data[field.name] = self._clean_choices(field.name, model_class)
+            except FieldDoesNotExist:
+                # If no name field, skip (like City which uses direct model)
+                pass
 
         # Validate fields with "_other" using the centralized constant
         self._validate_other_fields(cleaned_data)
