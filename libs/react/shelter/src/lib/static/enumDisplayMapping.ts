@@ -275,13 +275,11 @@ export const enumDisplayFunderChoices: { [key in FunderChoices]: string } = {
  */
 export const CITY_COUNCIL_DISTRICT_UNINCORPORATED = 0;
 
-const enumDisplayCityCouncilDistrict: Record<number, string> = {
-  [CITY_COUNCIL_DISTRICT_UNINCORPORATED]: 'Unincorporated',
-};
-
 export function formatCityCouncilDistrict(
   district: number | null | undefined
 ): string {
   if (district == null) return '';
-  return enumDisplayCityCouncilDistrict[district] ?? String(district);
+  if (district === CITY_COUNCIL_DISTRICT_UNINCORPORATED)
+    return 'Unincorporated';
+  return String(district);
 }
