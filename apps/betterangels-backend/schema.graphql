@@ -184,7 +184,9 @@ enum CityChoices {
 }
 
 type CityType {
+  id: ID!
   name: CityChoices
+  displayName: String!
 }
 
 input ClientContactInput {
@@ -2287,6 +2289,7 @@ input UpdateUserInput {
   hasAcceptedPrivacyPolicy: Boolean
 }
 
+"""Represents a file upload."""
 scalar Upload
 
 enum UserOrganizationPermissions {

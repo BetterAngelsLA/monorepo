@@ -27,6 +27,7 @@ export type Scalars = {
   /** Time (isoformat) */
   Time: { input: any; output: any; }
   UUID: { input: any; output: any; }
+  /** Represents a file upload. */
   Upload: { input: any; output: any; }
 };
 
@@ -184,6 +185,8 @@ export enum CityChoices {
 
 export type CityType = {
   __typename?: 'CityType';
+  displayName: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
   name?: Maybe<CityChoices>;
 };
 

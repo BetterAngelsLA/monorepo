@@ -122,7 +122,9 @@ class EntryRequirementType:
 
 @strawberry_django.type(models.City)
 class CityType:
+    id: auto
     name: Optional[CityChoices]
+    display_name: auto
 
 
 @strawberry_django.type(models.SPA)
@@ -165,7 +167,7 @@ class ShelterPropertyInput:
     parking: Optional[List[ParkingChoices]] = None
 
 
-@strawberry_django.filter(models.Shelter)
+@strawberry_django.filter_type(models.Shelter)
 class ShelterFilter:
     @strawberry_django.filter_field
     def properties(
