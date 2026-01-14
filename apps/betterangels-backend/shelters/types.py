@@ -122,7 +122,9 @@ class EntryRequirementType:
 
 @strawberry_django.type(models.City)
 class CityType:
+    id: auto
     name: Optional[CityChoices]
+    display_name: auto
 
 
 @strawberry_django.type(models.SPA)
