@@ -14,6 +14,10 @@ export default function EcosystemInfo({
 }: {
   shelter: ViewShelterQuery['shelter'];
 }) {
+  const cityCouncilDistrict = formatCityCouncilDistrict(
+    shelter.cityCouncilDistrict
+  );
+
   return (
     <Card title="Ecosystem Information">
       <div className="flex flex-col gap-2">
@@ -29,10 +33,9 @@ export default function EcosystemInfo({
           )}
         />
 
-        {shelter.cityCouncilDistrict != null && (
+        {cityCouncilDistrict && (
           <div className="flex items-center gap-2">
-            <strong>LACD:</strong>{' '}
-            {formatCityCouncilDistrict(shelter.cityCouncilDistrict)}
+            <strong>LACD:</strong> {cityCouncilDistrict}
           </div>
         )}
 
