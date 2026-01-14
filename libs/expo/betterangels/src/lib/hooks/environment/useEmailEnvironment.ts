@@ -9,17 +9,15 @@ export type Environment = 'production' | 'demo';
  *
  * Environment selection logic:
  * - Email contains '+demo' or ends with '@example.com' → 'demo'
- * - Otherwise → uses the provided defaultEnv
  *
  * @param email - The email address to evaluate
- * @returns Object with targetEnv, isValidEmail, and isPasswordLogin
+ * @returns Object with isValidEmail, and isPasswordLogin
  */
 export default function useEmailEnvironment(email: string): {
-  targetEnv: Environment;
   isValidEmail: boolean;
   isPasswordLogin: boolean;
 } {
-  const { environment, switchEnvironment } = useApiConfig();
+  const { switchEnvironment } = useApiConfig();
 
   const isValidEmail = useMemo(() => Regex.email.test(email), [email]);
 
@@ -38,7 +36,7 @@ export default function useEmailEnvironment(email: string): {
   useEffect(() => {
     if (!isValidEmail) return;
     switchEnvironment(targetEnv);
-  }, [email, environment, targetEnv, switchEnvironment, isValidEmail]);
+  }, [targetEnv, switchEnvironment, isValidEmail]);
 
-  return { targetEnv, isValidEmail, isPasswordLogin };
+  return { isValidEmail, isPasswordLogin };
 }
