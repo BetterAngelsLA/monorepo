@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0022_city_overhaul"),
+        ("shelters", "0023_migrate_display_name_to_name"),
     ]
 
     operations = [
