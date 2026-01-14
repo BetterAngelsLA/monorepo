@@ -76,7 +76,7 @@
     "react-native-maps": "^1.26.20",
     "react-native-mmkv": "^4.1.0",
     "react-native-nitro-cookies": "^1.0.0",
-    "react-native-nitro-modules": "^0.31.10",
+    "react-native-nitro-modules": "^0.33.1",
     "react-native-open-maps": "^0.4.3",
     "react-native-paper": "^5.12.5",
     "react-native-paper-dates": "^0.22.47",

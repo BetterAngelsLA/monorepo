@@ -1,12 +1,13 @@
 import { useApiConfig } from '@monorepo/expo/shared/clients';
-import { Colors, Regex, Spacings, Radiuses } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   Button,
   Loading,
 } from '@monorepo/expo/shared/ui-components';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEmailEnvironment } from '../../hooks';
 import useUser from '../../hooks/user/useUser';
 import { useRememberedEmail } from '../../hooks/useRememberEmail/useRememberEmail';
 
@@ -28,20 +29,10 @@ export default function LoginForm() {
   const [confirming, setConfirming] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { environment, switchEnvironment, fetchClient } = useApiConfig();
+  const { fetchClient } = useApiConfig();
   const { refetchUser } = useUser();
 
-  const targetEnv =
-    email.includes('+demo') || email.endsWith('@example.com')
-      ? 'demo'
-      : 'production';
-  const isPasswordLogin = email.endsWith('@example.com');
-  const isValidEmail = Regex.email.test(email);
-
-  useEffect(() => {
-    if (!isValidEmail) return;
-    switchEnvironment(targetEnv);
-  }, [email, environment, targetEnv, switchEnvironment, isValidEmail]);
+  const { isValidEmail, isPasswordLogin } = useEmailEnvironment(email);
 
   const handleError = (message: string) => {
     setErrorMsg(message);
@@ -306,6 +297,6 @@ const styles = StyleSheet.create({
     fontSize: 14.5,
     color: Colors.PRIMARY_EXTRA_DARK,
     fontFamily: 'Poppins',
-    fontWeight: 400
+    fontWeight: 400,
   },
 });

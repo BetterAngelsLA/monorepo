@@ -7,6 +7,8 @@ from django.db import models
 from django_choices_field import IntegerChoicesField, TextChoicesField
 from organizations.models import Organization
 
+from .managers import TaskManager
+
 
 @pghistory.track(
     pghistory.InsertEvent("task.add"),
@@ -81,4 +83,4 @@ class Task(BaseModel):
             ),
         ]
 
-    objects = models.Manager()
+    objects = TaskManager()

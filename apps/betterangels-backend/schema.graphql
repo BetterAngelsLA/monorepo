@@ -88,103 +88,9 @@ type AuthResponse {
   status_code: String!
 }
 
-enum CityChoices {
-  AGOURA_HILLS
-  ALHAMBRA
-  ARCADIA
-  ARTESIA
-  AVALON
-  AZUSA
-  BALDWIN_PARK
-  BELL
-  BELLFLOWER
-  BELL_GARDENS
-  BEVERLY_HILLS
-  BRADBURY
-  BURBANK
-  CALABASAS
-  CARSON
-  CERRITOS
-  CLAREMONT
-  COMMERCE
-  COMPTON
-  COVINA
-  CUDAHY
-  CULVER_CITY
-  DIAMOND_BAR
-  DOWNEY
-  DUARTE
-  EL_MONTE
-  EL_SEGUNDO
-  GARDENA
-  GLENDALE
-  GLENDORA
-  HAWAIIAN_GARDENS
-  HAWTHORNE
-  HERMOSA_BEACH
-  HIDDEN_HILLS
-  HOLLYWOOD
-  HUNTINGTON_PARK
-  INDUSTRY
-  INGLEWOOD
-  IRWINDALE
-  LA_CANADA_FLINTRIDGE
-  LA_HABRA_HEIGHTS
-  LA_MIRADA
-  LA_PUENTE
-  LA_VERNE
-  LAKEWOOD
-  LANCASTER
-  LAWNDALE
-  LOMITA
-  LONG_BEACH
-  LOS_ANGELES
-  LYNWOOD
-  MALIBU
-  MANHATTAN_BEACH
-  MAYWOOD
-  MONROVIA
-  MONTEBELLO
-  MONTEREY_PARK
-  NORWALK
-  PALMDALE
-  PALOS_VERDES_ESTATES
-  PARAMOUNT
-  PASADENA
-  PICO_RIVERA
-  POMONA
-  RANCHO_PALOS_VERDES
-  REDONDO_BEACH
-  ROLLING_HILLS
-  ROLLING_HILLS_ESTATES
-  ROSEMEAD
-  SAN_DIMAS
-  SAN_FERNANDO
-  SAN_GABRIEL
-  SAN_MARINO
-  SANTA_CLARITA
-  SANTA_FE_SPRINGS
-  SANTA_MONICA
-  SIERRA_MADRE
-  SIGNAL_HILL
-  SOUTH_EL_MONTE
-  SOUTH_GATE
-  SOUTH_PASADENA
-  TEMPLE_CITY
-  TORRANCE
-  VERNON
-  VENICE
-  WALNUT
-  WEST_COVINA
-  WEST_HOLLYWOOD
-  WESTLAKE_VILLAGE
-  WEST_LOS_ANGELES
-  WHITTIER
-  WILMINGTON
-}
-
 type CityType {
-  name: CityChoices
+  id: ID!
+  name: String!
 }
 
 input ClientContactInput {
@@ -1632,7 +1538,7 @@ type Query {
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
-  tasks(pagination: OffsetPaginationInput, filters: TaskFilter, ordering: [TaskOrder!]! = []): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
+  tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(ordering: [ShelterOrder!] = null, filters: ShelterFilter, pagination: OffsetPaginationInput): ShelterTypeOffsetPaginated!
 }
