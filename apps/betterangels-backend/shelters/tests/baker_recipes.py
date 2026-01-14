@@ -105,7 +105,16 @@ class related_m2m_unique(related):
         quantity = random.randint(0, min(len(self.choices_enum), 5))
 
         for i in range(quantity):
-            related_object, _ = self.related_model.objects.get_or_create(name=(list(self.choices_enum)[i]))
+            choice_value = list(self.choices_enum)[i]
+            try:
+                name_field = self.related_model._meta.get_field("name")
+                if hasattr(name_field, "choices_enum"):
+                    related_object, _ = self.related_model.objects.get_or_create(name=choice_value.value)
+                else:
+                    related_object, _ = self.related_model.objects.get_or_create(name=choice_value)
+            except Exception:
+                # Fallback: use choice value
+                related_object, _ = self.related_model.objects.get_or_create(name=choice_value.value)
             related_objs.add(related_object)
 
         return related_objs
