@@ -3,9 +3,7 @@ from typing import Any
 from unittest.mock import ANY
 
 from accounts.tests.baker_recipes import organization_recipe
-from django.contrib.gis.db.models.functions import Distance
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db.models import F
 from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
