@@ -364,7 +364,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         search_range_in_miles = 20
         _, s2, s3 = [
             Shelter.objects.create(
-                name=f"Test Shelter Location {i}",
                 location=Places(
                     place=f"place {i}",
                     # Each subsequent shelter is ~9 miles further from the reference point.
@@ -445,7 +444,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         _, s2, s3, s4, _ = [
             Shelter.objects.create(
-                name=f"Test Shelter MapBounds {i}",
                 location=Places(
                     place=f"place {i}",
                     # Each subsequent shelter is two degrees further from the reference point
@@ -495,7 +493,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         _, s2, s3, s4, _ = [
             Shelter.objects.create(
-                name=f"Test Shelter Combined {i}",
                 location=Places(
                     place=f"place {i}",
                     # Each subsequent shelter is two degrees further from the reference point
