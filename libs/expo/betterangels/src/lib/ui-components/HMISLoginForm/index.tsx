@@ -30,7 +30,8 @@ export default function HMISLoginForm() {
   const { switchEnvironment } = useApiConfig();
 
   useEffect(() => {
-    // Default to development environment since there's no production HMIS yet
+    // Default environment is demo. For local development, this points to your local Django backend via EXPO_PUBLIC_DEMO_API_URL.
+    // If you would like to override this to point to a live AWS environment, update the variable in your .env.local
     switchEnvironment('demo');
   }, [switchEnvironment]);
 
