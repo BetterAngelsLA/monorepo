@@ -131,11 +131,7 @@ class Mutation:
     def hmis_login(self, info: Info, email: str, password: str) -> HmisLoginResult:
         request = info.context["request"]
         hmis_api_bridge = HmisApiBridge(info=info)
-
-        # Reuse centralized '+demo' stripping used by email backend to avoid
-        # leaking demo aliases to HMIS auth.
         sanitized_email = strip_demo_tag(email)
-
         hmis_api_bridge.create_auth_token(sanitized_email, password)
 
         try:
