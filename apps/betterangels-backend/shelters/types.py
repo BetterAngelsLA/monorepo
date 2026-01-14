@@ -12,7 +12,6 @@ from django.db.models import Prefetch, Q, QuerySet
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
-    CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -123,8 +122,7 @@ class EntryRequirementType:
 @strawberry_django.type(models.City)
 class CityType:
     id: auto
-    name: Optional[CityChoices]
-    display_name: auto
+    name: auto
 
 
 @strawberry_django.type(models.SPA)

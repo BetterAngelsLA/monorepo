@@ -2,14 +2,13 @@
 
 import django.utils.timezone
 from django.db import migrations, models
-from django.db.migrations.operations.special import SeparateDatabaseAndState
 
 
 def migrate_cities(apps, schema_editor):
     City = apps.get_model("shelters", "City")
 
-    # Import CityChoices dynamically to avoid dependency on code changes
-    from shelters.enums import CityChoices
+    # Import CityChoices from deprecated for migration compatibility
+    from ..deprecated.deprecated_enums import CityChoices
 
     enum_by_value = {choice.value: choice.label for choice in CityChoices}
     enum_by_label = {choice.label.lower(): choice.label for choice in CityChoices}
@@ -49,69 +48,29 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AddField(
+            model_name="city",
+            name="created_at",
+            field=models.DateTimeField(auto_now_add=True),
+        ),
+        migrations.AddField(
+            model_name="city",
+            name="updated_at",
+            field=models.DateTimeField(auto_now=True),
+        ),
+        migrations.AddField(
+            model_name="city",
+            name="display_name",
+            field=models.CharField(db_index=True, max_length=255),
+        ),
+        migrations.AlterField(
+            model_name="city",
+            name="name",
+            field=models.CharField(db_index=True, max_length=255, unique=True),
+        ),
         migrations.AlterModelOptions(
             name="city",
             options={"ordering": ["display_name"], "verbose_name_plural": "Cities"},
-        ),
-        SeparateDatabaseAndState(
-            database_operations=[
-                migrations.RunSQL(
-                    sql=(
-                        "ALTER TABLE shelters_city "
-                        "ADD COLUMN IF NOT EXISTS created_at timestamp with time zone NOT NULL DEFAULT NOW()"
-                    ),
-                    reverse_sql=migrations.RunSQL.noop,
-                ),
-                migrations.RunSQL(
-                    sql=(
-                        "ALTER TABLE shelters_city "
-                        "ADD COLUMN IF NOT EXISTS updated_at timestamp with time zone NOT NULL DEFAULT NOW()"
-                    ),
-                    reverse_sql=migrations.RunSQL.noop,
-                ),
-                migrations.RunSQL(
-                    sql=(
-                        "ALTER TABLE shelters_city "
-                        "ADD COLUMN IF NOT EXISTS display_name varchar(255) NOT NULL DEFAULT 'Unknown'"
-                    ),
-                    reverse_sql=migrations.RunSQL.noop,
-                ),
-                migrations.RunSQL(
-                    sql="ALTER TABLE shelters_city ALTER COLUMN name TYPE varchar(255)",
-                    reverse_sql=migrations.RunSQL.noop,
-                ),
-                migrations.RunSQL(
-                    sql="CREATE UNIQUE INDEX IF NOT EXISTS shelters_city_name_key ON shelters_city (name)",
-                    reverse_sql=migrations.RunSQL.noop,
-                ),
-                migrations.RunSQL(
-                    sql="CREATE INDEX IF NOT EXISTS shelters_city_display_name_idx ON shelters_city (display_name)",
-                    reverse_sql=migrations.RunSQL.noop,
-                ),
-            ],
-            state_operations=[
-                migrations.AddField(
-                    model_name="city",
-                    name="created_at",
-                    field=models.DateTimeField(auto_now_add=True),
-                ),
-                migrations.AddField(
-                    model_name="city",
-                    name="updated_at",
-                    field=models.DateTimeField(auto_now=True),
-                ),
-                migrations.AddField(
-                    model_name="city",
-                    name="display_name",
-                    field=models.CharField(db_index=True, default="Unknown", max_length=255),
-                    preserve_default=False,
-                ),
-                migrations.AlterField(
-                    model_name="city",
-                    name="name",
-                    field=models.CharField(db_index=True, max_length=255, unique=True),
-                ),
-            ],
         ),
         migrations.RunPython(migrate_cities, migrations.RunPython.noop),
     ]

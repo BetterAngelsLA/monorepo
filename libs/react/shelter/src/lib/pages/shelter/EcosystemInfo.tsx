@@ -16,10 +16,7 @@ export default function EcosystemInfo({
   return (
     <Card title="Ecosystem Information">
       <div className="flex flex-col gap-2">
-        <InlineList
-          title="City:"
-          items={shelter?.cities.map((i) => i.displayName)}
-        />
+        <InlineList title="City:" items={shelter?.cities.map((i) => i.name)} />
 
         <InlineList
           title="SPA:"

@@ -986,7 +986,7 @@ class ShelterAdmin(ImportExportModelAdmin):
 class CityAdmin(admin.ModelAdmin):
     """Admin interface for managing cities."""
 
-    list_display = ("display_name", "name", "created_at")
-    search_fields = ("display_name", "name")
+    list_display = ("name", "created_at")
+    search_fields = ("name",)
     readonly_fields = ("created_at",)
-    ordering = ("display_name",)
+    ordering = ("name",)
