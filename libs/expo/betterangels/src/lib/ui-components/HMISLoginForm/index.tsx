@@ -1,14 +1,13 @@
 import { useMutation } from '@apollo/client/react';
-import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   Button,
   Loading,
 } from '@monorepo/expo/shared/ui-components';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useUser } from '../../hooks';
+import { useEmailEnvironment, useUser } from '../../hooks';
 import { useRememberedEmail } from '../../hooks/useRememberEmail/useRememberEmail';
 import { HmisLoginDocument } from './__generated__/HMISLogin.generated';
 
@@ -27,13 +26,10 @@ export default function HMISLoginForm() {
 
   const [hmisLogin] = useMutation(HmisLoginDocument);
   const { refetchUser } = useUser();
-  const { switchEnvironment } = useApiConfig();
 
-  useEffect(() => {
-    // Default environment is demo. For local development, this points to your local Django backend via EXPO_PUBLIC_DEMO_API_URL.
-    // If you would like to override this to point to a live AWS environment, update the variable in your .env.local
-    switchEnvironment('demo');
-  }, [switchEnvironment]);
+  // Default to demo environment for HMIS (production doesn't exist yet)
+  // Emails with '+demo' or '@example.com' will use demo environment
+  const { isValidEmail } = useEmailEnvironment(email, 'demo');
 
   const onSubmit = useCallback(async () => {
     if (!email.trim() || !password.trim()) {
@@ -115,7 +111,7 @@ export default function HMISLoginForm() {
         title="Sign In"
         icon={submitting ? <Loading size="small" color="white" /> : undefined}
         onPress={onSubmit}
-        disabled={submitting}
+        disabled={submitting || !isValidEmail || !password}
         testID="hmis-submit"
       />
 
