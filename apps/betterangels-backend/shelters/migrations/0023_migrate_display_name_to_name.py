@@ -25,4 +25,9 @@ class Migration(migrations.Migration):
             name="city",
             options={"ordering": ["name"], "verbose_name_plural": "Cities"},
         ),
+        # Add case-insensitive unique constraint for shelter names
+        migrations.RunSQL(
+            sql="CREATE UNIQUE INDEX shelter_name_ci_unique ON shelters_shelter (LOWER(name))",
+            reverse_sql="DROP INDEX IF EXISTS shelter_name_ci_unique",
+        ),
     ]
