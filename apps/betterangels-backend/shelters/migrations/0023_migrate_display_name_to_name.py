@@ -21,6 +21,11 @@ class Migration(migrations.Migration):
             old_name="display_name",
             new_name="name",
         ),
+        migrations.AlterField(
+            model_name="city",
+            name="name",
+            field=models.CharField(db_index=True, max_length=255, unique=True),
+        ),
         migrations.AlterModelOptions(
             name="city",
             options={"ordering": ["name"], "verbose_name_plural": "Cities"},
