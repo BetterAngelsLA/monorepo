@@ -76,6 +76,24 @@ class HmisClientProfilePermissionTestCase(HmisClientProfileBaseTestCase):
         self.assertEqual(len(response["errors"]), 1)
         self.assertEqual(response["errors"][0]["message"], "You must be logged in to HMIS to access this resource.")
 
+    def test_hmis_client_profiles_unauthenticated(self) -> None:
+        self.graphql_client.logout()
+
+        query = """
+            query ($pagination: OffsetPaginationInput) {
+                hmisClientProfiles (pagination: $pagination) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        response = self.execute_graphql(query)
+
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertEqual(response["errors"][0]["message"], "You must be logged in to perform this action.")
+
     def test_hmis_create_hmis_client_profile_permission_success(self) -> None:
         variables = {"firstName": "Create", "lastName": "Me", "nameQuality": "FULL"}
 

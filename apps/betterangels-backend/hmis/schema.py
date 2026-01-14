@@ -51,23 +51,15 @@ class IsHmisAuthenticated(BasePermission):
     message: str = "You must be logged in to HMIS to access this resource."
 
     def has_permission(self, source: Any, info: Info, **kwargs: Any) -> bool:
-        if not IsAuthenticated().has_permission(source, info, **kwargs):
-            IsAuthenticated().on_unauthorized()
+        IsAuthenticated().has_permission(source, info, **kwargs)
 
         request = info.context["request"]
         session = request.session
 
-        return bool(session.get(HMIS_SESSION_KEY_NAME))
+        if not bool(session.get(HMIS_SESSION_KEY_NAME)):
+            raise UnauthenticatedGQLError(message=self.message)
 
-    def on_unauthorized(self) -> None:
-        error = UnauthenticatedGQLError(message=self.message)
-
-        if self.error_extensions:
-            if not error.extensions:
-                error.extensions = {}
-            error.extensions.update(self.error_extensions)
-
-        raise error
+        return True
 
 
 def _get_client_program(program_data: dict[str, Any]) -> HmisClientProgramType:
