@@ -34,7 +34,7 @@ export function SearchBarActionButton(props: TSearchBarActionButton) {
         regular
         title={label}
         accessibilityHint={accessibilityHint}
-        accessibilityLabel={accessibilityLabel}
+        accessibilityLabel={accessibilityLabel ?? label}
       />
     );
   }
