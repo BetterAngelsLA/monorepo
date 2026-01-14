@@ -2095,7 +2095,7 @@ export type QueryTaskArgs = {
 
 export type QueryTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
-  ordering?: Array<TaskOrder>;
+  ordering?: InputMaybe<Array<TaskOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
