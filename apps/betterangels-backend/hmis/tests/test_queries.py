@@ -27,10 +27,11 @@ from hmis.enums import (
 from hmis.models import HmisClientProfile, HmisNote
 from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
 from model_bakery import baker
+from notes.models import OrganizationService, ServiceRequest
 from test_utils.vcr_config import scrubbed_vcr
 
 
-@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisNoteQueryTests(HmisNoteBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -40,44 +41,94 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
         self.hmis_client_profile = baker.make(HmisClientProfile, hmis_id="388")
         self.hmis_note = baker.make(
             HmisNote,
-            hmis_id="467",
-            hmis_client_profile_id=self.hmis_client_profile.pk,
+            hmis_id="480",
+            hmis_client_profile=self.hmis_client_profile,
         )
 
     @scrubbed_vcr.use_cassette("test_hmis_note_query.yaml")
     def test_hmis_note_query(self) -> None:
+        self._setup_location()
+        self.hmis_note.location = self.location
+        self.hmis_note.save()
+        provided_services = [baker.make(ServiceRequest, service=OrganizationService.objects.first())]
+        requested_services = [baker.make(ServiceRequest, service=OrganizationService.objects.last())]
+        self.hmis_note.provided_services.set(provided_services)
+        self.hmis_note.requested_services.set(requested_services)
+
         query = f"""
-            query ($client_hmis_id: String!, $note_hmis_id: String!) {{
-                hmisNote(clientHmisId: $client_hmis_id, noteHmisId: $note_hmis_id) {{
+            query ($id: ID!) {{
+                hmisNote(id: $id) {{
                     {self.hmis_note_fields}
                 }}
             }}
         """
-        variables = {
-            "client_hmis_id": self.hmis_client_profile.hmis_id,
-            "note_hmis_id": self.hmis_note.hmis_id,
-        }
+        variables = {"id": str(self.hmis_note.pk)}
         response = self.execute_graphql(query, variables)
 
         hmis_note = response["data"]["hmisNote"]
 
+        # TODO: remove after service cutover
+        assert provided_services[0].service
+        assert requested_services[0].service
+
         expected = {
-            "id": ANY,
-            "hmisId": "467",
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
-            "title": "poet",
-            "note": "<p>poen</p>",
-            "date": "2025-11-12",
-            "addedDate": "2025-11-13T01:40:39+00:00",
-            "lastUpdated": "2025-11-13T01:40:39+00:00",
-            "refClientProgram": None,
+            "id": str(self.hmis_note.pk),
+            "hmisId": "480",
+            "hmisClientProfile": {
+                "id": str(self.hmis_client_profile.pk),
+                "hmisId": self.hmis_client_profile.hmis_id,
+                "firstName": self.hmis_client_profile.first_name,
+                "lastName": self.hmis_client_profile.last_name,
+            },
+            "title": "prog note title",
+            "note": "prog note note",
+            "date": "2011-11-11",
+            "providedServices": [
+                {
+                    "id": str(provided_services[0].pk),
+                    "service": {
+                        "id": str(provided_services[0].service.pk),
+                        "label": provided_services[0].service.label,
+                    },
+                }
+            ],
+            "requestedServices": [
+                {
+                    "id": str(requested_services[0].pk),
+                    "service": {
+                        "id": str(requested_services[0].service.pk),
+                        "label": requested_services[0].service.label,
+                    },
+                }
+            ],
+            "addedDate": "2025-11-13T08:35:34+00:00",
+            "lastUpdated": "2025-11-13T08:35:34+00:00",
+            "refClientProgram": "525",
+            "clientProgram": {
+                "id": "525",
+                "program": {
+                    "id": "2",
+                    "name": "Housing Program 01",
+                },
+            },
+            "location": {
+                "id": str(self.location.pk),
+                "address": {
+                    "street": self.address.street,
+                    "city": self.address.city,
+                    "state": self.address.state,
+                    "zipCode": self.address.zip_code,
+                },
+                "point": self.point,
+                "pointOfInterest": self.point_of_interest,
+            },
             "createdBy": None,
         }
 
         self.assertEqual(expected, hmis_note)
 
 
-@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -147,18 +198,19 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
     @scrubbed_vcr.use_cassette("test_hmis_client_profile_query.yaml")
     def test_hmis_client_profile_query(self) -> None:
         query = f"""
-            query ($hmis_id: String!) {{
-                hmisClientProfile(hmisId: $hmis_id) {{
+            query ($id: ID!) {{
+                hmisClientProfile(id: $id) {{
                     {self.hmis_client_profile_fields}
                 }}
             }}
         """
-        variables = {"hmis_id": self.hmis_client_profile.hmis_id}
+        variables = {"id": str(self.hmis_client_profile.pk)}
         response = self.execute_graphql(query, variables)
 
         hmis_client_profile = response["data"]["hmisClientProfile"]
         expected = {
             # ID & metadata fields
+            "id": str(self.hmis_client_profile.pk),
             "hmisId": "1",
             "personalId": "7e401eed7ee14c36a7641ef44626695c",
             "uniqueIdentifier": "69E44770D",

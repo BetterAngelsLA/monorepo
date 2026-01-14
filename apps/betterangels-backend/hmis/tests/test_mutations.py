@@ -11,12 +11,13 @@ from clients.enums import (
     PreferredCommunicationEnum,
     PronounEnum,
 )
-from common.models import PhoneNumber
+from common.models import Location, PhoneNumber
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.test import TestCase, override_settings
+from hmis.api_bridge import HmisApiBridge
 from hmis.enums import (
     HmisDobQualityEnum,
     HmisGenderEnum,
@@ -29,6 +30,7 @@ from hmis.enums import (
 from hmis.models import HmisClientProfile, HmisNote
 from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
 from model_bakery import baker
+from notes.models import OrganizationService, ServiceRequest
 from test_utils.vcr_config import scrubbed_vcr
 
 LOGIN_MUTATION = """
@@ -42,7 +44,7 @@ LOGIN_MUTATION = """
 """
 
 
-@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisNoteMutationTests(HmisNoteBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -63,14 +65,23 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
 
         expected = {
             "id": ANY,
-            "hmisId": "471",
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "hmisId": "517",
+            "hmisClientProfile": {
+                "id": str(self.hmis_client_profile.pk),
+                "hmisId": self.hmis_client_profile.hmis_id,
+                "firstName": self.hmis_client_profile.first_name,
+                "lastName": self.hmis_client_profile.last_name,
+            },
             "title": "pitle",
             "note": "pote",
             "date": "2010-10-10",
-            "addedDate": "2025-11-13T07:58:27+00:00",
-            "lastUpdated": "2025-11-13T07:58:27+00:00",
+            "location": None,
+            "providedServices": [],
+            "requestedServices": [],
+            "addedDate": "2025-11-25T01:37:07+00:00",
+            "lastUpdated": "2025-11-25T01:37:07+00:00",
             "refClientProgram": None,
+            "clientProgram": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
         }
 
@@ -83,21 +94,36 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "title": "prog note title",
             "note": "prog note note",
             "date": "2011-11-11",
-            "refClientProgram": 525,
+            "refClientProgram": "525",
         }
         response = self._create_hmis_note_fixture(variables)
         note = response["data"]["createHmisNote"]
 
         expected = {
             "id": ANY,
-            "hmisId": "480",
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "hmisId": "521",
+            "hmisClientProfile": {
+                "id": str(self.hmis_client_profile.pk),
+                "hmisId": self.hmis_client_profile.hmis_id,
+                "firstName": self.hmis_client_profile.first_name,
+                "lastName": self.hmis_client_profile.last_name,
+            },
             "title": "prog note title",
             "note": "prog note note",
             "date": "2011-11-11",
-            "addedDate": "2025-11-13T08:35:34+00:00",
-            "lastUpdated": "2025-11-13T08:35:34+00:00",
-            "refClientProgram": 525,
+            "location": None,
+            "providedServices": [],
+            "requestedServices": [],
+            "addedDate": "2025-11-25T02:01:19+00:00",
+            "lastUpdated": "2025-11-25T02:01:19+00:00",
+            "refClientProgram": "525",
+            "clientProgram": {
+                "id": "525",
+                "program": {
+                    "id": "2",
+                    "name": "Housing Program 01",
+                },
+            },
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
         }
 
@@ -107,17 +133,23 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
     def test_update_hmis_note_mutation(self) -> None:
         hmis_note = baker.make(
             HmisNote,
-            hmis_id="479",
+            hmis_id="521",
             hmis_client_profile_id=self.hmis_client_profile.pk,
             title="prog note title",
             note="prog note note",
             date="2011-11-11",
             created_by=self.org_1_case_manager_1,
         )
+        provided_services = [baker.make(ServiceRequest, service=OrganizationService.objects.first())]
+        requested_services = [baker.make(ServiceRequest, service=OrganizationService.objects.last())]
+        hmis_note.provided_services.set(provided_services)
+        hmis_note.requested_services.set(requested_services)
+        # TODO: remove after service cutover
+        assert provided_services[0].service
+        assert requested_services[0].service
 
         variables = {
             "id": str(hmis_note.pk),
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
             "title": "updated note title",
             "note": "updated note note",
             "date": "2012-12-12",
@@ -127,21 +159,170 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
 
         expected = {
             "id": ANY,
-            "hmisId": "479",
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "hmisId": "521",
+            "hmisClientProfile": {
+                "id": str(self.hmis_client_profile.pk),
+                "hmisId": self.hmis_client_profile.hmis_id,
+                "firstName": self.hmis_client_profile.first_name,
+                "lastName": self.hmis_client_profile.last_name,
+            },
             "title": "updated note title",
             "note": "updated note note",
             "date": "2012-12-12",
-            "addedDate": "2025-11-13T08:34:40+00:00",
-            "lastUpdated": "2025-11-13T08:58:42+00:00",
-            "refClientProgram": 525,
+            "location": None,
+            "providedServices": [
+                {
+                    "id": str(provided_services[0].pk),
+                    "service": {
+                        "id": str(provided_services[0].service.pk),
+                        "label": provided_services[0].service.label,
+                    },
+                }
+            ],
+            "requestedServices": [
+                {
+                    "id": str(requested_services[0].pk),
+                    "service": {
+                        "id": str(requested_services[0].service.pk),
+                        "label": requested_services[0].service.label,
+                    },
+                }
+            ],
+            "addedDate": "2025-11-25T02:01:19+00:00",
+            "lastUpdated": "2025-11-25T02:04:24+00:00",
+            "refClientProgram": "525",
+            "clientProgram": {
+                "id": "525",
+                "program": {
+                    "id": "2",
+                    "name": "Housing Program 01",
+                },
+            },
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
         }
 
         self.assertEqual(expected, note)
 
+    def test_update_hmis_note_location_mutation(self) -> None:
+        self._setup_hmis_session()
+        self._setup_location()
 
-@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
+        hmis_note = baker.make(HmisNote, _fill_optional=True)
+        hmis_note_id = hmis_note.pk
+        json_address_input, address_input = self._get_address_inputs()
+
+        location = {
+            "address": json_address_input,
+            "point": self.point,
+            "pointOfInterest": self.point_of_interest,
+        }
+        variables = {
+            "id": hmis_note_id,
+            "location": location,
+        }
+
+        expected_query_count = 19
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._update_hmis_note_location_fixture(variables)
+
+        assert isinstance(address_input["addressComponents"], list)
+        expected_address = {
+            "street": (
+                f"{address_input['addressComponents'][0]['long_name']} "
+                f"{address_input['addressComponents'][1]['long_name']}"
+            ),
+            "city": address_input["addressComponents"][3]["long_name"],
+            "state": address_input["addressComponents"][5]["short_name"],
+            "zipCode": address_input["addressComponents"][7]["long_name"],
+        }
+
+        updated_note_location = response["data"]["updateHmisNoteLocation"]["location"]
+        self.assertEqual(updated_note_location["point"], self.point)
+        self.assertEqual(updated_note_location["address"], expected_address)
+
+        hmis_note = HmisNote.objects.get(id=hmis_note_id)
+        self.assertIsNotNone(hmis_note.location)
+
+        location = Location.objects.get(id=hmis_note.location.pk)  # type: ignore
+        self.assertEqual(hmis_note, location.hmis_notes.first())
+
+    def test_create_hmis_note_service_request_mutation(self) -> None:
+        bag_svc = OrganizationService.objects.get(label="Bag(s)")
+        hmis_note = baker.make(HmisNote, _fill_optional=True)
+
+        variables = {
+            "serviceId": str(bag_svc.pk),
+            "hmisNoteId": str(hmis_note.id),
+            "serviceRequestType": "PROVIDED",
+        }
+
+        initial_org_service_count = OrganizationService.objects.count()
+
+        response = self._create_hmis_note_service_request_fixture(variables)
+        self.assertEqual(initial_org_service_count, OrganizationService.objects.count())
+
+        response_service_request = response["data"]["createHmisNoteServiceRequest"]
+        service_request = ServiceRequest.objects.get(id=response_service_request["id"])
+
+        assert service_request.service
+        self.assertIn(service_request, hmis_note.provided_services.all())
+
+        self.assertEqual(response_service_request["service"]["id"], str(bag_svc.pk))
+        self.assertEqual(response_service_request["service"]["label"], bag_svc.label)
+
+        self.assertEqual(service_request.service.pk, bag_svc.pk)
+        self.assertEqual(service_request.service.label, bag_svc.label)
+        self.assertEqual(service_request.service.category, bag_svc.category)
+
+    def test_create_hmis_note_service_request_other_mutation(self) -> None:
+        hmis_note = baker.make(HmisNote, _fill_optional=True)
+        variables = {
+            "serviceOther": "another service",
+            "hmisNoteId": str(hmis_note.id),
+            "serviceRequestType": "PROVIDED",
+        }
+
+        initial_org_service_count = OrganizationService.objects.count()
+
+        response = self._create_hmis_note_service_request_fixture(variables)
+        self.assertEqual(initial_org_service_count + 1, OrganizationService.objects.count())
+
+        response_service_request = response["data"]["createHmisNoteServiceRequest"]
+        service_request = ServiceRequest.objects.get(id=response_service_request["id"])
+
+        assert service_request.service
+        self.assertIn(service_request, hmis_note.provided_services.all())
+
+        self.assertEqual(response_service_request["service"]["label"], "another service")
+
+        self.assertEqual(service_request.service.label, "another service")
+        self.assertIsNone(service_request.service.category)
+
+    def test_remove_hmis_note_service_request_mutation(self) -> None:
+        provided_services = [baker.make(ServiceRequest, service=OrganizationService.objects.first())]
+        requested_services = [baker.make(ServiceRequest, service=OrganizationService.objects.last())]
+
+        hmis_note = baker.make(HmisNote, _fill_optional=True)
+        hmis_note.provided_services.set(provided_services)
+        hmis_note.requested_services.set(requested_services)
+
+        service_to_remove = provided_services[0]
+
+        variables = {
+            "serviceRequestId": str(service_to_remove.pk),
+            "hmisNoteId": str(hmis_note.pk),
+            "serviceRequestType": "PROVIDED",
+        }
+
+        self._remove_hmis_note_service_request_fixture(variables)
+
+        self.assertNotIn(service_to_remove, hmis_note.provided_services.all())
+        self.assertIn(requested_services[0], hmis_note.requested_services.all())
+        self.assertEqual(hmis_note.provided_services.count(), 0)
+        self.assertEqual(hmis_note.requested_services.count(), 1)
+
+
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -218,6 +399,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
 
         expected = {
             # ID & Metadata Fields
+            "id": ANY,
             "hmisId": ANY,
             "uniqueIdentifier": ANY,
             "personalId": None,
@@ -293,7 +475,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
         )
 
         variables = {
-            "hmisId": str(hmis_client_profile.hmis_id),
+            "id": str(hmis_client_profile.pk),
             #
             "alias": "the raven",
             "birthDate": datetime.date.fromisoformat("1909-01-19"),
@@ -341,6 +523,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
         client = response["data"]["updateHmisClientProfile"]
 
         expected = {
+            "id": str(hmis_client_profile.pk),
             "hmisId": ANY,
             "uniqueIdentifier": ANY,
             "personalId": ANY,
@@ -395,21 +578,31 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
         self.assertEqual(expected, client)
 
 
-@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
+@override_settings(
+    AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"],
+    HMIS_REST_URL="https://example.com",
+    HMIS_HOST="example.com",
+)
 class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.existing_user = baker.make(get_user_model(), _fill_optional=["email"])
 
-        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
-        self.success_response = {"data": {"createAuthToken": {"authToken": token}}}
-
     @override_settings(HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=")
     def test_hmis_login_success(self) -> None:
+        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
+
         with patch(
-            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
-            return_value=self.success_response,
-        ):
+            "hmis.api_bridge.HmisApiBridge.create_auth_token",
+            autospec=True,
+        ) as mock_create_auth_token:
+
+            def fake_create_auth_token(self: HmisApiBridge, username: str, password: str) -> None:
+                self._set_auth_token(token)
+                return None
+
+            mock_create_auth_token.side_effect = fake_create_auth_token
+
             resp = self.execute_graphql(
                 LOGIN_MUTATION,
                 variables={"email": self.existing_user.email, "password": "anything"},
@@ -430,39 +623,19 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
             "django.contrib.auth.backends.ModelBackend",
         )
 
+    @scrubbed_vcr.use_cassette("test_hmis_login_invalid_credentials.yaml")
     def test_hmis_login_invalid_credentials(self) -> None:
-        return_value = {
-            "data": {"createAuthToken": {"authToken": None}},
-            "errors": [
-                {
-                    "path": ["createAuthToken"],
-                    "data": None,
-                    "errorType": "422",
-                    "errorInfo": None,
-                    "locations": [{"line": 5, "column": 5, "sourceName": None}],
-                    "message": '{"name":"Unprocessable entity","message":"{\\"username\\":[\\"Incorrect username or password.\\"]}","code":0,"status":422,"messages":{"username":["Incorrect username or password."]}}',
-                }
-            ],
-        }
-
-        with patch(
-            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
-            return_value=return_value,
-        ):
-            resp = self.execute_graphql(
-                LOGIN_MUTATION,
-                variables={"email": self.existing_user.email, "password": "wrong"},
-            )
-
-        self.assertIsNone(resp.get("errors"))
-        payload = resp["data"]["hmisLogin"]
-        self.assertEqual(payload["__typename"], "HmisLoginError")
-        self.assertIn("Invalid credentials", payload["message"])
+        resp = self.execute_graphql(
+            LOGIN_MUTATION,
+            variables={"email": self.existing_user.email, "password": "wrong"},
+        )
+        self.assertEqual(len(resp["errors"]), 1)
+        self.assertIn("Login Failed: Invalid credentials.", resp["errors"][0]["message"])
 
     def test_hmis_login_unknown_email_no_autocreate(self) -> None:
         with patch(
-            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
-            return_value=self.success_response,
+            "hmis.api_bridge.HmisApiBridge.create_auth_token",
+            return_value=None,
         ):
             resp = self.execute_graphql(
                 LOGIN_MUTATION,

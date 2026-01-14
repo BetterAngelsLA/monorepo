@@ -94,7 +94,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             totalBeds
             website
             accessibility {name}
-            cities {name}
+            cities {name displayName}
             demographics {name}
             entryRequirements {name}
             funders {name}
@@ -166,7 +166,12 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             website="shelter.com",
             location=shelter_location,
             accessibility=[Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)[0]],
-            cities=[City.objects.get_or_create(name=CityChoices.AGOURA_HILLS)[0]],
+            cities=[
+                City.objects.get_or_create(
+                    name=CityChoices.AGOURA_HILLS.value,
+                    defaults={"display_name": CityChoices.AGOURA_HILLS.label},
+                )[0]
+            ],
             demographics=[Demographic.objects.get_or_create(name=DemographicChoices.ALL)[0]],
             entry_requirements=[EntryRequirement.objects.get_or_create(name=EntryRequirementChoices.PHOTO_ID)[0]],
             funders=[Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)[0]],
@@ -261,7 +266,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "totalBeds": 1,
             "website": "shelter.com",
             "accessibility": [{"name": AccessibilityChoices.WHEELCHAIR_ACCESSIBLE.name}],
-            "cities": [{"name": CityChoices.AGOURA_HILLS.name}],
+            "cities": [{"name": CityChoices.AGOURA_HILLS.name, "displayName": CityChoices.AGOURA_HILLS.label}],
             "demographics": [{"name": DemographicChoices.ALL.name}],
             "entryRequirements": [{"name": EntryRequirementChoices.PHOTO_ID.name}],
             "funders": [{"name": FunderChoices.CITY_OF_LOS_ANGELES.name}],
@@ -322,8 +327,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         interior_photo_1 = InteriorPhoto.objects.create(shelter=shelters[1], file=self.file)
 
         query = f"""
-            query ($offset: Int, $limit: Int, $order: ShelterOrder) {{
-                shelters(pagination: {{offset: $offset, limit: $limit}}, order: $order) {{
+            query ($offset: Int, $limit: Int, $ordering: [ShelterOrder!]! = []) {{
+                shelters(pagination: {{offset: $offset, limit: $limit}}, ordering: $ordering) {{
                     totalCount
                     pageInfo {{
                         limit
@@ -339,7 +344,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         expected_query_count = 28
 
-        variables = {"order": {"name": "ASC"}}
+        variables = {"ordering": {"name": "ASC"}}
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)

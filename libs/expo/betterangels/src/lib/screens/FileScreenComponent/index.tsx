@@ -1,5 +1,4 @@
-import { useQuery } from '@apollo/client/react';
-import { useMutationWithErrors } from '@monorepo/apollo';
+import { useMutation, useQuery } from '@apollo/client/react';
 import {
   Colors,
   MimeTypes,
@@ -54,7 +53,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
     variables: { id },
   });
   const [filename, setFilename] = useState('');
-  const [updateClientDocument, { loading }] = useMutationWithErrors(
+  const [updateClientDocument, { loading }] = useMutation(
     UpdateClientDocumentDocument,
     {
       refetchQueries: [

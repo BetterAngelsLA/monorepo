@@ -1,12 +1,12 @@
-import { useQuery } from '@apollo/client/react';
-import { useMutationWithErrors } from '@monorepo/apollo';
+import { CombinedGraphQLErrors } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client/react';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import {
   UpdateClientProfileInput,
-  extractExtensionErrors,
+  extractResponseExtensions,
 } from '../../../apollo';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
@@ -23,7 +23,7 @@ export default function ClientProfileForm(props: IClientProfileForms) {
   const { componentName, id } = props;
 
   const {
-    data,
+    data: fetchProfileData,
     error: fetchProfileError,
     loading: isFetchingProfile,
     refetch,
@@ -31,7 +31,7 @@ export default function ClientProfileForm(props: IClientProfileForms) {
     variables: { id },
   });
 
-  const [updateClientProfile, { loading: isUpdating }] = useMutationWithErrors(
+  const [updateClientProfile, { loading: isUpdating }] = useMutation(
     UpdateClientProfileDocument
   );
 
@@ -61,7 +61,7 @@ export default function ClientProfileForm(props: IClientProfileForms) {
 
   const onSubmit: SubmitHandler<FormValues> = async (values) => {
     try {
-      if (!data || !('clientProfile' in data)) {
+      if (!fetchProfileData || !('clientProfile' in fetchProfileData)) {
         return;
       }
 
@@ -80,25 +80,28 @@ export default function ClientProfileForm(props: IClientProfileForms) {
           values.phoneNumbers?.filter((item) => item.number) || [];
       }
 
-      const updateResponse = await updateClientProfile({
+      const { error } = await updateClientProfile({
         variables: {
           data: inputs,
         },
         errorPolicy: 'all',
       });
 
-      const errorViaExtensions = extractExtensionErrors(updateResponse);
+      // handle fieldErrors and return if present
+      if (CombinedGraphQLErrors.is(error)) {
+        // TODO: convert to use extractExtensionFieldErrors
+        const fieldErrors = extractResponseExtensions(error);
 
-      if (errorViaExtensions) {
-        applyManualFormErrors(errorViaExtensions, methods.setError);
+        if (fieldErrors?.length) {
+          applyManualFormErrors(fieldErrors, methods.setError);
 
-        return;
+          return;
+        }
       }
 
-      const otherErrors = updateResponse.errors?.[0];
-
-      if (otherErrors) {
-        throw otherErrors.message;
+      // throw unhandled errors
+      if (error) {
+        throw new Error(error.message);
       }
 
       // Ensure the refetch completes before navigating away.
@@ -108,7 +111,7 @@ export default function ClientProfileForm(props: IClientProfileForms) {
 
       router.replace(`/client/${id}?openCard=${validComponentName}`);
     } catch (err) {
-      console.error(err);
+      console.error(`[updateClientProfile] error: ${err}`);
 
       showSnackbar({
         message: 'Sorry, there was an error updating this profile.',
@@ -118,17 +121,17 @@ export default function ClientProfileForm(props: IClientProfileForms) {
   };
 
   useEffect(() => {
-    if (!data || !('clientProfile' in data) || !id) {
+    if (!fetchProfileData || !('clientProfile' in fetchProfileData) || !id) {
       return;
     }
 
     const formData = extractClientFormData(
       validComponentName,
-      data.clientProfile
+      fetchProfileData.clientProfile
     );
 
     methods.reset(formData);
-  }, [data, id]);
+  }, [fetchProfileData, id]);
 
   if (isFetchingProfile) {
     return <LoadingView />;

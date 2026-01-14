@@ -1,6 +1,6 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 
-import { useMutationWithErrors } from '@monorepo/apollo';
+import { useMutation } from '@apollo/client/react';
 import {
   Avatar,
   Button,
@@ -25,7 +25,7 @@ export default function UserProfile() {
   const hmisFeatureOn = useFeatureFlagActive(FeatureFlags.HMIS_FF);
 
   if (!user) throw new Error('Something went wrong');
-  const [deleteCurrentUser] = useMutationWithErrors(DeleteCurrentUserDocument);
+  const [deleteCurrentUser] = useMutation(DeleteCurrentUserDocument);
   const userInfo = [
     { title: 'Email', value: user.email },
     {

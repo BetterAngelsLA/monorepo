@@ -53,7 +53,7 @@ export function FilterUserOptions(props: TProps) {
       document: FilterUsersDocument,
       queryFieldName: 'interactionAuthors',
       variables: {
-        order: {
+        ordering: {
           firstName: Ordering.AscNullsLast,
           lastName: Ordering.AscNullsLast,
           id: Ordering.Desc,

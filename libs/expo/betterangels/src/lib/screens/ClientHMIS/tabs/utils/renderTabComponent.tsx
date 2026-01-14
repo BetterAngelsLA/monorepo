@@ -1,12 +1,14 @@
 import type { ReactElement } from 'react';
-import { HmisClientType } from '../../../../apollo';
+import { HmisClientProfileType } from '../../../../apollo';
 import { ClientProfileSectionEnum } from '../../../../screenRouting';
 import { ClientViewTabEnum } from '../../../Client/ClientTabs';
 import { ClientInteractionsHmisView } from '../ClientInteractionsHmisView';
+import { ClientLocationsHmisView } from '../ClientLocationsHmisView';
 import { ClientProfileHMISView } from '../ClientProfileHMISView';
+import { ClientTasksHMISView } from '../ClientTasksHMISView';
 
 type RenderArgs = {
-  client?: HmisClientType;
+  client?: HmisClientProfileType;
   openCard?: ClientProfileSectionEnum | null;
 };
 
@@ -18,6 +20,12 @@ const tabRendererMap: Partial<
   ),
   [ClientViewTabEnum.Interactions]: ({ client }) => (
     <ClientInteractionsHmisView client={client} />
+  ),
+  [ClientViewTabEnum.Locations]: ({ client }) => (
+    <ClientLocationsHmisView clientProfileId={client?.id} />
+  ),
+  [ClientViewTabEnum.Tasks]: ({ client }) => (
+    <ClientTasksHMISView client={client} />
   ),
 };
 

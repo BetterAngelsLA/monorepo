@@ -41,7 +41,7 @@ const parseUser = (
   return {
     id: user.id,
     organization: userOrganization,
-    username: user.username,
+    username: user.username ?? undefined,
     firstName: user.firstName ?? undefined,
     lastName: user.lastName ?? undefined,
     email: user.email,

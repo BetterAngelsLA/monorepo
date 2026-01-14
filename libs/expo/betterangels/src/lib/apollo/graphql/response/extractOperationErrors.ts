@@ -6,7 +6,7 @@ import {
 } from '../__generated__/types';
 import { extractOperationInfo } from './extractOperationInfo';
 import { extractOperationInfoMessage } from './extractOperationInfoMessage';
-import { hasTypename } from './hasTypename';
+import { hasTypename } from './utils';
 
 type TOperationErrorsResponse = {
   validationErrors?: OperationMessage[];

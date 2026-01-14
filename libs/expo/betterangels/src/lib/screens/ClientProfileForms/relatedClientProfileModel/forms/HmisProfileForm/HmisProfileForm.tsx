@@ -1,6 +1,5 @@
-import { ApolloLink } from '@apollo/client';
-import { useLazyQuery } from '@apollo/client/react';
-import { useMutationWithErrors } from '@monorepo/apollo';
+import { ApolloLink, CombinedGraphQLErrors } from '@apollo/client';
+import { useLazyQuery, useMutation } from '@apollo/client/react';
 import {
   ControlledInput,
   Form,
@@ -11,8 +10,8 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import {
-  extractExtensionErrors,
   extractOperationInfo,
+  extractResponseExtensions,
 } from '../../../../../apollo';
 import { applyManualFormErrors } from '../../../../../errors';
 import { useSnackbar } from '../../../../../hooks';
@@ -45,8 +44,8 @@ export function HmisProfileForm(props: TProps) {
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [updateHmisProfile] = useMutationWithErrors(UpdateHmisProfileDocument);
-  const [createHmisProfile] = useMutationWithErrors(CreateHmisProfileDocument);
+  const [updateHmisProfile] = useMutation(UpdateHmisProfileDocument);
+  const [createHmisProfile] = useMutation(CreateHmisProfileDocument);
 
   const {
     control,
@@ -114,15 +113,24 @@ export function HmisProfileForm(props: TProps) {
         });
       }
 
-      const extensionErrors = extractExtensionErrors(response);
+      const { data: responseData, error } = response;
 
-      if (extensionErrors) {
-        applyManualFormErrors(extensionErrors, setError);
+      // handle fieldErrors and return if present
+      if (CombinedGraphQLErrors.is(error)) {
+        // TODO: convert to use extractExtensionFieldErrors
+        const fieldErrors = extractResponseExtensions(error);
 
-        return;
+        if (fieldErrors?.length) {
+          applyManualFormErrors(fieldErrors, setError);
+
+          return;
+        }
       }
 
-      const responseData = response.data;
+      // throw unhandled errors
+      if (error) {
+        throw new Error(error.message);
+      }
 
       if (!responseData) {
         throw new Error('Missing HMIS mutation response data');

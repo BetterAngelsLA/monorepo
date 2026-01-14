@@ -1,4 +1,5 @@
-import { useMutationWithErrors } from '@monorepo/apollo';
+import { CombinedGraphQLErrors } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BottomActions,
@@ -10,7 +11,10 @@ import {
 import { useRouter } from 'expo-router';
 import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
-import { CreateClientProfileInput, extractExtensionErrors } from '../../apollo';
+import {
+  CreateClientProfileInput,
+  extractResponseExtensions,
+} from '../../apollo';
 import { applyManualFormErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import {
@@ -50,7 +54,7 @@ export default function CreateClientProfile() {
     formState: { isSubmitted },
     setValue,
   } = useForm<CreateClientProfileInput>();
-  const [createClientProfile, { loading: isCreating }] = useMutationWithErrors<
+  const [createClientProfile, { loading: isCreating }] = useMutation<
     CreateClientProfileMutation,
     CreateClientProfileMutationVariables
   >(CreateClientProfileDocument);
@@ -67,35 +71,36 @@ export default function CreateClientProfile() {
 
   const onSubmit: SubmitHandler<CreateClientProfileInput> = async (values) => {
     try {
-      const createResponse = await createClientProfile({
+      const { data, error } = await createClientProfile({
         variables: {
           data: values,
         },
         errorPolicy: 'all',
       });
 
-      const extensionErrors = extractExtensionErrors(createResponse);
+      // handle fieldErrors and return if present
+      if (CombinedGraphQLErrors.is(error)) {
+        // TODO: handle `client_name` field returned by server + use zod schema
+        const fieldErrors = extractResponseExtensions(error);
 
-      if (extensionErrors) {
-        applyManualFormErrors(extensionErrors, setError);
+        if (fieldErrors?.length) {
+          applyManualFormErrors(fieldErrors, setError);
 
-        return;
+          return;
+        }
       }
 
-      const result = createResponse.data?.createClientProfile;
+      const result = data?.createClientProfile;
 
       if (result?.__typename === 'ClientProfileType') {
         router.replace(`/client/${result.id}`);
       } else {
-        console.log('Unexpected result: ', result);
-        showSnackbar({
-          message: `Something went wrong!`,
-          type: 'error',
-        });
-        router.replace(`/clients`);
+        console.error('Unexpected result: ', error);
+
+        throw new Error(error?.message || 'Unexpected result');
       }
     } catch (err) {
-      console.error(err);
+      console.error(`[createClientProfile] error: ${err}`);
 
       showSnackbar({
         message: 'Sorry, there was an error creating this profile.',

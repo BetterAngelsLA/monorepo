@@ -1,12 +1,12 @@
-import { ApolloClient } from '@apollo/client';
+import { ApolloClient, CombinedGraphQLErrors } from '@apollo/client';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
 import { Router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { UseFormSetError, useForm, useWatch } from 'react-hook-form';
 import {
   OperationMessage,
-  extractExtensionErrors,
   extractOperationInfo,
+  extractResponseExtensions,
 } from '../../../../../apollo';
 import { applyManualFormErrors } from '../../../../../errors';
 import { TShowSnackbar } from '../../../../../providers/snackbar/SnackbarProvider';
@@ -224,12 +224,14 @@ function applyValidationErrors(
     }
   });
 
-  const extensionErrors = extractExtensionErrors(response);
+  if (CombinedGraphQLErrors.is(response)) {
+    const responseExtensions = extractResponseExtensions(response);
 
-  if (extensionErrors) {
-    applyManualFormErrors(extensionErrors, setError);
+    if (responseExtensions) {
+      applyManualFormErrors(responseExtensions, setError);
 
-    hasErrors = true;
+      hasErrors = true;
+    }
   }
 
   return hasErrors;

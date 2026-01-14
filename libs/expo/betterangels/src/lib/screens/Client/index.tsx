@@ -3,7 +3,6 @@ import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import {
   ComponentType,
-  ForwardRefExoticComponent,
   ReactElement,
   useEffect,
   useLayoutEffect,
@@ -27,25 +26,34 @@ import {
   ClientProfileQuery,
 } from './__generated__/Client.generated';
 
+type TabComponentProps = {
+  client?: ClientProfileQuery;
+};
+
+const tabComponents: Record<
+  ClientViewTabEnum,
+  ComponentType<TabComponentProps>
+> = {
+  [ClientViewTabEnum.Profile]: () => null, // handled specially below
+  [ClientViewTabEnum.Docs]: Docs as ComponentType<TabComponentProps>,
+  [ClientViewTabEnum.Interactions]:
+    Interactions as ComponentType<TabComponentProps>,
+  [ClientViewTabEnum.Locations]: ({ client }) => (
+    <InteractionLocations clientProfileId={client?.clientProfile.id} />
+  ),
+  [ClientViewTabEnum.Tasks]: TasksTab as ComponentType<TabComponentProps>,
+};
+
 const getTabComponent = (
   key: ClientViewTabEnum,
   client: ClientProfileQuery | undefined,
   openCard?: ClientProfileSectionEnum
 ): ReactElement | null => {
-  const components: {
-    [key: string]: ForwardRefExoticComponent<any> | ComponentType<any>;
-  } = {
-    Docs,
-    Interactions,
-    Locations: InteractionLocations,
-    Tasks: TasksTab,
-  };
-
   if (key === ClientViewTabEnum.Profile) {
     return <ClientProfileView client={client} openCard={openCard} />;
   }
 
-  const Component = components[key];
+  const Component = tabComponents[key];
 
   if (!Component) {
     return null;
@@ -63,10 +71,14 @@ export default function Client({
   arrivedFrom?: string;
   openCard?: ClientProfileSectionEnum;
 }) {
-  const { data, loading, error } = useQuery(ClientProfileDocument, {
-    variables: { id: clientProfileId },
-  });
-  const [tab, setTab] = useState(ClientViewTabEnum.Profile);
+  const { data, loading, error } = useQuery<ClientProfileQuery>(
+    ClientProfileDocument,
+    {
+      variables: { id: clientProfileId },
+    }
+  );
+
+  const [tab, setTab] = useState<ClientViewTabEnum>(ClientViewTabEnum.Profile);
 
   const navigation = useNavigation();
   const router = useRouter();
@@ -90,9 +102,16 @@ export default function Client({
           <TextRegular color={Colors.WHITE}>Back</TextRegular>
         </Pressable>
       ),
-      headerRight: () => <ClientNavMenu clientProfileId={clientProfileId} />,
+      headerRight: () => (
+        <ClientNavMenu
+          clientProfileId={clientProfileId}
+          onDeleted={() => {
+            router.dismissTo(arrivedFrom || '/');
+          }}
+        />
+      ),
     });
-  }, [clientProfileId]);
+  }, [clientProfileId, arrivedFrom, navigation, router]);
 
   if (loading) {
     return (

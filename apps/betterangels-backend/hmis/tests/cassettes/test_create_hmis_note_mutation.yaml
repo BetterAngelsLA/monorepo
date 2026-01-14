@@ -2,15 +2,14 @@ interactions:
 - request:
     body: '{"clientNote": {"title": "pitle", "ref_client_program": null, "date": "10/10/2010",
       "note": "pote", "category": {"code": 1}, "ref_category": "1", "private": "0",
-      "tracking_hour": null, "tracking_minute": null}, "fields": "id, added_date,
-      client.id, last_updated, title, note, date"}'
+      "tracking_hour": null, "tracking_minute": null}, "fields": "ref_client_program,last_updated,note,added_date,id,date,title"}'
     headers: {}
     method: POST
     uri: ''
   response:
     body:
-      string: '{"id":471,"title":"pitle","note":"pote","added_date":"2025-11-12 23:58:27","last_updated":"2025-11-12
-        23:58:27","date":"2010-10-10","client":{"id":388}}'
+      string: '{"id":517,"title":"pitle","note":"pote","added_date":"2025-11-24 17:37:07","last_updated":"2025-11-24
+        17:37:07","ref_client_program":null,"date":"2010-10-10"}'
     headers: {}
     status:
       code: 200

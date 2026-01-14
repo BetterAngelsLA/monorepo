@@ -11,7 +11,13 @@ import TaskHeader from './TaskHeader';
 import TaskUpdatedAt from './TaskUpdatedAt';
 import { TaskDocument } from './__generated__/Task.generated';
 
-export default function Task({ id }: { id: string; arrivedFrom?: string }) {
+export default function Task({
+  id,
+  arrivedFrom,
+}: {
+  id: string;
+  arrivedFrom?: string;
+}) {
   const { data, loading, error } = useQuery(TaskDocument, {
     variables: { id },
     fetchPolicy: 'cache-and-network',
@@ -30,7 +36,7 @@ export default function Task({ id }: { id: string; arrivedFrom?: string }) {
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <View accessibilityRole="button" style={styles.body}>
-        <TaskHeader task={task} />
+        <TaskHeader id={id} task={task} arrivedFrom={arrivedFrom} />
         <TaskUpdatedAt updatedAt={task.updatedAt} />
         <View>
           {task.clientProfile && (

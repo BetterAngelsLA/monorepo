@@ -22,6 +22,7 @@ type InfiniteListBaseProps<T> = {
   renderItem: (item: T) => ReactElement | null;
   estimatedItemSize?: number; // rendering optimization. see console message if undefined
   loading?: boolean;
+  loadingMore?: boolean;
   itemGap?: number;
   totalItems?: number;
   modelName?: string; // singular model name to render in ResultsHeader
@@ -30,6 +31,10 @@ type InfiniteListBaseProps<T> = {
   loadingViewOptions?: TLoadingListView;
   showScrollIndicator?: boolean;
   ItemSeparatorComponent?: ComponentType<any> | null;
+  error?: boolean; // determines whether to show ErrorView
+  errorTitle?: string;
+  errorMessage?: string;
+  ErrorViewComponent?: ComponentType<any> | ReactElement | null;
 };
 
 export type TInfiniteListProps<T> = InfiniteListBaseProps<T> &

@@ -1,4 +1,6 @@
 import datetime
+from functools import reduce
+from operator import and_, or_
 from typing import Optional, Union
 
 import strawberry
@@ -10,10 +12,16 @@ from clients.enums import (
     LivingSituationEnum,
     PreferredCommunicationEnum,
 )
-from common.graphql.types import NonBlankString, PhoneNumberInput, PhoneNumberType
+from common.graphql.types import (
+    LocationInput,
+    LocationType,
+    NonBlankString,
+    PhoneNumberInput,
+    PhoneNumberType,
+    make_in_filter,
+)
+from django.db.models import Q, QuerySet
 from hmis.enums import (
-    HmisBranchEnum,
-    HmisDischargeEnum,
     HmisDobQualityEnum,
     HmisGenderEnum,
     HmisNameQualityEnum,
@@ -21,10 +29,13 @@ from hmis.enums import (
     HmisSsnQualityEnum,
     HmisSuffixEnum,
     HmisVeteranStatusEnum,
-    HmisVeteranTheaterEnum,
 )
 from hmis.models import HmisClientProfile, HmisNote
-from strawberry import ID, auto
+from notes.enums import ServiceRequestTypeEnum
+from notes.models import ServiceRequest
+from notes.types import ServiceRequestType
+from strawberry import ID, Info, auto
+from tasks.types import TaskType
 
 
 @strawberry.type
@@ -33,298 +44,52 @@ class HmisLoginError:
     field: Optional[str] = None
 
 
-@strawberry.input
-class HmisCreateClientInput:
-    first_name: str
-    last_name: str
-    name_data_quality: Optional[int] = 99
-    ssn1: Optional[str] = ""
-    ssn2: Optional[str] = ""
-    ssn3: Optional[str] = "xxxx"
-    ssn_data_quality: Optional[int] = 99
-    dob: Optional[str] = ""
-    dob_data_quality: Optional[int] = 99
-
-
-@strawberry.input
-class HmisCreateClientNoteInput:
-    personal_id: str
-    enrollment_id: str
-    title: str
-    note: str
-    date: str
-    category: Optional[str] = "1"
-
-
-@strawberry.input
-class HmisUpdateClientNoteInput:
-    id: str
-    personal_id: str
-    enrollment_id: str
-    title: str
-    note: str
-    date: str
-    category: Optional[str] = "1"
-
-
-@strawberry.input
-class HmisCreateClientSubItemsInput:
-    middle_name: Optional[str] = ""
-    name_suffix: Optional[int] = 9
-    alias: Optional[str] = ""
-    additional_race_ethnicity: Optional[str] = ""
-    different_identity_text: Optional[str] = ""
-    race_ethnicity: Optional[list[int]] = strawberry.field(default_factory=lambda: [99])
-    gender: Optional[list[int]] = strawberry.field(default_factory=lambda: [99])
-    veteran_status: Optional[int] = 99
-
-
-@strawberry.input
-class HmisUpdateClientInput:
-    personal_id: str
-    first_name: str
-    last_name: str
-    name_data_quality: int
-    ssn1: str
-    ssn2: str
-    ssn3: str
-    ssn_data_quality: int
-    dob: str
-    dob_data_quality: int
-
-
-@strawberry.input
-class HmisUpdateClientSubItemsInput:
-    middle_name: str
-    name_suffix: int
-    alias: str
-    additional_race_ethnicity: str
-    different_identity_text: str
-    race_ethnicity: list[int]
-    gender: list[int]
-    veteran_status: int
-
-
-@strawberry.input
-class HmisCreateReleaseOfInformationInput:
-    permission: Optional[int]
-    start_date: Optional[str]
-    end_date: Optional[str]
-    documentation: Optional[int]
-
-
-@strawberry.input
-class CreateClientInputVeteran:
-    veteran_entered: str
-    veteran_separated: str
-    veteran_theater_ww2: HmisVeteranTheaterEnum
-    veteran_theater_kw: HmisVeteranTheaterEnum
-    veteran_theater_vw: HmisVeteranTheaterEnum
-    veteran_theater_pg: HmisVeteranTheaterEnum
-    veteran_theater_afg: HmisVeteranTheaterEnum
-    veteran_theater_iraq1: HmisVeteranTheaterEnum
-    veteran_theater_iraq2: HmisVeteranTheaterEnum
-    veteran_theater_other: HmisVeteranTheaterEnum
-    veteran_branch: HmisBranchEnum
-    veteran_discharge: HmisDischargeEnum
-
-
-@strawberry.type
-class HmisOrganizationType:
-    date_created: Optional[str]
-    organization_name: Optional[str]
-    coc_code: Optional[str]
-
-
-@strawberry.type
-class HmisClientInfoReleaseType:
-    permission: Optional[int]
-    start_date: Optional[str]
-    end_date: Optional[str]
-    documentation: Optional[int]
-
-
-@strawberry.type
-class HmisClientDataType:
-    middle_name: Optional[str]
-    name_suffix: Optional[HmisSuffixEnum]
-    alias: Optional[str]
-    race_ethnicity: list[HmisRaceEnum]
-    additional_race_ethnicity: Optional[str]
-    different_identity_text: Optional[str]
-    gender: list[HmisGenderEnum]
-    veteran_status: HmisVeteranStatusEnum
-
-
-@strawberry.input
-class HmisClientFilterInput:
-    search: Optional[str] = None
-
-
-@strawberry.input
-class HmisPaginationInput:
-    page: Optional[int] = None
-    per_page: Optional[int] = 10
-
-
-@strawberry.type
-class HmisListMetaType:
-    current_page: Optional[int]
-    per_page: Optional[int]
-    page_count: Optional[int]
-    total_count: Optional[int]
-
-
-@strawberry.type
-class HmisClientType:
-    personal_id: Optional[str]
-    unique_identifier: Optional[str]
-    first_name: Optional[str]
-    last_name: Optional[str]
-    name_data_quality: Optional[HmisNameQualityEnum]
-    ssn1: Optional[str]
-    ssn2: Optional[str]
-    ssn3: Optional[str]
-    ssn_data_quality: Optional[HmisSsnQualityEnum]
-    dob: Optional[str]
-    dob_data_quality: Optional[HmisDobQualityEnum]
-    data: Optional[HmisClientDataType]
-
-
-@strawberry.type
-class HmisEnrollmentDataType:
-    field: Optional[str]
-    value: Optional[str]
-
-
-@strawberry.type
-class HmisEnrollmentHouseholdMemberType:
-    personal_id: Optional[str]
-    enrollment_id: Optional[str]
-
-
-@strawberry.type
-class HmisProjectType:
-    date_created: Optional[str]
-    date_updated: Optional[str]
-    organization_id: Optional[str]
-    project_id: Optional[str]
-    project_name: Optional[str]
-    project_type: Optional[str]
-
-
-@strawberry.input
-class HmisEnrollmentDynamicFieldsInput:
-    dynamic_fields: Optional[list[str]]
-
-
-@strawberry.type
-class HmisEnrollmentType:
-    personal_id: Optional[str]
-    date_created: Optional[str]
-    date_updated: Optional[str]
-    enrollment_id: Optional[str]
-    entry_date: Optional[str]
-    exit_date: Optional[str]
-    household_id: Optional[str]
-    project: Optional[HmisProjectType]
-    data: Optional[list[HmisEnrollmentDataType]]
-    enrollment_household_members: Optional[list[HmisEnrollmentHouseholdMemberType]]
-
-
-@strawberry.type
-class HmisClientNoteType:
-    id: Optional[str]
-    title: Optional[str]
-    note: Optional[str]
-    date: Optional[str]
-    category: Optional[str]
-    client: Optional[HmisClientType]
-    enrollment: Optional[HmisEnrollmentType]
-
-
-@strawberry.type
-class HmisClientListType:
-    items: list[HmisClientType]
-    meta: Optional[HmisListMetaType]
-
-
-@strawberry.type
-class HmisClientNoteListType:
-    items: list[HmisClientNoteType]
-    meta: Optional[HmisListMetaType]
-
-
-@strawberry.type
-class HmisEnrollmentListType:
-    items: list[HmisEnrollmentType]
-    meta: Optional[HmisListMetaType]
-
-
-@strawberry.type
-class HmisCreateClientError:
-    message: str
-    field: Optional[str] = None
-
-
-@strawberry.type
-class HmisCreateClientNoteError:
-    message: str
-    field: Optional[str] = None
-
-
-@strawberry.type
-class HmisUpdateClientNoteError:
-    message: str
-    field: Optional[str] = None
-
-
-@strawberry.type
-class HmisUpdateClientError:
-    message: str
-    field: Optional[str] = None
-
-
-@strawberry.type
-class HmisGetClientError:
-    message: str
-    field: Optional[str] = None
-
-
-@strawberry.type
-class HmisListClientsError:
-    message: str
-    field: Optional[str] = None
-
-
-@strawberry.type
-class HmisListClientNotesError:
-    message: str
-    field: Optional[str] = None
-
-
-@strawberry.type
-class HmisGetClientNoteError:
-    message: str
-    field: Optional[str] = None
-
-
-@strawberry.type
-class HmisListEnrollmentsError:
-    message: str
-    field: Optional[str] = None
-
-
-HmisCreateClientNoteResult = Union[HmisClientNoteType, HmisCreateClientNoteError]
-HmisCreateClientResult = Union[HmisClientType, HmisCreateClientError]
-HmisGetClientNoteResult = Union[HmisClientNoteType, HmisGetClientNoteError]
-HmisGetClientResult = Union[HmisClientType, HmisGetClientError]
-HmisListClientNotesResult = Union[HmisClientNoteListType, HmisListClientNotesError]
-HmisListClientsResult = Union[HmisClientListType, HmisListClientsError]
-HmisListEnrollmentsResult = Union[HmisEnrollmentListType, HmisListEnrollmentsError]
 HmisLoginResult = Union[UserType, HmisLoginError]
-HmisUpdateClientNoteResult = Union[HmisClientNoteType, HmisUpdateClientNoteError]
-HmisUpdateClientResult = Union[HmisClientType, HmisUpdateClientError]
+
+
+@strawberry_django.filter_type(HmisClientProfile, lookups=True)
+class HmisClientProfileFilter:
+    @strawberry_django.filter_field
+    def search(
+        self,
+        queryset: QuerySet,
+        info: Info,
+        value: Optional[str],
+        prefix: str,
+    ) -> tuple[QuerySet[HmisClientProfile], Q]:
+        if value is None:
+            return queryset, Q()
+
+        search_terms = value.split()
+
+        searchable_fields = [
+            "alias",
+            "first_name",
+            "hmis_id",
+            "last_name",
+            "name_middle",
+            "personal_id",
+            "unique_identifier",
+        ]
+
+        # Build queries for direct fields
+        direct_queries = [
+            reduce(or_, [Q(**{f"{field}__istartswith": term}) for field in searchable_fields]) for term in search_terms
+        ]
+        direct_query = reduce(and_, direct_queries) if direct_queries else Q()
+
+        combined_query = direct_query
+
+        return queryset.filter(combined_query), Q()
+
+
+@strawberry_django.order_type(HmisClientProfile, one_of=False)
+class HmisClientProfileOrdering:
+    id: auto
+    first_name: auto
+    last_name: auto
+    added_date: auto
+    last_updated: auto
 
 
 @strawberry_django.type(HmisClientProfile)
@@ -376,6 +141,8 @@ class HmisClientProfileBaseType:
 
 @strawberry_django.type(
     HmisClientProfile,
+    filters=HmisClientProfileFilter,
+    ordering=HmisClientProfileOrdering,
     pagination=True,
 )
 class HmisClientProfileType(HmisClientProfileBaseType):
@@ -400,18 +167,66 @@ class CreateHmisClientProfileInput(HmisClientProfileBaseType):
 
 @strawberry_django.input(HmisClientProfile, partial=True)
 class UpdateHmisClientProfileInput(HmisClientProfileBaseType):
-    hmis_id: str
+    id: ID
     gender: list[HmisGenderEnum]
     race_ethnicity: list[HmisRaceEnum]
     veteran: Optional[HmisVeteranStatusEnum]
     phone_numbers: Optional[list[PhoneNumberInput]]
 
 
-@strawberry_django.type(HmisNote)
+@strawberry_django.filter_type(HmisNote, lookups=True)
+class HmisNoteFilter:
+    hmis_client_profile: Optional[ID]
+    created_by: Optional[ID]
+    authors = make_in_filter("created_by", ID)
+
+    @strawberry_django.filter_field
+    def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Q:
+        if value is None:
+            return Q()
+
+        search_terms = value.split()
+        query = Q()
+
+        for term in search_terms:
+            q_search = Q(
+                Q(hmis_client_profile__first_name__icontains=term)
+                | Q(hmis_client_profile__last_name__icontains=term)
+                | Q(title__icontains=term)
+                | Q(note__icontains=term)
+            )
+
+            query &= q_search
+
+        return Q(query)
+
+
+@strawberry_django.order_type(HmisNote, one_of=False)
+class HmisNoteOrdering:
+    id: auto
+    added_date: auto
+    last_updated: auto
+    date: auto
+
+
+@strawberry.type
+class HmisProgramType:
+    id: str
+    name: str
+    enable_notes: Optional[int] = 0
+
+
+@strawberry.type
+class HmisClientProgramType:
+    id: str
+    program: HmisProgramType
+
+
+@strawberry_django.type(HmisNote, filters=HmisNoteFilter, ordering=HmisNoteOrdering)
 class HmisNoteType:
     id: ID
     hmis_id: str
-    hmis_client_profile_id: str
+    hmis_client_profile: HmisClientProfileType
 
     added_date: Optional[datetime.datetime]
     last_updated: Optional[datetime.datetime]
@@ -419,8 +234,30 @@ class HmisNoteType:
     title: auto
     note: auto
     date: Optional[datetime.date]
-    ref_client_program: auto
+    client_program: Optional[HmisClientProgramType]
+    ref_client_program: Optional[str]
+
+    tasks: Optional[list[TaskType]]
     created_by: Optional[UserType]
+    location: Optional[LocationType]
+
+    requested_services: Optional[list[ServiceRequestType]]
+    provided_services: Optional[list[ServiceRequestType]]
+
+
+@strawberry_django.input(ServiceRequest)
+class CreateHmisNoteServiceRequestInput:
+    hmis_note_id: ID
+    service_id: Optional[ID]
+    service_other: Optional[str]
+    service_request_type: ServiceRequestTypeEnum
+
+
+@strawberry.input
+class RemoveHmisNoteServiceRequestInput:
+    service_request_id: ID
+    hmis_note_id: ID
+    service_request_type: ServiceRequestTypeEnum
 
 
 @strawberry_django.input(HmisNote)
@@ -429,14 +266,26 @@ class CreateHmisNoteInput:
     title: auto
     note: auto
     date: datetime.date
-    ref_client_program: auto
+    ref_client_program: Optional[str]
+
+
+@strawberry.type
+class ProgramEnrollmentType:
+    id: str
+    client_id: str
+    ref_client_program: str
 
 
 @strawberry_django.input(HmisNote)
 class UpdateHmisNoteInput:
     id: ID
-    hmis_client_profile_id: str
-
     title: Optional[str]
     note: Optional[str]
     date: Optional[datetime.date]
+    ref_client_program: Optional[str]
+
+
+@strawberry_django.input(HmisNote)
+class UpdateHmisNoteLocationInput:
+    id: ID
+    location: LocationInput

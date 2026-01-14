@@ -6,13 +6,15 @@ import { useEffect, useState } from 'react';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
 import { ClientViewTabEnum } from '../Client/ClientTabs';
-import { HMISClientHeader } from './HMISClientHeader';
-import { GetHmisClientDocument } from './__generated__/getHMISClient.generated';
+import { HMISClientProfileHeader } from './HMISClientProfileHeader';
+import { HmisClientProfileDocument } from './__generated__/getHMISClient.generated';
 import { renderTabComponent } from './tabs/utils/renderTabComponent';
 
 const hmisTabs: ClientViewTabEnum[] = [
   ClientViewTabEnum.Profile,
   ClientViewTabEnum.Interactions,
+  ClientViewTabEnum.Locations,
+  ClientViewTabEnum.Tasks,
 ];
 
 type TProps = {
@@ -22,7 +24,7 @@ type TProps = {
 };
 
 export function ClientHMIS(props: TProps) {
-  const { id: personalId, openCard } = props;
+  const { id, openCard } = props;
 
   const { activeTab } = useLocalSearchParams<{
     activeTab?: ClientViewTabEnum;
@@ -36,23 +38,25 @@ export function ClientHMIS(props: TProps) {
     }
   }, [activeTab]);
 
-  const { data, loading } = useQuery(GetHmisClientDocument, {
-    variables: { personalId },
+  const { data, loading } = useQuery(HmisClientProfileDocument, {
+    variables: { id },
   });
 
   if (loading) {
     return <LoadingView />;
   }
 
-  const client = data?.hmisGetClient;
+  const client = data?.hmisClientProfile;
 
-  if (client?.__typename !== 'HmisClientType') {
+  if (client?.__typename !== 'HmisClientProfileType') {
     return null;
   }
 
+  const showHeader = currentTab !== ClientViewTabEnum.Locations;
+
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      <HMISClientHeader client={client} />
+      {showHeader && <HMISClientProfileHeader client={client} />}
 
       <Tabs
         tabs={hmisTabs}

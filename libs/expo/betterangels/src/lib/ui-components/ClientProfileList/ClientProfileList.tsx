@@ -30,7 +30,7 @@ type TProps = {
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<ClientProfileFilter>;
-  order?: ClientProfileOrder | null;
+  ordering?: ClientProfileOrder | ClientProfileOrder[] | null;
   paginationLimit?: number;
   showAllClientsLink?: boolean;
   renderHeaderText?: (props: ListHeaderProps) => string;
@@ -40,7 +40,7 @@ type TProps = {
 
 export function ClientProfileList({
   filters,
-  order = DEFAULT_QUERY_ORDER,
+  ordering = DEFAULT_QUERY_ORDER,
   itemGap = DEFAULT_ITEM_GAP,
   paginationLimit = DEFAULT_PAGINATION_LIMIT,
   renderItem,
@@ -50,7 +50,7 @@ export function ClientProfileList({
   style,
   horizontalPadding = pagePaddingHorizontal,
 }: TProps) {
-  const { items, total, loading, loadMore, hasMore, error } =
+  const { items, total, loading, reloading, loadMore, reload, hasMore, error } =
     useInfiniteScrollQuery<
       TClientProfile,
       ClientProfilesQuery,
@@ -58,7 +58,7 @@ export function ClientProfileList({
     >({
       document: ClientProfilesDocument,
       queryFieldName: 'clientProfiles',
-      variables: { filters, order: order || undefined },
+      variables: { filters, ordering: ordering || undefined },
       pageSize: paginationLimit,
     });
 
@@ -102,6 +102,8 @@ export function ClientProfileList({
           styles.listContent,
           { paddingHorizontal: horizontalPadding },
         ]}
+        onRefresh={reload}
+        refreshing={reloading}
       />
     </View>
   );

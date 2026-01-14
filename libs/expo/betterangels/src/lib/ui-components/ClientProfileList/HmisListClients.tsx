@@ -7,85 +7,83 @@ import {
 import { ReactElement, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
-  HmisClientFilterInput,
-  HmisClientType,
+  HmisClientProfileFilter,
+  HmisClientProfileType,
   InputMaybe,
 } from '../../apollo';
 import { ListLoadingView } from './ListLoadingView';
 import {
-  HmisListClientsDocument,
-  HmisListClientsQuery,
-  HmisListClientsQueryVariables,
+  HmisClientProfilesDocument,
+  HmisClientProfilesQuery,
+  HmisClientProfilesQueryVariables,
 } from './__generated__/HmisListClients.generated';
 import { DEFAULT_ITEM_GAP, DEFAULT_PAGINATION_LIMIT } from './constants';
 
 type TProps = {
-  renderItem: (client: HmisClientType) => ReactElement | null;
+  renderItem: (client: HmisClientProfileType) => ReactElement | null;
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
-  filter?: InputMaybe<HmisClientFilterInput>;
+  filters?: InputMaybe<HmisClientProfileFilter>;
   paginationLimit?: number;
   showAllClientsLink?: boolean;
   renderHeaderText?: (props: TRenderListResultsHeader) => string;
   headerStyle?: ViewStyle;
 };
 
+type THmisClientProfileResult =
+  HmisClientProfilesQuery['hmisClientProfiles']['results'][number];
+
 export function HmisListClients(props: TProps) {
   const {
-    filter,
+    filters,
     itemGap = DEFAULT_ITEM_GAP,
     paginationLimit = DEFAULT_PAGINATION_LIMIT,
     renderItem,
     style,
   } = props;
-
-  const {
-    items: clients,
-    total: totalCount,
-    loading,
-    hasMore,
-    loadMore,
-    error,
-  } = useInfiniteScrollQuery<
-    HmisClientType,
-    HmisListClientsQuery,
-    HmisListClientsQueryVariables
-  >({
-    document: HmisListClientsDocument,
-    queryFieldName: 'hmisListClients',
-    pageSize: paginationLimit,
-    variables: { filter },
-    fetchPolicy: 'cache-and-network',
-    nextFetchPolicy: 'cache-first',
-  });
+  const { items, total, loading, reloading, hasMore, loadMore, reload, error } =
+    useInfiniteScrollQuery<
+      THmisClientProfileResult,
+      HmisClientProfilesQuery,
+      HmisClientProfilesQueryVariables
+    >({
+      document: HmisClientProfilesDocument,
+      queryFieldName: 'hmisClientProfiles',
+      pageSize: paginationLimit,
+      variables: { filters },
+      fetchPolicy: 'cache-and-network',
+      nextFetchPolicy: 'cache-first',
+    });
 
   if (error) {
     console.error(error);
   }
 
   const renderItemFn = useCallback(
-    (item: HmisClientType) => {
+    (item: HmisClientProfileType) => {
       return renderItem(item);
     },
     [renderItem]
   );
 
-  if (clients.length === 0 && loading) {
+  if (items.length === 0 && loading) {
     return <ListLoadingView fullScreen />;
   }
 
   return (
     <View style={[styles.container, style]}>
-      <InfiniteList<HmisClientType>
+      <InfiniteList<HmisClientProfileType>
         modelName="client"
-        data={clients}
-        keyExtractor={(item) => item.personalId!}
-        totalItems={totalCount}
+        data={items}
+        keyExtractor={(item) => item.id!}
+        totalItems={total}
         renderItem={renderItemFn}
         itemGap={itemGap}
         loading={loading}
         loadMore={loadMore}
         hasMore={hasMore}
+        onRefresh={reload}
+        refreshing={reloading}
       />
     </View>
   );

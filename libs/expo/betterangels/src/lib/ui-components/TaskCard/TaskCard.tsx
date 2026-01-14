@@ -1,7 +1,7 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { TasksQuery } from '../TaskList/__generated__/Tasks.generated';
+import { TaskType } from '../../apollo';
 import TaskStatusBtn from '../TaskStatusBtn';
 import TaskCardBody from './TaskCardBody';
 import TaskCardClient from './TaskCardClient';
@@ -10,8 +10,8 @@ import TaskCardCreatedBy from './TaskCardCreatedBy';
 type TaskCardVariant = 'default' | 'withoutClient';
 
 type TaskCardProps = {
-  task: TasksQuery['tasks']['results'][number];
-  onPress?: (task: TasksQuery['tasks']['results'][number]) => void;
+  task: TaskType;
+  onPress?: (task: TaskType) => void;
   variant?: TaskCardVariant;
 };
 
@@ -30,7 +30,19 @@ export function TaskCard(props: TaskCardProps) {
         </TextBold>
 
         {variant !== 'withoutClient' && task.clientProfile && (
-          <TaskCardClient clientProfile={task.clientProfile} />
+          <TaskCardClient
+            firstName={task.clientProfile.firstName}
+            lastName={task.clientProfile.lastName}
+            profilePhotoUrl={task.clientProfile.profilePhoto?.url}
+          />
+        )}
+
+        {variant !== 'withoutClient' && task.hmisClientProfile && (
+          <TaskCardClient
+            firstName={task.hmisClientProfile.firstName}
+            lastName={task.hmisClientProfile.lastName}
+            profilePhotoUrl={task.hmisClientProfile.profilePhoto?.url}
+          />
         )}
 
         <TaskCardCreatedBy

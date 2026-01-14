@@ -1,35 +1,33 @@
-import type { GraphQLError } from 'graphql';
+import { ApolloLink } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import type { UseFormSetError } from 'react-hook-form';
-import { extractExtensionErrors } from '../../../../../apollo';
+import { extractResponseExtensions } from '../../../../../apollo';
 import { applyManualFormErrors } from '../../../../../errors';
 import {
   CreateClientHouseholdMemberMutation,
+  CreateClientHouseholdMemberMutationVariables,
   UpdateClientHouseholdMemberMutation,
+  UpdateClientHouseholdMemberMutationVariables,
 } from './__generated__/householdMember.generated';
 import { THouseholdMemberFormState } from './types';
 
-// this matches what your useMutationWithErrors returns
-type ExecutedMutationResult<TData> = {
-  data?: TData | null;
-  errors?: readonly GraphQLError[];
-};
-
-// Temp/fake mutation fn type – matches what useMutation gives you
-type HouseholdMutationFn<TData> = (
-  // accept whatever Apollo's mutate fn accepts
-  ...args: any[]
-) => Promise<{
-  data?: TData | null;
-  errors?: readonly GraphQLError[];
-}>;
+type HouseholdMutationResult =
+  | ApolloLink.Result<CreateClientHouseholdMemberMutation>
+  | ApolloLink.Result<UpdateClientHouseholdMemberMutation>;
 
 type TProps = {
   formData: THouseholdMemberFormState;
   clientProfileId: string;
   relationId?: string;
   setError: UseFormSetError<THouseholdMemberFormState>;
-  createHouseholdMember: HouseholdMutationFn<CreateClientHouseholdMemberMutation>;
-  updateHouseholdMember: HouseholdMutationFn<UpdateClientHouseholdMemberMutation>;
+  createHouseholdMember: useMutation.MutationFunction<
+    CreateClientHouseholdMemberMutation,
+    CreateClientHouseholdMemberMutationVariables
+  >;
+  updateHouseholdMember: useMutation.MutationFunction<
+    UpdateClientHouseholdMemberMutation,
+    UpdateClientHouseholdMemberMutationVariables
+  >;
 };
 
 export async function processHouseholdMemberForm(
@@ -49,9 +47,7 @@ export async function processHouseholdMemberForm(
     return false;
   }
 
-  let response:
-    | ExecutedMutationResult<CreateClientHouseholdMemberMutation>
-    | ExecutedMutationResult<UpdateClientHouseholdMemberMutation>;
+  let response: HouseholdMutationResult;
 
   if (relationId) {
     // UPDATE
@@ -79,9 +75,11 @@ export async function processHouseholdMemberForm(
   }
 
   // same error handling as before
-  const extensionErrors = extractExtensionErrors(response);
-  if (extensionErrors) {
-    applyManualFormErrors(extensionErrors, setError);
+  const responseExtensions = extractResponseExtensions(response);
+
+  if (responseExtensions) {
+    applyManualFormErrors(responseExtensions, setError);
+
     return false;
   }
 
@@ -111,12 +109,9 @@ function toApiInputs(values: THouseholdMemberFormState) {
   return next;
 }
 
-function isSuccessMutationResponse(
-  response:
-    | ExecutedMutationResult<CreateClientHouseholdMemberMutation>
-    | ExecutedMutationResult<UpdateClientHouseholdMemberMutation>
-): boolean {
+function isSuccessMutationResponse(response: HouseholdMutationResult): boolean {
   const data = response.data;
+
   if (!data) {
     return false;
   }
