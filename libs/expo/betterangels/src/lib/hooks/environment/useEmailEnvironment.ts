@@ -12,13 +12,13 @@ export type Environment = 'production' | 'demo';
  * - Otherwise → uses the provided defaultEnv
  *
  * @param email - The email address to evaluate
- * @param defaultEnv - The environment to use when email doesn't match special patterns (default: 'production')
  * @returns Object with targetEnv, isValidEmail, and isPasswordLogin
  */
-export default function useEmailEnvironment(
-  email: string,
-  defaultEnv: Environment = 'production'
-): { targetEnv: Environment; isValidEmail: boolean; isPasswordLogin: boolean } {
+export default function useEmailEnvironment(email: string): {
+  targetEnv: Environment;
+  isValidEmail: boolean;
+  isPasswordLogin: boolean;
+} {
   const { environment, switchEnvironment } = useApiConfig();
 
   const isValidEmail = useMemo(() => Regex.email.test(email), [email]);
@@ -32,8 +32,8 @@ export default function useEmailEnvironment(
     if (email.includes('+demo') || email.endsWith('@example.com')) {
       return 'demo';
     }
-    return defaultEnv;
-  }, [email, defaultEnv]);
+    return 'production';
+  }, [email]);
 
   useEffect(() => {
     if (!isValidEmail) return;
