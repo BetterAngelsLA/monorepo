@@ -401,7 +401,7 @@ class ShelterResource(resources.ModelResource):
     cities = Field(
         column_name="cities",
         attribute="cities",
-        widget=ManyToManyWidget(City, separator=",", field="name"),
+        widget=ManyToManyWidget(City, separator=",", field="display_name"),
     )
     funders = Field(
         column_name="funders",
