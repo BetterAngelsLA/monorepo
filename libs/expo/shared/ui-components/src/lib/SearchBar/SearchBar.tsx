@@ -1,80 +1,43 @@
-import { SearchIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
-import { debounce } from '@monorepo/expo/shared/utils';
-import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, TextInputProps, View, ViewStyle } from 'react-native';
-import BasicInput from '../BasicInput';
+import { Spacings } from '@monorepo/expo/shared/static';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import {
+  SearchBarActionButton,
+  TSearchBarActionButton,
+} from './SearchBarActionButton';
+import { SearchBarSlot } from './SearchBarSlot';
+import { SearchInput, TSearchInput } from './SearchInput';
 
-type TProps = Omit<TextInputProps, 'value' | 'onChange' | 'onChangeText'> & {
-  value: string;
-  placeholder?: string;
-  onChange: (text: string) => void;
-  onClear?: () => void;
-  debounceMs?: number; // set to 0 to disable
-  style?: ViewStyle;
-};
+type TSearchBar = {
+  style?: StyleProp<ViewStyle>;
+  actionSlotRight?: TSearchBarActionButton;
+} & TSearchInput;
 
-export function SearchBar(props: TProps) {
-  const {
-    value,
-    debounceMs = 500,
-    placeholder = 'Search',
-    onChange,
-    onClear,
-    style,
-    ...textInputRest
-  } = props;
-
-  const [internalValue, setInternalValue] = useState(value);
-
-  useEffect(() => {
-    setInternalValue(value);
-  }, [value]);
-
-  const debouncedChange = useMemo(
-    () => debounce(onChange, debounceMs),
-    [onChange, debounceMs]
-  );
-
-  useEffect(() => {
-    return () => {
-      debouncedChange.cancel();
-    };
-  }, [debouncedChange]);
+export function SearchBar(props: TSearchBar) {
+  const { style, actionSlotRight, ...inputProps } = props;
 
   return (
     <View style={[styles.container, style]}>
-      <BasicInput
-        value={internalValue}
-        placeholder={placeholder}
-        autoCorrect={false}
-        onChangeText={(text) => {
-          setInternalValue(text);
+      <View style={styles.inputSlot}>
+        <SearchInput {...inputProps} />
+      </View>
 
-          if (debounceMs > 0) {
-            debouncedChange(text);
-          } else {
-            onChange(text);
-          }
-        }}
-        onDelete={() => {
-          if (debounceMs > 0) {
-            debouncedChange.cancel();
-          }
-
-          setInternalValue('');
-          onChange('');
-          onClear?.();
-        }}
-        icon={<SearchIcon color={Colors.NEUTRAL} />}
-        {...textInputRest}
-      />
+      {actionSlotRight && (
+        <SearchBarSlot style={[actionSlotRight.slotStyle]}>
+          <SearchBarActionButton {...actionSlotRight} />
+        </SearchBarSlot>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.xs,
+  },
+  inputSlot: {
+    flexGrow: 1,
+    flexShrink: 1,
   },
 });
