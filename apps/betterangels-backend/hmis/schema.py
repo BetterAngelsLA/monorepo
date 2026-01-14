@@ -9,6 +9,7 @@ from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
 from common.models import Location, PhoneNumber
 from common.permissions.utils import IsAuthenticated
+from common.utils import strip_demo_tag
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login as django_login
 from django.contrib.contenttypes.models import ContentType
@@ -150,10 +151,11 @@ class Mutation:
     def hmis_login(self, info: Info, email: str, password: str) -> HmisLoginResult:
         request = info.context["request"]
         hmis_api_bridge = HmisApiBridge(info=info)
-        hmis_api_bridge.create_auth_token(email, password)
+        sanitized_email = strip_demo_tag(email)
+        hmis_api_bridge.create_auth_token(sanitized_email, password)
 
         try:
-            user = User.objects.get(email__iexact=email)
+            user = User.objects.get(email__iexact=sanitized_email)
         except User.DoesNotExist:
             return HmisLoginError(message="Invalid credentials or HMIS login failed")
 
