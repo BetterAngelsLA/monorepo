@@ -27,8 +27,6 @@ export default function HMISLoginForm() {
   const [hmisLogin] = useMutation(HmisLoginDocument);
   const { refetchUser } = useUser();
 
-  // Default to demo environment for HMIS (production doesn't exist yet)
-  // Emails with '+demo' or '@example.com' will use demo environment
   const { isValidEmail } = useEmailEnvironment(email);
 
   const onSubmit = useCallback(async () => {
