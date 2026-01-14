@@ -1,11 +1,9 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
-import {
-  ImageThumbnailSizeDefault,
-  Spacings,
-} from '@monorepo/expo/shared/static';
+import { FullThumbenailSize, Spacings } from '@monorepo/expo/shared/static';
 import { View } from 'react-native';
 
 import { TextBold } from '@monorepo/expo/shared/ui-components';
+
 import { FileThumbnail } from '../FileThumbnail/FileThumbnail';
 
 export interface IUploadPreview {
@@ -31,7 +29,7 @@ export function FileUploadsPreview(props: IUploadPreview) {
             <FileThumbnail
               uri={file.uri}
               mimeType={file.type}
-              thumbnailSize={ImageThumbnailSizeDefault}
+              thumbnailSize={FullThumbenailSize}
               onDelete={() => onRemoveFile(index)}
             />
           </View>

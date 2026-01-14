@@ -6,127 +6,29 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { Pressable, View } from 'react-native';
+import { FILE_CATEGORIES, FILE_SUBCATEGORIES } from './categoryConstants';
 
-const TEMPORARY_DOCUMENT_TYPES = [
-  {
-    category: 'Family, Social, and Legal',
-    types: [
-      {
-        value: '1',
-        displayValue: 'Alimony Agreement',
-      },
-      {
-        value: '2',
-        displayValue: 'Court Order or Records',
-      },
-      {
-        value: '3',
-        displayValue: 'Divorce Decree',
-      },
-      {
-        value: '4',
-        displayValue: 'Other Family Document',
-      },
-      {
-        value: '5',
-        displayValue: 'Other Legal Document',
-      },
-      {
-        value: '6',
-        displayValue: 'Other Social Document',
-      },
-      {
-        value: '7',
-        displayValue: 'Passport or Visa',
-      },
-      {
-        value: '8',
-        displayValue: 'Police Citations',
-      },
-      {
-        value: '9',
-        displayValue: 'Voter Registration Card',
-      },
-      {
-        value: '10',
-        displayValue: 'Other',
-      },
-    ],
-  },
-  {
-    category: 'Finances and Income',
-    types: [
-      {
-        value: '11',
-        displayValue: 'Alimony Agreement',
-      },
-      {
-        value: '12',
-        displayValue: 'Bank Records',
-      },
-      {
-        value: '13',
-        displayValue: 'Cancelled Check',
-      },
-      {
-        value: '14',
-        displayValue: 'Court Order or Records',
-      },
-      {
-        value: '15',
-        displayValue: 'Dividends Statement',
-      },
-      {
-        value: '16',
-        displayValue: 'Other Financial Document',
-      },
-      {
-        value: '17',
-        displayValue: 'Pay Check Stub',
-      },
-      {
-        value: '18',
-        displayValue: 'Tax Return',
-      },
-      {
-        value: '19',
-        displayValue: 'Utility Bill',
-      },
-      {
-        value: '20',
-        displayValue: 'Other',
-      },
-    ],
-  },
-  {
-    category: 'Health and Medical',
-    types: [
-      {
-        value: '21',
-        displayValue: 'Health Insurance Documentation',
-      },
-      {
-        value: '22',
-        displayValue: 'Hospital Record of Birth',
-      },
-      {
-        value: '23',
-        displayValue: 'Medical Records',
-      },
-      {
-        value: '24',
-        displayValue: 'Other Health and Medical Document',
-      },
-      {
-        value: '25',
-        displayValue: 'Other',
-      },
-    ],
-  },
-];
+export const TEMPORARY_DOCUMENT_TYPES = FILE_CATEGORIES.filter(
+  (c) => c.status === 1
+)
+  .map((c) => ({
+    categoryId: String(c.id),
+    categoryName: c.name,
+    types: FILE_SUBCATEGORIES.filter(
+      (s) => s.status === 1 && s.ref_category === c.id
+    ).map((s) => ({
+      value: String(s.id),
+      displayValue: s.name,
+    })),
+  }))
+  .filter((group) => group.types.length > 0);
 
 type FileCategorySelectorProps = {
-  onSelect: (categoryGroup: { category: string; value: string }) => void;
+  onSelect: (categoryGroup: {
+    categoryId: string;
+    subCategoryId: string;
+    categoryName: string;
+  }) => void;
   closeModal: () => void;
 };
 
@@ -154,14 +56,15 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
       <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
         {TEMPORARY_DOCUMENT_TYPES.map((categoryGroup) => (
           <SingleSelect
-            key={categoryGroup.category}
+            key={categoryGroup.categoryId}
             placeholderTextColor={Colors.PRIMARY_EXTRA_DARK}
-            placeholder={categoryGroup.category}
+            placeholder={categoryGroup.categoryName}
             modalTitle="Document Type"
             onChange={(e) => {
               onSelect({
-                category: categoryGroup.category,
-                value: e || '',
+                categoryId: categoryGroup.categoryId,
+                subCategoryId: e || '',
+                categoryName: categoryGroup.categoryName,
               });
             }}
             items={categoryGroup.types}
