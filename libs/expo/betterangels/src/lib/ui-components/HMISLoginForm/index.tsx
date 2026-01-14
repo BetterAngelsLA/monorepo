@@ -1,11 +1,12 @@
 import { useMutation } from '@apollo/client/react';
+import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   Button,
   Loading,
 } from '@monorepo/expo/shared/ui-components';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useUser } from '../../hooks';
 import { useRememberedEmail } from '../../hooks/useRememberEmail/useRememberEmail';
@@ -26,6 +27,12 @@ export default function HMISLoginForm() {
 
   const [hmisLogin] = useMutation(HmisLoginDocument);
   const { refetchUser } = useUser();
+  const { switchEnvironment } = useApiConfig();
+
+  useEffect(() => {
+    // Default to development environment since there's no production HMIS yet
+    switchEnvironment('demo');
+  }, [switchEnvironment]);
 
   const onSubmit = useCallback(async () => {
     if (!email.trim() || !password.trim()) {
