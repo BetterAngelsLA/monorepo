@@ -126,7 +126,7 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    @strawberry.django.mutation(
+    @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
         extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
     )
