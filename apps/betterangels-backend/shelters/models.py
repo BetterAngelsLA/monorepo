@@ -12,6 +12,8 @@ from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db import models
+from django.db.models import UniqueConstraint
+from django.db.models.functions import Lower
 from django_choices_field import IntegerChoicesField, TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
 from organizations.models import Organization
@@ -147,14 +149,19 @@ class City(BaseModel):
     """Cities that shelters serve. Users can add new cities directly."""
 
     name = models.CharField(max_length=255, unique=True, db_index=True)
-    display_name = models.CharField(max_length=255, db_index=True)
 
     class Meta:
-        ordering = ["display_name"]
+        ordering = ["name"]
         verbose_name_plural = "Cities"
+        constraints = [
+            UniqueConstraint(
+                Lower("name"),
+                name="city_name_ci_unique",
+            ),
+        ]
 
     def __str__(self) -> str:
-        return self.display_name
+        return self.name
 
 
 class SPA(models.Model):

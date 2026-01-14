@@ -88,106 +88,10 @@ export type AuthResponse = {
   status_code: Scalars['String']['output'];
 };
 
-export enum CityChoices {
-  AgouraHills = 'AGOURA_HILLS',
-  Alhambra = 'ALHAMBRA',
-  Arcadia = 'ARCADIA',
-  Artesia = 'ARTESIA',
-  Avalon = 'AVALON',
-  Azusa = 'AZUSA',
-  BaldwinPark = 'BALDWIN_PARK',
-  Bell = 'BELL',
-  Bellflower = 'BELLFLOWER',
-  BellGardens = 'BELL_GARDENS',
-  BeverlyHills = 'BEVERLY_HILLS',
-  Bradbury = 'BRADBURY',
-  Burbank = 'BURBANK',
-  Calabasas = 'CALABASAS',
-  Carson = 'CARSON',
-  Cerritos = 'CERRITOS',
-  Claremont = 'CLAREMONT',
-  Commerce = 'COMMERCE',
-  Compton = 'COMPTON',
-  Covina = 'COVINA',
-  Cudahy = 'CUDAHY',
-  CulverCity = 'CULVER_CITY',
-  DiamondBar = 'DIAMOND_BAR',
-  Downey = 'DOWNEY',
-  Duarte = 'DUARTE',
-  ElMonte = 'EL_MONTE',
-  ElSegundo = 'EL_SEGUNDO',
-  Gardena = 'GARDENA',
-  Glendale = 'GLENDALE',
-  Glendora = 'GLENDORA',
-  HawaiianGardens = 'HAWAIIAN_GARDENS',
-  Hawthorne = 'HAWTHORNE',
-  HermosaBeach = 'HERMOSA_BEACH',
-  HiddenHills = 'HIDDEN_HILLS',
-  Hollywood = 'HOLLYWOOD',
-  HuntingtonPark = 'HUNTINGTON_PARK',
-  Industry = 'INDUSTRY',
-  Inglewood = 'INGLEWOOD',
-  Irwindale = 'IRWINDALE',
-  Lakewood = 'LAKEWOOD',
-  Lancaster = 'LANCASTER',
-  Lawndale = 'LAWNDALE',
-  LaCanadaFlintridge = 'LA_CANADA_FLINTRIDGE',
-  LaHabraHeights = 'LA_HABRA_HEIGHTS',
-  LaMirada = 'LA_MIRADA',
-  LaPuente = 'LA_PUENTE',
-  LaVerne = 'LA_VERNE',
-  Lomita = 'LOMITA',
-  LongBeach = 'LONG_BEACH',
-  LosAngeles = 'LOS_ANGELES',
-  Lynwood = 'LYNWOOD',
-  Malibu = 'MALIBU',
-  ManhattanBeach = 'MANHATTAN_BEACH',
-  Maywood = 'MAYWOOD',
-  Monrovia = 'MONROVIA',
-  Montebello = 'MONTEBELLO',
-  MontereyPark = 'MONTEREY_PARK',
-  Norwalk = 'NORWALK',
-  Palmdale = 'PALMDALE',
-  PalosVerdesEstates = 'PALOS_VERDES_ESTATES',
-  Paramount = 'PARAMOUNT',
-  Pasadena = 'PASADENA',
-  PicoRivera = 'PICO_RIVERA',
-  Pomona = 'POMONA',
-  RanchoPalosVerdes = 'RANCHO_PALOS_VERDES',
-  RedondoBeach = 'REDONDO_BEACH',
-  RollingHills = 'ROLLING_HILLS',
-  RollingHillsEstates = 'ROLLING_HILLS_ESTATES',
-  Rosemead = 'ROSEMEAD',
-  SantaClarita = 'SANTA_CLARITA',
-  SantaFeSprings = 'SANTA_FE_SPRINGS',
-  SantaMonica = 'SANTA_MONICA',
-  SanDimas = 'SAN_DIMAS',
-  SanFernando = 'SAN_FERNANDO',
-  SanGabriel = 'SAN_GABRIEL',
-  SanMarino = 'SAN_MARINO',
-  SierraMadre = 'SIERRA_MADRE',
-  SignalHill = 'SIGNAL_HILL',
-  SouthElMonte = 'SOUTH_EL_MONTE',
-  SouthGate = 'SOUTH_GATE',
-  SouthPasadena = 'SOUTH_PASADENA',
-  TempleCity = 'TEMPLE_CITY',
-  Torrance = 'TORRANCE',
-  Venice = 'VENICE',
-  Vernon = 'VERNON',
-  Walnut = 'WALNUT',
-  WestlakeVillage = 'WESTLAKE_VILLAGE',
-  WestCovina = 'WEST_COVINA',
-  WestHollywood = 'WEST_HOLLYWOOD',
-  WestLosAngeles = 'WEST_LOS_ANGELES',
-  Whittier = 'WHITTIER',
-  Wilmington = 'WILMINGTON'
-}
-
 export type CityType = {
   __typename?: 'CityType';
-  displayName: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  name?: Maybe<CityChoices>;
+  name: Scalars['String']['output'];
 };
 
 export type ClientContactInput = {
@@ -2095,7 +1999,7 @@ export type QueryTaskArgs = {
 
 export type QueryTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
-  ordering?: Array<TaskOrder>;
+  ordering?: InputMaybe<Array<TaskOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

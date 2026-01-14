@@ -122,6 +122,8 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         """
         Verify we can create a task linked specifically to an HMIS Note.
         """
+        self._setup_hmis_session()
+
         variables = {
             "description": "hmis task description",
             "hmisNote": str(self.hmis_note.pk),
