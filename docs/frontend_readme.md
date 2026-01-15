@@ -121,7 +121,7 @@ Run the following on the host machine—**not in the container**:
    Start the Shelter app
 
    ```bash
-   yarn nx start shelter
+   yarn shelter
    ```
 
    If your current node version is incorrect, run the following and try again.
