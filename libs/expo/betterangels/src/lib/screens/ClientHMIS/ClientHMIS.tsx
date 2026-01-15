@@ -15,6 +15,7 @@ import { renderTabComponent } from './tabs/utils/renderTabComponent';
 
 const hmisTabs: ClientViewTabEnum[] = [
   ClientViewTabEnum.Profile,
+  ClientViewTabEnum.Docs,
   ClientViewTabEnum.Interactions,
   ClientViewTabEnum.Locations,
   ClientViewTabEnum.Tasks,
