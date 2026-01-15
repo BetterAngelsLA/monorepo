@@ -1,6 +1,6 @@
 {
-  "name": "Shelter DB",
-  "short_name": "Shelter",
+  "name": "Shelter LA",
+  "short_name": "Shelter LA",
   "description": "LA Homeless Shelter search.",
   "start_url": "./",
   "display": "standalone",
