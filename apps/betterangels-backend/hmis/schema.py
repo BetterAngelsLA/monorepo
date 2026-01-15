@@ -5,6 +5,7 @@ import strawberry_django
 from accounts.types import UserType
 from accounts.utils import get_user_permission_group
 from betterangels_backend import settings
+from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
 from common.models import Location, PhoneNumber
 from common.permissions.utils import IsAuthenticated
@@ -172,6 +173,9 @@ class Mutation:
         # Create Django session
         backend = settings.AUTHENTICATION_BACKENDS[0]
         django_login(request, user, backend=backend)
+
+        # Mark session as HMIS authenticated so isHmisUser resolver returns True
+        request.session[HMIS_SESSION_KEY_NAME] = True
 
         # Return cookies and refresh URL for frontend to manage
         return HmisLoginSuccess(

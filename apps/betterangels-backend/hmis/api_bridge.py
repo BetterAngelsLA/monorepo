@@ -109,13 +109,18 @@ class HmisApiBridge:
         self.current_token = token
         auth_header = {"Authorization": f"Bearer {token}"} if token else {}
 
+        # Forward the client User-Agent to HMIS when available.
+        # This allows callers (including curl test scripts) to control UA without us spoofing a browser.
+        forwarded_user_agent = (self.request.headers.get("User-Agent") or "").strip()
+        user_agent_header = {"User-Agent": forwarded_user_agent} if forwarded_user_agent else {}
+
         self.http = requests.Session()
 
         self.headers = {
             "Accept": "application/json, text/plain, */*",
             "Host": hmis_host,
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:144.0) Gecko/20100101 Firefox/144.0",
             **auth_header,
+            **user_agent_header,
         }
 
     def _get_field_dot_paths(
@@ -323,11 +328,13 @@ class HmisApiBridge:
     def login(self, username: str, password: str) -> dict[str, Any]:
         headers = self.headers.copy()
         headers.pop("Host", None)
+        headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
         login_url = f"{self.endpoint}/login"
 
         try:
-            response = self.http.get(login_url, headers={})
+            response = self.http.get(login_url, headers=headers, allow_redirects=True)
             response.raise_for_status()
+
             html = response.text
 
             param_match = re.search(r'meta name="csrf-param" content="([^"]+)"', html)
