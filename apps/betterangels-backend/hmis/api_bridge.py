@@ -91,10 +91,9 @@ BA_NOTE_FIELDS = {"hmisId", "createdBy", "hmisClientProfile"}
 class HmisApiBridge:
     """Utility class for interfacing with HMIS REST API."""
 
-    def __init__(self, info: strawberry.Info, token: Optional[str] = None) -> None:
+    def __init__(self, info: strawberry.Info) -> None:
         self.info = info
-        self.request = self.info.context["request"]
-        self.session = self.request.session
+        request = self.info.context["request"]
         hmis_rest_endpoint = getattr(settings, "HMIS_REST_URL", None)
         hmis_host = getattr(settings, "HMIS_HOST", None)
         if not all([hmis_rest_endpoint, hmis_host]):
@@ -102,16 +101,13 @@ class HmisApiBridge:
 
         self.endpoint = hmis_rest_endpoint
 
-        # Extract token from X-HMIS-Token header if not provided
-        if token is None:
-            token = self.request.META.get("HTTP_X_HMIS_TOKEN")
-
-        self.current_token = token
+        # Extract token from X-HMIS-Token header
+        token = request.META.get("HTTP_X_HMIS_TOKEN")
         auth_header = {"Authorization": f"Bearer {token}"} if token else {}
 
         # Forward the client User-Agent to HMIS when available.
         # This allows callers (including curl test scripts) to control UA without us spoofing a browser.
-        forwarded_user_agent = (self.request.headers.get("User-Agent") or "").strip()
+        forwarded_user_agent = (request.headers.get("User-Agent") or "").strip()
         user_agent_header = {"User-Agent": forwarded_user_agent} if forwarded_user_agent else {}
 
         self.http = requests.Session()
@@ -365,9 +361,6 @@ class HmisApiBridge:
                 auth_token = post_response.cookies.get("auth_token")
                 if not auth_token:
                     raise ValidationError(f"Status Code: {post_response.status_code}")
-
-                self.current_token = auth_token
-                self.headers["Authorization"] = f"Bearer {auth_token}"
 
                 # Return all cookies from HMIS response for frontend to manage
                 cookies = {cookie.name: cookie.value for cookie in post_response.cookies}
