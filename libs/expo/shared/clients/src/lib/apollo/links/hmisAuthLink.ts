@@ -1,6 +1,8 @@
 import { ApolloLink } from '@apollo/client';
 import { SetContextLink } from '@apollo/client/link/context';
+import { Observable } from '@apollo/client/utilities';
 import { getHmisAuthToken } from '@monorepo/expo/shared/utils';
+import NitroCookies from 'react-native-nitro-cookies';
 import { MODERN_BROWSER_USER_AGENT } from '../../common/constants';
 
 /**
@@ -9,24 +11,60 @@ import { MODERN_BROWSER_USER_AGENT } from '../../common/constants';
  * Reads token from cookies set by server
  */
 export const createHmisAuthLink = (): ApolloLink => {
-  return new SetContextLink(async (prevContext, operation) => {
-    const headers = (prevContext['headers'] ?? {}) as Record<string, string>;
+  const setContextLink = new SetContextLink(async (prevContext, operation) => {
     const operationName = operation.operationName?.toLowerCase() || '';
 
-    // Only add HMIS token for HMIS operations
-    const isHmisOperation = operationName.includes('hmis');
-
-    if (!isHmisOperation) {
-      return { headers };
+    if (!operationName.includes('hmis')) {
+      return prevContext;
     }
-    const nextHeaders: Record<string, string> = { ...headers };
-    nextHeaders['User-Agent'] = MODERN_BROWSER_USER_AGENT;
 
+    const headers = {
+      ...(prevContext['headers'] ?? {}),
+      'User-Agent': MODERN_BROWSER_USER_AGENT,
+    };
     const authToken = await getHmisAuthToken();
+
     if (authToken) {
-      nextHeaders['x-hmis-token'] = authToken; // Custom header instead of Authorization
+      headers['x-hmis-token'] = authToken;
     }
 
-    return { headers: nextHeaders };
+    return { ...prevContext, headers };
   });
+
+  // Afterware link to extract and store cookies from Set-Cookie header
+  const cookieLink = new ApolloLink(
+    (operation, forward) =>
+      new Observable((observer) => {
+        const subscription = forward(operation).subscribe({
+          next: (response: ApolloLink.Result) => {
+            observer.next(response);
+
+            // Store cookies asynchronously for HMIS login
+            if (operation.operationName?.toLowerCase().includes('hmislogin')) {
+              const setCookieHeader = (
+                operation.getContext()['response'] as Response | undefined
+              )?.headers.get('set-cookie');
+
+              if (setCookieHeader) {
+                const domainMatch = setCookieHeader.match(/Domain=([^;,]+)/i);
+                if (domainMatch) {
+                  NitroCookies.setFromResponse(
+                    `https://${domainMatch[1].trim()}`,
+                    setCookieHeader
+                  ).catch((error) =>
+                    console.error('[HMIS] Failed to store cookies:', error)
+                  );
+                }
+              }
+            }
+          },
+          error: (error) => observer.error(error),
+          complete: () => observer.complete(),
+        });
+
+        return () => subscription.unsubscribe();
+      })
+  );
+
+  return cookieLink.concat(setContextLink);
 };

@@ -334,15 +334,6 @@ type ContactInfoType {
   contactNumber: PhoneNumber!
 }
 
-type CookieInfo {
-  name: String!
-  value: String!
-  domain: String!
-  path: String
-  secure: Boolean
-  httponly: Boolean
-}
-
 union CreateClientContactPayload = ClientContactType | OperationInfo
 
 input CreateClientDocumentInput {
@@ -829,7 +820,6 @@ type HmisLoginError {
 
 type HmisLoginSuccess {
   user: UserType!
-  cookies: [CookieInfo!]!
   refreshUrl: String!
 }
 

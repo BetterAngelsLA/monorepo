@@ -337,16 +337,6 @@ export type ContactInfoType = {
   id: Scalars['ID']['output'];
 };
 
-export type CookieInfo = {
-  __typename?: 'CookieInfo';
-  domain: Scalars['String']['output'];
-  httponly?: Maybe<Scalars['Boolean']['output']>;
-  name: Scalars['String']['output'];
-  path?: Maybe<Scalars['String']['output']>;
-  secure?: Maybe<Scalars['Boolean']['output']>;
-  value: Scalars['String']['output'];
-};
-
 export type CreateClientContactPayload = ClientContactType | OperationInfo;
 
 export type CreateClientDocumentInput = {
@@ -840,7 +830,6 @@ export type HmisLoginError = {
 
 export type HmisLoginSuccess = {
   __typename?: 'HmisLoginSuccess';
-  cookies: Array<CookieInfo>;
   refreshUrl: Scalars['String']['output'];
   user: UserType;
 };

@@ -155,9 +155,10 @@ class Mutation:
     def hmis_login(self, info: Info, email: str, password: str) -> HmisLoginResult:
         """
         Authenticate with HMIS and create Django session.
-        Returns HMIS cookies and refresh URL for frontend state management.
+        Cookies are set on the HTTP response; refresh URL is returned.
         """
         request = info.context["request"]
+        response = info.context.get("response")
         sanitized_email = strip_demo_tag(email)
 
         # Verify user exists in our system before attempting HMIS login
@@ -177,10 +178,21 @@ class Mutation:
         # Mark session as HMIS authenticated so isHmisUser resolver returns True
         request.session[HMIS_SESSION_KEY_NAME] = True
 
-        # Return cookies and refresh URL for frontend to manage
+        # Set HMIS cookies directly on the response
+        if response:
+            for cookie in auth_data["cookies"]:
+                response.set_cookie(
+                    key=cookie.get("name"),
+                    value=cookie.get("value"),
+                    domain=cookie.get("domain"),
+                    path=cookie.get("path"),
+                    secure=cookie.get("secure"),
+                    httponly=cookie.get("httponly"),
+                )
+
+        # Return refresh URL for frontend to use for token refresh
         return HmisLoginSuccess(
             user=cast(UserType, user),
-            cookies=auth_data["cookies"],
             refresh_url=auth_data["refresh_url"],
         )
 

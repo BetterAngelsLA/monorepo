@@ -5,44 +5,26 @@ const storage = createPersistentSynchronousStorage({ scopeId: 'hmis-auth' });
 
 const HMIS_REFRESH_URL_KEY = 'hmis_refresh_url' as const;
 
-interface CookieInfo {
-  name: string;
-  value: string;
-  domain: string;
-  path?: string | null;
-  secure?: boolean | null;
-  httponly?: boolean | null;
-}
-
 /**
- * Store HMIS cookies and refresh URL
- * Cookies include full domain/path/secure/httponly attributes from server
+ * Store HMIS refresh URL
+ * Cookies are set directly via Set-Cookie headers from backend
  */
 export const storeHmisAuth = async (
-  cookies: CookieInfo[],
   refreshUrl: string
 ): Promise<void> => {
-  // Store the refresh URL
+  // Store the refresh URL for token refresh operations
   storage.set(HMIS_REFRESH_URL_KEY, refreshUrl);
-
-  // Set all HMIS cookies with their proper domain and attributes
-  for (const cookieInfo of cookies) {
-    await NitroCookies.set(cookieInfo.domain, {
-      name: cookieInfo.name,
-      value: cookieInfo.value,
-    });
-  }
 };
 
 /**
  * Get HMIS auth token from cookies
- * Retrieves from all stored cookies by checking all domains
+ * Cookies are automatically managed by NitroCookies from Set-Cookie headers
  */
 export const getHmisAuthToken = async (): Promise<string | null> => {
   const refreshUrl = storage.get<string>(HMIS_REFRESH_URL_KEY);
   if (!refreshUrl) return null;
 
-  // Try to extract domain from refresh URL as fallback
+  // Extract domain from refresh URL to get cookies
   try {
     const urlObj = new URL(refreshUrl);
     const domain = urlObj.origin;

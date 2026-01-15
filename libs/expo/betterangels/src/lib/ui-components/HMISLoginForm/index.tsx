@@ -56,9 +56,8 @@ export default function HMISLoginForm() {
         throw new Error('Sorry, login failed.');
       }
       if (res.__typename === 'HmisLoginSuccess') {
-        // Store HMIS cookies and refresh URL (domain extracted from refresh URL)
-        await storeHmisAuth(res.cookies, res.refreshUrl);
-
+        // Store HMIS refresh URL (cookies are set via Set-Cookie headers)
+        await storeHmisAuth(res.refreshUrl);
         await refetchUser();
         await persistOnSuccessfulSignIn(email);
         return;
