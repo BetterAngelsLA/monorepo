@@ -3,16 +3,12 @@ import re
 from datetime import timezone
 from enum import Enum
 from http import HTTPMethod
-from typing import Any, Collection, Iterable, Optional, cast
+from typing import Any, Collection, Iterable, Optional
 from zoneinfo import ZoneInfo
 
 import requests
 import strawberry
-from common.errors import (
-    HmisTokenExpiredError,
-    NotFoundGQLError,
-    UnauthenticatedGQLError,
-)
+from common.errors import HmisTokenExpiredError, NotFoundGQLError
 from common.utils import dict_keys_to_snake
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -99,12 +95,12 @@ class HmisApiBridge:
         self.info = info
         self.request = self.info.context["request"]
         self.session = self.request.session
-        HMIS_REST_ENDPOINT = getattr(settings, "HMIS_REST_URL", None)
-        HMIS_HOST = getattr(settings, "HMIS_HOST", None)
-        if not all([HMIS_REST_ENDPOINT, HMIS_HOST]):
-            raise Exception("HMIS not configured")
+        hmis_rest_endpoint = getattr(settings, "HMIS_REST_URL", None)
+        hmis_host = getattr(settings, "HMIS_HOST", None)
+        if not all([hmis_rest_endpoint, hmis_host]):
+            raise Exception("HMIS_REST_URL and HMIS_HOST must be configured in settings")
 
-        self.endpoint = HMIS_REST_ENDPOINT
+        self.endpoint = hmis_rest_endpoint
 
         # Extract token from X-HMIS-Token header if not provided
         if token is None:
@@ -117,7 +113,7 @@ class HmisApiBridge:
 
         self.headers = {
             "Accept": "application/json, text/plain, */*",
-            "Host": HMIS_HOST,
+            "Host": hmis_host,
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:144.0) Gecko/20100101 Firefox/144.0",
             **auth_header,
         }
@@ -338,7 +334,7 @@ class HmisApiBridge:
             token_match = re.search(r'meta name="csrf-token" content="([^"]+)"', html)
 
             if not param_match or not token_match:
-                raise ValidationError("❌ Error: Could not extract CSRF tokens.")
+                raise ValidationError("Could not extract CSRF tokens from HMIS login page")
 
             csrf_key = param_match.group(1)
             csrf_val = token_match.group(1)
@@ -367,9 +363,7 @@ class HmisApiBridge:
                 self.headers["Authorization"] = f"Bearer {auth_token}"
 
                 # Return all cookies from HMIS response for frontend to manage
-                cookies = {}
-                for cookie in post_response.cookies:
-                    cookies[cookie.name] = cookie.value
+                cookies = {cookie.name: cookie.value for cookie in post_response.cookies}
 
                 return {
                     "cookies": cookies,
@@ -588,10 +582,6 @@ class HmisApiBridge:
         resp = self._make_request(
             method=HTTPMethod.POST,
             path=f"/clients/{client_hmis_id}/client-programs/enroll",
-            body={**DEFAULT_ENROLLMENT_DATA, "fields": self._get_field_str(fields)},
-        )
-
-        return dict_keys_to_snake(resp.json())
             body={**DEFAULT_ENROLLMENT_DATA, "fields": self._get_field_str(fields)},
         )
 

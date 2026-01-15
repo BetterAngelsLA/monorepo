@@ -1,6 +1,6 @@
 import { ApolloLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
-import { getHmisAuthToken } from '@monorepo/expo/betterangels';
+import { getHmisAuthToken } from '@monorepo/expo/shared/utils';
 
 /**
  * Apollo link that adds HMIS token in custom header ONLY for HMIS operations

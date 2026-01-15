@@ -10,7 +10,6 @@ from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.test import ignore_warnings, override_settings
-from hmis.api_bridge import HmisApiBridge
 from hmis.tests.test_mutations import LOGIN_MUTATION
 from model_bakery import baker
 from organizations.models import Organization, OrganizationUser

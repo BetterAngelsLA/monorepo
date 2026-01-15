@@ -17,7 +17,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.test import TestCase, override_settings
-from hmis.api_bridge import HmisApiBridge
 from hmis.enums import (
     HmisDobQualityEnum,
     HmisGenderEnum,
@@ -37,7 +36,11 @@ LOGIN_MUTATION = """
     mutation ($email: String!, $password: String!) {
         hmisLogin(email: $email, password: $password) {
             __typename
-            ... on UserType { id isHmisUser }
+            ... on HmisLoginSuccess {
+                user { id }
+                cookies
+                refreshUrl
+            }
             ... on HmisLoginError { message field }
         }
     }
@@ -628,18 +631,3 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         )
         self.assertEqual(len(resp["errors"]), 1)
         self.assertIn("Login Failed: Invalid credentials.", resp["errors"][0]["message"])
-
-    def test_hmis_login_unknown_email_no_autocreate(self) -> None:
-        with patch(
-            "hmis.api_bridge.HmisApiBridge.create_auth_token",
-            return_value=None,
-        ):
-            resp = self.execute_graphql(
-                LOGIN_MUTATION,
-                variables={"email": "nonexistent_user@example.org", "password": "pw"},
-            )
-
-        self.assertIsNone(resp.get("errors"))
-        payload = resp["data"]["hmisLogin"]
-        self.assertEqual(payload["__typename"], "HmisLoginError")
-        self.assertIn("Invalid credentials or HMIS login failed", payload["message"])

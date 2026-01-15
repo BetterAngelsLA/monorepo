@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Optional, cast
+from typing import Any, Iterable, cast
 
 import strawberry
 import strawberry_django
@@ -152,16 +152,24 @@ class Query:
 class Mutation:
     @strawberry.mutation
     def hmis_login(self, info: Info, email: str, password: str) -> HmisLoginResult:
+        """
+        Authenticate with HMIS and create Django session.
+        Returns HMIS cookies and refresh URL for frontend state management.
+        """
         request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(info=info)
         sanitized_email = strip_demo_tag(email)
-        auth_data = hmis_api_bridge.login(sanitized_email, password)
 
+        # Verify user exists in our system before attempting HMIS login
         try:
             user = User.objects.get(email__iexact=sanitized_email)
         except User.DoesNotExist:
             return HmisLoginError(message="Invalid credentials or HMIS login failed")
 
+        # Authenticate with HMIS
+        hmis_api_bridge = HmisApiBridge(info=info)
+        auth_data = hmis_api_bridge.login(sanitized_email, password)
+
+        # Create Django session
         backend = settings.AUTHENTICATION_BACKENDS[0]
         django_login(request, user, backend=backend)
 

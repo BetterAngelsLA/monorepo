@@ -5,11 +5,11 @@ import {
   Button,
   Loading,
 } from '@monorepo/expo/shared/ui-components';
+import { storeHmisAuth } from '@monorepo/expo/shared/utils';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEmailEnvironment, useUser } from '../../hooks';
 import { useRememberedEmail } from '../../hooks/useRememberEmail/useRememberEmail';
-import { storeHmisAuth } from '../../utils/hmisAuth';
 import { HmisLoginDocument } from './__generated__/HMISLogin.generated';
 
 export default function HMISLoginForm() {

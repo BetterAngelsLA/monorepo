@@ -3,7 +3,8 @@ import {
   getHmisRefreshUrl,
   storeHmisAuth,
   getHmisDomain,
-} from '@monorepo/expo/betterangels';
+} from '@monorepo/expo/shared/utils';
+import NitroCookies from 'react-native-nitro-cookies';
 
 /**
  * Refresh HMIS cookies by calling HMIS refresh URL directly
@@ -11,11 +12,9 @@ import {
  */
 export async function refreshHmisToken(): Promise<boolean> {
   try {
-    const [cookies, refreshUrl, hmisDomain] = await Promise.all([
-      getAllHmisCookies(),
-      Promise.resolve(getHmisRefreshUrl()),
-      Promise.resolve(getHmisDomain()),
-    ]);
+    const cookies = await getAllHmisCookies();
+    const refreshUrl = getHmisRefreshUrl();
+    const hmisDomain = getHmisDomain();
 
     if (!refreshUrl || !cookies.auth_token) {
       console.warn('No HMIS auth data found for refresh');
@@ -26,6 +25,11 @@ export async function refreshHmisToken(): Promise<boolean> {
     const cookieHeader = Object.entries(cookies)
       .map(([name, value]) => `${name}=${value}`)
       .join('; ');
+
+    if (!cookieHeader) {
+      console.warn('No cookies available for HMIS refresh');
+      return false;
+    }
 
     // Call HMIS refresh URL with all cookies
     const response = await fetch(refreshUrl, {
@@ -76,6 +80,7 @@ export async function refreshHmisToken(): Promise<boolean> {
 
 /**
  * Extract new cookies from Set-Cookie headers and store them
+ * Uses NitroCookies.setFromResponse() to parse Set-Cookie headers properly
  */
 async function extractAndStoreNewCookies(
   response: Response,
@@ -87,23 +92,32 @@ async function extractAndStoreNewCookies(
     return false;
   }
 
-  // Parse all cookies from Set-Cookie header(s)
-  const cookies: Record<string, string> = {};
-  const cookieMatches = setCookieHeaders.matchAll(/(\w+)=([^;]+)/g);
+  try {
+    // Use NitroCookies to parse and store Set-Cookie header(s)
+    const hmisDomain = getHmisDomain();
+    if (!hmisDomain) {
+      console.error('No HMIS domain found in storage');
+      return false;
+    }
 
-  for (const match of cookieMatches) {
-    const [, name, value] = match;
-    cookies[name] = value;
-  }
+    // Parse Set-Cookie header(s) - may be multiple cookies separated by commas
+    const cookieStrings = setCookieHeaders.split(',').map((s) => s.trim());
 
-  if (!cookies.auth_token) {
-    console.error('No auth_token in refresh response cookies');
+    for (const cookieStr of cookieStrings) {
+      // Use NitroCookies built-in parser for Set-Cookie headers
+      await NitroCookies.setFromResponse(hmisDomain, cookieStr);
+    }
+
+    // Verify auth_token was refreshed
+    const updatedCookies = await NitroCookies.get(hmisDomain);
+    if (!updatedCookies.auth_token) {
+      console.error('No auth_token in refreshed cookies');
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error parsing Set-Cookie headers:', error);
     return false;
   }
-
-  // Store updated cookies
-  await storeHmisAuth(cookies, refreshUrl);
-
-  console.log('HMIS cookies refreshed successfully');
-  return true;
 }

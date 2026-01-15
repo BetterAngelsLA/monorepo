@@ -41,7 +41,7 @@ export const createErrorLink = ({
 
     // Check for HMIS token expired error first
     if (isHmisTokenExpiredError(graphQLErrors)) {
-      // Convert promise to observable and retry operation if refresh succeeds
+      // Attempt to refresh token and retry operation
       return new Observable((observer) => {
         refreshHmisToken()
           .then((success) => {
@@ -49,7 +49,7 @@ export const createErrorLink = ({
               observer.error(error);
               return;
             }
-            // Retry the operation
+            // Retry the operation with refreshed token
             forward(operation).subscribe({
               next: observer.next.bind(observer),
               error: observer.error.bind(observer),
