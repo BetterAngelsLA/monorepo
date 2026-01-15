@@ -10,7 +10,7 @@ import { sanitizeHtmlString } from '@monorepo/expo/shared/utils';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { MainScrollContainer, NoteTasks } from '../../../ui-components';
+import { MainScrollContainer } from '../../../ui-components';
 import HmisNoteLocation from './HmisNoteLocation';
 import HmisProgramNoteServices from './HmisProgramNoteServices';
 import HmisProgramNoteTitle from './HmisProgramNoteTitle';
@@ -25,7 +25,7 @@ export function HmisProgramNoteView(props: TProps) {
   const { id, clientId } = props;
   const scrollRef = useRef<ScrollView>(null);
 
-  const { data, error, loading, refetch } = useQuery(ViewHmisNoteDocument, {
+  const { data, error, loading } = useQuery(ViewHmisNoteDocument, {
     variables: { id },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -71,7 +71,6 @@ export function HmisProgramNoteView(props: TProps) {
     clientProgram,
     providedServices,
     requestedServices,
-    tasks,
   } = hmisNote;
   const { firstName, lastName } = hmisClientProfile || {};
   const { program } = clientProgram || {};
@@ -108,16 +107,6 @@ export function HmisProgramNoteView(props: TProps) {
           </View>
         )}
       </View>
-
-      <NoteTasks
-        hmisClientProfileId={clientId}
-        hmisNoteId={id}
-        tasks={tasks || []}
-        refetch={refetch}
-        scrollRef={scrollRef}
-        team={null}
-        hideIfEmpty={true} // Only show if tasks exist
-      />
     </MainScrollContainer>
   );
 }

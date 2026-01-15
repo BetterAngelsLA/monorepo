@@ -7,7 +7,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useUser } from '../../hooks';
+import { useEmailEnvironment, useUser } from '../../hooks';
 import { useRememberedEmail } from '../../hooks/useRememberEmail/useRememberEmail';
 import { HmisLoginDocument } from './__generated__/HMISLogin.generated';
 
@@ -26,6 +26,8 @@ export default function HMISLoginForm() {
 
   const [hmisLogin] = useMutation(HmisLoginDocument);
   const { refetchUser } = useUser();
+
+  const { isValidEmail } = useEmailEnvironment(email);
 
   const onSubmit = useCallback(async () => {
     if (!email.trim() || !password.trim()) {
@@ -107,7 +109,7 @@ export default function HMISLoginForm() {
         title="Sign In"
         icon={submitting ? <Loading size="small" color="white" /> : undefined}
         onPress={onSubmit}
-        disabled={submitting}
+        disabled={submitting || !isValidEmail || !password}
         testID="hmis-submit"
       />
 

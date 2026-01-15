@@ -1,9 +1,4 @@
-import {
-  AuthContainer,
-  FeatureFlagControlled,
-  FeatureFlags,
-  useUser,
-} from '@monorepo/expo/betterangels';
+import { AuthContainer, useUser } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Button } from '@monorepo/expo/shared/ui-components';
 import * as Application from 'expo-application';
@@ -37,56 +32,42 @@ export default function Auth() {
 
   return (
     <AuthContainer header={<Logo width={216} height={33} />}>
-      <FeatureFlagControlled
-        flag={FeatureFlags.HMIS_FF}
-        fallback={
-          <Button
-            {...SHARED_BUTTON_PROPS}
-            accessibilityHint="Goes to sign-in screen"
-            onPress={() => router.navigate('/sign-in')}
-            testID="get-started-button"
-            title="Get Started"
-            variant="primaryDark"
-          />
-        }
-      >
-        <View style={styles.buttonStack}>
-          <Text style={styles.heading}>Choose an account:</Text>
+      <View style={styles.buttonStack}>
+        <Text style={styles.heading}>Choose an account:</Text>
 
-          <Button
-            {...SHARED_BUTTON_PROPS}
-            accessibilityHint="Opens Better Angels login"
-            onPress={() =>
-              router.navigate({
-                pathname: '/sign-in',
-                params: { provider: 'ba' },
-              })
-            }
-            testID="better-angels-login"
-            title="Better Angels"
-            variant="primaryDark"
-          />
+        <Button
+          {...SHARED_BUTTON_PROPS}
+          accessibilityHint="Opens Better Angels login"
+          onPress={() =>
+            router.navigate({
+              pathname: '/sign-in',
+              params: { provider: 'ba' },
+            })
+          }
+          testID="better-angels-login"
+          title="Better Angels"
+          variant="primaryDark"
+        />
 
-          <Button
-            {...SHARED_BUTTON_PROPS}
-            accessibilityHint="Opens HMIS login for service providers"
-            onPress={() =>
-              router.navigate({
-                pathname: '/sign-in',
-                params: { provider: 'hmis' },
-              })
-            }
-            testID="hmis-login-button"
-            title="HMIS"
-            variant="secondary"
-          />
+        <Button
+          {...SHARED_BUTTON_PROPS}
+          accessibilityHint="Opens HMIS login for service providers"
+          onPress={() =>
+            router.navigate({
+              pathname: '/sign-in',
+              params: { provider: 'hmis' },
+            })
+          }
+          testID="hmis-login-button"
+          title="HMIS"
+          variant="secondary"
+        />
 
-          <View style={styles.versionContainer}>
-            <Text style={styles.appVersion}>App version: {nativeVersion}</Text>
-            <Text style={styles.appVersion}>OTA version: {otaVersion}</Text>
-          </View>
+        <View style={styles.versionContainer}>
+          <Text style={styles.appVersion}>App version: {nativeVersion}</Text>
+          <Text style={styles.appVersion}>OTA version: {otaVersion}</Text>
         </View>
-      </FeatureFlagControlled>
+      </View>
     </AuthContainer>
   );
 }

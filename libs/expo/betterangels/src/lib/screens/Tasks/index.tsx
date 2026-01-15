@@ -1,5 +1,5 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
-import { SearchBar, TextButton } from '@monorepo/expo/shared/ui-components';
+import { SearchBar } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -50,26 +50,22 @@ export default function Tasks() {
   const serverFilters = toTaskFilter({
     search,
     ...toModelFilterValues(currentFilters),
-    hmisClientProfileLookup: isHmisUser ? undefined : { isNull: true },
   });
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchRow}>
-        <SearchBar
-          value={search}
-          placeholder="Search tasks"
-          onChange={(text) => setSearch(text)}
-          onClear={() => setSearch('')}
-          style={{ flexGrow: 1 }}
-        />
-        <TextButton
-          onPress={onFilterReset}
-          regular
-          title="Reset"
-          accessibilityHint="Reset search and filters"
-        />
-      </View>
+      <SearchBar
+        style={styles.searchRow}
+        value={search}
+        placeholder="Search tasks"
+        onChange={(text) => setSearch(text)}
+        onClear={() => setSearch('')}
+        actionSlotRight={{
+          label: 'Reset',
+          accessibilityHint: 'reset search and filters',
+          onPress: onFilterReset,
+        }}
+      />
 
       <ModelFilters
         key={filtersKey}
@@ -99,9 +95,6 @@ const styles = StyleSheet.create({
   },
   searchRow: {
     marginBottom: Spacings.xs,
-    display: 'flex',
-    flexDirection: 'row',
-    gap: Spacings.sm,
   },
   filters: {
     marginBottom: Spacings.sm,
