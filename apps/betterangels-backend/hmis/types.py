@@ -45,9 +45,19 @@ class HmisLoginError:
 
 
 @strawberry.type
+class CookieInfo:
+    name: str
+    value: str
+    domain: str
+    path: Optional[str] = None
+    secure: Optional[bool] = None
+    httponly: Optional[bool] = None
+
+
+@strawberry.type
 class HmisLoginSuccess:
     user: UserType
-    cookies: strawberry.scalars.JSON
+    cookies: list[CookieInfo]
     refresh_url: str
 
 

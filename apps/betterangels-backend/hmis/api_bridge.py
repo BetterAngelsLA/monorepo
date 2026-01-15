@@ -362,8 +362,18 @@ class HmisApiBridge:
                 if not auth_token:
                     raise ValidationError(f"Status Code: {post_response.status_code}")
 
-                # Return all cookies from HMIS response for frontend to manage
-                cookies = {cookie.name: cookie.value for cookie in post_response.cookies}
+                # Return full cookie objects with all attributes for frontend to manage
+                cookies = [
+                    {
+                        "name": cookie.name,
+                        "value": cookie.value,
+                        "domain": cookie.domain,
+                        "path": cookie.path,
+                        "secure": cookie.secure,
+                        "httponly": cookie.has_nonstandard_attr("HttpOnly"),
+                    }
+                    for cookie in post_response.cookies
+                ]
 
                 return {
                     "cookies": cookies,

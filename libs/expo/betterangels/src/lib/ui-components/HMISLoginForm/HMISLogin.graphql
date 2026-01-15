@@ -4,7 +4,14 @@ mutation HMISLogin($email: String!, $password: String!) {
       user {
         id
       }
-      cookies
+      cookies {
+        name
+        value
+        domain
+        path
+        secure
+        httponly
+      }
       refreshUrl
     }
     ... on HmisLoginError {

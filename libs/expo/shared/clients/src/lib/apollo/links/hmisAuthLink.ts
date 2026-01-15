@@ -1,9 +1,7 @@
 import { ApolloLink } from '@apollo/client';
 import { SetContextLink } from '@apollo/client/link/context';
 import { getHmisAuthToken } from '@monorepo/expo/shared/utils';
-
-const MODERN_BROWSER_USER_AGENT =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+import { MODERN_BROWSER_USER_AGENT } from '../../common/constants';
 
 /**
  * Apollo link that adds HMIS token in custom header ONLY for HMIS operations

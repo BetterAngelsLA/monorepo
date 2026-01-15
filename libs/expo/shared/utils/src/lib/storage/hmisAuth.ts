@@ -3,60 +3,55 @@ import { createPersistentSynchronousStorage } from './createPersistentSynchronou
 
 const storage = createPersistentSynchronousStorage({ scopeId: 'hmis-auth' });
 
-const HMIS_DOMAIN_KEY = 'hmis_domain' as const;
 const HMIS_REFRESH_URL_KEY = 'hmis_refresh_url' as const;
 
-/**
- * Extract domain from URL
- */
-function extractDomain(url: string): string {
-  try {
-    const urlObj = new URL(url);
-    return urlObj.origin;
-  } catch (error) {
-    console.error('Failed to extract domain from URL:', url, error);
-    throw error;
-  }
+interface CookieInfo {
+  name: string;
+  value: string;
+  domain: string;
+  path?: string | null;
+  secure?: boolean | null;
+  httponly?: boolean | null;
 }
 
 /**
  * Store HMIS cookies and refresh URL
- * Extracts HMIS domain from refresh URL and stores cookies with proper domain
+ * Cookies include full domain/path/secure/httponly attributes from server
  */
 export const storeHmisAuth = async (
-  cookies: Record<string, string>,
+  cookies: CookieInfo[],
   refreshUrl: string
 ): Promise<void> => {
-  // Extract and store HMIS domain from refresh URL
-  const hmisDomain = extractDomain(refreshUrl);
-  storage.set(HMIS_DOMAIN_KEY, hmisDomain);
+  // Store the refresh URL
   storage.set(HMIS_REFRESH_URL_KEY, refreshUrl);
 
-  // Set all HMIS cookies with the proper HMIS domain
-  for (const [name, value] of Object.entries(cookies)) {
-    await NitroCookies.set(hmisDomain, {
-      name,
-      value,
+  // Set all HMIS cookies with their proper domain and attributes
+  for (const cookieInfo of cookies) {
+    await NitroCookies.set(cookieInfo.domain, {
+      name: cookieInfo.name,
+      value: cookieInfo.value,
     });
   }
 };
 
 /**
- * Get stored HMIS domain
- */
-export const getHmisDomain = (): string | null => {
-  return storage.get<string>(HMIS_DOMAIN_KEY);
-};
-
-/**
  * Get HMIS auth token from cookies
+ * Retrieves from all stored cookies by checking all domains
  */
 export const getHmisAuthToken = async (): Promise<string | null> => {
-  const hmisDomain = getHmisDomain();
-  if (!hmisDomain) return null;
+  const refreshUrl = storage.get<string>(HMIS_REFRESH_URL_KEY);
+  if (!refreshUrl) return null;
 
-  const cookies = await NitroCookies.get(hmisDomain);
-  return cookies['auth_token']?.value ?? null;
+  // Try to extract domain from refresh URL as fallback
+  try {
+    const urlObj = new URL(refreshUrl);
+    const domain = urlObj.origin;
+    const cookies = await NitroCookies.get(domain);
+    return cookies['auth_token']?.value ?? null;
+  } catch (error) {
+    console.error('Failed to extract domain from refresh URL:', error);
+    return null;
+  }
 };
 
 /**
@@ -64,33 +59,4 @@ export const getHmisAuthToken = async (): Promise<string | null> => {
  */
 export const getHmisRefreshUrl = (): string | null => {
   return storage.get<string>(HMIS_REFRESH_URL_KEY);
-};
-
-/**
- * Get all HMIS cookies
- */
-export const getAllHmisCookies = async (): Promise<Record<string, string>> => {
-  const hmisDomain = getHmisDomain();
-  if (!hmisDomain) return {};
-
-  const cookies = await NitroCookies.get(hmisDomain);
-  return Object.fromEntries(
-    Object.entries(cookies).map(([name, cookie]) => [name, cookie.value])
-  );
-};
-
-/**
- * Clear HMIS auth
- */
-export const clearHmisAuth = async (): Promise<void> => {
-  const hmisDomain = getHmisDomain();
-  if (hmisDomain) {
-    // Clear specific HMIS cookies
-    const cookies = await NitroCookies.get(hmisDomain);
-    for (const name of Object.keys(cookies)) {
-      await NitroCookies.clearByName(hmisDomain, name);
-    }
-  }
-  storage.remove(HMIS_DOMAIN_KEY);
-  storage.remove(HMIS_REFRESH_URL_KEY);
 };
