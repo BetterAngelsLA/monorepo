@@ -22,7 +22,7 @@ export const createErrorLink = ({
     onUnauthenticated,
   });
 
-  return new ErrorLink(({ error, operation }) => {
+  return new ErrorLink(({ error, operation, forward }) => {
     const { operationName } = operation;
 
     let graphQLErrors: readonly GraphQLFormattedError[] | undefined;
@@ -38,10 +38,10 @@ export const createErrorLink = ({
 
     if (isUnauthorizedError(graphQLErrors, networkError)) {
       redirectToAuth(operationName ?? '');
-
       return; // stop here, don't forward
     }
 
     // otherwise do nothing and let the response bubble up
+    return undefined;
   });
 };

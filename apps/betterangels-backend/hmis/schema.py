@@ -36,6 +36,7 @@ from .types import (
     HmisClientProgramType,
     HmisLoginError,
     HmisLoginResult,
+    HmisLoginSuccess,
     HmisNoteType,
     HmisProgramType,
     ProgramEnrollmentType,
@@ -55,9 +56,12 @@ class IsHmisAuthenticated(BasePermission):
         IsAuthenticated().has_permission(source, info, **kwargs)
 
         request = info.context["request"]
-        session = request.session
 
-        if not bool(session.get(HMIS_SESSION_KEY_NAME)):
+        # Check for HMIS token in custom header first
+        hmis_token = request.META.get("HTTP_X_HMIS_TOKEN")
+
+        # Fallback to Authorization header for backwards compatibility
+        if not hmis_token:
             raise UnauthenticatedGQLError(message=self.message)
 
         return True
@@ -149,20 +153,33 @@ class Query:
 class Mutation:
     @strawberry.mutation
     def hmis_login(self, info: Info, email: str, password: str) -> HmisLoginResult:
+        """
+        Authenticate with HMIS and create Django session.
+        Cookies are automatically forwarded from HMIS via the API bridge.
+        """
         request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(info=info)
         sanitized_email = strip_demo_tag(email)
-        hmis_api_bridge.create_auth_token(sanitized_email, password)
 
+        # Verify user exists in our system before attempting HMIS login
         try:
             user = User.objects.get(email__iexact=sanitized_email)
         except User.DoesNotExist:
             return HmisLoginError(message="Invalid credentials or HMIS login failed")
 
+        # Authenticate with HMIS (cookies are automatically set via bridge)
+        hmis_api_bridge = HmisApiBridge(info=info)
+        hmis_api_bridge.login(sanitized_email, password)
+
+        # Create Django session
         backend = settings.AUTHENTICATION_BACKENDS[0]
         django_login(request, user, backend=backend)
 
-        return cast(UserType, user)
+        # Mark session as HMIS authenticated so isHmisUser resolver returns True
+        request.session[HMIS_SESSION_KEY_NAME] = True
+
+        return HmisLoginSuccess(
+            user=cast(UserType, user),
+        )
 
     @strawberry_django.mutation(permission_classes=[IsHmisAuthenticated])
     def create_hmis_client_profile(self, info: Info, data: CreateHmisClientProfileInput) -> HmisClientProfileType:

@@ -49,7 +49,6 @@ env = environ.Env(
     DJANGO_CACHE_MAX_CONNECTIONS=(int, 100),
     GOOGLE_MAPS_API_KEY=(str, ""),
     HMIS_API_KEY=(str, ""),
-    HMIS_GRAPHQL_URL=(str, ""),
     HMIS_HOST=(str, ""),
     HMIS_REST_URL=(str, ""),
     HMIS_TOKEN_KEY=(str, ""),
@@ -373,7 +372,6 @@ PLACES_MARKER_OPTIONS = '{"draggable": true}'
 
 # HMIS
 HMIS_API_KEY = env("HMIS_API_KEY")
-HMIS_GRAPHQL_URL = env("HMIS_GRAPHQL_URL")
 HMIS_TOKEN_KEY = env("HMIS_TOKEN_KEY")
 HMIS_HOST = env("HMIS_HOST")
 HMIS_REST_URL = env("HMIS_REST_URL")

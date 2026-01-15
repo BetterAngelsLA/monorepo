@@ -10,7 +10,6 @@ from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.test import ignore_warnings, override_settings
-from hmis.api_bridge import HmisApiBridge
 from hmis.tests.test_mutations import LOGIN_MUTATION
 from model_bakery import baker
 from organizations.models import Organization, OrganizationUser
@@ -159,15 +158,13 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge.create_auth_token",
+            "hmis.api_bridge.HmisApiBridge.login",
             autospec=True,
-        ) as mock_create_auth_token:
-
-            def fake_create_auth_token(self: HmisApiBridge, username: str, password: str) -> None:
-                self._set_auth_token(token)
-                return None
-
-            mock_create_auth_token.side_effect = fake_create_auth_token
+        ) as mock_login:
+            mock_login.return_value = {
+                "cookies": {"auth_token": token},
+                "refresh_url": "https://example.com/refresh",
+            }
 
             self.execute_graphql(
                 LOGIN_MUTATION,
