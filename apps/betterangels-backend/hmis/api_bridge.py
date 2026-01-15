@@ -3,7 +3,7 @@ import re
 from datetime import timezone
 from enum import Enum
 from http import HTTPMethod
-from typing import Any, Collection, Iterable, Optional
+from typing import Any, Collection, Iterable, Mapping, Optional
 from zoneinfo import ZoneInfo
 
 import requests
@@ -231,7 +231,7 @@ class HmisApiBridge:
 
     def _clean_client_input(
         self,
-        data: dict[str, Any],
+        data: Mapping[str, Any],
         keys: Collection[str],
         enum_list_keys: Collection[str] = (),
         date_keys: Collection[str] = (),
