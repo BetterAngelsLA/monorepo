@@ -95,7 +95,7 @@ export default function GeneralInfo({
   return (
     <Card px="px-0" pb="pb-0">
       <div className="gap-2 flex flex-col px-6">
-        {shelter.totalBeds && (
+        {!!shelter.totalBeds && (
           <>
             <h3 className="text-base font-semibold">Capacity</h3>
             <div>
