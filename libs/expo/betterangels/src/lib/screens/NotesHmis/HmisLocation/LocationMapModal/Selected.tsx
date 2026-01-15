@@ -60,8 +60,8 @@ export default function Selected(props: ISelectedProps) {
       {
         longitude: currentLocation?.longitude,
         latitude: currentLocation?.latitude,
-        formattedAddress: address?.full,
-        shortAddressName: currentLocation?.shortAddressName,
+        formattedAddress: address?.full || '',
+        shortAddressName: currentLocation?.shortAddressName || '',
         components: address?.addressComponents || [],
       },
       {
