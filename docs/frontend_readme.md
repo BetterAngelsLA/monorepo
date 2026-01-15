@@ -326,6 +326,26 @@ Before you begin, ensure you have the following installed on your Windows machin
 
    > [!IMPORTANT] Maintenance Note: This script places a shim file inside your Android SDK folder. If you update your Android SDK Platform-Tools via Android Studio, that shim will be deleted. If you suddenly see `adb ENOENT` errors after an update, simply re-run this script to restore the environment.
 
+
+   **Troubleshooting**
+
+   If you run the setup script and see this error:
+
+   ```
+   Error: Could not detect Windows User Profile via cmd.exe.
+   ```
+
+   Ensure you are running this in a valid WSL2 environment.
+
+   **The Issue:** The WSL "Interop" service (which allows Linux to run Windows executables) has stalled or crashed. This often happens after Windows updates or long uptimes.
+
+   **The Fix:** You must fully restart the WSL subsystem. Closing the terminal is not enough.
+
+   1. Close all WSL terminals and VS Code windows.
+   2. Open PowerShell or Command Prompt in Windows.
+   3. Run: `wsl --shutdown`
+   4. Wait a few seconds, then reopen your WSL terminal and re-run the script.
+
 6. **Verify Setup**
 
    Ensure the configuration was successful by checking the ADB version from your WSL terminal:
