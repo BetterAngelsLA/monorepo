@@ -7,6 +7,7 @@ import { ReactNode, useCallback, useRef } from 'react';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 import { useSnackbar } from '../../hooks';
 import { useBlockingScreen } from '../../providers';
+import { useUserTeamPreference } from '../../state';
 import { CreateNoteDocument } from './__generated__/CreateInteraction.generated';
 
 type TProps = {
@@ -37,6 +38,7 @@ export function CreateClientInteractionBtn(props: TProps) {
 
   const router = useRouter();
   const [createNote] = useMutation(CreateNoteDocument);
+  const [teamPreference] = useUserTeamPreference();
   const { showSnackbar } = useSnackbar();
   const { blockScreenUntilNextNavigation, unblockScreen } = useBlockingScreen();
 
@@ -54,6 +56,7 @@ export function CreateClientInteractionBtn(props: TProps) {
         variables: {
           data: {
             clientProfile: clientProfileId,
+            team: teamPreference ?? undefined,
           },
         },
       });

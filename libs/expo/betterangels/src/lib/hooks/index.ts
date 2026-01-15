@@ -1,5 +1,6 @@
 export { default as useAppState } from './appState/useAppState';
 export { default as useCaliforniaIdUniqueCheck } from './californiaIdUniqueCheck/useCaliforniaIdUniqueCheck';
+export { default as useEmailEnvironment } from './environment/useEmailEnvironment';
 export { default as useAppVersion } from './expoUpdates/useAppVersion';
 export { default as useFeatureFlagActive } from './featureFlag/useFeatureFlagActive';
 export { useGetClientInteractionsWithLocation } from './interactions/useGetClientInteractionsWithLocation';

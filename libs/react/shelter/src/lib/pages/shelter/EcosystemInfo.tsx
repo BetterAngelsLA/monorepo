@@ -4,6 +4,7 @@ import {
   enumDisplayFunderChoices,
   enumDisplayShelterProgramChoices,
   enumDisplaySpaChoices,
+  formatCityCouncilDistrict,
 } from '../../static';
 import { ViewShelterQuery } from './__generated__/shelter.generated';
 import { InlineList } from './shared/InlineList';
@@ -13,13 +14,14 @@ export default function EcosystemInfo({
 }: {
   shelter: ViewShelterQuery['shelter'];
 }) {
+  const cityCouncilDistrict = formatCityCouncilDistrict(
+    shelter.cityCouncilDistrict
+  );
+
   return (
     <Card title="Ecosystem Information">
       <div className="flex flex-col gap-2">
-        <InlineList
-          title="City:"
-          items={shelter?.cities.map((i) => i.displayName)}
-        />
+        <InlineList title="City:" items={shelter?.cities.map((i) => i.name)} />
 
         <InlineList
           title="SPA:"
@@ -28,9 +30,9 @@ export default function EcosystemInfo({
           )}
         />
 
-        {!!shelter.cityCouncilDistrict && (
+        {cityCouncilDistrict && (
           <div className="flex items-center gap-2">
-            <strong>LACD:</strong> {shelter.cityCouncilDistrict}
+            <strong>LACD:</strong> {cityCouncilDistrict}
           </div>
         )}
 

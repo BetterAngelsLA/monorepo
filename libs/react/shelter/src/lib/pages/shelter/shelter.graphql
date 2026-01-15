@@ -37,7 +37,7 @@ query ViewShelter($id: ID!) {
       contactNumber
     }
     cities {
-      displayName
+      name
     }
     demographics {
       name
