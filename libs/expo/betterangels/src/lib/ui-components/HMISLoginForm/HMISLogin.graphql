@@ -4,7 +4,6 @@ mutation HMISLogin($email: String!, $password: String!) {
       user {
         id
       }
-      refreshUrl
     }
     ... on HmisLoginError {
       field

@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 import strawberry
-from common.errors import HmisTokenExpiredError, NotFoundGQLError
+from common.errors import NotFoundGQLError, UnauthenticatedGQLError
 from common.utils import dict_keys_to_snake
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -281,7 +281,7 @@ class HmisApiBridge:
             return
 
         if resp.status_code == 401:
-            raise HmisTokenExpiredError()
+            raise UnauthenticatedGQLError()
 
         if resp.status_code == 403:
             raise PermissionDenied("Unauthorized.")
@@ -319,9 +319,25 @@ class HmisApiBridge:
 
         self._handle_error_response(resp)
 
+        # Transparently forward any auth_token cookie updates from HMIS to the client
+        if "Set-Cookie" in resp.headers and "auth_token" in resp.headers.get("Set-Cookie", ""):
+            cookie_obj = next((c for c in resp.cookies if c.name == "auth_token"), None)
+            django_response = self.info.context.get("response")
+
+            if cookie_obj and django_response:
+                django_response.set_cookie(
+                    key="auth_token",
+                    value=cookie_obj.value,
+                    domain=cookie_obj.domain,
+                    path=cookie_obj.path or "/",
+                    secure=cookie_obj.secure,
+                    httponly=cookie_obj.has_nonstandard_attr("HttpOnly"),
+                    samesite="Lax",
+                )
+
         return resp
 
-    def login(self, username: str, password: str) -> dict[str, Any]:
+    def login(self, username: str, password: str) -> None:
         headers = self.headers.copy()
         headers.pop("Host", None)
         headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
@@ -362,23 +378,21 @@ class HmisApiBridge:
                 if not auth_token:
                     raise ValidationError(f"Status Code: {post_response.status_code}")
 
-                # Return full cookie objects with all attributes for frontend to manage
-                cookies = [
-                    {
-                        "name": cookie.name,
-                        "value": cookie.value,
-                        "domain": cookie.domain,
-                        "path": cookie.path,
-                        "secure": cookie.secure,
-                        "httponly": cookie.has_nonstandard_attr("HttpOnly"),
-                    }
-                    for cookie in post_response.cookies
-                ]
+                # Set cookies on Django response
+                django_response = self.info.context.get("response")
+                if django_response:
+                    for cookie in post_response.cookies:
+                        django_response.set_cookie(
+                            key=cookie.name,
+                            value=cookie.value,
+                            domain=cookie.domain,
+                            path=cookie.path or "/",
+                            secure=cookie.secure,
+                            httponly=cookie.has_nonstandard_attr("HttpOnly"),
+                            samesite="Lax",
+                        )
 
-                return {
-                    "cookies": cookies,
-                    "refresh_url": post_response.url,
-                }
+                return
 
             elif "Incorrect username or password" in post_response.text:
                 raise PermissionDenied("Login Failed: Invalid credentials.")

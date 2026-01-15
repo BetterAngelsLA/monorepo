@@ -820,7 +820,6 @@ type HmisLoginError {
 
 type HmisLoginSuccess {
   user: UserType!
-  refreshUrl: String!
 }
 
 union HmisLoginSuccessHmisLoginError = HmisLoginSuccess | HmisLoginError

@@ -6,65 +6,69 @@ import NitroCookies from 'react-native-nitro-cookies';
 import { MODERN_BROWSER_USER_AGENT } from '../../common/constants';
 
 /**
- * Apollo link that adds HMIS token in custom header ONLY for HMIS operations
- * Uses X-HMIS-Token header to avoid conflicts with user Authorization
- * Reads token from cookies set by server
+ * Adds X-HMIS-Token header
  */
-export const createHmisAuthLink = (): ApolloLink => {
-  const setContextLink = new SetContextLink(async (prevContext, operation) => {
-    const operationName = operation.operationName?.toLowerCase() || '';
-
-    if (!operationName.includes('hmis')) {
-      return prevContext;
-    }
-
-    const headers = {
-      ...(prevContext['headers'] ?? {}),
-      'User-Agent': MODERN_BROWSER_USER_AGENT,
-    };
+const createAuthHeaderLink = () =>
+  new SetContextLink(async (prevContext) => {
     const authToken = await getHmisAuthToken();
-
-    if (authToken) {
-      headers['x-hmis-token'] = authToken;
-    }
-
-    return { ...prevContext, headers };
+    return {
+      ...prevContext,
+      headers: {
+        ...(prevContext['headers'] ?? {}),
+        'User-Agent': MODERN_BROWSER_USER_AGENT,
+        ...(authToken ? { 'x-hmis-token': authToken } : {}),
+      },
+    };
   });
 
-  // Afterware link to extract and store cookies from Set-Cookie header
-  const cookieLink = new ApolloLink(
+/**
+ * Extracts and stores cookies from responses
+ */
+const createCookieExtractorLink = () =>
+  new ApolloLink(
     (operation, forward) =>
       new Observable((observer) => {
         const subscription = forward(operation).subscribe({
-          next: (response: ApolloLink.Result) => {
+          next: (response) => {
             observer.next(response);
 
-            // Store cookies asynchronously for HMIS login
-            if (operation.operationName?.toLowerCase().includes('hmislogin')) {
-              const setCookieHeader = (
-                operation.getContext()['response'] as Response | undefined
-              )?.headers.get('set-cookie');
+            const setCookieHeader = (
+              operation.getContext()['response'] as Response | undefined
+            )?.headers.get('set-cookie');
 
-              if (setCookieHeader) {
-                const domainMatch = setCookieHeader.match(/Domain=([^;,]+)/i);
-                if (domainMatch) {
-                  NitroCookies.setFromResponse(
-                    `https://${domainMatch[1].trim()}`,
-                    setCookieHeader
-                  ).catch((error) =>
-                    console.error('[HMIS] Failed to store cookies:', error)
-                  );
-                }
+            if (setCookieHeader) {
+              const domainMatch = setCookieHeader.match(/Domain=([^;,]+)/i);
+              if (domainMatch) {
+                NitroCookies.setFromResponse(
+                  `https://${domainMatch[1].trim()}`,
+                  setCookieHeader
+                ).catch((error) =>
+                  console.error('[HMIS] Failed to store cookies:', error)
+                );
               }
             }
           },
-          error: (error) => observer.error(error),
-          complete: () => observer.complete(),
+          error: observer.error.bind(observer),
+          complete: observer.complete.bind(observer),
         });
 
         return () => subscription.unsubscribe();
       })
   );
 
-  return cookieLink.concat(setContextLink);
+/**
+ * Apollo link that handles HMIS authentication and cookie management
+ * Only processes HMIS operations
+ */
+export const createHmisAuthLink = (): ApolloLink => {
+  const authAndCookieLink = createCookieExtractorLink().concat(
+    createAuthHeaderLink()
+  );
+
+  return new ApolloLink((operation, forward) => {
+    if (!operation.operationName?.toLowerCase().includes('hmis')) {
+      return forward(operation);
+    }
+    return authAndCookieLink.request(operation, forward);
+  });
 };

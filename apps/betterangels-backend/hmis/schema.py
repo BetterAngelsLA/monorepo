@@ -155,10 +155,9 @@ class Mutation:
     def hmis_login(self, info: Info, email: str, password: str) -> HmisLoginResult:
         """
         Authenticate with HMIS and create Django session.
-        Cookies are set on the HTTP response; refresh URL is returned.
+        Cookies are automatically forwarded from HMIS via the API bridge.
         """
         request = info.context["request"]
-        response = info.context.get("response")
         sanitized_email = strip_demo_tag(email)
 
         # Verify user exists in our system before attempting HMIS login
@@ -167,9 +166,9 @@ class Mutation:
         except User.DoesNotExist:
             return HmisLoginError(message="Invalid credentials or HMIS login failed")
 
-        # Authenticate with HMIS
+        # Authenticate with HMIS (cookies are automatically set via bridge)
         hmis_api_bridge = HmisApiBridge(info=info)
-        auth_data = hmis_api_bridge.login(sanitized_email, password)
+        hmis_api_bridge.login(sanitized_email, password)
 
         # Create Django session
         backend = settings.AUTHENTICATION_BACKENDS[0]
@@ -178,22 +177,8 @@ class Mutation:
         # Mark session as HMIS authenticated so isHmisUser resolver returns True
         request.session[HMIS_SESSION_KEY_NAME] = True
 
-        # Set HMIS cookies directly on the response
-        if response:
-            for cookie in auth_data["cookies"]:
-                response.set_cookie(
-                    key=cookie.get("name"),
-                    value=cookie.get("value"),
-                    domain=cookie.get("domain"),
-                    path=cookie.get("path"),
-                    secure=cookie.get("secure"),
-                    httponly=cookie.get("httponly"),
-                )
-
-        # Return refresh URL for frontend to use for token refresh
         return HmisLoginSuccess(
             user=cast(UserType, user),
-            refresh_url=auth_data["refresh_url"],
         )
 
     @strawberry_django.mutation(permission_classes=[IsHmisAuthenticated])

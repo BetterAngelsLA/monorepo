@@ -5,7 +5,6 @@ import {
   Button,
   Loading,
 } from '@monorepo/expo/shared/ui-components';
-import { storeHmisAuth } from '@monorepo/expo/shared/utils';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEmailEnvironment, useUser } from '../../hooks';
@@ -56,8 +55,7 @@ export default function HMISLoginForm() {
         throw new Error('Sorry, login failed.');
       }
       if (res.__typename === 'HmisLoginSuccess') {
-        // Store HMIS refresh URL (cookies are set via Set-Cookie headers)
-        await storeHmisAuth(res.refreshUrl);
+        // Cookies are set automatically via Set-Cookie headers from backend
         await refetchUser();
         await persistOnSuccessfulSignIn(email);
         return;

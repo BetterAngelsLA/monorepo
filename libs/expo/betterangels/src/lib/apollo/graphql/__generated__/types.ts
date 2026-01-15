@@ -830,7 +830,6 @@ export type HmisLoginError = {
 
 export type HmisLoginSuccess = {
   __typename?: 'HmisLoginSuccess';
-  refreshUrl: Scalars['String']['output'];
   user: UserType;
 };
 
