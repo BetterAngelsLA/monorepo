@@ -1,7 +1,7 @@
 import { ApolloLink } from '@apollo/client';
 import { SetContextLink } from '@apollo/client/link/context';
 import { Observable } from '@apollo/client/utilities';
-import { getHmisAuthToken } from '@monorepo/expo/shared/utils';
+import { getHmisAuthToken, storeHmisDomain } from '@monorepo/expo/shared/utils';
 import NitroCookies from 'react-native-nitro-cookies';
 import { MODERN_BROWSER_USER_AGENT } from '../../common/constants';
 
@@ -38,12 +38,27 @@ const createCookieExtractorLink = () =>
 
             if (setCookieHeader) {
               const domainMatch = setCookieHeader.match(/Domain=([^;,]+)/i);
+              const authTokenMatch =
+                setCookieHeader.match(/auth_token=([^;,]+)/i);
+
               if (domainMatch) {
-                NitroCookies.setFromResponse(
-                  `https://${domainMatch[1].trim()}`,
-                  setCookieHeader
-                ).catch((error) =>
-                  console.error('[HMIS] Failed to store cookies:', error)
+                const domain = `https://${domainMatch[1].trim()}`;
+
+                if (authTokenMatch) {
+                  if (__DEV__) {
+                    const tokenValue = authTokenMatch[1];
+                    console.debug('[HMIS] Auth token cookie updated:', {
+                      domain,
+                      token: tokenValue,
+                    });
+                  }
+                }
+
+                // Store the HMIS domain for later use in getHmisAuthToken
+                storeHmisDomain(domain);
+                NitroCookies.setFromResponse(domain, setCookieHeader).catch(
+                  (error: Error) =>
+                    console.error('[HMIS] Failed to store cookies:', error)
                 );
               }
             }

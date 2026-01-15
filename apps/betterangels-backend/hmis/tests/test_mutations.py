@@ -38,8 +38,6 @@ LOGIN_MUTATION = """
             __typename
             ... on HmisLoginSuccess {
                 user { id }
-                cookies
-                refreshUrl
             }
             ... on HmisLoginError { message field }
         }
@@ -593,16 +591,11 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
     @override_settings(HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=")
     def test_hmis_login_success(self) -> None:
-        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
-
         with patch(
             "hmis.api_bridge.HmisApiBridge.login",
             autospec=True,
         ) as mock_login:
-            mock_login.return_value = {
-                "cookies": {"auth_token": token},
-                "refresh_url": "https://example.com/refresh",
-            }
+            mock_login.return_value = None
 
             resp = self.execute_graphql(
                 LOGIN_MUTATION,
