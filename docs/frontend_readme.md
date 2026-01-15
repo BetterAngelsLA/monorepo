@@ -130,6 +130,37 @@ Run the following on the host machine—**not in the container**:
    nvm use 22.21.1
    ```
 
+#### Accessing the Shelter Web App from Your Phone While Using WSL
+
+If you're running the Shelter web app (`yarn shelter`) in WSL and want to test it on your phone over your local network, you'll need to configure port forwarding since WSL2 uses a virtual network isolated from your physical network adapters.
+
+1. **Find your Windows machine's IP address** (not the WSL IP). Run in **Windows PowerShell**:
+   ```powershell
+   ipconfig
+   ```
+   Look for your WiFi adapter's IPv4 address (typically `192.168.x.x`)
+
+2. **Configure port forwarding from Windows to WSL**. Run in **PowerShell (as Administrator)**:
+   ```powershell
+   netsh interface portproxy add v4tov4 listenport=8083 listenaddress=0.0.0.0 connectport=8083 connectaddress=<WSL_IP>
+   ```
+   Replace `<WSL_IP>` with your WSL IP address (find it by running `wsl hostname -I` in Windows)
+
+3. **Allow the port through Windows Firewall**. Run in **PowerShell (as Administrator)**:
+   ```powershell
+   New-NetFirewallRule -DisplayName "Vite Dev Server" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8083
+   ```
+
+4. **Connect from your phone**:
+   - Ensure your phone is on the same WiFi network as your Windows machine
+   - Open your browser and navigate to: `http://<WINDOWS_IP>:8083`
+   - Replace `<WINDOWS_IP>` with the IP address from step 1
+
+**To remove the port forwarding later:**
+```powershell
+netsh interface portproxy delete v4tov4 listenport=8083 listenaddress=0.0.0.0
+```
+
 #### Starting the iOS emulator
 
 1. Make sure Xcode is fully installed and hit "i" while Expo is running
