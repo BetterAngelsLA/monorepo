@@ -6,7 +6,7 @@ on:
   pull_request:
     types: [opened, synchronize]
   push:
-    branches: [main]
+    branches: [main, pv-hmis-login-ota-backport]
 
 jobs:
   prepare:
@@ -72,7 +72,9 @@ jobs:
     env:
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     runs-on: ubuntu-latest
-    if: needs.prepare.outputs.is_matrix_empty == 'false'
+    if: |
+      needs.prepare.outputs.is_matrix_empty == 'false' &&
+      github.ref != 'refs/heads/pv-hmis-login-ota-backport'
     strategy:
       matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
@@ -236,7 +238,7 @@ jobs:
   production:
     if: |
       github.event_name == 'push' &&
-      github.ref == 'refs/heads/main' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/pv-hmis-login-ota-backport') &&
       needs.prepare.outputs.is_matrix_empty == 'false'
     needs: prepare
     environment: production

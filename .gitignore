@@ -2,6 +2,8 @@
 
 # env files (we currently track the standard .env file)
 .env.local
+.env.hmis
+.env.hmis.*
 
 # compiled output
 dist

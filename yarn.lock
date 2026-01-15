@@ -5644,7 +5644,7 @@ __metadata:
     react-native-maps: "npm:^1.26.20"
     react-native-mmkv: "npm:^4.1.0"
     react-native-nitro-cookies: "npm:^1.0.0"
-    react-native-nitro-modules: "npm:^0.33.1"
+    react-native-nitro-modules: "npm:^0.31.10"
     react-native-open-maps: "npm:^0.4.3"
     react-native-paper: "npm:^5.12.5"
     react-native-paper-dates: "npm:^0.22.47"
@@ -23289,13 +23289,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-nitro-modules@npm:^0.33.1":
-  version: 0.33.1
-  resolution: "react-native-nitro-modules@npm:0.33.1"
+"react-native-nitro-modules@npm:^0.31.10":
+  version: 0.31.10
+  resolution: "react-native-nitro-modules@npm:0.31.10"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/2203c124434fffd35a43490e5367039891c8ed4a4fe836f44a4fb0d1166e30afc83f8ce743aa6bd8f6531c4b39b570e671dec5cd5db86c1ddbc5fa4e010e0e32
+  checksum: 10/b0dabcc7c251660d39c712898a2147fcb14bf99cbf2a1a4ff0bc2c8798e4d72b4d3a2ee03e684a1454aaee6a17d665ab38c3f445234a2e17aced32b776ecac38
   languageName: node
   linkType: hard
 
