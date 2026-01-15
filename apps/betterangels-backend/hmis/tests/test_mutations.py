@@ -593,15 +593,13 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge.create_auth_token",
+            "hmis.api_bridge.HmisApiBridge.login",
             autospec=True,
-        ) as mock_create_auth_token:
-
-            def fake_create_auth_token(self: HmisApiBridge, username: str, password: str) -> None:
-                self._set_auth_token(token)
-                return None
-
-            mock_create_auth_token.side_effect = fake_create_auth_token
+        ) as mock_login:
+            mock_login.return_value = {
+                "cookies": {"auth_token": token},
+                "refresh_url": "https://example.com/refresh",
+            }
 
             resp = self.execute_graphql(
                 LOGIN_MUTATION,
@@ -610,9 +608,8 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
         self.assertIsNone(resp.get("errors"))
         payload = resp["data"]["hmisLogin"]
-        self.assertEqual(payload["__typename"], "UserType")
-        self.assertEqual(payload["id"], str(self.existing_user.pk))
-        self.assertEqual(payload["isHmisUser"], True)
+        self.assertEqual(payload["__typename"], "HmisLoginSuccess")
+        self.assertEqual(payload["user"]["id"], str(self.existing_user.pk))
 
         # Session should now contain the logged-in user
         session = self.graphql_client.session

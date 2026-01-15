@@ -1,8 +1,11 @@
 import type { ApolloLink, ErrorLike } from '@apollo/client';
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
 import { ErrorLink } from '@apollo/client/link/error';
+import { Observable } from '@apollo/client/utilities';
 import { GraphQLFormattedError } from 'graphql';
+import { isHmisTokenExpiredError } from './utils/isHmisTokenExpiredError';
 import { isUnauthorizedError } from './utils/isUnauthorizedError';
+import { refreshHmisToken } from './utils/refreshHmisToken';
 import { createRedirectHandler } from './utils/redirectHandler';
 
 type TProps = {
@@ -22,7 +25,7 @@ export const createErrorLink = ({
     onUnauthenticated,
   });
 
-  return new ErrorLink(({ error, operation }) => {
+  return new ErrorLink(({ error, operation, forward }) => {
     const { operationName } = operation;
 
     let graphQLErrors: readonly GraphQLFormattedError[] | undefined;
@@ -36,12 +39,33 @@ export const createErrorLink = ({
       networkError = error;
     }
 
+    // Check for HMIS token expired error first
+    if (isHmisTokenExpiredError(graphQLErrors)) {
+      // Convert promise to observable and retry operation if refresh succeeds
+      return new Observable((observer) => {
+        refreshHmisToken()
+          .then((success) => {
+            if (!success) {
+              observer.error(error);
+              return;
+            }
+            // Retry the operation
+            forward(operation).subscribe({
+              next: observer.next.bind(observer),
+              error: observer.error.bind(observer),
+              complete: observer.complete.bind(observer),
+            });
+          })
+          .catch((err) => observer.error(err));
+      });
+    }
+
     if (isUnauthorizedError(graphQLErrors, networkError)) {
       redirectToAuth(operationName ?? '');
-
       return; // stop here, don't forward
     }
 
     // otherwise do nothing and let the response bubble up
+    return undefined;
   });
 };

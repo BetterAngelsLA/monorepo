@@ -12,3 +12,4 @@ export * from './services';
 export * from './state';
 export * from './static';
 export * from './ui-components';
+export * from './utils/hmisAuth';

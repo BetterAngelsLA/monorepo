@@ -1,11 +1,10 @@
-from typing import Any, Iterable, cast
+from typing import Any, Iterable, Optional, cast
 
 import strawberry
 import strawberry_django
 from accounts.types import UserType
 from accounts.utils import get_user_permission_group
 from betterangels_backend import settings
-from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
 from common.models import Location, PhoneNumber
 from common.permissions.utils import IsAuthenticated
@@ -36,6 +35,7 @@ from .types import (
     HmisClientProgramType,
     HmisLoginError,
     HmisLoginResult,
+    HmisLoginSuccess,
     HmisNoteType,
     HmisProgramType,
     ProgramEnrollmentType,
@@ -55,9 +55,12 @@ class IsHmisAuthenticated(BasePermission):
         IsAuthenticated().has_permission(source, info, **kwargs)
 
         request = info.context["request"]
-        session = request.session
 
-        if not bool(session.get(HMIS_SESSION_KEY_NAME)):
+        # Check for HMIS token in custom header first
+        hmis_token = request.META.get("HTTP_X_HMIS_TOKEN")
+
+        # Fallback to Authorization header for backwards compatibility
+        if not hmis_token:
             raise UnauthenticatedGQLError(message=self.message)
 
         return True
@@ -152,7 +155,7 @@ class Mutation:
         request = info.context["request"]
         hmis_api_bridge = HmisApiBridge(info=info)
         sanitized_email = strip_demo_tag(email)
-        hmis_api_bridge.create_auth_token(sanitized_email, password)
+        auth_data = hmis_api_bridge.login(sanitized_email, password)
 
         try:
             user = User.objects.get(email__iexact=sanitized_email)
@@ -162,7 +165,12 @@ class Mutation:
         backend = settings.AUTHENTICATION_BACKENDS[0]
         django_login(request, user, backend=backend)
 
-        return cast(UserType, user)
+        # Return cookies and refresh URL for frontend to manage
+        return HmisLoginSuccess(
+            user=cast(UserType, user),
+            cookies=auth_data["cookies"],
+            refresh_url=auth_data["refresh_url"],
+        )
 
     @strawberry_django.mutation(permission_classes=[IsHmisAuthenticated])
     def create_hmis_client_profile(self, info: Info, data: CreateHmisClientProfileInput) -> HmisClientProfileType:

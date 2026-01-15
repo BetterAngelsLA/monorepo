@@ -3,16 +3,17 @@ import re
 from datetime import timezone
 from enum import Enum
 from http import HTTPMethod
-from typing import Any, Collection, Iterable, Mapping, Optional, cast
+from typing import Any, Collection, Iterable, Optional, cast
 from zoneinfo import ZoneInfo
 
-import jwt
 import requests
 import strawberry
-from common.constants import HMIS_SESSION_KEY_NAME
-from common.errors import NotFoundGQLError, UnauthenticatedGQLError
+from common.errors import (
+    HmisTokenExpiredError,
+    NotFoundGQLError,
+    UnauthenticatedGQLError,
+)
 from common.utils import dict_keys_to_snake
-from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
 from graphql import (
@@ -91,32 +92,28 @@ BA_CLIENT_FIELDS = {
 BA_NOTE_FIELDS = {"hmisId", "createdBy", "hmisClientProfile"}
 
 
-HMIS_COOKIEJAR_SESSION_KEY = "hmis_cookiejar"
-HMIS_REFRESH_URL_SESSION_KEY = "hmis_refresh_url"
-_REFRESH_TIMEOUT = 10.0
-
-
 class HmisApiBridge:
     """Utility class for interfacing with HMIS REST API."""
 
-    def __init__(self, info: strawberry.Info) -> None:
+    def __init__(self, info: strawberry.Info, token: Optional[str] = None) -> None:
         self.info = info
         self.request = self.info.context["request"]
         self.session = self.request.session
         HMIS_REST_ENDPOINT = getattr(settings, "HMIS_REST_URL", None)
         HMIS_HOST = getattr(settings, "HMIS_HOST", None)
-        if not all([HMIS_REST_ENDPOINT, HMIS_SESSION_KEY_NAME, HMIS_HOST]):
+        if not all([HMIS_REST_ENDPOINT, HMIS_HOST]):
             raise Exception("HMIS not configured")
 
         self.endpoint = HMIS_REST_ENDPOINT
-        self.session_key = HMIS_SESSION_KEY_NAME
-        self.token_key = getattr(settings, "HMIS_TOKEN_KEY", None)
 
-        token = self._get_auth_token()
+        # Extract token from X-HMIS-Token header if not provided
+        if token is None:
+            token = self.request.META.get("HTTP_X_HMIS_TOKEN")
+
+        self.current_token = token
         auth_header = {"Authorization": f"Bearer {token}"} if token else {}
 
         self.http = requests.Session()
-        self._rehydrate_cookies()
 
         self.headers = {
             "Accept": "application/json, text/plain, */*",
@@ -124,85 +121,6 @@ class HmisApiBridge:
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:144.0) Gecko/20100101 Firefox/144.0",
             **auth_header,
         }
-
-    def _cookiejar_to_dict(self, jar: requests.cookies.RequestsCookieJar) -> dict[str, str]:
-        return cast(dict[str, str], requests.utils.dict_from_cookiejar(jar))  # type: ignore
-
-    def _cookiejar_from_dict(self, data: Mapping[str, str]) -> requests.cookies.RequestsCookieJar:
-        jar = requests.utils.cookiejar_from_dict(dict(data), cookiejar=None, overwrite=True)  # type: ignore
-        return cast(requests.cookies.RequestsCookieJar, jar)
-
-    def _rehydrate_cookies(self) -> None:
-        if stored := self.session.get(HMIS_COOKIEJAR_SESSION_KEY):
-            self.http.cookies = self._cookiejar_from_dict(stored)
-
-    def _persist_cookies(self) -> None:
-        self.session[HMIS_COOKIEJAR_SESSION_KEY] = self._cookiejar_to_dict(self.http.cookies)
-        self.session.modified = True
-
-    def _fernet(self, key: str) -> Fernet:
-        return Fernet(key)
-
-    def _set_auth_token(self, token: str) -> None:
-        """"""
-        if not self.token_key:
-            raise RuntimeError("HMIS_TOKEN_KEY is not configured")
-
-        decoded = jwt.decode(token, options={"verify_signature": False})
-        self.session.set_expiry(decoded["exp"] - decoded["iat"])
-
-        f = self._fernet(self.token_key)
-        self.session[self.session_key] = f.encrypt(token.encode("utf-8")).decode("utf-8")
-        self.session.modified = True
-
-    def _get_auth_token(self) -> Optional[str]:
-        enc = self.session.get(self.session_key)
-
-        if not enc or not self.token_key:
-            return None
-
-        try:
-            f = self._fernet(self.token_key)
-
-            return f.decrypt(enc.encode("utf-8")).decode("utf-8")
-
-        except (InvalidToken, ValueError):
-            self._clear_auth_token()
-
-            return None
-
-    def _clear_auth_token(self) -> None:
-        if self.session_key in self.session:
-            del self.session[self.session_key]
-
-        self.session.modified = True
-
-    def _refresh_auth_token(self) -> bool:
-        refresh_url = self.session.get(HMIS_REFRESH_URL_SESSION_KEY)
-        if not refresh_url:
-            return False
-
-        headers = self.headers.copy()
-        headers.pop("Host", None)
-        headers.pop("Authorization", None)
-
-        resp = self.http.get(
-            refresh_url,
-            headers=headers,
-            timeout=_REFRESH_TIMEOUT,
-            allow_redirects=True,
-        )
-
-        new_token = resp.cookies.get("auth_token")
-
-        if not new_token:
-            return False
-
-        self._set_auth_token(new_token)
-        self.headers["Authorization"] = f"Bearer {new_token}"
-        self._persist_cookies()
-
-        return True
 
     def _get_field_dot_paths(
         self,
@@ -317,7 +235,7 @@ class HmisApiBridge:
 
     def _clean_client_input(
         self,
-        data: Mapping[str, Any],
+        data: dict[str, Any],
         keys: Collection[str],
         enum_list_keys: Collection[str] = (),
         date_keys: Collection[str] = (),
@@ -366,7 +284,7 @@ class HmisApiBridge:
             return
 
         if resp.status_code == 401:
-            raise UnauthenticatedGQLError()
+            raise HmisTokenExpiredError()
 
         if resp.status_code == 403:
             raise PermissionDenied("Unauthorized.")
@@ -402,15 +320,11 @@ class HmisApiBridge:
         }
         resp = self.http.request(method, **request_args)  # type: ignore
 
-        if resp.status_code == 401:
-            if self._refresh_auth_token():
-                resp = self.http.request(method, **request_args)  # type: ignore
-
         self._handle_error_response(resp)
 
         return resp
 
-    def create_auth_token(self, username: str, password: str) -> None:
+    def login(self, username: str, password: str) -> dict[str, Any]:
         headers = self.headers.copy()
         headers.pop("Host", None)
         login_url = f"{self.endpoint}/login"
@@ -445,19 +359,22 @@ class HmisApiBridge:
             )
 
             if post_response.url != login_url and "login" not in post_response.url:
-                self.session[HMIS_REFRESH_URL_SESSION_KEY] = post_response.url
-                self.session.modified = True
-
                 auth_token = post_response.cookies.get("auth_token")
                 if not auth_token:
                     raise ValidationError(f"Status Code: {post_response.status_code}")
 
-                self._set_auth_token(auth_token)
+                self.current_token = auth_token
                 self.headers["Authorization"] = f"Bearer {auth_token}"
 
-                self._persist_cookies()
+                # Return all cookies from HMIS response for frontend to manage
+                cookies = {}
+                for cookie in post_response.cookies:
+                    cookies[cookie.name] = cookie.value
 
-                return
+                return {
+                    "cookies": cookies,
+                    "refresh_url": post_response.url,
+                }
 
             elif "Incorrect username or password" in post_response.text:
                 raise PermissionDenied("Login Failed: Invalid credentials.")
@@ -671,6 +588,10 @@ class HmisApiBridge:
         resp = self._make_request(
             method=HTTPMethod.POST,
             path=f"/clients/{client_hmis_id}/client-programs/enroll",
+            body={**DEFAULT_ENROLLMENT_DATA, "fields": self._get_field_str(fields)},
+        )
+
+        return dict_keys_to_snake(resp.json())
             body={**DEFAULT_ENROLLMENT_DATA, "fields": self._get_field_str(fields)},
         )
 

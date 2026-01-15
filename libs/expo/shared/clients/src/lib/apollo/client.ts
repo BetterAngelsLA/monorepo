@@ -3,6 +3,7 @@ import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { isReactNativeFileInstance } from './ReactNativeFile';
 import { createAuthLink } from './links/authLink';
 import { createErrorLink } from './links/errorLink';
+import { createHmisAuthLink } from './links/hmisAuthLink';
 import { loggerLink } from './links/loggerLink';
 
 type TArgs = {
@@ -23,6 +24,7 @@ export const createApolloClient = (args: TArgs) => {
   } = args;
 
   const authLink = createAuthLink({ apiUrl, csrfUrl });
+  const hmisAuthLink = createHmisAuthLink();
 
   const uploadHttpLink = new UploadHttpLink({
     uri: `${apiUrl}/graphql`,
@@ -35,7 +37,7 @@ export const createApolloClient = (args: TArgs) => {
     onUnauthenticated,
   });
 
-  const composedLinks = [errorLink, authLink, uploadHttpLink];
+  const composedLinks = [errorLink, authLink, hmisAuthLink, uploadHttpLink];
 
   // Debug only: logs GraphQL requests/responses
   if (

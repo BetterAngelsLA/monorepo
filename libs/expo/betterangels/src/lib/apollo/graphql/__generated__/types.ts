@@ -828,6 +828,15 @@ export type HmisLoginError = {
   message: Scalars['String']['output'];
 };
 
+export type HmisLoginSuccess = {
+  __typename?: 'HmisLoginSuccess';
+  cookies: Scalars['JSON']['output'];
+  refreshUrl: Scalars['String']['output'];
+  user: UserType;
+};
+
+export type HmisLoginSuccessHmisLoginError = HmisLoginError | HmisLoginSuccess;
+
 export enum HmisNameQualityEnum {
   DontKnow = 'DONT_KNOW',
   Full = 'FULL',
@@ -1182,7 +1191,7 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
-  hmisLogin: UserTypeHmisLoginError;
+  hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
   login: AuthResponse;
@@ -2688,8 +2697,6 @@ export type UserTypeOrganizationsOrganizationArgs = {
   ordering?: Array<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
-export type UserTypeHmisLoginError = HmisLoginError | UserType;
 
 export enum VeteranStatusEnum {
   No = 'NO',

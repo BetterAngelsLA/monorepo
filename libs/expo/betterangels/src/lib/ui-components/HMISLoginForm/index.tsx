@@ -9,6 +9,7 @@ import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEmailEnvironment, useUser } from '../../hooks';
 import { useRememberedEmail } from '../../hooks/useRememberEmail/useRememberEmail';
+import { storeHmisAuth } from '../../utils/hmisAuth';
 import { HmisLoginDocument } from './__generated__/HMISLogin.generated';
 
 export default function HMISLoginForm() {
@@ -54,7 +55,10 @@ export default function HMISLoginForm() {
         console.error(res.message);
         throw new Error('Sorry, login failed.');
       }
-      if (res.__typename === 'UserType') {
+      if (res.__typename === 'HmisLoginSuccess') {
+        // Store HMIS cookies and refresh URL (domain extracted from refresh URL)
+        await storeHmisAuth(res.cookies, res.refreshUrl);
+
         await refetchUser();
         await persistOnSuccessfulSignIn(email);
         return;

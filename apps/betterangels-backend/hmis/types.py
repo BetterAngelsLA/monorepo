@@ -44,7 +44,14 @@ class HmisLoginError:
     field: Optional[str] = None
 
 
-HmisLoginResult = Union[UserType, HmisLoginError]
+@strawberry.type
+class HmisLoginSuccess:
+    user: UserType
+    cookies: strawberry.scalars.JSON
+    refresh_url: str
+
+
+HmisLoginResult = Union[HmisLoginSuccess, HmisLoginError]
 
 
 @strawberry_django.filter_type(HmisClientProfile, lookups=True)

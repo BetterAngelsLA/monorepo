@@ -159,15 +159,13 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge.create_auth_token",
+            "hmis.api_bridge.HmisApiBridge.login",
             autospec=True,
-        ) as mock_create_auth_token:
-
-            def fake_create_auth_token(self: HmisApiBridge, username: str, password: str) -> None:
-                self._set_auth_token(token)
-                return None
-
-            mock_create_auth_token.side_effect = fake_create_auth_token
+        ) as mock_login:
+            mock_login.return_value = {
+                "cookies": {"auth_token": token},
+                "refresh_url": "https://example.com/refresh",
+            }
 
             self.execute_graphql(
                 LOGIN_MUTATION,

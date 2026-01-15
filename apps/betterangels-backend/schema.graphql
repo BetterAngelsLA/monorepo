@@ -818,6 +818,14 @@ type HmisLoginError {
   field: String
 }
 
+type HmisLoginSuccess {
+  user: UserType!
+  cookies: JSON!
+  refreshUrl: String!
+}
+
+union HmisLoginSuccessHmisLoginError = HmisLoginSuccess | HmisLoginError
+
 enum HmisNameQualityEnum {
   FULL
   PARTIAL
@@ -1177,7 +1185,7 @@ type Mutation {
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
-  hmisLogin(email: String!, password: String!): UserTypeHmisLoginError!
+  hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError!
   createHmisClientProfile(data: CreateHmisClientProfileInput!): CreateHmisClientProfilePayload!
   updateHmisClientProfile(data: UpdateHmisClientProfileInput!): UpdateHmisClientProfilePayload!
   createHmisNote(data: CreateHmisNoteInput!): CreateHmisNotePayload!
@@ -2217,8 +2225,6 @@ type UserType {
   username: String
   isHmisUser: Boolean
 }
-
-union UserTypeHmisLoginError = UserType | HmisLoginError
 
 enum VeteranStatusEnum {
   YES
