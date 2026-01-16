@@ -22,14 +22,13 @@ export function ClientInteractionsHmisView(props: TProps) {
         onPress={() => {
           router.navigate({
             pathname: `/notes-hmis/${item.id}`,
-            params: { clientId: client?.id },
           });
         }}
         variant="clientProfile"
         hmisNote={item}
       />
     ),
-    [client?.id]
+    []
   );
 
   const renderHeader = useCallback(
@@ -54,16 +53,16 @@ export function ClientInteractionsHmisView(props: TProps) {
             borderColor={Colors.WHITE}
             accessibilityLabel="create an interaction"
             accessibilityHint="create new interaction"
-            onPress={() =>
-              router.navigate(`/notes-hmis/create?clientId=${client?.id}`)
-            }
+            onPress={() => {
+              router.navigate(`/notes-hmis/create?clientId=${client!.id}`);
+            }}
           >
             <PlusIcon />
           </IconButton>
         </View>
       );
     },
-    [client?.id]
+    [client!.id]
   );
 
   if (!client) {
