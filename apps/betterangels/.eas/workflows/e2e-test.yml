@@ -59,7 +59,6 @@ jobs:
     steps:
       - id: dispatch
         env:
-          GITHUB_DISPATCH_TOKEN: ${{ secrets.GITHUB_DISPATCH_TOKEN }}
           ANDROID_E2E_RESULT: ${{ needs.maestro_android_test.result }}
           IOS_E2E_RESULT: ${{ needs.maestro_ios_test.result }}
         run: |

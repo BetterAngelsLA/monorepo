@@ -200,7 +200,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF: ${{ github.ref }}
           GITHUB_SHA: ${{ github.sha }}
-          GITHUB_DISPATCH_TOKEN: ${{ secrets.GITHUB_DISPATCH_APP_TOKEN }}
+          GITHUB_DISPATCH_TOKEN: ${{ secrets.EXPO_REPO_DISPATCH_TOKEN }}
           PROJECT_NAME: ${{ matrix.project }}
           WEBHOOK_PAYLOAD: ${{ steps.prepare-webhook.outputs.payload }}
         run: |
@@ -243,7 +243,7 @@ jobs:
   preview-post-e2e:
     environment: preview
     env:
-      BRANCH_NAME: ${{ github.event.client_payload.branch_name || github.head_ref || github.ref_name }}
+      BRANCH_NAME: ${{ github.event.client_payload['branch-name'] || github.head_ref || github.ref_name }}
     runs-on: ubuntu-latest
     if: github.event_name == 'repository_dispatch' && github.event.action == 'e2e-tests-complete'
     permissions:
@@ -261,32 +261,32 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-          ref: ${{ github.event.client_payload.github-sha || github.event.client_payload.github-ref || github.ref }}
+          ref: ${{ github.event.client_payload['github-sha'] || github.event.client_payload['github-ref'] || github.ref }}
 
       - name: 📝 Comment on PR
-        if: github.event.client_payload.pr-number != ''
+        if: github.event.client_payload['pr-number'] != ''
         uses: edumserrano/find-create-or-update-comment@v3
         with:
-          issue-number: ${{ github.event.client_payload.pr-number }}
-          body-includes: '<!-- continuous-deploy-fingerprint-projectId:${{ github.event.client_payload.project-id }} -->'
+          issue-number: ${{ github.event.client_payload['pr-number'] }}
+          body-includes: '<!-- continuous-deploy-fingerprint-projectId:${{ github.event.client_payload[''project-id''] }} -->'
           comment-author: 'github-actions[bot]'
           body: |
-            <!-- continuous-deploy-fingerprint-projectId:${{ github.event.client_payload.project-id }} -->
-            🚀 Expo continuous deployment is ready for **${{ github.event.client_payload.project }}**!
+            <!-- continuous-deploy-fingerprint-projectId:${{ github.event.client_payload['project-id'] }} -->
+            🚀 Expo continuous deployment is ready for **${{ github.event.client_payload['project'] }}**!
 
-            - Project → **${{ github.event.client_payload.project }}**
+            - Project → **${{ github.event.client_payload['project'] }}**
             - Environment → **Preview**
             - Platforms → **android**, **ios**
-            - Scheme → **${{ github.event.client_payload.slug }}**
+            - Scheme → **${{ github.event.client_payload['slug'] }}**
 
             &nbsp; | 🤖 Android | 🍎 iOS
             --- | --- | ---
-            Runtime Version | `${{ github.event.client_payload.android-runtime-version }}` | `${{ github.event.client_payload.ios-runtime-version }}`
-            Build Details | [Build Permalink](${{ github.event.client_payload.android-build-link }})<br /><details><summary>Details</summary>Distribution: `${{ github.event.client_payload.android-distribution }}`<br />Build profile: `${{ github.event.client_payload.android-build-profile }}`<br />Runtime version: `${{ github.event.client_payload.android-runtime-version }}`<br />App version: `${{ github.event.client_payload.android-app-version }}`<br />Git commit: `${{ github.event.client_payload.android-git-commit }}`</details> | [Build Permalink](${{ github.event.client_payload.ios-build-link }})<br /><details><summary>Details</summary>Distribution: `${{ github.event.client_payload.ios-distribution }}`<br />Build profile: `${{ github.event.client_payload.ios-build-profile }}`<br />Runtime version: `${{ github.event.client_payload.ios-runtime-version }}`<br />App version: `${{ github.event.client_payload.ios-app-version }}`<br />Git commit: `${{ github.event.client_payload.ios-git-commit }}`</details>
-            Update Details | [Update Permalink](${{ github.event.client_payload.android-update-permalink }})<br /><details><summary>Details</summary>Branch: `${{ github.event.client_payload.android-branch }}`<br />Runtime version: `${{ github.event.client_payload.android-update-runtime-version }}`<br />Git commit: `${{ github.event.client_payload.android-update-commit }}`</details> | [Update Permalink](${{ github.event.client_payload.ios-update-permalink }})<br /><details><summary>Details</summary>Branch: `${{ github.event.client_payload.ios-branch }}`<br />Runtime version: `${{ github.event.client_payload.ios-update-runtime-version }}`<br />Git commit: `${{ github.event.client_payload.ios-update-commit }}`</details>
-            Update QR   | <a href="${{ github.event.client_payload.android-update-qr-url }}"><img src="${{ github.event.client_payload.android-update-qr-url }}" width="250px" height="250px" /></a> | <a href="${{ github.event.client_payload.ios-update-qr-url }}"><img src="${{ github.event.client_payload.ios-update-qr-url }}" width="250px" height="250px" /></a>
+            Runtime Version | `${{ github.event.client_payload['android-runtime-version'] }}` | `${{ github.event.client_payload['ios-runtime-version'] }}`
+            Build Details | [Build Permalink](${{ github.event.client_payload['android-build-link'] }})<br /><details><summary>Details</summary>Distribution: `${{ github.event.client_payload['android-distribution'] }}`<br />Build profile: `${{ github.event.client_payload['android-build-profile'] }}`<br />Runtime version: `${{ github.event.client_payload['android-runtime-version'] }}`<br />App version: `${{ github.event.client_payload['android-app-version'] }}`<br />Git commit: `${{ github.event.client_payload['android-git-commit'] }}`</details> | [Build Permalink](${{ github.event.client_payload['ios-build-link'] }})<br /><details><summary>Details</summary>Distribution: `${{ github.event.client_payload['ios-distribution'] }}`<br />Build profile: `${{ github.event.client_payload['ios-build-profile'] }}`<br />Runtime version: `${{ github.event.client_payload['ios-runtime-version'] }}`<br />App version: `${{ github.event.client_payload['ios-app-version'] }}`<br />Git commit: `${{ github.event.client_payload['ios-git-commit'] }}`</details>
+            Update Details | [Update Permalink](${{ github.event.client_payload['android-update-permalink'] }})<br /><details><summary>Details</summary>Branch: `${{ github.event.client_payload['android-branch'] }}`<br />Runtime version: `${{ github.event.client_payload['android-update-runtime-version'] }}`<br />Git commit: `${{ github.event.client_payload['android-update-commit'] }}`</details> | [Update Permalink](${{ github.event.client_payload['ios-update-permalink'] }})<br /><details><summary>Details</summary>Branch: `${{ github.event.client_payload['ios-branch'] }}`<br />Runtime version: `${{ github.event.client_payload['ios-update-runtime-version'] }}`<br />Git commit: `${{ github.event.client_payload['ios-update-commit'] }}`</details>
+            Update QR   | <a href="${{ github.event.client_payload['android-update-qr-url'] }}"><img src="${{ github.event.client_payload['android-update-qr-url'] }}" width="250px" height="250px" /></a> | <a href="${{ github.event.client_payload['ios-update-qr-url'] }}"><img src="${{ github.event.client_payload['ios-update-qr-url'] }}" width="250px" height="250px" /></a>
 
-            **iOS Simulator Build:** [Simulator Build Link](${{ github.event.client_payload.simulator-ios-build-link }})
+            **iOS Simulator Build:** [Simulator Build Link](${{ github.event.client_payload['simulator-ios-build-link'] }})
           edit-mode: replace
 
       - name: 📝 Set Git Variables
@@ -301,7 +301,7 @@ jobs:
           } >> $GITHUB_OUTPUT
 
       - name: 📣 Post to Slack
-        if: github.event.client_payload.github-ref == 'refs/heads/main'
+        if: github.event.client_payload['github-ref'] == 'refs/heads/main'
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
@@ -312,14 +312,14 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*New code has landed in main for project ${{ github.event.client_payload.project }}!* \n*Commit:* `${{ steps.set-git-vars.outputs.commit-id }}`\n*Message:* ${{ steps.set-git-vars.outputs.commit-message }}"
+                    "text": "*New code has landed in main for project ${{ github.event.client_payload['project'] }}!* \n*Commit:* `${{ steps.set-git-vars.outputs.commit-id }}`\n*Message:* ${{ steps.set-git-vars.outputs.commit-message }}"
                   }
                 },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*📱 iOS*\n\n<${{ github.event.client_payload.ios-update-qr-url }}|Update>\n<${{ github.event.client_payload.ios-build-link }}|Build>\n<${{ github.event.client_payload.simulator-ios-build-link }}|Simulator Build>"
+                    "text": "*📱 iOS*\n\n<${{ github.event.client_payload['ios-update-qr-url'] }}|Update>\n<${{ github.event.client_payload['ios-build-link'] }}|Build>\n<${{ github.event.client_payload['simulator-ios-build-link'] }}|Simulator Build>"
                   }
                 },
                 {
@@ -329,7 +329,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*🤖 Android*\n\n<${{ github.event.client_payload.android-update-qr-url }}|Update>\n<${{ github.event.client_payload.android-build-link }}|Build>"
+                    "text": "*🤖 Android*\n\n<${{ github.event.client_payload['android-update-qr-url'] }}|Update>\n<${{ github.event.client_payload['android-build-link'] }}|Build>"
                   }
                 }
               ]
@@ -342,7 +342,7 @@ jobs:
         if: always()
         run: |
           rm -f .env
-        working-directory: apps/${{ github.event.client_payload.project }}
+        working-directory: apps/${{ github.event.client_payload['project'] }}
 
   production:
     if: |
