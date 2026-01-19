@@ -53,54 +53,55 @@ jobs:
       build_id: ${{ needs.get_ios_build.outputs.build_id }}
       flow_path: ['.maestro/landing.yml']
 
-  github_dispatch:
-    needs: [maestro_android_test, maestro_ios_test]
-    steps:
-      - id: dispatch
-        env:
-          ANDROID_E2E_RESULT: ${{ needs.maestro_android_test.result }}
-          IOS_E2E_RESULT: ${{ needs.maestro_ios_test.result }}
-        run: |
-          set -euo pipefail
+github_dispatch:
+  after: [maestro_android_test, maestro_ios_test]
+  steps:
+    - id: dispatch
+      env:
+        ANDROID_E2E_STATUS: ${{ after.maestro_android_test.status }}
+        IOS_E2E_STATUS: ${{ after.maestro_ios_test.status }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+      run: |
+        set -euo pipefail
 
-          if [ -z "${GITHUB_DISPATCH_TOKEN:-}" ]; then
-            echo "Missing GITHUB_DISPATCH_TOKEN"
-            exit 1
-          fi
+        if [ -z "${GITHUB_DISPATCH_TOKEN:-}" ]; then
+          echo "Missing GITHUB_DISPATCH_TOKEN"
+          exit 1
+        fi
 
-          if [ -z "${GITHUB_REPOSITORY:-}" ]; then
-            echo "Missing GITHUB_REPOSITORY (expected format: owner/repo)"
-            exit 1
-          fi
+        if [ -z "${GITHUB_REPOSITORY:-}" ]; then
+          echo "Missing GITHUB_REPOSITORY (expected format: owner/repo)"
+          exit 1
+        fi
 
-          if [ -z "${WEBHOOK_PAYLOAD:-}" ]; then
-            echo "Missing WEBHOOK_PAYLOAD (expected JSON string)"
-            exit 1
-          fi
+        if [ -z "${WEBHOOK_PAYLOAD:-}" ]; then
+          echo "Missing WEBHOOK_PAYLOAD (expected JSON string)"
+          exit 1
+        fi
 
-          BODY="$(python3 - <<'PY'
-          import json, os
+        BODY="$(python3 - <<'PY'
+        import json, os
 
-          payload = json.loads(os.environ["WEBHOOK_PAYLOAD"])
-          android_result = os.environ.get("ANDROID_E2E_RESULT", "")
-          ios_result = os.environ.get("IOS_E2E_RESULT", "")
+        payload = json.loads(os.environ["WEBHOOK_PAYLOAD"])
+        android_status = os.environ.get("ANDROID_E2E_STATUS", "")
+        ios_status = os.environ.get("IOS_E2E_STATUS", "")
 
-          status = "success" if android_result == "success" and ios_result == "success" else "failure"
-          payload["status"] = status
-          payload["android-e2e-result"] = android_result
-          payload["ios-e2e-result"] = ios_result
+        status = "success" if android_status == "success" and ios_status == "success" else "failure"
+        payload["status"] = status
+        payload["android-e2e-status"] = android_status
+        payload["ios-e2e-status"] = ios_status
 
-          print(json.dumps({
-            "event_type": "e2e-tests-complete",
-            "client_payload": payload
-          }))
-          PY
-          )"
+        print(json.dumps({
+          "event_type": "e2e-tests-complete",
+          "client_payload": payload
+        }))
+        PY
+        )"
 
-          curl -fsSL \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GITHUB_DISPATCH_TOKEN}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/dispatches" \
-            -d "${BODY}"
+        curl -fsSL \
+          -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${GITHUB_DISPATCH_TOKEN}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          "https://api.github.com/repos/${GITHUB_REPOSITORY}/dispatches" \
+          -d "${BODY}"
