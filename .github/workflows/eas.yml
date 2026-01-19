@@ -245,7 +245,7 @@ jobs:
     env:
       BRANCH_NAME: ${{ github.event.client_payload['branch-name'] || github.head_ref || github.ref_name }}
     runs-on: ubuntu-latest
-    if: github.event_name == 'repository_dispatch' && github.event.action == 'e2e-tests-complete'
+    if: github.event_name == 'repository_dispatch'
     permissions:
       pull-requests: write # REQUIRED: Allow comments on PRs
       contents: read # Required for actions/checkout

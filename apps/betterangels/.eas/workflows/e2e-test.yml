@@ -55,7 +55,6 @@ jobs:
 
   github_dispatch:
     needs: [maestro_android_test, maestro_ios_test]
-    if: ${{ always() }}
     steps:
       - id: dispatch
         env:
