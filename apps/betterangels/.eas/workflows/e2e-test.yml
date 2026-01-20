@@ -64,11 +64,11 @@ jobs:
     after: [dummy_test]
     steps:
       - id: dispatch
-        env:
-          ANDROID_E2E_STATUS: ${{ after.dummy_test.status }}
-          IOS_E2E_STATUS: ${{ after.dummy_test.status }}
-          # ANDROID_E2E_STATUS: ${{ after.maestro_android_test.status }}
-          # IOS_E2E_STATUS: ${{ after.maestro_ios_test.status }}
+        # env:
+        #   ANDROID_E2E_STATUS: ${{ after.dummy_test.status }}
+        #   IOS_E2E_STATUS: ${{ after.dummy_test.status }}
+        #   # ANDROID_E2E_STATUS: ${{ after.maestro_android_test.status }}
+        #   # IOS_E2E_STATUS: ${{ after.maestro_ios_test.status }}
         run: |
           set -euo pipefail
 
@@ -113,8 +113,6 @@ jobs:
 
           status = "success" if android_status == "success" and ios_status == "success" else "failure"
           payload["status"] = status
-          payload["android-e2e-status"] = android_status
-          payload["ios-e2e-status"] = ios_status
 
           print(json.dumps({
             "event_type": "eas_post_e2e",
