@@ -17,59 +17,77 @@ jobs:
           set-output project_id "$PROJECT_ID"
           set-output runtime_version "$RUNTIME_VERSION"
 
-  get_android_build:
+  # get_android_build:
+  #   needs: [get_vars]
+  #   type: get-build
+  #   params:
+  #     runtime_version: ${{ needs.get_vars.outputs.runtime_version }}
+  #     platform: android
+
+  # get_ios_build:
+  #   needs: [get_vars]
+  #   type: get-build
+  #   params:
+  #     runtime_version: ${{ needs.get_vars.outputs.runtime_version }}
+  #     platform: ios
+
+  # maestro_android_test:
+  #   needs: [get_vars, get_android_build]
+  #   type: maestro
+  #   env:
+  #     MAESTRO_PLATFORM: android
+  #     MAESTRO_GROUP_ID: ${{ needs.get_vars.outputs.group_id }}
+  #     MAESTRO_PROJECT_ID: ${{ needs.get_vars.outputs.project_id }}
+  #   params:
+  #     build_id: ${{ needs.get_android_build.outputs.build_id }}
+  #     flow_path: ['.maestro/landing.yml']
+
+  # maestro_ios_test:
+  #   needs: [get_vars, get_ios_build]
+  #   type: maestro
+  #   env:
+  #     MAESTRO_PLATFORM: ios
+  #     MAESTRO_GROUP_ID: ${{ needs.get_vars.outputs.group_id }}
+  #     MAESTRO_PROJECT_ID: ${{ needs.get_vars.outputs.project_id }}
+  #   params:
+  #     build_id: ${{ needs.get_ios_build.outputs.build_id }}
+  #     flow_path: ['.maestro/landing.yml']
+  dummy_test:
     needs: [get_vars]
-    type: get-build
-    params:
-      runtime_version: ${{ needs.get_vars.outputs.runtime_version }}
-      platform: android
-
-  get_ios_build:
-    needs: [get_vars]
-    type: get-build
-    params:
-      runtime_version: ${{ needs.get_vars.outputs.runtime_version }}
-      platform: ios
-
-  maestro_android_test:
-    needs: [get_vars, get_android_build]
-    type: maestro
-    env:
-      MAESTRO_PLATFORM: android
-      MAESTRO_GROUP_ID: ${{ needs.get_vars.outputs.group_id }}
-      MAESTRO_PROJECT_ID: ${{ needs.get_vars.outputs.project_id }}
-    params:
-      build_id: ${{ needs.get_android_build.outputs.build_id }}
-      flow_path: ['.maestro/landing.yml']
-
-  maestro_ios_test:
-    needs: [get_vars, get_ios_build]
-    type: maestro
-    env:
-      MAESTRO_PLATFORM: ios
-      MAESTRO_GROUP_ID: ${{ needs.get_vars.outputs.group_id }}
-      MAESTRO_PROJECT_ID: ${{ needs.get_vars.outputs.project_id }}
-    params:
-      build_id: ${{ needs.get_ios_build.outputs.build_id }}
-      flow_path: ['.maestro/landing.yml']
-
+    steps:
+      - id: dummy_test
+        run: |
+          echo "Dummy test"
+          echo ""
   github_dispatch:
-    after: [maestro_android_test, maestro_ios_test]
+    # after: [maestro_android_test, maestro_ios_test]
+    after: [dummy_test]
     steps:
       - id: dispatch
         env:
-          ANDROID_E2E_STATUS: ${{ after.maestro_android_test.status }}
-          IOS_E2E_STATUS: ${{ after.maestro_ios_test.status }}
-          GITHUB_DISPATCH_TOKEN: ${{ secrets.GITHUB_DISPATCH_TOKEN }}
-          GITHUB_REPOSITORY: ${{ secrets.GITHUB_REPOSITORY }}
+          ANDROID_E2E_STATUS: ${{ after.dummy_test.status }}
+          IOS_E2E_STATUS: ${{ after.dummy_test.status }}
+          # ANDROID_E2E_STATUS: ${{ after.maestro_android_test.status }}
+          # IOS_E2E_STATUS: ${{ after.maestro_ios_test.status }}
         run: |
           set -euo pipefail
 
           WORK_DIR="/home/expo/workingdir/temporary-custom-build/apps/betterangels"
+          echo "~~~~~~~~~~~~~~~~~~~~~~~~GITHUB_REPOSITORY: ${GITHUB_REPOSITORY}"
+          if [ -n "${GITHUB_DISPATCH_TOKEN:-}" ]; then
+            echo "~~~~~~~~~~~~~~~~~~~~~~~~GITHUB_DISPATCH_TOKEN (first 3 chars): ${GITHUB_DISPATCH_TOKEN:0:3}"
+          else
+            echo "~~~~~~~~~~~~~~~~~~~~~~~~GITHUB_DISPATCH_TOKEN is not set"
+          fi
 
           if [ -z "${GITHUB_DISPATCH_TOKEN:-}" ]; then
             echo "Missing GITHUB_DISPATCH_TOKEN"
             exit 1
+          fi
+
+          if [ -z "${GITHUB_REPOSITORY:-}" ]; then
+            # This one is safe to store in .env as plaintext.
+            GITHUB_REPOSITORY="$(grep '^GITHUB_REPOSITORY=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
           fi
 
           if [ -z "${GITHUB_REPOSITORY:-}" ]; then

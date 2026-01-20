@@ -205,7 +205,6 @@ jobs:
         id: run-e2e-tests
         working-directory: apps/${{ matrix.project }}
         env:
-          GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF: ${{ github.ref }}
           GITHUB_SHA: ${{ github.sha }}
           PROJECT_NAME: ${{ matrix.project }}
