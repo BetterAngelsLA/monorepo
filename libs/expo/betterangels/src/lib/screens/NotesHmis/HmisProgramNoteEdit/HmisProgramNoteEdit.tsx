@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { ServiceRequestTypeEnum } from '../../../apollo';
 import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/extractExtensionFieldErrors';
@@ -26,7 +26,6 @@ import {
   THmisProgramNoteFormOutputs,
   hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm';
-import { ViewHmisNoteQuery } from '../HmisProgramNoteView/__generated__/HmisProgramNoteView.generated';
 import splitBucket from '../utils/splitBucket';
 import { HmisNoteDocument } from './__generated__/hmisGetClientNote.generated';
 import { UpdateHmisNoteDocument } from './__generated__/hmisUpdateClientNote.generated';
@@ -43,8 +42,7 @@ export function HmisProgramNoteEdit(props: TProps) {
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [existingNote, setExistingNote] =
-    useState<ViewHmisNoteQuery['hmisNote']>();
+
   const [updateHmisNoteMutation] = useMutation(UpdateHmisNoteDocument);
   const [updateHmisNoteLocation] = useMutation(UpdateHmisNoteLocationDocument);
   const [deleteService] = useMutation(RemoveHmisNoteServiceRequestDocument);
@@ -119,7 +117,6 @@ export function HmisProgramNoteEdit(props: TProps) {
     data: noteData,
     loading: noteDataLoading,
     error: getNoteNetworkError,
-    refetch,
   } = useQuery(HmisNoteDocument, {
     variables: { id },
     fetchPolicy: 'cache-first',
@@ -132,26 +129,18 @@ export function HmisProgramNoteEdit(props: TProps) {
       return;
     }
 
-    setExistingNote(noteResult);
-  }, [noteData]);
-
-  useEffect(() => {
-    if (!existingNote) {
-      return;
-    }
-
     const existingProvidedServices =
-      existingNote.providedServices?.map(normalizeService) ?? [];
+      noteResult.providedServices?.map(normalizeService) ?? [];
 
     const existingRequestedServices =
-      existingNote.requestedServices?.map(normalizeService) ?? [];
+      noteResult.requestedServices?.map(normalizeService) ?? [];
 
     methods.reset({
       ...hmisProgramNoteFormEmptyState,
-      title: existingNote.title ?? '',
-      date: toLocalCalendarDate(existingNote.date),
-      note: existingNote.note ?? '',
-      refClientProgram: existingNote.refClientProgram ?? '',
+      title: noteResult.title ?? '',
+      date: toLocalCalendarDate(noteResult.date),
+      note: noteResult.note ?? '',
+      refClientProgram: noteResult.refClientProgram ?? '',
       services: {
         [ServiceRequestTypeEnum.Provided]: {
           serviceRequests: existingProvidedServices,
@@ -161,26 +150,26 @@ export function HmisProgramNoteEdit(props: TProps) {
         },
       },
       location: {
-        longitude: existingNote.location?.point[0],
-        latitude: existingNote.location?.point[1],
-        formattedAddress: existingNote.location?.address
-          ? `${existingNote.location?.address.street}, ${existingNote.location?.address.city}, ${existingNote.location?.address.state} ${existingNote.location?.address.zipCode}`
+        longitude: noteResult.location?.point[0],
+        latitude: noteResult.location?.point[1],
+        formattedAddress: noteResult.location?.address
+          ? `${noteResult.location?.address.street}, ${noteResult.location?.address.city}, ${noteResult.location?.address.state} ${noteResult.location?.address.zipCode}`
           : undefined,
         shortAddressName:
-          existingNote.location?.address &&
-          existingNote.location?.address.street
-            ? existingNote.location?.address.street
+          noteResult.location?.address && noteResult.location?.address.street
+            ? noteResult.location?.address.street
             : undefined,
       },
+      tasks: noteResult.tasks || [],
     });
-  }, [existingNote, methods]);
+  }, [noteData, methods]);
 
   const {
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  const formDisabled = !existingNote || isSubmitting;
+  const formDisabled = !noteData || isSubmitting;
 
   const onSubmit: SubmitHandler<THmisProgramNoteFormInputs> = async (
     values
@@ -295,9 +284,6 @@ export function HmisProgramNoteEdit(props: TProps) {
           editing={true}
           clientId={clientId}
           disabled={formDisabled}
-          noteId={id}
-          existingTasks={existingNote?.tasks || []}
-          refetch={refetch}
         />
       </Form.Page>
     </FormProvider>

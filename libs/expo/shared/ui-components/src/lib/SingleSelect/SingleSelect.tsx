@@ -17,7 +17,7 @@ interface ISingleSelectProps extends TMarginProps {
   items: { displayValue?: string; value: string }[];
   required?: boolean;
   disabled?: boolean;
-  selectedValue?: string;
+  selectedValue?: string | null;
   selectNoneLabel?: string;
   allowSelectNone?: boolean;
   error?: string;

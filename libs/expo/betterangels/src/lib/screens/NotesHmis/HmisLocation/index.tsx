@@ -20,7 +20,7 @@ type SectionKey =
   | 'refClientProgram'
   | 'note'
   | 'services'
-  | 'draftTasks'
+  | 'tasks'
   | null;
 
 interface ILocationProps {
