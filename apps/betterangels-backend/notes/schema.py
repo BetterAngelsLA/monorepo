@@ -309,7 +309,7 @@ class Mutation:
                     label=service_other,
                     organization=permission_group.organization,
                 )
-                service_args["service"] = str(org_service.pk)  # type: ignore
+                service_args["service"] = str(org_service.pk)
 
             service_request = resolvers.create(
                 info,
