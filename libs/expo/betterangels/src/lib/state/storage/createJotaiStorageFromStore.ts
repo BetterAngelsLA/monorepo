@@ -1,5 +1,5 @@
+import { StateStorageSyncApi } from '@monorepo/expo/shared/utils';
 import type { SyncStorage } from 'jotai/vanilla/utils/atomWithStorage';
-import { StateStorageSyncApi } from './types';
 
 export function adaptToJotaiStorage<T>(
   store: StateStorageSyncApi
