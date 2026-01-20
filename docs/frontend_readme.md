@@ -121,7 +121,7 @@ Run the following on the host machine—**not in the container**:
    Start the Shelter app
 
    ```bash
-   yarn nx start shelter
+   yarn shelter
    ```
 
    If your current node version is incorrect, run the following and try again.
@@ -129,6 +129,37 @@ Run the following on the host machine—**not in the container**:
    ```bash
    nvm use 22.21.1
    ```
+
+#### Accessing the Shelter Web App from Your Phone While Using WSL
+
+If you're running the Shelter web app (`yarn shelter`) in WSL and want to test it on your phone over your local network, you'll need to configure port forwarding since WSL2 uses a virtual network isolated from your physical network adapters.
+
+1. **Find your Windows machine's IP address** (not the WSL IP). Run in **Windows PowerShell**:
+   ```powershell
+   ipconfig
+   ```
+   Look for your WiFi adapter's IPv4 address (typically `192.168.x.x`)
+
+2. **Configure port forwarding from Windows to WSL**. Run in **PowerShell (as Administrator)**:
+   ```powershell
+   netsh interface portproxy add v4tov4 listenport=8083 listenaddress=0.0.0.0 connectport=8083 connectaddress=<WSL_IP>
+   ```
+   Replace `<WSL_IP>` with your WSL IP address (find it by running `wsl hostname -I` in Windows)
+
+3. **Allow the port through Windows Firewall**. Run in **PowerShell (as Administrator)**:
+   ```powershell
+   New-NetFirewallRule -DisplayName "Vite Dev Server" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8083
+   ```
+
+4. **Connect from your phone**:
+   - Ensure your phone is on the same WiFi network as your Windows machine
+   - Open your browser and navigate to: `http://<WINDOWS_IP>:8083`
+   - Replace `<WINDOWS_IP>` with the IP address from step 1
+
+**To remove the port forwarding later:**
+```powershell
+netsh interface portproxy delete v4tov4 listenport=8083 listenaddress=0.0.0.0
+```
 
 #### Starting the iOS emulator
 
@@ -294,6 +325,26 @@ Before you begin, ensure you have the following installed on your Windows machin
    This script sets environment variables, configures the WSL network bridge for the emulator, and creates necessary shims for `adb`.
 
    > [!IMPORTANT] Maintenance Note: This script places a shim file inside your Android SDK folder. If you update your Android SDK Platform-Tools via Android Studio, that shim will be deleted. If you suddenly see `adb ENOENT` errors after an update, simply re-run this script to restore the environment.
+
+
+   **Troubleshooting**
+
+   If you run the setup script and see this error:
+
+   ```
+   Error: Could not detect Windows User Profile via cmd.exe.
+   ```
+
+   Ensure you are running this in a valid WSL2 environment.
+
+   **The Issue:** The WSL "Interop" service (which allows Linux to run Windows executables) has stalled or crashed. This often happens after Windows updates or long uptimes.
+
+   **The Fix:** You must fully restart the WSL subsystem. Closing the terminal is not enough.
+
+   1. Close all WSL terminals and VS Code windows.
+   2. Open PowerShell or Command Prompt in Windows.
+   3. Run: `wsl --shutdown`
+   4. Wait a few seconds, then reopen your WSL terminal and re-run the script.
 
 6. **Verify Setup**
 
