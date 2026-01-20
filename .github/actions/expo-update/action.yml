@@ -116,3 +116,4 @@ runs:
         group_id="${{ steps.perform-eas-update.outputs.group-id }}"
         echo "PROJECT_ID=$project_id" >> .env
         echo "GROUP_ID=$group_id" >> .env
+

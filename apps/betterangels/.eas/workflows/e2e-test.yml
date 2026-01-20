@@ -60,9 +60,10 @@ jobs:
         env:
           ANDROID_E2E_STATUS: ${{ after.maestro_android_test.status }}
           IOS_E2E_STATUS: ${{ after.maestro_ios_test.status }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
+
+          WORK_DIR="/home/expo/workingdir/temporary-custom-build/apps/betterangels"
 
           if [ -z "${GITHUB_DISPATCH_TOKEN:-}" ]; then
             echo "Missing GITHUB_DISPATCH_TOKEN"
@@ -74,10 +75,14 @@ jobs:
             exit 1
           fi
 
-          if [ -z "${WEBHOOK_PAYLOAD:-}" ]; then
-            echo "Missing WEBHOOK_PAYLOAD (expected JSON string)"
+          WEBHOOK_PAYLOAD_B64="$(grep '^WEBHOOK_PAYLOAD_B64=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
+          if [ -z "${WEBHOOK_PAYLOAD_B64:-}" ]; then
+            echo "Missing WEBHOOK_PAYLOAD_B64 in ${WORK_DIR}/.env"
             exit 1
           fi
+
+          WEBHOOK_PAYLOAD="$(printf '%s' "$WEBHOOK_PAYLOAD_B64" | base64 -d)"
+          export WEBHOOK_PAYLOAD
 
           BODY="$(python3 - <<'PY'
           import json, os

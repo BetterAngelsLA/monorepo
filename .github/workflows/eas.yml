@@ -193,6 +193,14 @@ jobs:
           echo "$PAYLOAD" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: 🧾 Write E2E dispatch payload into .env
+        working-directory: apps/${{ matrix.project }}
+        env:
+          WEBHOOK_PAYLOAD: ${{ steps.prepare-webhook.outputs.payload }}
+        run: |
+          set -euo pipefail
+          echo "WEBHOOK_PAYLOAD_B64=$(printf '%s' "$WEBHOOK_PAYLOAD" | base64 -w0)" >> .env
+
       - name: 🧪 Run E2E Tests
         id: run-e2e-tests
         working-directory: apps/${{ matrix.project }}
@@ -200,9 +208,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF: ${{ github.ref }}
           GITHUB_SHA: ${{ github.sha }}
-          GITHUB_DISPATCH_TOKEN: ${{ secrets.EXPO_REPO_DISPATCH_TOKEN }}
           PROJECT_NAME: ${{ matrix.project }}
-          WEBHOOK_PAYLOAD: ${{ steps.prepare-webhook.outputs.payload }}
         run: |
           eas workflow:run .eas/workflows/e2e-test.yml --non-interactive
 
