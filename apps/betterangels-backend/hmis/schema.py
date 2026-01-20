@@ -22,12 +22,24 @@ from notes.types import ServiceRequestType
 from notes.utils.note_utils import get_service_args
 from strawberry import ID, asdict
 from strawberry.permission import BasePermission
+from strawberry.schema_directive import Location, schema_directive
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 
 from .api_bridge import HmisApiBridge
+
+
+# Custom schema directive to mark HMIS operations
+# This allows the frontend to detect HMIS operations via schema introspection
+@schema_directive(locations=[Location.OBJECT, Location.FIELD_DEFINITION])
+class HmisDirective:
+    """Mark a type or field as an HMIS operation"""
+
+    pass
+
+
 from .types import (
     CreateHmisClientProfileInput,
     CreateHmisNoteInput,
@@ -47,6 +59,18 @@ from .types import (
 )
 
 User = get_user_model()
+
+
+def apply_hmis_directive(cls):
+    """
+    Decorator that automatically applies @hmisDirective to all fields in a Query or Mutation class.
+    """
+    if hasattr(cls, "__strawberry_definition__"):
+        for field in cls.__strawberry_definition__.fields:
+            # Add directive if not already present
+            if not field.directives or HmisDirective not in [type(d) for d in field.directives]:
+                field.directives = list(field.directives or []) + [HmisDirective()]
+    return cls
 
 
 class IsHmisAuthenticated(BasePermission):
@@ -71,9 +95,12 @@ def _get_client_program(program_data: dict[str, Any]) -> HmisClientProgramType:
     return HmisClientProgramType(id=program_data["id"], program=HmisProgramType(**program_data["program"]))
 
 
+@apply_hmis_directive
 @strawberry.type
 class Query:
-    @strawberry_django.field(permission_classes=[IsHmisAuthenticated])
+    """HMIS-scoped queries. All operations in this class require HMIS authentication."""
+
+    @strawberry_django.field(permission_classes=[IsHmisAuthenticated], directives=[HmisDirective()])
     def hmis_client_profile(self, info: Info, id: ID) -> HmisClientProfileType:
         try:
             hmis_client_profile = HmisClientProfile.objects.get(pk=id)
@@ -95,9 +122,10 @@ class Query:
 
     hmis_client_profiles: OffsetPaginated[HmisClientProfileType] = strawberry_django.offset_paginated(
         permission_classes=[IsHmisAuthenticated],
+        directives=[HmisDirective()],
     )
 
-    @strawberry_django.field(permission_classes=[IsHmisAuthenticated])
+    @strawberry_django.field(permission_classes=[IsHmisAuthenticated], directives=[HmisDirective()])
     def hmis_note(self, info: Info, id: ID) -> HmisNoteType:
         try:
             hmis_note = HmisNote.objects.get(pk=id)
@@ -125,10 +153,11 @@ class Query:
         return cast(HmisNoteType, hmis_note)
 
     hmis_notes: OffsetPaginated[HmisNoteType] = strawberry_django.offset_paginated(
-        permission_classes=[IsHmisAuthenticated]
+        permission_classes=[IsHmisAuthenticated],
+        directives=[HmisDirective()],
     )
 
-    @strawberry.field()
+    @strawberry.field(directives=[HmisDirective()])
     def hmis_client_programs(
         self,
         info: Info,
@@ -149,9 +178,12 @@ class Query:
         return [_get_client_program(p) for p in client_programs["items"]]
 
 
+@apply_hmis_directive
 @strawberry.type
 class Mutation:
-    @strawberry.mutation
+    """HMIS-scoped mutations. All operations in this class require HMIS authentication and special handling."""
+
+    @strawberry.mutation(directives=[HmisDirective()])
     def hmis_login(self, info: Info, email: str, password: str) -> HmisLoginResult:
         """
         Authenticate with HMIS and create Django session.
@@ -176,12 +208,11 @@ class Mutation:
 
         # Mark session as HMIS authenticated so isHmisUser resolver returns True
         request.session[HMIS_SESSION_KEY_NAME] = True
-
         return HmisLoginSuccess(
             user=cast(UserType, user),
         )
 
-    @strawberry_django.mutation(permission_classes=[IsHmisAuthenticated])
+    @strawberry_django.mutation(permission_classes=[IsHmisAuthenticated], directives=[HmisDirective()])
     def create_hmis_client_profile(self, info: Info, data: CreateHmisClientProfileInput) -> HmisClientProfileType:
         hmis_api_bridge = HmisApiBridge(info=info)
 
@@ -389,4 +420,5 @@ class Mutation:
             else:
                 raise NotImplementedError
 
+            return cast(HmisNoteType, hmis_note)
             return cast(HmisNoteType, hmis_note)

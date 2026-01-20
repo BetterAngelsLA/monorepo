@@ -1,11 +1,12 @@
-"""
+// This file is generated - do not edit
+export const schema = `"""
 Will check if the user has any/all permissions for the resolved value of this field before returning it.
 
 When the condition fails, the following can be returned (following this priority):
-1) `OperationInfo`/`OperationMessage` if those types are allowed at the return type
-2) `null` in case the field is not mandatory (e.g. `String` or `[String]`)
-3) An empty list in case the field is a list (e.g. `[String]!`)
-4) An empty `Connection` in case the return type is a relay connection
+1) \`OperationInfo\`/\`OperationMessage\` if those types are allowed at the return type
+2) \`null\` in case the field is not mandatory (e.g. \`String\` or \`[String]\`)
+3) An empty list in case the field is a list (e.g. \`[String]!\`)
+4) An empty \`Connection\` in case the return type is a relay connection
 2) Otherwise, an error will be raised
 """
 directive @hasRetvalPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
@@ -14,10 +15,10 @@ directive @hasRetvalPerm(permissions: [PermDefinition!]!, any: Boolean! = true) 
 Will check if the user has any/all permissions for the resolved value of this field before returning it.
 
 When the condition fails, the following can be returned (following this priority):
-1) `OperationInfo`/`OperationMessage` if those types are allowed at the return type
-2) `null` in case the field is not mandatory (e.g. `String` or `[String]`)
-3) An empty list in case the field is a list (e.g. `[String]!`)
-4) An empty `Connection` in case the return type is a relay connection
+1) \`OperationInfo\`/\`OperationMessage\` if those types are allowed at the return type
+2) \`null\` in case the field is not mandatory (e.g. \`String\` or \`[String]\`)
+3) An empty list in case the field is a list (e.g. \`[String]!\`)
+4) An empty \`Connection\` in case the return type is a relay connection
 2) Otherwise, an error will be raised
 """
 directive @permissionedQuerySet(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
@@ -26,10 +27,10 @@ directive @permissionedQuerySet(permissions: [PermDefinition!]!, any: Boolean! =
 Will check if the user has any/all permissions to resolve this.
 
 When the condition fails, the following can be returned (following this priority):
-1) `OperationInfo`/`OperationMessage` if those types are allowed at the return type
-2) `null` in case the field is not mandatory (e.g. `String` or `[String]`)
-3) An empty list in case the field is a list (e.g. `[String]!`)
-4) An empty `Connection` in case the return type is a relay connection
+1) \`OperationInfo\`/\`OperationMessage\` if those types are allowed at the return type
+2) \`null\` in case the field is not mandatory (e.g. \`String\` or \`[String]\`)
+3) An empty list in case the field is a list (e.g. \`[String]!\`)
+4) An empty \`Connection\` in case the return type is a relay connection
 2) Otherwise, an error will be raised
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
@@ -952,49 +953,49 @@ enum HmisVeteranStatusEnum {
 }
 
 input IDFilterLookup {
-  """Exact match. Filter will be skipped on `null` value"""
+  """Exact match. Filter will be skipped on \`null\` value"""
   exact: ID
 
-  """Assignment test. Filter will be skipped on `null` value"""
+  """Assignment test. Filter will be skipped on \`null\` value"""
   isNull: Boolean
 
   """
-  Exact match of items in a given list. Filter will be skipped on `null` value
+  Exact match of items in a given list. Filter will be skipped on \`null\` value
   """
   inList: [ID!]
 
-  """Case-insensitive exact match. Filter will be skipped on `null` value"""
+  """Case-insensitive exact match. Filter will be skipped on \`null\` value"""
   iExact: ID
 
   """
-  Case-sensitive containment test. Filter will be skipped on `null` value
+  Case-sensitive containment test. Filter will be skipped on \`null\` value
   """
   contains: ID
 
   """
-  Case-insensitive containment test. Filter will be skipped on `null` value
+  Case-insensitive containment test. Filter will be skipped on \`null\` value
   """
   iContains: ID
 
-  """Case-sensitive starts-with. Filter will be skipped on `null` value"""
+  """Case-sensitive starts-with. Filter will be skipped on \`null\` value"""
   startsWith: ID
 
-  """Case-insensitive starts-with. Filter will be skipped on `null` value"""
+  """Case-insensitive starts-with. Filter will be skipped on \`null\` value"""
   iStartsWith: ID
 
-  """Case-sensitive ends-with. Filter will be skipped on `null` value"""
+  """Case-sensitive ends-with. Filter will be skipped on \`null\` value"""
   endsWith: ID
 
-  """Case-insensitive ends-with. Filter will be skipped on `null` value"""
+  """Case-insensitive ends-with. Filter will be skipped on \`null\` value"""
   iEndsWith: ID
 
   """
-  Case-sensitive regular expression match. Filter will be skipped on `null` value
+  Case-sensitive regular expression match. Filter will be skipped on \`null\` value
   """
   regex: ID
 
   """
-  Case-insensitive regular expression match. Filter will be skipped on `null` value
+  Case-insensitive regular expression match. Filter will be skipped on \`null\` value
   """
   iRegex: ID
 }
@@ -1061,7 +1062,7 @@ type InteractionAuthorTypeOffsetPaginated {
 }
 
 """
-The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
+The \`JSON\` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
 """
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
 
@@ -1306,11 +1307,11 @@ type OperationMessage {
   message: String!
 
   """
-  The field that caused the error, or `null` if it isn't associated with any particular field.
+  The field that caused the error, or \`null\` if it isn't associated with any particular field.
   """
   field: String
 
-  """The error code, or `null` if no error code was set."""
+  """The error code, or \`null\` if no error code was set."""
   code: String
 }
 
@@ -1492,7 +1493,7 @@ type PhoneNumberType {
   isPrimary: Boolean
 }
 
-"""Represents a point as `(x, y, z)` or `(x, y)`."""
+"""Represents a point as \`(x, y, z)\` or \`(x, y)\`."""
 scalar Point
 
 enum PreferredCommunicationEnum {
@@ -2245,3 +2246,4 @@ input PermDefinition {
   """
   permission: String
 }
+`;

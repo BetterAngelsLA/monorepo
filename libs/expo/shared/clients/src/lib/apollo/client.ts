@@ -24,7 +24,6 @@ export const createApolloClient = (args: TArgs) => {
   } = args;
 
   const authLink = createAuthLink({ apiUrl, csrfUrl });
-  const hmisAuthLink = createHmisAuthLink();
 
   const uploadHttpLink = new UploadHttpLink({
     uri: `${apiUrl}/graphql`,
@@ -37,6 +36,8 @@ export const createApolloClient = (args: TArgs) => {
     onUnauthenticated,
   });
 
+  const hmisAuthLink = createHmisAuthLink();
+
   const composedLinks = [errorLink, authLink, hmisAuthLink, uploadHttpLink];
 
   // Debug only: logs GraphQL requests/responses
@@ -47,7 +48,7 @@ export const createApolloClient = (args: TArgs) => {
     composedLinks.unshift(loggerLink);
   }
 
-  return new ApolloClient({
+  const client = new ApolloClient({
     link: ApolloLink.from(composedLinks),
     cache: cacheStore ?? new InMemoryCache(),
     // NOTE: in v4 the notifyOnNetworkStatusChange default value changed to `true`.
@@ -59,4 +60,6 @@ export const createApolloClient = (args: TArgs) => {
       },
     },
   });
+
+  return client;
 };
