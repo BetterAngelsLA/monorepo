@@ -60,6 +60,8 @@ jobs:
         env:
           ANDROID_E2E_STATUS: ${{ after.maestro_android_test.status }}
           IOS_E2E_STATUS: ${{ after.maestro_ios_test.status }}
+          GITHUB_DISPATCH_TOKEN: ${{ secrets.GITHUB_DISPATCH_TOKEN }}
+          GITHUB_REPOSITORY: ${{ secrets.GITHUB_REPOSITORY }}
         run: |
           set -euo pipefail
 
