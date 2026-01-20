@@ -1,0 +1,105 @@
+name: 📣 FE Post-E2E Notifications
+
+on:
+  repository_dispatch:
+    types: [eas_post_e2e]
+
+jobs:
+  post-e2e:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: ⚠️ Fail if E2E tests failed
+        if: github.event.client_payload.status != 'success'
+        run: |
+          echo "E2E tests failed with status: ${{ github.event.client_payload.status }}"
+          exit 1
+
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.client_payload['github-sha'] || github.event.client_payload['github-ref'] || github.ref }}
+
+      - name: 📝 Comment on PR
+        if: github.event.client_payload['pr-number'] != ''
+        uses: edumserrano/find-create-or-update-comment@v3
+        with:
+          issue-number: ${{ github.event.client_payload['pr-number'] }}
+          body-includes: '<!-- continuous-deploy-fingerprint-projectId:${{ github.event.client_payload[''project-id''] }} -->'
+          comment-author: 'github-actions[bot]'
+          body: |
+            <!-- continuous-deploy-fingerprint-projectId:${{ github.event.client_payload['project-id'] }} -->
+            🚀 Expo continuous deployment is ready for **${{ github.event.client_payload['project'] }}**!
+
+            - Project → **${{ github.event.client_payload['project'] }}**
+            - Environment → **Preview**
+            - Platforms → **android**, **ios**
+            - Scheme → **${{ github.event.client_payload['slug'] }}**
+
+            &nbsp; | 🤖 Android | 🍎 iOS
+            --- | --- | ---
+            Runtime Version | `${{ github.event.client_payload['android-runtime-version'] }}` | `${{ github.event.client_payload['ios-runtime-version'] }}`
+            Build Details | [Build Permalink](${{ github.event.client_payload['android-build-link'] }})<br /><details><summary>Details</summary>Distribution: `${{ github.event.client_payload['android-distribution'] }}`<br />Build profile: `${{ github.event.client_payload['android-build-profile'] }}`<br />Runtime version: `${{ github.event.client_payload['android-runtime-version'] }}`<br />App version: `${{ github.event.client_payload['android-app-version'] }}`<br />Git commit: `${{ github.event.client_payload['android-git-commit'] }}`</details> | [Build Permalink](${{ github.event.client_payload['ios-build-link'] }})<br /><details><summary>Details</summary>Distribution: `${{ github.event.client_payload['ios-distribution'] }}`<br />Build profile: `${{ github.event.client_payload['ios-build-profile'] }}`<br />Runtime version: `${{ github.event.client_payload['ios-runtime-version'] }}`<br />App version: `${{ github.event.client_payload['ios-app-version'] }}`<br />Git commit: `${{ github.event.client_payload['ios-git-commit'] }}`</details>
+            Update Details | [Update Permalink](${{ github.event.client_payload['android-update-permalink'] }})<br /><details><summary>Details</summary>Branch: `${{ github.event.client_payload['android-branch'] }}`<br />Runtime version: `${{ github.event.client_payload['android-update-runtime-version'] }}`<br />Git commit: `${{ github.event.client_payload['android-update-commit'] }}`</details> | [Update Permalink](${{ github.event.client_payload['ios-update-permalink'] }})<br /><details><summary>Details</summary>Branch: `${{ github.event.client_payload['ios-branch'] }}`<br />Runtime version: `${{ github.event.client_payload['ios-update-runtime-version'] }}`<br />Git commit: `${{ github.event.client_payload['ios-update-commit'] }}`</details>
+            Update QR   | <a href="${{ github.event.client_payload['android-update-qr-url'] }}"><img src="${{ github.event.client_payload['android-update-qr-url'] }}" width="250px" height="250px" /></a> | <a href="${{ github.event.client_payload['ios-update-qr-url'] }}"><img src="${{ github.event.client_payload['ios-update-qr-url'] }}" width="250px" height="250px" /></a>
+
+            **iOS Simulator Build:** [Simulator Build Link](${{ github.event.client_payload['simulator-ios-build-link'] }})
+          edit-mode: replace
+
+      - name: 📝 Set Git Variables
+        id: set-git-vars
+        run: |
+          COMMIT_ID=$(git rev-parse HEAD)
+          COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s" HEAD)
+
+          {
+            echo "commit-id=${COMMIT_ID}"
+            echo "commit-message=${COMMIT_MESSAGE}"
+          } >> $GITHUB_OUTPUT
+
+      - name: 📣 Post to Slack
+        if: github.event.client_payload['github-ref'] == 'refs/heads/main'
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "channel": "#tech-outreach-main",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*New code has landed in main for project ${{ github.event.client_payload['project'] }}!* \n*Commit:* `${{ steps.set-git-vars.outputs.commit-id }}`\n*Message:* ${{ steps.set-git-vars.outputs.commit-message }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*📱 iOS*\n\n<${{ github.event.client_payload['ios-update-qr-url'] }}|Update>\n<${{ github.event.client_payload['ios-build-link'] }}|Build>\n<${{ github.event.client_payload['simulator-ios-build-link'] }}|Simulator Build>"
+                  }
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*🤖 Android*\n\n<${{ github.event.client_payload['android-update-qr-url'] }}|Update>\n<${{ github.event.client_payload['android-build-link'] }}|Build>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: 🧼 Cleanup .env file
+        if: always()
+        run: |
+          rm -f .env
+        working-directory: apps/${{ github.event.client_payload['project'] }}

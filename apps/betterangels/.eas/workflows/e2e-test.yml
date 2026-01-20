@@ -117,11 +117,15 @@ jobs:
           payload["ios-e2e-status"] = ios_status
 
           print(json.dumps({
-            "event_type": "e2e-tests-complete",
+            "event_type": "eas_post_e2e",
             "client_payload": payload
           }))
           PY
           )"
+
+          echo "BODY: ${BODY}"
+          echo "WEBHOOK_PAYLOAD: ${WEBHOOK_PAYLOAD}"
+          echo "ANDROID_E2E_STATUS: ${ANDROID_E2E_STATUS}"
 
           curl -fsSL \
             -X POST \
