@@ -140,14 +140,14 @@ jobs:
           platforms: ios
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
-      - name: 🚀 Perform EAS Update
-        id: expo-update
-        uses: ./.github/actions/expo-update
-        with:
-          project: ${{ matrix.project }}
-          branch: ${{ github.head_ref || github.ref_name }}
-          slug: ${{ steps.preview-build.outputs.slug }}
-          project-id: ${{ steps.preview-build.outputs.project-id }}
+      # - name: 🚀 Perform EAS Update
+      #   id: expo-update
+      #   uses: ./.github/actions/expo-update
+      #   with:
+      #     project: ${{ matrix.project }}
+      #     branch: ${{ github.head_ref || github.ref_name }}
+      #     slug: ${{ steps.preview-build.outputs.slug }}
+      #     project-id: ${{ steps.preview-build.outputs.project-id }}
 
       - name: 📦 Prepare Webhook Payload
         id: prepare-webhook
@@ -156,42 +156,83 @@ jobs:
           PR_NUMBER="${{ github.event.pull_request.number }}"
           PAYLOAD=$(cat <<EOF
           {
-            "project": "${{ matrix.project }}",
-            "project-id": "${{ steps.preview-build.outputs.project-id }}",
-            "slug": "${{ steps.preview-build.outputs.slug }}",
-            "android-runtime-version": "${{ steps.preview-build.outputs.android-runtime-version }}",
-            "ios-runtime-version": "${{ steps.preview-build.outputs.ios-runtime-version }}",
-            "android-build-link": "${{ steps.preview-build.outputs.android-build-link }}",
-            "ios-build-link": "${{ steps.preview-build.outputs.ios-build-link }}",
-            "android-distribution": "${{ steps.preview-build.outputs.android-distribution }}",
-            "android-build-profile": "${{ steps.preview-build.outputs.android-build-profile }}",
-            "android-app-version": "${{ steps.preview-build.outputs.android-app-version }}",
-            "android-git-commit": "${{ steps.preview-build.outputs.android-git-commit }}",
-            "ios-distribution": "${{ steps.preview-build.outputs.ios-distribution }}",
-            "ios-build-profile": "${{ steps.preview-build.outputs.ios-build-profile }}",
-            "ios-app-version": "${{ steps.preview-build.outputs.ios-app-version }}",
-            "ios-git-commit": "${{ steps.preview-build.outputs.ios-git-commit }}",
-            "android-update-permalink": "${{ steps.expo-update.outputs.android-update-permalink }}",
-            "android-branch": "${{ steps.expo-update.outputs.android-branch }}",
-            "android-update-runtime-version": "${{ steps.expo-update.outputs.android-runtime-version }}",
-            "android-update-commit": "${{ steps.expo-update.outputs.android-update-commit }}",
-            "android-update-qr-url": "${{ steps.expo-update.outputs.android-update-qr-url }}",
-            "ios-update-permalink": "${{ steps.expo-update.outputs.ios-update-permalink }}",
-            "ios-branch": "${{ steps.expo-update.outputs.ios-branch }}",
-            "ios-update-runtime-version": "${{ steps.expo-update.outputs.ios-runtime-version }}",
-            "ios-update-commit": "${{ steps.expo-update.outputs.ios-update-commit }}",
-            "ios-update-qr-url": "${{ steps.expo-update.outputs.ios-update-qr-url }}",
-            "simulator-ios-build-link": "${{ steps.simulator-build.outputs.ios-build-link }}",
-            "branch-name": "${{ github.head_ref || github.ref_name }}",
-            "github-ref": "${{ github.ref }}",
-            "github-sha": "${{ github.sha }}",
-            "pr-number": "${PR_NUMBER}"
+            "project": "betterangels",
+            "project-id": "53171ba4-60ca-40cb-b3e6-b0c2393677b8",
+            "slug": "betterangels",
+            "android-runtime-version": "84c9efb850e71475bdf5ca9270cca37229321e21",
+            "ios-runtime-version": "84c9efb850e71475bdf5ca9270cca37229321e21",
+            "android-build-link": "https://expo.dev/accounts/better-angels/projects/betterangels/builds/6b3af6ab-9f4e-4e96-98bf-59a9730244ea",
+            "ios-build-link": "https://expo.dev/accounts/better-angels/projects/betterangels/builds/c2212b9e-2778-41c2-8a94-61a43605aedb",
+            "android-distribution": "INTERNAL",
+            "android-build-profile": "preview",
+            "android-app-version": "1.0.58",
+            "android-git-commit": "2a068de5c10a937c45e9dc25e04c33f1360be376",
+            "ios-distribution": "INTERNAL",
+            "ios-build-profile": "preview",
+            "ios-app-version": "1.0.58",
+            "ios-git-commit": "2a068de5c10a937c45e9dc25e04c33f1360be376",
+            "android-update-permalink": "https://expo.dev/projects/53171ba4-60ca-40cb-b3e6-b0c2393677b8/updates/019bdd88-1a82-7424-9d2b-20788a63ecf4",
+            "android-branch": "DEV-1936/block-on-e2e",
+            "android-update-runtime-version": "84c9efb850e71475bdf5ca9270cca37229321e21",
+            "android-update-commit": "6a698e1d6afb8f5c63d09e467595f9dd96fc9735",
+            "android-update-qr-url": "https://qr.expo.dev/eas-update?appScheme=betterangels&projectId=53171ba4-60ca-40cb-b3e6-b0c2393677b8&groupId=73d9832b-e617-4a2d-b478-63540e869202",
+            "ios-update-permalink": "https://expo.dev/projects/53171ba4-60ca-40cb-b3e6-b0c2393677b8/updates/019bdd88-1a82-7405-ae11-acb3d38c163e",
+            "ios-branch": "DEV-1936/block-on-e2e",
+            "ios-update-runtime-version": "84c9efb850e71475bdf5ca9270cca37229321e21",
+            "ios-update-commit": "6a698e1d6afb8f5c63d09e467595f9dd96fc9735",
+            "ios-update-qr-url": "https://qr.expo.dev/eas-update?appScheme=betterangels&projectId=53171ba4-60ca-40cb-b3e6-b0c2393677b8&groupId=73d9832b-e617-4a2d-b478-63540e869202",
+            "simulator-ios-build-link": "https://expo.dev/accounts/better-angels/projects/betterangels/builds/0626f53b-99cd-4e2b-972a-a7fe9e82d6eb",
+            "branch-name": "DEV-1936/block-on-e2e",
+            "github-ref": "refs/pull/1804/merge",
+            "github-sha": "a88bfd51e789cbd890fddbdb7b8b1a019f5143ff",
+            "pr-number": "1804"
           }
           EOF
           )
           echo "payload<<EOF" >> $GITHUB_OUTPUT
           echo "$PAYLOAD" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+        # run: |
+        #   # Create a JSON payload with all preview outputs for EAS to send back via webhook
+        #   PR_NUMBER="${{ github.event.pull_request.number }}"
+        #   PAYLOAD=$(cat <<EOF
+        #   {
+        #     "project": "${{ matrix.project }}",
+        #     "project-id": "${{ steps.preview-build.outputs.project-id }}",
+        #     "slug": "${{ steps.preview-build.outputs.slug }}",
+        #     "android-runtime-version": "${{ steps.preview-build.outputs.android-runtime-version }}",
+        #     "ios-runtime-version": "${{ steps.preview-build.outputs.ios-runtime-version }}",
+        #     "android-build-link": "${{ steps.preview-build.outputs.android-build-link }}",
+        #     "ios-build-link": "${{ steps.preview-build.outputs.ios-build-link }}",
+        #     "android-distribution": "${{ steps.preview-build.outputs.android-distribution }}",
+        #     "android-build-profile": "${{ steps.preview-build.outputs.android-build-profile }}",
+        #     "android-app-version": "${{ steps.preview-build.outputs.android-app-version }}",
+        #     "android-git-commit": "${{ steps.preview-build.outputs.android-git-commit }}",
+        #     "ios-distribution": "${{ steps.preview-build.outputs.ios-distribution }}",
+        #     "ios-build-profile": "${{ steps.preview-build.outputs.ios-build-profile }}",
+        #     "ios-app-version": "${{ steps.preview-build.outputs.ios-app-version }}",
+        #     "ios-git-commit": "${{ steps.preview-build.outputs.ios-git-commit }}",
+        #     "android-update-permalink": "${{ steps.expo-update.outputs.android-update-permalink }}",
+        #     "android-branch": "${{ steps.expo-update.outputs.android-branch }}",
+        #     "android-update-runtime-version": "${{ steps.expo-update.outputs.android-runtime-version }}",
+        #     "android-update-commit": "${{ steps.expo-update.outputs.android-update-commit }}",
+        #     "android-update-qr-url": "${{ steps.expo-update.outputs.android-update-qr-url }}",
+        #     "ios-update-permalink": "${{ steps.expo-update.outputs.ios-update-permalink }}",
+        #     "ios-branch": "${{ steps.expo-update.outputs.ios-branch }}",
+        #     "ios-update-runtime-version": "${{ steps.expo-update.outputs.ios-runtime-version }}",
+        #     "ios-update-commit": "${{ steps.expo-update.outputs.ios-update-commit }}",
+        #     "ios-update-qr-url": "${{ steps.expo-update.outputs.ios-update-qr-url }}",
+        #     "simulator-ios-build-link": "${{ steps.simulator-build.outputs.ios-build-link }}",
+        #     "branch-name": "${{ github.head_ref || github.ref_name }}",
+        #     "github-ref": "${{ github.ref }}",
+        #     "github-sha": "${{ github.sha }}",
+        #     "pr-number": "${PR_NUMBER}"
+        #   }
+        #   EOF
+        #   )
+        #   echo "payload<<EOF" >> $GITHUB_OUTPUT
+        #   echo "$PAYLOAD" >> $GITHUB_OUTPUT
+        #   echo "EOF" >> $GITHUB_OUTPUT
 
       - name: 🧾 Write E2E dispatch payload into .env
         working-directory: apps/${{ matrix.project }}
@@ -218,32 +259,59 @@ jobs:
         working-directory: apps/${{ matrix.project }}
 
     outputs:
-      project: ${{ matrix.project }}
-      project-id: ${{ steps.preview-build.outputs.project-id }}
-      slug: ${{ steps.preview-build.outputs.slug }}
-      android-runtime-version: ${{ steps.preview-build.outputs.android-runtime-version }}
-      ios-runtime-version: ${{ steps.preview-build.outputs.ios-runtime-version }}
-      android-build-link: ${{ steps.preview-build.outputs.android-build-link }}
-      ios-build-link: ${{ steps.preview-build.outputs.ios-build-link }}
-      android-distribution: ${{ steps.preview-build.outputs.android-distribution }}
-      android-build-profile: ${{ steps.preview-build.outputs.android-build-profile }}
-      android-app-version: ${{ steps.preview-build.outputs.android-app-version }}
-      android-git-commit: ${{ steps.preview-build.outputs.android-git-commit }}
-      ios-distribution: ${{ steps.preview-build.outputs.ios-distribution }}
-      ios-build-profile: ${{ steps.preview-build.outputs.ios-build-profile }}
-      ios-app-version: ${{ steps.preview-build.outputs.ios-app-version }}
-      ios-git-commit: ${{ steps.preview-build.outputs.ios-git-commit }}
-      android-update-permalink: ${{ steps.expo-update.outputs.android-update-permalink }}
-      android-branch: ${{ steps.expo-update.outputs.android-branch }}
-      android-update-runtime-version: ${{ steps.expo-update.outputs.android-runtime-version }}
-      android-update-commit: ${{ steps.expo-update.outputs.android-update-commit }}
-      android-update-qr-url: ${{ steps.expo-update.outputs.android-update-qr-url }}
-      ios-update-permalink: ${{ steps.expo-update.outputs.ios-update-permalink }}
-      ios-branch: ${{ steps.expo-update.outputs.ios-branch }}
-      ios-update-runtime-version: ${{ steps.expo-update.outputs.ios-runtime-version }}
-      ios-update-commit: ${{ steps.expo-update.outputs.ios-update-commit }}
-      ios-update-qr-url: ${{ steps.expo-update.outputs.ios-update-qr-url }}
-      simulator-ios-build-link: ${{ steps.simulator-build.outputs.ios-build-link }}
+      project: "betterangels"
+      project-id: "53171ba4-60ca-40cb-b3e6-b0c2393677b8"
+      slug: "betterangels"
+      android-runtime-version: "84c9efb850e71475bdf5ca9270cca37229321e21"
+      ios-runtime-version: "84c9efb850e71475bdf5ca9270cca37229321e21"
+      android-build-link: "https://expo.dev/accounts/better-angels/projects/betterangels/builds/6b3af6ab-9f4e-4e96-98bf-59a9730244ea"
+      ios-build-link: "https://expo.dev/accounts/better-angels/projects/betterangels/builds/c2212b9e-2778-41c2-8a94-61a43605aedb"
+      android-distribution: "INTERNAL"
+      android-build-profile: "preview"
+      android-app-version: "1.0.58"
+      android-git-commit: "2a068de5c10a937c45e9dc25e04c33f1360be376"
+      ios-distribution: "INTERNAL"
+      ios-build-profile: "preview"
+      ios-app-version: "1.0.58"
+      ios-git-commit: "2a068de5c10a937c45e9dc25e04c33f1360be376"
+      android-update-permalink: "https://expo.dev/projects/53171ba4-60ca-40cb-b3e6-b0c2393677b8/updates/019bdd88-1a82-7424-9d2b-20788a63ecf4"
+      android-branch: "DEV-1936/block-on-e2e"
+      android-update-runtime-version: "84c9efb850e71475bdf5ca9270cca37229321e21"
+      android-update-commit: "6a698e1d6afb8f5c63d09e467595f9dd96fc9735"
+      android-update-qr-url: "https://qr.expo.dev/eas-update?appScheme=betterangels&projectId=53171ba4-60ca-40cb-b3e6-b0c2393677b8&groupId=73d9832b-e617-4a2d-b478-63540e869202"
+      ios-update-permalink: "https://expo.dev/projects/53171ba4-60ca-40cb-b3e6-b0c2393677b8/updates/019bdd88-1a82-7405-ae11-acb3d38c163e"
+      ios-branch: "DEV-1936/block-on-e2e"
+      ios-update-runtime-version: "84c9efb850e71475bdf5ca9270cca37229321e21"
+      ios-update-commit: "6a698e1d6afb8f5c63d09e467595f9dd96fc9735"
+      ios-update-qr-url: "https://qr.expo.dev/eas-update?appScheme=betterangels&projectId=53171ba4-60ca-40cb-b3e6-b0c2393677b8&groupId=73d9832b-e617-4a2d-b478-63540e869202"
+      simulator-ios-build-link: "https://expo.dev/accounts/better-angels/projects/betterangels/builds/0626f53b-99cd-4e2b-972a-a7fe9e82d6eb"
+
+      # project: ${{ matrix.project }}
+      # project-id: ${{ steps.preview-build.outputs.project-id }}
+      # slug: ${{ steps.preview-build.outputs.slug }}
+      # android-runtime-version: ${{ steps.preview-build.outputs.android-runtime-version }}
+      # ios-runtime-version: ${{ steps.preview-build.outputs.ios-runtime-version }}
+      # android-build-link: ${{ steps.preview-build.outputs.android-build-link }}
+      # ios-build-link: ${{ steps.preview-build.outputs.ios-build-link }}
+      # android-distribution: ${{ steps.preview-build.outputs.android-distribution }}
+      # android-build-profile: ${{ steps.preview-build.outputs.android-build-profile }}
+      # android-app-version: ${{ steps.preview-build.outputs.android-app-version }}
+      # android-git-commit: ${{ steps.preview-build.outputs.android-git-commit }}
+      # ios-distribution: ${{ steps.preview-build.outputs.ios-distribution }}
+      # ios-build-profile: ${{ steps.preview-build.outputs.ios-build-profile }}
+      # ios-app-version: ${{ steps.preview-build.outputs.ios-app-version }}
+      # ios-git-commit: ${{ steps.preview-build.outputs.ios-git-commit }}
+      # android-update-permalink: ${{ steps.expo-update.outputs.android-update-permalink }}
+      # android-branch: ${{ steps.expo-update.outputs.android-branch }}
+      # android-update-runtime-version: ${{ steps.expo-update.outputs.android-runtime-version }}
+      # android-update-commit: ${{ steps.expo-update.outputs.android-update-commit }}
+      # android-update-qr-url: ${{ steps.expo-update.outputs.android-update-qr-url }}
+      # ios-update-permalink: ${{ steps.expo-update.outputs.ios-update-permalink }}
+      # ios-branch: ${{ steps.expo-update.outputs.ios-branch }}
+      # ios-update-runtime-version: ${{ steps.expo-update.outputs.ios-runtime-version }}
+      # ios-update-commit: ${{ steps.expo-update.outputs.ios-update-commit }}
+      # ios-update-qr-url: ${{ steps.expo-update.outputs.ios-update-qr-url }}
+      # simulator-ios-build-link: ${{ steps.simulator-build.outputs.ios-build-link }}
 
   preview-post-e2e:
     environment: preview
