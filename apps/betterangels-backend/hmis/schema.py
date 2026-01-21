@@ -33,9 +33,9 @@ from .api_bridge import HmisApiBridge
 
 # Custom schema directive to mark HMIS operations
 # This allows the frontend to detect HMIS operations via schema introspection
-@schema_directive(locations=[Location.OBJECT, Location.FIELD_DEFINITION])
+@schema_directive(locations=[Location.FIELD_DEFINITION])
 class HmisDirective:
-    """Mark a type or field as an HMIS operation"""
+    """Mark a field as an HMIS operation"""
 
     pass
 

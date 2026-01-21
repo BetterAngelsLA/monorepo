@@ -34,7 +34,7 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
-directive @hmisDirective on OBJECT | FIELD_DEFINITION
+directive @hmisDirective on FIELD_DEFINITION
 
 enum AccessibilityChoices {
   MEDICAL_EQUIPMENT_PERMITTED

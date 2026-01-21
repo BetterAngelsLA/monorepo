@@ -27,7 +27,7 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasRetvalPerm(any: Boolean! = true, permissions: [PermDefinition!]!) repeatable on FIELD_DEFINITION
 
-directive @hmisDirective on FIELD_DEFINITION | OBJECT
+directive @hmisDirective on FIELD_DEFINITION
 
 """
 Will check if the user has any/all permissions for the resolved value of this field before returning it.
