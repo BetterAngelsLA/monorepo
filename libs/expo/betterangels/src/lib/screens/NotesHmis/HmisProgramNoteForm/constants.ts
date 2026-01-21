@@ -6,6 +6,6 @@ export const FORM_KEYS = {
   refClientProgram: 'refClientProgram',
   note: 'note',
   location: 'location',
-  draftTasks: 'draftTasks',
+  tasks: 'tasks',
   services: 'services',
 } as const satisfies { [K in TFormKeys]: K };
