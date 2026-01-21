@@ -15,13 +15,21 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { generateGirpNote } from './generateGirpNote';
 
+export type TGirpServiceType = {
+  id: string;
+  service?: {
+    label: string;
+  } | null;
+  serviceOther?: string | null;
+};
+
 type TProps = {
   onDone: (note: string) => void;
   note?: string;
   disabled?: boolean;
   purpose?: string;
-  providedServices?: string[];
-  requestedServices?: string[];
+  providedServices?: TGirpServiceType[];
+  requestedServices?: TGirpServiceType[];
 };
 
 export function GirpNoteForm(props: TProps) {
