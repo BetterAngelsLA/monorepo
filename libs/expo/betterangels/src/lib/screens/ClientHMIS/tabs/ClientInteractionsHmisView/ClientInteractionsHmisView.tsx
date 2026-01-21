@@ -1,6 +1,6 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { IconButton, TextMedium, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { IconButton, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { View } from 'react-native';
