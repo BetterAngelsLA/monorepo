@@ -35,7 +35,12 @@ export default function HmisRestDebug() {
   const [error, setError] = useState<string | null>(null);
 
   const handleFetch = useCallback(async () => {
-    const selectedFields = fields.trim() || undefined;
+    const selectedFields = fields.trim()
+      ? fields
+          .split(',')
+          .map((f) => f.trim())
+          .filter(Boolean)
+      : undefined;
     setStatus('loading');
     setError(null);
     setOutput('');
