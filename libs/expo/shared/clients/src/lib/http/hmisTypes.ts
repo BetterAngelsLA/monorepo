@@ -4,11 +4,11 @@
 
 export interface HmisRequestOptions extends Omit<RequestInit, 'body'> {
   params?: Record<string, string>;
-  body?: any;
+  body?: unknown;
 }
 
 export class HmisError extends Error {
-  constructor(message: string, public status: number, public data?: any) {
+  constructor(message: string, public status: number, public data?: unknown) {
     super(message);
     this.name = 'HmisError';
   }

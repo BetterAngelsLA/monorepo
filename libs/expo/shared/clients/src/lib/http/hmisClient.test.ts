@@ -9,7 +9,7 @@ jest.mock('@monorepo/expo/shared/utils', () => ({
 const mockFetch = jest.fn();
 
 // Provide a global fetch mock
-(global as any).fetch = mockFetch;
+(global as typeof globalThis).fetch = mockFetch;
 
 const jsonHeaders = new Headers({ 'content-type': 'application/json' });
 

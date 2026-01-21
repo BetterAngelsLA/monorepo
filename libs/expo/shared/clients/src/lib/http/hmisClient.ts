@@ -47,7 +47,7 @@ class HmisClient {
    */
   private async handleError(response: Response): Promise<never> {
     const contentType = response.headers.get('content-type');
-    let data: any;
+    let data: unknown;
 
     try {
       data = contentType?.includes('application/json')
@@ -69,8 +69,9 @@ class HmisClient {
 
       case 422: {
         // HMIS returns validation errors as { messages: { field: message } }
-        if (data?.messages) {
-          const errors = Object.entries(data.messages)
+        const validationData = data as { messages?: Record<string, string> };
+        if (validationData?.messages) {
+          const errors = Object.entries(validationData.messages)
             .map(([field, message]) => `${field}: ${message}`)
             .join(', ');
           throw new HmisError(`Validation errors: ${errors}`, 422, data);
@@ -115,17 +116,20 @@ class HmisClient {
     }
 
     // Make request with automatic cookie management
-    const response = await fetch(url.toString(), {
-      ...options,
+    const fetchOptions: RequestInit = {
+      method: options.method,
       credentials: 'include', // Automatic cookie sending/storage
       headers: {
         ...authHeaders,
         ...options.headers,
       },
-      ...(options.body && {
-        body: JSON.stringify(options.body),
-      }),
-    });
+    };
+
+    if (options.body) {
+      fetchOptions.body = JSON.stringify(options.body);
+    }
+
+    const response = await fetch(url.toString(), fetchOptions);
 
     // Handle errors
     if (!response.ok) {
@@ -138,20 +142,20 @@ class HmisClient {
       return response.json();
     }
 
-    return response.text() as any;
+    return response.text() as unknown as T;
   }
 
   /**
    * GET request
    */
-  get<T = any>(path: string, params?: Record<string, string>): Promise<T> {
+  get<T = unknown>(path: string, params?: Record<string, string>): Promise<T> {
     return this.request<T>(path, { method: 'GET', params });
   }
 
   /**
    * POST request
    */
-  post<T = any>(path: string, body?: any): Promise<T> {
+  post<T = unknown>(path: string, body?: unknown): Promise<T> {
     return this.request<T>(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -162,7 +166,7 @@ class HmisClient {
   /**
    * PUT request
    */
-  put<T = any>(path: string, body?: any): Promise<T> {
+  put<T = unknown>(path: string, body?: unknown): Promise<T> {
     return this.request<T>(path, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -173,7 +177,7 @@ class HmisClient {
   /**
    * DELETE request
    */
-  delete<T = any>(path: string): Promise<T> {
+  delete<T = unknown>(path: string): Promise<T> {
     return this.request<T>(path, { method: 'DELETE' });
   }
 }
