@@ -119,6 +119,7 @@ export function HmisProgramNoteEdit(props: TProps) {
     data: noteData,
     loading: noteDataLoading,
     error: getNoteNetworkError,
+    refetch,
   } = useQuery(HmisNoteDocument, {
     variables: { id },
     fetchPolicy: 'cache-first',
@@ -194,8 +195,6 @@ export function HmisProgramNoteEdit(props: TProps) {
           },
         },
         errorPolicy: 'all',
-        refetchQueries: [{ query: HmisNoteDocument, variables: { id } }],
-        awaitRefetchQueries: true,
       });
 
       const { data, error } = updateResponse;
@@ -254,6 +253,8 @@ export function HmisProgramNoteEdit(props: TProps) {
         ServiceRequestTypeEnum.Requested,
         draftServices[ServiceRequestTypeEnum.Requested]
       );
+
+      await refetch();
 
       router.replace(
         `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`

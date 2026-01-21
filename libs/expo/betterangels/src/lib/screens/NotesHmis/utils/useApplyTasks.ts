@@ -17,11 +17,9 @@ export function useApplyTasks() {
       hmisNoteId: string,
       hmisClientProfileId: string
     ) => {
-      console.log('Applying tasks...');
       const { toCreateTask, toUpdateTask, toDeleteTask } = splitTasks(tasks);
 
       for (const s of toCreateTask) {
-        console.log('CREATING A TASK');
         await createTask({
           variables: {
             data: {
@@ -37,14 +35,12 @@ export function useApplyTasks() {
       }
 
       for (const s of toDeleteTask) {
-        console.log('DELETING A TASK');
         await deleteTask({
           variables: { id: String(s.id) },
         });
       }
 
       for (const s of toUpdateTask) {
-        console.log('UPDATING A TASK');
         await updateTask({
           variables: {
             data: {

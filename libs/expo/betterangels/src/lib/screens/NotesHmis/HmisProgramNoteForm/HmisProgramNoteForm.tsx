@@ -265,7 +265,7 @@ export function HmisProgramNoteForm(props: TProps) {
       />
 
       {/* --- TASK SECTION --- */}
-      <HmisTasks tasks={tasks || []} />
+      <HmisTasks tasks={tasks} />
     </Form>
   );
 }
