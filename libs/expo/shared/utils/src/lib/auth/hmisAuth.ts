@@ -73,5 +73,19 @@ export const getHmisAuthToken = (): Promise<string | null> => {
  * Get HMIS API URL from cookies
  */
 export const getHmisApiUrl = (): Promise<string | null> => {
-  return getHmisCookie('api_url');
+  return getHmisCookie('api_url').then((value) => {
+    if (!value) {
+      return value;
+    }
+
+    try {
+      const decoded = decodeURIComponent(value);
+      const trimmed = (decoded || value).trim();
+      const cleaned = trimmed.replace(/\/+$/, '');
+
+      return cleaned || null;
+    } catch {
+      return null;
+    }
+  });
 };

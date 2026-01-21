@@ -94,6 +94,39 @@ describe('hmisAuth', () => {
       expect(url).toBe('https://api.example.com');
     });
 
+    it('decodes percent-encoded api_url values', async () => {
+      mockStorage.get.mockReturnValue('https://example.com');
+      mockGetCookies.mockResolvedValue({
+        api_url: { value: 'https%3A%2F%2Fapi.example.com%2F' },
+      });
+
+      const url = await getHmisApiUrl();
+
+      expect(url).toBe('https://api.example.com');
+    });
+
+    it('trims whitespace and trailing slashes', async () => {
+      mockStorage.get.mockReturnValue('https://example.com');
+      mockGetCookies.mockResolvedValue({
+        api_url: { value: '  https://api.example.com///  ' },
+      });
+
+      const url = await getHmisApiUrl();
+
+      expect(url).toBe('https://api.example.com');
+    });
+
+    it('returns null when value is empty after cleanup', async () => {
+      mockStorage.get.mockReturnValue('https://example.com');
+      mockGetCookies.mockResolvedValue({
+        api_url: { value: '   ///   ' },
+      });
+
+      const url = await getHmisApiUrl();
+
+      expect(url).toBeNull();
+    });
+
     it('returns null when domain is not set', async () => {
       mockStorage.get.mockReturnValue(null);
 
