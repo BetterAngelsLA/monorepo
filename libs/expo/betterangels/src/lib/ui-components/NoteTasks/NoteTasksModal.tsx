@@ -75,7 +75,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
     // B. Live Mode
     try {
       const cleanStatus = formData.status || undefined;
-      const cleanTeam = formData.team === '' ? null : formData.team;
+      const cleanTeam = !formData.team ? null : formData.team;
 
       if (task?.id) {
         await updateTask({
@@ -93,7 +93,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
         await createTask({
           variables: {
             data: {
-              summary: formData.summary,
+              summary: formData.summary || '',
               description: formData.description,
               status: cleanStatus,
               team: cleanTeam || team || null,
