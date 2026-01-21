@@ -27,6 +27,7 @@ import {
   hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm';
 import splitBucket from '../utils/splitBucket';
+import { useApplyTasks } from '../utils/useApplyTasks';
 import { HmisNoteDocument } from './__generated__/hmisGetClientNote.generated';
 import { UpdateHmisNoteDocument } from './__generated__/hmisUpdateClientNote.generated';
 
@@ -47,6 +48,7 @@ export function HmisProgramNoteEdit(props: TProps) {
   const [updateHmisNoteLocation] = useMutation(UpdateHmisNoteLocationDocument);
   const [deleteService] = useMutation(RemoveHmisNoteServiceRequestDocument);
   const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);
+  const { applyTasks } = useApplyTasks();
 
   async function applyBucket(
     id: string,
@@ -182,7 +184,7 @@ export function HmisProgramNoteEdit(props: TProps) {
       const payload: THmisProgramNoteFormOutputs =
         HmisProgramNoteFormSchemaOutput.parse(values);
 
-      const { services, location, ...rest } = payload;
+      const { services, location, tasks, ...rest } = payload;
 
       const updateResponse = await updateHmisNoteMutation({
         variables: {
@@ -238,6 +240,8 @@ export function HmisProgramNoteEdit(props: TProps) {
           },
         });
       }
+
+      await applyTasks(tasks, id, clientId);
 
       await applyBucket(
         id,
