@@ -5,7 +5,6 @@ const backendSchema = fs.readFileSync(
   '../../../../apps/betterangels-backend/schema.graphql',
   'utf8'
 );
-const escapedSchema = backendSchema.replace(/`/g, '\\`');
 
 const config: CodegenConfig = {
   overwrite: true,
@@ -20,7 +19,9 @@ const config: CodegenConfig = {
     'src/lib/apollo/graphql/__generated__/schema.ts': {
       plugins: ['add'],
       config: {
-        content: `// This file is generated - do not edit\nexport const schema = \`${escapedSchema}\`;\n`,
+        content: `// This file is generated - do not edit\nexport const schema = ${JSON.stringify(
+          backendSchema
+        )};\n`,
       },
     },
   },
