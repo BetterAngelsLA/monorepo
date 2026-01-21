@@ -2,7 +2,7 @@
 
 from typing import Any, Type, TypeVar
 
-from strawberry.permission import BasePermission
+from strawberry.permission import BasePermission, PermissionExtension
 
 T = TypeVar("T")
 
@@ -18,6 +18,12 @@ def apply_schema_directives_and_permissions_to_all_fields(
 
     This decorator automatically applies specified directives and permission classes to all fields,
     making it easier to enforce consistent behavior across GraphQL operations.
+
+    Technical Implementation:
+        - Directives: Appended to field.directives list
+        - Permissions: Added to field.extensions as PermissionExtension (Strawberry's native mechanism)
+        - Works with all field types: @strawberry.field, @strawberry_django.field,
+          and strawberry_django.offset_paginated() descriptors
 
     Args:
         directives: Optional list of directive classes to apply to all fields
@@ -42,21 +48,32 @@ def apply_schema_directives_and_permissions_to_all_fields(
         exclude_set = set(exclude_fields or [])
         exclude_perms_set = set(exclude_permissions or [])
 
+        # Apply modifications after strawberry.type has processed the class
         if hasattr(cls, "__strawberry_definition__"):
             for field in cls.__strawberry_definition__.fields:
-                # Skip fields excluded from all modifications
                 if field.name in exclude_set:
                     continue
 
-                # Apply directives if specified
+                # Apply directives
                 if directives:
-                    for directive_class in directives:
-                        if not field.directives or directive_class not in [type(d) for d in field.directives]:
-                            field.directives = list(field.directives or []) + [directive_class()]
+                    existing_directive_types = {type(d) for d in (field.directives or [])}
+                    new_directives = [d() for d in directives if d not in existing_directive_types]
+                    if new_directives:
+                        field.directives = list(field.directives or []) + new_directives
 
-                # Apply permission classes if specified (skip if in exclude_permissions)
+                # Apply permissions
                 if permission_classes and field.name not in exclude_perms_set:
-                    field.permission_classes = list(field.permission_classes or []) + permission_classes
+                    # Find and merge with existing PermissionExtension
+                    existing_perm_ext = next(
+                        (ext for ext in (field.extensions or []) if isinstance(ext, PermissionExtension)), None
+                    )
+                    other_extensions = [
+                        ext for ext in (field.extensions or []) if not isinstance(ext, PermissionExtension)
+                    ]
+
+                    existing_perms = existing_perm_ext.permissions if existing_perm_ext else []
+                    new_perms = [perm() for perm in permission_classes]
+                    field.extensions = other_extensions + [PermissionExtension(existing_perms + new_perms)]
 
         return cls
 

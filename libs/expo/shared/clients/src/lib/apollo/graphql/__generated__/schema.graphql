@@ -29,6 +29,8 @@ directive @hasRetvalPerm(any: Boolean! = true, permissions: [PermDefinition!]!) 
 
 directive @hmisDirective on FIELD_DEFINITION
 
+directive @isHmisAuthenticated on FIELD_DEFINITION
+
 """
 Will check if the user has any/all permissions for the resolved value of this field before returning it.
 
@@ -1141,10 +1143,10 @@ type Mutation {
   createClientHouseholdMember(data: ClientHouseholdMemberInput!): CreateClientHouseholdMemberPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clienthouseholdmember"}], any: true)
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
-  createHmisClientProfile(data: CreateHmisClientProfileInput!): CreateHmisClientProfilePayload! @hmisDirective
-  createHmisClientProgram(clientId: Int!, programHmisId: Int!): CreateHmisClientProgramPayload! @hmisDirective
-  createHmisNote(data: CreateHmisNoteInput!): CreateHmisNotePayload! @hmisDirective
-  createHmisNoteServiceRequest(data: CreateHmisNoteServiceRequestInput!): CreateHmisNoteServiceRequestPayload! @hmisDirective
+  createHmisClientProfile(data: CreateHmisClientProfileInput!): CreateHmisClientProfilePayload! @hmisDirective @isHmisAuthenticated
+  createHmisClientProgram(clientId: Int!, programHmisId: Int!): CreateHmisClientProgramPayload! @hmisDirective @isHmisAuthenticated
+  createHmisNote(data: CreateHmisNoteInput!): CreateHmisNotePayload! @hmisDirective @isHmisAuthenticated
+  createHmisNoteServiceRequest(data: CreateHmisNoteServiceRequestInput!): CreateHmisNoteServiceRequestPayload! @hmisDirective @isHmisAuthenticated
   createHmisProfile(data: HmisProfileInput!): CreateHmisProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_hmisprofile"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
@@ -1169,7 +1171,7 @@ type Mutation {
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   login(input: LoginInput!): AuthResponse!
   logout: Boolean!
-  removeHmisNoteServiceRequest(data: RemoveHmisNoteServiceRequestInput!): RemoveHmisNoteServiceRequestPayload! @hmisDirective
+  removeHmisNoteServiceRequest(data: RemoveHmisNoteServiceRequestInput!): RemoveHmisNoteServiceRequestPayload! @hmisDirective @isHmisAuthenticated
   removeNoteServiceRequest(data: RemoveNoteServiceRequestInput!): RemoveNoteServiceRequestPayload!
   revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
@@ -1178,9 +1180,9 @@ type Mutation {
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
-  updateHmisClientProfile(data: UpdateHmisClientProfileInput!): UpdateHmisClientProfilePayload! @hmisDirective
-  updateHmisNote(data: UpdateHmisNoteInput!): UpdateHmisNotePayload! @hmisDirective
-  updateHmisNoteLocation(data: UpdateHmisNoteLocationInput!): UpdateHmisNoteLocationPayload! @hmisDirective
+  updateHmisClientProfile(data: UpdateHmisClientProfileInput!): UpdateHmisClientProfilePayload! @hmisDirective @isHmisAuthenticated
+  updateHmisNote(data: UpdateHmisNoteInput!): UpdateHmisNotePayload! @hmisDirective @isHmisAuthenticated
+  updateHmisNoteLocation(data: UpdateHmisNoteLocationInput!): UpdateHmisNoteLocationPayload! @hmisDirective @isHmisAuthenticated
   updateHmisProfile(data: HmisProfileInput!): UpdateHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_hmisprofile"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
@@ -1506,11 +1508,11 @@ type Query {
   clientProfiles(filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = [], pagination: OffsetPaginationInput): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   currentUser: UserType!
   featureControls: FeatureControlData!
-  hmisClientProfile(id: ID!): HmisClientProfileType! @hmisDirective
-  hmisClientProfiles(filters: HmisClientProfileFilter, ordering: [HmisClientProfileOrdering!]! = [], pagination: OffsetPaginationInput): HmisClientProfileTypeOffsetPaginated! @hmisDirective
-  hmisClientPrograms(clientId: ID!): [HmisClientProgramType!]! @hmisDirective
-  hmisNote(id: ID!): HmisNoteType! @hmisDirective
-  hmisNotes(filters: HmisNoteFilter, ordering: [HmisNoteOrdering!]! = [], pagination: OffsetPaginationInput): HmisNoteTypeOffsetPaginated! @hmisDirective
+  hmisClientProfile(id: ID!): HmisClientProfileType! @hmisDirective @isHmisAuthenticated
+  hmisClientProfiles(filters: HmisClientProfileFilter, ordering: [HmisClientProfileOrdering!]! = [], pagination: OffsetPaginationInput): HmisClientProfileTypeOffsetPaginated! @hmisDirective @isHmisAuthenticated
+  hmisClientPrograms(clientId: ID!): [HmisClientProgramType!]! @hmisDirective @isHmisAuthenticated
+  hmisNote(id: ID!): HmisNoteType! @hmisDirective @isHmisAuthenticated
+  hmisNotes(filters: HmisNoteFilter, ordering: [HmisNoteOrdering!]! = [], pagination: OffsetPaginationInput): HmisNoteTypeOffsetPaginated! @hmisDirective @isHmisAuthenticated
   hmisProfile(pk: ID!): HmisProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
   hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
   interactionAuthors(filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = [], pagination: OffsetPaginationInput): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
