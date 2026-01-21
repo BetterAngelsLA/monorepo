@@ -1,8 +1,8 @@
+import { parse, type OperationDefinitionNode } from 'graphql';
 import {
   getOperationsByDirective,
   operationHasDirective,
 } from '../utils/schemaDirectives';
-import { parse, type OperationDefinitionNode } from 'graphql';
 
 describe('Schema directive utilities', () => {
   describe('getOperationsByDirective', () => {

@@ -1,8 +1,8 @@
 import { ApolloLink } from '@apollo/client';
 import { SetContextLink } from '@apollo/client/link/context';
 import { Observable } from '@apollo/client/utilities';
-import { Kind, type OperationDefinitionNode } from 'graphql';
 import { getHmisAuthToken, storeHmisDomain } from '@monorepo/expo/shared/utils';
+import { Kind, type OperationDefinitionNode } from 'graphql';
 import NitroCookies from 'react-native-nitro-cookies';
 import { MODERN_BROWSER_USER_AGENT } from '../../common/constants';
 import { operationHasDirective } from '../utils/schemaDirectives';
@@ -67,7 +67,10 @@ export const createCookieExtractorLink = () =>
               : null;
             if (parsed) {
               if (parsed.authToken && __DEV__) {
-                console.debug('[HMIS] Auth token cookie updated for domain:', parsed.domain);
+                console.debug(
+                  '[HMIS] Auth token cookie updated for domain:',
+                  parsed.domain
+                );
               }
 
               // Store the HMIS domain for later use in getHmisAuthToken
@@ -99,9 +102,14 @@ export const createHmisAuthLink = (): ApolloLink => {
 
   return new ApolloLink((operation, forward) => {
     const operationDef = operation.query.definitions.find(
-      (def: any) => def.kind === Kind.OPERATION_DEFINITION && def.name?.value === operation.operationName
+      (def: any) =>
+        def.kind === Kind.OPERATION_DEFINITION &&
+        def.name?.value === operation.operationName
     ) as OperationDefinitionNode | undefined;
-    const isHmisOperation = operationHasDirective(operationDef, 'hmisDirective');
+    const isHmisOperation = operationHasDirective(
+      operationDef,
+      'hmisDirective'
+    );
 
     if (!isHmisOperation) {
       return forward(operation);

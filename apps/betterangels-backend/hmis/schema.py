@@ -22,24 +22,14 @@ from notes.types import ServiceRequestType
 from notes.utils.note_utils import get_service_args
 from strawberry import ID, asdict
 from strawberry.permission import BasePermission
-from strawberry.schema_directive import Location, schema_directive
+from strawberry.schema_directive import Location as DirectiveLocation
+from strawberry.schema_directive import schema_directive
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 
 from .api_bridge import HmisApiBridge
-
-
-# Custom schema directive to mark HMIS operations
-# This allows the frontend to detect HMIS operations via schema introspection
-@schema_directive(locations=[Location.FIELD_DEFINITION])
-class HmisDirective:
-    """Mark a field as an HMIS operation"""
-
-    pass
-
-
 from .types import (
     CreateHmisClientProfileInput,
     CreateHmisNoteInput,
@@ -61,7 +51,16 @@ from .types import (
 User = get_user_model()
 
 
-def apply_hmis_directive(cls):
+# Custom schema directive to mark HMIS operations
+# This allows the frontend to detect HMIS operations via schema introspection
+@schema_directive(locations=[DirectiveLocation.FIELD_DEFINITION])
+class HmisDirective:
+    """Mark a field as an HMIS operation"""
+
+    pass
+
+
+def apply_hmis_directive(cls: type) -> type:
     """
     Decorator that automatically applies @hmisDirective to all fields in a Query or Mutation class.
     """
