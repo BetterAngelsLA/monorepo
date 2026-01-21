@@ -1164,7 +1164,7 @@ type Mutation {
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload!
   deleteSocialMediaProfile(data: DeleteDjangoObjectInput!): DeleteSocialMediaProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_socialmediaprofile"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
-  hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError! @hmisDirective
+  hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError!
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   login(input: LoginInput!): AuthResponse!

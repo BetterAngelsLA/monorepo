@@ -7,6 +7,9 @@ from accounts.utils import get_user_permission_group
 from betterangels_backend import settings
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
+from common.graphql.decorators import (
+    apply_schema_directives_and_permissions_to_all_fields,
+)
 from common.models import Location, PhoneNumber
 from common.permissions.utils import IsAuthenticated
 from common.utils import strip_demo_tag
@@ -52,24 +55,11 @@ User = get_user_model()
 
 
 # Custom schema directive to mark HMIS operations
-# This allows the frontend to detect HMIS operations via schema introspection
 @schema_directive(locations=[DirectiveLocation.FIELD_DEFINITION])
 class HmisDirective:
     """Mark a field as an HMIS operation"""
 
     pass
-
-
-def apply_hmis_directive(cls: type) -> type:
-    """
-    Decorator that automatically applies @hmisDirective to all fields in a Query or Mutation class.
-    """
-    if hasattr(cls, "__strawberry_definition__"):
-        for field in cls.__strawberry_definition__.fields:
-            # Add directive if not already present
-            if not field.directives or HmisDirective not in [type(d) for d in field.directives]:
-                field.directives = list(field.directives or []) + [HmisDirective()]
-    return cls
 
 
 class IsHmisAuthenticated(BasePermission):
@@ -80,11 +70,8 @@ class IsHmisAuthenticated(BasePermission):
 
         request = info.context["request"]
 
-        # Check for HMIS token in custom header first
-        hmis_token = request.META.get("HTTP_X_HMIS_TOKEN")
-
-        # Fallback to Authorization header for backwards compatibility
-        if not hmis_token:
+        # Check if user authenticated with HMIS via login mutation
+        if not request.session.get(HMIS_SESSION_KEY_NAME):
             raise UnauthenticatedGQLError(message=self.message)
 
         return True
@@ -94,10 +81,10 @@ def _get_client_program(program_data: dict[str, Any]) -> HmisClientProgramType:
     return HmisClientProgramType(id=program_data["id"], program=HmisProgramType(**program_data["program"]))
 
 
-@apply_hmis_directive
+@apply_schema_directives_and_permissions_to_all_fields(directives=[HmisDirective])
 @strawberry.type
 class Query:
-    """HMIS-scoped queries. All operations in this class require HMIS authentication."""
+    """HMIS-scoped queries. All operations require HMIS authentication."""
 
     @strawberry_django.field(permission_classes=[IsHmisAuthenticated])
     def hmis_client_profile(self, info: Info, id: ID) -> HmisClientProfileType:
@@ -175,10 +162,10 @@ class Query:
         return [_get_client_program(p) for p in client_programs["items"]]
 
 
-@apply_hmis_directive
+@apply_schema_directives_and_permissions_to_all_fields(directives=[HmisDirective], exclude_fields=["hmis_login"])
 @strawberry.type
 class Mutation:
-    """HMIS-scoped mutations. All operations in this class require HMIS authentication and special handling."""
+    """HMIS-scoped mutations. All operations require HMIS authentication."""
 
     @strawberry.mutation
     def hmis_login(self, info: Info, email: str, password: str) -> HmisLoginResult:

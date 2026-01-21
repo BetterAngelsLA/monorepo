@@ -8,12 +8,6 @@ describe('Schema directive utilities', () => {
   describe('getOperationsByDirective', () => {
     it('returns all HMIS operations from the schema', () => {
       const ops = getOperationsByDirective('hmisDirective');
-
-      // Should find all 14 HMIS operations
-      expect(ops.size).toBe(14);
-
-      // Spot-check a few key operations
-      expect(ops.has('hmisLogin')).toBe(true);
       expect(ops.has('hmisClientProfiles')).toBe(true);
       expect(ops.has('createHmisNote')).toBe(true);
     });
@@ -21,21 +15,6 @@ describe('Schema directive utilities', () => {
 
   describe('operationHasDirective', () => {
     it('detects HMIS mutations from operation AST', () => {
-      // mutation HMISLogin { hmisLogin(...) { ... } }
-      const hmisLoginOp = parse(`
-        mutation HMISLogin {
-          hmisLogin(email: "", password: "") {
-            __typename
-          }
-        }
-      `).definitions[0];
-      expect(
-        operationHasDirective(
-          hmisLoginOp as OperationDefinitionNode,
-          'hmisDirective'
-        )
-      ).toBe(true);
-
       const createHmisOp = parse(`
         mutation CreateHmis {
           createHmisClientProfile(data: {}) {

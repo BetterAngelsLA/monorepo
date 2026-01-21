@@ -1185,7 +1185,7 @@ type Mutation {
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
-  hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError! @hmisDirective
+  hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError!
   createHmisClientProfile(data: CreateHmisClientProfileInput!): CreateHmisClientProfilePayload! @hmisDirective
   updateHmisClientProfile(data: UpdateHmisClientProfileInput!): UpdateHmisClientProfilePayload! @hmisDirective
   createHmisNote(data: CreateHmisNoteInput!): CreateHmisNotePayload! @hmisDirective
