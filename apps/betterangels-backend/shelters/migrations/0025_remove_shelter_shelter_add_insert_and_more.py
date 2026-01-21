@@ -5,7 +5,7 @@ import pgtrigger.migrations
 from django.db import migrations, models
 
 
-def update_enum_values_forward(apps, schema_editor):
+def update_field_values_forward(apps, schema_editor):
     # Use raw SQL to update the enum values directly in the database
     schema_editor.execute("UPDATE shelters_shelter SET declined_ba_visit = FALSE WHERE declined_ba_visit IS NULL")
 
@@ -82,5 +82,5 @@ class Migration(migrations.Migration):
                 ),
             ),
         ),
-        migrations.RunPython(update_enum_values_forward),
+        migrations.RunPython(update_field_values_forward),
     ]
