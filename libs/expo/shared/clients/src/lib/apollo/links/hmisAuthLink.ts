@@ -1,10 +1,17 @@
 import { ApolloLink } from '@apollo/client';
 import { SetContextLink } from '@apollo/client/link/context';
-import { getHmisAuthToken, storeHmisDomain } from '@monorepo/expo/shared/utils';
+import {
+  getHmisAuthToken,
+  HMIS_AUTH_COOKIE_NAME,
+  storeHmisDomain,
+} from '@monorepo/expo/shared/utils';
 import { Kind, type OperationDefinitionNode } from 'graphql';
 import NitroCookies from 'react-native-nitro-cookies';
 import { tap } from 'rxjs';
-import { MODERN_BROWSER_USER_AGENT } from '../../common/constants';
+import {
+  HMIS_TOKEN_HEADER_NAME,
+  MODERN_BROWSER_USER_AGENT,
+} from '../../common/constants';
 import { operationHasDirective } from '../utils/schemaDirectives';
 
 export const parseHmisCookieHeader = (
@@ -23,7 +30,7 @@ export const parseHmisCookieHeader = (
   const domain = `https://${rawDomain}`;
 
   const authTokenMatch = setCookieHeader.match(
-    /(?:^|[;\s])auth_token=([^;,\s]+)/i
+    new RegExp(`${HMIS_AUTH_COOKIE_NAME}=([^;,\\s]+)`, 'i')
   );
   const authToken = authTokenMatch?.[1];
 
@@ -42,7 +49,7 @@ export const createAuthHeaderLink = () =>
       headers: {
         ...(prevContext['headers'] ?? {}),
         'User-Agent': MODERN_BROWSER_USER_AGENT,
-        ...(authToken ? { 'x-hmis-token': authToken } : {}),
+        ...(authToken ? { [HMIS_TOKEN_HEADER_NAME]: authToken } : {}),
       },
     };
   });
@@ -58,25 +65,22 @@ export const createCookieExtractorLink = () =>
           operation.getContext()['response'] as Response | undefined
         )?.headers.get('set-cookie');
 
-        const parsed = setCookieHeader
-          ? parseHmisCookieHeader(setCookieHeader)
-          : null;
+        if (!setCookieHeader) return;
 
-        if (parsed) {
-          if (parsed.authToken && __DEV__) {
-            console.debug('[HMIS] Auth token cookie updated:', {
-              domain: parsed.domain,
-            });
-          }
+        const parsed = parseHmisCookieHeader(setCookieHeader);
+        if (!parsed) return;
 
-          storeHmisDomain(parsed.domain);
-          NitroCookies.setFromResponse(
-            parsed.domain,
-            setCookieHeader as string
-          ).catch((error: Error) =>
-            console.error('[HMIS] Failed to store cookies:', error)
-          );
+        if (__DEV__ && parsed.authToken) {
+          console.debug('[HMIS] Auth token cookie updated:', {
+            domain: parsed.domain,
+          });
         }
+
+        storeHmisDomain(parsed.domain);
+        NitroCookies.setFromResponse(parsed.domain, setCookieHeader).catch(
+          (error: Error) =>
+            console.error('[HMIS] Failed to store cookies:', error)
+        );
       })
     );
   });
@@ -84,18 +88,26 @@ export const createCookieExtractorLink = () =>
 /**
  * Apollo link that handles HMIS authentication and cookie management.
  * Automatically detects HMIS operations based on @hmisDirective in the schema.
+ *
+ * Uses ApolloLink.split() to route operations:
+ * - HMIS operations (with @hmisDirective): apply auth headers and extract cookies
+ * - Non-HMIS operations: pass through unchanged (falseLink is undefined)
  */
 export const createHmisAuthLink = (): ApolloLink => {
   const authAndCookieLink = createCookieExtractorLink().concat(
     createAuthHeaderLink()
   );
 
-  return ApolloLink.split((operation) => {
-    const operationDef = operation.query.definitions.find(
-      (def): def is OperationDefinitionNode =>
-        def.kind === Kind.OPERATION_DEFINITION &&
-        def.name?.value === operation.operationName
-    );
-    return operationHasDirective(operationDef, 'hmisDirective');
-  }, authAndCookieLink);
+  return ApolloLink.split(
+    (operation) => {
+      const operationDef = operation.query.definitions.find(
+        (def): def is OperationDefinitionNode =>
+          def.kind === Kind.OPERATION_DEFINITION &&
+          def.name?.value === operation.operationName
+      );
+      return operationHasDirective(operationDef, 'hmisDirective');
+    },
+    authAndCookieLink
+    // falseLink is undefined, so non-HMIS operations pass through unchanged
+  );
 };

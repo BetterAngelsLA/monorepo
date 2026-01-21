@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 import strawberry
+from common.constants import HMIS_AUTH_COOKIE_NAME
 from common.errors import NotFoundGQLError, UnauthenticatedGQLError
 from common.utils import dict_keys_to_snake
 from django.conf import settings
@@ -302,6 +303,23 @@ class HmisApiBridge:
 
             raise GraphQLError("Validation Errors", extensions={"errors": errors})
 
+    def _forward_cookies_to_client(self, resp: requests.Response) -> None:
+        """Forward all cookies from HMIS response to the Django response."""
+        django_response = self.info.context.get("response")
+        if not django_response:
+            return
+
+        for cookie in resp.cookies:
+            django_response.set_cookie(
+                key=cookie.name,
+                value=cookie.value,
+                domain=cookie.domain,
+                path=cookie.path or "/",
+                secure=cookie.secure,
+                httponly=cookie.has_nonstandard_attr("HttpOnly"),
+                samesite="Lax",
+            )
+
     def _make_request(
         self,
         path: str,
@@ -319,21 +337,9 @@ class HmisApiBridge:
 
         self._handle_error_response(resp)
 
-        # Transparently forward any auth_token cookie updates from HMIS to the client
-        if "Set-Cookie" in resp.headers and "auth_token" in resp.headers.get("Set-Cookie", ""):
-            cookie_obj = next((c for c in resp.cookies if c.name == "auth_token"), None)
-            django_response = self.info.context.get("response")
-
-            if cookie_obj and django_response:
-                django_response.set_cookie(
-                    key="auth_token",
-                    value=cookie_obj.value,
-                    domain=cookie_obj.domain,
-                    path=cookie_obj.path or "/",
-                    secure=cookie_obj.secure,
-                    httponly=cookie_obj.has_nonstandard_attr("HttpOnly"),
-                    samesite="Lax",
-                )
+        # Transparently forward any cookie updates from HMIS to the client
+        if "Set-Cookie" in resp.headers:
+            self._forward_cookies_to_client(resp)
 
         return resp
 
@@ -374,24 +380,12 @@ class HmisApiBridge:
             )
 
             if post_response.url != login_url and "login" not in post_response.url:
-                auth_token = post_response.cookies.get("auth_token")
+                auth_token = post_response.cookies.get(HMIS_AUTH_COOKIE_NAME)
                 if not auth_token:
                     raise ValidationError(f"Status Code: {post_response.status_code}")
 
-                # Set cookies on Django response
-                django_response = self.info.context.get("response")
-                if django_response:
-                    for cookie in post_response.cookies:
-                        django_response.set_cookie(
-                            key=cookie.name,
-                            value=cookie.value,
-                            domain=cookie.domain,
-                            path=cookie.path or "/",
-                            secure=cookie.secure,
-                            httponly=cookie.has_nonstandard_attr("HttpOnly"),
-                            samesite="Lax",
-                        )
-
+                # Forward cookies from login response to client
+                self._forward_cookies_to_client(post_response)
                 return
 
             elif "Incorrect username or password" in post_response.text:
