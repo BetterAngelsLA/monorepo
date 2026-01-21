@@ -71,7 +71,7 @@ class OrganizationType:
 
 
 @strawberry_django.type(Organization, ordering=OrganizationOrder, filters=OrganizationFilter, pagination=True)
-class OrganizationForUserType(OrganizationType):
+class CurrentUserOrganizationType(OrganizationType):
     @classmethod
     def get_queryset(
         cls,
@@ -120,7 +120,18 @@ class UserBaseType:
 @strawberry_django.type(User)
 class UserType(UserBaseType):
     id: ID
-    organizations_organization: Optional[List[OrganizationForUserType]]
+    organizations: Optional[List[OrganizationType]]
+    has_accepted_tos: Optional[bool]
+    has_accepted_privacy_policy: Optional[bool]
+    is_outreach_authorized: Optional[bool]
+    username: Optional[str]
+
+
+@strawberry_django.type(User)
+class CurrentUserType(UserBaseType):
+    id: ID
+    organizations_organization: Optional[List[CurrentUserOrganizationType]]
+    organizations: Optional[List[CurrentUserOrganizationType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
     is_outreach_authorized: Optional[bool]

@@ -27,6 +27,7 @@ from strawberry_django.utils.query import filter_for_user
 from .models import PermissionGroup, User
 from .types import (
     AuthResponse,
+    CurrentUserType,
     LoginInput,
     OrganizationMemberOrdering,
     OrganizationMemberType,
@@ -65,7 +66,7 @@ def annotate_member_role(org_id: str) -> Case:
 @strawberry.type
 class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
-    def current_user(self, info: Info) -> UserType:
+    def current_user(self, info: Info) -> CurrentUserType:
         return get_current_user(info)  # type: ignore
 
     @strawberry_django.offset_paginated(

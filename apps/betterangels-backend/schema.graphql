@@ -522,6 +522,27 @@ input CreateTaskInput {
 
 union CreateTaskPayload = TaskType | OperationInfo
 
+type CurrentUserOrganizationType {
+  id: ID!
+  name: String!
+  userPermissions: [UserOrganizationPermissions!]
+}
+
+type CurrentUserType {
+  firstName: NonBlankString
+  lastName: NonBlankString
+  middleName: NonBlankString
+  email: NonBlankString
+  id: ID!
+  organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): [CurrentUserOrganizationType!]
+  organizations(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): [CurrentUserOrganizationType!]
+  hasAcceptedTos: Boolean
+  hasAcceptedPrivacyPolicy: Boolean
+  isOutreachAuthorized: Boolean
+  username: String
+  isHmisUser: Boolean
+}
+
 """Date (isoformat)"""
 scalar Date
 
@@ -1345,12 +1366,6 @@ input OrganizationFilter {
   search: String
 }
 
-type OrganizationForUserType {
-  id: ID!
-  name: String!
-  userPermissions: [UserOrganizationPermissions!]
-}
-
 input OrganizationMemberOrdering {
   id: Ordering
   email: Ordering
@@ -1511,7 +1526,7 @@ enum PronounEnum {
 }
 
 type Query {
-  currentUser: UserType!
+  currentUser: CurrentUserType!
   caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
@@ -2210,12 +2225,11 @@ type UserType {
   middleName: NonBlankString
   email: NonBlankString
   id: ID!
-  organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): [OrganizationForUserType!]
+  organizations(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = []): [OrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean
   username: String
-  isHmisUser: Boolean
 }
 
 union UserTypeHmisLoginError = UserType | HmisLoginError
