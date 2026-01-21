@@ -543,16 +543,8 @@ export type CurrentUserType = {
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
-  organizations?: Maybe<Array<CurrentUserOrganizationType>>;
   organizationsOrganization?: Maybe<Array<CurrentUserOrganizationType>>;
   username?: Maybe<Scalars['String']['output']>;
-};
-
-
-export type CurrentUserTypeOrganizationsArgs = {
-  filters?: InputMaybe<OrganizationFilter>;
-  ordering?: Array<OrganizationOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -561,6 +553,8 @@ export type CurrentUserTypeOrganizationsOrganizationArgs = {
   ordering?: Array<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
+export type CurrentUserTypeHmisLoginError = CurrentUserType | HmisLoginError;
 
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
@@ -1219,7 +1213,7 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
-  hmisLogin: UserTypeHmisLoginError;
+  hmisLogin: CurrentUserTypeHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
   login: AuthResponse;
@@ -2707,17 +2701,15 @@ export type UserType = {
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
-  organizations?: Maybe<Array<OrganizationType>>;
+  organizationsOrganization?: Maybe<Array<OrganizationType>>;
   username?: Maybe<Scalars['String']['output']>;
 };
 
 
-export type UserTypeOrganizationsArgs = {
+export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   ordering?: Array<OrganizationOrder>;
 };
-
-export type UserTypeHmisLoginError = HmisLoginError | UserType;
 
 export enum VeteranStatusEnum {
   No = 'NO',

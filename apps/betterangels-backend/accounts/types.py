@@ -120,7 +120,7 @@ class UserBaseType:
 @strawberry_django.type(User)
 class UserType(UserBaseType):
     id: ID
-    organizations: Optional[List[OrganizationType]]
+    organizations_organization: Optional[List[OrganizationType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
     is_outreach_authorized: Optional[bool]
@@ -131,7 +131,6 @@ class UserType(UserBaseType):
 class CurrentUserType(UserBaseType):
     id: ID
     organizations_organization: Optional[List[CurrentUserOrganizationType]]
-    organizations: Optional[List[CurrentUserOrganizationType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
     is_outreach_authorized: Optional[bool]

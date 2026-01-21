@@ -5,7 +5,7 @@ from typing import Optional, Union
 
 import strawberry
 import strawberry_django
-from accounts.types import UserType
+from accounts.types import CurrentUserType, UserType
 from clients.enums import (
     AdaAccommodationEnum,
     LanguageEnum,
@@ -44,7 +44,7 @@ class HmisLoginError:
     field: Optional[str] = None
 
 
-HmisLoginResult = Union[UserType, HmisLoginError]
+HmisLoginResult = Union[CurrentUserType, HmisLoginError]
 
 
 @strawberry_django.filter_type(HmisClientProfile, lookups=True)

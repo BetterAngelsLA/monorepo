@@ -535,13 +535,14 @@ type CurrentUserType {
   email: NonBlankString
   id: ID!
   organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): [CurrentUserOrganizationType!]
-  organizations(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): [CurrentUserOrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean
   username: String
   isHmisUser: Boolean
 }
+
+union CurrentUserTypeHmisLoginError = CurrentUserType | HmisLoginError
 
 """Date (isoformat)"""
 scalar Date
@@ -1198,7 +1199,7 @@ type Mutation {
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
-  hmisLogin(email: String!, password: String!): UserTypeHmisLoginError!
+  hmisLogin(email: String!, password: String!): CurrentUserTypeHmisLoginError!
   createHmisClientProfile(data: CreateHmisClientProfileInput!): CreateHmisClientProfilePayload!
   updateHmisClientProfile(data: UpdateHmisClientProfileInput!): UpdateHmisClientProfilePayload!
   createHmisNote(data: CreateHmisNoteInput!): CreateHmisNotePayload!
@@ -2225,14 +2226,12 @@ type UserType {
   middleName: NonBlankString
   email: NonBlankString
   id: ID!
-  organizations(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = []): [OrganizationType!]
+  organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = []): [OrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean
   username: String
 }
-
-union UserTypeHmisLoginError = UserType | HmisLoginError
 
 enum VeteranStatusEnum {
   YES

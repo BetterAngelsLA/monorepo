@@ -2,7 +2,7 @@ from typing import Any, Iterable, cast
 
 import strawberry
 import strawberry_django
-from accounts.types import UserType
+from accounts.types import CurrentUserType
 from accounts.utils import get_user_permission_group
 from betterangels_backend import settings
 from common.constants import HMIS_SESSION_KEY_NAME
@@ -162,7 +162,7 @@ class Mutation:
         backend = settings.AUTHENTICATION_BACKENDS[0]
         django_login(request, user, backend=backend)
 
-        return cast(UserType, user)
+        return cast(CurrentUserType, user)
 
     @strawberry_django.mutation(permission_classes=[IsHmisAuthenticated])
     def create_hmis_client_profile(self, info: Info, data: CreateHmisClientProfileInput) -> HmisClientProfileType:
