@@ -1,5 +1,5 @@
 import { createMMKV } from 'react-native-mmkv';
-import { PersistentSynchronousStorageApi } from './types';
+import { StateStorageSyncApi } from './types';
 
 type TConfig = {
   scopeId: string;
@@ -7,7 +7,7 @@ type TConfig = {
 
 export function createPersistentSynchronousStorage(
   config?: TConfig
-): PersistentSynchronousStorageApi {
+): StateStorageSyncApi {
   const mmkvConfig = config ? { id: config.scopeId } : undefined;
 
   const mmkv = createMMKV(mmkvConfig);

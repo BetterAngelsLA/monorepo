@@ -1,17 +1,13 @@
 import NitroCookies from 'react-native-nitro-cookies';
 import { createPersistentSynchronousStorage } from '../storage/createPersistentSynchronousStorage';
-import { PersistentSynchronousStorageApi } from '../storage/types';
-import {
-  HMIS_API_URL_COOKIE_NAME,
-  HMIS_AUTH_COOKIE_NAME,
-  HMIS_DOMAIN_KEY,
-} from './constants';
+import { StateStorageSyncApi } from '../storage/types';
 
+const HMIS_DOMAIN_KEY = 'hmis_domain' as const;
 type CookieValue = Record<string, { value: string }>;
 
 // Dependencies that can be injected for testing
 interface HmisAuthDependencies {
-  storage: PersistentSynchronousStorageApi;
+  storage: StateStorageSyncApi;
   getCookies: (domain: string) => Promise<CookieValue>;
 }
 
@@ -70,26 +66,12 @@ const getHmisCookie = async (cookieName: string): Promise<string | null> => {
  * Get HMIS auth token from cookies
  */
 export const getHmisAuthToken = (): Promise<string | null> => {
-  return getHmisCookie(HMIS_AUTH_COOKIE_NAME);
+  return getHmisCookie('auth_token');
 };
 
 /**
  * Get HMIS API URL from cookies
  */
 export const getHmisApiUrl = (): Promise<string | null> => {
-  return getHmisCookie(HMIS_API_URL_COOKIE_NAME).then((value) => {
-    if (!value) {
-      return value;
-    }
-
-    try {
-      const decoded = decodeURIComponent(value);
-      const trimmed = (decoded || value).trim();
-      const cleaned = trimmed.replace(/\/+$/, '');
-
-      return cleaned || null;
-    } catch {
-      return null;
-    }
-  });
+  return getHmisCookie('api_url');
 };

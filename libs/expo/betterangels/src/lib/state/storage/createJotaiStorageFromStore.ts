@@ -1,8 +1,8 @@
-import { PersistentSynchronousStorageApi } from '@monorepo/expo/shared/utils';
+import { StateStorageSyncApi } from '@monorepo/expo/shared/utils';
 import type { SyncStorage } from 'jotai/vanilla/utils/atomWithStorage';
 
 export function adaptToJotaiStorage<T>(
-  store: PersistentSynchronousStorageApi
+  store: StateStorageSyncApi
 ): SyncStorage<T> {
   return {
     getItem(key: string, initialValue: T): T {
