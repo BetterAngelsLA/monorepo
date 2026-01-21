@@ -5,23 +5,22 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { NoteType } from '../../apollo';
-import { enumDisplaySelahTeam } from '../../static/enumDisplayMapping';
+import { UserType } from '../../apollo';
 
 interface IProgramNoteCardBylineProps {
-  createdBy?: NoteType['createdBy'];
-  organization: NoteType['organization'];
-  team?: NoteType['team'];
+  createdBy?: UserType | null;
 }
 
 export default function ProgramNoteCardByline(
   props: IProgramNoteCardBylineProps
 ) {
-  const { createdBy, organization, team } = props;
+  const { createdBy } = props;
 
   const authorName = createdBy
     ? `${createdBy.firstName} ${createdBy.lastName}`
     : 'Unknown User';
+
+  const authorOrganization = createdBy?.organizationsOrganization?.[0];
 
   return (
     <View
@@ -47,15 +46,11 @@ export default function ProgramNoteCardByline(
         <TextMedium size="xsm" color={Colors.PRIMARY_EXTRA_DARK}>
           {authorName}
         </TextMedium>
-        <TextRegular size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
-          {organization.name}
-          {team && (
-            <TextRegular size="xs">
-              {' - '}
-              {enumDisplaySelahTeam[team]}
-            </TextRegular>
-          )}
-        </TextRegular>
+        {authorOrganization && (
+          <TextRegular size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
+            {authorOrganization.name}
+          </TextRegular>
+        )}
       </View>
     </View>
   );
