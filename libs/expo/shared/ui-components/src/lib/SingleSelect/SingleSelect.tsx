@@ -13,6 +13,7 @@ import TextRegular from '../TextRegular';
 interface ISingleSelectProps extends TMarginProps {
   label?: string;
   placeholder?: string;
+  placeholderTextColor?: string;
   onChange: (value: string | null) => void;
   items: { displayValue?: string; value: string }[];
   required?: boolean;
@@ -22,6 +23,7 @@ interface ISingleSelectProps extends TMarginProps {
   allowSelectNone?: boolean;
   error?: string;
   maxRadioItems?: number;
+  modalTitle?: string;
 }
 
 export function SingleSelect(props: ISingleSelectProps) {
@@ -35,6 +37,8 @@ export function SingleSelect(props: ISingleSelectProps) {
     selectedValue,
     error,
     maxRadioItems = 3,
+    modalTitle,
+    placeholderTextColor,
     ...rest
   } = props;
 
@@ -44,6 +48,8 @@ export function SingleSelect(props: ISingleSelectProps) {
   if (asSelect) {
     return (
       <Picker
+        placeholderTextColor={placeholderTextColor}
+        modalTitle={modalTitle}
         error={error}
         label={label}
         required={required}

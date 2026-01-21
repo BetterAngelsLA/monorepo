@@ -34,7 +34,7 @@ export type LocationDraft =
       longitude: number;
       formattedAddress: string;
       shortAddressName: string;
-      components?: string;
+      components?: unknown;
     }>
   | undefined;
 

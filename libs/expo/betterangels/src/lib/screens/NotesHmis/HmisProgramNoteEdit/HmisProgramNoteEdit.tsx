@@ -223,8 +223,8 @@ export function HmisProgramNoteEdit(props: TProps) {
       }
 
       const draftServices = services ?? {};
-
-      if (location) {
+      const locationDirty = methods.getFieldState('location').isDirty;
+      if (locationDirty && location) {
         await updateHmisNoteLocation({
           variables: {
             data: {
@@ -233,7 +233,7 @@ export function HmisProgramNoteEdit(props: TProps) {
                 point: [location.longitude, location.latitude],
                 address: {
                   formattedAddress: location.formattedAddress,
-                  addressComponents: JSON.stringify(location.components),
+                  addressComponents: JSON.stringify(location.components ?? []),
                 },
               },
             },
