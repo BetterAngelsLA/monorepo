@@ -37,7 +37,7 @@ interface ILocationMapModalProps {
   setLocation: (location: LocationDraft) => void;
   location: LocationDraft;
   onClose?: () => void;
-  setValue: (key: string, data: any) => void;
+  setValue: (key: string, data: any, options?: any) => void;
   userLocation: ExpoLocation.LocationObject | null;
 }
 
@@ -173,6 +173,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         latitude: responseLocation.lat,
         shortAddressName,
         formattedAddress: place.description,
+        components: placeResult.address_components || [],
       };
 
       setCurrentLocation({

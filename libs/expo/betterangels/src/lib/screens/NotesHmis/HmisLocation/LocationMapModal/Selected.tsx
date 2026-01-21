@@ -26,7 +26,7 @@ interface ISelectedProps {
   setSelected: (selected: boolean) => void;
   onSelectLocation: (location: LocationDraft) => void;
   minimizeModal: boolean;
-  setValue: (key: string, data: any) => void;
+  setValue: (key: string, data: any, options?: any) => void;
 }
 
 export default function Selected(props: ISelectedProps) {
@@ -52,14 +52,24 @@ export default function Selected(props: ISelectedProps) {
       latitude: currentLocation?.latitude,
       formattedAddress: address?.full || '',
       shortAddressName: currentLocation?.shortAddressName || '',
+      components: address?.addressComponents || [],
     });
 
-    setValue('location', {
-      longitude: currentLocation?.longitude,
-      latitude: currentLocation?.latitude,
-      formattedAddress: address?.full,
-      components: address?.addressComponents,
-    });
+    setValue(
+      'location',
+      {
+        longitude: currentLocation?.longitude,
+        latitude: currentLocation?.latitude,
+        formattedAddress: address?.full || '',
+        shortAddressName: currentLocation?.shortAddressName || '',
+        components: address?.addressComponents || [],
+      },
+      {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      }
+    );
   }
 
   return (
