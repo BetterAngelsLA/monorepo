@@ -97,7 +97,8 @@ export default function HmisRestDebug() {
           </TextRegular>
           <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
             Leave fields empty to use the default field set provided in
-            useHmisClient; otherwise pass a comma-separated list.
+            useHmisClient; otherwise enter a comma-separated list (parsed into
+            an array).
           </TextRegular>
         </View>
 
@@ -111,7 +112,7 @@ export default function HmisRestDebug() {
 
           <BasicInput
             label="Fields (optional)"
-            placeholder="id,first_name,last_name"
+            placeholder="id, first_name, last_name"
             value={fields}
             onChangeText={setFields}
             autoCapitalize="none"

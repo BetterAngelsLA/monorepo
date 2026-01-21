@@ -17,7 +17,7 @@ import { useCallback } from 'react';
  * console.log(user.first_name, user.currentAgency.name);
  *
  * // Get user with custom fields
- * const minimalUser = await getCurrentUser('id,first_name,last_name');
+ * const minimalUser = await getCurrentUser(['id', 'first_name', 'last_name']);
  *
  * // Custom HMIS endpoint
  * const data = await hmisClient.get('/some-hmis-endpoint', {
@@ -29,7 +29,7 @@ export const useHmisClient = () => {
   /**
    * Get current HMIS user profile with agency and navigation settings
    *
-   * @param fields - Comma-separated list of fields to fetch. If not provided, uses comprehensive default.
+   * @param fields - Array of field names to fetch. If not provided, uses comprehensive default.
    */
   const getCurrentUser = useCallback(
     (fields?: string[]): Promise<HmisCurrentUser> => {
