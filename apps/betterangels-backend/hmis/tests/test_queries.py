@@ -1,4 +1,5 @@
 import datetime
+from typing import Any
 from unittest.mock import ANY
 
 from clients.enums import (
@@ -43,6 +44,7 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
             HmisNote,
             hmis_id="480",
             hmis_client_profile=self.hmis_client_profile,
+            created_by=self.org_1_case_manager_1,
         )
 
     @scrubbed_vcr.use_cassette("test_hmis_note_query.yaml")
@@ -122,9 +124,88 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
                 "point": self.point,
                 "pointOfInterest": self.point_of_interest,
             },
-            "createdBy": None,
+            "createdBy": {
+                "firstName": None,
+                "id": str(self.org_1_case_manager_1.pk),
+                "lastName": None,
+                "organizations": [{"id": ANY, "name": "org_1"}],
+            },
         }
 
+        self.assertEqual(expected, hmis_note)
+
+    def test_hmis_notes_query(self) -> None:
+        HmisNote.objects.filter(pk=self.hmis_note.pk).update(created_by=self.org_2_case_manager_1)
+
+        query = """
+            query ($offset: Int, $limit: Int) {
+                hmisNotes (pagination: {offset: $offset, limit: $limit}) {
+                    totalCount
+                    pageInfo {
+                        limit
+                        offset
+                    }
+                    results {
+                        id
+                        hmisId
+                        title
+                        note
+                        hmisClientProfile {
+                            id
+                            hmisId
+                            firstName
+                            lastName
+                        }
+                        createdBy {
+                            id
+                            firstName
+                            lastName
+                            organizations: organizationsOrganization {
+                                id
+                                name
+                            }
+                        }
+                        providedServices {
+                            id
+                            service { id label }
+                        }
+                        requestedServices {
+                            id
+                            service { id label }
+                        }
+                    }
+                }
+            }
+        """
+        expected_query_count = 6
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
+
+        self.assertEqual(response["data"]["hmisNotes"]["totalCount"], 1)
+        self.assertEqual(response["data"]["hmisNotes"]["pageInfo"], {"limit": 10, "offset": 0})
+
+        expected: dict[str, Any] = {
+            "id": str(self.hmis_note.pk),
+            "hmisId": "480",
+            "hmisClientProfile": {
+                "id": str(self.hmis_client_profile.pk),
+                "hmisId": self.hmis_client_profile.hmis_id,
+                "firstName": self.hmis_client_profile.first_name,
+                "lastName": self.hmis_client_profile.last_name,
+            },
+            "title": None,
+            "note": "",
+            "providedServices": [],
+            "requestedServices": [],
+            "createdBy": {
+                "firstName": None,
+                "id": str(self.org_2_case_manager_1.pk),
+                "lastName": None,
+                "organizations": [{"id": ANY, "name": "org_2"}],
+            },
+        }
+
+        hmis_note = response["data"]["hmisNotes"]["results"][0]
         self.assertEqual(expected, hmis_note)
 
 

@@ -37,7 +37,7 @@ LOGIN_MUTATION = """
     mutation ($email: String!, $password: String!) {
         hmisLogin(email: $email, password: $password) {
             __typename
-            ... on UserType { id isHmisUser }
+            ... on CurrentUserType { id isHmisUser }
             ... on HmisLoginError { message field }
         }
     }
@@ -82,7 +82,12 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "lastUpdated": "2025-11-25T01:37:07+00:00",
             "refClientProgram": None,
             "clientProgram": None,
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdBy": {
+                "id": str(self.org_1_case_manager_1.pk),
+                "firstName": self.org_1_case_manager_1.first_name,
+                "lastName": self.org_1_case_manager_1.last_name,
+                "organizations": [{"id": ANY, "name": "org_1"}],
+            },
         }
 
         self.assertEqual(expected, note)
@@ -124,7 +129,12 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
                     "name": "Housing Program 01",
                 },
             },
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdBy": {
+                "id": str(self.org_1_case_manager_1.pk),
+                "firstName": self.org_1_case_manager_1.first_name,
+                "lastName": self.org_1_case_manager_1.last_name,
+                "organizations": [{"id": ANY, "name": "org_1"}],
+            },
         }
 
         self.assertEqual(expected, note)
@@ -198,7 +208,12 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
                     "name": "Housing Program 01",
                 },
             },
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdBy": {
+                "id": str(self.org_1_case_manager_1.pk),
+                "firstName": self.org_1_case_manager_1.first_name,
+                "lastName": self.org_1_case_manager_1.last_name,
+                "organizations": [{"id": ANY, "name": "org_1"}],
+            },
         }
 
         self.assertEqual(expected, note)
@@ -610,7 +625,7 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
         self.assertIsNone(resp.get("errors"))
         payload = resp["data"]["hmisLogin"]
-        self.assertEqual(payload["__typename"], "UserType")
+        self.assertEqual(payload["__typename"], "CurrentUserType")
         self.assertEqual(payload["id"], str(self.existing_user.pk))
         self.assertEqual(payload["isHmisUser"], True)
 
