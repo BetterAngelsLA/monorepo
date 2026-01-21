@@ -51,12 +51,7 @@ export function operationHasDirective(
 
   for (const selection of operation.selectionSet.selections) {
     if (selection.kind === Kind.FIELD) {
-      const fieldName = selection.name.value;
-      if (
-        Array.from(directiveOps).some(
-          (op) => op.toLowerCase() === fieldName.toLowerCase()
-        )
-      ) {
+      if (directiveOps.has(selection.name.value)) {
         return true;
       }
     }

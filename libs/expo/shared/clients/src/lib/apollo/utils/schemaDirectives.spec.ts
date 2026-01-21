@@ -81,20 +81,6 @@ describe('Schema directive utilities', () => {
       ).toBe(true);
     });
 
-    it('is case-insensitive for field names', () => {
-      // Capital operation name but lowercase field name (as per schema)
-      const op = parse(`
-        mutation HMISLogin {
-          hmisLogin(email: "", password: "") {
-            __typename
-          }
-        }
-      `).definitions[0];
-      expect(
-        operationHasDirective(op as OperationDefinitionNode, 'hmisDirective')
-      ).toBe(true);
-    });
-
     it('excludes non-HMIS operations', () => {
       const nonHmisOp = parse(`
         mutation CreateClient {

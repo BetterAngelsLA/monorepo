@@ -1,10 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// Mock native modules before any imports
 import { Observable } from '@apollo/client/utilities';
 import {
   createCookieExtractorLink,
   createHmisAuthLink,
   parseHmisCookieHeader,
 } from './hmisAuthLink';
+
+jest.mock('react-native-nitro-cookies', () => ({
+  __esModule: true,
+  default: {
+    setFromResponse: jest.fn(() => Promise.resolve()),
+  },
+}));
+jest.mock('react-native-mmkv');
 
 // Ensure React Native global exists in Jest environment
 (globalThis as any).__DEV__ = false;
@@ -26,13 +35,6 @@ jest.mock('../utils/schemaDirectives', () => ({
     if (dirName !== 'hmisDirective') return new Set();
     return new Set(['hmisClientProfiles', 'hmisNotes', 'hmisLogin']);
   }),
-}));
-
-jest.mock('react-native-nitro-cookies', () => ({
-  __esModule: true,
-  default: {
-    setFromResponse: jest.fn(() => Promise.resolve()),
-  },
 }));
 
 jest.mock('@monorepo/expo/shared/utils', () => ({
@@ -119,9 +121,7 @@ describe('hmisAuthLink', () => {
           definitions: [
             {
               selectionSet: {
-                selections: [
-                  { kind: 'Field', name: { value: 'hmisLogin' } },
-                ],
+                selections: [{ kind: 'Field', name: { value: 'hmisLogin' } }],
               },
             },
           ],
@@ -160,9 +160,7 @@ describe('hmisAuthLink', () => {
           definitions: [
             {
               selectionSet: {
-                selections: [
-                  { kind: 'Field', name: { value: 'notes' } },
-                ],
+                selections: [{ kind: 'Field', name: { value: 'notes' } }],
               },
             },
           ],
