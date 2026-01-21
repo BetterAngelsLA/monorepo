@@ -10,7 +10,7 @@ import { ScrollView, View } from 'react-native';
 import { SelahTeamEnum, TaskStatusEnum, UpdateTaskInput } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
-import { LocalDraftTask } from '../../screens/NotesHmis/HmisProgramNoteForm/formSchema';
+import { DraftTask as LocalDraftTask } from '../../screens/NotesHmis/HmisProgramNoteForm/formSchema';
 import { CreateTaskDocument } from '../TaskForm/__generated__/createTask.generated';
 import { DeleteTaskDocument } from '../TaskForm/__generated__/deleteTask.generated';
 import { UpdateTaskDocument } from '../TaskForm/__generated__/updateTask.generated';
@@ -19,10 +19,10 @@ import NoteTasksModal from './NoteTasksModal';
 // Define the Form Data Interface Locally if not exported elsewhere
 export interface TaskFormData {
   id?: string;
-  summary: string;
-  description?: string;
-  status?: TaskStatusEnum;
-  team?: SelahTeamEnum | '';
+  summary: string | null;
+  description?: string | null;
+  status?: TaskStatusEnum | null;
+  team?: SelahTeamEnum | null;
 }
 
 interface INoteTasksProps {
@@ -96,7 +96,7 @@ export default function NoteTasks(props: INoteTasksProps) {
     const newTask: LocalDraftTask = {
       id: existingId || `temp-${Date.now()}`,
       summary: data.summary,
-      description: data.description || null,
+      description: data.description || '',
       status: (data.status as TaskStatusEnum) || TaskStatusEnum.ToDo,
       team: (data.team as SelahTeamEnum) || team || null,
     };
@@ -121,7 +121,7 @@ export default function NoteTasks(props: INoteTasksProps) {
   const handleLiveSave = async (data: TaskFormData, existingId?: string) => {
     try {
       const cleanStatus = data.status || undefined;
-      const cleanTeam = data.team === '' ? null : data.team;
+      const cleanTeam = !data.team ? null : data.team;
 
       if (existingId) {
         await updateTask({
@@ -140,6 +140,7 @@ export default function NoteTasks(props: INoteTasksProps) {
           variables: {
             data: {
               ...data,
+              summary: data.summary || '',
               status: cleanStatus,
               clientProfile: clientProfileId,
               hmisClientProfile: hmisClientProfileId,
