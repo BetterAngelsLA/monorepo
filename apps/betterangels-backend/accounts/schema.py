@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional, cast
+from typing import Optional, Union, cast
 
 import strawberry
 import strawberry_django
@@ -135,7 +135,7 @@ class Mutation:
         return AuthResponse(status_code="")
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def update_current_user(self, info: Info, data: UpdateUserInput) -> UserType:
+    def update_current_user(self, info: Info, data: UpdateUserInput) -> Union[UserType, CurrentUserType]:
         user = cast(User, get_current_user(info))
         if str(user.pk) != str(data.id):
             raise PermissionError("You do not have permission to modify this user.")

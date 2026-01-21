@@ -554,7 +554,7 @@ export type CurrentUserTypeOrganizationsOrganizationArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-export type CurrentUserTypeHmisLoginError = CurrentUserType | HmisLoginError;
+export type CurrentUserTypeUserTypeHmisLoginError = CurrentUserType | HmisLoginError | UserType;
 
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
@@ -1213,7 +1213,7 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
-  hmisLogin: CurrentUserTypeHmisLoginError;
+  hmisLogin: CurrentUserTypeUserTypeHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
   login: AuthResponse;
@@ -2566,7 +2566,7 @@ export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
 
 export type UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo;
 
-export type UpdateCurrentUserPayload = OperationInfo | UserType;
+export type UpdateCurrentUserPayload = CurrentUserType | OperationInfo | UserType;
 
 export type UpdateHmisClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
@@ -2698,6 +2698,7 @@ export type UserType = {
   hasAcceptedPrivacyPolicy?: Maybe<Scalars['Boolean']['output']>;
   hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
+  isHmisUser?: Maybe<Scalars['Boolean']['output']>;
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;

@@ -126,6 +126,13 @@ class UserType(UserBaseType):
     is_outreach_authorized: Optional[bool]
     username: Optional[str]
 
+    @strawberry_django.field
+    def is_hmis_user(self, info: Info) -> Optional[bool]:
+        request = info.context["request"]
+        session = request.session
+
+        return bool(session.get(HMIS_SESSION_KEY_NAME, None))
+
 
 @strawberry_django.type(User)
 class CurrentUserType(UserBaseType):

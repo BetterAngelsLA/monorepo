@@ -44,7 +44,7 @@ class HmisLoginError:
     field: Optional[str] = None
 
 
-HmisLoginResult = Union[CurrentUserType, HmisLoginError]
+HmisLoginResult = Union[CurrentUserType, UserType, HmisLoginError]
 
 
 @strawberry_django.filter_type(HmisClientProfile, lookups=True)

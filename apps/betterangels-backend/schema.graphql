@@ -542,7 +542,7 @@ type CurrentUserType {
   isHmisUser: Boolean
 }
 
-union CurrentUserTypeHmisLoginError = CurrentUserType | HmisLoginError
+union CurrentUserTypeUserTypeHmisLoginError = CurrentUserType | UserType | HmisLoginError
 
 """Date (isoformat)"""
 scalar Date
@@ -1199,7 +1199,7 @@ type Mutation {
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
-  hmisLogin(email: String!, password: String!): CurrentUserTypeHmisLoginError!
+  hmisLogin(email: String!, password: String!): CurrentUserTypeUserTypeHmisLoginError!
   createHmisClientProfile(data: CreateHmisClientProfileInput!): CreateHmisClientProfilePayload!
   updateHmisClientProfile(data: UpdateHmisClientProfileInput!): UpdateHmisClientProfilePayload!
   createHmisNote(data: CreateHmisNoteInput!): CreateHmisNotePayload!
@@ -2092,7 +2092,7 @@ union UpdateClientProfilePayload = ClientProfileType | OperationInfo
 
 union UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo
 
-union UpdateCurrentUserPayload = UserType | OperationInfo
+union UpdateCurrentUserPayload = UserType | CurrentUserType | OperationInfo
 
 input UpdateHmisClientProfileInput {
   alias: String
@@ -2231,6 +2231,7 @@ type UserType {
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean
   username: String
+  isHmisUser: Boolean
 }
 
 enum VeteranStatusEnum {

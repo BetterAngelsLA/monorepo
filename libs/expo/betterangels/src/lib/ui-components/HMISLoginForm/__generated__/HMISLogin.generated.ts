@@ -10,6 +10,7 @@ export type HmisLoginMutationVariables = Types.Exact<{
 export type HmisLoginMutation = { __typename?: 'Mutation', hmisLogin:
     | { __typename?: 'CurrentUserType', id: string }
     | { __typename?: 'HmisLoginError', field?: string | null, message: string }
+    | { __typename?: 'UserType' }
    };
 
 

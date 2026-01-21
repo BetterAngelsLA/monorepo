@@ -38,6 +38,7 @@ LOGIN_MUTATION = """
         hmisLogin(email: $email, password: $password) {
             __typename
             ... on CurrentUserType { id isHmisUser }
+            ... on UserType { id isHmisUser }
             ... on HmisLoginError { message field }
         }
     }
