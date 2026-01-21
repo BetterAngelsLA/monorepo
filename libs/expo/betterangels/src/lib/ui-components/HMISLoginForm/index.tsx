@@ -55,7 +55,6 @@ export default function HMISLoginForm() {
         throw new Error('Sorry, login failed.');
       }
       if (res.__typename === 'HmisLoginSuccess') {
-        // Cookies are set automatically via Set-Cookie headers from backend
         await refetchUser();
         await persistOnSuccessfulSignIn(email);
         return;

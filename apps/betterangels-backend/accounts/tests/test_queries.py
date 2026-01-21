@@ -155,16 +155,12 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
     )
     def test_logged_in_hmis_user_query(self) -> None:
         hmis_user = baker.make(get_user_model(), _fill_optional=["email"])
-        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
 
         with patch(
             "hmis.api_bridge.HmisApiBridge.login",
             autospec=True,
         ) as mock_login:
-            mock_login.return_value = {
-                "cookies": {"auth_token": token},
-                "refresh_url": "https://example.com/refresh",
-            }
+            mock_login.return_value = None
 
             self.execute_graphql(
                 LOGIN_MUTATION,
