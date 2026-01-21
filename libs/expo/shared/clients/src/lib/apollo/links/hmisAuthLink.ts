@@ -9,6 +9,7 @@ import { Kind, type OperationDefinitionNode } from 'graphql';
 import NitroCookies from 'react-native-nitro-cookies';
 import { tap } from 'rxjs';
 import {
+  HMIS_DIRECTIVE_NAME,
   HMIS_TOKEN_HEADER_NAME,
   MODERN_BROWSER_USER_AGENT,
 } from '../../common/constants';
@@ -105,7 +106,7 @@ export const createHmisAuthLink = (): ApolloLink => {
           def.kind === Kind.OPERATION_DEFINITION &&
           def.name?.value === operation.operationName
       );
-      return operationHasDirective(operationDef, 'hmisDirective');
+      return operationHasDirective(operationDef, HMIS_DIRECTIVE_NAME);
     },
     authAndCookieLink
     // falseLink is undefined, so non-HMIS operations pass through unchanged
