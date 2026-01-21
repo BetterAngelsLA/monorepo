@@ -1,27 +1,20 @@
 import type { CodegenConfig } from '@graphql-codegen/cli';
-import fs from 'fs';
+import { readFileSync } from 'fs';
 
-const backendSchema = fs.readFileSync(
-  '../../../../apps/betterangels-backend/schema.graphql',
-  'utf8'
-);
+const schemaPath = '../../../../apps/betterangels-backend/schema.graphql';
+const schemaString = readFileSync(schemaPath, 'utf8');
 
 const config: CodegenConfig = {
   overwrite: true,
-  schema: '../../../../apps/betterangels-backend/schema.graphql',
+  schema: schemaPath,
   generates: {
-    'src/lib/apollo/graphql/__generated__/schema.graphql': {
-      plugins: ['schema-ast'],
-      config: {
-        includeDirectives: true,
-      },
-    },
     'src/lib/apollo/graphql/__generated__/schema.ts': {
       plugins: ['add'],
       config: {
-        content: `// This file is generated - do not edit\nexport const schema = ${JSON.stringify(
-          backendSchema
-        )};\n`,
+        content: [
+          '// This file is generated - do not edit',
+          `export const schema = ${JSON.stringify(schemaString)};`,
+        ].join('\n'),
       },
     },
   },
