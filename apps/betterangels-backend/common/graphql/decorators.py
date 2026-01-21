@@ -11,6 +11,7 @@ def apply_schema_directives_and_permissions_to_all_fields(
     directives: list[Type[Any]] | None = None,
     permission_classes: list[Type[BasePermission]] | None = None,
     exclude_fields: list[str] | None = None,
+    exclude_permissions: list[str] | None = None,
 ) -> Any:
     """
     Decorator that applies directives and/or permission classes to all fields in a Query or Mutation class.
@@ -21,27 +22,29 @@ def apply_schema_directives_and_permissions_to_all_fields(
     Args:
         directives: Optional list of directive classes to apply to all fields
         permission_classes: Optional list of permission classes to apply to all fields
-        exclude_fields: Optional list of field names to exclude from modifications
+        exclude_fields: Optional list of field names to exclude from all modifications (directives and permissions)
+        exclude_permissions: Optional list of field names to exclude from permission classes only
 
     Example:
         @apply_schema_directives_and_permissions_to_all_fields(
-            directives=[MyDirective],
-            permission_classes=[MyPermission],
-            exclude_fields=['myField']
+            directives=[HmisDirective],
+            permission_classes=[IsHmisAuthenticated],
+            exclude_permissions=['hmis_login']
         )
         @strawberry.type
-        class Query:
-            def excluded_field(self) -> str:
-                # This field won't get directives or permissions applied
+        class Mutation:
+            def hmis_login(self) -> str:
+                # This field gets the directive but NOT the permission
                 ...
     """
 
     def decorator(cls: T) -> T:
         exclude_set = set(exclude_fields or [])
+        exclude_perms_set = set(exclude_permissions or [])
 
         if hasattr(cls, "__strawberry_definition__"):
             for field in cls.__strawberry_definition__.fields:
-                # Skip excluded fields
+                # Skip fields excluded from all modifications
                 if field.name in exclude_set:
                     continue
 
@@ -51,8 +54,8 @@ def apply_schema_directives_and_permissions_to_all_fields(
                         if not field.directives or directive_class not in [type(d) for d in field.directives]:
                             field.directives = list(field.directives or []) + [directive_class()]
 
-                # Apply permission classes if specified
-                if permission_classes:
+                # Apply permission classes if specified (skip if in exclude_permissions)
+                if permission_classes and field.name not in exclude_perms_set:
                     field.permission_classes = list(field.permission_classes or []) + permission_classes
 
         return cls

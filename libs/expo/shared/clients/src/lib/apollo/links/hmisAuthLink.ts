@@ -1,9 +1,9 @@
 import { ApolloLink } from '@apollo/client';
 import { SetContextLink } from '@apollo/client/link/context';
-import { Observable } from '@apollo/client/utilities';
 import { getHmisAuthToken, storeHmisDomain } from '@monorepo/expo/shared/utils';
 import { Kind, type OperationDefinitionNode } from 'graphql';
 import NitroCookies from 'react-native-nitro-cookies';
+import { tap } from 'rxjs';
 import { MODERN_BROWSER_USER_AGENT } from '../../common/constants';
 import { operationHasDirective } from '../utils/schemaDirectives';
 
@@ -51,45 +51,35 @@ export const createAuthHeaderLink = () =>
  * Extracts and stores cookies from responses
  */
 export const createCookieExtractorLink = () =>
-  new ApolloLink(
-    (operation, forward) =>
-      new Observable((observer) => {
-        const subscription = forward(operation).subscribe({
-          next: (response) => {
-            observer.next(response);
+  new ApolloLink((operation, forward) => {
+    return forward(operation).pipe(
+      tap(() => {
+        const setCookieHeader = (
+          operation.getContext()['response'] as Response | undefined
+        )?.headers.get('set-cookie');
 
-            const setCookieHeader = (
-              operation.getContext()['response'] as Response | undefined
-            )?.headers.get('set-cookie');
+        const parsed = setCookieHeader
+          ? parseHmisCookieHeader(setCookieHeader)
+          : null;
 
-            const parsed = setCookieHeader
-              ? parseHmisCookieHeader(setCookieHeader)
-              : null;
-            if (parsed) {
-              if (parsed.authToken && __DEV__) {
-                console.debug(
-                  '[HMIS] Auth token cookie updated for domain:',
-                  parsed.domain
-                );
-              }
+        if (parsed) {
+          if (parsed.authToken && __DEV__) {
+            console.debug('[HMIS] Auth token cookie updated:', {
+              domain: parsed.domain,
+            });
+          }
 
-              // Store the HMIS domain for later use in getHmisAuthToken
-              storeHmisDomain(parsed.domain);
-              NitroCookies.setFromResponse(
-                parsed.domain,
-                setCookieHeader as string
-              ).catch((error: Error) =>
-                console.error('[HMIS] Failed to store cookies:', error)
-              );
-            }
-          },
-          error: observer.error.bind(observer),
-          complete: observer.complete.bind(observer),
-        });
-
-        return () => subscription.unsubscribe();
+          storeHmisDomain(parsed.domain);
+          NitroCookies.setFromResponse(
+            parsed.domain,
+            setCookieHeader as string
+          ).catch((error: Error) =>
+            console.error('[HMIS] Failed to store cookies:', error)
+          );
+        }
       })
-  );
+    );
+  });
 
 /**
  * Apollo link that handles HMIS authentication and cookie management.
@@ -100,21 +90,12 @@ export const createHmisAuthLink = (): ApolloLink => {
     createAuthHeaderLink()
   );
 
-  return new ApolloLink((operation, forward) => {
+  return ApolloLink.split((operation) => {
     const operationDef = operation.query.definitions.find(
-      (def: any) =>
+      (def): def is OperationDefinitionNode =>
         def.kind === Kind.OPERATION_DEFINITION &&
         def.name?.value === operation.operationName
-    ) as OperationDefinitionNode | undefined;
-    const isHmisOperation = operationHasDirective(
-      operationDef,
-      'hmisDirective'
     );
-
-    if (!isHmisOperation) {
-      return forward(operation);
-    }
-
-    return authAndCookieLink.request(operation, forward);
-  });
+    return operationHasDirective(operationDef, 'hmisDirective');
+  }, authAndCookieLink);
 };
