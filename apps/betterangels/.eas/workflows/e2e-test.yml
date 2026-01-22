@@ -11,6 +11,8 @@ jobs:
           GITHUB_REPOSITORY="$(grep '^GITHUB_REPOSITORY=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
           GITHUB_STATUS_SHA="$(grep '^GITHUB_STATUS_SHA=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
           GITHUB_STATUS_CONTEXT="$(grep '^GITHUB_STATUS_CONTEXT=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
+          EAS_ACCOUNT="$(grep '^EAS_ACCOUNT=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
+          EAS_PROJECT_SLUG="$(grep '^EAS_PROJECT_SLUG=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
           # Prefer EAS-provided env var (EAS secret), fallback to .env if present.
           GITHUB_STATUS_TOKEN="${GITHUB_STATUS_TOKEN:-$(grep '^GITHUB_STATUS_TOKEN=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)}"
 
@@ -23,14 +25,26 @@ jobs:
             exit 1
           fi
 
-          export GITHUB_STATUS_CONTEXT
+          EAS_RUN_ID="${EAS_WORKFLOW_RUN_ID:-${EAS_WORKFLOW_RUN_UUID:-${EAS_WORKFLOW_RUN_IDENTITY:-}}}"
+          TARGET_URL=""
+          if [ -n "${EAS_ACCOUNT:-}" ] && [ -n "${EAS_PROJECT_SLUG:-}" ] && [ -n "${EAS_RUN_ID:-}" ]; then
+            TARGET_URL="https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${EAS_PROJECT_SLUG}/workflows/runs/${EAS_RUN_ID}"
+          elif [ -n "${EAS_ACCOUNT:-}" ] && [ -n "${EAS_PROJECT_SLUG:-}" ]; then
+            TARGET_URL="https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${EAS_PROJECT_SLUG}/workflows"
+          fi
+
+          export GITHUB_STATUS_CONTEXT TARGET_URL
           BODY="$(python3 - <<'PY'
           import json, os
-          print(json.dumps({
+          payload = {
             "state": "pending",
             "context": os.environ["GITHUB_STATUS_CONTEXT"],
             "description": "E2E tests running on EAS",
-          }))
+          }
+          target_url = os.environ.get("TARGET_URL", "").strip()
+          if target_url:
+            payload["target_url"] = target_url
+          print(json.dumps(payload))
           PY
           )"
 
@@ -114,6 +128,8 @@ jobs:
           GITHUB_REPOSITORY="$(grep '^GITHUB_REPOSITORY=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
           GITHUB_STATUS_SHA="$(grep '^GITHUB_STATUS_SHA=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
           GITHUB_STATUS_CONTEXT="$(grep '^GITHUB_STATUS_CONTEXT=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
+          EAS_ACCOUNT="$(grep '^EAS_ACCOUNT=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
+          EAS_PROJECT_SLUG="$(grep '^EAS_PROJECT_SLUG=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
           # Prefer EAS-provided env var (EAS secret), fallback to .env if present.
           GITHUB_STATUS_TOKEN="${GITHUB_STATUS_TOKEN:-$(grep '^GITHUB_STATUS_TOKEN=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)}"
 
@@ -141,14 +157,28 @@ jobs:
             DESC="E2E tests failed"
           fi
 
-          export STATE DESC GITHUB_STATUS_CONTEXT
+          # Best-effort: link to the exact workflow run if EAS exposes a run id, otherwise link
+          # to the project's workflows page.
+          EAS_RUN_ID="${EAS_WORKFLOW_RUN_ID:-${EAS_WORKFLOW_RUN_UUID:-${EAS_WORKFLOW_RUN_IDENTITY:-}}}"
+          TARGET_URL=""
+          if [ -n "${EAS_ACCOUNT:-}" ] && [ -n "${EAS_PROJECT_SLUG:-}" ] && [ -n "${EAS_RUN_ID:-}" ]; then
+            TARGET_URL="https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${EAS_PROJECT_SLUG}/workflows/runs/${EAS_RUN_ID}"
+          elif [ -n "${EAS_ACCOUNT:-}" ] && [ -n "${EAS_PROJECT_SLUG:-}" ]; then
+            TARGET_URL="https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${EAS_PROJECT_SLUG}/workflows"
+          fi
+
+          export STATE DESC GITHUB_STATUS_CONTEXT TARGET_URL
           BODY="$(python3 - <<'PY'
           import json, os
-          print(json.dumps({
+          payload = {
             "state": os.environ["STATE"],
             "context": os.environ["GITHUB_STATUS_CONTEXT"],
             "description": os.environ["DESC"],
-          }))
+          }
+          target_url = os.environ.get("TARGET_URL", "").strip()
+          if target_url:
+            payload["target_url"] = target_url
+          print(json.dumps(payload))
           PY
           )"
 
