@@ -54,6 +54,10 @@ query InteractionListHmis(
         id
         firstName
         lastName
+        organizationsOrganization {
+          id
+          name
+        }
       }
     }
   }
