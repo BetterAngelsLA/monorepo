@@ -121,9 +121,8 @@ jobs:
           echo "GITHUB_STATUS_SHA=${GITHUB_STATUS_SHA}"
           echo "GITHUB_STATUS_CONTEXT=${GITHUB_STATUS_CONTEXT}"
 
-          ANDROID_STATUS="${ANDROID_E2E_STATUS:-}"
-          IOS_STATUS="${IOS_E2E_STATUS:-}"
-
+          echo "ANDROID_STATUS=${ANDROID_STATUS:-}"
+          echo "IOS_STATUS=${IOS_STATUS:-}"
 
           if [ -z "${GITHUB_REPOSITORY:-}" ] || [ -z "${GITHUB_STATUS_SHA:-}" ] || [ -z "${GITHUB_STATUS_CONTEXT:-}" ]; then
             echo "Missing GITHUB_REPOSITORY / GITHUB_STATUS_SHA / GITHUB_STATUS_CONTEXT; cannot post commit status."
