@@ -4,6 +4,26 @@ platform: ${MAESTRO_PLATFORM}
 - openLink: betterangels-dev://expo-development-client/?url=https://u.expo.dev/${MAESTRO_PROJECT_ID}/group/${MAESTRO_GROUP_ID}?platform=${MAESTRO_PLATFORM}%26disableOnboarding%3D1
 
 - runFlow:
+    # Expo DevLauncher sometimes fails to open the update due to transient network/CDN issues.
+    # When that happens it shows an error screen with a "Reload" button; tapping it usually recovers.
+    when:
+      visible: 'There was a problem loading the project.'
+    commands:
+      - tapOn: 'Reload'
+
+- runFlow:
+    when:
+      visible: 'There was a problem loading the project.'
+    commands:
+      - tapOn: 'Reload'
+
+- runFlow:
+    when:
+      visible: 'There was a problem loading the project.'
+    commands:
+      - tapOn: 'Reload'
+
+- runFlow:
     when:
       platform: ios
       visible: 'Open'
