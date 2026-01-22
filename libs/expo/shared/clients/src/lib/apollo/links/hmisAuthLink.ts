@@ -75,13 +75,16 @@ export const createCookieExtractorLink = () =>
           return;
         }
 
-        if (__DEV__ && parsed.authToken) {
-          console.debug('[HMIS] Auth token cookie updated:', {
-            domain: parsed.domain,
-          });
-        }
+        // Only store domain when auth token is present to avoid overwriting with non-HMIS cookies
+        if (parsed.authToken) {
+          storeHmisDomain(parsed.domain);
 
-        storeHmisDomain(parsed.domain);
+          if (__DEV__) {
+            console.debug('[HMIS] Auth token cookie updated:', {
+              domain: parsed.domain,
+            });
+          }
+        }
         NitroCookies.setFromResponse(parsed.domain, setCookieHeader).catch(
           (error: Error) =>
             console.error('[HMIS] Failed to store cookies:', error)
