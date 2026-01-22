@@ -1,7 +1,7 @@
 import { atomFamily } from 'jotai-family';
 import { atomWithStorage } from 'jotai/utils';
+import { createPersistentSynchronousStorage } from '@monorepo/expo/shared/utils';
 import { adaptToJotaiStorage } from '../../storage/createJotaiStorageFromStore';
-import { createPersistentSynchronousStorage } from '../../storage/createPersistentSynchronousStorage';
 import {
   userPreferencesDefaultState,
   userPreferencesStorageKey,
