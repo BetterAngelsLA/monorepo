@@ -121,8 +121,13 @@ jobs:
           # Prefer EAS-provided env var (EAS secret), fallback to .env if present.
           GITHUB_STATUS_TOKEN="${GITHUB_STATUS_TOKEN:-$(grep '^GITHUB_STATUS_TOKEN=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)}"
 
+          echo "GITHUB_REPOSITORY=${GITHUB_REPOSITORY}"
+          echo "GITHUB_STATUS_SHA=${GITHUB_STATUS_SHA}"
+          echo "GITHUB_STATUS_CONTEXT=${GITHUB_STATUS_CONTEXT}"
+
           ANDROID_STATUS="${ANDROID_E2E_STATUS:-}"
           IOS_STATUS="${IOS_E2E_STATUS:-}"
+
 
           if [ -z "${GITHUB_REPOSITORY:-}" ] || [ -z "${GITHUB_STATUS_SHA:-}" ] || [ -z "${GITHUB_STATUS_CONTEXT:-}" ]; then
             echo "Missing GITHUB_REPOSITORY / GITHUB_STATUS_SHA / GITHUB_STATUS_CONTEXT; cannot post commit status."
