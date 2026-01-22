@@ -15,6 +15,11 @@ export const UPDATE_USER = gql`
         hasAcceptedTos
         hasAcceptedPrivacyPolicy
       }
+      ... on CurrentUserType {
+        id
+        hasAcceptedTos
+        hasAcceptedPrivacyPolicy
+      }
     }
   }
 `;

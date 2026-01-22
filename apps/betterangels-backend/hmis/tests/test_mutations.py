@@ -83,7 +83,12 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "lastUpdated": "2025-11-25T01:37:07+00:00",
             "refClientProgram": None,
             "clientProgram": None,
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdBy": {
+                "id": str(self.org_1_case_manager_1.pk),
+                "firstName": self.org_1_case_manager_1.first_name,
+                "lastName": self.org_1_case_manager_1.last_name,
+                "organizations": [{"id": ANY, "name": "org_1"}],
+            },
         }
 
         self.assertEqual(expected, note)
@@ -125,7 +130,12 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
                     "name": "Housing Program 01",
                 },
             },
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdBy": {
+                "id": str(self.org_1_case_manager_1.pk),
+                "firstName": self.org_1_case_manager_1.first_name,
+                "lastName": self.org_1_case_manager_1.last_name,
+                "organizations": [{"id": ANY, "name": "org_1"}],
+            },
         }
 
         self.assertEqual(expected, note)
@@ -199,7 +209,12 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
                     "name": "Housing Program 01",
                 },
             },
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdBy": {
+                "id": str(self.org_1_case_manager_1.pk),
+                "firstName": self.org_1_case_manager_1.first_name,
+                "lastName": self.org_1_case_manager_1.last_name,
+                "organizations": [{"id": ANY, "name": "org_1"}],
+            },
         }
 
         self.assertEqual(expected, note)

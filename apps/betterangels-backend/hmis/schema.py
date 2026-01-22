@@ -2,7 +2,7 @@ from typing import Any, Iterable, cast
 
 import strawberry
 import strawberry_django
-from accounts.types import UserType
+from accounts.types import CurrentUserType
 from accounts.utils import get_user_permission_group
 from betterangels_backend import settings
 from common.constants import HMIS_SESSION_KEY_NAME
@@ -196,7 +196,7 @@ class Mutation:
         # Mark session as HMIS authenticated so isHmisUser resolver returns True
         request.session[HMIS_SESSION_KEY_NAME] = True
         return HmisLoginSuccess(
-            user=cast(UserType, user),
+            user=cast(CurrentUserType, user),
         )
 
     @strawberry_django.mutation

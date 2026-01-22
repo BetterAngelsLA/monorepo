@@ -526,6 +526,26 @@ input CreateTaskInput {
 
 union CreateTaskPayload = TaskType | OperationInfo
 
+type CurrentUserOrganizationType {
+  id: ID!
+  name: String!
+  userPermissions: [UserOrganizationPermissions!]
+}
+
+type CurrentUserType {
+  firstName: NonBlankString
+  lastName: NonBlankString
+  middleName: NonBlankString
+  email: NonBlankString
+  id: ID!
+  organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): [CurrentUserOrganizationType!]
+  hasAcceptedTos: Boolean
+  hasAcceptedPrivacyPolicy: Boolean
+  isOutreachAuthorized: Boolean
+  username: String
+  isHmisUser: Boolean
+}
+
 """Date (isoformat)"""
 scalar Date
 
@@ -823,7 +843,7 @@ type HmisLoginError {
 }
 
 type HmisLoginSuccess {
-  user: UserType!
+  user: CurrentUserType!
 }
 
 union HmisLoginSuccessHmisLoginError = HmisLoginSuccess | HmisLoginError
@@ -1355,12 +1375,6 @@ input OrganizationFilter {
   search: String
 }
 
-type OrganizationForUserType {
-  id: ID!
-  name: String!
-  userPermissions: [UserOrganizationPermissions!]
-}
-
 input OrganizationMemberOrdering {
   id: Ordering
   email: Ordering
@@ -1521,7 +1535,7 @@ enum PronounEnum {
 }
 
 type Query {
-  currentUser: UserType!
+  currentUser: CurrentUserType!
   caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
@@ -2086,7 +2100,7 @@ union UpdateClientProfilePayload = ClientProfileType | OperationInfo
 
 union UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo
 
-union UpdateCurrentUserPayload = UserType | OperationInfo
+union UpdateCurrentUserPayload = UserType | CurrentUserType | OperationInfo
 
 input UpdateHmisClientProfileInput {
   alias: String
@@ -2220,7 +2234,7 @@ type UserType {
   middleName: NonBlankString
   email: NonBlankString
   id: ID!
-  organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): [OrganizationForUserType!]
+  organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = []): [OrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean

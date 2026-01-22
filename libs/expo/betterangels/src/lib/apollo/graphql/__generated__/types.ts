@@ -525,6 +525,35 @@ export type CreateTaskInput = {
 
 export type CreateTaskPayload = OperationInfo | TaskType;
 
+export type CurrentUserOrganizationType = {
+  __typename?: 'CurrentUserOrganizationType';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
+};
+
+export type CurrentUserType = {
+  __typename?: 'CurrentUserType';
+  email?: Maybe<Scalars['NonBlankString']['output']>;
+  firstName?: Maybe<Scalars['NonBlankString']['output']>;
+  hasAcceptedPrivacyPolicy?: Maybe<Scalars['Boolean']['output']>;
+  hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
+  id: Scalars['ID']['output'];
+  isHmisUser?: Maybe<Scalars['Boolean']['output']>;
+  isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
+  lastName?: Maybe<Scalars['NonBlankString']['output']>;
+  middleName?: Maybe<Scalars['NonBlankString']['output']>;
+  organizationsOrganization?: Maybe<Array<CurrentUserOrganizationType>>;
+  username?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type CurrentUserTypeOrganizationsOrganizationArgs = {
+  filters?: InputMaybe<OrganizationFilter>;
+  ordering?: Array<OrganizationOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
 export type DeleteClientDocumentPayload = ClientDocumentType | OperationInfo;
@@ -830,7 +859,7 @@ export type HmisLoginError = {
 
 export type HmisLoginSuccess = {
   __typename?: 'HmisLoginSuccess';
-  user: UserType;
+  user: CurrentUserType;
 };
 
 export type HmisLoginSuccessHmisLoginError = HmisLoginError | HmisLoginSuccess;
@@ -1621,13 +1650,6 @@ export type OrganizationFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type OrganizationForUserType = {
-  __typename?: 'OrganizationForUserType';
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
-};
-
 export type OrganizationMemberOrdering = {
   email?: InputMaybe<Ordering>;
   firstName?: InputMaybe<Ordering>;
@@ -1812,7 +1834,7 @@ export type Query = {
   clientHouseholdMembers: ClientHouseholdMemberTypeOffsetPaginated;
   clientProfile: ClientProfileType;
   clientProfiles: ClientProfileTypeOffsetPaginated;
-  currentUser: UserType;
+  currentUser: CurrentUserType;
   featureControls: FeatureControlData;
   hmisClientProfile: HmisClientProfileType;
   hmisClientProfiles: HmisClientProfileTypeOffsetPaginated;
@@ -2549,7 +2571,7 @@ export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
 
 export type UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo;
 
-export type UpdateCurrentUserPayload = OperationInfo | UserType;
+export type UpdateCurrentUserPayload = CurrentUserType | OperationInfo | UserType;
 
 export type UpdateHmisClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
@@ -2685,7 +2707,7 @@ export type UserType = {
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
-  organizationsOrganization?: Maybe<Array<OrganizationForUserType>>;
+  organizationsOrganization?: Maybe<Array<OrganizationType>>;
   username?: Maybe<Scalars['String']['output']>;
 };
 
@@ -2693,7 +2715,6 @@ export type UserType = {
 export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   ordering?: Array<OrganizationOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export enum VeteranStatusEnum {
