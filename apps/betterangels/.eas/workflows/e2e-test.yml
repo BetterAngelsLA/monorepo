@@ -60,48 +60,12 @@ jobs:
           echo "GROUP_ID=${GROUP_ID}"
           echo "PROJECT_ID=${PROJECT_ID}"
           echo "RUNTIME_VERSION=${RUNTIME_VERSION}"
-          if [ -z "${GROUP_ID:-}" ] || [ -z "${PROJECT_ID:-}" ] || [ -z "${RUNTIME_VERSION:-}" ]; then
-            echo "Missing GROUP_ID / PROJECT_ID / RUNTIME_VERSION in ${WORK_DIR}/.env"
-            echo "This will make the Expo dev-client deeplink invalid and can present as 'Failed to open app'."
-            exit 1
-          fi
           set-output group_id "$GROUP_ID"
           set-output project_id "$PROJECT_ID"
           set-output runtime_version "$RUNTIME_VERSION"
 
-  preflight_expo_update_android:
-    needs: [get_vars]
-    steps:
-      - id: preflight
-        run: |
-          set -euo pipefail
-
-          PROJECT_ID="${{ needs.get_vars.outputs.project_id }}"
-          GROUP_ID="${{ needs.get_vars.outputs.group_id }}"
-
-          UPDATE_URL="https://u.expo.dev/${PROJECT_ID}/group/${GROUP_ID}?platform=android&disableOnboarding=1"
-          echo "Preflighting Expo update URL: ${UPDATE_URL}"
-
-          # We occasionally see transient DNS/TLS/5xx issues from the emulator/runtime that resolve on retry.
-          # Preflight here makes failures deterministic and improves the odds the dev-client can open on first try.
-          for attempt in 1 2 3 4 5; do
-            echo "Attempt ${attempt}/5..."
-            code="$(curl -L -sS -o /dev/null -w '%{http_code}' --connect-timeout 10 --max-time 30 "${UPDATE_URL}" || true)"
-            echo "HTTP ${code}"
-
-            if [ "${code}" = "200" ] || [ "${code}" = "302" ] || [ "${code}" = "304" ]; then
-              echo "Preflight OK"
-              exit 0
-            fi
-
-            sleep $((attempt * 5))
-          done
-
-          echo "Preflight failed: could not reach ${UPDATE_URL} after retries."
-          exit 1
-
   get_android_build:
-    needs: [get_vars, preflight_expo_update_android]
+    needs: [get_vars]
     type: get-build
     params:
       runtime_version: ${{ needs.get_vars.outputs.runtime_version }}
