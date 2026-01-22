@@ -47,11 +47,19 @@ export function GirpNoteForm(props: TProps) {
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
 
+  const providedServicesList = (providedServices ?? [])
+    .map((s) => s.service?.label ?? s.serviceOther)
+    .filter((v): v is string => v != null);
+
+  const requestedServicesList = (requestedServices ?? [])
+    .map((s) => s.service?.label ?? s.serviceOther)
+    .filter((v): v is string => v != null);
+
   function generateNote() {
     const generated = generateGirpNote({
       purpose,
-      providedServices,
-      requestedServices,
+      providedServicesList,
+      requestedServicesList,
     });
 
     setLocalNote(generated);
