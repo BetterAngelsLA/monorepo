@@ -267,3 +267,4 @@ class NoteImportRecordAdmin(admin.ModelAdmin):
     list_filter = ("import_job__id", "success")
     search_fields = ("source_id", "note__id")
     readonly_fields = ("raw_data", "error_message")
+    readonly_fields = ("raw_data", "error_message")

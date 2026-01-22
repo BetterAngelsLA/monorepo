@@ -132,6 +132,7 @@ INSTALLED_APPS = [
     "legal",
     "notes",
     "proxy",
+    "reports",
     "shelters",
     "tasks",
     # Must be at the end

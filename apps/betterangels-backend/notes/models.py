@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
@@ -20,6 +21,8 @@ from .enums import MoodEnum, ServiceEnum, ServiceRequestStatusEnum
 
 if TYPE_CHECKING:
     from pghistory.models import Events
+
+logger = logging.getLogger(__name__)
 
 
 @pghistory.track(
