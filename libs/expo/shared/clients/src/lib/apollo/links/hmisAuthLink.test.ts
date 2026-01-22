@@ -205,94 +205,91 @@ describe('hmisAuthLink', () => {
   });
 });
 
-  describe('createCookieExtractorLink - Domain Storage Fix', () => {
-    const mockStoreHmisDomain = jest.requireMock(
-      '@monorepo/expo/shared/utils'
-    ).storeHmisDomain as jest.Mock;
+describe('createCookieExtractorLink - Domain Storage Fix', () => {
+  const mockStoreHmisDomain = jest.requireMock('@monorepo/expo/shared/utils')
+    .storeHmisDomain as jest.Mock;
 
-    it('REGRESSION TEST: only stores domain when auth token is present', async () => {
-      const setCookieHeaderWithToken =
-        'auth_token=valid123; Domain=hmis.example.com; Path=/;';
-      const response: any = {
-        headers: {
-          get: (name: string) =>
-            name.toLowerCase() === 'set-cookie'
-              ? setCookieHeaderWithToken
-              : null,
-        },
-      };
+  it('REGRESSION TEST: only stores domain when auth token is present', async () => {
+    const setCookieHeaderWithToken =
+      'auth_token=valid123; Domain=hmis.example.com; Path=/;';
+    const response: any = {
+      headers: {
+        get: (name: string) =>
+          name.toLowerCase() === 'set-cookie' ? setCookieHeaderWithToken : null,
+      },
+    };
 
-      const operation: any = {
-        operationName: 'HMISLogin',
-        getContext: () => ({ response }),
-      };
+    const operation: any = {
+      operationName: 'HMISLogin',
+      getContext: () => ({ response }),
+    };
 
-      const forward: any = jest.fn(
-        () =>
-          new Observable((observer) => {
-            observer.next({});
-            observer.complete();
-          })
-      );
+    const forward: any = jest.fn(
+      () =>
+        new Observable((observer) => {
+          observer.next({});
+          observer.complete();
+        })
+    );
 
-      const observer: any = {
-        next: jest.fn(),
-        error: jest.fn(),
-        complete: jest.fn(),
-      };
+    const observer: any = {
+      next: jest.fn(),
+      error: jest.fn(),
+      complete: jest.fn(),
+    };
 
-      const link = createCookieExtractorLink();
-      link.request(operation, forward)?.subscribe(observer);
+    const link = createCookieExtractorLink();
+    link.request(operation, forward)?.subscribe(observer);
 
-      await new Promise((resolve) => setImmediate(resolve));
+    await new Promise((resolve) => setImmediate(resolve));
 
-      // When auth token is present, domain SHOULD be stored
-      expect(mockStoreHmisDomain).toHaveBeenCalledWith(
-        'https://hmis.example.com'
-      );
-    });
-
-    it('REGRESSION TEST: does NOT store domain when auth token is missing', async () => {
-      // This test prevents regression of the bug where CSRF cookies from the app server
-      // would overwrite the HMIS domain, causing subsequent HMIS operations to fail
-      const setCookieHeaderWithoutToken =
-        'csrftoken=xyz789; Domain=.dev.example.com; Path=/; expires=Thu, 21 Jan 2027';
-      const response: any = {
-        headers: {
-          get: (name: string) =>
-            name.toLowerCase() === 'set-cookie'
-              ? setCookieHeaderWithoutToken
-              : null,
-        },
-      };
-
-      const operation: any = {
-        operationName: 'hmisClientProfile',
-        getContext: () => ({ response }),
-      };
-
-      const forward: any = jest.fn(
-        () =>
-          new Observable((observer) => {
-            observer.next({});
-            observer.complete();
-          })
-      );
-
-      const observer: any = {
-        next: jest.fn(),
-        error: jest.fn(),
-        complete: jest.fn(),
-      };
-
-      mockStoreHmisDomain.mockClear();
-
-      const link = createCookieExtractorLink();
-      link.request(operation, forward)?.subscribe(observer);
-
-      await new Promise((resolve) => setImmediate(resolve));
-
-      // When auth token is NOT present, domain should NOT be stored
-      expect(mockStoreHmisDomain).not.toHaveBeenCalled();
-    });
+    // When auth token is present, domain SHOULD be stored
+    expect(mockStoreHmisDomain).toHaveBeenCalledWith(
+      'https://hmis.example.com'
+    );
   });
+
+  it('REGRESSION TEST: does NOT store domain when auth token is missing', async () => {
+    // This test prevents regression of the bug where CSRF cookies from the app server
+    // would overwrite the HMIS domain, causing subsequent HMIS operations to fail
+    const setCookieHeaderWithoutToken =
+      'csrftoken=xyz789; Domain=.dev.example.com; Path=/; expires=Thu, 21 Jan 2027';
+    const response: any = {
+      headers: {
+        get: (name: string) =>
+          name.toLowerCase() === 'set-cookie'
+            ? setCookieHeaderWithoutToken
+            : null,
+      },
+    };
+
+    const operation: any = {
+      operationName: 'hmisClientProfile',
+      getContext: () => ({ response }),
+    };
+
+    const forward: any = jest.fn(
+      () =>
+        new Observable((observer) => {
+          observer.next({});
+          observer.complete();
+        })
+    );
+
+    const observer: any = {
+      next: jest.fn(),
+      error: jest.fn(),
+      complete: jest.fn(),
+    };
+
+    mockStoreHmisDomain.mockClear();
+
+    const link = createCookieExtractorLink();
+    link.request(operation, forward)?.subscribe(observer);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    // When auth token is NOT present, domain should NOT be stored
+    expect(mockStoreHmisDomain).not.toHaveBeenCalled();
+  });
+});

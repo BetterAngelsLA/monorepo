@@ -22,7 +22,7 @@ export const createErrorLink = ({
     onUnauthenticated,
   });
 
-  return new ErrorLink(({ error, operation, forward }) => {
+  return new ErrorLink(({ error, operation }) => {
     const { operationName } = operation;
 
     let graphQLErrors: readonly GraphQLFormattedError[] | undefined;
