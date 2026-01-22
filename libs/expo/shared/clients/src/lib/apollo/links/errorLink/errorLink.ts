@@ -38,10 +38,10 @@ export const createErrorLink = ({
 
     if (isUnauthorizedError(graphQLErrors, networkError)) {
       redirectToAuth(operationName ?? '');
-
       return; // stop here, don't forward
     }
 
     // otherwise do nothing and let the response bubble up
+    return undefined;
   });
 };

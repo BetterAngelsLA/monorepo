@@ -554,8 +554,6 @@ export type CurrentUserTypeOrganizationsOrganizationArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-export type CurrentUserTypeUserTypeHmisLoginError = CurrentUserType | HmisLoginError | UserType;
-
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
 export type DeleteClientDocumentPayload = ClientDocumentType | OperationInfo;
@@ -858,6 +856,13 @@ export type HmisLoginError = {
   field?: Maybe<Scalars['String']['output']>;
   message: Scalars['String']['output'];
 };
+
+export type HmisLoginSuccess = {
+  __typename?: 'HmisLoginSuccess';
+  user: UserType;
+};
+
+export type HmisLoginSuccessHmisLoginError = HmisLoginError | HmisLoginSuccess;
 
 export enum HmisNameQualityEnum {
   DontKnow = 'DONT_KNOW',
@@ -1213,7 +1218,7 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
-  hmisLogin: CurrentUserTypeUserTypeHmisLoginError;
+  hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
   login: AuthResponse;
