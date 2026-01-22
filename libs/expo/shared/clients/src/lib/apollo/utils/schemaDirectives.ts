@@ -33,8 +33,9 @@ const hasDirectiveNamed = (field: FieldDefinitionNode, name: string): boolean =>
  */
 export function getOperationsByDirective(directiveName: string): Set<string> {
   const cached = directiveCache.get(directiveName);
-  if (cached) return cached;
-
+  if (cached) {
+    return cached;
+  }
   const ast = parse(schema);
 
   // Pipeline that extracts operation names with the directive:
