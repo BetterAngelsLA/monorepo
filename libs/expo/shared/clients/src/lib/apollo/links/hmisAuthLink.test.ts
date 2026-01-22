@@ -20,24 +20,12 @@ jest.mock('react-native-mmkv');
 
 // Mock the schema directives utility
 jest.mock('../utils/schemaDirectives', () => ({
-  operationHasDirective: jest.fn((operation: any, dirName: string) => {
-    if (dirName !== 'hmisDirective') return false;
-    // Check if the operation contains any HMIS field names
-    const selections = operation?.selectionSet?.selections || [];
-    const fieldNames = selections
-      .filter((s: any) => s.kind === 'Field')
-      .map((s: any) => s.name.value);
-    return fieldNames.some((name: string) =>
-      ['hmisClientProfiles', 'hmisNotes', 'hmisLogin'].includes(name)
-    );
-  }),
-  getOperationsByDirective: jest.fn((dirName: string) => {
-    if (dirName !== 'hmisDirective') return new Set();
-    return new Set(['hmisClientProfiles', 'hmisNotes', 'hmisLogin']);
-  }),
+  operationHasDirective: jest.fn(),
+  getOperationsByDirective: jest.fn(),
 }));
 
 jest.mock('@monorepo/expo/shared/utils', () => ({
+  HMIS_AUTH_COOKIE_NAME: 'auth_token',
   getHmisAuthToken: jest.fn(() => Promise.resolve('mocked-token')),
   storeHmisDomain: jest.fn(),
 }));
@@ -45,6 +33,27 @@ jest.mock('@monorepo/expo/shared/utils', () => ({
 describe('hmisAuthLink', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  const mockOperationHasDirective = jest.requireMock(
+    '../utils/schemaDirectives'
+  ).operationHasDirective as jest.Mock;
+
+  const makeOperation = (operationName: string, selectionName: string) => ({
+    operationName,
+    query: {
+      definitions: [
+        {
+          selectionSet: {
+            selections: [{ kind: 'Field', name: { value: selectionName } }],
+          },
+        },
+      ],
+    },
+    getContext: () => ({
+      response: { headers: { get: () => null } },
+      headers: {},
+    }),
   });
 
   it('createCookieExtractorLink stores domain and sets cookies from response header', async () => {
@@ -114,23 +123,9 @@ describe('hmisAuthLink', () => {
   describe('createHmisAuthLink', () => {
     it('applies auth link to HMIS operations based on schema', async () => {
       const link = createHmisAuthLink();
+      mockOperationHasDirective.mockReturnValue(true);
 
-      const hmisOperation: any = {
-        operationName: 'HMISLogin',
-        query: {
-          definitions: [
-            {
-              selectionSet: {
-                selections: [{ kind: 'Field', name: { value: 'hmisLogin' } }],
-              },
-            },
-          ],
-        },
-        getContext: () => ({
-          response: { headers: { get: () => null } },
-          headers: {},
-        }),
-      };
+      const hmisOperation: any = makeOperation('HMISLogin', 'hmisLogin');
 
       const forward: any = jest.fn((_op) => {
         return new Observable((observer) => {
@@ -153,23 +148,9 @@ describe('hmisAuthLink', () => {
 
     it('bypasses auth for non-HMIS operations', async () => {
       const link = createHmisAuthLink();
+      mockOperationHasDirective.mockReturnValue(false);
 
-      const nonHmisOperation: any = {
-        operationName: 'GetNotes',
-        query: {
-          definitions: [
-            {
-              selectionSet: {
-                selections: [{ kind: 'Field', name: { value: 'notes' } }],
-              },
-            },
-          ],
-        },
-        getContext: () => ({
-          response: { headers: { get: () => null } },
-          headers: {},
-        }),
-      };
+      const nonHmisOperation: any = makeOperation('GetNotes', 'notes');
 
       const forward: any = jest.fn((_op) => {
         return new Observable((observer) => {
@@ -189,35 +170,37 @@ describe('hmisAuthLink', () => {
   });
 
   describe('parseHmisCookieHeader', () => {
-    it('extracts domain and token', () => {
-      const header =
-        'auth_token=abc123; Path=/; Domain=foo.example.com; Secure; HttpOnly';
-      const parsed = parseHmisCookieHeader(header);
-      expect(parsed).toEqual({
-        domain: 'https://foo.example.com',
-        authToken: 'abc123',
-      });
-    });
+    const cases = [
+      {
+        name: 'extracts domain and token',
+        header:
+          'auth_token=abc123; Path=/; Domain=foo.example.com; Secure; HttpOnly',
+        expected: { domain: 'https://foo.example.com', authToken: 'abc123' },
+      },
+      {
+        name: 'handles different order and casing',
+        header: 'DoMaIn=EXAMPLE.org; auth_token=xyz; Path=/',
+        expected: { domain: 'https://EXAMPLE.org', authToken: 'xyz' },
+      },
+      {
+        name: 'returns null when domain missing',
+        header: 'auth_token=xyz; Path=/;',
+        expected: null,
+      },
+      {
+        name: 'parses domain without token',
+        header: 'Domain=example.net; Path=/;',
+        expected: { domain: 'https://example.net' },
+      },
+      {
+        name: 'ignores when header is empty',
+        header: '',
+        expected: null,
+      },
+    ];
 
-    it('handles different order and casing', () => {
-      const header = 'DoMaIn=EXAMPLE.org; auth_token=xyz; Path=/';
-      const parsed = parseHmisCookieHeader(header);
-      expect(parsed).toEqual({
-        domain: 'https://EXAMPLE.org',
-        authToken: 'xyz',
-      });
-    });
-
-    it('returns null when domain missing', () => {
-      const header = 'auth_token=xyz; Path=/;';
-      const parsed = parseHmisCookieHeader(header);
-      expect(parsed).toBeNull();
-    });
-
-    it('parses domain without token', () => {
-      const header = 'Domain=example.net; Path=/;';
-      const parsed = parseHmisCookieHeader(header);
-      expect(parsed).toEqual({ domain: 'https://example.net' });
+    it.each(cases)('%s', ({ header, expected }) => {
+      expect(parseHmisCookieHeader(header)).toEqual(expected);
     });
   });
 });
