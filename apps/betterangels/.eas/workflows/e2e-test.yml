@@ -102,6 +102,9 @@ jobs:
 
   set_final_github_status:
     after: [maestro_android_test, maestro_ios_test]
+    env:
+      IOS_STATUS: ${{ after.maestro_ios_test.status }}
+      ANDROID_STATUS: ${{ after.maestro_android_test.status }}
     steps:
       - id: set_final_status
         run: |
