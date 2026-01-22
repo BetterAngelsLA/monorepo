@@ -1,27 +1,7 @@
 name: e2e-test
 
 jobs:
-  get_vars:
-    outputs:
-      runtime_version: ${{ steps.set_vars.outputs.runtime_version }}
-      group_id: ${{ steps.set_vars.outputs.group_id }}
-      project_id: ${{ steps.set_vars.outputs.project_id }}
-    steps:
-      - id: set_vars
-        run: |
-          WORK_DIR="/home/expo/workingdir/temporary-custom-build/apps/betterangels"
-          GROUP_ID=$(grep '^GROUP_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
-          PROJECT_ID=$(grep '^PROJECT_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
-          RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' ${WORK_DIR}/.env | cut -d '=' -f2-)
-          echo "GROUP_ID=${GROUP_ID}"
-          echo "PROJECT_ID=${PROJECT_ID}"
-          echo "RUNTIME_VERSION=${RUNTIME_VERSION}"
-          set-output group_id "$GROUP_ID"
-          set-output project_id "$PROJECT_ID"
-          set-output runtime_version "$RUNTIME_VERSION"
-
   set_pending_github_status:
-    after: [get_vars]
     steps:
       - id: set_pending_status
         run: |
@@ -64,6 +44,25 @@ jobs:
             >/dev/null
 
           echo "Posted pending status ${GITHUB_STATUS_CONTEXT} for ${GITHUB_REPOSITORY}@${GITHUB_STATUS_SHA}"
+
+  get_vars:
+    outputs:
+      runtime_version: ${{ steps.set_vars.outputs.runtime_version }}
+      group_id: ${{ steps.set_vars.outputs.group_id }}
+      project_id: ${{ steps.set_vars.outputs.project_id }}
+    steps:
+      - id: set_vars
+        run: |
+          WORK_DIR="/home/expo/workingdir/temporary-custom-build/apps/betterangels"
+          GROUP_ID=$(grep '^GROUP_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
+          PROJECT_ID=$(grep '^PROJECT_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
+          RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' ${WORK_DIR}/.env | cut -d '=' -f2-)
+          echo "GROUP_ID=${GROUP_ID}"
+          echo "PROJECT_ID=${PROJECT_ID}"
+          echo "RUNTIME_VERSION=${RUNTIME_VERSION}"
+          set-output group_id "$GROUP_ID"
+          set-output project_id "$PROJECT_ID"
+          set-output runtime_version "$RUNTIME_VERSION"
 
   get_android_build:
     needs: [get_vars]

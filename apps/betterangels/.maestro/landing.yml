@@ -10,7 +10,8 @@ platform: ${MAESTRO_PLATFORM}
     commands:
       - tapOn: 'Open'
 
-- assertVisible: 'Get Started'
+- assertVisible: 'Better Angels'
+- assertVisible: 'HMIS'
 - tapOn:
-    id: 'get-started-button'
+    id: 'better-angels-login'
 - assertVisible: 'Welcome!'
