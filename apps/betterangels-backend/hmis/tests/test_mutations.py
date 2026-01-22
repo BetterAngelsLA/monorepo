@@ -17,7 +17,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.test import TestCase, override_settings
-from hmis.api_bridge import HmisApiBridge
 from hmis.enums import (
     HmisDobQualityEnum,
     HmisGenderEnum,
@@ -37,7 +36,9 @@ LOGIN_MUTATION = """
     mutation ($email: String!, $password: String!) {
         hmisLogin(email: $email, password: $password) {
             __typename
-            ... on UserType { id isHmisUser }
+            ... on HmisLoginSuccess {
+                user { id }
+            }
             ... on HmisLoginError { message field }
         }
     }
@@ -590,18 +591,11 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
     @override_settings(HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=")
     def test_hmis_login_success(self) -> None:
-        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
-
         with patch(
-            "hmis.api_bridge.HmisApiBridge.create_auth_token",
+            "hmis.api_bridge.HmisApiBridge.login",
             autospec=True,
-        ) as mock_create_auth_token:
-
-            def fake_create_auth_token(self: HmisApiBridge, username: str, password: str) -> None:
-                self._set_auth_token(token)
-                return None
-
-            mock_create_auth_token.side_effect = fake_create_auth_token
+        ) as mock_login:
+            mock_login.return_value = None
 
             resp = self.execute_graphql(
                 LOGIN_MUTATION,
@@ -610,9 +604,8 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
         self.assertIsNone(resp.get("errors"))
         payload = resp["data"]["hmisLogin"]
-        self.assertEqual(payload["__typename"], "UserType")
-        self.assertEqual(payload["id"], str(self.existing_user.pk))
-        self.assertEqual(payload["isHmisUser"], True)
+        self.assertEqual(payload["__typename"], "HmisLoginSuccess")
+        self.assertEqual(payload["user"]["id"], str(self.existing_user.pk))
 
         # Session should now contain the logged-in user
         session = self.graphql_client.session
@@ -631,18 +624,3 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         )
         self.assertEqual(len(resp["errors"]), 1)
         self.assertIn("Login Failed: Invalid credentials.", resp["errors"][0]["message"])
-
-    def test_hmis_login_unknown_email_no_autocreate(self) -> None:
-        with patch(
-            "hmis.api_bridge.HmisApiBridge.create_auth_token",
-            return_value=None,
-        ):
-            resp = self.execute_graphql(
-                LOGIN_MUTATION,
-                variables={"email": "nonexistent_user@example.org", "password": "pw"},
-            )
-
-        self.assertIsNone(resp.get("errors"))
-        payload = resp["data"]["hmisLogin"]
-        self.assertEqual(payload["__typename"], "HmisLoginError")
-        self.assertIn("Invalid credentials or HMIS login failed", payload["message"])

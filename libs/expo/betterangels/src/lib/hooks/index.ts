@@ -10,6 +10,7 @@ export { default as useInfiniteScroll } from './scroll/useInfiniteScroll';
 export { default as useScrollToScreenTop } from './scroll/useScrollToScreenTop';
 export { default as useSnackbar } from './snackbar/useSnackbar';
 export * from './taskCount';
+export { useHmisClient } from './useHmisClient';
 export * from './useHmisClientPrograms';
 // user
 export { useInitialLocation } from './useInitialLocation';
