@@ -16,7 +16,7 @@ export class HmisError extends Error {
 
 /**
  * HMIS API Response Types
- * These match the shapes returned by the HMIS REST API
+ * These are manually created to match the shapes returned by the HMIS REST API
  */
 
 export interface HmisCurrentUser {
