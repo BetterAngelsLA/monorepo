@@ -102,13 +102,13 @@ jobs:
 
   set_final_github_status:
     after: [maestro_android_test, maestro_ios_test]
+    env:
+      IOS_STATUS: ${{ after.maestro_ios_test.status }}
+      ANDROID_STATUS: ${{ after.maestro_android_test.status }}
     steps:
       - id: set_final_status
         run: |
           set -euo pipefail
-
-          echo "IOS status: ${{ after.maestro_ios_test.status }}"
-          echo "ANDROID status: ${{ after.maestro_android_test.status }}"
 
           WORK_DIR="/home/expo/workingdir/temporary-custom-build/apps/betterangels"
           GITHUB_REPOSITORY="$(grep '^GITHUB_REPOSITORY=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
@@ -120,6 +120,9 @@ jobs:
           echo "GITHUB_REPOSITORY=${GITHUB_REPOSITORY}"
           echo "GITHUB_STATUS_SHA=${GITHUB_STATUS_SHA}"
           echo "GITHUB_STATUS_CONTEXT=${GITHUB_STATUS_CONTEXT}"
+
+          echo "ANDROID_STATUS=${ANDROID_STATUS:-}"
+          echo "IOS_STATUS=${IOS_STATUS:-}"
 
           if [ -z "${GITHUB_REPOSITORY:-}" ] || [ -z "${GITHUB_STATUS_SHA:-}" ] || [ -z "${GITHUB_STATUS_CONTEXT:-}" ]; then
             echo "Missing GITHUB_REPOSITORY / GITHUB_STATUS_SHA / GITHUB_STATUS_CONTEXT; cannot post commit status."
