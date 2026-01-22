@@ -66,10 +66,14 @@ export const createCookieExtractorLink = () =>
           operation.getContext()['response'] as Response | undefined
         )?.headers.get('set-cookie');
 
-        if (!setCookieHeader) return;
+        if (!setCookieHeader) {
+          return;
+        }
 
         const parsed = parseHmisCookieHeader(setCookieHeader);
-        if (!parsed) return;
+        if (!parsed) {
+          return;
+        }
 
         if (__DEV__ && parsed.authToken) {
           console.debug('[HMIS] Auth token cookie updated:', {
