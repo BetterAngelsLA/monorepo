@@ -843,7 +843,7 @@ type HmisLoginError {
 }
 
 type HmisLoginSuccess {
-  user: UserType!
+  user: CurrentUserType!
 }
 
 union HmisLoginSuccessHmisLoginError = HmisLoginSuccess | HmisLoginError

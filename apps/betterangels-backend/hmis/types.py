@@ -46,7 +46,7 @@ class HmisLoginError:
 
 @strawberry.type
 class HmisLoginSuccess:
-    user: UserType
+    user: CurrentUserType
 
 
 HmisLoginResult = Union[HmisLoginSuccess, HmisLoginError]

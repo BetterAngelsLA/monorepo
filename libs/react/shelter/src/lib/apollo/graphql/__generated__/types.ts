@@ -859,7 +859,7 @@ export type HmisLoginError = {
 
 export type HmisLoginSuccess = {
   __typename?: 'HmisLoginSuccess';
-  user: UserType;
+  user: CurrentUserType;
 };
 
 export type HmisLoginSuccessHmisLoginError = HmisLoginError | HmisLoginSuccess;
