@@ -13,6 +13,9 @@ jobs:
           GROUP_ID=$(grep '^GROUP_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
           PROJECT_ID=$(grep '^PROJECT_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
           RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' ${WORK_DIR}/.env | cut -d '=' -f2-)
+          echo "GROUP_ID=${GROUP_ID}"
+          echo "PROJECT_ID=${PROJECT_ID}"
+          echo "RUNTIME_VERSION=${RUNTIME_VERSION}"
           set-output group_id "$GROUP_ID"
           set-output project_id "$PROJECT_ID"
           set-output runtime_version "$RUNTIME_VERSION"
