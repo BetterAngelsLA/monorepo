@@ -20,9 +20,7 @@ platform: ${MAESTRO_PLATFORM}
           commands:
             - takeScreenshot: error-restart-kill
             - killApp: la.betterangels.dev.app
-            - waitForAnimationToEnd
             - openLink: betterangels-dev://expo-development-client/?url=https://u.expo.dev/${MAESTRO_PROJECT_ID}/group/${MAESTRO_GROUP_ID}?platform=${MAESTRO_PLATFORM}%26disableOnboarding%3D1
-            - waitForAnimationToEnd
       - runFlow:
           when:
             platform: ios
