@@ -1,7 +1,11 @@
 import { MenuIcon } from '@monorepo/react/icons';
 import { useAtom } from 'jotai';
 import { Link } from 'react-router-dom';
-import { aboutUsPath, shelterHomePath } from '../../../routes/routePaths';
+import {
+  aboutUsPath,
+  operatorPath,
+  shelterHomePath,
+} from '../../../routes/routePaths';
 import { flyoutAtom } from '../../atoms/flyoutAtom';
 import { FlyoutAnimationEnum } from '../../flyout/Flyout';
 import { MenuMobile } from './MenuMobile';
@@ -28,6 +32,9 @@ export function MenuBtnMobile() {
         </Link>
         <Link aria-label="navigate to about us" to={aboutUsPath}>
           About Us
+        </Link>
+        <Link aria-label="navigate to operator dashboard" to={operatorPath}>
+          Operator
         </Link>
       </div>
     </div>
