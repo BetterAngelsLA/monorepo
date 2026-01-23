@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(npx nx build shelter-web --skip-nx-cache)",
+      "Bash(npx tsc:*)",
+      "Bash(git add:*)",
+      "Bash(git reset:*)",
+      "Bash(git clean:*)",
+      "Bash(git fetch:*)",
+      "Bash(npx nx run:*)",
+      "Bash(npx graphql-codegen:*)",
+      "Bash(yarn nx affected:*)"
+    ]
+  }
+}
