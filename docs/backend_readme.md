@@ -251,6 +251,17 @@ Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by("me
 
 ---
 
+### Supplemental Scripts
+
+#### Seeding Shelters
+
+To populate the database with test shelters:
+
+```bash
+cd apps/betterangels-backend/shelters/scripts/
+poetry run python seed_shelters.py 10
+```
+
 ### Troubleshooting
 
 #### Aliases
