@@ -16,8 +16,12 @@ export type INumericDatePickerProps = Omit<
   | 'withDateFormatInLabel'
   | 'onChange'
 > & {
-  // Override onChange to accept null for explicit clearing
-  onChange?: (date: Date | null | undefined) => void;
+  // Invalid dates are filtered out and never passed to onChange
+  onChange?: (date: Date | null) => void;
+  // If provided, used instead of onChange(null) for clearing
+  onDelete?: () => void;
+  // Defaults to true
+  showClearButton?: boolean;
 };
 
 export interface IWheelDatePickerProps extends TMarginProps {

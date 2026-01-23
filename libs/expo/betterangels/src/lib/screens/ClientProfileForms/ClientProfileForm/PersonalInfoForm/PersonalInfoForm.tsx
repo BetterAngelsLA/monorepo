@@ -176,14 +176,10 @@ export function PersonalInfoForm() {
           }}
           value={dateOfBirth || undefined}
           onChange={(date) => {
-            // Only update if we have a valid date
-            // This prevents saving incomplete dates when user is still editing
-            if (date instanceof Date && !Number.isNaN(date.getTime())) {
-              setValue('dateOfBirth', date, { shouldDirty: true, shouldValidate: true });
-            } else if (date === undefined || date === null) {
-              // Allow clearing the date
-              setValue('dateOfBirth', undefined, { shouldDirty: true, shouldValidate: true });
-            }
+            setValue('dateOfBirth', date, { shouldDirty: true, shouldValidate: true });
+          }}
+          onDelete={() => {
+            setValue('dateOfBirth', null, { shouldDirty: true, shouldValidate: true });
           }}
         />
       </Form.Field>
