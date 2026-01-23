@@ -1,18 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// Mock native modules before any imports
 import { Observable } from '@apollo/client/utilities';
-import {
-  createCookieExtractorLink,
-  createHmisAuthLink,
-  parseHmisCookieHeader,
-} from './hmisAuthLink';
+import { createCookieExtractorLink, createHmisAuthLink } from './hmisAuthLink';
 
-jest.mock('react-native-nitro-cookies', () => ({
-  __esModule: true,
-  default: {
-    setFromResponse: jest.fn(() => Promise.resolve()),
-  },
-}));
 jest.mock('react-native-mmkv');
 
 // Ensure React Native global exists in Jest environment
@@ -26,8 +15,10 @@ jest.mock('../utils/schemaDirectives', () => ({
 
 jest.mock('@monorepo/expo/shared/utils', () => ({
   HMIS_AUTH_COOKIE_NAME: 'auth_token',
+  HMIS_API_URL_COOKIE_NAME: 'api_url',
   getHmisAuthToken: jest.fn(() => Promise.resolve('mocked-token')),
-  storeHmisDomain: jest.fn(),
+  storeHmisApiUrl: jest.fn(),
+  storeHmisAuthToken: jest.fn(() => Promise.resolve()),
 }));
 
 describe('hmisAuthLink', () => {
@@ -56,8 +47,15 @@ describe('hmisAuthLink', () => {
     }),
   });
 
-  it('createCookieExtractorLink stores domain and sets cookies from response header', async () => {
-    const setCookieHeader = 'auth_token=token123; Domain=example.com; Path=/;';
+  it('createCookieExtractorLink stores domain, api_url and auth token from response header', async () => {
+    const mockStoreHmisApiUrl = jest.requireMock('@monorepo/expo/shared/utils')
+      .storeHmisApiUrl as jest.Mock;
+    const mockStoreHmisAuthToken = jest.requireMock(
+      '@monorepo/expo/shared/utils'
+    ).storeHmisAuthToken as jest.Mock;
+
+    const setCookieHeader =
+      'auth_token=token123; Domain=example.com; Path=/; api_url=https%3A%2F%2Fapi.example.com';
     const response: any = {
       headers: {
         get: (name: string) =>
@@ -87,6 +85,9 @@ describe('hmisAuthLink', () => {
     link.request(operation, forward)?.subscribe(observer);
 
     await new Promise((resolve) => setImmediate(resolve));
+
+    expect(mockStoreHmisApiUrl).toHaveBeenCalledWith('https://api.example.com');
+    expect(mockStoreHmisAuthToken).toHaveBeenCalledWith('token123');
   });
 
   it('createCookieExtractorLink does nothing when set-cookie header is missing', async () => {
@@ -167,129 +168,5 @@ describe('hmisAuthLink', () => {
 
       expect(forward).toHaveBeenCalled();
     });
-  });
-
-  describe('parseHmisCookieHeader', () => {
-    const cases = [
-      {
-        name: 'extracts domain and token',
-        header:
-          'auth_token=abc123; Path=/; Domain=foo.example.com; Secure; HttpOnly',
-        expected: { domain: 'https://foo.example.com', authToken: 'abc123' },
-      },
-      {
-        name: 'handles different order and casing',
-        header: 'DoMaIn=EXAMPLE.org; auth_token=xyz; Path=/',
-        expected: { domain: 'https://EXAMPLE.org', authToken: 'xyz' },
-      },
-      {
-        name: 'returns null when domain missing',
-        header: 'auth_token=xyz; Path=/;',
-        expected: null,
-      },
-      {
-        name: 'parses domain without token',
-        header: 'Domain=example.net; Path=/;',
-        expected: { domain: 'https://example.net' },
-      },
-      {
-        name: 'ignores when header is empty',
-        header: '',
-        expected: null,
-      },
-    ];
-
-    it.each(cases)('%s', ({ header, expected }) => {
-      expect(parseHmisCookieHeader(header)).toEqual(expected);
-    });
-  });
-});
-
-describe('createCookieExtractorLink - Domain Storage Fix', () => {
-  const mockStoreHmisDomain = jest.requireMock('@monorepo/expo/shared/utils')
-    .storeHmisDomain as jest.Mock;
-
-  it('REGRESSION TEST: only stores domain when auth token is present', async () => {
-    const setCookieHeaderWithToken =
-      'auth_token=valid123; Domain=hmis.example.com; Path=/;';
-    const response: any = {
-      headers: {
-        get: (name: string) =>
-          name.toLowerCase() === 'set-cookie' ? setCookieHeaderWithToken : null,
-      },
-    };
-
-    const operation: any = {
-      operationName: 'HMISLogin',
-      getContext: () => ({ response }),
-    };
-
-    const forward: any = jest.fn(
-      () =>
-        new Observable((observer) => {
-          observer.next({});
-          observer.complete();
-        })
-    );
-
-    const observer: any = {
-      next: jest.fn(),
-      error: jest.fn(),
-      complete: jest.fn(),
-    };
-
-    const link = createCookieExtractorLink();
-    link.request(operation, forward)?.subscribe(observer);
-
-    await new Promise((resolve) => setImmediate(resolve));
-
-    // When auth token is present, domain SHOULD be stored
-    expect(mockStoreHmisDomain).toHaveBeenCalledWith(
-      'https://hmis.example.com'
-    );
-  });
-
-  it('REGRESSION TEST: does NOT store domain when auth token is missing', async () => {
-    // This test prevents regression of the bug where CSRF cookies from the app server
-    // would overwrite the HMIS domain, causing subsequent HMIS operations to fail
-    const setCookieHeaderWithoutToken =
-      'csrftoken=xyz789; Domain=.dev.example.com; Path=/; expires=Thu, 21 Jan 2027';
-    const response: any = {
-      headers: {
-        get: (name: string) =>
-          name.toLowerCase() === 'set-cookie'
-            ? setCookieHeaderWithoutToken
-            : null,
-      },
-    };
-
-    const operation: any = {
-      operationName: 'hmisClientProfile',
-      getContext: () => ({ response }),
-    };
-
-    const forward: any = jest.fn(
-      () =>
-        new Observable((observer) => {
-          observer.next({});
-          observer.complete();
-        })
-    );
-
-    const observer: any = {
-      next: jest.fn(),
-      error: jest.fn(),
-      complete: jest.fn(),
-    };
-
-    mockStoreHmisDomain.mockClear();
-
-    const link = createCookieExtractorLink();
-    link.request(operation, forward)?.subscribe(observer);
-
-    await new Promise((resolve) => setImmediate(resolve));
-
-    // When auth token is NOT present, domain should NOT be stored
-    expect(mockStoreHmisDomain).not.toHaveBeenCalled();
   });
 });

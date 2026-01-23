@@ -304,7 +304,6 @@ class HmisApiBridge:
             raise GraphQLError("Validation Errors", extensions={"errors": errors})
 
     def _forward_cookies_to_client(self, resp: requests.Response) -> None:
-        """Forward all cookies from HMIS response to the Django response."""
         django_response = self.info.context.get("response")
         if not django_response:
             return
@@ -314,7 +313,7 @@ class HmisApiBridge:
                 key=cookie.name,
                 value=cookie.value,
                 domain=cookie.domain,
-                path=cookie.path or "/",
+                path=cookie.path,
                 secure=cookie.secure,
                 httponly=cookie.has_nonstandard_attr("HttpOnly"),
                 samesite="Lax",

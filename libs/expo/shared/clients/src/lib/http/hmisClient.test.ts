@@ -3,7 +3,7 @@ import { HmisError } from './hmisTypes';
 
 jest.mock('@monorepo/expo/shared/utils', () => ({
   getHmisAuthToken: jest.fn().mockResolvedValue('mock-token'),
-  getHmisApiUrl: jest.fn().mockResolvedValue('https://hmis.example.com'),
+  getHmisApiUrl: jest.fn().mockReturnValue('https://hmis.example.com'),
 }));
 
 const mockFetch = jest.fn();
@@ -18,7 +18,7 @@ describe('HmisClient', () => {
     jest.clearAllMocks();
   });
 
-  it('sends bearer auth, user agent, and includes credentials', async () => {
+  it('sends bearer auth and user agent', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       headers: jsonHeaders,
@@ -32,7 +32,6 @@ describe('HmisClient', () => {
 
     const [url, options] = mockFetch.mock.calls[0];
     expect(url).toBe('https://hmis.example.com/current-user?fields=id');
-    expect(options.credentials).toBe('include');
     expect(options.headers['Authorization']).toBe('Bearer mock-token');
     expect(options.headers['User-Agent']).toBeTruthy();
     expect(options.headers['X-Requested-With']).toBe('XMLHttpRequest');

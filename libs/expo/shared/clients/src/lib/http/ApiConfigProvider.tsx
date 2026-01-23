@@ -37,10 +37,11 @@ export const ApiConfigProvider = ({
   useEffect(() => {
     const loadEnvironment = async () => {
       const saved = await AsyncStorage.getItem('currentEnvironment');
-      setEnvironment(saved === 'demo' ? 'demo' : 'production');
+      const env = saved === 'demo' ? 'demo' : 'production';
+      setEnvironment(env);
     };
     loadEnvironment();
-  }, []);
+  }, [demoUrl, productionUrl]);
 
   const switchEnvironment = async (env: Env) => {
     if (env === environment) return;
