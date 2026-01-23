@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional, cast
+from typing import Optional, Union, cast
 
 import strawberry
 import strawberry_django
@@ -27,6 +27,7 @@ from strawberry_django.utils.query import filter_for_user
 from .models import PermissionGroup, User
 from .types import (
     AuthResponse,
+    CurrentUserType,
     LoginInput,
     OrganizationMemberOrdering,
     OrganizationMemberType,
@@ -65,7 +66,7 @@ def annotate_member_role(org_id: str) -> Case:
 @strawberry.type
 class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
-    def current_user(self, info: Info) -> UserType:
+    def current_user(self, info: Info) -> CurrentUserType:
         return get_current_user(info)  # type: ignore
 
     @strawberry_django.offset_paginated(
@@ -134,7 +135,7 @@ class Mutation:
         return AuthResponse(status_code="")
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def update_current_user(self, info: Info, data: UpdateUserInput) -> UserType:
+    def update_current_user(self, info: Info, data: UpdateUserInput) -> Union[UserType, CurrentUserType]:
         user = cast(User, get_current_user(info))
         if str(user.pk) != str(data.id):
             raise PermissionError("You do not have permission to modify this user.")

@@ -36,14 +36,16 @@ LOGIN_MUTATION = """
     mutation ($email: String!, $password: String!) {
         hmisLogin(email: $email, password: $password) {
             __typename
-            ... on UserType { id isHmisUser }
+            ... on HmisLoginSuccess {
+                user { id }
+            }
             ... on HmisLoginError { message field }
         }
     }
 """
 
 
-@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisNoteMutationTests(HmisNoteBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -81,7 +83,12 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "lastUpdated": "2025-11-25T01:37:07+00:00",
             "refClientProgram": None,
             "clientProgram": None,
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdBy": {
+                "id": str(self.org_1_case_manager_1.pk),
+                "firstName": self.org_1_case_manager_1.first_name,
+                "lastName": self.org_1_case_manager_1.last_name,
+                "organizations": [{"id": ANY, "name": "org_1"}],
+            },
         }
 
         self.assertEqual(expected, note)
@@ -123,7 +130,12 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
                     "name": "Housing Program 01",
                 },
             },
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdBy": {
+                "id": str(self.org_1_case_manager_1.pk),
+                "firstName": self.org_1_case_manager_1.first_name,
+                "lastName": self.org_1_case_manager_1.last_name,
+                "organizations": [{"id": ANY, "name": "org_1"}],
+            },
         }
 
         self.assertEqual(expected, note)
@@ -197,12 +209,18 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
                     "name": "Housing Program 01",
                 },
             },
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdBy": {
+                "id": str(self.org_1_case_manager_1.pk),
+                "firstName": self.org_1_case_manager_1.first_name,
+                "lastName": self.org_1_case_manager_1.last_name,
+                "organizations": [{"id": ANY, "name": "org_1"}],
+            },
         }
 
         self.assertEqual(expected, note)
 
     def test_update_hmis_note_location_mutation(self) -> None:
+        self._setup_hmis_session()
         self._setup_location()
 
         hmis_note = baker.make(HmisNote, _fill_optional=True)
@@ -320,7 +338,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         self.assertEqual(hmis_note.requested_services.count(), 1)
 
 
-@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -576,21 +594,24 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
         self.assertEqual(expected, client)
 
 
-@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
+@override_settings(
+    AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"],
+    HMIS_REST_URL="https://example.com",
+    HMIS_HOST="example.com",
+)
 class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.existing_user = baker.make(get_user_model(), _fill_optional=["email"])
 
-        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
-        self.success_response = {"data": {"createAuthToken": {"authToken": token}}}
-
     @override_settings(HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=")
     def test_hmis_login_success(self) -> None:
         with patch(
-            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
-            return_value=self.success_response,
-        ):
+            "hmis.api_bridge.HmisApiBridge.login",
+            autospec=True,
+        ) as mock_login:
+            mock_login.return_value = None
+
             resp = self.execute_graphql(
                 LOGIN_MUTATION,
                 variables={"email": self.existing_user.email, "password": "anything"},
@@ -598,9 +619,8 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
         self.assertIsNone(resp.get("errors"))
         payload = resp["data"]["hmisLogin"]
-        self.assertEqual(payload["__typename"], "UserType")
-        self.assertEqual(payload["id"], str(self.existing_user.pk))
-        self.assertEqual(payload["isHmisUser"], True)
+        self.assertEqual(payload["__typename"], "HmisLoginSuccess")
+        self.assertEqual(payload["user"]["id"], str(self.existing_user.pk))
 
         # Session should now contain the logged-in user
         session = self.graphql_client.session
@@ -611,46 +631,11 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
             "django.contrib.auth.backends.ModelBackend",
         )
 
+    @scrubbed_vcr.use_cassette("test_hmis_login_invalid_credentials.yaml")
     def test_hmis_login_invalid_credentials(self) -> None:
-        return_value = {
-            "data": {"createAuthToken": {"authToken": None}},
-            "errors": [
-                {
-                    "path": ["createAuthToken"],
-                    "data": None,
-                    "errorType": "422",
-                    "errorInfo": None,
-                    "locations": [{"line": 5, "column": 5, "sourceName": None}],
-                    "message": '{"name":"Unprocessable entity","message":"{\\"username\\":[\\"Incorrect username or password.\\"]}","code":0,"status":422,"messages":{"username":["Incorrect username or password."]}}',
-                }
-            ],
-        }
-
-        with patch(
-            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
-            return_value=return_value,
-        ):
-            resp = self.execute_graphql(
-                LOGIN_MUTATION,
-                variables={"email": self.existing_user.email, "password": "wrong"},
-            )
-
-        self.assertIsNone(resp.get("errors"))
-        payload = resp["data"]["hmisLogin"]
-        self.assertEqual(payload["__typename"], "HmisLoginError")
-        self.assertIn("Invalid credentials", payload["message"])
-
-    def test_hmis_login_unknown_email_no_autocreate(self) -> None:
-        with patch(
-            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
-            return_value=self.success_response,
-        ):
-            resp = self.execute_graphql(
-                LOGIN_MUTATION,
-                variables={"email": "nonexistent_user@example.org", "password": "pw"},
-            )
-
-        self.assertIsNone(resp.get("errors"))
-        payload = resp["data"]["hmisLogin"]
-        self.assertEqual(payload["__typename"], "HmisLoginError")
-        self.assertIn("Invalid credentials or HMIS login failed", payload["message"])
+        resp = self.execute_graphql(
+            LOGIN_MUTATION,
+            variables={"email": self.existing_user.email, "password": "wrong"},
+        )
+        self.assertEqual(len(resp["errors"]), 1)
+        self.assertIn("Login Failed: Invalid credentials.", resp["errors"][0]["message"])

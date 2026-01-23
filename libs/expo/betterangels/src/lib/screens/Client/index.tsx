@@ -38,8 +38,9 @@ const tabComponents: Record<
   [ClientViewTabEnum.Docs]: Docs as ComponentType<TabComponentProps>,
   [ClientViewTabEnum.Interactions]:
     Interactions as ComponentType<TabComponentProps>,
-  [ClientViewTabEnum.Locations]:
-    InteractionLocations as ComponentType<TabComponentProps>,
+  [ClientViewTabEnum.Locations]: ({ client }) => (
+    <InteractionLocations clientProfileId={client?.clientProfile.id} />
+  ),
   [ClientViewTabEnum.Tasks]: TasksTab as ComponentType<TabComponentProps>,
 };
 

@@ -4,17 +4,19 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { ServiceRequestTypeEnum } from '../../../apollo';
 import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/extractExtensionFieldErrors';
 import { applyManualFormErrors } from '../../../errors';
+import { normalizeService } from '../../../helpers';
 import { useSnackbar } from '../../../hooks';
 import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import {
   CreateHmisServiceRequestDocument,
   RemoveHmisNoteServiceRequestDocument,
 } from '../HmisProgramNoteCreate/__generated__/HmisServiceRequest.generated';
+import { UpdateHmisNoteLocationDocument } from '../HmisProgramNoteCreate/__generated__/updateHmisNoteLocation.generated';
 import {
   HmisNoteFormFieldNames,
   HmisProgramNoteForm,
@@ -24,8 +26,8 @@ import {
   THmisProgramNoteFormOutputs,
   hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm';
-import { ViewHmisNoteQuery } from '../HmisProgramNoteView/__generated__/HmisProgramNoteView.generated';
 import splitBucket from '../utils/splitBucket';
+import { useApplyTasks } from '../utils/useApplyTasks';
 import { HmisNoteDocument } from './__generated__/hmisGetClientNote.generated';
 import { UpdateHmisNoteDocument } from './__generated__/hmisUpdateClientNote.generated';
 
@@ -41,14 +43,15 @@ export function HmisProgramNoteEdit(props: TProps) {
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [existingNote, setExistingNote] =
-    useState<ViewHmisNoteQuery['hmisNote']>();
+
   const [updateHmisNoteMutation] = useMutation(UpdateHmisNoteDocument);
+  const [updateHmisNoteLocation] = useMutation(UpdateHmisNoteLocationDocument);
   const [deleteService] = useMutation(RemoveHmisNoteServiceRequestDocument);
   const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);
+  const { applyTasks } = useApplyTasks();
 
   async function applyBucket(
-    noteId: string,
+    id: string,
     type: ServiceRequestTypeEnum,
     bucket: any
   ) {
@@ -59,7 +62,7 @@ export function HmisProgramNoteEdit(props: TProps) {
       await createServiceRequest({
         variables: {
           data: {
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
             serviceId: s.serviceId!,
           },
@@ -73,7 +76,7 @@ export function HmisProgramNoteEdit(props: TProps) {
         variables: {
           data: {
             serviceRequestId: s.serviceRequestId!,
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
           },
         },
@@ -85,7 +88,7 @@ export function HmisProgramNoteEdit(props: TProps) {
       await createServiceRequest({
         variables: {
           data: {
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
             serviceOther: o.serviceOther!.trim(),
           },
@@ -99,7 +102,7 @@ export function HmisProgramNoteEdit(props: TProps) {
         variables: {
           data: {
             serviceRequestId: o.serviceRequestId!,
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
           },
         },
@@ -129,23 +132,18 @@ export function HmisProgramNoteEdit(props: TProps) {
       return;
     }
 
-    setExistingNote(noteResult);
-  }, [noteData]);
+    const existingProvidedServices =
+      noteResult.providedServices?.map(normalizeService) ?? [];
 
-  useEffect(() => {
-    if (!existingNote) {
-      return;
-    }
-
-    const existingProvidedServices = existingNote.providedServices || [];
-    const existingRequestedServices = existingNote.requestedServices || [];
+    const existingRequestedServices =
+      noteResult.requestedServices?.map(normalizeService) ?? [];
 
     methods.reset({
       ...hmisProgramNoteFormEmptyState,
-      title: existingNote.title ?? '',
-      date: toLocalCalendarDate(existingNote.date),
-      note: existingNote.note ?? '',
-      refClientProgram: existingNote.refClientProgram ?? '',
+      title: noteResult.title ?? '',
+      date: toLocalCalendarDate(noteResult.date),
+      note: noteResult.note ?? '',
+      refClientProgram: noteResult.refClientProgram ?? '',
       services: {
         [ServiceRequestTypeEnum.Provided]: {
           serviceRequests: existingProvidedServices,
@@ -154,15 +152,27 @@ export function HmisProgramNoteEdit(props: TProps) {
           serviceRequests: existingRequestedServices,
         },
       },
+      location: {
+        longitude: noteResult.location?.point[0],
+        latitude: noteResult.location?.point[1],
+        formattedAddress: noteResult.location?.address
+          ? `${noteResult.location?.address.street}, ${noteResult.location?.address.city}, ${noteResult.location?.address.state} ${noteResult.location?.address.zipCode}`
+          : undefined,
+        shortAddressName:
+          noteResult.location?.address && noteResult.location?.address.street
+            ? noteResult.location?.address.street
+            : undefined,
+      },
+      tasks: noteResult.tasks || [],
     });
-  }, [existingNote, methods]);
+  }, [noteData, methods]);
 
   const {
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  const formDisabled = !existingNote || isSubmitting;
+  const formDisabled = !noteData || isSubmitting;
 
   const onSubmit: SubmitHandler<THmisProgramNoteFormInputs> = async (
     values
@@ -175,7 +185,7 @@ export function HmisProgramNoteEdit(props: TProps) {
       const payload: THmisProgramNoteFormOutputs =
         HmisProgramNoteFormSchemaOutput.parse(values);
 
-      const { services, ...rest } = payload;
+      const { services, location, tasks, ...rest } = payload;
 
       const updateResponse = await updateHmisNoteMutation({
         variables: {
@@ -185,8 +195,6 @@ export function HmisProgramNoteEdit(props: TProps) {
           },
         },
         errorPolicy: 'all',
-        refetchQueries: [{ query: HmisNoteDocument, variables: { id } }],
-        awaitRefetchQueries: true,
       });
 
       const { data, error } = updateResponse;
@@ -213,21 +221,40 @@ export function HmisProgramNoteEdit(props: TProps) {
         throw new Error('typename is not HmisNoteType');
       }
 
-      const noteId = result.id;
-
       const draftServices = services ?? {};
+      const locationDirty = methods.getFieldState('location').isDirty;
+      if (locationDirty && location) {
+        await updateHmisNoteLocation({
+          variables: {
+            data: {
+              id,
+              location: {
+                point: [location.longitude, location.latitude],
+                address: {
+                  formattedAddress: location.formattedAddress,
+                  addressComponents: JSON.stringify(location.components ?? []),
+                },
+              },
+            },
+          },
+        });
+      }
+
+      await applyTasks(tasks, id, clientId);
 
       await applyBucket(
-        noteId,
+        id,
         ServiceRequestTypeEnum.Provided,
         draftServices[ServiceRequestTypeEnum.Provided]
       );
 
       await applyBucket(
-        noteId,
+        id,
         ServiceRequestTypeEnum.Requested,
         draftServices[ServiceRequestTypeEnum.Requested]
       );
+
+      await refetch();
 
       router.replace(
         `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
@@ -259,12 +286,9 @@ export function HmisProgramNoteEdit(props: TProps) {
         }}
       >
         <HmisProgramNoteForm
+          editing={true}
           clientId={clientId}
           disabled={formDisabled}
-          editing={true}
-          noteId={id}
-          existingTasks={existingNote?.tasks || []}
-          refetch={refetch}
         />
       </Form.Page>
     </FormProvider>

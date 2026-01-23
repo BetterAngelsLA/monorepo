@@ -1,1 +1,1 @@
-export { cachePolicyRegistry } from './cachePolicyRegistry';
+export { baApolloTypePolicies } from './typePolicies';

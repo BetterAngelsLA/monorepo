@@ -4,6 +4,7 @@ import {
   ClientProfileSectionEnum,
   isValidClientProfileSectionEnum,
   useResetClientInteractionsMapState,
+  useResetHmisClientInteractionsMapState,
   useUser,
 } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
@@ -21,6 +22,8 @@ export default function ClientScreen() {
   const { isHmisUser } = useUser();
 
   const updateInteractionsMapState = useResetClientInteractionsMapState();
+  const updateHmisInteractionsMapState =
+    useResetHmisClientInteractionsMapState();
 
   if (!id) {
     throw new Error('Something went wrong. Please try again.');
@@ -33,12 +36,9 @@ export default function ClientScreen() {
   }
 
   if (isHmisUser) {
+    updateHmisInteractionsMapState(id);
     return (
-      <ClientHMIS
-        id={id}
-        arrivedFrom={arrivedFrom}
-        openCard={openCardName}
-      />
+      <ClientHMIS id={id} arrivedFrom={arrivedFrom} openCard={openCardName} />
     );
   }
 

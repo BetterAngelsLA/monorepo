@@ -27,6 +27,7 @@ export type Scalars = {
   /** Time (isoformat) */
   Time: { input: any; output: any; }
   UUID: { input: any; output: any; }
+  /** Represents a file upload. */
   Upload: { input: any; output: any; }
 };
 
@@ -87,104 +88,10 @@ export type AuthResponse = {
   status_code: Scalars['String']['output'];
 };
 
-export enum CityChoices {
-  AgouraHills = 'AGOURA_HILLS',
-  Alhambra = 'ALHAMBRA',
-  Arcadia = 'ARCADIA',
-  Artesia = 'ARTESIA',
-  Avalon = 'AVALON',
-  Azusa = 'AZUSA',
-  BaldwinPark = 'BALDWIN_PARK',
-  Bell = 'BELL',
-  Bellflower = 'BELLFLOWER',
-  BellGardens = 'BELL_GARDENS',
-  BeverlyHills = 'BEVERLY_HILLS',
-  Bradbury = 'BRADBURY',
-  Burbank = 'BURBANK',
-  Calabasas = 'CALABASAS',
-  Carson = 'CARSON',
-  Cerritos = 'CERRITOS',
-  Claremont = 'CLAREMONT',
-  Commerce = 'COMMERCE',
-  Compton = 'COMPTON',
-  Covina = 'COVINA',
-  Cudahy = 'CUDAHY',
-  CulverCity = 'CULVER_CITY',
-  DiamondBar = 'DIAMOND_BAR',
-  Downey = 'DOWNEY',
-  Duarte = 'DUARTE',
-  ElMonte = 'EL_MONTE',
-  ElSegundo = 'EL_SEGUNDO',
-  Gardena = 'GARDENA',
-  Glendale = 'GLENDALE',
-  Glendora = 'GLENDORA',
-  HawaiianGardens = 'HAWAIIAN_GARDENS',
-  Hawthorne = 'HAWTHORNE',
-  HermosaBeach = 'HERMOSA_BEACH',
-  HiddenHills = 'HIDDEN_HILLS',
-  Hollywood = 'HOLLYWOOD',
-  HuntingtonPark = 'HUNTINGTON_PARK',
-  Industry = 'INDUSTRY',
-  Inglewood = 'INGLEWOOD',
-  Irwindale = 'IRWINDALE',
-  Lakewood = 'LAKEWOOD',
-  Lancaster = 'LANCASTER',
-  Lawndale = 'LAWNDALE',
-  LaCanadaFlintridge = 'LA_CANADA_FLINTRIDGE',
-  LaHabraHeights = 'LA_HABRA_HEIGHTS',
-  LaMirada = 'LA_MIRADA',
-  LaPuente = 'LA_PUENTE',
-  LaVerne = 'LA_VERNE',
-  Lomita = 'LOMITA',
-  LongBeach = 'LONG_BEACH',
-  LosAngeles = 'LOS_ANGELES',
-  Lynwood = 'LYNWOOD',
-  Malibu = 'MALIBU',
-  ManhattanBeach = 'MANHATTAN_BEACH',
-  Maywood = 'MAYWOOD',
-  Monrovia = 'MONROVIA',
-  Montebello = 'MONTEBELLO',
-  MontereyPark = 'MONTEREY_PARK',
-  Norwalk = 'NORWALK',
-  Palmdale = 'PALMDALE',
-  PalosVerdesEstates = 'PALOS_VERDES_ESTATES',
-  Paramount = 'PARAMOUNT',
-  Pasadena = 'PASADENA',
-  PicoRivera = 'PICO_RIVERA',
-  Pomona = 'POMONA',
-  RanchoPalosVerdes = 'RANCHO_PALOS_VERDES',
-  RedondoBeach = 'REDONDO_BEACH',
-  RollingHills = 'ROLLING_HILLS',
-  RollingHillsEstates = 'ROLLING_HILLS_ESTATES',
-  Rosemead = 'ROSEMEAD',
-  SantaClarita = 'SANTA_CLARITA',
-  SantaFeSprings = 'SANTA_FE_SPRINGS',
-  SantaMonica = 'SANTA_MONICA',
-  SanDimas = 'SAN_DIMAS',
-  SanFernando = 'SAN_FERNANDO',
-  SanGabriel = 'SAN_GABRIEL',
-  SanMarino = 'SAN_MARINO',
-  SierraMadre = 'SIERRA_MADRE',
-  SignalHill = 'SIGNAL_HILL',
-  SouthElMonte = 'SOUTH_EL_MONTE',
-  SouthGate = 'SOUTH_GATE',
-  SouthPasadena = 'SOUTH_PASADENA',
-  TempleCity = 'TEMPLE_CITY',
-  Torrance = 'TORRANCE',
-  Venice = 'VENICE',
-  Vernon = 'VERNON',
-  Walnut = 'WALNUT',
-  WestlakeVillage = 'WESTLAKE_VILLAGE',
-  WestCovina = 'WEST_COVINA',
-  WestHollywood = 'WEST_HOLLYWOOD',
-  WestLosAngeles = 'WEST_LOS_ANGELES',
-  Whittier = 'WHITTIER',
-  Wilmington = 'WILMINGTON'
-}
-
 export type CityType = {
   __typename?: 'CityType';
-  name?: Maybe<CityChoices>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type ClientContactInput = {
@@ -618,6 +525,35 @@ export type CreateTaskInput = {
 
 export type CreateTaskPayload = OperationInfo | TaskType;
 
+export type CurrentUserOrganizationType = {
+  __typename?: 'CurrentUserOrganizationType';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
+};
+
+export type CurrentUserType = {
+  __typename?: 'CurrentUserType';
+  email?: Maybe<Scalars['NonBlankString']['output']>;
+  firstName?: Maybe<Scalars['NonBlankString']['output']>;
+  hasAcceptedPrivacyPolicy?: Maybe<Scalars['Boolean']['output']>;
+  hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
+  id: Scalars['ID']['output'];
+  isHmisUser?: Maybe<Scalars['Boolean']['output']>;
+  isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
+  lastName?: Maybe<Scalars['NonBlankString']['output']>;
+  middleName?: Maybe<Scalars['NonBlankString']['output']>;
+  organizationsOrganization?: Maybe<Array<CurrentUserOrganizationType>>;
+  username?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type CurrentUserTypeOrganizationsOrganizationArgs = {
+  filters?: InputMaybe<OrganizationFilter>;
+  ordering?: Array<OrganizationOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
 export type DeleteClientDocumentPayload = ClientDocumentType | OperationInfo;
@@ -921,6 +857,13 @@ export type HmisLoginError = {
   message: Scalars['String']['output'];
 };
 
+export type HmisLoginSuccess = {
+  __typename?: 'HmisLoginSuccess';
+  user: CurrentUserType;
+};
+
+export type HmisLoginSuccessHmisLoginError = HmisLoginError | HmisLoginSuccess;
+
 export enum HmisNameQualityEnum {
   DontKnow = 'DONT_KNOW',
   Full = 'FULL',
@@ -1190,7 +1133,7 @@ export type LocationInput = {
 export type LocationType = {
   __typename?: 'LocationType';
   address: AddressType;
-  id: Scalars['ID']['output'];
+  id?: Maybe<Scalars['ID']['output']>;
   point: Scalars['Point']['output'];
   pointOfInterest?: Maybe<Scalars['String']['output']>;
 };
@@ -1275,7 +1218,7 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
-  hmisLogin: UserTypeHmisLoginError;
+  hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
   login: AuthResponse;
@@ -1707,13 +1650,6 @@ export type OrganizationFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type OrganizationForUserType = {
-  __typename?: 'OrganizationForUserType';
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
-};
-
 export type OrganizationMemberOrdering = {
   email?: InputMaybe<Ordering>;
   firstName?: InputMaybe<Ordering>;
@@ -1898,7 +1834,7 @@ export type Query = {
   clientHouseholdMembers: ClientHouseholdMemberTypeOffsetPaginated;
   clientProfile: ClientProfileType;
   clientProfiles: ClientProfileTypeOffsetPaginated;
-  currentUser: UserType;
+  currentUser: CurrentUserType;
   featureControls: FeatureControlData;
   hmisClientProfile: HmisClientProfileType;
   hmisClientProfiles: HmisClientProfileTypeOffsetPaginated;
@@ -2092,7 +2028,7 @@ export type QueryTaskArgs = {
 
 export type QueryTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
-  ordering?: Array<TaskOrder>;
+  ordering?: InputMaybe<Array<TaskOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2635,7 +2571,7 @@ export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
 
 export type UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo;
 
-export type UpdateCurrentUserPayload = OperationInfo | UserType;
+export type UpdateCurrentUserPayload = CurrentUserType | OperationInfo | UserType;
 
 export type UpdateHmisClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
@@ -2771,7 +2707,7 @@ export type UserType = {
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
-  organizationsOrganization?: Maybe<Array<OrganizationForUserType>>;
+  organizationsOrganization?: Maybe<Array<OrganizationType>>;
   username?: Maybe<Scalars['String']['output']>;
 };
 
@@ -2779,10 +2715,7 @@ export type UserType = {
 export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   ordering?: Array<OrganizationOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
-export type UserTypeHmisLoginError = HmisLoginError | UserType;
 
 export enum VeteranStatusEnum {
   No = 'NO',

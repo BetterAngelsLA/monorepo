@@ -1,41 +1,29 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
-import {
-  SearchBar,
-  TextButton,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
+import { SearchBar } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { TaskType } from '../../apollo';
+import { TaskType, toTaskFilter } from '../../apollo';
 import { useUser } from '../../hooks';
-import { TUser } from '../../providers/user/UserContext';
+import { useUserTeamPreference } from '../../state';
 import { pagePaddingHorizontal } from '../../static';
 import {
-  TTaskFilters,
+  ModelFilters,
+  TModelFilters,
   TaskCard,
-  TaskFilters,
   TaskList,
-  nullTaskFilters,
-  toTaskFilterValue,
+  toModelFilterValues,
 } from '../../ui-components';
-
-function getInitialFilterValues(user?: TUser) {
-  return {
-    ...nullTaskFilters,
-    authors: user ? [{ id: user.id, label: 'Me' }] : [],
-  };
-}
+import { getInitialTaskFilters } from './getInitialTaskFilters';
 
 export default function Tasks() {
-  const { user, isHmisUser } = useUser();
-
+  const { isHmisUser } = useUser();
+  const [teamPreference] = useUserTeamPreference();
   const [search, setSearch] = useState('');
-  const [filtersKey, setFiltersKey] = useState(0);
-
-  const [currentFilters, setCurrentFilters] = useState<TTaskFilters>(
-    getInitialFilterValues(user)
+  const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
+    getInitialTaskFilters({ teamPreference })
   );
+  const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
 
   const handleTaskPress = useCallback((task: TaskType) => {
     router.navigate({
@@ -49,68 +37,51 @@ export default function Tasks() {
     [handleTaskPress]
   );
 
-  function onFilterChange(selectedFilters: TTaskFilters) {
+  function onFilterChange(selectedFilters: TModelFilters) {
     setCurrentFilters(selectedFilters);
   }
 
   function onFilterReset() {
     setSearch('');
-    const initial = getInitialFilterValues(user);
-    setCurrentFilters(initial);
+    setCurrentFilters(getInitialTaskFilters({ teamPreference }));
     setFiltersKey((k) => k + 1); // inc key to trigger remount
   }
 
-  function renderListHeader(visible: number, _total: number | undefined) {
-    return (
-      <View style={styles.resultsHeader}>
-        <TextRegular>{visible} Tasks total</TextRegular>
-      </View>
-    );
-  }
-
-  const serverFilters = toTaskFilterValue({
+  const serverFilters = toTaskFilter({
     search,
-    ...currentFilters,
-    // Tasks screen shows only tasks w/o notes
-    note: { isNull: true },
-    hmisNote: { isNull: true },
+    ...toModelFilterValues(currentFilters),
   });
-
-  // must be hmis user to view Task with hmisClientProfile
-  if (!isHmisUser) {
-    serverFilters.hmisClientProfileLookup = { isNull: true };
-  }
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchRow}>
-        <SearchBar
-          value={search}
-          placeholder="Search tasks"
-          onChange={(text) => setSearch(text)}
-          onClear={() => setSearch('')}
-          style={{ flexGrow: 1 }}
-        />
-        <TextButton
-          onPress={onFilterReset}
-          regular
-          title="Reset"
-          accessibilityHint="Reset filters"
-        />
-      </View>
+      <SearchBar
+        style={styles.searchRow}
+        value={search}
+        placeholder="Search tasks"
+        onChange={(text) => setSearch(text)}
+        onClear={() => setSearch('')}
+        actionSlotRight={{
+          label: 'Reset',
+          accessibilityHint: 'reset search and filters',
+          onPress: onFilterReset,
+        }}
+      />
 
-      <TaskFilters
+      <ModelFilters
         key={filtersKey}
         selected={currentFilters}
         onChange={onFilterChange}
         style={styles.filters}
+        filters={[
+          isHmisUser ? 'hmisClientProfiles' : 'clientProfiles',
+          'teams',
+          'taskStatus',
+          'authors',
+          'organizations',
+        ]}
       />
 
-      <TaskList
-        filters={serverFilters}
-        renderItem={renderTaskItem}
-        renderHeader={renderListHeader}
-      />
+      <TaskList filters={serverFilters} renderItem={renderTaskItem} />
     </View>
   );
 }
@@ -124,9 +95,6 @@ const styles = StyleSheet.create({
   },
   searchRow: {
     marginBottom: Spacings.xs,
-    display: 'flex',
-    flexDirection: 'row',
-    gap: Spacings.sm,
   },
   filters: {
     marginBottom: Spacings.sm,

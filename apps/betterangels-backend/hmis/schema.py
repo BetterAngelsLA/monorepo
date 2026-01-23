@@ -2,9 +2,19 @@ from typing import Any, Iterable, cast
 
 import strawberry
 import strawberry_django
+from accounts.types import CurrentUserType
 from accounts.utils import get_user_permission_group
+from betterangels_backend import settings
+from common.constants import HMIS_SESSION_KEY_NAME
+from common.errors import UnauthenticatedGQLError
+from common.graphql.decorators import (
+    apply_schema_directives_and_permissions_to_all_fields,
+)
 from common.models import Location, PhoneNumber
 from common.permissions.utils import IsAuthenticated
+from common.utils import strip_demo_tag
+from django.contrib.auth import get_user_model
+from django.contrib.auth import login as django_login
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
@@ -14,18 +24,24 @@ from notes.models import ServiceRequest
 from notes.types import ServiceRequestType
 from notes.utils.note_utils import get_service_args
 from strawberry import ID, asdict
+from strawberry.permission import BasePermission
+from strawberry.schema_directive import Location as DirectiveLocation
+from strawberry.schema_directive import schema_directive
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 
-from .rest_api_bridge import HmisRestApiBridge
+from .api_bridge import HmisApiBridge
 from .types import (
     CreateHmisClientProfileInput,
     CreateHmisNoteInput,
     CreateHmisNoteServiceRequestInput,
     HmisClientProfileType,
     HmisClientProgramType,
+    HmisLoginError,
+    HmisLoginResult,
+    HmisLoginSuccess,
     HmisNoteType,
     HmisProgramType,
     ProgramEnrollmentType,
@@ -35,14 +51,45 @@ from .types import (
     UpdateHmisNoteLocationInput,
 )
 
+User = get_user_model()
+
+
+# Custom schema directive to mark HMIS operations
+@schema_directive(locations=[DirectiveLocation.FIELD_DEFINITION])
+class HmisDirective:
+    """Mark a field as an HMIS operation"""
+
+    pass
+
+
+class IsHmisAuthenticated(BasePermission):
+    message: str = "You must be logged in to HMIS to access this resource."
+
+    def has_permission(self, source: Any, info: Info, **kwargs: Any) -> bool:
+        IsAuthenticated().has_permission(source, info, **kwargs)
+
+        request = info.context["request"]
+
+        # Check if user authenticated with HMIS via login mutation
+        if not request.session.get(HMIS_SESSION_KEY_NAME):
+            raise UnauthenticatedGQLError(message=self.message)
+
+        return True
+
 
 def _get_client_program(program_data: dict[str, Any]) -> HmisClientProgramType:
     return HmisClientProgramType(id=program_data["id"], program=HmisProgramType(**program_data["program"]))
 
 
+@apply_schema_directives_and_permissions_to_all_fields(
+    directives=[HmisDirective],
+    permission_classes=[IsHmisAuthenticated],
+)
 @strawberry.type
 class Query:
-    @strawberry_django.field(permission_classes=[IsAuthenticated])
+    """HMIS-scoped queries. All operations require HMIS authentication."""
+
+    @strawberry_django.field
     def hmis_client_profile(self, info: Info, id: ID) -> HmisClientProfileType:
         try:
             hmis_client_profile = HmisClientProfile.objects.get(pk=id)
@@ -52,7 +99,7 @@ class Query:
         if not hmis_client_profile.hmis_id:
             raise ValidationError("Missing Client hmis_id")
 
-        hmis_api_bridge = HmisRestApiBridge(info=info)
+        hmis_api_bridge = HmisApiBridge(info=info)
         client_data = hmis_api_bridge.get_client(hmis_client_profile.hmis_id)
 
         client_data.pop("unique_identifier")
@@ -62,11 +109,9 @@ class Query:
 
         return cast(HmisClientProfileType, hmis_client_profile)
 
-    hmis_client_profiles: OffsetPaginated[HmisClientProfileType] = strawberry_django.offset_paginated(
-        permission_classes=[IsAuthenticated],
-    )
+    hmis_client_profiles: OffsetPaginated[HmisClientProfileType] = strawberry_django.offset_paginated()
 
-    @strawberry_django.field(permission_classes=[IsAuthenticated])
+    @strawberry_django.field
     def hmis_note(self, info: Info, id: ID) -> HmisNoteType:
         try:
             hmis_note = HmisNote.objects.get(pk=id)
@@ -76,7 +121,7 @@ class Query:
         if not hmis_note.hmis_client_profile.hmis_id:
             raise ValidationError("Missing Client hmis_id")
 
-        hmis_api_bridge = HmisRestApiBridge(info=info)
+        hmis_api_bridge = HmisApiBridge(info=info)
 
         note_data = hmis_api_bridge.get_note(
             client_hmis_id=hmis_note.hmis_client_profile.hmis_id,
@@ -93,7 +138,7 @@ class Query:
 
         return cast(HmisNoteType, hmis_note)
 
-    hmis_notes: OffsetPaginated[HmisNoteType] = strawberry_django.offset_paginated(permission_classes=[IsAuthenticated])
+    hmis_notes: OffsetPaginated[HmisNoteType] = strawberry_django.offset_paginated()
 
     @strawberry.field()
     def hmis_client_programs(
@@ -109,18 +154,54 @@ class Query:
         if not client_hmis_id:
             raise ValidationError("Missing Client hmis_id")
 
-        hmis_api_bridge = HmisRestApiBridge(info=info)
+        hmis_api_bridge = HmisApiBridge(info=info)
 
         client_programs = hmis_api_bridge.get_client_programs(client_hmis_id=client_hmis_id)
 
         return [_get_client_program(p) for p in client_programs["items"]]
 
 
+@apply_schema_directives_and_permissions_to_all_fields(
+    directives=[HmisDirective],
+    permission_classes=[IsHmisAuthenticated],
+    exclude_permissions=["hmis_login"],
+)
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    """HMIS-scoped mutations. All operations require HMIS authentication."""
+
+    @strawberry.mutation
+    def hmis_login(self, info: Info, email: str, password: str) -> HmisLoginResult:
+        """
+        Authenticate with HMIS and create Django session.
+        Cookies are automatically forwarded from HMIS via the API bridge.
+        """
+        request = info.context["request"]
+        sanitized_email = strip_demo_tag(email)
+
+        # Verify user exists in our system before attempting HMIS login
+        try:
+            user = User.objects.get(email__iexact=sanitized_email)
+        except User.DoesNotExist:
+            return HmisLoginError(message="Invalid credentials or HMIS login failed")
+
+        # Authenticate with HMIS (cookies are automatically set via bridge)
+        hmis_api_bridge = HmisApiBridge(info=info)
+        hmis_api_bridge.login(sanitized_email, password)
+
+        # Create Django session
+        backend = settings.AUTHENTICATION_BACKENDS[0]
+        django_login(request, user, backend=backend)
+
+        # Mark session as HMIS authenticated so isHmisUser resolver returns True
+        request.session[HMIS_SESSION_KEY_NAME] = True
+        return HmisLoginSuccess(
+            user=cast(CurrentUserType, user),
+        )
+
+    @strawberry_django.mutation
     def create_hmis_client_profile(self, info: Info, data: CreateHmisClientProfileInput) -> HmisClientProfileType:
-        hmis_api_bridge = HmisRestApiBridge(info=info)
+        hmis_api_bridge = HmisApiBridge(info=info)
 
         client_data = hmis_api_bridge.create_client(data)
         current_user = get_current_user(info)
@@ -142,14 +223,14 @@ class Mutation:
 
         return cast(HmisClientProfileType, hmis_client_profile)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation
     def update_hmis_client_profile(self, info: Info, data: UpdateHmisClientProfileInput) -> HmisClientProfileType:
         try:
             hmis_client_profile = HmisClientProfile.objects.get(pk=data.id)
         except HmisClientProfile.DoesNotExist:
             raise ObjectDoesNotExist(f"Client Profile matching ID {id} could not be found.")
 
-        hmis_api_bridge = HmisRestApiBridge(info=info)
+        hmis_api_bridge = HmisApiBridge(info=info)
 
         data_dict = strawberry.asdict(data)
         phone_numbers = data_dict.pop("phone_numbers", []) or []
@@ -173,7 +254,7 @@ class Mutation:
 
         return cast(HmisClientProfileType, hmis_client_profile)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation
     def create_hmis_note(self, info: Info, data: CreateHmisNoteInput) -> HmisNoteType:
         try:
             hmis_client_profile = HmisClientProfile.objects.get(pk=data.hmis_client_profile_id)
@@ -183,7 +264,7 @@ class Mutation:
         if not hmis_client_profile.hmis_id:
             raise ValidationError("Missing Client hmis_id")
 
-        hmis_api_bridge = HmisRestApiBridge(info=info)
+        hmis_api_bridge = HmisApiBridge(info=info)
 
         note_data = hmis_api_bridge.create_note(client_hmis_id=hmis_client_profile.hmis_id, data=data)
         current_user = get_current_user(info)
@@ -206,14 +287,14 @@ class Mutation:
 
         return cast(HmisNoteType, hmis_note)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation
     def update_hmis_note(self, info: Info, data: UpdateHmisNoteInput) -> HmisNoteType:
         try:
             hmis_note = HmisNote.objects.get(pk=data.id)
         except HmisNote.DoesNotExist:
             raise ObjectDoesNotExist(f"Note matching ID {id} could not be found.")
 
-        hmis_api_bridge = HmisRestApiBridge(info=info)
+        hmis_api_bridge = HmisApiBridge(info=info)
 
         if not hmis_note.hmis_client_profile.hmis_id:
             raise ValidationError("Missing Client hmis_id")
@@ -234,7 +315,7 @@ class Mutation:
 
         return cast(HmisNoteType, hmis_note)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation
     def create_hmis_client_program(self, info: Info, client_id: int, program_hmis_id: int) -> ProgramEnrollmentType:
         try:
             hmis_client_profile = HmisClientProfile.objects.get(pk=client_id)
@@ -244,7 +325,7 @@ class Mutation:
         if not hmis_client_profile.hmis_id:
             raise ValidationError("Missing Client hmis_id")
 
-        hmis_api_bridge = HmisRestApiBridge(info=info)
+        hmis_api_bridge = HmisApiBridge(info=info)
 
         enrollment_data = hmis_api_bridge.create_client_program(
             client_hmis_id=hmis_client_profile.hmis_id,
@@ -257,7 +338,7 @@ class Mutation:
             ref_client_program=enrollment_data["ref_program"],
         )
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation
     def update_hmis_note_location(self, info: Info, data: UpdateHmisNoteLocationInput) -> HmisNoteType:
         with transaction.atomic():
             hmis_note = HmisNote.objects.get(id=data.id)
@@ -272,7 +353,7 @@ class Mutation:
 
             return cast(HmisNoteType, hmis_note)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation
     def create_hmis_note_service_request(
         self, info: Info, data: CreateHmisNoteServiceRequestInput
     ) -> ServiceRequestType:
@@ -312,7 +393,7 @@ class Mutation:
 
             return cast(ServiceRequestType, service_request)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation
     def remove_hmis_note_service_request(self, info: Info, data: RemoveHmisNoteServiceRequestInput) -> HmisNoteType:
         with transaction.atomic():
             hmis_note = HmisNote.objects.get(pk=data.hmis_note_id)

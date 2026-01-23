@@ -1,73 +1,50 @@
-import { useInfiniteScrollQuery } from '@monorepo/apollo';
-import { Colors } from '@monorepo/expo/shared/static';
-import { InfiniteList } from '@monorepo/expo/shared/ui-components';
-import { debounce } from '@monorepo/expo/shared/utils';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { SearchBar } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
-import { ElementType, useCallback, useMemo, useState } from 'react';
-import { HmisNoteType } from '../../apollo';
-import { useUser } from '../../hooks';
+import { ElementType, useCallback, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { HmisNoteType, toHmisNoteFilter } from '../../apollo';
+import useUser from '../../hooks/user/useUser';
+import { TUser } from '../../providers/user/UserContext';
 import {
   Header,
-  MainScrollContainer,
+  HorizontalContainer,
+  InteractionListHmis,
+  ModelFilters,
   ProgramNoteCard,
+  TModelFilters,
+  toModelFilterValues,
 } from '../../ui-components';
-import { DEFAULT_PAGINATION_LIMIT } from '../../ui-components/ClientProfileList/constants';
-import {
-  HmisNotesDocument,
-  HmisNotesQuery,
-  HmisNotesQueryVariables,
-} from '../ClientHMIS/tabs/ClientInteractionsHmisView/__generated__/ClientInteractionsHmisView.generated';
-import InteractionsFilters from './InteractionsFiltersHmis';
-import InteractionsHeader from './InteractionsHeaderHmis';
-type TFilters = {
-  authors: { id: string; label: string }[];
-};
+
+const paginationLimit = 10;
+
+function getInitialFilterValues(user?: TUser) {
+  return {
+    authors: user ? [{ id: user.id, label: 'Me' }] : [],
+  };
+}
+
 export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
   const { user } = useUser();
   const [search, setSearch] = useState<string>('');
-  const [filterSearch, setFilterSearch] = useState('');
-  const [filters, setFilters] = useState<TFilters>({
-    authors: user ? [{ id: user.id, label: 'Me' }] : [],
-  });
-
-  const updateFilters = (newFilters: TFilters) => {
-    setFilters(newFilters);
-  };
-  const onFiltersReset = () => {
-    setFilters({ authors: [] });
-    setSearch('');
-    setFilterSearch('');
-  };
-  const debounceFetch = useMemo(
-    () =>
-      debounce((text) => {
-        setFilterSearch(text);
-      }, 500),
-    []
+  const [filtersKey, setFiltersKey] = useState(0);
+  const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
+    getInitialFilterValues(user)
   );
-  const onChange = (e: string) => {
-    setSearch(e);
-    debounceFetch(e);
-  };
-  const authors = filters.authors.map((a) => a.id);
-  const { items, total, loading, hasMore, loadMore, error } =
-    useInfiniteScrollQuery<
-      HmisNoteType,
-      HmisNotesQuery,
-      HmisNotesQueryVariables
-    >({
-      document: HmisNotesDocument,
-      queryFieldName: 'hmisNotes',
-      pageSize: DEFAULT_PAGINATION_LIMIT,
-      variables: { filters: { authors, search: filterSearch } },
-      fetchPolicy: 'cache-and-network',
-      nextFetchPolicy: 'cache-first',
-    });
-  if (error) {
-    console.error(error);
+
+  function onFilterChange(selectedFilters: TModelFilters) {
+    setCurrentFilters(selectedFilters);
   }
 
-  const renderItemFn = useCallback(
+  function onFilterReset() {
+    const initial = getInitialFilterValues(user);
+
+    setSearch('');
+    setCurrentFilters(initial);
+    setFiltersKey((k) => k + 1); // inc key to trigger remount
+  }
+
+  const renderInteractionItem = useCallback(
     (item: HmisNoteType) => (
       <ProgramNoteCard
         onPress={() => {
@@ -83,28 +60,60 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
     []
   );
 
+  const serverFilters = toHmisNoteFilter({
+    search,
+    ...toModelFilterValues(currentFilters),
+  });
+
   return (
-    <>
-      <Header title="Notes" Logo={Logo} />
-      <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-        <InteractionsHeader
-          onFiltersReset={onFiltersReset}
-          search={search}
-          setSearch={onChange}
+    <View style={styles.container}>
+      <Header title="Interactions" Logo={Logo} />
+      <HorizontalContainer
+        style={{
+          paddingTop: Spacings.sm,
+          flex: 1,
+        }}
+      >
+        <SearchBar
+          style={styles.searchRow}
+          value={search}
+          placeholder="Search interactions"
+          onChange={(text) => setSearch(text)}
+          onClear={() => setSearch('')}
+          actionSlotRight={{
+            label: 'Reset',
+            accessibilityHint: 'Reset search and filters',
+            onPress: onFilterReset,
+          }}
         />
-        <InteractionsFilters filters={filters} setFilters={updateFilters} />
-        <InfiniteList<HmisNoteType>
-          data={items}
-          keyExtractor={(item) => item.id ?? ''}
-          totalItems={total}
-          renderItem={renderItemFn}
-          loading={loading}
-          loadMore={loadMore}
-          hasMore={hasMore}
-          modelName="note"
-          error={!!error}
+
+        <ModelFilters
+          key={filtersKey}
+          selected={currentFilters}
+          onChange={onFilterChange}
+          filters={['authors']}
+          style={styles.filters}
         />
-      </MainScrollContainer>
-    </>
+
+        <InteractionListHmis
+          filters={serverFilters}
+          renderItem={renderInteractionItem}
+          paginationLimit={paginationLimit}
+        />
+      </HorizontalContainer>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+  },
+  filters: {
+    marginBottom: Spacings.xl,
+  },
+  searchRow: {
+    marginBottom: Spacings.sm,
+  },
+});

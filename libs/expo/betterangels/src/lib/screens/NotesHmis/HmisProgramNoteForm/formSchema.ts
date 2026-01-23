@@ -9,17 +9,44 @@ import {
 // ----------------------------------------------------------------------
 // 1. Local Draft Task Type
 // ----------------------------------------------------------------------
-export type LocalDraftTask = {
-  id: string;
-  summary: string;
-  description?: string | null;
-  status?: TaskStatusEnum;
-  team?: SelahTeamEnum | null;
-};
+export type DraftTask = z.infer<typeof TaskFormSchema>;
+
+const TaskFormSchema = z.object({
+  id: z.string().optional(),
+  summary: z.string().min(1, 'Title is required.').nullable(),
+  team: z.enum(SelahTeamEnum).nullable(),
+  description: z.string().nullable(),
+  status: z
+    .enum(TaskStatusEnum, {
+      error: () => 'Status is required',
+    })
+    .nullable(),
+  markedForDeletion: z.boolean().optional(),
+});
 
 // ----------------------------------------------------------------------
 // 2. Validation Schema
 // ----------------------------------------------------------------------
+
+export type LocationDraft =
+  | Partial<{
+      latitude: number;
+      longitude: number;
+      formattedAddress: string;
+      shortAddressName: string;
+      components?: unknown;
+    }>
+  | undefined;
+
+export const LocationSchema = z
+  .object({
+    latitude: z.number().gte(-90).lte(90),
+    longitude: z.number().gte(-180).lte(180),
+    formattedAddress: z.string().min(1, 'Required'),
+    shortAddressName: z.string().optional(),
+    components: z.any().optional(), // accept array/object from Google
+  })
+  .strict();
 
 export type ServicesDraft = Partial<
   Record<
@@ -46,11 +73,12 @@ export const HmisProgramNoteFormSchema = z.object({
     ),
   refClientProgram: z.string(),
   note: z.string().min(1, 'Note is required.'),
+  location: LocationSchema,
 
   // FIX 1: Remove .default([]). This makes the field REQUIRED in the type definition,
   // preventing the "undefined is not assignable to LocalDraftTask[]" error.
   // We handle the default value via the 'getHmisProgramNoteFormEmptyState' function.
-  draftTasks: z.array(z.custom<LocalDraftTask>()),
+  tasks: z.array(TaskFormSchema).optional(),
   services: z.custom<ServicesDraft>().optional(),
 });
 
@@ -61,25 +89,20 @@ export const HmisProgramNoteFormSchema = z.object({
 // We explicitly intersect to ensure the TypeScript type for draftTasks is robust
 export type THmisProgramNoteFormInputs = z.input<
   typeof HmisProgramNoteFormSchema
-> & {
-  draftTasks: LocalDraftTask[];
-};
+>;
 
 // ----------------------------------------------------------------------
 // 4. Output Schema (API Payload)
 // ----------------------------------------------------------------------
 
-// We omit draftTasks so it doesn't interfere with the Note creation payload parsing
-export const HmisProgramNoteFormSchemaOutput = HmisProgramNoteFormSchema.omit({
-  draftTasks: true,
-})
-  .extend({
+export const HmisProgramNoteFormSchemaOutput = HmisProgramNoteFormSchema.extend(
+  {
     date: z.date(), // required
-  })
-  .transform(({ date, ...rest }) => ({
-    ...rest,
-    date: format(date, 'yyyy-MM-dd'),
-  }));
+  }
+).transform(({ date, ...rest }) => ({
+  ...rest,
+  date: format(date, 'yyyy-MM-dd'),
+}));
 
 export type THmisProgramNoteFormOutputs = z.output<
   typeof HmisProgramNoteFormSchemaOutput
@@ -94,7 +117,8 @@ export const hmisProgramNoteFormEmptyState: THmisProgramNoteFormInputs = {
   date: undefined,
   refClientProgram: '',
   note: '',
-  draftTasks: [],
+  location: undefined as any,
+  tasks: [],
   services: {},
 };
 
@@ -102,7 +126,6 @@ export const getHmisProgramNoteFormEmptyState =
   (): THmisProgramNoteFormInputs => ({
     ...hmisProgramNoteFormEmptyState,
     date: new Date(),
-    draftTasks: [],
   });
 
 // ----------------------------------------------------------------------

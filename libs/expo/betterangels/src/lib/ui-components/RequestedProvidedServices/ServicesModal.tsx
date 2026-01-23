@@ -22,7 +22,6 @@ import {
   ServiceRequestTypeEnum,
 } from '../../apollo';
 import { useSnackbar } from '../../hooks';
-import { useModalScreen } from '../../providers';
 
 import MainScrollContainer from '../MainScrollContainer';
 import OtherCategory from './OtherCategory';
@@ -59,14 +58,14 @@ interface IServicesModalProps {
     serviceOther?: string | null;
   }[];
   refetch: () => void;
+  close: () => void;
   type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
 }
 
 export default function ServicesModal(props: IServicesModalProps) {
-  const { initialServiceRequests, noteId, refetch, type } = props;
+  const { initialServiceRequests, noteId, refetch, type, close } = props;
 
   const { data: availableCategories } = useQuery(ServiceCategoriesDocument);
-  const { closeModalScreen } = useModalScreen();
   const { showSnackbar } = useSnackbar();
   const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
 
@@ -266,7 +265,7 @@ export default function ServicesModal(props: IServicesModalProps) {
       }
 
       refetch();
-      closeModalScreen();
+      close();
     } catch (e) {
       console.error('Error during service submission:', e);
       showSnackbar({
@@ -281,7 +280,7 @@ export default function ServicesModal(props: IServicesModalProps) {
     deleteService,
     noteId,
     refetch,
-    closeModalScreen,
+    close,
     serviceRequests,
     serviceRequestsOthers,
     type,
@@ -297,8 +296,8 @@ export default function ServicesModal(props: IServicesModalProps) {
 
   const closeModal = useCallback(() => {
     reset();
-    closeModalScreen();
-  }, [reset, closeModalScreen]);
+    close();
+  }, [reset, close]);
 
   // ---------- Bootstrap ----------
   useEffect(() => {

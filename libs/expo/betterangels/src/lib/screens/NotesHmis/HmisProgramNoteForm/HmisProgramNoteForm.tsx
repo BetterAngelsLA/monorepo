@@ -5,22 +5,21 @@ import {
   Form,
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
-import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { ScrollView } from 'react-native';
-import { ServiceRequestTypeEnum, UpdateTaskInput } from '../../../apollo';
+import { ServiceRequestTypeEnum } from '../../../apollo';
 import { useHmisClientPrograms } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
-import { GirpNoteForm, NoteTasks } from '../../../ui-components';
+import { GirpNoteForm } from '../../../ui-components';
+import HmisLocationComponent from '../HmisLocation';
+import HmisProvidedServices from './HmisProvidedServices';
+import HmisRequestedServices from './HmisRequestedServices';
+import HmisTasks from './HmisTasks';
 import { FORM_KEYS } from './constants';
 import {
-  LocalDraftTask,
   THmisProgramNoteFormInputs,
   hmisProgramNoteFormEmptyState,
 } from './formSchema';
-import HmisProvidedServices from './HmisProvidedServices';
-import HmisRequestedServices from './HmisRequestedServices';
 import { FieldCardHmisNote } from './shared/FieldCardHmisNote';
 import { renderValue } from './shared/renderValue';
 import { TFormKeys } from './types';
@@ -29,13 +28,10 @@ type TProps = {
   clientId: string;
   disabled?: boolean;
   editing?: boolean;
-  noteId?: string;
-  existingTasks?: (UpdateTaskInput | LocalDraftTask)[];
-  refetch?: () => void;
 };
 
 export function HmisProgramNoteForm(props: TProps) {
-  const { clientId, disabled, editing, noteId, existingTasks, refetch } = props;
+  const { clientId, disabled, editing } = props;
 
   const {
     control,
@@ -46,20 +42,18 @@ export function HmisProgramNoteForm(props: TProps) {
     formState: { errors, isSubmitting, submitCount },
   } = useFormContext<THmisProgramNoteFormInputs>();
 
-  const router = useRouter();
   const { showModalScreen } = useModalScreen();
   const [expandedField, setExpandedField] = useState<TFormKeys | null>(null);
   const [enrollmentsError, setProgramsError] = useState<string | undefined>(
     undefined
   );
 
-  const tasksScrollRef = useRef<ScrollView>(null);
-
   const titleValue = watch('title') || '';
   const refClientProgramValue = watch('refClientProgram') || '';
   const dateYmd = watch('date') || '';
   const noteValue = watch('note') || '';
   const services = watch('services') || {};
+  const tasks = watch('tasks') || [];
 
   const {
     clientPrograms,
@@ -133,7 +127,7 @@ export function HmisProgramNoteForm(props: TProps) {
     showModalScreen({
       presentation: 'card',
       title: 'Note',
-      content: () => (
+      renderContent: ({ close }) => (
         <GirpNoteForm
           note={noteValue}
           disabled={formDisabled}
@@ -144,7 +138,8 @@ export function HmisProgramNoteForm(props: TProps) {
               shouldValidate: true,
               shouldTouch: true,
             });
-            router.back();
+
+            close();
           }}
         />
       ),
@@ -185,6 +180,13 @@ export function HmisProgramNoteForm(props: TProps) {
           }}
         />
       </FieldCardHmisNote>
+
+      <HmisLocationComponent
+        error={errors.location?.message}
+        editing={!!editing}
+        expanded={expandedField === FORM_KEYS.location}
+        setExpanded={setExpandedField}
+      />
 
       <FieldCardHmisNote
         required
@@ -264,32 +266,7 @@ export function HmisProgramNoteForm(props: TProps) {
       />
 
       {/* --- TASK SECTION --- */}
-      {editing ? (
-        // LIVE MODE
-        <NoteTasks
-          isDraftMode={false}
-          hmisClientProfileId={clientId}
-          scrollRef={tasksScrollRef}
-          tasks={existingTasks || []}
-          hmisNoteId={noteId}
-          refetch={refetch}
-        />
-      ) : (
-        // DRAFT MODE
-        <Controller
-          control={control}
-          name="draftTasks"
-          render={({ field: { value, onChange } }) => (
-            <NoteTasks
-              isDraftMode={true}
-              hmisClientProfileId={clientId}
-              scrollRef={tasksScrollRef}
-              tasks={value || []}
-              onDraftTasksChange={onChange}
-            />
-          )}
-        />
-      )}
+      <HmisTasks tasks={tasks} />
     </Form>
   );
 }

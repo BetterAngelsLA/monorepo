@@ -9,14 +9,33 @@ import {
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { TaskType } from '../../../apollo';
+import { TaskStatusEnum, TaskType, toTaskFilter } from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
-import { pagePaddingHorizontal } from '../../../static';
-import { TaskCard, TaskForm, TaskList } from '../../../ui-components';
-import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
+import { enumDisplayTaskStatus, pagePaddingHorizontal } from '../../../static';
+import {
+  ModelFilters,
+  TModelFilters,
+  TaskCard,
+  TaskForm,
+  TaskList,
+  toModelFilterValues,
+} from '../../../ui-components';
 import { TaskFormData } from '../../../ui-components/TaskForm/TaskForm';
+import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
+
+function getInitialTaskFilters(): TModelFilters {
+  return {
+    taskStatus: [
+      { id: TaskStatusEnum.ToDo, label: enumDisplayTaskStatus.TO_DO },
+      {
+        id: TaskStatusEnum.InProgress,
+        label: enumDisplayTaskStatus.IN_PROGRESS,
+      },
+    ],
+  };
+}
 
 type TProps = {
   client: ClientProfileQuery | undefined;
@@ -29,8 +48,26 @@ export function TasksTab(props: TProps) {
 
   const [createTask] = useMutation(CreateTaskDocument);
   const { showSnackbar } = useSnackbar();
+  const { showModalScreen } = useModalScreen();
 
-  const onSubmit = async (task: TaskFormData) => {
+  const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
+  const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
+    getInitialTaskFilters()
+  );
+
+  function onFilterChange(selectedFilters: TModelFilters) {
+    setCurrentFilters(selectedFilters);
+  }
+
+  function onFilterReset() {
+    const initial = getInitialTaskFilters();
+
+    setSearch('');
+    setCurrentFilters(initial);
+    setFiltersKey((k) => k + 1); // inc key to trigger remount
+  }
+
+  const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
     if (!client?.clientProfile.id) return;
     try {
       const result = await createTask({
@@ -49,7 +86,7 @@ export function TasksTab(props: TProps) {
         console.log(result.data.createTask.messages);
       }
 
-      closeModalScreen();
+      closeForm();
     } catch (e) {
       showSnackbar({
         message: 'Error creating a task.',
@@ -76,8 +113,6 @@ export function TasksTab(props: TProps) {
     ),
     [handleTaskPress]
   );
-
-  const { showModalScreen, closeModalScreen } = useModalScreen();
 
   function renderListHeaderText(visible: number, total: number | undefined) {
     return (
@@ -106,33 +141,44 @@ export function TasksTab(props: TProps) {
   function openTaskForm() {
     showModalScreen({
       presentation: 'modal',
-      content: (
-        <TaskForm
-          onCancel={() => {
-            closeModalScreen();
-          }}
-          onSubmit={onSubmit}
-        />
+      renderContent: ({ close }) => (
+        <TaskForm onCancel={close} onSubmit={(task) => onSubmit(task, close)} />
       ),
       title: 'Follow-Up Task',
     });
   }
 
+  const serverFilters = toTaskFilter({
+    search,
+    ...toModelFilterValues(currentFilters),
+    clientProfileLookup: { exact: client.clientProfile.id },
+  });
+
   return (
     <View style={styles.container}>
       <SearchBar
+        style={styles.searchBar}
         value={search}
         placeholder="Search tasks"
         onChange={(text) => setSearch(text)}
         onClear={() => setSearch('')}
-        style={{ marginBottom: Spacings.xs }}
+        actionSlotRight={{
+          label: 'Reset',
+          accessibilityHint: 'reset search and filters',
+          onPress: onFilterReset,
+        }}
+      />
+
+      <ModelFilters
+        style={styles.filters}
+        key={filtersKey}
+        selected={currentFilters}
+        onChange={onFilterChange}
+        filters={['teams', 'taskStatus', 'authors', 'organizations']}
       />
 
       <TaskList
-        filters={{
-          search,
-          clientProfileLookup: { exact: client.clientProfile.id },
-        }}
+        filters={serverFilters}
         renderItem={renderTaskItem}
         renderHeader={renderListHeaderText}
       />
@@ -153,5 +199,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacings.xs,
+  },
+  searchBar: {
+    marginBottom: Spacings.xs,
+  },
+  filters: {
+    marginBottom: Spacings.sm,
   },
 });

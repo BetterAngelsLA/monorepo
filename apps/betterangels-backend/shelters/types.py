@@ -12,7 +12,6 @@ from django.db.models import Prefetch, Q, QuerySet
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
-    CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -122,7 +121,8 @@ class EntryRequirementType:
 
 @strawberry_django.type(models.City)
 class CityType:
-    name: Optional[CityChoices]
+    id: auto
+    name: auto
 
 
 @strawberry_django.type(models.SPA)
@@ -165,7 +165,7 @@ class ShelterPropertyInput:
     parking: Optional[List[ParkingChoices]] = None
 
 
-@strawberry_django.filter(models.Shelter)
+@strawberry_django.filter_type(models.Shelter)
 class ShelterFilter:
     @strawberry_django.filter_field
     def properties(

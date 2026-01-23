@@ -10,7 +10,6 @@ import {
 } from '../../../apollo';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
-import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
 import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import {
   HmisProgramNoteForm,
@@ -23,11 +22,13 @@ import {
   HmisNoteFormFieldNames,
 } from '../HmisProgramNoteForm/formSchema';
 import splitBucket from '../utils/splitBucket';
+import { useApplyTasks } from '../utils/useApplyTasks';
 import { CreateHmisNoteDocument } from './__generated__/hmisCreateClientNote.generated';
 import {
   CreateHmisServiceRequestDocument,
   RemoveHmisNoteServiceRequestDocument,
 } from './__generated__/HmisServiceRequest.generated';
+import { UpdateHmisNoteLocationDocument } from './__generated__/updateHmisNoteLocation.generated';
 
 type TProps = {
   clientId: string;
@@ -40,12 +41,14 @@ export function HmisProgramNoteCreate(props: TProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [createHmisNote] = useMutation(CreateHmisNoteDocument);
-  const [createTask] = useMutation(CreateTaskDocument);
+  const [updateHmisNoteLocation] = useMutation(UpdateHmisNoteLocationDocument);
   const [deleteService] = useMutation(RemoveHmisNoteServiceRequestDocument);
   const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);
 
+  const { applyTasks } = useApplyTasks();
+
   async function applyBucket(
-    noteId: string,
+    id: string,
     type: ServiceRequestTypeEnum,
     bucket: any
   ) {
@@ -57,7 +60,7 @@ export function HmisProgramNoteCreate(props: TProps) {
       await createServiceRequest({
         variables: {
           data: {
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
             serviceId: s.serviceId!,
           },
@@ -71,7 +74,7 @@ export function HmisProgramNoteCreate(props: TProps) {
         variables: {
           data: {
             serviceRequestId: s.serviceRequestId!,
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
           },
         },
@@ -83,7 +86,7 @@ export function HmisProgramNoteCreate(props: TProps) {
       await createServiceRequest({
         variables: {
           data: {
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
             serviceOther: o.serviceOther!.trim(),
           },
@@ -97,7 +100,7 @@ export function HmisProgramNoteCreate(props: TProps) {
         variables: {
           data: {
             serviceRequestId: o.serviceRequestId!,
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
           },
         },
@@ -117,14 +120,13 @@ export function HmisProgramNoteCreate(props: TProps) {
     try {
       // 1. Separate Draft Tasks from the Note fields
       // We do this because 'draftTasks' is not part of the HmisProgramNoteSchemaOutput
-      const { draftTasks, ...noteFields } = values;
+      const { tasks, ...noteFields } = values;
 
       // 2. Validate/Parse Note fields
       const payload = HmisProgramNoteFormSchemaOutput.parse(noteFields);
+      const { location, services, ...rest } = payload;
 
       // 3. Create Note
-      const { services, ...rest } = payload;
-
       const createResponse = await createHmisNote({
         variables: {
           data: {
@@ -160,44 +162,42 @@ export function HmisProgramNoteCreate(props: TProps) {
         throw new Error('Failed to create HMIS Note');
       }
 
-      // 4. Create Tasks (Link to the new Note)
-      // Eventually we can move this back to HMIS Note creation
-      if (draftTasks?.length > 0) {
-        await Promise.all(
-          draftTasks.map((task) =>
-            createTask({
-              variables: {
-                data: {
-                  summary: task.summary,
-                  description: task.description,
-                  status: task.status,
-                  team: task.team,
-                  hmisClientProfile: clientId,
-                  hmisNote: newNote.id,
+      const hmisNoteId = newNote.id;
+      if (location) {
+        await updateHmisNoteLocation({
+          variables: {
+            data: {
+              id: hmisNoteId,
+              location: {
+                point: [location.longitude, location.latitude],
+                address: {
+                  formattedAddress: location.formattedAddress,
+                  addressComponents: JSON.stringify(location.components ?? []),
                 },
               },
-            })
-          )
-        );
+            },
+          },
+        });
       }
+      // 4. Create Tasks (Link to the new Note)
 
-      // 5. Success - Redirect
-      const noteId = newNote.id;
+      await applyTasks(tasks, hmisNoteId, clientId);
 
       const draftServices = services ?? {};
 
       await applyBucket(
-        noteId,
+        hmisNoteId,
         ServiceRequestTypeEnum.Provided,
         draftServices[ServiceRequestTypeEnum.Provided]
       );
 
       await applyBucket(
-        noteId,
+        hmisNoteId,
         ServiceRequestTypeEnum.Requested,
         draftServices[ServiceRequestTypeEnum.Requested]
       );
 
+      // 5. Success - Redirect
       router.replace(
         `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
       );

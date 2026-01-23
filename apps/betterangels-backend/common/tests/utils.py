@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
+from common.constants import HMIS_SESSION_KEY_NAME
 from common.models import Address, Location
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
@@ -50,6 +51,23 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, Parametr
         self.org_1.add_user(self.org_1_case_manager_1)
         self.org_1.add_user(self.org_1_case_manager_2)
         self.org_2.add_user(self.org_2_case_manager_1)
+
+    def _setup_hmis_session(self) -> None:
+        """
+        Helper method to set up HMIS session for testing.
+        Sets the HMIS session key in the test client's session.
+        """
+
+        session = self.graphql_client.session
+        session[HMIS_SESSION_KEY_NAME] = "enc_token"
+        session.modified = True
+        session.save()
+
+    def _clear_hmis_session(self) -> None:
+        session = self.graphql_client.session
+        session[HMIS_SESSION_KEY_NAME] = None
+        session.modified = True
+        session.save()
 
     def _get_address_inputs(
         self,
