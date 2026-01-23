@@ -3,7 +3,7 @@ import { HmisError } from './hmisTypes';
 
 jest.mock('@monorepo/expo/shared/utils', () => ({
   getHmisAuthToken: jest.fn().mockResolvedValue('mock-token'),
-  getHmisApiUrl: jest.fn().mockResolvedValue('https://hmis.example.com'),
+  getHmisApiUrl: jest.fn().mockReturnValue('https://hmis.example.com'),
 }));
 
 const mockFetch = jest.fn();
