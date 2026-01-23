@@ -1,10 +1,13 @@
-import NitroCookies from 'react-native-nitro-cookies';
 import {
   __resetDependencies,
   __setDependencies,
   getHmisApiUrl,
   getHmisAuthToken,
   storeHmisDomain,
+  storeHmisApiUrl,
+  storeHmisAuthToken,
+  clearHmisAuthToken,
+  getHmisDomain,
 } from './hmisAuth';
 
 describe('hmisAuth', () => {
@@ -14,13 +17,17 @@ describe('hmisAuth', () => {
     remove: jest.fn(),
   };
 
-  const mockGetCookies = jest.fn();
+  const mockSecureStore = {
+    getItemAsync: jest.fn(),
+    setItemAsync: jest.fn(),
+    deleteItemAsync: jest.fn(),
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
     __setDependencies({
       storage: mockStorage,
-      getCookies: mockGetCookies,
+      secureStore: mockSecureStore,
     });
   });
 
@@ -29,7 +36,7 @@ describe('hmisAuth', () => {
   });
 
   describe('storeHmisDomain', () => {
-    it('stores the domain in storage', () => {
+    it('stores the domain in MMKV storage', () => {
       storeHmisDomain('https://example.com');
       expect(mockStorage.set).toHaveBeenCalledWith(
         'hmis_domain',
@@ -38,147 +45,90 @@ describe('hmisAuth', () => {
     });
   });
 
-  describe('getHmisAuthToken', () => {
-    it('returns auth token from cookies when domain is set', async () => {
+  describe('getHmisDomain', () => {
+    it('retrieves domain from MMKV storage', () => {
       mockStorage.get.mockReturnValue('https://example.com');
-      mockGetCookies.mockResolvedValue({
-        auth_token: { value: 'token123' },
-      });
-
-      const token = await getHmisAuthToken();
-
-      expect(mockStorage.get).toHaveBeenCalledWith('hmis_domain');
-      expect(mockGetCookies).toHaveBeenCalledWith('https://example.com');
-      expect(token).toBe('token123');
+      expect(getHmisDomain()).toBe('https://example.com');
     });
 
-    it('returns null when domain is not set', async () => {
+    it('returns null when domain not set', () => {
       mockStorage.get.mockReturnValue(null);
-
-      const token = await getHmisAuthToken();
-
-      expect(token).toBeNull();
-      expect(mockGetCookies).not.toHaveBeenCalled();
+      expect(getHmisDomain()).toBeNull();
     });
+  });
 
-    it('returns null when cookie does not exist', async () => {
-      mockStorage.get.mockReturnValue('https://example.com');
-      mockGetCookies.mockResolvedValue({});
-
-      const token = await getHmisAuthToken();
-
-      expect(token).toBeNull();
-    });
-
-    it('returns null when getCookies throws error', async () => {
-      mockStorage.get.mockReturnValue('https://example.com');
-      mockGetCookies.mockRejectedValue(new Error('Network error'));
-
-      const token = await getHmisAuthToken();
-
-      expect(token).toBeNull();
+  describe('storeHmisApiUrl', () => {
+    it('stores the API URL in MMKV storage', () => {
+      storeHmisApiUrl('https://api.example.com');
+      expect(mockStorage.set).toHaveBeenCalledWith(
+        'hmis_api_url',
+        'https://api.example.com'
+      );
     });
   });
 
   describe('getHmisApiUrl', () => {
-    it('returns api_url from cookies when domain is set', async () => {
-      mockStorage.get.mockReturnValue('https://example.com');
-      mockGetCookies.mockResolvedValue({
-        api_url: { value: 'https://api.example.com' },
-      });
-
-      const url = await getHmisApiUrl();
-
-      expect(mockStorage.get).toHaveBeenCalledWith('hmis_domain');
-      expect(mockGetCookies).toHaveBeenCalledWith('https://example.com');
-      expect(url).toBe('https://api.example.com');
+    it('retrieves API URL from MMKV storage', () => {
+      mockStorage.get.mockReturnValue('https://api.example.com');
+      expect(getHmisApiUrl()).toBe('https://api.example.com');
     });
 
-    it('decodes percent-encoded api_url values', async () => {
-      mockStorage.get.mockReturnValue('https://example.com');
-      mockGetCookies.mockResolvedValue({
-        api_url: { value: 'https%3A%2F%2Fapi.example.com%2F' },
-      });
-
-      const url = await getHmisApiUrl();
-
-      expect(url).toBe('https://api.example.com');
-    });
-
-    it('trims whitespace and trailing slashes', async () => {
-      mockStorage.get.mockReturnValue('https://example.com');
-      mockGetCookies.mockResolvedValue({
-        api_url: { value: '  https://api.example.com///  ' },
-      });
-
-      const url = await getHmisApiUrl();
-
-      expect(url).toBe('https://api.example.com');
-    });
-
-    it('returns null when value is empty after cleanup', async () => {
-      mockStorage.get.mockReturnValue('https://example.com');
-      mockGetCookies.mockResolvedValue({
-        api_url: { value: '   ///   ' },
-      });
-
-      const url = await getHmisApiUrl();
-
-      expect(url).toBeNull();
-    });
-
-    it('returns null when domain is not set', async () => {
+    it('returns null when API URL not set', () => {
       mockStorage.get.mockReturnValue(null);
-
-      const url = await getHmisApiUrl();
-
-      expect(url).toBeNull();
-      expect(mockGetCookies).not.toHaveBeenCalled();
-    });
-
-    it('returns null when cookie does not exist', async () => {
-      mockStorage.get.mockReturnValue('https://example.com');
-      mockGetCookies.mockResolvedValue({});
-
-      const url = await getHmisApiUrl();
-
-      expect(url).toBeNull();
+      expect(getHmisApiUrl()).toBeNull();
     });
   });
 
-  describe('production wiring (no DI overrides)', () => {
-    beforeEach(() => {
-      __resetDependencies();
-      jest.clearAllMocks();
+  describe('storeHmisAuthToken', () => {
+    it('stores auth token in SecureStore', async () => {
+      await storeHmisAuthToken('token123');
+      expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
+        'hmis_auth_token',
+        'token123'
+      );
+    });
+  });
+
+  describe('getHmisAuthToken', () => {
+    it('retrieves auth token from SecureStore', async () => {
+      mockSecureStore.getItemAsync.mockResolvedValue('token123');
+      const token = await getHmisAuthToken();
+      expect(token).toBe('token123');
     });
 
-    it('stores domain and retrieves auth token via NitroCookies + MMKV mock', async () => {
-      // Store domain using default storage
-      storeHmisDomain('https://example.com');
+    it('returns null when token not found', async () => {
+      mockSecureStore.getItemAsync.mockResolvedValue(null);
+      const token = await getHmisAuthToken();
+      expect(token).toBeNull();
+    });
 
-      // Mock cookies returned by NitroCookies
-      (NitroCookies as any).get.mockResolvedValue({
-        auth_token: { value: 'tokenProd' },
-      });
+    it('returns null and logs warning on error', async () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      mockSecureStore.getItemAsync.mockRejectedValue(
+        new Error('Storage error')
+      );
 
       const token = await getHmisAuthToken();
-      expect(token).toBe('tokenProd');
-      expect((NitroCookies as any).get).toHaveBeenCalledWith(
-        'https://example.com'
+
+      expect(token).toBeNull();
+      expect(consoleWarnSpy).toHaveBeenCalled();
+      consoleWarnSpy.mockRestore();
+    });
+  });
+
+  describe('clearHmisAuthToken', () => {
+    it('deletes auth token from SecureStore', async () => {
+      await clearHmisAuthToken();
+      expect(mockSecureStore.deleteItemAsync).toHaveBeenCalledWith(
+        'hmis_auth_token'
       );
     });
 
-    it('retrieves api_url via NitroCookies + MMKV mock', async () => {
-      storeHmisDomain('https://example.com');
-      (NitroCookies as any).get.mockResolvedValue({
-        api_url: { value: 'https://api.example.com' },
-      });
-
-      const url = await getHmisApiUrl();
-      expect(url).toBe('https://api.example.com');
-      expect((NitroCookies as any).get).toHaveBeenCalledWith(
-        'https://example.com'
+    it('silently handles errors when token does not exist', async () => {
+      mockSecureStore.deleteItemAsync.mockRejectedValue(
+        new Error('Item not found')
       );
+      await expect(clearHmisAuthToken()).resolves.not.toThrow();
     });
   });
 });

@@ -5,12 +5,8 @@ import { HmisError, HmisRequestOptions } from './hmisTypes';
 /**
  * HMIS REST API Client
  *
- * Provides direct access to HMIS REST endpoints from React Native.
- * Automatically handles:
- * - Authorization Bearer token from cookies
- * - Base URL from stored api_url cookie
- * - Browser User-Agent requirement
- * - Automatic cookie management via credentials: 'include'
+ * Handles direct access to HMIS REST endpoints from React Native.
+ * Automatically includes Bearer token auth and browser User-Agent.
  */
 class HmisClient {
   /**
@@ -32,10 +28,10 @@ class HmisClient {
   }
 
   /**
-   * Get HMIS API base URL from stored cookie
+   * Get HMIS API base URL from stored api_url
    */
-  private async getBaseUrl(): Promise<string> {
-    const apiUrl = await getHmisApiUrl();
+  private getBaseUrl(): string {
+    const apiUrl = getHmisApiUrl();
     if (!apiUrl) {
       throw new HmisError('HMIS API URL not found. Please log in first.', 500);
     }
@@ -90,22 +86,13 @@ class HmisClient {
 
   /**
    * Make a request to HMIS REST API
-   *
-   * Note: Automatically includes X-Requested-With: XMLHttpRequest header
-   * which is required by HMIS API.
-   *
-   * @param path - API path (e.g., '/current-user', '/clients/123')
-   * @param options - Request options including method, body, params, headers
-   * @returns Parsed JSON response
    */
   async request<T = any>(
     path: string,
     options: HmisRequestOptions = {}
   ): Promise<T> {
-    const [baseUrl, authHeaders] = await Promise.all([
-      this.getBaseUrl(),
-      this.getHeaders(),
-    ]);
+    const baseUrl = this.getBaseUrl();
+    const authHeaders = await this.getHeaders();
 
     // Build URL with query params
     const url = new URL(path, baseUrl);
@@ -115,10 +102,8 @@ class HmisClient {
       });
     }
 
-    // Make request with automatic cookie management
     const fetchOptions: RequestInit = {
       method: options.method,
-      credentials: 'include', // Automatic cookie sending/storage
       headers: {
         ...authHeaders,
         ...options.headers,
@@ -145,16 +130,10 @@ class HmisClient {
     return response.text() as unknown as T;
   }
 
-  /**
-   * GET request
-   */
   get<T = unknown>(path: string, params?: Record<string, string>): Promise<T> {
     return this.request<T>(path, { method: 'GET', params });
   }
 
-  /**
-   * POST request
-   */
   post<T = unknown>(path: string, body?: unknown): Promise<T> {
     return this.request<T>(path, {
       method: 'POST',
@@ -163,9 +142,6 @@ class HmisClient {
     });
   }
 
-  /**
-   * PUT request
-   */
   put<T = unknown>(path: string, body?: unknown): Promise<T> {
     return this.request<T>(path, {
       method: 'PUT',
@@ -174,20 +150,10 @@ class HmisClient {
     });
   }
 
-  /**
-   * DELETE request
-   */
   delete<T = unknown>(path: string): Promise<T> {
     return this.request<T>(path, { method: 'DELETE' });
   }
 }
 
-/**
- * Singleton HMIS client instance
- */
 export const hmisClient = new HmisClient();
-
-/**
- * Export class for testing/custom instantiation
- */
 export { HmisClient };

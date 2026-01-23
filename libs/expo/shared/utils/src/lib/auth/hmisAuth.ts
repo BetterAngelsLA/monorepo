@@ -1,95 +1,73 @@
-import NitroCookies from 'react-native-nitro-cookies';
+import * as SecureStore from 'expo-secure-store';
 import { createPersistentSynchronousStorage } from '../storage/createPersistentSynchronousStorage';
 import { PersistentSynchronousStorageApi } from '../storage/types';
 import {
-  HMIS_API_URL_COOKIE_NAME,
-  HMIS_AUTH_COOKIE_NAME,
   HMIS_DOMAIN_KEY,
+  HMIS_API_URL_KEY,
+  HMIS_AUTH_TOKEN_KEY,
 } from './constants';
 
-type CookieValue = Record<string, { value: string }>;
-
-// Dependencies that can be injected for testing
 interface HmisAuthDependencies {
   storage: PersistentSynchronousStorageApi;
-  getCookies: (domain: string) => Promise<CookieValue>;
+  secureStore: {
+    getItemAsync: (key: string) => Promise<string | null>;
+    setItemAsync: (key: string, value: string) => Promise<void>;
+    deleteItemAsync: (key: string) => Promise<void>;
+  };
 }
 
-// Default production dependencies
 const defaultDependencies: HmisAuthDependencies = {
   storage: createPersistentSynchronousStorage({ scopeId: 'hmis-auth' }),
-  getCookies: (domain: string) =>
-    NitroCookies.get(domain) as Promise<CookieValue>,
+  secureStore: SecureStore,
 };
 
-// Allow dependency injection for testing
 let dependencies = defaultDependencies;
 
-/**
- * @internal - For testing only
- */
+/** @internal - For testing only */
 export const __setDependencies = (
   deps: Partial<HmisAuthDependencies>
 ): void => {
   dependencies = { ...defaultDependencies, ...deps };
 };
 
-/**
- * @internal - For testing only
- */
+/** @internal - For testing only */
 export const __resetDependencies = (): void => {
   dependencies = defaultDependencies;
 };
 
-/**
- * Store HMIS domain for cookie retrieval
- */
+export const storeHmisAuthToken = async (token: string): Promise<void> => {
+  await dependencies.secureStore.setItemAsync(HMIS_AUTH_TOKEN_KEY, token);
+};
+
+export const clearHmisAuthToken = async (): Promise<void> => {
+  try {
+    await dependencies.secureStore.deleteItemAsync(HMIS_AUTH_TOKEN_KEY);
+  } catch {
+    // Item may not exist
+  }
+};
+
 export const storeHmisDomain = (domain: string): void => {
   dependencies.storage.set(HMIS_DOMAIN_KEY, domain);
 };
 
-/**
- * Get a cookie value from HMIS domain
- */
-const getHmisCookie = async (cookieName: string): Promise<string | null> => {
-  try {
-    const domain = dependencies.storage.get<string>(HMIS_DOMAIN_KEY);
-    if (!domain) {
-      return null;
-    }
+export const getHmisDomain = (): string | null => {
+  return dependencies.storage.get<string>(HMIS_DOMAIN_KEY) ?? null;
+};
 
-    const cookies = await dependencies.getCookies(domain);
-    return cookies[cookieName]?.value ?? null;
+export const storeHmisApiUrl = (apiUrl: string): void => {
+  dependencies.storage.set(HMIS_API_URL_KEY, apiUrl);
+};
+
+export const getHmisApiUrl = (): string | null => {
+  return dependencies.storage.get<string>(HMIS_API_URL_KEY) ?? null;
+};
+
+export const getHmisAuthToken = async (): Promise<string | null> => {
+  try {
+    return await dependencies.secureStore.getItemAsync(HMIS_AUTH_TOKEN_KEY);
   } catch (error) {
-    console.warn(`Failed to get HMIS ${cookieName} from cookies:`, error);
+    console.warn('Failed to get HMIS auth token:', error);
     return null;
   }
-};
-
-/**
- * Get HMIS auth token from cookies
- */
-export const getHmisAuthToken = (): Promise<string | null> => {
-  return getHmisCookie(HMIS_AUTH_COOKIE_NAME);
-};
-
-/**
- * Get HMIS API URL from cookies
- */
-export const getHmisApiUrl = (): Promise<string | null> => {
-  return getHmisCookie(HMIS_API_URL_COOKIE_NAME).then((value) => {
-    if (!value) {
-      return value;
-    }
-
-    try {
-      const decoded = decodeURIComponent(value);
-      const trimmed = (decoded || value).trim();
-      const cleaned = trimmed.replace(/\/+$/, '');
-
-      return cleaned || null;
-    } catch {
-      return null;
-    }
-  });
 };
