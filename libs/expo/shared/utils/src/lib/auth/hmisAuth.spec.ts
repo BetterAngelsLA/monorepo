@@ -1,6 +1,6 @@
+import * as SecureStore from 'expo-secure-store';
+
 import {
-  __resetDependencies,
-  __setDependencies,
   getHmisApiUrl,
   getHmisAuthToken,
   storeHmisApiUrl,
@@ -8,33 +8,24 @@ import {
   clearHmisAuthToken,
 } from './hmisAuth';
 
+const mockStorage = {
+  get: jest.fn(),
+  set: jest.fn(),
+};
+
+jest.mock('expo-secure-store');
+jest.mock('../storage/createPersistentSynchronousStorage', () => {
+  return {
+    createPersistentSynchronousStorage: () => mockStorage,
+  };
+});
+
 describe('hmisAuth', () => {
-  const mockStorage = {
-    get: jest.fn(),
-    set: jest.fn(),
-    remove: jest.fn(),
-  };
-
-  const mockSecureStore = {
-    getItemAsync: jest.fn(),
-    setItemAsync: jest.fn(),
-    deleteItemAsync: jest.fn(),
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
-    // Ensure mocks return Promises by default
-    mockSecureStore.deleteItemAsync.mockResolvedValue(undefined);
-    mockSecureStore.setItemAsync.mockResolvedValue(undefined);
-    mockSecureStore.getItemAsync.mockResolvedValue(null);
-    __setDependencies({
-      storage: mockStorage,
-      secureStore: mockSecureStore,
-    });
-  });
-
-  afterEach(() => {
-    __resetDependencies();
+    (SecureStore.deleteItemAsync as jest.Mock).mockResolvedValue(undefined);
+    (SecureStore.setItemAsync as jest.Mock).mockResolvedValue(undefined);
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
   });
 
   describe('storeHmisApiUrl', () => {
@@ -62,7 +53,7 @@ describe('hmisAuth', () => {
   describe('storeHmisAuthToken', () => {
     it('stores auth token in SecureStore', async () => {
       await storeHmisAuthToken('token123');
-      expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
         'hmis_auth_token',
         'token123'
       );
@@ -71,41 +62,28 @@ describe('hmisAuth', () => {
 
   describe('getHmisAuthToken', () => {
     it('retrieves auth token from SecureStore', async () => {
-      mockSecureStore.getItemAsync.mockResolvedValue('token123');
+      (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('token123');
       const token = await getHmisAuthToken();
       expect(token).toBe('token123');
     });
 
     it('returns null when token not found', async () => {
-      mockSecureStore.getItemAsync.mockResolvedValue(null);
+      (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
       const token = await getHmisAuthToken();
       expect(token).toBeNull();
-    });
-
-    it('returns null and logs warning on error', async () => {
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
-      mockSecureStore.getItemAsync.mockRejectedValue(
-        new Error('Storage error')
-      );
-
-      const token = await getHmisAuthToken();
-
-      expect(token).toBeNull();
-      expect(consoleWarnSpy).toHaveBeenCalled();
-      consoleWarnSpy.mockRestore();
     });
   });
 
   describe('clearHmisAuthToken', () => {
     it('deletes auth token from SecureStore', async () => {
       await clearHmisAuthToken();
-      expect(mockSecureStore.deleteItemAsync).toHaveBeenCalledWith(
+      expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(
         'hmis_auth_token'
       );
     });
 
     it('silently handles errors when token does not exist', async () => {
-      mockSecureStore.deleteItemAsync.mockRejectedValue(
+      (SecureStore.deleteItemAsync as jest.Mock).mockRejectedValue(
         new Error('Item not found')
       );
       await expect(clearHmisAuthToken()).resolves.not.toThrow();

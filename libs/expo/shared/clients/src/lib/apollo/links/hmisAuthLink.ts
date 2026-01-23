@@ -59,11 +59,7 @@ export const createCookieExtractorLink = () =>
           storeHmisApiUrl(decodeURIComponent(apiUrlMatch[1]));
         }
 
-        try {
-          await storeHmisAuthToken(authTokenMatch[1]);
-        } catch (error) {
-          console.error('[HMIS] Failed to store auth token:', error);
-        }
+        await storeHmisAuthToken(authTokenMatch[1]);
       })
     );
   });
