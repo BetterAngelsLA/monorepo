@@ -1,11 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { createPersistentSynchronousStorage } from '../storage/createPersistentSynchronousStorage';
 import { PersistentSynchronousStorageApi } from '../storage/types';
-import {
-  HMIS_DOMAIN_KEY,
-  HMIS_API_URL_KEY,
-  HMIS_AUTH_TOKEN_KEY,
-} from './constants';
+import { HMIS_API_URL_KEY, HMIS_AUTH_TOKEN_KEY } from './constants';
 
 interface HmisAuthDependencies {
   storage: PersistentSynchronousStorageApi;
@@ -40,19 +36,9 @@ export const storeHmisAuthToken = async (token: string): Promise<void> => {
 };
 
 export const clearHmisAuthToken = async (): Promise<void> => {
-  try {
-    await dependencies.secureStore.deleteItemAsync(HMIS_AUTH_TOKEN_KEY);
-  } catch {
-    // Item may not exist
-  }
-};
-
-export const storeHmisDomain = (domain: string): void => {
-  dependencies.storage.set(HMIS_DOMAIN_KEY, domain);
-};
-
-export const getHmisDomain = (): string | null => {
-  return dependencies.storage.get<string>(HMIS_DOMAIN_KEY) ?? null;
+  await dependencies.secureStore
+    .deleteItemAsync(HMIS_AUTH_TOKEN_KEY)
+    .catch(() => undefined);
 };
 
 export const storeHmisApiUrl = (apiUrl: string): void => {

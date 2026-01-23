@@ -3,11 +3,9 @@ import {
   __setDependencies,
   getHmisApiUrl,
   getHmisAuthToken,
-  storeHmisDomain,
   storeHmisApiUrl,
   storeHmisAuthToken,
   clearHmisAuthToken,
-  getHmisDomain,
 } from './hmisAuth';
 
 describe('hmisAuth', () => {
@@ -25,6 +23,10 @@ describe('hmisAuth', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Ensure mocks return Promises by default
+    mockSecureStore.deleteItemAsync.mockResolvedValue(undefined);
+    mockSecureStore.setItemAsync.mockResolvedValue(undefined);
+    mockSecureStore.getItemAsync.mockResolvedValue(null);
     __setDependencies({
       storage: mockStorage,
       secureStore: mockSecureStore,
@@ -33,28 +35,6 @@ describe('hmisAuth', () => {
 
   afterEach(() => {
     __resetDependencies();
-  });
-
-  describe('storeHmisDomain', () => {
-    it('stores the domain in MMKV storage', () => {
-      storeHmisDomain('https://example.com');
-      expect(mockStorage.set).toHaveBeenCalledWith(
-        'hmis_domain',
-        'https://example.com'
-      );
-    });
-  });
-
-  describe('getHmisDomain', () => {
-    it('retrieves domain from MMKV storage', () => {
-      mockStorage.get.mockReturnValue('https://example.com');
-      expect(getHmisDomain()).toBe('https://example.com');
-    });
-
-    it('returns null when domain not set', () => {
-      mockStorage.get.mockReturnValue(null);
-      expect(getHmisDomain()).toBeNull();
-    });
   });
 
   describe('storeHmisApiUrl', () => {

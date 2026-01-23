@@ -4,7 +4,6 @@ import {
   getHmisAuthToken,
   HMIS_AUTH_COOKIE_NAME,
   HMIS_API_URL_COOKIE_NAME,
-  storeHmisDomain,
   storeHmisApiUrl,
   storeHmisAuthToken,
 } from '@monorepo/expo/shared/utils';
@@ -23,12 +22,13 @@ import { operationHasDirective } from '../utils/schemaDirectives';
 export const createAuthHeaderLink = () =>
   new SetContextLink(async (prevContext) => {
     const authToken = await getHmisAuthToken();
+    const { headers = {} } = prevContext || {};
+
     return {
-      ...prevContext,
       headers: {
-        ...(prevContext['headers'] ?? {}),
+        ...headers,
         'User-Agent': MODERN_BROWSER_USER_AGENT,
-        ...(authToken ? { [HMIS_TOKEN_HEADER_NAME]: authToken } : {}),
+        ...(authToken && { [HMIS_TOKEN_HEADER_NAME]: authToken }),
       },
     };
   });
@@ -46,7 +46,6 @@ export const createCookieExtractorLink = () =>
 
         if (!setCookieHeader) return;
 
-        const domainMatch = setCookieHeader.match(/Domain=([^;,\s]+)/i);
         const authTokenMatch = setCookieHeader.match(
           new RegExp(`${HMIS_AUTH_COOKIE_NAME}=([^;,\\s]+)`, 'i')
         );
@@ -54,10 +53,7 @@ export const createCookieExtractorLink = () =>
           new RegExp(`${HMIS_API_URL_COOKIE_NAME}=([^;,\\s]+)`, 'i')
         );
 
-        if (!domainMatch?.[1] || !authTokenMatch?.[1]) return;
-
-        const domain = `https://${domainMatch[1].trim()}`;
-        storeHmisDomain(domain);
+        if (!authTokenMatch?.[1]) return;
 
         if (apiUrlMatch?.[1]) {
           storeHmisApiUrl(decodeURIComponent(apiUrlMatch[1]));
