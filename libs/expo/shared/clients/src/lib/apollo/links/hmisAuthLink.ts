@@ -22,9 +22,10 @@ import { operationHasDirective } from '../utils/schemaDirectives';
 export const createAuthHeaderLink = () =>
   new SetContextLink(async (prevContext) => {
     const authToken = await getHmisAuthToken();
-    const { headers = {} } = prevContext || {};
+    const { headers = {}, ...restContext } = prevContext || {};
 
     return {
+      ...restContext,
       headers: {
         ...headers,
         'User-Agent': MODERN_BROWSER_USER_AGENT,
