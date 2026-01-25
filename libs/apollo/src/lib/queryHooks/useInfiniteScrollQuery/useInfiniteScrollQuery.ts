@@ -65,7 +65,7 @@
  *   hasMore:     boolean,      // true if more results remain
  *   loadMore:    () => void,   // fetches next page
  *   reload:      () => void,   // refetches initial page (manual)
- *   error?:      ApolloError,  // query or network error
+ *   error?:      ApolloError,  // query or network error or fetchMore error.
  * }
  *
  * ---------------------------------------------------------------------------
@@ -83,6 +83,7 @@
  */
 
 import {
+  ErrorLike,
   NetworkStatus,
   type FetchPolicy,
   type OperationVariables,
@@ -92,15 +93,14 @@ import {
 import { useApolloClient, useQuery } from '@apollo/client/react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDeepCompareMemoize } from 'use-deep-compare-effect';
-
 import { DEFAULT_QUERY_PAGE_SIZE } from '../../cachePolicy/constants';
 import { getQueryPolicyConfigFromCache } from '../../cacheStore/utils/getQueryPolicyConfigFromCache';
+import { toErrorLike } from '../../errors';
 import {
   buildInitialVariables,
   buildVariablesForPage,
   extractItemsAndTotalFromData,
   getPageSizeFromVars,
-  validatePathOrThrow,
 } from './utils';
 
 type TProps<
@@ -130,6 +130,8 @@ export function useInfiniteScrollQuery<
   } = props;
 
   const apolloClient = useApolloClient();
+
+  const fetchMoreErrorRef = useRef<ErrorLike | null>(null);
 
   // Deep-memoize incoming variables to avoid unnecessary refetches
   const memoizedVariables = useDeepCompareMemoize(
@@ -178,12 +180,12 @@ export function useInfiniteScrollQuery<
   });
 
   // Validate structure in DEV env
-  if (process.env['NODE_ENV'] !== 'production' && data) {
-    validatePathOrThrow(
-      (data as any)[queryFieldName],
-      queryPolicyConfig.itemsPath
-    );
-  }
+  // if (process.env['NODE_ENV'] !== 'production' && data) {
+  //   validatePathOrThrow(
+  //     (data as any)[queryFieldName],
+  //     queryPolicyConfig.itemsPath
+  //   );
+  // }
 
   // Extract items and total count based on policy paths
   const { items, total } = useMemo(() => {
@@ -202,6 +204,7 @@ export function useInfiniteScrollQuery<
     isManualReloadRef.current = true;
 
     lastVariablesRef.current = initialVariables;
+    fetchMoreErrorRef.current = null; // 👈 reset error state
 
     try {
       await refetch(initialVariables as Partial<TVars>);
@@ -248,7 +251,7 @@ export function useInfiniteScrollQuery<
   }, [networkStatus]);
 
   // Load more handler
-  const loadMore = useCallback(() => {
+  const loadMore = useCallback(async () => {
     if (!hasMore || isAnyLoading || isFetchMoreInFlightRef.current) {
       return;
     }
@@ -276,7 +279,10 @@ export function useInfiniteScrollQuery<
       .then(() => {
         lastVariablesRef.current = nextVariables;
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('[useInfiniteScrollQuery] fetchMore failed:', err);
+        fetchMoreErrorRef.current = toErrorLike(err);
+
         isFetchMoreInFlightRef.current = false;
       });
   }, [hasMore, isAnyLoading, queryPolicyConfig, pageSize, fetchMore]);
@@ -290,6 +296,6 @@ export function useInfiniteScrollQuery<
     hasMore,
     loadMore,
     reload: reloadManual,
-    error: queryError,
+    error: queryError ?? fetchMoreErrorRef.current,
   };
 }

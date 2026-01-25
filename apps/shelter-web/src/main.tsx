@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { ApolloProvider } from '@apollo/client/react';
 import { createApolloClient } from '@monorepo/react/shared';
+import { shelterApolloTypePolicies } from '@monorepo/react/shelter';
 import App from './app/app';
 
 const csrfCookieName =
@@ -15,6 +16,7 @@ const apolloClient = createApolloClient({
   apiUrl: import.meta.env.VITE_SHELTER_API_URL,
   csrfCookieName,
   csrfHeaderName,
+  typePolicies: shelterApolloTypePolicies,
 });
 
 // to allow preview by branch

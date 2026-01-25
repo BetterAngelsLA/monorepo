@@ -1,0 +1,1 @@
+export { shelterApolloTypePolicies } from './typePolicies';
