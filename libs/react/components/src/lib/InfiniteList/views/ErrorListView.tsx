@@ -1,14 +1,23 @@
-import { mergeCss } from '@monorepo/react/components';
 import { FaceFrownIcon } from '@monorepo/react/icons';
+import { mergeCss } from '../../../utils';
+
+type TErrorListViewVariant = 'full' | 'compact';
+
+const VARIANT_STYLES: Record<TErrorListViewVariant, string> = {
+  full: 'py-[100px]',
+  compact: 'py-2',
+};
 
 type Props = {
   className?: string;
   title?: string;
   bodyText?: string;
+  variant?: TErrorListViewVariant;
 };
 
 export function ErrorListView(props: Props) {
   const {
+    variant = 'full',
     className,
     title = 'Sorry, something went wrong.',
     bodyText = "There was an error retrieving the data. Rest assured, we're working on it.",
@@ -19,7 +28,7 @@ export function ErrorListView(props: Props) {
     'flex-col',
     'items-center',
     'justify-center',
-    'py-[100px]',
+    VARIANT_STYLES[variant],
     className,
   ];
 

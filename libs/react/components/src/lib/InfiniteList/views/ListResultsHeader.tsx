@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { mergeCss } from '../../utils';
+import { mergeCss } from '../../../utils';
 
 export type TRenderListResultsHeader = (
   visible: number,
@@ -15,7 +15,7 @@ type TProps = {
   className?: string;
 };
 
-export function ResultsHeader(props: TProps) {
+export function ListResultsHeader(props: TProps) {
   const {
     renderResultsHeader,
     visibleCount,

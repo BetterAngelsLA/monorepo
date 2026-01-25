@@ -1,2 +1,2 @@
 export { InfiniteList } from './InfiniteList';
-export type { TRenderListResultsHeader } from './ResultsHeader';
+export type { TRenderListResultsHeader } from './views/ListResultsHeader';

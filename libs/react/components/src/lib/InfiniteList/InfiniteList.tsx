@@ -1,17 +1,21 @@
-import { useCallback, useMemo } from 'react';
+import { ReactNode, useCallback, useMemo } from 'react';
 import { mergeCss } from '../../utils';
 import { InfiniteScrollTrigger } from '../InfiniteScrollTrigger';
 import { LoadingView } from '../LoadingView';
-import { EmptyListView } from './EmptyListView';
-import { ErrorListView } from './ErrorListView';
-import { ResultsHeader, TRenderListResultsHeader } from './ResultsHeader';
+import { EmptyListView } from './views/EmptyListView';
+import { ErrorListView } from './views/ErrorListView';
+import {
+  ListResultsHeader,
+  TRenderListResultsHeader,
+} from './views/ListResultsHeader';
 
 export type InfiniteListProps<T> = {
   className?: string;
   contentClassName?: string;
 
   data: T[];
-  renderItem: (item: T) => React.ReactNode;
+  totalItems?: number;
+  renderItem: (item: T) => ReactNode;
   keyExtractor: (item: T, index: number) => string;
 
   loadMore?: () => void;
@@ -24,18 +28,16 @@ export type InfiniteListProps<T> = {
   error?: unknown;
   errorTitle?: string;
   errorMessage?: string;
-
-  totalItems?: number;
+  ErrorViewComponent?: ReactNode;
 
   itemGap?: number;
 
-  ListEmptyComponent?: React.ReactNode;
-  ErrorViewComponent?: React.ReactNode;
+  ListEmptyComponent?: ReactNode;
 
   renderResultsHeader?: TRenderListResultsHeader | null;
   headerClassName?: string;
 
-  renderDivider?: (index: number) => React.ReactNode;
+  renderDivider?: (index: number) => ReactNode;
 
   modelName?: string;
   modelNamePlural?: string;
@@ -70,20 +72,24 @@ export function InfiniteList<T>(props: InfiniteListProps<T>) {
   const isAnyLoading = loading || loadingMore || reloading;
 
   const ErrorView = useMemo(() => {
-    if (ErrorViewComponent) {
-      return ErrorViewComponent;
-    }
-
-    return <ErrorListView title={errorTitle} bodyText={errorMessage} />;
-  }, [ErrorViewComponent, errorTitle, errorMessage]);
-
-  const EmptyView = useMemo(() => {
-    if (isAnyLoading) {
+    if (ErrorViewComponent === null) {
       return null;
     }
 
-    if (error) {
-      return ErrorView;
+    return (
+      ErrorViewComponent ?? (
+        <ErrorListView
+          title={errorTitle}
+          bodyText={errorMessage}
+          variant={!!data.length ? 'compact' : 'full'}
+        />
+      )
+    );
+  }, [ErrorViewComponent, errorTitle, errorMessage, data.length]);
+
+  const EmptyView = useMemo(() => {
+    if (ListEmptyComponent === null) {
+      return null;
     }
 
     return ListEmptyComponent ?? <EmptyListView />;
@@ -104,7 +110,7 @@ export function InfiniteList<T>(props: InfiniteListProps<T>) {
   return (
     <div className={className}>
       {!loading && !error && (
-        <ResultsHeader
+        <ListResultsHeader
           className={headerClassName}
           visibleCount={data.length}
           totalCount={totalItems}
