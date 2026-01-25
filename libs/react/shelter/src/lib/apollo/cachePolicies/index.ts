@@ -1,1 +1,1 @@
-export { shelterApolloTypePolicies } from './typePolicies';
+export { createShelterTypePolicies } from './createShelterTypePolicies';

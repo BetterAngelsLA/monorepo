@@ -30,7 +30,7 @@ export type TShelterPropertyFilters = {
   specialSituationRestrictions?: SpecialSituationRestrictionChoices[] | null;
 };
 
-const SEARCH_RANGE_MILES = 25;
+const SEARCH_RANGE_MILES = 20;
 
 type TProps = {
   className?: string;
@@ -122,24 +122,20 @@ export function SheltersDisplay(props: TProps) {
 
   return (
     <div className={className}>
-      <div>
-        <InfiniteList<TShelter>
-          data={items}
-          totalItems={total}
-          loading={loading}
-          loadingMore={loadingMore}
-          error={error}
-          hasMore={hasMore}
-          loadMore={loadMore}
-          itemGap={24}
-          renderResultsHeader={renderListHeader}
-          renderItem={(shelter) => <ShelterCard shelter={shelter} />}
-          renderDivider={() => (
-            <div className="h-px bg-neutral-90 mt-6 -mx-4" />
-          )}
-          keyExtractor={(shelter) => shelter.id}
-        />
-      </div>
+      <InfiniteList<TShelter>
+        data={items}
+        totalItems={total}
+        loading={loading}
+        loadingMore={loadingMore}
+        error={error}
+        hasMore={hasMore}
+        loadMore={loadMore}
+        itemGap={24}
+        renderResultsHeader={renderListHeader}
+        renderItem={(shelter) => <ShelterCard shelter={shelter} />}
+        renderDivider={() => <div className="h-px bg-neutral-90 mt-6 -mx-4" />}
+        keyExtractor={(shelter) => shelter.id}
+      />
     </div>
   );
 }

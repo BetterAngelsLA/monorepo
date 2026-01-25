@@ -16,6 +16,10 @@ const policyFactoryList = [
   }),
 ] as const;
 
-export const cachePolicyRegistry = assemblePolicyRegistry(
-  policyFactoryList
-) satisfies TCachePolicyConfig;
+export function createShelterApolloCachePolicyRegistry(
+  isDevEnv: boolean
+): TCachePolicyConfig {
+  return assemblePolicyRegistry(policyFactoryList, {
+    isDevEnv: isDevEnv,
+  }) satisfies TCachePolicyConfig;
+}

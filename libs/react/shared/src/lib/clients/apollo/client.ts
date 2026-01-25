@@ -14,6 +14,7 @@ type IApolloClient = {
   csrfHeaderName: string;
   cacheStore?: InMemoryCache;
   typePolicies?: TypePolicies;
+  isDevEnv?: boolean;
 };
 
 export const createApolloClient = ({

@@ -96,12 +96,14 @@ import { useDeepCompareMemoize } from 'use-deep-compare-effect';
 import { DEFAULT_QUERY_PAGE_SIZE } from '../../cachePolicy/constants';
 import { getQueryPolicyConfigFromCache } from '../../cacheStore/utils/getQueryPolicyConfigFromCache';
 import { toErrorLike } from '../../errors';
+import { getApolloRuntimeConfig } from '../../runtime';
 import {
   buildInitialVariables,
   buildVariablesForPage,
   extractItemsAndTotalFromData,
   getPageSizeFromVars,
 } from './utils';
+import { assertValueAtPath } from './utils/assertValueAtPath';
 
 type TProps<
   TData extends Record<string, unknown>,
@@ -128,6 +130,8 @@ export function useInfiniteScrollQuery<
     fetchPolicy = 'cache-and-network',
     nextFetchPolicy = 'cache-first',
   } = props;
+
+  const { isDevEnv } = getApolloRuntimeConfig();
 
   const apolloClient = useApolloClient();
 
@@ -180,12 +184,13 @@ export function useInfiniteScrollQuery<
   });
 
   // Validate structure in DEV env
-  // if (process.env['NODE_ENV'] !== 'production' && data) {
-  //   validatePathOrThrow(
-  //     (data as any)[queryFieldName],
-  //     queryPolicyConfig.itemsPath
-  //   );
-  // }
+  if (data) {
+    assertValueAtPath({
+      source: (data as any)[queryFieldName],
+      path: queryPolicyConfig.itemsPath,
+      shouldThrow: isDevEnv,
+    });
+  }
 
   // Extract items and total count based on policy paths
   const { items, total } = useMemo(() => {

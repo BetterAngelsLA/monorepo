@@ -48,23 +48,29 @@
  * @param opts - readonly array of entries created via `buildEntry`
  * @returns object keyed by each entry’s `key`, with typed policy values
  */
+
 export function assemblePolicyRegistry<
   const T extends readonly { key: string; buildFn: () => any }[]
->(opts: T) {
+>(
+  opts: T,
+  options?: {
+    isDevEnv?: boolean;
+  }
+) {
   // (Optional) dev-time duplicate-key warning
-  // if (process.env['NODE_ENV'] !== 'production') {
-  //   const seen = new Set<string>();
+  if (options?.isDevEnv) {
+    const seen = new Set<string>();
 
-  //   for (const { key } of opts) {
-  //     if (seen.has(key)) {
-  //       // eslint-disable-next-line no-console
-  //       console.warn(
-  //         `[apollo assemblePolicyRegistry] Duplicate key "${key}" – later one will override.`
-  //       );
-  //     }
-  //     seen.add(key);
-  //   }
-  // }
+    for (const { key } of opts) {
+      if (seen.has(key)) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[apollo assemblePolicyRegistry] Duplicate key "${key}" – later one will override.`
+        );
+      }
+      seen.add(key);
+    }
+  }
 
   return Object.fromEntries(opts.map(({ key, buildFn }) => [key, buildFn()]));
 }

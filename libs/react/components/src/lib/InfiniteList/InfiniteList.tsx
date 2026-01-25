@@ -103,7 +103,7 @@ export function InfiniteList<T>(props: InfiniteListProps<T>) {
 
   return (
     <div className={className}>
-      {!error && (
+      {!loading && !error && (
         <ResultsHeader
           className={headerClassName}
           visibleCount={data.length}
