@@ -132,6 +132,12 @@ export function HmisProgramNoteForm(props: TProps) {
           note={noteValue}
           disabled={formDisabled}
           purpose={titleValue}
+          providedServices={
+            services[ServiceRequestTypeEnum.Provided]?.serviceRequests || []
+          }
+          requestedServices={
+            services[ServiceRequestTypeEnum.Requested]?.serviceRequests || []
+          }
           onDone={(newNote) => {
             setValue('note', newNote, {
               shouldDirty: true,
