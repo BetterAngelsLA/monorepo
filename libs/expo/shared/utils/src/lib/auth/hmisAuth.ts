@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import NitroCookies from 'react-native-nitro-cookies';
 import { createPersistentSynchronousStorage } from '../storage/createPersistentSynchronousStorage';
 import { HMIS_API_URL_KEY, HMIS_AUTH_TOKEN_KEY } from './constants';
 
@@ -32,4 +33,8 @@ export const getHmisApiUrl = (): string | null => {
 export const clearAllHmisCredentials = async (): Promise<void> => {
   await clearHmisAuthToken();
   getStorage().remove(HMIS_API_URL_KEY);
+};
+
+export const clearAllCredentials = async (): Promise<void> => {
+  await Promise.all([clearAllHmisCredentials(), NitroCookies.clearAll()]);
 };
