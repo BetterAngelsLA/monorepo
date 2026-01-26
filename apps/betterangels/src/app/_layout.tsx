@@ -47,9 +47,9 @@ export default function RootLayout() {
             <FeatureControlProvider>
               <KeyboardProvider>
                 <KeyboardToolbarProvider>
-                  <UserProvider>
-                    <BlockingScreenProvider>
-                      <SnackbarProvider>
+                  <SnackbarProvider>
+                    <UserProvider>
+                      <BlockingScreenProvider>
                         <ModalScreenProvider>
                           <AppUpdatePrompt />
                           <StatusBar
@@ -57,9 +57,9 @@ export default function RootLayout() {
                           />
                           <AppRoutesStack />
                         </ModalScreenProvider>
-                      </SnackbarProvider>
-                    </BlockingScreenProvider>
-                  </UserProvider>
+                      </BlockingScreenProvider>
+                    </UserProvider>
+                  </SnackbarProvider>
                 </KeyboardToolbarProvider>
               </KeyboardProvider>
             </FeatureControlProvider>

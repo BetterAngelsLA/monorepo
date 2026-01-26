@@ -2,13 +2,18 @@ import { ApolloLink } from '@apollo/client';
 import { SetContextLink } from '@apollo/client/link/context';
 import {
   getHmisAuthToken,
-  HMIS_AUTH_COOKIE_NAME,
   HMIS_API_URL_COOKIE_NAME,
+  HMIS_AUTH_COOKIE_NAME,
   storeHmisApiUrl,
   storeHmisAuthToken,
 } from '@monorepo/expo/shared/utils';
 import { Kind, type OperationDefinitionNode } from 'graphql';
-import { tap } from 'rxjs';
+import { concatMap } from 'rxjs';
+import {
+  parse as parseSetCookie,
+  splitCookiesString,
+  type Cookie,
+} from 'set-cookie-parser';
 import {
   HMIS_DIRECTIVE_NAME,
   HMIS_TOKEN_HEADER_NAME,
@@ -16,13 +21,33 @@ import {
 } from '../../common/constants';
 import { operationHasDirective } from '../utils/schemaDirectives';
 
+const parseSetCookieHeaders = (headers: {
+  get?: (key: string) => string | null;
+  getSetCookie?: () => string[] | null | undefined;
+}) => {
+  const raw = headers.getSetCookie?.() ?? headers.get?.('set-cookie') ?? [];
+
+  const headerValues = Array.isArray(raw) ? raw : splitCookiesString(raw);
+  const cookies = parseSetCookie(headerValues, { map: true }) as Record<
+    string,
+    Cookie | null
+  >;
+
+  return Object.fromEntries(
+    Object.entries(cookies)
+      .filter((entry): entry is [string, Cookie] => Boolean(entry[1]))
+      .map(([name, cookie]) => [name.toLowerCase(), cookie])
+  );
+};
+
 /**
  * Adds X-HMIS-Token header and sets a browser User-Agent
+ * Only adds auth token if one exists in storage (cleared on logout)
  */
 export const createAuthHeaderLink = () =>
   new SetContextLink(async (prevContext) => {
-    const authToken = await getHmisAuthToken();
     const { headers = {}, ...restContext } = prevContext || {};
+    const authToken = await getHmisAuthToken();
 
     return {
       ...restContext,
@@ -40,27 +65,41 @@ export const createAuthHeaderLink = () =>
 export const createCookieExtractorLink = () =>
   new ApolloLink((operation, forward) => {
     return forward(operation).pipe(
-      tap(async () => {
-        const setCookieHeader = (
-          operation.getContext()['response'] as Response | undefined
-        )?.headers.get('set-cookie');
+      concatMap(async (response) => {
+        try {
+          const responseObj = operation.getContext()['response'] as
+            | Response
+            | undefined;
+          if (!responseObj) {
+            return response;
+          }
 
-        if (!setCookieHeader) return;
+          const headers = responseObj.headers as {
+            get?: (key: string) => string | null;
+            getSetCookie?: () => string[] | null | undefined;
+          };
 
-        const authTokenMatch = setCookieHeader.match(
-          new RegExp(`${HMIS_AUTH_COOKIE_NAME}=([^;,\\s]+)`, 'i')
-        );
-        const apiUrlMatch = setCookieHeader.match(
-          new RegExp(`${HMIS_API_URL_COOKIE_NAME}=([^;,\\s]+)`, 'i')
-        );
+          const cookies = parseSetCookieHeaders(headers);
 
-        if (!authTokenMatch?.[1]) return;
+          const authToken = cookies[HMIS_AUTH_COOKIE_NAME.toLowerCase()]?.value;
+          const apiUrl = cookies[HMIS_API_URL_COOKIE_NAME.toLowerCase()]?.value;
 
-        if (apiUrlMatch?.[1]) {
-          storeHmisApiUrl(decodeURIComponent(apiUrlMatch[1]));
+          if (authToken) {
+            await storeHmisAuthToken(authToken);
+          }
+          if (apiUrl) {
+            storeHmisApiUrl(decodeURIComponent(apiUrl));
+          }
+        } catch (error) {
+          if (__DEV__) {
+            console.debug(
+              '[hmisAuthLink] Failed to store HMIS credentials',
+              error
+            );
+          }
         }
 
-        await storeHmisAuthToken(authTokenMatch[1]);
+        return response;
       })
     );
   });
