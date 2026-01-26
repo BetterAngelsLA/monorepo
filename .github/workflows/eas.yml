@@ -138,14 +138,14 @@ jobs:
           platforms: ios
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
-      - name: 🚀 Perform EAS Update
-        id: expo-update
-        uses: ./.github/actions/expo-update
-        with:
-          project: ${{ matrix.project }}
-          branch: ${{ github.head_ref || github.ref_name }}
-          slug: ${{ steps.preview-build.outputs.slug }}
-          project-id: ${{ steps.preview-build.outputs.project-id }}
+      # - name: 🚀 Perform EAS Update
+      #   id: expo-update
+      #   uses: ./.github/actions/expo-update
+      #   with:
+      #     project: ${{ matrix.project }}
+      #     branch: ${{ github.head_ref || github.ref_name }}
+      #     slug: ${{ steps.preview-build.outputs.slug }}
+      #     project-id: ${{ steps.preview-build.outputs.project-id }}
 
       - name: 🧷 Write commit status metadata for EAS
         if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
