@@ -61,75 +61,75 @@ import { generateCachePolicies } from '@monorepo/apollo';
 import { cachePolicyRegistry } from './cachePolicyRegistry';
 import { toUrlKeyFieldValue } from './utils/toUrlKeyFieldValue';
 
-const isDevEnv = process.env['NODE_ENV'] !== 'production';
-
-const extraTypePolicies: TypePolicies = {
-  DjangoImageType: {
-    keyFields: (obj: StoreObject) => {
-      const urlKey = toUrlKeyFieldValue(obj.url);
-
-      if (isDevEnv && !urlKey) {
-        console.warn(
-          `[typePolicies: DjangoImageType] missing url keyField: ${JSON.stringify(
-            obj
-          )}`
-        );
-      }
-
-      return urlKey ?? false;
-    },
-  },
-  DjangoFileType: {
-    keyFields: (obj: StoreObject) => {
-      const urlKey = toUrlKeyFieldValue(obj.url);
-
-      if (isDevEnv && !urlKey) {
-        console.warn(
-          `[typePolicies: DjangoFileType] missing url keyField: ${JSON.stringify(
-            obj
-          )}`
-        );
-      }
-
-      return urlKey ?? false;
-    },
-  },
-  ClientContactType: {
-    keyFields: ['id'],
-  },
-  ClientDocumentType: {
-    keyFields: ['id'],
-  },
-  HmisProfileType: {
-    keyFields: ['id'],
-  },
-  ClientHouseholdMemberType: {
-    keyFields: ['id'],
-  },
-  PhoneNumberType: {
-    keyFields: ['id'],
-  },
-  UserType: {
-    keyFields: ['id'],
-  },
-  ServiceRequestType: {
-    keyFields: ['id'],
-  },
-  OrganizationServiceType: {
-    keyFields: ['id'],
-  },
-  AddressType: {
-    keyFields: ['id'],
-  },
-  OrganizationType: {
-    keyFields: ['id'],
-  },
-};
-
 const queryTypePolicies = generateCachePolicies(cachePolicyRegistry);
 
 // TODO: add merge safety to avoid defining policy in both places
-export const baApolloTypePolicies = {
-  ...queryTypePolicies,
-  ...extraTypePolicies,
-};
+export function createBaTypePolicies(isDevEnv: boolean): TypePolicies {
+  const extraTypePolicies: TypePolicies = {
+    DjangoImageType: {
+      keyFields: (obj: StoreObject) => {
+        const urlKey = toUrlKeyFieldValue(obj.url);
+
+        if (isDevEnv && !urlKey) {
+          console.warn(
+            `[typePolicies: DjangoImageType] missing url keyField: ${JSON.stringify(
+              obj
+            )}`
+          );
+        }
+
+        return urlKey ?? false;
+      },
+    },
+    DjangoFileType: {
+      keyFields: (obj: StoreObject) => {
+        const urlKey = toUrlKeyFieldValue(obj.url);
+
+        if (isDevEnv && !urlKey) {
+          console.warn(
+            `[typePolicies: DjangoFileType] missing url keyField: ${JSON.stringify(
+              obj
+            )}`
+          );
+        }
+
+        return urlKey ?? false;
+      },
+    },
+    ClientContactType: {
+      keyFields: ['id'],
+    },
+    ClientDocumentType: {
+      keyFields: ['id'],
+    },
+    HmisProfileType: {
+      keyFields: ['id'],
+    },
+    ClientHouseholdMemberType: {
+      keyFields: ['id'],
+    },
+    PhoneNumberType: {
+      keyFields: ['id'],
+    },
+    UserType: {
+      keyFields: ['id'],
+    },
+    ServiceRequestType: {
+      keyFields: ['id'],
+    },
+    OrganizationServiceType: {
+      keyFields: ['id'],
+    },
+    AddressType: {
+      keyFields: ['id'],
+    },
+    OrganizationType: {
+      keyFields: ['id'],
+    },
+  };
+
+  return {
+    ...queryTypePolicies,
+    ...extraTypePolicies,
+  };
+}
