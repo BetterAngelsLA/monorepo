@@ -19,6 +19,31 @@ import {
 import { operationHasDirective } from '../utils/schemaDirectives';
 
 /**
+ * Parses Set-Cookie header string into indexed cookie objects.
+ * Handles React Native fetch's combined header format.
+ */
+function parseSetCookieHeaders(
+  raw: string | null | undefined
+): Record<string, Cookie> {
+  if (!raw) return {};
+
+  return R.pipe(
+    raw.split(/,(?=[^;]+=[^;]+)/g),
+    R.map((s) => s.trim()),
+    R.filter(Boolean),
+    R.flatMap((header) => {
+      try {
+        const cookie = Cookie.parse(header);
+        return cookie ? [cookie] : [];
+      } catch {
+        return [];
+      }
+    }),
+    R.indexBy((cookie) => cookie.key.toLowerCase())
+  );
+}
+
+/**
  * Adds X-HMIS-Token header and sets a browser User-Agent
  * Only adds auth token if one exists in storage (cleared on logout)
  */
@@ -52,23 +77,12 @@ export const createCookieExtractorLink = () =>
             return response;
           }
 
-          const setCookieHeaders =
-            (
-              responseObj.headers as { getSetCookie?: () => string[] }
-            ).getSetCookie?.() || [];
+          const headers = responseObj.headers as {
+            get?: (key: string) => string | null;
+          };
 
-          const cookies = R.pipe(
-            setCookieHeaders,
-            R.flatMap((header: string) => {
-              try {
-                const cookie = Cookie.parse(header);
-                return cookie ? [cookie] : [];
-              } catch {
-                return [];
-              }
-            }),
-            R.indexBy((cookie) => cookie.key.toLowerCase())
-          );
+          const raw = headers.get?.('set-cookie');
+          const cookies = parseSetCookieHeaders(raw);
 
           const authToken = cookies[HMIS_AUTH_COOKIE_NAME.toLowerCase()]?.value;
           const apiUrl = cookies[HMIS_API_URL_COOKIE_NAME.toLowerCase()]?.value;

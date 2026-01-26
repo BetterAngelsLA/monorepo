@@ -101,7 +101,8 @@
     "react-native-nitro-cookies": "*",
     "react-native-mmkv": "*",
     "jotai-family": "*",
-    "rxjs": "*"
+    "rxjs": "*",
+    "tough-cookie": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",
