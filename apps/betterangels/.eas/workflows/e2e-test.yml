@@ -2,8 +2,11 @@ name: e2e-test
 
 jobs:
   set_pending_github_status:
+    env:
+      EAS_WORKFLOW_RUN_ID: ${{ workflow.id }}
     steps:
       - id: set_pending_status
+
         run: |
           set -euo pipefail
 
@@ -25,15 +28,13 @@ jobs:
             exit 1
           fi
 
-          EAS_RUN_ID="${EAS_WORKFLOW_RUN_ID:-${EAS_WORKFLOW_RUN_UUID:-${EAS_WORKFLOW_RUN_IDENTITY:-}}}"
           TARGET_URL=""
-          if [ -n "${EAS_ACCOUNT:-}" ] && [ -n "${EAS_PROJECT_SLUG:-}" ] && [ -n "${EAS_RUN_ID:-}" ]; then
-            TARGET_URL="https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${EAS_PROJECT_SLUG}/workflows/runs/${EAS_RUN_ID}"
-          elif [ -n "${EAS_ACCOUNT:-}" ] && [ -n "${EAS_PROJECT_SLUG:-}" ]; then
-            TARGET_URL="https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${EAS_PROJECT_SLUG}/workflows"
+          if [ -n "${EAS_ACCOUNT:-}" ] && [ -n "${EAS_PROJECT_SLUG:-}" ]; then
+            TARGET_URL="https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${EAS_PROJECT_SLUG}/workflows/runs/${EAS_WORKFLOW_RUN_ID}"
           fi
 
           export GITHUB_STATUS_CONTEXT TARGET_URL
+
           BODY="$(python3 - <<'PY'
           import json, os
           payload = {
@@ -47,6 +48,9 @@ jobs:
           print(json.dumps(payload))
           PY
           )"
+
+          echo "TARGET_URL=${TARGET_URL}"
+          echo "BODY=${BODY}"
 
           curl --fail-with-body -sS \
             -X POST \
@@ -119,6 +123,7 @@ jobs:
     env:
       IOS_STATUS: ${{ after.maestro_ios_test.status }}
       ANDROID_STATUS: ${{ after.maestro_android_test.status }}
+      EAS_WORKFLOW_RUN_ID: ${{ workflow.id }}
     steps:
       - id: set_final_status
         run: |
@@ -157,14 +162,9 @@ jobs:
             DESC="E2E tests failed"
           fi
 
-          # Best-effort: link to the exact workflow run if EAS exposes a run id, otherwise link
-          # to the project's workflows page.
-          EAS_RUN_ID="${EAS_WORKFLOW_RUN_ID:-${EAS_WORKFLOW_RUN_UUID:-${EAS_WORKFLOW_RUN_IDENTITY:-}}}"
           TARGET_URL=""
-          if [ -n "${EAS_ACCOUNT:-}" ] && [ -n "${EAS_PROJECT_SLUG:-}" ] && [ -n "${EAS_RUN_ID:-}" ]; then
-            TARGET_URL="https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${EAS_PROJECT_SLUG}/workflows/runs/${EAS_RUN_ID}"
-          elif [ -n "${EAS_ACCOUNT:-}" ] && [ -n "${EAS_PROJECT_SLUG:-}" ]; then
-            TARGET_URL="https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${EAS_PROJECT_SLUG}/workflows"
+          if [ -n "${EAS_ACCOUNT:-}" ] && [ -n "${EAS_PROJECT_SLUG:-}" ]; then
+             TARGET_URL="https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${EAS_PROJECT_SLUG}/workflows/runs/${EAS_WORKFLOW_RUN_ID}"
           fi
 
           export STATE DESC GITHUB_STATUS_CONTEXT TARGET_URL
