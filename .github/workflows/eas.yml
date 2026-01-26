@@ -151,7 +151,7 @@ jobs:
         if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
         working-directory: apps/${{ matrix.project }}
         env:
-          GITHUB_STATUS_CONTEXT: 📱 Betterangels E2E Tests
+          GITHUB_STATUS_CONTEXT: Betterangels E2E Tests
           GITHUB_STATUS_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           EAS_ACCOUNT: better-angels
