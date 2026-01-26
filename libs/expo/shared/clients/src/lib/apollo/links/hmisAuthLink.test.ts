@@ -58,12 +58,10 @@ describe('hmisAuthLink', () => {
       'auth_token=token123; Domain=example.com; Path=/; HttpOnly; Secure',
       'api_url=https%3A%2F%2Fapi.example.com; Domain=example.com; Path=/',
     ];
-
     const response: any = {
       headers: {
-        getSetCookie: () => setCookies,
         get: (name: string) =>
-          name.toLowerCase() === 'set-cookie' ? setCookies[0] : null,
+          name.toLowerCase() === 'set-cookie' ? setCookies.join(', ') : null,
       },
     };
 
@@ -89,7 +87,6 @@ describe('hmisAuthLink', () => {
     link.request(operation, forward)?.subscribe(observer);
 
     await new Promise((resolve) => setImmediate(resolve));
-
     expect(mockStoreHmisAuthToken).toHaveBeenCalledWith('token123');
     expect(mockStoreHmisApiUrl).toHaveBeenCalledWith('https://api.example.com');
   });

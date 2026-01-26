@@ -1,3 +1,5 @@
+import * as SecureStore from 'expo-secure-store';
+
 import {
   clearHmisAuthToken,
   getHmisApiUrl,
@@ -5,7 +7,6 @@ import {
   storeHmisApiUrl,
   storeHmisAuthToken,
 } from './hmisAuth';
-import * as SecureStore from 'expo-secure-store';
 
 const mockStorage = {
   get: jest.fn(),
@@ -77,6 +78,7 @@ describe('hmisAuth', () => {
       expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(
         'hmis_auth_token'
       );
+      await expect(clearHmisAuthToken()).resolves.not.toThrow();
     });
   });
 });
