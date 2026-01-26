@@ -1,5 +1,6 @@
 import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
+import { clearAllHmisCredentials } from '@monorepo/expo/shared/utils';
 import { useCallback } from 'react';
 import NitroCookies from 'react-native-nitro-cookies';
 import useUser from './useUser';
@@ -17,8 +18,8 @@ export default function useSignOut() {
   const signOut = useCallback(async () => {
     try {
       await logout();
+      await Promise.all([clearAllHmisCredentials(), NitroCookies.clearAll()]);
       setUser(undefined);
-      NitroCookies.clearAll();
     } catch (err) {
       console.error(err);
     }

@@ -47,19 +47,23 @@ describe('hmisAuthLink', () => {
     }),
   });
 
-  it('createCookieExtractorLink stores domain, api_url and auth token from response header', async () => {
+  it('createCookieExtractorLink stores auth token and api_url from response headers', async () => {
     const mockStoreHmisApiUrl = jest.requireMock('@monorepo/expo/shared/utils')
       .storeHmisApiUrl as jest.Mock;
     const mockStoreHmisAuthToken = jest.requireMock(
       '@monorepo/expo/shared/utils'
     ).storeHmisAuthToken as jest.Mock;
 
-    const setCookieHeader =
-      'auth_token=token123; Domain=example.com; Path=/; api_url=https%3A%2F%2Fapi.example.com';
+    const setCookies = [
+      'auth_token=token123; Domain=example.com; Path=/; HttpOnly; Secure',
+      'api_url=https%3A%2F%2Fapi.example.com; Domain=example.com; Path=/',
+    ];
+
     const response: any = {
       headers: {
+        getSetCookie: () => setCookies,
         get: (name: string) =>
-          name.toLowerCase() === 'set-cookie' ? setCookieHeader : null,
+          name.toLowerCase() === 'set-cookie' ? setCookies[0] : null,
       },
     };
 
@@ -86,8 +90,8 @@ describe('hmisAuthLink', () => {
 
     await new Promise((resolve) => setImmediate(resolve));
 
-    expect(mockStoreHmisApiUrl).toHaveBeenCalledWith('https://api.example.com');
     expect(mockStoreHmisAuthToken).toHaveBeenCalledWith('token123');
+    expect(mockStoreHmisApiUrl).toHaveBeenCalledWith('https://api.example.com');
   });
 
   it('createCookieExtractorLink does nothing when set-cookie header is missing', async () => {

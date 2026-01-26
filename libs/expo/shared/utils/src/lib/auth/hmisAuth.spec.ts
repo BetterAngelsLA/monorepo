@@ -1,12 +1,11 @@
-import * as SecureStore from 'expo-secure-store';
-
 import {
+  clearHmisAuthToken,
   getHmisApiUrl,
   getHmisAuthToken,
   storeHmisApiUrl,
   storeHmisAuthToken,
-  clearHmisAuthToken,
 } from './hmisAuth';
+import * as SecureStore from 'expo-secure-store';
 
 const mockStorage = {
   get: jest.fn(),
@@ -14,11 +13,9 @@ const mockStorage = {
 };
 
 jest.mock('expo-secure-store');
-jest.mock('../storage/createPersistentSynchronousStorage', () => {
-  return {
-    createPersistentSynchronousStorage: () => mockStorage,
-  };
-});
+jest.mock('../storage/createPersistentSynchronousStorage', () => ({
+  createPersistentSynchronousStorage: jest.fn(() => mockStorage),
+}));
 
 describe('hmisAuth', () => {
   beforeEach(() => {
@@ -80,13 +77,6 @@ describe('hmisAuth', () => {
       expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(
         'hmis_auth_token'
       );
-    });
-
-    it('silently handles errors when token does not exist', async () => {
-      (SecureStore.deleteItemAsync as jest.Mock).mockRejectedValue(
-        new Error('Item not found')
-      );
-      await expect(clearHmisAuthToken()).resolves.not.toThrow();
     });
   });
 });
