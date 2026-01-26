@@ -788,7 +788,7 @@ description = "Foreign Function Interface for Python calling C code."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "platform_python_implementation == \"CPython\" and sys_platform == \"win32\" or platform_python_implementation != \"PyPy\""
+markers = "platform_python_implementation != \"PyPy\" or platform_python_implementation == \"CPython\" and sys_platform == \"win32\""
 files = [
     {file = "cffi-2.0.0-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:0cf2d91ecc3fcc0625c2c530fe004f82c110405f101548512cce44322fa8ac44"},
     {file = "cffi-2.0.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:f73b96c41e3b2adedc34a7356e64c8eb96e03a3782b535e043a986276ce12a49"},
@@ -2570,14 +2570,14 @@ files = [
 
 [[package]]
 name = "model-bakery"
-version = "1.21.0"
+version = "1.23.2"
 description = "Smart object creation facility for Django."
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "model_bakery-1.21.0-py3-none-any.whl", hash = "sha256:46df25eb2a0583d595ed5503caf434b4ce91c729456c5abfcb130594c1803c6f"},
-    {file = "model_bakery-1.21.0.tar.gz", hash = "sha256:ea5f579782e6ac521e49acb02f7454b91d24a1f7e602505006fbd4374be1aa94"},
+    {file = "model_bakery-1.23.2-py3-none-any.whl", hash = "sha256:31f1067df0879ea5f0f158aaa7a8b26fd9a6c62cc1f1f08ea288a35023b9f9b1"},
+    {file = "model_bakery-1.23.2.tar.gz", hash = "sha256:42d249903bcdb96875d289b4733c22c8e7b46c3e59604e0538aabe8a3a743fad"},
 ]
 
 [package.dependencies]
@@ -2585,7 +2585,6 @@ django = ">=4.2"
 
 [package.extras]
 docs = ["myst-parser", "sphinx", "sphinx-rtd-theme"]
-test = ["black", "coverage", "mypy", "pillow", "pytest", "pytest-django", "ruff"]
 
 [[package]]
 name = "mypy"
@@ -3173,7 +3172,7 @@ description = "C parser in Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
-markers = "(platform_python_implementation == \"CPython\" and sys_platform == \"win32\" or platform_python_implementation != \"PyPy\") and implementation_name != \"PyPy\""
+markers = "(platform_python_implementation != \"PyPy\" or platform_python_implementation == \"CPython\" and sys_platform == \"win32\") and implementation_name != \"PyPy\""
 files = [
     {file = "pycparser-2.23-py3-none-any.whl", hash = "sha256:e5c6e8d3fbad53479cab09ac03729e0a9faf2bee3db8208a550daf5af81a5934"},
     {file = "pycparser-2.23.tar.gz", hash = "sha256:78816d4f24add8f10a06d6f05b4d424ad9e96cfebf68a4ddc99c65c0720d00c2"},
@@ -4342,4 +4341,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = "3.14.2"
-content-hash = "658825490caf3085318ab35fdf953367ffbefe5ffcf0759d163c8eff50bcccb6"
+content-hash = "287851be8ab4ae9586532f42877ed54362e177f68442de5073024dfebe9c370e"
