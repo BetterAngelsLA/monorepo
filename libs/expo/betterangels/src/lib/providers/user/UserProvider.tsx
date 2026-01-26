@@ -79,22 +79,23 @@ export default function UserProvider({ children }: UserProviderProps) {
     if (!appBecameActive) {
       return;
     }
-    if (user?.isHmisUser) {
-      isHmisTokenExpired().then(async (isExpired) => {
+
+    (async () => {
+      if (user?.isHmisUser) {
+        const isExpired = await isHmisTokenExpired();
         if (isExpired) {
-          console.warn('HMIS token expired, clearing all credentials');
           showSnackbar({
             message: 'Your HMIS session has expired. Please log in again.',
             type: 'error',
             showDuration: 5000,
           });
           await clearAllCredentials();
+          setUser(undefined);
         }
-      });
-    }
-
-    refetchUser();
-  }, [appBecameActive, refetchUser, user?.isHmisUser, showSnackbar]);
+      }
+      refetchUser();
+    })();
+  }, [appBecameActive, user?.isHmisUser, showSnackbar, refetchUser]);
 
   const contextValue = useMemo(
     () => ({
