@@ -58,13 +58,15 @@
 
 import { StoreObject, TypePolicies } from '@apollo/client';
 import { generateCachePolicies } from '@monorepo/apollo';
-import { cachePolicyRegistry } from './cachePolicyRegistry';
+import { createBaApolloCachePolicyRegistry } from './cachePolicyRegistry';
 import { toUrlKeyFieldValue } from './utils/toUrlKeyFieldValue';
-
-const queryTypePolicies = generateCachePolicies(cachePolicyRegistry);
 
 // TODO: add merge safety to avoid defining policy in both places
 export function createBaTypePolicies(isDevEnv: boolean): TypePolicies {
+  const cachePolicyRegistry = createBaApolloCachePolicyRegistry(isDevEnv);
+
+  const queryTypePolicies = generateCachePolicies(cachePolicyRegistry);
+
   const extraTypePolicies: TypePolicies = {
     DjangoImageType: {
       keyFields: (obj: StoreObject) => {
