@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import NitroCookies from 'react-native-nitro-cookies';
+import { jwtDecode } from 'jwt-decode';
 import { createPersistentSynchronousStorage } from '../storage/createPersistentSynchronousStorage';
 import { HMIS_API_URL_KEY, HMIS_AUTH_TOKEN_KEY } from './constants';
 
@@ -35,6 +35,20 @@ export const clearAllHmisCredentials = async (): Promise<void> => {
   getStorage().remove(HMIS_API_URL_KEY);
 };
 
-export const clearAllCredentials = async (): Promise<void> => {
-  await Promise.all([clearAllHmisCredentials(), NitroCookies.clearAll()]);
+export const isHmisTokenExpired = async (): Promise<boolean> => {
+  const token = await getHmisAuthToken();
+  if (!token) {
+    return true;
+  }
+
+  try {
+    const payload = jwtDecode<{ exp?: number }>(token);
+    if (!payload.exp) {
+      return true;
+    }
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    return payload.exp < nowInSeconds;
+  } catch {
+    return true;
+  }
 };
