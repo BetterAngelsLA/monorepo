@@ -301,6 +301,7 @@ class Shelter(BaseModel):
     # Better Angels Review
     overall_rating = models.PositiveSmallIntegerField(choices=[(i, str(i)) for i in range(1, 6)], null=True, blank=True)
     subjective_review = CKEditor5Field(null=True, blank=True)
+    declined_ba_visit = models.BooleanField(default=False, verbose_name="Declined BA Visit")
 
     # Better Angels Admin
     status = TextChoicesField(choices_enum=StatusChoices, default=StatusChoices.DRAFT)
