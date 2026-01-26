@@ -20,7 +20,7 @@ type SectionKey =
   | 'refClientProgram'
   | 'note'
   | 'services'
-  | 'draftTasks'
+  | 'tasks'
   | null;
 
 interface ILocationProps {
@@ -46,7 +46,11 @@ export default function HmisLocationComponent(props: ILocationProps) {
   );
 
   const setLocation = (locationData: LocationDraft) => {
-    setValue('location', locationData);
+    setValue('location', locationData, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
   };
 
   const isLocation = expanded;

@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { SearchBar, TextButton } from '@monorepo/expo/shared/ui-components';
+import { SearchBar } from '@monorepo/expo/shared/ui-components';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { NoteType, toNoteFilter } from '../../apollo';
@@ -64,21 +64,18 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
           flex: 1,
         }}
       >
-        <View style={styles.searchRow}>
-          <SearchBar
-            value={search}
-            placeholder="Search interactions"
-            onChange={(text) => setSearch(text)}
-            onClear={() => setSearch('')}
-            style={{ flexGrow: 1 }}
-          />
-          <TextButton
-            onPress={onFilterReset}
-            regular
-            title="Reset"
-            accessibilityHint="Reset search and filters"
-          />
-        </View>
+        <SearchBar
+          style={styles.searchRow}
+          value={search}
+          placeholder="Search interactions"
+          onChange={(text) => setSearch(text)}
+          onClear={() => setSearch('')}
+          actionSlotRight={{
+            label: 'Reset',
+            accessibilityHint: 'Reset search and filters',
+            onPress: onFilterReset,
+          }}
+        />
 
         <ModelFilters
           key={filtersKey}
@@ -107,9 +104,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacings.xl,
   },
   searchRow: {
-    display: 'flex',
-    flexDirection: 'row',
-    gap: Spacings.xs,
     marginBottom: Spacings.sm,
   },
 });

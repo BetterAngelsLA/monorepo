@@ -10,7 +10,6 @@ import {
 } from '../../../apollo';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
-import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
 import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import {
   HmisProgramNoteForm,
@@ -23,6 +22,7 @@ import {
   HmisNoteFormFieldNames,
 } from '../HmisProgramNoteForm/formSchema';
 import splitBucket from '../utils/splitBucket';
+import { useApplyTasks } from '../utils/useApplyTasks';
 import { CreateHmisNoteDocument } from './__generated__/hmisCreateClientNote.generated';
 import {
   CreateHmisServiceRequestDocument,
@@ -42,9 +42,10 @@ export function HmisProgramNoteCreate(props: TProps) {
   const { showSnackbar } = useSnackbar();
   const [createHmisNote] = useMutation(CreateHmisNoteDocument);
   const [updateHmisNoteLocation] = useMutation(UpdateHmisNoteLocationDocument);
-  const [createTask] = useMutation(CreateTaskDocument);
   const [deleteService] = useMutation(RemoveHmisNoteServiceRequestDocument);
   const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);
+
+  const { applyTasks } = useApplyTasks();
 
   async function applyBucket(
     id: string,
@@ -119,7 +120,7 @@ export function HmisProgramNoteCreate(props: TProps) {
     try {
       // 1. Separate Draft Tasks from the Note fields
       // We do this because 'draftTasks' is not part of the HmisProgramNoteSchemaOutput
-      const { draftTasks, ...noteFields } = values;
+      const { tasks, ...noteFields } = values;
 
       // 2. Validate/Parse Note fields
       const payload = HmisProgramNoteFormSchemaOutput.parse(noteFields);
@@ -162,7 +163,6 @@ export function HmisProgramNoteCreate(props: TProps) {
       }
 
       const hmisNoteId = newNote.id;
-
       if (location) {
         await updateHmisNoteLocation({
           variables: {
@@ -172,7 +172,7 @@ export function HmisProgramNoteCreate(props: TProps) {
                 point: [location.longitude, location.latitude],
                 address: {
                   formattedAddress: location.formattedAddress,
-                  addressComponents: JSON.stringify(location.components),
+                  addressComponents: JSON.stringify(location.components ?? []),
                 },
               },
             },
@@ -180,25 +180,8 @@ export function HmisProgramNoteCreate(props: TProps) {
         });
       }
       // 4. Create Tasks (Link to the new Note)
-      // Eventually we can move this back to HMIS Note creation
-      if (draftTasks?.length > 0) {
-        await Promise.all(
-          draftTasks.map((task) =>
-            createTask({
-              variables: {
-                data: {
-                  summary: task.summary,
-                  description: task.description,
-                  status: task.status,
-                  team: task.team,
-                  hmisClientProfile: clientId,
-                  hmisNote: hmisNoteId,
-                },
-              },
-            })
-          )
-        );
-      }
+
+      await applyTasks(tasks, hmisNoteId, clientId);
 
       const draftServices = services ?? {};
 

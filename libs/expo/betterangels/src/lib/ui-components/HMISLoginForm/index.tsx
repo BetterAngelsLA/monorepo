@@ -54,7 +54,7 @@ export default function HMISLoginForm() {
         console.error(res.message);
         throw new Error('Sorry, login failed.');
       }
-      if (res.__typename === 'UserType') {
+      if (res.__typename === 'HmisLoginSuccess') {
         await refetchUser();
         await persistOnSuccessfulSignIn(email);
         return;

@@ -173,3 +173,17 @@ export const enumDisplayFunderChoices: { [key in FunderChoices]: string } = {
   [FunderChoices.Other]: 'Other',
   [FunderChoices.Private]: 'Private',
 };
+
+/**
+ * Must match CITY_COUNCIL_DISTRICT_CHOICES in apps/betterangels-backend/shelters/enums.py
+ */
+export const CITY_COUNCIL_DISTRICT_UNINCORPORATED = 0;
+
+export function formatCityCouncilDistrict(
+  district: number | null | undefined
+): string {
+  if (district == null) return '';
+  if (district === CITY_COUNCIL_DISTRICT_UNINCORPORATED)
+    return 'Unincorporated';
+  return String(district);
+}
