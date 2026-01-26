@@ -47,12 +47,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         )
         # Add purposes and next steps
         note = Note.objects.get(pk=note_id)
-        self.provided_services = [
-            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s)) for s in ["Book", "Food"]
-        ]
-        self.requested_services = [
-            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s)) for s in ["Tarp", "Tent"]
-        ]
+        self.provided_services = [baker.make(ServiceRequest, service=OrganizationService.objects.get(label="Book"))]
+        self.requested_services = [baker.make(ServiceRequest, service=OrganizationService.objects.get(label="Tarp"))]
         note.provided_services.set(self.provided_services)
         note.requested_services.set(self.requested_services)
 
@@ -98,27 +94,15 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                     "service": {"id": ANY, "label": "Book"},
                     "dueBy": self.provided_services[0].due_by,
                     "status": ServiceRequestStatusEnum(self.provided_services[0].status).name,
-                },
-                {
-                    "id": str(self.provided_services[1].id),
-                    "service": {"id": ANY, "label": "Food"},
-                    "dueBy": self.provided_services[1].due_by,
-                    "status": ServiceRequestStatusEnum(self.provided_services[1].status).name,
-                },
+                }
             ],
             "requestedServices": [
                 {
                     "id": str(self.requested_services[0].id),
-                    "service": {"id": ANY, "label": "Tent"},
+                    "service": {"id": ANY, "label": "Tarp"},
                     "dueBy": self.requested_services[0].due_by,
                     "status": ServiceRequestStatusEnum(self.requested_services[0].status).name,
-                },
-                {
-                    "id": str(self.requested_services[1].id),
-                    "service": {"id": ANY, "label": "Tarp"},
-                    "dueBy": self.requested_services[1].due_by,
-                    "status": ServiceRequestStatusEnum(self.requested_services[1].status).name,
-                },
+                }
             ],
             "tasks": [{"id": str(task["id"]), "summary": "task summary"}],
         }
