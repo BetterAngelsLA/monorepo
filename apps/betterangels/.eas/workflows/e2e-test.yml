@@ -3,7 +3,7 @@ name: e2e-test
 jobs:
   set_pending_github_status:
     env:
-      EAS_WORKFLOW_RUN_ID: ${{ workflow.id }}
+      EAS_WORKFLOW_URL: ${{ workflow.url }}
     steps:
       - id: set_pending_status
 
@@ -30,7 +30,7 @@ jobs:
 
           TARGET_URL=""
           if [ -n "${EAS_ACCOUNT:-}" ] && [ -n "${EAS_PROJECT_SLUG:-}" ]; then
-            TARGET_URL="https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${EAS_PROJECT_SLUG}/workflows/runs/${EAS_WORKFLOW_RUN_ID}"
+            TARGET_URL="${EAS_WORKFLOW_URL}"
           fi
 
           export GITHUB_STATUS_CONTEXT TARGET_URL
@@ -123,7 +123,7 @@ jobs:
     env:
       IOS_STATUS: ${{ after.maestro_ios_test.status }}
       ANDROID_STATUS: ${{ after.maestro_android_test.status }}
-      EAS_WORKFLOW_RUN_ID: ${{ workflow.id }}
+      EAS_WORKFLOW_URL: ${{ workflow.url }}
     steps:
       - id: set_final_status
         run: |
@@ -164,7 +164,7 @@ jobs:
 
           TARGET_URL=""
           if [ -n "${EAS_ACCOUNT:-}" ] && [ -n "${EAS_PROJECT_SLUG:-}" ]; then
-             TARGET_URL="https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${EAS_PROJECT_SLUG}/workflows/runs/${EAS_WORKFLOW_RUN_ID}"
+             TARGET_URL="${EAS_WORKFLOW_URL}"
           fi
 
           export STATE DESC GITHUB_STATUS_CONTEXT TARGET_URL
