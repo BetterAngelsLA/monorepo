@@ -60,6 +60,50 @@ describe('hmisAuthLink', () => {
     ];
     const response: any = {
       headers: {
+        getSetCookie: () => setCookies,
+        get: (_name: string) => null,
+      },
+    };
+
+    const operation: any = {
+      getContext: () => ({ response }),
+    };
+
+    const forward: any = jest.fn(
+      () =>
+        new Observable((observer) => {
+          observer.next({});
+          observer.complete();
+        })
+    );
+
+    const observer: any = {
+      next: jest.fn(),
+      error: jest.fn(),
+      complete: jest.fn(),
+    };
+
+    const link = createCookieExtractorLink();
+    link.request(operation, forward)?.subscribe(observer);
+
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(mockStoreHmisAuthToken).toHaveBeenCalledWith('token123');
+    expect(mockStoreHmisApiUrl).toHaveBeenCalledWith('https://api.example.com');
+  });
+
+  it('createCookieExtractorLink handles combined set-cookie header string', async () => {
+    const mockStoreHmisApiUrl = jest.requireMock('@monorepo/expo/shared/utils')
+      .storeHmisApiUrl as jest.Mock;
+    const mockStoreHmisAuthToken = jest.requireMock(
+      '@monorepo/expo/shared/utils'
+    ).storeHmisAuthToken as jest.Mock;
+
+    const setCookies = [
+      'auth_token=token123; Domain=example.com; Path=/; HttpOnly; Secure',
+      'api_url=https%3A%2F%2Fapi.example.com; Domain=example.com; Path=/',
+    ];
+    const response: any = {
+      headers: {
         get: (name: string) =>
           name.toLowerCase() === 'set-cookie' ? setCookies.join(', ') : null,
       },

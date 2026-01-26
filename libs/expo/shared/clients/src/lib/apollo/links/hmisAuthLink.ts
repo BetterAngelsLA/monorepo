@@ -8,9 +8,12 @@ import {
   storeHmisAuthToken,
 } from '@monorepo/expo/shared/utils';
 import { Kind, type OperationDefinitionNode } from 'graphql';
-import * as R from 'remeda';
 import { concatMap } from 'rxjs';
-import { Cookie } from 'tough-cookie';
+import {
+  parse as parseSetCookie,
+  splitCookiesString,
+  type Cookie,
+} from 'set-cookie-parser';
 import {
   HMIS_DIRECTIVE_NAME,
   HMIS_TOKEN_HEADER_NAME,
@@ -18,30 +21,24 @@ import {
 } from '../../common/constants';
 import { operationHasDirective } from '../utils/schemaDirectives';
 
-/**
- * Parses Set-Cookie header string into indexed cookie objects.
- * Handles React Native fetch's combined header format.
- */
-function parseSetCookieHeaders(
-  raw: string | null | undefined
-): Record<string, Cookie> {
-  if (!raw) return {};
+const parseSetCookieHeaders = (headers: {
+  get?: (key: string) => string | null;
+  getSetCookie?: () => string[] | null | undefined;
+}) => {
+  const raw = headers.getSetCookie?.() ?? headers.get?.('set-cookie') ?? [];
 
-  return R.pipe(
-    raw.split(/,(?=[^;]+=[^;]+)/g),
-    R.map((s) => s.trim()),
-    R.filter(Boolean),
-    R.flatMap((header) => {
-      try {
-        const cookie = Cookie.parse(header);
-        return cookie ? [cookie] : [];
-      } catch {
-        return [];
-      }
-    }),
-    R.indexBy((cookie) => cookie.key.toLowerCase())
+  const headerValues = Array.isArray(raw) ? raw : splitCookiesString(raw);
+  const cookies = parseSetCookie(headerValues, { map: true }) as Record<
+    string,
+    Cookie | null
+  >;
+
+  return Object.fromEntries(
+    Object.entries(cookies)
+      .filter((entry): entry is [string, Cookie] => Boolean(entry[1]))
+      .map(([name, cookie]) => [name.toLowerCase(), cookie])
   );
-}
+};
 
 /**
  * Adds X-HMIS-Token header and sets a browser User-Agent
@@ -79,10 +76,10 @@ export const createCookieExtractorLink = () =>
 
           const headers = responseObj.headers as {
             get?: (key: string) => string | null;
+            getSetCookie?: () => string[] | null | undefined;
           };
 
-          const raw = headers.get?.('set-cookie');
-          const cookies = parseSetCookieHeaders(raw);
+          const cookies = parseSetCookieHeaders(headers);
 
           const authToken = cookies[HMIS_AUTH_COOKIE_NAME.toLowerCase()]?.value;
           const apiUrl = cookies[HMIS_API_URL_COOKIE_NAME.toLowerCase()]?.value;
