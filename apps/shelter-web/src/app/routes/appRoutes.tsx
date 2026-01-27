@@ -1,7 +1,8 @@
+import { OperatorApp } from '@monorepo/react/shelter-operator';
 import { Link, RouteObject } from 'react-router-dom';
+import { Policy } from '../pages/Policy';
 import Gallery from '../pages/gallery/gallery';
 import { Home } from '../pages/home/home';
-import { Policy } from '../pages/Policy';
 import Shelter from '../pages/shelter/shelter';
 
 export const routeChildren: RouteObject[] = [
@@ -20,6 +21,10 @@ export const routeChildren: RouteObject[] = [
   {
     path: '/privacy-policy',
     element: <Policy />,
+  },
+  {
+    path: '/operator/*',
+    element: <OperatorApp />,
   },
   {
     path: '/page-2',
