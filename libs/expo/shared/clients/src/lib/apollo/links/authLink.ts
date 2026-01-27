@@ -1,6 +1,7 @@
 import { SetContextLink } from '@apollo/client/link/context';
+import { CSRF_HEADER_NAME } from '@monorepo/expo/shared/utils';
 import { Platform } from 'react-native';
-import { CSRF_HEADER_NAME, getCSRFToken } from '../../common';
+import { getCSRFToken } from '../../common';
 
 type TAuthLinkArgs = {
   apiUrl: string;

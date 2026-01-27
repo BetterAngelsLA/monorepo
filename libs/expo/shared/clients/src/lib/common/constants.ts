@@ -1,8 +1,6 @@
 export const MODERN_BROWSER_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
-export const CSRF_HEADER_NAME = 'x-csrftoken';
-
 export const API_ERROR_CODES = {
   UNKNOWN: 'UNKNOWN',
   UNAUTHENTICATED: 'UNAUTHENTICATED',

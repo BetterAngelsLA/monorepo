@@ -1,3 +1,9 @@
+import {
+  authStorage,
+  CSRF_HEADER_NAME,
+  CSRF_LOGIN_PATH,
+  ENVIRONMENT_STORAGE_KEY,
+} from '@monorepo/expo/shared/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {
   createContext,
@@ -8,12 +14,7 @@ import React, {
   useState,
 } from 'react';
 import { Platform } from 'react-native';
-import {
-  authStorage,
-  CSRF_LOGIN_PATH,
-  ENVIRONMENT_STORAGE_KEY,
-} from '@monorepo/expo/shared/utils';
-import { CSRF_HEADER_NAME, getCSRFToken } from '../common';
+import { getCSRFToken } from '../common';
 import { createNativeFetch } from '../common/nativeFetch';
 
 type Env = 'production' | 'demo';
