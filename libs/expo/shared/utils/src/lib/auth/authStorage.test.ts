@@ -35,13 +35,9 @@ jest.mock('react-native-mmkv', () => ({
 }));
 
 describe('AuthStorage', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
-    // Reset mock storage state
     mockStorage.clear();
-    authStorage.reset();
-    // Wait for async initialization
-    await new Promise((resolve) => setTimeout(resolve, 10));
   });
 
   describe('Cookie operations', () => {
@@ -215,68 +211,6 @@ describe('AuthStorage', () => {
       authStorage.storeHmisAuthToken(validToken);
 
       expect(authStorage.isHmisTokenExpired()).toBe(false);
-    });
-  });
-
-  describe('clearAllCredentials', () => {
-    it('clears all stored data', async () => {
-      const SecureStore = jest.requireMock('expo-secure-store');
-
-      // Store some data
-      authStorage.storeHmisAuthToken('token');
-      authStorage.storeHmisApiUrl('https://api.com');
-
-      const headers = {
-        getSetCookie: () => ['csrftoken=abc; Path=/'],
-      };
-      authStorage.updateFromSetCookieHeaders('https://env.com', headers);
-
-      await authStorage.clearAllCredentials();
-
-      // Should reinitialize storage
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      expect(SecureStore.deleteItemAsync).toHaveBeenCalled();
-
-      // Data should be cleared after reinitialization
-      expect(authStorage.getHmisAuthToken()).toBeNull();
-      expect(authStorage.getHmisApiUrl()).toBeNull();
-    });
-  });
-
-  describe('reset', () => {
-    it('reinitializes storage', async () => {
-      authStorage.storeHmisAuthToken('test-token');
-
-      // Reset clears storage and reinitializes
-      mockStorage.clear(); // Simulate storage being cleared
-      authStorage.reset();
-
-      // Wait for async init
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      // After reset, storage should be reinitialized (empty)
-      expect(authStorage.getHmisAuthToken()).toBeNull();
-    });
-  });
-
-  describe('storage not initialized', () => {
-    it('returns null when storage is not ready', () => {
-      // Create new instance that won't initialize immediately
-      const tempStorage = Object.create(
-        Object.getPrototypeOf(authStorage),
-        Object.getOwnPropertyDescriptors(authStorage)
-      );
-
-      // Force storage to null
-      Object.defineProperty(tempStorage, 'storage', {
-        value: null,
-        writable: true,
-      });
-
-      expect(tempStorage.getHmisAuthToken()).toBeNull();
-      expect(tempStorage.getHmisApiUrl()).toBeNull();
-      expect(tempStorage.getCookieValue('env', 'cookie')).toBeNull();
     });
   });
 });

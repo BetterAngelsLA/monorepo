@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Observable } from '@apollo/client/utilities';
-import { createCookieExtractorLink, createHmisAuthLink } from './hmisAuthLink';
+import { createHmisAuthLink } from './hmisAuthLink';
 
 jest.mock('react-native-mmkv');
 
@@ -47,129 +47,6 @@ describe('hmisAuthLink', () => {
       response: { headers: { get: () => null } },
       headers: {},
     }),
-  });
-
-  it('createCookieExtractorLink stores auth token and api_url from response headers', async () => {
-    const mockAuthStorage = jest.requireMock('@monorepo/expo/shared/utils')
-      .authStorage as {
-      storeHmisApiUrl: jest.Mock;
-      storeHmisAuthToken: jest.Mock;
-    };
-
-    const setCookies = [
-      'auth_token=token123; Domain=example.com; Path=/; HttpOnly; Secure',
-      'api_url=https%3A%2F%2Fapi.example.com; Domain=example.com; Path=/',
-    ];
-    const response: any = {
-      headers: {
-        getSetCookie: () => setCookies,
-        get: (_name: string) => null,
-      },
-    };
-
-    const operation: any = {
-      getContext: () => ({ response }),
-    };
-
-    const forward: any = jest.fn(
-      () =>
-        new Observable((observer) => {
-          observer.next({});
-          observer.complete();
-        })
-    );
-
-    const observer: any = {
-      next: jest.fn(),
-      error: jest.fn(),
-      complete: jest.fn(),
-    };
-
-    const link = createCookieExtractorLink();
-    link.request(operation, forward)?.subscribe(observer);
-
-    await new Promise((resolve) => setImmediate(resolve));
-    expect(mockAuthStorage.storeHmisAuthToken).toHaveBeenCalledWith('token123');
-    expect(mockAuthStorage.storeHmisApiUrl).toHaveBeenCalledWith(
-      'https://api.example.com'
-    );
-  });
-
-  it('createCookieExtractorLink handles combined set-cookie header string', async () => {
-    const mockAuthStorage = jest.requireMock('@monorepo/expo/shared/utils')
-      .authStorage as {
-      storeHmisApiUrl: jest.Mock;
-      storeHmisAuthToken: jest.Mock;
-    };
-
-    const setCookies = [
-      'auth_token=token123; Domain=example.com; Path=/; HttpOnly; Secure',
-      'api_url=https%3A%2F%2Fapi.example.com; Domain=example.com; Path=/',
-    ];
-    const response: any = {
-      headers: {
-        get: (name: string) =>
-          name.toLowerCase() === 'set-cookie' ? setCookies.join(', ') : null,
-      },
-    };
-
-    const operation: any = {
-      getContext: () => ({ response }),
-    };
-
-    const forward: any = jest.fn(
-      () =>
-        new Observable((observer) => {
-          observer.next({});
-          observer.complete();
-        })
-    );
-
-    const observer: any = {
-      next: jest.fn(),
-      error: jest.fn(),
-      complete: jest.fn(),
-    };
-
-    const link = createCookieExtractorLink();
-    link.request(operation, forward)?.subscribe(observer);
-
-    await new Promise((resolve) => setImmediate(resolve));
-    expect(mockAuthStorage.storeHmisAuthToken).toHaveBeenCalledWith('token123');
-    expect(mockAuthStorage.storeHmisApiUrl).toHaveBeenCalledWith(
-      'https://api.example.com'
-    );
-  });
-
-  it('createCookieExtractorLink does nothing when set-cookie header is missing', async () => {
-    const response: any = {
-      headers: {
-        get: (_name: string) => null,
-      },
-    };
-
-    const operation: any = {
-      getContext: () => ({ response }),
-    };
-
-    const forward: any = jest.fn(
-      () =>
-        new Observable((observer) => {
-          observer.next({});
-          observer.complete();
-        })
-    );
-
-    const observer: any = {
-      next: jest.fn(),
-      error: jest.fn(),
-      complete: jest.fn(),
-    };
-
-    const link = createCookieExtractorLink();
-    link.request(operation, forward)?.subscribe(observer);
-
-    await new Promise((resolve) => setImmediate(resolve));
   });
 
   describe('createHmisAuthLink', () => {

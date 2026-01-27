@@ -6,6 +6,11 @@ import {
 } from '@monorepo/expo/shared/utils';
 import { createNativeFetch } from './nativeFetch';
 
+const extractCookieValue = (cookieName: string): string | null => {
+  const match = document.cookie.match(new RegExp(`${cookieName}=([^;]+)`));
+  return match?.[1] ?? null;
+};
+
 const getTokenFromNative = async (
   apiUrl: string,
   csrfUrl: string
@@ -26,11 +31,7 @@ export const getCSRFToken = async (
   csrfUrl = `${apiUrl}${CSRF_LOGIN_PATH}`
 ): Promise<string | null> => {
   if (Platform.OS === 'web') {
-    const getToken = () =>
-      document.cookie.match(new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`))?.[1] ??
-      null;
-
-    const token = getToken();
+    const token = extractCookieValue(CSRF_COOKIE_NAME);
     if (token) {
       return token;
     }
@@ -39,7 +40,7 @@ export const getCSRFToken = async (
       credentials: 'include',
       headers: { Accept: 'text/html' },
     });
-    return getToken();
+    return extractCookieValue(CSRF_COOKIE_NAME);
   }
 
   return getTokenFromNative(apiUrl, csrfUrl);
