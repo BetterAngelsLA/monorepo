@@ -1,37 +1,25 @@
 import { authStorage } from './authStorage';
 import { CSRF_COOKIE_NAME, SESSION_COOKIE_NAME } from './constants';
 
-// Mock expo dependencies
 jest.mock('expo-crypto', () => ({
-  randomUUID: jest.fn(() => 'test-uuid-key'),
+  randomUUID: () => 'test-uuid-key',
 }));
 
 jest.mock('expo-secure-store', () => ({
-  getItemAsync: jest.fn(() => Promise.resolve(null)),
-  setItemAsync: jest.fn(() => Promise.resolve()),
-  deleteItemAsync: jest.fn(() => Promise.resolve()),
+  getItemAsync: () => Promise.resolve(null),
+  setItemAsync: () => Promise.resolve(),
+  deleteItemAsync: () => Promise.resolve(),
 }));
 
-// Mock MMKV storage with actual storage behavior
 const mockStorage = new Map<string, string>();
 
-const mockMMKVInstance = {
-  set: jest.fn((key: string, value: string) => {
-    mockStorage.set(key, value);
-  }),
-  getString: jest.fn((key: string) => {
-    return mockStorage.get(key) ?? null;
-  }),
-  delete: jest.fn((key: string) => {
-    mockStorage.delete(key);
-  }),
-  clearAll: jest.fn(() => {
-    mockStorage.clear();
-  }),
-};
-
 jest.mock('react-native-mmkv', () => ({
-  createMMKV: jest.fn(() => mockMMKVInstance),
+  createMMKV: () => ({
+    set: (key: string, value: string) => mockStorage.set(key, value),
+    getString: (key: string) => mockStorage.get(key) ?? null,
+    delete: (key: string) => mockStorage.delete(key),
+    clearAll: () => mockStorage.clear(),
+  }),
 }));
 
 describe('AuthStorage', () => {
@@ -44,20 +32,15 @@ describe('AuthStorage', () => {
     it('stores and retrieves cookie values', () => {
       const envKey = 'https://api.example.com';
 
-      // Initially no cookie
       expect(authStorage.getCookieValue(envKey, CSRF_COOKIE_NAME)).toBeNull();
 
-      // Update from headers
-      const headers = {
+      authStorage.updateFromSetCookieHeaders(envKey, {
         getSetCookie: () => [
           'csrftoken=abc123; Path=/; HttpOnly',
           'sessionid=xyz789; Path=/; HttpOnly',
         ],
-      };
+      });
 
-      authStorage.updateFromSetCookieHeaders(envKey, headers);
-
-      // Should retrieve stored values
       expect(authStorage.getCookieValue(envKey, CSRF_COOKIE_NAME)).toBe(
         'abc123'
       );
@@ -69,14 +52,12 @@ describe('AuthStorage', () => {
     it('generates cookie header for requests', () => {
       const envKey = 'https://api.example.com';
 
-      const headers = {
+      authStorage.updateFromSetCookieHeaders(envKey, {
         getSetCookie: () => [
           'csrftoken=token1; Path=/',
           'sessionid=session1; Path=/',
         ],
-      };
-
-      authStorage.updateFromSetCookieHeaders(envKey, headers);
+      });
 
       const result = authStorage.getCookiesForRequest(envKey);
 
@@ -91,17 +72,15 @@ describe('AuthStorage', () => {
       expect(result.csrfToken).toBeNull();
     });
 
-    it('handles string set-cookie header (not array)', () => {
+    it('handles string set-cookie header', () => {
       const envKey = 'https://api.example.com';
 
-      const headers = {
+      authStorage.updateFromSetCookieHeaders(envKey, {
         get: (name: string) =>
           name === 'set-cookie'
             ? 'csrftoken=value1; Path=/, sessionid=value2; Path=/'
             : null,
-      };
-
-      authStorage.updateFromSetCookieHeaders(envKey, headers);
+      });
 
       expect(authStorage.getCookieValue(envKey, CSRF_COOKIE_NAME)).toBe(
         'value1'
@@ -114,28 +93,21 @@ describe('AuthStorage', () => {
     it('ignores non-allowed cookies', () => {
       const envKey = 'https://api.example.com';
 
-      const headers = {
+      authStorage.updateFromSetCookieHeaders(envKey, {
         getSetCookie: () => [
           'csrftoken=allowed; Path=/',
           'random_cookie=ignored; Path=/',
         ],
-      };
-
-      authStorage.updateFromSetCookieHeaders(envKey, headers);
+      });
 
       const result = authStorage.getCookiesForRequest(envKey);
       expect(result.cookieHeader).toBe('csrftoken=allowed');
     });
 
-    it('handles missing set-cookie headers gracefully', () => {
+    it('handles missing set-cookie headers', () => {
       const envKey = 'https://api.example.com';
 
-      const headers = {
-        get: () => null,
-      };
-
-      // Should not throw
-      authStorage.updateFromSetCookieHeaders(envKey, headers);
+      authStorage.updateFromSetCookieHeaders(envKey, { get: () => null });
 
       expect(authStorage.getCookieValue(envKey, CSRF_COOKIE_NAME)).toBeNull();
     });
@@ -187,7 +159,6 @@ describe('AuthStorage', () => {
     });
 
     it('returns true when token has no exp claim', () => {
-      // JWT with no exp claim: {"sub":"user"}
       const tokenNoExp =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyIn0.test';
       authStorage.storeHmisAuthToken(tokenNoExp);
@@ -196,7 +167,6 @@ describe('AuthStorage', () => {
     });
 
     it('returns true for expired token', () => {
-      // JWT with exp in the past: {"exp": 1000000000} (Sep 2001)
       const expiredToken =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDAwMDB9.test';
       authStorage.storeHmisAuthToken(expiredToken);
@@ -205,7 +175,6 @@ describe('AuthStorage', () => {
     });
 
     it('returns false for valid non-expired token', () => {
-      // JWT with exp far in the future: {"exp": 9999999999} (Nov 2286)
       const validToken =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk5OTl9.test';
       authStorage.storeHmisAuthToken(validToken);
