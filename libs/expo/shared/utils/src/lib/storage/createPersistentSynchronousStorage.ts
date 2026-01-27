@@ -3,12 +3,15 @@ import { PersistentSynchronousStorageApi } from './types';
 
 type TConfig = {
   scopeId: string;
+  encryptionKey?: string;
 };
 
 export function createPersistentSynchronousStorage(
   config?: TConfig
 ): PersistentSynchronousStorageApi {
-  const mmkvConfig = config ? { id: config.scopeId } : undefined;
+  const mmkvConfig = config
+    ? { id: config.scopeId, encryptionKey: config.encryptionKey }
+    : undefined;
 
   const mmkv = createMMKV(mmkvConfig);
 

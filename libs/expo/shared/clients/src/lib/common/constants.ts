@@ -1,5 +1,3 @@
-export const CSRF_COOKIE_NAME = 'csrftoken';
-export const CSRF_HEADER_NAME = 'x-csrftoken';
 export const HMIS_TOKEN_HEADER_NAME = 'x-hmis-token';
 export const HMIS_DIRECTIVE_NAME = 'hmisDirective';
 

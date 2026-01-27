@@ -1,5 +1,5 @@
-import { isHmisTokenExpired } from './hmisAuth';
 import { clearAllCredentials } from './clearAllCredentials';
+import { isHmisTokenExpired } from './hmisAuth';
 
 /**
  * Validates if the stored HMIS auth token is still valid.

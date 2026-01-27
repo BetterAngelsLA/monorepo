@@ -8,8 +8,9 @@ import React, {
   useState,
 } from 'react';
 import { Platform } from 'react-native';
-import NitroCookies from 'react-native-nitro-cookies';
+import { clearAllCredentials } from '@monorepo/expo/shared/utils';
 import { CSRF_HEADER_NAME, getCSRFToken } from '../common';
+import { createNativeFetch } from '../common/nativeFetch';
 
 type Env = 'production' | 'demo';
 
@@ -45,22 +46,36 @@ export const ApiConfigProvider = ({
 
   const switchEnvironment = async (env: Env) => {
     if (env === environment) return;
-    await NitroCookies.clearAll();
+    await clearAllCredentials();
     await AsyncStorage.setItem('currentEnvironment', env);
     setEnvironment(env);
   };
 
   const fetchClient = useMemo(() => {
+    if (Platform.OS === 'web') {
+      return async (path: string, options: RequestInit = {}) => {
+        const token = await getCSRFToken(baseUrl, `${baseUrl}/admin/login/`);
+        const { headers: userHeaders = {}, ...otherOptions } = options;
+        const headers = new Headers(userHeaders as HeadersInit);
+        headers.set('Content-Type', 'application/json');
+        if (token) headers.set(CSRF_HEADER_NAME, token);
+
+        return fetch(`${baseUrl}${path}`, {
+          credentials: 'include',
+          headers,
+          ...otherOptions,
+        });
+      };
+    }
+
+    const nativeFetch = createNativeFetch(baseUrl, baseUrl);
+
     return async (path: string, options: RequestInit = {}) => {
-      const token = await getCSRFToken(baseUrl, `${baseUrl}/admin/login/`);
       const { headers: userHeaders = {}, ...otherOptions } = options;
       const headers = new Headers(userHeaders as HeadersInit);
       headers.set('Content-Type', 'application/json');
-      if (token) headers.set(CSRF_HEADER_NAME, token);
-      if (Platform.OS !== 'web') headers.set('Referer', baseUrl);
 
-      return fetch(`${baseUrl}${path}`, {
-        credentials: 'include',
+      return nativeFetch(`${baseUrl}${path}`, {
         headers,
         ...otherOptions,
       });

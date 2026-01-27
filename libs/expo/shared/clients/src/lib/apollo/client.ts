@@ -1,10 +1,12 @@
 import { ApolloClient, ApolloLink, InMemoryCache } from '@apollo/client';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
+import { Platform } from 'react-native';
 import { isReactNativeFileInstance } from './ReactNativeFile';
 import { createAuthLink } from './links/authLink';
 import { createErrorLink } from './links/errorLink';
 import { createHmisAuthLink } from './links/hmisAuthLink';
 import { loggerLink } from './links/loggerLink';
+import { createNativeFetch } from '../common/nativeFetch';
 
 type TArgs = {
   apiUrl: string;
@@ -25,10 +27,14 @@ export const createApolloClient = (args: TArgs) => {
 
   const authLink = createAuthLink({ apiUrl, csrfUrl });
 
+  const nativeFetch =
+    Platform.OS === 'web' ? undefined : createNativeFetch(apiUrl, apiUrl);
+
   const uploadHttpLink = new UploadHttpLink({
     uri: `${apiUrl}/graphql`,
-    credentials: 'include',
+    credentials: Platform.OS === 'web' ? 'include' : 'omit',
     isExtractableFile: isReactNativeFileInstance,
+    ...(nativeFetch ? { fetch: nativeFetch } : {}),
   });
 
   const errorLink = createErrorLink({
