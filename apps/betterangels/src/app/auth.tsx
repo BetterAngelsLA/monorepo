@@ -29,7 +29,7 @@ export default function Auth() {
   useEffect(() => {
     setUser(undefined);
     clearAllCredentials();
-  }, [setUser]);
+  }, []);
 
   return (
     <AuthContainer header={<Logo width={216} height={33} />}>
