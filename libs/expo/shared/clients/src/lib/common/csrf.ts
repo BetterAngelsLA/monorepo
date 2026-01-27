@@ -1,5 +1,9 @@
 import { Platform } from 'react-native';
-import { getCookieValue, CSRF_COOKIE_NAME } from '@monorepo/expo/shared/utils';
+import {
+  getCookieValue,
+  CSRF_COOKIE_NAME,
+  CSRF_LOGIN_PATH,
+} from '@monorepo/expo/shared/utils';
 import { createNativeFetch } from './nativeFetch';
 
 const getTokenFromNative = async (
@@ -17,7 +21,7 @@ const getTokenFromNative = async (
 
 export const getCSRFToken = async (
   apiUrl: string,
-  csrfUrl: string
+  csrfUrl = `${apiUrl}${CSRF_LOGIN_PATH}`
 ): Promise<string | null> => {
   if (Platform.OS === 'web') {
     const getToken = () =>

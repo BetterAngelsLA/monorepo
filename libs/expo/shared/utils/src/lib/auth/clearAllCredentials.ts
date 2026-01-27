@@ -1,6 +1,3 @@
-import { clearAllHmisCredentials } from './hmisAuth';
-import { clearAll as clearNativeCookies } from './nativeCookieJar';
+import { clearAll } from './authStorage';
 
-export const clearAllCredentials = async (): Promise<void> => {
-  await Promise.all([clearAllHmisCredentials(), clearNativeCookies()]);
-};
+export const clearAllCredentials = clearAll;
