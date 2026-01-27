@@ -1,6 +1,5 @@
 import { Platform } from 'react-native';
-import { authStorage } from '@monorepo/expo/shared/utils';
-import { CSRF_HEADER_NAME } from './constants';
+import { authStorage, CSRF_HEADER_NAME } from '@monorepo/expo/shared/utils';
 
 export const createNativeFetch = (envKey: string, referer: string) => {
   if (Platform.OS === 'web') {
