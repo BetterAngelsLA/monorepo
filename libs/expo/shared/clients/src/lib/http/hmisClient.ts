@@ -1,4 +1,4 @@
-import { getHmisApiUrl, getHmisAuthToken } from '@monorepo/expo/shared/utils';
+import { authStorage } from '@monorepo/expo/shared/utils';
 import { MODERN_BROWSER_USER_AGENT } from '../common/constants';
 import { HmisError, HmisRequestOptions } from './hmisTypes';
 
@@ -12,8 +12,8 @@ class HmisClient {
   /**
    * Get authorization headers including Bearer token
    */
-  private async getHeaders(): Promise<HeadersInit> {
-    const authToken = await getHmisAuthToken();
+  private getHeaders(): HeadersInit {
+    const authToken = authStorage.getHmisAuthToken();
 
     if (!authToken) {
       throw new HmisError('Not authenticated with HMIS', 401);
@@ -31,7 +31,7 @@ class HmisClient {
    * Get HMIS API base URL from stored api_url
    */
   private getBaseUrl(): string {
-    const apiUrl = getHmisApiUrl();
+    const apiUrl = authStorage.getHmisApiUrl();
     if (!apiUrl) {
       throw new HmisError('HMIS API URL not found. Please log in first.', 500);
     }
@@ -92,7 +92,7 @@ class HmisClient {
     options: HmisRequestOptions = {}
   ): Promise<T> {
     const baseUrl = this.getBaseUrl();
-    const authHeaders = await this.getHeaders();
+    const authHeaders = this.getHeaders();
 
     // Build URL with query params
     const url = new URL(path, baseUrl);

@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { Platform } from 'react-native';
 import {
-  clearAllCredentials,
+  authStorage,
   CSRF_LOGIN_PATH,
   ENVIRONMENT_STORAGE_KEY,
 } from '@monorepo/expo/shared/utils';
@@ -49,7 +49,7 @@ export const ApiConfigProvider = ({
 
   const switchEnvironment = async (env: Env) => {
     if (env === environment) return;
-    await clearAllCredentials();
+    await authStorage.clearAllCredentials();
     await AsyncStorage.setItem(ENVIRONMENT_STORAGE_KEY, env);
     setEnvironment(env);
   };

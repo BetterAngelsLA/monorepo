@@ -1,15 +1,8 @@
 import { jwtDecode } from 'jwt-decode';
-import {
-  getHmisApiUrl,
-  getHmisAuthToken,
-  storeHmisApiUrl,
-  storeHmisAuthToken,
-} from './authStorage';
-
-export { storeHmisAuthToken, getHmisAuthToken, storeHmisApiUrl, getHmisApiUrl };
+import { authStorage } from './authStorage';
 
 export const isHmisTokenExpired = async (): Promise<boolean> => {
-  const token = await getHmisAuthToken();
+  const token = authStorage.getHmisAuthToken();
   if (!token) {
     return true;
   }
@@ -19,7 +12,8 @@ export const isHmisTokenExpired = async (): Promise<boolean> => {
     if (!payload.exp) {
       return true;
     }
-    return payload.exp < Math.floor(Date.now() / 1000);
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    return payload.exp < nowInSeconds;
   } catch {
     return true;
   }

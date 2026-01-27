@@ -1,7 +1,7 @@
 import { AuthContainer, useUser } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Button } from '@monorepo/expo/shared/ui-components';
-import { clearAllCredentials } from '@monorepo/expo/shared/utils';
+import { authStorage } from '@monorepo/expo/shared/utils';
 import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
 import * as Updates from 'expo-updates';
@@ -28,7 +28,7 @@ export default function Auth() {
   // user on 401 errors
   useEffect(() => {
     setUser(undefined);
-    clearAllCredentials();
+    authStorage.clearAllCredentials();
   }, []);
 
   return (

@@ -1,11 +1,11 @@
 import { ApolloLink } from '@apollo/client';
 import { SetContextLink } from '@apollo/client/link/context';
 import {
-  getHmisAuthToken,
+  authStorage,
   HMIS_API_URL_COOKIE_NAME,
   HMIS_AUTH_COOKIE_NAME,
-  storeHmisApiUrl,
-  storeHmisAuthToken,
+  HMIS_DIRECTIVE_NAME,
+  HMIS_TOKEN_HEADER_NAME,
 } from '@monorepo/expo/shared/utils';
 import { Kind, type OperationDefinitionNode } from 'graphql';
 import { concatMap } from 'rxjs';
@@ -14,11 +14,7 @@ import {
   splitCookiesString,
   type Cookie,
 } from 'set-cookie-parser';
-import {
-  HMIS_DIRECTIVE_NAME,
-  HMIS_TOKEN_HEADER_NAME,
-  MODERN_BROWSER_USER_AGENT,
-} from '../../common/constants';
+import { MODERN_BROWSER_USER_AGENT } from '../../common/constants';
 import { operationHasDirective } from '../utils/schemaDirectives';
 
 const parseSetCookieHeaders = (headers: {
@@ -47,7 +43,7 @@ const parseSetCookieHeaders = (headers: {
 export const createAuthHeaderLink = () =>
   new SetContextLink(async (prevContext) => {
     const { headers = {}, ...restContext } = prevContext || {};
-    const authToken = await getHmisAuthToken();
+    const authToken = authStorage.getHmisAuthToken();
 
     return {
       ...restContext,
@@ -85,10 +81,10 @@ export const createCookieExtractorLink = () =>
           const apiUrl = cookies[HMIS_API_URL_COOKIE_NAME.toLowerCase()]?.value;
 
           if (authToken) {
-            await storeHmisAuthToken(authToken);
+            authStorage.storeHmisAuthToken(authToken);
           }
           if (apiUrl) {
-            storeHmisApiUrl(decodeURIComponent(apiUrl));
+            authStorage.storeHmisApiUrl(decodeURIComponent(apiUrl));
           }
         } catch (error) {
           if (__DEV__) {

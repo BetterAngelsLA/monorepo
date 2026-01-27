@@ -14,118 +14,120 @@ import {
 const ALLOWED_COOKIES = [CSRF_COOKIE_NAME, SESSION_COOKIE_NAME];
 type CookieJar = Record<string, string>;
 
-let storage: PersistentSynchronousStorageApi | null = null;
-let initPromise: Promise<PersistentSynchronousStorageApi> | null = null;
+class AuthStorage {
+  private storage: PersistentSynchronousStorageApi | null = null;
 
-const getStorage = async (): Promise<PersistentSynchronousStorageApi> => {
-  if (storage) {
-    return storage;
-  }
-  if (initPromise) {
-    return initPromise;
+  constructor() {
+    this.initStorage();
   }
 
-  initPromise = (async () => {
+  private async initStorage(): Promise<void> {
     try {
-      let key = await SecureStore.getItemAsync(NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE);
+      let key = await SecureStore.getItemAsync(
+        NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE
+      );
       if (!key) {
         const bytes = await Crypto.getRandomBytesAsync(32);
-        key = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-        await SecureStore.setItemAsync(NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE, key);
+        key = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join(
+          ''
+        );
+        await SecureStore.setItemAsync(
+          NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE,
+          key
+        );
       }
-      storage = createPersistentSynchronousStorage({
+      this.storage = createPersistentSynchronousStorage({
         scopeId: 'auth-storage',
         encryptionKey: key,
       });
     } catch (error) {
-      if (__DEV__) console.warn('[AuthStorage] Encryption failed, using unencrypted:', error);
-      storage = createPersistentSynchronousStorage({ scopeId: 'auth-storage' });
+      if (__DEV__)
+        console.warn(
+          '[AuthStorage] Encryption failed, using unencrypted:',
+          error
+        );
+      this.storage = createPersistentSynchronousStorage({
+        scopeId: 'auth-storage',
+      });
     }
-    if (!storage) throw new Error('[AuthStorage] Init failed');
-    return storage;
-  })();
-
-  const result = await initPromise;
-  initPromise = null;
-  return result;
-};
-
-// Cookie management
-export const getCookieValue = async (envKey: string, name: string): Promise<string | null> => {
-  const storage = await getStorage();
-  const jar = storage.get<CookieJar>(envKey) ?? {};
-  return jar[name] ?? null;
-};
-
-export const getCookiesForRequest = async (
-  envKey: string
-): Promise<{ cookieHeader: string | null; csrfToken: string | null }> => {
-  const storage = await getStorage();
-  const jar = storage.get<CookieJar>(envKey) ?? {};
-  const cookieHeader = ALLOWED_COOKIES.filter((name) => jar[name])
-    .map((name) => `${name}=${jar[name]}`)
-    .join('; ') || null;
-  return { cookieHeader, csrfToken: jar[CSRF_COOKIE_NAME] ?? null };
-};
-
-export const updateFromSetCookieHeaders = async (
-  envKey: string,
-  headers: { get?: (key: string) => string | null; getSetCookie?: () => string[] | null | undefined }
-) => {
-  const raw = headers.getSetCookie?.() ?? headers.get?.('set-cookie') ?? null;
-  if (!raw) {
-    return;
   }
 
-  const values = Array.isArray(raw) ? raw : splitCookiesString(raw);
-  if (!values.length) {
-    return;
+  getCookieValue(envKey: string, name: string): string | null {
+    return this.storage?.get<CookieJar>(envKey)?.[name] ?? null;
   }
 
-  const parsed = parseSetCookie(values, { map: true });
-  const storage = await getStorage();
-  const jar = storage.get<CookieJar>(envKey) ?? {};
-
-  for (const name of ALLOWED_COOKIES) {
-    if (parsed[name]?.value) jar[name] = parsed[name].value;
+  getCookiesForRequest(envKey: string): {
+    cookieHeader: string | null;
+    csrfToken: string | null;
+  } {
+    const jar = this.storage?.get<CookieJar>(envKey) ?? {};
+    const cookieHeader =
+      ALLOWED_COOKIES.filter((name) => jar[name])
+        .map((name) => `${name}=${jar[name]}`)
+        .join('; ') || null;
+    return { cookieHeader, csrfToken: jar[CSRF_COOKIE_NAME] ?? null };
   }
-  storage.set(envKey, jar);
-};
 
-// HMIS auth management
-export const storeHmisAuthToken = async (token: string): Promise<void> => {
-  const storage = await getStorage();
-  storage.set(HMIS_AUTH_TOKEN_KEY, token);
-};
+  updateFromSetCookieHeaders(
+    envKey: string,
+    headers: {
+      get?: (key: string) => string | null;
+      getSetCookie?: () => string[] | null | undefined;
+    }
+  ): void {
+    if (!this.storage) return;
 
-export const getHmisAuthToken = async (): Promise<string | null> => {
-  const storage = await getStorage();
-  return storage.get<string>(HMIS_AUTH_TOKEN_KEY);
-};
+    const raw = headers.getSetCookie?.() ?? headers.get?.('set-cookie') ?? null;
+    if (!raw) {
+      return;
+    }
 
-export const storeHmisApiUrl = async (apiUrl: string): Promise<void> => {
-  const storage = await getStorage();
-  storage.set(HMIS_API_URL_KEY, apiUrl);
-};
+    const values = Array.isArray(raw) ? raw : splitCookiesString(raw);
+    if (!values.length) {
+      return;
+    }
 
-export const getHmisApiUrl = async (): Promise<string | null> => {
-  const storage = await getStorage();
-  return storage.get<string>(HMIS_API_URL_KEY);
-};
+    const parsed = parseSetCookie(values, { map: true });
+    const jar = this.storage.get<CookieJar>(envKey) ?? {};
 
-// Clear all auth data
-export const clearAll = async () => {
-  storage = null;
-  initPromise = null;
-  try {
-    await SecureStore.deleteItemAsync(NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE);
-  } catch (error) {
-    if (__DEV__) console.warn('[AuthStorage] Clear failed:', error);
-    throw error;
+    for (const name of ALLOWED_COOKIES) {
+      if (parsed[name]?.value) jar[name] = parsed[name].value;
+    }
+    this.storage.set(envKey, jar);
   }
-};
 
-export const __reset = () => {
-  storage = null;
-  initPromise = null;
-};
+  storeHmisAuthToken(token: string): void {
+    this.storage?.set(HMIS_AUTH_TOKEN_KEY, token);
+  }
+
+  getHmisAuthToken(): string | null {
+    return this.storage?.get<string>(HMIS_AUTH_TOKEN_KEY) ?? null;
+  }
+
+  storeHmisApiUrl(apiUrl: string): void {
+    this.storage?.set(HMIS_API_URL_KEY, apiUrl);
+  }
+
+  getHmisApiUrl(): string | null {
+    return this.storage?.get<string>(HMIS_API_URL_KEY) ?? null;
+  }
+
+  async clearAllCredentials(): Promise<void> {
+    try {
+      this.storage?.clearAll();
+      await SecureStore.deleteItemAsync(NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE);
+    } catch (error) {
+      if (__DEV__) console.warn('[AuthStorage] Clear failed:', error);
+    } finally {
+      this.storage = null;
+      this.initStorage();
+    }
+  }
+
+  reset(): void {
+    this.storage = null;
+    this.initStorage();
+  }
+}
+
+export const authStorage = new AuthStorage();

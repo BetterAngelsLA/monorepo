@@ -33,5 +33,9 @@ export function createPersistentSynchronousStorage(
     remove(key: string): void {
       mmkv.remove(key);
     },
+
+    clearAll(): void {
+      mmkv.clearAll();
+    },
   };
 }

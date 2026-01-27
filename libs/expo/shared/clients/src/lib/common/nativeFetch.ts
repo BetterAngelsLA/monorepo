@@ -1,9 +1,6 @@
 import { Platform } from 'react-native';
-import {
-  getCookiesForRequest,
-  updateFromSetCookieHeaders,
-  CSRF_HEADER_NAME,
-} from '@monorepo/expo/shared/utils';
+import { authStorage } from '@monorepo/expo/shared/utils';
+import { CSRF_HEADER_NAME } from './constants';
 
 export const createNativeFetch = (envKey: string, referer: string) => {
   if (Platform.OS === 'web') {
@@ -14,7 +11,8 @@ export const createNativeFetch = (envKey: string, referer: string) => {
     const headers = new Headers(init.headers ?? {});
 
     if (!headers.has('Cookie')) {
-      const { cookieHeader, csrfToken } = await getCookiesForRequest(envKey);
+      const { cookieHeader, csrfToken } =
+        authStorage.getCookiesForRequest(envKey);
       if (cookieHeader) headers.set('Cookie', cookieHeader);
       if (csrfToken && !headers.has(CSRF_HEADER_NAME)) {
         headers.set(CSRF_HEADER_NAME, csrfToken);
@@ -31,7 +29,7 @@ export const createNativeFetch = (envKey: string, referer: string) => {
       credentials: 'omit',
     });
 
-    await updateFromSetCookieHeaders(envKey, response.headers as any);
+    authStorage.updateFromSetCookieHeaders(envKey, response.headers as any);
 
     return response;
   };

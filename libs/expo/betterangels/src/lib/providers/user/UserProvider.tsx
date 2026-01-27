@@ -1,9 +1,6 @@
 import { useQuery } from '@apollo/client/react';
 import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
-import {
-  isHmisTokenExpired,
-  clearAllCredentials,
-} from '@monorepo/expo/shared/utils';
+import { isHmisTokenExpired, authStorage } from '@monorepo/expo/shared/utils';
 import { GraphQLFormattedError } from 'graphql';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppState } from '../../hooks';
@@ -89,7 +86,7 @@ export default function UserProvider({ children }: UserProviderProps) {
             type: 'error',
             showDuration: 5000,
           });
-          await clearAllCredentials();
+          await authStorage.clearAllCredentials();
           setUser(undefined);
         }
       }
