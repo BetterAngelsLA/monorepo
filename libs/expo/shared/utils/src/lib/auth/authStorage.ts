@@ -18,8 +18,12 @@ let storage: PersistentSynchronousStorageApi | null = null;
 let initPromise: Promise<PersistentSynchronousStorageApi> | null = null;
 
 const getStorage = async (): Promise<PersistentSynchronousStorageApi> => {
-  if (storage) return storage;
-  if (initPromise) return initPromise;
+  if (storage) {
+    return storage;
+  }
+  if (initPromise) {
+    return initPromise;
+  }
 
   initPromise = (async () => {
     try {
@@ -69,10 +73,14 @@ export const updateFromSetCookieHeaders = async (
   headers: { get?: (key: string) => string | null; getSetCookie?: () => string[] | null | undefined }
 ) => {
   const raw = headers.getSetCookie?.() ?? headers.get?.('set-cookie') ?? null;
-  if (!raw) return;
+  if (!raw) {
+    return;
+  }
 
   const values = Array.isArray(raw) ? raw : splitCookiesString(raw);
-  if (!values.length) return;
+  if (!values.length) {
+    return;
+  }
 
   const parsed = parseSetCookie(values, { map: true });
   const storage = await getStorage();

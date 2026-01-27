@@ -11,7 +11,9 @@ const getTokenFromNative = async (
   csrfUrl: string
 ): Promise<string | null> => {
   const cached = await getCookieValue(apiUrl, CSRF_COOKIE_NAME);
-  if (cached) return cached;
+  if (cached) {
+    return cached;
+  }
 
   const nativeFetch = createNativeFetch(apiUrl, apiUrl);
   await nativeFetch(csrfUrl, { headers: { Accept: 'text/html' } });
@@ -29,7 +31,9 @@ export const getCSRFToken = async (
       null;
 
     const token = getToken();
-    if (token) return token;
+    if (token) {
+      return token;
+    }
 
     await fetch(csrfUrl, {
       credentials: 'include',
