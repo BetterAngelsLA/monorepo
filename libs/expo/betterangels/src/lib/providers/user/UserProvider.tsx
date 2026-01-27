@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client/react';
 import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
-import { isHmisTokenExpired, authStorage } from '@monorepo/expo/shared/utils';
+import { authStorage } from '@monorepo/expo/shared/utils';
 import { GraphQLFormattedError } from 'graphql';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppState } from '../../hooks';
@@ -79,7 +79,7 @@ export default function UserProvider({ children }: UserProviderProps) {
 
     (async () => {
       if (user?.isHmisUser) {
-        const isExpired = await isHmisTokenExpired();
+        const isExpired = authStorage.isHmisTokenExpired();
         if (isExpired) {
           showSnackbar({
             message: 'Your HMIS session has expired. Please log in again.',

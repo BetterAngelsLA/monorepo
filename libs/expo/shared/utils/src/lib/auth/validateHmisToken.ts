@@ -1,4 +1,3 @@
-import { isHmisTokenExpired } from './hmisAuth';
 import { authStorage } from './authStorage';
 
 /**
@@ -8,7 +7,7 @@ import { authStorage } from './authStorage';
  * @returns true if token is valid, false if invalid/expired
  */
 export const validateHmisToken = async (): Promise<boolean> => {
-  const isExpired = await isHmisTokenExpired();
+  const isExpired = authStorage.isHmisTokenExpired();
 
   if (isExpired) {
     console.warn('HMIS token expired, clearing all credentials');

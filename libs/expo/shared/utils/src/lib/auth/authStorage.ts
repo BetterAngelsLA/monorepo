@@ -1,5 +1,6 @@
 import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
+import { jwtDecode } from 'jwt-decode';
 import { parse as parseSetCookie, splitCookiesString } from 'set-cookie-parser';
 import { createPersistentSynchronousStorage } from '../storage/createPersistentSynchronousStorage';
 import type { PersistentSynchronousStorageApi } from '../storage/types';
@@ -110,6 +111,24 @@ class AuthStorage {
 
   getHmisApiUrl(): string | null {
     return this.storage?.get<string>(HMIS_API_URL_KEY) ?? null;
+  }
+
+  isHmisTokenExpired(): boolean {
+    const token = this.getHmisAuthToken();
+    if (!token) {
+      return true;
+    }
+
+    try {
+      const payload = jwtDecode<{ exp?: number }>(token);
+      if (!payload.exp) {
+        return true;
+      }
+      const nowInSeconds = Math.floor(Date.now() / 1000);
+      return payload.exp < nowInSeconds;
+    } catch {
+      return true;
+    }
   }
 
   async clearAllCredentials(): Promise<void> {
