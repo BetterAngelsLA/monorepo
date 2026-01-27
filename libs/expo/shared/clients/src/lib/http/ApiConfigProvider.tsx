@@ -49,7 +49,9 @@ export const ApiConfigProvider = ({
   }, [demoUrl, productionUrl]);
 
   const switchEnvironment = async (env: Env) => {
-    if (env === environment) return;
+    if (env === environment) {
+      return;
+    }
     await authStorage.clearAllCredentials();
     await AsyncStorage.setItem(ENVIRONMENT_STORAGE_KEY, env);
     setEnvironment(env);
@@ -64,7 +66,9 @@ export const ApiConfigProvider = ({
         );
         const headers = new Headers(options.headers);
         headers.set('Content-Type', 'application/json');
-        if (token) headers.set(CSRF_HEADER_NAME, token);
+        if (token) {
+          headers.set(CSRF_HEADER_NAME, token);
+        }
 
         return fetch(`${baseUrl}${path}`, {
           ...options,
@@ -82,7 +86,9 @@ export const ApiConfigProvider = ({
     };
   }, [baseUrl]);
 
-  if (environment === null) return null;
+  if (environment === null) {
+    return null;
+  }
 
   return (
     <ApiConfigContext.Provider
@@ -95,7 +101,8 @@ export const ApiConfigProvider = ({
 
 export const useApiConfig = () => {
   const context = useContext(ApiConfigContext);
-  if (!context)
+  if (!context) {
     throw new Error('useApiConfig must be used within an ApiConfigProvider');
+  }
   return context;
 };

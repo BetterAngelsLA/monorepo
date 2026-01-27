@@ -5,6 +5,7 @@ import { parse as parseSetCookie, splitCookiesString } from 'set-cookie-parser';
 import { createPersistentSynchronousStorage } from '../storage/createPersistentSynchronousStorage';
 import type { PersistentSynchronousStorageApi } from '../storage/types';
 import {
+  AUTH_STORAGE_SCOPE_ID,
   CSRF_COOKIE_NAME,
   HMIS_API_URL_KEY,
   HMIS_AUTH_TOKEN_KEY,
@@ -28,27 +29,25 @@ class AuthStorage {
         NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE
       );
       if (!key) {
-        const bytes = await Crypto.getRandomBytesAsync(32);
-        key = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join(
-          ''
-        );
+        key = Crypto.randomUUID();
         await SecureStore.setItemAsync(
           NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE,
           key
         );
       }
       this.storage = createPersistentSynchronousStorage({
-        scopeId: 'auth-storage',
+        scopeId: AUTH_STORAGE_SCOPE_ID,
         encryptionKey: key,
       });
     } catch (error) {
-      if (__DEV__)
+      if (__DEV__) {
         console.warn(
           '[AuthStorage] Encryption failed, using unencrypted:',
           error
         );
+      }
       this.storage = createPersistentSynchronousStorage({
-        scopeId: 'auth-storage',
+        scopeId: AUTH_STORAGE_SCOPE_ID,
       });
     }
   }
@@ -76,7 +75,9 @@ class AuthStorage {
       getSetCookie?: () => string[] | null | undefined;
     }
   ): void {
-    if (!this.storage) return;
+    if (!this.storage) {
+      return;
+    }
 
     const raw = headers.getSetCookie?.() ?? headers.get?.('set-cookie') ?? null;
     if (!raw) {
@@ -92,7 +93,9 @@ class AuthStorage {
     const jar = this.storage.get<CookieJar>(envKey) ?? {};
 
     for (const name of ALLOWED_COOKIES) {
-      if (parsed[name]?.value) jar[name] = parsed[name].value;
+      if (parsed[name]?.value) {
+        jar[name] = parsed[name].value;
+      }
     }
     this.storage.set(envKey, jar);
   }
@@ -136,7 +139,9 @@ class AuthStorage {
       this.storage?.clearAll();
       await SecureStore.deleteItemAsync(NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE);
     } catch (error) {
-      if (__DEV__) console.warn('[AuthStorage] Clear failed:', error);
+      if (__DEV__) {
+        console.warn('[AuthStorage] Clear failed:', error);
+      }
     } finally {
       this.storage = null;
       this.initStorage();
