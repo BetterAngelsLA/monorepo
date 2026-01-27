@@ -7,9 +7,8 @@ import { FileCategorySelector } from './FileCategorySelector';
 
 export default function UploadModalHmis(props: {
   client?: HmisClientProfileType;
-  closeModal: () => void;
 }) {
-  const { client, closeModal } = props;
+  const { client } = props;
   const [document, setDocument] = useState<ReactNativeFile | undefined>();
   const [documentCategory, setDocumentCategory] = useState({
     categoryId: '',

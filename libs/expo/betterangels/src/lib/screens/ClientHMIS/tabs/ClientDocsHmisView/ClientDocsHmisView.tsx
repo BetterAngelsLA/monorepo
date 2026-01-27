@@ -30,9 +30,7 @@ export function ClientDocsHmisView({
             showModalScreen({
               presentation: 'fullScreenModal',
               title: 'Upload Files',
-              renderContent: ({ close }) => (
-                <UploadModalHmis client={client} closeModal={close} />
-              ),
+              renderContent: () => <UploadModalHmis client={client} />,
             })
           }
           variant="secondary"
