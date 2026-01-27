@@ -1,13 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { pipe, filter as rfilter, find as rfind, map as rmap } from 'remeda';
 
-import {
-  FileSearchIcon,
-  PlusIcon,
-  SearchIcon,
-} from '@monorepo/expo/shared/icons';
+import { FileSearchIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -62,7 +58,7 @@ export default function ServicesModal(props: IServicesModalProps) {
 
   const { data: availableCategories } = useQuery(HmisServiceCategoriesDocument);
   const { showSnackbar } = useSnackbar();
-  const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
+  const { bottom: bottomInset } = useSafeAreaInsets();
 
   const [rows, setRows] = useState<SelectedService[]>([]);
 
@@ -264,56 +260,24 @@ export default function ServicesModal(props: IServicesModalProps) {
   // ---------- Close (revert) ----------
   const reset = useCallback(() => setRows(computeInitial()), [computeInitial]);
 
-  const closeModal = useCallback(() => {
-    reset();
-    close();
-  }, [reset, close]);
-
-  // ---------- Bootstrap ----------
   useEffect(() => {
     setRows(computeInitial());
   }, [computeInitial]);
 
   // ---------- Render ----------
   return (
-    <View
-      style={{ flex: 1, backgroundColor: Colors.WHITE, paddingTop: topInset }}
-    >
-      <View
-        style={{
-          alignItems: 'flex-end',
-          paddingHorizontal: 24,
-          marginBottom: 4,
-        }}
-      >
-        <Pressable
-          accessible
-          accessibilityHint="closes the modal"
-          accessibilityRole="button"
-          accessibilityLabel="close"
-          onPress={closeModal}
-        >
-          <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
-        </Pressable>
-      </View>
-
+    <View style={{ flex: 1, backgroundColor: Colors.WHITE }}>
       <MainScrollContainer keyboardAware>
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
             gap: Spacings.sm,
-            paddingBottom: Spacings.md,
           }}
           style={{ paddingHorizontal: Spacings.xs }}
         >
-          <View>
-            <TextBold size="lg">
-              {type === 'PROVIDED' ? 'Provided Services' : 'Requested Services'}
-            </TextBold>
-            <TextRegular mt="xxs" mb="sm">
-              Select the services for your client in this interaction.
-            </TextRegular>
-          </View>
+          <TextRegular mb="sm">
+            Select the services for your client in this interaction.
+          </TextRegular>
 
           <BasicInput
             value={searchText}

@@ -1,1 +1,1 @@
-export { baApolloTypePolicies } from './typePolicies';
+export { createBaTypePolicies } from './createBaTypePolicies';

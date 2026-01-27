@@ -704,6 +704,7 @@ class ShelterAdmin(ImportExportModelAdmin):
             {
                 "fields": (
                     "overall_rating",
+                    "declined_ba_visit",
                     "subjective_review",
                 )
             },
@@ -731,6 +732,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         "total_beds",
         "max_stay",
         "status",
+        "declined_ba_visit",
         "updated_at",
         "updated_by",
     )
