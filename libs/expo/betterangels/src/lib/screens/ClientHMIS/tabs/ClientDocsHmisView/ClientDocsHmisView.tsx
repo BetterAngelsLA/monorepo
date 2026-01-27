@@ -29,7 +29,7 @@ export function ClientDocsHmisView({
           onPress={() =>
             showModalScreen({
               presentation: 'fullScreenModal',
-              hideHeader: true,
+              title: 'Upload Files',
               renderContent: ({ close }) => (
                 <UploadModalHmis client={client} closeModal={close} />
               ),

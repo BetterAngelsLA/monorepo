@@ -39,7 +39,6 @@ export default function UploadModalHmis(props: {
 
       {!document && (
         <FileCategorySelector
-          closeModal={closeModal}
           onSelect={({ categoryId, subCategoryId, categoryName }) => {
             setDocumentCategory({
               categoryId,
