@@ -115,7 +115,10 @@ class HmisClientProfile(AbstractClientProfile):
         Coerce any explicitly-assigned `None` values back to field defaults so validation
         doesn't fail for non-nullable fields.
         """
+        excluded = set() if exclude is None else set(exclude)
         for field_name in ("veteran", "gender", "race_ethnicity"):
+            if field_name in excluded:
+                continue
             if getattr(self, field_name, None) is None:
                 model_field = cast(Field[Any, Any], self._meta.get_field(field_name))
                 setattr(self, field_name, model_field.get_default())
