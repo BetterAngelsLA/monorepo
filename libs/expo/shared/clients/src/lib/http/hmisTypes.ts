@@ -184,6 +184,16 @@ export interface FileNamesResponse {
 }
 
 /**
+ * Query parameters for listing file names
+ */
+export interface FileNamesListParams {
+  sort?: string;
+  page?: number;
+  per_page?: number;
+  fields?: string;
+}
+
+/**
  * File categories list response
  */
 export interface FileCategoriesResponse {

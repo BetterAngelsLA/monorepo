@@ -8,6 +8,7 @@ import {
   ClientFilesListParams,
   ClientFilesResponse,
   FileCategoriesResponse,
+  FileNamesListParams,
   FileNamesResponse,
   HmisError,
   HmisRequestOptions,
@@ -371,19 +372,32 @@ class HmisClient {
    * Fetches the list of file names that can be assigned when uploading
    * files for a client.
    *
+   * @param params - Query parameters for filtering, sorting, and pagination
    * @returns Promise with paginated file names response
    * @throws HmisError if the request fails
    *
    * @example
    * ```typescript
-   * const response = await hmisClient.getFileNames();
+   * const response = await hmisClient.getFileNames({
+   *   page: 1,
+   *   per_page: 50,
+   *   sort: 'name'
+   * });
    * response.items.forEach(name => {
    *   console.log(`${name.id}: ${name.name}`);
    * });
    * ```
    */
-  async getFileNames(): Promise<FileNamesResponse> {
-    return this.get<FileNamesResponse>('/client-file-names');
+  async getFileNames(params?: FileNamesListParams): Promise<FileNamesResponse> {
+    const queryParams: Record<string, string> = {};
+
+    if (params?.sort) queryParams['sort'] = params.sort;
+    if (params?.page !== undefined) queryParams['page'] = String(params.page);
+    if (params?.per_page !== undefined)
+      queryParams['per_page'] = String(params.per_page);
+    if (params?.fields) queryParams['fields'] = params.fields;
+
+    return this.get<FileNamesResponse>('/client-file-names', queryParams);
   }
 
   /**

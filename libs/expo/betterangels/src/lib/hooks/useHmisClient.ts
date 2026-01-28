@@ -4,6 +4,7 @@ import type {
   ClientFilesListParams,
   ClientFilesResponse,
   FileCategoriesResponse,
+  FileNamesListParams,
   FileNamesResponse,
   HmisCurrentUser,
 } from '@monorepo/expo/shared/clients';
@@ -144,9 +145,12 @@ export const useHmisClient = () => {
     return hmisClient.getFileCategories();
   }, []);
 
-  const getFileNames = useCallback((): Promise<FileNamesResponse> => {
-    return hmisClient.getFileNames();
-  }, []);
+  const getFileNames = useCallback(
+    (params?: FileNamesListParams): Promise<FileNamesResponse> => {
+      return hmisClient.getFileNames(params);
+    },
+    []
+  );
 
   /**
    * Update a client file's metadata (category and file name)

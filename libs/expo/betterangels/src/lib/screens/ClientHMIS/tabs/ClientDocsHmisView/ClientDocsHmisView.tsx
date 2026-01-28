@@ -3,6 +3,7 @@ import type {
   FileCategory,
   FileName,
 } from '@monorepo/expo/shared/clients';
+import { FileNamesListParams } from '@monorepo/expo/shared/clients';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -50,7 +51,7 @@ export function ClientDocsHmisView({
       setCategories(categories.items ?? []);
     });
 
-    getFileNames().then((fileNames) => {
+    getFileNames({ per_page: 50 } as FileNamesListParams).then((fileNames) => {
       setFileNames(fileNames.items ?? []);
     });
 
