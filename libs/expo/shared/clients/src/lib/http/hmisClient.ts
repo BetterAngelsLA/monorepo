@@ -8,7 +8,18 @@ import {
   logAuthFailureInterceptor,
   userAgentInterceptor,
 } from '../common/interceptors';
-import { HmisError, HmisRequestOptions } from './hmisTypes';
+import {
+  ALLOWED_FILE_TYPES,
+  AllowedFileType,
+  ClientFileUploadRequest,
+  ClientFileUploadResponse,
+  ClientFilesListParams,
+  ClientFilesResponse,
+  FileCategoriesResponse,
+  FileNamesResponse,
+  HmisError,
+  HmisRequestOptions,
+} from './hmisTypes';
 
 /**
  * HMIS REST API Client
@@ -77,7 +88,7 @@ class HmisClient {
   /**
    * Make a request to HMIS REST API
    */
-  async request<T = any>(
+  async request<T = unknown>(
     path: string,
     options: HmisRequestOptions = {}
   ): Promise<T> {
@@ -149,6 +160,298 @@ class HmisClient {
 
   delete<T = unknown>(path: string): Promise<T> {
     return this.request<T>(path, { method: 'DELETE' });
+  }
+
+  /**
+   * Upload multipart/form-data (e.g., for photo uploads)
+   * Does NOT set Content-Type header (browser sets it with boundary automatically)
+   * Does NOT JSON.stringify the body (FormData is sent as-is)
+   */
+  async postMultipart<T = unknown>(
+    path: string,
+    formData: FormData
+  ): Promise<T> {
+    const baseUrl = this.getBaseUrl();
+
+    const url = new URL(path, baseUrl);
+
+    // Compose headers using interceptors (except Content-Type for multipart)
+    const headers = new Headers({
+      ...userAgentInterceptor(),
+      ...hmisAuthInterceptor(),
+      [HEADER_NAMES.X_REQUESTED_WITH]: HEADER_VALUES.X_REQUESTED_WITH_AJAX,
+      // Do NOT set Content-Type - let the browser set it with the boundary
+    });
+
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      headers,
+      body: formData, // Send FormData directly without stringifying
+    });
+
+    logAuthFailureInterceptor(url.toString(), response.status);
+
+    // Handle errors
+    if (!response.ok) {
+      await this.handleError(response);
+    }
+
+    // Parse response
+    const contentType = response.headers.get('content-type');
+    if (contentType?.includes('application/json')) {
+      return response.json();
+    }
+
+    return response.text() as unknown as T;
+  }
+
+  /**
+   * Upload a file for a client
+   *
+   * @param clientId - The client ID (can be internal ID or external client ID string)
+   * @param file - File data object with base64 content
+   * @param file.content - Base64 encoded file content
+   * @param file.name - File name with extension
+   * @param file.mimeType - MIME type of the file (must be in allowed types)
+   * @param categoryId - File category ID
+   * @param fileNameId - File name ID from HMIS
+   * @param isPrivate - Whether the file should be private (optional)
+   * @returns Promise with upload response
+   * @throws HmisError if file type is not allowed or upload fails
+   *
+   * @example
+   * ```typescript
+   * const result = await hmisClient.uploadClientFile(
+   *   '68998C256',
+   *   {
+   *     content: 'base64encodedcontent...',
+   *     name: 'document.pdf',
+   *     mimeType: 'application/pdf'
+   *   },
+   *   12, // category ID
+   *   89  // file name ID
+   * );
+   * ```
+   */
+  async uploadClientFile(
+    clientId: string | number,
+    file: {
+      content: string;
+      name: string;
+      mimeType: AllowedFileType;
+    },
+    categoryId: number,
+    fileNameId: number,
+    isPrivate: boolean | null = null
+  ): Promise<ClientFileUploadResponse> {
+    // Validate file type
+    if (!ALLOWED_FILE_TYPES.includes(file.mimeType)) {
+      throw new HmisError(
+        `File type "${
+          file.mimeType
+        }" is not allowed. Allowed: ${ALLOWED_FILE_TYPES.join(', ')}`,
+        400
+      );
+    }
+
+    // Build data URI with proper format
+    const dataUri = `data:${file.mimeType};base64,${file.content}`;
+
+    // Build request payload matching API expectations
+    const payload: ClientFileUploadRequest = {
+      clientFile: {
+        ref_category: categoryId,
+        ref_file_name: fileNameId,
+        private: isPrivate,
+      },
+      base64_file_content: dataUri,
+      file_name: file.name,
+    };
+
+    // Make POST request to client-files endpoint
+    return this.post<ClientFileUploadResponse>(
+      `/clients/${clientId}/client-files`,
+      payload
+    );
+  }
+
+  /**
+   * Update a client file's metadata (category and file name)
+   *
+   * Updates an existing client file record to change its category and file name
+   * assignments. Optionally, you can re-upload the file content by passing the
+   * file object. If omitted, only the metadata is updated.
+   *
+   * @param clientId - The client ID
+   * @param fileId - The file ID to update
+   * @param categoryId - New category ID
+   * @param fileNameId - New file name ID
+   * @param file - Optional file object {content, name, mimeType}. If provided, updates the file content
+   * @param isPrivate - Optional private flag
+   * @returns Promise with updated file response
+   * @throws HmisError if the request fails
+   *
+   * @example
+   * ```typescript
+   * // Update only metadata
+   * const result = await hmisClient.updateClientFile(
+   *   '68998C256',
+   *   42,
+   *   12, // new category ID
+   *   89  // new file name ID
+   * );
+   *
+   * // Update metadata and re-upload file content
+   * const resultWithFile = await hmisClient.updateClientFile(
+   *   '68998C256',
+   *   42,
+   *   12,
+   *   89,
+   *   {
+   *     content: base64String,
+   *     name: 'updated-document.txt',
+   *     mimeType: 'text/plain'
+   *   }
+   * );
+   * ```
+   */
+  async updateClientFile(
+    clientId: string | number,
+    fileId: number,
+    categoryId: number,
+    fileNameId: number,
+    file?: { content: string; name: string; mimeType: string } | null,
+    isPrivate: boolean | null = null
+  ): Promise<ClientFileUploadResponse> {
+    const clientFile: Record<string, unknown> = {
+      id: fileId,
+      ref_category: categoryId,
+      ref_file_name: fileNameId,
+      private: isPrivate,
+    };
+
+    // If file content is provided, include it in the payload
+    if (file) {
+      clientFile['file'] = {
+        name: file.name,
+        mimeType: file.mimeType,
+        uploadedFile: file.content,
+      };
+    }
+
+    const payload = { clientFile };
+
+    return this.post<ClientFileUploadResponse>(
+      `/clients/${clientId}/client-files/${fileId}`,
+      payload
+    );
+  }
+
+  /**
+   * Get available file categories for uploads
+   *
+   * Fetches the list of file categories that can be assigned when uploading
+   * files for a client.
+   *
+   * @returns Promise with paginated file categories response
+   * @throws HmisError if the request fails
+   *
+   * @example
+   * ```typescript
+   * const response = await hmisClient.getFileCategories();
+   * response.items.forEach(cat => {
+   *   console.log(`${cat.id}: ${cat.name}`);
+   * });
+   * ```
+   */
+  async getFileCategories(): Promise<FileCategoriesResponse> {
+    return this.get<FileCategoriesResponse>('/client-file-categories');
+  }
+
+  /**
+   * Get available file names for uploads
+   *
+   * Fetches the list of file names that can be assigned when uploading
+   * files for a client.
+   *
+   * @returns Promise with paginated file names response
+   * @throws HmisError if the request fails
+   *
+   * @example
+   * ```typescript
+   * const response = await hmisClient.getFileNames();
+   * response.items.forEach(name => {
+   *   console.log(`${name.id}: ${name.name}`);
+   * });
+   * ```
+   */
+  async getFileNames(): Promise<FileNamesResponse> {
+    return this.get<FileNamesResponse>('/client-file-names');
+  }
+
+  /**
+   * List files for a specific client
+   *
+   * Fetches paginated list of files for a client with optional filtering,
+   * sorting, and field expansion.
+   *
+   * @param clientId - The client ID
+   * @param params - Query parameters for filtering, sorting, and pagination
+   * @returns Promise with paginated list of client files
+   * @throws HmisError if the request fails
+   *
+   * @example
+   * ```typescript
+   * const files = await hmisClient.getClientFiles('68998C256', {
+   *   sort: '-file_date',
+   *   page: 1,
+   *   per_page: 10,
+   *   expand: 'category,file,creator'
+   * });
+   * ```
+   */
+  async getClientFiles(
+    clientId: string | number,
+    params?: ClientFilesListParams
+  ): Promise<ClientFilesResponse> {
+    const queryParams: Record<string, string> = {};
+
+    if (params?.sort) queryParams['sort'] = params.sort;
+    if (params?.expand) queryParams['expand'] = params.expand;
+    if (params?.is_file !== undefined)
+      queryParams['is_file'] = String(params.is_file);
+    if (params?.deleted !== undefined)
+      queryParams['deleted'] = String(params.deleted);
+    if (params?.page !== undefined) queryParams['page'] = String(params.page);
+    if (params?.per_page !== undefined)
+      queryParams['per_page'] = String(params.per_page);
+    if (params?.fields) queryParams['fields'] = params.fields;
+
+    return this.get<ClientFilesResponse>(
+      `/clients/${clientId}/client-files`,
+      queryParams
+    );
+  }
+
+  /**
+   * Delete a client file
+   *
+   * Permanently removes a file record from the client's file list.
+   *
+   * @param clientId - The client ID
+   * @param fileId - The file ID to delete
+   * @throws HmisError if the request fails
+   *
+   * @example
+   * ```typescript
+   * await hmisClient.deleteClientFile('68998C256', 37);
+   * ```
+   */
+  async deleteClientFile(
+    clientId: string | number,
+    fileId: string | number
+  ): Promise<void> {
+    await this.delete(`/clients/${clientId}/client-files/${fileId}`);
   }
 }
 

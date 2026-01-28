@@ -1,11 +1,7 @@
-import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  SingleSelect,
-  TextBold,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
-import { Pressable, View } from 'react-native';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
+import { SingleSelect, TextOrNode } from '@monorepo/expo/shared/ui-components';
+import { ReactNode } from 'react';
+import { StyleSheet, View, ViewStyle } from 'react-native';
 import { FILE_CATEGORIES, FILE_SUBCATEGORIES } from './categoryConstants';
 
 export const TEMPORARY_DOCUMENT_TYPES = FILE_CATEGORIES.filter(
@@ -29,30 +25,23 @@ type FileCategorySelectorProps = {
     subCategoryId: string;
     categoryName: string;
   }) => void;
-  closeModal: () => void;
+  header?: string | ReactNode | null;
+  style?: ViewStyle;
 };
 
 export function FileCategorySelector(props: FileCategorySelectorProps) {
-  const { onSelect, closeModal } = props;
-  return (
-    <>
-      <Pressable
-        style={{ marginLeft: 'auto' }}
-        accessible
-        accessibilityHint="closes the Upload modal"
-        accessibilityRole="button"
-        accessibilityLabel="close"
-        onPress={closeModal}
-      >
-        <PlusIcon size="sm" color={Colors.BLACK} rotate="45deg" />
-      </Pressable>
-      <TextBold mb="xxs" mt="sm" size="lg">
-        Upload Files
-      </TextBold>
+  const {
+    onSelect,
+    style,
+    header = 'Select the right file category and predefined name.',
+  } = props;
 
-      <TextRegular size="sm" mb="md">
-        Select the right file category and predefined name.
-      </TextRegular>
+  return (
+    <View style={style}>
+      {header && (
+        <TextOrNode textStyle={[styles.defaultHeaderText]}>{header}</TextOrNode>
+      )}
+
       <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
         {TEMPORARY_DOCUMENT_TYPES.map((categoryGroup) => (
           <SingleSelect
@@ -71,6 +60,14 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
           />
         ))}
       </View>
-    </>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  defaultHeaderText: {
+    marginBottom: Spacings.md,
+    fontSize: FontSizes.sm.fontSize,
+    lineHeight: FontSizes.sm.lineHeight,
+  },
+});
