@@ -1,4 +1,4 @@
-import type { ClientFile } from '@monorepo/expo/shared/clients';
+import type { ClientFile, FileCategory } from '@monorepo/expo/shared/clients';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -19,11 +19,12 @@ export function ClientDocsHmisView({
   client: HmisClientProfileType | undefined;
 }) {
   const { showModalScreen } = useModalScreen();
-  const { getClientFiles } = useHmisClient();
+  const { getClientFiles, getFileCategories } = useHmisClient();
   const [status, setStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'
   >('idle');
   const [files, setFiles] = useState<ClientFile[]>([]);
+  const [categories, setCategories] = useState<FileCategory[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,6 +37,10 @@ export function ClientDocsHmisView({
     let isActive = true;
     setStatus('loading');
     setError(null);
+
+    getFileCategories().then((categories) => {
+      setCategories(categories);
+    });
 
     getClientFiles(client.hmisId as string)
       .then((data) => {
