@@ -166,6 +166,40 @@ class HmisClient {
   }
 
   /**
+   * Upload multipart/form-data (e.g., for photo uploads)
+   * Does NOT set Content-Type header (browser sets it with boundary automatically)
+   * Does NOT JSON.stringify the body (FormData is sent as-is)
+   */
+  async postMultipart<T = unknown>(path: string, formData: FormData): Promise<T> {
+    const baseUrl = this.getBaseUrl();
+    const authHeaders = await this.getHeaders();
+
+    const url = new URL(path, baseUrl);
+
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        ...authHeaders,
+        // Do NOT set Content-Type - let the browser set it with the boundary
+      },
+      body: formData, // Send FormData directly without stringifying
+    });
+
+    // Handle errors
+    if (!response.ok) {
+      await this.handleError(response);
+    }
+
+    // Parse response
+    const contentType = response.headers.get('content-type');
+    if (contentType?.includes('application/json')) {
+      return response.json();
+    }
+
+    return response.text() as unknown as T;
+  }
+
+  /**
    * Upload a file for a client
    *
    * @param clientId - The client ID (can be internal ID or external client ID string)

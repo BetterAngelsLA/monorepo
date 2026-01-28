@@ -1,8 +1,9 @@
-import { HmisError } from '@monorepo/expo/shared/clients';
+import { HmisError, ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   Button,
+  MediaPickerModal,
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -32,7 +33,8 @@ type Section =
   | 'fileUpload'
   | 'categories'
   | 'clientFiles'
-  | 'deleteFile';
+  | 'deleteFile'
+  | 'photoUpload';
 
 export default function HmisRestDebug() {
   const {
@@ -41,6 +43,7 @@ export default function HmisRestDebug() {
     getFileCategories,
     getClientFiles,
     deleteClientFile,
+    hmisClient,
   } = useHmisClient();
   const [activeSection, setActiveSection] = useState<Section>('currentUser');
 
@@ -78,6 +81,23 @@ export default function HmisRestDebug() {
   const [deleteStatus, setDeleteStatus] = useState<FetchStatus>('idle');
   const [deleteOutput, setDeleteOutput] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Photo Upload state
+  const [photoClientId, setPhotoClientId] = useState('403');
+  const [photoStatus, setPhotoStatus] = useState<FetchStatus>('idle');
+  const [photoOutput, setPhotoOutput] = useState('');
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoPickerVisible, setPhotoPickerVisible] = useState(false);
+
+  // Photo Crop state
+  const [cropClientId, setCropClientId] = useState('403');
+  const [cropX1, setCropX1] = useState('0');
+  const [cropY1, setCropY1] = useState('0');
+  const [cropW, setCropW] = useState('100');
+  const [cropH, setCropH] = useState('100');
+  const [cropStatus, setCropStatus] = useState<FetchStatus>('idle');
+  const [cropOutput, setCropOutput] = useState('');
+  const [cropError, setCropError] = useState<string | null>(null);
 
   const handleFetch = useCallback(async () => {
     const selectedFields = fields.trim()
@@ -271,11 +291,106 @@ export default function HmisRestDebug() {
     setDeleteStatus('idle');
   }, []);
 
+  const handlePhotoUpload = useCallback(async (file: ReactNativeFile) => {
+    if (!photoClientId.trim()) {
+      setPhotoError('Client ID is required');
+      return;
+    }
+
+    setPhotoStatus('loading');
+    setPhotoError(null);
+    setPhotoOutput('');
+    setPhotoPickerVisible(false);
+
+    try {
+      const clientId = photoClientId.trim();
+      const endpoint = `/clients/${clientId}/photo/upload`;
+      
+      // Create FormData with the correct field name expected by the API
+      const formData = new FormData();
+      formData.append('FileForm[uploadedFile]', file as any);
+
+      // POST /clients/:clientId/photo/upload
+      // Expected: multipart/form-data with FileForm[uploadedFile] field containing actual file
+      const result = await hmisClient.postMultipart(endpoint, formData);
+
+      setPhotoOutput(JSON.stringify(result, null, 2));
+      setPhotoStatus('success');
+    } catch (err) {
+      const message =
+        err instanceof HmisError && err.data
+          ? JSON.stringify(err.data, null, 2)
+          : err instanceof Error
+          ? err.message
+          : 'Photo upload failed. See logs.';
+      setPhotoError(err instanceof HmisError ? err.message : message);
+
+      if (err instanceof HmisError && err.data) {
+        setPhotoOutput(JSON.stringify(err.data, null, 2));
+      }
+
+      setPhotoStatus('error');
+    }
+  }, [photoClientId, hmisClient]);
+
+  const clearPhotoOutput = useCallback(() => {
+    setPhotoOutput('');
+    setPhotoError(null);
+    setPhotoStatus('idle');
+  }, []);
+
+  const handlePhotoCrop = useCallback(async () => {
+    if (!cropClientId.trim()) {
+      setCropError('Client ID is required');
+      return;
+    }
+
+    setCropStatus('loading');
+    setCropError(null);
+    setCropOutput('');
+
+    try {
+      const clientId = cropClientId.trim();
+      const endpoint = `/clients/${clientId}/photo/crop`;
+      const payload = {
+        PhotoList: {
+          x1: parseInt(cropX1, 10),
+          y1: parseInt(cropY1, 10),
+          w: parseInt(cropW, 10),
+          h: parseInt(cropH, 10),
+        },
+      };
+
+      // POST /clients/:clientId/photo/crop
+      // Expected request body: { PhotoList: { x1: number, y1: number, w: number, h: number } }
+      const result = await hmisClient.post(endpoint, payload);
+
+      setCropOutput(JSON.stringify(result, null, 2));
+      setCropStatus('success');
+    } catch (err) {
+      const message =
+        err instanceof HmisError && err.data
+          ? JSON.stringify(err.data, null, 2)
+          : err instanceof Error
+          ? err.message
+          : 'Photo crop failed. See logs.';
+      setCropError(err instanceof HmisError ? err.message : message);
+
+      if (err instanceof HmisError && err.data) {
+        setCropOutput(JSON.stringify(err.data, null, 2));
+      }
+
+      setCropStatus('error');
+    }
+  }, [cropClientId, cropX1, cropY1, cropW, cropH, hmisClient]);
+
   const hasOutput = output.trim().length > 0;
   const hasUploadOutput = uploadOutput.trim().length > 0;
   const hasCategoriesOutput = categoriesOutput.trim().length > 0;
   const hasFilesOutput = filesOutput.trim().length > 0;
   const hasDeleteOutput = deleteOutput.trim().length > 0;
+  const hasPhotoOutput = photoOutput.trim().length > 0;
+  const hasCropOutput = cropOutput.trim().length > 0;
 
   if (!__DEV__) {
     return (
@@ -333,6 +448,13 @@ export default function HmisRestDebug() {
               label="Delete File"
               isActive={activeSection === 'deleteFile'}
               onPress={() => setActiveSection('deleteFile')}
+            />
+          </View>
+          <View style={styles.tabRow}>
+            <TabButton
+              label="Photo Upload & Crop"
+              isActive={activeSection === 'photoUpload'}
+              onPress={() => setActiveSection('photoUpload')}
             />
           </View>
         </View>
@@ -794,7 +916,219 @@ export default function HmisRestDebug() {
             </View>
           </>
         )}
+
+        {/* Photo Upload & Crop Section */}
+        {activeSection === 'photoUpload' && (
+          <>
+            <View style={styles.card}>
+              <TextMedium>Upload Client Photo</TextMedium>
+              <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
+                Select a photo from your device to test photo upload. Uses
+                MediaPickerModal to get an actual file URI from camera/gallery.
+              </TextRegular>
+              <TextRegular size="sm" color={Colors.NEUTRAL_DARK} mt="xs">
+                Endpoint: POST /clients/:clientId/photo/upload with multipart
+                form field 'FileForm[uploadedFile]'
+              </TextRegular>
+
+              <BasicInput
+                label="Client ID *"
+                placeholder="403"
+                value={photoClientId}
+                onChangeText={setPhotoClientId}
+                autoCapitalize="none"
+                autoCorrect={false}
+                mb="xs"
+              />
+
+              <Button
+                title="Select Photo & Upload"
+                variant="primary"
+                onPress={() => setPhotoPickerVisible(true)}
+                loading={photoStatus === 'loading'}
+                disabled={photoStatus === 'loading'}
+                accessibilityHint="Open photo picker to select and upload a photo"
+                size="full"
+              />
+
+              <Button
+                title="Clear output"
+                variant="secondary"
+                onPress={clearPhotoOutput}
+                accessibilityHint="Reset the displayed response and status"
+                size="full"
+                mt="xs"
+                disabled={
+                  photoStatus === 'loading' && !hasPhotoOutput && !photoError
+                }
+              />
+
+              <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
+                Uploads a 1x1 test PNG image. In production, replace with actual
+                image selection and encoding logic.
+              </TextRegular>
+            </View>
+
+            <View style={styles.card}>
+              <View style={styles.statusRow}>
+                <TextMedium>Upload Status</TextMedium>
+                <TextRegular color={STATUS_COLOR[photoStatus]}>
+                  {STATUS_LABEL[photoStatus]}
+                </TextRegular>
+              </View>
+
+              {photoError && (
+                <TextRegular color={Colors.ERROR_DARK} size="sm">
+                  {photoError}
+                </TextRegular>
+              )}
+
+              <View style={styles.output}>
+                <TextRegular
+                  selectable
+                  size="xs"
+                  color={Colors.PRIMARY_EXTRA_DARK}
+                  style={styles.code}
+                >
+                  {hasPhotoOutput
+                    ? photoOutput
+                    : 'No response yet. Run the upload to see JSON or text output.'}
+                </TextRegular>
+              </View>
+            </View>
+
+            <View style={styles.card}>
+              <TextMedium>Crop Uploaded Photo</TextMedium>
+              <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
+                Crops an already-uploaded client photo using pixel coordinates.
+                Uses the /clients/:clientId/photo/crop endpoint with PhotoList
+                wrapper: {`{ PhotoList: { x1, y1, w, h } }`}
+              </TextRegular>
+
+              <BasicInput
+                label="Client ID *"
+                placeholder="403"
+                value={cropClientId}
+                onChangeText={setCropClientId}
+                autoCapitalize="none"
+                autoCorrect={false}
+                mb="xs"
+              />
+
+              <View style={styles.row}>
+                <View style={styles.halfInput}>
+                  <BasicInput
+                    label="X1 (top-left x)"
+                    placeholder="0"
+                    value={cropX1}
+                    onChangeText={setCropX1}
+                    keyboardType="numeric"
+                    mb="xs"
+                  />
+                </View>
+                <View style={styles.halfInput}>
+                  <BasicInput
+                    label="Y1 (top-left y)"
+                    placeholder="0"
+                    value={cropY1}
+                    onChangeText={setCropY1}
+                    keyboardType="numeric"
+                    mb="xs"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.row}>
+                <View style={styles.halfInput}>
+                  <BasicInput
+                    label="Width"
+                    placeholder="100"
+                    value={cropW}
+                    onChangeText={setCropW}
+                    keyboardType="numeric"
+                    mb="xs"
+                  />
+                </View>
+                <View style={styles.halfInput}>
+                  <BasicInput
+                    label="Height"
+                    placeholder="100"
+                    value={cropH}
+                    onChangeText={setCropH}
+                    keyboardType="numeric"
+                    mb="xs"
+                  />
+                </View>
+              </View>
+
+              <Button
+                title={cropStatus === 'loading' ? 'Cropping…' : 'Crop photo'}
+                variant="primary"
+                onPress={handlePhotoCrop}
+                loading={cropStatus === 'loading'}
+                accessibilityHint="Crops the photo with specified coordinates"
+                size="full"
+              />
+
+              <Button
+                title="Clear output"
+                variant="secondary"
+                onPress={() => {
+                  setCropOutput('');
+                  setCropError(null);
+                  setCropStatus('idle');
+                }}
+                accessibilityHint="Reset the displayed response and status"
+                size="full"
+                mt="xs"
+                disabled={
+                  cropStatus === 'loading' && !hasCropOutput && !cropError
+                }
+              />
+
+              <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
+                Requires an uploaded photo. Coordinates are in pixels relative
+                to the original image.
+              </TextRegular>
+            </View>
+
+            <View style={styles.card}>
+              <View style={styles.statusRow}>
+                <TextMedium>Crop Status</TextMedium>
+                <TextRegular color={STATUS_COLOR[cropStatus]}>
+                  {STATUS_LABEL[cropStatus]}
+                </TextRegular>
+              </View>
+
+              {cropError && (
+                <TextRegular color={Colors.ERROR_DARK} size="sm">
+                  {cropError}
+                </TextRegular>
+              )}
+
+              <View style={styles.output}>
+                <TextRegular
+                  selectable
+                  size="xs"
+                  color={Colors.PRIMARY_EXTRA_DARK}
+                  style={styles.code}
+                >
+                  {hasCropOutput
+                    ? cropOutput
+                    : 'No response yet. Run the crop to see JSON or text output.'}
+                </TextRegular>
+              </View>
+            </View>
+          </>
+        )}
       </View>
+      <MediaPickerModal
+        onCapture={handlePhotoUpload}
+        setModalVisible={setPhotoPickerVisible}
+        isModalVisible={photoPickerVisible}
+        setFiles={(files) => handlePhotoUpload(files[0])}
+        allowMultiple={false}
+      />
     </MainScrollContainer>
   );
 }
