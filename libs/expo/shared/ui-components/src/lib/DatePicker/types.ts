@@ -18,10 +18,8 @@ export type INumericDatePickerProps = Omit<
 > & {
   // Invalid dates are filtered out and never passed to onChange
   onChange?: (date: Date | null) => void;
-  // If provided, used instead of onChange(null) for clearing
+  // Handler for clearing the date. If provided, clear button will be shown when value exists.
   onDelete?: () => void;
-  // Defaults to true
-  showClearButton?: boolean;
 };
 
 export interface IWheelDatePickerProps extends TMarginProps {

@@ -6,21 +6,13 @@ import { InputClearIcon } from '../Input/InputClearIcon';
 import { INumericDatePickerProps } from './types';
 
 export function NumericDatePicker(props: INumericDatePickerProps) {
-  const { label, disabled, value, onChange, onDelete, showClearButton = true, ...rest } = props;
+  const { label, disabled, value, onChange, onDelete, ...rest } = props;
 
-  const handleClear = () => {
-    if (onDelete) {
-      onDelete();
-    } else {
-      onChange?.(null);
-    }
-  };
+  const showClear = Boolean(value && onDelete);
 
   const handleChange = (date: Date | undefined) => {
     if (date instanceof Date && !Number.isNaN(date.getTime())) {
       onChange?.(date);
-    } else if (date === undefined) {
-      handleClear();
     }
   };
 
@@ -52,10 +44,10 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
           {...rest}
           value={value}
           onChange={handleChange}
-          calendarIcon={value ? '' : undefined}
+          calendarIcon={showClear ? '' : undefined}
         />
 
-        {value && showClearButton && !disabled && (onDelete || onChange) && (
+        {showClear && (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Clear date"
@@ -63,7 +55,7 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
             hitSlop={8}
             style={styles.clearButton}
             disabled={disabled}
-            onPress={handleClear}
+            onPress={onDelete}
           >
             <InputClearIcon />
           </Pressable>

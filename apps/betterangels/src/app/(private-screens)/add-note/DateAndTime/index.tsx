@@ -34,7 +34,9 @@ export default function DateAndTime(props: IDateAndTimeProps) {
   const parseInteractedAt = (
     value: Date | string | null | undefined
   ): Date | undefined => {
-    if (!value) return undefined;
+    if (!value) {
+      return undefined;
+    }
     if (value instanceof Date) {
       return isValid(value) ? value : undefined;
     }
@@ -79,29 +81,19 @@ export default function DateAndTime(props: IDateAndTimeProps) {
   const updateNoteFunction = useRef(
     debounce(
       async (key: 'time' | 'date', value: string | Date | null | undefined) => {
-        if (!noteId) return;
+        if (!noteId) {
+          return;
+        }
 
         const currentNote = noteRef.current;
 
-        // If clearing (value is null or undefined), we need to handle it specially
+        // Calculate the final interactedAt value
+        let interactedAt: string | null | undefined;
+
         if (value === null || value === undefined) {
-          // If clearing date, set interactedAt to null/undefined
-          // If clearing time, keep the date but reset time to start of day or null
+          // If clearing date, set interactedAt to null
           if (key === 'date') {
-            try {
-              await updateNote({
-                variables: {
-                  data: {
-                    id: noteId,
-                    interactedAt: null,
-                  },
-                },
-                refetchQueries: [NotesDocument],
-              });
-            } catch (err) {
-              console.error(err);
-            }
-            return;
+            interactedAt = null;
           } else if (key === 'time') {
             // If clearing time but date exists, set time to start of day
             if (currentNote.date && isValid(currentNote.date)) {
@@ -109,59 +101,41 @@ export default function DateAndTime(props: IDateAndTimeProps) {
                 setHours(new Date(currentNote.date), 0),
                 0
               );
-              try {
-                await updateNote({
-                  variables: {
-                    data: {
-                      id: noteId,
-                      interactedAt: dateWithStartTime.toISOString(),
-                    },
-                  },
-                  refetchQueries: [NotesDocument],
-                });
-              } catch (err) {
-                console.error(err);
-              }
+              interactedAt = dateWithStartTime.toISOString();
+            } else {
+              // If no date, don't update (or set to null if preferred)
+              return;
             }
-            return;
           }
-        }
-
-        // Normal update path
-        if (!value) return;
-
-        const dateValue =
-          key === 'date'
-            ? value
-            : currentNote.date
-            ? new Date(currentNote.date)
-            : new Date();
-        const timeValue =
-          key === 'time'
-            ? value
-            : currentNote.time
-            ? new Date(currentNote.time)
-            : new Date();
-        let updatingField = value;
-
-        if (
-          timeValue instanceof Date &&
-          dateValue instanceof Date &&
-          isValid(timeValue) &&
-          isValid(dateValue)
-        ) {
-          const hours = timeValue.getHours();
-          const minutes = timeValue.getMinutes();
-          const combinedDateTime = setMinutes(
-            setHours(dateValue, hours),
-            minutes
-          );
-
-          updatingField = new Date(combinedDateTime).toISOString();
         } else {
-          throw new Error(
-            'Both timeValue and dateValue should be valid Date objects'
-          );
+          // Normal update path - combine date and time
+          let dateValue: Date = new Date();
+          if (key === 'date' && value instanceof Date) {
+            dateValue = value;
+          } else if (currentNote.date) {
+            dateValue = new Date(currentNote.date);
+          }
+
+          let timeValue: Date = new Date();
+          if (key === 'time' && value instanceof Date) {
+            timeValue = value;
+          } else if (currentNote.time) {
+            timeValue = new Date(currentNote.time);
+          }
+
+          if (isValid(timeValue) && isValid(dateValue)) {
+            const hours = timeValue.getHours();
+            const minutes = timeValue.getMinutes();
+            const combinedDateTime = setMinutes(
+              setHours(dateValue, hours),
+              minutes
+            );
+            interactedAt = combinedDateTime.toISOString();
+          } else {
+            throw new Error(
+              'Both timeValue and dateValue should be valid Date objects'
+            );
+          }
         }
 
         try {
@@ -169,7 +143,7 @@ export default function DateAndTime(props: IDateAndTimeProps) {
             variables: {
               data: {
                 id: noteId,
-                interactedAt: updatingField,
+                interactedAt,
               },
             },
             refetchQueries: [NotesDocument],
