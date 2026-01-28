@@ -30,6 +30,7 @@ export function ClientDocsHmisView({
   useEffect(() => {
     if (!client?.id) {
       setFiles([]);
+      setCategories([]);
       setStatus('idle');
       return;
     }
@@ -71,6 +72,35 @@ export function ClientDocsHmisView({
     }
     return 'No documents found.';
   }, [client?.id]);
+
+  const filesByCategory = useMemo(() => {
+    const byRefCategory = new Map<number, ClientFile[]>();
+    for (const file of files) {
+      const catId = file.ref_category;
+      const list = byRefCategory.get(catId) ?? [];
+      list.push(file);
+      byRefCategory.set(catId, list);
+    }
+    const result: { category: FileCategory | undefined; files: ClientFile[] }[] = [];
+    for (const cat of categories) {
+      const list = byRefCategory.get(cat.id);
+      if (list?.length) {
+        result.push({ category: cat, files: list });
+        byRefCategory.delete(cat.id);
+      }
+    }
+    byRefCategory.forEach((fileList, refCategory) => {
+      result.push({
+        category: {
+          id: refCategory,
+          name: `Category ${refCategory}`,
+          status: 0,
+        },
+        files: fileList,
+      });
+    });
+    return result;
+  }, [files, categories]);
 
   const getFileLabel = (file: ClientFile, index: number) => {
     return (
@@ -129,10 +159,20 @@ export function ClientDocsHmisView({
           <TextRegular color={Colors.NEUTRAL_DARK}>{emptyLabel}</TextRegular>
         )}
 
-        {files.map((file, index) => (
-          <TextMedium key={String(file?.id ?? index)}>
-            {getFileLabel(file, index)}
-          </TextMedium>
+        {filesByCategory.map(({ category, files: categoryFiles }) => (
+          <View
+            key={category?.id ?? 'other'}
+            style={{ marginTop: Spacings.md, gap: Spacings.xs }}
+          >
+            <TextMedium size="md" color={Colors.NEUTRAL_DARK}>
+              {category?.name ?? `Category ${category?.id}`}
+            </TextMedium>
+            {categoryFiles.map((file, index) => (
+              <TextMedium key={String(file?.id ?? index)}>
+                {getFileLabel(file, index)}
+              </TextMedium>
+            ))}
+          </View>
         ))}
       </View>
     </ScrollView>
