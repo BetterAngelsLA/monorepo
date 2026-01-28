@@ -303,6 +303,27 @@ class HmisClient {
       queryParams
     );
   }
+
+  /**
+   * Delete a client file
+   *
+   * Permanently removes a file record from the client's file list.
+   *
+   * @param clientId - The client ID
+   * @param fileId - The file ID to delete
+   * @throws HmisError if the request fails
+   *
+   * @example
+   * ```typescript
+   * await hmisClient.deleteClientFile('68998C256', 37);
+   * ```
+   */
+  async deleteClientFile(
+    clientId: string | number,
+    fileId: string | number
+  ): Promise<void> {
+    await this.delete(`/clients/${clientId}/client-files/${fileId}`);
+  }
 }
 
 export const hmisClient = new HmisClient();
