@@ -164,12 +164,18 @@ export function PersonalInfoForm() {
       <Form.Field title="Date of Birth">
         <DatePicker
           type="numeric"
+          placeholder='Enter date'
           validRange={{
             endDate: new Date(),
             startDate: new Date('1900-01-01'),
           }}
-          value={dateOfBirth}
-          onChange={(date) => setValue('dateOfBirth', date)}
+          value={dateOfBirth || undefined}
+          onChange={(date) => {
+            setValue('dateOfBirth', date, { shouldDirty: true, shouldValidate: true });
+          }}
+          onDelete={() => {
+            setValue('dateOfBirth', null, { shouldDirty: true, shouldValidate: true });
+          }}
         />
       </Form.Field>
 

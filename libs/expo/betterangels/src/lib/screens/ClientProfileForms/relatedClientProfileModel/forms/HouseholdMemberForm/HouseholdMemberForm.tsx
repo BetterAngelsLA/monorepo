@@ -196,6 +196,7 @@ export function HouseholdMemberForm(props: TProps) {
               <DatePicker
                 type="numeric"
                 label="Date of Birth"
+                placeholder='Enter date'
                 disabled={isLoading}
                 validRange={{
                   endDate: new Date(),
