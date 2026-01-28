@@ -22,7 +22,11 @@ export function TextOrNode(props: TTextOrNode) {
   }
 
   return (
-    <Text numberOfLines={numberOfLines} style={StyleSheet.flatten(textStyle)}>
+    <Text
+      selectable
+      numberOfLines={numberOfLines}
+      style={StyleSheet.flatten(textStyle)}
+    >
       {children}
     </Text>
   );
