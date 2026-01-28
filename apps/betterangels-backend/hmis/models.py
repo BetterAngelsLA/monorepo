@@ -1,6 +1,6 @@
 import os
 import uuid
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import pghistory
 from accounts.models import User
@@ -9,7 +9,7 @@ from clients.models import AbstractClientProfile
 from common.models import BaseModel, Location
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import Model
+from django.db.models import Field, Model
 from django.utils.encoding import force_str
 from django_choices_field import IntegerChoicesField
 from hmis.enums import (
@@ -108,6 +108,19 @@ class HmisClientProfile(AbstractClientProfile):
         return [force_str(g.label) for g in self.gender if g is not HmisGenderEnum.DIFFERENT] + [
             self.gender_identity_text
         ]
+
+    def full_clean(self, exclude: Any = None, validate_unique: bool = True, validate_constraints: bool = True) -> None:
+        """
+        `strawberry_django.mutations.resolvers.update()` runs `full_clean()` *before* `save()`.
+        Coerce any explicitly-assigned `None` values back to field defaults so validation
+        doesn't fail for non-nullable fields.
+        """
+        for field_name in ("veteran", "gender", "race_ethnicity"):
+            if getattr(self, field_name, None) is None:
+                model_field = cast(Field[Any, Any], self._meta.get_field(field_name))
+                setattr(self, field_name, model_field.get_default())
+
+        super().full_clean(exclude=exclude, validate_unique=validate_unique, validate_constraints=validate_constraints)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.california_id:
