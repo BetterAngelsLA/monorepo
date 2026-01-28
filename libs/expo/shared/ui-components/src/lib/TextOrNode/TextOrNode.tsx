@@ -17,12 +17,18 @@ type TTextOrNode = {
 export function TextOrNode(props: TTextOrNode) {
   const { children, numberOfLines, textStyle } = props;
 
+  const isText = typeof children === 'string' || typeof children === 'number';
+
   if (isValidElement(children)) {
     return children;
   }
 
   return (
-    <Text numberOfLines={numberOfLines} style={StyleSheet.flatten(textStyle)}>
+    <Text
+      {...(isText ? { selectable: true } : {})}
+      numberOfLines={numberOfLines}
+      style={StyleSheet.flatten(textStyle)}
+    >
       {children}
     </Text>
   );
