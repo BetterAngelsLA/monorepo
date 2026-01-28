@@ -1,10 +1,11 @@
 import type { ClientFile } from '@monorepo/expo/shared/clients';
 import { FolderIcon, FolderOpenIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { Accordion, FileCard, TextMedium, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
-import { Pressable, View } from 'react-native';
-import { FileThumbnail, Modal } from '../../../../ui-components';
+import { Accordion, FileCard } from '@monorepo/expo/shared/ui-components';
+import { router } from 'expo-router';
+import { useCallback } from 'react';
+import { View } from 'react-native';
+import { FileThumbnail } from '../../../../ui-components';
 
 function getMimeTypeFromFilename(filename: string): string {
   const ext = filename.split('.').pop()?.toLowerCase() ?? '';
@@ -41,9 +42,21 @@ export interface HmisDocumentsProps {
 
 export default function HmisDocuments(props: HmisDocumentsProps) {
   const { expanded, setExpanded, accordionKey, title, data } = props;
-  const [selectedFile, setSelectedFile] = useState<ClientFile | null>(null);
 
   const isExpanded = expanded === accordionKey;
+
+  const handleFilePress = useCallback(
+    (file: ClientFile, filename: string, createdAt: string) => {
+      router.navigate({
+        pathname: `/hmis-file/${file.id}`,
+        params: {
+          label: filename,
+          createdAt,
+        },
+      });
+    },
+    []
+  );
 
   return (
     <Accordion
@@ -76,7 +89,7 @@ export default function HmisDocuments(props: HmisDocumentsProps) {
                 key={String(file?.id ?? index)}
                 filename={filename}
                 url={uri || ''}
-                onPress={() => setSelectedFile(file)}
+                onPress={() => handleFilePress(file, filename, createdAt)}
                 createdAt={createdAt}
                 thumbnail={
                   uri ? (
@@ -95,38 +108,6 @@ export default function HmisDocuments(props: HmisDocumentsProps) {
             );
           })}
         </View>
-      )}
-
-      {!!selectedFile && (
-        <Modal
-          isModalVisible={!!selectedFile}
-          closeModal={() => setSelectedFile(null)}
-          closeButton
-        >
-          <View style={{ padding: Spacings.md, gap: Spacings.sm }}>
-            <TextMedium size="md">
-              {getFileLabel(selectedFile, 0)}
-            </TextMedium>
-            <TextRegular color={Colors.NEUTRAL_DARK} size="sm">
-              Preview not yet available for HMIS files.
-            </TextRegular>
-            <Pressable
-              onPress={() => setSelectedFile(null)}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-              accessibilityHint="Closes the file preview"
-              style={{
-                paddingVertical: Spacings.sm,
-                paddingHorizontal: Spacings.md,
-                backgroundColor: Colors.PRIMARY_LIGHT,
-                borderRadius: Radiuses.xs,
-                alignSelf: 'flex-start',
-              }}
-            >
-              <TextRegular color={Colors.WHITE}>Close</TextRegular>
-            </Pressable>
-          </View>
-        </Modal>
       )}
     </Accordion>
   );
