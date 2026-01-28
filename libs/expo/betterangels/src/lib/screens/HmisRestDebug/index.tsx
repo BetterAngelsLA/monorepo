@@ -715,24 +715,26 @@ export default function HmisRestDebug() {
               </TextRegular>
 
               <View style={styles.row}>
-                <BasicInput
-                  label="Client ID"
-                  placeholder="404"
-                  value={deleteClientId}
-                  onChangeText={setDeleteClientId}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={styles.halfInput}
-                />
-                <BasicInput
-                  label="File ID"
-                  placeholder="37"
-                  value={deleteFileId}
-                  onChangeText={setDeleteFileId}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={styles.halfInput}
-                />
+                <View style={styles.halfInput}>
+                  <BasicInput
+                    label="Client ID"
+                    placeholder="404"
+                    value={deleteClientId}
+                    onChangeText={setDeleteClientId}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+                <View style={styles.halfInput}>
+                  <BasicInput
+                    label="File ID"
+                    placeholder="37"
+                    value={deleteFileId}
+                    onChangeText={setDeleteFileId}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
               </View>
 
               <Button
