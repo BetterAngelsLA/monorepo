@@ -147,6 +147,25 @@ jobs:
           slug: ${{ steps.preview-build.outputs.slug }}
           project-id: ${{ steps.preview-build.outputs.project-id }}
 
+      - name: 🧷 Write commit status metadata for EAS
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        working-directory: apps/${{ matrix.project }}
+        env:
+          GITHUB_STATUS_CONTEXT: Betterangels E2E Tests
+          GITHUB_STATUS_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          EAS_ACCOUNT: better-angels
+          EAS_PROJECT_SLUG: ${{ steps.preview-build.outputs.slug }}
+        run: |
+          set -euo pipefail
+          {
+            echo "GITHUB_REPOSITORY=${GITHUB_REPOSITORY}"
+            echo "GITHUB_STATUS_SHA=${GITHUB_STATUS_SHA}"
+            echo "GITHUB_STATUS_CONTEXT=${GITHUB_STATUS_CONTEXT}"
+            echo "EAS_ACCOUNT=${EAS_ACCOUNT}"
+            echo "EAS_PROJECT_SLUG=${EAS_PROJECT_SLUG}"
+          } >> .env
+
       - name: 🧪 Run E2E Tests
         working-directory: apps/${{ matrix.project }}
         run: |
