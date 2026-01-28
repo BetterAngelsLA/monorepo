@@ -96,7 +96,7 @@ export const ALLOWED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ] as const;
 
-export type AllowedFileType = typeof ALLOWED_FILE_TYPES[number];
+export type AllowedFileType = (typeof ALLOWED_FILE_TYPES)[number];
 
 /**
  * Client file upload request payload
@@ -143,4 +143,113 @@ export interface ClientFileUploadResponse {
   dateUpdated: unknown;
   creator: unknown;
   clientId: string;
+}
+/**
+ * File category information
+ */
+export interface FileCategory {
+  id: number;
+  name: string;
+  status: number;
+  description?: string;
+}
+
+/**
+ * File categories list response
+ */
+export interface FileCategoriesResponse {
+  items: FileCategory[];
+  _meta: {
+    current_page: number;
+    per_page: number;
+    total?: number;
+  };
+}
+
+/**
+ * Client file information
+ */
+export interface ClientFile {
+  id: number;
+  name: string;
+  private: boolean | null;
+  ref_category: number;
+  ref_file_name: number;
+  ref_agency: number;
+  is_program_file: number;
+  category?: {
+    id: number;
+    name: string;
+    status: number;
+  };
+  file?: {
+    id: number;
+    filename: string;
+    filesize: number;
+    added_date: string;
+    encodedPreviewFileContent?: string;
+    encodedThumbnailFileContent?: string;
+  };
+  fileName?: {
+    id: number;
+    name: string;
+  };
+  creator?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    fullName: string;
+    currentAgency?: {
+      id: number;
+      name: string;
+    };
+  };
+  agency?: {
+    id: number;
+    name: string;
+  };
+  client?: {
+    uniqueIdentifier: string;
+  };
+  clientProgramsFiles?: Array<{
+    id: number;
+    clientProgram?: {
+      program?: {
+        id: number;
+        name: string;
+        added_date: string;
+        operatingEndDate?: string;
+        agency?: {
+          id: number;
+          name: string;
+        };
+      };
+    };
+  }>;
+}
+
+/**
+ * Client files list response with pagination
+ */
+export interface ClientFilesResponse {
+  items: ClientFile[];
+  _meta: {
+    current_page: number;
+    per_page: number;
+    total?: number;
+    page_count?: number;
+  };
+}
+
+/**
+ * Query parameters for listing client files
+ */
+export interface ClientFilesListParams {
+  sort?: string;
+  expand?: string;
+  is_file?: number;
+  deleted?: number;
+  page?: number;
+  per_page?: number;
+  fields?: string;
 }

@@ -5,6 +5,10 @@ import {
   AllowedFileType,
   ClientFileUploadRequest,
   ClientFileUploadResponse,
+  ClientFilesListParams,
+  ClientFilesResponse,
+  FileCategory,
+  FileCategoriesResponse,
   HmisError,
   HmisRequestOptions,
 } from './hmisTypes';
@@ -94,7 +98,7 @@ class HmisClient {
   /**
    * Make a request to HMIS REST API
    */
-  async request<T = any>(
+  async request<T = unknown>(
     path: string,
     options: HmisRequestOptions = {}
   ): Promise<T> {
@@ -203,7 +207,9 @@ class HmisClient {
     // Validate file type
     if (!ALLOWED_FILE_TYPES.includes(file.mimeType)) {
       throw new HmisError(
-        `File type "${file.mimeType}" is not allowed. Allowed: ${ALLOWED_FILE_TYPES.join(', ')}`,
+        `File type "${
+          file.mimeType
+        }" is not allowed. Allowed: ${ALLOWED_FILE_TYPES.join(', ')}`,
         400
       );
     }
@@ -226,6 +232,75 @@ class HmisClient {
     return this.post<ClientFileUploadResponse>(
       `/clients/${clientId}/client-files`,
       payload
+    );
+  }
+
+  /**
+   * Get available file categories for uploads
+   *
+   * Fetches the list of file categories that can be assigned when uploading
+   * files for a client.
+   *
+   * @returns Promise with list of available file categories
+   * @throws HmisError if the request fails
+   *
+   * @example
+   * ```typescript
+   * const categories = await hmisClient.getFileCategories();
+   * categories.forEach(cat => {
+   *   console.log(`${cat.id}: ${cat.name}`);
+   * });
+   * ```
+   */
+  async getFileCategories(): Promise<FileCategory[]> {
+    const response = await this.get<FileCategoriesResponse>(
+      '/client-file-categories'
+    );
+
+    return response.items;
+  }
+
+  /**
+   * List files for a specific client
+   *
+   * Fetches paginated list of files for a client with optional filtering,
+   * sorting, and field expansion.
+   *
+   * @param clientId - The client ID
+   * @param params - Query parameters for filtering, sorting, and pagination
+   * @returns Promise with paginated list of client files
+   * @throws HmisError if the request fails
+   *
+   * @example
+   * ```typescript
+   * const files = await hmisClient.getClientFiles('68998C256', {
+   *   sort: '-file_date',
+   *   page: 1,
+   *   per_page: 10,
+   *   expand: 'category,file,creator'
+   * });
+   * ```
+   */
+  async getClientFiles(
+    clientId: string | number,
+    params?: ClientFilesListParams
+  ): Promise<ClientFilesResponse> {
+    const queryParams: Record<string, string> = {};
+
+    if (params?.sort) queryParams.sort = params.sort;
+    if (params?.expand) queryParams.expand = params.expand;
+    if (params?.is_file !== undefined)
+      queryParams.is_file = String(params.is_file);
+    if (params?.deleted !== undefined)
+      queryParams.deleted = String(params.deleted);
+    if (params?.page !== undefined) queryParams.page = String(params.page);
+    if (params?.per_page !== undefined)
+      queryParams.per_page = String(params.per_page);
+    if (params?.fields) queryParams.fields = params.fields;
+
+    return this.get<ClientFilesResponse>(
+      `/clients/${clientId}/client-files`,
+      queryParams
     );
   }
 }

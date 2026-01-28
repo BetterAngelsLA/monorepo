@@ -110,7 +110,9 @@ describe('HmisClient', () => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
 
       const [url, options] = mockFetch.mock.calls[0];
-      expect(url).toBe('https://hmis.example.com/clients/68998C256/client-files');
+      expect(url).toBe(
+        'https://hmis.example.com/clients/68998C256/client-files'
+      );
       expect(options.method).toBe('POST');
       expect(options.headers['Content-Type']).toBe('application/json');
 

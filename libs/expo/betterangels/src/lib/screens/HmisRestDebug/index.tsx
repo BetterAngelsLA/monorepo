@@ -27,18 +27,29 @@ const STATUS_COLOR: Record<FetchStatus, string> = {
   error: Colors.ERROR_DARK,
 };
 
-type Section = 'currentUser' | 'fileUpload';
+type Section =
+  | 'currentUser'
+  | 'fileUpload'
+  | 'categories'
+  | 'clientFiles'
+  | 'deleteFile';
 
 export default function HmisRestDebug() {
-  const { getCurrentUser, uploadClientFile } = useHmisClient();
+  const {
+    getCurrentUser,
+    uploadClientFile,
+    getFileCategories,
+    getClientFiles,
+    deleteClientFile,
+  } = useHmisClient();
   const [activeSection, setActiveSection] = useState<Section>('currentUser');
-  
+
   // Current User state
   const [fields, setFields] = useState('');
   const [status, setStatus] = useState<FetchStatus>('idle');
   const [output, setOutput] = useState('');
   const [error, setError] = useState<string | null>(null);
-  
+
   // File Upload state
   const [clientId, setClientId] = useState('');
   const [fileName, setFileName] = useState('test-document.txt');
@@ -47,6 +58,26 @@ export default function HmisRestDebug() {
   const [uploadStatus, setUploadStatus] = useState<FetchStatus>('idle');
   const [uploadOutput, setUploadOutput] = useState('');
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // File Categories state
+  const [categoriesStatus, setCategoriesStatus] = useState<FetchStatus>('idle');
+  const [categoriesOutput, setCategoriesOutput] = useState('');
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
+
+  // Client Files state
+  const [filesClientId, setFilesClientId] = useState('404');
+  const [filesPage, setFilesPage] = useState('1');
+  const [filesPerPage, setFilesPerPage] = useState('10');
+  const [filesStatus, setFilesStatus] = useState<FetchStatus>('idle');
+  const [filesOutput, setFilesOutput] = useState('');
+  const [filesError, setFilesError] = useState<string | null>(null);
+
+  // Delete File state
+  const [deleteClientId, setDeleteClientId] = useState('404');
+  const [deleteFileId, setDeleteFileId] = useState('37');
+  const [deleteStatus, setDeleteStatus] = useState<FetchStatus>('idle');
+  const [deleteOutput, setDeleteOutput] = useState('');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleFetch = useCallback(async () => {
     const selectedFields = fields.trim()
@@ -81,23 +112,25 @@ export default function HmisRestDebug() {
     setError(null);
     setStatus('idle');
   }, []);
-  
+
   const handleFileUpload = useCallback(async () => {
     if (!clientId.trim()) {
       setUploadError('Client ID is required');
       return;
     }
-    
+
     setUploadStatus('loading');
     setUploadError(null);
     setUploadOutput('');
 
     try {
       // Create a test file with base64 content
-      const testContent = 'This is a test file uploaded from the HMIS REST debugger.\n\nTimestamp: ' + new Date().toISOString();
+      const testContent =
+        'This is a test file uploaded from the HMIS REST debugger.\n\nTimestamp: ' +
+        new Date().toISOString();
       // Use btoa for base64 encoding (available in React Native)
       const base64Content = btoa(testContent);
-      
+
       const result = await uploadClientFile(
         clientId.trim(),
         {
@@ -109,7 +142,7 @@ export default function HmisRestDebug() {
         parseInt(fileNameId, 10),
         false
       );
-      
+
       setUploadOutput(JSON.stringify(result, null, 2));
       setUploadStatus('success');
     } catch (err) {
@@ -123,16 +156,126 @@ export default function HmisRestDebug() {
 
       setUploadStatus('error');
     }
-  }, [clientId, fileName, categoryId, fileNameId, uploadClientFile]);
-  
+  }, [clientId, uploadClientFile, fileName, categoryId, fileNameId]);
+
   const clearUploadOutput = useCallback(() => {
     setUploadOutput('');
     setUploadError(null);
     setUploadStatus('idle');
   }, []);
 
+  const handleFetchCategories = useCallback(async () => {
+    setCategoriesStatus('loading');
+    setCategoriesError(null);
+    setCategoriesOutput('');
+
+    try {
+      const categories = await getFileCategories();
+      setCategoriesOutput(JSON.stringify(categories, null, 2));
+      setCategoriesStatus('success');
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Request failed. See logs.';
+      setCategoriesError(message);
+
+      if (err instanceof HmisError && err.data) {
+        setCategoriesOutput(JSON.stringify(err.data, null, 2));
+      }
+
+      setCategoriesStatus('error');
+    }
+  }, [getFileCategories]);
+
+  const clearCategoriesOutput = useCallback(() => {
+    setCategoriesOutput('');
+    setCategoriesError(null);
+    setCategoriesStatus('idle');
+  }, []);
+
+  const handleFetchClientFiles = useCallback(async () => {
+    if (!filesClientId.trim()) {
+      setFilesError('Client ID is required');
+      return;
+    }
+
+    setFilesStatus('loading');
+    setFilesError(null);
+    setFilesOutput('');
+
+    try {
+      const result = await getClientFiles(filesClientId.trim(), {
+        sort: '-file_date',
+        expand: 'agency,file,category,fileName',
+        is_file: 1,
+        deleted: 0,
+        page: parseInt(filesPage, 10),
+        per_page: parseInt(filesPerPage, 10),
+      });
+
+      setFilesOutput(JSON.stringify(result, null, 2));
+      setFilesStatus('success');
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Request failed. See logs.';
+      setFilesError(message);
+
+      if (err instanceof HmisError && err.data) {
+        setFilesOutput(JSON.stringify(err.data, null, 2));
+      }
+
+      setFilesStatus('error');
+    }
+  }, [filesClientId, filesPage, filesPerPage, getClientFiles]);
+
+  const clearFilesOutput = useCallback(() => {
+    setFilesOutput('');
+    setFilesError(null);
+    setFilesStatus('idle');
+  }, []);
+
+  const handleDeleteFile = useCallback(async () => {
+    setDeleteStatus('loading');
+    setDeleteError(null);
+    setDeleteOutput('');
+
+    try {
+      await deleteClientFile(deleteClientId, deleteFileId);
+      setDeleteOutput(
+        JSON.stringify(
+          {
+            message: 'File deleted successfully',
+            clientId: deleteClientId,
+            fileId: deleteFileId,
+          },
+          null,
+          2
+        )
+      );
+      setDeleteStatus('success');
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Request failed. See logs.';
+      setDeleteError(message);
+
+      if (err instanceof HmisError && err.data) {
+        setDeleteOutput(JSON.stringify(err.data, null, 2));
+      }
+
+      setDeleteStatus('error');
+    }
+  }, [deleteClientFile, deleteClientId, deleteFileId]);
+
+  const clearDeleteOutput = useCallback(() => {
+    setDeleteOutput('');
+    setDeleteError(null);
+    setDeleteStatus('idle');
+  }, []);
+
   const hasOutput = output.trim().length > 0;
   const hasUploadOutput = uploadOutput.trim().length > 0;
+  const hasCategoriesOutput = categoriesOutput.trim().length > 0;
+  const hasFilesOutput = filesOutput.trim().length > 0;
+  const hasDeleteOutput = deleteOutput.trim().length > 0;
 
   if (!__DEV__) {
     return (
@@ -161,52 +304,37 @@ export default function HmisRestDebug() {
           </TextRegular>
         </View>
 
-        {/* Section Tabs */}
-        <View style={styles.tabs}>
-          <TouchableOpacity
-            style={[
-              styles.tab,
-              activeSection === 'currentUser' && styles.tabActive,
-            ]}
-            onPress={() => setActiveSection('currentUser')}
-            accessibilityRole="tab"
-            accessibilityLabel="Current User Tab"
-            accessibilityHint="Switch to the Current User API test section"
-            accessibilityState={{ selected: activeSection === 'currentUser' }}
-          >
-            <TextMedium
-              size="sm"
-              color={
-                activeSection === 'currentUser'
-                  ? Colors.PRIMARY_EXTRA_DARK
-                  : Colors.NEUTRAL_DARK
-              }
-            >
-              Current User
-            </TextMedium>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.tab,
-              activeSection === 'fileUpload' && styles.tabActive,
-            ]}
-            onPress={() => setActiveSection('fileUpload')}
-            accessibilityRole="tab"
-            accessibilityLabel="File Upload Tab"
-            accessibilityHint="Switch to the File Upload API test section"
-            accessibilityState={{ selected: activeSection === 'fileUpload' }}
-          >
-            <TextMedium
-              size="sm"
-              color={
-                activeSection === 'fileUpload'
-                  ? Colors.PRIMARY_EXTRA_DARK
-                  : Colors.NEUTRAL_DARK
-              }
-            >
-              File Upload
-            </TextMedium>
-          </TouchableOpacity>
+        {/* Tab Navigation */}
+        <View style={styles.tabContainer}>
+          <View style={styles.tabRow}>
+            <TabButton
+              label="Current User"
+              isActive={activeSection === 'currentUser'}
+              onPress={() => setActiveSection('currentUser')}
+            />
+            <TabButton
+              label="Upload File"
+              isActive={activeSection === 'fileUpload'}
+              onPress={() => setActiveSection('fileUpload')}
+            />
+            <TabButton
+              label="Categories"
+              isActive={activeSection === 'categories'}
+              onPress={() => setActiveSection('categories')}
+            />
+          </View>
+          <View style={styles.tabRow}>
+            <TabButton
+              label="List Files"
+              isActive={activeSection === 'clientFiles'}
+              onPress={() => setActiveSection('clientFiles')}
+            />
+            <TabButton
+              label="Delete File"
+              isActive={activeSection === 'deleteFile'}
+              onPress={() => setActiveSection('deleteFile')}
+            />
+          </View>
         </View>
 
         {/* Current User Section */}
@@ -215,9 +343,9 @@ export default function HmisRestDebug() {
             <View style={styles.card}>
               <TextMedium>Request</TextMedium>
               <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
-                Fetches /current-user with optional field selection. Credentials,
-                User-Agent, and X-Requested-With headers are applied automatically
-                by the client.
+                Fetches /current-user with optional field selection.
+                Credentials, User-Agent, and X-Requested-With headers are
+                applied automatically by the client.
               </TextRegular>
 
               <BasicInput
@@ -231,7 +359,9 @@ export default function HmisRestDebug() {
               />
 
               <Button
-                title={status === 'loading' ? 'Requesting…' : 'Fetch current user'}
+                title={
+                  status === 'loading' ? 'Requesting…' : 'Fetch current user'
+                }
                 variant="primary"
                 onPress={handleFetch}
                 loading={status === 'loading'}
@@ -251,8 +381,8 @@ export default function HmisRestDebug() {
 
               <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
                 Leave fields empty to use the default field set provided in
-                useHmisClient; otherwise enter a comma-separated list (parsed into
-                an array).
+                useHmisClient; otherwise enter a comma-separated list (parsed
+                into an array).
               </TextRegular>
             </View>
 
@@ -340,7 +470,9 @@ export default function HmisRestDebug() {
               </View>
 
               <Button
-                title={uploadStatus === 'loading' ? 'Uploading…' : 'Upload test file'}
+                title={
+                  uploadStatus === 'loading' ? 'Uploading…' : 'Upload test file'
+                }
                 variant="primary"
                 onPress={handleFileUpload}
                 loading={uploadStatus === 'loading'}
@@ -355,7 +487,9 @@ export default function HmisRestDebug() {
                 accessibilityHint="Reset the displayed response and status"
                 size="full"
                 mt="xs"
-                disabled={uploadStatus === 'loading' && !hasUploadOutput && !uploadError}
+                disabled={
+                  uploadStatus === 'loading' && !hasUploadOutput && !uploadError
+                }
               />
 
               <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
@@ -394,8 +528,303 @@ export default function HmisRestDebug() {
             </View>
           </>
         )}
+
+        {/* File Categories Section */}
+        {activeSection === 'categories' && (
+          <>
+            <View style={styles.card}>
+              <TextMedium>Fetch File Categories</TextMedium>
+              <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
+                Fetches the list of available file categories for client file
+                uploads. These IDs can be used as the categoryId parameter when
+                uploading files.
+              </TextRegular>
+
+              <Button
+                title={
+                  categoriesStatus === 'loading'
+                    ? 'Fetching…'
+                    : 'Fetch file categories'
+                }
+                variant="primary"
+                onPress={handleFetchCategories}
+                loading={categoriesStatus === 'loading'}
+                accessibilityHint="Fetches the list of available file categories"
+                size="full"
+              />
+
+              <Button
+                title="Clear output"
+                variant="secondary"
+                onPress={clearCategoriesOutput}
+                accessibilityHint="Reset the displayed response and status"
+                size="full"
+                mt="xs"
+                disabled={
+                  categoriesStatus === 'loading' &&
+                  !hasCategoriesOutput &&
+                  !categoriesError
+                }
+              />
+
+              <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
+                Shows all available file categories returned from the
+                /client-file-categories endpoint.
+              </TextRegular>
+            </View>
+
+            <View style={styles.card}>
+              <View style={styles.statusRow}>
+                <TextMedium>Status</TextMedium>
+                <TextRegular color={STATUS_COLOR[categoriesStatus]}>
+                  {STATUS_LABEL[categoriesStatus]}
+                </TextRegular>
+              </View>
+
+              {categoriesError && (
+                <TextRegular color={Colors.ERROR_DARK} size="sm">
+                  {categoriesError}
+                </TextRegular>
+              )}
+
+              <View style={styles.output}>
+                <TextRegular
+                  selectable
+                  size="xs"
+                  color={Colors.PRIMARY_EXTRA_DARK}
+                  style={styles.code}
+                >
+                  {hasCategoriesOutput
+                    ? categoriesOutput
+                    : 'No response yet. Run the request to see JSON or text output.'}
+                </TextRegular>
+              </View>
+            </View>
+          </>
+        )}
+
+        {/* Client Files Section */}
+        {activeSection === 'clientFiles' && (
+          <>
+            <View style={styles.card}>
+              <TextMedium>List Client Files</TextMedium>
+              <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
+                Fetches the paginated list of files for a specific client with
+                sorting, filtering, and field expansion support.
+              </TextRegular>
+
+              <BasicInput
+                label="Client ID *"
+                placeholder="404"
+                value={filesClientId}
+                onChangeText={setFilesClientId}
+                autoCapitalize="none"
+                autoCorrect={false}
+                mb="xs"
+              />
+
+              <View style={styles.row}>
+                <View style={styles.halfInput}>
+                  <BasicInput
+                    label="Page"
+                    placeholder="1"
+                    value={filesPage}
+                    onChangeText={setFilesPage}
+                    keyboardType="numeric"
+                    mb="xs"
+                  />
+                </View>
+                <View style={styles.halfInput}>
+                  <BasicInput
+                    label="Per Page"
+                    placeholder="10"
+                    value={filesPerPage}
+                    onChangeText={setFilesPerPage}
+                    keyboardType="numeric"
+                    mb="xs"
+                  />
+                </View>
+              </View>
+
+              <Button
+                title={
+                  filesStatus === 'loading' ? 'Fetching…' : 'Fetch client files'
+                }
+                variant="primary"
+                onPress={handleFetchClientFiles}
+                loading={filesStatus === 'loading'}
+                accessibilityHint="Fetches the list of files for the specified client"
+                size="full"
+              />
+
+              <Button
+                title="Clear output"
+                variant="secondary"
+                onPress={clearFilesOutput}
+                accessibilityHint="Reset the displayed response and status"
+                size="full"
+                mt="xs"
+                disabled={
+                  filesStatus === 'loading' && !hasFilesOutput && !filesError
+                }
+              />
+
+              <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
+                Lists files with sorting by date, expanded relations (agency,
+                file, category, fileName), and pagination.
+              </TextRegular>
+            </View>
+
+            <View style={styles.card}>
+              <View style={styles.statusRow}>
+                <TextMedium>Status</TextMedium>
+                <TextRegular color={STATUS_COLOR[filesStatus]}>
+                  {STATUS_LABEL[filesStatus]}
+                </TextRegular>
+              </View>
+
+              {filesError && (
+                <TextRegular color={Colors.ERROR_DARK} size="sm">
+                  {filesError}
+                </TextRegular>
+              )}
+
+              <View style={styles.output}>
+                <TextRegular
+                  selectable
+                  size="xs"
+                  color={Colors.PRIMARY_EXTRA_DARK}
+                  style={styles.code}
+                >
+                  {hasFilesOutput
+                    ? filesOutput
+                    : 'No response yet. Run the request to see JSON or text output.'}
+                </TextRegular>
+              </View>
+            </View>
+          </>
+        )}
+
+        {/* Delete File Section */}
+        {activeSection === 'deleteFile' && (
+          <>
+            <View style={styles.card}>
+              <TextMedium>Request</TextMedium>
+              <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
+                Permanently deletes a file from a client's file list.
+              </TextRegular>
+
+              <View style={styles.row}>
+                <BasicInput
+                  label="Client ID"
+                  placeholder="404"
+                  value={deleteClientId}
+                  onChangeText={setDeleteClientId}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={styles.halfInput}
+                />
+                <BasicInput
+                  label="File ID"
+                  placeholder="37"
+                  value={deleteFileId}
+                  onChangeText={setDeleteFileId}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={styles.halfInput}
+                />
+              </View>
+
+              <Button
+                title={deleteStatus === 'loading' ? 'Deleting…' : 'Delete file'}
+                variant="primary"
+                onPress={handleDeleteFile}
+                loading={deleteStatus === 'loading'}
+                accessibilityHint="Calls HMIS DELETE endpoint to remove the file"
+                size="full"
+              />
+
+              <Button
+                title="Clear output"
+                variant="secondary"
+                onPress={clearDeleteOutput}
+                accessibilityHint="Reset the displayed response and status"
+                size="full"
+                mt="xs"
+                disabled={
+                  deleteStatus === 'loading' && !hasDeleteOutput && !deleteError
+                }
+              />
+
+              <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
+                Sends DELETE request to /clients/
+                {deleteClientId || '{clientId}'}/client-files/
+                {deleteFileId || '{fileId}'}
+              </TextRegular>
+            </View>
+
+            <View style={styles.card}>
+              <View style={styles.statusRow}>
+                <TextMedium>Status</TextMedium>
+                <TextRegular color={STATUS_COLOR[deleteStatus]}>
+                  {STATUS_LABEL[deleteStatus]}
+                </TextRegular>
+              </View>
+
+              {deleteError && (
+                <TextRegular color={Colors.ERROR_DARK} size="sm">
+                  {deleteError}
+                </TextRegular>
+              )}
+
+              <View style={styles.output}>
+                <TextRegular
+                  selectable
+                  size="xs"
+                  color={Colors.PRIMARY_EXTRA_DARK}
+                  style={styles.code}
+                >
+                  {hasDeleteOutput
+                    ? deleteOutput
+                    : 'No response yet. Run the request to see JSON or text output.'}
+                </TextRegular>
+              </View>
+            </View>
+          </>
+        )}
       </View>
     </MainScrollContainer>
+  );
+}
+
+/**
+ * Reusable tab button component
+ */
+function TabButton({
+  label,
+  isActive,
+  onPress,
+}: {
+  label: string;
+  isActive: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      style={[styles.tabButton, isActive && styles.tabButtonActive]}
+      onPress={onPress}
+      accessibilityRole="tab"
+      accessibilityLabel={`${label} Tab`}
+      accessibilityHint={`Switch to the ${label} section`}
+      accessibilityState={{ selected: isActive }}
+    >
+      <TextMedium
+        size="sm"
+        color={isActive ? Colors.PRIMARY_EXTRA_DARK : Colors.NEUTRAL_DARK}
+      >
+        {label}
+      </TextMedium>
+    </TouchableOpacity>
   );
 }
 
@@ -411,6 +840,27 @@ const styles = StyleSheet.create({
     borderRadius: Radiuses.xs,
     padding: Spacings.sm,
     gap: Spacings.xs,
+  },
+  tabContainer: {
+    gap: Spacings.xs,
+  },
+  tabRow: {
+    flexDirection: 'row',
+    gap: Spacings.xs,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: Spacings.sm,
+    paddingHorizontal: Spacings.xs,
+    alignItems: 'center',
+    backgroundColor: Colors.WHITE,
+    borderWidth: 1,
+    borderColor: Colors.NEUTRAL_LIGHT,
+    borderRadius: Radiuses.xs,
+  },
+  tabButtonActive: {
+    backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
+    borderColor: Colors.PRIMARY,
   },
   tabs: {
     flexDirection: 'row',

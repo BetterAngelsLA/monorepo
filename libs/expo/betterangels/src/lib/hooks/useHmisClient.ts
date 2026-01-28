@@ -1,6 +1,9 @@
 import type {
   AllowedFileType,
   ClientFileUploadResponse,
+  ClientFilesListParams,
+  ClientFilesResponse,
+  FileCategory,
   HmisCurrentUser,
 } from '@monorepo/expo/shared/clients';
 import { hmisClient } from '@monorepo/expo/shared/clients';
@@ -114,9 +117,51 @@ export const useHmisClient = () => {
     []
   );
 
+  /**
+   * Get available file categories for uploads
+   *
+   * @returns Array of available file categories
+   */
+
+  /**
+   * List files for a specific client
+   *
+   * @param clientId - Client ID
+   * @param params - Query parameters for filtering, sorting, pagination
+   * @returns Paginated list of client files
+   */
+  const getClientFiles = useCallback(
+    (
+      clientId: string | number,
+      params?: ClientFilesListParams
+    ): Promise<ClientFilesResponse> => {
+      return hmisClient.getClientFiles(clientId, params);
+    },
+    []
+  );
+  const getFileCategories = useCallback((): Promise<FileCategory[]> => {
+    return hmisClient.getFileCategories();
+  }, []);
+
+  /**
+   * Delete a client file
+   *
+   * @param clientId - Client ID
+   * @param fileId - File ID to delete
+   */
+  const deleteClientFile = useCallback(
+    (clientId: string | number, fileId: string | number): Promise<void> => {
+      return hmisClient.deleteClientFile(clientId, fileId);
+    },
+    []
+  );
+
   return {
     hmisClient,
     getCurrentUser,
     uploadClientFile,
+    getFileCategories,
+    getClientFiles,
+    deleteClientFile,
   };
 };
