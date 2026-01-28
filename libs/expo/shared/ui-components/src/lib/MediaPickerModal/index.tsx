@@ -25,6 +25,22 @@ interface IMediaPickerModalProps {
   allowMultiple?: boolean;
 }
 
+const ALLOWED_UPLOAD_TYPES = [
+  // Documents
+  MimeTypes.PDF,
+  MimeTypes.DOCX,
+  MimeTypes.DOC,
+  MimeTypes.XLSX,
+  MimeTypes.XLS,
+  MimeTypes.TXT,
+
+  // Images
+  MimeTypes.JPEG,
+  MimeTypes.PNG,
+  MimeTypes.WEBP,
+  MimeTypes.GIF,
+] as const;
+
 export default function MediaPickerModal(props: IMediaPickerModalProps) {
   const {
     onCapture,
@@ -43,7 +59,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
   const pickDocuments = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: MimeTypes.PDF,
+        type: [...ALLOWED_UPLOAD_TYPES],
       });
       const { canceled, assets } = result;
       if (canceled || !assets?.length) return;
@@ -54,7 +70,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
             new ReactNativeFile({
               uri: asset.uri,
               name: asset.name || Date.now().toString(),
-              type: asset.mimeType || MimeTypes.PDF,
+              type: asset.mimeType || 'application/octet-stream',
             })
         )
       );
@@ -203,7 +219,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
               accessibilityRole="button"
               accessibilityHint="opens file library"
             >
-              <TextRegular color={Colors.PRIMARY}>Upload PDF file</TextRegular>
+              <TextRegular color={Colors.PRIMARY}>Upload Document or Image</TextRegular>
             </Pressable>
           </View>
 
