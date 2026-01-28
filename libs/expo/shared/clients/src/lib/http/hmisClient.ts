@@ -341,16 +341,16 @@ class HmisClient {
   ): Promise<ClientFilesResponse> {
     const queryParams: Record<string, string> = {};
 
-    if (params?.sort) queryParams.sort = params.sort;
-    if (params?.expand) queryParams.expand = params.expand;
+    if (params?.sort) queryParams['sort'] = params.sort;
+    if (params?.expand) queryParams['expand'] = params.expand;
     if (params?.is_file !== undefined)
-      queryParams.is_file = String(params.is_file);
+      queryParams['is_file'] = String(params.is_file);
     if (params?.deleted !== undefined)
-      queryParams.deleted = String(params.deleted);
-    if (params?.page !== undefined) queryParams.page = String(params.page);
+      queryParams['deleted'] = String(params.deleted);
+    if (params?.page !== undefined) queryParams['page'] = String(params.page);
     if (params?.per_page !== undefined)
-      queryParams.per_page = String(params.per_page);
-    if (params?.fields) queryParams.fields = params.fields;
+      queryParams['per_page'] = String(params.per_page);
+    if (params?.fields) queryParams['fields'] = params.fields;
 
     return this.get<ClientFilesResponse>(
       `/clients/${clientId}/client-files`,

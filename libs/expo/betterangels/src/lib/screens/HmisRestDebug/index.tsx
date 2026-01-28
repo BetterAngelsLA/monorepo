@@ -344,7 +344,7 @@ export default function HmisRestDebug() {
 
         // Create FormData with the correct field name expected by the API
         const formData = new FormData();
-      formData.append('FileForm[uploadedFile]', file as unknown as Blob);
+        formData.append('FileForm[uploadedFile]', file as unknown as Blob);
         // POST /clients/:clientId/photo/upload
         // Expected: multipart/form-data with FileForm[uploadedFile] field containing actual file
         const result = await hmisClient.postMultipart(endpoint, formData);
