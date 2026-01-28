@@ -1,4 +1,4 @@
-import type { ClientFile } from '@monorepo/expo/shared/clients';
+import type { ClientFile, FileName } from '@monorepo/expo/shared/clients';
 import { FolderIcon, FolderOpenIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Accordion, FileCard } from '@monorepo/expo/shared/ui-components';
@@ -15,13 +15,21 @@ function getMimeTypeFromFilename(filename: string): string {
   return 'application/octet-stream';
 }
 
-function getFileLabel(file: ClientFile, index: number): string {
-  return (
-    file.file?.filename ||
-    file.fileName?.name ||
-    file.name ||
-    (file.id ? `Document ${file.id}` : `Document ${index + 1}`)
-  );
+function getFileLabel(file: ClientFile, fileNames: FileName[]): string {
+  if (file.name) {
+    return file.name;
+  }
+
+  if (file.ref_file_name) {
+    const matchingFileName = fileNames.find(
+      (fileName) => fileName.id === file.ref_file_name
+    );
+    if (matchingFileName) {
+      return matchingFileName.name;
+    }
+  }
+
+  return file.file?.filename || `Document ${file.id}`;
 }
 
 function getFileUri(file: ClientFile): string {
@@ -38,10 +46,11 @@ export interface HmisDocumentsProps {
   accordionKey: string;
   title: string;
   data: ClientFile[];
+  fileNames: FileName[];
 }
 
 export default function HmisDocuments(props: HmisDocumentsProps) {
-  const { expanded, setExpanded, accordionKey, title, data } = props;
+  const { expanded, setExpanded, accordionKey, title, data, fileNames } = props;
 
   const isExpanded = expanded === accordionKey;
 
@@ -80,13 +89,13 @@ export default function HmisDocuments(props: HmisDocumentsProps) {
             backgroundColor: Colors.WHITE,
           }}
         >
-          {data?.map((file, index) => {
-            const filename = getFileLabel(file, index);
+          {data?.map((file, idx) => {
+            const filename = getFileLabel(file, fileNames);
             const uri = getFileUri(file);
             const createdAt = file.file?.added_date ?? '';
             return (
               <FileCard
-                key={String(file?.id ?? index)}
+                key={String(file?.id ?? idx)}
                 filename={filename}
                 url={uri || ''}
                 onPress={() => handleFilePress(file, filename, createdAt)}

@@ -1,4 +1,8 @@
-import type { ClientFile, FileCategory } from '@monorepo/expo/shared/clients';
+import type {
+  ClientFile,
+  FileCategory,
+  FileName,
+} from '@monorepo/expo/shared/clients';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -20,12 +24,13 @@ export function ClientDocsHmisView({
   client: HmisClientProfileType | undefined;
 }) {
   const { showModalScreen } = useModalScreen();
-  const { getClientFiles, getFileCategories } = useHmisClient();
+  const { getClientFiles, getFileCategories, getFileNames } = useHmisClient();
   const [status, setStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'
   >('idle');
   const [files, setFiles] = useState<ClientFile[]>([]);
   const [categories, setCategories] = useState<FileCategory[]>([]);
+  const [fileNames, setFileNames] = useState<FileName[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<undefined | string | null>(null);
 
@@ -42,7 +47,11 @@ export function ClientDocsHmisView({
     setError(null);
 
     getFileCategories().then((categories) => {
-      setCategories(categories);
+      setCategories(categories.items ?? []);
+    });
+
+    getFileNames().then((fileNames) => {
+      setFileNames(fileNames.items ?? []);
     });
 
     getClientFiles(client.hmisId as string, {
@@ -166,6 +175,7 @@ export function ClientDocsHmisView({
             accordionKey={String(category?.id ?? 'other')}
             title={category?.name ?? `Category ${category?.id}`}
             data={categoryFiles}
+            fileNames={fileNames}
           />
         ))}
       </View>
