@@ -32,6 +32,7 @@ type Section =
   | 'currentUser'
   | 'fileUpload'
   | 'categories'
+  | 'fileNames'
   | 'clientFiles'
   | 'deleteFile'
   | 'photoUpload';
@@ -66,6 +67,11 @@ export default function HmisRestDebug() {
   const [categoriesStatus, setCategoriesStatus] = useState<FetchStatus>('idle');
   const [categoriesOutput, setCategoriesOutput] = useState('');
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
+
+  // File Names state
+  const [fileNamesStatus, setFileNamesStatus] = useState<FetchStatus>('idle');
+  const [fileNamesOutput, setFileNamesOutput] = useState('');
+  const [fileNamesError, setFileNamesError] = useState<string | null>(null);
 
   // Client Files state
   const [filesClientId, setFilesClientId] = useState('404');
@@ -190,8 +196,8 @@ export default function HmisRestDebug() {
     setCategoriesOutput('');
 
     try {
-      const categories = await getFileCategories();
-      setCategoriesOutput(JSON.stringify(categories, null, 2));
+      const result = await hmisClient.get('/client-file-categories');
+      setCategoriesOutput(JSON.stringify(result, null, 2));
       setCategoriesStatus('success');
     } catch (err) {
       const message =
@@ -204,12 +210,40 @@ export default function HmisRestDebug() {
 
       setCategoriesStatus('error');
     }
-  }, [getFileCategories]);
+  }, [hmisClient]);
 
   const clearCategoriesOutput = useCallback(() => {
     setCategoriesOutput('');
     setCategoriesError(null);
     setCategoriesStatus('idle');
+  }, []);
+
+  const handleFetchFileNames = useCallback(async () => {
+    setFileNamesStatus('loading');
+    setFileNamesError(null);
+    setFileNamesOutput('');
+
+    try {
+      const result = await hmisClient.get('/client-file-names');
+      setFileNamesOutput(JSON.stringify(result, null, 2));
+      setFileNamesStatus('success');
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Request failed. See logs.';
+      setFileNamesError(message);
+
+      if (err instanceof HmisError && err.data) {
+        setFileNamesOutput(JSON.stringify(err.data, null, 2));
+      }
+
+      setFileNamesStatus('error');
+    }
+  }, [hmisClient]);
+
+  const clearFileNamesOutput = useCallback(() => {
+    setFileNamesOutput('');
+    setFileNamesError(null);
+    setFileNamesStatus('idle');
   }, []);
 
   const handleFetchClientFiles = useCallback(async () => {
@@ -291,47 +325,50 @@ export default function HmisRestDebug() {
     setDeleteStatus('idle');
   }, []);
 
-  const handlePhotoUpload = useCallback(async (file: ReactNativeFile) => {
-    if (!photoClientId.trim()) {
-      setPhotoError('Client ID is required');
-      return;
-    }
-
-    setPhotoStatus('loading');
-    setPhotoError(null);
-    setPhotoOutput('');
-    setPhotoPickerVisible(false);
-
-    try {
-      const clientId = photoClientId.trim();
-      const endpoint = `/clients/${clientId}/photo/upload`;
-      
-      // Create FormData with the correct field name expected by the API
-      const formData = new FormData();
-      formData.append('FileForm[uploadedFile]', file as any);
-
-      // POST /clients/:clientId/photo/upload
-      // Expected: multipart/form-data with FileForm[uploadedFile] field containing actual file
-      const result = await hmisClient.postMultipart(endpoint, formData);
-
-      setPhotoOutput(JSON.stringify(result, null, 2));
-      setPhotoStatus('success');
-    } catch (err) {
-      const message =
-        err instanceof HmisError && err.data
-          ? JSON.stringify(err.data, null, 2)
-          : err instanceof Error
-          ? err.message
-          : 'Photo upload failed. See logs.';
-      setPhotoError(err instanceof HmisError ? err.message : message);
-
-      if (err instanceof HmisError && err.data) {
-        setPhotoOutput(JSON.stringify(err.data, null, 2));
+  const handlePhotoUpload = useCallback(
+    async (file: ReactNativeFile) => {
+      if (!photoClientId.trim()) {
+        setPhotoError('Client ID is required');
+        return;
       }
 
-      setPhotoStatus('error');
-    }
-  }, [photoClientId, hmisClient]);
+      setPhotoStatus('loading');
+      setPhotoError(null);
+      setPhotoOutput('');
+      setPhotoPickerVisible(false);
+
+      try {
+        const clientId = photoClientId.trim();
+        const endpoint = `/clients/${clientId}/photo/upload`;
+
+        // Create FormData with the correct field name expected by the API
+        const formData = new FormData();
+        formData.append('FileForm[uploadedFile]', file as any);
+
+        // POST /clients/:clientId/photo/upload
+        // Expected: multipart/form-data with FileForm[uploadedFile] field containing actual file
+        const result = await hmisClient.postMultipart(endpoint, formData);
+
+        setPhotoOutput(JSON.stringify(result, null, 2));
+        setPhotoStatus('success');
+      } catch (err) {
+        const message =
+          err instanceof HmisError && err.data
+            ? JSON.stringify(err.data, null, 2)
+            : err instanceof Error
+            ? err.message
+            : 'Photo upload failed. See logs.';
+        setPhotoError(err instanceof HmisError ? err.message : message);
+
+        if (err instanceof HmisError && err.data) {
+          setPhotoOutput(JSON.stringify(err.data, null, 2));
+        }
+
+        setPhotoStatus('error');
+      }
+    },
+    [photoClientId, hmisClient]
+  );
 
   const clearPhotoOutput = useCallback(() => {
     setPhotoOutput('');
@@ -387,6 +424,7 @@ export default function HmisRestDebug() {
   const hasOutput = output.trim().length > 0;
   const hasUploadOutput = uploadOutput.trim().length > 0;
   const hasCategoriesOutput = categoriesOutput.trim().length > 0;
+  const hasFileNamesOutput = fileNamesOutput.trim().length > 0;
   const hasFilesOutput = filesOutput.trim().length > 0;
   const hasDeleteOutput = deleteOutput.trim().length > 0;
   const hasPhotoOutput = photoOutput.trim().length > 0;
@@ -439,6 +477,11 @@ export default function HmisRestDebug() {
             />
           </View>
           <View style={styles.tabRow}>
+            <TabButton
+              label="File Names"
+              isActive={activeSection === 'fileNames'}
+              onPress={() => setActiveSection('fileNames')}
+            />
             <TabButton
               label="List Files"
               isActive={activeSection === 'clientFiles'}
@@ -690,8 +733,10 @@ export default function HmisRestDebug() {
               />
 
               <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
-                Shows all available file categories returned from the
-                /client-file-categories endpoint.
+                Returns paginated categories with items (id, name, status),
+                _meta (pagination), and _links. Example categories: Personal
+                Identification, HPRP Documentation, Finances and Income, Health
+                and Medical, Family/Social/Legal.
               </TextRegular>
             </View>
 
@@ -718,6 +763,80 @@ export default function HmisRestDebug() {
                 >
                   {hasCategoriesOutput
                     ? categoriesOutput
+                    : 'No response yet. Run the request to see JSON or text output.'}
+                </TextRegular>
+              </View>
+            </View>
+          </>
+        )}
+
+        {/* File Names Section */}
+        {activeSection === 'fileNames' && (
+          <>
+            <View style={styles.card}>
+              <TextMedium>Fetch File Names</TextMedium>
+              <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
+                Fetches the list of available file names for client file
+                uploads. These IDs can be used as the fileNameId parameter when
+                uploading files.
+              </TextRegular>
+
+              <Button
+                title={
+                  fileNamesStatus === 'loading'
+                    ? 'Fetching…'
+                    : 'Fetch file names'
+                }
+                variant="primary"
+                onPress={handleFetchFileNames}
+                loading={fileNamesStatus === 'loading'}
+                accessibilityHint="Fetches the list of available file names"
+                size="full"
+              />
+
+              <Button
+                title="Clear output"
+                variant="secondary"
+                onPress={clearFileNamesOutput}
+                accessibilityHint="Reset the displayed response and status"
+                size="full"
+                mt="xs"
+                disabled={
+                  fileNamesStatus === 'loading' &&
+                  !hasFileNamesOutput &&
+                  !fileNamesError
+                }
+              />
+
+              <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
+                Shows all available file names returned from the
+                /client-file-names endpoint.
+              </TextRegular>
+            </View>
+
+            <View style={styles.card}>
+              <View style={styles.statusRow}>
+                <TextMedium>Status</TextMedium>
+                <TextRegular color={STATUS_COLOR[fileNamesStatus]}>
+                  {STATUS_LABEL[fileNamesStatus]}
+                </TextRegular>
+              </View>
+
+              {fileNamesError && (
+                <TextRegular color={Colors.ERROR_DARK} size="sm">
+                  {fileNamesError}
+                </TextRegular>
+              )}
+
+              <View style={styles.output}>
+                <TextRegular
+                  selectable
+                  size="xs"
+                  color={Colors.PRIMARY_EXTRA_DARK}
+                  style={styles.code}
+                >
+                  {hasFileNamesOutput
+                    ? fileNamesOutput
                     : 'No response yet. Run the request to see JSON or text output.'}
                 </TextRegular>
               </View>

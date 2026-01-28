@@ -170,7 +170,10 @@ class HmisClient {
    * Does NOT set Content-Type header (browser sets it with boundary automatically)
    * Does NOT JSON.stringify the body (FormData is sent as-is)
    */
-  async postMultipart<T = unknown>(path: string, formData: FormData): Promise<T> {
+  async postMultipart<T = unknown>(
+    path: string,
+    formData: FormData
+  ): Promise<T> {
     const baseUrl = this.getBaseUrl();
     const authHeaders = await this.getHeaders();
 
