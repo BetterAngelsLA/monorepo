@@ -202,7 +202,6 @@ export interface ClientFile {
   id: number;
   name: string;
   private: boolean | null;
-  added_date: string;
   ref_category: number;
   ref_file_name: number;
   ref_agency: number;
@@ -214,6 +213,7 @@ export interface ClientFile {
   };
   file?: {
     id: number;
+    added_date: string;
     filename: string;
     filesize: number;
     encodedPreviewFileContent?: string;
