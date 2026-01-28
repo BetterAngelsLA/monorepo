@@ -1,10 +1,16 @@
 // HMIS constants
 export const HMIS_AUTH_COOKIE_NAME = 'auth_token';
 export const HMIS_API_URL_COOKIE_NAME = 'api_url';
-export const HMIS_API_URL_KEY = 'hmis_api_url';
-export const HMIS_AUTH_TOKEN_KEY = 'hmis_auth_token';
-export const HMIS_TOKEN_HEADER_NAME = 'x-hmis-token';
+export const HMIS_SERVER_DATE_TIME_COOKIE_NAME = 'server_date_time';
+export const HMIS_TOKEN_HEADER_NAME = 'X-HMIS-Token';
 export const HMIS_DIRECTIVE_NAME = 'hmisDirective';
+
+// Cookies that should NOT be sent to backend (client-side only)
+export const CLIENT_ONLY_COOKIES = [
+  HMIS_AUTH_COOKIE_NAME, // Sent as header, not cookie
+  HMIS_API_URL_COOKIE_NAME, // Client-side only
+  HMIS_SERVER_DATE_TIME_COOKIE_NAME, // Client-side only
+] as const;
 
 // Cookie/CSRF constants
 export const CSRF_COOKIE_NAME = 'csrftoken';

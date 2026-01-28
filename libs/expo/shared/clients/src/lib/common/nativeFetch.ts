@@ -1,26 +1,42 @@
 import { Platform } from 'react-native';
-import { authStorage, CSRF_HEADER_NAME } from '@monorepo/expo/shared/utils';
+import {
+  backendAuthInterceptor,
+  contentTypeInterceptor,
+  ensureCsrfToken,
+  logAuthFailureInterceptor,
+  refererInterceptor,
+  storeCookiesInterceptor,
+  userAgentInterceptor,
+} from './interceptors';
 
-export const createNativeFetch = (envKey: string, referer: string) => {
+/**
+ * Creates a fetch wrapper for React Native with backend authentication
+ */
+export const createNativeFetch = (referer: string) => {
   if (Platform.OS === 'web') {
     throw new Error('createNativeFetch is for React Native platforms only');
   }
 
   return async (input: RequestInfo | URL, init: RequestInit = {}) => {
-    const headers = new Headers(init.headers ?? {});
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+        ? input.href
+        : input.url;
+    const method = (init.method || 'GET').toUpperCase();
 
-    if (!headers.has('Cookie')) {
-      const { cookieHeader, csrfToken } =
-        authStorage.getCookiesForRequest(envKey);
-      if (cookieHeader) headers.set('Cookie', cookieHeader);
-      if (csrfToken && !headers.has(CSRF_HEADER_NAME)) {
-        headers.set(CSRF_HEADER_NAME, csrfToken);
-      }
-    }
+    // Ensure CSRF token exists for mutating requests
+    await ensureCsrfToken(referer, method);
 
-    if (!headers.has('Referer')) {
-      headers.set('Referer', referer);
-    }
+    // Compose headers from interceptors + user headers
+    const headers = new Headers({
+      ...userAgentInterceptor(),
+      ...contentTypeInterceptor(!!init.body),
+      ...refererInterceptor(referer),
+      ...backendAuthInterceptor(),
+      ...init.headers, // User headers override defaults
+    });
 
     const response = await fetch(input as any, {
       ...init,
@@ -28,7 +44,8 @@ export const createNativeFetch = (envKey: string, referer: string) => {
       credentials: 'omit',
     });
 
-    authStorage.updateFromSetCookieHeaders(envKey, response.headers as any);
+    storeCookiesInterceptor(response);
+    logAuthFailureInterceptor(url, response.status);
 
     return response;
   };

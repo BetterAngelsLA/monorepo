@@ -1,10 +1,11 @@
-import { hmisClient } from './hmisClient';
+import { createHmisClient } from './hmisClient';
 import { HmisError } from './hmisTypes';
+
+const mockGetCookieValue = jest.fn();
 
 jest.mock('@monorepo/expo/shared/utils', () => ({
   authStorage: {
-    getHmisAuthToken: jest.fn(() => 'mock-token'),
-    getHmisApiUrl: jest.fn(() => 'https://hmis.example.com'),
+    getCookieValue: mockGetCookieValue,
   },
 }));
 
@@ -18,9 +19,15 @@ const jsonHeaders = new Headers({ 'content-type': 'application/json' });
 describe('HmisClient', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetCookieValue.mockImplementation((name) => {
+      if (name === 'auth_token') return 'mock-token';
+      if (name === 'api_url') return 'https://hmis.example.com';
+      return null;
+    });
   });
 
   it('sends bearer auth and user agent', async () => {
+    const hmisClient = createHmisClient();
     mockFetch.mockResolvedValueOnce({
       ok: true,
       headers: jsonHeaders,
@@ -40,6 +47,7 @@ describe('HmisClient', () => {
   });
 
   it('throws HmisError with status code on 401', async () => {
+    const hmisClient = createHmisClient();
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 401,
@@ -55,6 +63,7 @@ describe('HmisClient', () => {
   });
 
   it('formats validation errors on 422', async () => {
+    const hmisClient = createHmisClient();
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 422,
@@ -71,6 +80,7 @@ describe('HmisClient', () => {
   });
 
   it('returns text when not json', async () => {
+    const hmisClient = createHmisClient();
     mockFetch.mockResolvedValueOnce({
       ok: true,
       headers: new Headers({ 'content-type': 'text/plain' }),

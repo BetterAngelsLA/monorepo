@@ -5,7 +5,7 @@ import {
   ENVIRONMENT_STORAGE_KEY,
 } from '@monorepo/expo/shared/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {
+import {
   createContext,
   ReactNode,
   useContext,
@@ -78,11 +78,9 @@ export const ApiConfigProvider = ({
       };
     }
 
-    const nativeFetch = createNativeFetch(baseUrl, baseUrl);
+    const nativeFetch = createNativeFetch(baseUrl);
     return async (path: string, options: RequestInit = {}) => {
-      const headers = new Headers(options.headers);
-      headers.set('Content-Type', 'application/json');
-      return nativeFetch(`${baseUrl}${path}`, { ...options, headers });
+      return nativeFetch(`${baseUrl}${path}`, options);
     };
   }, [baseUrl]);
 

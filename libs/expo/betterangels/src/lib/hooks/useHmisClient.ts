@@ -1,6 +1,6 @@
 import type { HmisCurrentUser } from '@monorepo/expo/shared/clients';
-import { hmisClient } from '@monorepo/expo/shared/clients';
-import { useCallback } from 'react';
+import { createHmisClient } from '@monorepo/expo/shared/clients';
+import { useCallback, useMemo } from 'react';
 
 /**
  * React hook for direct HMIS REST API access
@@ -26,6 +26,9 @@ import { useCallback } from 'react';
  * ```
  */
 export const useHmisClient = () => {
+  // Create HMIS client
+  const hmisClient = useMemo(() => createHmisClient(), []);
+
   /**
    * Get current HMIS user profile with agency and navigation settings
    *
@@ -66,7 +69,7 @@ export const useHmisClient = () => {
         fields: fieldsParam,
       });
     },
-    []
+    [hmisClient]
   );
 
   return {

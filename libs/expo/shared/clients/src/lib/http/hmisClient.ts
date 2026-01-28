@@ -1,41 +1,31 @@
-import { authStorage } from '@monorepo/expo/shared/utils';
-import { MODERN_BROWSER_USER_AGENT } from '../common/constants';
+import {
+  authStorage,
+  HMIS_API_URL_COOKIE_NAME,
+} from '@monorepo/expo/shared/utils';
+import { HEADER_NAMES, HEADER_VALUES } from '../common/constants';
+import {
+  hmisAuthInterceptor,
+  logAuthFailureInterceptor,
+  userAgentInterceptor,
+} from '../common/interceptors';
 import { HmisError, HmisRequestOptions } from './hmisTypes';
 
 /**
  * HMIS REST API Client
  *
  * Handles direct access to HMIS REST endpoints from React Native.
- * Automatically includes Bearer token auth and browser User-Agent.
+ * Uses Bearer token auth for direct HMIS API calls.
  */
 class HmisClient {
-  /**
-   * Get authorization headers including Bearer token
-   */
-  private getHeaders(): HeadersInit {
-    const authToken = authStorage.getHmisAuthToken();
-
-    if (!authToken) {
-      throw new HmisError('Not authenticated with HMIS', 401);
-    }
-
-    return {
-      Authorization: `Bearer ${authToken}`,
-      'User-Agent': MODERN_BROWSER_USER_AGENT,
-      Accept: 'application/json, text/plain, */*',
-      'X-Requested-With': 'XMLHttpRequest',
-    };
-  }
-
   /**
    * Get HMIS API base URL from stored api_url
    */
   private getBaseUrl(): string {
-    const apiUrl = authStorage.getHmisApiUrl();
+    const apiUrl = authStorage.getCookieValue(HMIS_API_URL_COOKIE_NAME);
     if (!apiUrl) {
       throw new HmisError('HMIS API URL not found. Please log in first.', 500);
     }
-    return apiUrl;
+    return decodeURIComponent(apiUrl);
   }
 
   /**
@@ -92,7 +82,6 @@ class HmisClient {
     options: HmisRequestOptions = {}
   ): Promise<T> {
     const baseUrl = this.getBaseUrl();
-    const authHeaders = this.getHeaders();
 
     // Build URL with query params
     const url = new URL(path, baseUrl);
@@ -102,12 +91,18 @@ class HmisClient {
       });
     }
 
+    // Compose headers using interceptors
+    const headers = new Headers({
+      ...userAgentInterceptor(),
+      ...hmisAuthInterceptor(),
+      [HEADER_NAMES.ACCEPT]: HEADER_VALUES.ACCEPT_JSON_ALL,
+      [HEADER_NAMES.X_REQUESTED_WITH]: HEADER_VALUES.X_REQUESTED_WITH_AJAX,
+      ...options.headers, // User headers override defaults
+    });
+
     const fetchOptions: RequestInit = {
       method: options.method,
-      headers: {
-        ...authHeaders,
-        ...options.headers,
-      },
+      headers,
     };
 
     if (options.body) {
@@ -115,6 +110,8 @@ class HmisClient {
     }
 
     const response = await fetch(url.toString(), fetchOptions);
+
+    logAuthFailureInterceptor(url.toString(), response.status);
 
     // Handle errors
     if (!response.ok) {
@@ -155,5 +152,7 @@ class HmisClient {
   }
 }
 
-export const hmisClient = new HmisClient();
+// Factory function to create HmisClient
+export const createHmisClient = () => new HmisClient();
+
 export { HmisClient };

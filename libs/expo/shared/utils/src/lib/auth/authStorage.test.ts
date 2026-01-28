@@ -29,157 +29,223 @@ describe('AuthStorage', () => {
   });
 
   describe('Cookie operations', () => {
-    it('stores and retrieves cookie values', () => {
-      const envKey = 'https://api.example.com';
-
-      expect(authStorage.getCookieValue(envKey, CSRF_COOKIE_NAME)).toBeNull();
-
-      authStorage.updateFromSetCookieHeaders(envKey, {
+    it('stores and retrieves cookie values by domain', () => {
+      authStorage.updateFromSetCookieHeaders({
         getSetCookie: () => [
-          'csrftoken=abc123; Path=/; HttpOnly',
-          'sessionid=xyz789; Path=/; HttpOnly',
+          'csrftoken=abc123; Path=/; Domain=backend.com; HttpOnly',
+          'sessionid=xyz789; Path=/; Domain=backend.com; HttpOnly',
         ],
       });
 
-      expect(authStorage.getCookieValue(envKey, CSRF_COOKIE_NAME)).toBe(
+      expect(authStorage.getCookieValue(CSRF_COOKIE_NAME, 'backend.com')).toBe(
         'abc123'
       );
-      expect(authStorage.getCookieValue(envKey, SESSION_COOKIE_NAME)).toBe(
-        'xyz789'
-      );
+      expect(
+        authStorage.getCookieValue(SESSION_COOKIE_NAME, 'backend.com')
+      ).toBe('xyz789');
     });
 
-    it('generates cookie header for requests', () => {
-      const envKey = 'https://api.example.com';
-
-      authStorage.updateFromSetCookieHeaders(envKey, {
+    it('generates cookie header for requests with all domains', () => {
+      authStorage.updateFromSetCookieHeaders({
         getSetCookie: () => [
-          'csrftoken=token1; Path=/',
-          'sessionid=session1; Path=/',
+          'csrftoken=token1; Path=/; Domain=backend.com',
+          'sessionid=session1; Path=/; Domain=backend.com',
+          'auth_token=hmis_token; Path=/; Domain=hmis.example.com',
         ],
       });
 
-      const result = authStorage.getCookiesForRequest(envKey);
+      const result = authStorage.getCookiesForRequest();
 
-      expect(result.cookieHeader).toBe('csrftoken=token1; sessionid=session1');
+      expect(result.cookieHeader).toContain('csrftoken=token1');
+      expect(result.cookieHeader).toContain('sessionid=session1');
+      expect(result.cookieHeader).toContain('auth_token=hmis_token');
       expect(result.csrfToken).toBe('token1');
     });
 
     it('returns null cookie header when no cookies stored', () => {
-      const result = authStorage.getCookiesForRequest('https://empty.com');
+      mockStorage.clear();
+
+      const result = authStorage.getCookiesForRequest();
 
       expect(result.cookieHeader).toBeNull();
       expect(result.csrfToken).toBeNull();
     });
 
-    it('handles string set-cookie header', () => {
-      const envKey = 'https://api.example.com';
-
-      authStorage.updateFromSetCookieHeaders(envKey, {
+    it('handles cookies without domain attribute', () => {
+      authStorage.updateFromSetCookieHeaders({
         get: (name: string) =>
           name === 'set-cookie'
             ? 'csrftoken=value1; Path=/, sessionid=value2; Path=/'
             : null,
       });
 
-      expect(authStorage.getCookieValue(envKey, CSRF_COOKIE_NAME)).toBe(
+      expect(authStorage.getCookieValue(CSRF_COOKIE_NAME, 'default')).toBe(
         'value1'
       );
-      expect(authStorage.getCookieValue(envKey, SESSION_COOKIE_NAME)).toBe(
+      expect(authStorage.getCookieValue(SESSION_COOKIE_NAME, 'default')).toBe(
         'value2'
       );
     });
 
-    it('ignores non-allowed cookies', () => {
-      const envKey = 'https://api.example.com';
-
-      authStorage.updateFromSetCookieHeaders(envKey, {
+    it('stores all cookies without whitelist', () => {
+      authStorage.updateFromSetCookieHeaders({
         getSetCookie: () => [
-          'csrftoken=allowed; Path=/',
-          'random_cookie=ignored; Path=/',
+          'csrftoken=allowed; Path=/; Domain=backend.com',
+          'random_cookie=also_stored; Path=/; Domain=backend.com',
         ],
       });
 
-      const result = authStorage.getCookiesForRequest(envKey);
-      expect(result.cookieHeader).toBe('csrftoken=allowed');
+      const result = authStorage.getCookiesForRequest();
+      expect(result.cookieHeader).toContain('csrftoken=allowed');
+      expect(result.cookieHeader).toContain('random_cookie=also_stored');
     });
 
     it('handles missing set-cookie headers', () => {
-      const envKey = 'https://api.example.com';
+      authStorage.updateFromSetCookieHeaders({ get: () => null });
 
-      authStorage.updateFromSetCookieHeaders(envKey, { get: () => null });
-
-      expect(authStorage.getCookieValue(envKey, CSRF_COOKIE_NAME)).toBeNull();
+      expect(
+        authStorage.getCookieValue(CSRF_COOKIE_NAME, 'default')
+      ).toBeNull();
     });
   });
 
   describe('HMIS token operations', () => {
-    it('stores and retrieves HMIS auth token', () => {
-      expect(authStorage.getHmisAuthToken()).toBeNull();
+    it('stores and retrieves HMIS auth token via cookies with domain', () => {
+      // Simulate Set-Cookie response from HMIS
+      const headers = {
+        getSetCookie: () => [
+          'auth_token=test-hmis-token; Path=/; Domain=hmis.example.com; HttpOnly',
+        ],
+      };
+      authStorage.updateFromSetCookieHeaders(headers);
 
-      authStorage.storeHmisAuthToken('test-hmis-token');
-
-      expect(authStorage.getHmisAuthToken()).toBe('test-hmis-token');
+      expect(authStorage.getCookieValue('auth_token', 'hmis.example.com')).toBe(
+        'test-hmis-token'
+      );
     });
 
-    it('overwrites existing HMIS token', () => {
-      authStorage.storeHmisAuthToken('token1');
-      authStorage.storeHmisAuthToken('token2');
+    it('overwrites existing HMIS token for same domain', () => {
+      const headers1 = {
+        getSetCookie: () => ['auth_token=token1; Domain=hmis.example.com'],
+      };
+      const headers2 = {
+        getSetCookie: () => ['auth_token=token2; Domain=hmis.example.com'],
+      };
 
-      expect(authStorage.getHmisAuthToken()).toBe('token2');
+      authStorage.updateFromSetCookieHeaders(headers1);
+      authStorage.updateFromSetCookieHeaders(headers2);
+
+      expect(authStorage.getCookieValue('auth_token', 'hmis.example.com')).toBe(
+        'token2'
+      );
+    });
+
+    it('keeps separate tokens for different domains', () => {
+      const headers1 = {
+        getSetCookie: () => ['auth_token=token1; Domain=hmis1.com'],
+      };
+      const headers2 = {
+        getSetCookie: () => ['auth_token=token2; Domain=hmis2.com'],
+      };
+
+      authStorage.updateFromSetCookieHeaders(headers1);
+      authStorage.updateFromSetCookieHeaders(headers2);
+
+      expect(authStorage.getCookieValue('auth_token', 'hmis1.com')).toBe(
+        'token1'
+      );
+      expect(authStorage.getCookieValue('auth_token', 'hmis2.com')).toBe(
+        'token2'
+      );
     });
   });
 
   describe('HMIS API URL operations', () => {
-    it('stores and retrieves HMIS API URL', () => {
-      expect(authStorage.getHmisApiUrl()).toBeNull();
+    it('stores and retrieves HMIS API URL via cookies with domain', () => {
+      const headers = {
+        getSetCookie: () => [
+          'api_url=https%3A%2F%2Fhmis.example.com; Domain=hmis.example.com',
+        ],
+      };
+      authStorage.updateFromSetCookieHeaders(headers);
 
-      authStorage.storeHmisApiUrl('https://hmis.example.com');
-
-      expect(authStorage.getHmisApiUrl()).toBe('https://hmis.example.com');
+      expect(authStorage.getCookieValue('api_url', 'hmis.example.com')).toBe(
+        'https%3A%2F%2Fhmis.example.com'
+      );
     });
 
     it('overwrites existing HMIS API URL', () => {
-      authStorage.storeHmisApiUrl('https://url1.com');
-      authStorage.storeHmisApiUrl('https://url2.com');
+      const headers1 = {
+        getSetCookie: () => [
+          'api_url=https%3A%2F%2Furl1.com; Domain=hmis.example.com',
+        ],
+      };
+      const headers2 = {
+        getSetCookie: () => [
+          'api_url=https%3A%2F%2Furl2.com; Domain=hmis.example.com',
+        ],
+      };
 
-      expect(authStorage.getHmisApiUrl()).toBe('https://url2.com');
+      authStorage.updateFromSetCookieHeaders(headers1);
+      authStorage.updateFromSetCookieHeaders(headers2);
+
+      expect(authStorage.getCookieValue('api_url', 'hmis.example.com')).toBe(
+        'https%3A%2F%2Furl2.com'
+      );
     });
   });
 
   describe('HMIS token expiration', () => {
+    const hmisDomain = 'hmis.example.com';
+
     it('returns true when no token exists', () => {
-      expect(authStorage.isHmisTokenExpired()).toBe(true);
+      expect(authStorage.isHmisTokenExpired(hmisDomain)).toBe(true);
     });
 
     it('returns true for malformed JWT', () => {
-      authStorage.storeHmisAuthToken('not-a-valid-jwt');
+      const headers = {
+        getSetCookie: () => [
+          `auth_token=not-a-valid-jwt; Domain=${hmisDomain}`,
+        ],
+      };
+      authStorage.updateFromSetCookieHeaders(headers);
 
-      expect(authStorage.isHmisTokenExpired()).toBe(true);
+      expect(authStorage.isHmisTokenExpired(hmisDomain)).toBe(true);
     });
 
     it('returns true when token has no exp claim', () => {
       const tokenNoExp =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyIn0.test';
-      authStorage.storeHmisAuthToken(tokenNoExp);
+      const headers = {
+        getSetCookie: () => [`auth_token=${tokenNoExp}; Domain=${hmisDomain}`],
+      };
+      authStorage.updateFromSetCookieHeaders(headers);
 
-      expect(authStorage.isHmisTokenExpired()).toBe(true);
+      expect(authStorage.isHmisTokenExpired(hmisDomain)).toBe(true);
     });
 
     it('returns true for expired token', () => {
       const expiredToken =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDAwMDB9.test';
-      authStorage.storeHmisAuthToken(expiredToken);
+      const headers = {
+        getSetCookie: () => [
+          `auth_token=${expiredToken}; Domain=${hmisDomain}`,
+        ],
+      };
+      authStorage.updateFromSetCookieHeaders(headers);
 
-      expect(authStorage.isHmisTokenExpired()).toBe(true);
+      expect(authStorage.isHmisTokenExpired(hmisDomain)).toBe(true);
     });
 
     it('returns false for valid non-expired token', () => {
       const validToken =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk5OTl9.test';
-      authStorage.storeHmisAuthToken(validToken);
+      const headers = {
+        getSetCookie: () => [`auth_token=${validToken}; Domain=${hmisDomain}`],
+      };
+      authStorage.updateFromSetCookieHeaders(headers);
 
-      expect(authStorage.isHmisTokenExpired()).toBe(false);
+      expect(authStorage.isHmisTokenExpired(hmisDomain)).toBe(false);
     });
   });
 });

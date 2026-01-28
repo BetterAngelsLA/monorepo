@@ -1,9 +1,9 @@
-import { Platform } from 'react-native';
 import {
   authStorage,
   CSRF_COOKIE_NAME,
   CSRF_LOGIN_PATH,
 } from '@monorepo/expo/shared/utils';
+import { Platform } from 'react-native';
 import { createNativeFetch } from './nativeFetch';
 
 const extractCookieValue = (cookieName: string): string | null => {
@@ -15,15 +15,15 @@ const getTokenFromNative = async (
   apiUrl: string,
   csrfUrl: string
 ): Promise<string | null> => {
-  const cached = authStorage.getCookieValue(apiUrl, CSRF_COOKIE_NAME);
+  const cached = authStorage.getCookieValue(CSRF_COOKIE_NAME);
   if (cached) {
     return cached;
   }
 
-  const nativeFetch = createNativeFetch(apiUrl, apiUrl);
+  const nativeFetch = createNativeFetch(apiUrl);
   await nativeFetch(csrfUrl, { headers: { Accept: 'text/html' } });
 
-  return authStorage.getCookieValue(apiUrl, CSRF_COOKIE_NAME);
+  return authStorage.getCookieValue(CSRF_COOKIE_NAME);
 };
 
 export const getCSRFToken = async (

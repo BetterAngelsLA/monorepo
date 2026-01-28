@@ -6,18 +6,17 @@ import { createPersistentSynchronousStorage } from '../storage/createPersistentS
 import type { PersistentSynchronousStorageApi } from '../storage/types';
 import {
   AUTH_STORAGE_SCOPE_ID,
+  CLIENT_ONLY_COOKIES,
   CSRF_COOKIE_NAME,
-  HMIS_API_URL_KEY,
-  HMIS_AUTH_TOKEN_KEY,
+  HMIS_AUTH_COOKIE_NAME,
   NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE,
-  SESSION_COOKIE_NAME,
 } from './constants';
 
-const ALLOWED_COOKIES = [CSRF_COOKIE_NAME, SESSION_COOKIE_NAME];
 type CookieJar = Record<string, string>;
 
 class AuthStorage {
   private storage: PersistentSynchronousStorageApi | null = null;
+  private static readonly STORAGE_KEY = 'cookies';
 
   constructor() {
     this.initStorage();
@@ -29,10 +28,7 @@ class AuthStorage {
     );
     if (!key) {
       key = Crypto.randomUUID();
-      await SecureStore.setItemAsync(
-        NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE,
-        key
-      );
+      await SecureStore.setItemAsync(NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE, key);
     }
     this.storage = createPersistentSynchronousStorage({
       scopeId: AUTH_STORAGE_SCOPE_ID,
@@ -40,71 +36,81 @@ class AuthStorage {
     });
   }
 
-  getCookieValue(envKey: string, name: string): string | null {
-    return this.storage?.get<CookieJar>(envKey)?.[name] ?? null;
+  /**
+   * Get a cookie value by name
+   */
+  getCookieValue(name: string): string | null {
+    const jar = this.storage?.get<CookieJar>(AuthStorage.STORAGE_KEY);
+    return jar?.[name] ?? null;
   }
 
-  getCookiesForRequest(envKey: string): {
+  /**
+   * Clear all cookies - call before login to ensure clean state
+   */
+  clearCookies(): void {
+    if (this.storage) {
+      this.storage.set(AuthStorage.STORAGE_KEY, {});
+    }
+  }
+
+  /**
+   * Get all cookies for request headers
+   * Filters out client-only cookies (HMIS cookies that should not be sent to backend)
+   */
+  getCookiesForRequest(): {
     cookieHeader: string | null;
     csrfToken: string | null;
+    hmisToken: string | null;
   } {
-    const jar = this.storage?.get<CookieJar>(envKey) ?? {};
-    const cookies = ALLOWED_COOKIES.filter((name) => jar[name]).map(
-      (name) => `${name}=${jar[name]}`
-    );
+    const jar = this.storage?.get<CookieJar>(AuthStorage.STORAGE_KEY);
+    if (!jar || Object.keys(jar).length === 0) {
+      return { cookieHeader: null, csrfToken: null, hmisToken: null };
+    }
+
+    // Filter out client-only cookies - only send Django cookies to backend
+    const backendCookies = Object.entries(jar)
+      .filter(([name]) => !CLIENT_ONLY_COOKIES.includes(name as any))
+      .map(([name, value]) => `${name}=${value}`);
 
     return {
-      cookieHeader: cookies.length ? cookies.join('; ') : null,
+      cookieHeader:
+        backendCookies.length > 0 ? backendCookies.join('; ') : null,
       csrfToken: jar[CSRF_COOKIE_NAME] ?? null,
+      hmisToken: jar[HMIS_AUTH_COOKIE_NAME] ?? null,
     };
   }
 
-  updateFromSetCookieHeaders(
-    envKey: string,
-    headers: {
-      get?: (key: string) => string | null;
-      getSetCookie?: () => string[] | null | undefined;
-    }
-  ): void {
-    if (!this.storage) {
-      return;
-    }
+  /**
+   * Extract and store cookies from Set-Cookie headers
+   * Overwrites existing cookies with same name
+   */
+  updateFromSetCookieHeaders(headers: {
+    get?: (key: string) => string | null;
+    getSetCookie?: () => string[] | null | undefined;
+  }): void {
+    if (!this.storage) return;
 
     const raw = headers.getSetCookie?.() ?? headers.get?.('set-cookie');
-    if (!raw) {
-      return;
-    }
+    if (!raw) return;
 
     const values = Array.isArray(raw) ? raw : splitCookiesString(raw);
     const parsed = parseSetCookie(values, { map: true });
-    const jar = this.storage.get<CookieJar>(envKey) ?? {};
 
-    for (const name of ALLOWED_COOKIES) {
-      if (parsed[name]?.value) {
-        jar[name] = parsed[name].value;
+    const jar = this.storage.get<CookieJar>(AuthStorage.STORAGE_KEY) ?? {};
+    for (const [name, cookie] of Object.entries(parsed)) {
+      if (cookie?.value) {
+        jar[name] = cookie.value;
       }
     }
-    this.storage.set(envKey, jar);
+
+    this.storage.set(AuthStorage.STORAGE_KEY, jar);
   }
 
-  storeHmisAuthToken(token: string): void {
-    this.storage?.set(HMIS_AUTH_TOKEN_KEY, token);
-  }
-
-  getHmisAuthToken(): string | null {
-    return this.storage?.get<string>(HMIS_AUTH_TOKEN_KEY) ?? null;
-  }
-
-  storeHmisApiUrl(apiUrl: string): void {
-    this.storage?.set(HMIS_API_URL_KEY, apiUrl);
-  }
-
-  getHmisApiUrl(): string | null {
-    return this.storage?.get<string>(HMIS_API_URL_KEY) ?? null;
-  }
-
+  /**
+   * Check if HMIS auth_token is expired
+   */
   isHmisTokenExpired(): boolean {
-    const token = this.getHmisAuthToken();
+    const token = this.getCookieValue(HMIS_AUTH_COOKIE_NAME);
     if (!token) {
       return true;
     }

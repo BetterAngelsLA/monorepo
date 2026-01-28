@@ -50,13 +50,14 @@ export default function LoginForm() {
         method: 'POST',
         body: JSON.stringify({ email: email.toLowerCase() }),
       });
+
       if (res.ok || res.status === 401) {
         setStep('otp');
       } else {
         handleError('Unable to send code. Please try again.');
       }
     } catch (error) {
-      console.error('Send code error:', error);
+      console.error('[LoginForm] Send code error:', error);
       handleError('Network error. Please try again.');
     } finally {
       setSendingCode(false);
@@ -72,6 +73,7 @@ export default function LoginForm() {
         method: 'POST',
         body: JSON.stringify({ code: otp.trim() }),
       });
+
       const data = await res.json();
 
       if (res.ok && data?.meta?.is_authenticated) {
@@ -81,7 +83,7 @@ export default function LoginForm() {
         handleError('Invalid code. Please try again.');
       }
     } catch (error) {
-      console.error('Confirm code error:', error);
+      console.error('[LoginForm] Confirm code error:', error);
       handleError('Network error. Please try again.');
     } finally {
       setConfirming(false);
@@ -97,6 +99,7 @@ export default function LoginForm() {
         method: 'POST',
         body: JSON.stringify({ username: email.toLowerCase(), password }),
       });
+
       const data = await res.json();
 
       if (res.ok && data?.meta?.is_authenticated) {
@@ -105,7 +108,7 @@ export default function LoginForm() {
         handleError('Invalid email or password.');
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('[LoginForm] Login error:', error);
       handleError('Network error. Please try again.');
     } finally {
       setLoading(false);
