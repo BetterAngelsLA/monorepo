@@ -1,17 +1,14 @@
 import type { ClientFile, FileCategory } from '@monorepo/expo/shared/clients';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  IconButton,
-  TextMedium,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
+import { IconButton, TextMedium, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { HmisClientProfileType } from '../../../../apollo';
 import { useHmisClient } from '../../../../hooks';
 import { useModalScreen } from '../../../../providers';
 import UploadModalHmis from './UploadModalHmis';
+import HmisDocuments from './HmisDocuments';
 
 export function ClientDocsHmisView({
   client,
@@ -26,6 +23,7 @@ export function ClientDocsHmisView({
   const [files, setFiles] = useState<ClientFile[]>([]);
   const [categories, setCategories] = useState<FileCategory[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<undefined | string | null>(null);
 
   useEffect(() => {
     if (!client?.id) {
@@ -43,7 +41,9 @@ export function ClientDocsHmisView({
       setCategories(categories);
     });
 
-    getClientFiles(client.hmisId as string)
+    getClientFiles(client.hmisId as string, {
+      expand: 'agency,file,category,fileName',
+    })
       .then((data) => {
         if (!isActive) {
           return;
@@ -102,15 +102,6 @@ export function ClientDocsHmisView({
     return result;
   }, [files, categories]);
 
-  const getFileLabel = (file: ClientFile, index: number) => {
-    return (
-      file.file?.filename ||
-      file.fileName?.name ||
-      file.name ||
-      (file.id ? `Document ${file.id}` : `Document ${index + 1}`)
-    );
-  };
-
   return (
     <ScrollView
       contentContainerStyle={{ paddingVertical: Spacings.lg }}
@@ -160,19 +151,14 @@ export function ClientDocsHmisView({
         )}
 
         {filesByCategory.map(({ category, files: categoryFiles }) => (
-          <View
-            key={category?.id ?? 'other'}
-            style={{ marginTop: Spacings.md, gap: Spacings.xs }}
-          >
-            <TextMedium size="md" color={Colors.NEUTRAL_DARK}>
-              {category?.name ?? `Category ${category?.id}`}
-            </TextMedium>
-            {categoryFiles.map((file, index) => (
-              <TextMedium key={String(file?.id ?? index)}>
-                {getFileLabel(file, index)}
-              </TextMedium>
-            ))}
-          </View>
+          <HmisDocuments
+            key={String(category?.id ?? 'other')}
+            expanded={expanded}
+            setExpanded={setExpanded}
+            accordionKey={String(category?.id ?? 'other')}
+            title={category?.name ?? `Category ${category?.id}`}
+            data={categoryFiles}
+          />
         ))}
       </View>
     </ScrollView>
