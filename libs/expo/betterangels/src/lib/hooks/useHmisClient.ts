@@ -149,6 +149,40 @@ export const useHmisClient = () => {
   }, []);
 
   /**
+   * Update a client file's metadata (category and file name)
+   *
+   * Optionally can re-upload the file content. If file is omitted, only
+   * metadata is updated.
+   *
+   * @param clientId - Client ID
+   * @param fileId - File ID to update
+   * @param categoryId - New category ID
+   * @param fileNameId - New file name ID
+   * @param file - Optional file object {content, name, mimeType}
+   * @param isPrivate - Optional private flag
+   */
+  const updateClientFile = useCallback(
+    (
+      clientId: string | number,
+      fileId: number,
+      categoryId: number,
+      fileNameId: number,
+      file?: { content: string; name: string; mimeType: string } | null,
+      isPrivate?: boolean | null
+    ): Promise<ClientFileUploadResponse> => {
+      return hmisClient.updateClientFile(
+        clientId,
+        fileId,
+        categoryId,
+        fileNameId,
+        file,
+        isPrivate
+      );
+    },
+    []
+  );
+
+  /**
    * Delete a client file
    *
    * @param clientId - Client ID
@@ -168,6 +202,7 @@ export const useHmisClient = () => {
     getFileCategories,
     getFileNames,
     getClientFiles,
+    updateClientFile,
     deleteClientFile,
   };
 };

@@ -273,6 +273,78 @@ class HmisClient {
   }
 
   /**
+   * Update a client file's metadata (category and file name)
+   *
+   * Updates an existing client file record to change its category and file name
+   * assignments. Optionally, you can re-upload the file content by passing the
+   * file object. If omitted, only the metadata is updated.
+   *
+   * @param clientId - The client ID
+   * @param fileId - The file ID to update
+   * @param categoryId - New category ID
+   * @param fileNameId - New file name ID
+   * @param file - Optional file object {content, name, mimeType}. If provided, updates the file content
+   * @param isPrivate - Optional private flag
+   * @returns Promise with updated file response
+   * @throws HmisError if the request fails
+   *
+   * @example
+   * ```typescript
+   * // Update only metadata
+   * const result = await hmisClient.updateClientFile(
+   *   '68998C256',
+   *   42,
+   *   12, // new category ID
+   *   89  // new file name ID
+   * );
+   *
+   * // Update metadata and re-upload file content
+   * const resultWithFile = await hmisClient.updateClientFile(
+   *   '68998C256',
+   *   42,
+   *   12,
+   *   89,
+   *   {
+   *     content: base64String,
+   *     name: 'updated-document.txt',
+   *     mimeType: 'text/plain'
+   *   }
+   * );
+   * ```
+   */
+  async updateClientFile(
+    clientId: string | number,
+    fileId: number,
+    categoryId: number,
+    fileNameId: number,
+    file?: { content: string; name: string; mimeType: string } | null,
+    isPrivate: boolean | null = null
+  ): Promise<ClientFileUploadResponse> {
+    const clientFile: Record<string, unknown> = {
+      id: fileId,
+      ref_category: categoryId,
+      ref_file_name: fileNameId,
+      private: isPrivate,
+    };
+
+    // If file content is provided, include it in the payload
+    if (file) {
+      clientFile['file'] = {
+        name: file.name,
+        mimeType: file.mimeType,
+        uploadedFile: file.content,
+      };
+    }
+
+    const payload = { clientFile };
+
+    return this.post<ClientFileUploadResponse>(
+      `/clients/${clientId}/client-files/${fileId}`,
+      payload
+    );
+  }
+
+  /**
    * Get available file categories for uploads
    *
    * Fetches the list of file categories that can be assigned when uploading

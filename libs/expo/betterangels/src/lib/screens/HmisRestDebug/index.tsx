@@ -34,6 +34,7 @@ type Section =
   | 'categories'
   | 'fileNames'
   | 'clientFiles'
+  | 'updateFile'
   | 'deleteFile'
   | 'photoUpload';
 
@@ -44,6 +45,7 @@ export default function HmisRestDebug() {
     getFileCategories,
     getFileNames,
     getClientFiles,
+    updateClientFile,
     deleteClientFile,
     hmisClient,
   } = useHmisClient();
@@ -88,6 +90,15 @@ export default function HmisRestDebug() {
   const [deleteStatus, setDeleteStatus] = useState<FetchStatus>('idle');
   const [deleteOutput, setDeleteOutput] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Update File state
+  const [updateClientId, setUpdateClientId] = useState('404');
+  const [updateFileId, setUpdateFileId] = useState('42');
+  const [updateCategoryId, setUpdateCategoryId] = useState('12');
+  const [updateFileNameId, setUpdateFileNameId] = useState('89');
+  const [updateStatus, setUpdateStatus] = useState<FetchStatus>('idle');
+  const [updateOutput, setUpdateOutput] = useState('');
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   // Photo Upload state
   const [photoClientId, setPhotoClientId] = useState('403');
@@ -326,6 +337,57 @@ export default function HmisRestDebug() {
     setDeleteStatus('idle');
   }, []);
 
+  const handleUpdateFile = useCallback(async () => {
+    if (!updateClientId.trim()) {
+      setUpdateError('Client ID is required');
+      return;
+    }
+    if (!updateFileId.trim()) {
+      setUpdateError('File ID is required');
+      return;
+    }
+
+    setUpdateStatus('loading');
+    setUpdateError(null);
+    setUpdateOutput('');
+
+    try {
+      const result = await updateClientFile(
+        updateClientId.trim(),
+        parseInt(updateFileId, 10),
+        parseInt(updateCategoryId, 10),
+        parseInt(updateFileNameId, 10),
+        null, // no file content - just update metadata
+        false
+      );
+
+      setUpdateOutput(JSON.stringify(result, null, 2));
+      setUpdateStatus('success');
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Request failed. See logs.';
+      setUpdateError(message);
+
+      if (err instanceof HmisError && err.data) {
+        setUpdateOutput(JSON.stringify(err.data, null, 2));
+      }
+
+      setUpdateStatus('error');
+    }
+  }, [
+    updateClientId,
+    updateFileId,
+    updateCategoryId,
+    updateFileNameId,
+    updateClientFile,
+  ]);
+
+  const clearUpdateOutput = useCallback(() => {
+    setUpdateOutput('');
+    setUpdateError(null);
+    setUpdateStatus('idle');
+  }, []);
+
   const handlePhotoUpload = useCallback(
     async (file: ReactNativeFile) => {
       if (!photoClientId.trim()) {
@@ -427,6 +489,7 @@ export default function HmisRestDebug() {
   const hasFileNamesOutput = fileNamesOutput.trim().length > 0;
   const hasFilesOutput = filesOutput.trim().length > 0;
   const hasDeleteOutput = deleteOutput.trim().length > 0;
+  const hasUpdateOutput = updateOutput.trim().length > 0;
   const hasPhotoOutput = photoOutput.trim().length > 0;
   const hasCropOutput = cropOutput.trim().length > 0;
 
@@ -487,6 +550,13 @@ export default function HmisRestDebug() {
               isActive={activeSection === 'clientFiles'}
               onPress={() => setActiveSection('clientFiles')}
             />
+            <TabButton
+              label="Update File"
+              isActive={activeSection === 'updateFile'}
+              onPress={() => setActiveSection('updateFile')}
+            />
+          </View>
+          <View style={styles.tabRow}>
             <TabButton
               label="Delete File"
               isActive={activeSection === 'deleteFile'}
@@ -1029,6 +1099,122 @@ export default function HmisRestDebug() {
                 >
                   {hasDeleteOutput
                     ? deleteOutput
+                    : 'No response yet. Run the request to see JSON or text output.'}
+                </TextRegular>
+              </View>
+            </View>
+          </>
+        )}
+
+        {/* Update File Section */}
+        {activeSection === 'updateFile' && (
+          <>
+            <View style={styles.card}>
+              <TextMedium>Request</TextMedium>
+              <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
+                Updates a file's category and file name references. Send just
+                the metadata to update fields only, or include file content to
+                re-upload the file.
+              </TextRegular>
+
+              <View style={styles.row}>
+                <View style={styles.halfInput}>
+                  <BasicInput
+                    label="Client ID"
+                    placeholder="404"
+                    value={updateClientId}
+                    onChangeText={setUpdateClientId}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+                <View style={styles.halfInput}>
+                  <BasicInput
+                    label="File ID"
+                    placeholder="42"
+                    value={updateFileId}
+                    onChangeText={setUpdateFileId}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.row}>
+                <View style={styles.halfInput}>
+                  <BasicInput
+                    label="New Category ID"
+                    placeholder="12"
+                    value={updateCategoryId}
+                    onChangeText={setUpdateCategoryId}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+                <View style={styles.halfInput}>
+                  <BasicInput
+                    label="New File Name ID"
+                    placeholder="89"
+                    value={updateFileNameId}
+                    onChangeText={setUpdateFileNameId}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+              </View>
+
+              <Button
+                title={updateStatus === 'loading' ? 'Updating…' : 'Update file'}
+                variant="primary"
+                onPress={handleUpdateFile}
+                loading={updateStatus === 'loading'}
+                accessibilityHint="Calls HMIS PUT endpoint to update the file"
+                size="full"
+              />
+
+              <Button
+                title="Clear output"
+                variant="secondary"
+                onPress={clearUpdateOutput}
+                accessibilityHint="Reset the displayed response and status"
+                size="full"
+                mt="xs"
+                disabled={
+                  updateStatus === 'loading' && !hasUpdateOutput && !updateError
+                }
+              />
+
+              <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
+                Sends POST request to /clients/
+                {updateClientId || '{clientId}'}/client-files/
+                {updateFileId || '{fileId}'} with updated metadata (and optional
+                file content)
+              </TextRegular>
+            </View>
+
+            <View style={styles.card}>
+              <View style={styles.statusRow}>
+                <TextMedium>Status</TextMedium>
+                <TextRegular color={STATUS_COLOR[updateStatus]}>
+                  {STATUS_LABEL[updateStatus]}
+                </TextRegular>
+              </View>
+
+              {updateError && (
+                <TextRegular color={Colors.ERROR_DARK} size="sm">
+                  {updateError}
+                </TextRegular>
+              )}
+
+              <View style={styles.output}>
+                <TextRegular
+                  selectable
+                  size="xs"
+                  color={Colors.PRIMARY_EXTRA_DARK}
+                  style={styles.code}
+                >
+                  {hasUpdateOutput
+                    ? updateOutput
                     : 'No response yet. Run the request to see JSON or text output.'}
                 </TextRegular>
               </View>
