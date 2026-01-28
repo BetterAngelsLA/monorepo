@@ -1,5 +1,6 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { format } from 'date-fns';
 import { useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -30,18 +31,12 @@ export default function HmisFileInfoScreen(props: HmisFileInfoProps) {
     >
       <View style={styles.fileContainer}>
         <TextBold size="lg">{label || `Document ${id}`}</TextBold>
-
-        {!!createdAt && (
-          <>
-            <TextBold size="sm">Uploaded</TextBold>
-            <TextRegular size="sm">{createdAt}</TextRegular>
-          </>
-        )}
       </View>
-      <TextRegular textAlign="right" size="sm">
-        Uploaded on MM/dd/yyyy
-        {/* Uploaded on {format(new Date(createdAt), 'MM/dd/yyyy')} */}
-      </TextRegular>
+      {!!createdAt && (
+        <TextRegular textAlign="right" size="sm">
+          Uploaded on {format(new Date(createdAt), 'MM/dd/yyyy')}
+        </TextRegular>
+      )}
     </View>
   );
 }

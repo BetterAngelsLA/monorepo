@@ -83,7 +83,7 @@ export default function HmisDocuments(props: HmisDocumentsProps) {
           {data?.map((file, index) => {
             const filename = getFileLabel(file, index);
             const uri = getFileUri(file);
-            const createdAt = file.file?.added_date ?? '';
+            const createdAt = file.added_date ?? '';
             return (
               <FileCard
                 key={String(file?.id ?? index)}

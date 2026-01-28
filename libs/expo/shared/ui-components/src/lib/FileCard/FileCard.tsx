@@ -1,4 +1,5 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { format } from 'date-fns';
 import { Image } from 'expo-image';
 import { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
@@ -67,9 +68,9 @@ export function FileCard(props: IFileCardProps) {
           {filename}
         </TextRegular>
       </View>
-      {/* <TextRegular ellipsizeMode="tail" size="xs" color={Colors.NEUTRAL_DARK}>
+      <TextRegular ellipsizeMode="tail" size="xs" color={Colors.NEUTRAL_DARK}>
         {format(new Date(createdAt), 'MM/dd/yyyy')}
-      </TextRegular> */}
+      </TextRegular>
     </Pressable>
   );
 }
