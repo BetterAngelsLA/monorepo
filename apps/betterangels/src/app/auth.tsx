@@ -1,12 +1,13 @@
 import { AuthContainer, useUser } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Button } from '@monorepo/expo/shared/ui-components';
+import { clearAllCredentials } from '@monorepo/expo/shared/utils';
 import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
 import * as Updates from 'expo-updates';
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import NitroCookies from 'react-native-nitro-cookies';
+
 import Logo from './assets/images/logo.svg';
 
 const SHARED_BUTTON_PROPS = {
@@ -27,7 +28,7 @@ export default function Auth() {
   // user on 401 errors
   useEffect(() => {
     setUser(undefined);
-    NitroCookies.clearAll();
+    clearAllCredentials();
   }, []);
 
   return (

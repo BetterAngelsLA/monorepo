@@ -29,9 +29,7 @@ export function getDefaultStackModalOptions(
       ...defaultModalNavOpts.modal,
       presentation,
       title: title || '',
-      headerRight: onClose
-        ? () => getModalCloseBtn({ onClose, iconColor: Colors.WHITE })
-        : undefined,
+      headerRight: onClose ? () => getModalCloseBtn({ onClose }) : undefined,
     };
   }
 
@@ -40,9 +38,7 @@ export function getDefaultStackModalOptions(
       ...defaultModalNavOpts.fullScreenModal,
       presentation,
       title: title || '',
-      headerRight: onClose
-        ? () => getModalCloseBtn({ onClose, iconColor: Colors.ERROR })
-        : undefined,
+      headerRight: onClose ? () => getModalCloseBtn({ onClose }) : undefined,
     };
   }
 

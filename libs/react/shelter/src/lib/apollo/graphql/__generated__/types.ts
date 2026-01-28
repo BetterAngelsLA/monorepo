@@ -487,7 +487,6 @@ export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateNoteServiceRequestInput = {
   noteId: Scalars['ID']['input'];
-  serviceEnum?: InputMaybe<ServiceEnum>;
   serviceId?: InputMaybe<Scalars['ID']['input']>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   serviceRequestType: ServiceRequestTypeEnum;
@@ -502,7 +501,6 @@ export type CreateProfileDataImportInput = {
 
 export type CreateServiceRequestInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
-  serviceEnum?: InputMaybe<ServiceEnum>;
   serviceId?: InputMaybe<Scalars['ID']['input']>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   status: ServiceRequestStatusEnum;
@@ -2139,62 +2137,6 @@ export enum SelahTeamEnum {
   WdiOutreach = 'WDI_OUTREACH'
 }
 
-export enum ServiceEnum {
-  Bag = 'BAG',
-  Batteries = 'BATTERIES',
-  Bicycle = 'BICYCLE',
-  BicycleRepair = 'BICYCLE_REPAIR',
-  BirthCertificate = 'BIRTH_CERTIFICATE',
-  Blanket = 'BLANKET',
-  Book = 'BOOK',
-  CaliforniaLifelinePhone = 'CALIFORNIA_LIFELINE_PHONE',
-  Clothes = 'CLOTHES',
-  ConsentToConnect = 'CONSENT_TO_CONNECT',
-  ContactDpss = 'CONTACT_DPSS',
-  ContactFriend = 'CONTACT_FRIEND',
-  Dental = 'DENTAL',
-  DiscountScooterRides = 'DISCOUNT_SCOOTER_RIDES',
-  DmhEvaluation = 'DMH_EVALUATION',
-  DmvNoFeeIdForm = 'DMV_NO_FEE_ID_FORM',
-  Ebt = 'EBT',
-  FamilyReunification = 'FAMILY_REUNIFICATION',
-  FeminineHygiene = 'FEMININE_HYGIENE',
-  FirstAid = 'FIRST_AID',
-  Food = 'FOOD',
-  HarmReduction = 'HARM_REDUCTION',
-  HmisConsent = 'HMIS_CONSENT',
-  HygieneKit = 'HYGIENE_KIT',
-  InternetAccess = 'INTERNET_ACCESS',
-  Lahop = 'LAHOP',
-  LegalCounsel = 'LEGAL_COUNSEL',
-  MailPickUp = 'MAIL_PICK_UP',
-  Medical = 'MEDICAL',
-  MediCal = 'MEDI_CAL',
-  MetroLifeTap = 'METRO_LIFE_TAP',
-  Notary = 'NOTARY',
-  Other = 'OTHER',
-  PetCare = 'PET_CARE',
-  PetFood = 'PET_FOOD',
-  PublicBenefitsPrograms = 'PUBLIC_BENEFITS_PROGRAMS',
-  Ride = 'RIDE',
-  SafeParking = 'SAFE_PARKING',
-  Shelter = 'SHELTER',
-  Shoes = 'SHOES',
-  Shower = 'SHOWER',
-  SleepingBag = 'SLEEPING_BAG',
-  SocialSecurityCardReplacement = 'SOCIAL_SECURITY_CARD_REPLACEMENT',
-  SsiSsdi = 'SSI_SSDI',
-  StimulusAssistance = 'STIMULUS_ASSISTANCE',
-  StorageBelongings = 'STORAGE_BELONGINGS',
-  StorageDocuments = 'STORAGE_DOCUMENTS',
-  Tarp = 'TARP',
-  Tent = 'TENT',
-  TherapistAppointment = 'THERAPIST_APPOINTMENT',
-  UnemploymentCertification = 'UNEMPLOYMENT_CERTIFICATION',
-  VaccinePassport = 'VACCINE_PASSPORT',
-  Water = 'WATER'
-}
-
 export enum ServiceRequestStatusEnum {
   Completed = 'COMPLETED',
   ToDo = 'TO_DO'
@@ -2209,8 +2151,6 @@ export type ServiceRequestType = {
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   service?: Maybe<OrganizationServiceType>;
-  serviceEnum?: Maybe<ServiceEnum>;
-  serviceOther?: Maybe<Scalars['String']['output']>;
   status: ServiceRequestStatusEnum;
 };
 

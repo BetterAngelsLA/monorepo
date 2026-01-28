@@ -1,0 +1,1 @@
+export { toErrorLike } from './toErrorLike';

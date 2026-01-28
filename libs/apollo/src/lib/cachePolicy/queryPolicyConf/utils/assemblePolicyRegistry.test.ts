@@ -17,16 +17,37 @@ describe('assemblePolicyRegistry', () => {
     });
   });
 
-  it('logs a warning for duplicate keys in non-production', () => {
+  it('logs a warning for duplicate keys in dev-env', () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(vi.fn());
 
-    assemblePolicyRegistry([
-      { key: 'dup', buildFn: () => ({ one: 1 }) },
-      { key: 'dup', buildFn: () => ({ two: 2 }) },
-    ] as const);
+    assemblePolicyRegistry(
+      [
+        { key: 'dup', buildFn: () => ({ one: 1 }) },
+        { key: 'dup', buildFn: () => ({ two: 2 }) },
+      ] as const,
+      {
+        isDevEnv: true,
+      }
+    );
 
     expect(spy).toHaveBeenCalledWith(
       '[apollo assemblePolicyRegistry] Duplicate key "dup" – later one will override.'
     );
+  });
+
+  it('dos not log a warning for duplicate keys in non dev-env', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(vi.fn());
+
+    assemblePolicyRegistry(
+      [
+        { key: 'dup', buildFn: () => ({ one: 1 }) },
+        { key: 'dup', buildFn: () => ({ two: 2 }) },
+      ] as const,
+      {
+        isDevEnv: false,
+      }
+    );
+
+    expect(spy).not.toHaveBeenCalled();
   });
 });
