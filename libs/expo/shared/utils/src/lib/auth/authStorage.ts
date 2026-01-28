@@ -24,31 +24,20 @@ class AuthStorage {
   }
 
   private async initStorage(): Promise<void> {
-    try {
-      let key = await SecureStore.getItemAsync(
-        NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE
+    let key = await SecureStore.getItemAsync(
+      NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE
+    );
+    if (!key) {
+      key = Crypto.randomUUID();
+      await SecureStore.setItemAsync(
+        NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE,
+        key
       );
-      if (!key) {
-        key = Crypto.randomUUID();
-        await SecureStore.setItemAsync(
-          NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE,
-          key
-        );
-      }
-      this.storage = createPersistentSynchronousStorage({
-        scopeId: AUTH_STORAGE_SCOPE_ID,
-        encryptionKey: key,
-      });
-    } catch (error) {
-      __DEV__ &&
-        console.warn(
-          '[AuthStorage] Encryption failed, using unencrypted:',
-          error
-        );
-      this.storage = createPersistentSynchronousStorage({
-        scopeId: AUTH_STORAGE_SCOPE_ID,
-      });
     }
+    this.storage = createPersistentSynchronousStorage({
+      scopeId: AUTH_STORAGE_SCOPE_ID,
+      encryptionKey: key,
+    });
   }
 
   getCookieValue(envKey: string, name: string): string | null {
