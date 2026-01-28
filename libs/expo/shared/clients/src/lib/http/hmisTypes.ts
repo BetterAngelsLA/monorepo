@@ -155,6 +155,35 @@ export interface FileCategory {
 }
 
 /**
+ * File name item
+ */
+export interface FileName {
+  id: number;
+  name: string;
+  ref_category: number;
+  status: number;
+}
+
+/**
+ * File names list response
+ */
+export interface FileNamesResponse {
+  items: FileName[];
+  _meta: {
+    current_page: number;
+    per_page: number;
+    page_count: number;
+    total_count: number;
+  };
+  _links: {
+    self: { href: string };
+    first: { href: string };
+    last: { href: string };
+    next?: { href: string };
+  };
+}
+
+/**
  * File categories list response
  */
 export interface FileCategoriesResponse {

@@ -3,7 +3,8 @@ import type {
   ClientFileUploadResponse,
   ClientFilesListParams,
   ClientFilesResponse,
-  FileCategory,
+  FileCategoriesResponse,
+  FileNamesResponse,
   HmisCurrentUser,
 } from '@monorepo/expo/shared/clients';
 import { hmisClient } from '@monorepo/expo/shared/clients';
@@ -139,8 +140,12 @@ export const useHmisClient = () => {
     },
     []
   );
-  const getFileCategories = useCallback((): Promise<FileCategory[]> => {
+  const getFileCategories = useCallback((): Promise<FileCategoriesResponse> => {
     return hmisClient.getFileCategories();
+  }, []);
+
+  const getFileNames = useCallback((): Promise<FileNamesResponse> => {
+    return hmisClient.getFileNames();
   }, []);
 
   /**
@@ -161,6 +166,7 @@ export const useHmisClient = () => {
     getCurrentUser,
     uploadClientFile,
     getFileCategories,
+    getFileNames,
     getClientFiles,
     deleteClientFile,
   };

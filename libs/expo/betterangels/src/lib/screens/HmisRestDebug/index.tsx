@@ -42,6 +42,7 @@ export default function HmisRestDebug() {
     getCurrentUser,
     uploadClientFile,
     getFileCategories,
+    getFileNames,
     getClientFiles,
     deleteClientFile,
     hmisClient,
@@ -196,8 +197,8 @@ export default function HmisRestDebug() {
     setCategoriesOutput('');
 
     try {
-      const result = await hmisClient.get('/client-file-categories');
-      setCategoriesOutput(JSON.stringify(result, null, 2));
+      const categories = await getFileCategories();
+      setCategoriesOutput(JSON.stringify(categories, null, 2));
       setCategoriesStatus('success');
     } catch (err) {
       const message =
@@ -210,7 +211,7 @@ export default function HmisRestDebug() {
 
       setCategoriesStatus('error');
     }
-  }, [hmisClient]);
+  }, [getFileCategories]);
 
   const clearCategoriesOutput = useCallback(() => {
     setCategoriesOutput('');
@@ -224,7 +225,7 @@ export default function HmisRestDebug() {
     setFileNamesOutput('');
 
     try {
-      const result = await hmisClient.get('/client-file-names');
+      const result = await getFileNames();
       setFileNamesOutput(JSON.stringify(result, null, 2));
       setFileNamesStatus('success');
     } catch (err) {
@@ -238,7 +239,7 @@ export default function HmisRestDebug() {
 
       setFileNamesStatus('error');
     }
-  }, [hmisClient]);
+  }, [getFileNames]);
 
   const clearFileNamesOutput = useCallback(() => {
     setFileNamesOutput('');
@@ -343,8 +344,7 @@ export default function HmisRestDebug() {
 
         // Create FormData with the correct field name expected by the API
         const formData = new FormData();
-        formData.append('FileForm[uploadedFile]', file as any);
-
+      formData.append('FileForm[uploadedFile]', file as unknown as Blob);
         // POST /clients/:clientId/photo/upload
         // Expected: multipart/form-data with FileForm[uploadedFile] field containing actual file
         const result = await hmisClient.postMultipart(endpoint, formData);

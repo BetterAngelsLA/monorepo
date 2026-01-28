@@ -7,8 +7,8 @@ import {
   ClientFileUploadResponse,
   ClientFilesListParams,
   ClientFilesResponse,
-  FileCategory,
   FileCategoriesResponse,
+  FileNamesResponse,
   HmisError,
   HmisRequestOptions,
 } from './hmisTypes';
@@ -278,23 +278,40 @@ class HmisClient {
    * Fetches the list of file categories that can be assigned when uploading
    * files for a client.
    *
-   * @returns Promise with list of available file categories
+   * @returns Promise with paginated file categories response
    * @throws HmisError if the request fails
    *
    * @example
    * ```typescript
-   * const categories = await hmisClient.getFileCategories();
-   * categories.forEach(cat => {
+   * const response = await hmisClient.getFileCategories();
+   * response.items.forEach(cat => {
    *   console.log(`${cat.id}: ${cat.name}`);
    * });
    * ```
    */
-  async getFileCategories(): Promise<FileCategory[]> {
-    const response = await this.get<FileCategoriesResponse>(
-      '/client-file-categories'
-    );
+  async getFileCategories(): Promise<FileCategoriesResponse> {
+    return this.get<FileCategoriesResponse>('/client-file-categories');
+  }
 
-    return response.items;
+  /**
+   * Get available file names for uploads
+   *
+   * Fetches the list of file names that can be assigned when uploading
+   * files for a client.
+   *
+   * @returns Promise with paginated file names response
+   * @throws HmisError if the request fails
+   *
+   * @example
+   * ```typescript
+   * const response = await hmisClient.getFileNames();
+   * response.items.forEach(name => {
+   *   console.log(`${name.id}: ${name.name}`);
+   * });
+   * ```
+   */
+  async getFileNames(): Promise<FileNamesResponse> {
+    return this.get<FileNamesResponse>('/client-file-names');
   }
 
   /**
