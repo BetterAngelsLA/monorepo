@@ -68,6 +68,7 @@ cache/
 !.yarn/versions
 
 apps/betterangels-e2e/artifacts
+apps/betterangels/ios/
 
 # Python
 __pycache__
