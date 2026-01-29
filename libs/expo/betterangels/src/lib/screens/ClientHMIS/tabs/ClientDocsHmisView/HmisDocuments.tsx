@@ -5,6 +5,7 @@ import { Accordion, FileCard } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { View } from 'react-native';
+import { setHmisFilePreview } from '../../../HmisFileInfo/hmisFilePreviewCache';
 import { FileThumbnail } from '../../../../ui-components';
 
 function getMimeTypeFromFilename(filename: string): string {
@@ -32,15 +33,29 @@ function getFileLabel(file: ClientFile, fileNames: FileName[]): string {
   return file.file?.filename || `Document ${file.id}`;
 }
 
-function getFileUri(file: ClientFile, mimeType: string): string {
-  const raw =
-    file.file?.encodedThumbnailFileContent ??
-    file.file?.encodedPreviewFileContent ??
-    '';
+function toDataUri(raw: string, mimeType: string): string {
   if (!raw) return '';
   if (raw.startsWith('data:')) return raw;
   const encoded = raw.trim().replace(/\s/g, '');
   return `data:${mimeType};base64,${encoded}`;
+}
+
+/** Thumbnail for list/card (prefers smaller thumbnail, then preview). */
+function getFileThumbnail(file: ClientFile, mimeType: string): string {
+  const raw =
+    file.file?.encodedThumbnailFileContent ??
+    file.file?.encodedPreviewFileContent ??
+    '';
+  return toDataUri(raw, mimeType);
+}
+
+/** Preview for file info screen (prefers larger preview, then thumbnail). */
+function getFilePreview(file: ClientFile, mimeType: string): string {
+  const raw =
+    file.file?.encodedPreviewFileContent ??
+    file.file?.encodedThumbnailFileContent ??
+    '';
+  return toDataUri(raw, mimeType);
 }
 
 export interface HmisDocumentsProps {
@@ -58,7 +73,14 @@ export default function HmisDocuments(props: HmisDocumentsProps) {
   const isExpanded = expanded === accordionKey;
 
   const handleFilePress = useCallback(
-    (file: ClientFile, filename: string, createdAt: string) => {
+    (
+      file: ClientFile,
+      filename: string,
+      createdAt: string,
+      uri: string,
+      mimeType: string
+    ) => {
+      setHmisFilePreview(String(file.id), { uri, mimeType });
       router.navigate({
         pathname: `/hmis-file/${file.id}`,
         params: {
@@ -95,23 +117,31 @@ export default function HmisDocuments(props: HmisDocumentsProps) {
           {data?.map((file, idx) => {
             const filename = getFileLabel(file, fileNames);
             const mimeType = getMimeTypeFromFilename(filename);
-            // Thumbnail/preview from API is always an image; use image mime so FileThumbnail renders it
             const thumbnailMimeType = mimeType.startsWith('image')
               ? mimeType
               : 'image/jpeg';
-            const uri = getFileUri(file, thumbnailMimeType);
+            const thumbnailUri = getFileThumbnail(file, thumbnailMimeType);
+            const previewUri = getFilePreview(file, thumbnailMimeType);
             const createdAt = file.file?.added_date ?? '';
             return (
               <FileCard
                 key={String(file?.id ?? idx)}
                 filename={filename}
-                url={uri || ''}
-                onPress={() => handleFilePress(file, filename, createdAt)}
+                url={thumbnailUri || ''}
+                onPress={() =>
+                  handleFilePress(
+                    file,
+                    filename,
+                    createdAt,
+                    previewUri,
+                    previewUri ? thumbnailMimeType : mimeType
+                  )
+                }
                 createdAt={createdAt}
                 thumbnail={
                   <FileThumbnail
-                    uri={uri}
-                    mimeType={uri ? thumbnailMimeType : mimeType}
+                    uri={thumbnailUri}
+                    mimeType={thumbnailUri ? thumbnailMimeType : mimeType}
                     borderRadius={Radiuses.xxxs}
                     thumbnailSize={{
                       width: 36,
