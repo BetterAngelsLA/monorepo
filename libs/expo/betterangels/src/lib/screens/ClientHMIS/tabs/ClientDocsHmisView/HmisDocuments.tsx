@@ -3,17 +3,14 @@ import { FolderIcon, FolderOpenIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Accordion, FileCard } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
+import mime from 'mime';
 import { useCallback } from 'react';
 import { View } from 'react-native';
 import { setHmisFilePreview } from '../../../HmisFileInfo/hmisFilePreviewCache';
 import { FileThumbnail } from '../../../../ui-components';
 
 function getMimeTypeFromFilename(filename: string): string {
-  const ext = filename.split('.').pop()?.toLowerCase() ?? '';
-  if (['pdf'].includes(ext)) return 'application/pdf';
-  if (['jpg', 'jpeg', 'png', 'gif', 'heic', 'tiff'].includes(ext))
-    return `image/${ext === 'jpg' ? 'jpeg' : ext}`;
-  return 'application/octet-stream';
+  return mime.getType(filename) ?? 'application/octet-stream';
 }
 
 function getFileLabel(file: ClientFile, fileNames: FileName[]): string {

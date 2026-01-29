@@ -105,7 +105,8 @@
     "set-cookie-parser": "*",
     "@types/set-cookie-parser": "*",
     "jwt-decode": "*",
-    "@tanstack/react-query": "*"
+    "@tanstack/react-query": "*",
+    "mime": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",
