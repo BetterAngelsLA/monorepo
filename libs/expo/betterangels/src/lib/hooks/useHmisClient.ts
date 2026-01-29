@@ -4,7 +4,6 @@ import type {
   ClientFilesListParams,
   ClientFilesResponse,
   FileCategoriesResponse,
-  FileNamesListParams,
   FileNamesResponse,
   HmisCurrentUser,
 } from '@monorepo/expo/shared/clients';
@@ -199,117 +198,10 @@ export const useHmisClient = () => {
   );
 
   /**
-   * Upload a file for a client
-   *
-   * @param clientId - Client ID (internal numeric or external string like '68998C256')
-   * @param file - File object with base64 content, name, and mimeType
-   * @param categoryId - File category ID in HMIS
-   * @param fileNameId - File name ID from HMIS
-   * @param isPrivate - Whether the file should be private (optional, defaults to null)
-   * @returns Upload response with file metadata
-   */
-  const uploadClientFile = useCallback(
-    (
-      clientId: string | number,
-      file: {
-        content: string;
-        name: string;
-        mimeType: AllowedFileType;
-      },
-      categoryId: number,
-      fileNameId: number,
-      isPrivate?: boolean | null
-    ): Promise<ClientFileUploadResponse> => {
-      return hmisClient.uploadClientFile(
-        clientId,
-        file,
-        categoryId,
-        fileNameId,
-        isPrivate
-      );
-    },
-    []
-  );
-
-  /**
    * Get available file categories for uploads
    *
    * @returns Array of available file categories
    */
-
-  /**
-   * List files for a specific client
-   *
-   * @param clientId - Client ID
-   * @param params - Query parameters for filtering, sorting, pagination
-   * @returns Paginated list of client files
-   */
-  const getClientFiles = useCallback(
-    (
-      clientId: string | number,
-      params?: ClientFilesListParams
-    ): Promise<ClientFilesResponse> => {
-      return hmisClient.getClientFiles(clientId, params);
-    },
-    []
-  );
-  const getFileCategories = useCallback((): Promise<FileCategoriesResponse> => {
-    return hmisClient.getFileCategories();
-  }, []);
-
-  const getFileNames = useCallback(
-    (params?: FileNamesListParams): Promise<FileNamesResponse> => {
-      return hmisClient.getFileNames(params);
-    },
-    []
-  );
-
-  /**
-   * Update a client file's metadata (category and file name)
-   *
-   * Optionally can re-upload the file content. If file is omitted, only
-   * metadata is updated.
-   *
-   * @param clientId - Client ID
-   * @param fileId - File ID to update
-   * @param categoryId - New category ID
-   * @param fileNameId - New file name ID
-   * @param file - Optional file object {content, name, mimeType}
-   * @param isPrivate - Optional private flag
-   */
-  const updateClientFile = useCallback(
-    (
-      clientId: string | number,
-      fileId: number,
-      categoryId: number,
-      fileNameId: number,
-      file?: { content: string; name: string; mimeType: string } | null,
-      isPrivate?: boolean | null
-    ): Promise<ClientFileUploadResponse> => {
-      return hmisClient.updateClientFile(
-        clientId,
-        fileId,
-        categoryId,
-        fileNameId,
-        file,
-        isPrivate
-      );
-    },
-    []
-  );
-
-  /**
-   * Delete a client file
-   *
-   * @param clientId - Client ID
-   * @param fileId - File ID to delete
-   */
-  const deleteClientFile = useCallback(
-    (clientId: string | number, fileId: string | number): Promise<void> => {
-      return hmisClient.deleteClientFile(clientId, fileId);
-    },
-    []
-  );
 
   return {
     hmisClient,
