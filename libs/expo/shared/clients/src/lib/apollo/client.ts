@@ -21,7 +21,7 @@ export const createApolloClient = (args: TArgs) => {
 
   const uploadHttpLink = new UploadHttpLink({
     uri: `${apiUrl}/graphql`,
-    credentials: Platform.OS === 'web' ? 'include' : 'omit',
+    credentials: 'include',
     isExtractableFile: isReactNativeFileInstance,
     ...(nativeFetch ? { fetch: nativeFetch } : {}),
   });
