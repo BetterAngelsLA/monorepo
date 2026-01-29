@@ -8,6 +8,7 @@ import {
   ClientFilesListParams,
   ClientFilesResponse,
   FileCategoriesResponse,
+  FileName,
   FileNamesListParams,
   FileNamesResponse,
   HmisError,
@@ -398,6 +399,28 @@ class HmisClient {
     if (params?.fields) queryParams['fields'] = params.fields;
 
     return this.get<FileNamesResponse>('/client-file-names', queryParams);
+  }
+
+  /**
+   * Fetch all file names across all pages (API limits per_page to 50).
+   * Use when you need the full list for lookups (e.g. matching ref_file_name).
+   */
+  async getAllFileNames(): Promise<FileName[]> {
+    const PER_PAGE = 50;
+    const all: FileName[] = [];
+    let page = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+      const res = await this.getFileNames({ per_page: PER_PAGE, page });
+      all.push(...(res.items ?? []));
+      const meta = res._meta;
+      hasMore =
+        meta && meta.current_page < meta.page_count && res.items?.length === PER_PAGE;
+      page += 1;
+    }
+
+    return all;
   }
 
   /**

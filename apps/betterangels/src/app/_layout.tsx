@@ -17,6 +17,7 @@ import {
   ApiConfigProvider,
   ApolloClientProvider,
 } from '@monorepo/expo/shared/clients';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
@@ -34,6 +35,8 @@ initApolloRuntimeConfig({
 });
 
 const baApolloTypePolicies = createBaTypePolicies(isDevEnv);
+
+const queryClient = new QueryClient();
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -58,15 +61,17 @@ export default function RootLayout() {
                 <KeyboardToolbarProvider>
                   <SnackbarProvider>
                     <UserProvider>
-                      <BlockingScreenProvider>
-                        <ModalScreenProvider>
-                          <AppUpdatePrompt />
-                          <StatusBar
-                            style={Platform.OS === 'ios' ? 'light' : 'auto'}
-                          />
-                          <AppRoutesStack />
-                        </ModalScreenProvider>
-                      </BlockingScreenProvider>
+                      <QueryClientProvider client={queryClient}>
+                        <BlockingScreenProvider>
+                          <ModalScreenProvider>
+                            <AppUpdatePrompt />
+                            <StatusBar
+                              style={Platform.OS === 'ios' ? 'light' : 'auto'}
+                            />
+                            <AppRoutesStack />
+                          </ModalScreenProvider>
+                        </BlockingScreenProvider>
+                      </QueryClientProvider>
                     </UserProvider>
                   </SnackbarProvider>
                 </KeyboardToolbarProvider>
