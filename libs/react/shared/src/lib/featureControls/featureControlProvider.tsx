@@ -1,39 +1,24 @@
-import { gql } from '@apollo/client';
-import { useQuery } from '@apollo/client/react';
-import { useEffect, useMemo, useState } from 'react';
-import { FeatureControlContext } from './featureControlContext';
+import { useQuery, useApolloClient } from '@apollo/client/react';
+import { useEffect, useState } from 'react';
 import {
+  FeatureControlContext,
   FeatureControlDictionary,
   FeatureControlGroups,
-  FeatureControlsQuery,
-  FeatureControlItem,
-} from './interfaces';
-
-const GET_FEATURE_CONTROLS = gql`
-  query GetFeatureControls {
-    featureControls {
-      flags {
-        name
-        isActive
-        lastModified
-      }
-      switches {
-        name
-        isActive
-        lastModified
-      }
-      samples {
-        name
-        isActive
-        lastModified
-      }
-    }
-  }
-`;
+} from './featureControlContext';
+import {
+  GetFeatureControlsDocument,
+  GetFeatureControlsQuery,
+} from './__generated__/featureControlProvider.generated';
 
 interface FeatureControlProviderProps {
   children: React.ReactNode;
 }
+
+type FeatureControlItem = {
+  name: string;
+  isActive?: boolean | null;
+  lastModified?: any | null;
+};
 
 const toDictionary = (items: FeatureControlItem[]): FeatureControlDictionary =>
   items.reduce((acc, item) => {
@@ -54,19 +39,17 @@ export const FeatureControlProvider = ({
       samples: {},
     });
 
-  const { data, refetch } = useQuery<FeatureControlsQuery>(
-    GET_FEATURE_CONTROLS,
+  const client = useApolloClient();
+  const { data, refetch, loading, error } = useQuery<GetFeatureControlsQuery>(
+    GetFeatureControlsDocument,
     {
       fetchPolicy: 'network-only',
     }
   );
 
   const clearFeatureFlags = () => {
-    setFeatureControlGroups({
-      flags: {},
-      switches: {},
-      samples: {},
-    });
+    client.cache.evict({ fieldName: 'featureControls' });
+    client.cache.gc();
   };
 
   useEffect(() => {
@@ -76,20 +59,15 @@ export const FeatureControlProvider = ({
         switches: toDictionary(data.featureControls.switches),
         samples: toDictionary(data.featureControls.samples),
       });
-    } else {
-      clearFeatureFlags();
     }
   }, [data]);
-
-  const memoizedControlGroups = useMemo(
-    () => featureControlGroups,
-    [featureControlGroups]
-  );
 
   return (
     <FeatureControlContext.Provider
       value={{
-        ...memoizedControlGroups,
+        ...featureControlGroups,
+        loading,
+        error,
         refetchFeatureFlags: refetch,
         clearFeatureFlags,
       }}

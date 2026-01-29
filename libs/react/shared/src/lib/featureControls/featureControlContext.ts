@@ -1,12 +1,22 @@
-import { ApolloQueryResult } from '@apollo/client';
 import { createContext, useContext } from 'react';
-import { FeatureControlGroups, FeatureControlsQuery } from './interfaces';
+import type { QueryResult } from '@apollo/client/react';
+import type { GetFeatureControlsQuery } from './__generated__/featureControlProvider.generated';
+
+export type FeatureControlDictionary = {
+  [key: string]: { isActive: boolean; lastModified?: string | null };
+};
+
+export interface FeatureControlGroups {
+  flags: FeatureControlDictionary;
+  switches: FeatureControlDictionary;
+  samples: FeatureControlDictionary;
+}
 
 export interface TFeatureControlContext extends FeatureControlGroups {
+  loading: boolean;
+  error: Error | undefined;
   clearFeatureFlags: () => void;
-  refetchFeatureFlags: (
-    variables?: Record<string, unknown>
-  ) => Promise<ApolloQueryResult<FeatureControlsQuery>>;
+  refetchFeatureFlags: QueryResult<GetFeatureControlsQuery>['refetch'];
 }
 
 export const FeatureControlContext = createContext<
