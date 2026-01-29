@@ -18,9 +18,7 @@
         "cwd": "libs/react/shared",
         "command": "graphql-codegen --config codegen.ts"
       },
-      "outputs": [
-        "{workspaceRoot}/libs/react/shared/src/lib/**/__generated__/"
-      ]
+      "outputs": ["{workspaceRoot}/libs/react/shared/src/lib/**/__generated__/"]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
