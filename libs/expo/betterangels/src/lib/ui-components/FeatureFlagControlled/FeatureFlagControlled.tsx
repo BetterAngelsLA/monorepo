@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
-import { useFeatureFlagActive } from '../../hooks';
-import { TFeatureFlagValue } from '../../providers';
+import { useFeatureFlagActive } from '@monorepo/react/shared';
+
+type TFeatureFlagValue = string;
 
 type TProps = {
   flag: TFeatureFlagValue;

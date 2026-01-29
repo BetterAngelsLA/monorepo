@@ -1,38 +1,44 @@
 import { OperatorApp } from '@monorepo/react/shelter-operator';
-import { Link, RouteObject } from 'react-router-dom';
+import { Link, Route, RouteObject } from 'react-router-dom';
 import { Policy } from '../pages/Policy';
 import Gallery from '../pages/gallery/gallery';
 import { Home } from '../pages/home/home';
 import Shelter from '../pages/shelter/shelter';
+import {
+  operatorPath,
+  privacyPolicyPath,
+  shelterDetailsPath,
+  shelterGalleryPath,
+  shelterHomePath,
+} from './routePaths';
 
-export const routeChildren: RouteObject[] = [
-  {
-    path: '/',
-    element: <Home />,
-  },
-  {
-    path: '/shelter/:id',
-    element: <Shelter />,
-  },
-  {
-    path: '/shelter/:id/gallery',
-    element: <Gallery />,
-  },
-  {
-    path: '/privacy-policy',
-    element: <Policy />,
-  },
-  {
-    path: '/operator/*',
-    element: <OperatorApp />,
-  },
-  {
-    path: '/page-2',
-    element: (
-      <div>
-        <div>PAGE 2</div>
-        <Link to="/">go to home page</Link>
-      </div>
-    ),
-  },
-];
+export const buildRouteChildren = (): RouteObject[] => {
+  return [
+    {
+      path: shelterHomePath,
+      element: <Home />,
+    },
+    {
+      path: shelterDetailsPath,
+      element: <Shelter />,
+    },
+    {
+      path: shelterGalleryPath,
+      element: <Gallery />,
+    },
+    {
+      path: privacyPolicyPath,
+      element: <Policy />,
+    },
+    {
+      path: `${operatorPath}/*`,
+      element: <OperatorApp />,
+    },
+  ];
+};
+
+export const useRouteChildren = () => {
+  return buildRouteChildren().map((route) => (
+    <Route key={route.path} path={route.path} element={route.element} />
+  ));
+};

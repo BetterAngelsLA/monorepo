@@ -1,20 +1,41 @@
+import { gql } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import { useEffect, useMemo, useState } from 'react';
-import { GetFeatureControlsDocument } from './__generated__/featureControls.generated';
 import { FeatureControlContext } from './featureControlContext';
-import { FeatureControlDictionary, FeatureControlGroups } from './interfaces';
+import {
+  FeatureControlDictionary,
+  FeatureControlGroups,
+  FeatureControlsQuery,
+  FeatureControlItem,
+} from './interfaces';
+
+const GET_FEATURE_CONTROLS = gql`
+  query GetFeatureControls {
+    featureControls {
+      flags {
+        name
+        isActive
+        lastModified
+      }
+      switches {
+        name
+        isActive
+        lastModified
+      }
+      samples {
+        name
+        isActive
+        lastModified
+      }
+    }
+  }
+`;
 
 interface FeatureControlProviderProps {
   children: React.ReactNode;
 }
 
-const toDictionary = (
-  items: Array<{
-    isActive?: boolean | null;
-    lastModified?: string | null;
-    name: string;
-  }>
-): FeatureControlDictionary =>
+const toDictionary = (items: FeatureControlItem[]): FeatureControlDictionary =>
   items.reduce((acc, item) => {
     acc[item.name] = {
       isActive: item.isActive ?? false,
@@ -33,7 +54,12 @@ export const FeatureControlProvider = ({
       samples: {},
     });
 
-  const { data, refetch } = useQuery(GetFeatureControlsDocument);
+  const { data, refetch } = useQuery<FeatureControlsQuery>(
+    GET_FEATURE_CONTROLS,
+    {
+      fetchPolicy: 'network-only',
+    }
+  );
 
   const clearFeatureFlags = () => {
     setFeatureControlGroups({
@@ -51,12 +77,6 @@ export const FeatureControlProvider = ({
         samples: toDictionary(data.featureControls.samples),
       });
     } else {
-      /*
-      Clears existing flags if data is null. Consider retaining the last known state to
-      avoid frequent toggling between default and active flags, especially during connectivity
-      issues, to prevent flickering. This will be important when we integrate incremental refresh later.
-      */
-
       clearFeatureFlags();
     }
   }, [data]);

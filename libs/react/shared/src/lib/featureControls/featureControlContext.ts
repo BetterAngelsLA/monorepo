@@ -1,16 +1,12 @@
-import { ApolloClient } from '@apollo/client';
+import { ApolloQueryResult } from '@apollo/client';
 import { createContext, useContext } from 'react';
-import {
-  GetFeatureControlsQuery,
-  GetFeatureControlsQueryVariables,
-} from './__generated__/featureControls.generated';
-import { FeatureControlGroups } from './interfaces';
+import { FeatureControlGroups, FeatureControlsQuery } from './interfaces';
 
 export interface TFeatureControlContext extends FeatureControlGroups {
   clearFeatureFlags: () => void;
   refetchFeatureFlags: (
-    variables?: Partial<GetFeatureControlsQueryVariables>
-  ) => Promise<ApolloClient.QueryResult<GetFeatureControlsQuery>>;
+    variables?: Record<string, unknown>
+  ) => Promise<ApolloQueryResult<FeatureControlsQuery>>;
 }
 
 export const FeatureControlContext = createContext<
