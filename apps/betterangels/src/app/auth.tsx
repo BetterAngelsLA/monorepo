@@ -1,7 +1,6 @@
 import { AuthContainer, useUser } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Button } from '@monorepo/expo/shared/ui-components';
-import { authStorage } from '@monorepo/expo/shared/utils';
 import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
 import * as Updates from 'expo-updates';
@@ -23,13 +22,12 @@ export default function Auth() {
   const otaId = Updates.updateId;
   const otaVersion = otaId ? otaId.slice(0, 7) : 'N/A';
 
-  // make sure local user data is cleared when landing on this screen
+  // Clear local user data when landing on this screen
   // apolloProvider has no access to UserProvider so cannot really reset
   // user on 401 errors
   useEffect(() => {
     setUser(undefined);
-    authStorage.clearAllCredentials();
-  }, []);
+  }, [setUser]);
 
   return (
     <AuthContainer header={<Logo width={216} height={33} />}>

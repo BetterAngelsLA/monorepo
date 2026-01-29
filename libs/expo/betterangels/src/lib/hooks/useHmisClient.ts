@@ -42,7 +42,6 @@ import { useCallback, useMemo } from 'react';
  * ```
  */
 export const useHmisClient = () => {
-  // Create HMIS client
   const hmisClient = useMemo(() => createHmisClient(), []);
 
   /**

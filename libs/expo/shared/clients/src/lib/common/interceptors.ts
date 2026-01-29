@@ -9,6 +9,7 @@ import {
   HMIS_AUTH_COOKIE_NAME,
   HMIS_TOKEN_HEADER_NAME,
 } from '@monorepo/expo/shared/utils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import NitroCookies from 'react-native-nitro-cookies';
 import {
   HEADER_NAMES,
@@ -24,6 +25,33 @@ export type FetchInterceptor = (
   init: RequestInit,
   next: (input: RequestInfo | URL, init: RequestInit) => Promise<Response>
 ) => Promise<Response>;
+
+export const HMIS_API_URL_STORAGE_KEY = 'hmis_api_url';
+
+/**
+ * Helper to extract URL string from RequestInfo
+ */
+const getUrl = (input: RequestInfo | URL): string =>
+  typeof input === 'string'
+    ? input
+    : input instanceof URL
+    ? input.href
+    : input.url;
+
+/**
+ * Helper to get HMIS auth token from the stored HMIS domain
+ */
+const getHmisAuthToken = async (): Promise<string | null> => {
+  try {
+    const hmisApiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
+    if (!hmisApiUrl) return null;
+
+    const hmisCookies = await NitroCookies.get(hmisApiUrl);
+    return hmisCookies[HMIS_AUTH_COOKIE_NAME]?.value || null;
+  } catch (error) {
+    return null;
+  }
+};
 
 /**
  * Composes multiple interceptors into a single fetch function
@@ -102,24 +130,19 @@ export const backendAuthInterceptor: FetchInterceptor = async (
   next
 ) => {
   const headers = new Headers(init.headers);
-  const url =
-    typeof input === 'string'
-      ? input
-      : input instanceof URL
-      ? input.href
-      : input.url;
-  const cookiesForUrl = await NitroCookies.get(url);
+  const url = getUrl(input);
 
-  // Add CSRF token header for CSRF protection
+  // Add CSRF token header
+  const cookiesForUrl = await NitroCookies.get(url);
   const csrfCookie = cookiesForUrl[CSRF_COOKIE_NAME];
   if (csrfCookie?.value) {
     headers.set(CSRF_HEADER_NAME, csrfCookie.value);
   }
 
-  // Add HMIS auth_token header if present (for backend GraphQL requests)
-  const hmisAuthCookie = cookiesForUrl[HMIS_AUTH_COOKIE_NAME];
-  if (hmisAuthCookie?.value) {
-    headers.set(HMIS_TOKEN_HEADER_NAME, hmisAuthCookie.value);
+  // Add HMIS token header (retrieved from stored HMIS domain)
+  const hmisToken = await getHmisAuthToken();
+  if (hmisToken) {
+    headers.set(HMIS_TOKEN_HEADER_NAME, hmisToken);
   }
 
   return next(input, { ...init, headers });
@@ -179,17 +202,32 @@ export const storeCookiesInterceptor: FetchInterceptor = async (
   init,
   next
 ) => {
+  const url = getUrl(input);
+
   const response = await next(input, init);
   const setCookie = response.headers.get('set-cookie');
 
   if (setCookie) {
-    const url =
-      typeof input === 'string'
-        ? input
-        : input instanceof URL
-        ? input.href
-        : input.url;
     await NitroCookies.setFromResponse(url, setCookie);
+  }
+
+  return response;
+};
+
+/**
+ * HMIS-specific interceptor that extracts and stores the api_url from HMIS login responses
+ * This url is needed later to retrieve the auth_token cookie from the correct domain
+ */
+export const hmisInterceptor: FetchInterceptor = async (input, init, next) => {
+  const response = await next(input, init);
+  const setCookie = response.headers.get('set-cookie');
+
+  if (setCookie) {
+    const apiUrlMatch = setCookie.match(/api_url=([^;]+)/);
+    if (apiUrlMatch) {
+      const decodedUrl = decodeURIComponent(apiUrlMatch[1]);
+      await AsyncStorage.setItem(HMIS_API_URL_STORAGE_KEY, decodedUrl);
+    }
   }
 
   return response;
