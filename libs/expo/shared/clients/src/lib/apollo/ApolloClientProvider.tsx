@@ -9,9 +9,6 @@ import { createApolloClient } from './client';
  * ApolloClientProvider component that initializes the Apollo Client instance
  * based on the current base URL from the ApiConfigContext.
  * It recreates the Apollo Client when the base URL changes.
- *
- * @param props - The props for the component, including children.
- * @returns A provider component that supplies the Apollo Client to its children.
  */
 
 type TProps = {
@@ -41,10 +38,6 @@ export const ApolloClientProvider = (props: TProps) => {
       authPath,
     });
   }, [baseUrl, cache, onUnauthenticated, authPath]);
-
-  if (!apolloClient) {
-    return null;
-  }
 
   return <ApolloProvider client={apolloClient}>{children}</ApolloProvider>;
 };
