@@ -4,6 +4,8 @@ import type {
   ClientFilesListParams,
   ClientFilesResponse,
   FileCategoriesResponse,
+  FileName,
+  FileNamesListParams,
   FileNamesResponse,
   HmisCurrentUser,
 } from '@monorepo/expo/shared/clients';
@@ -146,9 +148,17 @@ export const useHmisClient = () => {
     return hmisClient.getFileCategories();
   }, [hmisClient]);
 
-  const getFileNames = useCallback((): Promise<FileNamesResponse> => {
-    return hmisClient.getFileNames();
-  }, [hmisClient]);
+  const getFileNames = useCallback(
+    (params?: FileNamesListParams): Promise<FileNamesResponse> => {
+      return hmisClient.getFileNames(params);
+    },
+    [hmisClient]
+  );
+
+  const getAllFileNames = useCallback(
+    (): Promise<FileName[]> => hmisClient.getAllFileNames(),
+    [hmisClient]
+  );
 
   /**
    * Update a client file's metadata (category and file name)
@@ -197,18 +207,13 @@ export const useHmisClient = () => {
     [hmisClient]
   );
 
-  /**
-   * Get available file categories for uploads
-   *
-   * @returns Array of available file categories
-   */
-
   return {
     hmisClient,
     getCurrentUser,
     uploadClientFile,
     getFileCategories,
     getFileNames,
+    getAllFileNames,
     getClientFiles,
     updateClientFile,
     deleteClientFile,
