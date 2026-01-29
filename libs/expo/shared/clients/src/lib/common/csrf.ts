@@ -1,10 +1,7 @@
-import {
-  authStorage,
-  CSRF_COOKIE_NAME,
-  CSRF_LOGIN_PATH,
-} from '@monorepo/expo/shared/utils';
+import { CSRF_COOKIE_NAME, CSRF_LOGIN_PATH } from '@monorepo/expo/shared/utils';
 import { Platform } from 'react-native';
 import { createNativeFetch } from './nativeFetch';
+import NitroCookies from 'react-native-nitro-cookies';
 
 const extractCookieValue = (cookieName: string): string | null => {
   const match = document.cookie.match(new RegExp(`${cookieName}=([^;]+)`));
@@ -15,15 +12,20 @@ const getTokenFromNative = async (
   apiUrl: string,
   csrfUrl: string
 ): Promise<string | null> => {
-  const cached = authStorage.getCookieValue(CSRF_COOKIE_NAME);
+  // Check if we already have a CSRF token
+  const cookies = await NitroCookies.get(apiUrl);
+  const cached = cookies[CSRF_COOKIE_NAME]?.value;
   if (cached) {
     return cached;
   }
 
+  // Fetch CSRF token from server
   const nativeFetch = createNativeFetch(apiUrl);
   await nativeFetch(csrfUrl, { headers: { Accept: 'text/html' } });
 
-  return authStorage.getCookieValue(CSRF_COOKIE_NAME);
+  // Get the newly set token
+  const newCookies = await NitroCookies.get(apiUrl);
+  return newCookies[CSRF_COOKIE_NAME]?.value ?? null;
 };
 
 export const getCSRFToken = async (

@@ -3,13 +3,13 @@
  */
 
 import {
-  authStorage,
   CSRF_COOKIE_NAME,
   CSRF_HEADER_NAME,
   CSRF_LOGIN_PATH,
   HMIS_AUTH_COOKIE_NAME,
   HMIS_TOKEN_HEADER_NAME,
 } from '@monorepo/expo/shared/utils';
+import NitroCookies from 'react-native-nitro-cookies';
 import {
   HEADER_NAMES,
   HEADER_VALUES,
@@ -47,19 +47,6 @@ export const composeFetchInterceptors = (
 // ============================================================================
 // INTERCEPTORS
 // ============================================================================
-
-/**
- * Ensures auth storage is ready before any request
- * This must be the first interceptor in the chain
- */
-export const ensureStorageReadyInterceptor: FetchInterceptor = async (
-  input,
-  init,
-  next
-) => {
-  await authStorage.ensureReady();
-  return next(input, init);
-};
 
 /**
  * Adds User-Agent header for browser compatibility
@@ -106,46 +93,81 @@ export const contentTypeInterceptor: FetchInterceptor = async (
 };
 
 /**
- * Adds backend authentication headers (cookies, CSRF token, HMIS token)
+ * Adds backend authentication headers (CSRF token, HMIS token)
+ * Cookies are automatically handled by nitro-cookies
  */
 export const backendAuthInterceptor: FetchInterceptor = async (
   input,
   init,
   next
 ) => {
-  const { cookieHeader, csrfToken, hmisToken } =
-    authStorage.getCookiesForRequest();
-
   const headers = new Headers(init.headers);
-  if (cookieHeader) headers.set(HEADER_NAMES.COOKIE, cookieHeader);
-  if (csrfToken) headers.set(CSRF_HEADER_NAME, csrfToken);
-  if (hmisToken) headers.set(HMIS_TOKEN_HEADER_NAME, hmisToken);
+  const url =
+    typeof input === 'string'
+      ? input
+      : input instanceof URL
+      ? input.href
+      : input.url;
+  const cookiesForUrl = await NitroCookies.get(url);
+
+  // Add CSRF token header for CSRF protection
+  const csrfCookie = cookiesForUrl[CSRF_COOKIE_NAME];
+  if (csrfCookie?.value) {
+    headers.set(CSRF_HEADER_NAME, csrfCookie.value);
+  }
+
+  // Add HMIS auth_token header if present (for backend GraphQL requests)
+  const hmisAuthCookie = cookiesForUrl[HMIS_AUTH_COOKIE_NAME];
+  if (hmisAuthCookie?.value) {
+    headers.set(HMIS_TOKEN_HEADER_NAME, hmisAuthCookie.value);
+  }
 
   return next(input, { ...init, headers });
 };
 
 /**
- * Ensures CSRF token exists before mutating requests
+ * Helper to fetch fresh CSRF token from Django
+ */
+const fetchFreshCsrf = async (referer: string): Promise<void> => {
+  const csrfResponse = await fetch(
+    `${referer}${CSRF_LOGIN_PATH}?t=${Date.now()}`,
+    {
+      headers: {
+        [HEADER_NAMES.ACCEPT]: HEADER_VALUES.ACCEPT_HTML,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+      },
+      credentials: 'include',
+      cache: 'no-store',
+    }
+  );
+
+  const setCookie = csrfResponse.headers.get('set-cookie');
+  if (setCookie) {
+    await NitroCookies.setFromResponse(referer, setCookie);
+  }
+};
+
+/**
+ * CSRF interceptor that handles Django CSRF protection
+ * Uses retry strategy: attempt request, if 403 fetch CSRF and retry once
  */
 export const createCsrfInterceptor = (referer: string): FetchInterceptor => {
   return async (input, init, next) => {
-    const method = (init.method || 'GET').toUpperCase();
+    let response = await next(input, init);
 
-    if (
-      MUTATING_METHODS.includes(method as (typeof MUTATING_METHODS)[number])
-    ) {
-      const hasCsrf = !!authStorage.getCookieValue(CSRF_COOKIE_NAME);
+    if (response.status === 403) {
+      const method = (init.method || 'GET').toUpperCase();
+      const isMutating = MUTATING_METHODS.includes(
+        method as (typeof MUTATING_METHODS)[number]
+      );
 
-      if (!hasCsrf) {
-        const response = await fetch(`${referer}${CSRF_LOGIN_PATH}`, {
-          headers: { [HEADER_NAMES.ACCEPT]: HEADER_VALUES.ACCEPT_HTML },
-          credentials: 'omit',
-        });
-        authStorage.updateFromSetCookieHeaders(response.headers);
+      if (isMutating) {
+        await fetchFreshCsrf(referer);
+        response = await next(input, init);
       }
     }
 
-    return next(input, init);
+    return response;
   };
 };
 
@@ -158,19 +180,30 @@ export const storeCookiesInterceptor: FetchInterceptor = async (
   next
 ) => {
   const response = await next(input, init);
-  authStorage.updateFromSetCookieHeaders(response.headers);
+  const setCookie = response.headers.get('set-cookie');
+
+  if (setCookie) {
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+        ? input.href
+        : input.url;
+    await NitroCookies.setFromResponse(url, setCookie);
+  }
+
   return response;
 };
 
 /**
- * Sets credentials to 'omit' for React Native
+ * Sets credentials to 'include' for React Native cookie handling
  */
-export const omitCredentialsInterceptor: FetchInterceptor = async (
+export const includeCredentialsInterceptor: FetchInterceptor = async (
   input,
   init,
   next
 ) => {
-  return next(input, { ...init, credentials: 'omit' });
+  return next(input, { ...init, credentials: 'include' });
 };
 
 // ============================================================================
@@ -185,16 +218,21 @@ export const getUserAgentHeaders = (): HeadersObject => ({
 });
 
 /**
- * Returns Bearer token auth header for direct HMIS API calls
+ * Gets HMIS-specific authentication headers for direct HMIS API calls
+ * Uses Bearer token format for direct HMIS REST API communication
+ * Note: This is different from backend GraphQL requests which use X-HMIS-Token header
  */
-export const getHmisAuthHeaders = (): HeadersObject => {
-  const authToken = authStorage.getCookieValue(HMIS_AUTH_COOKIE_NAME);
+export const getHmisAuthHeaders = async (
+  hmisApiUrl: string
+): Promise<HeadersObject> => {
+  const cookies = await NitroCookies.get(hmisApiUrl);
+  const authToken = cookies['auth_token']?.value;
 
-  if (!authToken) {
-    throw new Error('Not authenticated with HMIS');
+  if (authToken) {
+    return {
+      Authorization: `Bearer ${authToken}`,
+    };
   }
 
-  return {
-    Authorization: `Bearer ${authToken}`,
-  };
+  return {};
 };

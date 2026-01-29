@@ -1,13 +1,13 @@
 import {
-  authStorage,
   CSRF_HEADER_NAME,
   CSRF_LOGIN_PATH,
   ENVIRONMENT_STORAGE_KEY,
 } from '@monorepo/expo/shared/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
+import React, {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -46,16 +46,18 @@ export const ApiConfigProvider = ({
       setEnvironment(saved === 'demo' ? 'demo' : 'production');
     };
     loadEnvironment();
-  }, [demoUrl, productionUrl]);
+  }, []);
 
-  const switchEnvironment = async (env: Env) => {
-    if (env === environment) {
-      return;
-    }
-    await authStorage.clearAllCredentials();
-    await AsyncStorage.setItem(ENVIRONMENT_STORAGE_KEY, env);
-    setEnvironment(env);
-  };
+  const switchEnvironment = useCallback(
+    async (env: Env) => {
+      if (env === environment) {
+        return;
+      }
+      await AsyncStorage.setItem(ENVIRONMENT_STORAGE_KEY, env);
+      setEnvironment(env);
+    },
+    [environment]
+  );
 
   const fetchClient = useMemo(() => {
     if (Platform.OS === 'web') {

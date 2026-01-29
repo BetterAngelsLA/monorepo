@@ -26,7 +26,11 @@ export default function useEmailEnvironment(email: string): {
     [email]
   );
 
-  const targetEnv = useMemo<Environment>(() => {
+  const targetEnv = useMemo<Environment | null>(() => {
+    // Don't compute target environment for empty/invalid emails
+    if (!email || !Regex.email.test(email)) {
+      return null;
+    }
     if (email.includes('+demo') || email.endsWith('@example.com')) {
       return 'demo';
     }
@@ -34,7 +38,8 @@ export default function useEmailEnvironment(email: string): {
   }, [email]);
 
   useEffect(() => {
-    if (!isValidEmail) return;
+    // Only switch environment when we have a valid email AND computed target
+    if (!isValidEmail || !targetEnv) return;
     switchEnvironment(targetEnv);
   }, [targetEnv, switchEnvironment, isValidEmail]);
 

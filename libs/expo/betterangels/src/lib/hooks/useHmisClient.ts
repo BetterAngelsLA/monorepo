@@ -118,7 +118,7 @@ export const useHmisClient = () => {
         isPrivate
       );
     },
-    []
+    [hmisClient]
   );
 
   /**
@@ -141,15 +141,15 @@ export const useHmisClient = () => {
     ): Promise<ClientFilesResponse> => {
       return hmisClient.getClientFiles(clientId, params);
     },
-    []
+    [hmisClient]
   );
   const getFileCategories = useCallback((): Promise<FileCategoriesResponse> => {
     return hmisClient.getFileCategories();
-  }, []);
+  }, [hmisClient]);
 
   const getFileNames = useCallback((): Promise<FileNamesResponse> => {
     return hmisClient.getFileNames();
-  }, []);
+  }, [hmisClient]);
 
   /**
    * Update a client file's metadata (category and file name)
@@ -182,7 +182,7 @@ export const useHmisClient = () => {
         isPrivate
       );
     },
-    []
+    [hmisClient]
   );
 
   /**
@@ -195,7 +195,7 @@ export const useHmisClient = () => {
     (clientId: string | number, fileId: string | number): Promise<void> => {
       return hmisClient.deleteClientFile(clientId, fileId);
     },
-    []
+    [hmisClient]
   );
 
   return {

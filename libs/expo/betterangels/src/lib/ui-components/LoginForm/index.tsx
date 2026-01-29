@@ -42,22 +42,60 @@ export default function LoginForm() {
   };
 
   const handleSendCode = useCallback(async () => {
+    console.log('[LoginForm] Starting sendCode request');
+    console.log('[LoginForm] Email:', email.toLowerCase());
     setSendingCode(true);
     setErrorMsg('');
 
     try {
+      console.log(
+        '[LoginForm] Making fetch request to /_allauth/browser/v1/auth/code/request'
+      );
       const res = await fetchClient('/_allauth/browser/v1/auth/code/request', {
         method: 'POST',
         body: JSON.stringify({ email: email.toLowerCase() }),
       });
 
+      console.log('[LoginForm] Response status:', res.status);
+      console.log('[LoginForm] Response ok:', res.ok);
+      console.log(
+        '[LoginForm] Response headers:',
+        JSON.stringify([...res.headers.entries()])
+      );
+
+      // Try to read response body for debugging
+      try {
+        const responseText = await res.text();
+        console.log('[LoginForm] Response body:', responseText);
+        // Try to parse as JSON if possible
+        if (responseText) {
+          try {
+            const responseData = JSON.parse(responseText);
+            console.log(
+              '[LoginForm] Response JSON:',
+              JSON.stringify(responseData, null, 2)
+            );
+          } catch (e) {
+            console.log('[LoginForm] Response is not JSON');
+          }
+        }
+      } catch (e) {
+        console.error('[LoginForm] Failed to read response body:', e);
+      }
+
       if (res.ok || res.status === 401) {
+        console.log('[LoginForm] Success - moving to OTP step');
         setStep('otp');
       } else {
+        console.log('[LoginForm] Request failed with status:', res.status);
         handleError('Unable to send code. Please try again.');
       }
     } catch (error) {
       console.error('[LoginForm] Send code error:', error);
+      if (error instanceof Error) {
+        console.error('[LoginForm] Error message:', error.message);
+        console.error('[LoginForm] Error stack:', error.stack);
+      }
       handleError('Network error. Please try again.');
     } finally {
       setSendingCode(false);

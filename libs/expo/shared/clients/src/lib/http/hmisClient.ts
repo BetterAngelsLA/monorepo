@@ -1,7 +1,3 @@
-import {
-  authStorage,
-  HMIS_API_URL_COOKIE_NAME,
-} from '@monorepo/expo/shared/utils';
 import { HEADER_NAMES, HEADER_VALUES } from '../common/constants';
 import {
   getHmisAuthHeaders,
@@ -28,14 +24,14 @@ import {
  */
 class HmisClient {
   /**
-   * Get HMIS API base URL from stored api_url
+   * Get HMIS API base URL
+   * Note: With native cookies, the api_url cookie is automatically available
+   * This method now returns a placeholder - HMIS URL should come from config/env
    */
   private getBaseUrl(): string {
-    const apiUrl = authStorage.getCookieValue(HMIS_API_URL_COOKIE_NAME);
-    if (!apiUrl) {
-      throw new HmisError('HMIS API URL not found. Please log in first.', 500);
-    }
-    return decodeURIComponent(apiUrl);
+    // TODO: Get HMIS URL from environment config instead of cookies
+    // For now, throw error if not configured
+    throw new HmisError('HMIS API URL must be configured via environment', 500);
   }
 
   /**
@@ -104,10 +100,11 @@ class HmisClient {
     // Check if body is FormData (for multipart uploads)
     const isFormData = options.body instanceof FormData;
 
-    // Compose headers using interceptors
+    // Compose headers - get Bearer token for direct HMIS API communication
+    const authHeaders = await getHmisAuthHeaders(baseUrl);
     const headers = new Headers({
       ...getUserAgentHeaders(),
-      ...getHmisAuthHeaders(),
+      ...authHeaders,
       [HEADER_NAMES.ACCEPT]: HEADER_VALUES.ACCEPT_JSON_ALL,
       [HEADER_NAMES.X_REQUESTED_WITH]: HEADER_VALUES.X_REQUESTED_WITH_AJAX,
       // Set Content-Type for JSON bodies, but not for FormData (browser sets it with boundary)

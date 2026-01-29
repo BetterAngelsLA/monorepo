@@ -77,22 +77,10 @@ export default function UserProvider({ children }: UserProviderProps) {
       return;
     }
 
-    (async () => {
-      if (user?.isHmisUser) {
-        const isExpired = authStorage.isHmisTokenExpired();
-        if (isExpired) {
-          showSnackbar({
-            message: 'Your HMIS session has expired. Please log in again.',
-            type: 'error',
-            showDuration: 5000,
-          });
-          await authStorage.clearAllCredentials();
-          setUser(undefined);
-        }
-      }
-      refetchUser();
-    })();
-  }, [appBecameActive, user?.isHmisUser, showSnackbar, refetchUser]);
+    // Refetch user data when app becomes active
+    // The server will handle session validation and return null user if expired
+    refetchUser();
+  }, [appBecameActive, refetchUser]);
 
   const contextValue = useMemo(
     () => ({

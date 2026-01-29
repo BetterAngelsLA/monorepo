@@ -20,6 +20,8 @@ export default function useSignOut() {
     } catch (err) {
       console.error(err);
     }
+    // Clear all credentials including any cookies set by the logout response
+    // This ensures we don't keep a CSRF token tied to an invalidated session
     await authStorage.clearAllCredentials();
     setUser(undefined);
   }, [logout, setUser]);
