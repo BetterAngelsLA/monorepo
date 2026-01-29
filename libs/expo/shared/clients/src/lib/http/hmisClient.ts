@@ -1,7 +1,14 @@
-import { HEADER_NAMES, HEADER_VALUES } from '../common/constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  getHmisAuthHeaders,
-  getUserAgentHeaders,
+  bodySerializationInterceptor,
+  composeFetchInterceptors,
+  contentTypeInterceptor,
+  HMIS_API_URL_STORAGE_KEY,
+  hmisHeadersInterceptor,
+  hmisInterceptor,
+  includeCredentialsInterceptor,
+  storeCookiesInterceptor,
+  userAgentInterceptor,
 } from '../common/interceptors';
 import {
   ALLOWED_FILE_TYPES,
@@ -20,18 +27,39 @@ import {
  * HMIS REST API Client
  *
  * Handles direct access to HMIS REST endpoints from React Native.
- * Uses Bearer token auth for direct HMIS API calls.
+ * Uses composable interceptors for auth, cookies, and headers.
  */
 class HmisClient {
+  private composedFetch: (
+    input: RequestInfo | URL,
+    init?: RequestInit
+  ) => Promise<Response>;
+
+  constructor() {
+    // Compose fetch with interceptors for HMIS direct API calls
+    this.composedFetch = composeFetchInterceptors(
+      userAgentInterceptor,
+      hmisHeadersInterceptor,
+      contentTypeInterceptor,
+      bodySerializationInterceptor,
+      includeCredentialsInterceptor,
+      hmisInterceptor,
+      storeCookiesInterceptor
+    );
+  }
+
   /**
-   * Get HMIS API base URL
-   * Note: With native cookies, the api_url cookie is automatically available
-   * This method now returns a placeholder - HMIS URL should come from config/env
+   * Get HMIS API base URL from stored value
    */
-  private getBaseUrl(): string {
-    // TODO: Get HMIS URL from environment config instead of cookies
-    // For now, throw error if not configured
-    throw new HmisError('HMIS API URL must be configured via environment', 500);
+  private async getBaseUrl(): Promise<string> {
+    const hmisApiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
+    if (!hmisApiUrl) {
+      throw new HmisError(
+        'HMIS API URL not found. Please log in to HMIS first.',
+        401
+      );
+    }
+    return hmisApiUrl;
   }
 
   /**
@@ -87,7 +115,7 @@ class HmisClient {
     path: string,
     options: HmisRequestOptions = {}
   ): Promise<T> {
-    const baseUrl = this.getBaseUrl();
+    const baseUrl = await this.getBaseUrl();
 
     // Build URL with query params
     const url = new URL(path, baseUrl);
@@ -97,37 +125,13 @@ class HmisClient {
       });
     }
 
-    // Check if body is FormData (for multipart uploads)
-    const isFormData = options.body instanceof FormData;
-
-    // Compose headers - get Bearer token for direct HMIS API communication
-    const authHeaders = await getHmisAuthHeaders(baseUrl);
-    const headers = new Headers({
-      ...getUserAgentHeaders(),
-      ...authHeaders,
-      [HEADER_NAMES.ACCEPT]: HEADER_VALUES.ACCEPT_JSON_ALL,
-      [HEADER_NAMES.X_REQUESTED_WITH]: HEADER_VALUES.X_REQUESTED_WITH_AJAX,
-      // Set Content-Type for JSON bodies, but not for FormData (browser sets it with boundary)
-      ...(options.body && !isFormData
-        ? { [HEADER_NAMES.CONTENT_TYPE]: HEADER_VALUES.CONTENT_TYPE_JSON }
-        : {}),
-      // User headers override defaults
-      ...(options.headers || {}),
-    });
-
     const fetchOptions: RequestInit = {
       method: options.method,
-      headers,
+      headers: options.headers,
+      body: options.body,
     };
 
-    if (options.body) {
-      // Send FormData directly, JSON.stringify everything else
-      fetchOptions.body = isFormData
-        ? (options.body as FormData)
-        : JSON.stringify(options.body);
-    }
-
-    const response = await fetch(url.toString(), fetchOptions);
+    const response = await this.composedFetch(url.toString(), fetchOptions);
 
     // Handle errors
     if (!response.ok) {

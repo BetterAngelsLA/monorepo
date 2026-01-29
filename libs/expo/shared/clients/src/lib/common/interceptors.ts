@@ -234,6 +234,60 @@ export const hmisInterceptor: FetchInterceptor = async (input, init, next) => {
 };
 
 /**
+ * HMIS-specific headers interceptor for direct HMIS API calls
+ * Adds Bearer token auth and HMIS-required headers
+ */
+export const hmisHeadersInterceptor: FetchInterceptor = async (
+  input,
+  init,
+  next
+) => {
+  const headers = new Headers(init.headers);
+
+  // Get HMIS API URL to retrieve auth token
+  const hmisApiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
+  if (hmisApiUrl) {
+    const cookies = await NitroCookies.get(hmisApiUrl);
+    const authToken = cookies[HMIS_AUTH_COOKIE_NAME]?.value;
+
+    if (authToken) {
+      headers.set('Authorization', `Bearer ${authToken}`);
+    }
+  }
+
+  // Add HMIS-required headers
+  headers.set(HEADER_NAMES.ACCEPT, HEADER_VALUES.ACCEPT_JSON_ALL);
+  headers.set(
+    HEADER_NAMES.X_REQUESTED_WITH,
+    HEADER_VALUES.X_REQUESTED_WITH_AJAX
+  );
+
+  return next(input, { ...init, headers });
+};
+
+/**
+ * Body serialization interceptor - converts non-FormData bodies to JSON
+ */
+export const bodySerializationInterceptor: FetchInterceptor = async (
+  input,
+  init,
+  next
+) => {
+  if (
+    init.body &&
+    !(init.body instanceof FormData) &&
+    typeof init.body !== 'string'
+  ) {
+    return next(input, {
+      ...init,
+      body: JSON.stringify(init.body),
+    });
+  }
+
+  return next(input, init);
+};
+
+/**
  * Sets credentials to 'include' for React Native cookie handling
  */
 export const includeCredentialsInterceptor: FetchInterceptor = async (
