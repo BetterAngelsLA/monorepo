@@ -4,7 +4,6 @@ import type {
   ClientFilesListParams,
   ClientFilesResponse,
   FileCategoriesResponse,
-  FileName,
   FileNamesListParams,
   FileNamesResponse,
   HmisCurrentUser,
@@ -155,11 +154,6 @@ export const useHmisClient = () => {
     [hmisClient]
   );
 
-  const getAllFileNames = useCallback(
-    (): Promise<FileName[]> => hmisClient.getAllFileNames(),
-    [hmisClient]
-  );
-
   /**
    * Update a client file's metadata (category and file name)
    *
@@ -213,7 +207,6 @@ export const useHmisClient = () => {
     uploadClientFile,
     getFileCategories,
     getFileNames,
-    getAllFileNames,
     getClientFiles,
     updateClientFile,
     deleteClientFile,
