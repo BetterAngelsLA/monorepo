@@ -1,34 +1,29 @@
 import { ApolloClient, ApolloLink, InMemoryCache } from '@apollo/client';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
+import { Platform } from 'react-native';
+import { createNativeFetch } from '../common/nativeFetch';
 import { isReactNativeFileInstance } from './ReactNativeFile';
-import { createAuthLink } from './links/authLink';
 import { createErrorLink } from './links/errorLink';
-import { createHmisAuthLink } from './links/hmisAuthLink';
 import { loggerLink } from './links/loggerLink';
 
 type TArgs = {
   apiUrl: string;
-  csrfUrl?: string;
   cacheStore?: InMemoryCache;
   onUnauthenticated?: () => void;
   authPath?: string;
 };
 
 export const createApolloClient = (args: TArgs) => {
-  const {
-    cacheStore,
-    apiUrl,
-    csrfUrl = `${apiUrl}/admin/login/`,
-    authPath,
-    onUnauthenticated,
-  } = args;
+  const { cacheStore, apiUrl, authPath, onUnauthenticated } = args;
 
-  const authLink = createAuthLink({ apiUrl, csrfUrl });
+  const nativeFetch =
+    Platform.OS === 'web' ? undefined : createNativeFetch(apiUrl);
 
   const uploadHttpLink = new UploadHttpLink({
     uri: `${apiUrl}/graphql`,
     credentials: 'include',
     isExtractableFile: isReactNativeFileInstance,
+    ...(nativeFetch ? { fetch: nativeFetch } : {}),
   });
 
   const errorLink = createErrorLink({
@@ -36,9 +31,7 @@ export const createApolloClient = (args: TArgs) => {
     onUnauthenticated,
   });
 
-  const hmisAuthLink = createHmisAuthLink();
-
-  const composedLinks = [errorLink, authLink, hmisAuthLink, uploadHttpLink];
+  const composedLinks = [errorLink, uploadHttpLink];
 
   // Debug only: logs GraphQL requests/responses
   if (

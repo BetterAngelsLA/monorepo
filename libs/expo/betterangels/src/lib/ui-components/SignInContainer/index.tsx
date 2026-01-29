@@ -20,12 +20,14 @@ export default function SignInContainer({
   privacyPolicyUrl,
 }: AuthLayoutProps) {
   const { user } = useUser();
-  const { switchEnvironment } = useApiConfig();
+  const { switchEnvironment, environment } = useApiConfig();
   const { refetchFeatureFlags } = useFeatureControls();
 
   // On mount, optionally switch env when unauthenticated.
   useEffect(() => {
-    if (!user) switchEnvironment('production');
+    if (!user && environment !== 'production') {
+      switchEnvironment('production');
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
