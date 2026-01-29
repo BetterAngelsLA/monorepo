@@ -103,21 +103,23 @@ export const createRefererInterceptor = (referer: string): FetchInterceptor => {
 };
 
 /**
- * Adds Content-Type: application/json when there's a body
+ * Body handling interceptor - serializes objects to JSON and sets Content-Type
  */
-export const contentTypeInterceptor: FetchInterceptor = async (
-  input,
-  init,
-  next
-) => {
+export const bodyInterceptor: FetchInterceptor = async (input, init, next) => {
   const headers = new Headers(init.headers);
+  let body = init.body;
 
-  // Only set Content-Type if there's a body and it's not already set
-  if (init.body && !headers.has(HEADER_NAMES.CONTENT_TYPE)) {
+  // Serialize non-string, non-FormData bodies to JSON
+  if (body && !(body instanceof FormData) && typeof body !== 'string') {
+    body = JSON.stringify(body);
+  }
+
+  // Set Content-Type header if there's a body and it's not already set
+  if (body && !headers.has(HEADER_NAMES.CONTENT_TYPE)) {
     headers.set(HEADER_NAMES.CONTENT_TYPE, HEADER_VALUES.CONTENT_TYPE_JSON);
   }
 
-  return next(input, { ...init, headers });
+  return next(input, { ...init, headers, body });
 };
 
 /**
@@ -215,36 +217,14 @@ export const storeCookiesInterceptor: FetchInterceptor = async (
 };
 
 /**
- * HMIS-specific interceptor that extracts and stores the api_url from HMIS login responses
- * This url is needed later to retrieve the auth_token cookie from the correct domain
+ * HMIS-specific interceptor for direct HMIS API calls
+ * Request phase: Adds Bearer token auth and HMIS-required headers
+ * Response phase: Extracts and stores api_url from Set-Cookie
  */
 export const hmisInterceptor: FetchInterceptor = async (input, init, next) => {
-  const response = await next(input, init);
-  const setCookie = response.headers.get('set-cookie');
-
-  if (setCookie) {
-    const apiUrlMatch = setCookie.match(/api_url=([^;]+)/);
-    if (apiUrlMatch) {
-      const decodedUrl = decodeURIComponent(apiUrlMatch[1]);
-      await AsyncStorage.setItem(HMIS_API_URL_STORAGE_KEY, decodedUrl);
-    }
-  }
-
-  return response;
-};
-
-/**
- * HMIS-specific headers interceptor for direct HMIS API calls
- * Adds Bearer token auth and HMIS-required headers
- */
-export const hmisHeadersInterceptor: FetchInterceptor = async (
-  input,
-  init,
-  next
-) => {
   const headers = new Headers(init.headers);
 
-  // Get HMIS API URL to retrieve auth token
+  // Request phase: Add HMIS headers
   const hmisApiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
   if (hmisApiUrl) {
     const cookies = await NitroCookies.get(hmisApiUrl);
@@ -262,33 +242,24 @@ export const hmisHeadersInterceptor: FetchInterceptor = async (
     HEADER_VALUES.X_REQUESTED_WITH_AJAX
   );
 
-  return next(input, { ...init, headers });
-};
+  // Make request
+  const response = await next(input, { ...init, headers });
 
-/**
- * Body serialization interceptor - converts non-FormData bodies to JSON
- */
-export const bodySerializationInterceptor: FetchInterceptor = async (
-  input,
-  init,
-  next
-) => {
-  if (
-    init.body &&
-    !(init.body instanceof FormData) &&
-    typeof init.body !== 'string'
-  ) {
-    return next(input, {
-      ...init,
-      body: JSON.stringify(init.body),
-    });
+  // Response phase: Extract and store api_url
+  const setCookie = response.headers.get('set-cookie');
+  if (setCookie) {
+    const apiUrlMatch = setCookie.match(/api_url=([^;]+)/);
+    if (apiUrlMatch) {
+      const decodedUrl = decodeURIComponent(apiUrlMatch[1]);
+      await AsyncStorage.setItem(HMIS_API_URL_STORAGE_KEY, decodedUrl);
+    }
   }
 
-  return next(input, init);
+  return response;
 };
 
 /**
- * Sets credentials to 'include' for React Native cookie handling
+ * Sets credentials: 'include' to enable cookie handling
  */
 export const includeCredentialsInterceptor: FetchInterceptor = async (
   input,

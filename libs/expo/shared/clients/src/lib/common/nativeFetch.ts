@@ -1,8 +1,8 @@
 import { Platform } from 'react-native';
 import {
   backendAuthInterceptor,
+  bodyInterceptor,
   composeFetchInterceptors,
-  contentTypeInterceptor,
   createCsrfInterceptor,
   createRefererInterceptor,
   hmisInterceptor,
@@ -27,7 +27,7 @@ export const createNativeFetch = (referer: string) => {
     createCsrfInterceptor(referer), // Ensure CSRF token before request
     userAgentInterceptor, // Add User-Agent header
     createRefererInterceptor(referer), // Add Referer header
-    contentTypeInterceptor, // Add Content-Type: application/json for JSON bodies
+    bodyInterceptor, // Serialize body to JSON and add Content-Type header
     backendAuthInterceptor, // Add auth headers (CSRF, HMIS token)
     includeCredentialsInterceptor, // Set credentials: 'include' for cookies
     hmisInterceptor, // Extract and store HMIS api_url from responses

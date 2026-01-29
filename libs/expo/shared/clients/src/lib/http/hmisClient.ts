@@ -1,10 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  bodySerializationInterceptor,
+  bodyInterceptor,
   composeFetchInterceptors,
-  contentTypeInterceptor,
   HMIS_API_URL_STORAGE_KEY,
-  hmisHeadersInterceptor,
   hmisInterceptor,
   includeCredentialsInterceptor,
   storeCookiesInterceptor,
@@ -39,11 +37,9 @@ class HmisClient {
     // Compose fetch with interceptors for HMIS direct API calls
     this.composedFetch = composeFetchInterceptors(
       userAgentInterceptor,
-      hmisHeadersInterceptor,
-      contentTypeInterceptor,
-      bodySerializationInterceptor,
-      includeCredentialsInterceptor,
       hmisInterceptor,
+      bodyInterceptor,
+      includeCredentialsInterceptor,
       storeCookiesInterceptor
     );
   }
@@ -128,7 +124,7 @@ class HmisClient {
     const fetchOptions: RequestInit = {
       method: options.method,
       headers: options.headers,
-      body: options.body,
+      body: options.body as BodyInit | undefined,
     };
 
     const response = await this.composedFetch(url.toString(), fetchOptions);
