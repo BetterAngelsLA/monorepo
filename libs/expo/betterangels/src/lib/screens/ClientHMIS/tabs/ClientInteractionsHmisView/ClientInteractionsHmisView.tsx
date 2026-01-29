@@ -1,6 +1,6 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { IconButton } from '@monorepo/expo/shared/ui-components';
+import { Colors } from '@monorepo/expo/shared/static';
+import { IconButton, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { View } from 'react-native';
@@ -38,7 +38,14 @@ export function ClientInteractionsHmisView(props: TProps) {
 
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <View style={{ marginBottom: Spacings.md }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <TextMedium size="lg">Notes</TextMedium>
         <IconButton
           variant="secondary"
           borderColor={Colors.WHITE}
