@@ -1,6 +1,6 @@
 import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
-import { clearAllCredentials } from '@monorepo/expo/shared/utils';
+import { authStorage } from '@monorepo/expo/shared/utils';
 import { useCallback } from 'react';
 import useUser from './useUser';
 
@@ -20,7 +20,7 @@ export default function useSignOut() {
     } catch (err) {
       console.error(err);
     }
-    await clearAllCredentials();
+    await authStorage.clearAllCredentials();
     setUser(undefined);
   }, [logout, setUser]);
 

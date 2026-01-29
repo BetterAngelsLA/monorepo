@@ -1,12 +1,19 @@
-import { getHmisApiUrl, getHmisAuthToken } from '@monorepo/expo/shared/utils';
-import { MODERN_BROWSER_USER_AGENT } from '../common/constants';
+import {
+  authStorage,
+  HMIS_API_URL_COOKIE_NAME,
+} from '@monorepo/expo/shared/utils';
+import { HEADER_NAMES, HEADER_VALUES } from '../common/constants';
+import {
+  getHmisAuthHeaders,
+  getUserAgentHeaders,
+} from '../common/interceptors';
 import {
   ALLOWED_FILE_TYPES,
   AllowedFileType,
-  ClientFileUploadRequest,
-  ClientFileUploadResponse,
   ClientFilesListParams,
   ClientFilesResponse,
+  ClientFileUploadRequest,
+  ClientFileUploadResponse,
   FileCategoriesResponse,
   FileNamesResponse,
   HmisError,
@@ -17,36 +24,18 @@ import {
  * HMIS REST API Client
  *
  * Handles direct access to HMIS REST endpoints from React Native.
- * Automatically includes Bearer token auth and browser User-Agent.
+ * Uses Bearer token auth for direct HMIS API calls.
  */
 class HmisClient {
-  /**
-   * Get authorization headers including Bearer token
-   */
-  private async getHeaders(): Promise<HeadersInit> {
-    const authToken = await getHmisAuthToken();
-
-    if (!authToken) {
-      throw new HmisError('Not authenticated with HMIS', 401);
-    }
-
-    return {
-      Authorization: `Bearer ${authToken}`,
-      'User-Agent': MODERN_BROWSER_USER_AGENT,
-      Accept: 'application/json, text/plain, */*',
-      'X-Requested-With': 'XMLHttpRequest',
-    };
-  }
-
   /**
    * Get HMIS API base URL from stored api_url
    */
   private getBaseUrl(): string {
-    const apiUrl = getHmisApiUrl();
+    const apiUrl = authStorage.getCookieValue(HMIS_API_URL_COOKIE_NAME);
     if (!apiUrl) {
       throw new HmisError('HMIS API URL not found. Please log in first.', 500);
     }
-    return apiUrl;
+    return decodeURIComponent(apiUrl);
   }
 
   /**
@@ -103,7 +92,6 @@ class HmisClient {
     options: HmisRequestOptions = {}
   ): Promise<T> {
     const baseUrl = this.getBaseUrl();
-    const authHeaders = await this.getHeaders();
 
     // Build URL with query params
     const url = new URL(path, baseUrl);
@@ -113,16 +101,33 @@ class HmisClient {
       });
     }
 
+    // Check if body is FormData (for multipart uploads)
+    const isFormData = options.body instanceof FormData;
+
+    // Compose headers using interceptors
+    const headers = new Headers({
+      ...getUserAgentHeaders(),
+      ...getHmisAuthHeaders(),
+      [HEADER_NAMES.ACCEPT]: HEADER_VALUES.ACCEPT_JSON_ALL,
+      [HEADER_NAMES.X_REQUESTED_WITH]: HEADER_VALUES.X_REQUESTED_WITH_AJAX,
+      // Set Content-Type for JSON bodies, but not for FormData (browser sets it with boundary)
+      ...(options.body && !isFormData
+        ? { [HEADER_NAMES.CONTENT_TYPE]: HEADER_VALUES.CONTENT_TYPE_JSON }
+        : {}),
+      // User headers override defaults
+      ...(options.headers || {}),
+    });
+
     const fetchOptions: RequestInit = {
       method: options.method,
-      headers: {
-        ...authHeaders,
-        ...options.headers,
-      },
+      headers,
     };
 
     if (options.body) {
-      fetchOptions.body = JSON.stringify(options.body);
+      // Send FormData directly, JSON.stringify everything else
+      fetchOptions.body = isFormData
+        ? (options.body as FormData)
+        : JSON.stringify(options.body);
     }
 
     const response = await fetch(url.toString(), fetchOptions);
@@ -146,19 +151,11 @@ class HmisClient {
   }
 
   post<T = unknown>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>(path, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-    });
+    return this.request<T>(path, { method: 'POST', body });
   }
 
   put<T = unknown>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>(path, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-    });
+    return this.request<T>(path, { method: 'PUT', body });
   }
 
   delete<T = unknown>(path: string): Promise<T> {
@@ -174,32 +171,10 @@ class HmisClient {
     path: string,
     formData: FormData
   ): Promise<T> {
-    const baseUrl = this.getBaseUrl();
-    const authHeaders = await this.getHeaders();
-
-    const url = new URL(path, baseUrl);
-
-    const response = await fetch(url.toString(), {
+    return this.request<T>(path, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        // Do NOT set Content-Type - let the browser set it with the boundary
-      },
-      body: formData, // Send FormData directly without stringifying
+      body: formData,
     });
-
-    // Handle errors
-    if (!response.ok) {
-      await this.handleError(response);
-    }
-
-    // Parse response
-    const contentType = response.headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-      return response.json();
-    }
-
-    return response.text() as unknown as T;
   }
 
   /**
@@ -452,5 +427,7 @@ class HmisClient {
   }
 }
 
-export const hmisClient = new HmisClient();
+// Factory function to create HmisClient
+export const createHmisClient = () => new HmisClient();
+
 export { HmisClient };
