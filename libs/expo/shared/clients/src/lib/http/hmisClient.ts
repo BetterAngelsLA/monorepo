@@ -43,7 +43,6 @@ class HmisClient {
       storeCookiesInterceptor
     );
   }
-
   /**
    * Get HMIS API base URL from stored value
    */
@@ -58,33 +57,20 @@ class HmisClient {
     return hmisApiUrl;
   }
 
-  /**
-   * Handle HTTP error responses with HMIS-specific error mapping
-   */
   private async handleError(response: Response): Promise<never> {
     const contentType = response.headers.get('content-type');
-    let data: unknown;
-
-    try {
-      data = contentType?.includes('application/json')
-        ? await response.json()
-        : await response.text();
-    } catch {
-      data = null;
-    }
+    const data = await (contentType?.includes('application/json')
+      ? response.json().catch(() => null)
+      : response.text().catch(() => null));
 
     switch (response.status) {
       case 401:
         throw new HmisError('Unauthorized - please log in', 401, data);
-
       case 403:
         throw new HmisError('Forbidden - insufficient permissions', 403, data);
-
       case 404:
         throw new HmisError('Resource not found', 404, data);
-
       case 422: {
-        // HMIS returns validation errors as { messages: { field: message } }
         const validationData = data as { messages?: Record<string, string> };
         if (validationData?.messages) {
           const errors = Object.entries(validationData.messages)
@@ -94,7 +80,6 @@ class HmisClient {
         }
         throw new HmisError('Validation error', 422, data);
       }
-
       default:
         throw new HmisError(
           `HTTP ${response.status}: ${response.statusText}`,
@@ -134,13 +119,16 @@ class HmisClient {
       await this.handleError(response);
     }
 
-    // Parse response
-    const contentType = response.headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-      return response.json();
-    }
+    // Parse response - try JSON first regardless of Content-Type
+    // Some HMIS endpoints return JSON with incorrect/missing Content-Type headers
+    const text = await response.text();
+    if (!text) return text as unknown as T;
 
-    return response.text() as unknown as T;
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text as unknown as T; // Not JSON, return raw text
+    }
   }
 
   get<T = unknown>(path: string, params?: Record<string, string>): Promise<T> {
