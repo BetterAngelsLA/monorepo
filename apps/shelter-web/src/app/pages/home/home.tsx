@@ -69,11 +69,7 @@ export function Home() {
           shelter={
             shelters.find((shelter) => shelter.id === markerId) as TShelter
           }
-          footer={
-            <div className={mergeCss(footerStyle)}>
-              View Details
-            </div>
-          }
+          footer={<div className={mergeCss(footerStyle)}>View Details</div>}
         />
       ),
       animation: ModalAnimationEnum.EXPAND,
