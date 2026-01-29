@@ -545,6 +545,7 @@ export type CurrentUserType = {
   username?: Maybe<Scalars['String']['output']>;
 };
 
+
 export type CurrentUserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   ordering?: Array<OrganizationOrder>;
@@ -906,13 +907,16 @@ export type HmisNoteType = {
   title?: Maybe<Scalars['String']['output']>;
 };
 
+
 export type HmisNoteTypeProvidedServicesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type HmisNoteTypeRequestedServicesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
 
 export type HmisNoteTypeTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
@@ -1237,203 +1241,253 @@ export type Mutation = {
   updateTask: UpdateTaskPayload;
 };
 
+
 export type MutationAddOrganizationMemberArgs = {
   data: OrgInvitationInput;
 };
+
 
 export type MutationCreateClientContactArgs = {
   data: ClientContactInput;
 };
 
+
 export type MutationCreateClientDocumentArgs = {
   data: CreateClientDocumentInput;
 };
+
 
 export type MutationCreateClientHouseholdMemberArgs = {
   data: ClientHouseholdMemberInput;
 };
 
+
 export type MutationCreateClientProfileArgs = {
   data: CreateClientProfileInput;
 };
+
 
 export type MutationCreateClientProfileDataImportArgs = {
   data: CreateProfileDataImportInput;
 };
 
+
 export type MutationCreateHmisClientProfileArgs = {
   data: CreateHmisClientProfileInput;
 };
+
 
 export type MutationCreateHmisClientProgramArgs = {
   clientId: Scalars['Int']['input'];
   programHmisId: Scalars['Int']['input'];
 };
 
+
 export type MutationCreateHmisNoteArgs = {
   data: CreateHmisNoteInput;
 };
+
 
 export type MutationCreateHmisNoteServiceRequestArgs = {
   data: CreateHmisNoteServiceRequestInput;
 };
 
+
 export type MutationCreateHmisProfileArgs = {
   data: HmisProfileInput;
 };
+
 
 export type MutationCreateNoteArgs = {
   data: CreateNoteInput;
 };
 
+
 export type MutationCreateNoteDataImportArgs = {
   data: CreateNoteDataImportInput;
 };
+
 
 export type MutationCreateNoteMoodArgs = {
   data: CreateNoteMoodInput;
 };
 
+
 export type MutationCreateNoteServiceRequestArgs = {
   data: CreateNoteServiceRequestInput;
 };
+
 
 export type MutationCreateServiceRequestArgs = {
   data: CreateServiceRequestInput;
 };
 
+
 export type MutationCreateSocialMediaProfileArgs = {
   data: SocialMediaProfileInput;
 };
+
 
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
 };
 
+
 export type MutationDeleteClientContactArgs = {
   data: DeleteDjangoObjectInput;
 };
+
 
 export type MutationDeleteClientDocumentArgs = {
   data: DeleteDjangoObjectInput;
 };
 
+
 export type MutationDeleteClientHouseholdMemberArgs = {
   data: DeleteDjangoObjectInput;
 };
+
 
 export type MutationDeleteClientProfileArgs = {
   data: DeleteDjangoObjectInput;
 };
 
+
 export type MutationDeleteHmisProfileArgs = {
   data: DeleteDjangoObjectInput;
 };
+
 
 export type MutationDeleteMoodArgs = {
   data: DeleteDjangoObjectInput;
 };
 
+
 export type MutationDeleteNoteArgs = {
   data: DeleteDjangoObjectInput;
 };
+
 
 export type MutationDeleteServiceRequestArgs = {
   data: DeleteDjangoObjectInput;
 };
 
+
 export type MutationDeleteSocialMediaProfileArgs = {
   data: DeleteDjangoObjectInput;
 };
 
+
 export type MutationDeleteTaskArgs = {
   data: DeleteDjangoObjectInput;
 };
+
 
 export type MutationHmisLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
 };
 
+
 export type MutationImportClientProfileArgs = {
   data: ImportClientProfileInput;
 };
+
 
 export type MutationImportNoteArgs = {
   data: ImportNoteInput;
 };
 
+
 export type MutationLoginArgs = {
   input: LoginInput;
 };
+
 
 export type MutationRemoveHmisNoteServiceRequestArgs = {
   data: RemoveHmisNoteServiceRequestInput;
 };
 
+
 export type MutationRemoveNoteServiceRequestArgs = {
   data: RemoveNoteServiceRequestInput;
 };
+
 
 export type MutationRevertNoteArgs = {
   data: RevertNoteInput;
 };
 
+
 export type MutationUpdateClientContactArgs = {
   data: ClientContactInput;
 };
+
 
 export type MutationUpdateClientDocumentArgs = {
   data: UpdateClientDocumentInput;
 };
 
+
 export type MutationUpdateClientHouseholdMemberArgs = {
   data: ClientHouseholdMemberInput;
 };
+
 
 export type MutationUpdateClientProfileArgs = {
   data: UpdateClientProfileInput;
 };
 
+
 export type MutationUpdateClientProfilePhotoArgs = {
   data: ClientProfilePhotoInput;
 };
+
 
 export type MutationUpdateCurrentUserArgs = {
   data: UpdateUserInput;
 };
 
+
 export type MutationUpdateHmisClientProfileArgs = {
   data: UpdateHmisClientProfileInput;
 };
+
 
 export type MutationUpdateHmisNoteArgs = {
   data: UpdateHmisNoteInput;
 };
 
+
 export type MutationUpdateHmisNoteLocationArgs = {
   data: UpdateHmisNoteLocationInput;
 };
+
 
 export type MutationUpdateHmisProfileArgs = {
   data: HmisProfileInput;
 };
 
+
 export type MutationUpdateNoteArgs = {
   data: UpdateNoteInput;
 };
+
 
 export type MutationUpdateNoteLocationArgs = {
   data: UpdateNoteLocationInput;
 };
 
+
 export type MutationUpdateServiceRequestArgs = {
   data: UpdateServiceRequestInput;
 };
 
+
 export type MutationUpdateSocialMediaProfileArgs = {
   data: SocialMediaProfileInput;
 };
+
 
 export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
@@ -1500,13 +1554,16 @@ export type NoteType = {
   userCanEdit: Scalars['Boolean']['output'];
 };
 
+
 export type NoteTypeProvidedServicesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type NoteTypeRequestedServicesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
 
 export type NoteTypeTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
@@ -1637,6 +1694,7 @@ export type OrganizationServiceCategoryType = {
   priority?: Maybe<Scalars['Int']['output']>;
   services: Array<OrganizationServiceType>;
 };
+
 
 export type OrganizationServiceCategoryTypeServicesArgs = {
   ordering?: Array<OrganizationServiceOrdering>;
@@ -1798,10 +1856,12 @@ export type Query = {
   tasks: TaskTypeOffsetPaginated;
 };
 
+
 export type QueryBulkClientProfileImportRecordsArgs = {
   data: ClientProfileImportRecordsBulkInput;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
 
 export type QueryCaseworkerOrganizationsArgs = {
   filters?: InputMaybe<OrganizationFilter>;
@@ -1809,17 +1869,21 @@ export type QueryCaseworkerOrganizationsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryClientContactArgs = {
   pk: Scalars['ID']['input'];
 };
+
 
 export type QueryClientContactsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryClientDocumentArgs = {
   pk: Scalars['ID']['input'];
 };
+
 
 export type QueryClientDocumentsArgs = {
   clientId: Scalars['String']['input'];
@@ -1827,17 +1891,21 @@ export type QueryClientDocumentsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryClientHouseholdMemberArgs = {
   pk: Scalars['ID']['input'];
 };
+
 
 export type QueryClientHouseholdMembersArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryClientProfileArgs = {
   pk: Scalars['ID']['input'];
 };
+
 
 export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
@@ -1845,9 +1913,11 @@ export type QueryClientProfilesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryHmisClientProfileArgs = {
   id: Scalars['ID']['input'];
 };
+
 
 export type QueryHmisClientProfilesArgs = {
   filters?: InputMaybe<HmisClientProfileFilter>;
@@ -1855,13 +1925,16 @@ export type QueryHmisClientProfilesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryHmisClientProgramsArgs = {
   clientId: Scalars['ID']['input'];
 };
 
+
 export type QueryHmisNoteArgs = {
   id: Scalars['ID']['input'];
 };
+
 
 export type QueryHmisNotesArgs = {
   filters?: InputMaybe<HmisNoteFilter>;
@@ -1869,13 +1942,16 @@ export type QueryHmisNotesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryHmisProfileArgs = {
   pk: Scalars['ID']['input'];
 };
 
+
 export type QueryHmisProfilesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
 
 export type QueryInteractionAuthorsArgs = {
   filters?: InputMaybe<InteractionAuthorFilter>;
@@ -1883,9 +1959,11 @@ export type QueryInteractionAuthorsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryNoteArgs = {
   pk: Scalars['ID']['input'];
 };
+
 
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
@@ -1893,10 +1971,12 @@ export type QueryNotesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryOrganizationMemberArgs = {
   organizationId: Scalars['String']['input'];
   userId: Scalars['String']['input'];
 };
+
 
 export type QueryOrganizationMembersArgs = {
   ordering?: InputMaybe<Array<OrganizationMemberOrdering>>;
@@ -1904,19 +1984,23 @@ export type QueryOrganizationMembersArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryServiceCategoriesArgs = {
   ordering?: Array<OrganizationServiceCategoryOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
 
 export type QueryServicesArgs = {
   ordering?: Array<OrganizationServiceOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryShelterArgs = {
   pk: Scalars['ID']['input'];
 };
+
 
 export type QuerySheltersArgs = {
   filters?: InputMaybe<ShelterFilter>;
@@ -1924,17 +2008,21 @@ export type QuerySheltersArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QuerySocialMediaProfileArgs = {
   pk: Scalars['ID']['input'];
 };
+
 
 export type QuerySocialMediaProfilesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryTaskArgs = {
   pk: Scalars['ID']['input'];
 };
+
 
 export type QueryTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
@@ -2562,6 +2650,7 @@ export type UserType = {
   organizationsOrganization?: Maybe<Array<OrganizationType>>;
   username?: Maybe<Scalars['String']['output']>;
 };
+
 
 export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
