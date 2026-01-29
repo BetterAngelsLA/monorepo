@@ -16,11 +16,8 @@ import {
   ApiConfigProvider,
   ApolloClientProvider,
 } from '@monorepo/expo/shared/clients';
-<<<<<<< HEAD
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-=======
 import { FeatureControlProvider } from '@monorepo/react/shared';
->>>>>>> main
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
