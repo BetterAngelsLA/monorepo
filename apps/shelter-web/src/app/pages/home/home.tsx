@@ -1,7 +1,7 @@
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
 import { useEffect, useState } from 'react';
-import { SHELTERS_MAP_ID } from '../../constants.app';
+import { SHELTERS_MAP_ID } from '../../constants/app.constants';
 import { MaxWLayout } from '../../layout/maxWLayout';
 import { locationAtom } from '../../shared/atoms/locationAtom';
 import { modalAtom } from '../../shared/atoms/modalAtom';
@@ -69,11 +69,7 @@ export function Home() {
           shelter={
             shelters.find((shelter) => shelter.id === markerId) as TShelter
           }
-          footer={
-            <div className={mergeCss(footerStyle)}>
-              View Details
-            </div>
-          }
+          footer={<div className={mergeCss(footerStyle)}>View Details</div>}
         />
       ),
       animation: ModalAnimationEnum.EXPAND,

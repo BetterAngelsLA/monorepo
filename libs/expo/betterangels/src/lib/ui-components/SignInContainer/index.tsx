@@ -1,12 +1,12 @@
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { useFeatureControls } from '@monorepo/react/shared';
 import { Link, router } from 'expo-router';
 import { ReactNode, useEffect } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useUser } from '../../hooks';
-import { useFeatureControls } from '../../providers';
 
 type AuthLayoutProps = {
   children: ReactNode;

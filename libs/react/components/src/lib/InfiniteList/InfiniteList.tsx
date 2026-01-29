@@ -81,7 +81,7 @@ export function InfiniteList<T>(props: InfiniteListProps<T>) {
         <ErrorListView
           title={errorTitle}
           bodyText={errorMessage}
-          variant={!!data.length ? 'compact' : 'full'}
+          variant={data.length > 0 ? 'compact' : 'full'}
         />
       )
     );

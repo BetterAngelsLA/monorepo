@@ -5,7 +5,6 @@ import {
   BlockingScreenProvider,
   createBaTypePolicies,
   ErrorCrashView,
-  FeatureControlProvider,
   KeyboardToolbarProvider,
   ModalScreenProvider,
   NativePaperProvider,
@@ -17,6 +16,7 @@ import {
   ApiConfigProvider,
   ApolloClientProvider,
 } from '@monorepo/expo/shared/clients';
+import { FeatureControlProvider } from '@monorepo/react/shared';
 import { StatusBar } from 'expo-status-bar';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';

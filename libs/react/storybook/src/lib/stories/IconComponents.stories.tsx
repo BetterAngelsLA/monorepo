@@ -1,7 +1,7 @@
-import { SbkGallery } from '@monorepo/react/storybook';
+import { SbkGallery } from '../components';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ComponentType, SVGProps } from 'react';
-import * as icons from '../index';
+import * as icons from '@monorepo/react/icons';
 
 // Avoid prop collision with SVG's built-in `type` attribute
 type BaseSvgProps = Omit<SVGProps<SVGSVGElement>, 'type'>;
