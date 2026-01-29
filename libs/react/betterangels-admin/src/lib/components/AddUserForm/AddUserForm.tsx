@@ -57,11 +57,10 @@ export function AddUserForm(props: TProps) {
         },
       });
 
-      const errorMessage =
-        extractOperationInfoMessage<AddOrganizationMemberMutation>(
-          response,
-          'addOrganizationMember'
-        );
+      const errorMessage = extractOperationInfoMessage(
+        response,
+        'addOrganizationMember'
+      );
 
       if (errorMessage) {
         throw new Error(errorMessage);

@@ -6,7 +6,7 @@ import {
 import {
   ViewSheltersQuery,
   ViewSheltersQueryVariables,
-} from '../../graphql/__generated__/ViewShelters.generated';
+} from '../../pages/shelters/__generated__/shelters.generated';
 
 const policyFactoryList = [
   getQueryPolicyFactory<ViewSheltersQuery, ViewSheltersQueryVariables>({
