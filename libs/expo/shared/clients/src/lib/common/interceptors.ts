@@ -49,6 +49,19 @@ export const composeFetchInterceptors = (
 // ============================================================================
 
 /**
+ * Ensures auth storage is ready before any request
+ * This must be the first interceptor in the chain
+ */
+export const ensureStorageReadyInterceptor: FetchInterceptor = async (
+  input,
+  init,
+  next
+) => {
+  await authStorage.ensureReady();
+  return next(input, init);
+};
+
+/**
  * Adds User-Agent header for browser compatibility
  */
 export const userAgentInterceptor: FetchInterceptor = async (

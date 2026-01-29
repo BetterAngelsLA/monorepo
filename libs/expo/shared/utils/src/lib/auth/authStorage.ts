@@ -14,15 +14,8 @@ import {
 
 type CookieJar = Record<string, string>;
 
-class AuthStorage {
-  private storage: PersistentSynchronousStorageApi | null = null;
-  private static readonly STORAGE_KEY = 'cookies';
-
-  constructor() {
-    this.initStorage();
-  }
-
-  private async initStorage(): Promise<void> {
+const initializeStorage =
+  async (): Promise<PersistentSynchronousStorageApi> => {
     let key = await SecureStore.getItemAsync(
       NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE
     );
@@ -30,39 +23,76 @@ class AuthStorage {
       key = Crypto.randomUUID();
       await SecureStore.setItemAsync(NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE, key);
     }
-    this.storage = createPersistentSynchronousStorage({
+    return createPersistentSynchronousStorage({
       scopeId: AUTH_STORAGE_SCOPE_ID,
       encryptionKey: key,
     });
+  };
+
+// Extend global to store singleton across hot reloads
+declare global {
+  // eslint-disable-next-line no-var
+  var __authStorage: AuthStorage | undefined;
+  // eslint-disable-next-line no-var
+  var __authStorageInstance: PersistentSynchronousStorageApi | undefined;
+  // eslint-disable-next-line no-var
+  var __authStorageInitPromise:
+    | Promise<PersistentSynchronousStorageApi>
+    | undefined;
+}
+
+// Initialize at module load - app waits for this in _layout.tsx
+if (!global.__authStorageInitPromise) {
+  global.__authStorageInitPromise = initializeStorage().then((storage) => {
+    global.__authStorageInstance = storage;
+    return storage;
+  });
+}
+
+class AuthStorage {
+  private static readonly STORAGE_KEY = 'cookies';
+
+  private get storage(): PersistentSynchronousStorageApi {
+    // Guaranteed ready after ensureReady() called by app or interceptor
+    return global.__authStorageInstance!;
   }
 
   /**
-   * Get a cookie value by name
+   * Wait for storage initialization - called by app at startup
    */
+  async ensureReady(): Promise<void> {
+    if (!global.__authStorageInstance) {
+      await global.__authStorageInitPromise;
+      // After waiting, if still not set, reinitialize (hot reload edge case)
+      if (!global.__authStorageInstance) {
+        global.__authStorageInitPromise = initializeStorage().then((storage) => {
+          global.__authStorageInstance = storage;
+          return storage;
+        });
+        await global.__authStorageInitPromise;
+      }
+    }
+  }
+
   getCookieValue(name: string): string | null {
-    const jar = this.storage?.get<CookieJar>(AuthStorage.STORAGE_KEY);
+    const jar = this.storage.get<CookieJar>(AuthStorage.STORAGE_KEY);
     return jar?.[name] ?? null;
   }
 
-  /**
-   * Clear all cookies - call before login to ensure clean state
-   */
   clearCookies(): void {
-    if (this.storage) {
-      this.storage.set(AuthStorage.STORAGE_KEY, {});
-    }
+    this.storage.set(AuthStorage.STORAGE_KEY, {});
   }
 
   /**
    * Get all cookies for request headers
-   * Filters out client-only cookies (HMIS cookies that should not be sent to backend)
+   * Filters out client-only cookies (HMIS cookies not sent to backend)
    */
   getCookiesForRequest(): {
     cookieHeader: string | null;
     csrfToken: string | null;
     hmisToken: string | null;
   } {
-    const jar = this.storage?.get<CookieJar>(AuthStorage.STORAGE_KEY);
+    const jar = this.storage.get<CookieJar>(AuthStorage.STORAGE_KEY);
     if (!jar || Object.keys(jar).length === 0) {
       return { cookieHeader: null, csrfToken: null, hmisToken: null };
     }
@@ -83,14 +113,11 @@ class AuthStorage {
 
   /**
    * Extract and store cookies from Set-Cookie headers
-   * Overwrites existing cookies with same name
    */
   updateFromSetCookieHeaders(headers: {
     get?: (key: string) => string | null;
     getSetCookie?: () => string[] | null | undefined;
   }): void {
-    if (!this.storage) return;
-
     const raw = headers.getSetCookie?.() ?? headers.get?.('set-cookie');
     if (!raw) return;
 
@@ -126,20 +153,22 @@ class AuthStorage {
 
   async clearAllCredentials(): Promise<void> {
     try {
-      this.storage?.clearAll();
+      this.storage.clearAll();
       await SecureStore.deleteItemAsync(NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE);
-    } catch (error) {
-      __DEV__ && console.warn('[AuthStorage] Clear failed:', error);
+    } catch {
+      // Silently handle errors
     } finally {
-      this.storage = null;
-      this.initStorage();
+      // Clear globals to force reinitialization
+      global.__authStorage = undefined;
+      global.__authStorageInstance = undefined;
+      global.__authStorageInitPromise = undefined;
     }
-  }
-
-  reset(): void {
-    this.storage = null;
-    this.initStorage();
   }
 }
 
-export const authStorage = new AuthStorage();
+// Singleton across hot reloads
+if (!global.__authStorage) {
+  global.__authStorage = new AuthStorage();
+}
+
+export const authStorage = global.__authStorage;

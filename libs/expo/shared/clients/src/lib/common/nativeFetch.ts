@@ -5,6 +5,7 @@ import {
   contentTypeInterceptor,
   createCsrfInterceptor,
   createRefererInterceptor,
+  ensureStorageReadyInterceptor,
   omitCredentialsInterceptor,
   storeCookiesInterceptor,
   userAgentInterceptor,
@@ -14,7 +15,7 @@ import {
  * Creates a fetch client for React Native with composable interceptors
  *
  * Interceptor execution order:
- * - Request phase (top to bottom): CSRF check → headers added → credentials set
+ * - Request phase (top to bottom): Storage ready → CSRF check → headers added → credentials set
  * - Response phase (bottom to top): log failures → store cookies
  */
 export const createNativeFetch = (referer: string) => {
@@ -23,6 +24,7 @@ export const createNativeFetch = (referer: string) => {
   }
 
   return composeFetchInterceptors(
+    ensureStorageReadyInterceptor, // Must be first - ensures storage ready
     createCsrfInterceptor(referer), // Ensure CSRF token before request
     userAgentInterceptor, // Add User-Agent header
     createRefererInterceptor(referer), // Add Referer header
