@@ -28,7 +28,6 @@ export function createRedirectHandler({
       // Custom hook wins
       if (onUnauthenticated) {
         onUnauthenticated();
-
         return;
       }
 

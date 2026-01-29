@@ -7,8 +7,8 @@ import type {
   FileNamesResponse,
   HmisCurrentUser,
 } from '@monorepo/expo/shared/clients';
-import { hmisClient } from '@monorepo/expo/shared/clients';
-import { useCallback } from 'react';
+import { createHmisClient } from '@monorepo/expo/shared/clients';
+import { useCallback, useMemo } from 'react';
 
 /**
  * React hook for direct HMIS REST API access
@@ -42,6 +42,8 @@ import { useCallback } from 'react';
  * ```
  */
 export const useHmisClient = () => {
+  const hmisClient = useMemo(() => createHmisClient(), []);
+
   /**
    * Get current HMIS user profile with agency and navigation settings
    *
@@ -82,7 +84,7 @@ export const useHmisClient = () => {
         fields: fieldsParam,
       });
     },
-    []
+    [hmisClient]
   );
 
   /**
@@ -115,7 +117,7 @@ export const useHmisClient = () => {
         isPrivate
       );
     },
-    []
+    [hmisClient]
   );
 
   /**
@@ -138,15 +140,15 @@ export const useHmisClient = () => {
     ): Promise<ClientFilesResponse> => {
       return hmisClient.getClientFiles(clientId, params);
     },
-    []
+    [hmisClient]
   );
   const getFileCategories = useCallback((): Promise<FileCategoriesResponse> => {
     return hmisClient.getFileCategories();
-  }, []);
+  }, [hmisClient]);
 
   const getFileNames = useCallback((): Promise<FileNamesResponse> => {
     return hmisClient.getFileNames();
-  }, []);
+  }, [hmisClient]);
 
   /**
    * Update a client file's metadata (category and file name)
@@ -179,7 +181,7 @@ export const useHmisClient = () => {
         isPrivate
       );
     },
-    []
+    [hmisClient]
   );
 
   /**
@@ -192,7 +194,7 @@ export const useHmisClient = () => {
     (clientId: string | number, fileId: string | number): Promise<void> => {
       return hmisClient.deleteClientFile(clientId, fileId);
     },
-    []
+    [hmisClient]
   );
 
   return {
