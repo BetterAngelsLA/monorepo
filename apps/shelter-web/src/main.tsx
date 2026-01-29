@@ -1,6 +1,7 @@
 import { ApolloProvider } from '@apollo/client/react';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import { createApolloClient } from '@monorepo/react/shared';
+import { FeatureControlProvider } from '@monorepo/react/shared';
 import { createShelterTypePolicies } from '@monorepo/react/shelter';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
@@ -36,9 +37,11 @@ const root = ReactDOM.createRoot(
 root.render(
   <StrictMode>
     <ApolloProvider client={apolloClient}>
-      <BrowserRouter basename={basename}>
-        <App />
-      </BrowserRouter>
+      <FeatureControlProvider>
+        <BrowserRouter basename={basename}>
+          <App />
+        </BrowserRouter>
+      </FeatureControlProvider>
     </ApolloProvider>
   </StrictMode>
 );

@@ -8,10 +8,7 @@ import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { useUser } from '../../hooks';
 import Input from '../Input';
-import {
-  AddOrganizationMemberDocument,
-  AddOrganizationMemberMutation,
-} from './__generated__/addOrganizationMember.generated';
+import { AddOrganizationMemberDocument } from './__generated__/addOrganizationMember.generated';
 import { FormSchema, TFormSchema, defaultValues } from './formSchema';
 
 type TProps = {
@@ -57,11 +54,10 @@ export function AddUserForm(props: TProps) {
         },
       });
 
-      const errorMessage =
-        extractOperationInfoMessage<AddOrganizationMemberMutation>(
-          response,
-          'addOrganizationMember'
-        );
+      const errorMessage = extractOperationInfoMessage(
+        response,
+        'addOrganizationMember'
+      );
 
       if (errorMessage) {
         throw new Error(errorMessage);
