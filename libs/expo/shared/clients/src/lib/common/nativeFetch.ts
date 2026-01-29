@@ -1,52 +1,34 @@
 import { Platform } from 'react-native';
 import {
   backendAuthInterceptor,
+  composeFetchInterceptors,
   contentTypeInterceptor,
-  ensureCsrfToken,
-  logAuthFailureInterceptor,
-  refererInterceptor,
+  createCsrfInterceptor,
+  createRefererInterceptor,
+  omitCredentialsInterceptor,
   storeCookiesInterceptor,
   userAgentInterceptor,
 } from './interceptors';
 
 /**
- * Creates a fetch wrapper for React Native with backend authentication
+ * Creates a fetch client for React Native with composable interceptors
+ *
+ * Interceptor execution order:
+ * - Request phase (top to bottom): CSRF check → headers added → credentials set
+ * - Response phase (bottom to top): log failures → store cookies
  */
 export const createNativeFetch = (referer: string) => {
   if (Platform.OS === 'web') {
     throw new Error('createNativeFetch is for React Native platforms only');
   }
 
-  return async (input: RequestInfo | URL, init: RequestInit = {}) => {
-    const url =
-      typeof input === 'string'
-        ? input
-        : input instanceof URL
-        ? input.href
-        : input.url;
-    const method = (init.method || 'GET').toUpperCase();
-
-    // Ensure CSRF token exists for mutating requests
-    await ensureCsrfToken(referer, method);
-
-    // Compose headers from interceptors + user headers
-    const headers = new Headers({
-      ...userAgentInterceptor(),
-      ...contentTypeInterceptor(!!init.body),
-      ...refererInterceptor(referer),
-      ...backendAuthInterceptor(),
-      ...init.headers, // User headers override defaults
-    });
-
-    const response = await fetch(input as any, {
-      ...init,
-      headers,
-      credentials: 'omit',
-    });
-
-    storeCookiesInterceptor(response);
-    logAuthFailureInterceptor(url, response.status);
-
-    return response;
-  };
+  return composeFetchInterceptors(
+    createCsrfInterceptor(referer), // Ensure CSRF token before request
+    userAgentInterceptor, // Add User-Agent header
+    createRefererInterceptor(referer), // Add Referer header
+    contentTypeInterceptor, // Add Content-Type: application/json for JSON bodies
+    backendAuthInterceptor, // Add auth headers (cookies, CSRF, HMIS token)
+    omitCredentialsInterceptor, // Set credentials: 'omit'
+    storeCookiesInterceptor // Store cookies from response
+  );
 };

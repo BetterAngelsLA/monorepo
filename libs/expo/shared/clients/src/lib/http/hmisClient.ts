@@ -4,17 +4,16 @@ import {
 } from '@monorepo/expo/shared/utils';
 import { HEADER_NAMES, HEADER_VALUES } from '../common/constants';
 import {
-  hmisAuthInterceptor,
-  logAuthFailureInterceptor,
-  userAgentInterceptor,
+  getHmisAuthHeaders,
+  getUserAgentHeaders,
 } from '../common/interceptors';
 import {
   ALLOWED_FILE_TYPES,
   AllowedFileType,
-  ClientFileUploadRequest,
-  ClientFileUploadResponse,
   ClientFilesListParams,
   ClientFilesResponse,
+  ClientFileUploadRequest,
+  ClientFileUploadResponse,
   FileCategoriesResponse,
   FileNamesResponse,
   HmisError,
@@ -102,13 +101,21 @@ class HmisClient {
       });
     }
 
+    // Check if body is FormData (for multipart uploads)
+    const isFormData = options.body instanceof FormData;
+
     // Compose headers using interceptors
     const headers = new Headers({
-      ...userAgentInterceptor(),
-      ...hmisAuthInterceptor(),
+      ...getUserAgentHeaders(),
+      ...getHmisAuthHeaders(),
       [HEADER_NAMES.ACCEPT]: HEADER_VALUES.ACCEPT_JSON_ALL,
       [HEADER_NAMES.X_REQUESTED_WITH]: HEADER_VALUES.X_REQUESTED_WITH_AJAX,
-      ...options.headers, // User headers override defaults
+      // Set Content-Type for JSON bodies, but not for FormData (browser sets it with boundary)
+      ...(options.body && !isFormData
+        ? { [HEADER_NAMES.CONTENT_TYPE]: HEADER_VALUES.CONTENT_TYPE_JSON }
+        : {}),
+      // User headers override defaults
+      ...(options.headers || {}),
     });
 
     const fetchOptions: RequestInit = {
@@ -117,12 +124,13 @@ class HmisClient {
     };
 
     if (options.body) {
-      fetchOptions.body = JSON.stringify(options.body);
+      // Send FormData directly, JSON.stringify everything else
+      fetchOptions.body = isFormData
+        ? (options.body as FormData)
+        : JSON.stringify(options.body);
     }
 
     const response = await fetch(url.toString(), fetchOptions);
-
-    logAuthFailureInterceptor(url.toString(), response.status);
 
     // Handle errors
     if (!response.ok) {
@@ -143,19 +151,11 @@ class HmisClient {
   }
 
   post<T = unknown>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>(path, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-    });
+    return this.request<T>(path, { method: 'POST', body });
   }
 
   put<T = unknown>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>(path, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-    });
+    return this.request<T>(path, { method: 'PUT', body });
   }
 
   delete<T = unknown>(path: string): Promise<T> {
@@ -171,38 +171,10 @@ class HmisClient {
     path: string,
     formData: FormData
   ): Promise<T> {
-    const baseUrl = this.getBaseUrl();
-
-    const url = new URL(path, baseUrl);
-
-    // Compose headers using interceptors (except Content-Type for multipart)
-    const headers = new Headers({
-      ...userAgentInterceptor(),
-      ...hmisAuthInterceptor(),
-      [HEADER_NAMES.X_REQUESTED_WITH]: HEADER_VALUES.X_REQUESTED_WITH_AJAX,
-      // Do NOT set Content-Type - let the browser set it with the boundary
-    });
-
-    const response = await fetch(url.toString(), {
+    return this.request<T>(path, {
       method: 'POST',
-      headers,
-      body: formData, // Send FormData directly without stringifying
+      body: formData,
     });
-
-    logAuthFailureInterceptor(url.toString(), response.status);
-
-    // Handle errors
-    if (!response.ok) {
-      await this.handleError(response);
-    }
-
-    // Parse response
-    const contentType = response.headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-      return response.json();
-    }
-
-    return response.text() as unknown as T;
   }
 
   /**

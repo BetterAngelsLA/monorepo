@@ -37,9 +37,6 @@ export const createErrorLink = ({
     }
 
     if (isUnauthorizedError(graphQLErrors, networkError)) {
-      if (__DEV__) {
-        console.error('[Apollo] Unauthorized', { operationName });
-      }
       redirectToAuth(operationName ?? '');
       return; // stop here, don't forward
     }

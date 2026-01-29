@@ -68,8 +68,9 @@ class AuthStorage {
     }
 
     // Filter out client-only cookies - only send Django cookies to backend
+    const clientOnlyCookies: readonly string[] = CLIENT_ONLY_COOKIES;
     const backendCookies = Object.entries(jar)
-      .filter(([name]) => !CLIENT_ONLY_COOKIES.includes(name as any))
+      .filter(([name]) => !clientOnlyCookies.includes(name))
       .map(([name, value]) => `${name}=${value}`);
 
     return {
