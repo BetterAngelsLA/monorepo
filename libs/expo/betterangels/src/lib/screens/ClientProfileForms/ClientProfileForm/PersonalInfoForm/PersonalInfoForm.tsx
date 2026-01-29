@@ -171,10 +171,10 @@ export function PersonalInfoForm() {
           }}
           value={dateOfBirth || undefined}
           onChange={(date) => {
-            setValue('dateOfBirth', date, { shouldDirty: true, shouldValidate: true });
+            setValue('dateOfBirth', date);
           }}
           onDelete={() => {
-            setValue('dateOfBirth', null, { shouldDirty: true, shouldValidate: true });
+            setValue('dateOfBirth', null);
           }}
         />
       </Form.Field>
