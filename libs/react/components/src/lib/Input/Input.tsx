@@ -1,4 +1,4 @@
-import { mergeCss } from '@monorepo/react/components';
+import { mergeCss } from '../../utils';
 import { InputHTMLAttributes, ReactNode, useId } from 'react';
 
 export interface IInputProps extends InputHTMLAttributes<HTMLInputElement> {
