@@ -121,11 +121,24 @@ class HmisClient {
 
     // Parse response - try JSON first regardless of Content-Type
     // Some HMIS endpoints return JSON with incorrect/missing Content-Type headers
+    // Some endpoints also return double-encoded JSON strings
     const text = await response.text();
     if (!text) return text as unknown as T;
 
     try {
-      return JSON.parse(text);
+      const parsed = JSON.parse(text);
+
+      // Handle double-encoded JSON: if parsed result is a string, try parsing again
+      if (typeof parsed === 'string') {
+        try {
+          return JSON.parse(parsed);
+        } catch {
+          // Not double-encoded, return the string
+          return parsed as unknown as T;
+        }
+      }
+
+      return parsed;
     } catch {
       return text as unknown as T; // Not JSON, return raw text
     }

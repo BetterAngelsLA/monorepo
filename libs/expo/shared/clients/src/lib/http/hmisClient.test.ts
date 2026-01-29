@@ -133,6 +133,21 @@ describe('HmisClient', () => {
     expect(result).toBe('plain text');
   });
 
+  it('handles double-encoded JSON responses', async () => {
+    const hmisClient = createHmisClient();
+    const innerJson = { success: true, data: { content: 'uploaded' } };
+    const doubleEncoded = JSON.stringify(JSON.stringify(innerJson));
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      headers: jsonHeaders,
+      text: async () => doubleEncoded,
+    });
+
+    const result = await hmisClient.get('/photo/upload');
+    expect(result).toEqual(innerJson);
+  });
+
   describe('uploadClientFile', () => {
     it('uploads a file with correct structure', async () => {
       const hmisClient = createHmisClient();
