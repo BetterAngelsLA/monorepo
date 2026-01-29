@@ -25,11 +25,18 @@ export function ClientDocsHmisView({
 }) {
   const { showModalScreen } = useModalScreen();
   const { data: categories = [] } = useHmisFileCategories();
-  const { data: fileNames = [], isError: isFileNamesError, error: fileNamesError } = useHmisFileNames();
+  const {
+    data: fileNames = [],
+    isError: isFileNamesError,
+    error: fileNamesError,
+  } = useHmisFileNames();
 
   useEffect(() => {
     if (isFileNamesError && fileNamesError) {
-      console.error('[ClientDocsHmisView] File names failed to load:', fileNamesError);
+      console.error(
+        '[ClientDocsHmisView] File names failed to load:',
+        fileNamesError
+      );
     }
   }, [isFileNamesError, fileNamesError]);
   const { getClientFiles } = useHmisClient();

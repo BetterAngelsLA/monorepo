@@ -32,12 +32,15 @@ function getFileLabel(file: ClientFile, fileNames: FileName[]): string {
   return file.file?.filename || `Document ${file.id}`;
 }
 
-function getFileUri(file: ClientFile): string {
-  return (
+function getFileUri(file: ClientFile, mimeType: string): string {
+  const raw =
     file.file?.encodedThumbnailFileContent ??
     file.file?.encodedPreviewFileContent ??
-    ''
-  );
+    '';
+  if (!raw) return '';
+  if (raw.startsWith('data:')) return raw;
+  const encoded = raw.trim().replace(/\s/g, '');
+  return `data:${mimeType};base64,${encoded}`;
 }
 
 export interface HmisDocumentsProps {
@@ -91,7 +94,12 @@ export default function HmisDocuments(props: HmisDocumentsProps) {
         >
           {data?.map((file, idx) => {
             const filename = getFileLabel(file, fileNames);
-            const uri = getFileUri(file);
+            const mimeType = getMimeTypeFromFilename(filename);
+            // Thumbnail/preview from API is always an image; use image mime so FileThumbnail renders it
+            const thumbnailMimeType = mimeType.startsWith('image')
+              ? mimeType
+              : 'image/jpeg';
+            const uri = getFileUri(file, thumbnailMimeType);
             const createdAt = file.file?.added_date ?? '';
             return (
               <FileCard
@@ -101,17 +109,15 @@ export default function HmisDocuments(props: HmisDocumentsProps) {
                 onPress={() => handleFilePress(file, filename, createdAt)}
                 createdAt={createdAt}
                 thumbnail={
-                  uri ? (
-                    <FileThumbnail
-                      uri={uri}
-                      mimeType={getMimeTypeFromFilename(filename)}
-                      borderRadius={Radiuses.xxxs}
-                      thumbnailSize={{
-                        width: 36,
-                        height: 36,
-                      }}
-                    />
-                  ) : undefined
+                  <FileThumbnail
+                    uri={uri}
+                    mimeType={uri ? thumbnailMimeType : mimeType}
+                    borderRadius={Radiuses.xxxs}
+                    thumbnailSize={{
+                      width: 36,
+                      height: 36,
+                    }}
+                  />
                 }
               />
             );
