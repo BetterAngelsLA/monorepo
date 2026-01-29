@@ -6,7 +6,7 @@ import {
 import {
   ViewSheltersQuery,
   ViewSheltersQueryVariables,
-} from '@monorepo/react/shelter';
+} from '../../graphql/__generated__/ViewShelters.generated';
 
 const policyFactoryList = [
   getQueryPolicyFactory<ViewSheltersQuery, ViewSheltersQueryVariables>({

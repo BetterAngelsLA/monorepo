@@ -6,7 +6,8 @@
   ],
   "ignorePatterns": [
     "!**/*",
-    "storybook-static"
+    "storybook-static",
+    "**/*.stories.tsx"
   ],
   "overrides": [
     {
@@ -16,7 +17,14 @@
         "*.js",
         "*.jsx"
       ],
-      "rules": {}
+      "rules": {
+        "@nx/enforce-module-boundaries": [
+          "error",
+          {
+            "allow": ["^.*\\.svg$"]
+          }
+        ]
+      }
     },
     {
       "files": [

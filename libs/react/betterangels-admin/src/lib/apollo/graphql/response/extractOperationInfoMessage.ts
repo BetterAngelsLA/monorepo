@@ -1,7 +1,7 @@
 import { ApolloLink } from '@apollo/client';
 import { extractOperationInfo } from './extractOperationInfo';
 
-export function extractOperationInfoMessage<T>(
+export function extractOperationInfoMessage<_T = unknown>(
   response: ApolloLink.Result,
   queryKey: string
 ): string | null {

@@ -11,6 +11,17 @@
       "options": {
         "jestConfig": "libs/react/components/jest.config.ts"
       }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/react/components",
+        "command": "tsc --noEmit -p tsconfig.lib.json"
+      }
     }
   }
 }

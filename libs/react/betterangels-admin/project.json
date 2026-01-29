@@ -20,6 +20,17 @@
       "outputs": [
         "{workspaceRoot}/libs/react/betterangels-admin/src/lib/**/__generated__/"
       ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/react/betterangels-admin",
+        "command": "tsc --noEmit -p tsconfig.lib.json"
+      }
     }
   }
 }
