@@ -1,12 +1,20 @@
-import { getHmisApiUrl, getHmisAuthToken } from '@monorepo/expo/shared/utils';
-import { MODERN_BROWSER_USER_AGENT } from '../common/constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  bodyInterceptor,
+  composeFetchInterceptors,
+  HMIS_API_URL_STORAGE_KEY,
+  hmisInterceptor,
+  includeCredentialsInterceptor,
+  storeCookiesInterceptor,
+  userAgentInterceptor,
+} from '../common/interceptors';
 import {
   ALLOWED_FILE_TYPES,
   AllowedFileType,
-  ClientFileUploadRequest,
-  ClientFileUploadResponse,
   ClientFilesListParams,
   ClientFilesResponse,
+  ClientFileUploadRequest,
+  ClientFileUploadResponse,
   FileCategoriesResponse,
   FileName,
   FileNamesListParams,
@@ -19,65 +27,52 @@ import {
  * HMIS REST API Client
  *
  * Handles direct access to HMIS REST endpoints from React Native.
- * Automatically includes Bearer token auth and browser User-Agent.
+ * Uses composable interceptors for auth, cookies, and headers.
  */
 class HmisClient {
+  private composedFetch: (
+    input: RequestInfo | URL,
+    init?: RequestInit
+  ) => Promise<Response>;
+
+  constructor() {
+    // Compose fetch with interceptors for HMIS direct API calls
+    this.composedFetch = composeFetchInterceptors(
+      userAgentInterceptor,
+      hmisInterceptor,
+      bodyInterceptor,
+      includeCredentialsInterceptor,
+      storeCookiesInterceptor
+    );
+  }
   /**
-   * Get authorization headers including Bearer token
+   * Get HMIS API base URL from stored value
    */
-  private async getHeaders(): Promise<HeadersInit> {
-    const authToken = await getHmisAuthToken();
-
-    if (!authToken) {
-      throw new HmisError('Not authenticated with HMIS', 401);
+  private async getBaseUrl(): Promise<string> {
+    const hmisApiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
+    if (!hmisApiUrl) {
+      throw new HmisError(
+        'HMIS API URL not found. Please log in to HMIS first.',
+        401
+      );
     }
-
-    return {
-      Authorization: `Bearer ${authToken}`,
-      'User-Agent': MODERN_BROWSER_USER_AGENT,
-      Accept: 'application/json, text/plain, */*',
-      'X-Requested-With': 'XMLHttpRequest',
-    };
+    return hmisApiUrl;
   }
 
-  /**
-   * Get HMIS API base URL from stored api_url
-   */
-  private getBaseUrl(): string {
-    const apiUrl = getHmisApiUrl();
-    if (!apiUrl) {
-      throw new HmisError('HMIS API URL not found. Please log in first.', 500);
-    }
-    return apiUrl;
-  }
-
-  /**
-   * Handle HTTP error responses with HMIS-specific error mapping
-   */
   private async handleError(response: Response): Promise<never> {
     const contentType = response.headers.get('content-type');
-    let data: unknown;
-
-    try {
-      data = contentType?.includes('application/json')
-        ? await response.json()
-        : await response.text();
-    } catch {
-      data = null;
-    }
+    const data = await (contentType?.includes('application/json')
+      ? response.json().catch(() => null)
+      : response.text().catch(() => null));
 
     switch (response.status) {
       case 401:
         throw new HmisError('Unauthorized - please log in', 401, data);
-
       case 403:
         throw new HmisError('Forbidden - insufficient permissions', 403, data);
-
       case 404:
         throw new HmisError('Resource not found', 404, data);
-
       case 422: {
-        // HMIS returns validation errors as { messages: { field: message } }
         const validationData = data as { messages?: Record<string, string> };
         if (validationData?.messages) {
           const errors = Object.entries(validationData.messages)
@@ -87,7 +82,6 @@ class HmisClient {
         }
         throw new HmisError('Validation error', 422, data);
       }
-
       default:
         throw new HmisError(
           `HTTP ${response.status}: ${response.statusText}`,
@@ -104,8 +98,7 @@ class HmisClient {
     path: string,
     options: HmisRequestOptions = {}
   ): Promise<T> {
-    const baseUrl = this.getBaseUrl();
-    const authHeaders = await this.getHeaders();
+    const baseUrl = await this.getBaseUrl();
 
     // Build URL with query params
     const url = new URL(path, baseUrl);
@@ -117,30 +110,40 @@ class HmisClient {
 
     const fetchOptions: RequestInit = {
       method: options.method,
-      headers: {
-        ...authHeaders,
-        ...options.headers,
-      },
+      headers: options.headers,
+      body: options.body as BodyInit | undefined,
     };
 
-    if (options.body) {
-      fetchOptions.body = JSON.stringify(options.body);
-    }
-
-    const response = await fetch(url.toString(), fetchOptions);
+    const response = await this.composedFetch(url.toString(), fetchOptions);
 
     // Handle errors
     if (!response.ok) {
       await this.handleError(response);
     }
 
-    // Parse response
-    const contentType = response.headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-      return response.json();
-    }
+    // Parse response - try JSON first regardless of Content-Type
+    // Some HMIS endpoints return JSON with incorrect/missing Content-Type headers
+    // Some endpoints also return double-encoded JSON strings
+    const text = await response.text();
+    if (!text) return text as unknown as T;
 
-    return response.text() as unknown as T;
+    try {
+      const parsed = JSON.parse(text);
+
+      // Handle double-encoded JSON: if parsed result is a string, try parsing again
+      if (typeof parsed === 'string') {
+        try {
+          return JSON.parse(parsed);
+        } catch {
+          // Not double-encoded, return the string
+          return parsed as unknown as T;
+        }
+      }
+
+      return parsed;
+    } catch {
+      return text as unknown as T; // Not JSON, return raw text
+    }
   }
 
   get<T = unknown>(path: string, params?: Record<string, string>): Promise<T> {
@@ -148,19 +151,11 @@ class HmisClient {
   }
 
   post<T = unknown>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>(path, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-    });
+    return this.request<T>(path, { method: 'POST', body });
   }
 
   put<T = unknown>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>(path, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-    });
+    return this.request<T>(path, { method: 'PUT', body });
   }
 
   delete<T = unknown>(path: string): Promise<T> {
@@ -176,32 +171,10 @@ class HmisClient {
     path: string,
     formData: FormData
   ): Promise<T> {
-    const baseUrl = this.getBaseUrl();
-    const authHeaders = await this.getHeaders();
-
-    const url = new URL(path, baseUrl);
-
-    const response = await fetch(url.toString(), {
+    return this.request<T>(path, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        // Do NOT set Content-Type - let the browser set it with the boundary
-      },
-      body: formData, // Send FormData directly without stringifying
+      body: formData,
     });
-
-    // Handle errors
-    if (!response.ok) {
-      await this.handleError(response);
-    }
-
-    // Parse response
-    const contentType = response.headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-      return response.json();
-    }
-
-    return response.text() as unknown as T;
   }
 
   /**
@@ -416,7 +389,9 @@ class HmisClient {
       all.push(...(res.items ?? []));
       const meta = res._meta;
       hasMore =
-        meta && meta.current_page < meta.page_count && res.items?.length === PER_PAGE;
+        meta &&
+        meta.current_page < meta.page_count &&
+        res.items?.length === PER_PAGE;
       page += 1;
     }
 
@@ -489,5 +464,7 @@ class HmisClient {
   }
 }
 
-export const hmisClient = new HmisClient();
+// Factory function to create HmisClient
+export const createHmisClient = () => new HmisClient();
+
 export { HmisClient };

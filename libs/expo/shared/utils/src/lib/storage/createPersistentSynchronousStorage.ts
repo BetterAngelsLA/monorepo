@@ -8,9 +8,7 @@ type TConfig = {
 export function createPersistentSynchronousStorage(
   config?: TConfig
 ): PersistentSynchronousStorageApi {
-  const mmkvConfig = config ? { id: config.scopeId } : undefined;
-
-  const mmkv = createMMKV(mmkvConfig);
+  const mmkv = createMMKV(config ? { id: config.scopeId } : undefined);
 
   return {
     get<T>(key: string): T | null {
@@ -29,6 +27,10 @@ export function createPersistentSynchronousStorage(
 
     remove(key: string): void {
       mmkv.remove(key);
+    },
+
+    clearAll(): void {
+      mmkv.clearAll();
     },
   };
 }

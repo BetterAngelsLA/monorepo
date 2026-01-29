@@ -50,6 +50,7 @@ export default function LoginForm() {
         method: 'POST',
         body: JSON.stringify({ email: email.toLowerCase() }),
       });
+
       if (res.ok || res.status === 401) {
         setStep('otp');
       } else {
@@ -72,6 +73,7 @@ export default function LoginForm() {
         method: 'POST',
         body: JSON.stringify({ code: otp.trim() }),
       });
+
       const data = await res.json();
 
       if (res.ok && data?.meta?.is_authenticated) {
@@ -97,6 +99,7 @@ export default function LoginForm() {
         method: 'POST',
         body: JSON.stringify({ username: email.toLowerCase(), password }),
       });
+
       const data = await res.json();
 
       if (res.ok && data?.meta?.is_authenticated) {

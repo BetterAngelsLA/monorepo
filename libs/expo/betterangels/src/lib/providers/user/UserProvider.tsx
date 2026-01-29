@@ -1,13 +1,8 @@
 import { useQuery } from '@apollo/client/react';
 import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
-import {
-  isHmisTokenExpired,
-  clearAllCredentials,
-} from '@monorepo/expo/shared/utils';
 import { GraphQLFormattedError } from 'graphql';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppState } from '../../hooks';
-import useSnackbar from '../../hooks/snackbar/useSnackbar';
 import UserContext, { TUser } from './UserContext';
 import {
   CurrentUserDocument,
@@ -43,7 +38,6 @@ export default function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<TUser | undefined>();
 
   const { appBecameActive } = useAppState();
-  const { showSnackbar } = useSnackbar();
   const { data, loading, error, refetch } = useQuery(CurrentUserDocument, {
     fetchPolicy: 'network-only',
     errorPolicy: 'all',
@@ -70,7 +64,6 @@ export default function UserProvider({ children }: UserProviderProps) {
       const res = await refetch();
       updateUser(res);
     } catch (err) {
-      console.error('Error refetching user data:', err);
       setUser(undefined);
     }
   }, [refetch, updateUser]);
@@ -80,22 +73,10 @@ export default function UserProvider({ children }: UserProviderProps) {
       return;
     }
 
-    (async () => {
-      if (user?.isHmisUser) {
-        const isExpired = await isHmisTokenExpired();
-        if (isExpired) {
-          showSnackbar({
-            message: 'Your HMIS session has expired. Please log in again.',
-            type: 'error',
-            showDuration: 5000,
-          });
-          await clearAllCredentials();
-          setUser(undefined);
-        }
-      }
-      refetchUser();
-    })();
-  }, [appBecameActive, user?.isHmisUser, showSnackbar, refetchUser]);
+    // Refetch user data when app becomes active
+    // The server will handle session validation and return null user if expired
+    refetchUser();
+  }, [appBecameActive, refetchUser]);
 
   const contextValue = useMemo(
     () => ({
