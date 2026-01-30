@@ -7,7 +7,6 @@ const config: CodegenConfig = {
     'src/**/*.{graphql,ts,tsx}',
     '!src/**/__generated__/**/*.{graphql,ts,tsx}',
   ],
-  ignoreNoDocuments: true,
   generates: {
     'src/lib/apollo/graphql/__generated__/types.ts': {
       plugins: ['typescript'],
@@ -19,17 +18,10 @@ const config: CodegenConfig = {
     },
     'src/': {
       preset: 'near-operation-file',
-      plugins: ['typescript-operations', 'typed-document-node'],
-      config: {
-        scalars: {
-          NonBlankString: 'string',
-        },
-        useTypeImports: true,
-      },
+      plugins: ['typescript-operations', 'typescript-react-apollo'],
       presetConfig: {
         baseTypesPath: 'lib/apollo/graphql/__generated__/types.ts',
         folder: '__generated__',
-        importTypes: true,
       },
     },
   },

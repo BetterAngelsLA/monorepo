@@ -222,3 +222,9 @@ class ReferralRequirementChoices(models.TextChoices):
     SERVICE_PROVIDER_SUBMISSION = "service_provider_submission", _("Service Provider Submission")
     SELF_REFERRAL = "self_referral", _("Self Referral Option")
     SAME_DAY_INTAKE = "same_day_intake", _("Same Day Intake")
+
+
+@strawberry.enum
+class BedStatusChoices(models.TextChoices):
+    AVAILABLE = "available", _("Available")
+    RESERVED = "reserved", _("Reserved")
