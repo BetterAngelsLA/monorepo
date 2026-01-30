@@ -12,11 +12,11 @@ export default function NoteTitle({
   return (
     <View>
       {note?.purpose && (
-        <TextBold size="lg" mb="xs">
+        <TextBold selectable size="lg" mb="xs">
           {note?.purpose}
         </TextBold>
       )}
-      <TextRegular mb="sm" size="sm">
+      <TextRegular selectable mb="sm" size="sm">
         {format(new Date(note?.interactedAt), 'MM/dd/yyyy')}
         {' @ '}
         {format(new Date(note?.interactedAt), 'hh:mm a')}
@@ -24,7 +24,9 @@ export default function NoteTitle({
       {!!note?.team && (
         <>
           <TextBold size="sm">Team</TextBold>
-          <TextRegular size="sm">{enumDisplaySelahTeam[note.team]}</TextRegular>
+          <TextRegular selectable size="sm">
+            {enumDisplaySelahTeam[note.team]}
+          </TextRegular>
         </>
       )}
     </View>

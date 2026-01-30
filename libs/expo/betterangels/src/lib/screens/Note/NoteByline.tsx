@@ -43,13 +43,13 @@ export default function NoteByline(props: INoteBylineProps) {
           marginRight: Spacings.md,
         }}
       >
-        <TextMedium size="xsm" color={Colors.PRIMARY_EXTRA_DARK}>
+        <TextMedium selectable size="xsm" color={Colors.PRIMARY_EXTRA_DARK}>
           {authorName}
         </TextMedium>
-        <TextRegular size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
+        <TextRegular selectable size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
           {organization.name}
           {team && (
-            <TextRegular size="xs">
+            <TextRegular selectable size="xs">
               {' - '}
               {enumDisplaySelahTeam[team]}
             </TextRegular>

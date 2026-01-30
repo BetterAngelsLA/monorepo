@@ -20,7 +20,9 @@ export default function NotePublicNote({
           borderRadius: Radiuses.xxs,
         }}
       >
-        <TextRegular size="sm">{note?.publicDetails}</TextRegular>
+        <TextRegular selectable size="sm">
+          {note?.publicDetails}
+        </TextRegular>
       </View>
     </View>
   );
