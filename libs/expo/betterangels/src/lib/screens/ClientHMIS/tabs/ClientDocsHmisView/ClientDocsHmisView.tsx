@@ -13,13 +13,11 @@ import {
   useHmisFileCategories,
   useHmisFileNames,
 } from '../../../../hooks';
-import {
-  groupFilesByCategory,
-  useClientFiles,
-} from '../../../../hooks/hmisFileMetadata';
+import { useClientFiles } from '../../../../hooks/hmisFileMetadata';
 import { useModalScreen } from '../../../../providers';
 import HmisDocuments from './HmisDocuments';
 import UploadModalHmis from './UploadModalHmis';
+import { groupFilesByCategory } from './groupFilesByCategory';
 
 export function ClientDocsHmisView({
   client,

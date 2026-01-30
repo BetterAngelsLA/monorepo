@@ -20,7 +20,7 @@ export default function HmisFileInfoScreen(props: HmisFileInfoProps) {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: label ? 'Document' : 'Document',
+      title: label || 'Document',
     });
   }, [label, navigation]);
 
