@@ -9,6 +9,7 @@ export * from './ClientsAddNoteHmis';
 export { default as CreateClientProfile } from './CreateClientProfile';
 export * from './CreateClientProfileHMIS';
 export { default as FileScreenComponent } from './FileScreenComponent';
+export { default as HmisFileInfoScreen } from './HmisFileInfo';
 export { default as HmisRestDebug } from './HmisRestDebug';
 export { default as Interactions } from './Interactions';
 export { default as InteractionsHmis } from './InteractionsHmis';

@@ -184,6 +184,16 @@ export interface FileNamesResponse {
 }
 
 /**
+ * Query parameters for listing file names
+ */
+export interface FileNamesListParams {
+  sort?: string;
+  page?: number;
+  per_page?: number;
+  fields?: string;
+}
+
+/**
  * File categories list response
  */
 export interface FileCategoriesResponse {
@@ -213,9 +223,9 @@ export interface ClientFile {
   };
   file?: {
     id: number;
+    added_date: string;
     filename: string;
     filesize: number;
-    added_date: string;
     encodedPreviewFileContent?: string;
     encodedThumbnailFileContent?: string;
   };
