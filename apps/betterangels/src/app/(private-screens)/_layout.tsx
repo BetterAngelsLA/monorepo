@@ -202,15 +202,27 @@ export default function PrivateLayout() {
         })}
       />
       <Stack.Screen
-        name="settings/hmis-rest"
-        options={getDefaultStackNavOptions({
-          title: 'HMIS REST (dev)',
-        })}
-      />
-      <Stack.Screen
         name="settings/team/index"
         options={getDefaultStackNavOptions({
           title: 'Select Default Team',
+        })}
+      />
+      <Stack.Screen
+        name="dev-tools/index"
+        options={getDefaultStackNavOptions({
+          title: 'Dev Tools',
+        })}
+      />
+      <Stack.Screen
+        name="dev-tools/session-debug"
+        options={getDefaultStackNavOptions({
+          title: 'Session Monitor',
+        })}
+      />
+      <Stack.Screen
+        name="dev-tools/hmis-rest"
+        options={getDefaultStackNavOptions({
+          title: 'HMIS REST API',
         })}
       />
       <Stack.Screen

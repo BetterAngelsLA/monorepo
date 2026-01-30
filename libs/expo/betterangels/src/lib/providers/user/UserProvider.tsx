@@ -1,8 +1,12 @@
-import { useQuery } from '@apollo/client/react';
-import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
+import { useLazyQuery } from '@apollo/client/react';
+import { API_ERROR_CODES, SessionManager } from '@monorepo/expo/shared/clients';
+import { USER_STORAGE_KEY } from '@monorepo/expo/shared/utils';
 import { GraphQLFormattedError } from 'graphql';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppState } from '../../hooks';
+import { clearSession, handleSessionExpired } from '../../auth';
+import useSnackbar from '../../hooks/snackbar/useSnackbar';
 import UserContext, { TUser } from './UserContext';
 import {
   CurrentUserDocument,
@@ -36,12 +40,65 @@ type UserResponse = {
 
 export default function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<TUser | undefined>();
+  const [isInitialized, setIsInitialized] = useState(false);
+  const { showSnackbar } = useSnackbar();
 
   const { appBecameActive } = useAppState();
-  const { data, loading, error, refetch } = useQuery(CurrentUserDocument, {
+  const [executeQuery, { loading }] = useLazyQuery(CurrentUserDocument, {
     fetchPolicy: 'network-only',
     errorPolicy: 'all',
   });
+
+  // Load user from storage on mount
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(USER_STORAGE_KEY);
+        if (stored) {
+          setUser(JSON.parse(stored));
+        }
+      } catch (error) {
+        console.debug(
+          '[UserProvider] Failed to load user from storage:',
+          error
+        );
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+    loadUser();
+  }, []);
+
+  // Persist user to storage (except HMIS users - they're session-only)
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const saveUser = async () => {
+      try {
+        if (user && !user.isHmisUser) {
+          await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+        } else {
+          await AsyncStorage.removeItem(USER_STORAGE_KEY);
+        }
+      } catch (error) {
+        console.debug('[UserProvider] Failed to save user to storage:', error);
+      }
+    };
+    saveUser();
+  }, [user, isInitialized]);
+
+  // Set up session monitoring callback when user is logged in
+  useEffect(() => {
+    const manager = SessionManager.getInstance();
+    if (!manager) return;
+
+    if (user) {
+      const onExpired = () => handleSessionExpired(showSnackbar, setUser);
+      manager.setCallback(onExpired);
+    } else {
+      manager.setCallback(null);
+    }
+  }, [user, showSnackbar]);
 
   const updateUser = useCallback((res: UserResponse) => {
     const invalidate = res.errors?.some((e) => {
@@ -53,28 +110,18 @@ export default function UserProvider({ children }: UserProviderProps) {
     setUser(userValue);
   }, []);
 
-  useEffect(() => {
-    if (!loading) {
-      updateUser({ data, errors: error ? [error] : undefined });
-    }
-  }, [loading, data, error, updateUser]);
-
   const refetchUser = useCallback(async () => {
     try {
-      const res = await refetch();
+      const res = await executeQuery();
       updateUser(res);
     } catch (err) {
-      setUser(undefined);
+      // Clear session on refetch error (likely auth issue)
+      await clearSession(setUser);
     }
-  }, [refetch, updateUser]);
+  }, [executeQuery, updateUser]);
 
   useEffect(() => {
-    if (!appBecameActive) {
-      return;
-    }
-
-    // Refetch user data when app becomes active
-    // The server will handle session validation and return null user if expired
+    if (!appBecameActive) return;
     refetchUser();
   }, [appBecameActive, refetchUser]);
 
@@ -82,11 +129,11 @@ export default function UserProvider({ children }: UserProviderProps) {
     () => ({
       user,
       setUser,
-      isLoading: loading,
+      isLoading: !isInitialized || loading,
       refetchUser,
       isHmisUser: user?.isHmisUser,
     }),
-    [user, loading, refetchUser]
+    [user, isInitialized, loading, refetchUser]
   );
 
   return (

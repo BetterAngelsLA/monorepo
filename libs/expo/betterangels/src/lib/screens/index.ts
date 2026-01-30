@@ -15,6 +15,7 @@ export { default as InteractionsHmis } from './InteractionsHmis';
 export { default as Note } from './Note';
 export * from './NotesHmis';
 export { default as PublicNote } from './PublicNote';
+export * from './SessionDebug';
 export { default as Task } from './Task';
 export { default as Tasks } from './Tasks';
 export { default as UserProfile } from './UserProfile';

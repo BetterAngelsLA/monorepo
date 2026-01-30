@@ -22,5 +22,7 @@ export const AUTH_STORAGE_SCOPE_ID = 'auth-storage';
 export const ENVIRONMENT_STORAGE_KEY = 'currentEnvironment';
 export const NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE =
   'native-cookie-encryption-key';
+export const HMIS_API_URL_STORAGE_KEY = 'hmis_api_url';
+export const USER_STORAGE_KEY = 'current_user';
 
 export const CSRF_LOGIN_PATH = '/admin/login/';

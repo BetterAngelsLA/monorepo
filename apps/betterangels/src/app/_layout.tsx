@@ -5,25 +5,28 @@ import {
   BlockingScreenProvider,
   createBaTypePolicies,
   ErrorCrashView,
+  handleSessionExpired,
   KeyboardToolbarProvider,
   ModalScreenProvider,
   NativePaperProvider,
   SnackbarProvider,
   useNewRelic,
+  useSnackbar,
   UserProvider,
 } from '@monorepo/expo/betterangels';
 import {
   ApiConfigProvider,
   ApolloClientProvider,
+  SessionManagerProvider,
 } from '@monorepo/expo/shared/clients';
 import { FeatureControlProvider } from '@monorepo/react/shared';
 import { StatusBar } from 'expo-status-bar';
+import { Platform, StyleSheet } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
 
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import { type ErrorBoundaryProps } from 'expo-router';
-import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AppRoutesStack from './AppRoutesStack';
 
@@ -52,30 +55,44 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <NativePaperProvider>
         <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-          <ApolloClientProvider typePolicies={baApolloTypePolicies}>
-            <FeatureControlProvider>
-              <KeyboardProvider>
-                <KeyboardToolbarProvider>
-                  <SnackbarProvider>
-                    <UserProvider>
-                      <BlockingScreenProvider>
-                        <ModalScreenProvider>
-                          <AppUpdatePrompt />
-                          <StatusBar
-                            style={Platform.OS === 'ios' ? 'light' : 'auto'}
-                          />
-                          <AppRoutesStack />
-                        </ModalScreenProvider>
-                      </BlockingScreenProvider>
-                    </UserProvider>
-                  </SnackbarProvider>
-                </KeyboardToolbarProvider>
-              </KeyboardProvider>
-            </FeatureControlProvider>
-          </ApolloClientProvider>
+          <SessionManagerProvider />
+          <KeyboardProvider>
+            <KeyboardToolbarProvider>
+              <SnackbarProvider>
+                <AppProviders />
+              </SnackbarProvider>
+            </KeyboardToolbarProvider>
+          </KeyboardProvider>
         </ApiConfigProvider>
       </NativePaperProvider>
     </GestureHandlerRootView>
+  );
+}
+
+function AppProviders() {
+  const { showSnackbar } = useSnackbar();
+
+  const handleUnauthenticated = () => {
+    handleSessionExpired(showSnackbar);
+  };
+
+  return (
+    <ApolloClientProvider
+      typePolicies={baApolloTypePolicies}
+      onUnauthenticated={handleUnauthenticated}
+    >
+      <FeatureControlProvider>
+        <UserProvider>
+          <BlockingScreenProvider>
+            <ModalScreenProvider>
+              <AppUpdatePrompt />
+              <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
+              <AppRoutesStack />
+            </ModalScreenProvider>
+          </BlockingScreenProvider>
+        </UserProvider>
+      </FeatureControlProvider>
+    </ApolloClientProvider>
   );
 }
 

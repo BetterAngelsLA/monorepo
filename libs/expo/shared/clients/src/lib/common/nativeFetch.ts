@@ -7,6 +7,7 @@ import {
   createRefererInterceptor,
   hmisInterceptor,
   includeCredentialsInterceptor,
+  sessionExpiryInterceptor,
   storeCookiesInterceptor,
   userAgentInterceptor,
 } from './interceptors';
@@ -31,6 +32,7 @@ export const createNativeFetch = (referer: string) => {
     backendAuthInterceptor, // Add auth headers (CSRF, HMIS token)
     includeCredentialsInterceptor, // Set credentials: 'include' for cookies
     hmisInterceptor, // Extract and store HMIS api_url from responses
-    storeCookiesInterceptor // Store cookies from response
+    storeCookiesInterceptor, // Store cookies from response
+    sessionExpiryInterceptor // Monitor session cookie expiry
   );
 };

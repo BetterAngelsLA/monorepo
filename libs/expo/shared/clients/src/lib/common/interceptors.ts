@@ -8,6 +8,7 @@ import {
   CSRF_LOGIN_PATH,
   HMIS_AUTH_COOKIE_NAME,
   HMIS_TOKEN_HEADER_NAME,
+  HMIS_API_URL_STORAGE_KEY,
 } from '@monorepo/expo/shared/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NitroCookies from 'react-native-nitro-cookies';
@@ -17,6 +18,7 @@ import {
   MODERN_BROWSER_USER_AGENT,
   MUTATING_METHODS,
 } from './constants';
+import { SessionManager } from './sessionManager';
 
 export type HeadersObject = Record<string, string>;
 
@@ -25,8 +27,6 @@ export type FetchInterceptor = (
   init: RequestInit,
   next: (input: RequestInfo | URL, init: RequestInit) => Promise<Response>
 ) => Promise<Response>;
-
-export const HMIS_API_URL_STORAGE_KEY = 'hmis_api_url';
 
 /**
  * Helper to extract URL string from RequestInfo
@@ -49,6 +49,7 @@ const getHmisAuthToken = async (): Promise<string | null> => {
     const hmisCookies = await NitroCookies.get(hmisApiUrl);
     return hmisCookies[HMIS_AUTH_COOKIE_NAME]?.value || null;
   } catch (error) {
+    console.debug('[getHmisAuthToken] Failed to retrieve token:', error);
     return null;
   }
 };
@@ -217,6 +218,26 @@ export const storeCookiesInterceptor: FetchInterceptor = async (
 };
 
 /**
+ * Monitors session cookie expiry after each request.
+ * Checks after response received - when cookies may have been updated via Set-Cookie.
+ * NitroCookies.get() is fast (synchronous, in-memory) so minimal overhead.
+ */
+export const sessionExpiryInterceptor: FetchInterceptor = async (
+  input,
+  init,
+  next
+) => {
+  const response = await next(input, init);
+
+  // Check session expiry after storing cookies
+  const manager = SessionManager.getInstance();
+  if (manager) {
+    await manager.checkAndSchedule();
+  }
+  return response;
+};
+
+/**
  * HMIS-specific interceptor for direct HMIS API calls
  * Request phase: Adds Bearer token auth and HMIS-required headers
  * Response phase: Extracts and stores api_url from Set-Cookie
@@ -225,14 +246,18 @@ export const hmisInterceptor: FetchInterceptor = async (input, init, next) => {
   const headers = new Headers(init.headers);
 
   // Request phase: Add HMIS headers
-  const hmisApiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
-  if (hmisApiUrl) {
-    const cookies = await NitroCookies.get(hmisApiUrl);
-    const authToken = cookies[HMIS_AUTH_COOKIE_NAME]?.value;
+  try {
+    const hmisApiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
+    if (hmisApiUrl) {
+      const cookies = await NitroCookies.get(hmisApiUrl);
+      const authToken = cookies[HMIS_AUTH_COOKIE_NAME]?.value;
 
-    if (authToken) {
-      headers.set('Authorization', `Bearer ${authToken}`);
+      if (authToken) {
+        headers.set('Authorization', `Bearer ${authToken}`);
+      }
     }
+  } catch (error) {
+    console.debug('[hmisInterceptor] Failed to get HMIS auth:', error);
   }
 
   // Add HMIS-required headers
@@ -249,9 +274,20 @@ export const hmisInterceptor: FetchInterceptor = async (input, init, next) => {
   const setCookie = response.headers.get('set-cookie');
   if (setCookie) {
     const apiUrlMatch = setCookie.match(/api_url=([^;]+)/);
-    if (apiUrlMatch) {
-      const decodedUrl = decodeURIComponent(apiUrlMatch[1]);
-      await AsyncStorage.setItem(HMIS_API_URL_STORAGE_KEY, decodedUrl);
+    if (apiUrlMatch && apiUrlMatch[1]) {
+      try {
+        const decodedUrl = decodeURIComponent(apiUrlMatch[1]);
+        if (decodedUrl && typeof decodedUrl === 'string') {
+          await AsyncStorage.setItem(HMIS_API_URL_STORAGE_KEY, decodedUrl);
+        } else {
+          console.warn('[hmisInterceptor] Invalid decoded URL:', decodedUrl);
+        }
+      } catch (error) {
+        console.error(
+          '[hmisInterceptor] Failed to decode/store HMIS URL:',
+          error
+        );
+      }
     }
   }
 
@@ -289,7 +325,7 @@ export const getHmisAuthHeaders = async (
   hmisApiUrl: string
 ): Promise<HeadersObject> => {
   const cookies = await NitroCookies.get(hmisApiUrl);
-  const authToken = cookies['auth_token']?.value;
+  const authToken = cookies[HMIS_AUTH_COOKIE_NAME]?.value;
 
   if (authToken) {
     return {

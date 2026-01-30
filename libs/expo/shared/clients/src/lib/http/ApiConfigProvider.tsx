@@ -14,7 +14,7 @@ import React, {
   useState,
 } from 'react';
 import { Platform } from 'react-native';
-import { getCSRFToken } from '../common';
+import { getCSRFToken } from '../common/csrf';
 import { createNativeFetch } from '../common/nativeFetch';
 
 type Env = 'production' | 'demo';
