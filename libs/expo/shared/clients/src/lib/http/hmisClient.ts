@@ -1,8 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
+  HMIS_API_URL_STORAGE_KEY,
+  HMIS_AUTH_COOKIE_NAME,
+} from '@monorepo/expo/shared/utils';
+import {
   bodyInterceptor,
   composeFetchInterceptors,
-  HMIS_API_URL_STORAGE_KEY,
   hmisInterceptor,
   includeCredentialsInterceptor,
   sessionExpiryInterceptor,

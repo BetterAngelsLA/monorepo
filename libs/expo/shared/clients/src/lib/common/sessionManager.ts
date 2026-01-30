@@ -1,6 +1,8 @@
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NitroCookies from 'react-native-nitro-cookies';
+import { jwtDecode } from 'jwt-decode';
+import { pipe, map, filter } from 'remeda';
 import {
   HMIS_API_URL_STORAGE_KEY,
   HMIS_AUTH_COOKIE_NAME,
@@ -23,29 +25,29 @@ const checkDjangoSessionExpiry: ExpiryChecker = async (backendUrl) => {
 
   const cookies = await NitroCookies.get(backendUrl);
   const sessionCookie = cookies[SESSION_COOKIE_NAME];
-  
-  return sessionCookie?.expires ? new Date(sessionCookie.expires).getTime() : null;
+
+  return sessionCookie?.expires
+    ? new Date(sessionCookie.expires).getTime()
+    : null;
 };
 
 /**
  * Check HMIS JWT token expiry
  */
 const checkHmisTokenExpiry: ExpiryChecker = async () => {
-  const hmisApiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
-  if (!hmisApiUrl) return null;
-
-  const cookies = await NitroCookies.get(hmisApiUrl);
-  const hmisCookie = cookies[HMIS_AUTH_COOKIE_NAME];
-  if (!hmisCookie?.value) return null;
-
   try {
-    // JWT format: header.payload.signature - decode payload
-    const payload = hmisCookie.value.split('.')[1];
-    const decoded = JSON.parse(atob(payload));
-    // JWT exp is in seconds, convert to milliseconds
+    const hmisApiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
+    if (!hmisApiUrl) return null;
+
+    const cookies = await NitroCookies.get(hmisApiUrl);
+    const hmisCookie = cookies[HMIS_AUTH_COOKIE_NAME];
+    if (!hmisCookie?.value) return null;
+
+    // Decode JWT token to get expiry (exp is in seconds, convert to milliseconds)
+    const decoded = jwtDecode<{ exp?: number }>(hmisCookie.value);
     return decoded.exp ? decoded.exp * 1000 : null;
   } catch (error) {
-    console.debug('[SessionManager] Failed to decode HMIS JWT:', error);
+    console.debug('[SessionManager] Failed to check HMIS token:', error);
     return null;
   }
 };
@@ -57,15 +59,36 @@ const expiryCheckers: ExpiryChecker[] = [
 ];
 
 class SessionManager {
+  private static instance: SessionManager | null = null;
+
   private timeoutId: NodeJS.Timeout | null = null;
   private callback: SessionExpiredCallback | null = null;
   private appStateSubscription: ReturnType<typeof AppState.addEventListener>;
   private lastExpiries: Map<number, number | null> = new Map();
   private readonly backendUrl: string;
 
-  constructor(backendUrl: string) {
+  private constructor(backendUrl: string) {
     this.backendUrl = backendUrl;
-    this.appStateSubscription = AppState.addEventListener('change', this.handleAppStateChange);
+    this.appStateSubscription = AppState.addEventListener(
+      'change',
+      this.handleAppStateChange
+    );
+  }
+
+  static initialize(backendUrl: string): SessionManager {
+    // Destroy old instance if exists
+    this.instance?.destroy();
+    this.instance = new SessionManager(backendUrl);
+    return this.instance;
+  }
+
+  static getInstance(): SessionManager | null {
+    return this.instance;
+  }
+
+  static clearInstance(): void {
+    this.instance?.destroy();
+    this.instance = null;
   }
 
   destroy() {
@@ -85,8 +108,8 @@ class SessionManager {
     try {
       // Run all checkers in parallel
       const expiryResults = await Promise.all(
-        expiryCheckers.map((checker, index) => 
-          checker(this.backendUrl).then(expiry => ({ index, expiry }))
+        expiryCheckers.map((checker, index) =>
+          checker(this.backendUrl).then((expiry) => ({ index, expiry }))
         )
       );
 
@@ -104,9 +127,11 @@ class SessionManager {
       this.clearTimeout();
 
       // Schedule timeout to earliest expiry
-      const validExpiries = expiryResults
-        .map(({ expiry }) => expiry)
-        .filter((time): time is number => time !== null);
+      const validExpiries = pipe(
+        expiryResults,
+        map(({ expiry }) => expiry),
+        filter((time): time is number => time !== null)
+      );
 
       if (validExpiries.length === 0) return;
 
@@ -115,7 +140,10 @@ class SessionManager {
       if (msUntilExpiry <= 0) {
         this.triggerExpiration();
       } else {
-        this.timeoutId = setTimeout(() => this.triggerExpiration(), msUntilExpiry);
+        this.timeoutId = setTimeout(
+          () => this.triggerExpiration(),
+          msUntilExpiry
+        );
       }
     } catch (error) {
       console.debug('[SessionManager] Failed to check cookies:', error);
@@ -147,17 +175,6 @@ class SessionManager {
   triggerExpirationForTesting() {
     this.triggerExpiration();
   }
-}
-
-// Singleton instance managed by SessionManagerProvider
-let currentSessionManager: SessionManager | null = null;
-
-export function getSessionManager(): SessionManager | null {
-  return currentSessionManager;
-}
-
-export function setSessionManager(manager: SessionManager | null): void {
-  currentSessionManager = manager;
 }
 
 export { SessionManager };

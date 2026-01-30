@@ -4,15 +4,17 @@ import { StyleSheet, View } from 'react-native';
 import { handleSessionExpired } from '../../../auth';
 import { useAppVersion } from '../../../hooks';
 import useSnackbar from '../../../hooks/snackbar/useSnackbar';
+import useUser from '../../../hooks/user/useUser';
 import { MainScrollContainer } from '../../../ui-components';
 import { AppDataCard } from './AppDataCard';
 
 export function AboutApp() {
   const { version, runtimeVersionShort, otaUpdateIdShort } = useAppVersion();
   const { showSnackbar } = useSnackbar();
+  const { setUser } = useUser();
 
   const testSessionExpired = () => {
-    handleSessionExpired(showSnackbar);
+    handleSessionExpired(showSnackbar, setUser);
   };
 
   return (

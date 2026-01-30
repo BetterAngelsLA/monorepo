@@ -1,1 +1,1 @@
-export { handleSessionExpired } from './handleSessionExpired';
+export { clearSession, handleSessionExpired } from './handleSessionExpired';

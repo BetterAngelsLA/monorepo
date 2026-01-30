@@ -1,5 +1,6 @@
 import { HmisError, ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { HMIS_API_URL_STORAGE_KEY } from '@monorepo/expo/shared/utils';
 import {
   BasicInput,
   Button,
@@ -7,7 +8,8 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useCallback, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useHmisClient } from '../../hooks';
 import { MainScrollContainer } from '../../ui-components';
@@ -50,6 +52,16 @@ export default function HmisRestDebug() {
     hmisClient,
   } = useHmisClient();
   const [activeSection, setActiveSection] = useState<Section>('currentUser');
+  const [hmisApiUrl, setHmisApiUrl] = useState<string | null>(null);
+
+  // Check if HMIS API URL is available
+  useEffect(() => {
+    const checkHmisUrl = async () => {
+      const url = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
+      setHmisApiUrl(url);
+    };
+    checkHmisUrl();
+  }, []);
 
   // Current User state
   const [fields, setFields] = useState('');
@@ -503,6 +515,56 @@ export default function HmisRestDebug() {
               This screen is available only in development builds.
             </TextRegular>
           </View>
+        </View>
+      </MainScrollContainer>
+    );
+  }
+
+  // Show message if HMIS API URL is not available
+  if (!hmisApiUrl) {
+    return (
+      <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+        <View style={styles.content}>
+          <View
+            style={[styles.banner, { backgroundColor: Colors.WARNING_LIGHT }]}
+          >
+            <TextMedium color={Colors.WARNING_EXTRA_DARK}>
+              HMIS API URL not available
+            </TextMedium>
+            <TextRegular
+              size="sm"
+              color={Colors.WARNING_DARK}
+              style={{ marginTop: 8 }}
+            >
+              To use this debug screen, you need to:
+            </TextRegular>
+            <TextRegular
+              size="sm"
+              color={Colors.WARNING_DARK}
+              style={{ marginTop: 4 }}
+            >
+              1. Log in as an HMIS user, OR
+            </TextRegular>
+            <TextRegular size="sm" color={Colors.WARNING_DARK}>
+              2. Use any HMIS feature in the app (e.g., view an HMIS client)
+            </TextRegular>
+            <TextRegular
+              size="sm"
+              color={Colors.WARNING_DARK}
+              style={{ marginTop: 8 }}
+            >
+              This will populate the HMIS API URL needed for direct REST calls.
+            </TextRegular>
+          </View>
+          <Button
+            title="Refresh"
+            variant="primary"
+            onPress={async () => {
+              const url = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
+              setHmisApiUrl(url);
+            }}
+            style={{ marginTop: 16 }}
+          />
         </View>
       </MainScrollContainer>
     );

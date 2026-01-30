@@ -4,12 +4,17 @@ import {
   SESSION_COOKIE_NAME,
 } from '@monorepo/expo/shared/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { jwtDecode } from 'jwt-decode';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import NitroCookies from 'react-native-nitro-cookies';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { Button, TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { getSessionManager, useApiConfig } from '@monorepo/expo/shared/clients';
+import {
+  Button,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
+import { SessionManager, useApiConfig } from '@monorepo/expo/shared/clients';
 import { MainContainer } from '../../ui-components';
 
 export function SessionDebug() {
@@ -44,12 +49,10 @@ export function SessionDebug() {
         if (hmisCookie) {
           info += `HMIS Cookie:\n`;
           info += `  Value: ${hmisCookie.value ? 'present' : 'missing'}\n`;
-          
-          // Decode JWT to get actual expiry
+
           if (hmisCookie.value) {
             try {
-              const payload = hmisCookie.value.split('.')[1];
-              const decoded = JSON.parse(atob(payload));
+              const decoded = jwtDecode<{ exp?: number }>(hmisCookie.value);
               if (decoded.exp) {
                 const jwtExpiry = new Date(decoded.exp * 1000).toISOString();
                 info += `  JWT Expires: ${jwtExpiry}\n`;
@@ -59,7 +62,7 @@ export function SessionDebug() {
               info += `  JWT decode failed\n`;
             }
           }
-          
+
           info += `  Cookie Expires: ${hmisCookie.expires || 'no expiry'}\n`;
         } else {
           info += `HMIS Cookie: not found\n`;
@@ -74,10 +77,12 @@ export function SessionDebug() {
 
   const expireSession = async () => {
     try {
-      const manager = getSessionManager();
+      const manager = SessionManager.getInstance();
       if (manager) {
         manager.triggerExpirationForTesting();
-        setResult('✓ Session expiration triggered\nShould navigate to /auth and clear cookies');
+        setResult(
+          '✓ Session expiration triggered\nShould navigate to /auth and clear cookies'
+        );
       } else {
         setResult('✗ Session manager not initialized');
       }
@@ -89,10 +94,12 @@ export function SessionDebug() {
 
   const expireHmis = async () => {
     try {
-      const manager = getSessionManager();
+      const manager = SessionManager.getInstance();
       if (manager) {
         manager.triggerExpirationForTesting();
-        setResult('✓ HMIS expiration triggered\nShould navigate to /auth and clear cookies');
+        setResult(
+          '✓ HMIS expiration triggered\nShould navigate to /auth and clear cookies'
+        );
       } else {
         setResult('✗ Session manager not initialized');
       }
@@ -107,8 +114,9 @@ export function SessionDebug() {
         <View style={styles.section}>
           <TextBold fontSize="lg">Session Monitor Debug</TextBold>
           <TextRegular fontSize="sm" color={Colors.NEUTRAL_DARK}>
-            Test session expiration monitoring. Note: Cannot modify httpOnly cookies,
-            so "Expire Now" buttons simulate expiration by directly triggering the handler.
+            Test session expiration monitoring. Note: Cannot modify httpOnly
+            cookies, so "Expire Now" buttons simulate expiration by directly
+            triggering the handler.
           </TextRegular>
         </View>
 

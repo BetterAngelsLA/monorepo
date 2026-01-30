@@ -18,7 +18,7 @@ import {
   MODERN_BROWSER_USER_AGENT,
   MUTATING_METHODS,
 } from './constants';
-import { getSessionManager } from './sessionManager';
+import { SessionManager } from './sessionManager';
 
 export type HeadersObject = Record<string, string>;
 
@@ -49,6 +49,7 @@ const getHmisAuthToken = async (): Promise<string | null> => {
     const hmisCookies = await NitroCookies.get(hmisApiUrl);
     return hmisCookies[HMIS_AUTH_COOKIE_NAME]?.value || null;
   } catch (error) {
+    console.debug('[getHmisAuthToken] Failed to retrieve token:', error);
     return null;
   }
 };
@@ -227,10 +228,9 @@ export const sessionExpiryInterceptor: FetchInterceptor = async (
   next
 ) => {
   const response = await next(input, init);
-  
+
   // Check session expiry after storing cookies
-  // Backend URL is set by SessionManagerProvider from React context
-  const manager = getSessionManager();
+  const manager = SessionManager.getInstance();
   if (manager) {
     await manager.checkAndSchedule();
   }
@@ -246,14 +246,18 @@ export const hmisInterceptor: FetchInterceptor = async (input, init, next) => {
   const headers = new Headers(init.headers);
 
   // Request phase: Add HMIS headers
-  const hmisApiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
-  if (hmisApiUrl) {
-    const cookies = await NitroCookies.get(hmisApiUrl);
-    const authToken = cookies[HMIS_AUTH_COOKIE_NAME]?.value;
+  try {
+    const hmisApiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
+    if (hmisApiUrl) {
+      const cookies = await NitroCookies.get(hmisApiUrl);
+      const authToken = cookies[HMIS_AUTH_COOKIE_NAME]?.value;
 
-    if (authToken) {
-      headers.set('Authorization', `Bearer ${authToken}`);
+      if (authToken) {
+        headers.set('Authorization', `Bearer ${authToken}`);
+      }
     }
+  } catch (error) {
+    console.debug('[hmisInterceptor] Failed to get HMIS auth:', error);
   }
 
   // Add HMIS-required headers
@@ -270,9 +274,20 @@ export const hmisInterceptor: FetchInterceptor = async (input, init, next) => {
   const setCookie = response.headers.get('set-cookie');
   if (setCookie) {
     const apiUrlMatch = setCookie.match(/api_url=([^;]+)/);
-    if (apiUrlMatch) {
-      const decodedUrl = decodeURIComponent(apiUrlMatch[1]);
-      await AsyncStorage.setItem(HMIS_API_URL_STORAGE_KEY, decodedUrl);
+    if (apiUrlMatch && apiUrlMatch[1]) {
+      try {
+        const decodedUrl = decodeURIComponent(apiUrlMatch[1]);
+        if (decodedUrl && typeof decodedUrl === 'string') {
+          await AsyncStorage.setItem(HMIS_API_URL_STORAGE_KEY, decodedUrl);
+        } else {
+          console.warn('[hmisInterceptor] Invalid decoded URL:', decodedUrl);
+        }
+      } catch (error) {
+        console.error(
+          '[hmisInterceptor] Failed to decode/store HMIS URL:',
+          error
+        );
+      }
     }
   }
 
@@ -310,7 +325,7 @@ export const getHmisAuthHeaders = async (
   hmisApiUrl: string
 ): Promise<HeadersObject> => {
   const cookies = await NitroCookies.get(hmisApiUrl);
-  const authToken = cookies['auth_token']?.value;
+  const authToken = cookies[HMIS_AUTH_COOKIE_NAME]?.value;
 
   if (authToken) {
     return {

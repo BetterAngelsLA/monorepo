@@ -1,12 +1,11 @@
-import { AuthContainer, useUser } from '@monorepo/expo/betterangels';
+import { AuthContainer } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Button } from '@monorepo/expo/shared/ui-components';
 import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
 import * as Updates from 'expo-updates';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import NitroCookies from 'react-native-nitro-cookies';
 
 import Logo from './assets/images/logo.svg';
 
@@ -18,19 +17,9 @@ const SHARED_BUTTON_PROPS = {
 
 export default function Auth() {
   const router = useRouter();
-  const { setUser } = useUser();
   const nativeVersion = Application.nativeApplicationVersion;
   const otaId = Updates.updateId;
   const otaVersion = otaId ? otaId.slice(0, 7) : 'N/A';
-
-  // Clear user state and cookies when landing on auth screen
-  useEffect(() => {
-    const clearSession = async () => {
-      await NitroCookies.clearAll();
-      setUser(undefined);
-    };
-    clearSession();
-  }, [setUser]);
 
   return (
     <AuthContainer header={<Logo width={216} height={33} />}>
