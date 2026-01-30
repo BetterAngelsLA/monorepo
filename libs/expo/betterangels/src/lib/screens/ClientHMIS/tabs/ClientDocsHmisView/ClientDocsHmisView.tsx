@@ -1,4 +1,3 @@
-import type { ClientFile, FileCategory } from '@monorepo/expo/shared/clients';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -14,6 +13,10 @@ import {
   useHmisFileCategories,
   useHmisFileNames,
 } from '../../../../hooks';
+import {
+  groupFilesByCategory,
+  useClientFiles,
+} from '../../../../hooks/hmisFileMetadata';
 import { useModalScreen } from '../../../../providers';
 import HmisDocuments from './HmisDocuments';
 import UploadModalHmis from './UploadModalHmis';
@@ -40,88 +43,33 @@ export function ClientDocsHmisView({
     }
   }, [isFileNamesError, fileNamesError]);
   const { getClientFiles } = useHmisClient();
-  const [status, setStatus] = useState<
-    'idle' | 'loading' | 'success' | 'error'
-  >('idle');
-  const [files, setFiles] = useState<ClientFile[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const { files, status, error, isLoading, isError } = useClientFiles(
+    client?.id,
+    client?.hmisId as string | undefined
+  );
+
   const [expanded, setExpanded] = useState<undefined | string | null>(null);
 
+  const filesByCategory = useMemo(
+    () => groupFilesByCategory(files, categories),
+    [files, categories]
+  );
   useEffect(() => {
-    if (!client?.id) {
-      setFiles([]);
-      setStatus('idle');
+    if (!client?.id || !client?.hmisId) {
       return;
     }
-
-    let isActive = true;
-    setStatus('loading');
-    setError(null);
-
     getClientFiles(client.hmisId as string, {
       fields:
         'id,ref_category,ref_file_name,ref_agency,name,is_program_file,file.*,category,fileName',
     })
       .then((data) => {
-        if (!isActive) {
-          return;
-        }
-        setFiles(data.items ?? []);
-        setStatus('success');
+        console.log('[ClientDocsHmisView] Documents loaded:', data);
       })
       .catch((err) => {
-        if (!isActive) {
-          return;
-        }
-        const message =
-          err instanceof Error ? err.message : 'Failed to load documents.';
-        setError(message);
-        setStatus('error');
+        console.error('[ClientDocsHmisView] Failed to load documents:', err);
       });
-
-    return () => {
-      isActive = false;
-    };
   }, [client?.id, client?.hmisId, getClientFiles]);
-
-  const emptyLabel = useMemo(() => {
-    if (!client?.id) {
-      return 'Select a client to view documents.';
-    }
-    return 'No documents found.';
-  }, [client?.id]);
-
-  const filesByCategory = useMemo(() => {
-    const byRefCategory = new Map<number, ClientFile[]>();
-    for (const file of files) {
-      const catId = file.ref_category;
-      const list = byRefCategory.get(catId) ?? [];
-      list.push(file);
-      byRefCategory.set(catId, list);
-    }
-    const result: {
-      category: FileCategory | undefined;
-      files: ClientFile[];
-    }[] = [];
-    for (const cat of categories) {
-      const list = byRefCategory.get(cat.id);
-      if (list?.length) {
-        result.push({ category: cat, files: list });
-        byRefCategory.delete(cat.id);
-      }
-    }
-    byRefCategory.forEach((fileList, refCategory) => {
-      result.push({
-        category: {
-          id: refCategory,
-          name: `Category ${refCategory}`,
-          status: 0,
-        },
-        files: fileList,
-      });
-    });
-    return result;
-  }, [files, categories]);
+  const showEmpty = !isLoading && !isError && files.length === 0;
 
   return (
     <ScrollView
@@ -165,8 +113,10 @@ export function ClientDocsHmisView({
           </TextRegular>
         )}
 
-        {status !== 'loading' && status !== 'error' && files.length === 0 && (
-          <TextRegular color={Colors.NEUTRAL_DARK}>{emptyLabel}</TextRegular>
+        {showEmpty && (
+          <TextRegular color={Colors.NEUTRAL_DARK}>
+            No documents found.
+          </TextRegular>
         )}
 
         {filesByCategory.map(({ category, files: categoryFiles }) => (
