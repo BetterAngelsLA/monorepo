@@ -5,6 +5,7 @@ import {
   HMIS_API_URL_STORAGE_KEY,
   hmisInterceptor,
   includeCredentialsInterceptor,
+  sessionExpiryInterceptor,
   storeCookiesInterceptor,
   userAgentInterceptor,
 } from '../common/interceptors';
@@ -40,7 +41,8 @@ class HmisClient {
       hmisInterceptor,
       bodyInterceptor,
       includeCredentialsInterceptor,
-      storeCookiesInterceptor
+      storeCookiesInterceptor,
+      sessionExpiryInterceptor
     );
   }
   /**

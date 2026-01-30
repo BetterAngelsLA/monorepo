@@ -23,13 +23,14 @@ export default function Auth() {
   const otaId = Updates.updateId;
   const otaVersion = otaId ? otaId.slice(0, 7) : 'N/A';
 
-  // Clear local user data when landing on this screen
-  // apolloProvider has no access to UserProvider so cannot really reset
-  // user on 401 errors
+  // Clear user state and cookies when landing on auth screen
   useEffect(() => {
-    setUser(undefined);
-    NitroCookies.clearAll();
-  }, []);
+    const clearSession = async () => {
+      await NitroCookies.clearAll();
+      setUser(undefined);
+    };
+    clearSession();
+  }, [setUser]);
 
   return (
     <AuthContainer header={<Logo width={216} height={33} />}>

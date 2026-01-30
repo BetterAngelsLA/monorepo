@@ -10,11 +10,18 @@ export function AppSettings() {
         <NavButton title="About" Icon={InfoIcon} route="settings/about" />
         <NavButton title="Team" Icon={GroupsIcon} route="settings/team" />
         {__DEV__ && (
-          <NavButton
-            title="HMIS REST (dev)"
-            Icon={GlobeIcon}
-            route="settings/hmis-rest"
-          />
+          <>
+            <NavButton
+              title="HMIS REST (dev)"
+              Icon={GlobeIcon}
+              route="settings/hmis-rest"
+            />
+            <NavButton
+              title="Session Monitor (dev)"
+              Icon={GlobeIcon}
+              route="settings/session-test"
+            />
+          </>
         )}
       </View>
     </MainContainer>

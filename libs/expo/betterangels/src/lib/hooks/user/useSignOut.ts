@@ -22,6 +22,7 @@ export default function useSignOut() {
     }
     await NitroCookies.clearAll();
     setUser(undefined);
+    // Session manager will be recreated when URL changes
   }, [logout, setUser]);
 
   return { signOut, loading, error };

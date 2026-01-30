@@ -1,8 +1,10 @@
-import { useQuery } from '@apollo/client/react';
-import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
+import { useLazyQuery } from '@apollo/client/react';
+import { API_ERROR_CODES, getSessionManager } from '@monorepo/expo/shared/clients';
 import { GraphQLFormattedError } from 'graphql';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppState } from '../../hooks';
+import { handleSessionExpired } from '../../auth';
+import useSnackbar from '../../hooks/snackbar/useSnackbar';
 import UserContext, { TUser } from './UserContext';
 import {
   CurrentUserDocument,
@@ -36,12 +38,26 @@ type UserResponse = {
 
 export default function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<TUser | undefined>();
+  const { showSnackbar } = useSnackbar();
 
   const { appBecameActive } = useAppState();
-  const { data, loading, error, refetch } = useQuery(CurrentUserDocument, {
+  const [executeQuery, { loading }] = useLazyQuery(CurrentUserDocument, {
     fetchPolicy: 'network-only',
     errorPolicy: 'all',
   });
+
+  // Set up session monitoring callback when user is logged in
+  useEffect(() => {
+    const manager = getSessionManager();
+    if (!manager) return;
+
+    if (user) {
+      const onExpired = () => handleSessionExpired(showSnackbar);
+      manager.setCallback(onExpired);
+    } else {
+      manager.setCallback(null);
+    }
+  }, [user, showSnackbar]);
 
   const updateUser = useCallback((res: UserResponse) => {
     const invalidate = res.errors?.some((e) => {
@@ -53,20 +69,14 @@ export default function UserProvider({ children }: UserProviderProps) {
     setUser(userValue);
   }, []);
 
-  useEffect(() => {
-    if (!loading) {
-      updateUser({ data, errors: error ? [error] : undefined });
-    }
-  }, [loading, data, error, updateUser]);
-
   const refetchUser = useCallback(async () => {
     try {
-      const res = await refetch();
+      const res = await executeQuery();
       updateUser(res);
     } catch (err) {
       setUser(undefined);
     }
-  }, [refetch, updateUser]);
+  }, [executeQuery, updateUser]);
 
   useEffect(() => {
     if (!appBecameActive) {

@@ -8,6 +8,7 @@ import {
   CSRF_LOGIN_PATH,
   HMIS_AUTH_COOKIE_NAME,
   HMIS_TOKEN_HEADER_NAME,
+  HMIS_API_URL_STORAGE_KEY,
 } from '@monorepo/expo/shared/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NitroCookies from 'react-native-nitro-cookies';
@@ -17,6 +18,7 @@ import {
   MODERN_BROWSER_USER_AGENT,
   MUTATING_METHODS,
 } from './constants';
+import { getSessionManager } from './sessionManager';
 
 export type HeadersObject = Record<string, string>;
 
@@ -25,8 +27,6 @@ export type FetchInterceptor = (
   init: RequestInit,
   next: (input: RequestInfo | URL, init: RequestInit) => Promise<Response>
 ) => Promise<Response>;
-
-export const HMIS_API_URL_STORAGE_KEY = 'hmis_api_url';
 
 /**
  * Helper to extract URL string from RequestInfo
@@ -213,6 +213,27 @@ export const storeCookiesInterceptor: FetchInterceptor = async (
     await NitroCookies.setFromResponse(url, setCookie);
   }
 
+  return response;
+};
+
+/**
+ * Monitors session cookie expiry after each request.
+ * Checks after response received - when cookies may have been updated via Set-Cookie.
+ * NitroCookies.get() is fast (synchronous, in-memory) so minimal overhead.
+ */
+export const sessionExpiryInterceptor: FetchInterceptor = async (
+  input,
+  init,
+  next
+) => {
+  const response = await next(input, init);
+  
+  // Check session expiry after storing cookies
+  // Backend URL is set by SessionManagerProvider from React context
+  const manager = getSessionManager();
+  if (manager) {
+    await manager.checkAndSchedule();
+  }
   return response;
 };
 
