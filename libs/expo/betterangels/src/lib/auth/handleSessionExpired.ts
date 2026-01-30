@@ -1,11 +1,6 @@
 import { router } from 'expo-router';
 import NitroCookies from 'react-native-nitro-cookies';
 
-type ShowSnackbarFn = (params: {
-  message: string;
-  type: 'error' | 'success' | 'info';
-}) => void;
-
 type SetUserFn = (user: undefined) => void;
 
 /**
@@ -28,7 +23,7 @@ export async function clearSession(setUser: SetUserFn): Promise<void> {
  * Clears all cookies and user state, shows toast, and redirects to auth screen.
  */
 export async function handleSessionExpired(
-  showSnackbar: ShowSnackbarFn,
+  showSnackbar: (props: { message: string; type?: string }) => void,
   setUser: SetUserFn
 ): Promise<void> {
   await clearSession(setUser);
