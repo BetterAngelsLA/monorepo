@@ -6,8 +6,8 @@ import { router } from 'expo-router';
 import mime from 'mime';
 import { useCallback } from 'react';
 import { View } from 'react-native';
-import { setHmisFilePreview } from '../../../HmisFileInfo/hmisFilePreviewCache';
 import { FileThumbnail } from '../../../../ui-components';
+import { setHmisFilePreview } from '../../../HmisFileInfo/hmisFilePreviewCache';
 
 function getMimeTypeFromFilename(filename: string): string {
   return mime.getType(filename) ?? 'application/octet-stream';
@@ -55,6 +55,50 @@ function getFilePreview(file: ClientFile, mimeType: string): string {
   return toDataUri(raw, mimeType);
 }
 
+type FileDisplayData = {
+  label: string;
+  createdAt: string;
+  thumbnailUri: string;
+  previewUri: string;
+  mimeType: string;
+  thumbnailMimeType: string;
+};
+
+function buildFileDisplayData(
+  file: ClientFile,
+  fileNames: FileName[]
+): FileDisplayData {
+  const label = getFileLabel(file, fileNames);
+  const filenameForMime = file.file?.filename ?? label;
+  const mimeType = getMimeTypeFromFilename(filenameForMime);
+
+  const thumbnailMimeType = mimeType.startsWith('image')
+    ? mimeType
+    : 'image/jpeg';
+
+  const thumbnailUri = getFileThumbnail(file, thumbnailMimeType);
+  const previewUri = getFilePreview(file, thumbnailMimeType);
+
+  const createdAt = file.file?.added_date ?? '';
+  const effectiveMimeType = previewUri ? thumbnailMimeType : mimeType;
+
+  return {
+    label,
+    createdAt,
+    thumbnailUri,
+    previewUri,
+    mimeType: effectiveMimeType,
+    thumbnailMimeType,
+  };
+}
+
+type FilePressPayload = {
+  label: string;
+  createdAt: string;
+  uri: string;
+  mimeType: string;
+};
+
 export interface HmisDocumentsProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
@@ -72,18 +116,12 @@ export default function HmisDocuments(props: HmisDocumentsProps) {
   const handleFilePress = useCallback(
     (
       file: ClientFile,
-      filename: string,
-      createdAt: string,
-      uri: string,
-      mimeType: string
+      { label, createdAt, uri, mimeType }: FilePressPayload
     ) => {
       setHmisFilePreview(String(file.id), { uri, mimeType });
       router.navigate({
         pathname: `/hmis-file/${file.id}`,
-        params: {
-          label: filename,
-          createdAt,
-        },
+        params: { label, createdAt },
       });
     },
     []
@@ -112,27 +150,27 @@ export default function HmisDocuments(props: HmisDocumentsProps) {
           }}
         >
           {data?.map((file, idx) => {
-            const filename = getFileLabel(file, fileNames);
-            const mimeType = getMimeTypeFromFilename(filename);
-            const thumbnailMimeType = mimeType.startsWith('image')
-              ? mimeType
-              : 'image/jpeg';
-            const thumbnailUri = getFileThumbnail(file, thumbnailMimeType);
-            const previewUri = getFilePreview(file, thumbnailMimeType);
-            const createdAt = file.file?.added_date ?? '';
+            const {
+              label,
+              createdAt,
+              thumbnailUri,
+              previewUri,
+              mimeType,
+              thumbnailMimeType,
+            } = buildFileDisplayData(file, fileNames);
+
             return (
               <FileCard
                 key={String(file?.id ?? idx)}
-                filename={filename}
+                filename={label}
                 url={thumbnailUri || ''}
                 onPress={() =>
-                  handleFilePress(
-                    file,
-                    filename,
+                  handleFilePress(file, {
+                    label,
                     createdAt,
-                    previewUri,
-                    previewUri ? thumbnailMimeType : mimeType
-                  )
+                    uri: previewUri,
+                    mimeType,
+                  })
                 }
                 createdAt={createdAt}
                 thumbnail={
@@ -140,10 +178,7 @@ export default function HmisDocuments(props: HmisDocumentsProps) {
                     uri={thumbnailUri}
                     mimeType={thumbnailUri ? thumbnailMimeType : mimeType}
                     borderRadius={Radiuses.xxxs}
-                    thumbnailSize={{
-                      width: 36,
-                      height: 36,
-                    }}
+                    thumbnailSize={{ width: 36, height: 36 }}
                   />
                 }
               />
