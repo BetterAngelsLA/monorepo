@@ -3,6 +3,7 @@ export { default as useCaliforniaIdUniqueCheck } from './californiaIdUniqueCheck
 export { default as useEmailEnvironment } from './environment/useEmailEnvironment';
 export { default as useAppVersion } from './expoUpdates/useAppVersion';
 export { default as useFeatureFlagActive } from './featureFlag/useFeatureFlagActive';
+export * from './hmisFileCategoryAndNames';
 export { useGetClientInteractionsWithLocation } from './interactions/useGetClientInteractionsWithLocation';
 export { useGetHmisClientInteractionsWithLocation } from './interactions/useGetHmisClientInteractionsWithLocation';
 export { default as useNewRelic } from './newRelic/useNewRelic';
