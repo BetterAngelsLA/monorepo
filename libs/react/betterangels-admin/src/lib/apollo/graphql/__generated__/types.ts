@@ -487,7 +487,6 @@ export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateNoteServiceRequestInput = {
   noteId: Scalars['ID']['input'];
-  serviceEnum?: InputMaybe<ServiceEnum>;
   serviceId?: InputMaybe<Scalars['ID']['input']>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   serviceRequestType: ServiceRequestTypeEnum;
@@ -502,7 +501,6 @@ export type CreateProfileDataImportInput = {
 
 export type CreateServiceRequestInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
-  serviceEnum?: InputMaybe<ServiceEnum>;
   serviceId?: InputMaybe<Scalars['ID']['input']>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   status: ServiceRequestStatusEnum;
@@ -524,6 +522,35 @@ export type CreateTaskInput = {
 };
 
 export type CreateTaskPayload = OperationInfo | TaskType;
+
+export type CurrentUserOrganizationType = {
+  __typename?: 'CurrentUserOrganizationType';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
+};
+
+export type CurrentUserType = {
+  __typename?: 'CurrentUserType';
+  email?: Maybe<Scalars['NonBlankString']['output']>;
+  firstName?: Maybe<Scalars['NonBlankString']['output']>;
+  hasAcceptedPrivacyPolicy?: Maybe<Scalars['Boolean']['output']>;
+  hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
+  id: Scalars['ID']['output'];
+  isHmisUser?: Maybe<Scalars['Boolean']['output']>;
+  isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
+  lastName?: Maybe<Scalars['NonBlankString']['output']>;
+  middleName?: Maybe<Scalars['NonBlankString']['output']>;
+  organizationsOrganization?: Maybe<Array<CurrentUserOrganizationType>>;
+  username?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type CurrentUserTypeOrganizationsOrganizationArgs = {
+  filters?: InputMaybe<OrganizationFilter>;
+  ordering?: Array<OrganizationOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
 
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
@@ -827,6 +854,13 @@ export type HmisLoginError = {
   field?: Maybe<Scalars['String']['output']>;
   message: Scalars['String']['output'];
 };
+
+export type HmisLoginSuccess = {
+  __typename?: 'HmisLoginSuccess';
+  user: CurrentUserType;
+};
+
+export type HmisLoginSuccessHmisLoginError = HmisLoginError | HmisLoginSuccess;
 
 export enum HmisNameQualityEnum {
   DontKnow = 'DONT_KNOW',
@@ -1182,7 +1216,7 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
-  hmisLogin: UserTypeHmisLoginError;
+  hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
   login: AuthResponse;
@@ -1614,13 +1648,6 @@ export type OrganizationFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type OrganizationForUserType = {
-  __typename?: 'OrganizationForUserType';
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
-};
-
 export type OrganizationMemberOrdering = {
   email?: InputMaybe<Ordering>;
   firstName?: InputMaybe<Ordering>;
@@ -1805,7 +1832,7 @@ export type Query = {
   clientHouseholdMembers: ClientHouseholdMemberTypeOffsetPaginated;
   clientProfile: ClientProfileType;
   clientProfiles: ClientProfileTypeOffsetPaginated;
-  currentUser: UserType;
+  currentUser: CurrentUserType;
   featureControls: FeatureControlData;
   hmisClientProfile: HmisClientProfileType;
   hmisClientProfiles: HmisClientProfileTypeOffsetPaginated;
@@ -2110,62 +2137,6 @@ export enum SelahTeamEnum {
   WdiOutreach = 'WDI_OUTREACH'
 }
 
-export enum ServiceEnum {
-  Bag = 'BAG',
-  Batteries = 'BATTERIES',
-  Bicycle = 'BICYCLE',
-  BicycleRepair = 'BICYCLE_REPAIR',
-  BirthCertificate = 'BIRTH_CERTIFICATE',
-  Blanket = 'BLANKET',
-  Book = 'BOOK',
-  CaliforniaLifelinePhone = 'CALIFORNIA_LIFELINE_PHONE',
-  Clothes = 'CLOTHES',
-  ConsentToConnect = 'CONSENT_TO_CONNECT',
-  ContactDpss = 'CONTACT_DPSS',
-  ContactFriend = 'CONTACT_FRIEND',
-  Dental = 'DENTAL',
-  DiscountScooterRides = 'DISCOUNT_SCOOTER_RIDES',
-  DmhEvaluation = 'DMH_EVALUATION',
-  DmvNoFeeIdForm = 'DMV_NO_FEE_ID_FORM',
-  Ebt = 'EBT',
-  FamilyReunification = 'FAMILY_REUNIFICATION',
-  FeminineHygiene = 'FEMININE_HYGIENE',
-  FirstAid = 'FIRST_AID',
-  Food = 'FOOD',
-  HarmReduction = 'HARM_REDUCTION',
-  HmisConsent = 'HMIS_CONSENT',
-  HygieneKit = 'HYGIENE_KIT',
-  InternetAccess = 'INTERNET_ACCESS',
-  Lahop = 'LAHOP',
-  LegalCounsel = 'LEGAL_COUNSEL',
-  MailPickUp = 'MAIL_PICK_UP',
-  Medical = 'MEDICAL',
-  MediCal = 'MEDI_CAL',
-  MetroLifeTap = 'METRO_LIFE_TAP',
-  Notary = 'NOTARY',
-  Other = 'OTHER',
-  PetCare = 'PET_CARE',
-  PetFood = 'PET_FOOD',
-  PublicBenefitsPrograms = 'PUBLIC_BENEFITS_PROGRAMS',
-  Ride = 'RIDE',
-  SafeParking = 'SAFE_PARKING',
-  Shelter = 'SHELTER',
-  Shoes = 'SHOES',
-  Shower = 'SHOWER',
-  SleepingBag = 'SLEEPING_BAG',
-  SocialSecurityCardReplacement = 'SOCIAL_SECURITY_CARD_REPLACEMENT',
-  SsiSsdi = 'SSI_SSDI',
-  StimulusAssistance = 'STIMULUS_ASSISTANCE',
-  StorageBelongings = 'STORAGE_BELONGINGS',
-  StorageDocuments = 'STORAGE_DOCUMENTS',
-  Tarp = 'TARP',
-  Tent = 'TENT',
-  TherapistAppointment = 'THERAPIST_APPOINTMENT',
-  UnemploymentCertification = 'UNEMPLOYMENT_CERTIFICATION',
-  VaccinePassport = 'VACCINE_PASSPORT',
-  Water = 'WATER'
-}
-
 export enum ServiceRequestStatusEnum {
   Completed = 'COMPLETED',
   ToDo = 'TO_DO'
@@ -2180,8 +2151,6 @@ export type ServiceRequestType = {
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   service?: Maybe<OrganizationServiceType>;
-  serviceEnum?: Maybe<ServiceEnum>;
-  serviceOther?: Maybe<Scalars['String']['output']>;
   status: ServiceRequestStatusEnum;
 };
 
@@ -2542,7 +2511,7 @@ export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
 
 export type UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo;
 
-export type UpdateCurrentUserPayload = OperationInfo | UserType;
+export type UpdateCurrentUserPayload = CurrentUserType | OperationInfo | UserType;
 
 export type UpdateHmisClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
@@ -2678,7 +2647,7 @@ export type UserType = {
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
-  organizationsOrganization?: Maybe<Array<OrganizationForUserType>>;
+  organizationsOrganization?: Maybe<Array<OrganizationType>>;
   username?: Maybe<Scalars['String']['output']>;
 };
 
@@ -2686,10 +2655,7 @@ export type UserType = {
 export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   ordering?: Array<OrganizationOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
-export type UserTypeHmisLoginError = HmisLoginError | UserType;
 
 export enum VeteranStatusEnum {
   No = 'NO',

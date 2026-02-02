@@ -1,7 +1,7 @@
 import { ApolloLink } from '@apollo/client';
 import { OperationInfo } from '../__generated__/types';
 
-export function extractOperationInfo<T>(
+export function extractOperationInfo(
   response: ApolloLink.Result,
   queryKey: string
 ): OperationInfo | null {

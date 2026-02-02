@@ -3,6 +3,7 @@ import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format, parseISO, startOfDay } from 'date-fns';
 import { Pressable, StyleSheet } from 'react-native';
 import { InteractionListHmisQuery } from '../InteractionListHmis/__generated__/interactionListHmis.generated';
+import ProgramNoteCardByline from './ProgramNoteCardByline';
 import ProgramNoteCardClient from './ProgramNoteCardClient';
 import ProgramNoteCardHeader from './ProgramNoteCardHeader';
 import ProgramNoteCardServices from './ProgramNoteCardServices';
@@ -38,6 +39,7 @@ export default function ProgramNoteCard(props: INoteCardProps) {
       {variant === 'interactions' && (
         <ProgramNoteCardClient clientProfile={hmisNote.hmisClientProfile} />
       )}
+      <ProgramNoteCardByline createdBy={hmisNote.createdBy} />
       {(!!hmisNote.providedServices?.length ||
         !!hmisNote.requestedServices?.length) && (
         <ProgramNoteCardServices note={hmisNote} />

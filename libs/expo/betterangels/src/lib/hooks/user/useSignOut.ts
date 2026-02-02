@@ -17,11 +17,11 @@ export default function useSignOut() {
   const signOut = useCallback(async () => {
     try {
       await logout();
-      setUser(undefined);
-      NitroCookies.clearAll();
     } catch (err) {
       console.error(err);
     }
+    await NitroCookies.clearAll();
+    setUser(undefined);
   }, [logout, setUser]);
 
   return { signOut, loading, error };

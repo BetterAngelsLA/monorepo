@@ -11,6 +11,10 @@
       "options": {
         "jestConfig": "libs/react/components/jest.config.ts"
       }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
     }
   }
 }

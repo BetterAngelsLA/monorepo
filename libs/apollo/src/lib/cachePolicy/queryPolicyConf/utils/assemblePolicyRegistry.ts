@@ -48,11 +48,17 @@
  * @param opts - readonly array of entries created via `buildEntry`
  * @returns object keyed by each entry’s `key`, with typed policy values
  */
+
 export function assemblePolicyRegistry<
   const T extends readonly { key: string; buildFn: () => any }[]
->(opts: T) {
+>(
+  opts: T,
+  options?: {
+    isDevEnv?: boolean;
+  }
+) {
   // (Optional) dev-time duplicate-key warning
-  if (process.env['NODE_ENV'] !== 'production') {
+  if (options?.isDevEnv) {
     const seen = new Set<string>();
 
     for (const { key } of opts) {

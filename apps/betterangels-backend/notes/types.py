@@ -25,7 +25,7 @@ from django.db.models import (
     Value,
     When,
 )
-from notes.enums import ServiceEnum, ServiceRequestTypeEnum
+from notes.enums import ServiceRequestTypeEnum
 from notes.permissions import NotePermissions, PrivateDetailsPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.utils.query import filter_for_user
@@ -74,8 +74,6 @@ class OrganizationServiceCategoryType:
 class ServiceRequestType:
     id: ID
     service: Optional[OrganizationServiceType]
-    service_enum: auto
-    service_other: auto
     status: auto
     due_by: auto
     completed_on: auto
@@ -87,16 +85,14 @@ class ServiceRequestType:
 @strawberry_django.input(models.ServiceRequest)
 class CreateServiceRequestInput:
     service_id: Optional[ID]
-    service_enum: Optional[ServiceEnum]
     status: auto
-    service_other: auto
+    service_other: Optional[str]
     client_profile: ID | None
 
 
 @strawberry_django.input(models.ServiceRequest)
 class CreateNoteServiceRequestInput:
     service_id: Optional[ID]
-    service_enum: Optional[ServiceEnum]
     service_other: Optional[str]
     note_id: ID
     service_request_type: ServiceRequestTypeEnum
@@ -105,7 +101,7 @@ class CreateNoteServiceRequestInput:
 @strawberry_django.input(models.ServiceRequest, partial=True)
 class UpdateServiceRequestInput:
     id: ID
-    service_other: auto
+    service_other: Optional[str]
     status: auto
     due_by: auto
 
