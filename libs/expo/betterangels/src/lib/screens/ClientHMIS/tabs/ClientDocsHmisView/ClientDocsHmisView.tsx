@@ -9,7 +9,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { HmisClientProfileType } from '../../../../apollo';
-import { useHmisFileCategories, useHmisFileNames } from '../../../../hooks';
+import { useHmisFileCategoryAndNames } from '../../../../hooks';
 import { useClientFiles } from '../../../../hooks/hmisFileMetadata';
 import { useModalScreen } from '../../../../providers';
 import HmisDocuments from './HmisDocuments';
@@ -22,21 +22,20 @@ export function ClientDocsHmisView({
   client: HmisClientProfileType | undefined;
 }) {
   const { showModalScreen } = useModalScreen();
-  const { data: categories = [] } = useHmisFileCategories();
   const {
-    data: fileNames = [],
-    isError: isFileNamesError,
-    error: fileNamesError,
-  } = useHmisFileNames();
+    categories = [],
+    fileNames = [],
+    error: categoryAndNamesError,
+  } = useHmisFileCategoryAndNames();
 
   useEffect(() => {
-    if (isFileNamesError && fileNamesError) {
+    if (categoryAndNamesError) {
       console.error(
-        '[ClientDocsHmisView] File names failed to load:',
-        fileNamesError
+        '[ClientDocsHmisView] File categories/names failed to load:',
+        categoryAndNamesError
       );
     }
-  }, [isFileNamesError, fileNamesError]);
+  }, [categoryAndNamesError]);
   const {
     data: files = [],
     error,
