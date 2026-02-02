@@ -9,7 +9,6 @@ export const HmisFileCategorySchema = z.object({
 
 export const HmisFileNameSchema = z.object({
   id: z.number(),
-  // hello: z.string(),
   name: z.string(),
   ref_category: z.number(),
   status: z.number(),
