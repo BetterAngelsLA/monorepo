@@ -2,12 +2,11 @@ import { HmisFileInfoScreen } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
 
 export default function HmisFileInfoRoute() {
-  const { id, label, createdAt, clientId, hmisId } = useLocalSearchParams<{
+  const { id, label, createdAt, clientId } = useLocalSearchParams<{
     id: string;
     label?: string;
     createdAt?: string;
     clientId?: string;
-    hmisId?: string;
   }>();
 
   if (!id) {
@@ -20,7 +19,6 @@ export default function HmisFileInfoRoute() {
       label={label}
       createdAt={createdAt}
       clientId={clientId}
-      hmisId={hmisId}
     />
   );
 }
