@@ -116,7 +116,7 @@ export default function Users() {
   ));
 
   return (
-    <div>
+    <div className="h-full flex flex-col">
       <div className="flex items-center justify-between gap-5 mb-16">
         <div>
           <h1 className="mb-3 text-2xl font-bold">User Management</h1>
@@ -138,7 +138,9 @@ export default function Users() {
       </div>
 
       <div
-        className={loading ? 'opacity-50 transition-opacity duration-200' : ''}
+        className={`${
+          loading ? 'opacity-50 transition-opacity duration-200' : ''
+        } flex-1 flex`}
       >
         {user?.canViewOrgMembers ? (
           <Table<OrganizationMemberType>
@@ -160,10 +162,10 @@ export default function Users() {
                   {isOpen && (
                     <div
                       ref={menuRef}
-                      className="absolute top-full right-1/2 shadow-md bg-white z-10 p-2 rounded-lg"
+                      className="absolute flex flex-col items-start top-full right-1/2 shadow-md bg-white z-10 p-2 rounded-lg"
                     >
                       <button
-                        className="py-2 px-4 hover:bg-neutral-98 rounded-lg"
+                        className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left"
                         onClick={() => {
                           setOpenMenuRowId(null);
                           showDrawer({
