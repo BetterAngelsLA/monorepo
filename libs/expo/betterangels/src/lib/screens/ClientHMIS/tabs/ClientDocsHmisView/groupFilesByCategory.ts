@@ -1,38 +1,23 @@
 import type { ClientFile, FileCategory } from '@monorepo/expo/shared/clients';
+import * as R from 'remeda';
 
 export function groupFilesByCategory(
   files: ClientFile[],
   categories: FileCategory[]
 ) {
-  const byRefCategory = new Map<number, ClientFile[]>();
+  const categoriesById = R.indexBy(categories, (c) => c.id);
 
-  for (const file of files) {
-    const list = byRefCategory.get(file.ref_category) ?? [];
-    list.push(file);
-    byRefCategory.set(file.ref_category, list);
-  }
-
-  const result: { category: FileCategory | undefined; files: ClientFile[] }[] =
-    [];
-
-  for (const cat of categories) {
-    const list = byRefCategory.get(cat.id);
-    if (list?.length) {
-      result.push({ category: cat, files: list });
-      byRefCategory.delete(cat.id);
-    }
-  }
-
-  byRefCategory.forEach((fileList, refCategory) => {
-    result.push({
-      category: {
-        id: refCategory,
-        name: `Category ${refCategory}`,
+  return R.pipe(
+    files,
+    R.groupBy((f) => f.ref_category),
+    R.entries(),
+    R.map(([catId, groupFiles]) => ({
+      category: categoriesById[Number(catId)] ?? {
+        id: Number(catId),
+        name: `Category ${catId}`,
         status: 0,
       },
-      files: fileList,
-    });
-  });
-
-  return result;
+      files: groupFiles,
+    }))
+  );
 }

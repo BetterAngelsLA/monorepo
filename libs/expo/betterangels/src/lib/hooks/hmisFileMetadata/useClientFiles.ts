@@ -1,54 +1,30 @@
 import type { ClientFile } from '@monorepo/expo/shared/clients';
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useHmisClient } from '../useHmisClient';
+import { fetchAllPages } from './fetchAllPages';
 
-type Status = 'idle' | 'loading' | 'success' | 'error';
+const PER_PAGE = 50;
+const CLIENT_FILE_FIELDS =
+  'id,ref_category,ref_file_name,ref_agency,name,is_program_file,file.*,category,fileName';
 
 export function useClientFiles(clientId?: string, hmisId?: string) {
   const { getClientFiles } = useHmisClient();
-  const [status, setStatus] = useState<Status>('idle');
-  const [files, setFiles] = useState<ClientFile[]>([]);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!clientId || !hmisId) {
-      setFiles([]);
-      setStatus('idle');
-      setError(null);
-      return;
-    }
+  const isEnabled = !!clientId && !!hmisId;
 
-    let isActive = true;
-    setStatus('loading');
-    setError(null);
+  return useQuery({
+    queryKey: ['hmis', 'clientFiles', clientId, hmisId],
+    queryFn: async (): Promise<ClientFile[]> => {
+      if (!hmisId) return [];
 
-    getClientFiles(hmisId, {
-      fields:
-        'id,ref_category,ref_file_name,ref_agency,name,is_program_file,file.*,category,fileName',
-    })
-      .then((data) => {
-        if (!isActive) return;
-        setFiles(data.items ?? []);
-        setStatus('success');
-      })
-      .catch((err) => {
-        if (!isActive) return;
-        const message =
-          err instanceof Error ? err.message : 'Failed to load documents.';
-        setError(message);
-        setStatus('error');
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, [clientId, hmisId, getClientFiles]);
-
-  return {
-    files,
-    status,
-    error,
-    isLoading: status === 'loading',
-    isError: status === 'error',
-  };
+      return fetchAllPages((page) =>
+        getClientFiles(hmisId, {
+          page,
+          per_page: PER_PAGE,
+          fields: CLIENT_FILE_FIELDS,
+        })
+      );
+    },
+    enabled: isEnabled,
+  });
 }

@@ -2,17 +2,14 @@ import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   IconButton,
+  LoadingView,
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { HmisClientProfileType } from '../../../../apollo';
-import {
-  useHmisClient,
-  useHmisFileCategories,
-  useHmisFileNames,
-} from '../../../../hooks';
+import { useHmisFileCategories, useHmisFileNames } from '../../../../hooks';
 import { useClientFiles } from '../../../../hooks/hmisFileMetadata';
 import { useModalScreen } from '../../../../providers';
 import HmisDocuments from './HmisDocuments';
@@ -40,11 +37,12 @@ export function ClientDocsHmisView({
       );
     }
   }, [isFileNamesError, fileNamesError]);
-  const { getClientFiles } = useHmisClient();
-  const { files, status, error, isLoading, isError } = useClientFiles(
-    client?.id,
-    client?.hmisId as string | undefined
-  );
+  const {
+    data: files = [],
+    error,
+    isLoading,
+    isError,
+  } = useClientFiles(client?.id, client?.hmisId as string | undefined);
 
   const [expanded, setExpanded] = useState<undefined | string | null>(null);
 
@@ -52,21 +50,6 @@ export function ClientDocsHmisView({
     () => groupFilesByCategory(files, categories),
     [files, categories]
   );
-  useEffect(() => {
-    if (!client?.id || !client?.hmisId) {
-      return;
-    }
-    getClientFiles(client.hmisId as string, {
-      fields:
-        'id,ref_category,ref_file_name,ref_agency,name,is_program_file,file.*,category,fileName',
-    })
-      .then((data) => {
-        console.log('[ClientDocsHmisView] Documents loaded:', data);
-      })
-      .catch((err) => {
-        console.error('[ClientDocsHmisView] Failed to load documents:', err);
-      });
-  }, [client?.id, client?.hmisId, getClientFiles]);
   const showEmpty = !isLoading && !isError && files.length === 0;
 
   return (
@@ -99,15 +82,13 @@ export function ClientDocsHmisView({
         </IconButton>
       </View>
       <View style={{ gap: Spacings.xs, marginTop: Spacings.sm }}>
-        {status === 'loading' && (
-          <TextRegular color={Colors.NEUTRAL_DARK}>
-            Loading documents…
-          </TextRegular>
-        )}
+        {isLoading && <LoadingView />}
 
-        {status === 'error' && (
+        {isError && (
           <TextRegular color={Colors.ERROR_DARK}>
-            {error || 'Failed to load documents.'}
+            {error instanceof Error
+              ? error.message
+              : 'Failed to load documents.'}
           </TextRegular>
         )}
 

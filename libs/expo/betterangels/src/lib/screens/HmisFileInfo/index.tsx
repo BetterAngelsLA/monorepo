@@ -5,18 +5,17 @@ import { Image } from 'expo-image';
 import { useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { getHmisFilePreview } from './hmisFilePreviewCache';
 
 export type HmisFileInfoProps = {
   id: string;
   label?: string;
   createdAt?: string;
+  uri?: string;
 };
 
 export default function HmisFileInfoScreen(props: HmisFileInfoProps) {
-  const { id, label, createdAt } = props;
+  const { id, label, createdAt, uri } = props;
   const navigation = useNavigation();
-  const preview = getHmisFilePreview(id);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -34,11 +33,11 @@ export default function HmisFileInfoScreen(props: HmisFileInfoProps) {
     >
       <View style={styles.fileContainer}>
         <TextBold size="lg">{label || `Document ${id}`}</TextBold>
-        {!!preview?.uri && (
+        {!!uri && (
           <View style={styles.previewContainer}>
             <Image
               style={styles.previewImage}
-              source={{ uri: preview.uri }}
+              source={{ uri }}
               contentFit="contain"
               accessibilityIgnoresInvertColors
             />

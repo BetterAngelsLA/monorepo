@@ -71,6 +71,9 @@ class HmisClient {
         throw new HmisError('Forbidden - insufficient permissions', 403, data);
       case 404:
         throw new HmisError('Resource not found', 404, data);
+      case 429: {
+        throw new HmisError('Too Many Requests', 429, data);
+      }
       case 422: {
         const validationData = data as { messages?: Record<string, string> };
         if (validationData?.messages) {
