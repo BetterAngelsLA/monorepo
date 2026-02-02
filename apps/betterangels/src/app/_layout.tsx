@@ -2,10 +2,9 @@ import 'expo-dev-client';
 
 import {
   AppUpdatePrompt,
-  baApolloTypePolicies,
   BlockingScreenProvider,
+  createBaTypePolicies,
   ErrorCrashView,
-  FeatureControlProvider,
   KeyboardToolbarProvider,
   ModalScreenProvider,
   NativePaperProvider,
@@ -17,14 +16,24 @@ import {
   ApiConfigProvider,
   ApolloClientProvider,
 } from '@monorepo/expo/shared/clients';
+import { FeatureControlProvider } from '@monorepo/react/shared';
 import { StatusBar } from 'expo-status-bar';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
 
+import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AppRoutesStack from './AppRoutesStack';
+
+const isDevEnv = process.env['NODE_ENV'] === 'development';
+
+initApolloRuntimeConfig({
+  isDevEnv: false,
+});
+
+const baApolloTypePolicies = createBaTypePolicies(isDevEnv);
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -47,9 +56,9 @@ export default function RootLayout() {
             <FeatureControlProvider>
               <KeyboardProvider>
                 <KeyboardToolbarProvider>
-                  <UserProvider>
-                    <BlockingScreenProvider>
-                      <SnackbarProvider>
+                  <SnackbarProvider>
+                    <UserProvider>
+                      <BlockingScreenProvider>
                         <ModalScreenProvider>
                           <AppUpdatePrompt />
                           <StatusBar
@@ -57,9 +66,9 @@ export default function RootLayout() {
                           />
                           <AppRoutesStack />
                         </ModalScreenProvider>
-                      </SnackbarProvider>
-                    </BlockingScreenProvider>
-                  </UserProvider>
+                      </BlockingScreenProvider>
+                    </UserProvider>
+                  </SnackbarProvider>
                 </KeyboardToolbarProvider>
               </KeyboardProvider>
             </FeatureControlProvider>

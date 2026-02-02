@@ -20,6 +20,10 @@
       "outputs": [
         "{workspaceRoot}/libs/react/shelter/src/lib/**/__generated__/"
       ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
     }
   }
 }
