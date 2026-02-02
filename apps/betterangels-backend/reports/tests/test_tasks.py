@@ -9,12 +9,90 @@ from django.utils import timezone
 from model_bakery import baker
 from notes.models import Note
 from reports.models import ScheduledReport
-from reports.tasks import send_scheduled_report
+from reports.tasks import process_scheduled_reports, send_scheduled_report
+
+
+@pytest.mark.django_db
+class TestProcessScheduledReportsTask:
+    """Tests for the process_scheduled_reports task."""
+
+    @time_machine.travel("2025-01-15 10:00:00", tick=False)
+    def test_dispatcher_finds_due_reports(self) -> None:
+        """Test that the dispatcher finds reports due at the current hour."""
+        org = baker.make(Organization)
+
+        # Report due now (Day 15, Hour 10)
+        baker.make(
+            ScheduledReport,
+            name="Due Now",
+            organization=org,
+            recipients="test@example.com",
+            frequency=ScheduledReport.Frequency.MONTHLY,
+            day_of_month=15,
+            hour=10,
+            is_active=True,
+        )
+
+        # Report due today but wrong hour
+        baker.make(
+            ScheduledReport,
+            name="Wrong Hour",
+            organization=org,
+            frequency=ScheduledReport.Frequency.MONTHLY,
+            day_of_month=15,
+            hour=11,
+            is_active=True,
+        )
+
+        # Report due right hour but wrong day
+        baker.make(
+            ScheduledReport,
+            name="Wrong Day",
+            organization=org,
+            frequency=ScheduledReport.Frequency.MONTHLY,
+            day_of_month=14,
+            hour=10,
+            is_active=True,
+        )
+
+        # Report due now but inactive
+        baker.make(
+            ScheduledReport,
+            name="Inactive",
+            organization=org,
+            frequency=ScheduledReport.Frequency.MONTHLY,
+            day_of_month=15,
+            hour=10,
+            is_active=False,
+        )
+
+        # We can't easily mock the recursive celery call in a shared_task easily
+        # without patching, so we'll check the return string or use a mock.
+        # But for integration, let's just assert the return message.
+        result = process_scheduled_reports.apply().get()
+
+        assert "Queued 1 reports" in result
 
 
 @pytest.mark.django_db
 class TestSendScheduledReportTask:
     """Tests for the send_scheduled_report Celery task."""
+
+    @time_machine.travel("2025-01-15 10:00:00", tick=False)
+    def test_idempotency_check(self) -> None:
+        """Test that report is skipped if already sent this month."""
+        org = baker.make(Organization)
+
+        # Create a report that looks like it was just sent
+        last_sent = timezone.make_aware(datetime(2025, 1, 15, 10, 0, 0))
+        report = baker.make(
+            ScheduledReport, organization=org, recipients="test@example.com", is_active=True, last_sent_at=last_sent
+        )
+
+        result = send_scheduled_report.apply(args=(report.pk,)).get()
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "already_sent_this_month"
 
     def test_report_not_found(self) -> None:
         """Test task with non-existent report ID."""

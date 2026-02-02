@@ -1,7 +1,6 @@
 """Reports app admin."""
 
 from django.contrib import admin
-from django.http import HttpRequest
 
 from .models import ScheduledReport
 
@@ -67,24 +66,3 @@ class ScheduledReportAdmin(admin.ModelAdmin):
             },
         ),
     )
-
-    def save_model(
-        self,
-        request: HttpRequest,
-        obj: ScheduledReport,
-        form: admin.options.ModelForm,  # type: ignore[name-defined]
-        change: bool,
-    ) -> None:
-        """Save the model and show a message about the Celery Beat schedule."""
-        super().save_model(request, obj, form, change)
-
-        if obj.is_active:
-            self.message_user(
-                request,
-                f"Celery Beat schedule created/updated: {obj._get_schedule_name()}",
-            )
-        else:
-            self.message_user(
-                request,
-                f"Celery Beat schedule removed: {obj._get_schedule_name()}",
-            )

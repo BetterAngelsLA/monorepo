@@ -34,7 +34,6 @@ env = environ.Env(
     AWS_CLOUDFRONT_KEY_ID=(str, ""),
     AWS_CLOUDFRONT_MEDIA_LOCATION=(str, "media"),
     CELERY_BROKER_URL=(str, ""),
-    CELERY_REDBEAT_REDIS_URL=(str, ""),
     CONN_MAX_AGE=(int, 300),
     CSRF_TRUSTED_ORIGINS=(list, []),
     CSRF_COOKIE_DOMAIN=(str, ""),
