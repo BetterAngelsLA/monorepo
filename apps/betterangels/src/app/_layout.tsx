@@ -39,7 +39,7 @@ const baApolloTypePolicies = createBaTypePolicies(isDevEnv);
 const reactqQueryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false, // need custom implementation for RN
+      refetchOnWindowFocus: false, // need custom implementation for React Native
     },
   },
 });

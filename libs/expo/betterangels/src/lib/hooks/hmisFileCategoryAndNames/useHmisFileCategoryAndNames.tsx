@@ -22,7 +22,7 @@ export function useHmisFileCategoryAndNames(): TResult {
 
   const query = useQuery({
     queryKey: ['hmis', 'file-upload-metadata'],
-    staleTime: 5 * 60_000, // 5 minutes
+    staleTime: 5 * 60 * 60_000, // 5 hours
     gcTime: 12 * 60 * 60_000, // 12 hours
     retry: 1,
     refetchOnMount: false,
