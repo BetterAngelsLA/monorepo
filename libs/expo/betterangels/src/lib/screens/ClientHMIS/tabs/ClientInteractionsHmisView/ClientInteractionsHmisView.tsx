@@ -1,6 +1,10 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { IconButton, TextRegular } from '@monorepo/expo/shared/ui-components';
+import {
+  IconButton,
+  TextMedium,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { View } from 'react-native';
@@ -72,6 +76,27 @@ export function ClientInteractionsHmisView(props: TProps) {
 
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <TextMedium size="lg">Notes</TextMedium>
+        <IconButton
+          variant="secondary"
+          borderColor={Colors.WHITE}
+          accessibilityLabel="create an interaction"
+          accessibilityHint="create new interaction"
+          onPress={() =>
+            router.navigate(`/notes-hmis/create?clientId=${client.id}`)
+          }
+        >
+          <PlusIcon />
+        </IconButton>
+      </View>
+
       <InteractionListHmis
         filters={{ hmisClientProfile: client.id }}
         renderItem={renderItemFn}
