@@ -17,6 +17,7 @@ import {
   ApolloClientProvider,
 } from '@monorepo/expo/shared/clients';
 import { FeatureControlProvider } from '@monorepo/react/shared';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
@@ -35,6 +36,14 @@ initApolloRuntimeConfig({
 
 const baApolloTypePolicies = createBaTypePolicies(isDevEnv);
 
+const reactqQueryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false, // need custom implementation for RN
+    },
+  },
+});
+
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: '(tabs)',
@@ -52,27 +61,29 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <NativePaperProvider>
         <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-          <ApolloClientProvider typePolicies={baApolloTypePolicies}>
-            <FeatureControlProvider>
-              <KeyboardProvider>
-                <KeyboardToolbarProvider>
-                  <SnackbarProvider>
-                    <UserProvider>
-                      <BlockingScreenProvider>
-                        <ModalScreenProvider>
-                          <AppUpdatePrompt />
-                          <StatusBar
-                            style={Platform.OS === 'ios' ? 'light' : 'auto'}
-                          />
-                          <AppRoutesStack />
-                        </ModalScreenProvider>
-                      </BlockingScreenProvider>
-                    </UserProvider>
-                  </SnackbarProvider>
-                </KeyboardToolbarProvider>
-              </KeyboardProvider>
-            </FeatureControlProvider>
-          </ApolloClientProvider>
+          <QueryClientProvider client={reactqQueryClient}>
+            <ApolloClientProvider typePolicies={baApolloTypePolicies}>
+              <FeatureControlProvider>
+                <KeyboardProvider>
+                  <KeyboardToolbarProvider>
+                    <SnackbarProvider>
+                      <UserProvider>
+                        <BlockingScreenProvider>
+                          <ModalScreenProvider>
+                            <AppUpdatePrompt />
+                            <StatusBar
+                              style={Platform.OS === 'ios' ? 'light' : 'auto'}
+                            />
+                            <AppRoutesStack />
+                          </ModalScreenProvider>
+                        </BlockingScreenProvider>
+                      </UserProvider>
+                    </SnackbarProvider>
+                  </KeyboardToolbarProvider>
+                </KeyboardProvider>
+              </FeatureControlProvider>
+            </ApolloClientProvider>
+          </QueryClientProvider>
         </ApiConfigProvider>
       </NativePaperProvider>
     </GestureHandlerRootView>
