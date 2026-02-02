@@ -5,7 +5,7 @@ import { fetchAllPages } from './fetchAllPages';
 
 const PER_PAGE = 50;
 const CLIENT_FILE_FIELDS =
-  'id,ref_category,ref_file_name,ref_agency,name,is_program_file,file.*,category,fileName';
+  'id,ref_category,ref_file_name,ref_agency,name,is_program_file,file.id,file.added_date,file.filename,file.filesize,category,fileName';
 
 export const getClientFilesQueryKey = (clientId?: string, hmisId?: string) => [
   'hmis',

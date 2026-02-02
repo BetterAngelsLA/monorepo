@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { View } from 'react-native';
 import * as R from 'remeda';
+import { useHmisFileHeaders } from '../../../../hooks';
 import { HmisDocumentItem } from './HmisDocumentItem';
 
 export interface HmisDocumentsProps {
@@ -29,6 +30,8 @@ export default function HmisDocuments({
   clientId,
   hmisId,
 }: HmisDocumentsProps) {
+  const { headers, baseUrl } = useHmisFileHeaders();
+
   const isExpanded = expanded === accordionKey;
   const fileNameMap = useMemo(
     () => R.indexBy(fileNames, (n) => n.id),
@@ -36,11 +39,7 @@ export default function HmisDocuments({
   );
 
   const handlePress = useCallback(
-    (
-      id: number,
-      preview: { uri: string; mimeType: string },
-      params: { label: string; createdAt: string }
-    ) => {
+    (id: number, params: { label: string; createdAt: string }) => {
       router.navigate({
         pathname: `/hmis-file/${id}`,
         params: { ...params, clientId, hmisId },
@@ -74,7 +73,10 @@ export default function HmisDocuments({
               key={file.id ?? idx}
               file={file}
               fileNameMap={fileNameMap}
+              baseUrl={baseUrl}
+              headers={headers}
               onPress={handlePress}
+              clientId={clientId}
             />
           ))}
         </View>

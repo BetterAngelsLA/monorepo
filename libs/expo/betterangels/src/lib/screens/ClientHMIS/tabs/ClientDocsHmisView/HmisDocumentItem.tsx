@@ -1,15 +1,13 @@
-import type { ClientFile, FileName } from '@monorepo/expo/shared/clients';
+import {
+  getHmisFileUrls,
+  type ClientFile,
+  type FileName,
+} from '@monorepo/expo/shared/clients';
 import { Radiuses } from '@monorepo/expo/shared/static';
 import { FileCard } from '@monorepo/expo/shared/ui-components';
 import mime from 'mime';
 import { memo, useMemo } from 'react';
 import { FileThumbnail } from '../../../../ui-components';
-
-const toDataUri = (raw: string | undefined, mimeType: string) => {
-  if (!raw) return '';
-  if (raw.startsWith('data:')) return raw;
-  return `data:${mimeType};base64,${raw.trim().replace(/\s/g, '')}`;
-};
 
 function useClientFileMetadata(
   file: ClientFile,
@@ -27,27 +25,9 @@ function useClientFileMetadata(
     const filenameForMime = file.file?.filename ?? label;
     const detectedMime =
       mime.getType(filenameForMime) ?? 'application/octet-stream';
-    const imgMime = detectedMime.startsWith('image')
-      ? detectedMime
-      : 'image/jpeg';
-
-    const rawThumb =
-      file.file?.encodedThumbnailFileContent ??
-      file.file?.encodedPreviewFileContent;
-    const rawPreview =
-      file.file?.encodedPreviewFileContent ??
-      file.file?.encodedThumbnailFileContent;
-
-    const thumbnailUri = toDataUri(rawThumb, imgMime);
-    const previewUri = toDataUri(rawPreview, imgMime);
-    const effectiveMime = previewUri ? imgMime : detectedMime;
 
     return {
       label,
-      thumbnailUri,
-      previewUri,
-      effectiveMime,
-      imgMime,
       detectedMime,
       createdAt: file.file?.added_date ?? '',
     };
@@ -57,41 +37,42 @@ function useClientFileMetadata(
 interface HmisDocumentItemProps {
   file: ClientFile;
   fileNameMap: Record<string, FileName>;
-  onPress: (
-    id: number,
-    preview: { uri: string; mimeType: string },
-    params: { label: string; createdAt: string }
-  ) => void;
+  baseUrl: string | null;
+  headers: Record<string, string> | null;
+  onPress: (id: number, params: { label: string; createdAt: string }) => void;
+  clientId?: string;
 }
 
 export const HmisDocumentItem = memo(
-  ({ file, fileNameMap, onPress }: HmisDocumentItemProps) => {
-    const {
-      label,
-      createdAt,
-      thumbnailUri,
-      previewUri,
-      effectiveMime,
-      imgMime,
-      detectedMime,
-    } = useClientFileMetadata(file, fileNameMap);
+  ({
+    file,
+    fileNameMap,
+    onPress,
+    baseUrl,
+    headers,
+    clientId,
+  }: HmisDocumentItemProps) => {
+    const { label, createdAt, detectedMime } = useClientFileMetadata(
+      file,
+      fileNameMap
+    );
+
+    const thumbnailUri =
+      baseUrl && headers && clientId
+        ? getHmisFileUrls(baseUrl, clientId, file.id).thumbnail
+        : '';
 
     return (
       <FileCard
         filename={label}
         url={thumbnailUri}
-        onPress={() =>
-          onPress(
-            file.id,
-            { uri: previewUri, mimeType: effectiveMime },
-            { label, createdAt }
-          )
-        }
+        onPress={() => onPress(file.id, { label, createdAt })}
         createdAt={createdAt}
         thumbnail={
           <FileThumbnail
             uri={thumbnailUri}
-            mimeType={thumbnailUri ? imgMime : detectedMime}
+            headers={headers ?? undefined}
+            mimeType={detectedMime}
             borderRadius={Radiuses.xxxs}
             thumbnailSize={{ width: 36, height: 36 }}
           />

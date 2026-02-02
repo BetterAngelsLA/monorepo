@@ -445,4 +445,15 @@ class HmisClient {
 // Factory function to create HmisClient
 export const createHmisClient = () => new HmisClient();
 
+export const getHmisFileUrls = (
+  baseUrl: string,
+  clientId: string | number,
+  fileId: string | number
+) => {
+  return {
+    thumbnail: `${baseUrl}/clients/${clientId}/client-files/${fileId}/thumb`,
+    content: `${baseUrl}/clients/${clientId}/client-files/${fileId}/content`,
+  };
+};
+
 export { HmisClient };

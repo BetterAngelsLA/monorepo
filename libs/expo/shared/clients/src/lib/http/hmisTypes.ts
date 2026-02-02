@@ -226,8 +226,6 @@ export interface ClientFile {
     added_date: string;
     filename: string;
     filesize: number;
-    encodedPreviewFileContent?: string;
-    encodedThumbnailFileContent?: string;
   };
   fileName?: {
     id: number;
