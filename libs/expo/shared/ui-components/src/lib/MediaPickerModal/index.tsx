@@ -219,7 +219,11 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
               accessibilityRole="button"
               accessibilityHint="opens file library"
             >
+<<<<<<< HEAD
               <TextRegular color={Colors.PRIMARY}>Upload Document or Image</TextRegular>
+=======
+              <TextRegular color={Colors.PRIMARY}>Upload file</TextRegular>
+>>>>>>> b9dbb3d4e (update document picker modal text to not reference pdf)
             </Pressable>
           </View>
 
