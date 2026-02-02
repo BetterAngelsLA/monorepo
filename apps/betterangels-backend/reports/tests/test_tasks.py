@@ -1,6 +1,6 @@
 """Tests for Celery tasks."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 import time_machine
@@ -9,90 +9,73 @@ from django.utils import timezone
 from model_bakery import baker
 from notes.models import Note
 from reports.models import ScheduledReport
-from reports.tasks import process_scheduled_reports, send_scheduled_report
+from reports.tasks import (
+    get_previous_month_range,
+    process_scheduled_reports,
+    send_scheduled_report,
+)
 
 
 @pytest.mark.django_db
 class TestProcessScheduledReportsTask:
     """Tests for the process_scheduled_reports task."""
 
-    @time_machine.travel("2025-01-15 10:00:00", tick=False)
+    @time_machine.travel("2025-01-15 10:30:00", tick=False)
     def test_dispatcher_finds_due_reports(self) -> None:
-        """Test that the dispatcher finds reports due at the current hour."""
+        """Test that the dispatcher finds reports that are due."""
         org = baker.make(Organization)
+        now = timezone.now()
 
-        # Report due now (Day 15, Hour 10)
+        # 1. Report due now (next_run_at <= now)
         baker.make(
             ScheduledReport,
             name="Due Now",
             organization=org,
             recipients="test@example.com",
-            frequency=ScheduledReport.Frequency.MONTHLY,
-            day_of_month=15,
-            hour=10,
             is_active=True,
+            next_run_at=now - timedelta(minutes=1),
         )
 
-        # Report due today but wrong hour
+        # 2. Report due later (next_run_at > now)
         baker.make(
             ScheduledReport,
-            name="Wrong Hour",
+            name="Future",
             organization=org,
-            frequency=ScheduledReport.Frequency.MONTHLY,
-            day_of_month=15,
-            hour=11,
             is_active=True,
+            next_run_at=now + timedelta(hours=1),
         )
 
-        # Report due right hour but wrong day
+        # 3. Report due yesterday (Catch-up)
         baker.make(
             ScheduledReport,
-            name="Wrong Day",
+            name="Missed Yesterday",
             organization=org,
-            frequency=ScheduledReport.Frequency.MONTHLY,
-            day_of_month=14,
-            hour=10,
             is_active=True,
+            next_run_at=now - timedelta(days=1),
         )
 
-        # Report due now but inactive
+        # 4. Inactive report (even if due)
         baker.make(
             ScheduledReport,
             name="Inactive",
             organization=org,
-            frequency=ScheduledReport.Frequency.MONTHLY,
-            day_of_month=15,
-            hour=10,
             is_active=False,
+            next_run_at=now - timedelta(minutes=1),
         )
 
-        # We can't easily mock the recursive celery call in a shared_task easily
-        # without patching, so we'll check the return string or use a mock.
-        # But for integration, let's just assert the return message.
+        # We need to mock the delay call to count invocations
+        # Since process_scheduled_reports is a shared_task, calling .apply() executes it synchronously.
+        # We check the return string which counts queued reports.
+
         result = process_scheduled_reports.apply().get()
 
-        assert "Queued 1 reports" in result
+        # We expect "Due Now" and "Missed Yesterday" to be queued.
+        assert "Queued 2 reports" in result
 
 
 @pytest.mark.django_db
 class TestSendScheduledReportTask:
     """Tests for the send_scheduled_report Celery task."""
-
-    @time_machine.travel("2025-01-15 10:00:00", tick=False)
-    def test_idempotency_check(self) -> None:
-        """Test that report is skipped if already sent this month."""
-        org = baker.make(Organization)
-
-        # Create a report that looks like it was just sent
-        last_sent = timezone.make_aware(datetime(2025, 1, 15, 10, 0, 0))
-        report = baker.make(
-            ScheduledReport, organization=org, recipients="test@example.com", is_active=True, last_sent_at=last_sent
-        )
-
-        result = send_scheduled_report.apply(args=(report.pk,)).get()
-
-        assert result["status"] == "skipped"
-        assert result["reason"] == "already_sent_this_month"
 
     def test_report_not_found(self) -> None:
         """Test task with non-existent report ID."""
@@ -329,3 +312,78 @@ class TestSendScheduledReportTask:
 
         assert result["report_id"] == report.pk
         assert result["report_name"] == "Test Report"
+
+
+class TestGetPreviousMonthRange:
+    """Tests for get_previous_month_range function (helper in tasks.py)."""
+
+    @time_machine.travel("2025-01-15 10:30:00", tick=False)
+    def test_january_returns_december(self) -> None:
+        """Test that January returns December of previous year."""
+        start, end = get_previous_month_range()
+
+        assert start.year == 2024
+        assert start.month == 12
+        assert start.day == 1
+        assert start.hour == 0
+
+        assert end.year == 2025
+        assert end.month == 1
+        assert end.day == 1
+        assert end.hour == 0
+
+    @time_machine.travel("2025-03-15 10:30:00", tick=False)
+    def test_march_returns_february(self) -> None:
+        """Test that March returns February."""
+        start, end = get_previous_month_range()
+
+        assert start.year == 2025
+        assert start.month == 2
+        assert start.day == 1
+
+        assert end.year == 2025
+        assert end.month == 3
+        assert end.day == 1
+
+    @time_machine.travel("2025-05-31 23:59:59", tick=False)
+    def test_end_of_month_returns_april(self) -> None:
+        """Test that end of May returns April."""
+        start, end = get_previous_month_range()
+
+        assert start.year == 2025
+        assert start.month == 4
+        assert start.day == 1
+
+        assert end.year == 2025
+        assert end.month == 5
+        assert end.day == 1
+
+    @time_machine.travel("2024-02-29 12:00:00", tick=False)
+    def test_leap_year_february(self) -> None:
+        """Test leap year February returns January."""
+        start, end = get_previous_month_range()
+
+        assert start.year == 2024
+        assert start.month == 1
+        assert start.day == 1
+
+        assert end.year == 2024
+        assert end.month == 2
+        assert end.day == 1
+
+    def test_date_range_is_inclusive_exclusive(self) -> None:
+        """Test that start is inclusive and end is exclusive."""
+        with time_machine.travel("2025-02-15 00:00:00", tick=False):
+            start, end = get_previous_month_range()
+
+            # Start should be at midnight
+            assert start.hour == 0
+            assert start.minute == 0
+            assert start.second == 0
+            assert start.microsecond == 0
+
+            # End should also be at midnight (exclusive boundary)
+            assert end.hour == 0
+            assert end.minute == 0
+            assert end.second == 0
+            assert end.microsecond == 0

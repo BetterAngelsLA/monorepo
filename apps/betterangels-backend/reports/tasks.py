@@ -1,21 +1,34 @@
 """Reports app Celery tasks."""
 
 import logging
+from datetime import datetime, timedelta
 from typing import Any
 
 from celery import Task, shared_task
 from common.celery import single_instance
 from django.core.files.base import ContentFile
-from django.db import transaction
 from django.utils import timezone
 from notes.admin import NoteResource
 from notes.models import Note
 from post_office import mail
 
 from .models import ScheduledReport
-from .utils.report_utils import get_previous_month_range
 
 logger = logging.getLogger(__name__)
+
+
+def get_previous_month_range() -> tuple[datetime, datetime]:
+    """
+    Calculate the date range for the previous month.
+
+    Returns:
+        A tuple of (start_date, end_date) for the previous month,
+        where start_date is inclusive and end_date is exclusive.
+    """
+    now = timezone.now()
+    first_day_current = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    first_day_previous = (first_day_current - timedelta(days=1)).replace(day=1)
+    return (first_day_previous, first_day_current)
 
 
 @shared_task(bind=True)
@@ -27,21 +40,11 @@ def process_scheduled_reports(self: Task) -> str:
     """
     Dispatcher Task: Runs hourly (via Celery Beat) to check for reports due now.
 
-    It finds active scheduled reports that match the current day of month and hour,
-    and queues them for processing.
+    It finds active scheduled reports where next_run_at is in the past.
     """
     now = timezone.now()
-
-    # Find active reports scheduled for today and this hour
-    # We filter by frequency=MONTHLY (currently the only supported frequency)
-    reports_due = list(
-        ScheduledReport.objects.filter(
-            is_active=True,
-            frequency=ScheduledReport.Frequency.MONTHLY,
-            day_of_month=now.day,
-            hour=now.hour,
-        )
-    )
+    # Simple query: give me everything that is active and due
+    reports_due = ScheduledReport.objects.filter(is_active=True, next_run_at__lte=now)
 
     for report in reports_due:
         send_scheduled_report.delay(report.pk)
@@ -50,119 +53,104 @@ def process_scheduled_reports(self: Task) -> str:
 
 
 @shared_task(bind=True)
-def send_scheduled_report(self: Task, report_id: int) -> dict[str, Any]:
+def send_scheduled_report(self: Task, report_id: int, recipient_override: str | None = None) -> dict[str, Any]:
     """
     Send a scheduled report via email.
 
-    This task:
-    1. Checks if the report has already been sent this month (idempotency)
-    2. Queries the relevant data based on report_type
-    3. Generates the export file
-    4. Sends the email
-    5. Updates the last_sent_at timestamp
-
     Args:
-        report_id: The ID of the ScheduledReport to send
+        report_id: The ID of the ScheduledReport to send.
+        recipient_override: If provided, send only to this email and do not update schedule.
     """
     try:
-        # Use select_for_update to lock the row and prevent race conditions
-        with transaction.atomic():
-            report = ScheduledReport.objects.select_for_update().select_related("organization").get(pk=report_id)
-
-            # Idempotency Check: Don't send if already sent this month
-            now = timezone.now()
-            if report.last_sent_at:
-                if report.last_sent_at.year == now.year and report.last_sent_at.month == now.month:
-                    logger.info(f"Skipping report {report_id}: Already sent for {now.strftime('%Y-%m')}")
-                    return {
-                        "status": "skipped",
-                        "reason": "already_sent_this_month",
-                    }
-
-            # Mark as sent immediately to update lock (although actual save happens at end)
-            # ideally we save timestamp at the end of success, but we rely on transaction atomicity
-            pass
-
+        report = ScheduledReport.objects.select_related("organization").get(pk=report_id)
     except ScheduledReport.DoesNotExist:
-        return {
-            "status": "error",
-            "message": f"ScheduledReport with ID {report_id} not found",
-        }
+        return {"status": "error", "message": f"ScheduledReport {report_id} not found"}
 
     # Calculate the date range for the previous month
     start_date, end_date = get_previous_month_range()
-
-    # Format month/year keys for response/logging
     month_str = start_date.strftime("%m")
     year_str = start_date.strftime("%Y")
 
-    csv_content = None
-    filename = ""
+    # Generate content
+    try:
+        filename, csv_content, meta = _generate_report_data(report, start_date, end_date)
+    except ValueError as e:
+        return {"status": "error", "message": str(e)}
 
-    # Dispatch based on report type
+    if not csv_content:
+        return {"status": "error", "message": "No content generated"}
+
+    # Calculate subject for email and return value
+    subject = report.subject_template.format(month=month_str, year=year_str)
+
+    if not recipient_override:
+        # Update state
+        # We update the state *before* sending the email so that if sending fails,
+        # we don't end up in an infinite retry loop every hour. (At-most-once delivery)
+        report.last_sent_at = timezone.now()
+        report.set_next_run()  # Calculate for next month
+        report.save(update_fields=["last_sent_at", "next_run_at"])
+
+    # Send Email
+    recipients = [recipient_override] if recipient_override else report.get_recipient_list()
+    _send_report_email(report, filename, csv_content, month_str, year_str, subject=subject, recipients=recipients)
+
+    return {
+        "status": "success",
+        "report_id": report_id,
+        "report_name": report.name,
+        "recipients": recipients,
+        "month": month_str,
+        "test_run": bool(recipient_override),
+        "year": year_str,
+        "subject": subject,
+        **meta,
+    }
+
+
+def _generate_report_data(
+    report: ScheduledReport, start_date: datetime, end_date: datetime
+) -> tuple[str, str, dict[str, Any]]:
+    """Generate the filename, content, and metadata for the report."""
+    month_str = start_date.strftime("%m")
+    year_str = start_date.strftime("%Y")
+
     if report.report_type == ScheduledReport.ReportType.INTERACTION_DATA:
-        # Query notes for the previous month and this organization
         notes = Note.objects.filter(
             interacted_at__gte=start_date,
             interacted_at__lt=end_date,
             organization=report.organization,
         ).order_by("interacted_at")
 
-        # Generate CSV using NoteResource
         resource = NoteResource()
         dataset = resource.export(queryset=notes)
-        csv_content = dataset.csv
         filename = f"interaction_data_{month_str}_{year_str}.csv"
+        return filename, dataset.csv, {"notes_count": notes.count()}
 
-        # Add metadata for return value
-        result_meta = {"notes_count": notes.count()}
+    raise ValueError(f"Unknown report type: {report.report_type}")
 
-    else:
-        # Handle unknown report types gracefully
-        return {
-            "status": "error",
-            "message": f"Unknown report type: {report.report_type}",
-        }
 
-    if not csv_content:
-        return {
-            "status": "error",
-            "message": "No content generated for report",
-        }
+def _send_report_email(
+    report: ScheduledReport,
+    filename: str,
+    content: str,
+    month: str,
+    year: str,
+    subject: str,
+    recipients: list[str] | None = None,
+) -> None:
+    """Send the email with the report attachment."""
+    body = report.email_body.format(month=month, year=year)
 
-    # Format email subject and body
-    subject = report.subject_template.format(
-        month=month_str,
-        year=year_str,
-    )
+    if recipients is None:
+        recipients = report.get_recipient_list()
 
-    body = report.email_body.format(
-        month=month_str,
-        year=year_str,
-    )
-
-    # Send email with attachment using django-post-office
     mail.send(
-        recipients=report.get_recipient_list(),
+        recipients=recipients,
         sender=report.from_email,
         subject=subject,
         message=body,
         attachments={
-            filename: ContentFile(csv_content.encode("utf-8")),
+            filename: ContentFile(content.encode("utf-8")),
         },
     )
-
-    # Update last_sent_at
-    report.last_sent_at = timezone.now()
-    report.save(update_fields=["last_sent_at"])
-
-    return {
-        "status": "success",
-        "report_id": report_id,
-        "report_name": report.name,
-        "recipients": report.get_recipient_list(),
-        "subject": subject,
-        "month": month_str,
-        "year": year_str,
-        **result_meta,
-    }

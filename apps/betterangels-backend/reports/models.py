@@ -1,9 +1,12 @@
 """Reports app models."""
 
+from typing import Any
+
 from accounts.models import Organization
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 
 def validate_email_list(value: str) -> None:
@@ -94,6 +97,12 @@ class ScheduledReport(models.Model):
         blank=True,
         help_text="When this report was last sent",
     )
+    next_run_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When this report should be sent next",
+        db_index=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -106,7 +115,30 @@ class ScheduledReport(models.Model):
 
     def __str__(self) -> str:
         """Return string representation."""
-        return f"{self.name} ({self.get_frequency_display()})"  # type: ignore[attr-defined]
+        return f"{self.name} ({self.get_frequency_display()})"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Save the model."""
+        if self.next_run_at is None:
+            self.set_next_run()
+
+        super().save(*args, **kwargs)
+
+    def set_next_run(self) -> None:
+        """Calculate and set the next run time based on the schedule."""
+        now = timezone.now()
+
+        # Start with a run time for *this* month at the scheduled day/hour
+        # Note: day_of_month is validated to be 1-28, so it is valid for all months.
+        next_run = now.replace(day=self.day_of_month, hour=self.hour, minute=0, second=0, microsecond=0)
+
+        # If that time has passed (or is now), move to next month
+        if next_run <= now:
+            month = next_run.month + 1 if next_run.month < 12 else 1
+            year = next_run.year + 1 if next_run.month == 12 else next_run.year
+            next_run = next_run.replace(year=year, month=month)
+
+        self.next_run_at = next_run
 
     def clean(self) -> None:
         """Validate the model."""
