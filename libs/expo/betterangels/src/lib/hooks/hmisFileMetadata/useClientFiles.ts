@@ -7,13 +7,20 @@ const PER_PAGE = 50;
 const CLIENT_FILE_FIELDS =
   'id,ref_category,ref_file_name,ref_agency,name,is_program_file,file.*,category,fileName';
 
+export const getClientFilesQueryKey = (clientId?: string, hmisId?: string) => [
+  'hmis',
+  'clientFiles',
+  clientId,
+  hmisId,
+];
+
 export function useClientFiles(clientId?: string, hmisId?: string) {
   const { getClientFiles } = useHmisClient();
 
   const isEnabled = !!clientId && !!hmisId;
 
   return useQuery({
-    queryKey: ['hmis', 'clientFiles', clientId, hmisId],
+    queryKey: getClientFilesQueryKey(clientId, hmisId),
     queryFn: async (): Promise<ClientFile[]> => {
       if (!hmisId) return [];
 

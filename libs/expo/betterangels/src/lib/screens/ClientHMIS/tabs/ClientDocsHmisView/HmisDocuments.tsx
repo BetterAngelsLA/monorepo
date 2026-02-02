@@ -6,7 +6,6 @@ import { router } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { View } from 'react-native';
 import * as R from 'remeda';
-import { cacheHmisPreview } from '../../../../helpers';
 import { HmisDocumentItem } from './HmisDocumentItem';
 
 export interface HmisDocumentsProps {
@@ -16,6 +15,8 @@ export interface HmisDocumentsProps {
   title: string;
   data: ClientFile[];
   fileNames: FileName[];
+  clientId?: string;
+  hmisId?: string;
 }
 
 export default function HmisDocuments({
@@ -25,6 +26,8 @@ export default function HmisDocuments({
   title,
   data,
   fileNames,
+  clientId,
+  hmisId,
 }: HmisDocumentsProps) {
   const isExpanded = expanded === accordionKey;
   const fileNameMap = useMemo(
@@ -33,18 +36,17 @@ export default function HmisDocuments({
   );
 
   const handlePress = useCallback(
-    async (
+    (
       id: number,
       preview: { uri: string; mimeType: string },
       params: { label: string; createdAt: string }
     ) => {
-      const fileUri = await cacheHmisPreview(id, preview);
       router.navigate({
         pathname: `/hmis-file/${id}`,
-        params: { ...params, uri: fileUri || '' },
+        params: { ...params, clientId, hmisId },
       });
     },
-    []
+    [clientId, hmisId]
   );
 
   return (

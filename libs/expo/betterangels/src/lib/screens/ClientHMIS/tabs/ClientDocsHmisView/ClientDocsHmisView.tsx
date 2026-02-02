@@ -107,6 +107,8 @@ export function ClientDocsHmisView({
             title={category?.name ?? `Category ${category?.id}`}
             data={categoryFiles}
             fileNames={fileNames}
+            clientId={client?.id}
+            hmisId={client?.hmisId ?? undefined}
           />
         ))}
       </View>
