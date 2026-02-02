@@ -1,15 +1,15 @@
 import { useQuery } from '@apollo/client/react';
 import { Table, useAppDrawer } from '@monorepo/react/components';
-import { PlusIcon } from '@monorepo/react/icons';
+import { PlusIcon, ThreeDotIcon } from '@monorepo/react/icons';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { JSX, useState } from 'react';
+import { JSX, useRef, useState } from 'react';
 import {
   Ordering,
   OrganizationMemberOrdering,
   OrganizationMemberType,
 } from '../../apollo/graphql/__generated__/types';
-import { AddUserFormDrawer } from '../../components';
-import { useUser } from '../../hooks';
+import { AddUserFormDrawer, EditUserFormDrawer } from '../../components';
+import { useOutsideClick, useUser } from '../../hooks';
 import { OrganizationMembersDocument } from './__generated__/users.generated';
 
 const PAGE_SIZE = 25;
@@ -71,6 +71,14 @@ export default function Users() {
     field: keyof OrganizationMemberOrdering;
     direction: Ordering;
   }>({ field: 'lastName', direction: Ordering.Asc });
+  const [openMenuRowId, setOpenMenuRowId] = useState<string | null>(null);
+
+  const menuRef = useRef<HTMLDivElement>(null);
+  useOutsideClick(
+    menuRef,
+    () => setOpenMenuRowId(null),
+    openMenuRowId !== null
+  );
 
   const organizationId = user?.organizations?.[0]?.id ?? '';
 
@@ -134,6 +142,43 @@ export default function Users() {
       >
         {user?.canViewOrgMembers ? (
           <Table<OrganizationMemberType>
+            action={(row) => {
+              const isOpen = openMenuRowId === row.id;
+              return (
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenMenuRowId((prev) =>
+                        prev === row.id ? null : row.id
+                      );
+                    }}
+                    className="flex items-center justify-center h-8 w-8 rounded-[8px] bg-neutral-99 relative z-0"
+                  >
+                    <ThreeDotIcon className="w-6" fill="#052b73" />
+                  </button>
+                  {isOpen && (
+                    <div
+                      ref={menuRef}
+                      className="absolute top-full right-1/2 shadow-md bg-white z-10 p-2 rounded-lg"
+                    >
+                      <button
+                        className="py-2 px-4 hover:bg-neutral-98 rounded-lg"
+                        onClick={() => {
+                          setOpenMenuRowId(null);
+                          showDrawer({
+                            content: <EditUserFormDrawer data={row} />,
+                            contentClassName: 'p-0',
+                          });
+                        }}
+                      >
+                        Edit User
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            }}
             data={members}
             page={page}
             totalPages={totalPages}

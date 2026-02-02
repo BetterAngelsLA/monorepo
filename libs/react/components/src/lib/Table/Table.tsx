@@ -39,7 +39,7 @@ export function Table<T>({
         <tbody>
           {data.map((row, rowIndex) => (
             <tr
-              key={`${row}-${rowIndex}`}
+              key={(row as any).id ?? rowIndex}
               className="border-b border-neutral-90"
             >
               {header.map((_, colIndex) => (
