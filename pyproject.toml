@@ -34,7 +34,7 @@ develop = true
 [tool.poetry.group.dev.dependencies]
 flake8 = "^7.3.0"
 isort = "^7.0.0"
-black = "^25.12.0"
+black = "^26.1.0"
 flake8-bugbear = "^25.11.29"
 django-stubs-ext = "5.2.8"
 djlint = "^1.36.4"
