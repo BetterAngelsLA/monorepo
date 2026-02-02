@@ -24,7 +24,7 @@ export default function UploadModalHmis(props: {
 
   const {
     categories: fileCategories,
-    fileNames: fileCategyFileNames,
+    fileNames: fileCategoryFileNames,
     error,
     loading: loadingCategoryMeta,
   } = useHmisFileCategoryAndNames();
@@ -58,10 +58,10 @@ export default function UploadModalHmis(props: {
         />
       )}
 
-      {!document && fileCategories && fileCategyFileNames && (
+      {!document && fileCategories && fileCategoryFileNames && (
         <FileCategorySelector
           categories={fileCategories}
-          subCategories={fileCategyFileNames}
+          subCategories={fileCategoryFileNames}
           onSelect={({ categoryId, subCategoryId, categoryName }) => {
             setDocumentCategory({
               categoryId,
