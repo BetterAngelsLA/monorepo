@@ -15,7 +15,6 @@ import {
   ClientFileUploadRequest,
   ClientFileUploadResponse,
   FileCategoriesResponse,
-  FileNamesListParams,
   FileNamesResponse,
   HmisError,
   HmisHttpQueryParams,
