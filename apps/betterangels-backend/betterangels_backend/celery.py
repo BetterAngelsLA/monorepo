@@ -29,4 +29,9 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute=0, hour=7),  # 7 AM UTC, corresponds to midnight PT
         "kwargs": {"days": 90, "delete_attachments": True},
     },
+    # Trigger scheduled reports every hour
+    "process_scheduled_reports": {
+        "task": "reports.tasks.process_scheduled_reports",
+        "schedule": crontab(minute=0),
+    },
 }
