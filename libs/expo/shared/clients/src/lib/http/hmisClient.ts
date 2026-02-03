@@ -5,7 +5,6 @@ import {
   HMIS_API_URL_STORAGE_KEY,
   hmisInterceptor,
   includeCredentialsInterceptor,
-  storeCookiesInterceptor,
   userAgentInterceptor,
 } from '../common/interceptors';
 import {
@@ -18,8 +17,11 @@ import {
   FileCategoriesResponse,
   FileNamesResponse,
   HmisError,
+  HmisHttpQueryParams,
   HmisRequestOptions,
 } from './hmisTypes';
+
+export const HMIS_REST_API_MAX_PER_PAGE = 50;
 
 /**
  * HMIS REST API Client
@@ -39,8 +41,7 @@ class HmisClient {
       userAgentInterceptor,
       hmisInterceptor,
       bodyInterceptor,
-      includeCredentialsInterceptor,
-      storeCookiesInterceptor
+      includeCredentialsInterceptor
     );
   }
   /**
@@ -102,7 +103,11 @@ class HmisClient {
     const url = new URL(path, baseUrl);
     if (options.params) {
       Object.entries(options.params).forEach(([key, value]) => {
-        url.searchParams.append(key, value);
+        if (value === undefined || value === null) {
+          return;
+        }
+
+        url.searchParams.append(key, String(value));
       });
     }
 
@@ -144,7 +149,7 @@ class HmisClient {
     }
   }
 
-  get<T = unknown>(path: string, params?: Record<string, string>): Promise<T> {
+  get<T = unknown>(path: string, params?: HmisHttpQueryParams): Promise<T> {
     return this.request<T>(path, { method: 'GET', params });
   }
 
@@ -334,8 +339,10 @@ class HmisClient {
    * });
    * ```
    */
-  async getFileCategories(): Promise<FileCategoriesResponse> {
-    return this.get<FileCategoriesResponse>('/client-file-categories');
+  async getFileCategories(
+    params?: HmisHttpQueryParams
+  ): Promise<FileCategoriesResponse> {
+    return this.get<FileCategoriesResponse>('/client-file-categories', params);
   }
 
   /**
@@ -355,8 +362,8 @@ class HmisClient {
    * });
    * ```
    */
-  async getFileNames(): Promise<FileNamesResponse> {
-    return this.get<FileNamesResponse>('/client-file-names');
+  async getFileNames(params?: HmisHttpQueryParams): Promise<FileNamesResponse> {
+    return this.get<FileNamesResponse>('/client-file-names', params);
   }
 
   /**

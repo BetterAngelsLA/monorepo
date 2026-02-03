@@ -104,7 +104,9 @@
     "rxjs": "*",
     "set-cookie-parser": "*",
     "@types/set-cookie-parser": "*",
-    "jwt-decode": "*"
+    "jwt-decode": "*",
+    "@preeternal/react-native-cookie-manager": "*",
+    "@tanstack/react-query": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",

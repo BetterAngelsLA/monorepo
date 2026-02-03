@@ -60,7 +60,7 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
           accessibilityLabel="client's profile photo avatar"
           accessibilityHint="client's profile photo avatar"
         />
-        <TextMedium style={{ flexShrink: 1 }} size="lg">
+        <TextMedium selectable style={{ flexShrink: 1 }} size="lg">
           {nameParts.join(' ')}
         </TextMedium>
       </View>
@@ -86,7 +86,9 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
       {!!uniqueIdentifier && (
         <View style={styles.iconWithTextContainer}>
           <IdCardOutlineIcon width={20} color={Colors.PRIMARY_EXTRA_DARK} />
-          <TextRegular size="sm">HMIS ID: {uniqueIdentifier}</TextRegular>
+          <TextRegular selectable size="sm">
+            HMIS ID: {uniqueIdentifier}
+          </TextRegular>
         </View>
       )}
     </View>
