@@ -1236,6 +1236,7 @@ export type Mutation = {
   updateHmisProfile: UpdateHmisProfilePayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
+  updateOrganizationMember: UpdateOrganizationMemberPayload;
   updateServiceRequest: UpdateServiceRequestPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
@@ -1476,6 +1477,11 @@ export type MutationUpdateNoteArgs = {
 
 export type MutationUpdateNoteLocationArgs = {
   data: UpdateNoteLocationInput;
+};
+
+
+export type MutationUpdateOrganizationMemberArgs = {
+  data: UpdateOrganizationMemberInput;
 };
 
 
@@ -2596,6 +2602,16 @@ export type UpdateNoteLocationInput = {
 export type UpdateNoteLocationPayload = NoteType | OperationInfo;
 
 export type UpdateNotePayload = NoteType | OperationInfo;
+
+export type UpdateOrganizationMemberInput = {
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  lastName?: InputMaybe<Scalars['String']['input']>;
+  middleName?: InputMaybe<Scalars['String']['input']>;
+  organizationId: Scalars['ID']['input'];
+};
+
+export type UpdateOrganizationMemberPayload = OperationInfo | OrganizationMemberType;
 
 export type UpdateServiceRequestInput = {
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
