@@ -36,17 +36,11 @@ export function MenuBtnMobile() {
         <Link aria-label="navigate to about us" to={aboutUsPath}>
           About Us
         </Link>
-<<<<<<< HEAD
-        <Link aria-label="navigate to about us" to="/operator">
-          Operator Portal
-        </Link>
-=======
         {showOperator ? (
           <Link aria-label="navigate to operator dashboard" to={operatorPath}>
             Operator
           </Link>
         ) : null}
->>>>>>> main
       </div>
     </div>
   );
