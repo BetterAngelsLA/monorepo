@@ -24,11 +24,11 @@ jest.mock('@react-native-async-storage/async-storage', () => {
   };
 });
 
-// Mock NitroCookies
+// Mock CookieManager
 const mockGet = jest.fn();
 const mockSetFromResponse = jest.fn();
 
-jest.mock('react-native-nitro-cookies', () => {
+jest.mock('@preeternal/react-native-cookie-manager', () => {
   return {
     __esModule: true,
     default: {
@@ -57,7 +57,7 @@ describe('HmisClient', () => {
       return Promise.resolve(null);
     });
 
-    // Mock NitroCookies to return the auth token
+    // Mock CookieManager to return the auth token
     mockGet.mockResolvedValue({
       auth_token: { value: 'mock-token' },
     });

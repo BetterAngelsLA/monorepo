@@ -5522,6 +5522,7 @@ __metadata:
     "@nxlv/python": "npm:21.2.0"
     "@playwright/test": "npm:^1.36.0"
     "@portabletext/react": "npm:^3.2.0"
+    "@preeternal/react-native-cookie-manager": "npm:^6.3.0"
     "@react-native-async-storage/async-storage": "npm:2.2.0"
     "@react-native-community/datetimepicker": "npm:8.4.4"
     "@react-native-picker/picker": "npm:2.11.1"
@@ -5645,7 +5646,6 @@ __metadata:
     react-native-keyboard-controller: "npm:~1.19.6"
     react-native-maps: "npm:^1.26.20"
     react-native-mmkv: "npm:^4.1.0"
-    react-native-nitro-cookies: "npm:^1.0.0"
     react-native-nitro-modules: "npm:^0.33.1"
     react-native-open-maps: "npm:^0.4.3"
     react-native-paper: "npm:^5.12.5"
@@ -6779,6 +6779,16 @@ __metadata:
   version: 2.0.15
   resolution: "@portabletext/types@npm:2.0.15"
   checksum: 10/392417a6b964a7563adac06c0143779ce7e9a9487a7f18e67159616d9fb28ac14679911bdd89c8ac972e02d1e6032d3dd183d441a835b676ae44cc9b9ec00001
+  languageName: node
+  linkType: hard
+
+"@preeternal/react-native-cookie-manager@npm:^6.3.0":
+  version: 6.3.0
+  resolution: "@preeternal/react-native-cookie-manager@npm:6.3.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10/574ed25a0c53ae50c5a451426fe27c04238dec0c47e0115672f265ac553b78ece5c9a9a9fc12fa14c0f02b33ec62224224c9bbd2e3f1467d590ace6ff2d69d89
   languageName: node
   linkType: hard
 
@@ -23294,17 +23304,6 @@ __metadata:
     react-native: "*"
     react-native-nitro-modules: "*"
   checksum: 10/d5e77790d8f033e5197e7155a9bd921445da33995af84edf46ee1fddf977651fe67563bcc669d9b924fef90b0b876e4a7d38fd2764846b43ad6dff8d00eb0f80
-  languageName: node
-  linkType: hard
-
-"react-native-nitro-cookies@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "react-native-nitro-cookies@npm:1.0.0"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-    react-native-nitro-modules: ^0.31.4
-  checksum: 10/cfe0dfaf272b5966469e290c48121a4e83e7f4759656215a46a5e45ef200613a3ff699c6d30fd1f4beb42fdd1c9a05e77a65a99c0335c012f985b96132175823
   languageName: node
   linkType: hard
 

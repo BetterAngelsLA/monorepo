@@ -10,7 +10,7 @@ import {
   HMIS_TOKEN_HEADER_NAME,
 } from '@monorepo/expo/shared/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import NitroCookies from 'react-native-nitro-cookies';
+import CookieManager from '@preeternal/react-native-cookie-manager';
 import {
   HEADER_NAMES,
   HEADER_VALUES,
@@ -46,7 +46,7 @@ const getHmisAuthToken = async (): Promise<string | null> => {
     const hmisApiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
     if (!hmisApiUrl) return null;
 
-    const hmisCookies = await NitroCookies.get(hmisApiUrl);
+    const hmisCookies = await CookieManager.get(hmisApiUrl);
     return hmisCookies[HMIS_AUTH_COOKIE_NAME]?.value || null;
   } catch (error) {
     return null;
@@ -135,7 +135,7 @@ export const backendAuthInterceptor: FetchInterceptor = async (
   const url = getUrl(input);
 
   // Add CSRF token header
-  const cookiesForUrl = await NitroCookies.get(url);
+  const cookiesForUrl = await CookieManager.get(url);
   const csrfCookie = cookiesForUrl[CSRF_COOKIE_NAME];
   if (csrfCookie?.value) {
     headers.set(CSRF_HEADER_NAME, csrfCookie.value);
@@ -168,7 +168,7 @@ const fetchFreshCsrf = async (referer: string): Promise<void> => {
 
   const setCookie = csrfResponse.headers.get('set-cookie');
   if (setCookie) {
-    await NitroCookies.setFromResponse(referer, setCookie);
+    await CookieManager.setFromResponse(referer, setCookie);
   }
 };
 
@@ -210,7 +210,7 @@ export const storeCookiesInterceptor: FetchInterceptor = async (
   const setCookie = response.headers.get('set-cookie');
 
   if (setCookie) {
-    await NitroCookies.setFromResponse(url, setCookie);
+    await CookieManager.setFromResponse(url, setCookie);
   }
 
   return response;
@@ -227,7 +227,7 @@ export const hmisInterceptor: FetchInterceptor = async (input, init, next) => {
   // Request phase: Add HMIS headers
   const hmisApiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
   if (hmisApiUrl) {
-    const cookies = await NitroCookies.get(hmisApiUrl);
+    const cookies = await CookieManager.get(hmisApiUrl);
     const authToken = cookies[HMIS_AUTH_COOKIE_NAME]?.value;
 
     if (authToken) {
@@ -288,7 +288,7 @@ export const getUserAgentHeaders = (): HeadersObject => ({
 export const getHmisAuthHeaders = async (
   hmisApiUrl: string
 ): Promise<HeadersObject> => {
-  const cookies = await NitroCookies.get(hmisApiUrl);
+  const cookies = await CookieManager.get(hmisApiUrl);
   const authToken = cookies['auth_token']?.value;
 
   if (authToken) {
