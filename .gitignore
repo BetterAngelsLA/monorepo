@@ -13,6 +13,7 @@ node_modules
 
 # IDEs and editors
 /.idea
+.claude/
 .project
 .classpath
 .c9/
@@ -68,7 +69,6 @@ cache/
 !.yarn/versions
 
 apps/betterangels-e2e/artifacts
-apps/betterangels/ios/
 
 # Python
 __pycache__
