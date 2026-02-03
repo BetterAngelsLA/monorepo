@@ -71,5 +71,3 @@ class TestSchedulingLogic:
             )
 
             assert report.next_run_at == expected_next_run
-
-            assert report.next_run_at == expected_next_run
