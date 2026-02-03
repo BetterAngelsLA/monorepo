@@ -1,12 +1,12 @@
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { useFeatureControls } from '@monorepo/react/shared';
 import { Link, router } from 'expo-router';
 import { ReactNode, useEffect } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useUser } from '../../hooks';
-import { useFeatureControls } from '../../providers';
 
 type AuthLayoutProps = {
   children: ReactNode;
@@ -20,12 +20,14 @@ export default function SignInContainer({
   privacyPolicyUrl,
 }: AuthLayoutProps) {
   const { user } = useUser();
-  const { switchEnvironment } = useApiConfig();
+  const { switchEnvironment, environment } = useApiConfig();
   const { refetchFeatureFlags } = useFeatureControls();
 
   // On mount, optionally switch env when unauthenticated.
   useEffect(() => {
-    if (!user) switchEnvironment('production');
+    if (!user && environment !== 'production') {
+      switchEnvironment('production');
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

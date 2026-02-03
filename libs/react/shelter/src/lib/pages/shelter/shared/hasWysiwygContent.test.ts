@@ -1,6 +1,6 @@
 import { hasWysiwygContent } from './hasWysiwygContent';
 
-type TTestCase = [any, any];
+type TTestCase = [unknown, unknown];
 
 const testCases: TTestCase[] = [
   [null, false],

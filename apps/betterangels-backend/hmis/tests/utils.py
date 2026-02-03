@@ -139,7 +139,15 @@ class HmisNoteBaseTestCase(GraphQLBaseTestCase):
                 program { id name }
             }
 
-            createdBy { id }
+            createdBy {
+                id
+                firstName
+                lastName
+                organizations: organizationsOrganization {
+                    id
+                    name
+                }
+            }
         """
 
     def _create_hmis_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:

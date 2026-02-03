@@ -7,6 +7,7 @@ import * as Updates from 'expo-updates';
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import NitroCookies from 'react-native-nitro-cookies';
+
 import Logo from './assets/images/logo.svg';
 
 const SHARED_BUTTON_PROPS = {
@@ -22,7 +23,7 @@ export default function Auth() {
   const otaId = Updates.updateId;
   const otaVersion = otaId ? otaId.slice(0, 7) : 'N/A';
 
-  // make sure local user data is cleared when landing on this screen
+  // Clear local user data when landing on this screen
   // apolloProvider has no access to UserProvider so cannot really reset
   // user on 401 errors
   useEffect(() => {

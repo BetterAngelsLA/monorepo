@@ -70,7 +70,7 @@ export default function SignIn() {
     } finally {
       setLoading(false);
     }
-  }, [otp, fetchClient, refetchUser]);
+  }, [otp, fetchClient, refetchUser, navigate]);
 
   const handlePasswordLogin = useCallback(async () => {
     setLoading(true);
@@ -95,7 +95,7 @@ export default function SignIn() {
     } finally {
       setLoading(false);
     }
-  }, [email, password, fetchClient, refetchUser]);
+  }, [email, password, fetchClient, refetchUser, navigate]);
 
   return (
     <div className="bg-neutral-99 flex min-h-screen items-center justify-center">
