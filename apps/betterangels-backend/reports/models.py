@@ -3,6 +3,7 @@
 from typing import Any
 
 from accounts.models import Organization
+from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, MaxValueValidator, MinValueValidator
 from django.db import models
@@ -67,8 +68,8 @@ class ScheduledReport(models.Model):
     )
     day_of_month = models.IntegerField(
         default=1,
-        validators=[MinValueValidator(1), MaxValueValidator(28)],
-        help_text="Day of the month to send the report (1-28)",
+        validators=[MinValueValidator(1), MaxValueValidator(31)],
+        help_text="Day of the month to send the report (1-31). If the month has fewer days, the last day of the month will be used.",
     )
     hour = models.IntegerField(
         default=0,
@@ -128,32 +129,23 @@ class ScheduledReport(models.Model):
         """Calculate and set the next run time based on the schedule."""
         now = timezone.now()
 
-        # Start with a run time for *this* month at the scheduled day/hour
-        # Note: day_of_month is validated to be 1-28, so it is valid for all months.
-        next_run = now.replace(day=self.day_of_month, hour=self.hour, minute=0, second=0, microsecond=0)
+        # Calculate candidate for current month.
+        # relativedelta(day=N) replaces the day, clamping to the last valid day of month
+        # if the month is short (e.g. Feb 31 -> Feb 28).
+        # This matches the "Last Day of Month" behavior if day=31.
+        candidate = now + relativedelta(
+            day=self.day_of_month,
+            hour=self.hour,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
 
-        # If that time has passed (or is now), move to next month
-        if next_run <= now:
-            month = next_run.month + 1 if next_run.month < 12 else 1
-            year = next_run.year + 1 if next_run.month == 12 else next_run.year
-            next_run = next_run.replace(year=year, month=month)
+        # If the candidate time has already passed, schedule for next month
+        if candidate <= now:
+            candidate += relativedelta(months=1) + relativedelta(day=self.day_of_month)
 
-        self.next_run_at = next_run
-
-    def clean(self) -> None:
-        """Validate the model."""
-        super().clean()
-
-        # Validate email list
-        validate_email_list(self.recipients)
-
-        # Validate day of month is reasonable
-        if self.day_of_month < 1 or self.day_of_month > 28:
-            raise ValidationError({"day_of_month": "Day of month must be between 1 and 28"})
-
-        # Validate hour
-        if self.hour < 0 or self.hour > 23:
-            raise ValidationError({"hour": "Hour must be between 0 and 23"})
+        self.next_run_at = candidate
 
     def get_recipient_list(self) -> list[str]:
         """Parse the recipients field into a list of email addresses."""

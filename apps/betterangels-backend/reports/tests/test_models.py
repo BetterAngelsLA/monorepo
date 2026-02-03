@@ -126,13 +126,13 @@ class TestScheduledReportModel:
         assert "day_of_month" in exc_info.value.message_dict
 
     def test_validate_day_of_month_too_high(self) -> None:
-        """Test validation with day_of_month > 28."""
+        """Test validation with day_of_month > 31."""
         org = baker.make(Organization)
         report = baker.prepare(
             ScheduledReport,
             organization=org,
             recipients="test@example.com",
-            day_of_month=29,
+            day_of_month=32,
         )
 
         with pytest.raises(ValidationError) as exc_info:
