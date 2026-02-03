@@ -57,9 +57,14 @@ function FileThumbnailBase(props: IProps) {
 
   let thumbSize = thumbnailSize;
 
+  console.log('*****************  thumbSize:', thumbSize);
+
   if (!thumbSize) {
     thumbSize = isImage ? ImageThumbnailSizeDefault : FileThumbnailSizeDefault;
   }
+
+  // TEMP
+  thumbSize = ImageThumbnailSizeDefault;
 
   if (
     typeof thumbSize?.width !== 'number' ||
