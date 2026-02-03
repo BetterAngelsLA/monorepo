@@ -105,6 +105,7 @@
     "set-cookie-parser": "*",
     "@types/set-cookie-parser": "*",
     "jwt-decode": "*",
+    "@preeternal/react-native-cookie-manager": "*",
     "@tanstack/react-query": "*"
   },
   "scripts": {
