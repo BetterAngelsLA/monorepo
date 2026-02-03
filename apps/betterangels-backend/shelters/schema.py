@@ -1,15 +1,14 @@
 import strawberry
 import strawberry_django
-from strawberry.types import Info
-
-from shelters.enums import StatusChoices
 from common.permissions.utils import IsAuthenticated
 from django.db.models import QuerySet
+from shelters.enums import StatusChoices
 from shelters.models import Shelter
+from shelters.permissions import ShelterPermissions
 from shelters.types import ShelterType
+from strawberry.types import Info
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
-from shelters.permissions import ShelterPermissions
 
 
 @strawberry.type
@@ -34,8 +33,4 @@ class Query:
         user_org_id = getattr(user, "organization_id", None)
         effective_org_id = user_org_id or int(organization_id)
 
-        return (
-            Shelter.objects
-            .filter(organization_id=effective_org_id)
-            .order_by("-created_at")
-        )
+        return Shelter.objects.filter(organization_id=effective_org_id).order_by("-created_at")
