@@ -57,18 +57,30 @@ class TestScheduledReportModel:
         assert "bob@example.com" in recipients
         assert "charlie@example.com" in recipients
 
-    def test_get_recipient_list_with_whitespace(self) -> None:
-        """Test parsing recipients with irregular whitespace."""
+    def test_get_recipient_list_various_separators(self) -> None:
+        """Test parsing recipients with various separators (comma, semicolon, newline, space)."""
         org = baker.make(Organization)
-        report = baker.make(
-            ScheduledReport,
-            organization=org,
-            recipients="  alice@example.com  ,bob@example.com,  charlie@example.com  ",
-        )
 
-        recipients = report.get_recipient_list()
-        assert len(recipients) == 3
-        assert all(email == email.strip() for email in recipients)
+        # Test cases with different separators
+        scenarios = [
+            "a@b.com,c@d.com",
+            "a@b.com;c@d.com",
+            "a@b.com c@d.com",
+            "a@b.com\nc@d.com",
+            "a@b.com, c@d.com; e@f.com\ng@h.com",
+            "  a@b.com  ,  c@d.com  ",
+        ]
+
+        for recipients_str in scenarios:
+            report = baker.make(
+                ScheduledReport,
+                organization=org,
+                recipients=recipients_str,
+            )
+            recipients = report.get_recipient_list()
+            assert len(recipients) >= 2
+            assert "a@b.com" in recipients
+            assert "c@d.com" in recipients
 
     def test_validate_email_list_valid(self) -> None:
         """Test validation with valid email addresses."""

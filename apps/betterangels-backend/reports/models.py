@@ -1,5 +1,6 @@
 """Reports app models."""
 
+import re
 from typing import Any
 
 from accounts.models import Organization
@@ -11,12 +12,16 @@ from django.utils import timezone
 
 
 def validate_email_list(value: str) -> None:
-    """Validate that the input is a comma-separated list of valid emails."""
+    """Validate that the input is a list of valid emails (separated by comma, semicolon, space, or newline)."""
     if not value.strip():
         raise ValidationError("At least one email address is required.")
 
     email_validator = EmailValidator()
-    emails = [email.strip() for email in value.split(",")]
+    # Split by comma, semicolon, or whitespace (including newlines)
+    emails = [email for email in re.split(r"[,\s;]+", value) if email]
+
+    if not emails:
+        raise ValidationError("At least one email address is required.")
 
     for email in emails:
         try:
@@ -57,7 +62,7 @@ class ScheduledReport(models.Model):
         help_text="The type of data to include in the report",
     )
     recipients = models.TextField(
-        help_text="Comma-separated list of email addresses to send the report to",
+        help_text="List of email addresses to send the report to (separated by comma, semicolon, space, or newline)",
         validators=[validate_email_list],
     )
     frequency = models.CharField(
@@ -149,4 +154,4 @@ class ScheduledReport(models.Model):
 
     def get_recipient_list(self) -> list[str]:
         """Parse the recipients field into a list of email addresses."""
-        return [email.strip() for email in self.recipients.split(",") if email.strip()]
+        return [email for email in re.split(r"[,\s;]+", self.recipients) if email]

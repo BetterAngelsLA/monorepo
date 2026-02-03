@@ -157,12 +157,12 @@ class TestSendScheduledReportTask:
         assert "Invalid config" in result["message"]
 
     def test_send_report_recipient_list(self) -> None:
-        """Test that recipients are correctly parsed."""
+        """Test that recipients are correctly parsed with mixed separators."""
         org = baker.make(Organization)
         report = baker.make(
             ScheduledReport,
             organization=org,
-            recipients="alice@example.com, bob@example.com",
+            recipients="alice@example.com; bob@example.com\ncharlie@example.com",
             is_active=True,
         )
 
@@ -174,10 +174,11 @@ class TestSendScheduledReportTask:
 
             result = send_scheduled_report.apply(args=(report.pk,)).get()
 
-            assert set(result["recipients"]) == {"alice@example.com", "bob@example.com"}
+            expected_recipients = {"alice@example.com", "bob@example.com", "charlie@example.com"}
+            assert set(result["recipients"]) == expected_recipients
 
             email = Email.objects.latest("id")
-            assert set(email.to) == {"alice@example.com", "bob@example.com"}
+            assert set(email.to) == expected_recipients
 
     def test_send_report_templates(self) -> None:
         """Test subject and email body template formatting."""
