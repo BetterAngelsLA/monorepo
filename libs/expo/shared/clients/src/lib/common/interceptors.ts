@@ -11,6 +11,7 @@ import {
 } from '@monorepo/expo/shared/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CookieManager from '@preeternal/react-native-cookie-manager';
+import { splitCookiesString, parse as parseCookies } from 'set-cookie-parser';
 import {
   HEADER_NAMES,
   HEADER_VALUES,
@@ -27,6 +28,7 @@ export type FetchInterceptor = (
 ) => Promise<Response>;
 
 export const HMIS_API_URL_STORAGE_KEY = 'hmis_api_url';
+export const HMIS_AUTH_DOMAIN_STORAGE_KEY = 'hmis_auth_domain';
 
 /**
  * Helper to extract URL string from RequestInfo
@@ -43,10 +45,13 @@ const getUrl = (input: RequestInfo | URL): string =>
  */
 const getHmisAuthToken = async (): Promise<string | null> => {
   try {
-    const hmisApiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
-    if (!hmisApiUrl) return null;
+    const authDomain = await AsyncStorage.getItem(HMIS_AUTH_DOMAIN_STORAGE_KEY);
+    const apiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
+    const targetUrl = authDomain || apiUrl;
 
-    const hmisCookies = await CookieManager.get(hmisApiUrl);
+    if (!targetUrl) return null;
+
+    const hmisCookies = await CookieManager.get(targetUrl);
     return hmisCookies[HMIS_AUTH_COOKIE_NAME]?.value || null;
   } catch (error) {
     return null;
@@ -197,61 +202,47 @@ export const createCsrfInterceptor = (referer: string): FetchInterceptor => {
 };
 
 /**
- * Stores cookies from response Set-Cookie headers
- */
-export const storeCookiesInterceptor: FetchInterceptor = async (
-  input,
-  init,
-  next
-) => {
-  const url = getUrl(input);
-
-  const response = await next(input, init);
-  const setCookie = response.headers.get('set-cookie');
-
-  if (setCookie) {
-    await CookieManager.setFromResponse(url, setCookie);
-  }
-
-  return response;
-};
-
-/**
  * HMIS-specific interceptor for direct HMIS API calls
  * Request phase: Adds Bearer token auth and HMIS-required headers
  * Response phase: Extracts and stores api_url from Set-Cookie
  */
 export const hmisInterceptor: FetchInterceptor = async (input, init, next) => {
   const headers = new Headers(init.headers);
+  const url = getUrl(input);
 
-  // Request phase: Add HMIS headers
-  const hmisApiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
-  if (hmisApiUrl) {
-    const cookies = await CookieManager.get(hmisApiUrl);
-    const authToken = cookies[HMIS_AUTH_COOKIE_NAME]?.value;
+  // 1. Authorization Header
+  const token = await getHmisAuthToken();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
 
-    if (authToken) {
-      headers.set('Authorization', `Bearer ${authToken}`);
-    }
-  }
-
-  // Add HMIS-required headers
+  // 2. Standard HMIS Headers
   headers.set(HEADER_NAMES.ACCEPT, HEADER_VALUES.ACCEPT_JSON_ALL);
   headers.set(
     HEADER_NAMES.X_REQUESTED_WITH,
     HEADER_VALUES.X_REQUESTED_WITH_AJAX
   );
 
-  // Make request
   const response = await next(input, { ...init, headers });
 
-  // Response phase: Extract and store api_url
+  // 3. Capture API URL & Domain Context
   const setCookie = response.headers.get('set-cookie');
   if (setCookie) {
-    const apiUrlMatch = setCookie.match(/api_url=([^;]+)/);
-    if (apiUrlMatch) {
-      const decodedUrl = decodeURIComponent(apiUrlMatch[1]);
-      await AsyncStorage.setItem(HMIS_API_URL_STORAGE_KEY, decodedUrl);
+    const splitCookies = splitCookiesString(setCookie);
+    const parsed = parseCookies(splitCookies, { map: true });
+    const apiUrlCookie = parsed['api_url'];
+
+    if (apiUrlCookie) {
+      const decodedApiUrl = decodeURIComponent(apiUrlCookie.value);
+      const domain = apiUrlCookie.domain
+        ? `https://${apiUrlCookie.domain.replace(/^\./, '')}`
+        : new URL(url).origin;
+
+      await AsyncStorage.setItem(HMIS_API_URL_STORAGE_KEY, decodedApiUrl);
+      await AsyncStorage.setItem(HMIS_AUTH_DOMAIN_STORAGE_KEY, domain);
+
+      // Manually set all cookies from this response to the captured domain
+      for (const cookieStr of splitCookies) {
+        await CookieManager.setFromResponse(domain, cookieStr);
+      }
     }
   }
 
@@ -286,10 +277,9 @@ export const getUserAgentHeaders = (): HeadersObject => ({
  * Note: This is different from backend GraphQL requests which use X-HMIS-Token header
  */
 export const getHmisAuthHeaders = async (
-  hmisApiUrl: string
+  _hmisApiUrl: string
 ): Promise<HeadersObject> => {
-  const cookies = await CookieManager.get(hmisApiUrl);
-  const authToken = cookies['auth_token']?.value;
+  const authToken = await getHmisAuthToken();
 
   if (authToken) {
     return {
