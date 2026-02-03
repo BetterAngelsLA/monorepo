@@ -1184,6 +1184,7 @@ type Mutation {
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
   addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
+  updateOrganizationMember(data: UpdateOrganizationMemberInput!): UpdateOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
   updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
   deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
@@ -2125,6 +2126,16 @@ input UpdateNoteLocationInput {
 union UpdateNoteLocationPayload = NoteType | OperationInfo
 
 union UpdateNotePayload = NoteType | OperationInfo
+
+input UpdateOrganizationMemberInput {
+  id: ID!
+  organizationId: ID!
+  firstName: String = null
+  middleName: String = null
+  lastName: String = null
+}
+
+union UpdateOrganizationMemberPayload = OrganizationMemberType | OperationInfo
 
 input UpdateServiceRequestInput {
   id: ID!

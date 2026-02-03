@@ -303,3 +303,65 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
             response["data"]["updateOrganizationMember"]["messages"][0]["message"],
             "User is not a member of this organization.",
         )
+
+    def test_update_organization_member_caller_lacks_permission(self) -> None:
+        caller = baker.make(User, first_name="Caller", last_name="NoPerm", email="caller@example.com")
+        self.org.add_user(caller)
+
+        org_member = baker.make(
+            User,
+            first_name="Old",
+            middle_name="KeepMe",
+            last_name="Name",
+            email="member@example.com",
+        )
+        self.org.add_user(org_member)
+
+        mutation = """
+            mutation ($data: UpdateOrganizationMemberInput!) {
+                updateOrganizationMember(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on OrganizationMemberType {
+                        id
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "id": org_member.pk,
+            "organizationId": self.org.pk,
+            "firstName": "NewFirst",
+            "lastName": "NewLast",
+        }
+
+        self.graphql_client.force_login(caller)
+
+        response = self.execute_graphql(mutation, {"data": variables})
+
+        if "errors" in response:
+            self.assertIsNone(response["data"]["updateOrganizationMember"])
+            self.assertTrue(
+                any(
+                    "permission" in err["message"].lower() or "not have permission" in err["message"].lower()
+                    for err in response["errors"]
+                )
+            )
+        else:
+
+            self.assertEqual(len(response["data"]["updateOrganizationMember"]["messages"]), 1)
+            self.assertIn(
+                "permission",
+                response["data"]["updateOrganizationMember"]["messages"][0]["message"].lower(),
+            )
+
+        org_member.refresh_from_db()
+        self.assertEqual("Old", org_member.first_name)
+        self.assertEqual("Name", org_member.last_name)
+        self.assertEqual("KeepMe", org_member.middle_name)
