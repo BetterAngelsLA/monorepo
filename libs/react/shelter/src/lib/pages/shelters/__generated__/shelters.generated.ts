@@ -1,12 +1,10 @@
-import * as Types from '../../../apollo/graphql/__generated__/types';
+import type * as Types from '../../../apollo/graphql/__generated__/types';
 
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
-const defaultOptions = {} as const;
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type ViewSheltersQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.ShelterFilter>;
   pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
-  order?: Types.InputMaybe<Types.ShelterOrder>;
+  ordering?: Array<Types.ShelterOrder> | Types.ShelterOrder;
 }>;
 
 

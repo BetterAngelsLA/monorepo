@@ -1,155 +1,155 @@
-import { useCallback, useMemo, useState } from 'react';
-import { HmisEnrollmentType } from '../../apollo';
-import { useHmisClientProgramEnrollmentsQuery } from './__generated__/hmisClientProgramEnrollments.generated';
-import { parseError } from './utils/parseError';
+import { useQuery } from '@apollo/client/react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { HmisClientProgramType } from '../../apollo';
+import { HmisClientProgramsDocument } from './__generated__/hmisClientPrograms.generated';
 
 const MAX_PROGRAMS_TO_FETCH = 50;
 
-type TProgramsBase = {
-  programs?: HmisEnrollmentType[];
+type TClientProgramsBase = {
+  clientPrograms?: HmisClientProgramType[];
   error?: string;
 };
 
 type TProps = {
-  hmisClientId: string;
+  clientId: string;
 };
 
 export function useHmisClientPrograms(props: TProps) {
-  const { hmisClientId } = props;
+  const { clientId } = props;
 
   // track only fresh value from network (not cache) to prevent stale error messaging
   const [totalProgramsFromNetwork, setTotalProgramsFromNetwork] = useState<
     number | undefined
   >(undefined);
 
-  const { data, loading } = useHmisClientProgramEnrollmentsQuery({
-    skip: !hmisClientId,
-    variables: {
-      personalId: hmisClientId,
-      pagination: { page: 1, perPage: MAX_PROGRAMS_TO_FETCH },
-      dynamicFields: [],
-    },
+  const {
+    data,
+    loading,
+    error: queryError,
+  } = useQuery(HmisClientProgramsDocument, {
+    skip: !clientId,
+    variables: { clientId },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
     notifyOnNetworkStatusChange: true,
-    onCompleted: (freshData) => {
-      const list = freshData?.hmisListEnrollments;
-
-      if (list?.__typename === 'HmisEnrollmentListType') {
-        const total = list.meta?.totalCount;
-        const newTotal = typeof total === 'number' ? total : undefined;
-
-        setTotalProgramsFromNetwork(newTotal);
-      }
-    },
-    onError: () => {
-      // If the network failed, we don't trust cached total; keep undefined
-      setTotalProgramsFromNetwork(undefined);
-    },
   });
 
-  const { programs, error } = useMemo<TProgramsBase>(() => {
+  // update totalProgramsFromNetwork onComplete
+  useEffect(() => {
+    if (!data) {
+      return;
+    }
+
+    const list = data.hmisClientPrograms;
+
+    if (list?.length === 0) {
+      return;
+    }
+
+    if (list[0].__typename === 'HmisClientProgramType') {
+      const total = list.length;
+      const newTotal = typeof total === 'number' ? total : undefined;
+
+      setTotalProgramsFromNetwork(newTotal);
+    }
+  }, [data, setTotalProgramsFromNetwork]);
+
+  // update totalProgramsFromNetwork onError
+  useEffect(() => {
+    if (queryError) {
+      setTotalProgramsFromNetwork(undefined);
+    }
+  }, [queryError, setTotalProgramsFromNetwork]);
+
+  const { clientPrograms, error } = useMemo<TClientProgramsBase>(() => {
     // handle errors
-    if (!hmisClientId) {
-      console.error('useHmisClientPrograms: missing hmisClientId');
+    if (!clientId) {
+      console.error('useHmisClientPrograms: missing clientId');
 
-      return { error: 'missing hmisClientId' };
+      return { clientPrograms: undefined, error: 'missing clientId' };
     }
 
-    const list = data?.hmisListEnrollments;
+    const list = data?.hmisClientPrograms;
 
-    if (list?.__typename === 'HmisListEnrollmentsError') {
-      const { message } = parseError(list.message);
-      const errMsg = message || 'unknown HmisListEnrollmentsError error';
-
-      console.error(`useHmisClientPrograms: ${errMsg}`);
-
-      return { error: errMsg };
+    // nothing fetched yet / empty result
+    if (!list || list.length === 0) {
+      return { clientPrograms: undefined, error: undefined };
     }
 
-    if (list && list.__typename !== 'HmisEnrollmentListType') {
-      const errMsg = `invalid query result __typename: ${list.__typename}`;
-
-      console.error(`useHmisClientPrograms: ${errMsg}`);
-
-      return {
-        error: errMsg,
-      };
-    }
-
-    // warn if we did not fetch all resutls
+    // warn if we did not fetch all results
     if (
       totalProgramsFromNetwork &&
       totalProgramsFromNetwork > MAX_PROGRAMS_TO_FETCH
     ) {
       console.warn(
-        `useHmisClientPrograms: hmis client [${hmisClientId}] has ${totalProgramsFromNetwork} program enrollments (exceeds ${MAX_PROGRAMS_TO_FETCH})`
+        `useHmisClientPrograms: hmis client [${clientId}] has ${totalProgramsFromNetwork} clientProgram clientPrograms (exceeds ${MAX_PROGRAMS_TO_FETCH})`
       );
     }
 
-    const programs: HmisEnrollmentType[] = [];
+    const clientPrograms: HmisClientProgramType[] = [];
 
-    const listItems = list?.items || [];
-
-    for (const program of listItems) {
-      if (program.__typename !== 'HmisEnrollmentType') {
+    for (const clientProgram of list) {
+      if (clientProgram.__typename !== 'HmisClientProgramType') {
         console.warn(
-          `[useHmisClientPrograms]: invalid program for hmisClientId [${hmisClientId}]`,
-          program
+          `[useHmisClientPrograms]: invalid clientProgram for clientId [${clientId}]`,
+          clientProgram
         );
-
         continue;
       }
 
-      programs.push(program);
+      if (!clientProgram.program.enableNotes) {
+        continue;
+      }
+
+      clientPrograms.push(clientProgram);
     }
 
-    return { programs };
-  }, [data, hmisClientId, totalProgramsFromNetwork]);
+    return { clientPrograms, error: undefined };
+  }, [data, clientId, totalProgramsFromNetwork]);
 
   // map Program project names for easy access
-  const programIdToProjectNameMap = useMemo(() => {
+  const enrollmentIdToProjectNameMap = useMemo(() => {
     const map = new Map<string, string>();
 
-    if (!programs || programs?.length === 0) {
+    if (!clientPrograms || clientPrograms?.length === 0) {
       return map;
     }
 
-    for (const program of programs) {
-      const enrollmentId = program.enrollmentId;
-      if (!enrollmentId) {
+    for (const clientProgram of clientPrograms) {
+      const refClientProgram = clientProgram.id;
+      if (!refClientProgram) {
         continue;
       }
 
-      const projectName = program.project?.projectName;
+      const projectName = clientProgram.program?.name;
       if (!projectName) {
         continue;
       }
 
-      map.set(enrollmentId, projectName);
+      map.set(refClientProgram, projectName);
     }
 
     return map;
-  }, [programs]);
+  }, [clientPrograms]);
 
-  // utility fn to return program name
+  // utility fn to return clientProgram name
   const getProgramNameByEnrollmentId = useCallback(
-    (enrollmentId?: string | null) => {
-      if (!enrollmentId) {
+    (refClientProgram?: string | null) => {
+      if (!refClientProgram) {
         return undefined;
       }
 
-      return programIdToProjectNameMap.get(enrollmentId);
+      return enrollmentIdToProjectNameMap.get(refClientProgram);
     },
-    [programIdToProjectNameMap]
+    [enrollmentIdToProjectNameMap]
   );
 
   return {
-    programs,
+    clientPrograms,
     totalPrograms: totalProgramsFromNetwork,
     loading,
     error,
-    programIdToProjectNameMap,
+    enrollmentIdToProjectNameMap,
     getProgramNameByEnrollmentId,
   };
 }

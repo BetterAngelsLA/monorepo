@@ -1,5 +1,6 @@
 from datetime import time
 from typing import Any, Dict, List, Optional, Protocol, cast
+from typing import Optional
 
 import strawberry
 import strawberry_django
@@ -62,6 +63,9 @@ from shelters.types import ShelterType
 from strawberry import ID, UNSET
 from strawberry.types import Info
 from strawberry_django.mutations import resolvers
+from shelters.enums import StatusChoices
+from shelters.models import Shelter
+from shelters.types import ShelterOrder, ShelterType
 from strawberry_django.pagination import OffsetPaginated
 
 
@@ -81,7 +85,7 @@ class Query:
     shelter: ShelterType = strawberry_django.field()
 
     @strawberry_django.offset_paginated(OffsetPaginated[ShelterType])
-    def shelters(self) -> QuerySet:
+    def shelters(self, ordering: Optional[list[ShelterOrder]] = None) -> QuerySet:
         return Shelter.objects.filter(status=StatusChoices.APPROVED)
 
 

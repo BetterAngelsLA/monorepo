@@ -2,21 +2,18 @@ import { HmisProgramNoteCreate } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
 
 type TSearchParams = {
-  hmisClientId: string;
+  clientId: string;
   arrivedFrom?: string;
 };
 
 export default function InteractionsHmisCreateScreen() {
-  const { hmisClientId, arrivedFrom } = useLocalSearchParams<TSearchParams>();
+  const { clientId, arrivedFrom } = useLocalSearchParams<TSearchParams>();
 
-  if (!hmisClientId) {
+  if (!clientId) {
     throw new Error('Something went wrong. Please try again.');
   }
 
   return (
-    <HmisProgramNoteCreate
-      hmisClientId={hmisClientId}
-      arrivedFrom={arrivedFrom}
-    />
+    <HmisProgramNoteCreate clientId={clientId} arrivedFrom={arrivedFrom} />
   );
 }

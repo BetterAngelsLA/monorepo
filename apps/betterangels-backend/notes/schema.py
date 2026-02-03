@@ -4,7 +4,7 @@ import pghistory
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_outreach_authorized_users, get_user_permission_group
+from accounts.utils import get_user_permission_group
 from clients.models import ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
@@ -15,7 +15,7 @@ from django.db.models import QuerySet
 from django.db.models.expressions import Subquery
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
-from notes.enums import ServiceEnum, ServiceRequestStatusEnum, ServiceRequestTypeEnum
+from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
 from notes.models import (
     Mood,
     Note,
@@ -85,13 +85,10 @@ class Query:
         extensions=[HasPerm(NotePermissions.ADD)],
     )
 
-    @strawberry_django.offset_paginated(
-        OffsetPaginated[InteractionAuthorType],
+    interaction_authors: OffsetPaginated[InteractionAuthorType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(NotePermissions.ADD)],
     )
-    def interaction_authors(self) -> QuerySet[User]:
-        return get_outreach_authorized_users()
 
 
 @strawberry.type
@@ -129,7 +126,7 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    @strawberry.django.mutation(
+    @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
         extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
     )
@@ -145,9 +142,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[
-            HasRetvalPerm(perms=[NotePermissions.CHANGE]),
-        ],
+        extensions=[HasRetvalPerm(perms=[NotePermissions.CHANGE])],
     )
     def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
         with transaction.atomic(), pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
@@ -166,9 +161,7 @@ class Mutation:
             note = resolvers.update(
                 info,
                 note,
-                {
-                    "location": location,
-                },
+                {"location": location},
             )
 
             return cast(NoteType, note)
@@ -309,24 +302,14 @@ class Mutation:
 
             if service_id := service_request_data["service_id"]:
                 org_service = OrganizationService.objects.get(id=str(service_id))
-                enum = next(
-                    (choice for choice in ServiceEnum if choice.label == org_service.label),
-                    None,
-                )
                 service_args["service"] = service_id
-                service_args["service_enum"] = enum  # type: ignore
-
-            if service_enum := service_request_data["service_enum"]:
-                if service_enum != ServiceEnum.OTHER:
-                    service_args["service"] = str(OrganizationService.objects.get(label=service_enum.label).pk)  # type: ignore
 
             if service_other := service_request_data["service_other"]:
                 org_service, _ = OrganizationService.objects.get_or_create(
                     label=service_other,
                     organization=permission_group.organization,
                 )
-                service_args["service"] = str(org_service.pk)  # type: ignore
-                service_args["service_enum"] = ServiceEnum.OTHER
+                service_args["service"] = str(org_service.pk)
 
             service_request = resolvers.create(
                 info,

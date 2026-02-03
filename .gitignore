@@ -13,6 +13,7 @@ node_modules
 
 # IDEs and editors
 /.idea
+.claude/
 .project
 .classpath
 .c9/
@@ -89,3 +90,4 @@ vitest.config.*.timestamp*
 # storybook
 debug-storybook.log
 storybook-static
+.cache/

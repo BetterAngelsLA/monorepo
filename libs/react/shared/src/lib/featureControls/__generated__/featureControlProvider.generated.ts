@@ -1,0 +1,10 @@
+import type * as Types from '../../apollo/graphql/__generated__/types';
+
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
+export type GetFeatureControlsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type GetFeatureControlsQuery = { __typename?: 'Query', featureControls: { __typename?: 'FeatureControlData', flags: Array<{ __typename?: 'FlagType', name: string, isActive?: boolean | null, lastModified?: any | null }>, switches: Array<{ __typename?: 'SwitchType', name: string, isActive: boolean, lastModified?: any | null }>, samples: Array<{ __typename?: 'SampleType', name: string, isActive: boolean, lastModified?: any | null }> } };
+
+
+export const GetFeatureControlsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetFeatureControls"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"featureControls"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"flags"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"lastModified"}}]}},{"kind":"Field","name":{"kind":"Name","value":"switches"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"lastModified"}}]}},{"kind":"Field","name":{"kind":"Name","value":"samples"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"lastModified"}}]}}]}}]}}]} as unknown as DocumentNode<GetFeatureControlsQuery, GetFeatureControlsQueryVariables>;

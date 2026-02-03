@@ -1,6 +1,6 @@
 import { MouseEvent, PropsWithChildren } from 'react';
 
-import { mergeCss } from '@monorepo/react/components';
+import { mergeCss } from '../../utils';
 import { ANIMATION_FADE, zIndex } from './constants';
 
 interface IProps extends PropsWithChildren {

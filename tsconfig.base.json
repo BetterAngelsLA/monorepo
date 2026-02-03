@@ -36,10 +36,10 @@
       "@monorepo/react/icons": ["libs/react/icons/src/index.ts"],
       "@monorepo/react/shared": ["libs/react/shared/src/index.ts"],
       "@monorepo/react/shelter": ["libs/react/shelter/src/index.ts"],
-      "@monorepo/react/storybook": ["libs/react/storybook/src/index.ts"],
       "@monorepo/react/shelter-operator": [
         "libs/react/shelter-operator/src/index.ts"
-      ]
+      ],
+      "@monorepo/react/storybook": ["libs/react/storybook/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

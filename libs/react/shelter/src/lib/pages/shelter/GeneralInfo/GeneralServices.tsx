@@ -1,5 +1,4 @@
 import { PillContainer } from '@monorepo/react/components';
-import { ListIcon } from '@monorepo/react/icons';
 import { enumDisplayGeneralServiceChoices } from '../../../static';
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
 
@@ -10,8 +9,7 @@ export default function GeneralServices({
 }) {
   return (
     <>
-      <div className="flex items-center gap-2">
-        <ListIcon className="w-6 h-6 fill-primary-20" />
+      <div>
         <p className="text-base font-semibold">Available General Services</p>
       </div>
       <div className="pb-6">

@@ -1,0 +1,13 @@
+query hmisClientPrograms($clientId: ID!) {
+  hmisClientPrograms(clientId: $clientId) {
+    __typename
+    ... on HmisClientProgramType {
+      id
+      program {
+        id
+        name
+        enableNotes
+      }
+    }
+  }
+}

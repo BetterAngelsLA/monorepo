@@ -1,5 +1,5 @@
 import uuid
-from typing import cast
+from typing import Optional, Union, cast
 
 import strawberry
 import strawberry_django
@@ -27,8 +27,11 @@ from strawberry_django.utils.query import filter_for_user
 from .models import PermissionGroup, User
 from .types import (
     AuthResponse,
+    CurrentUserType,
     LoginInput,
+    OrganizationMemberOrdering,
     OrganizationMemberType,
+    OrganizationOrder,
     OrganizationType,
     OrgInvitationInput,
     UpdateUserInput,
@@ -63,7 +66,7 @@ def annotate_member_role(org_id: str) -> Case:
 @strawberry.type
 class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
-    def current_user(self, info: Info) -> UserType:
+    def current_user(self, info: Info) -> CurrentUserType:
         return get_current_user(info)  # type: ignore
 
     @strawberry_django.offset_paginated(
@@ -71,7 +74,7 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(NotePermissions.ADD)],
     )
-    def caseworker_organizations(self) -> QuerySet[Organization]:
+    def caseworker_organizations(self, ordering: Optional[list[OrganizationOrder]] = None) -> QuerySet[Organization]:
         queryset: QuerySet[Organization] = Organization.objects.filter(
             permission_groups__name__icontains=GroupTemplateNames.CASEWORKER
         )
@@ -104,7 +107,9 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
-    def organization_members(self, info: Info, organization_id: str) -> QuerySet[User]:
+    def organization_members(
+        self, info: Info, organization_id: str, ordering: Optional[list[OrganizationMemberOrdering]] = None
+    ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
         try:
             organization = filter_for_user(
@@ -130,7 +135,7 @@ class Mutation:
         return AuthResponse(status_code="")
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def update_current_user(self, info: Info, data: UpdateUserInput) -> UserType:
+    def update_current_user(self, info: Info, data: UpdateUserInput) -> Union[UserType, CurrentUserType]:
         user = cast(User, get_current_user(info))
         if str(user.pk) != str(data.id):
             raise PermissionError("You do not have permission to modify this user.")

@@ -1,5 +1,6 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 
+import { useMutation } from '@apollo/client/react';
 import {
   Avatar,
   Button,
@@ -8,23 +9,16 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
-import { useDeleteCurrentUserMutation } from '../../apollo';
-import {
-  useFeatureFlagActive,
-  useSignOut,
-  useSnackbar,
-  useUser,
-} from '../../hooks';
-import { FeatureFlags } from '../../providers';
+import { DeleteCurrentUserDocument } from '../../apollo';
+import { useSignOut, useSnackbar, useUser } from '../../hooks';
 import InfoCard from './InfoCard';
 
 export default function UserProfile() {
   const { user } = useUser();
   const { showSnackbar } = useSnackbar();
-  const hmisFeatureOn = useFeatureFlagActive(FeatureFlags.HMIS_FF);
 
   if (!user) throw new Error('Something went wrong');
-  const [deleteCurrentUser] = useDeleteCurrentUserMutation();
+  const [deleteCurrentUser] = useMutation(DeleteCurrentUserDocument);
   const userInfo = [
     { title: 'Email', value: user.email },
     {
@@ -34,14 +28,11 @@ export default function UserProfile() {
           ? user.organizations?.map((org) => org.name).join(', ')
           : 'None',
     },
-  ];
-
-  if (hmisFeatureOn) {
-    userInfo.push({
+    {
       title: 'Login method',
       value: user.isHmisUser ? 'HMIS' : 'BetterAngels',
-    });
-  }
+    },
+  ];
 
   const { signOut } = useSignOut();
 

@@ -1,6 +1,9 @@
-import { join } from 'path';
-import { SHELTER_APP_LIB_DIR } from './storiesWebApps';
-import { REACT_COMPONENT_STORY_DIRS } from './storiesWebShared';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+import { SHELTER_APP_LIB_DIR } from './storiesWebApps.ts';
+import { REACT_COMPONENT_STORY_DIRS } from './storiesWebShared.ts';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const TAILWIND_CONTENT_DIRS = [
   '../src', // host

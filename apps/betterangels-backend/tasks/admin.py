@@ -13,6 +13,7 @@ class TaskAdmin(ExportActionMixin, admin.ModelAdmin):
     list_display = (
         "task_summary",
         "client_profile_name",
+        "hmis_client_profile",
         "created_by_name",
         "team",
         "organization",
@@ -20,6 +21,7 @@ class TaskAdmin(ExportActionMixin, admin.ModelAdmin):
         "created_at",
         "updated_at",
         "note",
+        "hmis_note",
     )
     list_filter = (
         "organization",
