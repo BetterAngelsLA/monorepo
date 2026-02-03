@@ -1,4 +1,5 @@
 import { CSRF_COOKIE_NAME, CSRF_LOGIN_PATH } from '@monorepo/expo/shared/utils';
+import { Platform } from 'react-native';
 import { createNativeFetch } from './nativeFetch';
 import CookieManager from '@preeternal/react-native-cookie-manager';
 
