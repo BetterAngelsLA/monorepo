@@ -50,10 +50,13 @@ describe('HmisClient', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Mock AsyncStorage to return the HMIS API URL
+    // Mock AsyncStorage to return the HMIS API URL and Auth Domain
     mockGetItem.mockImplementation((key) => {
       if (key === 'hmis_api_url')
         return Promise.resolve('https://hmis.example.com');
+      // Auth domain is needed for getHmisAuthToken
+      if (key === 'hmis_auth_domain')
+        return Promise.resolve('https://auth.example.com');
       return Promise.resolve(null);
     });
 
