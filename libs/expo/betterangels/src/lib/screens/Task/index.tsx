@@ -3,22 +3,15 @@ import { LoadingView } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { MainScrollContainer, TaskStatusBtn } from '../../ui-components';
 
-import { useQuery } from '@apollo/client/react';
 import TaskBody from './TaskBody';
 import TaskClient from './TaskClient';
 import TaskCreatedBy from './TaskCreatedBy';
 import TaskHeader from './TaskHeader';
 import TaskUpdatedAt from './TaskUpdatedAt';
-import { TaskDocument } from './__generated__/Task.generated';
+import { useTaskQuery } from './__generated__/Task.generated';
 
-export default function Task({
-  id,
-  arrivedFrom,
-}: {
-  id: string;
-  arrivedFrom?: string;
-}) {
-  const { data, loading, error } = useQuery(TaskDocument, {
+export default function Task({ id }: { id: string; arrivedFrom?: string }) {
+  const { data, loading, error } = useTaskQuery({
     variables: { id },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -36,7 +29,7 @@ export default function Task({
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <View accessibilityRole="button" style={styles.body}>
-        <TaskHeader id={id} task={task} arrivedFrom={arrivedFrom} />
+        <TaskHeader task={task} />
         <TaskUpdatedAt updatedAt={task.updatedAt} />
         <View>
           {task.clientProfile && (

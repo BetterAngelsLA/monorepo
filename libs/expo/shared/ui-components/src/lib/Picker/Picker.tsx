@@ -19,8 +19,6 @@ export default function Picker(props: IPickerProps) {
     label,
     required,
     disabled,
-    modalTitle,
-    placeholderTextColor,
   } = props;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -50,7 +48,6 @@ export default function Picker(props: IPickerProps) {
         disabled={disabled}
         required={required}
         placeholder={placeholder}
-        placeholderTextColor={placeholderTextColor}
         selectedValue={selectedValue}
         onFocus={open}
         items={items}
@@ -59,7 +56,6 @@ export default function Picker(props: IPickerProps) {
       />
 
       <PickerModal
-        title={modalTitle}
         visible={isModalVisible}
         items={items}
         selectedValue={selectedValue}

@@ -1,9 +1,6 @@
 import type { StoriesSpecifier } from '@storybook/types'; // ✅ public, type-only
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
-import { storyFileTypes } from './constants.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { join } from 'path';
+import { storyFileTypes } from './constants';
 
 const ICON_SVG_STORY_DIRS = ['../../../libs/assets/src/icons'];
 

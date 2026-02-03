@@ -1,12 +1,11 @@
-import { useQuery } from '@apollo/client/react';
 import { Regex } from '@monorepo/expo/shared/static';
-import { ClientCaliforniaUniqueCheckDocument } from './__generated__/ClientCaliforniaUniqueCheck.generated';
+import { useClientCaliforniaUniqueCheckQuery } from './__generated__/ClientCaliforniaUniqueCheck.generated';
 
 export default function useCaliforniaIdUniqueCheck(
   californiaId: string,
   clientProfileId?: string
 ) {
-  const { data } = useQuery(ClientCaliforniaUniqueCheckDocument, {
+  const { data } = useClientCaliforniaUniqueCheckQuery({
     skip: !Regex.californiaId.test(californiaId),
     variables: {
       filters: {

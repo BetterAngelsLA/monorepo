@@ -1,1 +1,0 @@
-export { UserTeamPreference } from './UserTeamPreference';

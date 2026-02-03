@@ -1,12 +1,160 @@
-import type * as Types from '../../../apollo/graphql/__generated__/types';
+import * as Types from '../../../apollo/graphql/__generated__/types';
 
-import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
+import { gql } from '@apollo/client';
+import * as Apollo from '@apollo/client';
+const defaultOptions = {} as const;
 export type ViewShelterQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
 
-export type ViewShelterQuery = { __typename?: 'Query', shelter: { __typename?: 'ShelterType', bedFees?: string | null, cityCouncilDistrict?: number | null, curfew?: any | null, demographicsOther?: string | null, description: string, email?: string | null, entryInfo?: string | null, heroImage?: string | null, id: string, instagram?: string | null, maxStay?: number | null, name: string, onSiteSecurity?: boolean | null, fundersOther?: string | null, otherRules?: string | null, otherServices?: string | null, addNotesShelterDetails?: string | null, addNotesSleepingDetails?: string | null, overallRating?: number | null, phone?: any | null, programFees?: string | null, roomStylesOther?: string | null, shelterProgramsOther?: string | null, shelterTypesOther?: string | null, status: Types.StatusChoices, subjectiveReview?: string | null, supervisorialDistrict?: number | null, totalBeds?: number | null, website?: string | null, accessibility: Array<{ __typename?: 'AccessibilityType', name?: Types.AccessibilityChoices | null }>, additionalContacts: Array<{ __typename?: 'ContactInfoType', contactName: string, contactNumber: any }>, cities: Array<{ __typename?: 'CityType', name: string }>, demographics: Array<{ __typename?: 'DemographicType', name?: Types.DemographicChoices | null }>, entryRequirements: Array<{ __typename?: 'EntryRequirementType', name?: Types.EntryRequirementChoices | null }>, exteriorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoFileType', name: string, url: string } }>, funders: Array<{ __typename?: 'FunderType', name?: Types.FunderChoices | null }>, generalServices: Array<{ __typename?: 'GeneralServiceType', name?: Types.GeneralServiceChoices | null }>, healthServices: Array<{ __typename?: 'HealthServiceType', name?: Types.HealthServiceChoices | null }>, immediateNeeds: Array<{ __typename?: 'ImmediateNeedType', name?: Types.ImmediateNeedChoices | null }>, interiorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoFileType', name: string, url: string } }>, location?: { __typename?: 'ShelterLocationType', latitude: number, longitude: number, place: string } | null, operatingHours?: Array<{ __typename?: 'TimeRange', start?: any | null, end?: any | null } | null> | null, organization?: { __typename?: 'OrganizationType', id: string, name: string } | null, parking: Array<{ __typename?: 'ParkingType', name?: Types.ParkingChoices | null }>, pets: Array<{ __typename?: 'PetType', name?: Types.PetChoices | null }>, roomStyles: Array<{ __typename?: 'RoomStyleType', name?: Types.RoomStyleChoices | null }>, shelterPrograms: Array<{ __typename?: 'ShelterProgramType', name?: Types.ShelterProgramChoices | null }>, shelterTypes: Array<{ __typename?: 'ShelterTypeType', name?: Types.ShelterChoices | null }>, spa: Array<{ __typename?: 'SPAType', name?: Types.SpaChoices | null }>, specialSituationRestrictions: Array<{ __typename?: 'SpecialSituationRestrictionType', name?: Types.SpecialSituationRestrictionChoices | null }>, storage: Array<{ __typename?: 'StorageType', name?: Types.StorageChoices | null }>, trainingServices: Array<{ __typename?: 'TrainingServiceType', name?: Types.TrainingServiceChoices | null }> } };
+export type ViewShelterQuery = { __typename?: 'Query', shelter: { __typename?: 'ShelterType', bedFees?: string | null, cityCouncilDistrict?: number | null, curfew?: any | null, demographicsOther?: string | null, description: string, email?: string | null, entryInfo?: string | null, heroImage?: string | null, id: string, instagram?: string | null, maxStay?: number | null, name: string, onSiteSecurity?: boolean | null, fundersOther?: string | null, otherRules?: string | null, otherServices?: string | null, addNotesShelterDetails?: string | null, addNotesSleepingDetails?: string | null, overallRating?: number | null, phone?: any | null, programFees?: string | null, roomStylesOther?: string | null, shelterProgramsOther?: string | null, shelterTypesOther?: string | null, status: Types.StatusChoices, subjectiveReview?: string | null, supervisorialDistrict?: number | null, totalBeds?: number | null, website?: string | null, accessibility: Array<{ __typename?: 'AccessibilityType', name?: Types.AccessibilityChoices | null }>, additionalContacts: Array<{ __typename?: 'ContactInfoType', contactName: string, contactNumber: any }>, cities: Array<{ __typename?: 'CityType', name?: Types.CityChoices | null }>, demographics: Array<{ __typename?: 'DemographicType', name?: Types.DemographicChoices | null }>, entryRequirements: Array<{ __typename?: 'EntryRequirementType', name?: Types.EntryRequirementChoices | null }>, exteriorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoFileType', name: string, url: string } }>, funders: Array<{ __typename?: 'FunderType', name?: Types.FunderChoices | null }>, generalServices: Array<{ __typename?: 'GeneralServiceType', name?: Types.GeneralServiceChoices | null }>, healthServices: Array<{ __typename?: 'HealthServiceType', name?: Types.HealthServiceChoices | null }>, immediateNeeds: Array<{ __typename?: 'ImmediateNeedType', name?: Types.ImmediateNeedChoices | null }>, interiorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoFileType', name: string, url: string } }>, location?: { __typename?: 'ShelterLocationType', latitude: number, longitude: number, place: string } | null, operatingHours?: Array<{ __typename?: 'TimeRange', start?: any | null, end?: any | null } | null> | null, organization?: { __typename?: 'OrganizationType', name: string } | null, parking: Array<{ __typename?: 'ParkingType', name?: Types.ParkingChoices | null }>, pets: Array<{ __typename?: 'PetType', name?: Types.PetChoices | null }>, roomStyles: Array<{ __typename?: 'RoomStyleType', name?: Types.RoomStyleChoices | null }>, shelterPrograms: Array<{ __typename?: 'ShelterProgramType', name?: Types.ShelterProgramChoices | null }>, shelterTypes: Array<{ __typename?: 'ShelterTypeType', name?: Types.ShelterChoices | null }>, spa: Array<{ __typename?: 'SPAType', name?: Types.SpaChoices | null }>, specialSituationRestrictions: Array<{ __typename?: 'SpecialSituationRestrictionType', name?: Types.SpecialSituationRestrictionChoices | null }>, storage: Array<{ __typename?: 'StorageType', name?: Types.StorageChoices | null }>, trainingServices: Array<{ __typename?: 'TrainingServiceType', name?: Types.TrainingServiceChoices | null }> } };
 
 
-export const ViewShelterDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ViewShelter"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"shelter"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"bedFees"}},{"kind":"Field","name":{"kind":"Name","value":"cityCouncilDistrict"}},{"kind":"Field","name":{"kind":"Name","value":"curfew"}},{"kind":"Field","name":{"kind":"Name","value":"demographicsOther"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"entryInfo"}},{"kind":"Field","name":{"kind":"Name","value":"heroImage"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"instagram"}},{"kind":"Field","name":{"kind":"Name","value":"maxStay"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"onSiteSecurity"}},{"kind":"Field","name":{"kind":"Name","value":"fundersOther"}},{"kind":"Field","name":{"kind":"Name","value":"otherRules"}},{"kind":"Field","name":{"kind":"Name","value":"otherServices"}},{"kind":"Field","name":{"kind":"Name","value":"addNotesShelterDetails"}},{"kind":"Field","name":{"kind":"Name","value":"addNotesSleepingDetails"}},{"kind":"Field","name":{"kind":"Name","value":"overallRating"}},{"kind":"Field","name":{"kind":"Name","value":"phone"}},{"kind":"Field","name":{"kind":"Name","value":"programFees"}},{"kind":"Field","name":{"kind":"Name","value":"roomStylesOther"}},{"kind":"Field","name":{"kind":"Name","value":"shelterProgramsOther"}},{"kind":"Field","name":{"kind":"Name","value":"shelterTypesOther"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"subjectiveReview"}},{"kind":"Field","name":{"kind":"Name","value":"supervisorialDistrict"}},{"kind":"Field","name":{"kind":"Name","value":"totalBeds"}},{"kind":"Field","name":{"kind":"Name","value":"website"}},{"kind":"Field","name":{"kind":"Name","value":"accessibility"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"additionalContacts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"contactName"}},{"kind":"Field","name":{"kind":"Name","value":"contactNumber"}}]}},{"kind":"Field","name":{"kind":"Name","value":"cities"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"demographics"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"entryRequirements"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"exteriorPhotos"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"file"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"url"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"funders"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"generalServices"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"healthServices"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"immediateNeeds"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"interiorPhotos"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"file"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"url"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"location"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"latitude"}},{"kind":"Field","name":{"kind":"Name","value":"longitude"}},{"kind":"Field","name":{"kind":"Name","value":"place"}}]}},{"kind":"Field","name":{"kind":"Name","value":"operatingHours"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"start"}},{"kind":"Field","name":{"kind":"Name","value":"end"}}]}},{"kind":"Field","name":{"kind":"Name","value":"organization"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"parking"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"pets"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"roomStyles"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"shelterPrograms"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"shelterTypes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"spa"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"specialSituationRestrictions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"storage"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"trainingServices"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<ViewShelterQuery, ViewShelterQueryVariables>;
+export const ViewShelterDocument = gql`
+    query ViewShelter($id: ID!) {
+  shelter(pk: $id) {
+    bedFees
+    cityCouncilDistrict
+    curfew
+    demographicsOther
+    description
+    email
+    entryInfo
+    heroImage
+    id
+    instagram
+    maxStay
+    name
+    onSiteSecurity
+    fundersOther
+    otherRules
+    otherServices
+    addNotesShelterDetails
+    addNotesSleepingDetails
+    overallRating
+    phone
+    programFees
+    roomStylesOther
+    shelterProgramsOther
+    shelterTypesOther
+    status
+    subjectiveReview
+    supervisorialDistrict
+    totalBeds
+    website
+    accessibility {
+      name
+    }
+    additionalContacts {
+      contactName
+      contactNumber
+    }
+    cities {
+      name
+    }
+    demographics {
+      name
+    }
+    entryRequirements {
+      name
+    }
+    exteriorPhotos {
+      file {
+        name
+        url
+      }
+    }
+    funders {
+      name
+    }
+    generalServices {
+      name
+    }
+    healthServices {
+      name
+    }
+    immediateNeeds {
+      name
+    }
+    interiorPhotos {
+      file {
+        name
+        url
+      }
+    }
+    location {
+      latitude
+      longitude
+      place
+    }
+    operatingHours {
+      start
+      end
+    }
+    organization {
+      name
+    }
+    parking {
+      name
+    }
+    pets {
+      name
+    }
+    roomStyles {
+      name
+    }
+    shelterPrograms {
+      name
+    }
+    shelterTypes {
+      name
+    }
+    spa {
+      name
+    }
+    specialSituationRestrictions {
+      name
+    }
+    storage {
+      name
+    }
+    trainingServices {
+      name
+    }
+  }
+}
+    `;
+
+/**
+ * __useViewShelterQuery__
+ *
+ * To run a query within a React component, call `useViewShelterQuery` and pass it any options that fit your needs.
+ * When your component renders, `useViewShelterQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useViewShelterQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useViewShelterQuery(baseOptions: Apollo.QueryHookOptions<ViewShelterQuery, ViewShelterQueryVariables> & ({ variables: ViewShelterQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ViewShelterQuery, ViewShelterQueryVariables>(ViewShelterDocument, options);
+      }
+export function useViewShelterLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ViewShelterQuery, ViewShelterQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ViewShelterQuery, ViewShelterQueryVariables>(ViewShelterDocument, options);
+        }
+export function useViewShelterSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ViewShelterQuery, ViewShelterQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ViewShelterQuery, ViewShelterQueryVariables>(ViewShelterDocument, options);
+        }
+export type ViewShelterQueryHookResult = ReturnType<typeof useViewShelterQuery>;
+export type ViewShelterLazyQueryHookResult = ReturnType<typeof useViewShelterLazyQuery>;
+export type ViewShelterSuspenseQueryHookResult = ReturnType<typeof useViewShelterSuspenseQuery>;
+export type ViewShelterQueryResult = Apollo.QueryResult<ViewShelterQuery, ViewShelterQueryVariables>;

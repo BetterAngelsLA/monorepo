@@ -1,25 +1,68 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { DeleteModal, TextBold } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useSnackbar } from '../../hooks';
+import { useDeleteTaskMutation } from './__generated__/deleteTask.generated';
 
 type TDeleteTaskProps = {
-  onDelete: () => Promise<void> | void;
+  id?: string;
+  arrivedFrom?: string;
+  onSuccess?: (taskId: string) => void;
 };
 
 export default function DeleteTask(props: TDeleteTaskProps) {
-  const { onDelete } = props;
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { id, arrivedFrom, onSuccess } = props;
 
-  const handleDeletePress = async () => {
-    if (isDeleting) return;
-    setIsDeleting(true);
+  const { showSnackbar } = useSnackbar();
+  const router = useRouter();
+
+  const [deleteTask, { loading: isDeleting }] = useDeleteTaskMutation({
+    update(cache, { data }) {
+      if (data?.deleteTask?.__typename !== 'DeletedObjectType') {
+        console.error(
+          `[DeleteTask] failed to delete Task id [${id}]. __typename DeletedObjectType missing from response.`
+        );
+
+        return;
+      }
+
+      // Cache store ID is a string, so must convert
+      const deletedId = String(data.deleteTask.id);
+
+      cache.evict({
+        // Note `__typename: 'TaskType'` is not in the response payload. It uses a generic `DeletedObjectType`.
+        id: cache.identify({ __typename: 'TaskType', id: deletedId }),
+      });
+
+      // clean up
+      cache.gc();
+    },
+  });
+
+  if (!id) {
+    return null;
+  }
+
+  const onDelete = async () => {
     try {
-      await onDelete();
+      await deleteTask({
+        variables: {
+          id,
+        },
+      });
+
+      onSuccess?.(id);
+
+      if (arrivedFrom) {
+        router.replace(arrivedFrom);
+      }
     } catch (error) {
-      console.error('[DeleteTask] Error:', error);
-    } finally {
-      setIsDeleting(false);
+      console.error('Failed to delete task:', error);
+      showSnackbar({
+        message: 'Something went wrong. Please try again.',
+        type: 'error',
+      });
     }
   };
 
@@ -28,7 +71,7 @@ export default function DeleteTask(props: TDeleteTaskProps) {
       <DeleteModal
         title="Delete this task?"
         body="All data associated with this task will be deleted."
-        onDelete={handleDeletePress}
+        onDelete={onDelete}
         button={
           <Pressable
             disabled={isDeleting}
@@ -36,7 +79,7 @@ export default function DeleteTask(props: TDeleteTaskProps) {
             accessibilityHint="delete this task"
           >
             <TextBold size="sm" color={Colors.ERROR}>
-              {isDeleting ? 'Deleting...' : 'Delete this task'}
+              Delete this task
             </TextBold>
           </Pressable>
         }

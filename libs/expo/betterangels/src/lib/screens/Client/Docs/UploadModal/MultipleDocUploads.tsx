@@ -1,4 +1,3 @@
-import { useMutation } from '@apollo/client/react';
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { UploadIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
@@ -12,7 +11,7 @@ import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import { useSnackbar } from '../../../../hooks';
 import {
   ClientProfileDocument,
-  CreateClientDocumentDocument,
+  useCreateClientDocumentMutation,
 } from '../../__generated__/Client.generated';
 import { UploadSection } from './UploadSection';
 import UploadsPreview from './UploadsPreview';
@@ -20,19 +19,16 @@ import { IMultipleDocUploadsProps } from './types';
 
 export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
   const { setTab, client, setDocs, docs, title, docType } = props;
-  const [createDocument, { loading }] = useMutation(
-    CreateClientDocumentDocument,
-    {
-      refetchQueries: [
-        {
-          query: ClientProfileDocument,
-          variables: {
-            id: client?.clientProfile.id,
-          },
+  const [createDocument, { loading }] = useCreateClientDocumentMutation({
+    refetchQueries: [
+      {
+        query: ClientProfileDocument,
+        variables: {
+          id: client?.clientProfile.id,
         },
-      ],
-    }
-  );
+      },
+    ],
+  });
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { showSnackbar } = useSnackbar();
 

@@ -6,7 +6,6 @@ import {
   Form,
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
-import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { Keyboard } from 'react-native';
@@ -16,13 +15,17 @@ import {
   UpdateClientProfileInput,
   VeteranStatusEnum,
 } from '../../../../apollo';
-import { useCaliforniaIdUniqueCheck } from '../../../../hooks';
+import {
+  useCaliforniaIdUniqueCheck,
+  useFeatureFlagActive,
+} from '../../../../hooks';
+import { FeatureFlags } from '../../../../providers';
 import {
   enumDisplayLanguage,
   enumDisplayLivingSituation,
   enumDisplayVeteranStatus,
-  FeatureFlags,
 } from '../../../../static';
+import { ProfilePhotoField } from './ProfilePhotoField/ProfilePhotoField';
 
 const languageOptions = Object.entries(enumDisplayLanguage).map(
   ([enumValue, displayValue]) => {
@@ -113,6 +116,10 @@ export function PersonalInfoForm() {
 
   return (
     <Form>
+      <Form.Field>
+        <ProfilePhotoField clientId={id} />
+      </Form.Field>
+
       <Form.Field title="CA ID#">
         <ActionModal
           title="This client has the same CA ID as another client."

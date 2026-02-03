@@ -155,7 +155,7 @@ export default function PrivateLayout() {
       <Stack.Screen
         name="notes-hmis/create/index"
         options={getDefaultStackNavOptions({
-          title: 'Add Note',
+          title: 'Add Interaction',
         })}
       />
       <Stack.Screen
@@ -167,7 +167,7 @@ export default function PrivateLayout() {
       <Stack.Screen
         name="notes-hmis/[id]/edit"
         options={getDefaultStackNavOptions({
-          title: 'Edit Note',
+          title: 'Edit Interaction',
         })}
       />
       <Stack.Screen
@@ -199,18 +199,6 @@ export default function PrivateLayout() {
         name="settings/about/index"
         options={getDefaultStackNavOptions({
           title: 'About App',
-        })}
-      />
-      <Stack.Screen
-        name="settings/hmis-rest"
-        options={getDefaultStackNavOptions({
-          title: 'HMIS REST (dev)',
-        })}
-      />
-      <Stack.Screen
-        name="settings/team/index"
-        options={getDefaultStackNavOptions({
-          title: 'Select Default Team',
         })}
       />
       <Stack.Screen

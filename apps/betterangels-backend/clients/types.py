@@ -25,6 +25,7 @@ from django.db.models import Exists, Max, OuterRef, Q, QuerySet
 from django.utils import timezone
 from strawberry import ID, Info, auto
 from strawberry.file_uploads import Upload
+from strawberry_django.filters import filter
 
 from .models import (
     ClientContact,
@@ -58,7 +59,7 @@ CLIENT_DOCUMENT_NAMESPACE_GROUPS = {
 }
 
 
-@strawberry_django.filter_type(Attachment)
+@filter(Attachment)
 class ClientDocumentFilter:
     @strawberry_django.filter_field
     def document_groups(
@@ -88,7 +89,7 @@ class CreateClientDocumentInput:
     namespace: ClientDocumentNamespaceEnum
 
 
-@strawberry_django.order_type(ClientProfile, one_of=False)
+@strawberry_django.ordering.order(ClientProfile)
 class ClientProfileOrder:
     first_name: auto
     last_name: auto
@@ -104,7 +105,7 @@ class ClientSearchInput:
     middle_name: Optional[str] = None
 
 
-@strawberry_django.filter_type(ClientProfile)
+@filter(ClientProfile)
 class ClientProfileFilter:
     @strawberry_django.filter_field
     def is_active(
@@ -236,7 +237,7 @@ class SocialMediaProfileInput(SocialMediaProfileBaseType):
 @strawberry.input
 class ClientProfilePhotoInput:
     client_profile: ID
-    photo: Optional[Upload]
+    photo: Upload
 
 
 @strawberry_django.type(ClientContact)
@@ -321,7 +322,7 @@ class ClientProfileBaseType:
     veteran_status: auto
 
 
-@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, ordering=ClientProfileOrder, pagination=True)
+@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType(ClientProfileBaseType):
     id: ID
     contacts: Optional[List[ClientContactType]]

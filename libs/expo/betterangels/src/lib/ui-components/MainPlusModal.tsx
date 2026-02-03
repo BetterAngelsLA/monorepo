@@ -19,21 +19,26 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
 
   const { isHmisUser } = useUser();
 
+  // shared actions
   const ACTIONS: TMainModalAction[] = [
     {
       title: 'Add client',
       Icon: UserAddIcon,
       route: '/clients/create',
     },
-    {
-      title: `Add ${isHmisUser ? 'note' : 'interaction'}`,
+  ];
+
+  // non-hmis actions
+  if (!isHmisUser) {
+    ACTIONS.unshift({
+      title: 'Add interaction',
       Icon: FilePlusIcon,
       route: '/',
       params: {
         createInteraction: 'true',
       },
-    },
-  ];
+    });
+  }
 
   return (
     <MainModal

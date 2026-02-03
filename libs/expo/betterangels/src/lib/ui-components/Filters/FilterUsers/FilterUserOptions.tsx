@@ -9,9 +9,8 @@ import { useMemo, useState } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
 import { Ordering } from '../../../apollo';
 import {
-  FilterUsersDocument,
   FilterUsersQuery,
-  FilterUsersQueryVariables,
+  useFilterUsersQuery,
 } from './__generated__/filterUsers.generated';
 
 type TUserResult = NonNullable<
@@ -45,15 +44,11 @@ export function FilterUserOptions(props: TProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const { items, total, loading, loadMore, hasMore, error } =
-    useInfiniteScrollQuery<
-      TUserResult,
-      FilterUsersQuery,
-      FilterUsersQueryVariables
-    >({
-      document: FilterUsersDocument,
+    useInfiniteScrollQuery<TUserResult, typeof useFilterUsersQuery>({
+      useQueryHook: useFilterUsersQuery,
       queryFieldName: 'interactionAuthors',
       variables: {
-        ordering: {
+        order: {
           firstName: Ordering.AscNullsLast,
           lastName: Ordering.AscNullsLast,
           id: Ordering.Desc,

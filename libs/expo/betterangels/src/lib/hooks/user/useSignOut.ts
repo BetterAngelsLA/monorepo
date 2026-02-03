@@ -1,7 +1,6 @@
-import { gql } from '@apollo/client';
-import { useMutation } from '@apollo/client/react';
+import { gql, useMutation } from '@apollo/client';
+import CookieManager from '@react-native-cookies/cookies';
 import { useCallback } from 'react';
-import NitroCookies from 'react-native-nitro-cookies';
 import useUser from './useUser';
 
 export const LOGOUT_MUTATION = gql`
@@ -17,11 +16,11 @@ export default function useSignOut() {
   const signOut = useCallback(async () => {
     try {
       await logout();
+      setUser(undefined);
+      CookieManager.clearAll();
     } catch (err) {
       console.error(err);
     }
-    await NitroCookies.clearAll();
-    setUser(undefined);
   }, [logout, setUser]);
 
   return { signOut, loading, error };

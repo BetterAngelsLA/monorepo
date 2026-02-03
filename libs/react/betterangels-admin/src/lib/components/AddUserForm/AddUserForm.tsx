@@ -1,4 +1,3 @@
-import { useMutation } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod'; // Install this resolver
 import { Button, mergeCss, useAlert } from '@monorepo/react/components';
 import { toError } from '@monorepo/react/shared';
@@ -8,7 +7,10 @@ import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { useUser } from '../../hooks';
 import Input from '../Input';
-import { AddOrganizationMemberDocument } from './__generated__/addOrganizationMember.generated';
+import {
+  AddOrganizationMemberMutation,
+  useAddOrganizationMemberMutation,
+} from './__generated__/addOrganizationMember.generated';
 import { FormSchema, TFormSchema, defaultValues } from './formSchema';
 
 type TProps = {
@@ -35,7 +37,7 @@ export function AddUserForm(props: TProps) {
 
   const organizationId = user?.organization?.id;
 
-  const [addOrganizationMember] = useMutation(AddOrganizationMemberDocument);
+  const [addOrganizationMember] = useAddOrganizationMemberMutation();
 
   const onSubmit: SubmitHandler<TFormSchema> = async (values) => {
     if (!organizationId) {
@@ -54,10 +56,11 @@ export function AddUserForm(props: TProps) {
         },
       });
 
-      const errorMessage = extractOperationInfoMessage(
-        response,
-        'addOrganizationMember'
-      );
+      const errorMessage =
+        extractOperationInfoMessage<AddOrganizationMemberMutation>(
+          response,
+          'addOrganizationMember'
+        );
 
       if (errorMessage) {
         throw new Error(errorMessage);

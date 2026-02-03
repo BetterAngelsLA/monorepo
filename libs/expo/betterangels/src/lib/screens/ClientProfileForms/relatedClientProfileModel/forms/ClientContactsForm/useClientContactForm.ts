@@ -1,12 +1,11 @@
-import { ApolloClient, CombinedGraphQLErrors } from '@apollo/client';
-import { useLazyQuery, useMutation } from '@apollo/client/react';
+import { FetchResult } from '@apollo/client';
 import { Router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { UseFormSetError, useForm, useWatch } from 'react-hook-form';
 import {
   OperationMessage,
+  extractExtensionErrors,
   extractOperationInfo,
-  extractResponseExtensions,
 } from '../../../../../apollo';
 import { applyManualFormErrors } from '../../../../../errors';
 import { TShowSnackbar } from '../../../../../providers/snackbar/SnackbarProvider';
@@ -15,12 +14,12 @@ import {
   getViewClientProfileRoute,
 } from '../../../../../screenRouting';
 import { TClientProfile } from '../../../../Client/ClientProfile/types';
-import { GetClientProfileDocument } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
+import { useGetClientProfileLazyQuery } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
 import {
-  CreateClientContactDocument,
   CreateClientContactMutation,
-  UpdateClientContactDocument,
   UpdateClientContactMutation,
+  useCreateClientContactMutation,
+  useUpdateClientContactMutation,
 } from './__generated__/clientContact.generated';
 import { defaultFormState, toFormState } from './toFormState';
 import { TClientContactFormState, TFormKey } from './types';
@@ -65,9 +64,9 @@ export function useClientContactForm(props: TProps) {
   const oneOfMissingError = !email && !phoneNumber && !mailingAddress;
   const isError = oneOfMissingError || !relationshipToClient;
 
-  const [createClientContact] = useMutation(CreateClientContactDocument);
-  const [updateClientContact] = useMutation(UpdateClientContactDocument);
-  const [reFetchClientProfile] = useLazyQuery(GetClientProfileDocument, {
+  const [createClientContact] = useCreateClientContactMutation();
+  const [updateClientContact] = useUpdateClientContactMutation();
+  const [reFetchClientProfile] = useGetClientProfileLazyQuery({
     fetchPolicy: 'network-only',
   });
 
@@ -81,25 +80,21 @@ export function useClientContactForm(props: TProps) {
     try {
       setIsLoading(true);
 
+      const mutationFn = relationId ? updateClientContact : createClientContact;
       const mutationKey = relationId
         ? 'updateClientContact'
         : 'createClientContact';
 
-      const dataPayload = {
-        clientProfile: clientProfileId,
-        ...formData,
-        ...(relationId ? { id: relationId } : {}),
-      };
-
-      const response = relationId
-        ? await updateClientContact({
-            variables: { data: dataPayload },
-            errorPolicy: 'all',
-          })
-        : await createClientContact({
-            variables: { data: dataPayload },
-            errorPolicy: 'all',
-          });
+      const response = await mutationFn({
+        variables: {
+          data: {
+            clientProfile: clientProfileId,
+            ...formData,
+            ...(relationId && { id: relationId }),
+          },
+        },
+        errorPolicy: 'all',
+      });
 
       if (!response) {
         throw new Error(`${mutationKey} response missing.`);
@@ -159,7 +154,7 @@ export function useClientContactForm(props: TProps) {
 }
 
 function isSuccessMutationResponse(
-  response: ApolloClient.MutateResult<
+  response: FetchResult<
     UpdateClientContactMutation | CreateClientContactMutation
   >
 ): boolean {
@@ -191,7 +186,7 @@ function isSuccessMutationResponse(
 }
 
 function applyValidationErrors(
-  response: ApolloClient.MutateResult<
+  response: FetchResult<
     CreateClientContactMutation | UpdateClientContactMutation
   >,
   key: 'updateClientContact' | 'createClientContact',
@@ -224,14 +219,12 @@ function applyValidationErrors(
     }
   });
 
-  if (CombinedGraphQLErrors.is(response)) {
-    const responseExtensions = extractResponseExtensions(response);
+  const extensionErrors = extractExtensionErrors(response);
 
-    if (responseExtensions) {
-      applyManualFormErrors(responseExtensions, setError);
+  if (extensionErrors) {
+    applyManualFormErrors(extensionErrors, setError);
 
-      hasErrors = true;
-    }
+    hasErrors = true;
   }
 
   return hasErrors;

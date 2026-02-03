@@ -1,4 +1,4 @@
-import { ApolloProvider } from '@apollo/client/react';
+import { ApolloProvider } from '@apollo/client';
 import {
   ApiConfigProvider,
   AuthProvider,

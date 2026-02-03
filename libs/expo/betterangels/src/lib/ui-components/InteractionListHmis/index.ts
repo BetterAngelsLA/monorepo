@@ -1,1 +1,0 @@
-export { InteractionListHmis } from './InteractionListHmis';

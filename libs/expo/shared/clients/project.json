@@ -4,23 +4,7 @@
   "sourceRoot": "libs/expo/shared/clients/src",
   "projectType": "library",
   "tags": [],
-  "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "{workspaceRoot}/apps/betterangels-backend/schema.graphql"
-    ]
-  },
   "targets": {
-    "generate-graphql-types": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "libs/expo/shared/clients",
-        "command": "graphql-codegen --config codegen.ts"
-      },
-      "outputs": [
-        "{workspaceRoot}/libs/expo/shared/clients/src/lib/apollo/graphql/__generated__/"
-      ]
-    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

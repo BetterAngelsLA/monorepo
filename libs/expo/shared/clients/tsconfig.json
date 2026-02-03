@@ -9,8 +9,7 @@
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "jsx": "react",
-    "types": ["jest", "node"]
+    "jsx": "react"
   },
   "files": [],
   "include": [],

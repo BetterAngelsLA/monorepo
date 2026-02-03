@@ -1,54 +1,50 @@
-import { useFeatureFlagActive } from '@monorepo/react/shared';
-import { OperatorApp } from '@monorepo/react/shelter-operator';
-import { Route, RouteObject } from 'react-router-dom';
-import { FeatureFlags } from '../constants/featureFlags';
-import { Policy } from '../pages/Policy';
+import { CreateShelterForm, OperatorDashboard, OperatorLogin, OperatorPortal } from '@monorepo/react/shelter-operator';
+import { Link, RouteObject } from 'react-router-dom';
 import Gallery from '../pages/gallery/gallery';
 import { Home } from '../pages/home/home';
+import { Policy } from '../pages/Policy';
 import Shelter from '../pages/shelter/shelter';
-import {
-  operatorPath,
-  privacyPolicyPath,
-  shelterDetailsPath,
-  shelterGalleryPath,
-  shelterHomePath,
-} from './routePaths';
 
-export const buildRouteChildren = (operatorEnabled: boolean): RouteObject[] => {
-  return [
-    {
-      path: shelterHomePath,
-      element: <Home />,
-    },
-    {
-      path: shelterDetailsPath,
-      element: <Shelter />,
-    },
-    {
-      path: shelterGalleryPath,
-      element: <Gallery />,
-    },
-    {
-      path: privacyPolicyPath,
-      element: <Policy />,
-    },
-    ...(operatorEnabled
-      ? [
-          {
-            path: `${operatorPath}/*`,
-            element: <OperatorApp />,
-          },
-        ]
-      : []),
-  ];
-};
-
-export const useRouteChildren = () => {
-  const operatorEnabled = useFeatureFlagActive(
-    FeatureFlags.SHELTER_OPERATOR_APP
-  );
-
-  return buildRouteChildren(operatorEnabled).map((route) => (
-    <Route key={route.path} path={route.path} element={route.element} />
-  ));
-};
+export const routeChildren: RouteObject[] = [
+  {
+    path: '/',
+    element: <Home />,
+  },
+  {
+    path: '/shelter/:id',
+    element: <Shelter />,
+  },
+  {
+    path: '/shelter/:id/gallery',
+    element: <Gallery />,
+  },
+  {
+    path: '/privacy-policy',
+    element: <Policy />,
+  },
+  {
+    path: '/operator',
+    element: <OperatorPortal />,
+  },
+  {
+    path: '/operator/login',
+    element: <OperatorLogin />,
+  },
+  {
+    path: '/operator/dashboard',
+    element: <OperatorDashboard />,
+  },
+  {
+    path: '/operator/dashboard/create',
+    element: <CreateShelterForm />,
+  },
+  {
+    path: '/page-2',
+    element: (
+      <div>
+        <div>PAGE 2</div>
+        <Link to="/">go to home page</Link>
+      </div>
+    ),
+  },
+];

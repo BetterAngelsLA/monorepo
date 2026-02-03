@@ -1,14 +1,13 @@
-import { useMutation, useQuery } from '@apollo/client/react';
 import {
-  DeleteNoteDocument,
   MainScrollContainer,
   NotesDocument,
   Ordering,
-  RevertNoteDocument,
-  UpdateNoteDocument,
-  ViewNoteDocument,
+  useDeleteNoteMutation,
+  useRevertNoteMutation,
   useSnackbar,
+  useUpdateNoteMutation,
   useUser,
+  useViewNoteQuery,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import {
@@ -87,13 +86,13 @@ export default function AddNote() {
     data,
     loading: isLoading,
     refetch,
-  } = useQuery(ViewNoteDocument, {
+  } = useViewNoteQuery({
     variables: { id: noteId },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-  const [updateNote, { error: updateError }] = useMutation(UpdateNoteDocument);
-  const [deleteNote] = useMutation(DeleteNoteDocument, {
+  const [updateNote, { error: updateError }] = useUpdateNoteMutation();
+  const [deleteNote] = useDeleteNoteMutation({
     refetchQueries: [
       {
         query: NotesDocument,
@@ -105,7 +104,7 @@ export default function AddNote() {
       },
     ],
   });
-  const [revertNote] = useMutation(RevertNoteDocument);
+  const [revertNote] = useRevertNoteMutation();
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [errors, setErrors] = useState({
     purpose: false,
@@ -267,6 +266,12 @@ export default function AddNote() {
           point={data.note.location?.point}
           {...props}
         />
+
+        {/* TODO: Will be back later */}
+        {/* <Mood
+          moods={data.note.moods}
+          {...props}
+        /> */}
         <ProvidedServices services={data.note.providedServices} {...props} />
         <RequestedServices services={data.note.requestedServices} {...props} />
         <Tasks

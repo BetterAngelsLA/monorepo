@@ -1,5 +1,5 @@
 {
-  "extends": ["../../.eslintrc.json", "plugin:import/recommended"],
+  "extends": ["../../.eslintrc.json"],
   "ignorePatterns": [
     "!**/*",
     "**/vite.config.*.timestamp*",

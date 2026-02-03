@@ -1,5 +1,3 @@
-import { useInfiniteScrollQuery } from '@monorepo/apollo';
-import { InfiniteList } from '@monorepo/react/components';
 import {
   DemographicChoices,
   ParkingChoices,
@@ -7,19 +5,16 @@ import {
   RoomStyleChoices,
   ShelterChoices,
   SpecialSituationRestrictionChoices,
-  ViewSheltersDocument,
-  ViewSheltersQuery,
   ViewSheltersQueryVariables,
+  useViewSheltersLazyQuery,
 } from '@monorepo/react/shelter';
 import { useAtom } from 'jotai';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { TLocationSource } from '../../atoms/locationAtom';
 import { sheltersAtom } from '../../atoms/sheltersAtom';
 import { TLatLng, TMapBounds } from '../map/types.maps';
-import { ShelterCard } from '../shelter/shelterCard';
 import { SearchSource } from './searchSource';
-
-type TShelter = ViewSheltersQuery['shelters']['results'][number];
+import { ShelterList } from './shelterList';
 
 export type TShelterPropertyFilters = {
   demographics?: DemographicChoices[] | null;
@@ -50,92 +45,84 @@ export function SheltersDisplay(props: TProps) {
     rangeInMiles = SEARCH_RANGE_MILES,
     className = '',
   } = props;
+  const [getShelters, { loading, data, error }] = useViewSheltersLazyQuery();
+
+  // Temporary suppression to allow incremental cleanup without regressions.
+  // ⚠️ If you're modifying this file, please remove this ignore and fix the issue.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
 
-  let queryVariables: ViewSheltersQueryVariables | undefined;
+  useEffect(() => {
+    let queryVariables: ViewSheltersQueryVariables | undefined;
 
-  if (coordinates) {
-    const { latitude, longitude } = coordinates;
+    if (coordinates) {
+      const { latitude, longitude } = coordinates;
 
-    queryVariables = queryVariables || {};
-    queryVariables.filters = queryVariables.filters || {};
-
-    queryVariables.filters.geolocation = {
-      latitude,
-      longitude,
-      rangeInMiles,
-    };
-  }
-
-  if (mapBoundsFilter) {
-    queryVariables = queryVariables || {};
-    queryVariables.filters = queryVariables.filters || {};
-
-    queryVariables.filters.mapBounds = mapBoundsFilter;
-  }
-
-  if (propertyFilters) {
-    const prunedFilters = pruneFilters(propertyFilters);
-
-    if (prunedFilters) {
       queryVariables = queryVariables || {};
       queryVariables.filters = queryVariables.filters || {};
 
-      queryVariables.filters.properties = prunedFilters;
+      queryVariables.filters.geolocation = {
+        latitude,
+        longitude,
+        rangeInMiles,
+      };
     }
-  }
 
-  const { items, total, loadMore, loading, loadingMore, hasMore, error } =
-    useInfiniteScrollQuery<
-      TShelter,
-      ViewSheltersQuery,
-      ViewSheltersQueryVariables
-    >({
-      document: ViewSheltersDocument,
-      queryFieldName: 'shelters',
-      variables: queryVariables,
-      pageSize: 25,
-    });
+    if (mapBoundsFilter) {
+      queryVariables = queryVariables || {};
+      queryVariables.filters = queryVariables.filters || {};
+
+      queryVariables.filters.mapBounds = mapBoundsFilter;
+    }
+
+    if (propertyFilters) {
+      const prunedFilters = pruneFilters(propertyFilters);
+
+      if (prunedFilters) {
+        queryVariables = queryVariables || {};
+        queryVariables.filters = queryVariables.filters || {};
+
+        queryVariables.filters.properties = prunedFilters;
+      }
+    }
+
+    if (!queryVariables) {
+      return;
+    }
+
+    getShelters({ variables: queryVariables });
+  }, [coordinates, mapBoundsFilter, propertyFilters]);
+
+  const shelters = data?.shelters?.results;
 
   useEffect(() => {
-    setSheltersData(items || []);
-  }, [items.length]);
+    setSheltersData(shelters || []);
+  }, [shelters]);
 
-  const renderListHeader = useCallback(
-    (visible: number, total: number | undefined) => {
-      const locationsPluralized = visible === 1 ? 'location' : 'locations';
+  if (loading) return <div className="mt-4">Loading...</div>;
 
-      const text =
-        total === undefined
-          ? `${visible} ${locationsPluralized}`
-          : `${visible} of ${total} locations`;
+  if (error) {
+    console.error(`[SheltersDisplay] ${error}`);
 
-      return (
-        <div className="mb-4">
-          <div className="text-xl font-semibold">{text}</div>
-          <SearchSource coordinatesSource={coordinatesSource} />
-        </div>
-      );
-    },
-    [coordinatesSource]
-  );
+    return (
+      <div className="mt-4">
+        Sorry, there was an issue fetching the data. Please try again.
+      </div>
+    );
+  }
+
+  if (!shelters) {
+    return null;
+  }
 
   return (
     <div className={className}>
-      <InfiniteList<TShelter>
-        data={items}
-        totalItems={total}
-        loading={loading}
-        loadingMore={loadingMore}
-        error={error}
-        hasMore={hasMore}
-        loadMore={loadMore}
-        itemGap={24}
-        renderResultsHeader={renderListHeader}
-        renderItem={(shelter) => <ShelterCard shelter={shelter} />}
-        renderDivider={() => <div className="h-px bg-neutral-90 mt-6 -mx-4" />}
-        keyExtractor={(shelter) => shelter.id}
-      />
+      <div>
+        <div className="text-xl font-semibold">{shelters.length} locations</div>
+        <SearchSource coordinatesSource={coordinatesSource} />
+      </div>
+
+      <ShelterList className="mt-4" shelters={shelters} />
     </div>
   );
 }

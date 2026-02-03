@@ -1,12 +1,77 @@
-import type * as Types from '../../../../apollo/graphql/__generated__/types';
+import * as Types from '../../../../apollo/graphql/__generated__/types';
 
-import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
-export type HmisNoteQueryVariables = Types.Exact<{
+import { gql } from '@apollo/client';
+import * as Apollo from '@apollo/client';
+const defaultOptions = {} as const;
+export type HmisGetClientNoteQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
+  personalId: Types.Scalars['ID']['input'];
+  enrollmentId: Types.Scalars['ID']['input'];
 }>;
 
 
-export type HmisNoteQuery = { __typename?: 'Query', hmisNote: { __typename?: 'HmisNoteType', id: string, hmisId: string, addedDate?: any | null, lastUpdated?: any | null, title?: string | null, note: string, date?: any | null, refClientProgram?: string | null, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, hmisClientProfile: { __typename?: 'HmisClientProfileType', id: string, hmisId?: string | null, firstName?: string | null, lastName?: string | null }, createdBy?: { __typename?: 'UserType', id: string, firstName?: string | null, lastName?: string | null } | null, clientProgram?: { __typename?: 'HmisClientProgramType', id: string, program: { __typename?: 'HmisProgramType', id: string, name: string } } | null, tasks?: Array<{ __typename?: 'TaskType', id: string, summary?: string | null, description?: string | null, status?: Types.TaskStatusEnum | null, team?: Types.SelahTeamEnum | null }> | null, providedServices?: Array<{ __typename?: 'ServiceRequestType', id: string, service?: { __typename?: 'OrganizationServiceType', id: string, label: string, category?: { __typename?: 'OrganizationServiceCategoryType', id: string } | null } | null }> | null, requestedServices?: Array<{ __typename?: 'ServiceRequestType', id: string, service?: { __typename?: 'OrganizationServiceType', id: string, label: string, category?: { __typename?: 'OrganizationServiceCategoryType', id: string } | null } | null }> | null } };
+export type HmisGetClientNoteQuery = { __typename?: 'Query', hmisGetClientNote: { __typename?: 'HmisClientNoteType', id?: string | null, title?: string | null, note?: string | null, date?: string | null, category?: string | null, client?: { __typename?: 'HmisClientType', personalId?: string | null } | null, enrollment?: { __typename?: 'HmisEnrollmentType', enrollmentId?: string | null, project?: { __typename?: 'HmisProjectType', projectId?: string | null, projectName?: string | null } | null } | null } | { __typename?: 'HmisGetClientNoteError', field?: string | null, message: string } };
 
 
-export const HmisNoteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"HmisNote"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hmisNote"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"HmisNoteType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"hmisId"}},{"kind":"Field","name":{"kind":"Name","value":"addedDate"}},{"kind":"Field","name":{"kind":"Name","value":"lastUpdated"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"note"}},{"kind":"Field","name":{"kind":"Name","value":"date"}},{"kind":"Field","name":{"kind":"Name","value":"location"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"address"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"street"}},{"kind":"Field","name":{"kind":"Name","value":"city"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"zipCode"}}]}},{"kind":"Field","name":{"kind":"Name","value":"point"}},{"kind":"Field","name":{"kind":"Name","value":"pointOfInterest"}}]}},{"kind":"Field","name":{"kind":"Name","value":"refClientProgram"}},{"kind":"Field","name":{"kind":"Name","value":"hmisClientProfile"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"hmisId"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}}]}},{"kind":"Field","name":{"kind":"Name","value":"clientProgram"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"program"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"tasks"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"summary"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"team"}}]}},{"kind":"Field","name":{"kind":"Name","value":"providedServices"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"service"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"category"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"requestedServices"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"service"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"category"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<HmisNoteQuery, HmisNoteQueryVariables>;
+export const HmisGetClientNoteDocument = gql`
+    query HmisGetClientNote($id: ID!, $personalId: ID!, $enrollmentId: ID!) {
+  hmisGetClientNote(id: $id, personalId: $personalId, enrollmentId: $enrollmentId) {
+    ... on HmisClientNoteType {
+      id
+      title
+      note
+      date
+      category
+      client {
+        personalId
+      }
+      enrollment {
+        enrollmentId
+        project {
+          projectId
+          projectName
+        }
+      }
+    }
+    ... on HmisGetClientNoteError {
+      field
+      message
+    }
+  }
+}
+    `;
+
+/**
+ * __useHmisGetClientNoteQuery__
+ *
+ * To run a query within a React component, call `useHmisGetClientNoteQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHmisGetClientNoteQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHmisGetClientNoteQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *      personalId: // value for 'personalId'
+ *      enrollmentId: // value for 'enrollmentId'
+ *   },
+ * });
+ */
+export function useHmisGetClientNoteQuery(baseOptions: Apollo.QueryHookOptions<HmisGetClientNoteQuery, HmisGetClientNoteQueryVariables> & ({ variables: HmisGetClientNoteQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<HmisGetClientNoteQuery, HmisGetClientNoteQueryVariables>(HmisGetClientNoteDocument, options);
+      }
+export function useHmisGetClientNoteLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HmisGetClientNoteQuery, HmisGetClientNoteQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<HmisGetClientNoteQuery, HmisGetClientNoteQueryVariables>(HmisGetClientNoteDocument, options);
+        }
+export function useHmisGetClientNoteSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HmisGetClientNoteQuery, HmisGetClientNoteQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<HmisGetClientNoteQuery, HmisGetClientNoteQueryVariables>(HmisGetClientNoteDocument, options);
+        }
+export type HmisGetClientNoteQueryHookResult = ReturnType<typeof useHmisGetClientNoteQuery>;
+export type HmisGetClientNoteLazyQueryHookResult = ReturnType<typeof useHmisGetClientNoteLazyQuery>;
+export type HmisGetClientNoteSuspenseQueryHookResult = ReturnType<typeof useHmisGetClientNoteSuspenseQuery>;
+export type HmisGetClientNoteQueryResult = Apollo.QueryResult<HmisGetClientNoteQuery, HmisGetClientNoteQueryVariables>;

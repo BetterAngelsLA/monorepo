@@ -1,49 +1,29 @@
-import { CSRF_COOKIE_NAME, CSRF_LOGIN_PATH } from '@monorepo/expo/shared/utils';
+import CookieManager from '@react-native-cookies/cookies';
 import { Platform } from 'react-native';
-import { createNativeFetch } from './nativeFetch';
-import NitroCookies from 'react-native-nitro-cookies';
+import { CSRF_COOKIE_NAME } from './constants';
 
-const extractCookieValue = (cookieName: string): string | null => {
-  const match = document.cookie.match(new RegExp(`${cookieName}=([^;]+)`));
-  return match?.[1] ?? null;
-};
+const getTokenFromWeb = (): string | null =>
+  document.cookie.match(new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`))?.[1] ?? null;
 
-const getTokenFromNative = async (
-  apiUrl: string,
-  csrfUrl: string
-): Promise<string | null> => {
-  // Check if we already have a CSRF token
-  const cookies = await NitroCookies.get(apiUrl);
-  const cached = cookies[CSRF_COOKIE_NAME]?.value;
-  if (cached) {
-    return cached;
-  }
-
-  // Fetch CSRF token from server
-  const nativeFetch = createNativeFetch(apiUrl);
-  await nativeFetch(csrfUrl, { headers: { Accept: 'text/html' } });
-
-  // Get the newly set token
-  const newCookies = await NitroCookies.get(apiUrl);
-  return newCookies[CSRF_COOKIE_NAME]?.value ?? null;
-};
+const getTokenFromNative = async (apiUrl: string): Promise<string | null> =>
+  (await CookieManager.get(apiUrl))[CSRF_COOKIE_NAME]?.value ?? null;
 
 export const getCSRFToken = async (
   apiUrl: string,
-  csrfUrl = `${apiUrl}${CSRF_LOGIN_PATH}`
+  csrfUrl: string
 ): Promise<string | null> => {
-  if (Platform.OS === 'web') {
-    const token = extractCookieValue(CSRF_COOKIE_NAME);
-    if (token) {
-      return token;
-    }
+  const readToken = async () =>
+    Platform.OS === 'web'
+      ? getTokenFromWeb()
+      : await getTokenFromNative(apiUrl);
 
+  let token = await readToken();
+  if (!token) {
     await fetch(csrfUrl, {
       credentials: 'include',
       headers: { Accept: 'text/html' },
     });
-    return extractCookieValue(CSRF_COOKIE_NAME);
+    token = await readToken();
   }
-
-  return getTokenFromNative(apiUrl, csrfUrl);
+  return token;
 };

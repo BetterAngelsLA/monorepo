@@ -158,7 +158,7 @@ class Migration(migrations.Migration):
                             ("Westlake Village", "Westlake Village"),
                             ("Whittier", "Whittier"),
                         ],
-                        choices_enum=deprecated_enums.CityChoices,
+                        choices_enum=shelters.enums.CityChoices,
                         max_length=21,
                         null=True,
                         unique=True,

@@ -1,15 +1,12 @@
 import type { ReactElement } from 'react';
-import { HmisClientProfileType } from '../../../../apollo';
+import { HmisClientType } from '../../../../apollo';
 import { ClientProfileSectionEnum } from '../../../../screenRouting';
 import { ClientViewTabEnum } from '../../../Client/ClientTabs';
-import { ClientDocsHmisView } from '../ClientDocsHmisView';
 import { ClientInteractionsHmisView } from '../ClientInteractionsHmisView';
-import { ClientLocationsHmisView } from '../ClientLocationsHmisView';
 import { ClientProfileHMISView } from '../ClientProfileHMISView';
-import { ClientTasksHMISView } from '../ClientTasksHMISView';
 
 type RenderArgs = {
-  client?: HmisClientProfileType;
+  client?: HmisClientType;
   openCard?: ClientProfileSectionEnum | null;
 };
 
@@ -19,17 +16,8 @@ const tabRendererMap: Partial<
   [ClientViewTabEnum.Profile]: ({ client, openCard }) => (
     <ClientProfileHMISView client={client} openCard={openCard} />
   ),
-  [ClientViewTabEnum.Docs]: ({ client }) => (
-    <ClientDocsHmisView client={client} />
-  ),
   [ClientViewTabEnum.Interactions]: ({ client }) => (
     <ClientInteractionsHmisView client={client} />
-  ),
-  [ClientViewTabEnum.Locations]: ({ client }) => (
-    <ClientLocationsHmisView clientProfileId={client?.id} />
-  ),
-  [ClientViewTabEnum.Tasks]: ({ client }) => (
-    <ClientTasksHMISView client={client} />
   ),
 };
 

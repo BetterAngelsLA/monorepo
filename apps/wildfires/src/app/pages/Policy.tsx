@@ -7,7 +7,7 @@ declare module 'react' {
   }
 }
 
-const Policy = (): React.ReactElement => {
+const Policy: React.FC = () => {
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://app.termly.io/embed-policy.min.js';

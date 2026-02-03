@@ -59,13 +59,6 @@ function FileThumbnailBase(props: IProps) {
     thumbSize = isImage ? ImageThumbnailSizeDefault : FileThumbnailSizeDefault;
   }
 
-  if (
-    typeof thumbSize?.width !== 'number' ||
-    typeof thumbSize?.height !== 'number'
-  ) {
-    throw new Error('thumbSize width and height must be numbers');
-  }
-
   const fileOrImageText = isImage ? 'image' : 'file';
 
   const iconSize = thumbSize.width >= 70 ? 'lg' : 'sm';

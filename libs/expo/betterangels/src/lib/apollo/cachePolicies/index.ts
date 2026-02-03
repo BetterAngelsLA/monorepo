@@ -1,1 +1,1 @@
-export { createBaTypePolicies } from './createBaTypePolicies';
+export { cachePolicyRegistry } from './cachePolicyRegistry';

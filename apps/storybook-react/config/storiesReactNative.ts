@@ -1,8 +1,5 @@
-import { dirname, join } from 'path';
+import { join } from 'path';
 import { StoriesSpecifier } from 'storybook/internal/types';
-import { fileURLToPath } from 'url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export const RN_SHARED_LIB_STORIES: StoriesSpecifier[] = [
   {

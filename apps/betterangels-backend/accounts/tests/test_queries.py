@@ -148,20 +148,17 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         )
         self.assertCountEqual(response["data"]["currentUser"]["organizations"], expected_organizations)
 
-    @override_settings(
-        HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=",
-        HMIS_REST_URL="https://example.com",
-        HMIS_HOST="example.com",
-    )
+    @override_settings(HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=")
     def test_logged_in_hmis_user_query(self) -> None:
         hmis_user = baker.make(get_user_model(), _fill_optional=["email"])
 
-        with patch(
-            "hmis.api_bridge.HmisApiBridge.login",
-            autospec=True,
-        ) as mock_login:
-            mock_login.return_value = None
+        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
+        success_response = {"data": {"createAuthToken": {"authToken": token}}}
 
+        with patch(
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
+            return_value=success_response,
+        ):
             self.execute_graphql(
                 LOGIN_MUTATION,
                 variables={"email": hmis_user.email, "password": "anything"},

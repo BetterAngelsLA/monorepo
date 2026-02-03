@@ -1,6 +1,6 @@
-# Shelter LA
+# Shelter DB
 
-Welcome to the BetterAngels Shelter LA project! Our goal is to facilitate the discovery of homeless shelters in Los Angeles county.
+Welcome to the BetterAngels Shelter DB project! Our goal is to facilitate the discovery of homeless shelters in Los Angeles county.
 
 ## Development
 

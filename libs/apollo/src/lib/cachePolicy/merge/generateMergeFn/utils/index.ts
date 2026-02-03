@@ -1,1 +1,0 @@
-export { generatePaginationResolver } from './generatePaginationResolver';

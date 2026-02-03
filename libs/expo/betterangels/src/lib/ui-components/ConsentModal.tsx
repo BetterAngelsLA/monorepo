@@ -16,10 +16,9 @@ import { Link } from 'expo-router';
 import { useState } from 'react';
 import { DimensionValue, Dimensions, StyleSheet, View } from 'react-native';
 
-import { useMutation } from '@apollo/client/react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignOut } from '../hooks';
-import { UpdateCurrentUserDocument } from '../providers';
+import { useUpdateCurrentUserMutation } from '../providers';
 import { TUser } from '../providers/user/UserContext';
 
 interface IConsentModalProps {
@@ -56,14 +55,14 @@ export default function ConsentModal({
   user,
   height = 'auto',
 }: IConsentModalProps) {
-  const [updateCurrentUser] = useMutation(UpdateCurrentUserDocument);
+  const [updateCurrentUser, { error }] = useUpdateCurrentUserMutation();
   const [checkedItems, setCheckedItems] = useState<CheckedItems>({
     isTosChecked: false,
     isPrivacyPolicyChecked: false,
   });
 
   const submitAgreements = async () => {
-    const { data, error } = await updateCurrentUser({
+    const { data } = await updateCurrentUser({
       variables: {
         data: {
           id: user.id,

@@ -1,13 +1,10 @@
-import { useQuery } from '@apollo/client/react';
 import { ArrowLeftIcon } from '@monorepo/react/icons';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ViewShelterDocument } from '../shelter/__generated__/shelter.generated';
+import { useViewShelterQuery } from '../shelter/__generated__/shelter.generated';
 
 export default function GalleryPage({ id }: { id: string }) {
-  const { loading, data } = useQuery(ViewShelterDocument, {
-    variables: { id },
-  });
+  const { loading, data } = useViewShelterQuery({ variables: { id } });
   const [selectedImage, setSelectedImage] = useState<{
     name: string;
     url: string;

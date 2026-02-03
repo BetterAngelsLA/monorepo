@@ -1,39 +1,24 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import Loading from '../Loading';
+import TextRegular from '../TextRegular';
 
-type TListLoadingIndicatorOpts = {
-  size?: 'small' | 'large';
-  color?: Colors;
-  style?: ViewStyle;
-};
-
-export type TLoadingListView = {
+type TProps = {
   style?: ViewStyle;
   content?: ReactNode;
-  indictator?: TListLoadingIndicatorOpts;
 };
 
-export function LoadingListView(props: TLoadingListView) {
-  const { style, content, indictator } = props;
-
-  const {
-    size: indicatorSize = 'large',
-    color: indicatorColor = Colors.NEUTRAL_DARK,
-    style: indicatorStyle,
-  } = indictator || {};
+export function LoadingListView(props: TProps) {
+  const { style, content } = props;
 
   return (
     <View style={[styles.container, style]}>
       {content}
 
       {!content && (
-        <Loading
-          size={indicatorSize}
-          style={indicatorStyle}
-          color={indicatorColor}
-        />
+        <TextRegular size="md" textAlign="center">
+          Loading…
+        </TextRegular>
       )}
     </View>
   );

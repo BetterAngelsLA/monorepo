@@ -1,13 +1,16 @@
-import { InMemoryCache, TypePolicies } from '@apollo/client';
-import { TCacheWithPolicies } from '../cachePolicy';
+import { InMemoryCache } from '@apollo/client';
+import { generateCachePolicies } from '../cachePolicy';
 import { TYPE_POLICIES_SYM } from '../cachePolicy/constants';
+import { TCachePolicyConfig, TCacheWithPolicies } from '../cachePolicy/types';
 
 export type TCacheStore = {
-  typePolicies?: TypePolicies;
+  policyConfig?: TCachePolicyConfig;
 };
 
 export function createApolloCache(opts?: TCacheStore): TCacheWithPolicies {
-  const { typePolicies = {} } = opts || {};
+  const { policyConfig = {} } = opts || {};
+
+  const typePolicies = generateCachePolicies(policyConfig);
 
   const cache = new InMemoryCache({
     typePolicies,

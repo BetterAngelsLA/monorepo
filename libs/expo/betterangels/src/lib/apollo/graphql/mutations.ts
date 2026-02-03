@@ -59,23 +59,13 @@ export const REVERT_NOTE = gql`
         }
         providedServices {
           id
-          service {
-            id
-            label
-            category {
-              id
-            }
-          }
+          serviceEnum
+          serviceOther
         }
         requestedServices {
           id
-          service {
-            id
-            label
-            category {
-              id
-            }
-          }
+          serviceEnum
+          serviceOther
         }
         publicDetails
         isSubmitted
@@ -113,10 +103,7 @@ export const CREATE_NOTE_SERVICE_REQUEST = gql`
       }
       ... on ServiceRequestType {
         id
-        service {
-          id
-          label
-        }
+        serviceEnum
       }
     }
   }

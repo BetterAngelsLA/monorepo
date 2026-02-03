@@ -1,76 +1,129 @@
+/**
+ * generateCachePolicies
+ *
+ * Utility to build a complete Apollo `TypePolicies` object from a simple
+ * registry of field and entity configurations.
+ *
+ * It centralizes how you define cache policies (keyFields, merge policies, etc.)
+ * so your Apollo Client setup can consume them in one place.
+ *
+ * --------------------------------------------------------------------
+ * Usage
+ * --------------------------------------------------------------------
+ *
+ * // 1. Define your registry describing query fields + entity types:
+ *
+ * const registry: TCachePolicyConfig = {
+ *   clientProfiles: {
+ *     // Query field-level policy (merge for infinite scroll, etc.)
+ *     fieldPolicy: {
+ *       keyArgs: ['filters', 'order'],
+ *       merge(existing = { results: [], totalCount: 0 }, incoming, { args }) {
+ *         const offset = args?.pagination?.offset ?? 0;
+ *         const merged = existing.results ? existing.results.slice(0) : [];
+ *         for (let i = 0; i < (incoming.results?.length ?? 0); i++) {
+ *           merged[offset + i] = incoming.results![i];
+ *         }
+ *         return { ...incoming, results: merged };
+ *       },
+ *     },
+ *     // Attach an entity typename and keyFields for normalization
+ *     entityTypename: 'ClientProfile',
+ *     keyFields: ['id'], // default, may be omitted
+ *   },
+ *   somePayloadWrapper: {
+ *     entityTypename: 'PayloadWrapper',
+ *     keyFields: false, // value object: never normalized
+ *   },
+ * };
+ *
+ * // 2. Generate the policies and pass them to Apollo:
+ *
+ * const cache = new InMemoryCache({
+ *   typePolicies: generateCachePolicies(registry),
+ * });
+ *
+ * --------------------------------------------------------------------
+ * Behavior
+ * --------------------------------------------------------------------
+ *
+ * - Query field policies (`fieldPolicy`) are attached under `Query.fields`.
+ * - Each `entityTypename` entry adds a `TypePolicy` with its chosen keyFields:
+ *   - `['id']` (default) → standard normalization on `id`.
+ *   - `['a','b']` → composite key normalization.
+ *   - `false` → value object, never normalized as entity.
+ * - If multiple registry entries target the same `entityTypename` but request
+ *   different `keyFields`, a warning is logged and the first policy wins.
+ *
+ * --------------------------------------------------------------------
+ * Arguments
+ * --------------------------------------------------------------------
+ *
+ * @param registry   A mapping of query field names to config objects:
+ *                   {
+ *                     fieldPolicy?: FieldPolicy;
+ *                     entityTypename?: string;
+ *                     keyFields?: string[] | false;
+ *                   }
+ *
+ * @returns Apollo `TypePolicies` object to pass to `InMemoryCache`.
+ */
+
 import { FieldPolicy, TypePolicies, TypePolicy } from '@apollo/client';
-import { isDeepEqual } from 'remeda';
-import { DEFAULT_QUERY_ID_KEY } from './constants';
 import { TCachePolicyConfig } from './types';
 
-type TKeyFields = TypePolicy['keyFields'];
+const DEFAULT_KEY_FIELDS = ['id'] as const;
 
 export function generateCachePolicies(
   registry: TCachePolicyConfig
 ): TypePolicies {
-  const queryFieldPolicies: Record<string, FieldPolicy> = {};
-  const policiesByTypename: Record<string, TypePolicy> = {};
+  const queryFields: Record<string, FieldPolicy> = {};
+  const typePoliciesByName: Record<string, TypePolicy> = {};
 
   for (const [fieldName, entry] of Object.entries(registry)) {
-    const { fieldPolicy, entityTypename, keyFields, queryPolicyConfig } = entry;
-
-    // 1) attach Query.<fieldName> field policies
-    if (fieldPolicy) {
-      const finalFieldPolicy: FieldPolicy = { ...fieldPolicy };
-
-      if (queryPolicyConfig) {
-        (finalFieldPolicy as any).__queryPolicyConfig = queryPolicyConfig;
-      }
-
-      queryFieldPolicies[fieldName] = finalFieldPolicy;
+    // 1) Attach Query field policy if provided
+    if (entry.fieldPolicy) {
+      queryFields[fieldName] = entry.fieldPolicy;
     }
 
-    // 2) attach type policy if we have a typename
+    // 2) Attach entity type policy if entityTypename provided
+    const entityTypename = entry.entityTypename;
     if (!entityTypename) {
       continue;
     }
 
-    const resolvedKeyFields = resolveKeyFields(keyFields);
+    // Resolve desired keyFields
+    // keyFields: ['id'] (default): normal entity with a stable id.
+    // keyFields: ['a','b']: composite key when there’s no single id.
+    // keyFields: false: value objects / payload wrappers you don’t want cached as entities.
+    const desiredKeyFields: TypePolicy['keyFields'] =
+      entry.keyFields === false
+        ? false
+        : Array.isArray(entry.keyFields)
+        ? entry.keyFields
+        : [...DEFAULT_KEY_FIELDS]; // default ['id']
 
-    const existingPolicy = policiesByTypename[entityTypename];
+    // De-dupe & guard conflicts
+    const existingPolicy = typePoliciesByName[entityTypename];
 
     if (existingPolicy) {
-      const existingKeyFields = existingPolicy.keyFields ?? null;
-      const desiredKeyFields = resolvedKeyFields ?? null;
+      const a = JSON.stringify(existingPolicy.keyFields ?? null);
+      const b = JSON.stringify(desiredKeyFields ?? null);
 
-      if (!isDeepEqual(existingKeyFields, desiredKeyFields)) {
+      if (a !== b && typeof console !== 'undefined') {
         console.warn(
-          `[generateCachePolicies] Conflicting keyFields for ${entityTypename}. existing=${JSON.stringify(
-            existingKeyFields
-          )}, ignored=${JSON.stringify(desiredKeyFields)}`
+          `[generateCachePolicies] Conflicting keyFields for ${entityTypename}. existing=${a}, ignored=${b}`
         );
       }
 
-      // keep the first one we saw
       continue;
     }
 
-    policiesByTypename[entityTypename] = {
-      keyFields: resolvedKeyFields,
-    };
+    typePoliciesByName[entityTypename] = { keyFields: desiredKeyFields };
   }
 
   return {
-    ...policiesByTypename,
-    Query: {
-      fields: queryFieldPolicies,
-    },
+    ...typePoliciesByName,
+    Query: { fields: queryFields },
   };
-}
-
-function resolveKeyFields(keyFields?: TKeyFields): TKeyFields {
-  if (keyFields === false) {
-    return false;
-  }
-
-  if (Array.isArray(keyFields)) {
-    return keyFields;
-  }
-
-  return [DEFAULT_QUERY_ID_KEY];
 }

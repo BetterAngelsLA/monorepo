@@ -1,59 +1,33 @@
-query hmisClientProfile($id: ID!) {
-  hmisClientProfile(id: $id) {
-    ... on HmisClientProfileType {
-      id
-      hmisId
+query GetHMISClient($personalId: ID!) {
+  hmisGetClient(personalId: $personalId) {
+    __typename
+    ... on HmisClientType {
       personalId
       uniqueIdentifier
-      addedDate
-      lastUpdated
-
-      alias
-      birthDate
-
-      dobQuality
       firstName
       lastName
-      nameQuality
+      nameDataQuality
       ssn1
       ssn2
       ssn3
-      ssnQuality
-
-      age
-      gender
-      genderIdentityText
-      nameMiddle
-      nameSuffix
-      raceEthnicity
-      additionalRaceEthnicityDetail
-      veteran
-
-      adaAccommodation
-      address
-      californiaId
-      email
-      eyeColor
-      hairColor
-      heightInInches
-      importantNotes
-      livingSituation
-      mailingAddress
-      maritalStatus
-      physicalDescription
-      placeOfBirth
-      preferredCommunication
-      preferredLanguage
-      pronouns
-      pronounsOther
-      residenceAddress
-      residenceGeolocation
-      spokenLanguages
-      phoneNumbers {
-        id
-        number
-        isPrimary
+      ssnDataQuality
+      dob
+      dobDataQuality
+      data {
+        middleName
+        nameSuffix
+        alias
+        raceEthnicity
+        additionalRaceEthnicity
+        differentIdentityText
+        gender
+        veteranStatus
       }
     }
   }
 }
+
+# ... on HmisGetClientError {
+#   message
+#   field
+# }

@@ -4,15 +4,14 @@ import { useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { useQuery } from '@apollo/client/react';
 import { MainScrollContainer } from '../../ui-components';
+import { useNoteSummaryQuery } from './__generated__/NoteSummary.generated';
 import NoteByline from './NoteByline';
 import NoteClient from './NoteClient';
 import NoteLocation from './NoteLocation';
 import NotePublicNote from './NotePublicNote';
 import NoteServices from './NoteServices';
 import NoteTitle from './NoteTitle';
-import { NoteSummaryDocument } from './__generated__/NoteSummary.generated';
 
 export default function Note({
   id,
@@ -21,7 +20,7 @@ export default function Note({
   id: string;
   arrivedFrom?: string;
 }) {
-  const { data, loading, error } = useQuery(NoteSummaryDocument, {
+  const { data, loading, error } = useNoteSummaryQuery({
     variables: { id },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',

@@ -16,6 +16,4 @@ export interface IPickerProps extends TMarginProps {
   disabled?: boolean;
   selectNoneLabel?: string;
   allowSelectNone?: boolean;
-  modalTitle?: string;
-  placeholderTextColor?: string;
 }

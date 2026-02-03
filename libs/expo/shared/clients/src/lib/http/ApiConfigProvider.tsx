@@ -1,21 +1,15 @@
-import {
-  CSRF_HEADER_NAME,
-  CSRF_LOGIN_PATH,
-  ENVIRONMENT_STORAGE_KEY,
-} from '@monorepo/expo/shared/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {
+import CookieManager from '@react-native-cookies/cookies';
+import {
   createContext,
   ReactNode,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from 'react';
 import { Platform } from 'react-native';
-import { getCSRFToken } from '../common';
-import { createNativeFetch } from '../common/nativeFetch';
+import { CSRF_HEADER_NAME, getCSRFToken } from '../common';
 
 type Env = 'production' | 'demo';
 
@@ -42,47 +36,33 @@ export const ApiConfigProvider = ({
 
   useEffect(() => {
     const loadEnvironment = async () => {
-      const saved = await AsyncStorage.getItem(ENVIRONMENT_STORAGE_KEY);
+      const saved = await AsyncStorage.getItem('currentEnvironment');
       setEnvironment(saved === 'demo' ? 'demo' : 'production');
     };
     loadEnvironment();
   }, []);
 
-  const switchEnvironment = useCallback(
-    async (env: Env) => {
-      if (env === environment) {
-        return;
-      }
-      await AsyncStorage.setItem(ENVIRONMENT_STORAGE_KEY, env);
-      setEnvironment(env);
-    },
-    [environment]
-  );
+  const switchEnvironment = async (env: Env) => {
+    if (env === environment) return;
+    await CookieManager.clearAll();
+    await AsyncStorage.setItem('currentEnvironment', env);
+    setEnvironment(env);
+  };
 
   const fetchClient = useMemo(() => {
-    if (Platform.OS === 'web') {
-      return async (path: string, options: RequestInit = {}) => {
-        const token = await getCSRFToken(
-          baseUrl,
-          `${baseUrl}${CSRF_LOGIN_PATH}`
-        );
-        const headers = new Headers(options.headers);
-        headers.set('Content-Type', 'application/json');
-        if (token) {
-          headers.set(CSRF_HEADER_NAME, token);
-        }
-
-        return fetch(`${baseUrl}${path}`, {
-          ...options,
-          credentials: 'include',
-          headers,
-        });
-      };
-    }
-
-    const nativeFetch = createNativeFetch(baseUrl);
     return async (path: string, options: RequestInit = {}) => {
-      return nativeFetch(`${baseUrl}${path}`, options);
+      const token = await getCSRFToken(baseUrl, `${baseUrl}/admin/login/`);
+      const { headers: userHeaders = {}, ...otherOptions } = options;
+      const headers = new Headers(userHeaders as HeadersInit);
+      headers.set('Content-Type', 'application/json');
+      if (token) headers.set(CSRF_HEADER_NAME, token);
+      if (Platform.OS !== 'web') headers.set('Referer', baseUrl);
+
+      return fetch(`${baseUrl}${path}`, {
+        credentials: 'include',
+        headers,
+        ...otherOptions,
+      });
     };
   }, [baseUrl]);
 

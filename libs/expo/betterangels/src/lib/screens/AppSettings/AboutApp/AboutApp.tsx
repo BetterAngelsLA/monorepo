@@ -2,8 +2,13 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Divider } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { useAppVersion } from '../../../hooks';
-import { MainScrollContainer } from '../../../ui-components';
+import { FeatureFlags } from '../../../providers';
+import {
+  FeatureFlagControlled,
+  MainScrollContainer,
+} from '../../../ui-components';
 import { AppDataCard } from './AppDataCard';
+import { UpdatesDebugInfo } from './UpdatesDebugInfo';
 
 export function AboutApp() {
   const { version, runtimeVersionShort, otaUpdateIdShort } = useAppVersion();
@@ -21,6 +26,10 @@ export function AboutApp() {
 
         <AppDataCard label="OTA Update" value={otaUpdateIdShort} />
       </View>
+
+      <FeatureFlagControlled flag={FeatureFlags.SHOW_DEBUG_INFO_FF}>
+        <UpdatesDebugInfo />
+      </FeatureFlagControlled>
     </MainScrollContainer>
   );
 }

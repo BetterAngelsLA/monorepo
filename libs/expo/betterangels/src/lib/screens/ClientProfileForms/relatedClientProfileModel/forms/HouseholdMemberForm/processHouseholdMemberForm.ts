@@ -1,33 +1,22 @@
-import { ApolloLink } from '@apollo/client';
-import { useMutation } from '@apollo/client/react';
-import type { UseFormSetError } from 'react-hook-form';
-import { extractResponseExtensions } from '../../../../../apollo';
+import { FetchResult } from '@apollo/client';
+import { UseFormSetError } from 'react-hook-form';
+import { extractExtensionErrors } from '../../../../../apollo';
 import { applyManualFormErrors } from '../../../../../errors';
 import {
   CreateClientHouseholdMemberMutation,
-  CreateClientHouseholdMemberMutationVariables,
+  CreateClientHouseholdMemberMutationFn,
   UpdateClientHouseholdMemberMutation,
-  UpdateClientHouseholdMemberMutationVariables,
+  UpdateClientHouseholdMemberMutationFn,
 } from './__generated__/householdMember.generated';
 import { THouseholdMemberFormState } from './types';
-
-type HouseholdMutationResult =
-  | ApolloLink.Result<CreateClientHouseholdMemberMutation>
-  | ApolloLink.Result<UpdateClientHouseholdMemberMutation>;
 
 type TProps = {
   formData: THouseholdMemberFormState;
   clientProfileId: string;
-  relationId?: string;
+  relationId: string | undefined;
   setError: UseFormSetError<THouseholdMemberFormState>;
-  createHouseholdMember: useMutation.MutationFunction<
-    CreateClientHouseholdMemberMutation,
-    CreateClientHouseholdMemberMutationVariables
-  >;
-  updateHouseholdMember: useMutation.MutationFunction<
-    UpdateClientHouseholdMemberMutation,
-    UpdateClientHouseholdMemberMutationVariables
-  >;
+  createHouseholdMember: CreateClientHouseholdMemberMutationFn;
+  updateHouseholdMember: UpdateClientHouseholdMemberMutationFn;
 };
 
 export async function processHouseholdMemberForm(
@@ -41,44 +30,29 @@ export async function processHouseholdMemberForm(
     createHouseholdMember,
     updateHouseholdMember,
   } = props;
-
   const apiInputs = toApiInputs(formData);
+
   if (!apiInputs) {
     return false;
   }
 
-  let response: HouseholdMutationResult;
+  const mutationFn = relationId ? updateHouseholdMember : createHouseholdMember;
 
-  if (relationId) {
-    // UPDATE
-    response = await updateHouseholdMember({
-      variables: {
-        data: {
-          id: relationId,
-          clientProfile: clientProfileId,
-          ...apiInputs,
-        },
+  const response = await mutationFn({
+    variables: {
+      data: {
+        clientProfile: clientProfileId,
+        ...apiInputs,
+        ...(relationId && { id: relationId }),
       },
-      errorPolicy: 'all',
-    });
-  } else {
-    // CREATE
-    response = await createHouseholdMember({
-      variables: {
-        data: {
-          clientProfile: clientProfileId,
-          ...apiInputs,
-        },
-      },
-      errorPolicy: 'all',
-    });
-  }
+    },
+    errorPolicy: 'all',
+  });
 
-  // same error handling as before
-  const responseExtensions = extractResponseExtensions(response);
+  const extensionErrors = extractExtensionErrors(response);
 
-  if (responseExtensions) {
-    applyManualFormErrors(responseExtensions, setError);
+  if (extensionErrors) {
+    applyManualFormErrors(extensionErrors, setError);
 
     return false;
   }
@@ -97,33 +71,43 @@ function toApiInputs(values: THouseholdMemberFormState) {
     return null;
   }
 
-  // make a copy so we don't mutate RHF's form state
-  const next: THouseholdMemberFormState = { ...values };
-
-  if (next.dateOfBirth instanceof Date) {
-    next.dateOfBirth = next.dateOfBirth
+  // convert dateOfBirth to date string and remove time
+  if ('dateOfBirth' in values && values.dateOfBirth) {
+    values.dateOfBirth = values.dateOfBirth
       .toISOString()
       .split('T')[0] as unknown as Date;
   }
 
-  return next;
+  return values;
 }
 
-function isSuccessMutationResponse(response: HouseholdMutationResult): boolean {
-  const data = response.data;
+function isSuccessMutationResponse(
+  response: FetchResult<
+    UpdateClientHouseholdMemberMutation | CreateClientHouseholdMemberMutation
+  >
+): boolean {
+  const responseData = response.data;
 
-  if (!data) {
+  if (!responseData) {
     return false;
   }
 
   const modelTypename = 'ClientHouseholdMemberType';
 
-  if ('createClientHouseholdMember' in data) {
-    return data.createClientHouseholdMember?.__typename === modelTypename;
+  if ('updateClientHouseholdMember' in responseData) {
+    const typename = responseData.updateClientHouseholdMember.__typename;
+
+    if (typename === modelTypename) {
+      return true;
+    }
   }
 
-  if ('updateClientHouseholdMember' in data) {
-    return data.updateClientHouseholdMember?.__typename === modelTypename;
+  if ('createClientHouseholdMember' in responseData) {
+    const typename = responseData.createClientHouseholdMember.__typename;
+
+    if (typename === modelTypename) {
+      return true;
+    }
   }
 
   return false;

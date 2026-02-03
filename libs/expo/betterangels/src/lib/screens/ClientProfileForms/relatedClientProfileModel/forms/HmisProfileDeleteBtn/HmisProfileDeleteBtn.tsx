@@ -1,4 +1,3 @@
-import { useMutation } from '@apollo/client/react';
 import { useRouter } from 'expo-router';
 import { Dispatch, SetStateAction } from 'react';
 import {
@@ -8,7 +7,7 @@ import {
 import { useSnackbar } from '../../../../../hooks';
 import { ClientProfileDocument } from '../../../../Client/__generated__/Client.generated';
 import { DeleteButton } from '../DeleteButton';
-import { DeleteHmisProfileDocument } from './__generated__/deleteHmisProfile.generated';
+import { useDeleteHmisProfileMutation } from './__generated__/deleteHmisProfile.generated';
 
 const deleteableItemName = 'HMIS ID';
 
@@ -25,9 +24,8 @@ export function HmisProfileDeleteBtn(props: TProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  const [deleteHmisProfile, { loading, error }] = useMutation(
-    DeleteHmisProfileDocument
-  );
+  const [deleteHmisProfile, { loading, error }] =
+    useDeleteHmisProfileMutation();
 
   const onDelete = async () => {
     try {

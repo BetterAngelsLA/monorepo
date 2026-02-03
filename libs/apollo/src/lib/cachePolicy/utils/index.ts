@@ -1,2 +1,2 @@
-export { defaultGetItemId } from './defaultGetItemId';
-export { defaultGetItems } from './defaultGetItems';
+export { buildPolicyConfig } from './buildPolicyConfig';
+export { queryPolicyRecord } from './queryPolicyRecord';

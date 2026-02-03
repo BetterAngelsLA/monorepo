@@ -13,7 +13,6 @@ export { Shadow } from './shadow';
 export { Spacings } from './spacings';
 export {
   FileThumbnailSizeDefault,
-  FullThumbenailSize,
   IdThumbnailSize,
   ImageThumbnailSizeDefault,
   thumbnailSizes,

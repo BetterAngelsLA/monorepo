@@ -7,20 +7,19 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { InputMaybe, TaskFilter, TaskOrder, TaskType } from '../../apollo';
-import {
-  TasksDocument,
-  TasksQuery,
-  TasksQueryVariables,
-} from './__generated__/Tasks.generated';
+import { InputMaybe, TaskFilter, TaskOrder } from '../../apollo';
+import { ListLoadingView } from './ListLoadingView';
+import { TasksQuery, useTasksQuery } from './__generated__/Tasks.generated';
 import {
   DEFAULT_ITEM_GAP,
   DEFAULT_PAGINATION_LIMIT,
   DEFAULT_QUERY_ORDER,
 } from './constants';
 
+type TTask = TasksQuery['tasks']['results'][number];
+
 type TProps = {
-  renderItem: (task: TaskType) => ReactElement | null;
+  renderItem: (task: TTask) => ReactElement | null;
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<TaskFilter>;
@@ -42,9 +41,9 @@ export function TaskList(props: TProps) {
     style,
   } = props;
 
-  const { items, total, loading, loadMore, reload, reloading, hasMore, error } =
-    useInfiniteScrollQuery<TaskType, TasksQuery, TasksQueryVariables>({
-      document: TasksDocument,
+  const { items, total, loading, loadMore, hasMore, error } =
+    useInfiniteScrollQuery<TTask, typeof useTasksQuery>({
+      useQueryHook: useTasksQuery,
       queryFieldName: 'tasks',
       variables: {
         filters,
@@ -54,7 +53,7 @@ export function TaskList(props: TProps) {
     });
 
   const renderItemFn = useCallback(
-    (item: TaskType) => renderItem(item),
+    (item: TTask) => renderItem(item),
     [renderItem]
   );
 
@@ -70,7 +69,7 @@ export function TaskList(props: TProps) {
 
   return (
     <View style={[styles.container, style]}>
-      <InfiniteList<TaskType>
+      <InfiniteList<TTask>
         data={items}
         keyExtractor={(item) => item.id}
         totalItems={total}
@@ -80,9 +79,8 @@ export function TaskList(props: TProps) {
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="task"
+        LoadingViewContent={<ListLoadingView style={{ paddingVertical: 40 }} />}
         renderResultsHeader={renderHeader}
-        onRefresh={reload}
-        refreshing={reloading}
       />
     </View>
   );

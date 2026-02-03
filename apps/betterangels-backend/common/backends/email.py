@@ -1,8 +1,16 @@
 from typing import List, cast
 
-from common.utils import strip_demo_tag
 from django.core.mail import EmailMessage
 from post_office.backends import EmailBackend as PostOfficeBackend
+
+
+def _strip_demo(addr: str) -> str:
+    """
+    If the local-part ends with '+demo', drop it.
+    e.g. 'paul+demo@example.com' → 'paul@example.com'
+    """
+    # only replace the first occurrence right before the '@'
+    return addr.replace("+demo@", "@", 1)
 
 
 class CustomPostOfficeEmailBackend(PostOfficeBackend):
@@ -21,5 +29,5 @@ class CustomPostOfficeEmailBackend(PostOfficeBackend):
         for msg in email_messages:
             for field in ("to", "cc", "bcc"):
                 if addrs := getattr(msg, field):
-                    setattr(msg, field, [strip_demo_tag(a) for a in addrs])
+                    setattr(msg, field, [_strip_demo(a) for a in addrs])
         return cast(int, super().send_messages(email_messages))

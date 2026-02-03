@@ -5,8 +5,8 @@ enum DocType {
 }
 
 export type TThumbnailSize = {
-  height: number | 'auto' | '100%';
-  width: number | 'auto' | '100%';
+  height: number;
+  width: number;
 };
 
 export const ImageThumbnailSizeDefault: TThumbnailSize = {
@@ -22,11 +22,6 @@ export const FileThumbnailSizeDefault: TThumbnailSize = {
 export const IdThumbnailSize: TThumbnailSize = {
   height: 86.5,
   width: 129,
-};
-
-export const FullThumbenailSize: TThumbnailSize = {
-  height: '100%',
-  width: 'auto',
 };
 
 export const thumbnailSizes: Record<DocType, TThumbnailSize> = {

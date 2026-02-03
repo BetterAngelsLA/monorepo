@@ -1,24 +1,13 @@
-import { CombinedGraphQLErrors } from '@apollo/client';
-import { useMutation, useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { ServiceRequestTypeEnum } from '../../../apollo';
-import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/extractExtensionFieldErrors';
-import { applyManualFormErrors } from '../../../errors';
-import { normalizeService } from '../../../helpers';
+import { HmisClientNoteType, extractHMISErrors } from '../../../apollo';
+import { applyOperationFieldErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
-import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import {
-  CreateHmisServiceRequestDocument,
-  RemoveHmisNoteServiceRequestDocument,
-} from '../HmisProgramNoteCreate/__generated__/HmisServiceRequest.generated';
-import { UpdateHmisNoteLocationDocument } from '../HmisProgramNoteCreate/__generated__/updateHmisNoteLocation.generated';
-import {
-  HmisNoteFormFieldNames,
   HmisProgramNoteForm,
   HmisProgramNoteFormSchema,
   HmisProgramNoteFormSchemaOutput,
@@ -26,153 +15,79 @@ import {
   THmisProgramNoteFormOutputs,
   hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm';
-import splitBucket from '../utils/splitBucket';
-import { useApplyTasks } from '../utils/useApplyTasks';
-import { HmisNoteDocument } from './__generated__/hmisGetClientNote.generated';
-import { UpdateHmisNoteDocument } from './__generated__/hmisUpdateClientNote.generated';
+import { useHmisGetClientNoteQuery } from './__generated__/hmisGetClientNote.generated';
+import { useHmisUpdateClientNoteMutation } from './__generated__/hmisUpdateClientNote.generated';
 
 type TProps = {
-  id: string;
-  clientId: string;
+  hmisNoteId: string;
+  hmisClientId: string;
+  hmisNoteEnrollmentId: string;
   arrivedFrom?: string;
   onSuccess?: () => void;
 };
 
 export function HmisProgramNoteEdit(props: TProps) {
-  const { id, clientId } = props;
+  const { hmisClientId, hmisNoteEnrollmentId, hmisNoteId, onSuccess } = props;
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const [existingNote, setExistingNote] = useState<HmisClientNoteType>();
+  const [updateHmisClientNoteMutation] = useHmisUpdateClientNoteMutation();
 
-  const [updateHmisNoteMutation] = useMutation(UpdateHmisNoteDocument);
-  const [updateHmisNoteLocation] = useMutation(UpdateHmisNoteLocationDocument);
-  const [deleteService] = useMutation(RemoveHmisNoteServiceRequestDocument);
-  const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);
-  const { applyTasks } = useApplyTasks();
-
-  async function applyBucket(
-    id: string,
-    type: ServiceRequestTypeEnum,
-    bucket: any
-  ) {
-    const { toCreateStandard, toDeleteStandard, toCreateOther, toDeleteOther } =
-      splitBucket(bucket);
-
-    for (const s of toCreateStandard) {
-      await createServiceRequest({
-        variables: {
-          data: {
-            hmisNoteId: id,
-            serviceRequestType: type,
-            serviceId: s.serviceId!,
-          },
-        },
-      });
-    }
-
-    // delete standard
-    for (const s of toDeleteStandard) {
-      await deleteService({
-        variables: {
-          data: {
-            serviceRequestId: s.serviceRequestId!,
-            hmisNoteId: id,
-            serviceRequestType: type,
-          },
-        },
-      });
-    }
-
-    // create “other”
-    for (const o of toCreateOther) {
-      await createServiceRequest({
-        variables: {
-          data: {
-            hmisNoteId: id,
-            serviceRequestType: type,
-            serviceOther: o.serviceOther!.trim(),
-          },
-        },
-      });
-    }
-
-    // delete “other”
-    for (const o of toDeleteOther) {
-      await deleteService({
-        variables: {
-          data: {
-            serviceRequestId: o.serviceRequestId!,
-            hmisNoteId: id,
-            serviceRequestType: type,
-          },
-        },
-      });
-    }
-  }
-
-  const methods = useForm<THmisProgramNoteFormInputs>({
+  const formMethods = useForm<THmisProgramNoteFormInputs>({
     resolver: zodResolver(HmisProgramNoteFormSchema),
     defaultValues: hmisProgramNoteFormEmptyState,
   });
 
+  // Note: we assume cached note is valid and refetch only on missing fields.
+  // fetchPolicy=cache-first: use cache unless missing fields in cache
+  // partialRefetch=true: refetch if any requested field is missing
   const {
     data: noteData,
     loading: noteDataLoading,
     error: getNoteNetworkError,
-    refetch,
-  } = useQuery(HmisNoteDocument, {
-    variables: { id },
+  } = useHmisGetClientNoteQuery({
+    variables: {
+      id: hmisNoteId,
+      personalId: hmisClientId,
+      enrollmentId: hmisNoteEnrollmentId,
+    },
     fetchPolicy: 'cache-first',
+    partialRefetch: true,
   });
 
   useEffect(() => {
-    const noteResult = noteData?.hmisNote;
+    const noteResult = noteData?.hmisGetClientNote;
 
-    if (noteResult?.__typename !== 'HmisNoteType') {
+    if (noteResult?.__typename !== 'HmisClientNoteType') {
       return;
     }
 
-    const existingProvidedServices =
-      noteResult.providedServices?.map(normalizeService) ?? [];
+    setExistingNote(noteResult);
+  }, [noteData]);
 
-    const existingRequestedServices =
-      noteResult.requestedServices?.map(normalizeService) ?? [];
+  useEffect(() => {
+    if (!existingNote) {
+      return;
+    }
 
-    methods.reset({
+    formMethods.reset({
       ...hmisProgramNoteFormEmptyState,
-      title: noteResult.title ?? '',
-      date: toLocalCalendarDate(noteResult.date),
-      note: noteResult.note ?? '',
-      refClientProgram: noteResult.refClientProgram ?? '',
-      services: {
-        [ServiceRequestTypeEnum.Provided]: {
-          serviceRequests: existingProvidedServices,
-        },
-        [ServiceRequestTypeEnum.Requested]: {
-          serviceRequests: existingRequestedServices,
-        },
-      },
-      location: {
-        longitude: noteResult.location?.point[0],
-        latitude: noteResult.location?.point[1],
-        formattedAddress: noteResult.location?.address
-          ? `${noteResult.location?.address.street}, ${noteResult.location?.address.city}, ${noteResult.location?.address.state} ${noteResult.location?.address.zipCode}`
-          : undefined,
-        shortAddressName:
-          noteResult.location?.address && noteResult.location?.address.street
-            ? noteResult.location?.address.street
-            : undefined,
-      },
-      tasks: noteResult.tasks || [],
+      title: existingNote.title ?? '',
+      date: toLocalCalendarDate(existingNote.date),
+      enrollmentId: existingNote.enrollment?.enrollmentId ?? '',
+      note: existingNote.note ?? '',
     });
-  }, [noteData, methods]);
+  }, [existingNote, formMethods]);
 
   const {
     handleSubmit,
     formState: { isSubmitting },
-  } = methods;
+  } = formMethods;
 
-  const formDisabled = !noteData || isSubmitting;
+  const formDisabled = !existingNote || isSubmitting;
+
+  const { setError } = formMethods;
 
   const onSubmit: SubmitHandler<THmisProgramNoteFormInputs> = async (
     values
@@ -185,82 +100,60 @@ export function HmisProgramNoteEdit(props: TProps) {
       const payload: THmisProgramNoteFormOutputs =
         HmisProgramNoteFormSchemaOutput.parse(values);
 
-      const { services, location, tasks, ...rest } = payload;
-
-      const updateResponse = await updateHmisNoteMutation({
+      const { data } = await updateHmisClientNoteMutation({
         variables: {
-          data: {
-            id,
-            ...rest,
+          clientNoteInput: {
+            id: hmisNoteId,
+            personalId: hmisClientId,
+            ...payload,
           },
         },
+
         errorPolicy: 'all',
       });
 
-      const { data, error } = updateResponse;
+      const result = data?.hmisUpdateClientNote;
 
-      if (CombinedGraphQLErrors.is(error)) {
-        const fieldErrors = extractExtensionFieldErrors(
-          error,
-          HmisNoteFormFieldNames
-        );
+      if (!result) {
+        throw new Error('missing hmisUpdateClientNote response');
+      }
 
-        if (fieldErrors.length) {
-          applyManualFormErrors(fieldErrors, methods.setError);
+      if (result?.__typename === 'HmisUpdateClientNoteError') {
+        const { message: hmisErrorMessage } = result;
+
+        const { status, fieldErrors = [] } =
+          extractHMISErrors(hmisErrorMessage) || {};
+
+        // handle unprocessable_entity errors and exit
+        if (status === 422) {
+          const formKeys = Object.keys(hmisProgramNoteFormEmptyState);
+
+          const formFieldErrors = fieldErrors.filter(({ field }) =>
+            formKeys.includes(field)
+          );
+
+          applyOperationFieldErrors(formFieldErrors, setError);
+
           return;
         }
+
+        // HmisCreateClientError exists but not 422 | 404
+        // throw generic error
+        throw new Error(hmisErrorMessage);
       }
 
-      if (error) {
-        throw new Error(error.message);
+      if (result?.__typename !== 'HmisClientNoteType') {
+        throw new Error('invalid HmisClientNoteType response');
       }
 
-      const result = data?.updateHmisNote;
-
-      if (result?.__typename !== 'HmisNoteType') {
-        throw new Error('typename is not HmisNoteType');
+      if (onSuccess) {
+        return onSuccess();
       }
 
-      const draftServices = services ?? {};
-      const locationDirty = methods.getFieldState('location').isDirty;
-      if (locationDirty && location) {
-        await updateHmisNoteLocation({
-          variables: {
-            data: {
-              id,
-              location: {
-                point: [location.longitude, location.latitude],
-                address: {
-                  formattedAddress: location.formattedAddress,
-                  addressComponents: JSON.stringify(location.components ?? []),
-                },
-              },
-            },
-          },
-        });
-      }
-
-      await applyTasks(tasks, id, clientId);
-
-      await applyBucket(
-        id,
-        ServiceRequestTypeEnum.Provided,
-        draftServices[ServiceRequestTypeEnum.Provided]
-      );
-
-      await applyBucket(
-        id,
-        ServiceRequestTypeEnum.Requested,
-        draftServices[ServiceRequestTypeEnum.Requested]
-      );
-
-      await refetch();
-
-      router.replace(
-        `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
-      );
+      router.dismissTo(`notes-hmis/${hmisNoteId}/index`);
     } catch (error) {
-      console.error('[updateHmisNoteMutation] error:', error);
+      console.error('updateHmisClientNoteMutation error:', error);
+
       showSnackbar({
         message: 'Something went wrong. Please try again.',
         type: 'error',
@@ -277,7 +170,7 @@ export function HmisProgramNoteEdit(props: TProps) {
   }
 
   return (
-    <FormProvider {...methods}>
+    <FormProvider {...formMethods}>
       <Form.Page
         actionProps={{
           onSubmit: handleSubmit(onSubmit),
@@ -286,8 +179,7 @@ export function HmisProgramNoteEdit(props: TProps) {
         }}
       >
         <HmisProgramNoteForm
-          editing={true}
-          clientId={clientId}
+          hmisClientId={hmisClientId}
           disabled={formDisabled}
         />
       </Form.Page>

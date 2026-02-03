@@ -8,6 +8,7 @@ from import_export import fields, resources
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
 from import_export.widgets import ForeignKeyWidget
+from notes.enums import ServiceEnum
 from organizations.models import Organization
 from rangefilter.filters import DateRangeFilterBuilder
 
@@ -97,7 +98,9 @@ class NoteResource(resources.ModelResource):
         return note.purpose or None
 
     def _join_services(self, services: QuerySet) -> str:
-        return ", ".join(str(s.service.label) for s in services)
+        return ", ".join(
+            s.service_other if s.service_enum == ServiceEnum.OTHER else str(s.service_enum.label) for s in services
+        )
 
     def dehydrate_requested_services(self, note: Note) -> str:
         return self._join_services(note.requested_services.all())
@@ -124,15 +127,6 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
 
     def get_export_formats(self) -> list:
         return [CSV]
-
-    autocomplete_fields = (
-        "client_profile",
-        "created_by",
-        "location",
-        "organization",
-        "provided_services",
-        "requested_services",
-    )
 
     list_display = (
         "note_purpose",
@@ -165,7 +159,6 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
         MoodInline,
     ]
     readonly_fields = (
-        "created_by",
         "interacted_at",
         "updated_at",
     )
@@ -238,7 +231,11 @@ class ServiceRequestAdmin(admin.ModelAdmin):
 
     @admin.display(description="Service")
     def service_name(self, obj: ServiceRequest) -> Optional[str]:
-        return str(obj.service.label if obj.service else "")
+        # TODO: undo after cutover
+        if not obj.service_enum:
+            return None
+
+        return str(obj.service_enum.label if obj.service_enum != ServiceEnum.OTHER else obj.service_other)
 
 
 @admin.register(NoteDataImport)
