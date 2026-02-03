@@ -1,9 +1,10 @@
+import { useQuery } from '@apollo/client/react';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { UserOrganizationPermissions } from '../../apollo/graphql/__generated__/types';
 import UserContext, { TUser } from './UserContext';
 import {
+  CurrentOrgUserDocument,
   CurrentOrgUserQuery,
-  useCurrentOrgUserQuery,
 } from './__generated__/UserProvider.generated';
 
 interface UserProviderProps {
@@ -40,7 +41,7 @@ const parseUser = (
   return {
     id: user.id,
     organization: userOrganization,
-    username: user.username,
+    username: user.username ?? undefined,
     firstName: user.firstName ?? undefined,
     lastName: user.lastName ?? undefined,
     email: user.email,
@@ -59,7 +60,7 @@ export default function UserProvider({ children }: UserProviderProps) {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
 
-  const { data, loading, error, refetch } = useCurrentOrgUserQuery({
+  const { data, loading, error, refetch } = useQuery(CurrentOrgUserDocument, {
     fetchPolicy: 'network-only',
     errorPolicy: 'all',
   });
@@ -93,7 +94,12 @@ export default function UserProvider({ children }: UserProviderProps) {
   }, [refetch, updateUser]);
 
   const contextValue = useMemo(
-    () => ({ user, setUser, isLoading: isInitialLoading || isRefetching, refetchUser }),
+    () => ({
+      user,
+      setUser,
+      isLoading: isInitialLoading || isRefetching,
+      refetchUser,
+    }),
     [user, isInitialLoading, isRefetching, refetchUser]
   );
 
