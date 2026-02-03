@@ -212,3 +212,94 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
             "New Member is already a member of org.",
         )
         self.assertEqual(initial_org_member_count, OrganizationUser.objects.count())
+
+    def test_update_organization_member(self) -> None:
+        org_member = baker.make(
+            User,
+            first_name="Old",
+            middle_name="KeepMe",
+            last_name="Name",
+            email="member@example.com",
+        )
+        self.org.add_user(org_member)
+
+        mutation = """
+            mutation ($data: UpdateOrganizationMemberInput!) {
+                updateOrganizationMember(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on OrganizationMemberType {
+                        id
+                        email
+                        firstName
+                        lastName
+                        middleName
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "id": org_member.pk,
+            "organizationId": self.org.pk,
+            "firstName": "NewFirst",
+            "lastName": "NewLast",
+        }
+
+        with self.assertNumQueriesWithoutCache(10):
+            response = self.execute_graphql(mutation, {"data": variables})
+
+        self.assertEqual(
+            {
+                "id": ANY,
+                "email": "member@example.com",
+                "firstName": "NewFirst",
+                "lastName": "NewLast",
+                "middleName": "KeepMe",
+            },
+            response["data"]["updateOrganizationMember"],
+        )
+
+        org_member.refresh_from_db()
+        self.assertEqual("NewFirst", org_member.first_name)
+        self.assertEqual("NewLast", org_member.last_name)
+        self.assertEqual("KeepMe", org_member.middle_name)
+
+    def test_update_organization_member_user_not_in_org(self) -> None:
+        outsider = baker.make(
+            User,
+            first_name="Out",
+            last_name="Side",
+            email="outsider@example.com",
+        )
+
+        mutation = """
+            mutation ($data: UpdateOrganizationMemberInput!) {
+                updateOrganizationMember(data: $data) {
+                    ... on OperationInfo {
+                        messages { kind field message }
+                    }
+                    ... on OrganizationMemberType { id }
+                }
+            }
+        """
+
+        variables = {
+            "id": outsider.pk,
+            "organizationId": self.org.pk,
+            "firstName": "NewFirst",
+        }
+
+        with self.assertNumQueriesWithoutCache(8):
+            response = self.execute_graphql(mutation, {"data": variables})
+
+        self.assertEqual(len(response["data"]["updateOrganizationMember"]["messages"]), 1)
+        self.assertEqual(
+            response["data"]["updateOrganizationMember"]["messages"][0]["message"],
+            "User is not a member of this organization.",
+        )

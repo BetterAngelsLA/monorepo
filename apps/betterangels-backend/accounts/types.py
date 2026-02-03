@@ -199,3 +199,12 @@ class OrgInvitationInput:
     middle_name: Optional[str] = None
     last_name: str
     organization_id: ID
+
+
+@strawberry.input
+class UpdateOrganizationMemberInput:
+    id: ID
+    organization_id: ID
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None  # reserved for future; currently ignored
+    last_name: Optional[str] = None

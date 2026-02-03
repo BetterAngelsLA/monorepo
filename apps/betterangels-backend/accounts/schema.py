@@ -34,6 +34,7 @@ from .types import (
     OrganizationOrder,
     OrganizationType,
     OrgInvitationInput,
+    UpdateOrganizationMemberInput,
     UpdateUserInput,
     UserType,
 )
@@ -209,5 +210,54 @@ class Mutation:
             organization=organization,
             domain=site,
         )
+
+        return cast(OrganizationMemberType, user)
+
+    # NOTE: update currently uses ADD_ORG_MEMBER permission.
+    # A separate UPDATE_ORG_MEMBER permission can be introduced later if needed.
+
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)],
+    )
+    def update_organization_member(
+        self,
+        info: Info,
+        data: UpdateOrganizationMemberInput,
+    ) -> OrganizationMemberType:
+        current_user = get_current_user(info)
+
+        try:
+            organization = filter_for_user(
+                Organization.objects.filter(users=current_user),
+                current_user,
+                [UserOrganizationPermissions.ADD_ORG_MEMBER],
+            ).get(id=data.organization_id)
+        except Organization.DoesNotExist:
+            raise PermissionDenied("You do not have permission to update members.")
+
+        try:
+            org_user = OrganizationUser.objects.select_related("user").get(
+                organization=organization,
+                user_id=data.id,
+            )
+        except OrganizationUser.DoesNotExist:
+            raise ValidationError("User is not a member of this organization.")
+
+        user = org_user.user
+
+        with transaction.atomic():
+            fields_to_update = []
+
+            if data.first_name is not None and data.first_name != user.first_name:
+                user.first_name = data.first_name
+                fields_to_update.append("first_name")
+
+            if data.last_name is not None and data.last_name != user.last_name:
+                user.last_name = data.last_name
+                fields_to_update.append("last_name")
+
+            if fields_to_update:
+                user.save(update_fields=fields_to_update)
 
         return cast(OrganizationMemberType, user)
