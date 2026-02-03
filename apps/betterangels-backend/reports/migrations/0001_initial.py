@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
                 (
                     "recipients",
                     models.TextField(
-                        help_text="Comma-separated list of email addresses to send the report to",
+                        help_text="List of email addresses to send the report to (separated by comma, semicolon, space, or newline)",
                         validators=[reports.models.validate_email_list],
                     ),
                 ),
@@ -49,10 +49,10 @@ class Migration(migrations.Migration):
                     "day_of_month",
                     models.IntegerField(
                         default=1,
-                        help_text="Day of the month to send the report (1-28)",
+                        help_text="Day of the month to send the report (1-31). If the month has fewer days, the last day of the month will be used.",
                         validators=[
                             django.core.validators.MinValueValidator(1),
-                            django.core.validators.MaxValueValidator(28),
+                            django.core.validators.MaxValueValidator(31),
                         ],
                     ),
                 ),
