@@ -57,6 +57,23 @@ const getHmisAuthToken = async (): Promise<string | null> => {
 };
 
 /**
+ * Helper to get authentication and valid headers for HMIS requests (e.g. for Images)
+ */
+export const getHmisAuthHeaders = async (): Promise<Record<string, string>> => {
+  const headers: Record<string, string> = {
+    [HEADER_NAMES.ACCEPT]: HEADER_VALUES.ACCEPT_JSON_ALL,
+    [HEADER_NAMES.X_REQUESTED_WITH]: HEADER_VALUES.X_REQUESTED_WITH_AJAX,
+  };
+
+  const token = await getHmisAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return headers;
+};
+
+/**
  * Composes multiple interceptors into a single fetch function
  */
 export const composeFetchInterceptors = (

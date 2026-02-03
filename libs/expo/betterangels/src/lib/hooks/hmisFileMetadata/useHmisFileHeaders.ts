@@ -21,7 +21,7 @@ export function useHmisFileHeaders() {
         if (!url || !mounted) return;
 
         setBaseUrl(url);
-        const authHeaders = await getHmisAuthHeaders(url);
+        const authHeaders = await getHmisAuthHeaders();
         if (mounted) {
           setHeaders(authHeaders);
         }
