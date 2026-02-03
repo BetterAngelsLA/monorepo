@@ -22,6 +22,7 @@ export function ClientInteractionsHmisView(props: TProps) {
         onPress={() => {
           router.navigate({
             pathname: `/notes-hmis/${item.id}`,
+            params: { clientId: client?.id },
           });
         }}
         variant="clientProfile"
