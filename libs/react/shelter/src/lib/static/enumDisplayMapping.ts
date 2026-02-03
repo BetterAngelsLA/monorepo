@@ -1,6 +1,5 @@
 import {
   AccessibilityChoices,
-  CityChoices,
   DemographicChoices,
   EntryRequirementChoices,
   FunderChoices,
@@ -132,101 +131,6 @@ export const enumDisplayParkingChoices: { [key in ParkingChoices]: string } = {
   [ParkingChoices.Rv]: 'RV',
 };
 
-export const enumDisplayCityChoices: { [key in CityChoices]: string } = {
-  [CityChoices.AgouraHills]: 'Agoura Hills',
-  [CityChoices.Alhambra]: 'Alhambra',
-  [CityChoices.Arcadia]: 'Arcadia',
-  [CityChoices.Artesia]: 'Artesia',
-  [CityChoices.Avalon]: 'Avalon',
-  [CityChoices.Azusa]: 'Azusa',
-  [CityChoices.BaldwinPark]: 'Baldwin Park',
-  [CityChoices.Bell]: 'Bell',
-  [CityChoices.BellGardens]: 'Bell Gardens',
-  [CityChoices.Bellflower]: 'Bellflower',
-  [CityChoices.BeverlyHills]: 'Beverly Hills',
-  [CityChoices.Bradbury]: 'Bradbury',
-  [CityChoices.Burbank]: 'Burbank',
-  [CityChoices.Calabasas]: 'Calabasas',
-  [CityChoices.Carson]: 'Carson',
-  [CityChoices.Cerritos]: 'Cerritos',
-  [CityChoices.Claremont]: 'Claremont',
-  [CityChoices.Commerce]: 'Commerce',
-  [CityChoices.Compton]: 'Compton',
-  [CityChoices.Covina]: 'Covina',
-  [CityChoices.Cudahy]: 'Cudahy',
-  [CityChoices.CulverCity]: 'Culver City',
-  [CityChoices.DiamondBar]: 'Diamond Bar',
-  [CityChoices.Downey]: 'Downey',
-  [CityChoices.Duarte]: 'Duarte',
-  [CityChoices.ElMonte]: 'El Monte',
-  [CityChoices.ElSegundo]: 'El Segundo',
-  [CityChoices.Gardena]: 'Gardena',
-  [CityChoices.Glendale]: 'Glendale',
-  [CityChoices.Glendora]: 'Glendora',
-  [CityChoices.HawaiianGardens]: 'Hawaiian Gardens',
-  [CityChoices.Hawthorne]: 'Hawthorne',
-  [CityChoices.HermosaBeach]: 'Hermosa Beach',
-  [CityChoices.HiddenHills]: 'Hidden Hills',
-  [CityChoices.Hollywood]: 'Hollywood',
-  [CityChoices.HuntingtonPark]: 'Huntington Park',
-  [CityChoices.Industry]: 'Industry',
-  [CityChoices.Inglewood]: 'Inglewood',
-  [CityChoices.Irwindale]: 'Irwindale',
-  [CityChoices.LaCanadaFlintridge]: 'La Canada Flintridge',
-  [CityChoices.LaHabraHeights]: 'La Habra Heights',
-  [CityChoices.LaMirada]: 'La Mirada',
-  [CityChoices.LaPuente]: 'La Puente',
-  [CityChoices.LaVerne]: 'La Verne',
-  [CityChoices.Lakewood]: 'Lakewood',
-  [CityChoices.Lancaster]: 'Lancaster',
-  [CityChoices.Lawndale]: 'Lawndale',
-  [CityChoices.Lomita]: 'Lomita',
-  [CityChoices.LongBeach]: 'Long Beach',
-  [CityChoices.LosAngeles]: 'Los Angeles',
-  [CityChoices.Lynwood]: 'Lynwood',
-  [CityChoices.Malibu]: 'Malibu',
-  [CityChoices.ManhattanBeach]: 'Manhattan Beach',
-  [CityChoices.Maywood]: 'Maywood',
-  [CityChoices.Monrovia]: 'Monrovia',
-  [CityChoices.Montebello]: 'Montebello',
-  [CityChoices.MontereyPark]: 'Monterey Park',
-  [CityChoices.Norwalk]: 'Norwalk',
-  [CityChoices.Palmdale]: 'Palmdale',
-  [CityChoices.PalosVerdesEstates]: 'Palos Verdes Estates',
-  [CityChoices.Paramount]: 'Paramount',
-  [CityChoices.Pasadena]: 'Pasadena',
-  [CityChoices.PicoRivera]: 'Pico Rivera',
-  [CityChoices.Pomona]: 'Pomona',
-  [CityChoices.RanchoPalosVerdes]: 'Rancho Palos Verdes',
-  [CityChoices.RedondoBeach]: 'Redondo Beach',
-  [CityChoices.RollingHills]: 'Rolling Hills',
-  [CityChoices.RollingHillsEstates]: 'Rolling Hills Estates',
-  [CityChoices.Rosemead]: 'Rosemead',
-  [CityChoices.SanDimas]: 'San Dimas',
-  [CityChoices.SanFernando]: 'San Fernando',
-  [CityChoices.SanGabriel]: 'San Gabriel',
-  [CityChoices.SanMarino]: 'San Marino',
-  [CityChoices.SantaClarita]: 'Santa Clarita',
-  [CityChoices.SantaFeSprings]: 'Santa Fe Springs',
-  [CityChoices.SantaMonica]: 'Santa Monica',
-  [CityChoices.SierraMadre]: 'Sierra Madre',
-  [CityChoices.SignalHill]: 'Signal Hill',
-  [CityChoices.SouthElMonte]: 'South El Monte',
-  [CityChoices.SouthGate]: 'South Gate',
-  [CityChoices.SouthPasadena]: 'South Pasadena',
-  [CityChoices.TempleCity]: 'Temple City',
-  [CityChoices.Torrance]: 'Torrance',
-  [CityChoices.Venice]: 'Venice',
-  [CityChoices.Vernon]: 'Vernon',
-  [CityChoices.Walnut]: 'Walnut',
-  [CityChoices.WestCovina]: 'West Covina',
-  [CityChoices.WestHollywood]: 'West Hollywood',
-  [CityChoices.WestlakeVillage]: 'Westlake Village',
-  [CityChoices.WestLosAngeles]: 'West Los Angeles',
-  [CityChoices.Whittier]: 'Whittier',
-  [CityChoices.Wilmington]: 'Wilmington',
-};
-
 export const enumDisplaySpaChoices: { [key in SpaChoices]: string } = {
   [SpaChoices.Eight]: '8',
   [SpaChoices.Five]: '5',
@@ -269,3 +173,17 @@ export const enumDisplayFunderChoices: { [key in FunderChoices]: string } = {
   [FunderChoices.Other]: 'Other',
   [FunderChoices.Private]: 'Private',
 };
+
+/**
+ * Must match CITY_COUNCIL_DISTRICT_CHOICES in apps/betterangels-backend/shelters/enums.py
+ */
+export const CITY_COUNCIL_DISTRICT_UNINCORPORATED = 0;
+
+export function formatCityCouncilDistrict(
+  district: number | null | undefined
+): string {
+  if (district == null) return '';
+  if (district === CITY_COUNCIL_DISTRICT_UNINCORPORATED)
+    return 'Unincorporated';
+  return String(district);
+}

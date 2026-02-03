@@ -1,13 +1,18 @@
+import { useMutation } from '@apollo/client/react';
 import { useRouter } from 'expo-router';
 import { Dispatch, SetStateAction } from 'react';
 import {
   ClientProfileSectionEnum,
   getViewClientProfileRoute,
 } from '../../../../../../lib/screenRouting';
+import {
+  OperationMessageKind,
+  extractOperationInfoMessages,
+} from '../../../../../apollo';
 import { useSnackbar } from '../../../../../hooks';
 import { ClientProfileDocument } from '../../../../Client/__generated__/Client.generated';
 import { DeleteButton } from '../DeleteButton';
-import { useDeleteClientContactMutation } from './__generated__/deleteClientContact.generated';
+import { DeleteClientContactDocument } from './__generated__/deleteClientContact.generated';
 
 const deleteableItemName = 'Relevant Contact';
 
@@ -24,13 +29,15 @@ export function ClientContactDeleteBtn(props: TProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  const [deleteClientContact, { loading }] = useDeleteClientContactMutation();
+  const [deleteClientContact, { loading }] = useMutation(
+    DeleteClientContactDocument
+  );
 
   const onDelete = async () => {
     try {
       setIsLoading && setIsLoading(true);
 
-      const { errors } = await deleteClientContact({
+      const response = await deleteClientContact({
         variables: {
           id: relationId,
         },
@@ -45,8 +52,26 @@ export function ClientContactDeleteBtn(props: TProps) {
         errorPolicy: 'all',
       });
 
-      if (errors?.length) {
-        throw errors[0];
+      const { error } = response;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      const operationErrors = extractOperationInfoMessages(
+        response,
+        'deleteClientContact',
+        [
+          OperationMessageKind.Error,
+          OperationMessageKind.Validation,
+          OperationMessageKind.Permission,
+        ]
+      );
+
+      if (operationErrors?.length) {
+        const errMessage = operationErrors.map((e) => e.message).join(', ');
+
+        throw new Error(errMessage);
       }
 
       const returnRoute = getViewClientProfileRoute({
@@ -56,7 +81,9 @@ export function ClientContactDeleteBtn(props: TProps) {
 
       router.replace(returnRoute);
     } catch (e) {
-      console.error('Error deleting Relevant Contact:', e);
+      console.error(
+        `Error deleting Relevant Contact Id [${relationId}] for clientProfileId [${clientProfileId}]: ${e}`
+      );
 
       showSnackbar({
         message: 'Something went wrong. Please try again.',

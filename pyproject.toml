@@ -24,8 +24,7 @@ profile = "black"
 skip_glob = ["*/migrations/*"]
 
 [tool.poetry.dependencies]
-python = "3.13.5"
-pre-commit = "^4.3.0"
+python = "3.14.2"
 
 [tool.poetry.dependencies.betterangels-backend]
 path = "apps/betterangels-backend"
@@ -34,26 +33,26 @@ develop = true
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^7.3.0"
-isort = "^6.0.1"
-black = "^25.1.0"
-flake8-bugbear = "^24.12.12"
-django-stubs-ext = "5.2.2"
+isort = "^7.0.0"
+black = "^25.12.0"
+flake8-bugbear = "^25.11.29"
+django-stubs-ext = "5.2.8"
 djlint = "^1.36.4"
-django-stubs = { extras = ["compatible-mypy"], version = "5.2.2" }
-celery-types = "^0.23.0"
-vcrpy = "^7.0.0"
+django-stubs = { extras = ["compatible-mypy"], version = "5.2.8" }
+celery-types = "^0.24.0"
+vcrpy = "^8.1.0"
 djangorestframework-stubs = { extras = [
     "compatible-mypy",
-], version = "^3.16.1" }
-ipython = "^9.4.0"
+], version = "^3.16.6" }
+ipython = "^9.9.0"
 pytest-django = "^4.11.1"
-boto3-stubs = { extras = ["essential"], version = "^1.40.1" }
-model-bakery = "^1.20.5"
+boto3-stubs = { extras = ["essential"], version = "^1.42.25" }
+model-bakery = "^1.21.0"
 unittest-parametrize = "^1.6.0"
-time-machine = "^2.16.0"
+time-machine = "^3.2.0"
 types-python-dateutil = "^2.9.0.20250708"
 types-gevent = "^25.4.0.20250801"
-pre-commit = "^4.3.0"
+pre-commit = "^4.3.1"
 
 
 [tool.pytest.ini_options]

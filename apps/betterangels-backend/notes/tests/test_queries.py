@@ -10,8 +10,13 @@ from common.tests.utils import GraphQLBaseTestCase
 from deepdiff import DeepDiff
 from django.test import ignore_warnings
 from model_bakery import baker
-from notes.enums import ServiceEnum, ServiceRequestStatusEnum
-from notes.models import Note, OrganizationService, OrganizationServiceCategory
+from notes.enums import ServiceRequestStatusEnum
+from notes.models import (
+    Note,
+    OrganizationService,
+    OrganizationServiceCategory,
+    ServiceRequest,
+)
 from notes.tests.utils import NoteGraphQLBaseTestCase, ServiceRequestGraphQLBaseTestCase
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 from unittest_parametrize import parametrize
@@ -42,6 +47,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         )
         # Add purposes and next steps
         note = Note.objects.get(pk=note_id)
+        self.provided_services = [baker.make(ServiceRequest, service=OrganizationService.objects.get(label="Book"))]
+        self.requested_services = [baker.make(ServiceRequest, service=OrganizationService.objects.get(label="Tarp"))]
         note.provided_services.set(self.provided_services)
         note.requested_services.set(self.requested_services)
 
@@ -58,16 +65,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
-
-        # TODO: remove in cutover
-        assert self.provided_services[0].service
-        assert self.provided_services[1].service
-        assert self.requested_services[0].service
-        assert self.requested_services[1].service
-        assert self.provided_services[0].service_enum
-        assert self.provided_services[1].service_enum
-        assert self.requested_services[0].service_enum
-        assert self.requested_services[1].service_enum
 
         note = response["data"]["note"]
         expected_note = {
@@ -94,38 +91,18 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "providedServices": [
                 {
                     "id": str(self.provided_services[0].id),
-                    "service": {"id": ANY, "label": "Bag(s)"},
-                    "serviceEnum": ServiceEnum(self.provided_services[0].service_enum).name,
-                    "serviceOther": self.provided_services[0].service_other,
+                    "service": {"id": ANY, "label": "Book"},
                     "dueBy": self.provided_services[0].due_by,
                     "status": ServiceRequestStatusEnum(self.provided_services[0].status).name,
-                },
-                {
-                    "id": str(self.provided_services[1].id),
-                    "service": {"id": ANY, "label": "Book"},
-                    "serviceEnum": ServiceEnum(self.provided_services[1].service_enum).name,
-                    "serviceOther": self.provided_services[1].service_other,
-                    "dueBy": self.provided_services[1].due_by,
-                    "status": ServiceRequestStatusEnum(self.provided_services[1].status).name,
-                },
+                }
             ],
             "requestedServices": [
                 {
                     "id": str(self.requested_services[0].id),
-                    "service": {"id": ANY, "label": "EBT"},
-                    "serviceEnum": ServiceEnum(self.requested_services[0].service_enum).name,
-                    "serviceOther": self.requested_services[0].service_other,
+                    "service": {"id": ANY, "label": "Tarp"},
                     "dueBy": self.requested_services[0].due_by,
                     "status": ServiceRequestStatusEnum(self.requested_services[0].status).name,
-                },
-                {
-                    "id": str(self.requested_services[1].id),
-                    "service": {"id": ANY, "label": "Food"},
-                    "serviceEnum": ServiceEnum(self.requested_services[1].service_enum).name,
-                    "serviceOther": self.requested_services[1].service_other,
-                    "dueBy": self.requested_services[1].due_by,
-                    "status": ServiceRequestStatusEnum(self.requested_services[1].status).name,
-                },
+                }
             ],
             "tasks": [{"id": str(task["id"]), "summary": "task summary"}],
         }
@@ -392,8 +369,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self._update_note_fixture({"id": oldest_note["id"], "interactedAt": "2024-01-10T10:11:12+00:00"})
 
         query = """
-            query Notes($order: NoteOrder) {
-                notes(order: $order) {
+            query Notes($ordering: [NoteOrder!]) {
+                notes(ordering: $ordering) {
                     results{
                         id
                     }
@@ -404,7 +381,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         # Test descending order
         expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query, variables={"order": {"interactedAt": "DESC"}})
+            response = self.execute_graphql(query, variables={"ordering": [{"interactedAt": "DESC"}]})
 
         self.assertEqual(
             [n["id"] for n in response["data"]["notes"]["results"]],
@@ -413,7 +390,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         # Test ascending order
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query, variables={"order": {"interactedAt": "ASC"}})
+            response = self.execute_graphql(query, variables={"ordering": [{"interactedAt": "ASC"}]})
 
         self.assertEqual(
             [n["id"] for n in response["data"]["notes"]["results"]],
@@ -678,6 +655,11 @@ class InteractionAuthorQueryTestCase(GraphQLBaseTestCase):
         response = self.execute_graphql(query, variables={"filters": filters})
         self.assertEqual(response["data"]["interactionAuthors"]["totalCount"], expected_results_count)
 
+        if expected_authors:
+            authors = response["data"]["interactionAuthors"]["results"]
+            author_ids = set([int(u["id"]) for u in authors])
+            expected_authors_ids = set([self.authors_map[u].pk for u in expected_authors])
+            self.assertEqual(author_ids, expected_authors_ids, f"Not equal, {author_ids, expected_authors_ids}")
         if expected_authors:
             authors = response["data"]["interactionAuthors"]["results"]
             author_ids = set([int(u["id"]) for u in authors])

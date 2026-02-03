@@ -1,10 +1,12 @@
 import { formatDateStatic } from '@monorepo/expo/shared/ui-components';
 import {
-  HmisClientType,
+  HmisClientProfileType,
   HmisDobQualityEnum,
   HmisVeteranStatusEnum,
 } from '../../../../../apollo';
 import {
+  enumDisplayLanguage,
+  enumDisplayLivingSituation,
   enumHmisDobQuality,
   enumHmisVeteranStatusEnum,
 } from '../../../../../static';
@@ -15,19 +17,25 @@ import {
 } from '../../../../../ui-components';
 
 type TProps = {
-  client?: HmisClientType;
+  client?: HmisClientProfileType;
 };
 
 export function PersonalInfoCardHmis(props: TProps) {
   const { client } = props;
 
-  const { dob, dobDataQuality, data } = client || {};
-  const { veteranStatus } = data || {};
+  const {
+    birthDate,
+    dobQuality,
+    veteran,
+    californiaId,
+    preferredLanguage,
+    livingSituation,
+  } = client || {};
 
   const formattedDob =
-    dob &&
+    birthDate &&
     formatDateStatic({
-      date: dob,
+      date: birthDate,
       inputFormat: 'yyyy-MM-dd',
     });
 
@@ -38,13 +46,23 @@ export function PersonalInfoCardHmis(props: TProps) {
     },
     {
       header: ['Quality of DOB'],
-      rows: [[enumHmisDobQuality[dobDataQuality as HmisDobQualityEnum]]],
+      rows: [[enumHmisDobQuality[dobQuality as HmisDobQualityEnum]]],
     },
     {
       header: ['Veteran Status'],
-      rows: [
-        [enumHmisVeteranStatusEnum[veteranStatus as HmisVeteranStatusEnum]],
-      ],
+      rows: [[enumHmisVeteranStatusEnum[veteran as HmisVeteranStatusEnum]]],
+    },
+    {
+      header: ['CA ID#'],
+      rows: [[californiaId]],
+    },
+    {
+      header: ['Preferred Language'],
+      rows: [[preferredLanguage && enumDisplayLanguage[preferredLanguage]]],
+    },
+    {
+      header: ['Living Situation'],
+      rows: [[livingSituation && enumDisplayLivingSituation[livingSituation]]],
     },
   ];
 

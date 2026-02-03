@@ -1,5 +1,5 @@
 import {
-  HmisClientType,
+  HmisClientProfileType,
   HmisNameQualityEnum,
   HmisSuffixEnum,
 } from '../../../../../apollo';
@@ -14,14 +14,14 @@ import {
 } from '../../../../../ui-components';
 
 type TProps = {
-  client?: HmisClientType;
+  client?: HmisClientProfileType;
 };
 
 export function FullNameCardHmis(props: TProps) {
   const { client } = props;
 
-  const { firstName, lastName, nameDataQuality, data } = client || {};
-  const { middleName, alias, nameSuffix } = data || {};
+  const { firstName, lastName, nameMiddle, nameQuality, alias, nameSuffix } =
+    client || {};
 
   const content: TClientProfileCardItem[] = [
     {
@@ -30,7 +30,7 @@ export function FullNameCardHmis(props: TProps) {
     },
     {
       header: ['Middle Name'],
-      rows: [[middleName]],
+      rows: [[nameMiddle]],
     },
     {
       header: ['Last Name'],
@@ -38,7 +38,7 @@ export function FullNameCardHmis(props: TProps) {
     },
     {
       header: ['Name Data Quality'],
-      rows: [[enumHmisNameQuality[nameDataQuality as HmisNameQualityEnum]]],
+      rows: [[enumHmisNameQuality[nameQuality as HmisNameQualityEnum]]],
     },
     {
       header: ['Nickname'],
