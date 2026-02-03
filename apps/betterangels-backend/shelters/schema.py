@@ -5,7 +5,6 @@ from strawberry.types import Info
 from shelters.enums import StatusChoices
 from common.permissions.utils import IsAuthenticated
 from django.db.models import QuerySet
-from notes.permissions import NotePermissions
 from shelters.models import Shelter
 from shelters.types import ShelterType
 from strawberry_django.pagination import OffsetPaginated
@@ -29,7 +28,7 @@ class Query:
     def shelters_by_organization(
         self,
         info: Info,
-        organization_id: strawberry.ID, 
+        organization_id: strawberry.ID,
     ) -> QuerySet[Shelter]:
         user = info.context.request.user
         user_org_id = getattr(user, "organization_id", None)
