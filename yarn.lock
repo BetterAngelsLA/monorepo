@@ -5636,8 +5636,8 @@ __metadata:
     libphonenumber-js: "npm:^1.12.6"
     metro: "npm:^0.83.1"
     metro-react-native-babel-transformer: "npm:^0.77.0"
-    newrelic-react-native-agent: "npm:^1.6.0"
     mime: "npm:^4.1.0"
+    newrelic-react-native-agent: "npm:^1.5.10"
     nx: "npm:22.3.3"
     nx-cloud: "npm:19.1.0"
     postcss: "npm:8.4.38"
@@ -21153,7 +21153,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"newrelic-react-native-agent@npm:^1.6.0":
+"newrelic-react-native-agent@npm:^1.5.10":
   version: 1.6.0
   resolution: "newrelic-react-native-agent@npm:1.6.0"
   dependencies:
