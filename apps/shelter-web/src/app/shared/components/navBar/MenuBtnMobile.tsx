@@ -3,7 +3,6 @@ import { useAtom } from 'jotai';
 import { Link } from 'react-router-dom';
 import {
   aboutUsPath,
-  operatorPath,
   shelterHomePath,
 } from '../../../routes/routePaths';
 import { flyoutAtom } from '../../atoms/flyoutAtom';
@@ -33,7 +32,7 @@ export function MenuBtnMobile() {
         <Link aria-label="navigate to about us" to={aboutUsPath}>
           About Us
         </Link>
-        <Link aria-label="navigate to about us" to={operatorPath}>
+        <Link aria-label="navigate to about us" to="/operator">
           Operator Portal
         </Link>
       </div>

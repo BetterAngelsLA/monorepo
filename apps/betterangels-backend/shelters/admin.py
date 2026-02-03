@@ -8,19 +8,22 @@ import requests
 from betterangels_backend import settings
 from common.models import Location
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.core.files.base import ContentFile
+from django.db import models, transaction
 from django.db.models import F, OuterRef, QuerySet, Subquery
 from django.db.models.functions import Cast, JSONObject
 from django.forms import BaseFormSet, TimeInput
-from django.http import HttpRequest
-from django.urls import reverse
+from django.http import HttpRequest, HttpResponseRedirect
+from django.shortcuts import redirect
+from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 from django_choices_field import TextChoicesField
 from django_select2.forms import Select2MultipleWidget
 from import_export import resources
@@ -1013,3 +1016,103 @@ class BedAdmin(admin.ModelAdmin):
     list_display = ("id", "shelter_id", "status", "created_at", "updated_at")
     list_filter = ("status",)
     search_fields = ("shelter_id__name",)
+
+    def get_urls(self) -> list[Any]:
+        urls = super().get_urls()
+        custom_urls: list[Any] = [
+            path(
+                "<path:object_id>/clone/",
+                self.admin_site.admin_view(self.clone_view),
+                name="shelters_shelter_clone",
+            ),
+        ]
+        return cast(list[Any], custom_urls + urls)
+
+    def _copy_file_field(self, original_file_field: Any) -> Optional[ContentFile]:
+        """Return a duplicated ContentFile with '_copy' suffix, or None if source is empty."""
+        if not original_file_field or not original_file_field.name:
+            return None
+
+        original_file = original_file_field.file
+        original_name = original_file_field.name
+
+        name_parts = original_name.rsplit(".", 1)
+        new_name = f"{name_parts[0]}_copy.{name_parts[1]}" if len(name_parts) == 2 else f"{original_name}_copy"
+
+        original_file.seek(0)
+        return ContentFile(original_file.read(), name=new_name)
+
+    def _clone_objects_with_files(
+        self, queryset: QuerySet[Union[ExteriorPhoto, InteriorPhoto, Video]], copy: Shelter
+    ) -> None:
+        """Clone objects with shelter and file fields, duplicating files."""
+        for obj in queryset:
+            obj.pk = None
+            obj.shelter = copy
+            content_file = self._copy_file_field(obj.file)
+            if content_file:
+                obj.file = content_file
+            obj.save()
+
+    def _clone_related_photos_and_videos(self, original: Shelter, copy: Shelter) -> None:
+        """Clone photos and videos with file duplication and metadata preservation."""
+        for model_class in (ExteriorPhoto, InteriorPhoto, Video):
+            self._clone_objects_with_files(model_class.objects.filter(shelter=original), copy)
+
+    def _clone_related_contacts(self, original: Shelter, copy: Shelter) -> None:
+        """Clone additional contacts."""
+        for contact in ContactInfo.objects.filter(shelter=original):
+            contact.pk = None
+            contact.shelter = copy
+            contact.save()
+
+    def _clone_many_to_many_fields(self, original: Shelter, copy: Shelter) -> None:
+        """Copy all many-to-many relationships."""
+        for field in Shelter._meta.get_fields():
+            if isinstance(field, models.ManyToManyField):
+                getattr(copy, field.name).set(getattr(original, field.name).all())
+
+    def clone_view(self, request: HttpRequest, object_id: str) -> HttpResponseRedirect:
+        """Clone a shelter instance with all related objects."""
+        shelter = self.get_object(request, object_id)
+        if shelter is None or not self.has_change_permission(request, shelter):
+            msg = (
+                f'{self.opts.verbose_name} with ID "{object_id}" is unavailable or you do not have '
+                "permission to access it."
+            )
+            self.message_user(request, msg, messages.WARNING)
+            return HttpResponseRedirect(reverse("admin:index", current_app=self.admin_site.name))
+
+        if not self.has_add_permission(request):
+            msg = (
+                f"You do not have permission to add {self.opts.verbose_name.lower()} instances. "
+                "Cloning requires add permission."
+            )
+            self.message_user(request, msg, messages.WARNING)
+            return HttpResponseRedirect(reverse("admin:index", current_app=self.admin_site.name))
+
+        with transaction.atomic():
+            # Create a copy of the shelter
+            shelter_copy = Shelter.objects.get(pk=shelter.pk)
+            shelter_copy.pk = None
+            shelter_copy.name = f"{shelter.name} (Copy)"
+            shelter_copy.status = StatusChoices.PENDING
+            shelter_copy.save()
+
+            # Clone all related data
+            self._clone_many_to_many_fields(shelter, shelter_copy)
+            self._clone_related_contacts(shelter, shelter_copy)
+            self._clone_related_photos_and_videos(shelter, shelter_copy)
+
+        messages.success(request, _("Shelter '%s' has been cloned successfully.") % shelter.name)
+        return redirect("admin:shelters_shelter_change", shelter_copy.pk)
+
+
+@admin.register(City)
+class CityAdmin(admin.ModelAdmin):
+    """Admin interface for managing cities."""
+
+    list_display = ("name", "created_at")
+    search_fields = ("name",)
+    readonly_fields = ("created_at",)
+    ordering = ("name",)
