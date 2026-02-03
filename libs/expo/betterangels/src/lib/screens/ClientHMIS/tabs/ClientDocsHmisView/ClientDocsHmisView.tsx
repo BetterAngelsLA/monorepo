@@ -25,34 +25,32 @@ export function ClientDocsHmisView({
   client: HmisClientProfileType | undefined;
 }) {
   const { showModalScreen } = useModalScreen();
-  const {
-    categories = [],
-    fileNames = [],
-    error: categoryAndNamesError,
-  } = useHmisFileCategoryAndNames();
+  const meta = useHmisFileCategoryAndNames();
 
   useEffect(() => {
-    if (categoryAndNamesError) {
+    if (meta.error) {
       console.error(
         '[ClientDocsHmisView] File categories/names failed to load:',
-        categoryAndNamesError
+        meta.error
       );
     }
-  }, [categoryAndNamesError]);
-  const {
-    data: files = [],
-    error,
-    isLoading,
-    isError,
-  } = useClientFiles(client?.id, client?.hmisId as string | undefined);
+  }, [meta.error]);
+
+  const filesQuery = useClientFiles(
+    client?.id,
+    client?.hmisId as string | undefined
+  );
+
+  const isLoading = meta.loading || filesQuery.isLoading;
+  const files = useMemo(() => filesQuery.data ?? [], [filesQuery.data]);
 
   const [expanded, setExpanded] = useState<undefined | string | null>(null);
 
   const filesByCategory = useMemo(
-    () => groupFilesByCategory(files, categories),
-    [files, categories]
+    () => groupFilesByCategory(files, meta.categories),
+    [files, meta.categories]
   );
-  const showEmpty = !isLoading && !isError && files.length === 0;
+  const showEmpty = !isLoading && !filesQuery.isError && files.length === 0;
 
   return (
     <ScrollView
@@ -84,17 +82,15 @@ export function ClientDocsHmisView({
         </IconButton>
       </View>
       <View style={{ gap: Spacings.xs, marginTop: Spacings.sm }}>
-        {isLoading && <LoadingView />}
-
-        {isError && (
+        {isLoading ? (
+          <LoadingView />
+        ) : filesQuery.isError ? (
           <TextRegular color={Colors.ERROR_DARK}>
-            {error instanceof Error
-              ? error.message
+            {filesQuery.error instanceof Error
+              ? filesQuery.error.message
               : 'Failed to load documents.'}
           </TextRegular>
-        )}
-
-        {showEmpty && (
+        ) : showEmpty ? (
           <View style={[styles.container]}>
             <View
               style={{
@@ -113,21 +109,21 @@ export function ClientDocsHmisView({
               No documents
             </TextBold>
           </View>
+        ) : (
+          filesByCategory.map(({ category, files: categoryFiles }) => (
+            <HmisDocuments
+              key={String(category?.id ?? 'other')}
+              expanded={expanded}
+              setExpanded={setExpanded}
+              accordionKey={String(category?.id ?? 'other')}
+              title={category?.name ?? `Category ${category?.id}`}
+              data={categoryFiles}
+              fileNames={meta.fileNames}
+              clientId={client?.id}
+              hmisId={client?.hmisId ?? undefined}
+            />
+          ))
         )}
-
-        {filesByCategory.map(({ category, files: categoryFiles }) => (
-          <HmisDocuments
-            key={String(category?.id ?? 'other')}
-            expanded={expanded}
-            setExpanded={setExpanded}
-            accordionKey={String(category?.id ?? 'other')}
-            title={category?.name ?? `Category ${category?.id}`}
-            data={categoryFiles}
-            fileNames={fileNames}
-            clientId={client?.id}
-            hmisId={client?.hmisId ?? undefined}
-          />
-        ))}
       </View>
     </ScrollView>
   );
