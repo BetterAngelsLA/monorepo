@@ -1,9 +1,7 @@
-import {
-  HMIS_REST_API_MAX_PER_PAGE,
-  HmisHttpQueryParams,
-} from '@monorepo/expo/shared/clients';
+import { HMIS_REST_API_MAX_PER_PAGE } from './hmisClient';
+import type { HmisHttpQueryParams } from './hmisTypes';
 
-type HmisLinkPaginatedResponse<T> = {
+export type HmisLinkPaginatedResponse<T> = {
   items: T[];
   _links?: {
     next?: { href: string };

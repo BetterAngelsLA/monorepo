@@ -97,6 +97,9 @@ export function ClientHMIS(props: TProps) {
         tabs={hmisTabs}
         selectedTab={currentTab}
         onTabPress={setCurrentTab}
+        getLabel={(tab) =>
+          tab === ClientViewTabEnum.Interactions ? 'Notes' : tab
+        }
       />
 
       {renderTabComponent(currentTab, { client, openCard })}

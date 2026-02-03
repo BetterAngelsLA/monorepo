@@ -1,4 +1,5 @@
 export * from './ApiConfigProvider';
+export * from './fetchAllPages';
 export * from './hmisClient';
 export { createHmisClient as default } from './hmisClient';
 export * from './hmisTypes';
