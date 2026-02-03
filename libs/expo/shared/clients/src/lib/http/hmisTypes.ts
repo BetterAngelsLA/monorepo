@@ -222,11 +222,9 @@ export interface ClientFile {
   };
   file?: {
     id: number;
+    added_date: string;
     filename: string;
     filesize: number;
-    added_date: string;
-    encodedPreviewFileContent?: string;
-    encodedThumbnailFileContent?: string;
   };
   fileName?: {
     id: number;

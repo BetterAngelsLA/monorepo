@@ -1,14 +1,13 @@
+import { fetchAllPages } from '@monorepo/expo/shared/clients';
+import type { FileCategory, FileName } from '@monorepo/expo/shared/clients';
 import { useQuery } from '@tanstack/react-query';
 import { useHmisClient } from '../useHmisClient';
 
-import { fetchAllPages } from './fetchAllPages';
 import {
   HmisFileCategoriesArraySchema,
   HmisFileNamesArraySchema,
 } from './schemas';
 import { validateNameCategories } from './validateNameCategories';
-
-import type { FileCategory, FileName } from '@monorepo/expo/shared/clients';
 
 type TResult = {
   categories: FileCategory[];
