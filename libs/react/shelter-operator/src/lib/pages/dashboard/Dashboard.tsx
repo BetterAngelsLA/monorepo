@@ -1,17 +1,18 @@
-'use client';
-
+import { useAtom, useAtomValue } from 'jotai';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useViewSheltersByOrganizationQuery } from '../../graphql/__generated__/shelters.generated';
+import { filteredSheltersAtom, sheltersAtom } from '../../atoms/shelters';
 import { ShelterRow } from '../../components/ShelterRow';
+import ShelterSearchBar from '../../components/ShelterSearchBar';
+import { useViewSheltersByOrganizationQuery } from '../../graphql/__generated__/shelters.generated';
+
 export type Shelter = {
   id: string;
-  name: string | null;
+  name: string;
   address: string | null;
   totalBeds: number | null;
   tags: string[] | null;
 };
-
 
 const PAGE_SIZE = 8;
 
@@ -20,61 +21,91 @@ export default function Dashboard() {
     variables: { organizationId: '1' },
   });
 
-  useEffect(() => {
-    if (data?.sheltersByOrganization?.results) {
-      console.log('[Backend shelters]', data.sheltersByOrganization.results);
-    }
-  }, [data]);
-
-  if (error) console.error('[Dashboard GraphQL error]', error);
-
-  const backendShelters: Shelter[] =
-    data?.sheltersByOrganization?.results?.map((s: any) => ({
-      id: String(s.id),
-      name: s.name ?? null,
-      address: s.location?.place ?? null,
-      totalBeds: s.totalBeds ?? null,
-      tags: null,
-    })) ?? [];
-
-  const allShelters: Shelter[] = [...backendShelters];
+  const [allShelters, setAllShelters] = useAtom(sheltersAtom);
+  const filteredShelters = useAtomValue(filteredSheltersAtom);
 
   const [page, setPage] = useState(1);
 
-  const totalPages = Math.max(1, Math.ceil(allShelters.length / PAGE_SIZE));
+  // load shelters into global atom
+  useEffect(() => {
+    if (data?.sheltersByOrganization?.results) {
+      const backendShelters: Shelter[] =
+        data.sheltersByOrganization.results.map((s: any) => ({
+          id: String(s.id),
+          name: s.name ?? '',
+          address: s.location?.place ?? null,
+          totalBeds: s.totalBeds ?? null,
+          tags: null,
+        }));
+      setAllShelters(backendShelters);
+    }
+  }, [data, setAllShelters]);
 
+  if (error) console.error('[Dashboard GraphQL error]', error);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredShelters.length / PAGE_SIZE)
+  );
   const paginatedShelters = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     const end = start + PAGE_SIZE;
-    return allShelters.slice(start, end);
-  }, [page, allShelters]);
+    return filteredShelters.slice(start, end);
+  }, [page, filteredShelters]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', padding: '32px', width: '100%' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '32px',
+        width: '100%',
+      }}
+    >
       {/* Back button */}
       <div style={{ marginBottom: '24px' }}>
         <Link to="/">
-          <button style={{
-            padding: '8px 16px',
-            border: '1px solid #d1d5db',
-            borderRadius: '8px',
-            backgroundColor: 'white',
-            fontSize: '14px',
-            cursor: 'pointer'
-          }}>
+          <button
+            style={{
+              padding: '8px 16px',
+              border: '1px solid #d1d5db',
+              borderRadius: '8px',
+              backgroundColor: 'white',
+              fontSize: '14px',
+              cursor: 'pointer',
+            }}
+          >
             Back
           </button>
         </Link>
       </div>
 
+      {/* Search bar */}
+      <ShelterSearchBar />
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '16px',
+          fontSize: '14px',
+          color: '#4b5563',
+        }}
+      >
+        {filteredShelters.length} Results
+      </div>
+
       {/* TABLE */}
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '16px',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-        overflow: 'hidden',
-        width: '100%'
-      }}>
+      <div
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden',
+          width: '100%',
+        }}
+      >
         {/* HEADER */}
         <div
           style={{
@@ -88,7 +119,7 @@ export default function Dashboard() {
             letterSpacing: '0.05em',
             color: '#374151',
             backgroundColor: '#f9fafb',
-            borderBottom: '1px solid #e5e7eb'
+            borderBottom: '1px solid #e5e7eb',
           }}
         >
           <div>Shelter Name</div>
@@ -103,14 +134,16 @@ export default function Dashboard() {
       </div>
 
       {/* PAGINATION */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginTop: '16px',
-        fontSize: '14px',
-        color: '#4b5563'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: '16px',
+          fontSize: '14px',
+          color: '#4b5563',
+        }}
+      >
         <div>
           Page {page} of {totalPages}
         </div>
@@ -123,7 +156,7 @@ export default function Dashboard() {
               borderRadius: '8px',
               backgroundColor: 'white',
               cursor: page === 1 ? 'not-allowed' : 'pointer',
-              opacity: page === 1 ? 0.4 : 1
+              opacity: page === 1 ? 0.4 : 1,
             }}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
@@ -138,7 +171,7 @@ export default function Dashboard() {
               borderRadius: '8px',
               backgroundColor: 'white',
               cursor: page === totalPages ? 'not-allowed' : 'pointer',
-              opacity: page === totalPages ? 0.4 : 1
+              opacity: page === totalPages ? 0.4 : 1,
             }}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
