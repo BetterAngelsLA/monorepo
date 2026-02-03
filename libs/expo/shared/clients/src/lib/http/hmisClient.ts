@@ -8,14 +8,14 @@ import {
   userAgentInterceptor,
 } from '../common/interceptors';
 import {
-  ALLOWED_FILE_TYPES,
-  AllowedFileType,
   ClientFilesListParams,
   ClientFilesResponse,
   ClientFileUploadRequest,
   ClientFileUploadResponse,
   FileCategoriesResponse,
   FileNamesResponse,
+  HMIS_ALLOWED_FILE_TYPES,
+  HmisAllowedFileType,
   HmisError,
   HmisHttpQueryParams,
   HmisRequestOptions,
@@ -216,18 +216,18 @@ class HmisClient {
     file: {
       content: string;
       name: string;
-      mimeType: AllowedFileType;
+      mimeType: HmisAllowedFileType;
     },
     categoryId: number,
     fileNameId: number,
     isPrivate: boolean | null = null
   ): Promise<ClientFileUploadResponse> {
     // Validate file type
-    if (!ALLOWED_FILE_TYPES.includes(file.mimeType)) {
+    if (!HMIS_ALLOWED_FILE_TYPES.includes(file.mimeType)) {
       throw new HmisError(
         `File type "${
           file.mimeType
-        }" is not allowed. Allowed: ${ALLOWED_FILE_TYPES.join(', ')}`,
+        }" is not allowed. Allowed: ${HMIS_ALLOWED_FILE_TYPES.join(', ')}`,
         400
       );
     }

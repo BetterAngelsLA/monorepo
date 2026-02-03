@@ -1,3 +1,5 @@
+import { MimeTypes } from '@monorepo/expo/shared/static';
+
 /**
  * HMIS REST API TypeScript types
  */
@@ -89,23 +91,23 @@ export interface HmisValidationError {
 /**
  * Allowed MIME types for client file uploads
  */
-export const ALLOWED_FILE_TYPES = [
-  'image/jpeg',
-  'image/jpg',
-  'image/gif',
-  'image/png',
-  'image/tiff',
-  'image/heic',
-  'text/plain',
-  'application/msword',
-  'application/pdf',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.openxmlformats-officedocument.word',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+export const HMIS_ALLOWED_FILE_TYPES = [
+  MimeTypes.JPEG,
+  MimeTypes.JPG,
+  MimeTypes.GIF,
+  MimeTypes.PNG,
+  MimeTypes.TIFF,
+  MimeTypes.HEIC,
+  MimeTypes.TEXT,
+  MimeTypes.PDF,
+  MimeTypes.MS_WORD,
+  MimeTypes.MS_EXCEL,
+  MimeTypes.WORD_OPENXML,
+  MimeTypes.EXCEL_OPENXML,
+  MimeTypes.WORD_OPENXML_LEGACY,
 ] as const;
 
-export type AllowedFileType = (typeof ALLOWED_FILE_TYPES)[number];
+export type HmisAllowedFileType = (typeof HMIS_ALLOWED_FILE_TYPES)[number];
 
 /**
  * Client file upload request payload
