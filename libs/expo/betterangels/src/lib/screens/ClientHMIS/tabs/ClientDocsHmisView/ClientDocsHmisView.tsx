@@ -1,13 +1,16 @@
-import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { FileSearchIcon, PlusIcon } from '@monorepo/expo/shared/icons';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { StyleSheet, View } from 'react-native';
+
 import {
   IconButton,
   LoadingView,
+  TextBold,
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView } from 'react-native';
 import { HmisClientProfileType } from '../../../../apollo';
 import { useHmisFileCategoryAndNames } from '../../../../hooks';
 import { useClientFiles } from '../../../../hooks/hmisFileMetadata';
@@ -92,9 +95,24 @@ export function ClientDocsHmisView({
         )}
 
         {showEmpty && (
-          <TextRegular color={Colors.NEUTRAL_DARK}>
-            No documents found.
-          </TextRegular>
+          <View style={[styles.container]}>
+            <View
+              style={{
+                height: 90,
+                width: 90,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: Radiuses.xxxl,
+                backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
+                marginBottom: Spacings.md,
+              }}
+            >
+              <FileSearchIcon size="2xl" color={Colors.PRIMARY} />
+            </View>
+            <TextBold mb="xs" size="sm">
+              No documents
+            </TextBold>
+          </View>
         )}
 
         {filesByCategory.map(({ category, files: categoryFiles }) => (
@@ -114,3 +132,11 @@ export function ClientDocsHmisView({
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 100,
+  },
+});
