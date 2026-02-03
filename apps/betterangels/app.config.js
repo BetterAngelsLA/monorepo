@@ -77,7 +77,14 @@ export default {
       'newrelic-react-native-agent',
       '@config-plugins/react-native-blob-util',
       '@config-plugins/react-native-pdf',
-      'expo-build-properties',
+      [
+        'expo-build-properties',
+        {
+          ios: {
+            deploymentTarget: '16.0',
+          },
+        },
+      ],
       [
         'expo-dev-client',
         {

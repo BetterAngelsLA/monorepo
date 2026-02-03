@@ -274,33 +274,3 @@ export const includeCredentialsInterceptor: FetchInterceptor = async (
 ) => {
   return next(input, { ...init, credentials: 'include' });
 };
-
-// ============================================================================
-// HEADER HELPERS (for direct header composition in non-fetch clients)
-// ============================================================================
-
-/**
- * Returns User-Agent header object
- */
-export const getUserAgentHeaders = (): HeadersObject => ({
-  [HEADER_NAMES.USER_AGENT]: MODERN_BROWSER_USER_AGENT,
-});
-
-/**
- * Gets HMIS-specific authentication headers for direct HMIS API calls
- * Uses Bearer token format for direct HMIS REST API communication
- * Note: This is different from backend GraphQL requests which use X-HMIS-Token header
- */
-export const getHmisAuthHeaders = async (
-  _hmisApiUrl: string
-): Promise<HeadersObject> => {
-  const authToken = await getHmisAuthToken();
-
-  if (authToken) {
-    return {
-      Authorization: `Bearer ${authToken}`,
-    };
-  }
-
-  return {};
-};
