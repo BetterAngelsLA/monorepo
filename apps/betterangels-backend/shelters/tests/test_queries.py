@@ -630,6 +630,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         from django.contrib.auth import get_user_model
         from django.contrib.auth.models import Permission
         from notes.permissions import NotePermissions
+
         # Arrange orgs + shelters
         org = organization_recipe.make()
         other_org = organization_recipe.make()
