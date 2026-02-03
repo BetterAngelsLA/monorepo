@@ -204,6 +204,10 @@ export function HouseholdMemberForm(props: TProps) {
                 }}
                 value={value || undefined}
                 onChange={onChange}
+                onDelete={() => {
+                  onChange(null);
+                  clearErrors('dateOfBirth');
+                }}
                 error={!!errors.dateOfBirth?.message}
               />
             )}
