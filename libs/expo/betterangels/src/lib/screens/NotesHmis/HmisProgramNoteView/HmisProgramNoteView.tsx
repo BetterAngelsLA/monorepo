@@ -83,12 +83,12 @@ export function HmisProgramNoteView(props: TProps) {
       <View style={styles.container}>
         <HmisProgramNoteTitle hmisNote={hmisNote} />
 
-        {!!clientName && <TextBold>{clientName}</TextBold>}
+        {!!clientName && <TextBold selectable>{clientName}</TextBold>}
 
         {programName && (
           <View>
             <TextBold mb="xs">Program</TextBold>
-            <TextRegular>{programName}</TextRegular>
+            <TextRegular selectable>{programName}</TextRegular>
           </View>
         )}
         {hmisNote.location?.point && <HmisNoteLocation hmisNote={hmisNote} />}
@@ -102,7 +102,7 @@ export function HmisProgramNoteView(props: TProps) {
           <View>
             <TextBold mb="xs">Note</TextBold>
             <View style={styles.noteContainer}>
-              <TextRegular>{sanitizedNote}</TextRegular>
+              <TextRegular selectable>{sanitizedNote}</TextRegular>
             </View>
           </View>
         )}
