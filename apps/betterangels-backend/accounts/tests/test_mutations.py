@@ -251,7 +251,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
             "lastName": "NewLast",
         }
 
-        with self.assertNumQueriesWithoutCache(10):
+        with self.assertNumQueriesWithoutCache(9):
             response = self.execute_graphql(mutation, {"data": variables})
 
         self.assertEqual(
@@ -295,7 +295,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
             "firstName": "NewFirst",
         }
 
-        with self.assertNumQueriesWithoutCache(8):
+        with self.assertNumQueriesWithoutCache(6):
             response = self.execute_graphql(mutation, {"data": variables})
 
         self.assertEqual(len(response["data"]["updateOrganizationMember"]["messages"]), 1)
