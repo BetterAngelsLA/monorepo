@@ -31,15 +31,15 @@ export function FullNameFormHmis() {
         />
 
         <ControlledInput
-          name="nameMiddle"
+          name="middleName"
           control={control}
           disabled={isSubmitting}
           label="Middle Name"
           placeholder="Enter middle name"
           onDelete={() => {
-            setValue('nameMiddle', fullNameFormEmptyState.nameMiddle);
+            setValue('middleName', fullNameFormEmptyState.middleName);
           }}
-          errorMessage={errors.nameMiddle?.message}
+          errorMessage={errors.middleName?.message}
         />
 
         <ControlledInput
@@ -56,7 +56,7 @@ export function FullNameFormHmis() {
         />
 
         <Controller
-          name="nameQuality"
+          name="nameDataQuality"
           control={control}
           render={({ field: { value, onChange } }) => (
             <SingleSelect
@@ -70,7 +70,7 @@ export function FullNameFormHmis() {
               )}
               selectedValue={value}
               onChange={(value) => onChange(value || '')}
-              error={errors.nameQuality?.message}
+              error={errors.nameDataQuality?.message}
             />
           )}
         />

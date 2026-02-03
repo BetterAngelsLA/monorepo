@@ -1,6 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactElement, cloneElement, useEffect, useState } from 'react';
-import type { ButtonProps, GestureResponderEvent } from 'react-native';
+import type { ButtonProps } from 'react-native';
 import { View } from 'react-native';
 import BasicModal from '../BasicModal';
 import Button from '../Button';
@@ -43,7 +43,7 @@ export default function DeleteModal(props: TProps) {
   const clonedButton =
     button &&
     cloneElement(button, {
-      onPress: (e: GestureResponderEvent) => {
+      onPress: (e) => {
         setVisible(true);
         button.props.onPress?.(e);
       },

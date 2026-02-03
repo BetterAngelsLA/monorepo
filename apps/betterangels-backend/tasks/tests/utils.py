@@ -12,7 +12,6 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
             createdBy { id firstName lastName }
             description
             note { pk }
-            hmisNote { pk }
             organization { id name }
             status
             summary

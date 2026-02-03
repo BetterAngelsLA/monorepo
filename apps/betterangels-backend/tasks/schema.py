@@ -1,9 +1,8 @@
-from typing import Optional, cast
+from typing import cast
 
 import strawberry
 import strawberry_django
 from accounts.utils import get_user_permission_group
-from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated
@@ -21,7 +20,7 @@ from strawberry_django.utils.query import filter_for_user
 from tasks.models import Task
 from tasks.permissions import TaskPermissions
 
-from .types import CreateTaskInput, TaskOrder, TaskType, UpdateTaskInput
+from .types import CreateTaskInput, TaskType, UpdateTaskInput
 
 
 @strawberry.type
@@ -30,15 +29,9 @@ class Query:
         permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
     )
 
-    @strawberry_django.offset_paginated(
+    tasks: OffsetPaginated[TaskType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
     )
-    def tasks(self, info: Info, ordering: Optional[list[TaskOrder]] = None) -> OffsetPaginated[TaskType]:
-        request = info.context["request"]
-        session = request.session
-        is_hmis_user = bool(session.get(HMIS_SESSION_KEY_NAME, False))
-
-        return Task.objects.tasks_for_user(is_hmis_user)  # type: ignore
 
 
 @strawberry.type

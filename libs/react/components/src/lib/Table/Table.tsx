@@ -1,10 +1,8 @@
-import { ReactElement, ReactNode } from 'react';
-
-type TableHeader = string | ReactNode;
+import { ReactElement } from 'react';
 
 type TableProps<T> = {
   data: T[];
-  header: TableHeader[];
+  header: string[];
   renderCell: (row: T, columnIndex: number) => ReactElement | string;
   action?: (row: T) => ReactElement;
   page?: number;
@@ -26,9 +24,9 @@ export function Table<T>({
       <table className="min-w-[800px] w-full text-left text-sm">
         <thead>
           <tr className="bg-primary-95">
-            {header.map((title, index) => (
+            {header.map((title) => (
               <th
-                key={index}
+                key={title}
                 className="text-sm py-4 px-8 font-normal whitespace-nowrap"
               >
                 {title}

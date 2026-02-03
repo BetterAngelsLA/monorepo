@@ -1,4 +1,3 @@
-import { useMutation } from '@apollo/client/react';
 import {
   DeleteIcon,
   DownloadIcon,
@@ -14,31 +13,27 @@ import { ClientDocumentType } from '../apollo';
 import { useSnackbar } from '../hooks';
 import {
   ClientProfileDocument,
-  DeleteClientDocumentDocument,
+  useDeleteClientDocumentMutation,
 } from '../screens/Client/__generated__/Client.generated';
 import { MainModal } from './MainModal';
 
-type ModalState =
-  | 'mainVisible'
-  | 'mainClosing'
-  | 'deleteRequested'
-  | 'deleteVisible';
-
 interface IDocumentModalProps {
   closeModal: () => void;
+  isModalVisible: boolean;
   document: ClientDocumentType;
   clientId: string;
 }
 
 export default function DocumentModal({
+  isModalVisible,
   closeModal,
   document,
   clientId,
 }: IDocumentModalProps) {
   const { showSnackbar } = useSnackbar();
-  const [modalState, setModalState] = useState<ModalState>('mainVisible');
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
-  const [deleteDocument] = useMutation(DeleteClientDocumentDocument, {
+  const [deleteDocument] = useDeleteClientDocumentMutation({
     refetchQueries: [
       { query: ClientProfileDocument, variables: { id: clientId } },
     ],
@@ -128,45 +123,28 @@ export default function DocumentModal({
     {
       title: `Delete ${fileTypeText}`,
       Icon: DeleteIcon,
-      onPress: () => setModalState('deleteRequested'),
+      onPress: () => setDeleteModalVisible(true),
     },
   ];
 
-  return (
-    <>
-      {modalState === 'deleteVisible' && (
-        <DeleteModal
-          isVisible={true}
-          body={`All data associated with this ${fileTypeText} will be deleted.`}
-          title={`Delete ${fileTypeText}?`}
-          onDelete={deleteFile}
-          onCancel={() => setModalState('mainVisible')}
-          deleteableItemName={fileTypeText}
-        />
-      )}
-
-      {modalState !== 'deleteVisible' && (
-        <MainModal
-          isModalVisible={modalState === 'mainVisible'}
-          closeButton
-          vertical
-          actions={ACTIONS}
-          closeModal={() => setModalState('mainClosing')}
-          opacity={0.5}
-          onCloseComplete={() => {
-            // onCloseComplete, modalState/intent and setTimeout are needed to avoid
-            // modal stacking context issues, as only one can be vialble at at time
-            if (modalState === 'deleteRequested') {
-              setTimeout(() => {
-                setModalState('deleteVisible');
-              }, 0);
-            } else {
-              closeModal();
-            }
-          }}
-        />
-      )}
-    </>
+  return deleteModalVisible ? (
+    <DeleteModal
+      body={`All data associated with this ${fileTypeText} will be deleted.`}
+      title={`Delete ${fileTypeText}?`}
+      onDelete={deleteFile}
+      onCancel={() => setDeleteModalVisible(false)}
+      isVisible
+      deleteableItemName={fileTypeText}
+    />
+  ) : (
+    <MainModal
+      closeButton
+      vertical
+      actions={ACTIONS}
+      isModalVisible={isModalVisible}
+      closeModal={closeModal}
+      opacity={0.5}
+    />
   );
 }
 

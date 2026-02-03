@@ -1,7 +1,5 @@
-import type { ApolloLink, ErrorLike } from '@apollo/client';
-import { CombinedGraphQLErrors } from '@apollo/client/errors';
-import { ErrorLink } from '@apollo/client/link/error';
-import { GraphQLFormattedError } from 'graphql';
+import type { ApolloLink } from '@apollo/client';
+import { onError } from '@apollo/client/link/error';
 import { isUnauthorizedError } from './utils/isUnauthorizedError';
 import { createRedirectHandler } from './utils/redirectHandler';
 
@@ -22,26 +20,17 @@ export const createErrorLink = ({
     onUnauthenticated,
   });
 
-  return new ErrorLink(({ error, operation }) => {
-    const { operationName } = operation;
-
-    let graphQLErrors: readonly GraphQLFormattedError[] | undefined;
-    let networkError: ErrorLike | undefined;
-
-    if (CombinedGraphQLErrors.is(error)) {
-      // If it's a GraphQL bundle, pull out the actual errors array.
-      graphQLErrors = error.errors;
-    } else {
-      // Otherwise assume Network Error
-      networkError = error;
-    }
+  return onError((err) => {
+    const {
+      networkError,
+      graphQLErrors,
+      operation: { operationName },
+    } = err;
 
     if (isUnauthorizedError(graphQLErrors, networkError)) {
-      redirectToAuth(operationName ?? '');
-      return; // stop here, don't forward
-    }
+      redirectToAuth(operationName);
 
-    // otherwise do nothing and let the response bubble up
-    return undefined;
+      return;
+    }
   });
 };

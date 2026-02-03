@@ -1,4 +1,4 @@
-FROM python:3.14.2-trixie AS base
+FROM python:3.13.5-bullseye AS base
 
 ENV PYTHONUNBUFFERED=1
 RUN groupadd --gid 1000 betterangels \
@@ -32,7 +32,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
     && apt-get install -y postgresql-client-16
 
 # Pin due to: https://github.com/aws/aws-cli/issues/8320
-ENV AWS_CLI_VERSION=2.32.16
+ENV AWS_CLI_VERSION=2.24.21
 RUN ARCH=$(uname -m) && \
   if [ "$ARCH" = "x86_64" ]; then \
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWS_CLI_VERSION}.zip" -o "awscliv2.zip"; \
@@ -47,7 +47,7 @@ RUN ARCH=$(uname -m) && \
 
 # Install Node
 # https://github.com/nodejs/docker-node/blob/3ac814a0a3470b195cb15530adcc3793c8268730/22/bullseye/Dockerfile
-ENV NODE_VERSION=22.21.1
+ENV NODE_VERSION=22.14.0
 
 RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
   && case "${dpkgArch##*-}" in \
@@ -64,7 +64,7 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
   # gpg keys listed at https://github.com/nodejs/node#release-keys
   && set -ex \
   && for key in \
-    5BE8A3F6C8A5C01D106C0AD820B1A390B168D356 \
+    C0D6248439F1D5604AAFFB4021D900FFDB233756 \
     DD792F5973C6DE52C432CBDAC77ABFA00DDBF2B7 \
     CC68F5A3106FF448322E48ED27F5E38D5B0A215F \
     8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600 \
@@ -94,7 +94,7 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 
 # Python
-RUN pip install poetry==2.2.1
+RUN pip install poetry==2.1.1
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \

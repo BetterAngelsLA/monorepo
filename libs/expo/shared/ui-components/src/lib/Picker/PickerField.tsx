@@ -6,7 +6,6 @@ import { TPickerItem } from './types';
 
 type TProps = {
   placeholder: string;
-  placeholderTextColor?: string;
   items: TPickerItem[];
   onFocus: () => void;
   selectedValue?: string | null;
@@ -23,7 +22,6 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
     error,
     selectedValue,
     placeholder,
-    placeholderTextColor,
     items,
     label,
     required,
@@ -45,7 +43,6 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
       disabled={disabled}
       required={required}
       placeholder={placeholder}
-      placeholderTextColor={placeholderTextColor}
       value={displayValue ?? ''}
       label={label}
       error={!!error}

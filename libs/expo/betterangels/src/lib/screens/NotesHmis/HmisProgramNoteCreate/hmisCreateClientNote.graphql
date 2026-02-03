@@ -1,42 +1,21 @@
-mutation CreateHmisNote($data: CreateHmisNoteInput!) {
-  createHmisNote(data: $data) {
-    ... on HmisNoteType {
+mutation hmisCreateClientNote($clientNoteInput: HmisCreateClientNoteInput!) {
+  hmisCreateClientNote(clientNoteInput: $clientNoteInput) {
+    ... on HmisClientNoteType {
       id
-      addedDate
-      lastUpdated
       title
       note
       date
-      refClientProgram
-      providedServices {
-        service {
-          id
-          label
-        }
+      category
+      client {
+        personalId
       }
-      requestedServices {
-        service {
-          id
-          label
-        }
-      }
-      hmisClientProfile {
-        id
-        firstName
-        lastName
-      }
-      createdBy {
-        id
-        firstName
-        lastName
+      enrollment {
+        enrollmentId
       }
     }
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
+    ... on HmisCreateClientNoteError {
+      message
+      field
     }
   }
 }

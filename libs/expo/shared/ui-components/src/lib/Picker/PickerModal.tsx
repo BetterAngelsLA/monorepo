@@ -8,7 +8,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import TextBold from '../TextBold';
 import { PickerItem } from './PickerItem';
 import { NONE_VALUE } from './constants';
 import { TPickerItem } from './types';
@@ -23,7 +22,6 @@ type TProps = {
   dismissOnBackdropPress?: boolean;
   allowSelectNone?: boolean;
   selectNoneLabel?: string;
-  title?: string;
 };
 
 export function PickerModal(props: TProps) {
@@ -36,7 +34,6 @@ export function PickerModal(props: TProps) {
     animationType = 'fade',
     allowSelectNone,
     selectNoneLabel = 'Select',
-    title,
   } = props;
 
   return (
@@ -66,7 +63,6 @@ export function PickerModal(props: TProps) {
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
-              {title && <TextBold size="sm">{title}</TextBold>}
               {!!allowSelectNone && (
                 <PickerItem
                   value={NONE_VALUE}

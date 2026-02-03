@@ -157,8 +157,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
     )
     def test_client_profiles_query_order(self, sort_order: Optional[str], expected_first_name: str) -> None:
         query = """
-            query ($ordering: [ClientProfileOrder!]) {
-                clientProfiles(ordering: $ordering) {
+            query ($order: ClientProfileOrder) {
+                clientProfiles(order: $order) {
                     totalCount
                     results {
                         id
@@ -169,7 +169,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query, variables={"ordering": [{"firstName": sort_order}]})
+            response = self.execute_graphql(query, variables={"order": {"firstName": sort_order}})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], ClientProfile.objects.count())
 

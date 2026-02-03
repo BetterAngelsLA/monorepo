@@ -1,15 +1,62 @@
-import type * as Types from '../../../../apollo/graphql/__generated__/types';
+import * as Types from '../../../../apollo/graphql/__generated__/types';
 
-import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
-export type CreateHmisNoteMutationVariables = Types.Exact<{
-  data: Types.CreateHmisNoteInput;
+import { gql } from '@apollo/client';
+import * as Apollo from '@apollo/client';
+const defaultOptions = {} as const;
+export type HmisCreateClientNoteMutationVariables = Types.Exact<{
+  clientNoteInput: Types.HmisCreateClientNoteInput;
 }>;
 
 
-export type CreateHmisNoteMutation = { __typename?: 'Mutation', createHmisNote:
-    | { __typename?: 'HmisNoteType', id: string, addedDate?: any | null, lastUpdated?: any | null, title?: string | null, note: string, date?: any | null, refClientProgram?: string | null, providedServices?: Array<{ __typename?: 'ServiceRequestType', service?: { __typename?: 'OrganizationServiceType', id: string, label: string } | null }> | null, requestedServices?: Array<{ __typename?: 'ServiceRequestType', service?: { __typename?: 'OrganizationServiceType', id: string, label: string } | null }> | null, hmisClientProfile: { __typename?: 'HmisClientProfileType', id: string, firstName?: string | null, lastName?: string | null }, createdBy?: { __typename?: 'UserType', id: string, firstName?: string | null, lastName?: string | null } | null }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-   };
+export type HmisCreateClientNoteMutation = { __typename?: 'Mutation', hmisCreateClientNote: { __typename?: 'HmisClientNoteType', id?: string | null, title?: string | null, note?: string | null, date?: string | null, category?: string | null, client?: { __typename?: 'HmisClientType', personalId?: string | null } | null, enrollment?: { __typename?: 'HmisEnrollmentType', enrollmentId?: string | null } | null } | { __typename?: 'HmisCreateClientNoteError', message: string, field?: string | null } };
 
 
-export const CreateHmisNoteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateHmisNote"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateHmisNoteInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createHmisNote"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"HmisNoteType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"addedDate"}},{"kind":"Field","name":{"kind":"Name","value":"lastUpdated"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"note"}},{"kind":"Field","name":{"kind":"Name","value":"date"}},{"kind":"Field","name":{"kind":"Name","value":"refClientProgram"}},{"kind":"Field","name":{"kind":"Name","value":"providedServices"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"service"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"label"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"requestedServices"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"service"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"label"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"hmisClientProfile"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"OperationInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"messages"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"field"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]}}]} as unknown as DocumentNode<CreateHmisNoteMutation, CreateHmisNoteMutationVariables>;
+export const HmisCreateClientNoteDocument = gql`
+    mutation hmisCreateClientNote($clientNoteInput: HmisCreateClientNoteInput!) {
+  hmisCreateClientNote(clientNoteInput: $clientNoteInput) {
+    ... on HmisClientNoteType {
+      id
+      title
+      note
+      date
+      category
+      client {
+        personalId
+      }
+      enrollment {
+        enrollmentId
+      }
+    }
+    ... on HmisCreateClientNoteError {
+      message
+      field
+    }
+  }
+}
+    `;
+export type HmisCreateClientNoteMutationFn = Apollo.MutationFunction<HmisCreateClientNoteMutation, HmisCreateClientNoteMutationVariables>;
+
+/**
+ * __useHmisCreateClientNoteMutation__
+ *
+ * To run a mutation, you first call `useHmisCreateClientNoteMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useHmisCreateClientNoteMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [hmisCreateClientNoteMutation, { data, loading, error }] = useHmisCreateClientNoteMutation({
+ *   variables: {
+ *      clientNoteInput: // value for 'clientNoteInput'
+ *   },
+ * });
+ */
+export function useHmisCreateClientNoteMutation(baseOptions?: Apollo.MutationHookOptions<HmisCreateClientNoteMutation, HmisCreateClientNoteMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<HmisCreateClientNoteMutation, HmisCreateClientNoteMutationVariables>(HmisCreateClientNoteDocument, options);
+      }
+export type HmisCreateClientNoteMutationHookResult = ReturnType<typeof useHmisCreateClientNoteMutation>;
+export type HmisCreateClientNoteMutationResult = Apollo.MutationResult<HmisCreateClientNoteMutation>;
+export type HmisCreateClientNoteMutationOptions = Apollo.BaseMutationOptions<HmisCreateClientNoteMutation, HmisCreateClientNoteMutationVariables>;

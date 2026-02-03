@@ -1,68 +1,6 @@
 name: e2e-test
 
 jobs:
-  set_pending_github_status:
-    env:
-      EAS_WORKFLOW_URL: ${{ workflow.url }}
-    steps:
-      - id: set_pending_status
-
-        run: |
-          set -euo pipefail
-
-          WORK_DIR="/home/expo/workingdir/temporary-custom-build/apps/betterangels"
-          GITHUB_REPOSITORY="$(grep '^GITHUB_REPOSITORY=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
-          GITHUB_STATUS_SHA="$(grep '^GITHUB_STATUS_SHA=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
-          GITHUB_STATUS_CONTEXT="$(grep '^GITHUB_STATUS_CONTEXT=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
-          EAS_ACCOUNT="$(grep '^EAS_ACCOUNT=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
-          EAS_PROJECT_SLUG="$(grep '^EAS_PROJECT_SLUG=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
-          # Prefer EAS-provided env var (EAS secret), fallback to .env if present.
-          GITHUB_STATUS_TOKEN="${GITHUB_STATUS_TOKEN:-$(grep '^GITHUB_STATUS_TOKEN=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)}"
-
-          if [ -z "${GITHUB_REPOSITORY:-}" ] || [ -z "${GITHUB_STATUS_SHA:-}" ] || [ -z "${GITHUB_STATUS_CONTEXT:-}" ]; then
-            echo "Missing GITHUB_REPOSITORY / GITHUB_STATUS_SHA / GITHUB_STATUS_CONTEXT; cannot post commit status."
-            exit 1
-          fi
-          if [ -z "${GITHUB_STATUS_TOKEN:-}" ]; then
-            echo "Missing GITHUB_STATUS_TOKEN; cannot post commit status."
-            exit 1
-          fi
-
-          TARGET_URL=""
-          if [ -n "${EAS_ACCOUNT:-}" ] && [ -n "${EAS_PROJECT_SLUG:-}" ]; then
-            TARGET_URL="${EAS_WORKFLOW_URL}"
-          fi
-
-          export GITHUB_STATUS_CONTEXT TARGET_URL
-
-          BODY="$(python3 - <<'PY'
-          import json, os
-          payload = {
-            "state": "pending",
-            "context": os.environ["GITHUB_STATUS_CONTEXT"],
-            "description": "E2E tests running on EAS",
-          }
-          target_url = os.environ.get("TARGET_URL", "").strip()
-          if target_url:
-            payload["target_url"] = target_url
-          print(json.dumps(payload))
-          PY
-          )"
-
-          echo "TARGET_URL=${TARGET_URL}"
-          echo "BODY=${BODY}"
-
-          curl --fail-with-body -sS \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            -H "Authorization: Bearer ${GITHUB_STATUS_TOKEN}" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_STATUS_SHA}" \
-            -d "${BODY}" \
-            >/dev/null
-
-          echo "Posted pending status ${GITHUB_STATUS_CONTEXT} for ${GITHUB_REPOSITORY}@${GITHUB_STATUS_SHA}"
-
   get_vars:
     outputs:
       runtime_version: ${{ steps.set_vars.outputs.runtime_version }}
@@ -75,9 +13,6 @@ jobs:
           GROUP_ID=$(grep '^GROUP_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
           PROJECT_ID=$(grep '^PROJECT_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
           RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' ${WORK_DIR}/.env | cut -d '=' -f2-)
-          echo "GROUP_ID=${GROUP_ID}"
-          echo "PROJECT_ID=${PROJECT_ID}"
-          echo "RUNTIME_VERSION=${RUNTIME_VERSION}"
           set-output group_id "$GROUP_ID"
           set-output project_id "$PROJECT_ID"
           set-output runtime_version "$RUNTIME_VERSION"
@@ -117,78 +52,3 @@ jobs:
     params:
       build_id: ${{ needs.get_ios_build.outputs.build_id }}
       flow_path: ['.maestro/landing.yml']
-
-  set_final_github_status:
-    after: [maestro_android_test, maestro_ios_test]
-    env:
-      IOS_STATUS: ${{ after.maestro_ios_test.status }}
-      ANDROID_STATUS: ${{ after.maestro_android_test.status }}
-      EAS_WORKFLOW_URL: ${{ workflow.url }}
-    steps:
-      - id: set_final_status
-        run: |
-          set -euo pipefail
-
-          WORK_DIR="/home/expo/workingdir/temporary-custom-build/apps/betterangels"
-          GITHUB_REPOSITORY="$(grep '^GITHUB_REPOSITORY=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
-          GITHUB_STATUS_SHA="$(grep '^GITHUB_STATUS_SHA=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
-          GITHUB_STATUS_CONTEXT="$(grep '^GITHUB_STATUS_CONTEXT=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
-          EAS_ACCOUNT="$(grep '^EAS_ACCOUNT=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
-          EAS_PROJECT_SLUG="$(grep '^EAS_PROJECT_SLUG=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
-          # Prefer EAS-provided env var (EAS secret), fallback to .env if present.
-          GITHUB_STATUS_TOKEN="${GITHUB_STATUS_TOKEN:-$(grep '^GITHUB_STATUS_TOKEN=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)}"
-
-          echo "GITHUB_REPOSITORY=${GITHUB_REPOSITORY}"
-          echo "GITHUB_STATUS_SHA=${GITHUB_STATUS_SHA}"
-          echo "GITHUB_STATUS_CONTEXT=${GITHUB_STATUS_CONTEXT}"
-
-          echo "ANDROID_STATUS=${ANDROID_STATUS:-}"
-          echo "IOS_STATUS=${IOS_STATUS:-}"
-
-          if [ -z "${GITHUB_REPOSITORY:-}" ] || [ -z "${GITHUB_STATUS_SHA:-}" ] || [ -z "${GITHUB_STATUS_CONTEXT:-}" ]; then
-            echo "Missing GITHUB_REPOSITORY / GITHUB_STATUS_SHA / GITHUB_STATUS_CONTEXT; cannot post commit status."
-            exit 1
-          fi
-          if [ -z "${GITHUB_STATUS_TOKEN:-}" ]; then
-            echo "Missing GITHUB_STATUS_TOKEN; cannot post commit status."
-            exit 1
-          fi
-
-          if [ "${ANDROID_STATUS}" = "success" ] && [ "${IOS_STATUS}" = "success" ]; then
-            STATE="success"
-            DESC="E2E tests passed"
-          else
-            STATE="failure"
-            DESC="E2E tests failed"
-          fi
-
-          TARGET_URL=""
-          if [ -n "${EAS_ACCOUNT:-}" ] && [ -n "${EAS_PROJECT_SLUG:-}" ]; then
-             TARGET_URL="${EAS_WORKFLOW_URL}"
-          fi
-
-          export STATE DESC GITHUB_STATUS_CONTEXT TARGET_URL
-          BODY="$(python3 - <<'PY'
-          import json, os
-          payload = {
-            "state": os.environ["STATE"],
-            "context": os.environ["GITHUB_STATUS_CONTEXT"],
-            "description": os.environ["DESC"],
-          }
-          target_url = os.environ.get("TARGET_URL", "").strip()
-          if target_url:
-            payload["target_url"] = target_url
-          print(json.dumps(payload))
-          PY
-          )"
-
-          curl --fail-with-body -sS \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            -H "Authorization: Bearer ${GITHUB_STATUS_TOKEN}" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_STATUS_SHA}" \
-            -d "${BODY}" \
-            >/dev/null
-
-          echo "Posted ${STATE} status ${GITHUB_STATUS_CONTEXT} for ${GITHUB_REPOSITORY}@${GITHUB_STATUS_SHA}"

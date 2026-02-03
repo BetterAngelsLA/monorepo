@@ -1,8 +1,8 @@
-import { ApolloLink } from '@apollo/client';
+import { FetchResult } from '@apollo/client';
 import { OperationInfo } from '../__generated__/types';
 
-export function extractOperationInfo(
-  response: ApolloLink.Result,
+export function extractOperationInfo<T>(
+  response: FetchResult,
   queryKey: string
 ): OperationInfo | null {
   const resultData = response?.data?.[queryKey];

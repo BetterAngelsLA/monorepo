@@ -79,7 +79,6 @@ query ViewShelter($id: ID!) {
       end
     }
     organization {
-      id
       name
     }
     parking {

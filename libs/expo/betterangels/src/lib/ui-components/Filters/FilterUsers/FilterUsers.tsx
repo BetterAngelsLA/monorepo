@@ -28,18 +28,18 @@ export function FilterUsers(props: TProps) {
   } = props;
 
   const [selected, setSelected] = useState<TFilterOption[]>(initialSelected);
-  const { showModalScreen } = useModalScreen();
+  const { showModalScreen, closeModalScreen } = useModalScreen();
 
   function showOptionsScreen() {
     showModalScreen({
       presentation: 'modal',
-      renderContent: ({ close }) => (
+      content: () => (
         <FilterUserOptions
           initialSelected={selected}
           onCommit={(next: TFilterOption[]) => {
             setSelected(next);
             onChange(next);
-            close();
+            closeModalScreen();
           }}
           searchPlaceholder={searchPlaceholder}
           currentUserLabel={currentUserLabel}

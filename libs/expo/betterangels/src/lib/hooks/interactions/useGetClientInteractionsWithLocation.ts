@@ -1,9 +1,8 @@
-import { useQuery } from '@apollo/client/react';
 import {
   NoteOrder,
-  NotesDocument,
   Ordering,
   TNotesQueryInteraction,
+  useNotesQuery,
 } from '../../apollo';
 
 const defaultSortOrder: NoteOrder = {
@@ -18,7 +17,7 @@ type TProps = {
 
 export function useGetClientInteractionsWithLocation(props: TProps) {
   const { id, ordering } = props;
-  const { data, error, loading } = useQuery(NotesDocument, {
+  const { data, error, loading } = useNotesQuery({
     variables: {
       pagination: { limit: 1000, offset: 0 },
       ordering: ordering || defaultSortOrder,

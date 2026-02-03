@@ -2,7 +2,7 @@ import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { StyleSheet, Text, TextProps, TextStyle } from 'react-native';
 
-type TSpacing = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface ITextBoldProps extends TextProps {
   children: ReactNode;

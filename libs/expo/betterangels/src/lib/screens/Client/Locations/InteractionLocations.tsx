@@ -1,21 +1,22 @@
 import { View } from 'react-native';
+import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { InteractionLocationsModal } from './InteractionLocationsModal';
 import { InteractionsMap } from './map/InteractionsMap';
 
 type TProps = {
-  clientProfileId?: string;
+  client: ClientProfileQuery | undefined;
 };
 
 export function InteractionLocations(props: TProps) {
-  const { clientProfileId } = props;
+  const { client } = props;
 
-  if (!clientProfileId) {
+  if (!client?.clientProfile.id) {
     throw new Error('Something went wrong. Please try again.');
   }
 
   return (
     <View style={{ flex: 1 }}>
-      <InteractionsMap clientProfileId={clientProfileId} />
+      <InteractionsMap clientProfileId={client.clientProfile.id} />
       <InteractionLocationsModal />
     </View>
   );

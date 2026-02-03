@@ -1,4 +1,4 @@
-import { mergeCss } from '../../utils';
+import { mergeCss } from '@monorepo/react/components';
 import { ReactNode, useEffect, useState } from 'react';
 import { SidebarContent } from './SidebarContent';
 import { SidebarHeader } from './SidebarHeader';

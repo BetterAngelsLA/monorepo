@@ -14,7 +14,6 @@ export interface IUploadSectionProps {
 }
 
 export interface IUploadModalProps {
-  closeModal: () => void;
   bottomSection?: React.ReactNode;
   topSection?: React.ReactNode;
   opacity?: number;

@@ -1,19 +1,17 @@
-import { CombinedGraphQLErrors } from '@apollo/client';
-import { useMutation, useQuery } from '@apollo/client/react';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import {
   UpdateClientProfileInput,
-  extractResponseExtensions,
+  extractExtensionErrors,
 } from '../../../apollo';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
 import { isValidClientProfileSectionEnum } from '../../../screenRouting';
 import {
-  GetClientProfileDocument,
-  UpdateClientProfileDocument,
+  useGetClientProfileQuery,
+  useUpdateClientProfileMutation,
 } from './__generated__/clientProfile.generated';
 import { config } from './config';
 import { extractClientFormData } from './extractClientFormData';
@@ -23,17 +21,16 @@ export default function ClientProfileForm(props: IClientProfileForms) {
   const { componentName, id } = props;
 
   const {
-    data: fetchProfileData,
+    data,
     error: fetchProfileError,
     loading: isFetchingProfile,
     refetch,
-  } = useQuery(GetClientProfileDocument, {
+  } = useGetClientProfileQuery({
     variables: { id },
   });
 
-  const [updateClientProfile, { loading: isUpdating }] = useMutation(
-    UpdateClientProfileDocument
-  );
+  const [updateClientProfile, { loading: isUpdating }] =
+    useUpdateClientProfileMutation();
 
   const methods = useForm<FormValues>({
     defaultValues: {
@@ -61,7 +58,7 @@ export default function ClientProfileForm(props: IClientProfileForms) {
 
   const onSubmit: SubmitHandler<FormValues> = async (values) => {
     try {
-      if (!fetchProfileData || !('clientProfile' in fetchProfileData)) {
+      if (!data || !('clientProfile' in data)) {
         return;
       }
 
@@ -80,38 +77,32 @@ export default function ClientProfileForm(props: IClientProfileForms) {
           values.phoneNumbers?.filter((item) => item.number) || [];
       }
 
-      const { error } = await updateClientProfile({
+      const updateResponse = await updateClientProfile({
         variables: {
           data: inputs,
         },
         errorPolicy: 'all',
       });
 
-      // handle fieldErrors and return if present
-      if (CombinedGraphQLErrors.is(error)) {
-        // TODO: convert to use extractExtensionFieldErrors
-        const fieldErrors = extractResponseExtensions(error);
+      const errorViaExtensions = extractExtensionErrors(updateResponse);
 
-        if (fieldErrors?.length) {
-          applyManualFormErrors(fieldErrors, methods.setError);
+      if (errorViaExtensions) {
+        applyManualFormErrors(errorViaExtensions, methods.setError);
 
-          return;
-        }
+        return;
       }
 
-      // throw unhandled errors
-      if (error) {
-        throw new Error(error.message);
+      const otherErrors = updateResponse.errors?.[0];
+
+      if (otherErrors) {
+        throw otherErrors.message;
       }
 
-      // Ensure the refetch completes before navigating away.
-      // In apollo client v4, if we navigate immediately,
-      // the query unmounts and refetch is cancelled.
-      await refetch();
+      refetch();
 
       router.replace(`/client/${id}?openCard=${validComponentName}`);
     } catch (err) {
-      console.error(`[updateClientProfile] error: ${err}`);
+      console.error(err);
 
       showSnackbar({
         message: 'Sorry, there was an error updating this profile.',
@@ -121,17 +112,17 @@ export default function ClientProfileForm(props: IClientProfileForms) {
   };
 
   useEffect(() => {
-    if (!fetchProfileData || !('clientProfile' in fetchProfileData) || !id) {
+    if (!data || !('clientProfile' in data) || !id) {
       return;
     }
 
     const formData = extractClientFormData(
       validComponentName,
-      fetchProfileData.clientProfile
+      data.clientProfile
     );
 
     methods.reset(formData);
-  }, [fetchProfileData, id]);
+  }, [data, id]);
 
   if (isFetchingProfile) {
     return <LoadingView />;

@@ -68,10 +68,10 @@ export default function Documents(props: IDocumentsProps) {
           ))}
         </View>
       )}
-
       {!!selectedDocument && (
         <DocumentModal
           clientId={clientId}
+          isModalVisible={!!selectedDocument}
           closeModal={() => setSelectedDocument(undefined)}
           document={selectedDocument}
         />

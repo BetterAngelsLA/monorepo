@@ -1,13 +1,10 @@
 {
   "compilerOptions": {
-    "composite": true,
-    "declaration": true,
     "jsx": "react-jsx",
     "allowJs": false,
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "disableSourceOfProjectReferenceRedirect": true
+    "strict": true
   },
   "files": [],
   "include": [],

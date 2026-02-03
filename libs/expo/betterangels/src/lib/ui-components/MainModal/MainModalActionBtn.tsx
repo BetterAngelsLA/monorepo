@@ -1,10 +1,10 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { ElementType, ReactNode } from 'react';
+import { ElementType } from 'react';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 import { MainModalActionBtnBody } from './MainModalActionBtnBody';
 
 type TProps = {
-  title: string | ReactNode;
+  title: string;
   Icon: ElementType;
   onPress: () => void;
   disabled?: boolean;

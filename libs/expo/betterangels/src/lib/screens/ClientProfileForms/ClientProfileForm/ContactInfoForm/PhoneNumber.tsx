@@ -55,8 +55,8 @@ export function PhoneNumber() {
               {index !== 0 && (
                 <Pressable
                   style={{
-                    marginLeft: Spacings.xs,
-                    marginRight: Spacings.xs + Spacings.xxs,
+                    marginLeft: Spacings.xxs,
+                    marginRight: Spacings.sm,
                   }}
                   accessible
                   accessibilityHint="closes the modal"

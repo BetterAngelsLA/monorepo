@@ -1,4 +1,5 @@
 import datetime
+from unittest import skip
 from unittest.mock import ANY, patch
 
 from clients.enums import (
@@ -11,7 +12,7 @@ from clients.enums import (
     PreferredCommunicationEnum,
     PronounEnum,
 )
-from common.models import Location, PhoneNumber
+from common.models import PhoneNumber
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
@@ -26,330 +27,149 @@ from hmis.enums import (
     HmisSuffixEnum,
     HmisVeteranStatusEnum,
 )
-from hmis.models import HmisClientProfile, HmisNote
-from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
+from hmis.models import HmisClientProfile
+from hmis.tests.utils import HmisClientProfileBaseTestCase
 from model_bakery import baker
-from notes.models import OrganizationService, ServiceRequest
 from test_utils.vcr_config import scrubbed_vcr
 
 LOGIN_MUTATION = """
     mutation ($email: String!, $password: String!) {
         hmisLogin(email: $email, password: $password) {
             __typename
-            ... on HmisLoginSuccess {
-                user { id }
-            }
+            ... on UserType { id isHmisUser }
             ... on HmisLoginError { message field }
         }
     }
 """
 
-
-@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
-class HmisNoteMutationTests(HmisNoteBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        self.hmis_client_profile = baker.make(HmisClientProfile, hmis_id="388")
-
-    @scrubbed_vcr.use_cassette("test_create_hmis_note_mutation.yaml")
-    def test_create_hmis_note_mutation(self) -> None:
-        variables = {
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
-            "title": "pitle",
-            "note": "pote",
-            "date": "2010-10-10",
-        }
-        response = self._create_hmis_note_fixture(variables)
-        note = response["data"]["createHmisNote"]
-
-        expected = {
-            "id": ANY,
-            "hmisId": "517",
-            "hmisClientProfile": {
-                "id": str(self.hmis_client_profile.pk),
-                "hmisId": self.hmis_client_profile.hmis_id,
-                "firstName": self.hmis_client_profile.first_name,
-                "lastName": self.hmis_client_profile.last_name,
-            },
-            "title": "pitle",
-            "note": "pote",
-            "date": "2010-10-10",
-            "location": None,
-            "providedServices": [],
-            "requestedServices": [],
-            "addedDate": "2025-11-25T01:37:07+00:00",
-            "lastUpdated": "2025-11-25T01:37:07+00:00",
-            "refClientProgram": None,
-            "clientProgram": None,
-            "createdBy": {
-                "id": str(self.org_1_case_manager_1.pk),
-                "firstName": self.org_1_case_manager_1.first_name,
-                "lastName": self.org_1_case_manager_1.last_name,
-                "organizations": [{"id": ANY, "name": "org_1"}],
-            },
-        }
-
-        self.assertEqual(expected, note)
-
-    @scrubbed_vcr.use_cassette("test_create_hmis_program_note_mutation.yaml")
-    def test_create_hmis_program_note_mutation(self) -> None:
-        variables = {
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
-            "title": "prog note title",
-            "note": "prog note note",
-            "date": "2011-11-11",
-            "refClientProgram": "525",
-        }
-        response = self._create_hmis_note_fixture(variables)
-        note = response["data"]["createHmisNote"]
-
-        expected = {
-            "id": ANY,
-            "hmisId": "521",
-            "hmisClientProfile": {
-                "id": str(self.hmis_client_profile.pk),
-                "hmisId": self.hmis_client_profile.hmis_id,
-                "firstName": self.hmis_client_profile.first_name,
-                "lastName": self.hmis_client_profile.last_name,
-            },
-            "title": "prog note title",
-            "note": "prog note note",
-            "date": "2011-11-11",
-            "location": None,
-            "providedServices": [],
-            "requestedServices": [],
-            "addedDate": "2025-11-25T02:01:19+00:00",
-            "lastUpdated": "2025-11-25T02:01:19+00:00",
-            "refClientProgram": "525",
-            "clientProgram": {
-                "id": "525",
-                "program": {
-                    "id": "2",
-                    "name": "Housing Program 01",
-                },
-            },
-            "createdBy": {
-                "id": str(self.org_1_case_manager_1.pk),
-                "firstName": self.org_1_case_manager_1.first_name,
-                "lastName": self.org_1_case_manager_1.last_name,
-                "organizations": [{"id": ANY, "name": "org_1"}],
-            },
-        }
-
-        self.assertEqual(expected, note)
-
-    @scrubbed_vcr.use_cassette("test_update_hmis_note_mutation.yaml")
-    def test_update_hmis_note_mutation(self) -> None:
-        hmis_note = baker.make(
-            HmisNote,
-            hmis_id="521",
-            hmis_client_profile_id=self.hmis_client_profile.pk,
-            title="prog note title",
-            note="prog note note",
-            date="2011-11-11",
-            created_by=self.org_1_case_manager_1,
-        )
-        provided_services = [baker.make(ServiceRequest, service=OrganizationService.objects.first())]
-        requested_services = [baker.make(ServiceRequest, service=OrganizationService.objects.last())]
-        hmis_note.provided_services.set(provided_services)
-        hmis_note.requested_services.set(requested_services)
-        # TODO: remove after service cutover
-        assert provided_services[0].service
-        assert requested_services[0].service
-
-        variables = {
-            "id": str(hmis_note.pk),
-            "title": "updated note title",
-            "note": "updated note note",
-            "date": "2012-12-12",
-        }
-        response = self._update_hmis_note_fixture(variables)
-        note = response["data"]["updateHmisNote"]
-
-        expected = {
-            "id": ANY,
-            "hmisId": "521",
-            "hmisClientProfile": {
-                "id": str(self.hmis_client_profile.pk),
-                "hmisId": self.hmis_client_profile.hmis_id,
-                "firstName": self.hmis_client_profile.first_name,
-                "lastName": self.hmis_client_profile.last_name,
-            },
-            "title": "updated note title",
-            "note": "updated note note",
-            "date": "2012-12-12",
-            "location": None,
-            "providedServices": [
-                {
-                    "id": str(provided_services[0].pk),
-                    "service": {
-                        "id": str(provided_services[0].service.pk),
-                        "label": provided_services[0].service.label,
-                    },
+CREATE_CLIENT_MUTATION = """
+    mutation hmisCreateClient(
+        $clientInput: HmisCreateClientInput!,
+        $clientSubItemsInput: HmisCreateClientSubItemsInput!
+    ) {
+        hmisCreateClient(
+            clientInput: $clientInput,
+            clientSubItemsInput: $clientSubItemsInput,
+        ) {
+            ... on HmisClientType {
+                personalId
+                uniqueIdentifier
+                firstName
+                lastName
+                nameDataQuality
+                ssn1
+                ssn2
+                ssn3
+                ssnDataQuality
+                dob
+                dobDataQuality
+                data {
+                    middleName
+                    nameSuffix
+                    alias
+                    raceEthnicity
+                    additionalRaceEthnicity
+                    differentIdentityText
+                    gender
+                    veteranStatus
                 }
-            ],
-            "requestedServices": [
-                {
-                    "id": str(requested_services[0].pk),
-                    "service": {
-                        "id": str(requested_services[0].service.pk),
-                        "label": requested_services[0].service.label,
-                    },
+            }
+            ... on HmisCreateClientError { message field }
+        }
+    }
+"""
+
+UPDATE_CLIENT_MUTATION = """
+    mutation hmisUpdateClient(
+        $clientInput: HmisUpdateClientInput!,
+        $clientSubItemsInput: HmisUpdateClientSubItemsInput!
+    ) {
+        hmisUpdateClient(
+            clientInput: $clientInput,
+            clientSubItemsInput: $clientSubItemsInput,
+        ) {
+            ... on HmisClientType {
+                personalId
+                uniqueIdentifier
+                firstName
+                lastName
+                nameDataQuality
+                ssn1
+                ssn2
+                ssn3
+                ssnDataQuality
+                dob
+                dobDataQuality
+                data {
+                    middleName
+                    nameSuffix
+                    alias
+                    raceEthnicity
+                    additionalRaceEthnicity
+                    differentIdentityText
+                    gender
+                    veteranStatus
                 }
-            ],
-            "addedDate": "2025-11-25T02:01:19+00:00",
-            "lastUpdated": "2025-11-25T02:04:24+00:00",
-            "refClientProgram": "525",
-            "clientProgram": {
-                "id": "525",
-                "program": {
-                    "id": "2",
-                    "name": "Housing Program 01",
-                },
-            },
-            "createdBy": {
-                "id": str(self.org_1_case_manager_1.pk),
-                "firstName": self.org_1_case_manager_1.first_name,
-                "lastName": self.org_1_case_manager_1.last_name,
-                "organizations": [{"id": ANY, "name": "org_1"}],
-            },
+            }
+            ... on HmisUpdateClientError { message field }
         }
+    }
+"""
 
-        self.assertEqual(expected, note)
-
-    def test_update_hmis_note_location_mutation(self) -> None:
-        self._setup_hmis_session()
-        self._setup_location()
-
-        hmis_note = baker.make(HmisNote, _fill_optional=True)
-        hmis_note_id = hmis_note.pk
-        json_address_input, address_input = self._get_address_inputs()
-
-        location = {
-            "address": json_address_input,
-            "point": self.point,
-            "pointOfInterest": self.point_of_interest,
+CREATE_CLIENT_NOTE_MUTATION = """
+    mutation hmisCreateClientNote($clientNoteInput: HmisCreateClientNoteInput!) {
+        hmisCreateClientNote(clientNoteInput: $clientNoteInput) {
+            ... on HmisClientNoteType {
+                id
+                title
+                note
+                date
+                category
+                client { personalId }
+                enrollment { enrollmentId }
+            }
+            ... on HmisCreateClientNoteError {
+                message
+                field
+            }
         }
-        variables = {
-            "id": hmis_note_id,
-            "location": location,
+    }
+"""
+
+UPDATE_CLIENT_NOTE_MUTATION = """
+    mutation hmisUpdateClientNote($clientNoteInput: HmisUpdateClientNoteInput!) {
+        hmisUpdateClientNote(clientNoteInput: $clientNoteInput) {
+            ... on HmisClientNoteType {
+                id
+                title
+                note
+                date
+                category
+                client { personalId }
+                enrollment { enrollmentId }
+            }
+            ... on HmisUpdateClientNoteError {
+                message
+                field
+            }
         }
-
-        expected_query_count = 19
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._update_hmis_note_location_fixture(variables)
-
-        assert isinstance(address_input["addressComponents"], list)
-        expected_address = {
-            "street": (
-                f"{address_input['addressComponents'][0]['long_name']} "
-                f"{address_input['addressComponents'][1]['long_name']}"
-            ),
-            "city": address_input["addressComponents"][3]["long_name"],
-            "state": address_input["addressComponents"][5]["short_name"],
-            "zipCode": address_input["addressComponents"][7]["long_name"],
-        }
-
-        updated_note_location = response["data"]["updateHmisNoteLocation"]["location"]
-        self.assertEqual(updated_note_location["point"], self.point)
-        self.assertEqual(updated_note_location["address"], expected_address)
-
-        hmis_note = HmisNote.objects.get(id=hmis_note_id)
-        self.assertIsNotNone(hmis_note.location)
-
-        location = Location.objects.get(id=hmis_note.location.pk)  # type: ignore
-        self.assertEqual(hmis_note, location.hmis_notes.first())
-
-    def test_create_hmis_note_service_request_mutation(self) -> None:
-        bag_svc = OrganizationService.objects.get(label="Bag(s)")
-        hmis_note = baker.make(HmisNote, _fill_optional=True)
-
-        variables = {
-            "serviceId": str(bag_svc.pk),
-            "hmisNoteId": str(hmis_note.id),
-            "serviceRequestType": "PROVIDED",
-        }
-
-        initial_org_service_count = OrganizationService.objects.count()
-
-        response = self._create_hmis_note_service_request_fixture(variables)
-        self.assertEqual(initial_org_service_count, OrganizationService.objects.count())
-
-        response_service_request = response["data"]["createHmisNoteServiceRequest"]
-        service_request = ServiceRequest.objects.get(id=response_service_request["id"])
-
-        assert service_request.service
-        self.assertIn(service_request, hmis_note.provided_services.all())
-
-        self.assertEqual(response_service_request["service"]["id"], str(bag_svc.pk))
-        self.assertEqual(response_service_request["service"]["label"], bag_svc.label)
-
-        self.assertEqual(service_request.service.pk, bag_svc.pk)
-        self.assertEqual(service_request.service.label, bag_svc.label)
-        self.assertEqual(service_request.service.category, bag_svc.category)
-
-    def test_create_hmis_note_service_request_other_mutation(self) -> None:
-        hmis_note = baker.make(HmisNote, _fill_optional=True)
-        variables = {
-            "serviceOther": "another service",
-            "hmisNoteId": str(hmis_note.id),
-            "serviceRequestType": "PROVIDED",
-        }
-
-        initial_org_service_count = OrganizationService.objects.count()
-
-        response = self._create_hmis_note_service_request_fixture(variables)
-        self.assertEqual(initial_org_service_count + 1, OrganizationService.objects.count())
-
-        response_service_request = response["data"]["createHmisNoteServiceRequest"]
-        service_request = ServiceRequest.objects.get(id=response_service_request["id"])
-
-        assert service_request.service
-        self.assertIn(service_request, hmis_note.provided_services.all())
-
-        self.assertEqual(response_service_request["service"]["label"], "another service")
-
-        self.assertEqual(service_request.service.label, "another service")
-        self.assertIsNone(service_request.service.category)
-
-    def test_remove_hmis_note_service_request_mutation(self) -> None:
-        provided_services = [baker.make(ServiceRequest, service=OrganizationService.objects.first())]
-        requested_services = [baker.make(ServiceRequest, service=OrganizationService.objects.last())]
-
-        hmis_note = baker.make(HmisNote, _fill_optional=True)
-        hmis_note.provided_services.set(provided_services)
-        hmis_note.requested_services.set(requested_services)
-
-        service_to_remove = provided_services[0]
-
-        variables = {
-            "serviceRequestId": str(service_to_remove.pk),
-            "hmisNoteId": str(hmis_note.pk),
-            "serviceRequestType": "PROVIDED",
-        }
-
-        self._remove_hmis_note_service_request_fixture(variables)
-
-        self.assertNotIn(service_to_remove, hmis_note.provided_services.all())
-        self.assertIn(requested_services[0], hmis_note.requested_services.all())
-        self.assertEqual(hmis_note.provided_services.count(), 0)
-        self.assertEqual(hmis_note.requested_services.count(), 1)
+    }
+"""
 
 
-@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
-class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
+@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
+class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.residence_geolocation = [-118.2437207, 34.0521723]
 
-        self.hmis_client_profile = baker.make(
-            HmisClientProfile,
-            _fill_optional=["hmis_id"],
+        self.hmis_client_profile = HmisClientProfile.objects.create(
             # ID & Metadata Fields
+            hmis_id="1",
+            personal_id="7e401eed7ee14c36a7641ef44626695c",
+            unique_identifier="69E44770D",
             added_date=datetime.datetime.strptime("2025-08-06 13:43:43", "%Y-%m-%d %H:%M:%S"),
             last_updated=datetime.datetime.strptime("2025-11-06 11:14:54", "%Y-%m-%d %H:%M:%S"),
             # Client Fields
@@ -415,7 +235,6 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
 
         expected = {
             # ID & Metadata Fields
-            "id": ANY,
             "hmisId": ANY,
             "uniqueIdentifier": ANY,
             "personalId": None,
@@ -471,8 +290,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
 
     @scrubbed_vcr.use_cassette("test_update_hmis_client_profile_mutation.yaml")
     def test_update_hmis_client_profile_mutation(self) -> None:
-        hmis_client_profile = baker.make(
-            HmisClientProfile,
+        hmis_client_profile = HmisClientProfile.objects.create(
             # ID Fields
             hmis_id="384",
             unique_identifier="9AD65C3CF",
@@ -491,7 +309,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
         )
 
         variables = {
-            "id": str(hmis_client_profile.pk),
+            "hmisId": str(hmis_client_profile.hmis_id),
             #
             "alias": "the raven",
             "birthDate": datetime.date.fromisoformat("1909-01-19"),
@@ -539,7 +357,6 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
         client = response["data"]["updateHmisClientProfile"]
 
         expected = {
-            "id": str(hmis_client_profile.pk),
             "hmisId": ANY,
             "uniqueIdentifier": ANY,
             "personalId": ANY,
@@ -594,24 +411,21 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
         self.assertEqual(expected, client)
 
 
-@override_settings(
-    AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"],
-    HMIS_REST_URL="https://example.com",
-    HMIS_HOST="example.com",
-)
+@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
 class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.existing_user = baker.make(get_user_model(), _fill_optional=["email"])
 
+        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
+        self.success_response = {"data": {"createAuthToken": {"authToken": token}}}
+
     @override_settings(HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=")
     def test_hmis_login_success(self) -> None:
         with patch(
-            "hmis.api_bridge.HmisApiBridge.login",
-            autospec=True,
-        ) as mock_login:
-            mock_login.return_value = None
-
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
+            return_value=self.success_response,
+        ):
             resp = self.execute_graphql(
                 LOGIN_MUTATION,
                 variables={"email": self.existing_user.email, "password": "anything"},
@@ -619,8 +433,9 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
         self.assertIsNone(resp.get("errors"))
         payload = resp["data"]["hmisLogin"]
-        self.assertEqual(payload["__typename"], "HmisLoginSuccess")
-        self.assertEqual(payload["user"]["id"], str(self.existing_user.pk))
+        self.assertEqual(payload["__typename"], "UserType")
+        self.assertEqual(payload["id"], str(self.existing_user.pk))
+        self.assertEqual(payload["isHmisUser"], True)
 
         # Session should now contain the logged-in user
         session = self.graphql_client.session
@@ -631,11 +446,364 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
             "django.contrib.auth.backends.ModelBackend",
         )
 
-    @scrubbed_vcr.use_cassette("test_hmis_login_invalid_credentials.yaml")
     def test_hmis_login_invalid_credentials(self) -> None:
+        return_value = {
+            "data": {"createAuthToken": {"authToken": None}},
+            "errors": [
+                {
+                    "path": ["createAuthToken"],
+                    "data": None,
+                    "errorType": "422",
+                    "errorInfo": None,
+                    "locations": [{"line": 5, "column": 5, "sourceName": None}],
+                    "message": '{"name":"Unprocessable entity","message":"{\\"username\\":[\\"Incorrect username or password.\\"]}","code":0,"status":422,"messages":{"username":["Incorrect username or password."]}}',
+                }
+            ],
+        }
+
+        with patch(
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
+            return_value=return_value,
+        ):
+            resp = self.execute_graphql(
+                LOGIN_MUTATION,
+                variables={"email": self.existing_user.email, "password": "wrong"},
+            )
+
+        self.assertIsNone(resp.get("errors"))
+        payload = resp["data"]["hmisLogin"]
+        self.assertEqual(payload["__typename"], "HmisLoginError")
+        self.assertIn("Invalid credentials", payload["message"])
+
+    def test_hmis_login_unknown_email_no_autocreate(self) -> None:
+        with patch(
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
+            return_value=self.success_response,
+        ):
+            resp = self.execute_graphql(
+                LOGIN_MUTATION,
+                variables={"email": "nonexistent_user@example.org", "password": "pw"},
+            )
+
+        self.assertIsNone(resp.get("errors"))
+        payload = resp["data"]["hmisLogin"]
+        self.assertEqual(payload["__typename"], "HmisLoginError")
+        self.assertIn("Invalid credentials or HMIS login failed", payload["message"])
+
+
+class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
+    def test_hmis_create_client_success(self) -> None:
+        return_value = {
+            "data": {
+                "createClient": {
+                    "personalId": "1",
+                    "uniqueIdentifier": "123AB456C",
+                    "firstName": "Firsty",
+                    "lastName": "Lasty",
+                    "nameDataQuality": 1,
+                    "ssn1": "***",
+                    "ssn2": "**",
+                    "ssn3": "xxxx",
+                    "ssnDataQuality": 99,
+                    "dob": None,
+                    "dobDataQuality": 99,
+                    "data": {
+                        "middleName": None,
+                        "nameSuffix": 9,
+                        "alias": None,
+                        "raceEthnicity": [99],
+                        "additionalRaceEthnicity": None,
+                        "differentIdentityText": None,
+                        "gender": [99],
+                        "veteranStatus": 99,
+                    },
+                }
+            }
+        }
+
+        client_input = {
+            "firstName": "Firsty",
+            "lastName": "Lasty",
+            "nameDataQuality": 1,
+            "ssn1": "***",
+            "ssn2": "**",
+            "ssn3": "xxxx",
+            "ssnDataQuality": 99,
+            "dob": None,
+            "dobDataQuality": 99,
+        }
+        client_sub_items_input = {
+            "middleName": None,
+            "nameSuffix": 9,
+            "alias": None,
+            "additionalRaceEthnicity": None,
+            "differentIdentityText": None,
+            "raceEthnicity": [99],
+            "gender": [99],
+            "veteranStatus": 99,
+        }
+
+        with patch(
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
+            return_value=return_value,
+        ):
+            resp = self.execute_graphql(
+                CREATE_CLIENT_MUTATION,
+                variables={
+                    "clientInput": client_input,
+                    "clientSubItemsInput": client_sub_items_input,
+                },
+            )
+
+        self.assertIsNone(resp.get("errors"))
+
+        payload = resp["data"]["hmisCreateClient"]
+
+        expected_data = {
+            "middleName": None,
+            "nameSuffix": HmisSuffixEnum.NO_ANSWER.name,
+            "alias": None,
+            "additionalRaceEthnicity": None,
+            "differentIdentityText": None,
+            "raceEthnicity": [HmisRaceEnum.NOT_COLLECTED.name],
+            "gender": [HmisGenderEnum.NOT_COLLECTED.name],
+            "veteranStatus": HmisVeteranStatusEnum.NOT_COLLECTED.name,
+        }
+        expected_client = {
+            "personalId": "1",
+            "uniqueIdentifier": "123AB456C",
+            "firstName": "Firsty",
+            "lastName": "Lasty",
+            "nameDataQuality": HmisNameQualityEnum.FULL.name,
+            "ssn1": "***",
+            "ssn2": "**",
+            "ssn3": "xxxx",
+            "ssnDataQuality": HmisSsnQualityEnum.NOT_COLLECTED.name,
+            "dob": None,
+            "dobDataQuality": HmisDobQualityEnum.NOT_COLLECTED.name,
+            "data": expected_data,
+        }
+
+        self.assertEqual(payload, expected_client)
+
+    def test_hmis_create_client_invalid_input(self) -> None:
+        return_value = {
+            "data": {"createClient": None},
+            "errors": [
+                {
+                    "path": ["createClient"],
+                    "data": None,
+                    "errorType": "422",
+                    "errorInfo": None,
+                    "locations": [{"line": 6, "column": 17, "sourceName": None}],
+                    "message": '{"name":"Unprocessable entity","message":"{\\"ssnQuality\\":[\\"Quality of SSN is invalid.\\"],\\"nameQuality\\":[\\"Quality of Name is invalid.\\"],\\"dobQuality\\":[\\"Quality of DOB is invalid.\\"],\\"ssn_quality\\":[\\"Quality of SSN is invalid.\\"],\\"name_quality\\":[\\"Quality of Name is invalid.\\"],\\"dob_quality\\":[\\"Quality of DOB is invalid.\\"]}","code":0,"status":422,"messages":{"ssnQuality":["Quality of SSN is invalid."],"nameQuality":["Quality of Name is invalid."],"dobQuality":["Quality of DOB is invalid."],"ssn_quality":["Quality of SSN is invalid."],"name_quality":["Quality of Name is invalid."],"dob_quality":["Quality of DOB is invalid."]}}',
+                },
+                {
+                    "path": ["createClient", "personalId"],
+                    "locations": None,
+                    "message": "Cannot return null for non-nullable type: 'ID' within parent 'Client' (/createClient/personalId)",
+                },
+            ],
+        }
+
+        client_input = {
+            "firstName": "Firsty",
+            "lastName": "Lasty",
+            "nameDataQuality": 22,
+            "ssn3": "xxxx",
+            "ssnDataQuality": 22,
+            "dob": "2001-01-01",
+            "dobDataQuality": 22,
+        }
+        client_sub_items_input = {
+            "raceEthnicity": [22],
+            "gender": [22],
+            "veteranStatus": 22,
+        }
+
+        with patch(
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
+            return_value=return_value,
+        ):
+            resp = self.execute_graphql(
+                CREATE_CLIENT_MUTATION,
+                variables={
+                    "clientInput": client_input,
+                    "clientSubItemsInput": client_sub_items_input,
+                },
+            )
+
+        self.assertIsNone(resp.get("errors"))
+
+        payload = resp["data"]["hmisCreateClient"]
+
+        self.assertIsNone(resp.get("errors"))
+        payload = resp["data"]["hmisCreateClient"]
+        self.assertIn("Quality of SSN is invalid.", payload["message"])
+
+    def test_hmis_update_client_success(self) -> None:
+        client_input = {
+            "personalId": "1",
+            "firstName": "Firsty",
+            "lastName": "Lasty",
+            "nameDataQuality": 1,
+            "ssn1": "123",
+            "ssn2": "45",
+            "ssn3": "6789",
+            "ssnDataQuality": 2,
+            "dob": "2002-02-02",
+            "dobDataQuality": 2,
+        }
+        client_sub_items_input = {
+            "middleName": "Middly",
+            "nameSuffix": 2,
+            "alias": "Nicky",
+            "additionalRaceEthnicity": "add re",
+            "differentIdentityText": "diff id",
+            "raceEthnicity": [2],
+            "gender": [2],
+            "veteranStatus": 0,
+        }
+
+        return_value = {
+            "personalId": "1",
+            "uniqueIdentifier": "981C4E53A",
+            "firstName": "Firsty",
+            "lastName": "Lasty",
+            "nameDataQuality": 1,
+            "ssn1": "***",
+            "ssn2": "**",
+            "ssn3": "6789",
+            "ssnDataQuality": 2,
+            "dob": "2002-02-02",
+            "dobDataQuality": 2,
+            "data": {
+                "middleName": "Middly",
+                "nameSuffix": 2,
+                "alias": "Nicky",
+                "additionalRaceEthnicity": "add re",
+                "differentIdentityText": "diff id",
+                "raceEthnicity": [2],
+                "gender": [2],
+                "veteranStatus": 0,
+            },
+        }
+
+        with patch(
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge.update_client",
+            return_value=return_value,
+        ):
+            resp = self.execute_graphql(
+                UPDATE_CLIENT_MUTATION,
+                variables={
+                    "clientInput": client_input,
+                    "clientSubItemsInput": client_sub_items_input,
+                },
+            )
+
+        self.assertIsNone(resp.get("errors"))
+
+        payload = resp["data"]["hmisUpdateClient"]
+
+        expected_data = {
+            "middleName": "Middly",
+            "nameSuffix": "SR",
+            "alias": "Nicky",
+            "additionalRaceEthnicity": "add re",
+            "differentIdentityText": "diff id",
+            "raceEthnicity": [HmisRaceEnum.ASIAN.name],
+            "gender": [HmisGenderEnum.SPECIFIC.name],
+            "veteranStatus": HmisVeteranStatusEnum.NO.name,
+        }
+        expected_client = {
+            "personalId": "1",
+            "uniqueIdentifier": "981C4E53A",
+            "firstName": "Firsty",
+            "lastName": "Lasty",
+            "nameDataQuality": HmisNameQualityEnum.FULL.name,
+            "ssn1": "***",
+            "ssn2": "**",
+            "ssn3": "6789",
+            "ssnDataQuality": HmisSsnQualityEnum.PARTIAL.name,
+            "dob": "2002-02-02",
+            "dobDataQuality": HmisDobQualityEnum.PARTIAL.name,
+            "data": expected_data,
+        }
+
+        self.assertEqual(payload, expected_client)
+
+
+@skip("need to fix vcrpy in ci")
+class HmisCreateClientNoteMutationTests(GraphQLBaseTestCase, TestCase):
+    @scrubbed_vcr.use_cassette(
+        "apps/betterangels-backend/hmis/tests/cassettes/test_hmis_create_client_note_success.yaml"
+    )
+    def test_hmis_create_client_note_success(self) -> None:
+        client_note_input = {
+            "personalId": "1",
+            "enrollmentId": "517",
+            "title": "api test note",
+            "note": "duly noted",
+            "date": "2025-10-17",
+            "category": "1",
+        }
+
         resp = self.execute_graphql(
-            LOGIN_MUTATION,
-            variables={"email": self.existing_user.email, "password": "wrong"},
+            CREATE_CLIENT_NOTE_MUTATION,
+            variables={
+                "clientNoteInput": client_note_input,
+            },
         )
-        self.assertEqual(len(resp["errors"]), 1)
-        self.assertIn("Login Failed: Invalid credentials.", resp["errors"][0]["message"])
+
+        self.assertIsNone(resp.get("errors"))
+
+        client_note = resp["data"]["hmisCreateClientNote"]
+
+        expected_client_note = {
+            "id": "418",
+            "title": "api test note",
+            "note": "duly noted",
+            "date": "2025-10-17",
+            "category": None,
+            "client": {"personalId": "1"},
+            "enrollment": {"enrollmentId": "517"},
+        }
+
+        self.assertEqual(client_note, expected_client_note)
+
+    @scrubbed_vcr.use_cassette(
+        "apps/betterangels-backend/hmis/tests/cassettes/test_hmis_update_client_note_success.yaml"
+    )
+    def test_hmis_update_client_note_success(self) -> None:
+        client_note_input = {
+            "id": "418",
+            "personalId": "1",
+            "enrollmentId": "517",
+            "title": "api test note update",
+            "note": "duly updated",
+            "date": "2024-09-16",
+            "category": "1",
+        }
+
+        resp = self.execute_graphql(
+            UPDATE_CLIENT_NOTE_MUTATION,
+            variables={
+                "clientNoteInput": client_note_input,
+            },
+        )
+
+        self.assertIsNone(resp.get("errors"))
+
+        client_note = resp["data"]["hmisUpdateClientNote"]
+
+        expected_client_note = {
+            "id": "418",
+            "title": "api test note update",
+            "note": "duly updated",
+            "date": "2024-09-16",
+            "category": None,
+            "client": {"personalId": "1"},
+            "enrollment": {"enrollmentId": "517"},
+        }
+
+        self.assertEqual(client_note, expected_client_note)

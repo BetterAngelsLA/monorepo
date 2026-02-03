@@ -3,8 +3,8 @@ import { SearchBar } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { HmisClientListType } from '../../apollo';
 import { useUser } from '../../hooks';
-import { pagePaddingHorizontal } from '../../static';
 import {
   ClientCard,
   ClientCardHMIS,
@@ -14,12 +14,10 @@ import {
   HmisListClients,
   HorizontalContainer,
 } from '../../ui-components';
-import { HmisClientProfilesQuery } from '../../ui-components/ClientProfileList/__generated__/HmisListClients.generated';
 import { ClientProfilesQuery } from './__generated__/Clients.generated';
 
 type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
-type THmisClientProfile =
-  HmisClientProfilesQuery['hmisClientProfiles']['results'][number];
+type THmisClient = HmisClientListType['items'][number];
 
 export default function Clients({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] = useState<TClientProfile | null>(
@@ -47,8 +45,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   );
 
   const renderHmisClientItem = useCallback(
-    (client: THmisClientProfile) => {
-      const { id } = client;
+    (client: THmisClient) => {
+      const id = client.personalId;
 
       if (!id) {
         return null;
@@ -78,9 +76,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
 
         {isHmisUser ? (
           <HmisListClients
-            filters={{ search }}
+            filter={{ search }}
             renderItem={renderHmisClientItem}
-            style={{ paddingHorizontal: pagePaddingHorizontal }}
           />
         ) : (
           <ClientProfileList

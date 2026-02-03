@@ -1,49 +1,66 @@
 import { usePathname, useRouter } from 'expo-router';
-import {
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { ModalScreenContext } from './ModalScreenContext';
-import type {
-  IModalScreenState,
-  TModalPresentationType,
-  TRenderContentApi,
-  TShowModalScreenProps,
-  noOpFn,
-} from './types';
+import { TModalPresentationType, TShowModalScreenProps, noOpFn } from './types';
+
+/**
+ * ModalScreenProvider
+ *
+ * Wrap the app with this provider to enable showing and closing
+ * a global modal screen via context.
+ *
+ * @example
+ * <ModalScreenProvider>
+ *   // your app components and <Stack> navigator here
+ * </ModalScreenProvider>
+ *
+ * showModalScreen({
+ *  presentation: 'modal',
+ *  hideHeader: true,
+ *  content: (
+ *     <MyComponent />
+ *   ),
+ * })
+ */
 
 const DEFAULT_PRESENTATION: TModalPresentationType = 'modal';
 const SCREEN_PATH_NAME = '/modal-screen';
-
-const DEFAULT_MODAL_STATE: IModalScreenState = {
-  presentation: DEFAULT_PRESENTATION,
-  title: '',
-  hideHeader: false,
-  renderContent: null,
-};
 
 export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
 
   const onCloseCallbackRef = useRef<noOpFn | null>(null);
-  const isOpeningOrOpenRef = useRef(false);
   const prevPathRef = useRef(pathname);
 
-  const [modal, setModal] = useState<IModalScreenState>(DEFAULT_MODAL_STATE);
+  const [presentation, setPresentation] =
+    useState<TModalPresentationType>(DEFAULT_PRESENTATION);
+  const [modalContent, setModalContent] = useState<React.ReactNode | null>(
+    null
+  );
+  const [title, setTitle] = useState<string>('');
+  const [noHeader, setNoHeader] = useState<boolean>(false);
 
-  // fires onClose callback based on pathname change
+  const showModalScreen = (props: TShowModalScreenProps) => {
+    const { content, presentation, title, hideHeader, onClose } = props;
+
+    setModalContent(content);
+    setPresentation(presentation || DEFAULT_PRESENTATION);
+    setTitle(title || '');
+    setNoHeader(!!hideHeader);
+    onCloseCallbackRef.current = onClose ?? null;
+
+    router.push(SCREEN_PATH_NAME);
+  };
+
+  // Auto modal close detection:
+  // Effect listens for route changes and detects when the modal route is exited.
+  // When exiting, it invokes the onClose handler (if any) and resets modal state.
   useEffect(() => {
     const modalWasOpen = prevPathRef.current === SCREEN_PATH_NAME;
     const changedToClosed = modalWasOpen && pathname !== SCREEN_PATH_NAME;
 
     if (changedToClosed) {
-      isOpeningOrOpenRef.current = false;
-
       try {
         onCloseCallbackRef.current?.();
       } catch (e) {
@@ -51,77 +68,34 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
       }
 
       onCloseCallbackRef.current = null;
-
-      setModal(DEFAULT_MODAL_STATE);
+      setModalContent(null);
     }
 
     prevPathRef.current = pathname;
   }, [pathname]);
 
-  const closeModal = useCallback(() => {
-    const currentPath = prevPathRef.current;
-
-    if (currentPath !== SCREEN_PATH_NAME) {
+  // Manual modal close method
+  const closeModalScreen = () => {
+    if (pathname !== SCREEN_PATH_NAME && presentation !== 'modal') {
       console.warn(
-        `[ModalScreenProvider close] closing modal when pathname is ${currentPath}.`
+        `ModalScreenProvider: attempting to close modalScreen when path is ${SCREEN_PATH_NAME}`
       );
+
+      return;
     }
 
-    router.dismiss();
-  }, [router]);
-
-  const showModalScreen = useCallback(
-    (props: TShowModalScreenProps) => {
-      const { renderContent, presentation, title, hideHeader, onClose } = props;
-
-      setModal({
-        renderContent,
-        presentation: presentation ?? DEFAULT_PRESENTATION,
-        title: title ?? '',
-        hideHeader: !!hideHeader,
-      });
-
-      onCloseCallbackRef.current = onClose ?? null;
-
-      if (isOpeningOrOpenRef.current) {
-        return;
-      }
-
-      isOpeningOrOpenRef.current = true;
-
-      router.push(SCREEN_PATH_NAME);
-    },
-    [router]
-  );
-
-  const api: TRenderContentApi = useMemo(
-    () => ({
-      close: closeModal,
-    }),
-    [closeModal]
-  );
-
-  const resolvedContent = useMemo(() => {
-    if (!modal.renderContent) {
-      return null;
-    }
-
-    try {
-      return modal.renderContent(api);
-    } catch (e) {
-      console.error('[ModalScreenProvider] renderContent error:', e);
-      return null;
-    }
-  }, [modal.renderContent, api]);
+    router.back();
+  };
 
   return (
     <ModalScreenContext.Provider
       value={{
         showModalScreen,
-        presentation: modal.presentation,
-        content: resolvedContent,
-        hideHeader: modal.hideHeader,
-        title: modal.title,
+        closeModalScreen,
+        presentation,
+        content: modalContent,
+        hideHeader: noHeader,
+        title,
       }}
     >
       {children}

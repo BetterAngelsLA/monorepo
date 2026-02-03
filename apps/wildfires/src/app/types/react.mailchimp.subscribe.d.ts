@@ -21,6 +21,6 @@ declare module 'react-mailchimp-subscribe' {
     render?: (renderProps: ISubscribeFormProps) => JSX.Element;
   }
 
-  const MailchimpSubscribe: React.ComponentType<IMailchimpSubscribeProps>;
+  const MailchimpSubscribe: React.FC<IMailchimpSubscribeProps>;
   export default MailchimpSubscribe;
 }

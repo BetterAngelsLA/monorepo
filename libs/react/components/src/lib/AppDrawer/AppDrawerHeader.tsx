@@ -1,6 +1,6 @@
 import { PropsWithChildren } from 'react';
 
-import { mergeCss } from '../../utils';
+import { mergeCss } from '@monorepo/react/components';
 import { CloseIcon } from '@monorepo/react/icons';
 import { useAppDrawer } from './state/useAppDrawer';
 

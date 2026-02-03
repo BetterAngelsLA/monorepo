@@ -1,4 +1,4 @@
-import { mergeCss } from '../../utils';
+import { mergeCss } from '@monorepo/react/components';
 import { ReactNode } from 'react';
 
 type TProps = {

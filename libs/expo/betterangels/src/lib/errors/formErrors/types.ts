@@ -1,8 +1,7 @@
 export type TFormValidationError = {
   field: string;
+  location: string | undefined;
   errorCode: string;
-  location?: string;
-  message?: string;
 };
 
 export type TFieldError = {

@@ -11,10 +11,10 @@ import {
 } from '../../apollo';
 import { pagePaddingHorizontal } from '../../static';
 import { ClientProfileListHeader } from './ClientProfileListHeader';
+import { ListLoadingView } from './ListLoadingView';
 import {
-  ClientProfilesDocument,
   ClientProfilesQuery,
-  ClientProfilesQueryVariables,
+  useClientProfilesQuery,
 } from './__generated__/ClientProfiles.generated';
 import {
   DEFAULT_ITEM_GAP,
@@ -30,7 +30,7 @@ type TProps = {
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<ClientProfileFilter>;
-  ordering?: ClientProfileOrder | ClientProfileOrder[] | null;
+  order?: ClientProfileOrder | null;
   paginationLimit?: number;
   showAllClientsLink?: boolean;
   renderHeaderText?: (props: ListHeaderProps) => string;
@@ -40,7 +40,7 @@ type TProps = {
 
 export function ClientProfileList({
   filters,
-  ordering = DEFAULT_QUERY_ORDER,
+  order = DEFAULT_QUERY_ORDER,
   itemGap = DEFAULT_ITEM_GAP,
   paginationLimit = DEFAULT_PAGINATION_LIMIT,
   renderItem,
@@ -50,15 +50,11 @@ export function ClientProfileList({
   style,
   horizontalPadding = pagePaddingHorizontal,
 }: TProps) {
-  const { items, total, loading, reloading, loadMore, reload, hasMore, error } =
-    useInfiniteScrollQuery<
-      TClientProfile,
-      ClientProfilesQuery,
-      ClientProfilesQueryVariables
-    >({
-      document: ClientProfilesDocument,
+  const { items, total, loading, loadMore, hasMore, error } =
+    useInfiniteScrollQuery<TClientProfile, typeof useClientProfilesQuery>({
+      useQueryHook: useClientProfilesQuery,
       queryFieldName: 'clientProfiles',
-      variables: { filters, ordering: ordering || undefined },
+      variables: { filters, order: order || undefined },
       pageSize: paginationLimit,
     });
 
@@ -81,6 +77,7 @@ export function ClientProfileList({
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="client"
+        LoadingViewContent={<ListLoadingView style={{ paddingVertical: 40 }} />}
         renderResultsHeader={(visible, totalItems) => (
           <View
             style={[
@@ -102,8 +99,6 @@ export function ClientProfileList({
           styles.listContent,
           { paddingHorizontal: horizontalPadding },
         ]}
-        onRefresh={reload}
-        refreshing={reloading}
       />
     </View>
   );

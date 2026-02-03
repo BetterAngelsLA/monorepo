@@ -5,24 +5,5 @@
   "projectType": "library",
   "tags": ["type:shared"],
   "// targets": "to see all targets run: nx show project shared --web",
-  "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "{workspaceRoot}/apps/betterangels-backend/schema.graphql"
-    ]
-  },
-  "targets": {
-    "generate-graphql-types": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "libs/react/shared",
-        "command": "graphql-codegen --config codegen.ts"
-      },
-      "outputs": ["{workspaceRoot}/libs/react/shared/src/lib/**/__generated__/"]
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    }
-  }
+  "targets": {}
 }

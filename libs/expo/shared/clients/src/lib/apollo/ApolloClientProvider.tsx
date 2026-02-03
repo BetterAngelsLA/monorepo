@@ -1,6 +1,5 @@
-import { InMemoryCache, TypePolicies } from '@apollo/client';
-import { ApolloProvider } from '@apollo/client/react';
-import { createApolloCache } from '@monorepo/apollo';
+import { ApolloProvider, InMemoryCache } from '@apollo/client';
+import { TCachePolicyConfig, createApolloCache } from '@monorepo/apollo';
 import React, { ReactNode, useMemo } from 'react';
 import { useApiConfig } from '../http';
 import { createApolloClient } from './client';
@@ -9,25 +8,28 @@ import { createApolloClient } from './client';
  * ApolloClientProvider component that initializes the Apollo Client instance
  * based on the current base URL from the ApiConfigContext.
  * It recreates the Apollo Client when the base URL changes.
+ *
+ * @param props - The props for the component, including children.
+ * @returns A provider component that supplies the Apollo Client to its children.
  */
 
 type TProps = {
   children: ReactNode;
   cacheStore?: InMemoryCache;
-  typePolicies?: TypePolicies;
+  policyConfig?: TCachePolicyConfig;
   onUnauthenticated?: () => void;
   authPath?: string;
 };
 
 export const ApolloClientProvider = (props: TProps) => {
-  const { typePolicies, cacheStore, children, authPath, onUnauthenticated } =
+  const { policyConfig, cacheStore, children, authPath, onUnauthenticated } =
     props;
 
   const { baseUrl } = useApiConfig();
 
   const cache = useMemo(
-    () => cacheStore || createApolloCache({ typePolicies }),
-    [cacheStore, typePolicies]
+    () => cacheStore || createApolloCache({ policyConfig }),
+    [cacheStore, policyConfig]
   );
 
   const apolloClient = useMemo(() => {
@@ -38,6 +40,10 @@ export const ApolloClientProvider = (props: TProps) => {
       authPath,
     });
   }, [baseUrl, cache, onUnauthenticated, authPath]);
+
+  if (!apolloClient) {
+    return null;
+  }
 
   return <ApolloProvider client={apolloClient}>{children}</ApolloProvider>;
 };

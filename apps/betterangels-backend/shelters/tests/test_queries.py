@@ -1,16 +1,17 @@
 import datetime
+from datetime import timedelta
 from typing import Any
 from unittest.mock import ANY
 
 from accounts.tests.baker_recipes import organization_recipe
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db import connection
 from django.test import TestCase
-from django.test.utils import CaptureQueriesContext
+from django.utils import timezone
 from model_bakery.recipe import seq
 from places import Places
 from shelters.enums import (
     AccessibilityChoices,
+    CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -167,11 +168,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             website="shelter.com",
             location=shelter_location,
             accessibility=[Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)[0]],
-            cities=[
-                City.objects.get_or_create(
-                    name="Agoura Hills",
-                )[0]
-            ],
+            cities=[City.objects.get_or_create(name=CityChoices.AGOURA_HILLS)[0]],
             demographics=[Demographic.objects.get_or_create(name=DemographicChoices.ALL)[0]],
             entry_requirements=[EntryRequirement.objects.get_or_create(name=EntryRequirementChoices.PHOTO_ID)[0]],
             funders=[Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)[0]],
@@ -266,7 +263,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "totalBeds": 1,
             "website": "shelter.com",
             "accessibility": [{"name": AccessibilityChoices.WHEELCHAIR_ACCESSIBLE.name}],
-            "cities": [{"name": "Agoura Hills"}],
+            "cities": [{"name": CityChoices.AGOURA_HILLS.name}],
             "demographics": [{"name": DemographicChoices.ALL.name}],
             "entryRequirements": [{"name": EntryRequirementChoices.PHOTO_ID.name}],
             "funders": [{"name": FunderChoices.CITY_OF_LOS_ANGELES.name}],
@@ -327,8 +324,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         interior_photo_1 = InteriorPhoto.objects.create(shelter=shelters[1], file=self.file)
 
         query = f"""
-            query ($offset: Int, $limit: Int, $ordering: [ShelterOrder!]! = []) {{
-                shelters(pagination: {{offset: $offset, limit: $limit}}, ordering: $ordering) {{
+            query ($offset: Int, $limit: Int, $order: ShelterOrder) {{
+                shelters(pagination: {{offset: $offset, limit: $limit}}, order: $order) {{
                     totalCount
                     pageInfo {{
                         limit
@@ -344,7 +341,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         expected_query_count = 28
 
-        variables = {"ordering": {"name": "ASC"}}
+        variables = {"order": {"name": "ASC"}}
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -394,10 +391,9 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "rangeInMiles": search_range_in_miles,
         }
 
-        with CaptureQueriesContext(connection) as context:
+        expected_query_count = 2
+        with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
-        # PostGIS spatial_ref_sys may be cached or not, so accept either 2 or 3 queries
-        self.assertIn(len(context.captured_queries), [2, 3])
 
         results = response["data"]["shelters"]["results"]
 
@@ -528,10 +524,9 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             },
         }
 
-        with CaptureQueriesContext(connection) as context:
+        expected_query_count = 3
+        with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
-        # PostGIS spatial_ref_sys may be cached or not, so accept either 2 or 3 queries
-        self.assertIn(len(context.captured_queries), [2, 3])
 
         result_ids = [s["id"] for s in response["data"]["shelters"]["results"]]
         expected_ids = [str(s.id) for s in [s4, s3, s2]]
@@ -628,3 +623,64 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         results = response["data"]["shelters"]["results"]
 
         self.assertEqual(len(results), expected_result_count)
+
+    def test_shelters_by_org_filter(self) -> None:
+        import json
+
+        from django.contrib.auth import get_user_model
+        from django.contrib.auth.models import Permission
+        from notes.permissions import NotePermissions
+        # Arrange orgs + shelters
+        org = organization_recipe.make()
+        other_org = organization_recipe.make()
+        s_older = shelter_recipe.make(organization=org, created_at=timezone.now() - timedelta(minutes=1))
+        s_newer = shelter_recipe.make(organization=org, created_at=timezone.now())
+        shelter_recipe.make(organization=other_org)  # should be excluded
+        # Auth user + perm
+        User = get_user_model()
+        user = User.objects.create_user("orgtest@example.com", password="pw")
+        app_label, codename = getattr(NotePermissions.ADD, "value", NotePermissions.ADD).split(".")
+        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
+        user.user_permissions.add(perm)
+        self.client.force_login(user)
+        query = """
+        query SheltersByOrg($orgId: ID!, $offset: Int, $limit: Int) {
+            sheltersByOrganization(
+            organizationId: $orgId
+            pagination: { offset: $offset, limit: $limit }
+            ) {
+            totalCount
+            pageInfo { offset limit }
+            results { id name }
+            }
+        }
+        """
+        variables = {"orgId": str(org.id), "offset": 0, "limit": 10}
+        # Use the real HTTP endpoint so request.user is populated from the session
+        GRAPHQL_URL = "/graphql"
+        resp = self.client.post(
+            GRAPHQL_URL,
+            data=json.dumps({"query": query, "variables": variables}),
+            content_type="application/json",
+        )
+        response = resp.json()
+        if response.get("errors"):
+            self.fail(f"GQL errors: {response['errors']}")
+        payload = response["data"]["sheltersByOrganization"]
+        results = payload["results"]
+        self.assertEqual(payload["totalCount"], 2)
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0]["id"], str(s_newer.id))
+        self.assertEqual(results[1]["id"], str(s_older.id))
+        self.assertEqual(payload["pageInfo"]["offset"], 0)
+        self.assertEqual(payload["pageInfo"]["limit"], 10)
+        invalid_resp = self.client.post(
+            GRAPHQL_URL,
+            data=json.dumps({"query": query, "variables": {"orgId": "999999", "offset": 0, "limit": 10}}),
+            content_type="application/json",
+        ).json()
+        if invalid_resp.get("errors"):
+            self.fail(f"GQL errors (invalid org): {invalid_resp['errors']}")
+        invalid_payload = invalid_resp["data"]["sheltersByOrganization"]
+        self.assertEqual(invalid_payload["totalCount"], 0)
+        self.assertEqual(len(invalid_payload["results"]), 0)

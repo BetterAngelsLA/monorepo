@@ -4,6 +4,7 @@ import {
   TPlacesPrediction,
   getPlaceAutocomplete,
   getPlaceDetailsById,
+  useUpdateNoteLocationMutation,
 } from '@monorepo/expo/betterangels';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
@@ -13,8 +14,9 @@ import {
   IconButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import * as ExpoLocation from 'expo-location';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import axios from 'axios';
+import * as Location from 'expo-location';
+import { useEffect, useRef, useState } from 'react';
 import { FlatList, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Directions from './Directions';
@@ -53,112 +55,54 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
   const { baseUrl } = useApiConfig();
   const mapRef = useRef<TMapView>(null);
-
   const [minizeModal, setMinimizeModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearch, setIsSearch] = useState(false);
+  const [initialLocation, setInitialLocation] = useState(INITIAL_LOCATION);
   const [suggestions, setSuggestions] = useState<TPlacesPrediction[]>([]);
   const [chooseDirections, setChooseDirections] = useState(false);
   const [selected, setSelected] = useState<boolean>(false);
   const [userLocation, setUserLocation] =
-    useState<ExpoLocation.LocationObject | null>(null);
-
+    useState<Location.LocationObject | null>(null);
   const [address, setAddress] = useState<
-    { short: string; full: string; addressComponents: unknown[] } | undefined
+    { short: string; full: string; addressComponents: any[] } | undefined
   >({
     short: '',
     full: '',
     addressComponents: [],
   });
-
   const [currentLocation, setCurrentLocation] = useState<
     locationLongLat | undefined
   >(undefined);
-
-  // Required by Map's IMapProps
-  const [initialLocation, setInitialLocation] = useState<{
-    longitude: number;
-    latitude: number;
-  }>(INITIAL_LOCATION);
+  const [updateNoteLocation, { error: updateError }] =
+    useUpdateNoteLocationMutation();
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
 
-  // --- Hydrate from existing note location once ---
-  useEffect(() => {
-    if (location?.latitude && location?.longitude) {
-      const name =
-        location.name ??
-        (location.address ? location.address.split(', ')[0] : undefined);
+  const searchPlacesInCalifornia = async (query: string) => {
+    if (query.length < 3) return;
 
-      setCurrentLocation({
-        latitude: location.latitude,
-        longitude: location.longitude,
-        name,
+    try {
+      const predictions = await getPlaceAutocomplete({
+        baseUrl,
+        query,
       });
 
-      setInitialLocation({
-        latitude: location.latitude,
-        longitude: location.longitude,
-      });
+      setIsSearch(true);
 
-      setAddress(
-        location.address
-          ? {
-              short: name ?? '',
-              full: location.address,
-              addressComponents: [],
-            }
-          : {
-              short: name ?? '',
-              full: '',
-              addressComponents: [],
-            }
-      );
-
-      setSelected(true);
-    } else {
-      // No existing location: keep currentLocation undefined.
-      setSelected(false);
+      setSuggestions(predictions);
+    } catch (err) {
+      console.error('Error fetching place data:', err);
+      return [];
     }
-  }, [location]);
-
-  // --- Search / autocomplete ---
-
-  const searchPlacesInCalifornia = useCallback(
-    async (query: string) => {
-      if (query.length < 3) return;
-
-      try {
-        const predictions = await getPlaceAutocomplete({
-          baseUrl,
-          query,
-        });
-
-        setIsSearch(true);
-        setSuggestions(predictions);
-      } catch (err) {
-        console.error('Error fetching place data:', err);
-      }
-    },
-    [baseUrl]
-  );
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (searchQuery) {
-        void searchPlacesInCalifornia(searchQuery);
-      }
-    }, 500);
-
-    return () => clearTimeout(handler);
-  }, [searchQuery, searchPlacesInCalifornia]);
-
+  };
   const onSuggestionsSelect = async (place: TPlacesPrediction) => {
     try {
       if (chooseDirections) {
         setChooseDirections(false);
       }
+      setLocation(undefined);
 
       const placeResult = await getPlaceDetailsById({
         baseUrl,
@@ -173,24 +117,10 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       setIsSearch(false);
       setSuggestions([]);
 
-      const name = place.description.split(', ')[0];
-
-      const newLoc: TLocation = {
-        longitude: responseLocation.lng,
-        latitude: responseLocation.lat,
-        name,
-        address: place.description,
-      };
-
       setCurrentLocation({
         longitude: responseLocation.lng,
         latitude: responseLocation.lat,
-        name,
-      });
-
-      setInitialLocation({
-        longitude: responseLocation.lng,
-        latitude: responseLocation.lat,
+        name: place.description.split(', ')[0],
       });
 
       mapRef.current?.animateToRegion(
@@ -203,17 +133,18 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         500
       );
 
+      setInitialLocation({
+        longitude: responseLocation.lng,
+        latitude: responseLocation.lat,
+      });
+
       setAddress({
-        short: name,
+        short: place.description,
         full: place.description,
         addressComponents: placeResult.address_components || [],
       });
-
       setMinimizeModal(false);
       setSelected(true);
-
-      // Hand result back up; parent owns persistence
-      setLocation(newLoc);
     } catch (err) {
       console.error(err);
     }
@@ -226,6 +157,20 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       addressComponents: [],
     });
     setSearchQuery(query);
+  };
+
+  const goToUserLocation = () => {
+    if (userLocation && mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: userLocation.coords.latitude,
+          longitude: userLocation.coords.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        },
+        500
+      );
+    }
   };
 
   const onSearchDelete = () => {
@@ -242,37 +187,109 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     }
   };
 
-  const onDelete = () => {
-    if (!selected) return;
-    onSearchDelete();
-  };
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchQuery) {
+        searchPlacesInCalifornia(searchQuery);
+      }
+    }, 500);
 
-  // --- User location button (just to move the camera) ---
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
-  const goToUserLocation = async () => {
+  useEffect(() => {
+    getLocation();
+  }, []);
+
+  const getLocation = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      return;
+    }
+    const userCurrentLocation = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+    const { latitude, longitude } = userCurrentLocation.coords;
+
+    setUserLocation(userCurrentLocation);
+    if (location?.latitude && location?.longitude) return;
+
+    const url = `${baseUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}`;
+
     try {
-      const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-
-      const userCurrentLocation = await ExpoLocation.getCurrentPositionAsync({
-        accuracy: ExpoLocation.Accuracy.Balanced,
+      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
+      const { data } = await axios.get(url, {
+        params: {
+          withCredentials: true,
+        },
       });
 
-      setUserLocation(userCurrentLocation);
+      setLocation(undefined);
+      setCurrentLocation({
+        longitude,
+        latitude,
+        name: undefined,
+      });
 
-      if (mapRef.current) {
-        mapRef.current.animateToRegion(
-          {
-            latitude: userCurrentLocation.coords.latitude,
-            longitude: userCurrentLocation.coords.longitude,
-            latitudeDelta: 0.005,
-            longitudeDelta: 0.005,
+      setInitialLocation({
+        longitude,
+        latitude,
+      });
+
+      const googleAddress = data.results[0].formatted_address;
+      const shortAddress = googleAddress.split(', ')[0];
+
+      setAddress({
+        short: shortAddress,
+        full: googleAddress,
+        addressComponents: data.results[0].address_components,
+      });
+
+      setLocation({
+        longitude: longitude,
+        latitude: latitude,
+        address: googleAddress,
+        name: undefined,
+      });
+      setMinimizeModal(false);
+      setSelected(true);
+
+      const { data: locationData } = await updateNoteLocation({
+        variables: {
+          data: {
+            id: noteId || '',
+            location: {
+              point: [longitude, latitude],
+              address: {
+                addressComponents: JSON.stringify(
+                  data.results[0].address_components
+                ),
+                formattedAddress: googleAddress,
+              },
+            },
           },
-          500
-        );
+        },
+      });
+      if (!locationData) {
+        throw new Error(`Error updating interaction location: ${updateError}`);
       }
     } catch (err) {
-      console.error('Error getting user location', err);
+      console.error(err);
+    }
+  };
+
+  const onDelete = () => {
+    if (!selected) return;
+    setAddress(undefined);
+    setCurrentLocation(undefined);
+    setLocation(undefined);
+    setMinimizeModal(false);
+    setSearchQuery('');
+    setIsSearch(false);
+    setSuggestions([]);
+    setSelected(false);
+    if (chooseDirections) {
+      setChooseDirections(false);
     }
   };
 
@@ -291,8 +308,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
           currentLocation={currentLocation}
         />
       )}
-
-      {/* Search overlay */}
       <View
         style={{
           position: 'absolute',
@@ -348,8 +363,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
           )}
         />
       </View>
-
-      {/* Bottom actions + Selected summary */}
       <View
         style={{
           position: 'absolute',
@@ -384,7 +397,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             </IconButton>
           </View>
         )}
-
         {selected && currentLocation && (
           <Selected
             noteId={noteId}
@@ -393,8 +405,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             address={address}
             setChooseDirections={setChooseDirections}
             setSelected={setSelected}
-            onSelectLocation={(loc) => {
-              setLocation(loc);
+            onSelectLocation={(location) => {
+              setLocation(location);
               onclose?.();
             }}
           />
@@ -407,8 +419,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
           }}
         />
       </View>
-
-      {/* Map */}
       <Map
         userLocation={userLocation}
         ref={mapRef}

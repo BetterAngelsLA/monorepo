@@ -18,17 +18,10 @@ const config: CodegenConfig = {
     },
     'src/': {
       preset: 'near-operation-file',
-      plugins: ['typescript-operations', 'typed-document-node'],
-      config: {
-        scalars: {
-          NonBlankString: 'string',
-        },
-        useTypeImports: true,
-      },
+      plugins: ['typescript-operations', 'typescript-react-apollo'],
       presetConfig: {
         baseTypesPath: 'lib/apollo/graphql/__generated__/types.ts',
         folder: '__generated__',
-        importTypes: true,
       },
     },
   },

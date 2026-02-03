@@ -9,9 +9,8 @@ import { useMemo, useState } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
 import { Ordering } from '../../../apollo';
 import {
-  FilterOrganizationsDocument,
   FilterOrganizationsQuery,
-  FilterOrganizationsQueryVariables,
+  useFilterOrganizationsQuery,
 } from './__generated__/filterOrganizations.generated';
 
 type TOrgResult = NonNullable<
@@ -41,15 +40,11 @@ export function FilterOrganizationsOptions(props: TProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const { items, total, loading, loadMore, hasMore, error } =
-    useInfiniteScrollQuery<
-      TOrgResult,
-      FilterOrganizationsQuery,
-      FilterOrganizationsQueryVariables
-    >({
-      document: FilterOrganizationsDocument,
+    useInfiniteScrollQuery<TOrgResult, typeof useFilterOrganizationsQuery>({
+      useQueryHook: useFilterOrganizationsQuery,
       queryFieldName: 'caseworkerOrganizations',
       variables: {
-        ordering: {
+        order: {
           name: Ordering.AscNullsLast,
           id: Ordering.Desc,
         },

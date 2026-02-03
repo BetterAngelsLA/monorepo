@@ -1,66 +1,37 @@
-mutation createHmisClientProfile($data: CreateHmisClientProfileInput!) {
-  createHmisClientProfile(data: $data) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-    ... on HmisClientProfileType {
-      id
-      hmisId
+mutation CreateHmisClient(
+  $clientInput: HmisCreateClientInput!
+  $clientSubItemsInput: HmisCreateClientSubItemsInput!
+) {
+  hmisCreateClient(
+    clientInput: $clientInput
+    clientSubItemsInput: $clientSubItemsInput
+  ) {
+    ... on HmisClientType {
       personalId
       uniqueIdentifier
-      addedDate
-      lastUpdated
-
-      alias
-      birthDate
-
-      dobQuality
       firstName
       lastName
-      nameQuality
+      nameDataQuality
       ssn1
       ssn2
       ssn3
-      ssnQuality
-
-      age
-      gender
-      genderIdentityText
-      nameMiddle
-      nameSuffix
-      raceEthnicity
-      additionalRaceEthnicityDetail
-      veteran
-
-      adaAccommodation
-      address
-      californiaId
-      email
-      eyeColor
-      hairColor
-      heightInInches
-      importantNotes
-      livingSituation
-      mailingAddress
-      maritalStatus
-      physicalDescription
-      placeOfBirth
-      preferredCommunication
-      preferredLanguage
-      pronouns
-      pronounsOther
-      residenceAddress
-      residenceGeolocation
-      spokenLanguages
-      phoneNumbers {
-        id
-        number
-        isPrimary
+      ssnDataQuality
+      dob
+      dobDataQuality
+      data {
+        middleName
+        nameSuffix
+        alias
+        raceEthnicity
+        additionalRaceEthnicity
+        differentIdentityText
+        gender
+        veteranStatus
       }
+    }
+    ... on HmisCreateClientError {
+      message
+      field
     }
   }
 }

@@ -1,4 +1,3 @@
-import { useLazyQuery, useMutation } from '@apollo/client/react';
 import {
   ControlledInput,
   DatePicker,
@@ -19,11 +18,11 @@ import {
   enumDisplayGender,
 } from '../../../../../static';
 import { TClientProfile } from '../../../../Client/ClientProfile/types';
-import { GetClientProfileDocument } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
+import { useGetClientProfileLazyQuery } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
 import { HouseholdMemeberDeleteBtn } from '../HouseholdMemeberDeleteBtn';
 import {
-  CreateClientHouseholdMemberDocument,
-  UpdateClientHouseholdMemberDocument,
+  useCreateClientHouseholdMemberMutation,
+  useUpdateClientHouseholdMemberMutation,
 } from './__generated__/householdMember.generated';
 import { processHouseholdMemberForm } from './processHouseholdMemberForm';
 import { defaultFormState, toFormState } from './toFormState';
@@ -64,14 +63,9 @@ export function HouseholdMemberForm(props: TProps) {
     setValue('relationshipToClient', relationshipToClient);
   }, [clientProfile, relationId, setValue]);
 
-  const [createHouseholdMember] = useMutation(
-    CreateClientHouseholdMemberDocument
-  );
-  const [updateHouseholdMember] = useMutation(
-    UpdateClientHouseholdMemberDocument
-  );
-
-  const [reFetchClientProfile] = useLazyQuery(GetClientProfileDocument, {
+  const [createHouseholdMember] = useCreateClientHouseholdMemberMutation();
+  const [updateHouseholdMember] = useUpdateClientHouseholdMemberMutation();
+  const [reFetchClientProfile] = useGetClientProfileLazyQuery({
     fetchPolicy: 'network-only',
   });
 

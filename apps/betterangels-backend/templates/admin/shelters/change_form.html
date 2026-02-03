@@ -1,0 +1,53 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls static admin_list %}
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+    .places-widget > input:first-child { width: 100% !important; }
+    label.required::after { content: '\00a0*' !important; color: red; position: absolute; }
+    .hero-fieldset .readonly { display: block; margin-bottom: .5rem; }
+    .hero-fieldset img { max-height: 200px; }
+    </style>
+{% endblock %}
+{% block content_title %}
+    {{ block.super }}
+    <p style="font-size: 14px; margin-top: 10px;">
+        <span style="color: red;">*</span> indicates a required field
+    </p>
+{% endblock %}
+{% block field_sets %}{{ block.super }}{% endblock %}
+{% block inline_field_sets %}
+    {# ContactInfo inline #}
+    {% for inline_admin_formset in inline_admin_formsets %}
+        {% if inline_admin_formset.opts.inline_key == "contactinfo" %}
+            {% include inline_admin_formset.opts.template with inline_admin_formset=inline_admin_formset only %}
+        {% endif %}
+    {% endfor %}
+    {# Inject Hero Image section #}
+    <fieldset class="module aligned hero-fieldset">
+        <h2>HERO IMAGE</h2>
+        <div class="form-row">
+            <div class="readonly">
+                {% if original.hero_image and original.hero_image.file %}
+                    <img src="{{ original.hero_image.file.url }}" style="max-height: 200px;" />
+                {% else %}
+                    No hero image selected
+                {% endif %}
+            </div>
+        </div>
+        <div class="form-row">
+            <div>
+                {% if original.hero_image and original.hero_image.file %}
+                    <label for="{{ adminform.form.clear_hero_image.id_for_label }}">Clear hero image</label>
+                    {{ adminform.form.clear_hero_image }}
+                {% endif %}
+            </div>
+        </div>
+    </fieldset>
+    {# Remaining inlines #}
+    {% for inline_admin_formset in inline_admin_formsets %}
+        {% if inline_admin_formset.opts.inline_key != "contactinfo" %}
+            {% include inline_admin_formset.opts.template with inline_admin_formset=inline_admin_formset only %}
+        {% endif %}
+    {% endfor %}
+{% endblock %}

@@ -1,1 +1,0 @@
-export { HMISClientProfileHeader } from './HMISClientProfileHeader';

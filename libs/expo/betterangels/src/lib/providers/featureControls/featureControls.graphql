@@ -1,0 +1,19 @@
+query GetFeatureControls {
+  featureControls {
+    flags {
+      isActive
+      lastModified
+      name
+    }
+    samples {
+      isActive
+      lastModified
+      name
+    }
+    switches {
+      isActive
+      lastModified
+      name
+    }
+  }
+}

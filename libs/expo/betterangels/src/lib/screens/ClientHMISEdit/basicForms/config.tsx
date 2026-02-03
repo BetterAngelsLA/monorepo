@@ -1,12 +1,12 @@
+import { ZodType } from 'zod';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
-import { THmisFormSectionKey, TSectionConfigRecord } from '../types';
+import { THmisFormSectionKey, TSectionConfig } from '../types';
 import {
   DemographicInfoFormHmis,
   DemographicInfoFormSchema,
   demographicInfoFormEmptyState,
   mapClientToDemographicSchema,
 } from './DemographicInfo';
-import { DemographicInfoFormSchemaOut } from './DemographicInfo/formSchema';
 import {
   FullNameFormHmis,
   FullNameFormSchema,
@@ -14,16 +14,8 @@ import {
   mapClientToFullNameSchema,
 } from './FullName';
 import {
-  ImportantNotesFormHmis,
-  ImportantNotesFormSchema,
-  ImportantNotesFormSchemaOut,
-  importantNotesFormEmptyState,
-  mapClientToImportantNotes,
-} from './ImportantNotes';
-import {
   PersonalInfoFormHmis,
   PersonalInfoFormSchema,
-  PersonalInfoFormSchemaOut,
   mapClientToPersonalInfoSchema,
   personalInfoFormEmptyState,
 } from './PersonalInfo';
@@ -33,7 +25,6 @@ export const hmisFormConfig = {
     title: 'Edit Full Name',
     Form: FullNameFormHmis,
     schema: FullNameFormSchema,
-    schemaOutput: undefined,
     emptyState: fullNameFormEmptyState,
     dataMapper: mapClientToFullNameSchema,
   },
@@ -41,7 +32,6 @@ export const hmisFormConfig = {
     title: 'Edit Demographic Info',
     Form: DemographicInfoFormHmis,
     schema: DemographicInfoFormSchema,
-    schemaOutput: DemographicInfoFormSchemaOut,
     emptyState: demographicInfoFormEmptyState,
     dataMapper: mapClientToDemographicSchema,
   },
@@ -49,20 +39,11 @@ export const hmisFormConfig = {
     title: 'Edit Personal Info',
     Form: PersonalInfoFormHmis,
     schema: PersonalInfoFormSchema,
-    schemaOutput: PersonalInfoFormSchemaOut,
     emptyState: personalInfoFormEmptyState,
     dataMapper: mapClientToPersonalInfoSchema,
   },
-  [ClientProfileSectionEnum.ImportantNotes]: {
-    title: 'Edit Important Notes',
-    Form: ImportantNotesFormHmis,
-    schema: ImportantNotesFormSchema,
-    schemaOutput: ImportantNotesFormSchemaOut,
-    emptyState: importantNotesFormEmptyState,
-    dataMapper: mapClientToImportantNotes,
-  },
 } as const satisfies Partial<
-  Record<ClientProfileSectionEnum, TSectionConfigRecord>
+  Record<ClientProfileSectionEnum, TSectionConfig<ZodType<any, any, any>>>
 >;
 
 export function parseAsSectionKeyHMIS(

@@ -1,70 +1,29 @@
-query HmisNote($id: ID!) {
-  hmisNote(id: $id) {
-    ... on HmisNoteType {
+query HmisGetClientNote($id: ID!, $personalId: ID!, $enrollmentId: ID!) {
+  hmisGetClientNote(
+    id: $id
+    personalId: $personalId
+    enrollmentId: $enrollmentId
+  ) {
+    ... on HmisClientNoteType {
       id
-      hmisId
-      addedDate
-      lastUpdated
       title
       note
       date
-      location {
-        address {
-          id
-          street
-          city
-          state
-          zipCode
-        }
-        point
-        pointOfInterest
+      category
+      client {
+        personalId
       }
-      refClientProgram
-      hmisClientProfile {
-        id
-        hmisId
-        firstName
-        lastName
-      }
-      createdBy {
-        id
-        firstName
-        lastName
-      }
-      clientProgram {
-        id
-        program {
-          id
-          name
+      enrollment {
+        enrollmentId
+        project {
+          projectId
+          projectName
         }
       }
-      tasks {
-        id
-        summary
-        description
-        status
-        team
-      }
-      providedServices {
-        id
-        service {
-          id
-          label
-          category {
-            id
-          }
-        }
-      }
-      requestedServices {
-        id
-        service {
-          id
-          label
-          category {
-            id
-          }
-        }
-      }
+    }
+    ... on HmisGetClientNoteError {
+      field
+      message
     }
   }
 }

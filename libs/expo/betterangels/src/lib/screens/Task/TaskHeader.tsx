@@ -1,111 +1,41 @@
-import { useMutation } from '@apollo/client/react';
 import { EditButton, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
-import { TaskStatusEnum } from '../../apollo';
-import { useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
 import { TaskForm } from '../../ui-components';
-import { TaskFormData } from '../../ui-components/TaskForm/TaskForm';
-import { DeleteTaskDocument } from '../../ui-components/TaskForm/__generated__/deleteTask.generated';
-import { UpdateTaskDocument } from '../../ui-components/TaskForm/__generated__/updateTask.generated';
 import { TaskQuery } from './__generated__/Task.generated';
 
-type TTaskHeaderProps = {
-  task: TaskQuery['task'];
-  id: string;
+type TSearchParams = {
   arrivedFrom?: string;
 };
 
+type TTaskHeaderProps = {
+  task: TaskQuery['task'];
+};
+
 export default function TaskHeader(props: TTaskHeaderProps) {
-  const { task, id, arrivedFrom } = props;
+  const { task } = props;
 
-  const { showSnackbar } = useSnackbar();
-  const { showModalScreen } = useModalScreen();
+  const { arrivedFrom } = useLocalSearchParams<TSearchParams>();
 
-  const [updateTask] = useMutation(UpdateTaskDocument);
+  const currentPath = arrivedFrom || '/tasks';
 
-  const [deleteTask] = useMutation(DeleteTaskDocument, {
-    update(cache, { data }) {
-      if (data?.deleteTask?.__typename !== 'DeletedObjectType') {
-        console.error(
-          `[DeleteTask] failed to delete Task __typename DeletedObjectType missing from response.`
-        );
-
-        return;
-      }
-
-      // Cache store ID is a string, so must convert
-      const deletedId = String(data.deleteTask.id);
-
-      cache.evict({
-        // Note `__typename: 'TaskType'` is not in the response payload. It uses a generic `DeletedObjectType`.
-        id: cache.identify({ __typename: 'TaskType', id: deletedId }),
-      });
-
-      // clean up
-      cache.gc();
-    },
-  });
-
-  const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
-    if (!id) return;
-
-    try {
-      const result = await updateTask({
-        variables: {
-          data: {
-            id,
-            summary: task.summary!,
-            description: task.description,
-            status: task.status,
-            team: task.team || null,
-          },
-        },
-      });
-
-      if (result.data?.updateTask.__typename === 'OperationInfo') {
-        console.log(result.data.updateTask.messages);
-      }
-
-      closeForm();
-    } catch (e) {
-      showSnackbar({
-        message: 'Error updating the task.',
-        type: 'error',
-      });
-      console.error(e);
-    }
-  };
-
-  const onDelete = async (id: string, closeForm: () => void) => {
-    try {
-      await deleteTask({
-        variables: { id },
-      });
-
-      showSnackbar({ message: 'Task deleted', type: 'success' });
-      closeForm();
-      arrivedFrom ? router.replace(arrivedFrom) : router.back();
-    } catch (err) {
-      showSnackbar({ message: 'Failed to delete task', type: 'error' });
-    }
-  };
+  const { showModalScreen, closeModalScreen } = useModalScreen();
 
   function openTaskForm() {
     showModalScreen({
       presentation: 'modal',
-      renderContent: ({ close }) => (
+      content: (
         <TaskForm
-          initialValues={{
-            summary: task.summary || '',
-            team: task.team || null,
-            description: task.description || '',
-            status: task.status || TaskStatusEnum.ToDo,
+          clientProfileId={task.clientProfile?.id}
+          task={task}
+          onCancel={() => {
+            closeModalScreen();
           }}
-          onDelete={() => onDelete(id, close)}
-          onSubmit={(task) => onSubmit(task, close)}
-          onCancel={close}
+          onSuccess={() => {
+            closeModalScreen();
+          }}
+          arrivedFrom={currentPath}
         />
       ),
       title: 'Follow-Up Task',

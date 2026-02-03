@@ -1,19 +1,14 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, TextBold } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
+import { TasksQuery } from '../TaskList/__generated__/Tasks.generated';
 
 type TaskCardClientProps = {
-  firstName?: string | null;
-  lastName?: string | null;
-  profilePhotoUrl?: string | null;
+  clientProfile: TasksQuery['tasks']['results'][number]['clientProfile'];
 };
 
 export default function TaskCardClient(props: TaskCardClientProps) {
-  const { firstName, lastName, profilePhotoUrl } = props;
-
-  if (!firstName && !lastName && !profilePhotoUrl) {
-    return null;
-  }
+  const { clientProfile } = props;
 
   return (
     <View
@@ -28,10 +23,10 @@ export default function TaskCardClient(props: TaskCardClientProps) {
         size="sm"
         accessibilityLabel={`client's profile photo`}
         accessibilityHint={`client's profile photo`}
-        imageUrl={profilePhotoUrl || undefined}
+        imageUrl={clientProfile?.profilePhoto?.url}
       />
       <TextBold size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
-        {firstName} {lastName}
+        {clientProfile?.firstName} {clientProfile?.lastName}
       </TextBold>
     </View>
   );

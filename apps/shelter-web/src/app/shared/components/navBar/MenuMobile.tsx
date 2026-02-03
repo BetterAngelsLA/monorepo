@@ -9,11 +9,7 @@ import {
 import { flyoutAtom } from '../../atoms/flyoutAtom';
 import { mergeCss } from '../../utils/styles/mergeCss';
 
-type MenuMobileProps = {
-  showOperator: boolean;
-};
-
-export function MenuMobile({ showOperator }: MenuMobileProps) {
+export function MenuMobile() {
   const [_flyout, setFlyout] = useAtom(flyoutAtom);
 
   function onFlyoutClose() {
@@ -63,7 +59,7 @@ export function MenuMobile({ showOperator }: MenuMobileProps) {
             Home
           </Link>
         </div>
-        <div className={mergeCss(borderCss)}>
+        <div>
           <Link
             aria-label="navigate to about us"
             to={aboutUsPath}
@@ -72,17 +68,15 @@ export function MenuMobile({ showOperator }: MenuMobileProps) {
             About Us
           </Link>
         </div>
-        {showOperator ? (
-          <div>
-            <Link
-              aria-label="navigate to operator dashboard"
-              to={operatorPath}
-              className={mergeCss(hoverBtnCss)}
-            >
-              Operator
-            </Link>
-          </div>
-        ) : null}
+        <div>
+          <Link
+            aria-label="navigate to operator page"
+            to={operatorPath}
+            className={mergeCss(hoverBtnCss)}
+          >
+            Operator
+          </Link>
+        </div>
       </div>
     </>
   );

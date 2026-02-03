@@ -1,8 +1,3 @@
-import {
-  IdCardOutlineIcon,
-  LocationDotIcon,
-  UserOutlineIcon,
-} from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   TextBold,
@@ -10,31 +5,21 @@ import {
   formatDateStatic,
 } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { HmisClientProfileType, HmisSuffixEnum } from '../../apollo';
-import { enumDisplayHmisSuffix } from '../../static';
-import { formatHeight } from '../ClientCard/utils/formatHeight';
+import { HmisClientType } from '../../apollo';
+import { NameSuffixHMIS } from './NameSuffixHMIS';
 
 export interface IClientCardProps {
-  client: HmisClientProfileType;
+  client: HmisClientType;
   onPress?: () => void;
 }
 
 export function ClientCardHMIS(props: IClientCardProps) {
   const {
-    client: {
-      firstName,
-      lastName,
-      birthDate,
-      alias,
-      nameSuffix,
-      heightInInches,
-      residenceAddress,
-      age,
-      uniqueIdentifier,
-    },
+    client: { firstName, lastName, dob, data: metadata },
     onPress,
   } = props;
-  const formattedHeight = formatHeight(heightInInches ?? 0);
+
+  const { alias, middleName, nameSuffix } = metadata || {};
 
   return (
     <Pressable
@@ -46,51 +31,25 @@ export function ClientCardHMIS(props: IClientCardProps) {
         pressed && onPress && styles.pressed,
       ]}
     >
-      <View style={{ gap: Spacings.xxs, flex: 2 }}>
-        <TextBold size="sm">
-          {firstName} {lastName}{' '}
-          {nameSuffix &&
-            !['NO_ANSWER', 'DONT_KNOW'].includes(nameSuffix) &&
-            `${enumDisplayHmisSuffix[nameSuffix as HmisSuffixEnum]} `}
-          {alias && `(${alias})`}
-        </TextBold>
-
-        {(birthDate || formattedHeight) && (
-          <View style={styles.row}>
-            <UserOutlineIcon mr="xxs" size="sm" color={Colors.NEUTRAL_DARK} />
-            {!!birthDate && (
-              <TextRegular size="xs">
-                {formatDateStatic({
-                  date: birthDate,
-                  inputFormat: 'yyyy-MM-dd',
-                  outputFormat: 'MM/dd/yyyy',
-                })}{' '}
-                ({age})
-              </TextRegular>
-            )}
-            {!!birthDate && !!formattedHeight && (
-              <TextRegular size="xs"> | </TextRegular>
-            )}
-            {!!formattedHeight && (
-              <TextRegular size="xs">Height: {formattedHeight}</TextRegular>
-            )}
-          </View>
-        )}
-
-        {!!residenceAddress && (
-          <View style={styles.row}>
-            <LocationDotIcon size="sm" mr="xxs" color={Colors.NEUTRAL_DARK} />
-            <TextRegular size="xs">{residenceAddress}</TextRegular>
-          </View>
-        )}
-
-        {!!uniqueIdentifier && (
-          <View style={styles.row}>
-            <IdCardOutlineIcon size="sm" mr="xxs" color={Colors.NEUTRAL_DARK} />
-            <TextRegular size="xs">HMIS ID: {uniqueIdentifier}</TextRegular>
-          </View>
-        )}
+      <View style={[styles.row, { gap: 2 }]}>
+        <TextBold size="sm">{firstName}</TextBold>
+        {!!middleName && <TextBold size="sm">{middleName}</TextBold>}
+        <TextBold size="sm">{lastName}</TextBold>
+        <NameSuffixHMIS suffix={nameSuffix} />
+        {!!alias && <TextBold size="sm">({alias})</TextBold>}
       </View>
+
+      {!!dob && (
+        <View style={styles.row}>
+          <TextRegular size="xs">
+            {formatDateStatic({
+              date: dob,
+              inputFormat: 'yyyy-MM-dd',
+              outputFormat: 'MM/dd/yyyy',
+            })}
+          </TextRegular>
+        </View>
+      )}
     </Pressable>
   );
 }

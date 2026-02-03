@@ -1,15 +1,77 @@
-import type * as Types from '../../../apollo/graphql/__generated__/types';
+import * as Types from '../../../apollo/graphql/__generated__/types';
 
-import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
-export type CreateHmisClientProfileMutationVariables = Types.Exact<{
-  data: Types.CreateHmisClientProfileInput;
+import { gql } from '@apollo/client';
+import * as Apollo from '@apollo/client';
+const defaultOptions = {} as const;
+export type CreateHmisClientMutationVariables = Types.Exact<{
+  clientInput: Types.HmisCreateClientInput;
+  clientSubItemsInput: Types.HmisCreateClientSubItemsInput;
 }>;
 
 
-export type CreateHmisClientProfileMutation = { __typename?: 'Mutation', createHmisClientProfile:
-    | { __typename?: 'HmisClientProfileType', id: string, hmisId?: string | null, personalId?: string | null, uniqueIdentifier?: string | null, addedDate?: any | null, lastUpdated?: any | null, alias?: string | null, birthDate?: any | null, dobQuality?: Types.HmisDobQualityEnum | null, firstName?: string | null, lastName?: string | null, nameQuality?: Types.HmisNameQualityEnum | null, ssn1?: string | null, ssn2?: string | null, ssn3?: string | null, ssnQuality?: Types.HmisSsnQualityEnum | null, age?: number | null, gender?: Array<Types.HmisGenderEnum> | null, genderIdentityText?: string | null, nameMiddle?: string | null, nameSuffix?: Types.HmisSuffixEnum | null, raceEthnicity?: Array<Types.HmisRaceEnum> | null, additionalRaceEthnicityDetail?: string | null, veteran?: Types.HmisVeteranStatusEnum | null, adaAccommodation?: Array<Types.AdaAccommodationEnum> | null, address?: string | null, californiaId?: string | null, email?: string | null, eyeColor?: Types.EyeColorEnum | null, hairColor?: Types.HairColorEnum | null, heightInInches?: number | null, importantNotes?: string | null, livingSituation?: Types.LivingSituationEnum | null, mailingAddress?: string | null, maritalStatus?: Types.MaritalStatusEnum | null, physicalDescription?: string | null, placeOfBirth?: string | null, preferredCommunication?: Array<Types.PreferredCommunicationEnum> | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: Types.PronounEnum | null, pronounsOther?: string | null, residenceAddress?: string | null, residenceGeolocation?: any | null, spokenLanguages?: Array<Types.LanguageEnum> | null, phoneNumbers?: Array<{ __typename?: 'PhoneNumberType', id: string, number?: any | null, isPrimary?: boolean | null }> | null }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-   };
+export type CreateHmisClientMutation = { __typename?: 'Mutation', hmisCreateClient: { __typename?: 'HmisClientType', personalId?: string | null, uniqueIdentifier?: string | null, firstName?: string | null, lastName?: string | null, nameDataQuality?: Types.HmisNameQualityEnum | null, ssn1?: string | null, ssn2?: string | null, ssn3?: string | null, ssnDataQuality?: Types.HmisSsnQualityEnum | null, dob?: string | null, dobDataQuality?: Types.HmisDobQualityEnum | null, data?: { __typename?: 'HmisClientDataType', middleName?: string | null, nameSuffix?: Types.HmisSuffixEnum | null, alias?: string | null, raceEthnicity: Array<Types.HmisRaceEnum>, additionalRaceEthnicity?: string | null, differentIdentityText?: string | null, gender: Array<Types.HmisGenderEnum>, veteranStatus: Types.HmisVeteranStatusEnum } | null } | { __typename?: 'HmisCreateClientError', message: string, field?: string | null } };
 
 
-export const CreateHmisClientProfileDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"createHmisClientProfile"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateHmisClientProfileInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createHmisClientProfile"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"OperationInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"messages"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"field"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"HmisClientProfileType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"hmisId"}},{"kind":"Field","name":{"kind":"Name","value":"personalId"}},{"kind":"Field","name":{"kind":"Name","value":"uniqueIdentifier"}},{"kind":"Field","name":{"kind":"Name","value":"addedDate"}},{"kind":"Field","name":{"kind":"Name","value":"lastUpdated"}},{"kind":"Field","name":{"kind":"Name","value":"alias"}},{"kind":"Field","name":{"kind":"Name","value":"birthDate"}},{"kind":"Field","name":{"kind":"Name","value":"dobQuality"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}},{"kind":"Field","name":{"kind":"Name","value":"nameQuality"}},{"kind":"Field","name":{"kind":"Name","value":"ssn1"}},{"kind":"Field","name":{"kind":"Name","value":"ssn2"}},{"kind":"Field","name":{"kind":"Name","value":"ssn3"}},{"kind":"Field","name":{"kind":"Name","value":"ssnQuality"}},{"kind":"Field","name":{"kind":"Name","value":"age"}},{"kind":"Field","name":{"kind":"Name","value":"gender"}},{"kind":"Field","name":{"kind":"Name","value":"genderIdentityText"}},{"kind":"Field","name":{"kind":"Name","value":"nameMiddle"}},{"kind":"Field","name":{"kind":"Name","value":"nameSuffix"}},{"kind":"Field","name":{"kind":"Name","value":"raceEthnicity"}},{"kind":"Field","name":{"kind":"Name","value":"additionalRaceEthnicityDetail"}},{"kind":"Field","name":{"kind":"Name","value":"veteran"}},{"kind":"Field","name":{"kind":"Name","value":"adaAccommodation"}},{"kind":"Field","name":{"kind":"Name","value":"address"}},{"kind":"Field","name":{"kind":"Name","value":"californiaId"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"eyeColor"}},{"kind":"Field","name":{"kind":"Name","value":"hairColor"}},{"kind":"Field","name":{"kind":"Name","value":"heightInInches"}},{"kind":"Field","name":{"kind":"Name","value":"importantNotes"}},{"kind":"Field","name":{"kind":"Name","value":"livingSituation"}},{"kind":"Field","name":{"kind":"Name","value":"mailingAddress"}},{"kind":"Field","name":{"kind":"Name","value":"maritalStatus"}},{"kind":"Field","name":{"kind":"Name","value":"physicalDescription"}},{"kind":"Field","name":{"kind":"Name","value":"placeOfBirth"}},{"kind":"Field","name":{"kind":"Name","value":"preferredCommunication"}},{"kind":"Field","name":{"kind":"Name","value":"preferredLanguage"}},{"kind":"Field","name":{"kind":"Name","value":"pronouns"}},{"kind":"Field","name":{"kind":"Name","value":"pronounsOther"}},{"kind":"Field","name":{"kind":"Name","value":"residenceAddress"}},{"kind":"Field","name":{"kind":"Name","value":"residenceGeolocation"}},{"kind":"Field","name":{"kind":"Name","value":"spokenLanguages"}},{"kind":"Field","name":{"kind":"Name","value":"phoneNumbers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"number"}},{"kind":"Field","name":{"kind":"Name","value":"isPrimary"}}]}}]}}]}}]}}]} as unknown as DocumentNode<CreateHmisClientProfileMutation, CreateHmisClientProfileMutationVariables>;
+export const CreateHmisClientDocument = gql`
+    mutation CreateHmisClient($clientInput: HmisCreateClientInput!, $clientSubItemsInput: HmisCreateClientSubItemsInput!) {
+  hmisCreateClient(
+    clientInput: $clientInput
+    clientSubItemsInput: $clientSubItemsInput
+  ) {
+    ... on HmisClientType {
+      personalId
+      uniqueIdentifier
+      firstName
+      lastName
+      nameDataQuality
+      ssn1
+      ssn2
+      ssn3
+      ssnDataQuality
+      dob
+      dobDataQuality
+      data {
+        middleName
+        nameSuffix
+        alias
+        raceEthnicity
+        additionalRaceEthnicity
+        differentIdentityText
+        gender
+        veteranStatus
+      }
+    }
+    ... on HmisCreateClientError {
+      message
+      field
+    }
+  }
+}
+    `;
+export type CreateHmisClientMutationFn = Apollo.MutationFunction<CreateHmisClientMutation, CreateHmisClientMutationVariables>;
+
+/**
+ * __useCreateHmisClientMutation__
+ *
+ * To run a mutation, you first call `useCreateHmisClientMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateHmisClientMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createHmisClientMutation, { data, loading, error }] = useCreateHmisClientMutation({
+ *   variables: {
+ *      clientInput: // value for 'clientInput'
+ *      clientSubItemsInput: // value for 'clientSubItemsInput'
+ *   },
+ * });
+ */
+export function useCreateHmisClientMutation(baseOptions?: Apollo.MutationHookOptions<CreateHmisClientMutation, CreateHmisClientMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateHmisClientMutation, CreateHmisClientMutationVariables>(CreateHmisClientDocument, options);
+      }
+export type CreateHmisClientMutationHookResult = ReturnType<typeof useCreateHmisClientMutation>;
+export type CreateHmisClientMutationResult = Apollo.MutationResult<CreateHmisClientMutation>;
+export type CreateHmisClientMutationOptions = Apollo.BaseMutationOptions<CreateHmisClientMutation, CreateHmisClientMutationVariables>;

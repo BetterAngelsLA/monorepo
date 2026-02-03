@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { pipe, filter as rfilter, find as rfind, map as rmap } from 'remeda';
 
-import { FileSearchIcon, SearchIcon } from '@monorepo/expo/shared/icons';
+import {
+  FileSearchIcon,
+  PlusIcon,
+  SearchIcon,
+} from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -13,20 +17,20 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 
 import {
-  CreateNoteServiceRequestDocument,
-  DeleteServiceRequestDocument,
   ServiceRequestTypeEnum,
+  useCreateNoteServiceRequestMutation,
+  useDeleteServiceRequestMutation,
 } from '../../apollo';
 import { useSnackbar } from '../../hooks';
+import { useModalScreen } from '../../providers';
 
 import MainScrollContainer from '../MainScrollContainer';
 import OtherCategory from './OtherCategory';
 import ServiceCheckbox from './ServiceCheckbox';
 
-import { useMutation, useQuery } from '@apollo/client/react';
 import {
-  ServiceCategoriesDocument,
   ServiceCategoriesQuery,
+  useServiceCategoriesQuery,
 } from './__generated__/services.generated';
 
 type ApiCategory =
@@ -54,16 +58,16 @@ interface IServicesModalProps {
     serviceOther?: string | null;
   }[];
   refetch: () => void;
-  close: () => void;
   type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
 }
 
 export default function ServicesModal(props: IServicesModalProps) {
-  const { initialServiceRequests, noteId, refetch, type, close } = props;
+  const { initialServiceRequests, noteId, refetch, type } = props;
 
-  const { data: availableCategories } = useQuery(ServiceCategoriesDocument);
+  const { data: availableCategories } = useServiceCategoriesQuery();
+  const { closeModalScreen } = useModalScreen();
   const { showSnackbar } = useSnackbar();
-  const { bottom: bottomInset } = useSafeAreaInsets();
+  const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
 
   const [serviceRequests, setServiceRequests] = useState<SelectedService[]>([]);
   const [serviceRequestsOthers, setServiceRequestsOthers] = useState<
@@ -76,8 +80,8 @@ export default function ServicesModal(props: IServicesModalProps) {
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
 
-  const [deleteService] = useMutation(DeleteServiceRequestDocument);
-  const [createServiceRequest] = useMutation(CreateNoteServiceRequestDocument);
+  const [deleteService] = useDeleteServiceRequestMutation();
+  const [createServiceRequest] = useCreateNoteServiceRequestMutation();
 
   // ---------- Pure helpers (native sort + Remeda for map/filter/find) ----------
   const sortCategories = (arr: ApiCategory[]) =>
@@ -261,7 +265,7 @@ export default function ServicesModal(props: IServicesModalProps) {
       }
 
       refetch();
-      close();
+      closeModalScreen();
     } catch (e) {
       console.error('Error during service submission:', e);
       showSnackbar({
@@ -276,7 +280,7 @@ export default function ServicesModal(props: IServicesModalProps) {
     deleteService,
     noteId,
     refetch,
-    close,
+    closeModalScreen,
     serviceRequests,
     serviceRequestsOthers,
     type,
@@ -290,6 +294,11 @@ export default function ServicesModal(props: IServicesModalProps) {
     setServiceRequestsOthers(others);
   }, [computeInitial]);
 
+  const closeModal = useCallback(() => {
+    reset();
+    closeModalScreen();
+  }, [reset, closeModalScreen]);
+
   // ---------- Bootstrap ----------
   useEffect(() => {
     const { existing, others } = computeInitial();
@@ -299,18 +308,44 @@ export default function ServicesModal(props: IServicesModalProps) {
 
   // ---------- Render ----------
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.WHITE }}>
+    <View
+      style={{ flex: 1, backgroundColor: Colors.WHITE, paddingTop: topInset }}
+    >
+      <View
+        style={{
+          alignItems: 'flex-end',
+          paddingHorizontal: 24,
+          marginBottom: 4,
+        }}
+      >
+        <Pressable
+          accessible
+          accessibilityHint="closes the modal"
+          accessibilityRole="button"
+          accessibilityLabel="close"
+          onPress={closeModal}
+        >
+          <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
+        </Pressable>
+      </View>
+
       <MainScrollContainer keyboardAware>
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
             gap: Spacings.sm,
+            paddingBottom: Spacings.md,
           }}
           style={{ paddingHorizontal: Spacings.xs }}
         >
-          <TextRegular mb="sm">
-            Select the services for your client in this interaction.
-          </TextRegular>
+          <View>
+            <TextBold size="lg">
+              {type === 'PROVIDED' ? 'Provided Services' : 'Requested Services'}
+            </TextBold>
+            <TextRegular mt="xxs" mb="sm">
+              Select the services for your client in this interaction.
+            </TextRegular>
+          </View>
 
           <BasicInput
             value={searchText}

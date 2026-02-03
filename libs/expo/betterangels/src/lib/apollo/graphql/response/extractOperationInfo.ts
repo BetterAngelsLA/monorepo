@@ -1,24 +1,19 @@
+import { FetchResult } from '@apollo/client';
 import { OperationInfo } from '../__generated__/types';
 
 export function extractOperationInfo(
-  responseOrData: unknown,
+  response: FetchResult,
   queryKey: string
 ): OperationInfo | null {
-  if (!responseOrData || typeof responseOrData !== 'object') {
+  const resultData = response?.data?.[queryKey];
+
+  if (!resultData) {
     return null;
   }
 
-  const maybeWithData = responseOrData as { data?: Record<string, unknown> };
-  const dataObject =
-    maybeWithData.data && typeof maybeWithData.data === 'object'
-      ? maybeWithData.data
-      : (responseOrData as Record<string, unknown>);
-
-  const result = dataObject?.[queryKey] as { __typename?: string };
-
-  if (result?.__typename !== 'OperationInfo') {
-    return null;
+  if (resultData['__typename'] === 'OperationInfo') {
+    return resultData;
   }
 
-  return result as OperationInfo;
+  return null;
 }

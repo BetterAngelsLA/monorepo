@@ -40,9 +40,9 @@ export function ResultsHeader(props: TProps) {
   const normalizedName = visibleCount === 1 ? itemNameSingular : itemNamePlural;
 
   const text =
-    typeof totalCount === 'number'
-      ? `Displaying ${visibleCount} of ${totalCount} ${itemNamePlural}`
-      : `Displaying ${visibleCount} ${normalizedName}`;
+    totalCount === undefined
+      ? `Displaying ${visibleCount} ${normalizedName}`
+      : `Displaying ${visibleCount} of ${totalCount} ${normalizedName}`;
 
   return (
     <View style={style}>
