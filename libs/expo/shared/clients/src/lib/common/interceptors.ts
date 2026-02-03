@@ -45,9 +45,7 @@ const getUrl = (input: RequestInfo | URL): string =>
  */
 const getHmisAuthToken = async (): Promise<string | null> => {
   try {
-    const authDomain = await AsyncStorage.getItem(HMIS_AUTH_DOMAIN_STORAGE_KEY);
-    const apiUrl = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
-    const targetUrl = authDomain || apiUrl;
+    const targetUrl = await AsyncStorage.getItem(HMIS_AUTH_DOMAIN_STORAGE_KEY);
 
     if (!targetUrl) return null;
 
@@ -230,19 +228,36 @@ export const hmisInterceptor: FetchInterceptor = async (input, init, next) => {
     const parsed = parseCookies(splitCookies, { map: true });
     const apiUrlCookie = parsed['api_url'];
 
+    let targetDomain: string | null = null;
+
     if (apiUrlCookie) {
       const decodedApiUrl = decodeURIComponent(apiUrlCookie.value);
-      const domain = apiUrlCookie.domain
+      targetDomain = apiUrlCookie.domain
         ? `https://${apiUrlCookie.domain.replace(/^\./, '')}`
         : new URL(url).origin;
 
-      await AsyncStorage.setItem(HMIS_API_URL_STORAGE_KEY, decodedApiUrl);
-      await AsyncStorage.setItem(HMIS_AUTH_DOMAIN_STORAGE_KEY, domain);
+      await Promise.all([
+        AsyncStorage.setItem(HMIS_API_URL_STORAGE_KEY, decodedApiUrl),
+        AsyncStorage.setItem(HMIS_AUTH_DOMAIN_STORAGE_KEY, targetDomain),
+      ]);
+    } else {
+      targetDomain = await AsyncStorage.getItem(HMIS_AUTH_DOMAIN_STORAGE_KEY);
+    }
 
-      // Manually set all cookies from this response to the captured domain
-      for (const cookieStr of splitCookies) {
-        await CookieManager.setFromResponse(domain, cookieStr);
-      }
+    // Only set cookies to the target domain if they explicitly match it
+    if (targetDomain) {
+      const host = new URL(targetDomain).hostname;
+
+      const matchingCookies = splitCookies.filter((str) => {
+        const domain = parseCookies(str)[0]?.domain?.replace(/^\./, '');
+        return domain && (host === domain || host.endsWith(`.${domain}`));
+      });
+
+      await Promise.all(
+        matchingCookies.map((str) =>
+          CookieManager.setFromResponse(targetDomain, str)
+        )
+      );
     }
   }
 
