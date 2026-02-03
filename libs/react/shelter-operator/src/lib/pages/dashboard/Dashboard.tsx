@@ -53,7 +53,6 @@ export default function Dashboard() {
     1,
     Math.ceil(filteredShelters.length / PAGE_SIZE)
   );
-
   const paginatedShelters = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     const end = start + PAGE_SIZE;
