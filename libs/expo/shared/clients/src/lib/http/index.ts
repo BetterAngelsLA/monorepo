@@ -3,3 +3,4 @@ export * from './fetchAllPages';
 export * from './hmisClient';
 export { createHmisClient as default } from './hmisClient';
 export * from './hmisTypes';
+export * from './useHmisFileHeaders';

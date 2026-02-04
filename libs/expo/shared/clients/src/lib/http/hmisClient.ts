@@ -454,4 +454,14 @@ export const getHmisFileUrls = (
   };
 };
 
+export const getClientPhotoUrls = (
+  baseUrl: string,
+  clientId: string | number
+) => {
+  return {
+    thumbnail: `${baseUrl}/clients/${clientId}/photo/thumb`,
+    content: `${baseUrl}/clients/${clientId}/photo`,
+  };
+};
+
 export { HmisClient };

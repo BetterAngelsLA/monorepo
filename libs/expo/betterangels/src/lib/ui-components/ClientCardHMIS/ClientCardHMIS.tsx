@@ -1,4 +1,8 @@
 import {
+  getClientPhotoUrls,
+  useHmisFileHeaders,
+} from '@monorepo/expo/shared/clients';
+import {
   IdCardOutlineIcon,
   LocationDotIcon,
   UserOutlineIcon,
@@ -14,7 +18,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { HmisClientProfileType, HmisSuffixEnum } from '../../apollo';
 import { enumDisplayHmisSuffix } from '../../static';
 import { formatHeight } from '../ClientCard/utils/formatHeight';
-
 export interface IClientCardProps {
   client: HmisClientProfileType;
   onPress?: () => void;
@@ -23,6 +26,7 @@ export interface IClientCardProps {
 export function ClientCardHMIS(props: IClientCardProps) {
   const {
     client: {
+      hmisId: clientId,
       firstName,
       lastName,
       birthDate,
@@ -36,6 +40,12 @@ export function ClientCardHMIS(props: IClientCardProps) {
     onPress,
   } = props;
   const formattedHeight = formatHeight(heightInInches ?? 0);
+  const { headers, baseUrl } = useHmisFileHeaders();
+
+  const contentUri =
+    baseUrl && headers && clientId
+      ? getClientPhotoUrls(baseUrl, clientId).content
+      : null;
 
   return (
     <Pressable
@@ -50,9 +60,10 @@ export function ClientCardHMIS(props: IClientCardProps) {
       <Avatar
         accessibilityLabel={`client's profile photo`}
         accessibilityHint={`client's profile photo`}
-        imageUrl={`https://betterangels-sandbox.clarityhs.com/assets/36bdfc7/images/logo.svg`}
+        imageUrl={contentUri || ''}
         size="xl"
         mr="xs"
+        headers={headers}
       />
       <View style={{ gap: Spacings.xxs, flex: 2 }}>
         <TextBold size="sm">

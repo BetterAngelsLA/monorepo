@@ -1,9 +1,9 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
 import {
   getHmisAuthHeaders,
   HMIS_API_URL_STORAGE_KEY,
-} from '@monorepo/expo/shared/clients';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState } from 'react';
+} from '../common/interceptors';
 
 /**
  * Hook to get the necessary headers and base URL for authenticated HMIS file requests (images/downloads)
