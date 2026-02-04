@@ -141,11 +141,14 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
             "organizationId": self.org.pk,
         }
 
-        with patch("accounts.backends.CustomInvitations.send_invitation") as mock_send_invitation:
-            with self.assertNumQueriesWithoutCache(18):
-                response = self.execute_graphql(mutation, {"data": variables})
+        with (
+            patch("accounts.backends.CustomInvitations.send_invitation") as mock_send_invitation,
+            self.captureOnCommitCallbacks(execute=True),
+            self.assertNumQueriesWithoutCache(17),
+        ):
+            response = self.execute_graphql(mutation, {"data": variables})
 
-            mock_send_invitation.assert_called_once()
+        mock_send_invitation.assert_called_once()
 
         expected_member = {**new_member, "id": ANY, "memberRole": OrgRoleEnum.MEMBER.name}
         self.assertEqual(expected_member, response["data"]["addOrganizationMember"])

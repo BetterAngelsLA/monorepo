@@ -14,6 +14,7 @@ from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
 
+@transaction.atomic
 def member_add(
     *,
     organization: Organization,
@@ -40,36 +41,39 @@ def member_add(
     Raises:
         ValidationError: If the user is already a member.
     """
-    with transaction.atomic():
-        user, created = User.objects.get_or_create(
-            email=email,
-            defaults={"username": str(uuid.uuid4()), "is_active": True},
-        )
-        if created:
-            user.first_name = first_name
-            user.last_name = last_name
-            user.middle_name = middle_name
-            user.set_unusable_password()
-            user.save()
-
-        try:
-            OrganizationUser.objects.create(user=user, organization=organization)
-        except Exception:
-            raise ValidationError(f"{first_name} {last_name} is already a member of {organization.name}.")
-
-        invitation_backend().create_organization_invite(
-            organization=organization,
-            invited_by_user=current_user,
-            invitee_user=user,
-        )
-
-    site = Site.objects.get(pk=settings.SITE_ID)
-    invitation_backend().send_invitation(
-        user=user,
-        sender=current_user,
-        organization=organization,
-        domain=site,
+    user, created = User.objects.get_or_create(
+        email=email,
+        defaults={"username": str(uuid.uuid4()), "is_active": True},
     )
+    if created:
+        user.first_name = first_name
+        user.last_name = last_name
+        user.middle_name = middle_name
+        user.set_unusable_password()
+        user.save()
+
+    try:
+        OrganizationUser.objects.create(user=user, organization=organization)
+    except Exception:
+        raise ValidationError(f"{first_name} {last_name} is already a member of {organization.name}.")
+
+    invitation_backend().create_organization_invite(
+        organization=organization,
+        invited_by_user=current_user,
+        invitee_user=user,
+    )
+
+    # Send invitation email only after transaction commits successfully
+    def send_email() -> None:
+        site = Site.objects.get(pk=settings.SITE_ID)
+        invitation_backend().send_invitation(
+            user=user,
+            sender=current_user,
+            organization=organization,
+            domain=site,
+        )
+
+    transaction.on_commit(send_email)
 
     return user
 
@@ -116,6 +120,7 @@ def member_remove(
     return user_id
 
 
+@transaction.atomic
 def member_change_role(
     *,
     organization: Organization,
@@ -173,17 +178,16 @@ def member_change_role(
         template__name__in=[GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER],
     ).select_related("group")
 
-    with transaction.atomic():
-        # Remove user from all role groups
-        for perm_group in role_groups:
-            user.groups.remove(perm_group.group)
+    # Remove user from all role groups
+    for perm_group in role_groups:
+        user.groups.remove(perm_group.group)
 
-        # Add user to the new role group if not MEMBER
-        if template_name:
-            new_group = PermissionGroup.objects.get(
-                organization=organization,
-                template__name=template_name,
-            ).group
-            user.groups.add(new_group)
+    # Add user to the new role group if not MEMBER
+    if template_name:
+        new_group = PermissionGroup.objects.get(
+            organization=organization,
+            template__name=template_name,
+        ).group
+        user.groups.add(new_group)
 
     return user
