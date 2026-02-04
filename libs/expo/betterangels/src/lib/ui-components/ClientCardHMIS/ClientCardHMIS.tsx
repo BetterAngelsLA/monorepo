@@ -1,7 +1,4 @@
-import {
-  getClientPhotoUrls,
-  useHmisFileHeaders,
-} from '@monorepo/expo/shared/clients';
+import { useClientPhotoContentUri } from '@monorepo/expo/shared/clients';
 import {
   IdCardOutlineIcon,
   LocationDotIcon,
@@ -40,12 +37,7 @@ export function ClientCardHMIS(props: IClientCardProps) {
     onPress,
   } = props;
   const formattedHeight = formatHeight(heightInInches ?? 0);
-  const { headers, baseUrl } = useHmisFileHeaders();
-
-  const contentUri =
-    baseUrl && headers && clientId
-      ? getClientPhotoUrls(baseUrl, clientId).content
-      : null;
+  const { contentUri, headers } = useClientPhotoContentUri(clientId);
 
   return (
     <Pressable
@@ -60,9 +52,9 @@ export function ClientCardHMIS(props: IClientCardProps) {
       <Avatar
         accessibilityLabel={`client's profile photo`}
         accessibilityHint={`client's profile photo`}
-        imageUrl={contentUri || ''}
         size="xl"
         mr="xs"
+        imageUrl={contentUri || ''}
         headers={headers ?? undefined}
       />
       <View style={{ gap: Spacings.xxs, flex: 2 }}>
