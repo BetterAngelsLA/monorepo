@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 from accounts.enums import OrgRoleEnum
 from accounts.models import User
@@ -9,6 +9,31 @@ from organizations.models import OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 from .baker_recipes import organization_recipe
+
+
+def get_permission_error(response: dict[str, Any], mutation_name: str) -> Optional[str]:
+    """
+    Extract permission error message from a GraphQL response.
+
+    Handles both:
+    - Hard GraphQL errors (response["errors"])
+    - Soft OperationInfo messages (response["data"][mutation_name]["messages"])
+
+    Returns the error message string, or None if no error.
+    """
+    # Check for hard GraphQL errors first
+    if response.get("errors"):
+        return str(response["errors"][0]["message"])
+
+    # Check for OperationInfo soft errors
+    data = response.get("data", {})
+    mutation_data = data.get(mutation_name) if data else None
+    if mutation_data and "messages" in mutation_data:
+        messages = mutation_data["messages"]
+        if messages:
+            return str(messages[0]["message"])
+
+    return None
 
 
 class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
@@ -34,7 +59,7 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
     @parametrize(
         "user, expected_error",
         [
-            ("org_member", "You don't have permission to access this app."),
+            ("org_member", "You do not have permission to view this organization's members."),
             ("org_1_admin", None),
             ("org_2_admin", "You do not have permission to view this organization's members."),
         ],
@@ -68,7 +93,7 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
     @parametrize(
         "user, org, expected_member_count, expected_members",
         [
-            ("org_member", "org_1", 0, []),
+            ("org_member", "org_1", None, []),
             ("org_1_admin", "org_1", 2, ["org member", "org 1 admin"]),
             ("org_1_admin", "org_2", None, []),
             ("org_2_admin", "org_1", None, []),
@@ -141,7 +166,7 @@ class AddOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedT
     @parametrize(
         "user, expected_error",
         [
-            ("org_member", "You don't have permission to access this app."),
+            ("org_member", "You do not have permission to add members."),
             ("org_1_admin", None),
             ("org_2_admin", "You do not have permission to add members."),
         ],
@@ -176,8 +201,9 @@ class AddOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedT
         response = self.execute_graphql(mutation, {"data": variables})
 
         if expected_error:
-            self.assertEqual(len(response["data"]["addOrganizationMember"]["messages"]), 1)
-            self.assertEqual(response["data"]["addOrganizationMember"]["messages"][0]["message"], expected_error)
+            error_msg = get_permission_error(response, "addOrganizationMember")
+            self.assertEqual(error_msg, expected_error)
+
             with self.assertRaises(User.DoesNotExist):
                 User.objects.get(email=variables["email"])
         else:
@@ -214,7 +240,7 @@ class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, Parametriz
     @parametrize(
         "user, expected_error",
         [
-            ("org_member", "You don't have permission to access this app."),
+            ("org_member", "You do not have permission to remove members."),
             ("org_1_admin", None),
             ("org_2_admin", "You do not have permission to remove members."),
         ],
@@ -243,18 +269,8 @@ class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, Parametriz
         response = self.execute_graphql(mutation, {"data": variables})
 
         if expected_error:
-            # Permission can fail in two ways:
-            # 1) hard GraphQL error => data is None
-            if response.get("data") is None:
-                self.assertEqual(len(response["errors"]), 1)
-                self.assertEqual(response["errors"][0]["message"], expected_error)
-            else:
-                # 2) union OperationInfo => messages inside data
-                self.assertEqual(len(response["data"]["removeOrganizationMember"]["messages"]), 1)
-                self.assertEqual(
-                    response["data"]["removeOrganizationMember"]["messages"][0]["message"],
-                    expected_error,
-                )
+            error_msg = get_permission_error(response, "removeOrganizationMember")
+            self.assertEqual(error_msg, expected_error)
 
             # membership should still exist
             self.assertTrue(

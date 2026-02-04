@@ -14,7 +14,7 @@ from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
 
-def add_member(
+def member_add(
     *,
     organization: Organization,
     email: str,
@@ -74,7 +74,7 @@ def add_member(
     return user
 
 
-def remove_member(
+def member_remove(
     *,
     organization: Organization,
     user_id: int,
@@ -116,7 +116,7 @@ def remove_member(
     return user_id
 
 
-def change_member_role(
+def member_change_role(
     *,
     organization: Organization,
     user_id: int,

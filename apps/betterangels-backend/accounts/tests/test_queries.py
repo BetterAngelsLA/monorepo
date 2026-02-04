@@ -360,7 +360,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
             "userId": str(self.org_admin.pk),
         }
 
-        with self.assertNumQueriesWithoutCache(6):
+        with self.assertNumQueriesWithoutCache(4):
             response = self.execute_graphql(query, variables)
 
         expected_member = {
@@ -391,7 +391,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
 
         variables = {"organizationId": str(self.org.pk)}
 
-        with self.assertNumQueriesWithoutCache(7):
+        with self.assertNumQueriesWithoutCache(5):
             response = self.execute_graphql(query, variables)
 
         expected_members = zip(

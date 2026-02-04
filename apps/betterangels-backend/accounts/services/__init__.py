@@ -1,5 +1,5 @@
 """Services for the accounts app."""
 
-from .users import add_member, change_member_role, remove_member
+from .users import member_add, member_change_role, member_remove
 
-__all__ = ["add_member", "remove_member", "change_member_role"]
+__all__ = ["member_add", "member_remove", "member_change_role"]
