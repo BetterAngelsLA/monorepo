@@ -21,8 +21,8 @@ from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 from strawberry_django.utils.query import filter_for_user
 
+from . import services
 from .models import PermissionGroup, User
-from .services import OrganizationMemberService
 from .types import (
     AuthResponse,
     CurrentUserType,
@@ -184,7 +184,7 @@ class Mutation:
         except Organization.DoesNotExist:
             raise PermissionDenied("You do not have permission to add members.")
 
-        user = OrganizationMemberService.add(
+        user = services.add_member(
             organization=organization,
             email=data.email,
             first_name=data.first_name,
@@ -217,7 +217,7 @@ class Mutation:
         except Organization.DoesNotExist:
             raise PermissionDenied("You do not have permission to remove members.")
 
-        user_id = OrganizationMemberService.remove(
+        user_id = services.remove_member(
             organization=organization,
             user_id=int(data.id),
             current_user=current_user,
@@ -246,10 +246,10 @@ class Mutation:
         except Organization.DoesNotExist:
             raise PermissionDenied("You do not have permission to change member roles.")
 
-        user = OrganizationMemberService.change_role(
+        user = services.change_member_role(
             organization=organization,
             user_id=int(data.id),
-            new_role=data.role,
+            role=data.role,
             current_user=current_user,
         )
 
