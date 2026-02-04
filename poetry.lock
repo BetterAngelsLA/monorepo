@@ -196,14 +196,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.42.41"
-description = "Type annotations for boto3 1.42.41 generated with mypy-boto3-builder 8.12.0"
+version = "1.42.42"
+description = "Type annotations for boto3 1.42.42 generated with mypy-boto3-builder 8.12.0"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "boto3_stubs-1.42.41-py3-none-any.whl", hash = "sha256:745049b3ceef15c5b015ad373ee341c6204801a4de0375711a974c612333fb31"},
-    {file = "boto3_stubs-1.42.41.tar.gz", hash = "sha256:cfa7ab21b993c83e8d72c6df7ba86e41a6b030ea22b95562205ca648cd624426"},
+    {file = "boto3_stubs-1.42.42-py3-none-any.whl", hash = "sha256:0745a33fc1d2e21182ccb944b0f3e91eb029e3867ea778c27a1931a94213023c"},
+    {file = "boto3_stubs-1.42.42.tar.gz", hash = "sha256:4d05ccb0b6d03c2c5e90272c1c58e4e875651b088e0ee1be618bb41e082b8530"},
 ]
 
 [package.dependencies]
@@ -270,7 +270,7 @@ bedrock-data-automation-runtime = ["mypy-boto3-bedrock-data-automation-runtime (
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.42.0,<1.43.0)"]
 billing = ["mypy-boto3-billing (>=1.42.0,<1.43.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.42.0,<1.43.0)"]
-boto3 = ["boto3 (==1.42.41)"]
+boto3 = ["boto3 (==1.42.42)"]
 braket = ["mypy-boto3-braket (>=1.42.0,<1.43.0)"]
 budgets = ["mypy-boto3-budgets (>=1.42.0,<1.43.0)"]
 ce = ["mypy-boto3-ce (>=1.42.0,<1.43.0)"]
@@ -788,7 +788,7 @@ description = "Foreign Function Interface for Python calling C code."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "platform_python_implementation == \"CPython\" and sys_platform == \"win32\" or platform_python_implementation != \"PyPy\""
+markers = "platform_python_implementation != \"PyPy\" or platform_python_implementation == \"CPython\" and sys_platform == \"win32\""
 files = [
     {file = "cffi-2.0.0-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:0cf2d91ecc3fcc0625c2c530fe004f82c110405f101548512cce44322fa8ac44"},
     {file = "cffi-2.0.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:f73b96c41e3b2adedc34a7356e64c8eb96e03a3782b535e043a986276ce12a49"},
@@ -3173,7 +3173,7 @@ description = "C parser in Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
-markers = "(platform_python_implementation == \"CPython\" and sys_platform == \"win32\" or platform_python_implementation != \"PyPy\") and implementation_name != \"PyPy\""
+markers = "(platform_python_implementation != \"PyPy\" or platform_python_implementation == \"CPython\" and sys_platform == \"win32\") and implementation_name != \"PyPy\""
 files = [
     {file = "pycparser-2.23-py3-none-any.whl", hash = "sha256:e5c6e8d3fbad53479cab09ac03729e0a9faf2bee3db8208a550daf5af81a5934"},
     {file = "pycparser-2.23.tar.gz", hash = "sha256:78816d4f24add8f10a06d6f05b4d424ad9e96cfebf68a4ddc99c65c0720d00c2"},
@@ -4342,4 +4342,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = "3.14.2"
-content-hash = "8733fbbdc2a79f75111f46aa0402b12ee5a905d63aeda747ee215774e227a6df"
+content-hash = "0e29207f44c56b5e56365677b62e0b1f556fdf46e4fdf406bb04842d1c9237cf"
