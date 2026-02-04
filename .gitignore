@@ -70,6 +70,9 @@ cache/
 
 apps/betterangels-e2e/artifacts
 
+# iOS build files
+apps/betterangels/ios/
+
 # Python
 __pycache__
 .mypy_cache
