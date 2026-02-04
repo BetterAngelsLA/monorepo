@@ -1,4 +1,4 @@
-import { useHmisFileHeaders } from './HmisFileHeadersContext';
+import { useHmisFileHeaders } from './useHmisFileHeaders';
 
 /**
  * Hook that returns the content URI and headers for a client's profile photo.
