@@ -24,11 +24,11 @@ jest.mock('@react-native-async-storage/async-storage', () => {
   };
 });
 
-// Mock NitroCookies
+// Mock CookieManager
 const mockGet = jest.fn();
 const mockSetFromResponse = jest.fn();
 
-jest.mock('react-native-nitro-cookies', () => {
+jest.mock('@preeternal/react-native-cookie-manager', () => {
   return {
     __esModule: true,
     default: {
@@ -50,14 +50,17 @@ describe('HmisClient', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Mock AsyncStorage to return the HMIS API URL
+    // Mock AsyncStorage to return the HMIS API URL and Auth Domain
     mockGetItem.mockImplementation((key) => {
       if (key === 'hmis_api_url')
         return Promise.resolve('https://hmis.example.com');
+      // Auth domain is needed for getHmisAuthToken
+      if (key === 'hmis_auth_domain')
+        return Promise.resolve('https://auth.example.com');
       return Promise.resolve(null);
     });
 
-    // Mock NitroCookies to return the auth token
+    // Mock CookieManager to return the auth token
     mockGet.mockResolvedValue({
       auth_token: { value: 'mock-token' },
     });

@@ -15,12 +15,12 @@ export default function HmisProgramNoteTitle({
   return (
     <View>
       {hmisNote?.title && (
-        <TextBold size="lg" mb="xs">
+        <TextBold selectable size="lg" mb="xs">
           {hmisNote?.title}
         </TextBold>
       )}
       {hmisNote.date && (
-        <TextRegular mb="sm" size="sm">
+        <TextRegular selectable mb="sm" size="sm">
           {format(date, 'MM/dd/yyyy')}
         </TextRegular>
       )}
