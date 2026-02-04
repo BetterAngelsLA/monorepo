@@ -5560,7 +5560,7 @@ __metadata:
     "@types/validator": "npm:^13.15.0"
     "@typescript-eslint/eslint-plugin": "npm:7.17.0"
     "@typescript-eslint/parser": "npm:7.17.0"
-    "@vis.gl/react-google-maps": "npm:^1.4.2"
+    "@vis.gl/react-google-maps": "npm:^1.7.1"
     "@vitejs/plugin-react": "npm:^4.2.0"
     "@vitest/coverage-v8": "npm:^4.0.16"
     "@vitest/ui": "npm:^4.0.16"
@@ -10123,7 +10123,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vis.gl/react-google-maps@npm:^1.4.2":
+"@vis.gl/react-google-maps@npm:^1.7.1":
   version: 1.7.1
   resolution: "@vis.gl/react-google-maps@npm:1.7.1"
   dependencies:

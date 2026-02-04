@@ -104,6 +104,10 @@ function toApiInputs(values: THouseholdMemberFormState) {
     next.dateOfBirth = next.dateOfBirth
       .toISOString()
       .split('T')[0] as unknown as Date;
+  } else if (next.dateOfBirth === null) {
+    next.dateOfBirth = null;
+  } else if (next.dateOfBirth === undefined) {
+    delete next.dateOfBirth;
   }
 
   return next;
