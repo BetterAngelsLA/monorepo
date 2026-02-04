@@ -5,6 +5,7 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
+  Avatar,
   TextBold,
   TextRegular,
   formatDateStatic,
@@ -46,6 +47,13 @@ export function ClientCardHMIS(props: IClientCardProps) {
         pressed && onPress && styles.pressed,
       ]}
     >
+      <Avatar
+        accessibilityLabel={`client's profile photo`}
+        accessibilityHint={`client's profile photo`}
+        imageUrl={`https://betterangels-sandbox.clarityhs.com/assets/36bdfc7/images/logo.svg`}
+        size="xl"
+        mr="xs"
+      />
       <View style={{ gap: Spacings.xxs, flex: 2 }}>
         <TextBold size="sm">
           {firstName} {lastName}{' '}
@@ -97,6 +105,8 @@ export function ClientCardHMIS(props: IClientCardProps) {
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: Radiuses.xs,
     paddingVertical: Spacings.sm,
     paddingHorizontal: Spacings.xs,
