@@ -30,8 +30,8 @@ export default function ProgramNoteCardClient(
         size="sm"
         accessibilityLabel={`client's profile photo`}
         accessibilityHint={`client's profile photo`}
-        imageUrl={contentUri || ''}
-        headers={headers ?? undefined}
+        imageUrl={contentUri}
+        headers={headers}
       />
       <TextMedium size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
         {clientProfile?.firstName} {clientProfile?.lastName}

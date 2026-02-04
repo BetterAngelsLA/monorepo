@@ -54,8 +54,8 @@ export function ClientCardHMIS(props: IClientCardProps) {
         accessibilityHint={`client's profile photo`}
         size="xl"
         mr="xs"
-        imageUrl={contentUri || ''}
-        headers={headers ?? undefined}
+        imageUrl={contentUri}
+        headers={headers}
       />
       <View style={{ gap: Spacings.xxs, flex: 2 }}>
         <TextBold size="sm">

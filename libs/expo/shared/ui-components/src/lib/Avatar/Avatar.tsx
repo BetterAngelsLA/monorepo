@@ -12,7 +12,7 @@ interface IAvatarProps {
    * sm(24) lg(40) xl(60)
    */
   size?: 'sm' | 'lg' | 'xl';
-  imageUrl?: string;
+  imageUrl?: string | null;
   hasBorder?: boolean;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -20,7 +20,7 @@ interface IAvatarProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  headers?: Record<string, string>;
+  headers?: Record<string, string> | null;
   alt?: string;
   accessibilityLabel: string;
   accessibilityHint: string;

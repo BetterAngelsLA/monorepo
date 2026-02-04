@@ -62,8 +62,8 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
           mr="xs"
           accessibilityLabel="client's profile photo avatar"
           accessibilityHint="client's profile photo avatar"
-          imageUrl={contentUri || ''}
-          headers={headers ?? undefined}
+          imageUrl={contentUri}
+          headers={headers}
         />
         <TextMedium selectable style={{ flexShrink: 1 }} size="lg">
           {nameParts.join(' ')}
