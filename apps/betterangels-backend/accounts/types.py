@@ -205,3 +205,10 @@ class OrgInvitationInput:
 class RemoveOrganizationMemberInput:
     id: ID
     organization_id: ID
+
+
+@strawberry.input
+class UpdateOrganizationMemberRoleInput:
+    id: ID
+    organization_id: ID
+    role: OrgRoleEnum

@@ -3,7 +3,9 @@
 import uuid
 from typing import Optional
 
-from accounts.models import User
+from accounts.enums import OrgRoleEnum
+from accounts.groups import GroupTemplateNames
+from accounts.models import PermissionGroup, User
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
@@ -114,3 +116,75 @@ class OrganizationMemberService:
 
         org_user.delete()
         return user_id
+
+    @staticmethod
+    def change_role(
+        organization: Organization,
+        user_id: int,
+        role: OrgRoleEnum,
+        current_user: User,
+    ) -> User:
+        """
+        Change a member's role in an organization.
+
+        Args:
+            organization: The organization.
+            user_id: The ID of the user whose role to change.
+            role: The new role to assign.
+            current_user: The user performing the action.
+
+        Returns:
+            The updated User object.
+
+        Raises:
+            ValidationError: If the user is not a member, is the owner,
+                or is changing their own role.
+        """
+        try:
+            org_user = OrganizationUser.objects.select_related("user").get(
+                organization=organization,
+                user_id=user_id,
+            )
+        except OrganizationUser.DoesNotExist:
+            raise ValidationError("User is not a member of this organization.")
+
+        if OrganizationOwner.objects.filter(
+            organization=organization,
+            organization_user=org_user,
+        ).exists():
+            raise ValidationError("You cannot change the organization owner's role.")
+
+        if user_id == current_user.pk:
+            raise ValidationError("You cannot change your own role.")
+
+        user: User = org_user.user
+
+        # Map role enum to group template name
+        role_to_template = {
+            OrgRoleEnum.ADMIN: GroupTemplateNames.ORG_ADMIN,
+            OrgRoleEnum.SUPERUSER: GroupTemplateNames.ORG_SUPERUSER,
+            OrgRoleEnum.MEMBER: None,  # Members have no special group
+        }
+
+        template_name = role_to_template.get(role)
+
+        # Get all role-related permission groups for this org
+        role_groups = PermissionGroup.objects.filter(
+            organization=organization,
+            template__name__in=[GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER],
+        ).select_related("group")
+
+        with transaction.atomic():
+            # Remove user from all role groups
+            for perm_group in role_groups:
+                user.groups.remove(perm_group.group)
+
+            # Add user to the new role group if not MEMBER
+            if template_name:
+                new_group = PermissionGroup.objects.get(
+                    organization=organization,
+                    template__name=template_name,
+                ).group
+                user.groups.add(new_group)
+
+        return user

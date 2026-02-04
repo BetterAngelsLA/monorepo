@@ -33,6 +33,7 @@ from .types import (
     OrganizationType,
     OrgInvitationInput,
     RemoveOrganizationMemberInput,
+    UpdateOrganizationMemberRoleInput,
     UpdateUserInput,
     UserType,
 )
@@ -222,3 +223,40 @@ class Mutation:
             current_user=current_user,
         )
         return DeletedObjectType(id=user_id)
+
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[
+            PermissionedQuerySet(
+                UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE,
+                model=Organization,
+                check_retval=False,
+            )
+        ],
+    )
+    def update_organization_member_role(
+        self,
+        info: Info,
+        data: UpdateOrganizationMemberRoleInput,
+    ) -> OrganizationMemberType:
+        current_user = cast(User, get_current_user(info))
+
+        try:
+            organization = info.context.qs.get(id=data.organization_id)
+        except Organization.DoesNotExist:
+            raise PermissionDenied("You do not have permission to change member roles.")
+
+        user = OrganizationMemberService.change_role(
+            organization=organization,
+            user_id=int(data.id),
+            new_role=data.role,
+            current_user=current_user,
+        )
+
+        user = (
+            organization.users.filter(id=user.id)
+            .annotate(_member_role=annotate_member_role(str(organization.id)))
+            .first()
+        )
+
+        return cast(OrganizationMemberType, user)
