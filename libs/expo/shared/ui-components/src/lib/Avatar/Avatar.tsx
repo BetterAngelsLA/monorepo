@@ -12,7 +12,7 @@ interface IAvatarProps {
    * sm(24) lg(40) xl(60)
    */
   size?: 'sm' | 'lg' | 'xl';
-  imageUrl?: string;
+  imageUrl?: string | null;
   hasBorder?: boolean;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -20,6 +20,7 @@ interface IAvatarProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
+  headers?: Record<string, string> | null;
   alt?: string;
   accessibilityLabel: string;
   accessibilityHint: string;
@@ -37,6 +38,7 @@ export function Avatar(props: IAvatarProps) {
   const {
     size = 'lg',
     imageUrl,
+    headers,
     mb,
     mt,
     mr,
@@ -107,6 +109,7 @@ export function Avatar(props: IAvatarProps) {
             }}
             source={{
               uri: imageUrl,
+              headers: headers ?? undefined,
             }}
           />
         )}

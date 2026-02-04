@@ -1,4 +1,7 @@
-import { getHmisFileUrls } from '@monorepo/expo/shared/clients';
+import {
+  getHmisFileUrls,
+  useHmisFileHeaders,
+} from '@monorepo/expo/shared/clients';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
@@ -6,7 +9,6 @@ import { Image } from 'expo-image';
 import { useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useHmisFileHeaders } from '../../hooks';
 
 export type HmisFileInfoProps = {
   id: string;
