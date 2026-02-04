@@ -63,7 +63,7 @@ export function ClientCardHMIS(props: IClientCardProps) {
         imageUrl={contentUri || ''}
         size="xl"
         mr="xs"
-        headers={headers}
+        headers={headers ?? undefined}
       />
       <View style={{ gap: Spacings.xxs, flex: 2 }}>
         <TextBold size="sm">

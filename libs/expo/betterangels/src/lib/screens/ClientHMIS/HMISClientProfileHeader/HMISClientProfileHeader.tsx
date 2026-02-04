@@ -1,4 +1,8 @@
 import {
+  getClientPhotoUrls,
+  useHmisFileHeaders,
+} from '@monorepo/expo/shared/clients';
+import {
   GlobeIcon,
   IdCardOutlineIcon,
   UserIcon,
@@ -27,6 +31,7 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
   const {
     firstName,
     lastName,
+    hmisId: clientId,
     nameMiddle,
     alias,
     nameSuffix,
@@ -34,6 +39,12 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
     pronouns,
     uniqueIdentifier,
   } = client || {};
+  const { headers, baseUrl } = useHmisFileHeaders();
+
+  const contentUri =
+    baseUrl && headers && clientId
+      ? getClientPhotoUrls(baseUrl, clientId).content
+      : null;
 
   const nameParts = [firstName, nameMiddle, lastName].filter((s) => !!s);
 
@@ -59,6 +70,8 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
           mr="xs"
           accessibilityLabel="client's profile photo avatar"
           accessibilityHint="client's profile photo avatar"
+          imageUrl={contentUri || ''}
+          headers={headers ?? undefined}
         />
         <TextMedium selectable style={{ flexShrink: 1 }} size="lg">
           {nameParts.join(' ')}
