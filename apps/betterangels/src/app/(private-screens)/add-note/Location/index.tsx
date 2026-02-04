@@ -3,6 +3,7 @@ import {
   MapView,
   Marker,
   PROVIDER_GOOGLE,
+  reverseGeocode,
   UpdateNoteLocationDocument,
   useModalScreen,
 } from '@monorepo/expo/betterangels';
@@ -10,7 +11,6 @@ import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
-import axios from 'axios';
 import * as ExpoLocation from 'expo-location';
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -125,24 +125,17 @@ export default function LocationComponent(props: ILocationProps) {
           longitude = userCurrentLocation.coords.longitude;
         }
 
-        const url = `${baseUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}`;
-        const { data } = await axios.get(url, {
-          withCredentials: true,
-        });
-
-        const result = data.results?.[0];
-        const formattedAddress: string | null =
-          result?.formatted_address ?? null;
-        const shortName: string | null = formattedAddress
-          ? formattedAddress.split(', ')[0]
-          : null;
-        const components = result?.address_components ?? [];
+        const geocodeResult = await reverseGeocode(
+          baseUrl,
+          latitude,
+          longitude
+        );
 
         const newLocation: TLocation = {
           latitude,
           longitude,
-          address: formattedAddress,
-          name: shortName,
+          address: geocodeResult.formattedAddress,
+          name: geocodeResult.shortAddress,
         };
 
         setLocation(newLocation);
@@ -153,10 +146,12 @@ export default function LocationComponent(props: ILocationProps) {
               id: noteId,
               location: {
                 point: [longitude, latitude],
-                address: formattedAddress
+                address: geocodeResult.formattedAddress
                   ? {
-                      formattedAddress,
-                      addressComponents: JSON.stringify(components),
+                      formattedAddress: geocodeResult.formattedAddress,
+                      addressComponents: JSON.stringify(
+                        geocodeResult.addressComponents
+                      ),
                     }
                   : null,
               },

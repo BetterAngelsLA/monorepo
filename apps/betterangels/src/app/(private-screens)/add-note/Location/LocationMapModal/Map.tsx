@@ -1,12 +1,13 @@
 import {
+  getPlaceDetailsById,
   MapView,
   Marker,
   PROVIDER_GOOGLE,
+  reverseGeocode,
   TMapView,
 } from '@monorepo/expo/betterangels';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
-import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
 
@@ -35,8 +36,6 @@ interface IMapProps {
   chooseDirections: boolean;
   userLocation: Location.LocationObject | null;
 }
-
-const apiKey = process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY;
 
 const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
   const {
@@ -69,41 +68,36 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
     setMinimizeModal(false);
     setSelected(true);
 
-    const url = isId
-      ? `${baseUrl}/proxy/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
-      : `${baseUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
     try {
-      const controller = new AbortController();
-      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
-      const { data } = await axios.get(url, {
-        withCredentials: true,
-        signal: controller.signal,
-        timeout: 8000,
-      });
+      if (isId && placeId) {
+        const placeResult = await getPlaceDetailsById(baseUrl, placeId);
+        const googleAddress = placeResult.formatted_address || '';
 
-      const googleAddress = isId
-        ? data.result.formatted_address
-        : data.results[0].formatted_address;
-      const addressComponents = isId
-        ? data.result.address_components
-        : data.results[0].address_components;
+        setAddress({
+          short: name || googleAddress.split(', ')[0],
+          full: googleAddress,
+          addressComponents: placeResult.address_components || [],
+        });
+      } else {
+        const geocodeResult = await reverseGeocode(
+          baseUrl,
+          latitude,
+          longitude
+        );
 
-      const shortAddress = isId ? name : googleAddress.split(', ')[0];
-
-      setAddress({
-        short: shortAddress,
-        full: googleAddress,
-        addressComponents,
-      });
-      setMinimizeModal(false);
-      setSelected(true);
+        setAddress({
+          short: geocodeResult.shortAddress,
+          full: geocodeResult.formattedAddress,
+          addressComponents: geocodeResult.addressComponents,
+        });
+      }
     } catch (err) {
+      console.error('Geocode failed:', err);
       setAddress({
         short: name || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
         full: name || `${latitude}, ${longitude}`,
         addressComponents: [],
       });
-      console.error('Reverse geocode failed:', err);
     }
   }
 

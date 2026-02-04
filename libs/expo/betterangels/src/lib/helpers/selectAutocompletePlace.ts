@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { getPlaceDetailsById } from '../services';
 
 export default async function selectAutocompletePlace<T>(
   apiUrl: string,
@@ -9,15 +9,9 @@ export default async function selectAutocompletePlace<T>(
 ) {
   const placeId = place.place_id;
   try {
-    const response = await axios.get(
-      `${apiUrl}/proxy/maps/api/place/details/json`,
-      {
-        params: {
-          place_id: placeId,
-        },
-      }
-    );
-    const formattedAddress = response.data.result.formatted_address;
+    const placeResult = await getPlaceDetailsById(apiUrl, placeId);
+
+    const formattedAddress = placeResult.formatted_address || '';
     const cleanedAddress = formattedAddress.substring(
       0,
       formattedAddress.lastIndexOf(',')

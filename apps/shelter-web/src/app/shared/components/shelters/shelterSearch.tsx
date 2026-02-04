@@ -7,7 +7,10 @@ import { locationAtom } from '../../atoms/locationAtom';
 import { modalAtom } from '../../atoms/modalAtom';
 import { shelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 import { ModalAnimationEnum } from '../../modal/modal';
-import { AddressAutocomplete } from '../address/AddressAutocomplete';
+import {
+  AddressAutocomplete,
+  TPlaceResult,
+} from '../address/AddressAutocomplete';
 import { TMapBounds } from '../map/types.maps';
 import { toGoogleLatLng } from '../map/utils/toGoogleLatLng';
 import { FilterPills } from '../shelterFilter/filterPills';
@@ -40,15 +43,13 @@ export function ShelterSearch(props: TProps) {
     center && map.setCenter(center);
   }, [map, location]);
 
-  function onPlaceSelect(address: google.maps.places.PlaceResult | null) {
-    if (!address) {
+  function onPlaceSelect(place: TPlaceResult | null) {
+    if (!place) {
       return;
     }
 
-    const { geometry } = address;
-
-    const latitude = geometry?.location?.lat();
-    const longitude = geometry?.location?.lng();
+    const latitude = place.location?.lat();
+    const longitude = place.location?.lng();
 
     if (!latitude || !longitude) {
       return;
