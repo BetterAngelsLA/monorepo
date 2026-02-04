@@ -1223,6 +1223,7 @@ export type Mutation = {
   logout: Scalars['Boolean']['output'];
   removeHmisNoteServiceRequest: RemoveHmisNoteServiceRequestPayload;
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
+  removeOrganizationMember: RemoveOrganizationMemberPayload;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
   updateClientDocument: UpdateClientDocumentPayload;
@@ -1411,6 +1412,11 @@ export type MutationRemoveHmisNoteServiceRequestArgs = {
 
 export type MutationRemoveNoteServiceRequestArgs = {
   data: RemoveNoteServiceRequestInput;
+};
+
+
+export type MutationRemoveOrganizationMemberArgs = {
+  data: RemoveOrganizationMemberInput;
 };
 
 
@@ -2072,6 +2078,13 @@ export type RemoveNoteServiceRequestInput = {
 };
 
 export type RemoveNoteServiceRequestPayload = NoteType | OperationInfo;
+
+export type RemoveOrganizationMemberInput = {
+  id: Scalars['ID']['input'];
+  organizationId: Scalars['ID']['input'];
+};
+
+export type RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo;
 
 export type RevertNoteInput = {
   id: Scalars['ID']['input'];
