@@ -153,11 +153,11 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         setChooseDirections(false);
       }
 
-      const placeResult = await getPlaceDetailsById(
+      const placeResult = await getPlaceDetailsById({
         baseUrl,
-        place.place_id,
-        'geometry,address_component'
-      );
+        placeId: place.place_id,
+        fields: 'geometry,address_component',
+      });
 
       const geometry = placeResult.geometry as google.maps.places.PlaceGeometry;
       const responseLocation = geometry.location as unknown as TPlaceLatLng;

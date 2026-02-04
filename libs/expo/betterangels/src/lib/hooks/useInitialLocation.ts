@@ -38,11 +38,11 @@ export function useInitialLocation(
 
         if (editing) return;
 
-        const geocodeResult = await reverseGeocode(
+        const geocodeResult = await reverseGeocode({
           baseUrl,
           latitude,
-          longitude
-        );
+          longitude,
+        });
 
         setValue('location', {
           ...location,

@@ -9,7 +9,7 @@ export default async function selectAutocompletePlace<T>(
 ) {
   const placeId = place.place_id;
   try {
-    const placeResult = await getPlaceDetailsById(apiUrl, placeId);
+    const placeResult = await getPlaceDetailsById({ baseUrl: apiUrl, placeId });
 
     const formattedAddress = placeResult.formatted_address || '';
     const cleanedAddress = formattedAddress.substring(

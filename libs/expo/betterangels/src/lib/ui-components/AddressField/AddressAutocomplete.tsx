@@ -152,7 +152,7 @@ async function getDetailAddress(
   }
 
   try {
-    const deatailAddress = await getPlaceDetailsById(baseUrl, placeId);
+    const deatailAddress = await getPlaceDetailsById({ baseUrl, placeId });
 
     return getPresentedAddress(deatailAddress);
   } catch (e) {

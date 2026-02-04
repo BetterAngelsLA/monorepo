@@ -125,11 +125,11 @@ export default function LocationComponent(props: ILocationProps) {
           longitude = userCurrentLocation.coords.longitude;
         }
 
-        const geocodeResult = await reverseGeocode(
+        const geocodeResult = await reverseGeocode({
           baseUrl,
           latitude,
-          longitude
-        );
+          longitude,
+        });
 
         const newLocation: TLocation = {
           latitude,

@@ -70,7 +70,7 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
 
     try {
       if (isId && placeId) {
-        const placeResult = await getPlaceDetailsById(baseUrl, placeId);
+        const placeResult = await getPlaceDetailsById({ baseUrl, placeId });
         const googleAddress = placeResult.formatted_address || '';
 
         setAddress({
@@ -79,11 +79,11 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
           addressComponents: placeResult.address_components || [],
         });
       } else {
-        const geocodeResult = await reverseGeocode(
+        const geocodeResult = await reverseGeocode({
           baseUrl,
           latitude,
-          longitude
-        );
+          longitude,
+        });
 
         setAddress({
           short: geocodeResult.shortAddress,

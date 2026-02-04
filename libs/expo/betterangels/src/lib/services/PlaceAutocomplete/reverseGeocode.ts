@@ -6,14 +6,20 @@ export type TReverseGeocodeResult = {
   addressComponents: google.maps.GeocoderAddressComponent[];
 };
 
+type TReverseGeocodeProps = {
+  baseUrl: string;
+  latitude: number;
+  longitude: number;
+};
+
 /**
  * Reverse geocode coordinates to an address using the Google Geocoding API.
  */
 export async function reverseGeocode(
-  baseUrl: string,
-  latitude: number,
-  longitude: number
+  props: TReverseGeocodeProps
 ): Promise<TReverseGeocodeResult> {
+  const { baseUrl, latitude, longitude } = props;
+
   const response = await axios.get(`${baseUrl}/proxy/maps/api/geocode/json`, {
     params: { latlng: `${latitude},${longitude}` },
     withCredentials: true,

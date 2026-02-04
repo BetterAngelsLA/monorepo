@@ -64,7 +64,7 @@ export function AddressAutocomplete(props: TProps) {
 
   const fetchPredictions = useCallback(
     async (input: string) => {
-      if (!input || !sessionToken) {
+      if (!input || !sessionToken || !places) {
         setPredictions([]);
         return;
       }
@@ -86,11 +86,17 @@ export function AddressAutocomplete(props: TProps) {
 
         setPredictions(
           suggestions
-            .filter((s) => s.placePrediction)
+            .filter(
+              (
+                s
+              ): s is typeof s & {
+                placePrediction: NonNullable<typeof s.placePrediction>;
+              } => !!s.placePrediction
+            )
             .map(({ placePrediction }) => ({
-              placeId: placePrediction!.placeId,
-              mainText: placePrediction!.mainText?.text || '',
-              secondaryText: placePrediction!.secondaryText?.text || '',
+              placeId: placePrediction.placeId,
+              mainText: placePrediction.mainText?.text || '',
+              secondaryText: placePrediction.secondaryText?.text || '',
             }))
         );
       } catch (error) {
@@ -98,7 +104,7 @@ export function AddressAutocomplete(props: TProps) {
         setPredictions([]);
       }
     },
-    [sessionToken, countryRestrictions]
+    [places, sessionToken, countryRestrictions]
   );
 
   const handleInputChange = (value: string) => {
@@ -153,6 +159,7 @@ export function AddressAutocomplete(props: TProps) {
             <li
               key={placeId}
               role="option"
+              aria-selected={false}
               tabIndex={0}
               onClick={() => handleSelect(placeId)}
               onKeyDown={(e) => e.key === 'Enter' && handleSelect(placeId)}
