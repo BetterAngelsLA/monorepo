@@ -23,8 +23,8 @@ from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
-from . import services
 from .models import User
+from .services import organizations
 from .types import (
     AuthResponse,
     CurrentUserType,
@@ -163,7 +163,7 @@ class Mutation:
             permission_denied_message="You do not have permission to add members.",
         )
 
-        user = services.member_add(
+        user = organizations.member_add(
             organization=organization,
             email=data.email,
             first_name=data.first_name,
@@ -196,7 +196,7 @@ class Mutation:
             permission_denied_message="You do not have permission to remove members.",
         )
 
-        user_id = services.member_remove(
+        user_id = organizations.member_remove(
             organization=organization,
             user_id=int(data.id),
             current_user=current_user,
@@ -225,7 +225,7 @@ class Mutation:
             permission_denied_message="You do not have permission to change member roles.",
         )
 
-        services.member_change_role(
+        organizations.member_change_role(
             organization=organization,
             user_id=int(data.id),
             role=data.role,
