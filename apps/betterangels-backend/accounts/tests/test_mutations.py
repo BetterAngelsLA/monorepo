@@ -303,7 +303,8 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
             ).exists()
         )
 
-    def test_remove_organization_member_cannot_remove_self(self) -> None:
+    def test_remove_organization_member_cannot_remove_owner(self) -> None:
+
         mutation = """
             mutation ($data: RemoveOrganizationMemberInput!) {
                 removeOrganizationMember(data: $data) {
