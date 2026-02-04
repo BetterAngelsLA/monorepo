@@ -1,6 +1,6 @@
 import {
   getHmisFileUrls,
-  useHmisFileHeadersContext,
+  useHmisFileHeaders,
 } from '@monorepo/expo/shared/clients';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
@@ -20,9 +20,7 @@ export type HmisFileInfoProps = {
 export default function HmisFileInfoScreen(props: HmisFileInfoProps) {
   const { id, label, createdAt, clientId } = props;
   const navigation = useNavigation();
-  const context = useHmisFileHeadersContext();
-  const headers = context?.headers ?? null;
-  const baseUrl = context?.baseUrl ?? null;
+  const { headers, baseUrl } = useHmisFileHeaders();
 
   const contentUri =
     baseUrl && headers && clientId && id

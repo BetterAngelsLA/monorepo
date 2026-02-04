@@ -15,7 +15,6 @@ import {
 import {
   ApiConfigProvider,
   ApolloClientProvider,
-  HmisFileHeadersProvider,
 } from '@monorepo/expo/shared/clients';
 import { FeatureControlProvider } from '@monorepo/react/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -62,31 +61,29 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <NativePaperProvider>
         <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-          <HmisFileHeadersProvider>
-            <QueryClientProvider client={reactqQueryClient}>
-              <ApolloClientProvider typePolicies={baApolloTypePolicies}>
-                <FeatureControlProvider>
-                  <KeyboardProvider>
-                    <KeyboardToolbarProvider>
-                      <SnackbarProvider>
-                        <UserProvider>
-                          <BlockingScreenProvider>
-                            <ModalScreenProvider>
-                              <AppUpdatePrompt />
-                              <StatusBar
-                                style={Platform.OS === 'ios' ? 'light' : 'auto'}
-                              />
-                              <AppRoutesStack />
-                            </ModalScreenProvider>
-                          </BlockingScreenProvider>
-                        </UserProvider>
-                      </SnackbarProvider>
-                    </KeyboardToolbarProvider>
-                  </KeyboardProvider>
-                </FeatureControlProvider>
-              </ApolloClientProvider>
-            </QueryClientProvider>
-          </HmisFileHeadersProvider>
+          <QueryClientProvider client={reactqQueryClient}>
+            <ApolloClientProvider typePolicies={baApolloTypePolicies}>
+              <FeatureControlProvider>
+                <KeyboardProvider>
+                  <KeyboardToolbarProvider>
+                    <SnackbarProvider>
+                      <UserProvider>
+                        <BlockingScreenProvider>
+                          <ModalScreenProvider>
+                            <AppUpdatePrompt />
+                            <StatusBar
+                              style={Platform.OS === 'ios' ? 'light' : 'auto'}
+                            />
+                            <AppRoutesStack />
+                          </ModalScreenProvider>
+                        </BlockingScreenProvider>
+                      </UserProvider>
+                    </SnackbarProvider>
+                  </KeyboardToolbarProvider>
+                </KeyboardProvider>
+              </FeatureControlProvider>
+            </ApolloClientProvider>
+          </QueryClientProvider>
         </ApiConfigProvider>
       </NativePaperProvider>
     </GestureHandlerRootView>

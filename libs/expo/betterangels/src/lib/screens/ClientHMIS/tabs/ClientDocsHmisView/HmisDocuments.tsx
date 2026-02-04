@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { View } from 'react-native';
 import * as R from 'remeda';
-import { useHmisFileHeadersContext } from '@monorepo/expo/shared/clients';
+import { useHmisFileHeaders } from '@monorepo/expo/shared/clients';
 import { HmisDocumentItem } from './HmisDocumentItem';
 
 export interface HmisDocumentsProps {
@@ -30,9 +30,7 @@ export default function HmisDocuments({
   clientId,
   hmisId,
 }: HmisDocumentsProps) {
-  const context = useHmisFileHeadersContext();
-  const headers = context?.headers ?? null;
-  const baseUrl = context?.baseUrl ?? null;
+  const { headers, baseUrl } = useHmisFileHeaders();
 
   const isExpanded = expanded === accordionKey;
   const fileNameMap = useMemo(

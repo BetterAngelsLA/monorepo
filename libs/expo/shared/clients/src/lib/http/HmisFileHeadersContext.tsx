@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { loadHmisFileHeaders } from '../common/interceptors';
 
 export interface HmisFileHeadersValue {
@@ -12,39 +6,22 @@ export interface HmisFileHeadersValue {
   baseUrl: string | null;
 }
 
-const HmisFileHeadersContext = createContext<HmisFileHeadersValue | null>(null);
+const HMIS_FILE_HEADERS_QUERY_KEY = ['hmisFileHeaders'] as const;
 
 /**
- * Provider that loads HMIS file headers and base URL once and shares them via context.
- * Wrap screens that use useHmisFileHeadersContext / useClientPhotoContentUri so the async
- * work runs once instead of per list item.
+ * Loads HMIS file headers and base URL via React Query (cached).
+ * Use with Avatar/image components and HMIS file screens that need authenticated HMIS file requests.
+ * Must be used inside QueryClientProvider.
  */
-export function HmisFileHeadersProvider({ children }: { children: ReactNode }) {
-  const [headers, setHeaders] = useState<Record<string, string> | null>(null);
-  const [baseUrl, setBaseUrl] = useState<string | null>(null);
+export function useHmisFileHeaders(): HmisFileHeadersValue {
+  const { data } = useQuery({
+    queryKey: HMIS_FILE_HEADERS_QUERY_KEY,
+    queryFn: loadHmisFileHeaders,
+    staleTime: Infinity,
+  });
 
-  useEffect(() => {
-    let mounted = true;
-    loadHmisFileHeaders().then(({ headers: h, baseUrl: url }) => {
-      if (mounted) {
-        setHeaders(h);
-        setBaseUrl(url);
-      }
-    });
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const value: HmisFileHeadersValue = { headers, baseUrl };
-
-  return (
-    <HmisFileHeadersContext.Provider value={value}>
-      {children}
-    </HmisFileHeadersContext.Provider>
-  );
-}
-
-export function useHmisFileHeadersContext(): HmisFileHeadersValue | null {
-  return useContext(HmisFileHeadersContext);
+  return {
+    headers: data?.headers ?? null,
+    baseUrl: data?.baseUrl ?? null,
+  };
 }

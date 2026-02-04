@@ -80,7 +80,7 @@ export interface HmisFileHeadersLoadResult {
 
 /**
  * Load HMIS file request config (base URL + auth headers) from storage.
- * Used by HmisFileHeadersProvider to load config once.
+ * Used by useHmisFileHeaders (React Query) to load and cache config.
  */
 export const loadHmisFileHeaders = async (): Promise<HmisFileHeadersLoadResult> => {
   try {

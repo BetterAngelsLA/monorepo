@@ -1,16 +1,14 @@
-import { useHmisFileHeadersContext } from './HmisFileHeadersContext';
+import { useHmisFileHeaders } from './HmisFileHeadersContext';
 
 /**
  * Hook that returns the content URI and headers for a client's profile photo.
  * Use with Avatar or image components that need authenticated HMIS file requests.
- * Must be used inside HmisFileHeadersProvider.
+ * Must be used inside QueryClientProvider.
  */
 export function useClientPhotoContentUri(
   clientId: string | number | null | undefined
 ) {
-  const context = useHmisFileHeadersContext();
-  const headers = context?.headers ?? null;
-  const baseUrl = context?.baseUrl ?? null;
+  const { headers, baseUrl } = useHmisFileHeaders();
 
   if (!clientId) {
     return { contentUri: null, thumbnailUri: null, headers: null };
