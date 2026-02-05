@@ -44,6 +44,8 @@ django-ckeditor-5 = "^0.2.19"
 newrelic = "^11.2.0"
 dj-places = "^5.2.1"
 python-magic = "^0.4.27"
+django-s3-file-field = {version = "^1.1.0", extras = ["s3"]}
+# Kept for migration compatibility (shelters/migrations/0010_*); remove after squashing.
 django-admin-async-upload = { git = "https://github.com/BetterAngelsLA/django-admin-async-upload", rev = "cfa824d7d390c9b500ea735ecfd5aa546c8165cd" }
 django-admin-interface = "^0.32.0"
 django-select2 = "^8.4.8"

@@ -2,7 +2,6 @@ from functools import cache
 from typing import Any, Optional
 
 import pghistory
-from admin_async_upload.models import AsyncFileField
 from common.models import BaseModel
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -13,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db import models
 from django.db.models import UniqueConstraint
+from s3_file_field import S3FileField
 from django.db.models.functions import Lower
 from django_choices_field import IntegerChoicesField, TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
@@ -384,17 +384,17 @@ def upload_path(instance: Optional[Shelter], filename: str) -> str:
 
 
 class InteriorPhoto(BaseModel):
-    file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
+    file = S3FileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="interior_photos")
 
 
 class ExteriorPhoto(BaseModel):
-    file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
+    file = S3FileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="exterior_photos")
 
 
 class Video(BaseModel):
-    file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
+    file = S3FileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="videos")
 
 

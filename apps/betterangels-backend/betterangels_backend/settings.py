@@ -87,7 +87,7 @@ DEBUG = env("DEBUG")
 
 # Application definition
 INSTALLED_APPS = [
-    "admin_async_upload",
+    "s3_file_field",
     "admin_interface",
     "adminsortable2",
     "betterangels_backend.apps.CustomAdminConfig",
@@ -290,10 +290,6 @@ if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
         },
     }
 
-
-ADMIN_RESUMABLE_CHUNKSIZE = 10 * 1024 * 1024
-ADMIN_RESUMABLE_SHOW_THUMB = True
-ADMIN_SIMULTANEOUS_UPLOADS = 5
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
