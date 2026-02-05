@@ -17,6 +17,7 @@ import {
   HMIS_ALLOWED_FILE_TYPES,
   HmisAllowedFileType,
   HmisError,
+  HmisFileError,
   HmisHttpQueryParams,
   HmisRequestOptions,
 } from './hmisTypes';
@@ -131,6 +132,7 @@ class HmisClient {
     // Some HMIS endpoints return JSON with incorrect/missing Content-Type headers
     // Some endpoints also return double-encoded JSON strings
     const text = await response.text();
+
     if (!text) return text as unknown as T;
 
     try {
@@ -224,12 +226,10 @@ class HmisClient {
   ): Promise<ClientFileUploadResponse> {
     // Validate file type
     if (!HMIS_ALLOWED_FILE_TYPES.includes(file.mimeType)) {
-      throw new HmisError(
-        `File type "${
-          file.mimeType
-        }" is not allowed. Allowed: ${HMIS_ALLOWED_FILE_TYPES.join(', ')}`,
-        400
-      );
+      throw new HmisFileError('Invalid file type', 400, 'INVALID_FILE_TYPE', {
+        received: file.mimeType,
+        allowed: HMIS_ALLOWED_FILE_TYPES,
+      });
     }
 
     // Build data URI with proper format

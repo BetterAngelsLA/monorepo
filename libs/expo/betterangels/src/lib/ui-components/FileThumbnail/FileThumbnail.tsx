@@ -1,4 +1,4 @@
-import { FilePdfIcon, NoteIcon } from '@monorepo/expo/shared/icons';
+import { FilePdfIcon, NoteIcon, TIconSize } from '@monorepo/expo/shared/icons';
 import {
   Colors,
   FileThumbnailSizeDefault,
@@ -12,23 +12,34 @@ import { Image } from 'expo-image';
 import { TouchableOpacity, View } from 'react-native';
 import { ThumbnailDeleteButton } from './ThumbnailDeleteButton';
 
+function getIconSize(thumbSize: TThumbnailSize): TIconSize {
+  if (typeof thumbSize.width === 'number' && thumbSize.width >= 70) {
+    return 'lg';
+  }
+
+  return 'sm';
+}
+
 interface IProps {
   uri: string;
   headers?: Record<string, string>;
   mimeType: string;
   thumbnailSize?: TThumbnailSize;
+  iconSize?: TIconSize;
   borderRadius?: TRadius;
   accessibilityHint?: string;
   onDelete?: () => void;
   onPress?: () => void;
+  disabled?: boolean;
 }
 
 export function FileThumbnail(props: IProps) {
-  const { accessibilityHint, onPress, ...rest } = props;
+  const { accessibilityHint, onPress, disabled, ...rest } = props;
 
   if (onPress) {
     return (
       <TouchableOpacity
+        disabled={disabled}
         onPress={onPress}
         accessibilityRole="button"
         accessibilityHint={accessibilityHint}
@@ -38,16 +49,18 @@ export function FileThumbnail(props: IProps) {
     );
   }
 
-  return <FileThumbnailBase {...rest} />;
+  return <FileThumbnailBase disabled={disabled} {...rest} />;
 }
 
 function FileThumbnailBase(props: IProps) {
   const {
+    disabled,
     mimeType,
     onDelete,
     uri,
     headers,
     thumbnailSize,
+    iconSize,
     borderRadius = Radiuses.xs,
   } = props;
 
@@ -57,25 +70,13 @@ function FileThumbnailBase(props: IProps) {
 
   let thumbSize = thumbnailSize;
 
-  console.log('*****************  thumbSize:', thumbSize);
-
   if (!thumbSize) {
     thumbSize = isImage ? ImageThumbnailSizeDefault : FileThumbnailSizeDefault;
   }
 
-  // TEMP
-  thumbSize = ImageThumbnailSizeDefault;
-
-  if (
-    typeof thumbSize?.width !== 'number' ||
-    typeof thumbSize?.height !== 'number'
-  ) {
-    throw new Error('thumbSize width and height must be numbers');
-  }
-
   const fileOrImageText = isImage ? 'image' : 'file';
 
-  const iconSize = thumbSize.width >= 70 ? 'lg' : 'sm';
+  const effectiveIconSize: TIconSize = iconSize || getIconSize(thumbSize);
 
   return (
     <View
@@ -92,6 +93,7 @@ function FileThumbnailBase(props: IProps) {
       {!!onDelete && (
         <ThumbnailDeleteButton
           onDelete={onDelete}
+          disabled={disabled}
           accessibilityHint={`deletes the ${fileOrImageText}`}
         />
       )}
@@ -108,9 +110,13 @@ function FileThumbnailBase(props: IProps) {
         />
       )}
 
-      {isPdf && <FilePdfIcon size={iconSize} color={Colors.NEUTRAL_DARK} />}
+      {isPdf && (
+        <FilePdfIcon size={effectiveIconSize} color={Colors.NEUTRAL_DARK} />
+      )}
 
-      {isOtherType && <NoteIcon size={iconSize} color={Colors.NEUTRAL_DARK} />}
+      {isOtherType && (
+        <NoteIcon size={effectiveIconSize} color={Colors.NEUTRAL_DARK} />
+      )}
     </View>
   );
 }

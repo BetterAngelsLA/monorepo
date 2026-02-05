@@ -5,13 +5,15 @@ import { IconButton } from '@monorepo/expo/shared/ui-components';
 export interface IDeleteButton {
   onDelete: () => void;
   accessibilityHint: string;
+  disabled?: boolean;
 }
 
 export function ThumbnailDeleteButton(props: IDeleteButton) {
-  const { onDelete, accessibilityHint } = props;
+  const { onDelete, disabled, accessibilityHint } = props;
 
   return (
     <IconButton
+      disabled={disabled}
       borderColor={Colors.NEUTRAL_LIGHT}
       borderRadius={Radiuses.xxxl}
       onPress={() => onDelete()}

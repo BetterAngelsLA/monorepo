@@ -1,5 +1,14 @@
 import { MimeTypes } from '@monorepo/expo/shared/static';
 
+export const HmisFileErrorCode = {
+  INVALID_FILE_TYPE: 'INVALID_FILE_TYPE',
+  FILE_TOO_LARGE: 'FILE_TOO_LARGE',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+export type HmisFileErrorCode =
+  (typeof HmisFileErrorCode)[keyof typeof HmisFileErrorCode];
+
 /**
  * HMIS REST API TypeScript types
  */
@@ -22,6 +31,21 @@ export class HmisError extends Error {
   constructor(message: string, public status: number, public data?: unknown) {
     super(message);
     this.name = 'HmisError';
+  }
+}
+
+export class HmisFileError extends HmisError {
+  readonly code: HmisFileErrorCode;
+
+  constructor(
+    message: string,
+    status: number,
+    code: HmisFileErrorCode,
+    data?: unknown
+  ) {
+    super(message, status, data);
+    this.name = 'HmisFileError';
+    this.code = code;
   }
 }
 
