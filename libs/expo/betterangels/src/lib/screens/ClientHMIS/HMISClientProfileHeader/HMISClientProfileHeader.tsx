@@ -28,7 +28,6 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
     firstName,
     lastName,
     hmisId: clientId,
-    id: profileId,
     nameMiddle,
     alias,
     nameSuffix,
@@ -68,7 +67,6 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
       <View style={styles.headerRow}>
         <HMISProfilePhotoUploader
           clientId={clientId ?? ''}
-          refetchId={profileId}
           imageUrl={photoUrl}
           headers={headers}
           onUploadSuccess={onUploadSuccess}

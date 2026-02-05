@@ -1,5 +1,6 @@
 import { useMutation } from '@apollo/client/react';
 import { DeleteIcon, ViewIcon } from '@monorepo/expo/shared/icons';
+import { Colors } from '@monorepo/expo/shared/static';
 import {
   BaseModal,
   DeleteModal,

@@ -1,8 +1,6 @@
-import { WFEdit, ViewIcon } from '@monorepo/expo/shared/icons';
-import {
-  BaseModal,
-  ImageViewer,
-} from '@monorepo/expo/shared/ui-components';
+import { ViewIcon, WFEdit } from '@monorepo/expo/shared/icons';
+import { Colors } from '@monorepo/expo/shared/static';
+import { BaseModal, ImageViewer } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
@@ -39,7 +37,8 @@ export function HMISProfilePhotoModal({
 
   const handleAddOrChangePhoto = () => {
     closeModal();
-    onAddOrChangePhoto?.();
+    // Defer opening the picker so the profile modal can finish closing first (avoids stacking/z-order issues).
+    setTimeout(() => onAddOrChangePhoto?.(), 300);
   };
 
   const viewActionNode = (
@@ -100,5 +99,8 @@ export function HMISProfilePhotoModal({
 const styles = StyleSheet.create({
   viewerContainer: {
     flex: 1,
+  },
+  headerStyle: {
+    backgroundColor: Colors.BRAND_DARK_BLUE,
   },
 });

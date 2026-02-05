@@ -1,4 +1,4 @@
-import { useApolloClient } from '@apollo/client';
+import { useApolloClient } from '@apollo/client/react';
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { WFEdit } from '@monorepo/expo/shared/icons';
 import { Spacings } from '@monorepo/expo/shared/static';
@@ -14,7 +14,6 @@ interface HMISProfilePhotoUploaderProps {
   /** HMIS client id (hmisId) used for REST photo upload and content URI */
   clientId: string;
   /** GraphQL id for refetching profile after upload; defaults to clientId if omitted */
-  refetchId?: string;
   imageUrl: string | null;
   headers?: Record<string, string> | null;
   onUploadSuccess?: () => void;
@@ -24,17 +23,12 @@ type ModalType = 'picker' | 'profile' | null;
 
 function buildFormData(file: ReactNativeFile): FormData {
   const formData = new FormData();
-  formData.append('file', {
-    uri: file.uri,
-    name: file.name,
-    type: file.type,
-  } as unknown as Blob);
+  formData.append('FileForm[uploadedFile]', file as unknown as Blob);
   return formData;
 }
 
 export function HMISProfilePhotoUploader({
   clientId,
-  refetchId,
   imageUrl,
   headers,
   onUploadSuccess,
@@ -44,7 +38,6 @@ export function HMISProfilePhotoUploader({
   const { showSnackbar } = useSnackbar();
   const { uploadClientPhoto } = useHmisClient();
   const apolloClient = useApolloClient();
-  const queryId = refetchId ?? clientId;
 
   const handleUpload = async (file: ReactNativeFile) => {
     setUploading(true);
@@ -52,12 +45,7 @@ export function HMISProfilePhotoUploader({
       const formData = buildFormData(file);
       await uploadClientPhoto(clientId, formData);
       await apolloClient.refetchQueries({
-        include: [
-          {
-            query: HmisClientProfileDocument,
-            variables: { id: queryId },
-          },
-        ],
+        include: [HmisClientProfileDocument],
       });
       onUploadSuccess?.();
       setModalType(null);
