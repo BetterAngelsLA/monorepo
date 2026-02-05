@@ -21,7 +21,7 @@ def _run(code: str) -> subprocess.CompletedProcess:
     )
 
 
-def test_gunicorn_arbiter_does_not_import_concurrent_futures():
+def test_gunicorn_arbiter_does_not_import_concurrent_futures() -> None:
     """Importing gunicorn.arbiter must not pull in concurrent.futures."""
     r = _run("import sys; import gunicorn.arbiter; " "sys.exit(0 if 'concurrent.futures' not in sys.modules else 1)")
     assert r.returncode == 0, (
@@ -31,7 +31,7 @@ def test_gunicorn_arbiter_does_not_import_concurrent_futures():
     )
 
 
-def test_gevent_patching_works_after_gunicorn_import():
+def test_gevent_patching_works_after_gunicorn_import() -> None:
     """After importing gunicorn then patching gevent, concurrent.futures
     must use gevent locks — not stdlib ones."""
     r = _run(
