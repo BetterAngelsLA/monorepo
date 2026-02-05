@@ -5549,6 +5549,7 @@ __metadata:
     "@types/apollo-upload-client": "npm:^19.0.0"
     "@types/google.maps": "npm:^3.58.1"
     "@types/jest": "npm:29.5.14"
+    "@types/lodash": "npm:^4.17.23"
     "@types/node": "npm:^20.0.0"
     "@types/react": "npm:~19.1.10"
     "@types/react-dom": "npm:~19.1.7"
@@ -9547,6 +9548,13 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: 10/e009a2bfb50e90ca9b7c6e8f648f8464067271fd99116f881073fa6fa76dc8d0133181dd65e6614d5fb1220d671d67b0124aef7d97dc02d7e342ab143a47779d
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:^4.17.23":
+  version: 4.17.23
+  resolution: "@types/lodash@npm:4.17.23"
+  checksum: 10/05935534a44aadef67c2158b2fb4a042a226970088106a40ddc67e4f063783149fe5cf02279d7dd4a1e72c98d9189b9430face659645dbf77270f8c4c3e387f5
   languageName: node
   linkType: hard
 

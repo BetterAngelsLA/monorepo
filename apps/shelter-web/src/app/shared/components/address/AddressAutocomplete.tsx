@@ -84,8 +84,8 @@ export function AddressAutocomplete(props: TProps) {
             locationBias: {
               circle: {
                 center: {
-                  latitude: LA_COUNTY_CENTER.lat,
-                  longitude: LA_COUNTY_CENTER.lng,
+                  latitude: LA_COUNTY_CENTER.latitude,
+                  longitude: LA_COUNTY_CENTER.longitude,
                 },
                 radius: BOUNDS_RADIUS_MILES * MILES_TO_METERS,
               },
