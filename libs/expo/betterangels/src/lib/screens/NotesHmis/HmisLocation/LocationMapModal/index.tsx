@@ -12,7 +12,6 @@ import { FlatList, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TMapView } from '../../../../maps';
 import {
-  TPlaceLatLng,
   TPlacePrediction,
   getPlaceAutocomplete,
   getPlaceDetailsById,
