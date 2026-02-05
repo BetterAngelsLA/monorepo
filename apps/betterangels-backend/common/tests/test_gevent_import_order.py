@@ -23,10 +23,7 @@ def _run(code: str) -> subprocess.CompletedProcess:
 
 def test_gunicorn_arbiter_does_not_import_concurrent_futures():
     """Importing gunicorn.arbiter must not pull in concurrent.futures."""
-    r = _run(
-        "import sys; import gunicorn.arbiter; "
-        "sys.exit(0 if 'concurrent.futures' not in sys.modules else 1)"
-    )
+    r = _run("import sys; import gunicorn.arbiter; " "sys.exit(0 if 'concurrent.futures' not in sys.modules else 1)")
     assert r.returncode == 0, (
         "gunicorn.arbiter imported concurrent.futures as a side effect, "
         "which breaks gevent patching and hangs S3 uploads. "
