@@ -5,11 +5,8 @@ import {
   UserIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  Avatar,
-  TextMedium,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
+import { TextMedium, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { HmisClientProfileType, HmisSuffixEnum } from '../../../apollo';
 import {
@@ -17,6 +14,7 @@ import {
   enumDisplayPronoun,
   getExistingHmisSuffix,
 } from '../../../static';
+import { HMISProfilePhotoUploader } from './HMISProfilePhotoUploader';
 
 interface IClientHeaderProps {
   client?: HmisClientProfileType;
@@ -24,11 +22,13 @@ interface IClientHeaderProps {
 
 export function HMISClientProfileHeader(props: IClientHeaderProps) {
   const { client } = props;
+  const [photoVersion, setPhotoVersion] = useState(0);
 
   const {
     firstName,
     lastName,
     hmisId: clientId,
+    id: profileId,
     nameMiddle,
     alias,
     nameSuffix,
@@ -37,6 +37,15 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
     uniqueIdentifier,
   } = client || {};
   const { contentUri, headers } = useClientPhotoContentUri(clientId);
+
+  const photoUrl =
+    contentUri && photoVersion > 0
+      ? `${contentUri}?t=${photoVersion}`
+      : contentUri;
+
+  const onUploadSuccess = useCallback(() => {
+    setPhotoVersion((v) => v + 1);
+  }, []);
 
   const nameParts = [firstName, nameMiddle, lastName].filter((s) => !!s);
 
@@ -57,13 +66,12 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Avatar
-          size="xl"
-          mr="xs"
-          accessibilityLabel="client's profile photo avatar"
-          accessibilityHint="client's profile photo avatar"
-          imageUrl={contentUri}
+        <HMISProfilePhotoUploader
+          clientId={clientId ?? ''}
+          refetchId={profileId}
+          imageUrl={photoUrl}
           headers={headers}
+          onUploadSuccess={onUploadSuccess}
         />
         <TextMedium selectable style={{ flexShrink: 1 }} size="lg">
           {nameParts.join(' ')}
