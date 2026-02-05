@@ -6,7 +6,6 @@ import requests
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 
 
 @login_required
@@ -39,7 +38,6 @@ def google_maps_api(request: HttpRequest, path: str) -> HttpResponse:
     return JsonResponse(response_data, safe=False)
 
 
-@csrf_exempt
 @login_required
 def google_places_api_new(request: HttpRequest, action: str) -> HttpResponse:
     """
