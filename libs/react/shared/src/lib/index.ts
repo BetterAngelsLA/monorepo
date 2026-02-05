@@ -3,5 +3,4 @@ export * from './featureControls';
 export * from './observers';
 export { Regex } from './static/regex';
 export { appZIndex } from './static/zIndex';
-export { debounce } from './utils/debounce';
 export { toError } from './utils/errors/toError';

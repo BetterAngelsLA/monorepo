@@ -1,9 +1,10 @@
 import axios from 'axios';
+import { TAddressComponent } from './types';
 
 export type TReverseGeocodeResult = {
   formattedAddress: string;
   shortAddress: string;
-  addressComponents: google.maps.GeocoderAddressComponent[];
+  addressComponents: TAddressComponent[];
 };
 
 type TReverseGeocodeProps = {

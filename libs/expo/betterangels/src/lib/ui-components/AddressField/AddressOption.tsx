@@ -1,19 +1,15 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { TouchableOpacity } from 'react-native';
-import { TPlacesPrediction } from '../../services';
+import { TPlacePrediction } from '../../services';
 
 type TAddressOption = {
-  item: TPlacesPrediction;
+  item: TPlacePrediction;
   onPress: () => void;
 };
 
 export function AddressOption(props: TAddressOption) {
   const { item, onPress } = props;
-
-  const addressArr = item.description.split(', ');
-  const streetAddress = addressArr[0];
-  const cityState = `${addressArr[1]}, ${addressArr[2]}`;
 
   return (
     <TouchableOpacity
@@ -25,9 +21,9 @@ export function AddressOption(props: TAddressOption) {
       accessibilityRole="button"
       onPress={onPress}
     >
-      <TextRegular>{streetAddress}</TextRegular>
+      <TextRegular>{item.mainText}</TextRegular>
       <TextRegular color={Colors.NEUTRAL_DARK} size="xxs">
-        {cityState}
+        {item.secondaryText}
       </TextRegular>
     </TouchableOpacity>
   );

@@ -5,7 +5,7 @@ import {
   FieldCard,
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
-import { debounce } from '@monorepo/expo/shared/utils';
+import { debounce } from 'lodash';
 import { format, isValid, setHours, setMinutes } from 'date-fns';
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';

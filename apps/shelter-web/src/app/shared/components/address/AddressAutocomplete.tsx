@@ -1,30 +1,43 @@
 import { SearchIcon } from '@monorepo/react/icons';
-import { useMapsLibrary } from '@vis.gl/react-google-maps';
+import { getCookie } from '@monorepo/react/shared';
+import axios from 'axios';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ISO3166Alpha2 } from '../../../types/isoCodes';
 import { Input } from '../form/input';
 import { LA_COUNTY_CENTER } from '../map/constants.maps';
-import { getPlacesBounds } from '../map/utils/getPlacesBounds';
-
-const boundsLA = getPlacesBounds({
-  boundsCenter: LA_COUNTY_CENTER,
-  boundsRadiusMiles: 25,
-});
 
 const DEBOUNCE_MS = 300;
+const MILES_TO_METERS = 1609.34;
+const BOUNDS_RADIUS_MILES = 25;
+
+// Get config from environment
+const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
+const csrfCookieName =
+  import.meta.env.VITE_SHELTER_CSRF_COOKIE_NAME || 'csrftoken';
+const csrfHeaderName =
+  import.meta.env.VITE_SHELTER_CSRF_HEADER_NAME || 'x-csrftoken';
 
 export type TPlaceResult = {
   id: string;
   displayName: string | null;
   formattedAddress: string | null;
-  location: google.maps.LatLng | null;
-  viewport: google.maps.LatLngBounds | null;
+  location: { lat: number; lng: number } | null;
 };
 
 type TPlacePrediction = {
   placeId: string;
   mainText: string;
   secondaryText: string;
+};
+
+type TAutocompleteSuggestion = {
+  placePrediction?: {
+    placeId: string;
+    structuredFormat: {
+      mainText: { text: string };
+      secondaryText: { text: string };
+    };
+  };
 };
 
 type TProps = {
@@ -43,18 +56,8 @@ export function AddressAutocomplete(props: TProps) {
   } = props;
 
   const [inputValue, setInputValue] = useState('');
-  const [sessionToken, setSessionToken] =
-    useState<google.maps.places.AutocompleteSessionToken>();
   const [predictions, setPredictions] = useState<TPlacePrediction[]>([]);
-
-  // Wait for places library to load before creating session token
-  const places = useMapsLibrary('places');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (!places) return;
-    setSessionToken(new google.maps.places.AutocompleteSessionToken());
-  }, [places]);
 
   useEffect(() => {
     return () => {
@@ -64,28 +67,48 @@ export function AddressAutocomplete(props: TProps) {
 
   const fetchPredictions = useCallback(
     async (input: string) => {
-      if (!input || !sessionToken || !places) {
+      if (!input || input.length < 3) {
         setPredictions([]);
         return;
       }
 
       try {
-        const { suggestions } =
-          await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions(
-            {
-              input,
-              sessionToken,
-              locationBias: boundsLA,
-              includedRegionCodes: Array.isArray(countryRestrictions)
-                ? countryRestrictions
-                : countryRestrictions
-                ? [countryRestrictions]
-                : ['us'],
-            }
-          );
+        const csrfToken = getCookie(csrfCookieName)[0];
+
+        const response = await axios.post<{
+          suggestions: TAutocompleteSuggestion[];
+        }>(
+          `${apiUrl}/proxy/places/v1/places:autocomplete/`,
+          {
+            input,
+            locationBias: {
+              circle: {
+                center: {
+                  latitude: LA_COUNTY_CENTER.lat,
+                  longitude: LA_COUNTY_CENTER.lng,
+                },
+                radius: BOUNDS_RADIUS_MILES * MILES_TO_METERS,
+              },
+            },
+            includedRegionCodes: Array.isArray(countryRestrictions)
+              ? countryRestrictions
+              : countryRestrictions
+              ? [countryRestrictions]
+              : ['us'],
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Goog-FieldMask':
+                'suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat',
+              ...(csrfToken && { [csrfHeaderName]: csrfToken }),
+            },
+            withCredentials: true,
+          }
+        );
 
         setPredictions(
-          suggestions
+          (response.data.suggestions || [])
             .filter(
               (
                 s
@@ -95,8 +118,9 @@ export function AddressAutocomplete(props: TProps) {
             )
             .map(({ placePrediction }) => ({
               placeId: placePrediction.placeId,
-              mainText: placePrediction.mainText?.text || '',
-              secondaryText: placePrediction.secondaryText?.text || '',
+              mainText: placePrediction.structuredFormat?.mainText?.text || '',
+              secondaryText:
+                placePrediction.structuredFormat?.secondaryText?.text || '',
             }))
         );
       } catch (error) {
@@ -104,7 +128,7 @@ export function AddressAutocomplete(props: TProps) {
         setPredictions([]);
       }
     },
-    [places, sessionToken, countryRestrictions]
+    [countryRestrictions]
   );
 
   const handleInputChange = (value: string) => {
@@ -120,22 +144,34 @@ export function AddressAutocomplete(props: TProps) {
   const handleSelect = useCallback(
     async (placeId: string) => {
       try {
-        const place = new google.maps.places.Place({ id: placeId });
-        await place.fetchFields({
-          fields: ['displayName', 'formattedAddress', 'location', 'viewport'],
+        // Use legacy place details API through proxy
+        const response = await axios.get<{
+          result: {
+            name?: string;
+            formatted_address?: string;
+            geometry?: {
+              location: { lat: number; lng: number };
+            };
+          };
+        }>(`${apiUrl}/proxy/maps/api/place/details/json/`, {
+          params: {
+            place_id: placeId,
+            fields: 'name,formatted_address,geometry',
+          },
+          withCredentials: true,
         });
+
+        const result = response.data.result;
 
         onPlaceSelect({
           id: placeId,
-          displayName: place.displayName || null,
-          formattedAddress: place.formattedAddress || null,
-          location: place.location || null,
-          viewport: place.viewport || null,
+          displayName: result.name || null,
+          formattedAddress: result.formatted_address || null,
+          location: result.geometry?.location || null,
         });
 
-        setInputValue(place.formattedAddress || '');
+        setInputValue(result.formatted_address || '');
         setPredictions([]);
-        setSessionToken(new google.maps.places.AutocompleteSessionToken());
       } catch (error) {
         console.error('Error fetching place details:', error);
       }

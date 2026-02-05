@@ -1,7 +1,7 @@
 import {
   TMapView,
   TPlaceLatLng,
-  TPlacesPrediction,
+  TPlacePrediction,
   getPlaceAutocomplete,
   getPlaceDetailsById,
 } from '@monorepo/expo/betterangels';
@@ -57,7 +57,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const [minizeModal, setMinimizeModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearch, setIsSearch] = useState(false);
-  const [suggestions, setSuggestions] = useState<TPlacesPrediction[]>([]);
+  const [suggestions, setSuggestions] = useState<TPlacePrediction[]>([]);
   const [chooseDirections, setChooseDirections] = useState(false);
   const [selected, setSelected] = useState<boolean>(false);
   const [userLocation, setUserLocation] =
@@ -154,7 +154,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     return () => clearTimeout(handler);
   }, [searchQuery, searchPlacesInCalifornia]);
 
-  const onSuggestionsSelect = async (place: TPlacesPrediction) => {
+  const onSuggestionsSelect = async (place: TPlacePrediction) => {
     try {
       if (chooseDirections) {
         setChooseDirections(false);
@@ -162,15 +162,20 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
       const placeResult = await getPlaceDetailsById({
         baseUrl,
-        placeId: place.place_id,
+        placeId: place.placeId,
         fields: 'geometry,address_component',
       });
 
-      const geometry = placeResult.geometry as google.maps.places.PlaceGeometry;
-      const responseLocation = geometry.location as unknown as TPlaceLatLng;
+      const responseLocation = placeResult.geometry?.location;
+
+      if (!responseLocation) {
+        console.error('No geometry location in place result');
+        return;
+      }
 
       setIsSearch(false);
       setSuggestions([]);
+      setSearchQuery('');
 
       const name = place.description.split(', ')[0];
 
@@ -327,7 +332,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             flex: 1,
           }}
           data={suggestions}
-          keyExtractor={(item) => item.place_id}
+          keyExtractor={(item) => item.placeId}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={{

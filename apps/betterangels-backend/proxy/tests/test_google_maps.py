@@ -34,3 +34,66 @@ class GoogleMapsApiViewTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertJSONEqual(response.content.decode("utf-8"), json.dumps(mock_response.json.return_value))
+
+
+class GooglePlacesApiNewViewTestCase(TestCase):
+
+    def setUp(self) -> None:
+        self.client = Client()
+        self.user = baker.make(User)
+
+    @patch("requests.post")
+    @patch("django.conf.settings.GOOGLE_MAPS_API_KEY", "fake_api_key")
+    def test_google_places_api_new_autocomplete(self, mock_post: Any) -> None:
+        self.client.force_login(self.user)
+        url = reverse("google_places_api_new", args=["autocomplete"])
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "suggestions": [
+                {
+                    "placePrediction": {
+                        "placeId": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+                        "structuredFormat": {
+                            "mainText": {"text": "Sydney Opera House"},
+                            "secondaryText": {"text": "Sydney NSW, Australia"},
+                        },
+                    }
+                }
+            ]
+        }
+        mock_post.return_value = mock_response
+
+        response = self.client.post(
+            url,
+            data=json.dumps({"input": "Sydney Opera"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content.decode("utf-8"), json.dumps(mock_response.json.return_value))
+
+        # Verify the API key was passed in headers
+        call_args = mock_post.call_args
+        self.assertEqual(call_args[1]["headers"]["X-Goog-Api-Key"], "fake_api_key")
+
+    def test_google_places_api_new_requires_post(self) -> None:
+        self.client.force_login(self.user)
+        url = reverse("google_places_api_new", args=["autocomplete"])
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 405)
+
+    def test_google_places_api_new_requires_authentication(self) -> None:
+        url = reverse("google_places_api_new", args=["autocomplete"])
+
+        response = self.client.post(
+            url,
+            data=json.dumps({"input": "test"}),
+            content_type="application/json",
+        )
+
+        # Should redirect to login
+        self.assertEqual(response.status_code, 302)

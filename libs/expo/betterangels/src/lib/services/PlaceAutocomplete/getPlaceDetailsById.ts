@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { TPlaceDetails } from './types';
 
 type TGetPlaceDetailsProps = {
   baseUrl: string;
@@ -11,7 +12,7 @@ type TGetPlaceDetailsProps = {
  */
 export async function getPlaceDetailsById(
   props: TGetPlaceDetailsProps
-): Promise<google.maps.places.PlaceResult> {
+): Promise<TPlaceDetails> {
   const {
     baseUrl,
     placeId,

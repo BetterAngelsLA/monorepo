@@ -48,8 +48,8 @@ export function ShelterSearch(props: TProps) {
       return;
     }
 
-    const latitude = place.location?.lat();
-    const longitude = place.location?.lng();
+    const latitude = place.location?.lat;
+    const longitude = place.location?.lng;
 
     if (!latitude || !longitude) {
       return;
