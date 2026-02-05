@@ -2,6 +2,7 @@ from accounts.schema import Mutation as AccountsMutation
 from accounts.schema import Query as AccountsQuery
 from clients.schema import Mutation as ClientsMutation
 from clients.schema import Query as ClientsQuery
+from common.graphql.s3 import Mutation as S3Mutation
 from common.graphql.schema import Query as CommonQuery
 from common.graphql.types import SCALAR_MAP
 from hmis.schema import Mutation as HmisMutation
@@ -21,7 +22,7 @@ from tasks.schema import Query as TasksQuery
 queries = (AccountsQuery, ClientsQuery, CommonQuery, HmisQuery, NotesQuery, TasksQuery, SheltersQuery)
 Query = merge_types("Query", queries)
 
-mutations = (AccountsMutation, ClientsMutation, HmisMutation, NotesMutation, TasksMutation)
+mutations = (AccountsMutation, ClientsMutation, HmisMutation, NotesMutation, S3Mutation, TasksMutation)
 Mutation = merge_types("Mutation", mutations)
 
 schema = Schema(

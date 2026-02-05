@@ -81,20 +81,23 @@ class Attachment(BaseModel):
         the original file name and categorizing the file for easier management.
         """
         if not self.pk:
-            # Determine the MIME type of the file
-            self.file.seek(0)
-            mime_type = self.file.file.content_type or magic.from_buffer(self.file.read(), mime=True)
-            self.mime_type = mime_type
+            if not self.mime_type:
+                # Determine the MIME type from file content (legacy multipart upload path).
+                # For S3 direct uploads, mime_type is set before save() is called.
+                self.file.seek(0)
+                mime_type = self.file.file.content_type or magic.from_buffer(self.file.read(), mime=True)
+                self.mime_type = mime_type
+                self.file.seek(0)
+
             # Map MIME type to AttachmentType enum
-            if mime_type.startswith("image"):
+            if self.mime_type.startswith("image"):
                 self.attachment_type = AttachmentType.IMAGE
-            elif mime_type.startswith("audio"):
+            elif self.mime_type.startswith("audio"):
                 self.attachment_type = AttachmentType.AUDIO
-            elif mime_type.startswith("video"):
+            elif self.mime_type.startswith("video"):
                 self.attachment_type = AttachmentType.VIDEO
             else:
                 self.attachment_type = AttachmentType.DOCUMENT
-            self.file.seek(0)
 
         filename = self.original_filename or unquote(self.file.name)
         self.original_filename = canonicalise_filename(self.mime_type, filename)

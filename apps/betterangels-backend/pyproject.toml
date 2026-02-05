@@ -57,6 +57,7 @@ cryptography = "^46.0.3"
 django-admin-sortable2 = "^2.3.1"
 pyjwt = "^2.11.0"
 django-cleanup = "^9.0.0"
+requests = "^2.32.5"
 
 [build-system]
 requires = ["poetry-core"]
