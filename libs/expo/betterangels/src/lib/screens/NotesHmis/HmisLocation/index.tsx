@@ -8,8 +8,8 @@ import { StyleSheet, View } from 'react-native';
 import { useInitialLocation } from '../../../hooks';
 import { MapView, Marker, PROVIDER_GOOGLE } from '../../../maps';
 import { useModalScreen } from '../../../providers';
-import { LocationMapModal, TLocationData } from '../../../ui-components';
 import { LocationDraft } from '../HmisProgramNoteForm';
+import LocationMapModal from './LocationMapModal';
 
 const FIELD_KEY = 'location';
 
@@ -53,17 +53,6 @@ export default function HmisLocationComponent(props: ILocationProps) {
     });
   };
 
-  const handleSelectLocation = (data: TLocationData) => {
-    const locationDraft: LocationDraft = {
-      latitude: data.latitude,
-      longitude: data.longitude,
-      shortAddressName: data.name,
-      formattedAddress: data.address,
-      components: data.addressComponents,
-    };
-    setLocation(locationDraft);
-  };
-
   const isLocation = expanded;
 
   return (
@@ -80,17 +69,9 @@ export default function HmisLocationComponent(props: ILocationProps) {
           renderContent: ({ close }) => (
             <LocationMapModal
               userLocation={userLocation}
-              initialLocation={
-                location
-                  ? {
-                      latitude: location.latitude,
-                      longitude: location.longitude,
-                      name: location.shortAddressName || undefined,
-                      address: location.formattedAddress || undefined,
-                    }
-                  : undefined
-              }
-              onSelectLocation={handleSelectLocation}
+              setValue={setValue}
+              location={location}
+              setLocation={setLocation}
               onClose={close}
             />
           ),

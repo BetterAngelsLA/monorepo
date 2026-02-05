@@ -1,11 +1,8 @@
 import { useMutation } from '@apollo/client/react';
 import {
-  LocationMapModal,
   MapView,
   Marker,
   PROVIDER_GOOGLE,
-  reverseGeocode,
-  TLocationData,
   UpdateNoteLocationDocument,
   useModalScreen,
 } from '@monorepo/expo/betterangels';
@@ -13,9 +10,11 @@ import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
+import axios from 'axios';
 import * as ExpoLocation from 'expo-location';
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import LocationMapModal from './LocationMapModal';
 
 const FIELD_KEY = 'Location';
 
@@ -98,34 +97,6 @@ export default function LocationComponent(props: ILocationProps) {
 
   const { showModalScreen } = useModalScreen();
 
-  const handleSelectLocation = async (data: TLocationData) => {
-    const newLocation: TLocation = {
-      latitude: data.latitude,
-      longitude: data.longitude,
-      address: data.address,
-      name: data.name,
-    };
-
-    setLocation(newLocation);
-
-    await updateNoteLocation({
-      variables: {
-        data: {
-          id: noteId,
-          location: {
-            point: [data.longitude, data.latitude],
-            address: data.address
-              ? {
-                  formattedAddress: data.address,
-                  addressComponents: JSON.stringify(data.addressComponents),
-                }
-              : null,
-          },
-        },
-      },
-    });
-  };
-
   // Auto-prefill on NEW notes: no point/address → use current or default location
   useEffect(() => {
     const hasServerLocation = !!point && point.length === 2;
@@ -154,17 +125,24 @@ export default function LocationComponent(props: ILocationProps) {
           longitude = userCurrentLocation.coords.longitude;
         }
 
-        const geocodeResult = await reverseGeocode({
-          baseUrl,
-          latitude,
-          longitude,
+        const url = `${baseUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}`;
+        const { data } = await axios.get(url, {
+          withCredentials: true,
         });
+
+        const result = data.results?.[0];
+        const formattedAddress: string | null =
+          result?.formatted_address ?? null;
+        const shortName: string | null = formattedAddress
+          ? formattedAddress.split(', ')[0]
+          : null;
+        const components = result?.address_components ?? [];
 
         const newLocation: TLocation = {
           latitude,
           longitude,
-          address: geocodeResult.formattedAddress,
-          name: geocodeResult.shortAddress,
+          address: formattedAddress,
+          name: shortName,
         };
 
         setLocation(newLocation);
@@ -175,12 +153,10 @@ export default function LocationComponent(props: ILocationProps) {
               id: noteId,
               location: {
                 point: [longitude, latitude],
-                address: geocodeResult.formattedAddress
+                address: formattedAddress
                   ? {
-                      formattedAddress: geocodeResult.formattedAddress,
-                      addressComponents: JSON.stringify(
-                        geocodeResult.addressComponents
-                      ),
+                      formattedAddress,
+                      addressComponents: JSON.stringify(components),
                     }
                   : null,
               },
@@ -216,18 +192,10 @@ export default function LocationComponent(props: ILocationProps) {
           },
           renderContent: ({ close }) => (
             <LocationMapModal
-              initialLocation={
-                location
-                  ? {
-                      latitude: location.latitude ?? 0,
-                      longitude: location.longitude ?? 0,
-                      name: location.name ?? undefined,
-                      address: location.address ?? undefined,
-                    }
-                  : undefined
-              }
-              onSelectLocation={handleSelectLocation}
-              onClose={close}
+              location={location}
+              noteId={noteId}
+              setLocation={setLocation}
+              onclose={close}
             />
           ),
         });
