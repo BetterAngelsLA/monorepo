@@ -1,8 +1,5 @@
 import * as ExpoLocation from 'expo-location';
 
-/**
- * Location data - the only type needed for this component
- */
 export type TLocationData = {
   latitude: number;
   longitude: number;
