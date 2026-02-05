@@ -37,7 +37,6 @@ from shelters.permissions import ShelterFieldPermissions
 
 from .enums import (
     AccessibilityChoices,
-    CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
@@ -255,8 +254,8 @@ class ShelterForm(forms.ModelForm):
     )
 
     # Ecosystem Information
-    cities = forms.MultipleChoiceField(
-        choices=CityChoices,
+    cities = forms.ModelMultipleChoiceField(
+        queryset=City.objects.all(),
         widget=Select2MultipleWidget(
             attrs={
                 "data-placeholder": "Select cities...",

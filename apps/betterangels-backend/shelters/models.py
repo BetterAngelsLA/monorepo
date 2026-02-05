@@ -26,7 +26,6 @@ from .enums import (
     SUPERVISORIAL_DISTRICT_CHOICES,
     AccessibilityChoices,
     BedStatusChoices,
-    CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
