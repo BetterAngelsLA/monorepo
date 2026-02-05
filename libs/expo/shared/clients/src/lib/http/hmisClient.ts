@@ -7,6 +7,7 @@ import {
   includeCredentialsInterceptor,
   userAgentInterceptor,
 } from '../common/interceptors';
+import { HmisError, HmisInvalidFileTypeError } from './hmisError';
 import {
   ClientFilesListParams,
   ClientFilesResponse,
@@ -16,8 +17,6 @@ import {
   FileNamesResponse,
   HMIS_ALLOWED_FILE_TYPES,
   HmisAllowedFileType,
-  HmisError,
-  HmisFileError,
   HmisHttpQueryParams,
   HmisRequestOptions,
 } from './hmisTypes';
@@ -226,7 +225,7 @@ class HmisClient {
   ): Promise<ClientFileUploadResponse> {
     // Validate file type
     if (!HMIS_ALLOWED_FILE_TYPES.includes(file.mimeType)) {
-      throw new HmisFileError('Invalid file type', 400, 'INVALID_FILE_TYPE', {
+      throw new HmisInvalidFileTypeError('Invalid file type', 400, {
         received: file.mimeType,
         allowed: HMIS_ALLOWED_FILE_TYPES,
       });
