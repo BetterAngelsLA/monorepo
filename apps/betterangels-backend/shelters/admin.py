@@ -12,7 +12,7 @@ from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import FieldDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import models, transaction
 from django.db.models import F, OuterRef, QuerySet, Subquery
@@ -24,6 +24,7 @@ from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from django_choices_field import TextChoicesField
 from django_select2.forms import Select2MultipleWidget
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
@@ -36,6 +37,7 @@ from shelters.permissions import ShelterFieldPermissions
 
 from .enums import (
     AccessibilityChoices,
+    CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
@@ -59,6 +61,7 @@ from .enums import (
 from .models import (
     SPA,
     Accessibility,
+    Bed,
     City,
     ContactInfo,
     Demographic,
@@ -79,7 +82,6 @@ from .models import (
     Storage,
     TrainingService,
     Video,
-    get_fields_with_other_option,
 )
 
 T = TypeVar("T", bound=models.Model)
@@ -87,53 +89,8 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
-def create_other_text_field() -> forms.CharField:
-    """
-    Factory function to create consistent _other text fields.
-
-    These fields are shown/hidden by JavaScript based on whether 'Other' is selected.
-    """
-    return forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={"placeholder": "Please specify..."}),
-    )
-
-
-def create_select2_multiple_field(
-    choices: Any,
-    placeholder: str,
-    required: bool = False,
-    label: Optional[str] = None,
-) -> forms.MultipleChoiceField:
-    """
-    Factory function to create consistent Select2 multiple choice fields.
-
-    Args:
-        choices: The enum choices for the field
-        placeholder: Placeholder text shown in the widget
-        required: Whether the field is required
-        label: Optional custom label for the field
-
-    Returns:
-        A configured MultipleChoiceField with Select2 widget
-    """
-    field = forms.MultipleChoiceField(
-        choices=choices,
-        widget=Select2MultipleWidget(
-            attrs={
-                "data-placeholder": placeholder,
-                "data-allow-clear": "true",
-            }
-        ),
-        required=required,
-    )
-    if label:
-        field.label = label
-    return field
-
-
 class ShelterForm(forms.ModelForm):
-    template_name = "admin/shelters/shelter/change_form.html"
+    template_name = "admin/shelters/change_form.html"  # Specify your custom template path
 
     clear_hero_image = forms.BooleanField(
         required=False,
@@ -142,49 +99,164 @@ class ShelterForm(forms.ModelForm):
     )
 
     # Summary Info
-    demographics = create_select2_multiple_field(DemographicChoices, "Select demographics...", required=True)
-    demographics_other = create_other_text_field()
-    special_situation_restrictions = create_select2_multiple_field(
-        SpecialSituationRestrictionChoices,
-        "Select special situation restrictions...",
+    demographics = forms.MultipleChoiceField(
+        choices=DemographicChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select demographics...",
+                "data-allow-clear": "true",
+            }
+        ),
         required=True,
-        label="Special Situation",
     )
-    shelter_types = create_select2_multiple_field(ShelterChoices, "Select shelter types...")
-    shelter_types_other = create_other_text_field()
+    demographics_other = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": "Please specify..."}),
+    )
+    special_situation_restrictions = forms.MultipleChoiceField(
+        choices=SpecialSituationRestrictionChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select special situation restrictions...",
+                "data-allow-clear": "true",
+            }
+        ),
+        label="Special Situation",
+        required=True,
+    )
+    shelter_types = forms.MultipleChoiceField(
+        choices=ShelterChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select shelter types...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    shelter_types_other = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": "Please specify..."}),
+    )
 
     # Sleeping Details
-    room_styles = create_select2_multiple_field(RoomStyleChoices, "Select room style...")
-    room_styles_other = create_other_text_field()
+    room_styles = forms.MultipleChoiceField(
+        choices=RoomStyleChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select room style...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    room_styles_other = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": "Please specify..."}),
+    )
 
     # Shelter Details
-    accessibility = create_select2_multiple_field(AccessibilityChoices, "Select accessibility...")
-    storage = create_select2_multiple_field(StorageChoices, "Select storage...", required=True)
-    pets = create_select2_multiple_field(PetChoices, "Select pets...", required=True)
-    parking = create_select2_multiple_field(ParkingChoices, "Select parking...", required=True)
+    accessibility = forms.MultipleChoiceField(
+        choices=AccessibilityChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select accessibility...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    storage = forms.MultipleChoiceField(
+        choices=StorageChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select storage...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=True,
+    )
+    pets = forms.MultipleChoiceField(
+        choices=PetChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select pets...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=True,
+    )
+    parking = forms.MultipleChoiceField(
+        choices=ParkingChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select parking...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=True,
+    )
 
     # Restrictions
     curfew = forms.TimeField(widget=TimeInput(attrs={"type": "time"}), required=False)
 
     # Services Offered
-    immediate_needs = create_select2_multiple_field(ImmediateNeedChoices, "Select immediate needs...")
-    general_services = create_select2_multiple_field(GeneralServiceChoices, "Select general services...")
-    health_services = create_select2_multiple_field(HealthServiceChoices, "Select health services...")
-    training_services = create_select2_multiple_field(TrainingServiceChoices, "Select training services...")
+    immediate_needs = forms.MultipleChoiceField(
+        choices=ImmediateNeedChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select immediate needs...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    general_services = forms.MultipleChoiceField(
+        choices=GeneralServiceChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select general services...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    health_services = forms.MultipleChoiceField(
+        choices=HealthServiceChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select health services...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    training_services = forms.MultipleChoiceField(
+        choices=TrainingServiceChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select training services...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
 
     # Entry Requirements
-    entry_requirements = create_select2_multiple_field(EntryRequirementChoices, "Select entry requirements...")
+    entry_requirements = forms.MultipleChoiceField(
+        choices=EntryRequirementChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select entry requirements...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
 
     # Ecosystem Information
-    spa = create_select2_multiple_field(SPAChoices, "Select SPA...")
-    shelter_programs = create_select2_multiple_field(ShelterProgramChoices, "Select shelter programs...")
-    shelter_programs_other = create_other_text_field()
-    funders = create_select2_multiple_field(FunderChoices, "Select funders...")
-    funders_other = create_other_text_field()
-
-    # Cities field with Select2 widget for inline display
-    cities = forms.ModelMultipleChoiceField(
-        queryset=City.objects.all(),
+    cities = forms.MultipleChoiceField(
+        choices=CityChoices,
         widget=Select2MultipleWidget(
             attrs={
                 "data-placeholder": "Select cities...",
@@ -193,11 +265,91 @@ class ShelterForm(forms.ModelForm):
         ),
         required=False,
     )
+    spa = forms.MultipleChoiceField(
+        choices=SPAChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select SPA...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    shelter_programs = forms.MultipleChoiceField(
+        choices=ShelterProgramChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select shelter programs...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    shelter_programs_other = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Please specify...",
+            }
+        ),
+    )
+    funders = forms.MultipleChoiceField(
+        choices=FunderChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select funders...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    funders_other = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Please specify...",
+            }
+        ),
+    )
 
-    exit_policy = create_select2_multiple_field(ExitPolicyChoices, "Select exit policies...")
-    exit_policy_other = create_other_text_field()
-    meal_services = create_select2_multiple_field(MealServiceChoices, "Select meal services...")
-    referral_requirement = create_select2_multiple_field(ReferralRequirementChoices, "Select requirements...")
+    exit_policy = forms.MultipleChoiceField(
+        choices=ExitPolicyChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select exit policies...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    exit_policy_other = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Please specify...",
+            }
+        ),
+    )
+    meal_services = forms.MultipleChoiceField(
+        choices=MealServiceChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select meal services...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    referral_requirement = forms.MultipleChoiceField(
+        choices=ReferralRequirementChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select requirements...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
 
     class Meta:
         model = Shelter
@@ -210,62 +362,41 @@ class ShelterForm(forms.ModelForm):
         )
 
     def clean(self) -> dict:
-        """
-        Validate form data including:
-        1. Ensure all M2M choice objects exist in database
-        2. Validate that _other fields are filled when 'Other' is selected
-        """
         cleaned_data = super().clean() or {}
 
-        # Process only ManyToMany fields where the related model uses TextChoices
-        for field in self._meta.model._meta.get_fields():
-            if not isinstance(field, models.ManyToManyField) or not isinstance(field.related_model, type):
-                continue
+        # Dynamically detect all ManyToManyField attributes in the model
+        many_to_many_fields = [
+            field.name for field in self._meta.model._meta.get_fields() if isinstance(field, models.ManyToManyField)
+        ]
 
-            model_class = field.related_model
-            try:
-                name_field = model_class._meta.get_field("name")
-                # Only process if the name field uses an enum (has choices_enum)
-                if hasattr(name_field, "choices_enum"):
-                    cleaned_data[field.name] = self._clean_choices(field.name, model_class)
-            except FieldDoesNotExist:
-                # If no name field, skip (like City which uses direct model)
-                pass
+        for field_name in many_to_many_fields:
+            model_class = self._meta.model._meta.get_field(field_name).related_model
+            cleaned_data[field_name] = self._clean_choices(field_name, model_class)
 
-        # Validate fields with "_other" using the centralized constant
-        self._validate_other_fields(cleaned_data)
+        # Detect fields with "_other" dynamically
+        other_fields = [
+            field_name.removesuffix("_other") for field_name in self.fields.keys() if field_name.endswith("_other")
+        ]
 
-        return cleaned_data
-
-    def _validate_other_fields(self, cleaned_data: dict) -> None:
-        """Validate that _other fields are filled when 'Other' is selected."""
-        for multi_field in get_fields_with_other_option():
+        # Validate each dynamically detected pair
+        for multi_field in other_fields:
             text_field = f"{multi_field}_other"
             multi_values = cleaned_data.get(multi_field, [])
+            multi_values = [str(m.name) for m in multi_values] if multi_values else []
+            text_value = cleaned_data.get(text_field)
 
-            # Extract string names from model instances
-            multi_value_names = [str(m.name).lower() for m in multi_values] if multi_values else []
-            text_value = cleaned_data.get(text_field, "").strip()
-
-            if "other" in multi_value_names and not text_value:
+            if "other" in multi_values and not text_value:
                 self.add_error(
                     text_field,
                     f"This field is required when 'Other' is selected in {multi_field}.",
                 )
 
+        return cleaned_data
+
     def _clean_choices(self, field_name: str, model_class: Type[T]) -> list[T]:
         """
-        Ensure all selected choices exist in the related model, creating missing ones.
-
-        This is necessary because the form uses TextChoices but the database
-        stores foreign keys to the related models.
-
-        Args:
-            field_name: Name of the M2M field being processed
-            model_class: The related model class
-
-        Returns:
-            List of model instances for the selected choices
+        Handles the cleaning of ManyToMany fields by ensuring all selected choices
+        exist in the related model.
         """
         choices = self.cleaned_data.get(field_name, [])
 
@@ -273,7 +404,7 @@ class ShelterForm(forms.ModelForm):
             return []
 
         # Retrieve existing objects and their names
-        existing_objects: list[T] = list(model_class.objects.filter(name__in=choices))  # type: ignore[attr-defined]
+        existing_objects = list(model_class.objects.filter(name__in=choices))  # type: ignore[attr-defined]
         existing_entries = {str(obj) for obj in existing_objects}
 
         # Create missing objects
@@ -401,7 +532,7 @@ class ShelterResource(resources.ModelResource):
     cities = Field(
         column_name="cities",
         attribute="cities",
-        widget=ManyToManyWidget(City, separator=",", field="display_name"),
+        widget=ManyToManyWidget(City, separator=",", field="name"),
     )
     funders = Field(
         column_name="funders",
@@ -474,28 +605,16 @@ class ShelterResource(resources.ModelResource):
             self.skip_or_raise(row, "location")
 
     def process_many_to_many_import(self, row: Any, rowInDict: dict, column: str) -> None:
-        """Process many-to-many imports with dynamic field lookup."""
         fieldModel = cast(Type[models.Model], Shelter._meta.get_field(column).related_model)
-
-        try:
-            name_field = fieldModel._meta.get_field("name")  # type: ignore
-        except FieldDoesNotExist:
-            self.skip_or_raise(row, column)
-            return
-
-        field_choices = name_field.choices  # type: ignore
+        fieldModelChoices = cast(TextChoicesField, fieldModel._meta.get_field("name")).choices
         columnSeparateVals = [v.strip() for v in rowInDict[column].split(",")]
-        # Build reverse mapping from choice display to choice value
-        row_vals_choices: dict = {}
-        if field_choices:
-            for choice_value, choice_display in field_choices:
-                row_vals_choices[choice_display] = choice_value
+        row_vals_choices = {j: i for i, j in fieldModelChoices}  # type: ignore
         for i, indVal in enumerate(columnSeparateVals):
             try:
                 if indVal in row_vals_choices:
                     if row_vals_choices[indVal] == "other" and not rowInDict[f"{column}_other"]:
                         raise ValueError
-                    brand_new_obj, createdNewObjectInModel = fieldModel.objects.get_or_create(  # type: ignore[attr-defined]
+                    brand_new_obj, createdNewObjectInModel = fieldModel.objects.get_or_create(  # type: ignore
                         name=row_vals_choices[indVal]
                     )
                     columnSeparateVals[i] = row_vals_choices[indVal]
@@ -704,7 +823,6 @@ class ShelterAdmin(ImportExportModelAdmin):
             {
                 "fields": (
                     "overall_rating",
-                    "declined_ba_visit",
                     "subjective_review",
                 )
             },
@@ -732,7 +850,6 @@ class ShelterAdmin(ImportExportModelAdmin):
         "total_beds",
         "max_stay",
         "status",
-        "declined_ba_visit",
         "updated_at",
         "updated_by",
     )
@@ -800,7 +917,7 @@ class ShelterAdmin(ImportExportModelAdmin):
 
         return permissions_map
 
-    def _create_log_entries(self, user_pk: int, rows: dict) -> None:
+    def _create_log_entries(self, user_pk, rows):  # type: ignore
         logentry_map = {
             RowResult.IMPORT_TYPE_NEW: ADDITION,
             RowResult.IMPORT_TYPE_UPDATE: CHANGE,
@@ -892,6 +1009,13 @@ class ShelterAdmin(ImportExportModelAdmin):
         label = name or (data.get("username") or f"User {uid}")
         url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
         return format_html('<a href="{}">{}</a>', url, label)
+
+
+@admin.register(Bed)
+class BedAdmin(admin.ModelAdmin):
+    list_display = ("id", "shelter_id", "status", "created_at", "updated_at")
+    list_filter = ("status",)
+    search_fields = ("shelter_id__name",)
 
     def get_urls(self) -> list[Any]:
         urls = super().get_urls()
