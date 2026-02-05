@@ -1223,6 +1223,7 @@ export type Mutation = {
   logout: Scalars['Boolean']['output'];
   removeHmisNoteServiceRequest: RemoveHmisNoteServiceRequestPayload;
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
+  removeOrganizationMember: RemoveOrganizationMemberPayload;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
   updateClientDocument: UpdateClientDocumentPayload;
@@ -1236,6 +1237,7 @@ export type Mutation = {
   updateHmisProfile: UpdateHmisProfilePayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
+  updateOrganizationMemberRole: UpdateOrganizationMemberRolePayload;
   updateServiceRequest: UpdateServiceRequestPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
@@ -1414,6 +1416,11 @@ export type MutationRemoveNoteServiceRequestArgs = {
 };
 
 
+export type MutationRemoveOrganizationMemberArgs = {
+  data: RemoveOrganizationMemberInput;
+};
+
+
 export type MutationRevertNoteArgs = {
   data: RevertNoteInput;
 };
@@ -1476,6 +1483,11 @@ export type MutationUpdateNoteArgs = {
 
 export type MutationUpdateNoteLocationArgs = {
   data: UpdateNoteLocationInput;
+};
+
+
+export type MutationUpdateOrganizationMemberRoleArgs = {
+  data: UpdateOrganizationMemberRoleInput;
 };
 
 
@@ -2073,6 +2085,13 @@ export type RemoveNoteServiceRequestInput = {
 
 export type RemoveNoteServiceRequestPayload = NoteType | OperationInfo;
 
+export type RemoveOrganizationMemberInput = {
+  id: Scalars['ID']['input'];
+  organizationId: Scalars['ID']['input'];
+};
+
+export type RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo;
+
 export type RevertNoteInput = {
   id: Scalars['ID']['input'];
   revertBeforeTimestamp: Scalars['DateTime']['input'];
@@ -2596,6 +2615,14 @@ export type UpdateNoteLocationInput = {
 export type UpdateNoteLocationPayload = NoteType | OperationInfo;
 
 export type UpdateNotePayload = NoteType | OperationInfo;
+
+export type UpdateOrganizationMemberRoleInput = {
+  id: Scalars['ID']['input'];
+  organizationId: Scalars['ID']['input'];
+  role: OrgRoleEnum;
+};
+
+export type UpdateOrganizationMemberRolePayload = OperationInfo | OrganizationMemberType;
 
 export type UpdateServiceRequestInput = {
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;

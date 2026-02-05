@@ -15,7 +15,17 @@ from strawberry_django.utils.query import filter_for_user
 
 class PermissionedQuerySet(HasRetvalPerm):
     """
-    Wraps HasRetvalPerm injects a permission-filtered QuerySet into context.
+    Extension that injects a permission-filtered QuerySet into context.
+
+    By default, also checks permissions on the return value (via HasRetvalPerm).
+    Set check_retval=False to skip return value checking, which is needed for
+    delete mutations that return DeletedObjectType (unhashable).
+
+    Usage:
+        extensions=[PermissionedQuerySet(perms, model=Organization)]
+
+    Then in the mutation:
+        organization = info.context.qs.get(id=data.organization_id)
     """
 
     def __init__(
@@ -23,6 +33,7 @@ class PermissionedQuerySet(HasRetvalPerm):
         perms: Union[list[str], str],
         *,
         model: Type[Model],
+        check_retval: bool = True,
         message: Optional[str] = None,
         use_directives: bool = True,
         target: Optional[PermTarget] = None,
@@ -45,6 +56,7 @@ class PermissionedQuerySet(HasRetvalPerm):
             with_superuser=with_superuser,
         )
         self.model = model
+        self.check_retval = check_retval
 
     def _prepare_qs(self, info: Info) -> QuerySet[Model]:
         user = get_current_user(info)
@@ -60,7 +72,9 @@ class PermissionedQuerySet(HasRetvalPerm):
         **kwargs: Any,
     ) -> Any:
         info.context.qs = self._prepare_qs(info)
-        return super().resolve(next_, source, info, *args, **kwargs)
+        if self.check_retval:
+            return super().resolve(next_, source, info, *args, **kwargs)
+        return next_(source, info, **kwargs)
 
     async def resolve_async(
         self,
@@ -71,7 +85,12 @@ class PermissionedQuerySet(HasRetvalPerm):
         **kwargs: Any,
     ) -> Any:
         info.context.qs = self._prepare_qs(info)
-        result = super().resolve_async(next_, source, info, *args, **kwargs)
+        if self.check_retval:
+            result = super().resolve_async(next_, source, info, *args, **kwargs)
+            if inspect.isawaitable(result):
+                result = await result  # type: ignore
+            return result
+        result = next_(source, info, **kwargs)
         if inspect.isawaitable(result):
             result = await result  # type: ignore
         return result
