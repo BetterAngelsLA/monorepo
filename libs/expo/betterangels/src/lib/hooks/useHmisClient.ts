@@ -19,7 +19,7 @@ import { useCallback, useMemo } from 'react';
  *
  * @example
  * ```tsx
- * const { getCurrentUser, uploadClientFile, hmisClient } = useHmisClient();
+ * const { getCurrentUser, uploadClientFile, uploadClientPhoto, hmisClient } = useHmisClient();
  *
  * // Get HMIS current user profile with default fields
  * const user = await getCurrentUser();
@@ -35,6 +35,11 @@ import { useCallback, useMemo } from 'react';
  *   12,
  *   89
  * );
+ *
+ * // Upload client photo
+ * const formData = new FormData();
+ * formData.append('file', { uri, name: 'photo.jpg', type: 'image/jpeg' });
+ * await uploadClientPhoto('68998C256', formData);
  *
  * // Custom HMIS endpoint
  * const data = await hmisClient.get('/some-hmis-endpoint', {
@@ -204,10 +209,30 @@ export const useHmisClient = () => {
     [hmisClient]
   );
 
+  /**
+   * Upload client photo
+   *
+   * POST /clients/{id}/photo/upload with multipart/form-data.
+   *
+   * @param clientId - Client ID
+   * @param formData - FormData containing the photo file (e.g. from image picker)
+   * @returns Promise with upload response
+   */
+  const uploadClientPhoto = useCallback(
+    <T = unknown>(
+      clientId: string | number,
+      formData: FormData
+    ): Promise<T> => {
+      return hmisClient.uploadClientPhoto<T>(clientId, formData);
+    },
+    [hmisClient]
+  );
+
   return {
     hmisClient,
     getCurrentUser,
     uploadClientFile,
+    uploadClientPhoto,
     getFileCategories,
     getFileNames,
     getClientFiles,

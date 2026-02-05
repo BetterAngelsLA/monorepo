@@ -436,6 +436,33 @@ class HmisClient {
   ): Promise<void> {
     await this.delete(`/clients/${clientId}/client-files/${fileId}`);
   }
+
+  /**
+   * Upload client photo
+   *
+   * POST /clients/{id}/photo/upload with multipart/form-data body.
+   *
+   * @param clientId - The client ID
+   * @param formData - FormData containing the photo file (e.g. from image picker)
+   * @returns Promise with upload response
+   * @throws HmisError if the request fails
+   *
+   * @example
+   * ```typescript
+   * const formData = new FormData();
+   * formData.append('file', { uri, name: 'photo.jpg', type: 'image/jpeg' });
+   * await hmisClient.uploadClientPhoto('68998C256', formData);
+   * ```
+   */
+  async uploadClientPhoto<T = unknown>(
+    clientId: string | number,
+    formData: FormData
+  ): Promise<T> {
+    return this.postMultipart<T>(
+      `/clients/${clientId}/photo/upload`,
+      formData
+    );
+  }
 }
 
 // Factory function to create HmisClient
