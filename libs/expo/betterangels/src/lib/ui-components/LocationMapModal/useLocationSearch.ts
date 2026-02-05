@@ -1,5 +1,5 @@
-import { debounce, DebouncedFunc } from 'lodash';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { debounce } from 'lodash';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   TPlacePrediction,
   getPlaceAutocomplete,
@@ -21,53 +21,38 @@ export function useLocationSearch({
 
   const searching = suggestions.length > 0;
 
-  // Store baseUrl in ref so debounced function always has latest value
-  const baseUrlRef = useRef(baseUrl);
-  baseUrlRef.current = baseUrl;
-
-  // Create stable debounced function once
-  const debouncedSearchRef = useRef<
-    DebouncedFunc<(q: string) => Promise<void>>
-  >(
-    debounce(async (q: string) => {
-      if (q.length < 3) {
-        setSuggestions([]);
-        return;
-      }
-      try {
-        const results = await getPlaceAutocomplete({
-          baseUrl: baseUrlRef.current,
-          query: q,
-        });
-        setSuggestions(results);
-      } catch (err) {
-        console.error('Error fetching suggestions:', err);
-      }
-    }, 400)
+  const debouncedSearch = useMemo(
+    () =>
+      debounce(async (q: string) => {
+        if (q.length < 3) {
+          setSuggestions([]);
+          return;
+        }
+        try {
+          const results = await getPlaceAutocomplete({ baseUrl, query: q });
+          setSuggestions(results);
+        } catch (err) {
+          console.error('Error fetching suggestions:', err);
+        }
+      }, 400),
+    [baseUrl]
   );
 
-  // Cleanup on unmount
-  useEffect(() => {
-    const debouncedFn = debouncedSearchRef.current;
-    return () => {
-      debouncedFn?.cancel();
-    };
-  }, []);
+  useEffect(() => () => debouncedSearch.cancel(), [debouncedSearch]);
 
-  // Trigger search when query changes
   useEffect(() => {
     if (query) {
-      debouncedSearchRef.current(query);
+      debouncedSearch(query);
     } else {
       setSuggestions([]);
     }
-  }, [query]);
+  }, [query, debouncedSearch]);
 
   const selectSuggestion = useCallback(
     async (place: TPlacePrediction) => {
       try {
         const r = await getPlaceDetailsById({
-          baseUrl: baseUrlRef.current,
+          baseUrl,
           placeId: place.placeId,
           fields: 'geometry,address_component',
         });
@@ -87,14 +72,14 @@ export function useLocationSearch({
         console.error('Error selecting suggestion:', err);
       }
     },
-    [onSelect]
+    [baseUrl, onSelect]
   );
 
   const clear = useCallback(() => {
     setQuery('');
     setSuggestions([]);
-    debouncedSearchRef.current?.cancel();
-  }, []);
+    debouncedSearch.cancel();
+  }, [debouncedSearch]);
 
   return {
     query,

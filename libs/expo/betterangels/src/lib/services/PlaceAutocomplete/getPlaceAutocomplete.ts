@@ -80,20 +80,14 @@ export async function getPlaceAutocomplete(
   );
 
   return (response.data.suggestions || [])
-    .filter(
-      (
-        s
-      ): s is typeof s & {
-        placePrediction: NonNullable<typeof s.placePrediction>;
-      } => !!s.placePrediction
-    )
-    .map(({ placePrediction }) => {
-      const mainText = placePrediction.structuredFormat?.mainText?.text || '';
-      const secondaryText =
-        placePrediction.structuredFormat?.secondaryText?.text || '';
+    .filter((s) => s.placePrediction)
+    .map((s) => {
+      const { placeId, structuredFormat } = s.placePrediction!;
+      const mainText = structuredFormat?.mainText?.text || '';
+      const secondaryText = structuredFormat?.secondaryText?.text || '';
 
       return {
-        placeId: placePrediction.placeId,
+        placeId,
         description: `${mainText}, ${secondaryText}`,
         mainText,
         secondaryText,

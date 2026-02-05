@@ -229,7 +229,7 @@ export function LocationMapModal({
             setQuery(t);
           }}
           onDelete={clear}
-          onFocus={() => showIosDirections && setShowIosDirections(false)}
+          onFocus={() => setShowIosDirections(false)}
         />
         {searching && (
           <FlatList
