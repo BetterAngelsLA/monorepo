@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { View } from 'react-native';
 import * as R from 'remeda';
-import { useHmisFileHeaders } from '../../../../hooks';
+import { useHmisFileHeaders } from '@monorepo/expo/shared/clients';
 import { HmisDocumentItem } from './HmisDocumentItem';
 
 export interface HmisDocumentsProps {
