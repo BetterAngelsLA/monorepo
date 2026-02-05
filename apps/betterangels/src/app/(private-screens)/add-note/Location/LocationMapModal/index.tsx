@@ -1,6 +1,5 @@
 import {
   TMapView,
-  TPlaceLatLng,
   TPlacePrediction,
   getPlaceAutocomplete,
   getPlaceDetailsById,
