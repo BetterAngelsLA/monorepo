@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import Dashboard from './pages/dashboard/Dashboard';
-import ShelterDashboardPage from './ShelterDashboardPage'
+import ShelterDashboardPage from './ShelterDashboardPage';
 
 export function OperatorApp() {
   return (

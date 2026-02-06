@@ -82,17 +82,18 @@ export interface HmisFileHeadersLoadResult {
  * Load HMIS file request config (base URL + auth headers) from storage.
  * Used by useHmisFileHeaders (React Query) to load and cache config.
  */
-export const loadHmisFileHeaders = async (): Promise<HmisFileHeadersLoadResult> => {
-  try {
-    const url = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
-    if (!url) return { headers: null, baseUrl: null };
-    const authHeaders = await getHmisAuthHeaders();
-    return { headers: authHeaders, baseUrl: url };
-  } catch (error) {
-    console.error('Failed to load HMIS headers', error);
-    return { headers: null, baseUrl: null };
-  }
-};
+export const loadHmisFileHeaders =
+  async (): Promise<HmisFileHeadersLoadResult> => {
+    try {
+      const url = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
+      if (!url) return { headers: null, baseUrl: null };
+      const authHeaders = await getHmisAuthHeaders();
+      return { headers: authHeaders, baseUrl: url };
+    } catch (error) {
+      console.error('Failed to load HMIS headers', error);
+      return { headers: null, baseUrl: null };
+    }
+  };
 
 /**
  * Composes multiple interceptors into a single fetch function

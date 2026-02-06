@@ -42,7 +42,7 @@ export function PersonalInfoFormHmis() {
   return (
     <Form>
       <Form.Fieldset>
-      <DatePicker
+        <DatePicker
           name="birthDate"
           control={control}
           type="numeric"

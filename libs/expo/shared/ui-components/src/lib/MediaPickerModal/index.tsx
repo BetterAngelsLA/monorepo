@@ -219,7 +219,9 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
               accessibilityRole="button"
               accessibilityHint="opens file library"
             >
-              <TextRegular color={Colors.PRIMARY}>Upload Document or Image</TextRegular>
+              <TextRegular color={Colors.PRIMARY}>
+                Upload Document or Image
+              </TextRegular>
             </Pressable>
           </View>
 
