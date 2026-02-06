@@ -44,6 +44,7 @@ urlpatterns = [
     path("legal/", include("legal.urls")),
     path("proxy/", include("proxy.urls"), name="proxy"),
     path("api/s3-upload/", include("s3_file_field.urls")),
+    path("api/shelters/", include("shelters.urls")),
     path("_allauth/", include("allauth.headless.urls")),
 ]
 

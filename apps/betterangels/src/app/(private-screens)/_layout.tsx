@@ -227,6 +227,12 @@ export default function PrivateLayout() {
         })}
       />
       <Stack.Screen
+        name="settings/s3-upload"
+        options={getDefaultStackNavOptions({
+          title: 'S3 Upload (dev)',
+        })}
+      />
+      <Stack.Screen
         name="settings/team/index"
         options={getDefaultStackNavOptions({
           title: 'Select Default Team',

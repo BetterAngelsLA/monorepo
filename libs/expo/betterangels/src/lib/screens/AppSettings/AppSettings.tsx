@@ -1,4 +1,9 @@
-import { GlobeIcon, GroupsIcon, InfoIcon } from '@monorepo/expo/shared/icons';
+import {
+  BoltIcon,
+  GlobeIcon,
+  GroupsIcon,
+  InfoIcon,
+} from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { StyleSheet, View } from 'react-native';
 import { MainContainer, NavButton } from '../../ui-components';
@@ -10,11 +15,18 @@ export function AppSettings() {
         <NavButton title="About" Icon={InfoIcon} route="settings/about" />
         <NavButton title="Team" Icon={GroupsIcon} route="settings/team" />
         {__DEV__ && (
-          <NavButton
-            title="HMIS REST (dev)"
-            Icon={GlobeIcon}
-            route="settings/hmis-rest"
-          />
+          <>
+            <NavButton
+              title="HMIS REST (dev)"
+              Icon={GlobeIcon}
+              route="settings/hmis-rest"
+            />
+            <NavButton
+              title="S3 Upload (dev)"
+              Icon={BoltIcon}
+              route="settings/s3-upload"
+            />
+          </>
         )}
       </View>
     </MainContainer>
