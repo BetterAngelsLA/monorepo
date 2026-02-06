@@ -1,11 +1,16 @@
+from typing import Any
+
 from common.models import Address, Attachment, Location
+from common.widgets import AdminS3FileWidget
 from django.apps import apps
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
+from django.db import models
 from django.db.models import Model
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.safestring import SafeString
+from django.utils.safestring import SafeString, mark_safe
+from s3_file_field import S3FileField
 
 
 class AttachmentAdminMixin:
@@ -72,10 +77,33 @@ class AttachmentAdmin(admin.ModelAdmin):
         "id",
         "attachment_type",
     )
+    readonly_fields = ("file_preview",)
+
+    @admin.display(description="Preview")
+    def file_preview(self, obj: Attachment) -> str:
+        if not obj.pk or not obj.file:
+            return ""
+        url = obj.file.url
+        mime = obj.mime_type or ""
+        if mime.startswith("image/"):
+            return mark_safe(f'<img src="{url}" style="max-height: 200px; max-width: 250px;" />')
+        if mime.startswith("video/"):
+            return mark_safe(
+                f'<video src="{url}" style="max-height: 200px; max-width: 250px;"'
+                f' controls preload="metadata"></video>'
+            )
+        if mime.startswith("audio/"):
+            return mark_safe(f'<audio src="{url}" controls preload="metadata"></audio>')
+        return mark_safe(f'<a href="{url}" target="_blank">{obj.original_filename or obj.file.name}</a>')
 
     @admin.display(description="Attachment")
     def get_str(self, obj: Attachment) -> str:
         return str(obj)
+
+    def formfield_for_dbfield(self, db_field: models.Field, request: Any, **kwargs: Any) -> Any:  # type: ignore[override]
+        if isinstance(db_field, S3FileField):
+            kwargs["widget"] = AdminS3FileWidget
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
 
 
 @admin.register(Address)

@@ -11,6 +11,8 @@ services:
 
     ports:
       - '8000:8000'
+      - '9000:9000'
+      - '9001:9001'
   db:
     image: nickblah/postgis:17.5-bullseye-postgis-3.5
     ports:
@@ -26,7 +28,18 @@ services:
   valkey:
     image: valkey/valkey:8.0.2
 
+  minio:
+    image: minio/minio:latest
+    network_mode: 'service:better-angels'
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    entrypoint: sh -c "mkdir -p /data/betterangels-media && minio server /data --console-address ':9001'"
+    volumes:
+      - minio_data:/data
+
 volumes:
+  minio_data:
   node_modules:
   pgdata:
   venv:

@@ -7,6 +7,7 @@ import places
 import requests
 from betterangels_backend import settings
 from common.models import Location
+from common.widgets import AdminS3FileWidget
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
@@ -308,6 +309,7 @@ class PhotoForm(forms.ModelForm):
 
     class Meta:
         fields = "__all__"
+        widgets = {"file": AdminS3FileWidget}
 
 
 class ExteriorPhotoForm(PhotoForm):
@@ -320,21 +322,49 @@ class InteriorPhotoForm(PhotoForm):
         model = InteriorPhoto
 
 
-class ExteriorPhotoInline(admin.TabularInline):
+class FilePreviewMixin:
+    """Mixin that adds a file preview readonly field to inlines with a `file` field."""
+
+    @admin.display(description="Preview")
+    def file_preview(self, obj: Any) -> str:
+        if not obj.pk or not obj.file:
+            return ""
+        url = obj.file.url
+        name = obj.file.name.lower()
+        if name.endswith((".mp4", ".mov", ".webm", ".avi")):
+            return mark_safe(
+                f'<video src="{url}" style="max-height: 200px; max-width: 250px;"'
+                f' controls preload="metadata"></video>'
+            )
+        return mark_safe(f'<img src="{url}" style="max-height: 200px; max-width: 250px;" />')
+
+
+class ExteriorPhotoInline(FilePreviewMixin, admin.TabularInline):
     model = ExteriorPhoto
     form = ExteriorPhotoForm
-    max_num = 0
+    extra = 0
+    readonly_fields = ("file_preview",)
 
 
-class InterPhotoInline(admin.TabularInline):
+class InterPhotoInline(FilePreviewMixin, admin.TabularInline):
     model = InteriorPhoto
     form = InteriorPhotoForm
-    max_num = 0
+    extra = 0
+    readonly_fields = ("file_preview",)
 
 
-class VideoInline(admin.TabularInline):
+class VideoForm(forms.ModelForm):
+    class Meta:
+        model = Video
+        fields = "__all__"
+        widgets = {"file": AdminS3FileWidget}
+
+
+class VideoInline(FilePreviewMixin, admin.TabularInline):
     model = Video
-    max_num = 0
+    form = VideoForm
+    extra = 0
+    readonly_fields = ("file_preview",)
 
 
 class ShelterResource(resources.ModelResource):

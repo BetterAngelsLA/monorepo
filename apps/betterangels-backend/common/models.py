@@ -13,7 +13,6 @@ from django.db.models import ForeignKey
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from phonenumber_field.modelfields import PhoneNumberField
-from s3_file_field import S3FileField
 
 
 class BaseModel(models.Model):
@@ -42,7 +41,7 @@ class Attachment(BaseModel):
         uploaded_by: Reference to the User who uploaded the file.
     """
 
-    file = S3FileField(upload_to=get_unique_file_path)
+    file = models.FileField(upload_to=get_unique_file_path)
     attachment_type = TextChoicesField(choices_enum=AttachmentType)
     mime_type = models.CharField()
     original_filename = models.CharField(max_length=255, blank=True, null=True)

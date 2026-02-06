@@ -3,6 +3,7 @@ import { Alert, AppDrawer, mergeCss } from '@monorepo/react/components';
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
+import { DevFlyout } from './DevFlyout';
 
 type IProps = {
   className?: string;
@@ -25,6 +26,7 @@ export function AppLayout(props: IProps): ReactElement {
       </div>
       <AppDrawer />
       <Alert />
+      <DevFlyout />
     </div>
   );
 }

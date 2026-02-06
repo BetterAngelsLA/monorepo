@@ -88,20 +88,6 @@ class CreateClientDocumentInput:
     namespace: ClientDocumentNamespaceEnum
 
 
-@strawberry.input
-class CreateClientDocumentS3Input:
-    """Input for creating a client document using a direct-to-S3 uploaded file.
-
-    Use the createUploadUrl / completeUpload / finalizeUpload mutations first,
-    then pass the resulting field_value here.
-    """
-
-    client_profile: ID
-    file: str  # Signed field_value from finalizeUpload mutation
-    namespace: ClientDocumentNamespaceEnum
-    content_type: Optional[str] = None  # MIME type of the uploaded file
-
-
 @strawberry_django.order_type(ClientProfile, one_of=False)
 class ClientProfileOrder:
     first_name: auto
@@ -251,18 +237,6 @@ class SocialMediaProfileInput(SocialMediaProfileBaseType):
 class ClientProfilePhotoInput:
     client_profile: ID
     photo: Optional[Upload]
-
-
-@strawberry.input
-class ClientProfilePhotoS3Input:
-    """Input for updating a client profile photo using a direct-to-S3 uploaded file.
-
-    Use the createUploadUrl / completeUpload / finalizeUpload mutations first,
-    then pass the resulting field_value here (or None to clear the photo).
-    """
-
-    client_profile: ID
-    photo: Optional[str] = None  # Signed field_value from finalizeUpload, or None to clear
 
 
 @strawberry_django.type(ClientContact)

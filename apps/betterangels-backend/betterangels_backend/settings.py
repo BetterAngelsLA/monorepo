@@ -30,6 +30,9 @@ env = environ.Env(
     AWS_S3_STORAGE_BUCKET_NAME=(str, ""),
     AWS_S3_CUSTOM_DOMAIN=(str, ""),
     AWS_S3_MEDIA_STORAGE_ENABLED=(bool, False),
+    AWS_S3_ENDPOINT_URL=(str, ""),
+    AWS_S3_ACCESS_KEY_ID=(str, ""),
+    AWS_S3_SECRET_ACCESS_KEY=(str, ""),
     AWS_CLOUDFRONT_KEY=(str, ""),
     AWS_CLOUDFRONT_KEY_ID=(str, ""),
     AWS_CLOUDFRONT_MEDIA_LOCATION=(str, "media"),
@@ -273,17 +276,30 @@ USE_TZ = True
 
 # Storage Settings
 if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
+    _s3_options: dict = {
+        "bucket_name": env("AWS_S3_STORAGE_BUCKET_NAME"),
+        "signature_version": "s3v4",
+    }
+
+    # MinIO / S3-compatible local storage
+    _endpoint_url = env("AWS_S3_ENDPOINT_URL")
+    if _endpoint_url:
+        _s3_options["endpoint_url"] = _endpoint_url
+        _s3_options["access_key"] = env("AWS_S3_ACCESS_KEY_ID")
+        _s3_options["secret_key"] = env("AWS_S3_SECRET_ACCESS_KEY")
+
+    # CloudFront signed URLs (production)
+    _cloudfront_key = env("AWS_CLOUDFRONT_KEY")
+    if _cloudfront_key:
+        _s3_options["cloudfront_key"] = _cloudfront_key.encode("ascii")
+        _s3_options["cloudfront_key_id"] = env("AWS_CLOUDFRONT_KEY_ID")
+        _s3_options["custom_domain"] = env("AWS_S3_CUSTOM_DOMAIN")
+        _s3_options["location"] = env("AWS_CLOUDFRONT_MEDIA_LOCATION")
+
     STORAGES = {
         "default": {
             "BACKEND": "storages.backends.s3.S3Storage",
-            "OPTIONS": {
-                "bucket_name": env("AWS_S3_STORAGE_BUCKET_NAME"),
-                "cloudfront_key": env("AWS_CLOUDFRONT_KEY").encode("ascii"),
-                "cloudfront_key_id": env("AWS_CLOUDFRONT_KEY_ID"),
-                "custom_domain": env("AWS_S3_CUSTOM_DOMAIN"),
-                "location": env("AWS_CLOUDFRONT_MEDIA_LOCATION"),
-                "signature_version": "s3v4",
-            },
+            "OPTIONS": _s3_options,
         },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",

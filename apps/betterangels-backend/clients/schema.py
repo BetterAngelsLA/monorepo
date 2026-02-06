@@ -53,10 +53,8 @@ from .types import (
     ClientProfileImportRecordsBulkInput,
     ClientProfileImportRecordType,
     ClientProfilePhotoInput,
-    ClientProfilePhotoS3Input,
     ClientProfileType,
     CreateClientDocumentInput,
-    CreateClientDocumentS3Input,
     CreateClientProfileInput,
     CreateProfileDataImportInput,
     HmisProfileInput,
@@ -644,85 +642,6 @@ class Mutation:
                 ).get(id=data.client_profile)
 
                 client_profile.profile_photo = data.photo
-                client_profile.save(update_fields=["profile_photo"])
-            except ClientProfile.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this client.")
-
-            return cast(ClientProfileType, client_profile)
-
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
-    def create_client_document_s3(
-        self, info: Info, data: CreateClientDocumentS3Input
-    ) -> ClientDocumentType:
-        """Create a client document from a file uploaded directly to S3.
-
-        Use createUploadUrl -> completeUpload -> finalizeUpload first to get the field_value,
-        then pass it as `data.file`.
-        """
-        from common.graphql.s3 import resolve_s3_field_value
-
-        with transaction.atomic():
-            user = cast(User, get_current_user(info))
-            client_profile = filter_for_user(
-                ClientProfile.objects.all(),
-                user,
-                [ClientProfilePermissions.CHANGE],
-            ).get(id=data.client_profile)
-
-            permission_group = get_user_permission_group(user)
-
-            content_type_obj = ContentType.objects.get_for_model(ClientProfile)
-
-            object_key = resolve_s3_field_value(data.file)
-
-            client_document = Attachment.objects.create(
-                file=object_key,
-                namespace=data.namespace,
-                content_type=content_type_obj,
-                object_id=client_profile.id,
-                uploaded_by=user,
-                mime_type=data.content_type or "",
-            )
-
-            permissions = [
-                AttachmentPermissions.DELETE,
-                AttachmentPermissions.CHANGE,
-            ]
-            for perm in permissions:
-                assign_perm(perm, permission_group.group, client_document)
-
-            return cast(ClientDocumentType, client_document)
-
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])],
-    )
-    def update_client_profile_photo_s3(
-        self, info: Info, data: ClientProfilePhotoS3Input
-    ) -> ClientProfileType:
-        """Update a client profile photo from a file uploaded directly to S3.
-
-        Use createUploadUrl -> completeUpload -> finalizeUpload first to get the field_value,
-        then pass it as `data.photo`. Pass None to clear the photo.
-        """
-        from common.graphql.s3 import resolve_s3_field_value
-
-        with transaction.atomic():
-            user = get_current_user(info)
-
-            try:
-                client_profile = filter_for_user(
-                    ClientProfile.objects.all(),
-                    user,
-                    [ClientProfilePermissions.CHANGE],
-                ).get(id=data.client_profile)
-
-                if data.photo:
-                    object_key = resolve_s3_field_value(data.photo)
-                    client_profile.profile_photo = object_key
-                else:
-                    client_profile.profile_photo = None
-
                 client_profile.save(update_fields=["profile_photo"])
             except ClientProfile.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this client.")
