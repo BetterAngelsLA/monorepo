@@ -1025,7 +1025,7 @@ class BedAdmin(admin.ModelAdmin):
                 name="shelters_shelter_clone",
             ),
         ]
-        return cast(list[Any], custom_urls + urls)
+        return custom_urls + urls
 
     def _copy_file_field(self, original_file_field: Any) -> Optional[ContentFile]:
         """Return a duplicated ContentFile with '_copy' suffix, or None if source is empty."""
@@ -1083,8 +1083,9 @@ class BedAdmin(admin.ModelAdmin):
             return HttpResponseRedirect(reverse("admin:index", current_app=self.admin_site.name))
 
         if not self.has_add_permission(request):
+            verbose_name = str(self.opts.verbose_name or "").lower()
             msg = (
-                f"You do not have permission to add {self.opts.verbose_name.lower()} instances. "
+                f"You do not have permission to add {verbose_name} instances. "
                 "Cloning requires add permission."
             )
             self.message_user(request, msg, messages.WARNING)
