@@ -1850,6 +1850,7 @@ export type Query = {
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
   shelters: ShelterTypeOffsetPaginated;
+  sheltersByOrganization: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
   task: TaskType;
@@ -2005,6 +2006,14 @@ export type QueryShelterArgs = {
 export type QuerySheltersArgs = {
   filters?: InputMaybe<ShelterFilter>;
   ordering?: InputMaybe<Array<ShelterOrder>>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QuerySheltersByOrganizationArgs = {
+  filters?: InputMaybe<ShelterFilter>;
+  ordering?: Array<ShelterOrder>;
+  organizationId: Scalars['ID']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
