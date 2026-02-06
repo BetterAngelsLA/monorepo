@@ -5,38 +5,46 @@ from django.db import migrations
 
 def copy_note_client_to_client_profile(apps, schema_editor):
     with schema_editor.connection.cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(
+            """
                 UPDATE notes_note AS n
                 SET client_profile_id = cp.id
                 FROM clients_clientprofile AS cp
                 WHERE n.client_id = cp.user_id;
-            """)
+            """
+        )
 
 
 def clear_note_client_profile(apps, schema_editor):
     with schema_editor.connection.cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(
+            """
                 UPDATE notes_note
                 SET client_profile_id = NULL;
-            """)
+            """
+        )
 
 
 def copy_service_request_client_to_client_profile(apps, schema_editor):
     with schema_editor.connection.cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(
+            """
                 UPDATE notes_servicerequest AS sr
                 SET client_profile_id = cp.id
                 FROM clients_clientprofile AS cp
                 WHERE sr.client_id = cp.user_id;
-            """)
+            """
+        )
 
 
 def clear_service_request_client_profile(apps, schema_editor):
     with schema_editor.connection.cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(
+            """
                 UPDATE notes_servicerequest
                 SET client_profile_id = NULL;
-            """)
+            """
+        )
 
 
 class Migration(migrations.Migration):

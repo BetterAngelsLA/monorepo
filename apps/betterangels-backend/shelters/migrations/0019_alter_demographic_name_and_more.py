@@ -7,7 +7,8 @@ from django.db import migrations
 
 def update_enum_values_forward(apps, schema_editor):
     # Use raw SQL to update the enum values directly in the database
-    schema_editor.execute("""
+    schema_editor.execute(
+        """
         INSERT INTO shelters_demographic (name)
         SELECT name FROM shelters_specialsituationrestriction WHERE name = 'lgbtq_plus';
 
@@ -26,7 +27,8 @@ def update_enum_values_forward(apps, schema_editor):
         AND ct.name = 'lgbtq_plus';
 
         DELETE FROM shelters_specialsituationrestriction WHERE name = 'lgbtq_plus';
-    """)
+    """
+    )
 
 
 class Migration(migrations.Migration):
