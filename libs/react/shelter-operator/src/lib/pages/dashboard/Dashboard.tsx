@@ -3,7 +3,7 @@
 import { useQuery } from '@apollo/client/react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ViewSheltersByOrganizationDocument } from '../../graphql/__generated__/shelters.generated';
+import { ViewSheltersByOrganizationDocument, ViewSheltersByOrganizationQuery } from '../../graphql/__generated__/shelters.generated';
 import { ShelterRow } from '../../components/ShelterRow';
 export type Shelter = {
   id: string;
@@ -12,7 +12,6 @@ export type Shelter = {
   totalBeds: number | null;
   tags: string[] | null;
 };
-
 
 const PAGE_SIZE = 8;
 
@@ -29,26 +28,26 @@ export default function Dashboard() {
 
   if (error) console.error('[Dashboard GraphQL error]', error);
 
-  const backendShelters: Shelter[] =
-    data?.sheltersByOrganization?.results?.map((s: any) => ({
+  const backendShelters: Shelter[] = useMemo(() => {
+    type ShelterResult = NonNullable<ViewSheltersByOrganizationQuery['sheltersByOrganization']['results'][number]>;
+    return data?.sheltersByOrganization?.results?.map((s: ShelterResult) => ({
       id: String(s.id),
       name: s.name ?? null,
       address: s.location?.place ?? null,
       totalBeds: s.totalBeds ?? null,
       tags: null,
     })) ?? [];
-
-  const allShelters: Shelter[] = [...backendShelters];
+  }, [data?.sheltersByOrganization?.results]);
 
   const [page, setPage] = useState(1);
 
-  const totalPages = Math.max(1, Math.ceil(allShelters.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(backendShelters.length / PAGE_SIZE));
 
   const paginatedShelters = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     const end = start + PAGE_SIZE;
-    return allShelters.slice(start, end);
-  }, [page, allShelters]);
+    return backendShelters.slice(start, end);
+  }, [page, backendShelters]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', padding: '32px', width: '100%' }}>
