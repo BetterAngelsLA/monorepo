@@ -131,7 +131,6 @@ class HmisClient {
     // Some HMIS endpoints return JSON with incorrect/missing Content-Type headers
     // Some endpoints also return double-encoded JSON strings
     const text = await response.text();
-
     if (!text) return text as unknown as T;
 
     try {

@@ -1,4 +1,4 @@
-// Base Hmis Client error
+// HMIS error - base
 export class HmisError extends Error {
   constructor(message: string, public status: number, public data?: unknown) {
     super(message);
@@ -6,7 +6,7 @@ export class HmisError extends Error {
   }
 }
 
-// HmisFileError
+// HMIS File Errors
 export const HmisFileErrorCode = {
   INVALID_FILE_TYPE: 'INVALID_FILE_TYPE',
   FILE_TOO_LARGE: 'FILE_TOO_LARGE',
