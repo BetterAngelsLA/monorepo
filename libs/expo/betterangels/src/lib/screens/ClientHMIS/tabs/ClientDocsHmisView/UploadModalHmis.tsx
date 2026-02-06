@@ -134,11 +134,13 @@ export default function UploadModalHmis(props: TProps) {
 
   return (
     <Form.Page
+      showLoadingOverlay={isUploading}
       actionProps={
         document
           ? {
               onSubmit,
               onLeftBtnClick: onCancel,
+              disabled: isUploading,
             }
           : undefined
       }
