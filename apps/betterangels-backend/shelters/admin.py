@@ -1084,10 +1084,7 @@ class BedAdmin(admin.ModelAdmin):
 
         if not self.has_add_permission(request):
             verbose_name = str(self.opts.verbose_name or "").lower()
-            msg = (
-                f"You do not have permission to add {verbose_name} instances. "
-                "Cloning requires add permission."
-            )
+            msg = f"You do not have permission to add {verbose_name} instances. " "Cloning requires add permission."
             self.message_user(request, msg, messages.WARNING)
             return HttpResponseRedirect(reverse("admin:index", current_app=self.admin_site.name))
 
