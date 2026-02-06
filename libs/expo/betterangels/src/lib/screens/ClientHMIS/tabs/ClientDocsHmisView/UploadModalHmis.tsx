@@ -10,6 +10,7 @@ import {
   MediaPickerModal,
 } from '@monorepo/expo/shared/ui-components';
 import { readFileAsBase64 } from '@monorepo/expo/shared/utils';
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { HmisClientProfileType } from '../../../../apollo';
 import {
@@ -17,6 +18,7 @@ import {
   useHmisFileCategoryAndNames,
   useSnackbar,
 } from '../../../../hooks';
+import { getClientFilesQueryKey } from '../../../../hooks/hmisFileMetadata/useClientFiles';
 import { FileUploadsPreview } from '../../../../ui-components';
 import { FileCategorySelector } from './FileCategorySelector';
 
@@ -59,7 +61,9 @@ export default function UploadModalHmis(props: TProps) {
   });
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
   const { uploadClientFile } = useHmisClient();
+  const queryClient = useQueryClient();
 
   const {
     categories: fileCategories,
@@ -78,13 +82,18 @@ export default function UploadModalHmis(props: TProps) {
     return <LoadingView />;
   }
 
-  function clearDocument() {
-    setIsUploading(false);
+  function onCancel() {
     setDocument(undefined);
+    closeModal();
   }
 
-  function onCancel() {
-    clearDocument();
+  function onUploadSuccess() {
+    if (client?.id && client?.hmisId) {
+      queryClient.invalidateQueries({
+        queryKey: getClientFilesQueryKey(client.id, client.hmisId),
+      });
+    }
+
     closeModal();
   }
 
@@ -115,7 +124,7 @@ export default function UploadModalHmis(props: TProps) {
         false
       );
 
-      closeModal();
+      onUploadSuccess();
     } catch (err) {
       console.error('[UploadModalHmis onSubmit]', err);
 
@@ -147,7 +156,7 @@ export default function UploadModalHmis(props: TProps) {
           disabled={isUploading}
           title={`Upload ${documentCategory.categoryName}`}
           files={[document]}
-          onRemoveFile={clearDocument}
+          onRemoveFile={() => setDocument(undefined)}
         />
       )}
 
