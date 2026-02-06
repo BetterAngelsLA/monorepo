@@ -70,10 +70,10 @@ export function ClientDocsHmisView({
             showModalScreen({
               presentation: 'fullScreenModal',
               title: 'Upload Files',
-              renderContent: () => (
+              renderContent: ({ close }) => (
                 // without local SnackbarProvider snackbar will be hidden behind native modals
                 <SnackbarProvider>
-                  <UploadModalHmis client={client} />
+                  <UploadModalHmis client={client} closeModal={close} />
                 </SnackbarProvider>
               ),
             })

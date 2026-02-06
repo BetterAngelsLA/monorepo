@@ -1,7 +1,6 @@
 import {
   HMIS_ALLOWED_FILE_TYPES,
-  HmisFileError,
-  HmisFileErrorCode,
+  HmisAllowedFileType,
   ReactNativeFile,
 } from '@monorepo/expo/shared/clients';
 import {
@@ -10,6 +9,10 @@ import {
   MediaPickerModal,
 } from '@monorepo/expo/shared/ui-components';
 import { readFileAsBase64 } from '@monorepo/expo/shared/utils';
+import {
+  HmisError,
+  HmisInvalidFileTypeError,
+} from 'libs/expo/shared/clients/src/lib/http/hmisError';
 import { useState } from 'react';
 import { HmisClientProfileType } from '../../../../apollo';
 import {
@@ -20,10 +23,36 @@ import {
 import { FileUploadsPreview } from '../../../../ui-components';
 import { FileCategorySelector } from './FileCategorySelector';
 
-export default function UploadModalHmis(props: {
+function toErrorMessage(err: unknown): string {
+  if (err instanceof HmisInvalidFileTypeError) {
+    const receivedType = err.data?.received;
+
+    return receivedType
+      ? `Sorry, file type "${receivedType}" is not supported.`
+      : `Sorry, this file type is not supported.`;
+  }
+
+  if (err instanceof HmisError) {
+    if (err.status === 401) {
+      return 'Your HMIS session has expired. Please log in again.';
+    }
+
+    if (err.status === 403) {
+      return 'You do not have permission to upload files for this client.';
+    }
+  }
+
+  return 'Sorry, something went wrong. Please try again.';
+}
+
+type TProps = {
   client?: HmisClientProfileType;
-}) {
-  const { client } = props;
+  closeModal: () => void;
+};
+
+export default function UploadModalHmis(props: TProps) {
+  const { client, closeModal } = props;
+
   const { showSnackbar } = useSnackbar();
   const [document, setDocument] = useState<ReactNativeFile | undefined>();
   const [documentCategory, setDocumentCategory] = useState({
@@ -52,56 +81,51 @@ export default function UploadModalHmis(props: {
     return <LoadingView />;
   }
 
+  function clearDocument() {
+    setIsUploading(false);
+    setDocument(undefined);
+  }
+
+  function onCancel() {
+    clearDocument();
+    closeModal();
+  }
+
   async function onSubmit() {
     const clientHmisId = client?.uniqueIdentifier;
 
-    if (!clientHmisId || !document) {
-      return;
-    }
-
     try {
       setIsUploading(true);
+
+      if (!clientHmisId || !document) {
+        throw new Error('onSubmit called without client or document');
+      }
 
       const { uri, type, name } = document;
       const { categoryId, subCategoryId } = documentCategory;
 
       const fileBase64 = await readFileAsBase64(uri);
 
-      const result = await uploadClientFile(
+      await uploadClientFile(
         clientHmisId.trim(),
         {
           content: fileBase64,
           name: name.trim(),
-          // mimeType: type as HmisAllowedFileType,
-          mimeType: 'hello' as any,
+          mimeType: type as HmisAllowedFileType, // validate in client
         },
         parseInt(categoryId, 10),
         parseInt(subCategoryId, 10),
         false
       );
 
-      console.log();
-      console.log('| -------------  result  ------------- |');
-      console.log(result);
-      console.log();
+      closeModal();
     } catch (err) {
-      let errMessage = 'Sorry, something went wrong. Please try again.';
-
-      if (err instanceof HmisFileError) {
-        if (err.code === HmisFileErrorCode.INVALID_FILE_TYPE) {
-          const receivedMimeType = (err as any).data['received'];
-
-          errMessage = receivedMimeType
-            ? `Sorry, file type "${receivedMimeType}" is not supported.`
-            : `Sorry, this file type is not supported.`;
-        }
-      }
-
-      console.error(`[UploadModalHmis onSubmit] ${error}`);
+      console.error('[UploadModalHmis onSubmit]', err);
 
       showSnackbar({
-        message: errMessage,
+        message: toErrorMessage(err),
         type: 'error',
+        persist: true,
       });
     } finally {
       setIsUploading(false);
@@ -114,7 +138,7 @@ export default function UploadModalHmis(props: {
         document
           ? {
               onSubmit,
-              onLeftBtnClick: () => setDocument(undefined),
+              onLeftBtnClick: onCancel,
             }
           : undefined
       }
@@ -122,13 +146,9 @@ export default function UploadModalHmis(props: {
       {!!document && (
         <FileUploadsPreview
           disabled={isUploading}
-          files={[document]}
-          onRemoveFile={(x) => {
-            console.log('*****************  onRemoveFile:', x);
-
-            setDocument(undefined);
-          }}
           title={`Upload ${documentCategory.categoryName}`}
+          files={[document]}
+          onRemoveFile={clearDocument}
         />
       )}
 
