@@ -14,7 +14,13 @@ export type INumericDatePickerProps = Omit<
   | 'outlineColor'
   | 'outlineStyle'
   | 'withDateFormatInLabel'
->;
+  | 'onChange'
+> & {
+  // Invalid dates are filtered out and never passed to onChange
+  onChange?: (date: Date | null) => void;
+  // Handler for clearing the date. If provided, clear button will be shown when value exists.
+  onDelete?: () => void;
+};
 
 export interface IWheelDatePickerProps extends TMarginProps {
   mode: 'date' | 'time';

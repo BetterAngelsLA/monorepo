@@ -1,9 +1,18 @@
 /**
  * HMIS REST API TypeScript types
  */
+export type HmisHttpQueryParams = Record<
+  string,
+  string | number | boolean | null | undefined
+>;
+
+export interface HmisListParams {
+  page?: number;
+  per_page?: number;
+}
 
 export interface HmisRequestOptions extends Omit<RequestInit, 'body'> {
-  params?: Record<string, string>;
+  params?: HmisHttpQueryParams;
   body?: unknown;
 }
 
@@ -213,11 +222,9 @@ export interface ClientFile {
   };
   file?: {
     id: number;
+    added_date: string;
     filename: string;
     filesize: number;
-    added_date: string;
-    encodedPreviewFileContent?: string;
-    encodedThumbnailFileContent?: string;
   };
   fileName?: {
     id: number;

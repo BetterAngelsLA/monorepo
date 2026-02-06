@@ -32,7 +32,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
     && apt-get install -y postgresql-client-16
 
 # Pin due to: https://github.com/aws/aws-cli/issues/8320
-ENV AWS_CLI_VERSION=2.32.16
+ENV AWS_CLI_VERSION=2.33.14
 RUN ARCH=$(uname -m) && \
   if [ "$ARCH" = "x86_64" ]; then \
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWS_CLI_VERSION}.zip" -o "awscliv2.zip"; \
@@ -94,7 +94,7 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 
 # Python
-RUN pip install poetry==2.2.1
+RUN pip install poetry==2.3.2
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \

@@ -42,6 +42,18 @@ export function PersonalInfoFormHmis() {
   return (
     <Form>
       <Form.Fieldset>
+      <DatePicker
+          name="birthDate"
+          control={control}
+          type="numeric"
+          label="Date of Birth"
+          placeholder="Enter date"
+          disabled={isDobDisabled || isSubmitting}
+          validRange={{
+            endDate: new Date(),
+            startDate: new Date('1900-01-01'),
+          }}
+        />
         <Controller
           name="dobQuality"
           control={control}
@@ -60,17 +72,6 @@ export function PersonalInfoFormHmis() {
               error={errors.dobQuality?.message}
             />
           )}
-        />
-        <DatePicker
-          name="birthDate"
-          control={control}
-          type="numeric"
-          label="Date of Birth"
-          disabled={isDobDisabled}
-          validRange={{
-            endDate: new Date(),
-            startDate: new Date('1900-01-01'),
-          }}
         />
         <Controller
           name="veteran"

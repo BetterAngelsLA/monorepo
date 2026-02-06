@@ -122,7 +122,7 @@ export default function Users() {
                 contentClassName: 'p-0',
               })
             }
-            className="btn btn-primary btn-lg gap-2 inline-flex"
+            className="btn btn-primary btn-lg gap-2 inline-flex px-4"
           >
             <PlusIcon color="white" className="w-3 h-3" /> Add User
           </button>

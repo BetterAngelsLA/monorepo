@@ -5,7 +5,6 @@ import {
   HMIS_API_URL_STORAGE_KEY,
   hmisInterceptor,
   includeCredentialsInterceptor,
-  storeCookiesInterceptor,
   userAgentInterceptor,
 } from '../common/interceptors';
 import {
@@ -18,8 +17,11 @@ import {
   FileCategoriesResponse,
   FileNamesResponse,
   HmisError,
+  HmisHttpQueryParams,
   HmisRequestOptions,
 } from './hmisTypes';
+
+export const HMIS_REST_API_MAX_PER_PAGE = 50;
 
 /**
  * HMIS REST API Client
@@ -39,8 +41,7 @@ class HmisClient {
       userAgentInterceptor,
       hmisInterceptor,
       bodyInterceptor,
-      includeCredentialsInterceptor,
-      storeCookiesInterceptor
+      includeCredentialsInterceptor
     );
   }
   /**
@@ -70,6 +71,9 @@ class HmisClient {
         throw new HmisError('Forbidden - insufficient permissions', 403, data);
       case 404:
         throw new HmisError('Resource not found', 404, data);
+      case 429: {
+        throw new HmisError('Too Many Requests', 429, data);
+      }
       case 422: {
         const validationData = data as { messages?: Record<string, string> };
         if (validationData?.messages) {
@@ -102,7 +106,11 @@ class HmisClient {
     const url = new URL(path, baseUrl);
     if (options.params) {
       Object.entries(options.params).forEach(([key, value]) => {
-        url.searchParams.append(key, value);
+        if (value === undefined || value === null) {
+          return;
+        }
+
+        url.searchParams.append(key, String(value));
       });
     }
 
@@ -144,7 +152,7 @@ class HmisClient {
     }
   }
 
-  get<T = unknown>(path: string, params?: Record<string, string>): Promise<T> {
+  get<T = unknown>(path: string, params?: HmisHttpQueryParams): Promise<T> {
     return this.request<T>(path, { method: 'GET', params });
   }
 
@@ -334,8 +342,10 @@ class HmisClient {
    * });
    * ```
    */
-  async getFileCategories(): Promise<FileCategoriesResponse> {
-    return this.get<FileCategoriesResponse>('/client-file-categories');
+  async getFileCategories(
+    params?: HmisHttpQueryParams
+  ): Promise<FileCategoriesResponse> {
+    return this.get<FileCategoriesResponse>('/client-file-categories', params);
   }
 
   /**
@@ -344,19 +354,24 @@ class HmisClient {
    * Fetches the list of file names that can be assigned when uploading
    * files for a client.
    *
+   * @param params - Query parameters for filtering, sorting, and pagination
    * @returns Promise with paginated file names response
    * @throws HmisError if the request fails
    *
    * @example
    * ```typescript
-   * const response = await hmisClient.getFileNames();
+   * const response = await hmisClient.getFileNames({
+   *   page: 1,
+   *   per_page: 50,
+   *   sort: 'name'
+   * });
    * response.items.forEach(name => {
    *   console.log(`${name.id}: ${name.name}`);
    * });
    * ```
    */
-  async getFileNames(): Promise<FileNamesResponse> {
-    return this.get<FileNamesResponse>('/client-file-names');
+  async getFileNames(params?: HmisHttpQueryParams): Promise<FileNamesResponse> {
+    return this.get<FileNamesResponse>('/client-file-names', params);
   }
 
   /**
@@ -427,5 +442,16 @@ class HmisClient {
 
 // Factory function to create HmisClient
 export const createHmisClient = () => new HmisClient();
+
+export const getHmisFileUrls = (
+  baseUrl: string,
+  clientId: string | number,
+  fileId: string | number
+) => {
+  return {
+    thumbnail: `${baseUrl}/clients/${clientId}/client-files/${fileId}/thumb`,
+    content: `${baseUrl}/clients/${clientId}/client-files/${fileId}/content`,
+  };
+};
 
 export { HmisClient };

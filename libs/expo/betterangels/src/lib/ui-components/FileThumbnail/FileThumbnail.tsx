@@ -14,6 +14,7 @@ import { ThumbnailDeleteButton } from './ThumbnailDeleteButton';
 
 interface IProps {
   uri: string;
+  headers?: Record<string, string>;
   mimeType: string;
   thumbnailSize?: TThumbnailSize;
   borderRadius?: TRadius;
@@ -45,6 +46,7 @@ function FileThumbnailBase(props: IProps) {
     mimeType,
     onDelete,
     uri,
+    headers,
     thumbnailSize,
     borderRadius = Radiuses.xs,
   } = props;
@@ -95,7 +97,7 @@ function FileThumbnailBase(props: IProps) {
             height: '100%',
             width: '100%',
           }}
-          source={{ uri }}
+          source={{ uri, headers }}
           contentFit="cover"
           accessibilityIgnoresInvertColors
         />

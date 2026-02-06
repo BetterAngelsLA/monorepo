@@ -12,7 +12,7 @@ export type TPersonalInfoFormSchema = z.input<typeof PersonalInfoFormSchema>;
 
 export const personalInfoFormEmptyState: TPersonalInfoFormSchema = {
   veteran: '',
-  birthDate: '',
+  birthDate: null,
   dobQuality: '',
   californiaId: '',
   livingSituation: '',

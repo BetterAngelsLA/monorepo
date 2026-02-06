@@ -1,3 +1,4 @@
+import { useClientPhotoContentUri } from '@monorepo/expo/shared/clients';
 import {
   GlobeIcon,
   IdCardOutlineIcon,
@@ -27,6 +28,7 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
   const {
     firstName,
     lastName,
+    hmisId: clientId,
     nameMiddle,
     alias,
     nameSuffix,
@@ -34,6 +36,7 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
     pronouns,
     uniqueIdentifier,
   } = client || {};
+  const { contentUri, headers } = useClientPhotoContentUri(clientId);
 
   const nameParts = [firstName, nameMiddle, lastName].filter((s) => !!s);
 
@@ -59,8 +62,10 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
           mr="xs"
           accessibilityLabel="client's profile photo avatar"
           accessibilityHint="client's profile photo avatar"
+          imageUrl={contentUri}
+          headers={headers}
         />
-        <TextMedium style={{ flexShrink: 1 }} size="lg">
+        <TextMedium selectable style={{ flexShrink: 1 }} size="lg">
           {nameParts.join(' ')}
         </TextMedium>
       </View>
@@ -86,7 +91,9 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
       {!!uniqueIdentifier && (
         <View style={styles.iconWithTextContainer}>
           <IdCardOutlineIcon width={20} color={Colors.PRIMARY_EXTRA_DARK} />
-          <TextRegular size="sm">HMIS ID: {uniqueIdentifier}</TextRegular>
+          <TextRegular selectable size="sm">
+            HMIS ID: {uniqueIdentifier}
+          </TextRegular>
         </View>
       )}
     </View>

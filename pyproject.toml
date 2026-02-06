@@ -34,11 +34,11 @@ develop = true
 [tool.poetry.group.dev.dependencies]
 flake8 = "^7.3.0"
 isort = "^7.0.0"
-black = "^25.12.0"
+black = "^26.1.0"
 flake8-bugbear = "^25.11.29"
-django-stubs-ext = "5.2.8"
+django-stubs-ext = "^5.2.9"
 djlint = "^1.36.4"
-django-stubs = { extras = ["compatible-mypy"], version = "5.2.8" }
+django-stubs = {extras = ["compatible-mypy"], version = "^5.2.9"}
 celery-types = "^0.24.0"
 vcrpy = "^8.1.0"
 djangorestframework-stubs = { extras = [
@@ -46,12 +46,13 @@ djangorestframework-stubs = { extras = [
 ], version = "^3.16.6" }
 ipython = "^9.9.0"
 pytest-django = "^4.11.1"
-boto3-stubs = { extras = ["essential"], version = "^1.42.25" }
-model-bakery = "^1.21.0"
+boto3-stubs = {extras = ["essential"], version = "^1.42.41"}
+model-bakery = "^1.23.2"
 unittest-parametrize = "^1.6.0"
 time-machine = "^3.2.0"
-types-python-dateutil = "^2.9.0.20250708"
+types-python-dateutil = "^2.9.0.20260124"
 types-gevent = "^25.4.0.20250801"
+types-requests = "^2.32.0"
 pre-commit = "^4.3.1"
 
 

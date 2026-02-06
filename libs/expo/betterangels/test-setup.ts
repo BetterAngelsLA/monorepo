@@ -1,12 +1,13 @@
 import '@testing-library/jest-native/extend-expect';
 
 // Mock native modules that crash in Node.js environment
-jest.mock('react-native-nitro-cookies', () => ({
+jest.mock('@preeternal/react-native-cookie-manager', () => ({
   __esModule: true,
   default: {
-    getCookie: jest.fn(),
-    setCookie: jest.fn(),
-    deleteCookie: jest.fn(),
+    get: jest.fn(),
+    set: jest.fn(),
+    clearAll: jest.fn(),
+    setFromResponse: jest.fn(),
   },
 }));
 
@@ -28,5 +29,5 @@ jest.mock('react-native-mmkv', () => ({
 }));
 
 // Mock native modules that crash in Jest Node.js environment
-jest.mock('react-native-nitro-cookies');
+jest.mock('@preeternal/react-native-cookie-manager');
 jest.mock('react-native-mmkv');
