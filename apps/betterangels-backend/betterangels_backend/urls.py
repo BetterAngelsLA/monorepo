@@ -18,9 +18,11 @@ Including another URLconf
 from betterangels_backend import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.admin.views.decorators import staff_member_required
 from django.urls import include, path
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic.base import RedirectView
+from s3_file_field.urls import urlpatterns as s3ff_urlpatterns
 from strawberry.django.views import GraphQLView
 
 from .schema import schema
@@ -43,8 +45,19 @@ urlpatterns = [
     ),
     path("legal/", include("legal.urls")),
     path("proxy/", include("proxy.urls"), name="proxy"),
-    path("api/s3-upload/", include("s3_file_field.urls")),
-    path("api/shelters/", include("shelters.urls")),
+    # s3_file_field admin widget endpoints — locked to staff users only.
+    # The widget JS needs the "s3_file_field" namespace to render its <input>,
+    # and staff users use these views for uploads in the Django admin.
+    # The mobile app uses GraphQL (common.graphql.s3) instead.
+    path(
+        "api/s3-upload/",
+        include(
+            (
+                [path(p.pattern._route, staff_member_required(p.callback), name=p.name) for p in s3ff_urlpatterns],
+                "s3_file_field",
+            )
+        ),
+    ),
     path("_allauth/", include("allauth.headless.urls")),
 ]
 

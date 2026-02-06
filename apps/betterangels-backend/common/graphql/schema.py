@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional, cast
 
 import strawberry
+from common.graphql.s3 import Mutation  # noqa: F401 — re-exported for schema stitching
 from common.graphql.types import FeatureControlData, FlagType, SampleType, SwitchType
 from strawberry.types import Info
 from waffle import (

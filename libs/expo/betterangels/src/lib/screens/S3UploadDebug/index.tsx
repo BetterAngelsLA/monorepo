@@ -1,6 +1,7 @@
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
+  BasicInput,
   Button,
   TextMedium,
   TextRegular,
@@ -10,9 +11,14 @@ import { useCallback, useRef, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { MainScrollContainer } from '../../ui-components';
 
-type UploadStatus = 'idle' | 'uploading' | 'completing' | 'done' | 'error';
-
-const S3_UPLOAD_PATH = '/api/s3-upload';
+type UploadStatus =
+  | 'idle'
+  | 'uploading'
+  | 'completing'
+  | 'finalized'
+  | 'saving'
+  | 'done'
+  | 'error';
 
 const FIELD_OPTIONS = [
   { label: 'Interior Photo', value: 'shelters.InteriorPhoto.file' },
@@ -20,116 +26,189 @@ const FIELD_OPTIONS = [
   { label: 'Video', value: 'shelters.Video.file' },
 ];
 
-interface UploadPart {
-  part_number: number;
-  size: number;
-  upload_url: string;
+// ---- GraphQL helpers ----
+
+async function gql<T>(
+  fetchClient: ReturnType<typeof useApiConfig>['fetchClient'],
+  query: string,
+  variables: Record<string, unknown>
+): Promise<T> {
+  const res = await fetchClient('/graphql', {
+    method: 'POST',
+    body: JSON.stringify({ query, variables }),
+  });
+  const json = await res.json();
+  if (json.errors?.length) throw new Error(json.errors[0].message);
+
+  // strawberry_django mutations return union { Result | OperationInfo }
+  const data = json.data as Record<string, unknown>;
+  for (const val of Object.values(data)) {
+    if (
+      val &&
+      typeof val === 'object' &&
+      'messages' in (val as Record<string, unknown>)
+    ) {
+      const msgs = (val as { messages: { message: string }[] }).messages;
+      if (msgs?.length) throw new Error(msgs[0].message);
+    }
+  }
+
+  return data as T;
 }
 
-interface InitResponse {
-  object_key: string;
-  upload_id: string;
-  parts: UploadPart[];
-  upload_signature: string;
-}
+const S3_INIT = `
+  mutation S3UploadInitialize($data: S3UploadInitInput!) {
+    s3UploadInitialize(data: $data) {
+      ... on S3UploadInitResult {
+        objectKey
+        uploadId
+        parts { partNumber size uploadUrl }
+        uploadSignature
+      }
+      ... on OperationInfo {
+        messages { message kind field }
+      }
+    }
+  }
+`;
+
+const S3_COMPLETE = `
+  mutation S3UploadComplete($data: S3UploadCompleteInput!) {
+    s3UploadComplete(data: $data) {
+      ... on S3UploadCompleteResult {
+        completeUrl
+        body
+      }
+      ... on OperationInfo {
+        messages { message kind field }
+      }
+    }
+  }
+`;
+
+const S3_FINALIZE = `
+  mutation S3UploadFinalize($data: S3UploadFinalizeInput!) {
+    s3UploadFinalize(data: $data) {
+      ... on S3UploadFinalizeResult {
+        fieldValue
+      }
+      ... on OperationInfo {
+        messages { message kind field }
+      }
+    }
+  }
+`;
+
+const S3_ATTACH = `
+  mutation CreateS3Attachment($data: CreateS3AttachmentInput!) {
+    createS3Attachment(data: $data) {
+      ... on S3AttachmentResult {
+        id
+        modelName
+        fileName
+        parentId
+      }
+      ... on OperationInfo {
+        messages { message kind field }
+      }
+    }
+  }
+`;
 
 export default function S3UploadDebug() {
   const { fetchClient } = useApiConfig();
+
+  // Form state
   const [fieldId, setFieldId] = useState(FIELD_OPTIONS[0].value);
+  const [parentId, setParentId] = useState('');
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileUri, setFileUri] = useState<string | null>(null);
   const [fileSize, setFileSize] = useState(0);
   const [fileMime, setFileMime] = useState('application/octet-stream');
+
+  // Upload state
   const [status, setStatus] = useState<UploadStatus>('idle');
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<string | null>(null);
+  const [fieldValue, setFieldValue] = useState<string | null>(null);
+  const [saveResult, setSaveResult] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  // ------- File picker -------
   const pickFile = useCallback(async () => {
     const res = await DocumentPicker.getDocumentAsync({
       copyToCacheDirectory: true,
     });
-
     if (res.canceled || !res.assets?.length) return;
-
     const asset = res.assets[0];
     setFileName(asset.name);
     setFileUri(asset.uri);
     setFileSize(asset.size ?? 0);
     setFileMime(asset.mimeType ?? 'application/octet-stream');
-    setResult(null);
+    setFieldValue(null);
+    setSaveResult(null);
     setError(null);
     setStatus('idle');
   }, []);
 
+  // ------- S3 Upload (steps 1-4 via GraphQL) -------
   const upload = useCallback(async () => {
     if (!fileUri || !fileSize) {
       setError('Pick a file first');
       return;
     }
-
     const ac = new AbortController();
     abortRef.current = ac;
     setProgress(0);
     setStatus('uploading');
     setError(null);
-    setResult(null);
+    setFieldValue(null);
+    setSaveResult(null);
 
     try {
-      // 1. Initialize multipart upload
-      const initRes = await fetchClient(
-        `${S3_UPLOAD_PATH}/upload-initialize/`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            field_id: fieldId,
-            file_name: fileName,
-            file_size: fileSize,
-            content_type: fileMime,
-          }),
-        }
-      );
+      // 1. Initialize — GraphQL
+      const initData = await gql<{
+        s3UploadInitialize: {
+          objectKey: string;
+          uploadId: string;
+          parts: { partNumber: number; size: number; uploadUrl: string }[];
+          uploadSignature: string;
+        };
+      }>(fetchClient, S3_INIT, {
+        data: {
+          fieldId,
+          fileName,
+          fileSize,
+          contentType: fileMime,
+        },
+      });
+      const init = initData.s3UploadInitialize;
 
-      if (!initRes.ok) {
-        throw new Error(`Initialize failed: ${initRes.status}`);
-      }
+      // 2. Read file blob
+      const fileBlob = await (await fetch(fileUri)).blob();
 
-      const init: InitResponse = await initRes.json();
-
-      // 2. Fetch the file blob from the local URI
-      const fileResponse = await fetch(fileUri);
-      const fileBlob = await fileResponse.blob();
-
-      // 3. Upload each part directly to S3
+      // 3. Upload parts directly to S3
       let uploaded = 0;
       const completedParts: {
-        part_number: number;
+        partNumber: number;
         size: number;
         etag: string;
       }[] = [];
 
       for (const part of init.parts) {
         if (ac.signal.aborted) throw new Error('Upload cancelled');
-
         const blob = fileBlob.slice(uploaded, uploaded + part.size);
-
-        const partRes = await fetch(part.upload_url, {
+        const partRes = await fetch(part.uploadUrl, {
           method: 'PUT',
           body: blob,
         });
-
-        if (!partRes.ok) {
+        if (!partRes.ok)
           throw new Error(`Part upload failed: ${partRes.status}`);
-        }
-
-        const etag = partRes.headers.get('ETag') ?? '';
         completedParts.push({
-          part_number: part.part_number,
+          partNumber: part.partNumber,
           size: part.size,
-          etag,
+          etag: partRes.headers.get('ETag') ?? '',
         });
-
         uploaded += part.size;
         setProgress(Math.round((uploaded / fileSize) * 100));
       }
@@ -137,55 +216,70 @@ export default function S3UploadDebug() {
       setProgress(100);
       setStatus('completing');
 
-      // 4. Complete multipart upload
-      const completeRes = await fetchClient(
-        `${S3_UPLOAD_PATH}/upload-complete/`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            upload_signature: init.upload_signature,
-            upload_id: init.upload_id,
-            parts: completedParts,
-          }),
-        }
-      );
-
-      if (!completeRes.ok) {
-        throw new Error(`Complete failed: ${completeRes.status}`);
-      }
-
-      const completeData: { complete_url: string; body: string } =
-        await completeRes.json();
-
-      // 5. Call the S3 complete URL
-      await fetch(completeData.complete_url, {
-        method: 'POST',
-        body: completeData.body,
+      // 4a. Complete multipart — GraphQL
+      const completeData = await gql<{
+        s3UploadComplete: { completeUrl: string; body: string };
+      }>(fetchClient, S3_COMPLETE, {
+        data: {
+          uploadSignature: init.uploadSignature,
+          uploadId: init.uploadId,
+          parts: completedParts,
+        },
       });
 
-      // 6. Finalize to get the signed field_value
-      const finalizeRes = await fetchClient(`${S3_UPLOAD_PATH}/finalize/`, {
+      // 4b. Tell S3 to assemble parts
+      await fetch(completeData.s3UploadComplete.completeUrl, {
         method: 'POST',
-        body: JSON.stringify({
-          upload_signature: init.upload_signature,
-        }),
+        body: completeData.s3UploadComplete.body,
       });
 
-      if (!finalizeRes.ok) {
-        throw new Error(`Finalize failed: ${finalizeRes.status}`);
-      }
+      // 5. Finalize — GraphQL → signed field_value
+      const finalizeData = await gql<{
+        s3UploadFinalize: { fieldValue: string };
+      }>(fetchClient, S3_FINALIZE, {
+        data: { uploadSignature: init.uploadSignature },
+      });
 
-      const finalizeData: { field_value: string } = await finalizeRes.json();
-      setResult(finalizeData.field_value);
-      setStatus('done');
+      setFieldValue(finalizeData.s3UploadFinalize.fieldValue);
+      setStatus('finalized');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Upload failed';
-      setError(message);
+      setError(err instanceof Error ? err.message : 'Upload failed');
       setStatus('error');
     } finally {
       abortRef.current = null;
     }
   }, [fetchClient, fieldId, fileName, fileUri, fileSize, fileMime]);
+
+  // ------- Save attachment (GraphQL mutation) -------
+  const saveAttachment = useCallback(async () => {
+    if (!fieldValue || !parentId) return;
+    setStatus('saving');
+    setError(null);
+    setSaveResult(null);
+
+    try {
+      const data = await gql<{
+        createS3Attachment: {
+          id: string;
+          modelName: string;
+          fileName: string;
+          parentId: string;
+        };
+      }>(fetchClient, S3_ATTACH, {
+        data: {
+          fieldId,
+          fieldValue,
+          parentId,
+        },
+      });
+
+      setSaveResult(JSON.stringify(data.createS3Attachment, null, 2));
+      setStatus('done');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+      setStatus('error');
+    }
+  }, [fetchClient, fieldId, fieldValue, parentId]);
 
   const cancel = useCallback(() => {
     abortRef.current?.abort();
@@ -196,21 +290,31 @@ export default function S3UploadDebug() {
     status === 'idle'
       ? 'Ready'
       : status === 'uploading'
-      ? `Uploading ${progress}%`
-      : status === 'completing'
-      ? 'Completing…'
-      : status === 'done'
-      ? 'Done'
-      : 'Error';
+        ? `Uploading ${progress}%`
+        : status === 'completing'
+          ? 'Completing…'
+          : status === 'finalized'
+            ? 'Uploaded — ready to save'
+            : status === 'saving'
+              ? 'Saving to shelter…'
+              : status === 'done'
+                ? 'Saved!'
+                : 'Error';
 
   const statusColor =
     status === 'done'
       ? Colors.SUCCESS_DARK
       : status === 'error'
-      ? Colors.ERROR_DARK
-      : status === 'uploading' || status === 'completing'
-      ? Colors.PRIMARY_DARK
-      : Colors.NEUTRAL_DARK;
+        ? Colors.ERROR_DARK
+        : status === 'uploading' ||
+            status === 'completing' ||
+            status === 'saving'
+          ? Colors.PRIMARY_DARK
+          : status === 'finalized'
+            ? Colors.WARNING_DARK
+            : Colors.NEUTRAL_DARK;
+
+  const isUploading = status === 'uploading' || status === 'completing';
 
   if (!__DEV__) return null;
 
@@ -221,15 +325,25 @@ export default function S3UploadDebug() {
         <View style={styles.banner}>
           <TextMedium>Direct-to-S3 Upload (dev)</TextMedium>
           <TextRegular size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
-            Uploads a file directly to S3/MinIO via the REST API at
-            /api/s3-upload/. No custom GraphQL mutation needed. The resulting
-            signed field_value can be used in any mutation that accepts a file.
+            Full workflow: upload a file to S3, then attach it to a shelter.
           </TextRegular>
+        </View>
+
+        {/* Parent ID */}
+        <View style={styles.card}>
+          <TextMedium size="sm">Parent ID (e.g. Shelter ID)</TextMedium>
+          <BasicInput
+            label="Parent ID"
+            value={parentId}
+            onChangeText={setParentId}
+            placeholder="e.g. 1"
+            keyboardType="number-pad"
+          />
         </View>
 
         {/* Field Selector */}
         <View style={styles.card}>
-          <TextMedium size="sm">Target Field</TextMedium>
+          <TextMedium size="sm">Attachment Type</TextMedium>
           <View style={styles.fieldList}>
             {FIELD_OPTIONS.map((opt) => (
               <FieldButton
@@ -272,37 +386,50 @@ export default function S3UploadDebug() {
           )}
         </View>
 
-        {/* Upload Controls */}
+        {/* Upload + Progress */}
         <View style={styles.card}>
-          <TextMedium size="sm">Status</TextMedium>
-          <TextMedium size="sm" color={statusColor} numberOfLines={1}>
+          <TextMedium size="sm" color={statusColor}>
             {statusLabel}
           </TextMedium>
 
-          {/* Progress bar */}
-          {(status === 'uploading' || status === 'completing') && (
+          {isUploading && (
             <View style={styles.progressTrack}>
               <View style={[styles.progressFill, { width: `${progress}%` }]} />
             </View>
           )}
 
-          <Button
-            title="Upload to S3"
-            onPress={upload}
-            variant="primary"
-            size="full"
-            disabled={
-              !fileUri || status === 'uploading' || status === 'completing'
-            }
-            accessibilityHint="Start uploading the selected file to S3"
-          />
-          {(status === 'uploading' || status === 'completing') && (
+          {/* Step 1: Upload to S3 */}
+          {(status === 'idle' || status === 'error') && (
+            <Button
+              title="Upload to S3"
+              onPress={upload}
+              variant="primary"
+              size="full"
+              disabled={!fileUri}
+              accessibilityHint="Upload the selected file to S3"
+            />
+          )}
+
+          {/* Cancel */}
+          {isUploading && (
             <Button
               title="Cancel"
               onPress={cancel}
               variant="negative"
               size="full"
-              accessibilityHint="Cancel the in-progress upload"
+              accessibilityHint="Cancel the upload"
+            />
+          )}
+
+          {/* Step 2: Save Attachment */}
+          {status === 'finalized' && (
+            <Button
+              title="Save Attachment"
+              onPress={saveAttachment}
+              variant="primary"
+              size="full"
+              disabled={!parentId}
+              accessibilityHint="Attach the uploaded file to the parent record"
             />
           )}
         </View>
@@ -319,40 +446,37 @@ export default function S3UploadDebug() {
           </View>
         )}
 
-        {/* Result */}
-        {status === 'done' && result && (
+        {/* Save Result */}
+        {status === 'done' && saveResult && (
           <View style={[styles.card, styles.successCard]}>
             <TextMedium size="sm" color={Colors.SUCCESS_DARK}>
-              Upload complete!
+              Attachment Created!
             </TextMedium>
-            <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
-              Signed field_value (use in GraphQL mutations):
-            </TextRegular>
             <View style={styles.output}>
               <TextRegular size="xs" style={styles.code} selectable>
-                {result}
+                {saveResult}
               </TextRegular>
             </View>
           </View>
         )}
 
-        {/* Instructions */}
+        {/* How it works */}
         <View style={styles.card}>
           <TextMedium size="sm">How it works</TextMedium>
           <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
-            1. Initialize — POST to /api/s3-upload/upload-initialize/ with
-            field_id and file metadata
+            1. GraphQL s3UploadInitialize → presigned part URLs
           </TextRegular>
           <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
-            2. Upload parts — PUT each part directly to the presigned S3 URL
+            2. PUT each part directly to S3
           </TextRegular>
           <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
-            3. Complete — POST to /api/s3-upload/upload-complete/, then POST to
-            S3 complete URL
+            3. GraphQL s3UploadComplete → assemble parts via S3
           </TextRegular>
           <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
-            4. Finalize — POST to /api/s3-upload/finalize/ → returns signed
-            field_value
+            4. GraphQL s3UploadFinalize → signed field_value token
+          </TextRegular>
+          <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
+            5. GraphQL createS3Attachment → create DB record
           </TextRegular>
         </View>
       </View>
@@ -375,7 +499,6 @@ function FieldButton({
       onPress={onPress}
       accessibilityRole="tab"
       accessibilityLabel={`${label} field`}
-      accessibilityHint={`Select ${label} as the target field`}
       accessibilityState={{ selected: isActive }}
     >
       <TextMedium
@@ -421,11 +544,6 @@ const styles = StyleSheet.create({
   successCard: {
     borderColor: Colors.SUCCESS_LIGHT,
     backgroundColor: Colors.SUCCESS_EXTRA_LIGHT,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: Spacings.xs,
-    alignItems: 'center',
   },
   fieldList: {
     flexDirection: 'column',
