@@ -1,5 +1,5 @@
 import { createHmisClient } from './hmisClient';
-import { HmisError } from './hmisTypes';
+import { HmisError } from './hmisError';
 
 // Mock the utils module to avoid expo dependencies in tests
 jest.mock('@monorepo/expo/shared/utils', () => ({
