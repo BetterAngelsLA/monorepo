@@ -154,6 +154,7 @@ export default function UploadModalHmis(props: TProps) {
 
       {!document && fileCategories && fileCategoryFileNames && (
         <FileCategorySelector
+          disabled={isUploading}
           categories={fileCategories}
           subCategories={fileCategoryFileNames}
           onSelect={({ categoryId, categoryName, subCategoryId }) => {
