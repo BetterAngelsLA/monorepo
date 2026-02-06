@@ -9,14 +9,14 @@ import {
 } from '../common/interceptors';
 import { HmisError, HmisInvalidFileTypeError } from './hmisError';
 import {
+  ALLOWED_FILE_TYPES,
+  AllowedFileType,
   ClientFilesListParams,
   ClientFilesResponse,
   ClientFileUploadRequest,
   ClientFileUploadResponse,
   FileCategoriesResponse,
   FileNamesResponse,
-  HMIS_ALLOWED_FILE_TYPES,
-  HmisAllowedFileType,
   HmisHttpQueryParams,
   HmisRequestOptions,
 } from './hmisTypes';
@@ -217,17 +217,17 @@ class HmisClient {
     file: {
       content: string;
       name: string;
-      mimeType: HmisAllowedFileType;
+      mimeType: AllowedFileType;
     },
     categoryId: number,
     fileNameId: number,
     isPrivate: boolean | null = null
   ): Promise<ClientFileUploadResponse> {
     // Validate file type
-    if (!HMIS_ALLOWED_FILE_TYPES.includes(file.mimeType)) {
+    if (!ALLOWED_FILE_TYPES.includes(file.mimeType)) {
       throw new HmisInvalidFileTypeError('Invalid file type', 400, {
         received: file.mimeType,
-        allowed: HMIS_ALLOWED_FILE_TYPES,
+        allowed: ALLOWED_FILE_TYPES,
       });
     }
 

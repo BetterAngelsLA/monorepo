@@ -1,10 +1,10 @@
 import type {
+  AllowedFileType,
   ClientFileUploadResponse,
   ClientFilesListParams,
   ClientFilesResponse,
   FileCategoriesResponse,
   FileNamesResponse,
-  HmisAllowedFileType,
   HmisCurrentUser,
   HmisHttpQueryParams,
 } from '@monorepo/expo/shared/clients';
@@ -104,7 +104,7 @@ export const useHmisClient = () => {
       file: {
         content: string;
         name: string;
-        mimeType: HmisAllowedFileType;
+        mimeType: AllowedFileType;
       },
       categoryId: number,
       fileNameId: number,

@@ -1,6 +1,7 @@
 import {
-  HMIS_ALLOWED_FILE_TYPES,
-  HmisAllowedFileType,
+  AllowedFileType,
+  HmisError,
+  HmisInvalidFileTypeError,
   ReactNativeFile,
 } from '@monorepo/expo/shared/clients';
 import {
@@ -9,10 +10,6 @@ import {
   MediaPickerModal,
 } from '@monorepo/expo/shared/ui-components';
 import { readFileAsBase64 } from '@monorepo/expo/shared/utils';
-import {
-  HmisError,
-  HmisInvalidFileTypeError,
-} from 'libs/expo/shared/clients/src/lib/http/hmisError';
 import { useState } from 'react';
 import { HmisClientProfileType } from '../../../../apollo';
 import {
@@ -111,7 +108,7 @@ export default function UploadModalHmis(props: TProps) {
         {
           content: fileBase64,
           name: name.trim(),
-          mimeType: type as HmisAllowedFileType, // validate in client
+          mimeType: type as AllowedFileType,
         },
         parseInt(categoryId, 10),
         parseInt(subCategoryId, 10),
@@ -180,7 +177,6 @@ export default function UploadModalHmis(props: TProps) {
         setFiles={(files) => {
           setDocument(files[0]);
         }}
-        mimeTypes={HMIS_ALLOWED_FILE_TYPES}
       />
     </Form.Page>
   );
