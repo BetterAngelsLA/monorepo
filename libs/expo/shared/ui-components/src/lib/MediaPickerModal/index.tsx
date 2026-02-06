@@ -4,6 +4,7 @@ import {
   MimeTypes,
   Shadow,
   Spacings,
+  TMimeType,
 } from '@monorepo/expo/shared/static';
 import { resizeImage } from '@monorepo/expo/shared/utils';
 import { useCameraPermissions } from 'expo-camera';
@@ -16,6 +17,7 @@ import Camera from '../Camera';
 import { BaseModal } from '../Modal';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
+import { resolveMediaPickerMimeTypes } from './resolveMediaPickerMimeTypes';
 
 interface IMediaPickerModalProps {
   onCapture: (file: ReactNativeFile) => void;
@@ -23,6 +25,7 @@ interface IMediaPickerModalProps {
   isModalVisible: boolean;
   setFiles: (files: ReactNativeFile[]) => void;
   allowMultiple?: boolean;
+  mimeTypes?: readonly TMimeType[];
 }
 
 const ALLOWED_UPLOAD_TYPES = [
@@ -48,6 +51,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
     isModalVisible,
     setFiles,
     allowMultiple = true,
+    mimeTypes,
   } = props;
 
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -56,10 +60,16 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
 
   const closeModal = () => setModalVisible(false);
 
+  const selectableMimeTypes = resolveMediaPickerMimeTypes(mimeTypes);
+
   const pickDocuments = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
+<<<<<<< HEAD
         type: [...ALLOWED_UPLOAD_TYPES],
+=======
+        type: selectableMimeTypes,
+>>>>>>> 70bcec588 (update MediaPickerModal to accept mimeTypes)
       });
       const { canceled, assets } = result;
       if (canceled || !assets?.length) return;
@@ -219,11 +229,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
               accessibilityRole="button"
               accessibilityHint="opens file library"
             >
-<<<<<<< HEAD
               <TextRegular color={Colors.PRIMARY}>Upload Document or Image</TextRegular>
-=======
-              <TextRegular color={Colors.PRIMARY}>Upload file</TextRegular>
->>>>>>> b9dbb3d4e (update document picker modal text to not reference pdf)
             </Pressable>
           </View>
 
