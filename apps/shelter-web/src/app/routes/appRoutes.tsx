@@ -1,6 +1,5 @@
 import { OperatorApp } from '@monorepo/react/shelter-operator';
 import { Link, RouteObject } from 'react-router-dom';
-import { OperatorApp } from '@monorepo/react/shelter-operator';
 import { Policy } from '../pages/Policy';
 import Gallery from '../pages/gallery/gallery';
 import { Home } from '../pages/home/home';

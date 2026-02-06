@@ -1,8 +1,9 @@
 'use client';
 
+import { useQuery } from '@apollo/client/react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useViewSheltersByOrganizationQuery } from '../../graphql/__generated__/shelters.generated';
+import { ViewSheltersByOrganizationDocument } from '../../graphql/__generated__/shelters.generated';
 import { ShelterRow } from '../../components/ShelterRow';
 export type Shelter = {
   id: string;
@@ -16,7 +17,7 @@ export type Shelter = {
 const PAGE_SIZE = 8;
 
 export default function Dashboard() {
-  const { data, loading, error } = useViewSheltersByOrganizationQuery({
+  const { data, loading, error } = useQuery(ViewSheltersByOrganizationDocument, {
     variables: { organizationId: '1' },
   });
 
