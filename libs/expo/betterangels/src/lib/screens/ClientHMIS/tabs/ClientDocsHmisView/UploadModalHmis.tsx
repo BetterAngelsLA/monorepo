@@ -186,6 +186,9 @@ export default function UploadModalHmis(props: TProps) {
         setFiles={(files) => {
           setDocument(files[0]);
         }}
+        labels={{
+          file: 'From Files folder',
+        }}
       />
     </Form.Page>
   );
