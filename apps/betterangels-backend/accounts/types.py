@@ -205,3 +205,13 @@ class OrgInvitationInput:
 class RemoveOrganizationMemberInput:
     id: ID
     organization_id: ID
+
+
+@strawberry.type
+class RequestOtpResult:
+    success: bool
+
+
+@strawberry.type
+class AuthPayload:
+    token: str

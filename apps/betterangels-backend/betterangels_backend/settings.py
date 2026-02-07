@@ -68,6 +68,7 @@ env = environ.Env(
     SECURE_HSTS_PRELOAD=(bool, False),
     SECURE_HSTS_SECONDS=(int, 0),
     ACCOUNT_LOGIN_BY_CODE_ENABLED=(bool, False),
+    ACCOUNT_LOGIN_BY_CODE_TIMEOUT=(int, 300),
     USE_IAM_AUTH=(bool, False),
 )
 
@@ -158,6 +159,7 @@ MIDDLEWARE = [
 ACCOUNT_ADAPTER = "accounts.adapters.AccountAdapter"
 ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
 ACCOUNT_LOGIN_BY_CODE_ENABLED = env("ACCOUNT_LOGIN_BY_CODE_ENABLED")
+ACCOUNT_LOGIN_BY_CODE_TIMEOUT = env.int("ACCOUNT_LOGIN_BY_CODE_TIMEOUT", default=300)
 
 ROOT_URLCONF = "betterangels_backend.urls"
 

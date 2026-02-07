@@ -83,6 +83,11 @@ export enum AttachmentType {
   Video = 'VIDEO'
 }
 
+export type AuthPayload = {
+  __typename?: 'AuthPayload';
+  token: Scalars['String']['output'];
+};
+
 export type AuthResponse = {
   __typename?: 'AuthResponse';
   status_code: Scalars['String']['output'];
@@ -1224,6 +1229,7 @@ export type Mutation = {
   removeHmisNoteServiceRequest: RemoveHmisNoteServiceRequestPayload;
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   removeOrganizationMember: RemoveOrganizationMemberPayload;
+  requestOtp: RequestOtpResult;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
   updateClientDocument: UpdateClientDocumentPayload;
@@ -1240,6 +1246,7 @@ export type Mutation = {
   updateServiceRequest: UpdateServiceRequestPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
+  verifyOtp: AuthPayload;
 };
 
 
@@ -1420,6 +1427,11 @@ export type MutationRemoveOrganizationMemberArgs = {
 };
 
 
+export type MutationRequestOtpArgs = {
+  email: Scalars['String']['input'];
+};
+
+
 export type MutationRevertNoteArgs = {
   data: RevertNoteInput;
 };
@@ -1497,6 +1509,12 @@ export type MutationUpdateSocialMediaProfileArgs = {
 
 export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
+};
+
+
+export type MutationVerifyOtpArgs = {
+  code: Scalars['String']['input'];
+  email: Scalars['String']['input'];
 };
 
 export type NoteDataImportType = {
@@ -2085,6 +2103,11 @@ export type RemoveOrganizationMemberInput = {
 };
 
 export type RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo;
+
+export type RequestOtpResult = {
+  __typename?: 'RequestOtpResult';
+  success: Scalars['Boolean']['output'];
+};
 
 export type RevertNoteInput = {
   id: Scalars['ID']['input'];
