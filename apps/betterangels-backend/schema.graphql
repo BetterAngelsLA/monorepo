@@ -88,13 +88,6 @@ enum AttachmentType {
   UNKNOWN
 }
 
-input AuthInput {
-  code: String
-  code_verifier: String
-  id_token: String
-  redirect_uri: String
-}
-
 type AuthPayload {
   token: String!
 }
