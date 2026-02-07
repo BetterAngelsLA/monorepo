@@ -40,7 +40,6 @@ from .exceptions import (
 )
 from .models import PermissionGroup, User
 from .types import (
-    AuthInput,
     AuthPayload,
     AuthResponse,
     CurrentUserType,
@@ -151,16 +150,6 @@ class Mutation:
 
     @strawberry.mutation
     def login(self, input: LoginInput) -> AuthResponse:
-        # The is a stub and logic is handled client-side by Apollo
-        return AuthResponse(status_code="")
-
-    @strawberry.mutation
-    def google_auth(self, input: AuthInput) -> AuthResponse:
-        # The is a stub and logic is handled client-side by Apollo
-        return AuthResponse(status_code="")
-
-    @strawberry.mutation
-    def apple_auth(self, input: AuthInput) -> AuthResponse:
         # The is a stub and logic is handled client-side by Apollo
         return AuthResponse(status_code="")
 
