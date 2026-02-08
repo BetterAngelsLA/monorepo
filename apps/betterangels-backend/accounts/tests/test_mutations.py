@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import ANY, patch
 
 from accounts.enums import OrgRoleEnum
@@ -437,7 +438,7 @@ class OtpMutationTests(GraphQLBaseTestCase, TestCase):
 
     @override_settings(ACCOUNT_LOGIN_BY_CODE_ENABLED=True, ACCOUNT_LOGIN_BY_CODE_TIMEOUT=300)
     @patch("accounts.schema.cache")
-    def test_request_otp_stores_code_in_cache(self, mock_cache: ANY) -> None:
+    def test_request_otp_stores_code_in_cache(self, mock_cache: Any) -> None:
         """Test that the OTP code is stored in cache with correct timeout."""
         mutation = """
             mutation RequestOtp($email: String!) {
