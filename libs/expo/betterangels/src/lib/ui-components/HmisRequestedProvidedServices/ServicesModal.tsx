@@ -258,7 +258,14 @@ export default function ServicesModal(props: IServicesModalProps) {
   }, [rows, type, close, showSnackbar]);
 
   // ---------- Close (revert) ----------
-  const reset = useCallback(() => setRows(computeInitial()), [computeInitial]);
+  const clearAll = useCallback(() => {
+    setRows(
+      pipe(
+        computeInitial(),
+        rmap((r) => ({ ...r, markedForDeletion: true }))
+      )
+    );
+  }, [computeInitial]);
 
   useEffect(() => {
     setRows(computeInitial());
@@ -362,7 +369,7 @@ export default function ServicesModal(props: IServicesModalProps) {
       >
         <View style={{ flex: 1 }}>
           <Button
-            onPress={reset}
+            onPress={clearAll}
             size="full"
             variant="secondary"
             title="Reset"
