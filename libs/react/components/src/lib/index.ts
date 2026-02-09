@@ -14,6 +14,7 @@ export * from './LoadingSpinner';
 export * from './LoadingView';
 export { default as Pill } from './Pill';
 export { default as PillContainer } from './PillContainer';
+export * from './ProfileButton';
 export * from './SearchInput';
 export * from './SearchList';
 export * from './Sidebar';
