@@ -1,4 +1,4 @@
-FROM python:3.14.2-trixie AS base
+FROM python:3.14.3-trixie AS base
 
 ENV PYTHONUNBUFFERED=1
 RUN groupadd --gid 1000 betterangels \
