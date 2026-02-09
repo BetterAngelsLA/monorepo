@@ -3,8 +3,11 @@
 import { useQuery } from '@apollo/client/react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ViewSheltersByOrganizationDocument, ViewSheltersByOrganizationQuery } from '../../graphql/__generated__/shelters.generated';
 import { ShelterRow } from '../../components/ShelterRow';
+import {
+  ViewSheltersByOrganizationDocument,
+  ViewSheltersByOrganizationQuery,
+} from '../../graphql/__generated__/shelters.generated';
 export type Shelter = {
   id: string;
   name: string | null;
@@ -16,10 +19,14 @@ export type Shelter = {
 const PAGE_SIZE = 8;
 
 export default function Dashboard() {
-  const { data, loading, error } = useQuery(ViewSheltersByOrganizationDocument, {
-    variables: { organizationId: '1' },
-  });
-
+  // TODO - use actual organization ID from auth context or similar once shelter fetch merged in
+  const { data, loading, error } = useQuery(
+    ViewSheltersByOrganizationDocument,
+    {
+      variables: { organizationId: '1' },
+    }
+  );
+  // TODO - remove debug output once actual shelter data is fetched
   useEffect(() => {
     if (data?.sheltersByOrganization?.results) {
       console.log('[Backend shelters]', data.sheltersByOrganization.results);
@@ -29,14 +36,18 @@ export default function Dashboard() {
   if (error) console.error('[Dashboard GraphQL error]', error);
 
   const backendShelters: Shelter[] = useMemo(() => {
-    type ShelterResult = NonNullable<ViewSheltersByOrganizationQuery['sheltersByOrganization']['results'][number]>;
-    return data?.sheltersByOrganization?.results?.map((s: ShelterResult) => ({
-      id: String(s.id),
-      name: s.name ?? null,
-      address: s.location?.place ?? null,
-      totalBeds: s.totalBeds ?? null,
-      tags: null,
-    })) ?? [];
+    type ShelterResult = NonNullable<
+      ViewSheltersByOrganizationQuery['sheltersByOrganization']['results'][number]
+    >;
+    return (
+      data?.sheltersByOrganization?.results?.map((s: ShelterResult) => ({
+        id: String(s.id),
+        name: s.name ?? null,
+        address: s.location?.place ?? null,
+        totalBeds: s.totalBeds ?? null,
+        tags: null,
+      })) ?? []
+    );
   }, [data?.sheltersByOrganization?.results]);
 
   const [page, setPage] = useState(1);
@@ -50,31 +61,42 @@ export default function Dashboard() {
   }, [page, backendShelters]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', padding: '32px', width: '100%' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '32px',
+        width: '100%',
+      }}
+    >
       {/* Back button */}
       <div style={{ marginBottom: '24px' }}>
         <Link to="/">
-          <button style={{
-            padding: '8px 16px',
-            border: '1px solid #d1d5db',
-            borderRadius: '8px',
-            backgroundColor: 'white',
-            fontSize: '14px',
-            cursor: 'pointer'
-          }}>
+          <button
+            style={{
+              padding: '8px 16px',
+              border: '1px solid #d1d5db',
+              borderRadius: '8px',
+              backgroundColor: 'white',
+              fontSize: '14px',
+              cursor: 'pointer',
+            }}
+          >
             Back
           </button>
         </Link>
       </div>
 
       {/* TABLE */}
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '16px',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-        overflow: 'hidden',
-        width: '100%'
-      }}>
+      <div
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden',
+          width: '100%',
+        }}
+      >
         {/* HEADER */}
         <div
           style={{
@@ -88,7 +110,7 @@ export default function Dashboard() {
             letterSpacing: '0.05em',
             color: '#374151',
             backgroundColor: '#f9fafb',
-            borderBottom: '1px solid #e5e7eb'
+            borderBottom: '1px solid #e5e7eb',
           }}
         >
           <div>Shelter Name</div>
@@ -103,14 +125,16 @@ export default function Dashboard() {
       </div>
 
       {/* PAGINATION */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginTop: '16px',
-        fontSize: '14px',
-        color: '#4b5563'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: '16px',
+          fontSize: '14px',
+          color: '#4b5563',
+        }}
+      >
         <div>
           Page {page} of {totalPages}
         </div>
@@ -123,7 +147,7 @@ export default function Dashboard() {
               borderRadius: '8px',
               backgroundColor: 'white',
               cursor: page === 1 ? 'not-allowed' : 'pointer',
-              opacity: page === 1 ? 0.4 : 1
+              opacity: page === 1 ? 0.4 : 1,
             }}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
@@ -138,7 +162,7 @@ export default function Dashboard() {
               borderRadius: '8px',
               backgroundColor: 'white',
               cursor: page === totalPages ? 'not-allowed' : 'pointer',
-              opacity: page === totalPages ? 0.4 : 1
+              opacity: page === totalPages ? 0.4 : 1,
             }}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
