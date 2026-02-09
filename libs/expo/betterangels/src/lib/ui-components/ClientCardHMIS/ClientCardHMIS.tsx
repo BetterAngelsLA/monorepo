@@ -55,6 +55,7 @@ export function ClientCardHMIS(props: IClientCardProps) {
         size="xl"
         mr="xs"
         imageUrl={contentUri}
+        imageCacheKey={contentUri}
         headers={headers}
       />
       <View style={{ gap: Spacings.xxs, flex: 2 }}>

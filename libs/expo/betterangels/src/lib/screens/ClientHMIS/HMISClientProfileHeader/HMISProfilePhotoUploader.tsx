@@ -86,6 +86,7 @@ export function HMISProfilePhotoUploader({
             size="xl"
             mr="xs"
             imageUrl={imageUrl}
+            imageCacheKey={imageUrl ?? undefined}
             headers={headers}
             accessibilityLabel="client's profile photo"
             accessibilityHint={

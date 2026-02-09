@@ -1,6 +1,10 @@
 import { ViewIcon, WFEdit } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { BaseModal, ImageViewer } from '@monorepo/expo/shared/ui-components';
+import {
+  BaseModal,
+  ImageViewer,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
