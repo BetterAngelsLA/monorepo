@@ -17,12 +17,25 @@ import { BaseModal } from '../Modal';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
 
+type TMediaOptionLabels = {
+  image?: string;
+  camera?: string;
+  file?: string;
+};
+
+const pickerSelectLabelDefaults: Required<TMediaOptionLabels> = {
+  image: 'From Photo Album',
+  camera: 'Take Photo',
+  file: 'Upload a file',
+};
+
 interface IMediaPickerModalProps {
   onCapture: (file: ReactNativeFile) => void;
   setModalVisible: (isModalVisible: boolean) => void;
   isModalVisible: boolean;
   setFiles: (files: ReactNativeFile[]) => void;
   allowMultiple?: boolean;
+  labels?: TMediaOptionLabels;
 }
 
 const ALLOWED_UPLOAD_TYPES = [
@@ -43,12 +56,18 @@ const ALLOWED_UPLOAD_TYPES = [
 
 export default function MediaPickerModal(props: IMediaPickerModalProps) {
   const {
+    labels,
     onCapture,
     setModalVisible,
     isModalVisible,
     setFiles,
     allowMultiple = true,
   } = props;
+
+  const selectorLabels: Required<TMediaOptionLabels> = {
+    ...pickerSelectLabelDefaults,
+    ...labels,
+  };
 
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [, requestPermission] = useCameraPermissions();
@@ -191,7 +210,9 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
               accessibilityRole="button"
               accessibilityHint="opens photo library"
             >
-              <TextRegular color={Colors.PRIMARY}>From Photo Album</TextRegular>
+              <TextRegular color={Colors.PRIMARY}>
+                {selectorLabels.image}
+              </TextRegular>
             </Pressable>
 
             <Pressable
@@ -205,7 +226,9 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
               accessibilityRole="button"
               accessibilityHint="opens camera"
             >
-              <TextRegular color={Colors.PRIMARY}>Take Photo</TextRegular>
+              <TextRegular color={Colors.PRIMARY}>
+                {selectorLabels.camera}
+              </TextRegular>
             </Pressable>
 
             <Pressable
@@ -219,7 +242,9 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
               accessibilityRole="button"
               accessibilityHint="opens file library"
             >
-              <TextRegular color={Colors.PRIMARY}>Upload Document or Image</TextRegular>
+              <TextRegular color={Colors.PRIMARY}>
+                {selectorLabels.file}
+              </TextRegular>
             </Pressable>
           </View>
 

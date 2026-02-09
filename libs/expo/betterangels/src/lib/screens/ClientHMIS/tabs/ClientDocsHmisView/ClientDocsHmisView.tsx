@@ -14,7 +14,7 @@ import { ScrollView } from 'react-native';
 import { HmisClientProfileType } from '../../../../apollo';
 import { useHmisFileCategoryAndNames } from '../../../../hooks';
 import { useClientFiles } from '../../../../hooks/hmisFileMetadata';
-import { useModalScreen } from '../../../../providers';
+import { SnackbarProvider, useModalScreen } from '../../../../providers';
 import HmisDocuments from './HmisDocuments';
 import UploadModalHmis from './UploadModalHmis';
 import { groupFilesByCategory } from './groupFilesByCategory';
@@ -68,9 +68,14 @@ export function ClientDocsHmisView({
         <IconButton
           onPress={() =>
             showModalScreen({
-              presentation: 'fullScreenModal',
+              presentation: 'modal',
               title: 'Upload Files',
-              renderContent: () => <UploadModalHmis client={client} />,
+              renderContent: ({ close }) => (
+                // without local SnackbarProvider snackbar will be hidden behind native modals
+                <SnackbarProvider>
+                  <UploadModalHmis client={client} closeModal={close} />
+                </SnackbarProvider>
+              ),
             })
           }
           variant="secondary"
