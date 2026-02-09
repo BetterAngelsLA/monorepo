@@ -1,5 +1,10 @@
 import { createHmisClient } from './hmisClient';
-import { HmisError } from './hmisTypes';
+import {
+  HmisError,
+  HmisFileErrorCode,
+  HmisInvalidFileTypeError,
+} from './hmisError';
+import { ALLOWED_FILE_TYPES } from './hmisTypes';
 
 // Mock the utils module to avoid expo dependencies in tests
 jest.mock('@monorepo/expo/shared/utils', () => ({
@@ -203,10 +208,10 @@ describe('HmisClient', () => {
       });
     });
 
-    it('throws error for invalid file type', async () => {
+    it('throws HmisInvalidFileTypeError for invalid file type', async () => {
       const hmisClient = createHmisClient();
-      await expect(
-        hmisClient.uploadClientFile(
+      try {
+        await hmisClient.uploadClientFile(
           '68998C256',
           {
             content: 'VGVzdCBjb250ZW50',
@@ -215,8 +220,19 @@ describe('HmisClient', () => {
           },
           12,
           89
-        )
-      ).rejects.toThrow('File type "video/quicktime" is not allowed');
+        );
+
+        fail('Expected uploadClientFile to throw');
+      } catch (err) {
+        expect(err).toBeInstanceOf(HmisInvalidFileTypeError);
+
+        const error = err as HmisInvalidFileTypeError;
+
+        expect(error.status).toBe(400);
+        expect(error.code).toBe(HmisFileErrorCode.INVALID_FILE_TYPE);
+        expect(error.data?.received).toBe('video/quicktime');
+        expect(error.data?.allowed).toEqual(ALLOWED_FILE_TYPES);
+      }
     });
 
     it('supports private flag', async () => {
