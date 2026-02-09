@@ -290,29 +290,27 @@ export default function S3UploadDebug() {
     status === 'idle'
       ? 'Ready'
       : status === 'uploading'
-        ? `Uploading ${progress}%`
-        : status === 'completing'
-          ? 'Completing…'
-          : status === 'finalized'
-            ? 'Uploaded — ready to save'
-            : status === 'saving'
-              ? 'Saving to shelter…'
-              : status === 'done'
-                ? 'Saved!'
-                : 'Error';
+      ? `Uploading ${progress}%`
+      : status === 'completing'
+      ? 'Completing…'
+      : status === 'finalized'
+      ? 'Uploaded — ready to save'
+      : status === 'saving'
+      ? 'Saving to shelter…'
+      : status === 'done'
+      ? 'Saved!'
+      : 'Error';
 
   const statusColor =
     status === 'done'
       ? Colors.SUCCESS_DARK
       : status === 'error'
-        ? Colors.ERROR_DARK
-        : status === 'uploading' ||
-            status === 'completing' ||
-            status === 'saving'
-          ? Colors.PRIMARY_DARK
-          : status === 'finalized'
-            ? Colors.WARNING_DARK
-            : Colors.NEUTRAL_DARK;
+      ? Colors.ERROR_DARK
+      : status === 'uploading' || status === 'completing' || status === 'saving'
+      ? Colors.PRIMARY_DARK
+      : status === 'finalized'
+      ? Colors.WARNING_DARK
+      : Colors.NEUTRAL_DARK;
 
   const isUploading = status === 'uploading' || status === 'completing';
 

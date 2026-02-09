@@ -34,6 +34,7 @@ from django.db.models import ForeignKey, Prefetch
 from graphql import GraphQLError
 from guardian.shortcuts import assign_perm
 from phonenumber_field.validators import validate_international_phonenumber
+from s3_file_field.widgets import S3PlaceholderFile
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
@@ -599,15 +600,40 @@ class Mutation:
             ).get(id=data.client_profile)
 
             permission_group = get_user_permission_group(user)
-
             content_type = ContentType.objects.get_for_model(ClientProfile)
-            client_document = Attachment.objects.create(
-                file=data.file,
-                namespace=data.namespace,
-                content_type=content_type,
-                object_id=client_profile.id,
-                uploaded_by=user,
-            )
+
+            has_file = data.file is not None
+            has_field_value = bool(data.field_value)
+
+            if has_file == has_field_value:
+                raise GraphQLError("Provide exactly one of 'file' (legacy upload) or 'field_value' (S3 direct upload).")
+
+            if has_field_value:
+                # S3 direct-upload path: decode signed token → S3 object key
+                if not data.mime_type:
+                    raise GraphQLError("'mime_type' is required when using 'field_value' (S3 direct upload).")
+
+                placeholder = S3PlaceholderFile.from_field(data.field_value)
+                if placeholder is None:
+                    raise GraphQLError("Invalid or tampered field_value token.")
+
+                client_document = Attachment.objects.create(
+                    file=placeholder.name,
+                    mime_type=data.mime_type,
+                    namespace=data.namespace,
+                    content_type=content_type,
+                    object_id=client_profile.id,
+                    uploaded_by=user,
+                )
+            else:
+                # Legacy multipart upload path (existing mobile clients)
+                client_document = Attachment.objects.create(
+                    file=data.file,
+                    namespace=data.namespace,
+                    content_type=content_type,
+                    object_id=client_profile.id,
+                    uploaded_by=user,
+                )
 
             permissions = [
                 AttachmentPermissions.DELETE,

@@ -142,7 +142,7 @@ class LocationInput:
 @strawberry_django.type(Attachment, is_interface=True)
 class AttachmentInterface:
     id: ID
-    file: auto
+    file: strawberry_django.DjangoFileType
     attachment_type: auto
     mime_type: auto
     original_filename: auto

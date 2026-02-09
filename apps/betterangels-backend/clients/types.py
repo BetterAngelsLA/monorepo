@@ -84,8 +84,13 @@ class ClientDocumentType(AttachmentInterface):
 @strawberry_django.input(Attachment)
 class CreateClientDocumentInput:
     client_profile: ID
-    file: Upload
     namespace: ClientDocumentNamespaceEnum
+    # Legacy multipart upload path (existing mobile clients)
+    file: Optional[Upload] = None
+    # S3 direct-upload path: signed token from s3UploadFinalize
+    field_value: Optional[str] = None
+    # Required when using field_value (S3 path) so we know the MIME type
+    mime_type: Optional[str] = None
 
 
 @strawberry_django.order_type(ClientProfile, one_of=False)
