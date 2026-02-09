@@ -68,7 +68,7 @@ export function ClientDocsHmisView({
         <IconButton
           onPress={() =>
             showModalScreen({
-              presentation: 'fullScreenModal',
+              presentation: 'modal',
               title: 'Upload Files',
               renderContent: ({ close }) => (
                 // without local SnackbarProvider snackbar will be hidden behind native modals
