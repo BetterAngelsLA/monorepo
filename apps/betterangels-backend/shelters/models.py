@@ -79,12 +79,9 @@ class RoomStyle(models.Model):
         return str(self.name)
 
 
-class Bed(models.Model):
+class Bed(BaseModel):
     shelter_id = models.ForeignKey("Shelter", on_delete=models.CASCADE)
     status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         indexes = [
