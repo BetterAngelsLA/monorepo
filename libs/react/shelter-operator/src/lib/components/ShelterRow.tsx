@@ -3,6 +3,7 @@ export type Shelter = {
   name: string | null;
   address: string | null;
   totalBeds: number | null;
+  tags: string[] | null;
 };
 type Props = { shelter: Shelter };
 
@@ -10,30 +11,16 @@ export function ShelterRow({ shelter }: Props) {
   const { name, address, totalBeds } = shelter;
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1.5fr 0.5fr',
-        alignItems: 'center',
-        padding: '16px 24px',
-        fontSize: '14px',
-        borderBottom: '1px solid #e5e7eb'
-      }}
-      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
-      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-    >
-      {/* Name */}
-      <div style={{ fontWeight: 500, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+    <div className="grid grid-cols-[1fr_1.5fr_0.5fr] items-center px-6 py-4 text-sm border-b border-gray-200 hover:bg-gray-50">
+      <div className="font-medium text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap">
         {name ?? 'N/A'}
       </div>
 
-      {/* Address */}
-      <div style={{ color: '#4b5563', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <div className="text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap">
         {address ?? 'N/A'}
       </div>
 
-      {/* Capacity */}
-      <div style={{ textAlign: 'right', whiteSpace: 'nowrap', color: '#374151' }}>
+      <div className="text-right whitespace-nowrap text-gray-700">
         {totalBeds ?? 'N/A'}
       </div>
     </div>

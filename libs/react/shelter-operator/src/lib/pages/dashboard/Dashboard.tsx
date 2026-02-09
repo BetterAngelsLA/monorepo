@@ -1,39 +1,22 @@
-'use client';
-
 import { useQuery } from '@apollo/client/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShelterRow } from '../../components/ShelterRow';
+import { Shelter, ShelterRow } from '../../components/ShelterRow';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
-export type Shelter = {
-  id: string;
-  name: string | null;
-  address: string | null;
-  totalBeds: number | null;
-  tags: string[] | null;
-};
 
 const PAGE_SIZE = 8;
 
 export default function Dashboard() {
-  // TODO - use actual organization ID from auth context or similar once shelter fetch merged in
+  // TODO: Replace hardcoded organizationId with value from authenticated user context
   const { data, loading, error } = useQuery(
     ViewSheltersByOrganizationDocument,
     {
       variables: { organizationId: '1' },
     }
   );
-  // TODO - remove debug output once actual shelter data is fetched
-  useEffect(() => {
-    if (data?.sheltersByOrganization?.results) {
-      console.log('[Backend shelters]', data.sheltersByOrganization.results);
-    }
-  }, [data]);
-
-  if (error) console.error('[Dashboard GraphQL error]', error);
 
   const backendShelters: Shelter[] = useMemo(() => {
     type ShelterResult = NonNullable<
@@ -61,61 +44,23 @@ export default function Dashboard() {
   }, [page, backendShelters]);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '32px',
-        width: '100%',
-      }}
-    >
+    <div className="flex flex-col p-8 w-full">
       {/* Back button */}
-      <div style={{ marginBottom: '24px' }}>
+      <div className="mb-6">
         <Link to="/">
-          <button
-            style={{
-              padding: '8px 16px',
-              border: '1px solid #d1d5db',
-              borderRadius: '8px',
-              backgroundColor: 'white',
-              fontSize: '14px',
-              cursor: 'pointer',
-            }}
-          >
+          <button className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm cursor-pointer hover:bg-gray-50">
             Back
           </button>
         </Link>
       </div>
 
       {/* TABLE */}
-      <div
-        style={{
-          backgroundColor: 'white',
-          borderRadius: '16px',
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-          overflow: 'hidden',
-          width: '100%',
-        }}
-      >
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden w-full">
         {/* HEADER */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1.5fr 0.5fr',
-            alignItems: 'center',
-            padding: '12px 24px',
-            fontSize: '12px',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            color: '#374151',
-            backgroundColor: '#f9fafb',
-            borderBottom: '1px solid #e5e7eb',
-          }}
-        >
+        <div className="grid grid-cols-[1fr_1.5fr_0.5fr] items-center px-6 py-3 text-xs font-semibold uppercase tracking-wider text-gray-700 bg-gray-50 border-b border-gray-200">
           <div>Shelter Name</div>
           <div>Address</div>
-          <div style={{ textAlign: 'right' }}>Capacity (beds)</div>
+          <div className="text-right">Capacity (beds)</div>
         </div>
 
         {/* ROWS */}
@@ -125,30 +70,14 @@ export default function Dashboard() {
       </div>
 
       {/* PAGINATION */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginTop: '16px',
-          fontSize: '14px',
-          color: '#4b5563',
-        }}
-      >
+      <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
         <div>
           Page {page} of {totalPages}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="flex items-center gap-2">
           <button
-            style={{
-              padding: '4px 12px',
-              border: '1px solid #d1d5db',
-              borderRadius: '8px',
-              backgroundColor: 'white',
-              cursor: page === 1 ? 'not-allowed' : 'pointer',
-              opacity: page === 1 ? 0.4 : 1,
-            }}
+            className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
           >
@@ -156,14 +85,7 @@ export default function Dashboard() {
           </button>
 
           <button
-            style={{
-              padding: '4px 12px',
-              border: '1px solid #d1d5db',
-              borderRadius: '8px',
-              backgroundColor: 'white',
-              cursor: page === totalPages ? 'not-allowed' : 'pointer',
-              opacity: page === totalPages ? 0.4 : 1,
-            }}
+            className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
           >
@@ -173,13 +95,11 @@ export default function Dashboard() {
       </div>
 
       {loading && (
-        <div style={{ marginTop: '16px', fontSize: '12px', color: '#6b7280' }}>
-          Loading backend shelters…
-        </div>
+        <div className="mt-4 text-xs text-gray-500">Loading shelters…</div>
       )}
       {error && (
-        <div style={{ marginTop: '8px', fontSize: '12px', color: '#ef4444' }}>
-          Backend error
+        <div className="mt-2 text-xs text-red-500">
+          Failed to load shelters.
         </div>
       )}
     </div>

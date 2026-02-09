@@ -31,8 +31,4 @@ class Query:
         info: Info,
         organization_id: strawberry.ID,
     ) -> QuerySet[Shelter]:
-        user = info.context.request.user
-        user_org_id = getattr(user, "organization_id", None)
-        effective_org_id = user_org_id or int(organization_id)
-
-        return Shelter.objects.filter(organization_id=effective_org_id).order_by("-created_at")
+        return Shelter.objects.filter(organization_id=int(organization_id)).order_by("-created_at")
