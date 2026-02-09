@@ -14,16 +14,16 @@ export default function Dashboard() {
   const { data, loading, error } = useQuery(
     ViewSheltersByOrganizationDocument,
     {
-      variables: { organizationId: '1' },
+      variables: { organizationId: '2' },
     }
   );
 
   const backendShelters: Shelter[] = useMemo(() => {
     type ShelterResult = NonNullable<
-      ViewSheltersByOrganizationQuery['sheltersByOrganization']['results'][number]
+      ViewSheltersByOrganizationQuery['adminShelters']['results'][number]
     >;
     return (
-      data?.sheltersByOrganization?.results?.map((s: ShelterResult) => ({
+      data?.adminShelters?.results?.map((s: ShelterResult) => ({
         id: String(s.id),
         name: s.name ?? null,
         address: s.location?.place ?? null,
@@ -31,7 +31,7 @@ export default function Dashboard() {
         tags: null,
       })) ?? []
     );
-  }, [data?.sheltersByOrganization?.results]);
+  }, [data?.adminShelters?.results]);
 
   const [page, setPage] = useState(1);
 

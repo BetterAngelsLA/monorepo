@@ -619,6 +619,10 @@ export type DjangoImageType = {
   width: Scalars['Int']['output'];
 };
 
+export type DjangoModelFilterInput = {
+  pk: Scalars['ID']['input'];
+};
+
 export type DjangoModelType = {
   __typename?: 'DjangoModelType';
   pk: Scalars['ID']['output'];
@@ -1828,6 +1832,7 @@ export enum PronounEnum {
 
 export type Query = {
   __typename?: 'Query';
+  adminShelters: ShelterTypeOffsetPaginated;
   bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
   caseworkerOrganizations: OrganizationTypeOffsetPaginated;
   clientContact: ClientContactType;
@@ -1856,11 +1861,17 @@ export type Query = {
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
   shelters: ShelterTypeOffsetPaginated;
-  sheltersByOrganization: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
   task: TaskType;
   tasks: TaskTypeOffsetPaginated;
+};
+
+
+export type QueryAdminSheltersArgs = {
+  filters?: InputMaybe<ShelterFilter>;
+  ordering?: Array<ShelterOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -2012,14 +2023,6 @@ export type QueryShelterArgs = {
 export type QuerySheltersArgs = {
   filters?: InputMaybe<ShelterFilter>;
   ordering?: InputMaybe<Array<ShelterOrder>>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QuerySheltersByOrganizationArgs = {
-  filters?: InputMaybe<ShelterFilter>;
-  ordering?: Array<ShelterOrder>;
-  organizationId: Scalars['ID']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2198,6 +2201,7 @@ export type ShelterFilter = {
   OR?: InputMaybe<ShelterFilter>;
   geolocation?: InputMaybe<GeolocationInput>;
   mapBounds?: InputMaybe<MapBoundsInput>;
+  organization?: InputMaybe<DjangoModelFilterInput>;
   properties?: InputMaybe<ShelterPropertyInput>;
 };
 
@@ -2209,6 +2213,7 @@ export type ShelterLocationType = {
 };
 
 export type ShelterOrder = {
+  createdAt?: InputMaybe<Ordering>;
   name?: InputMaybe<Ordering>;
 };
 

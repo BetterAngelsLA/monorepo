@@ -1,5 +1,8 @@
 query ViewSheltersByOrganization($organizationId: ID!) {
-  sheltersByOrganization(organizationId: $organizationId) {
+  adminShelters(
+    filters: { organization: { pk: $organizationId } }
+    ordering: [{ createdAt: DESC }]
+  ) {
     results {
       id
       name
