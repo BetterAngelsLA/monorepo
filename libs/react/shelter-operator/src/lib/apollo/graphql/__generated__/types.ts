@@ -1,53 +1,40 @@
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = {
-  [K in keyof T]: T[K];
-};
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
-  [SubKey in K]?: Maybe<T[SubKey]>;
-};
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
-  [SubKey in K]: Maybe<T[SubKey]>;
-};
-export type MakeEmpty<
-  T extends { [key: string]: unknown },
-  K extends keyof T
-> = { [_ in K]?: never };
-export type Incremental<T> =
-  | T
-  | {
-      [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never;
-    };
+export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string };
-  String: { input: string; output: string };
-  Boolean: { input: boolean; output: boolean };
-  Int: { input: number; output: number };
-  Float: { input: number; output: number };
+  ID: { input: string; output: string; }
+  String: { input: string; output: string; }
+  Boolean: { input: boolean; output: boolean; }
+  Int: { input: number; output: number; }
+  Float: { input: number; output: number; }
   /** Date (isoformat) */
-  Date: { input: any; output: any };
+  Date: { input: any; output: any; }
   /** Date with time (isoformat) */
-  DateTime: { input: any; output: any };
+  DateTime: { input: any; output: any; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
-  JSON: { input: any; output: any };
-  LatitudeScalar: { input: any; output: any };
-  LongitudeScalar: { input: any; output: any };
-  NonBlankString: { input: string; output: string };
-  PhoneNumber: { input: any; output: any };
+  JSON: { input: any; output: any; }
+  LatitudeScalar: { input: any; output: any; }
+  LongitudeScalar: { input: any; output: any; }
+  NonBlankString: { input: string; output: string; }
+  PhoneNumber: { input: any; output: any; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
-  Point: { input: any; output: any };
+  Point: { input: any; output: any; }
   /** Time (isoformat) */
-  Time: { input: any; output: any };
-  UUID: { input: any; output: any };
+  Time: { input: any; output: any; }
+  UUID: { input: any; output: any; }
   /** Represents a file upload. */
-  Upload: { input: any; output: any };
+  Upload: { input: any; output: any; }
 };
 
 export enum AccessibilityChoices {
   AdaRooms = 'ADA_ROOMS',
   MedicalEquipmentPermitted = 'MEDICAL_EQUIPMENT_PERMITTED',
-  WheelchairAccessible = 'WHEELCHAIR_ACCESSIBLE',
+  WheelchairAccessible = 'WHEELCHAIR_ACCESSIBLE'
 }
 
 export type AccessibilityType = {
@@ -59,12 +46,10 @@ export enum AdaAccommodationEnum {
   Hearing = 'HEARING',
   Mobility = 'MOBILITY',
   Other = 'OTHER',
-  Visual = 'VISUAL',
+  Visual = 'VISUAL'
 }
 
-export type AddOrganizationMemberPayload =
-  | OperationInfo
-  | OrganizationMemberType;
+export type AddOrganizationMemberPayload = OperationInfo | OrganizationMemberType;
 
 export type AddressInput = {
   addressComponents?: InputMaybe<Scalars['JSON']['input']>;
@@ -95,108 +80,13 @@ export enum AttachmentType {
   Document = 'DOCUMENT',
   Image = 'IMAGE',
   Unknown = 'UNKNOWN',
-  Video = 'VIDEO',
+  Video = 'VIDEO'
 }
 
 export type AuthResponse = {
   __typename?: 'AuthResponse';
   status_code: Scalars['String']['output'];
 };
-
-export enum CityChoices {
-  AgouraHills = 'AGOURA_HILLS',
-  Alhambra = 'ALHAMBRA',
-  Arcadia = 'ARCADIA',
-  Artesia = 'ARTESIA',
-  Avalon = 'AVALON',
-  Azusa = 'AZUSA',
-  BaldwinPark = 'BALDWIN_PARK',
-  Bell = 'BELL',
-  Bellflower = 'BELLFLOWER',
-  BellGardens = 'BELL_GARDENS',
-  BeverlyHills = 'BEVERLY_HILLS',
-  Bradbury = 'BRADBURY',
-  Burbank = 'BURBANK',
-  Calabasas = 'CALABASAS',
-  Carson = 'CARSON',
-  Cerritos = 'CERRITOS',
-  Claremont = 'CLAREMONT',
-  Commerce = 'COMMERCE',
-  Compton = 'COMPTON',
-  Covina = 'COVINA',
-  Cudahy = 'CUDAHY',
-  CulverCity = 'CULVER_CITY',
-  DiamondBar = 'DIAMOND_BAR',
-  Downey = 'DOWNEY',
-  Duarte = 'DUARTE',
-  ElMonte = 'EL_MONTE',
-  ElSegundo = 'EL_SEGUNDO',
-  Gardena = 'GARDENA',
-  Glendale = 'GLENDALE',
-  Glendora = 'GLENDORA',
-  HawaiianGardens = 'HAWAIIAN_GARDENS',
-  Hawthorne = 'HAWTHORNE',
-  HermosaBeach = 'HERMOSA_BEACH',
-  HiddenHills = 'HIDDEN_HILLS',
-  Hollywood = 'HOLLYWOOD',
-  HuntingtonPark = 'HUNTINGTON_PARK',
-  Industry = 'INDUSTRY',
-  Inglewood = 'INGLEWOOD',
-  Irwindale = 'IRWINDALE',
-  Lakewood = 'LAKEWOOD',
-  Lancaster = 'LANCASTER',
-  Lawndale = 'LAWNDALE',
-  LaCanadaFlintridge = 'LA_CANADA_FLINTRIDGE',
-  LaHabraHeights = 'LA_HABRA_HEIGHTS',
-  LaMirada = 'LA_MIRADA',
-  LaPuente = 'LA_PUENTE',
-  LaVerne = 'LA_VERNE',
-  Lomita = 'LOMITA',
-  LongBeach = 'LONG_BEACH',
-  LosAngeles = 'LOS_ANGELES',
-  Lynwood = 'LYNWOOD',
-  Malibu = 'MALIBU',
-  ManhattanBeach = 'MANHATTAN_BEACH',
-  Maywood = 'MAYWOOD',
-  Monrovia = 'MONROVIA',
-  Montebello = 'MONTEBELLO',
-  MontereyPark = 'MONTEREY_PARK',
-  Norwalk = 'NORWALK',
-  Palmdale = 'PALMDALE',
-  PalosVerdesEstates = 'PALOS_VERDES_ESTATES',
-  Paramount = 'PARAMOUNT',
-  Pasadena = 'PASADENA',
-  PicoRivera = 'PICO_RIVERA',
-  Pomona = 'POMONA',
-  RanchoPalosVerdes = 'RANCHO_PALOS_VERDES',
-  RedondoBeach = 'REDONDO_BEACH',
-  RollingHills = 'ROLLING_HILLS',
-  RollingHillsEstates = 'ROLLING_HILLS_ESTATES',
-  Rosemead = 'ROSEMEAD',
-  SantaClarita = 'SANTA_CLARITA',
-  SantaFeSprings = 'SANTA_FE_SPRINGS',
-  SantaMonica = 'SANTA_MONICA',
-  SanDimas = 'SAN_DIMAS',
-  SanFernando = 'SAN_FERNANDO',
-  SanGabriel = 'SAN_GABRIEL',
-  SanMarino = 'SAN_MARINO',
-  SierraMadre = 'SIERRA_MADRE',
-  SignalHill = 'SIGNAL_HILL',
-  SouthElMonte = 'SOUTH_EL_MONTE',
-  SouthGate = 'SOUTH_GATE',
-  SouthPasadena = 'SOUTH_PASADENA',
-  TempleCity = 'TEMPLE_CITY',
-  Torrance = 'TORRANCE',
-  Venice = 'VENICE',
-  Vernon = 'VERNON',
-  Walnut = 'WALNUT',
-  WestlakeVillage = 'WESTLAKE_VILLAGE',
-  WestCovina = 'WEST_COVINA',
-  WestHollywood = 'WEST_HOLLYWOOD',
-  WestLosAngeles = 'WEST_LOS_ANGELES',
-  Whittier = 'WHITTIER',
-  Wilmington = 'WILMINGTON',
-}
 
 export type CityType = {
   __typename?: 'CityType';
@@ -248,7 +138,7 @@ export type ClientDocumentFilter = {
 export enum ClientDocumentGroupEnum {
   DocReady = 'DOC_READY',
   Forms = 'FORMS',
-  Other = 'OTHER',
+  Other = 'OTHER'
 }
 
 export enum ClientDocumentNamespaceEnum {
@@ -262,7 +152,7 @@ export enum ClientDocumentNamespaceEnum {
   OtherDocReady = 'OTHER_DOC_READY',
   OtherForm = 'OTHER_FORM',
   PhotoId = 'PHOTO_ID',
-  SocialSecurityCard = 'SOCIAL_SECURITY_CARD',
+  SocialSecurityCard = 'SOCIAL_SECURITY_CARD'
 }
 
 export type ClientDocumentType = AttachmentInterface & {
@@ -457,13 +347,9 @@ export type CreateClientDocumentInput = {
 
 export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
 
-export type CreateClientHouseholdMemberPayload =
-  | ClientHouseholdMemberType
-  | OperationInfo;
+export type CreateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo;
 
-export type CreateClientProfileDataImportPayload =
-  | ClientProfileDataImportType
-  | OperationInfo;
+export type CreateClientProfileDataImportPayload = ClientProfileDataImportType | OperationInfo;
 
 export type CreateClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
@@ -548,13 +434,9 @@ export type CreateHmisClientProfileInput = {
   veteran?: InputMaybe<HmisVeteranStatusEnum>;
 };
 
-export type CreateHmisClientProfilePayload =
-  | HmisClientProfileType
-  | OperationInfo;
+export type CreateHmisClientProfilePayload = HmisClientProfileType | OperationInfo;
 
-export type CreateHmisClientProgramPayload =
-  | OperationInfo
-  | ProgramEnrollmentType;
+export type CreateHmisClientProgramPayload = OperationInfo | ProgramEnrollmentType;
 
 export type CreateHmisNoteInput = {
   date: Scalars['Date']['input'];
@@ -573,9 +455,7 @@ export type CreateHmisNoteServiceRequestInput = {
   serviceRequestType: ServiceRequestTypeEnum;
 };
 
-export type CreateHmisNoteServiceRequestPayload =
-  | OperationInfo
-  | ServiceRequestType;
+export type CreateHmisNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type CreateHmisProfilePayload = HmisProfileType | OperationInfo;
 
@@ -607,15 +487,12 @@ export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateNoteServiceRequestInput = {
   noteId: Scalars['ID']['input'];
-
   serviceId?: InputMaybe<Scalars['ID']['input']>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   serviceRequestType: ServiceRequestTypeEnum;
 };
 
-export type CreateNoteServiceRequestPayload =
-  | OperationInfo
-  | ServiceRequestType;
+export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type CreateProfileDataImportInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
@@ -624,7 +501,6 @@ export type CreateProfileDataImportInput = {
 
 export type CreateServiceRequestInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
-
   serviceId?: InputMaybe<Scalars['ID']['input']>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   status: ServiceRequestStatusEnum;
@@ -632,17 +508,13 @@ export type CreateServiceRequestInput = {
 
 export type CreateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
-export type CreateSocialMediaProfilePayload =
-  | OperationInfo
-  | SocialMediaProfileType;
+export type CreateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type CreateTaskInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
-
   hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
   hmisNote?: InputMaybe<Scalars['ID']['input']>;
-
   note?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
   summary: Scalars['String']['input'];
@@ -673,6 +545,7 @@ export type CurrentUserType = {
   username?: Maybe<Scalars['String']['output']>;
 };
 
+
 export type CurrentUserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   ordering?: Array<OrganizationOrder>;
@@ -683,9 +556,7 @@ export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
 export type DeleteClientDocumentPayload = ClientDocumentType | OperationInfo;
 
-export type DeleteClientHouseholdMemberPayload =
-  | ClientHouseholdMemberType
-  | OperationInfo;
+export type DeleteClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo;
 
 export type DeleteClientProfilePayload = DeletedObjectType | OperationInfo;
 
@@ -703,9 +574,7 @@ export type DeleteNotePayload = NoteType | OperationInfo;
 
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
 
-export type DeleteSocialMediaProfilePayload =
-  | OperationInfo
-  | SocialMediaProfileType;
+export type DeleteSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type DeleteTaskPayload = DeletedObjectType | OperationInfo;
 
@@ -724,7 +593,7 @@ export enum DemographicChoices {
   SingleMen = 'SINGLE_MEN',
   SingleMoms = 'SINGLE_MOMS',
   SingleWomen = 'SINGLE_WOMEN',
-  TayTeen = 'TAY_TEEN',
+  TayTeen = 'TAY_TEEN'
 }
 
 export type DemographicType = {
@@ -763,7 +632,7 @@ export enum EntryRequirementChoices {
   Referral = 'REFERRAL',
   Reservation = 'RESERVATION',
   VehicleRegistration = 'VEHICLE_REGISTRATION',
-  WalkUps = 'WALK_UPS',
+  WalkUps = 'WALK_UPS'
 }
 
 export type EntryRequirementType = {
@@ -777,7 +646,7 @@ export enum EyeColorEnum {
   Gray = 'GRAY',
   Green = 'GREEN',
   Hazel = 'HAZEL',
-  Other = 'OTHER',
+  Other = 'OTHER'
 }
 
 export type FeatureControlData = {
@@ -802,7 +671,7 @@ export enum FunderChoices {
   Hopwa = 'HOPWA',
   Lahsa = 'LAHSA',
   Other = 'OTHER',
-  Private = 'PRIVATE',
+  Private = 'PRIVATE'
 }
 
 export type FunderType = {
@@ -817,7 +686,7 @@ export enum GenderEnum {
   Other = 'OTHER',
   PreferNotToSay = 'PREFER_NOT_TO_SAY',
   TransFemale = 'TRANS_FEMALE',
-  TransMale = 'TRANS_MALE',
+  TransMale = 'TRANS_MALE'
 }
 
 export enum GeneralServiceChoices {
@@ -832,7 +701,7 @@ export enum GeneralServiceChoices {
   Mail = 'MAIL',
   Phone = 'PHONE',
   Tls = 'TLS',
-  Transportation = 'TRANSPORTATION',
+  Transportation = 'TRANSPORTATION'
 }
 
 export type GeneralServiceType = {
@@ -854,14 +723,14 @@ export enum HairColorEnum {
   Gray = 'GRAY',
   Other = 'OTHER',
   Red = 'RED',
-  White = 'WHITE',
+  White = 'WHITE'
 }
 
 export enum HealthServiceChoices {
   Dental = 'DENTAL',
   Medical = 'MEDICAL',
   MentalHealth = 'MENTAL_HEALTH',
-  SubstanceUseTreatment = 'SUBSTANCE_USE_TREATMENT',
+  SubstanceUseTreatment = 'SUBSTANCE_USE_TREATMENT'
 }
 
 export type HealthServiceType = {
@@ -874,7 +743,7 @@ export enum HmisAgencyEnum {
   Lahsa = 'LAHSA',
   LongBeach = 'LONG_BEACH',
   Pasadena = 'PASADENA',
-  Vash = 'VASH',
+  Vash = 'VASH'
 }
 
 export type HmisClientProfileFilter = {
@@ -964,7 +833,7 @@ export enum HmisDobQualityEnum {
   Full = 'FULL',
   NotCollected = 'NOT_COLLECTED',
   NoAnswer = 'NO_ANSWER',
-  Partial = 'PARTIAL',
+  Partial = 'PARTIAL'
 }
 
 export enum HmisGenderEnum {
@@ -977,7 +846,7 @@ export enum HmisGenderEnum {
   Questioning = 'QUESTIONING',
   Specific = 'SPECIFIC',
   Transgender = 'TRANSGENDER',
-  WomanGirl = 'WOMAN_GIRL',
+  WomanGirl = 'WOMAN_GIRL'
 }
 
 export type HmisLoginError = {
@@ -998,7 +867,7 @@ export enum HmisNameQualityEnum {
   Full = 'FULL',
   NotCollected = 'NOT_COLLECTED',
   NoAnswer = 'NO_ANSWER',
-  Partial = 'PARTIAL',
+  Partial = 'PARTIAL'
 }
 
 export type HmisNoteFilter = {
@@ -1038,13 +907,16 @@ export type HmisNoteType = {
   title?: Maybe<Scalars['String']['output']>;
 };
 
+
 export type HmisNoteTypeProvidedServicesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type HmisNoteTypeRequestedServicesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
 
 export type HmisNoteTypeTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
@@ -1101,7 +973,7 @@ export enum HmisRaceEnum {
   NotCollected = 'NOT_COLLECTED',
   NoAnswer = 'NO_ANSWER',
   PacificIslander = 'PACIFIC_ISLANDER',
-  White = 'WHITE',
+  White = 'WHITE'
 }
 
 export enum HmisSsnQualityEnum {
@@ -1109,7 +981,7 @@ export enum HmisSsnQualityEnum {
   Full = 'FULL',
   NotCollected = 'NOT_COLLECTED',
   NoAnswer = 'NO_ANSWER',
-  Partial = 'PARTIAL',
+  Partial = 'PARTIAL'
 }
 
 export enum HmisSuffixEnum {
@@ -1122,7 +994,7 @@ export enum HmisSuffixEnum {
   Second = 'SECOND',
   Sixth = 'SIXTH',
   Sr = 'SR',
-  Third = 'THIRD',
+  Third = 'THIRD'
 }
 
 export enum HmisVeteranStatusEnum {
@@ -1130,7 +1002,7 @@ export enum HmisVeteranStatusEnum {
   No = 'NO',
   NotCollected = 'NOT_COLLECTED',
   NoAnswer = 'NO_ANSWER',
-  Yes = 'YES',
+  Yes = 'YES'
 }
 
 export type IdFilterLookup = {
@@ -1163,7 +1035,7 @@ export type IdFilterLookup = {
 export enum ImmediateNeedChoices {
   Clothing = 'CLOTHING',
   Food = 'FOOD',
-  Showers = 'SHOWERS',
+  Showers = 'SHOWERS'
 }
 
 export type ImmediateNeedType = {
@@ -1179,9 +1051,7 @@ export type ImportClientProfileInput = {
   sourceName: Scalars['String']['input'];
 };
 
-export type ImportClientProfilePayload =
-  | ClientProfileImportRecordType
-  | OperationInfo;
+export type ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo;
 
 export type ImportNoteInput = {
   importJobId: Scalars['UUID']['input'];
@@ -1240,7 +1110,7 @@ export enum LanguageEnum {
   Spanish = 'SPANISH',
   Tagalog = 'TAGALOG',
   TraditionalChinese = 'TRADITIONAL_CHINESE',
-  Vietnamese = 'VIETNAMESE',
+  Vietnamese = 'VIETNAMESE'
 }
 
 export enum LivingSituationEnum {
@@ -1249,7 +1119,7 @@ export enum LivingSituationEnum {
   Other = 'OTHER',
   Shelter = 'SHELTER',
   Tent = 'TENT',
-  Vehicle = 'VEHICLE',
+  Vehicle = 'VEHICLE'
 }
 
 export type LocationInput = {
@@ -1261,9 +1131,7 @@ export type LocationInput = {
 export type LocationType = {
   __typename?: 'LocationType';
   address: AddressType;
-
   id?: Maybe<Scalars['ID']['output']>;
-
   point: Scalars['Point']['output'];
   pointOfInterest?: Maybe<Scalars['String']['output']>;
 };
@@ -1285,7 +1153,7 @@ export enum MaritalStatusEnum {
   Married = 'MARRIED',
   Separated = 'SEPARATED',
   Single = 'SINGLE',
-  Widowed = 'WIDOWED',
+  Widowed = 'WIDOWED'
 }
 
 export enum MoodEnum {
@@ -1308,7 +1176,7 @@ export enum MoodEnum {
   Personable = 'PERSONABLE',
   Pleasant = 'PLEASANT',
   Restless = 'RESTLESS',
-  Suicidal = 'SUICIDAL',
+  Suicidal = 'SUICIDAL'
 }
 
 export type MoodType = {
@@ -1325,12 +1193,10 @@ export type Mutation = {
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
   createClientProfile: CreateClientProfilePayload;
   createClientProfileDataImport: CreateClientProfileDataImportPayload;
-
   createHmisClientProfile: CreateHmisClientProfilePayload;
   createHmisClientProgram: CreateHmisClientProgramPayload;
   createHmisNote: CreateHmisNotePayload;
   createHmisNoteServiceRequest: CreateHmisNoteServiceRequestPayload;
-
   createHmisProfile: CreateHmisProfilePayload;
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
@@ -1350,16 +1216,12 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
-
   hmisLogin: HmisLoginSuccessHmisLoginError;
-
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
   login: AuthResponse;
   logout: Scalars['Boolean']['output'];
-
   removeHmisNoteServiceRequest: RemoveHmisNoteServiceRequestPayload;
-
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   removeOrganizationMember: RemoveOrganizationMemberPayload;
   revertNote: RevertNotePayload;
@@ -1369,11 +1231,9 @@ export type Mutation = {
   updateClientProfile: UpdateClientProfilePayload;
   updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
   updateCurrentUser: UpdateCurrentUserPayload;
-
   updateHmisClientProfile: UpdateHmisClientProfilePayload;
   updateHmisNote: UpdateHmisNotePayload;
   updateHmisNoteLocation: UpdateHmisNoteLocationPayload;
-
   updateHmisProfile: UpdateHmisProfilePayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
@@ -1382,207 +1242,258 @@ export type Mutation = {
   updateTask: UpdateTaskPayload;
 };
 
+
 export type MutationAddOrganizationMemberArgs = {
   data: OrgInvitationInput;
 };
+
 
 export type MutationCreateClientContactArgs = {
   data: ClientContactInput;
 };
 
+
 export type MutationCreateClientDocumentArgs = {
   data: CreateClientDocumentInput;
 };
+
 
 export type MutationCreateClientHouseholdMemberArgs = {
   data: ClientHouseholdMemberInput;
 };
 
+
 export type MutationCreateClientProfileArgs = {
   data: CreateClientProfileInput;
 };
+
 
 export type MutationCreateClientProfileDataImportArgs = {
   data: CreateProfileDataImportInput;
 };
 
+
 export type MutationCreateHmisClientProfileArgs = {
   data: CreateHmisClientProfileInput;
 };
+
 
 export type MutationCreateHmisClientProgramArgs = {
   clientId: Scalars['Int']['input'];
   programHmisId: Scalars['Int']['input'];
 };
 
+
 export type MutationCreateHmisNoteArgs = {
   data: CreateHmisNoteInput;
 };
+
 
 export type MutationCreateHmisNoteServiceRequestArgs = {
   data: CreateHmisNoteServiceRequestInput;
 };
 
+
 export type MutationCreateHmisProfileArgs = {
   data: HmisProfileInput;
 };
+
 
 export type MutationCreateNoteArgs = {
   data: CreateNoteInput;
 };
 
+
 export type MutationCreateNoteDataImportArgs = {
   data: CreateNoteDataImportInput;
 };
+
 
 export type MutationCreateNoteMoodArgs = {
   data: CreateNoteMoodInput;
 };
 
+
 export type MutationCreateNoteServiceRequestArgs = {
   data: CreateNoteServiceRequestInput;
 };
+
 
 export type MutationCreateServiceRequestArgs = {
   data: CreateServiceRequestInput;
 };
 
+
 export type MutationCreateSocialMediaProfileArgs = {
   data: SocialMediaProfileInput;
 };
+
 
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
 };
 
+
 export type MutationDeleteClientContactArgs = {
   data: DeleteDjangoObjectInput;
 };
+
 
 export type MutationDeleteClientDocumentArgs = {
   data: DeleteDjangoObjectInput;
 };
 
+
 export type MutationDeleteClientHouseholdMemberArgs = {
   data: DeleteDjangoObjectInput;
 };
+
 
 export type MutationDeleteClientProfileArgs = {
   data: DeleteDjangoObjectInput;
 };
 
+
 export type MutationDeleteHmisProfileArgs = {
   data: DeleteDjangoObjectInput;
 };
+
 
 export type MutationDeleteMoodArgs = {
   data: DeleteDjangoObjectInput;
 };
 
+
 export type MutationDeleteNoteArgs = {
   data: DeleteDjangoObjectInput;
 };
+
 
 export type MutationDeleteServiceRequestArgs = {
   data: DeleteDjangoObjectInput;
 };
 
+
 export type MutationDeleteSocialMediaProfileArgs = {
   data: DeleteDjangoObjectInput;
 };
 
+
 export type MutationDeleteTaskArgs = {
   data: DeleteDjangoObjectInput;
 };
+
 
 export type MutationHmisLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
 };
 
+
 export type MutationImportClientProfileArgs = {
   data: ImportClientProfileInput;
 };
+
 
 export type MutationImportNoteArgs = {
   data: ImportNoteInput;
 };
 
+
 export type MutationLoginArgs = {
   input: LoginInput;
 };
+
 
 export type MutationRemoveHmisNoteServiceRequestArgs = {
   data: RemoveHmisNoteServiceRequestInput;
 };
 
+
 export type MutationRemoveNoteServiceRequestArgs = {
   data: RemoveNoteServiceRequestInput;
 };
+
 
 export type MutationRemoveOrganizationMemberArgs = {
   data: RemoveOrganizationMemberInput;
 };
 
+
 export type MutationRevertNoteArgs = {
   data: RevertNoteInput;
 };
+
 
 export type MutationUpdateClientContactArgs = {
   data: ClientContactInput;
 };
 
+
 export type MutationUpdateClientDocumentArgs = {
   data: UpdateClientDocumentInput;
 };
+
 
 export type MutationUpdateClientHouseholdMemberArgs = {
   data: ClientHouseholdMemberInput;
 };
 
+
 export type MutationUpdateClientProfileArgs = {
   data: UpdateClientProfileInput;
 };
+
 
 export type MutationUpdateClientProfilePhotoArgs = {
   data: ClientProfilePhotoInput;
 };
 
+
 export type MutationUpdateCurrentUserArgs = {
   data: UpdateUserInput;
 };
+
 
 export type MutationUpdateHmisClientProfileArgs = {
   data: UpdateHmisClientProfileInput;
 };
 
+
 export type MutationUpdateHmisNoteArgs = {
   data: UpdateHmisNoteInput;
 };
+
 
 export type MutationUpdateHmisNoteLocationArgs = {
   data: UpdateHmisNoteLocationInput;
 };
 
+
 export type MutationUpdateHmisProfileArgs = {
   data: HmisProfileInput;
 };
+
 
 export type MutationUpdateNoteArgs = {
   data: UpdateNoteInput;
 };
 
+
 export type MutationUpdateNoteLocationArgs = {
   data: UpdateNoteLocationInput;
 };
+
 
 export type MutationUpdateServiceRequestArgs = {
   data: UpdateServiceRequestInput;
 };
 
+
 export type MutationUpdateSocialMediaProfileArgs = {
   data: SocialMediaProfileInput;
 };
+
 
 export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
@@ -1632,9 +1543,7 @@ export type NoteType = {
   __typename?: 'NoteType';
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
-
   createdBy?: Maybe<UserType>;
-
   id: Scalars['ID']['output'];
   interactedAt: Scalars['DateTime']['output'];
   isSubmitted: Scalars['Boolean']['output'];
@@ -1651,13 +1560,16 @@ export type NoteType = {
   userCanEdit: Scalars['Boolean']['output'];
 };
 
+
 export type NoteTypeProvidedServicesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type NoteTypeRequestedServicesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
 
 export type NoteTypeTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
@@ -1708,7 +1620,7 @@ export enum OperationMessageKind {
   Info = 'INFO',
   Permission = 'PERMISSION',
   Validation = 'VALIDATION',
-  Warning = 'WARNING',
+  Warning = 'WARNING'
 }
 
 export enum Ordering {
@@ -1717,7 +1629,7 @@ export enum Ordering {
   AscNullsLast = 'ASC_NULLS_LAST',
   Desc = 'DESC',
   DescNullsFirst = 'DESC_NULLS_FIRST',
-  DescNullsLast = 'DESC_NULLS_LAST',
+  DescNullsLast = 'DESC_NULLS_LAST'
 }
 
 export type OrgInvitationInput = {
@@ -1731,7 +1643,7 @@ export type OrgInvitationInput = {
 export enum OrgRoleEnum {
   Admin = 'ADMIN',
   Member = 'MEMBER',
-  Superuser = 'SUPERUSER',
+  Superuser = 'SUPERUSER'
 }
 
 export type OrganizationFilter = {
@@ -1789,6 +1701,7 @@ export type OrganizationServiceCategoryType = {
   services: Array<OrganizationServiceType>;
 };
 
+
 export type OrganizationServiceCategoryTypeServicesArgs = {
   ordering?: Array<OrganizationServiceOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -1845,7 +1758,7 @@ export enum ParkingChoices {
   Bicycle = 'BICYCLE',
   Motorcycle = 'MOTORCYCLE',
   NoParking = 'NO_PARKING',
-  Rv = 'RV',
+  Rv = 'RV'
 }
 
 export type ParkingType = {
@@ -1868,7 +1781,7 @@ export enum PetChoices {
   Exotics = 'EXOTICS',
   NoPetsAllowed = 'NO_PETS_ALLOWED',
   PetArea = 'PET_AREA',
-  ServiceAnimals = 'SERVICE_ANIMALS',
+  ServiceAnimals = 'SERVICE_ANIMALS'
 }
 
 export type PetType = {
@@ -1896,7 +1809,7 @@ export enum PreferredCommunicationEnum {
   Instagram = 'INSTAGRAM',
   Linkedin = 'LINKEDIN',
   Text = 'TEXT',
-  Whatsapp = 'WHATSAPP',
+  Whatsapp = 'WHATSAPP'
 }
 
 export type ProgramEnrollmentType = {
@@ -1910,7 +1823,7 @@ export enum PronounEnum {
   HeHimHis = 'HE_HIM_HIS',
   Other = 'OTHER',
   SheHerHers = 'SHE_HER_HERS',
-  TheyThemTheirs = 'THEY_THEM_THEIRS',
+  TheyThemTheirs = 'THEY_THEM_THEIRS'
 }
 
 export type Query = {
@@ -1925,7 +1838,6 @@ export type Query = {
   clientHouseholdMembers: ClientHouseholdMemberTypeOffsetPaginated;
   clientProfile: ClientProfileType;
   clientProfiles: ClientProfileTypeOffsetPaginated;
-
   currentUser: CurrentUserType;
   featureControls: FeatureControlData;
   hmisClientProfile: HmisClientProfileType;
@@ -1933,7 +1845,6 @@ export type Query = {
   hmisClientPrograms: Array<HmisClientProgramType>;
   hmisNote: HmisNoteType;
   hmisNotes: HmisNoteTypeOffsetPaginated;
-
   hmisProfile: HmisProfileType;
   hmisProfiles: HmisProfileTypeOffsetPaginated;
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
@@ -1951,30 +1862,34 @@ export type Query = {
   tasks: TaskTypeOffsetPaginated;
 };
 
+
 export type QueryBulkClientProfileImportRecordsArgs = {
   data: ClientProfileImportRecordsBulkInput;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryCaseworkerOrganizationsArgs = {
   filters?: InputMaybe<OrganizationFilter>;
-
   ordering?: InputMaybe<Array<OrganizationOrder>>;
-
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
 
 export type QueryClientContactArgs = {
   pk: Scalars['ID']['input'];
 };
 
+
 export type QueryClientContactsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryClientDocumentArgs = {
   pk: Scalars['ID']['input'];
 };
+
 
 export type QueryClientDocumentsArgs = {
   clientId: Scalars['String']['input'];
@@ -1982,29 +1897,33 @@ export type QueryClientDocumentsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryClientHouseholdMemberArgs = {
   pk: Scalars['ID']['input'];
 };
+
 
 export type QueryClientHouseholdMembersArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryClientProfileArgs = {
   pk: Scalars['ID']['input'];
 };
 
+
 export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
-
   ordering?: Array<ClientProfileOrder>;
-
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
 
 export type QueryHmisClientProfileArgs = {
   id: Scalars['ID']['input'];
 };
+
 
 export type QueryHmisClientProfilesArgs = {
   filters?: InputMaybe<HmisClientProfileFilter>;
@@ -2012,13 +1931,16 @@ export type QueryHmisClientProfilesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryHmisClientProgramsArgs = {
   clientId: Scalars['ID']['input'];
 };
 
+
 export type QueryHmisNoteArgs = {
   id: Scalars['ID']['input'];
 };
+
 
 export type QueryHmisNotesArgs = {
   filters?: InputMaybe<HmisNoteFilter>;
@@ -2026,84 +1948,91 @@ export type QueryHmisNotesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryHmisProfileArgs = {
   pk: Scalars['ID']['input'];
 };
+
 
 export type QueryHmisProfilesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryInteractionAuthorsArgs = {
   filters?: InputMaybe<InteractionAuthorFilter>;
-
   ordering?: Array<InteractionAuthorOrder>;
-
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
 
 export type QueryNoteArgs = {
   pk: Scalars['ID']['input'];
 };
 
+
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
-
   ordering?: Array<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
 
 export type QueryOrganizationMemberArgs = {
   organizationId: Scalars['String']['input'];
   userId: Scalars['String']['input'];
 };
 
+
 export type QueryOrganizationMembersArgs = {
   ordering?: InputMaybe<Array<OrganizationMemberOrdering>>;
-
   organizationId: Scalars['String']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
 
 export type QueryServiceCategoriesArgs = {
   ordering?: Array<OrganizationServiceCategoryOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryServicesArgs = {
   ordering?: Array<OrganizationServiceOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
 export type QueryShelterArgs = {
   pk: Scalars['ID']['input'];
 };
 
+
 export type QuerySheltersArgs = {
   filters?: InputMaybe<ShelterFilter>;
-
   ordering?: InputMaybe<Array<ShelterOrder>>;
-
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
 
 export type QuerySocialMediaProfileArgs = {
   pk: Scalars['ID']['input'];
 };
 
+
 export type QuerySocialMediaProfilesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
 
 export type QueryTaskArgs = {
   pk: Scalars['ID']['input'];
 };
 
+
 export type QueryTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
-
   ordering?: InputMaybe<Array<TaskOrder>>;
-
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2114,7 +2043,7 @@ export enum RaceEnum {
   HispanicLatino = 'HISPANIC_LATINO',
   NativeHawaiianPacificIslander = 'NATIVE_HAWAIIAN_PACIFIC_ISLANDER',
   Other = 'OTHER',
-  WhiteCaucasian = 'WHITE_CAUCASIAN',
+  WhiteCaucasian = 'WHITE_CAUCASIAN'
 }
 
 export enum RelationshipTypeEnum {
@@ -2131,7 +2060,7 @@ export enum RelationshipTypeEnum {
   PastCaseManager = 'PAST_CASE_MANAGER',
   Pet = 'PET',
   Sibling = 'SIBLING',
-  Uncle = 'UNCLE',
+  Uncle = 'UNCLE'
 }
 
 export type RemoveHmisNoteServiceRequestInput = {
@@ -2173,7 +2102,7 @@ export enum RoomStyleChoices {
   MotelRoom = 'MOTEL_ROOM',
   Other = 'OTHER',
   SharedRooms = 'SHARED_ROOMS',
-  SingleRoom = 'SINGLE_ROOM',
+  SingleRoom = 'SINGLE_ROOM'
 }
 
 export type RoomStyleType = {
@@ -2189,7 +2118,7 @@ export enum SpaChoices {
   Seven = 'SEVEN',
   Six = 'SIX',
   Three = 'THREE',
-  Two = 'TWO',
+  Two = 'TWO'
 }
 
 export type SpaType = {
@@ -2218,12 +2147,12 @@ export enum SelahTeamEnum {
   SundaySocialAtwaterOnSite = 'SUNDAY_SOCIAL_ATWATER_ON_SITE',
   SundaySocialAtwaterOutreach = 'SUNDAY_SOCIAL_ATWATER_OUTREACH',
   WdiOnSite = 'WDI_ON_SITE',
-  WdiOutreach = 'WDI_OUTREACH',
+  WdiOutreach = 'WDI_OUTREACH'
 }
 
 export enum ServiceRequestStatusEnum {
   Completed = 'COMPLETED',
-  ToDo = 'TO_DO',
+  ToDo = 'TO_DO'
 }
 
 export type ServiceRequestType = {
@@ -2235,13 +2164,12 @@ export type ServiceRequestType = {
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   service?: Maybe<OrganizationServiceType>;
-
   status: ServiceRequestStatusEnum;
 };
 
 export enum ServiceRequestTypeEnum {
   Provided = 'PROVIDED',
-  Requested = 'REQUESTED',
+  Requested = 'REQUESTED'
 }
 
 export enum ShelterChoices {
@@ -2251,7 +2179,7 @@ export enum ShelterChoices {
   Other = 'OTHER',
   SafeParking = 'SAFE_PARKING',
   SingleFamilyHouse = 'SINGLE_FAMILY_HOUSE',
-  TinyHomes = 'TINY_HOMES',
+  TinyHomes = 'TINY_HOMES'
 }
 
 export type ShelterFilter = {
@@ -2298,7 +2226,7 @@ export enum ShelterProgramChoices {
   SoberLiving = 'SOBER_LIVING',
   TinyHomeVillage = 'TINY_HOME_VILLAGE',
   TransitionalHousing = 'TRANSITIONAL_HOUSING',
-  WinterShelter = 'WINTER_SHELTER',
+  WinterShelter = 'WINTER_SHELTER'
 }
 
 export type ShelterProgramType = {
@@ -2312,9 +2240,7 @@ export type ShelterPropertyInput = {
   pets?: InputMaybe<Array<PetChoices>>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
-  specialSituationRestrictions?: InputMaybe<
-    Array<SpecialSituationRestrictionChoices>
-  >;
+  specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
 };
 
 export type ShelterType = {
@@ -2397,7 +2323,7 @@ export enum SocialMediaEnum {
   Snapchat = 'SNAPCHAT',
   Tiktok = 'TIKTOK',
   Twitter = 'TWITTER',
-  Whatsapp = 'WHATSAPP',
+  Whatsapp = 'WHATSAPP'
 }
 
 export type SocialMediaProfileInput = {
@@ -2431,7 +2357,7 @@ export enum SpecialSituationRestrictionChoices {
   HumanTrafficking = 'HUMAN_TRAFFICKING',
   JusticeSystems = 'JUSTICE_SYSTEMS',
   None = 'NONE',
-  Veterans = 'VETERANS',
+  Veterans = 'VETERANS'
 }
 
 export type SpecialSituationRestrictionType = {
@@ -2443,14 +2369,14 @@ export enum StatusChoices {
   Approved = 'APPROVED',
   Draft = 'DRAFT',
   Inactive = 'INACTIVE',
-  Pending = 'PENDING',
+  Pending = 'PENDING'
 }
 
 export enum StorageChoices {
   AmnestyLockers = 'AMNESTY_LOCKERS',
   NoStorage = 'NO_STORAGE',
   SharedStorage = 'SHARED_STORAGE',
-  StandardLockers = 'STANDARD_LOCKERS',
+  StandardLockers = 'STANDARD_LOCKERS'
 }
 
 export type StorageType = {
@@ -2472,7 +2398,6 @@ export type TaskFilter = {
   OR?: InputMaybe<TaskFilter>;
   authors?: InputMaybe<Array<Scalars['ID']['input']>>;
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
-
   clientProfileLookup?: InputMaybe<IdFilterLookup>;
   clientProfiles?: InputMaybe<Array<Scalars['ID']['input']>>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
@@ -2481,7 +2406,6 @@ export type TaskFilter = {
   hmisClientProfiles?: InputMaybe<Array<Scalars['ID']['input']>>;
   hmisNote?: InputMaybe<IdFilterLookup>;
   note?: InputMaybe<IdFilterLookup>;
-
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Array<TaskStatusEnum>>;
@@ -2498,7 +2422,7 @@ export type TaskOrder = {
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',
   InProgress = 'IN_PROGRESS',
-  ToDo = 'TO_DO',
+  ToDo = 'TO_DO'
 }
 
 export type TaskType = {
@@ -2507,10 +2431,8 @@ export type TaskType = {
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   description?: Maybe<Scalars['String']['output']>;
-
   hmisClientProfile?: Maybe<HmisClientProfileType>;
   hmisNote?: Maybe<DjangoModelType>;
-
   id: Scalars['ID']['output'];
   note?: Maybe<DjangoModelType>;
   organization?: Maybe<OrganizationType>;
@@ -2538,7 +2460,7 @@ export type TimeRange = {
 export enum TrainingServiceChoices {
   JobTraining = 'JOB_TRAINING',
   LifeSkillsTraining = 'LIFE_SKILLS_TRAINING',
-  Tutoring = 'TUTORING',
+  Tutoring = 'TUTORING'
 }
 
 export type TrainingServiceType = {
@@ -2555,9 +2477,7 @@ export type UpdateClientDocumentInput = {
 
 export type UpdateClientDocumentPayload = ClientDocumentType | OperationInfo;
 
-export type UpdateClientHouseholdMemberPayload =
-  | ClientHouseholdMemberType
-  | OperationInfo;
+export type UpdateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo;
 
 export type UpdateClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
@@ -2604,10 +2524,7 @@ export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
 
 export type UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo;
 
-export type UpdateCurrentUserPayload =
-  | CurrentUserType
-  | OperationInfo
-  | UserType;
+export type UpdateCurrentUserPayload = CurrentUserType | OperationInfo | UserType;
 
 export type UpdateHmisClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
@@ -2652,9 +2569,7 @@ export type UpdateHmisClientProfileInput = {
   veteran?: InputMaybe<HmisVeteranStatusEnum>;
 };
 
-export type UpdateHmisClientProfilePayload =
-  | HmisClientProfileType
-  | OperationInfo;
+export type UpdateHmisClientProfilePayload = HmisClientProfileType | OperationInfo;
 
 export type UpdateHmisNoteInput = {
   date?: InputMaybe<Scalars['Date']['input']>;
@@ -2704,9 +2619,7 @@ export type UpdateServiceRequestInput = {
 
 export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
-export type UpdateSocialMediaProfilePayload =
-  | OperationInfo
-  | SocialMediaProfileType;
+export type UpdateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type UpdateTaskInput = {
   description?: InputMaybe<Scalars['String']['input']>;
@@ -2733,7 +2646,7 @@ export enum UserOrganizationPermissions {
   AddOrgMember = 'ADD_ORG_MEMBER',
   ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
   RemoveOrgMember = 'REMOVE_ORG_MEMBER',
-  ViewOrgMembers = 'VIEW_ORG_MEMBERS',
+  ViewOrgMembers = 'VIEW_ORG_MEMBERS'
 }
 
 export type UserType = {
@@ -2747,14 +2660,13 @@ export type UserType = {
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
-
   organizationsOrganization?: Maybe<Array<OrganizationType>>;
   username?: Maybe<Scalars['String']['output']>;
 };
 
+
 export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
-
   ordering?: Array<OrganizationOrder>;
 };
 
@@ -2762,5 +2674,5 @@ export enum VeteranStatusEnum {
   No = 'NO',
   OtherThanHonorable = 'OTHER_THAN_HONORABLE',
   PreferNotToSay = 'PREFER_NOT_TO_SAY',
-  Yes = 'YES',
+  Yes = 'YES'
 }
