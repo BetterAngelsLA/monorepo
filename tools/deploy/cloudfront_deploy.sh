@@ -30,21 +30,12 @@ DIST_PATH="dist/$APP_ROOT"
 echo "📦 $NX_TASK_TARGET_PROJECT | 🗂 $DIST_PATH → $S3_DEST | 🚀 invalidate: $CF_PATH/*"
 
 # --- Deploy ---
-# 1) Upload new files (keep old hashed bundles so stale edge caches still resolve)
-aws s3 sync "$DIST_PATH" "$S3_DEST"
-echo "✅ Uploaded new files."
-
-# 2) Invalidate CloudFront and wait for full propagation
-INVALIDATION_ID=$(aws cloudfront create-invalidation \
-  --distribution-id "$CF_DISTRIBUTION_ID" \
-  --paths "$CF_PATH/*" \
-  --query 'Invalidation.Id' --output text)
-echo "⏳ Waiting for invalidation $INVALIDATION_ID..."
-aws cloudfront wait invalidation-completed \
-  --distribution-id "$CF_DISTRIBUTION_ID" \
-  --id "$INVALIDATION_ID"
-echo "✅ Invalidation complete."
-
-# 3) Now safe to remove stale files — all edges serve the new index.html
+# Sync static files to S3
 aws s3 sync "$DIST_PATH" "$S3_DEST" --delete
-echo "✅ Cleaned up old files."
+echo "✅ S3 sync complete."
+
+# Invalidate CloudFront cache for the deployed path
+aws cloudfront create-invalidation \
+  --distribution-id "$CF_DISTRIBUTION_ID" \
+  --paths "$CF_PATH/*" > /dev/null
+echo "✅ CloudFront invalidation sent."
