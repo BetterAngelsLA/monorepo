@@ -5,7 +5,11 @@ import {
   UserIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextMedium, TextRegular } from '@monorepo/expo/shared/ui-components';
+import {
+  Avatar,
+  TextMedium,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { HmisClientProfileType, HmisSuffixEnum } from '../../../apollo';
 import {
@@ -54,11 +58,22 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <HMISProfilePhotoUploader
-          clientId={clientId ?? ''}
-          imageUrl={thumbnailUri}
-          headers={headers}
-        />
+        {clientId ? (
+          <HMISProfilePhotoUploader
+            clientId={clientId}
+            imageUrl={thumbnailUri}
+            headers={headers}
+          />
+        ) : (
+          <Avatar
+            size="xl"
+            mr="xs"
+            imageUrl={thumbnailUri}
+            headers={headers}
+            accessibilityLabel="client's profile photo"
+            accessibilityHint="profile photo, editing not available"
+          />
+        )}
         <TextMedium selectable style={{ flexShrink: 1 }} size="lg">
           {nameParts.join(' ')}
         </TextMedium>

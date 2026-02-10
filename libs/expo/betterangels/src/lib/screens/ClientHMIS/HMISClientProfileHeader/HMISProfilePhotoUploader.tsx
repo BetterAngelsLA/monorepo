@@ -14,9 +14,7 @@ import { HmisClientProfileDocument } from '../__generated__/getHMISClient.genera
 import { HMISProfilePhotoModal } from './HMISProfilePhotoModal';
 
 interface HMISProfilePhotoUploaderProps {
-  /** HMIS client id (hmisId) used for REST photo upload and content URI */
   clientId: string;
-  /** GraphQL id for refetching profile after upload; defaults to clientId if omitted */
   imageUrl: string | null;
   headers?: Record<string, string> | null;
   onUploadSuccess?: () => void;
