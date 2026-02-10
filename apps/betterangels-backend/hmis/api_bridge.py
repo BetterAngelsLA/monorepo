@@ -570,6 +570,17 @@ class HmisApiBridge:
             body={},
         )
 
+        # Verify delete by confirming the note can no longer be fetched.
+        try:
+            self._make_request(
+                path=f"/clients/{client_hmis_id}/client-notes/{note_hmis_id}",
+                body={"fields": "id"},
+            )
+        except NotFoundGQLError:
+            return
+
+        raise ValidationError("HMIS note deletion could not be verified.")
+
     def get_client_programs(self, client_hmis_id: str) -> dict[str, Any]:
         fields = self._get_field_dot_paths(info=self.info, ignored_fields=BA_NOTE_FIELDS)
 
