@@ -88,10 +88,6 @@ enum AttachmentType {
   UNKNOWN
 }
 
-type AuthPayload {
-  token: String!
-}
-
 type AuthResponse {
   status_code: String!
 }
@@ -1189,8 +1185,6 @@ type MoodType {
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
-  requestOtp(email: String!): RequestOtpResult!
-  verifyOtp(email: String!, code: String!): AuthPayload!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
   addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
@@ -1628,10 +1622,6 @@ input RemoveOrganizationMemberInput {
 }
 
 union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo
-
-type RequestOtpResult {
-  success: Boolean!
-}
 
 input RevertNoteInput {
   id: ID!

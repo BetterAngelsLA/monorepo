@@ -348,7 +348,7 @@ AWS_SES_REGION_NAME = env("AWS_SES_REGION_NAME") or env("AWS_REGION")
 AWS_SES_REGION_ENDPOINT = env("AWS_SES_REGION_ENDPOINT")
 USE_SES_V2 = True
 
-EMAIL_BACKEND = "common.backends.email.CustomPostOfficeEmailBackend"
+EMAIL_BACKEND = "post_office.backends.EmailBackend"
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 POST_OFFICE = {
     "BACKENDS": {
@@ -356,7 +356,7 @@ POST_OFFICE = {
     },
     "CELERY_ENABLED": True,
 }
-EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
+EMAIL_FILE_PATH = str(BASE_DIR / "tmp" / "app-emails")
 INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 
 # Django Guardian
