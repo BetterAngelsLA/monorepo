@@ -13,12 +13,6 @@ interface IAvatarProps {
    */
   size?: 'sm' | 'lg' | 'xl';
   imageUrl?: string | null;
-  /**
-   * Optional cache key for the image. When the same URI can serve updated content (e.g. client
-   * profile photo), pass a key that changes when content changes (e.g. URI with ?t=version) so
-   * expo-image does not serve a stale cached image.
-   */
-  imageCacheKey?: string | null;
   hasBorder?: boolean;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -44,7 +38,6 @@ export function Avatar(props: IAvatarProps) {
   const {
     size = 'lg',
     imageUrl,
-    imageCacheKey,
     headers,
     mb,
     mt,
@@ -108,6 +101,7 @@ export function Avatar(props: IAvatarProps) {
             accessibilityRole="image"
             accessibilityHint={accessibilityHint}
             accessibilityIgnoresInvertColors
+            cachePolicy={headers ? 'none' : 'memory-disk'}
             contentFit="cover"
             style={{
               height: SIZE[size] - 1,
@@ -117,9 +111,6 @@ export function Avatar(props: IAvatarProps) {
             source={{
               uri: imageUrl,
               headers: headers ?? undefined,
-              ...(imageCacheKey != null && imageCacheKey !== ''
-                ? { cacheKey: imageCacheKey }
-                : {}),
             }}
           />
         )}
