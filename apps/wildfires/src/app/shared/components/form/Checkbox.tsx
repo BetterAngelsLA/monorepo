@@ -1,6 +1,6 @@
 import { CheckIcon } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
-import { mergeCss } from '../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 
 export type ICheckboxProps = {
   label: string;

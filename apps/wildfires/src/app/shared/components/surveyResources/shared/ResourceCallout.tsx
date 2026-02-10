@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 import { usePrint } from '../../../providers/PrintProvider';
-import { mergeCss } from '../../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 
 interface IProps extends PropsWithChildren {
   className?: string;

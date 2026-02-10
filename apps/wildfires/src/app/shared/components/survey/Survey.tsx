@@ -1,5 +1,5 @@
 import { useContext, useEffect } from 'react';
-import { mergeCss } from '../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { QuestionsBlock } from './QuestionsBlock';
 import { Results } from './Results';
 import { SurveyNav } from './SurveyNav';

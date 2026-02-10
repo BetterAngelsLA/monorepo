@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { mergeCss } from '../../utils/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { Checkbox } from './Checkbox';
 
 const SELECT_ALL_KEY = 'select_all';

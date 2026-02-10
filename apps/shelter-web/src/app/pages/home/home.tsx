@@ -20,7 +20,7 @@ import {
 } from '../../shared/components/shelter/shelterCard';
 import { ShelterSearch } from '../../shared/components/shelters/shelterSearch';
 import { ModalAnimationEnum } from '../../shared/modal/modal';
-import { mergeCss } from '../../shared/utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 
 export function Home() {
   const [atomLocation, setLocation] = useAtom(locationAtom);

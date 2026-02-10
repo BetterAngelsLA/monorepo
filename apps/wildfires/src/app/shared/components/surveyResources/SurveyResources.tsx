@@ -1,6 +1,6 @@
 import { groupBy, sortBy, uniqueBy } from 'remeda';
 import { TResource, TTagCategory } from '../../clients/sanityCms/types';
-import { mergeCss } from '../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { AlertResources } from './AlertResources';
 import { ResourceGroupCard } from './ResourceGroupCard';
 

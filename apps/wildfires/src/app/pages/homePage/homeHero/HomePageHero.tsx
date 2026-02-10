@@ -1,7 +1,7 @@
 import heroImgDesktop from '../../../../assets/images/hero-image-map-desktop-midres.jpg';
 import heroImgMobile from '../../../../assets/images/home-hero-image-mobile.webp';
 import { HeroContainer } from '../../../shared/components/hero/HeroContainer';
-import { mergeCss } from '../../../shared/utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { HeroContent } from './HeroContent';
 
 interface IHeroProps {

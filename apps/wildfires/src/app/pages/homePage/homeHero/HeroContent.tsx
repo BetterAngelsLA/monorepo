@@ -1,5 +1,5 @@
 import { PropsWithChildren } from 'react';
-import { mergeCss } from '../../../shared/utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 
 interface IProps extends PropsWithChildren {
   className?: string;

@@ -10,3 +10,4 @@ export { Regex } from './static/regex';
 export { appZIndex } from './static/zIndex';
 export { debounce } from './utils/debounce';
 export { toError } from './utils/errors/toError';
+export { mergeCss } from './utils/mergeCss';

@@ -1,7 +1,7 @@
 import { useMap } from '@vis.gl/react-google-maps';
 import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mergeCss } from '../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { TLatLng } from '../map/types.maps';
 import { DistanceAway } from './distanceAway';
 import { ShelterCardHero } from './shelterCardHero';

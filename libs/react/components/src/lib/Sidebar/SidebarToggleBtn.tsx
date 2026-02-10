@@ -1,4 +1,4 @@
-import { mergeCss } from '../../utils';
+import { mergeCss } from '@monorepo/react/shared';
 import { ChevronLeftIcon } from '@monorepo/react/icons';
 
 type TProps = {

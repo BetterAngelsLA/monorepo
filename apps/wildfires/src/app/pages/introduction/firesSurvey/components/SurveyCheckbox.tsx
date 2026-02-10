@@ -1,6 +1,6 @@
 import { CheckIcon } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
-import { mergeCss } from '../../../../shared/utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { wildfireLabels } from '../config/forms/questions/whichFire';
 
 type IProps = {

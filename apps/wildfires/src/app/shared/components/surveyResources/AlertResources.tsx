@@ -1,7 +1,7 @@
 import { WFAlertOnIcon } from '@monorepo/react/icons';
 import { TResource } from '../../clients/sanityCms/types';
 import { sortByPriority } from '../../utils/sort';
-import { mergeCss } from '../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { ResourceCard } from './ResourceCard';
 
 type IProps = {

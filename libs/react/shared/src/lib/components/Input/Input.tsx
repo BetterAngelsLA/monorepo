@@ -30,7 +30,6 @@ export default function Input(props: InputProps) {
   const inputCss = [
     'bg-neutral-99',
     'rounded-lg',
-    '',
     'focus:outline-none',
     'px-4',
     'py-4',

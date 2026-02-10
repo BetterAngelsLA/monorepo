@@ -2,7 +2,7 @@ import { CloseIcon } from '@monorepo/react/icons';
 import { useAtom } from 'jotai';
 import { PropsWithChildren, ReactElement, ReactNode } from 'react';
 import { modalAtom } from '../atoms/modalAtom';
-import { mergeCss } from '../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { ModalMask } from './modalMask';
 
 export enum ModalAnimationEnum {

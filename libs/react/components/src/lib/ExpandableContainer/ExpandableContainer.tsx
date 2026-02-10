@@ -7,7 +7,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { mergeCss } from '../../utils/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 
 interface IProps extends PropsWithChildren {
   className?: string;

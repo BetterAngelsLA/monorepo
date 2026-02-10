@@ -6,7 +6,7 @@ import {
   contactPagePath,
   privacyPolicyPagePath,
 } from '../routes/routePaths';
-import { mergeCss } from '../shared/utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 
 type IParams = {
   className?: string;

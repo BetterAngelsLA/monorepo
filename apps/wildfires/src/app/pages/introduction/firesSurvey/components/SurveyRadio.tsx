@@ -1,5 +1,5 @@
 import { ReactElement } from 'react';
-import { mergeCss } from '../../../../shared/utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 
 type IProps = {
   name: string;

@@ -1,7 +1,7 @@
 import { MouseEventHandler, PropsWithChildren } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../../../shared/components/button/Button';
-import { mergeCss } from '../../../../shared/utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 
 interface IBaseButton extends PropsWithChildren {
   ariaLabel: string;

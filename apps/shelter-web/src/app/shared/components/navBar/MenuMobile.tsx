@@ -7,7 +7,7 @@ import {
   shelterHomePath,
 } from '../../../routes/routePaths';
 import { flyoutAtom } from '../../atoms/flyoutAtom';
-import { mergeCss } from '../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 
 type MenuMobileProps = {
   showOperator: boolean;

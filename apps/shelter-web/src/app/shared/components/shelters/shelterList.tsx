@@ -1,4 +1,4 @@
-import { mergeCss } from '../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { TLatLng } from '../map/types.maps';
 import { ShelterCard, TShelter } from '../shelter/shelterCard';
 

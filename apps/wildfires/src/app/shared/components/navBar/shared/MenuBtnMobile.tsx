@@ -2,7 +2,7 @@ import { MenuIcon } from '@monorepo/react/icons';
 import { useAtom } from 'jotai';
 import { modalAtom } from '../../../atoms/modalAtom';
 import { ModalAnimationEnum } from '../../../modal/modal';
-import { mergeCss } from '../../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { MenuMobile } from '../MenuMobile';
 
 type IProps = {

@@ -1,7 +1,7 @@
 import { useAtom } from 'jotai';
 import { PropsWithChildren, ReactElement, ReactNode } from 'react';
 import { flyoutAtom } from '../atoms/flyoutAtom';
-import { mergeCss } from '../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { FlyoutMask } from './Flyoutmask';
 
 export enum FlyoutAnimationEnum {

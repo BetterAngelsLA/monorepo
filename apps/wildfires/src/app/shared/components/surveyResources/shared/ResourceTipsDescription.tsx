@@ -1,7 +1,7 @@
 import { LightBulbIcon } from '@monorepo/react/icons';
 import { PortableText } from '@portabletext/react';
 import { PortableTextBlock } from '@portabletext/types';
-import { mergeCss } from '../../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { ResourceCallout } from './ResourceCallout';
 
 type IProps = {
