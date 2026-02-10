@@ -9,11 +9,6 @@ from django.db.models import Model
 from strawberry.utils.str_converters import to_camel_case, to_snake_case
 
 
-def strip_demo_tag(addr: str) -> str:
-    """Remove a trailing '+demo' before the @ while leaving other aliases intact."""
-    return addr.replace("+demo@", "@", 1)
-
-
 def canonicalise_filename(mime_type: str, filename: str) -> str:
     """
     Canonicalise filenames by:

@@ -39,7 +39,7 @@ def google_maps_api(request: HttpRequest, path: str) -> HttpResponse:
 
 
 @login_required
-def google_places_api_new(request: HttpRequest, action: str) -> HttpResponse:
+def google_places_api(request: HttpRequest, action: str) -> HttpResponse:
     """
     Proxies a request to the Google Places API (New).
     This endpoint supports the new Places API which uses POST requests with JSON body.
@@ -74,8 +74,8 @@ def google_places_api_new(request: HttpRequest, action: str) -> HttpResponse:
         response = requests.post(google_places_api_url, json=body, headers=headers)
         response.raise_for_status()
         response_data = response.json()
-    except requests.RequestException as e:
-        return JsonResponse({"error": f"An error occurred while contacting Google Places API: {str(e)}"}, status=500)
+    except requests.RequestException:
+        return JsonResponse({"error": "An error occurred while contacting Google Places API."}, status=500)
     except ValueError:
         return JsonResponse({"error": "Invalid response from Google Places API."}, status=500)
 

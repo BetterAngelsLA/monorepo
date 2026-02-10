@@ -38,8 +38,8 @@ export default function Docs({
         <IconButton
           onPress={() =>
             showModalScreen({
-              presentation: 'fullScreenModal',
-              hideHeader: true,
+              presentation: 'modal',
+              title: 'Upload Files',
               renderContent: ({ close }) => (
                 <UploadModal client={client} closeModal={close} />
               ),

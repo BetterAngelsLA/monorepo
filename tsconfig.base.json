@@ -35,6 +35,7 @@
       "@monorepo/react/components": ["libs/react/components/src/index.ts"],
       "@monorepo/react/icons": ["libs/react/icons/src/index.ts"],
       "@monorepo/react/shared": ["libs/react/shared/src/index.ts"],
+      "@monorepo/react/shared/apollo": ["libs/react/shared/src/apollo.ts"],
       "@monorepo/react/shelter": ["libs/react/shelter/src/index.ts"],
       "@monorepo/react/shelter-operator": [
         "libs/react/shelter-operator/src/index.ts"

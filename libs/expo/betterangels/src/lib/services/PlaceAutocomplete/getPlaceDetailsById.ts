@@ -16,7 +16,7 @@ export async function getPlaceDetailsById(
   const {
     baseUrl,
     placeId,
-    fields = 'formatted_address,address_component',
+    fields = 'formatted_address,address_components',
   } = props;
 
   const response = await axios.get(

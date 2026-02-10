@@ -1,7 +1,4 @@
-import {
-  type ClientFile,
-  fetchAllPages,
-} from '@monorepo/expo/shared/clients';
+import { type ClientFile, fetchAllPages } from '@monorepo/expo/shared/clients';
 import { useQuery } from '@tanstack/react-query';
 import { useHmisClient } from '../useHmisClient';
 

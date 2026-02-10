@@ -1,14 +1,14 @@
-import { mergeCss } from '@monorepo/react/components';
 import { InputHTMLAttributes, useId } from 'react';
-import './index.css';
+import { mergeCss } from '../../utils/mergeCss';
+import './Input.css';
 
-interface IInputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   inputClassname?: string;
   error?: string;
 }
 
-export default function Input(props: IInputProps) {
+export default function Input(props: InputProps) {
   const {
     label,
     id: propId,
@@ -30,7 +30,6 @@ export default function Input(props: IInputProps) {
   const inputCss = [
     'bg-neutral-99',
     'rounded-lg',
-    '',
     'focus:outline-none',
     'px-4',
     'py-4',

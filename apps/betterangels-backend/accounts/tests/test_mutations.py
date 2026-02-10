@@ -212,3 +212,126 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
             "New Member is already a member of org.",
         )
         self.assertEqual(initial_org_member_count, OrganizationUser.objects.count())
+
+    def test_remove_organization_member(self) -> None:
+
+        removable_member = baker.make(
+            User,
+            first_name="Remove",
+            last_name="Me",
+            email="remove@example.com",
+        )
+        self.org.add_user(removable_member)
+
+        self.assertTrue(
+            OrganizationUser.objects.filter(
+                organization=self.org,
+                user=removable_member,
+            ).exists()
+        )
+
+        mutation = """
+            mutation ($data: RemoveOrganizationMemberInput!) {
+                removeOrganizationMember(data: $data) {
+                    ... on OperationInfo {
+                        messages { kind field message }
+                    }
+                    ... on DeletedObjectType {
+                        id
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "id": removable_member.pk,
+            "organizationId": self.org.pk,
+        }
+
+        response = self.execute_graphql(mutation, {"data": variables})
+
+        self.assertEqual(
+            {"id": removable_member.pk},
+            response["data"]["removeOrganizationMember"],
+        )
+
+        self.assertFalse(
+            OrganizationUser.objects.filter(
+                organization=self.org,
+                user=removable_member,
+            ).exists()
+        )
+
+        self.assertTrue(User.objects.filter(pk=removable_member.pk).exists())
+
+    def test_remove_organization_member_user_not_in_org(self) -> None:
+        outsider = baker.make(
+            User,
+            first_name="Out",
+            last_name="Side",
+            email="outsider@example.com",
+        )
+
+        mutation = """
+            mutation ($data: RemoveOrganizationMemberInput!) {
+                removeOrganizationMember(data: $data) {
+                    ... on OperationInfo {
+                        messages { kind field message }
+                    }
+                    ... on DeletedObjectType { id }
+                }
+            }
+        """
+
+        variables = {
+            "id": outsider.pk,
+            "organizationId": self.org.pk,
+        }
+
+        response = self.execute_graphql(mutation, {"data": variables})
+
+        self.assertEqual(len(response["data"]["removeOrganizationMember"]["messages"]), 1)
+        self.assertEqual(
+            response["data"]["removeOrganizationMember"]["messages"][0]["message"],
+            "User is not a member of this organization.",
+        )
+
+        self.assertFalse(
+            OrganizationUser.objects.filter(
+                organization=self.org,
+                user=outsider,
+            ).exists()
+        )
+
+    def test_remove_organization_member_cannot_remove_owner(self) -> None:
+
+        mutation = """
+            mutation ($data: RemoveOrganizationMemberInput!) {
+                removeOrganizationMember(data: $data) {
+                    ... on OperationInfo {
+                        messages { kind field message }
+                    }
+                    ... on DeletedObjectType { id }
+                }
+            }
+        """
+
+        variables = {
+            "id": self.org_admin.pk,
+            "organizationId": self.org.pk,
+        }
+
+        response = self.execute_graphql(mutation, {"data": variables})
+
+        self.assertEqual(len(response["data"]["removeOrganizationMember"]["messages"]), 1)
+        self.assertEqual(
+            response["data"]["removeOrganizationMember"]["messages"][0]["message"],
+            "You cannot remove the organization owner. Transfer ownership first.",
+        )
+
+        self.assertTrue(
+            OrganizationUser.objects.filter(
+                organization=self.org,
+                user=self.org_admin,
+            ).exists()
+        )
