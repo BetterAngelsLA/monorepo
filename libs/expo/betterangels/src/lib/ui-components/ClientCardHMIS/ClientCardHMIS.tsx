@@ -37,7 +37,7 @@ export function ClientCardHMIS(props: IClientCardProps) {
     onPress,
   } = props;
   const formattedHeight = formatHeight(heightInInches ?? 0);
-  const { contentUri, headers } = useClientPhotoContentUri(clientId);
+  const { thumbnailUri, headers } = useClientPhotoContentUri(clientId);
 
   return (
     <Pressable
@@ -54,7 +54,7 @@ export function ClientCardHMIS(props: IClientCardProps) {
         accessibilityHint={`client's profile photo`}
         size="xl"
         mr="xs"
-        imageUrl={contentUri}
+        imageUrl={thumbnailUri}
         headers={headers}
       />
       <View style={{ gap: Spacings.xxs, flex: 2 }}>

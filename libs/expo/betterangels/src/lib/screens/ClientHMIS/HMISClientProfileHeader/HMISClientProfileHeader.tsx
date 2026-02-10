@@ -33,7 +33,7 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
     pronouns,
     uniqueIdentifier,
   } = client || {};
-  const { contentUri, headers } = useClientPhotoContentUri(clientId);
+  const { thumbnailUri, headers } = useClientPhotoContentUri(clientId);
 
   const nameParts = [firstName, nameMiddle, lastName].filter((s) => !!s);
 
@@ -56,7 +56,7 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
       <View style={styles.headerRow}>
         <HMISProfilePhotoUploader
           clientId={clientId ?? ''}
-          imageUrl={contentUri}
+          imageUrl={thumbnailUri}
           headers={headers}
         />
         <TextMedium selectable style={{ flexShrink: 1 }} size="lg">
