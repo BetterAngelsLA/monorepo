@@ -65,8 +65,8 @@ def google_places_api(request: HttpRequest, action: str) -> HttpResponse:
         "X-Goog-Api-Key": settings.GOOGLE_MAPS_API_KEY,
     }
 
-    # Extract field mask from request body
-    field_mask = body.pop("fieldMask", None)
+    # Pass through X-Goog-FieldMask if provided
+    field_mask = request.headers.get("X-Goog-FieldMask")
     if field_mask:
         headers["X-Goog-FieldMask"] = field_mask
 
