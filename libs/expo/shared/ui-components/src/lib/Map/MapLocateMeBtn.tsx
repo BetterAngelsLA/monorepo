@@ -1,9 +1,9 @@
 import { showOpenSettingsAlert } from '@monorepo/expo/shared/utils';
 import { RefObject, useState } from 'react';
 import { StyleSheet } from 'react-native';
-import LocateMeButton from '../../LocateMeButton';
-import { TMapDeltaLatLng, TMapView } from '../types';
-import { goToUserLocation } from '../utils';
+import LocateMeButton from '../LocateMeButton';
+import { TMapDeltaLatLng, TMapView } from './types';
+import { goToUserLocation } from './utils';
 
 type TProps = {
   mapRef: RefObject<TMapView | null>;

@@ -3,17 +3,17 @@ import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
 
-interface IDirectionsActionSheetProps {
+interface IMapDirectionsActionSheetProps {
   onSelectApple?: () => void;
   onSelectGoogle: () => void;
   onCancel: () => void;
 }
 
-export function DirectionsActionSheet({
+export function MapDirectionsActionSheet({
   onSelectApple,
   onSelectGoogle,
   onCancel,
-}: IDirectionsActionSheetProps) {
+}: IMapDirectionsActionSheetProps) {
   return (
     <View style={styles.container}>
       <View style={styles.card}>

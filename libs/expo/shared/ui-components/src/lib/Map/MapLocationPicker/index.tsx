@@ -9,9 +9,9 @@ import {
   SearchIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import BasicInput from '../../../BasicInput';
-import IconButton from '../../../IconButton';
-import TextRegular from '../../../TextRegular';
+import BasicInput from '../../BasicInput';
+import IconButton from '../../IconButton';
+import TextRegular from '../../TextRegular';
 import * as ExpoLocation from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -23,8 +23,8 @@ import RNMapView, {
 } from 'react-native-maps';
 import openMap from 'react-native-open-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { TMapView } from '../../types';
-import { DirectionsActionSheet } from '../../../DirectionsPopup/DirectionsActionSheet';
+import type { TMapView } from '../types';
+import { MapDirectionsActionSheet } from '../MapDirectionsActionSheet';
 import { SelectedLocationPanel } from './SelectedLocationPanel';
 import { IMapLocationPickerProps, TLocationData } from './types';
 import { useLocationSearch } from './useLocationSearch';
@@ -214,7 +214,7 @@ export function MapLocationPicker({
       {/* iOS Directions Picker */}
       {showIosDirections && location && (
         <View style={styles.directionsOverlay}>
-          <DirectionsActionSheet
+          <MapDirectionsActionSheet
             onSelectApple={() => openDirections('apple')}
             onSelectGoogle={() => openDirections('google')}
             onCancel={() => setShowIosDirections(false)}

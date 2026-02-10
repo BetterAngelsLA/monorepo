@@ -12,9 +12,10 @@ export * from './types';
 export * from './utils';
 export { RNMapView as MapView, Marker, PROVIDER_GOOGLE, PROVIDER_DEFAULT };
 
-export { LocationMarker } from './mapUi/LocationMarker';
-export { MapLocationPicker } from './mapUi/MapLocationPicker';
+export { LocationMarker } from './LocationMarker';
+export { MapDirectionsActionSheet } from './MapDirectionsActionSheet';
+export { MapLocationPicker } from './MapLocationPicker';
 export type {
   IMapLocationPickerProps,
   TLocationData,
-} from './mapUi/MapLocationPicker/types';
+} from './MapLocationPicker/types';

@@ -7,7 +7,7 @@ import {
 } from '@monorepo/expo/shared/static';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import TextBold from '../../TextBold';
+import TextBold from '../TextBold';
 
 export interface ILocationMarkerProps {
   label?: string;

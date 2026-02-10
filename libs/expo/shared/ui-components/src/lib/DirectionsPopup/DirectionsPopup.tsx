@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import openMap from 'react-native-open-maps';
 import TextRegular from '../TextRegular';
-import { DirectionsActionSheet } from './DirectionsActionSheet';
+import { MapDirectionsActionSheet } from '../Map/MapDirectionsActionSheet';
 
 interface IDirectionsPopupProps {
   address:
@@ -57,7 +57,7 @@ export function DirectionsPopup(props: IDirectionsPopupProps) {
               accessibilityRole="button"
               accessibilityHint="Closes the map selection"
             />
-            <DirectionsActionSheet
+            <MapDirectionsActionSheet
               onSelectApple={() =>
                 openMap({
                   query: fullAddress,

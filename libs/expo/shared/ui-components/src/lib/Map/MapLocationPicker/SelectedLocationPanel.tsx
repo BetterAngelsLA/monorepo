@@ -1,10 +1,10 @@
 import { TargetIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import Button from '../../../Button';
-import Copy from '../../../Copy';
-import TextBold from '../../../TextBold';
-import TextButton from '../../../TextButton';
-import TextRegular from '../../../TextRegular';
+import Button from '../../Button';
+import Copy from '../../Copy';
+import TextBold from '../../TextBold';
+import TextButton from '../../TextButton';
+import TextRegular from '../../TextRegular';
 import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { TLocationData } from './types';
