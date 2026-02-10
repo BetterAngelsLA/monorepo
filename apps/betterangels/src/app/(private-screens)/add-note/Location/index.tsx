@@ -4,13 +4,13 @@ import {
   MapView,
   Marker,
   PROVIDER_GOOGLE,
-  reverseGeocode,
   TLocationData,
   UpdateNoteLocationDocument,
   useModalScreen,
 } from '@monorepo/expo/betterangels';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
+import { reverseGeocode } from '@monorepo/expo/shared/services';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
 import * as ExpoLocation from 'expo-location';
