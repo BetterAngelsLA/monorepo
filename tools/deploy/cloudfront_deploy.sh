@@ -14,15 +14,15 @@ CREDS=$(aws sts assume-role \
   --role-session-name "deployment-script-session" \
   --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
   --output text)
-export AWS_ACCESS_KEY_ID=$(echo "$CREDS" | awk '{print $1}')
-export AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | awk '{print $2}')
-export AWS_SESSION_TOKEN=$(echo "$CREDS" | awk '{print $3}')
+read -r AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN <<< "$CREDS"
+export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
 echo "✅ Assumed role and set temporary credentials."
 
 # --- Resolve paths ---
 S3_PATH="${VITE_APP_BASE_PATH#/}"   # strip leading slash: "branches/staging" or ""
 S3_PATH="${S3_PATH%/}"              # strip trailing slash
-CF_PATH="${VITE_APP_BASE_PATH%/}"   # strip trailing slash only: "/branches/staging" or ""
+# For root path (/), CF_PATH intentionally becomes "" so invalidation is "/*" not "//*"
+CF_PATH="${VITE_APP_BASE_PATH%/}"   # "/branches/staging" or ""
 S3_DEST="s3://$S3_BUCKET/$S3_PATH"
 
 APP_ROOT=$(yarn nx show project "$NX_TASK_TARGET_PROJECT" --json | jq -r '.root')
