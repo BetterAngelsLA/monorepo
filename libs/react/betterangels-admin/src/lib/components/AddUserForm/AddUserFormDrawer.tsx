@@ -1,9 +1,5 @@
-import {
-  AppDrawer,
-  mergeCss,
-  useAlert,
-  useAppDrawer,
-} from '@monorepo/react/components';
+import { AppDrawer, useAlert, useAppDrawer } from '@monorepo/react/components';
+import { mergeCss } from '@monorepo/react/shared';
 import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types';
 import { AddUserForm } from './AddUserForm';
 

@@ -1,10 +1,10 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { Link } from 'react-router-dom';
 import {
   aboutPagePath,
   contactPagePath,
   privacyPolicyPagePath,
 } from '../../../routes/routePaths';
-import { mergeCss } from '../../utils/styles/mergeCss';
 import { AboutLink } from './shared/AboutLink';
 
 type IProps = {

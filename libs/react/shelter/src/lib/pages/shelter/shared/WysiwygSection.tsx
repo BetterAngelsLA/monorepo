@@ -1,4 +1,4 @@
-import { mergeCss } from '@monorepo/react/components';
+import { mergeCss } from '@monorepo/react/shared';
 import { WysiwygContainer } from '../../../components';
 
 type TProps = {

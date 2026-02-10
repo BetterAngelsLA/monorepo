@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 export type FetchClient = (
   path: string,
@@ -59,10 +59,7 @@ export function useAllauthLogin({
   const [confirmingCode, setConfirmingCode] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
 
-  const loading = useMemo(
-    () => sendingCode || confirmingCode || loggingIn,
-    [sendingCode, confirmingCode, loggingIn]
-  );
+  const loading = sendingCode || confirmingCode || loggingIn;
 
   const clearError = useCallback(() => setErrorMsg(''), []);
 
@@ -118,7 +115,8 @@ export function useAllauthLogin({
 
         const data = await res.json();
 
-        if (res.ok && data?.meta?.is_authenticated) {
+        // Success (200) or already authenticated (409)
+        if ((res.ok && data?.meta?.is_authenticated) || res.status === 409) {
           await onLoginSuccess();
         } else {
           setErrorMsg('Invalid code. Please try again.');

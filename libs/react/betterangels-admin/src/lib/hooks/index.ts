@@ -1,2 +1,2 @@
 export { default as useSignOut } from './auth/useSignOut';
-export { default as useUser } from './user/useUser';
+export { useUser } from '@monorepo/react/shared';
