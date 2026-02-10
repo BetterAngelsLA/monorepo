@@ -103,6 +103,7 @@ export function Avatar(props: IAvatarProps) {
             accessibilityIgnoresInvertColors
             cachePolicy={headers ? 'none' : 'memory-disk'}
             contentFit="cover"
+            recyclingKey={imageUrl}
             style={{
               height: SIZE[size] - 1,
               width: SIZE[size] - 1,

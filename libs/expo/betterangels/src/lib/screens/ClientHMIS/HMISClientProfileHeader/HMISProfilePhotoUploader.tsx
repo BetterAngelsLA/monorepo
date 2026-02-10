@@ -1,5 +1,8 @@
 import { useApolloClient } from '@apollo/client/react';
-import { ReactNativeFile } from '@monorepo/expo/shared/clients';
+import {
+  incrementClientPhotoVersion,
+  ReactNativeFile,
+} from '@monorepo/expo/shared/clients';
 import { WFEdit } from '@monorepo/expo/shared/icons';
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, MediaPickerModal } from '@monorepo/expo/shared/ui-components';
@@ -47,6 +50,7 @@ export function HMISProfilePhotoUploader({
       await apolloClient.refetchQueries({
         include: [HmisClientProfileDocument],
       });
+      incrementClientPhotoVersion(clientId);
       onUploadSuccess?.();
       setModalType(null);
     } catch {

@@ -6,7 +6,6 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextMedium, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { HmisClientProfileType, HmisSuffixEnum } from '../../../apollo';
 import {
@@ -22,7 +21,6 @@ interface IClientHeaderProps {
 
 export function HMISClientProfileHeader(props: IClientHeaderProps) {
   const { client } = props;
-  const [photoVersion, setPhotoVersion] = useState(0);
 
   const {
     firstName,
@@ -36,15 +34,6 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
     uniqueIdentifier,
   } = client || {};
   const { contentUri, headers } = useClientPhotoContentUri(clientId);
-
-  const photoUrl =
-    contentUri && photoVersion > 0
-      ? `${contentUri}?t=${photoVersion}`
-      : contentUri;
-
-  const onUploadSuccess = useCallback(() => {
-    setPhotoVersion((v) => v + 1);
-  }, []);
 
   const nameParts = [firstName, nameMiddle, lastName].filter((s) => !!s);
 
@@ -67,9 +56,8 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
       <View style={styles.headerRow}>
         <HMISProfilePhotoUploader
           clientId={clientId ?? ''}
-          imageUrl={photoUrl}
+          imageUrl={contentUri}
           headers={headers}
-          onUploadSuccess={onUploadSuccess}
         />
         <TextMedium selectable style={{ flexShrink: 1 }} size="lg">
           {nameParts.join(' ')}
