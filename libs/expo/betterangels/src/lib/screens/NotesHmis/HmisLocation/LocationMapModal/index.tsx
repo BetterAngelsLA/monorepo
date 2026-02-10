@@ -155,7 +155,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       const placeResult = await getPlaceDetailsById({
         baseUrl,
         placeId: place.placeId,
-        fields: 'geometry,address_component',
+        fields: 'geometry,address_components',
       });
 
       const responseLocation = placeResult.geometry?.location;
