@@ -17,6 +17,7 @@ CREDS=$(aws sts assume-role \
 export AWS_ACCESS_KEY_ID=$(echo "$CREDS" | awk '{print $1}')
 export AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | awk '{print $2}')
 export AWS_SESSION_TOKEN=$(echo "$CREDS" | awk '{print $3}')
+echo "✅ Assumed role and set temporary credentials."
 
 # --- Resolve paths ---
 S3_PATH="${VITE_APP_BASE_PATH#/}"   # strip leading slash: "branches/staging" or ""
