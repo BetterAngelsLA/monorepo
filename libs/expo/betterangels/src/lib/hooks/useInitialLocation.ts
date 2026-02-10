@@ -1,7 +1,7 @@
-import axios from 'axios';
 import * as ExpoLocation from 'expo-location';
 import { useEffect, useState } from 'react';
 import { LocationDraft } from '../screens/NotesHmis/HmisProgramNoteForm';
+import { reverseGeocode } from '@monorepo/expo/shared/services';
 
 const INITIAL_LOCATION = {
   longitude: -118.258815,
@@ -38,26 +38,19 @@ export function useInitialLocation(
 
         if (editing) return;
 
-        const url = `${baseUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}`;
-        const { data } = await axios.get(url, {
-          params: { withCredentials: true },
+        const geocodeResult = await reverseGeocode({
+          baseUrl,
+          latitude,
+          longitude,
         });
-
-        const result = data.results?.[0];
-        const formattedAddress: string | null =
-          result?.formatted_address ?? null;
-        const shortName: string | null = formattedAddress
-          ? formattedAddress.split(', ')[0]
-          : null;
-        const components = result?.address_components ?? [];
 
         setValue('location', {
           ...location,
           longitude,
           latitude,
-          formattedAddress,
-          shortAddressName: shortName,
-          components,
+          formattedAddress: geocodeResult.formattedAddress,
+          shortAddressName: geocodeResult.shortAddress,
+          components: geocodeResult.addressComponents,
         } as LocationDraft);
       } catch (err) {
         console.error('Error auto-setting initial location', err);

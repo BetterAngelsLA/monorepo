@@ -107,7 +107,12 @@
     "jwt-decode": "*",
     "@preeternal/react-native-cookie-manager": "*",
     "@tanstack/react-query": "*",
-    "mime": "*"
+    "mime": "*",
+    "react-native-google-places-autocomplete": "*",
+    "react-router-dom": "*",
+    "clsx": "*",
+    "tailwind-merge": "*",
+    "lodash": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",

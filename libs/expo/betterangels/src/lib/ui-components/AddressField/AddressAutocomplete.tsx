@@ -1,16 +1,16 @@
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { AutocompleteInput } from '@monorepo/expo/shared/ui-components';
-import { debounce } from '@monorepo/expo/shared/utils';
+import { debounce } from 'lodash';
 import { RefObject, useCallback, useRef, useState } from 'react';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
 import { useScrollToScreenTop } from '../../hooks';
 import {
-  TPlaceResult,
-  TPlacesPrediction,
+  TPlaceDetails,
+  TPlacePrediction,
   getPlaceAutocomplete,
   getPlaceDetailsById,
-} from '../../services';
+} from '@monorepo/expo/shared/services';
 import { AddressOption } from './AddressOption';
 
 const DEFAULT_DEBOUNCE_MS = 100;
@@ -53,7 +53,7 @@ export function AddressAutocomplete<TForm extends FieldValues>(
 
   const { baseUrl } = useApiConfig();
 
-  const [predictions, setPredictions] = useState<TPlacesPrediction[]>([]);
+  const [predictions, setPredictions] = useState<TPlacePrediction[]>([]);
 
   const getPredictions = async (input: string) => {
     if (!input.trim() || input.length < 3) {
@@ -109,7 +109,7 @@ export function AddressAutocomplete<TForm extends FieldValues>(
 
         return (
           <View ref={addressViewRef}>
-            <AutocompleteInput<TPlacesPrediction>
+            <AutocompleteInput<TPlacePrediction>
               value={value || ''}
               placeholder={placeholder}
               label={label}
@@ -122,9 +122,10 @@ export function AddressAutocomplete<TForm extends FieldValues>(
               errorMessage={error?.message}
               renderItem={(item) => (
                 <AddressOption
-                  key={item.place_id}
+                  key={item.placeId}
                   item={item}
                   onPress={async () => {
+                    debouncedSearch.cancel();
                     setPredictions([]);
 
                     const detailAddress = await getDetailAddress(item, baseUrl);
@@ -141,23 +142,17 @@ export function AddressAutocomplete<TForm extends FieldValues>(
   );
 }
 
-async function getDetailAddress(
-  prediction: TPlacesPrediction,
-  baseUrl: string
-) {
-  const placeId = prediction.place_id;
+async function getDetailAddress(prediction: TPlacePrediction, baseUrl: string) {
+  const placeId = prediction.placeId;
 
   if (!placeId || !baseUrl) {
     return '';
   }
 
   try {
-    const deatailAddress = await getPlaceDetailsById({
-      baseUrl,
-      placeId,
-    });
+    const detailAddress = await getPlaceDetailsById({ baseUrl, placeId });
 
-    return getPresentedAddress(deatailAddress);
+    return getPresentedAddress(detailAddress);
   } catch (e) {
     console.error(e);
 
@@ -165,8 +160,8 @@ async function getDetailAddress(
   }
 }
 
-function getPresentedAddress(deatailAddress: TPlaceResult): string {
-  const formattedAddress = deatailAddress.formatted_address || '';
+function getPresentedAddress(detailAddress: TPlaceDetails): string {
+  const formattedAddress = detailAddress.formatted_address || '';
 
   return formattedAddress.substring(0, formattedAddress.lastIndexOf(','));
 }

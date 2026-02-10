@@ -46,3 +46,8 @@ export * from './TaskList';
 export { default as TaskStatusBtn } from './TaskStatusBtn';
 export * from './UserPreferences';
 export { default as WebBrowserLink } from './WebBrowserLink';
+export {
+  LocationMapModal,
+  type ILocationMapModalProps,
+  type TLocationData,
+} from './LocationMapModal';
