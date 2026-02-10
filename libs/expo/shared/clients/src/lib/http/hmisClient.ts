@@ -10,7 +10,6 @@ import {
 import { HmisError, HmisInvalidFileTypeError } from './hmisError';
 import {
   ALLOWED_FILE_TYPES,
-  AllowedFileType,
   ClientFilesListParams,
   ClientFilesResponse,
   ClientFileUploadRequest,
@@ -19,6 +18,7 @@ import {
   FileNamesResponse,
   HmisHttpQueryParams,
   HmisRequestOptions,
+  UploadClientFileParams,
 } from './hmisTypes';
 
 export const HMIS_REST_API_MAX_PER_PAGE = 50;
@@ -184,44 +184,63 @@ class HmisClient {
   }
 
   /**
-   * Upload a file for a client
-   *
-   * @param clientId - The client ID (can be internal ID or external client ID string)
-   * @param file - File data object with base64 content
-   * @param file.content - Base64 encoded file content
-   * @param file.name - File name with extension
-   * @param file.mimeType - MIME type of the file (must be in allowed types)
-   * @param categoryId - File category ID
-   * @param fileNameId - File name ID from HMIS
-   * @param isPrivate - Whether the file should be private (optional)
-   * @returns Promise with upload response
-   * @throws HmisError if file type is not allowed or upload fails
-   *
-   * @example
-   * ```typescript
-   * const result = await hmisClient.uploadClientFile(
-   *   '68998C256',
-   *   {
-   *     content: 'base64encodedcontent...',
-   *     name: 'document.pdf',
-   *     mimeType: 'application/pdf'
-   *   },
-   *   12, // category ID
-   *   89  // file name ID
-   * );
-   * ```
-   */
+/**
+ * Upload a file for a client.
+ *
+ * Accepts a single parameter object to keep the API extensible and
+ * self-documenting.
+ *
+ * @param props - Upload parameters
+ * @param props.clientId - The client ID (can be internal ID or external client ID string)
+ * @param props.file - File data object with base64 content
+ * @param props.file.content - Base64 encoded file content (without data URI prefix)
+ * @param props.file.name - Original file name with extension (e.g. "document.pdf")
+ * @param props.file.mimeType - MIME type of the file (must be in allowed types)
+ * @param props.categoryId - File category ID
+ * @param props.fileNameId - File name ID from HMIS
+ * @param props.isPrivate - Whether the file should be private
+ *   - `true`  → private
+ *   - `false` → public
+ *   - `null` / `undefined` → API default behavior
+ * @param props.customFileName - Optional custom display name for the file
+ *   (sent as `clientFile.name`)
+ *
+ * @returns Promise with the upload response
+ *
+ * @throws HmisInvalidFileTypeError
+ * Thrown when the file MIME type is not allowed.
+ *
+ * @throws HmisError
+ * Thrown when the upload request fails.
+ *
+ * @example
+ * ```ts
+ * const result = await hmisClient.uploadClientFile({
+ *   clientId: '68998C256',
+ *   file: {
+ *     content: 'base64encodedcontent...',
+ *     name: 'document.pdf',
+ *     mimeType: 'application/pdf',
+ *   },
+ *   categoryId: 12,
+ *   fileNameId: 89,
+ *   isPrivate: true,
+ *   customFileName: 'Intake Form',
+ * });
+ * ```
+ */
   async uploadClientFile(
-    clientId: string | number,
-    file: {
-      content: string;
-      name: string;
-      mimeType: AllowedFileType;
-    },
-    categoryId: number,
-    fileNameId: number,
-    isPrivate: boolean | null = null
+    props: UploadClientFileParams
   ): Promise<ClientFileUploadResponse> {
+    const {
+      clientId,
+      file,
+      categoryId,
+      fileNameId,
+      customFileName,
+      isPrivate = null,
+    } = props;
+
     // Validate file type
     if (!ALLOWED_FILE_TYPES.includes(file.mimeType)) {
       throw new HmisInvalidFileTypeError('Invalid file type', 400, {
@@ -233,15 +252,22 @@ class HmisClient {
     // Build data URI with proper format
     const dataUri = `data:${file.mimeType};base64,${file.content}`;
 
+    // Build clientFile object
+    const clientFile: ClientFileUploadRequest['clientFile'] = {
+      ref_category: categoryId,
+      ref_file_name: fileNameId,
+      private: isPrivate,
+    };
+
+    if (customFileName !== undefined) {
+      clientFile.name = customFileName;
+    }
+
     // Build request payload matching API expectations
     const payload: ClientFileUploadRequest = {
-      clientFile: {
-        ref_category: categoryId,
-        ref_file_name: fileNameId,
-        private: isPrivate,
-      },
+      clientFile,
       base64_file_content: dataUri,
-      file_name: file.name,
+      file_name: file.name, // actual file name, ie: hello.pdf
     };
 
     // Make POST request to client-files endpoint
