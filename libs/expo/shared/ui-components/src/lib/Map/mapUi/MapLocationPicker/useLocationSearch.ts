@@ -1,10 +1,10 @@
-import { debounce } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   TPlacePrediction,
   getPlaceAutocomplete,
   getPlaceDetailsById,
-} from '../../services';
+} from '@monorepo/expo/shared/services';
+import { debounce } from 'lodash';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TLocationData } from './types';
 
 interface UseLocationSearchOptions {

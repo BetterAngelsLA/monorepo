@@ -1,3 +1,7 @@
+import {
+  getPlaceDetailsById,
+  reverseGeocode,
+} from '@monorepo/expo/shared/services';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import {
   LocationArrowIcon,
@@ -5,34 +9,36 @@ import {
   SearchIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  BasicInput,
-  IconButton,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
+import BasicInput from '../../../BasicInput';
+import IconButton from '../../../IconButton';
+import TextRegular from '../../../TextRegular';
 import * as ExpoLocation from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { MapPressEvent, PoiClickEvent } from 'react-native-maps';
+import RNMapView, {
+  Marker,
+  PROVIDER_GOOGLE,
+  MapPressEvent,
+  PoiClickEvent,
+} from 'react-native-maps';
 import openMap from 'react-native-open-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MapView, Marker, PROVIDER_GOOGLE, TMapView } from '../../maps';
-import { getPlaceDetailsById, reverseGeocode } from '../../services';
-import { DirectionsPicker } from './DirectionsPicker';
+import type { TMapView } from '../../types';
+import { DirectionsActionSheet } from '../../../DirectionsPopup/DirectionsActionSheet';
 import { SelectedLocationPanel } from './SelectedLocationPanel';
-import { ILocationMapModalProps, TLocationData } from './types';
+import { IMapLocationPickerProps, TLocationData } from './types';
 import { useLocationSearch } from './useLocationSearch';
 
 const DEFAULT_COORDS = { latitude: 34.048655, longitude: -118.258815 };
 const DELTA = { latitudeDelta: 0.005, longitudeDelta: 0.005 };
 
-export function LocationMapModal({
+export function MapLocationPicker({
   initialLocation,
   onSelectLocation,
   onClearLocation,
   onClose,
   userLocation: propUserLocation,
-}: ILocationMapModalProps) {
+}: IMapLocationPickerProps) {
   const { baseUrl } = useApiConfig();
   const mapRef = useRef<TMapView>(null);
   const insets = useSafeAreaInsets();
@@ -207,11 +213,13 @@ export function LocationMapModal({
     <View style={styles.container}>
       {/* iOS Directions Picker */}
       {showIosDirections && location && (
-        <DirectionsPicker
-          onSelectApple={() => openDirections('apple')}
-          onSelectGoogle={() => openDirections('google')}
-          onCancel={() => setShowIosDirections(false)}
-        />
+        <View style={styles.directionsOverlay}>
+          <DirectionsActionSheet
+            onSelectApple={() => openDirections('apple')}
+            onSelectGoogle={() => openDirections('google')}
+            onCancel={() => setShowIosDirections(false)}
+          />
+        </View>
       )}
 
       {/* Search */}
@@ -291,7 +299,7 @@ export function LocationMapModal({
       </View>
 
       {/* Map */}
-      <MapView
+      <RNMapView
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={styles.map}
@@ -308,7 +316,7 @@ export function LocationMapModal({
             <LocationPinIcon size="2xl" />
           </Marker>
         )}
-      </MapView>
+      </RNMapView>
     </View>
   );
 }
@@ -354,6 +362,10 @@ const styles = StyleSheet.create({
   safeAreaBottomActive: {
     backgroundColor: Colors.WHITE,
   },
+  directionsOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    zIndex: 1001,
+    width: '100%',
+  },
 });
-
-export default LocationMapModal;

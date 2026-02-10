@@ -8,7 +8,7 @@ export type TLocationData = {
   addressComponents: unknown[];
 };
 
-export interface ILocationMapModalProps {
+export interface IMapLocationPickerProps {
   initialLocation?: {
     latitude: number;
     longitude: number;

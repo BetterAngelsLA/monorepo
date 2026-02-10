@@ -2,11 +2,17 @@ import {
   CSRF_COOKIE_NAME,
   CSRF_HEADER_NAME,
 } from '@monorepo/expo/shared/utils';
-import { LA_COUNTY_CENTER } from '@monorepo/expo/shared/ui-components';
 import CookieManager from '@preeternal/react-native-cookie-manager';
 import axios from 'axios';
 
 import { TPlaceLatLng, TPlacePrediction } from './types';
+
+// Default bias center for autocomplete (approx center of LA County).
+// Defined locally to avoid a circular dependency on ui-components.
+const DEFAULT_BOUNDS_CENTER: TPlaceLatLng = {
+  lat: 34.04499,
+  lng: -118.251601,
+};
 
 const MILES_TO_METERS = 1609.34;
 
@@ -35,7 +41,7 @@ export async function getPlaceAutocomplete(
   const {
     baseUrl,
     query,
-    boundsCenter = LA_COUNTY_CENTER,
+    boundsCenter = DEFAULT_BOUNDS_CENTER,
     boundsRadiusMiles = 10,
   } = props;
 

@@ -10,7 +10,7 @@ import {
   TPlacePrediction,
   getPlaceAutocomplete,
   getPlaceDetailsById,
-} from '../../services';
+} from '@monorepo/expo/shared/services';
 import { AddressOption } from './AddressOption';
 
 const DEFAULT_DEBOUNCE_MS = 100;

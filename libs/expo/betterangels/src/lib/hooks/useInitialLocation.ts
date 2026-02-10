@@ -1,7 +1,7 @@
 import * as ExpoLocation from 'expo-location';
 import { useEffect, useState } from 'react';
 import { LocationDraft } from '../screens/NotesHmis/HmisProgramNoteForm';
-import { reverseGeocode } from '../services';
+import { reverseGeocode } from '@monorepo/expo/shared/services';
 
 const INITIAL_LOCATION = {
   longitude: -118.258815,

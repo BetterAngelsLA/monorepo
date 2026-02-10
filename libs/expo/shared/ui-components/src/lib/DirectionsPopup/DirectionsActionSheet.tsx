@@ -1,32 +1,37 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import TextBold from '../TextBold';
+import TextRegular from '../TextRegular';
 
-interface DirectionsPickerProps {
-  onSelectApple: () => void;
+interface IDirectionsActionSheetProps {
+  onSelectApple?: () => void;
   onSelectGoogle: () => void;
   onCancel: () => void;
 }
 
-export function DirectionsPicker({
+export function DirectionsActionSheet({
   onSelectApple,
   onSelectGoogle,
   onCancel,
-}: DirectionsPickerProps) {
+}: IDirectionsActionSheetProps) {
   return (
-    <View style={styles.overlay}>
+    <View style={styles.container}>
       <View style={styles.card}>
-        <Pressable
-          style={[styles.option, styles.borderBottom]}
-          onPress={onSelectApple}
-          accessibilityRole="button"
-        >
-          <TextRegular color={Colors.PRIMARY}>Apple Maps</TextRegular>
-        </Pressable>
+        {Platform.OS === 'ios' && onSelectApple && (
+          <Pressable
+            style={[styles.option, styles.borderBottom]}
+            onPress={onSelectApple}
+            accessibilityRole="button"
+            accessibilityHint="opens apple maps"
+          >
+            <TextRegular color={Colors.PRIMARY}>Apple Maps</TextRegular>
+          </Pressable>
+        )}
         <Pressable
           style={styles.option}
           onPress={onSelectGoogle}
           accessibilityRole="button"
+          accessibilityHint="opens google maps"
         >
           <TextRegular color={Colors.PRIMARY}>Google Maps</TextRegular>
         </Pressable>
@@ -35,6 +40,7 @@ export function DirectionsPicker({
         style={[styles.card, styles.cancel]}
         onPress={onCancel}
         accessibilityRole="button"
+        accessibilityHint="close map selection"
       >
         <TextBold color={Colors.PRIMARY}>Cancel</TextBold>
       </Pressable>
@@ -43,11 +49,7 @@ export function DirectionsPicker({
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    position: 'absolute',
-    bottom: 0,
-    zIndex: 1001,
-    width: '100%',
+  container: {
     paddingBottom: Spacings.sm,
     paddingHorizontal: Spacings.sm,
   },
