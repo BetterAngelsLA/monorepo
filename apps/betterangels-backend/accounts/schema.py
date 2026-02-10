@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import Optional, Union, cast
 
@@ -38,6 +39,8 @@ from .types import (
     UpdateUserInput,
     UserType,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def annotate_member_role(org_id: str) -> Case:

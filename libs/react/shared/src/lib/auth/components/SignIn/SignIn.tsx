@@ -1,10 +1,11 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '../../../components/Input';
+import { useUser } from '../../../hooks';
+import { useAllauthLogin } from '../../../hooks/useAllauthLogin';
+import { useApiConfig } from '../../../providers';
 import { Regex } from '../../../static';
 import './SignIn.css';
-import { useApiConfig } from '../../../providers';
-import { useUser } from '../../../hooks';
 
 export interface SignInProps {
   /** Path to redirect to after successful login */
@@ -19,95 +20,30 @@ export default function SignIn({
 }: SignInProps) {
   const { fetchClient, apiUrl } = useApiConfig();
   const { refetchUser } = useUser();
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
-  const [step, setStep] = useState<'initial' | 'otp'>('initial');
-  const [errorMsg, setErrorMsg] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate();
+  const {
+    step,
+    errorMsg,
+    loading,
+    handleSendCode,
+    handleConfirmCode,
+    handlePasswordLogin,
+    resetStep,
+  } = useAllauthLogin({
+    fetchClient,
+    onLoginSuccess: async () => {
+      await refetchUser();
+      navigate(onSuccessRedirect);
+    },
+  });
 
   const isPasswordLogin = email.endsWith('@example.com');
   const isValidEmail = Regex.email.test(email);
-
-  const handleError = (message: string) => {
-    setErrorMsg(message);
-    setLoading(false);
-  };
-
-  const handleSendCode = useCallback(async () => {
-    setLoading(true);
-    setErrorMsg('');
-
-    try {
-      const res = await fetchClient('/_allauth/browser/v1/auth/code/request', {
-        method: 'POST',
-        body: JSON.stringify({ email: email.toLowerCase() }),
-      });
-
-      if (res.ok || res.status === 401) {
-        setStep('otp');
-      } else {
-        handleError('Unable to send code. Please try again.');
-      }
-    } catch (error) {
-      console.error('Send code error:', error);
-      handleError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [email, fetchClient]);
-
-  const handleConfirmCode = useCallback(async () => {
-    setLoading(true);
-    setErrorMsg('');
-    try {
-      const res = await fetchClient('/_allauth/browser/v1/auth/code/confirm', {
-        method: 'POST',
-        body: JSON.stringify({ code: otp.trim() }),
-      });
-      const data = await res.json();
-
-      // Success (200) or already authenticated (409) - both mean user is authenticated
-      if ((res.ok && data?.meta?.is_authenticated) || res.status === 409) {
-        await refetchUser();
-        navigate(onSuccessRedirect);
-      } else {
-        handleError('Invalid code. Please try again.');
-      }
-    } catch (error) {
-      console.error('Confirm code error:', error);
-      handleError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [otp, fetchClient, refetchUser, navigate, onSuccessRedirect]);
-
-  const handlePasswordLogin = useCallback(async () => {
-    setLoading(true);
-    setErrorMsg('');
-
-    try {
-      const res = await fetchClient('/_allauth/browser/v1/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ username: email.toLowerCase(), password }),
-      });
-      const data = await res.json();
-
-      if (res.ok && data?.meta?.is_authenticated) {
-        await refetchUser();
-        navigate(onSuccessRedirect);
-      } else {
-        handleError('Invalid email or password.');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      handleError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [email, password, fetchClient, refetchUser, navigate, onSuccessRedirect]);
 
   return (
     <div className="bg-neutral-99 flex min-h-screen items-center justify-center">
@@ -121,29 +57,38 @@ export default function SignIn({
               inputClassname="input-xl"
               label="Email Address"
               value={email}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setEmail(e.target.value)
-              }
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setOtp('');
+                resetStep();
+              }}
               autoCapitalize="none"
               placeholder="you@example.com"
             />
 
             {isPasswordLogin && (
-              <input
+              <Input
+                className="mb-4"
+                inputClassname="input-xl"
+                label="Password"
                 value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setPassword(e.target.value)
-                }
+                onChange={(e) => setPassword(e.target.value)}
                 type="password"
                 placeholder="Password"
               />
             )}
 
-            {!!errorMsg && <div>{errorMsg}</div>}
+            {!!errorMsg && (
+              <p className="text-alert-60 text-sm mb-4">{errorMsg}</p>
+            )}
 
             <button
               className="btn btn-primary btn-xl"
-              onClick={isPasswordLogin ? handlePasswordLogin : handleSendCode}
+              onClick={() =>
+                isPasswordLogin
+                  ? handlePasswordLogin(email, password)
+                  : handleSendCode(email)
+              }
               disabled={
                 loading || !isValidEmail || (isPasswordLogin && !password)
               }
@@ -160,20 +105,20 @@ export default function SignIn({
               inputClassname="input-xl"
               label="OTP Code"
               value={otp}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setOtp(e.target.value)
-              }
+              onChange={(e) => setOtp(e.target.value)}
               autoCapitalize="none"
               placeholder="Enter OTP"
             />
 
             <p>Check your email for the access code.</p>
 
-            {!!errorMsg && <p>{errorMsg}</p>}
+            {!!errorMsg && (
+              <p className="text-alert-60 text-sm mb-4">{errorMsg}</p>
+            )}
 
             <button
               className="btn btn-primary btn-xl"
-              onClick={handleConfirmCode}
+              onClick={() => handleConfirmCode(otp)}
               disabled={loading || !otp.trim()}
             >
               Confirm OTP

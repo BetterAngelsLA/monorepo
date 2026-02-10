@@ -35,14 +35,16 @@ function getRouteAccess(
   return 'neutral';
 }
 
-export default function AuthProvider({
-  children,
-  config,
-}: AuthProviderProps) {
+export default function AuthProvider({ children, config }: AuthProviderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const hasRedirected = useRef(false);
   const { user, isLoading } = useUser();
+
+  // Reset redirect guard when user or location changes
+  useEffect(() => {
+    hasRedirected.current = false;
+  }, [user, location.pathname]);
 
   useEffect(() => {
     if (isLoading || hasRedirected.current) return;
@@ -59,7 +61,8 @@ export default function AuthProvider({
 
     if (access === 'unsafe' && user) {
       const from =
-        (location.state as any)?.from || config.defaultAuthenticatedRoute;
+        (location.state as { from?: string })?.from ||
+        config.defaultAuthenticatedRoute;
       hasRedirected.current = true;
       navigate(from, { replace: true });
     }

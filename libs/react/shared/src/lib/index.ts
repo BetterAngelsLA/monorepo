@@ -1,11 +1,11 @@
 export * from './auth';
-export * from './providers';
-export * from './hooks';
+export { createApolloClient } from './clients/apollo/client';
 export { Input } from './components/Input';
 export type { InputProps } from './components/Input';
-export { createApolloClient } from './clients/apollo/client';
 export * from './featureControls';
+export * from './hooks';
 export * from './observers';
+export * from './providers';
 export { Regex } from './static/regex';
 export { appZIndex } from './static/zIndex';
 export { debounce } from './utils/debounce';
