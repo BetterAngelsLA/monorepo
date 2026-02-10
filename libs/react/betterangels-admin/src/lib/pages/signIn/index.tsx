@@ -1,5 +1,5 @@
-import { Regex } from '@monorepo/react/shared';
-import { useCallback, useState } from 'react';
+import { Regex, useAllauthLogin } from '@monorepo/react/shared';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '../../components';
 import { useUser } from '../../hooks';
@@ -9,93 +9,29 @@ export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
-  const [step, setStep] = useState<'initial' | 'otp'>('initial');
-  const [errorMsg, setErrorMsg] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const { fetchClient, apiUrl } = useApiConfig();
   const { refetchUser } = useUser();
   const navigate = useNavigate();
 
+  const {
+    step,
+    errorMsg,
+    loading,
+    handleSendCode,
+    handleConfirmCode,
+    handlePasswordLogin,
+    resetStep,
+  } = useAllauthLogin({
+    fetchClient,
+    onLoginSuccess: async () => {
+      await refetchUser();
+      navigate('/users');
+    },
+  });
+
   const isPasswordLogin = email.endsWith('@example.com');
   const isValidEmail = Regex.email.test(email);
-
-  const handleError = (message: string) => {
-    setErrorMsg(message);
-    setLoading(false);
-  };
-
-  const handleSendCode = useCallback(async () => {
-    setLoading(true);
-    setErrorMsg('');
-
-    try {
-      const res = await fetchClient('/_allauth/browser/v1/auth/code/request', {
-        method: 'POST',
-        body: JSON.stringify({ email: email.toLowerCase() }),
-      });
-
-      if (res.ok || res.status === 401) {
-        setStep('otp');
-      } else {
-        handleError('Unable to send code. Please try again.');
-      }
-    } catch (error) {
-      console.error('Send code error:', error);
-      handleError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [email, fetchClient]);
-
-  const handleConfirmCode = useCallback(async () => {
-    setLoading(true);
-    setErrorMsg('');
-    try {
-      const res = await fetchClient('/_allauth/browser/v1/auth/code/confirm', {
-        method: 'POST',
-        body: JSON.stringify({ code: otp.trim() }),
-      });
-      const data = await res.json();
-
-      if (res.ok && data?.meta?.is_authenticated) {
-        await refetchUser();
-        navigate('/users');
-      } else {
-        handleError('Invalid code. Please try again.');
-      }
-    } catch (error) {
-      console.error('Confirm code error:', error);
-      handleError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [otp, fetchClient, refetchUser, navigate]);
-
-  const handlePasswordLogin = useCallback(async () => {
-    setLoading(true);
-    setErrorMsg('');
-
-    try {
-      const res = await fetchClient('/_allauth/browser/v1/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ username: email.toLowerCase(), password }),
-      });
-      const data = await res.json();
-
-      if (res.ok && data?.meta?.is_authenticated) {
-        await refetchUser();
-        navigate('/');
-      } else {
-        handleError('Invalid email or password.');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      handleError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [email, password, fetchClient, refetchUser, navigate]);
 
   return (
     <div className="bg-neutral-99 flex min-h-screen items-center justify-center">
@@ -112,7 +48,11 @@ export default function SignIn() {
               inputClassname="input-xl"
               label="Email Address"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setOtp('');
+                resetStep();
+              }}
               autoCapitalize="none"
               placeholder="you@example.com"
             />
@@ -130,7 +70,11 @@ export default function SignIn() {
 
             <button
               className="btn btn-primary btn-xl"
-              onClick={isPasswordLogin ? handlePasswordLogin : handleSendCode}
+              onClick={() =>
+                isPasswordLogin
+                  ? handlePasswordLogin(email, password)
+                  : handleSendCode(email)
+              }
               disabled={
                 loading || !isValidEmail || (isPasswordLogin && !password)
               }
@@ -158,7 +102,7 @@ export default function SignIn() {
 
             <button
               className="btn btn-primary btn-xl"
-              onClick={handleConfirmCode}
+              onClick={() => handleConfirmCode(otp)}
               disabled={loading || !otp.trim()}
             >
               Confirm OTP
