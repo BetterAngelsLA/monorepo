@@ -26,10 +26,10 @@ export function Button(props: IButtonProps) {
 
   const buttonCss = [
     className,
-    'font-semibold focus:outline-none transition-all inline-flex items-center justify-center',
+    'font-sans font-light focus:outline-none transition-all inline-flex items-center justify-center',
     'text-white shadow-lg',
     isFloating
-      ? 'rounded-full flex items-center justify-center gap-[12px]'
+      ? 'rounded-full flex items-center justify-center gap-[8px]'
       : 'rounded-lg',
   ]
     .filter(Boolean)
