@@ -95,12 +95,12 @@ export function AddressAutocomplete(props: TProps) {
               : countryRestrictions
               ? [countryRestrictions]
               : ['us'],
+            fieldMask:
+              'suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat',
           },
           {
             headers: {
               'Content-Type': 'application/json',
-              'X-Goog-FieldMask':
-                'suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat',
               ...(csrfToken && { [csrfHeaderName]: csrfToken }),
             },
             withCredentials: true,
