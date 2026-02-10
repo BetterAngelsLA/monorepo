@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { Plus } from 'lucide-react';
 import { Button } from './buttons';
 
 const meta: Meta<typeof Button> = {
@@ -8,6 +9,33 @@ const meta: Meta<typeof Button> = {
 export default meta;
 
 type Story = StoryObj<typeof Button>;
+
+export const SmallLight: Story = {
+  parameters: {
+    customLayout: {
+      canvasClassName: 'flex-col w-[280px]',
+    },
+  },
+  render: () => <Button variant="smalllight">Button</Button>,
+};
+
+export const SmallMedium: Story = {
+  parameters: {
+    customLayout: {
+      canvasClassName: 'flex-col w-[280px]',
+    },
+  },
+  render: () => <Button variant="smallmedium">Button</Button>,
+};
+
+export const SmallDark: Story = {
+  parameters: {
+    customLayout: {
+      canvasClassName: 'flex-col w-[280px]',
+    },
+  },
+  render: () => <Button variant="smalldark">Button</Button>,
+};
 
 export const FloatingLight: Story = {
   parameters: {
@@ -31,8 +59,8 @@ export const Playground: Story = {
   render: (args) => (
     <Button
       {...args}
-      leftIcon={args.leftIcon ? <FaPlay /> : undefined}
-      rightIcon={args.rightIcon ? <FaArrowRight /> : undefined}
+      leftIcon={args.leftIcon ? <Plus /> : undefined}
+      rightIcon={args.rightIcon ? <Plus /> : undefined}
     />
   ),
   args: {

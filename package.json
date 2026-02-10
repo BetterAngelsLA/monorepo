@@ -64,6 +64,7 @@
     "jotai-family": "^1.0.1",
     "jwt-decode": "^4.0.0",
     "libphonenumber-js": "^1.12.6",
+    "lucide-react": "^0.563.0",
     "mime": "^4.1.0",
     "newrelic-react-native-agent": "^1.6.0",
     "react": "19.1.1",
