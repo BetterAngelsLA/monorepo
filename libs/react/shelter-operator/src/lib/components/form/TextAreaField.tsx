@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { INPUT_ERROR_CLASS, TEXTAREA_CLASS } from '../constants/styles';
+import { INPUT_ERROR_CLASS, TEXTAREA_CLASS } from './styles';
 import { FieldWrapper } from './FieldWrapper';
 
 interface TextAreaFieldProps {

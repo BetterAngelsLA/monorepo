@@ -2,10 +2,10 @@ import {
   ENTRY_REQUIREMENTS_OPTIONS,
   REFERRAL_REQUIREMENT_OPTIONS,
 } from '../../../types';
-import { CheckboxGroup } from '../components/CheckboxGroup';
-import { FormSection } from '../components/FormSection';
-import { TextAreaField } from '../components/TextAreaField';
-import { TextField } from '../components/TextField';
+import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
+import { FormSection } from '../../../../../components/form/FormSection';
+import { TextAreaField } from '../../../../../components/form/TextAreaField';
+import { TextField } from '../../../../../components/form/TextField';
 import type { SectionProps } from '../types';
 
 export function EntryRequirementsSection({ data, onChange, errors }: SectionProps) {

@@ -1,10 +1,10 @@
 import { ROOM_STYLES_OPTIONS } from '../../../types';
 import { RoomStyleChoices } from '@monorepo/react/shelter';
-import { CheckboxGroup } from '../components/CheckboxGroup';
-import { FormSection } from '../components/FormSection';
-import { NumberField } from '../components/NumberField';
-import { TextAreaField } from '../components/TextAreaField';
-import { TextField } from '../components/TextField';
+import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
+import { FormSection } from '../../../../../components/form/FormSection';
+import { NumberField } from '../../../../../components/form/NumberField';
+import { TextAreaField } from '../../../../../components/form/TextAreaField';
+import { TextField } from '../../../../../components/form/TextField';
 import type { SectionProps } from '../types';
 
 export function SleepingDetailsSection({ data, onChange, errors }: SectionProps) {

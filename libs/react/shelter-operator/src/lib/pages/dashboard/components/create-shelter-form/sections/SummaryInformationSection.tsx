@@ -4,10 +4,10 @@ import {
   SHELTER_TYPES_OPTIONS,
 } from '../../../types';
 import { DemographicChoices, ShelterChoices } from '@monorepo/react/shelter';
-import { CheckboxGroup } from '../components/CheckboxGroup';
-import { FormSection } from '../components/FormSection';
-import { TextAreaField } from '../components/TextAreaField';
-import { TextField } from '../components/TextField';
+import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
+import { FormSection } from '../../../../../components/form/FormSection';
+import { TextAreaField } from '../../../../../components/form/TextAreaField';
+import { TextField } from '../../../../../components/form/TextField';
 import type { SectionProps } from '../types';
 
 export function SummaryInformationSection({ data, onChange, errors }: SectionProps) {

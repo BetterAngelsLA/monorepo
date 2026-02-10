@@ -7,10 +7,10 @@ import {
   SUPERVISORIAL_DISTRICT_OPTIONS,
 } from '../../../types';
 import { FunderChoices, ShelterProgramChoices } from '@monorepo/react/shelter';
-import { CheckboxGroup } from '../components/CheckboxGroup';
-import { FormSection } from '../components/FormSection';
-import { SelectField } from '../components/SelectField';
-import { TextField } from '../components/TextField';
+import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
+import { FormSection } from '../../../../../components/form/FormSection';
+import { SelectField } from '../../../../../components/form/SelectField';
+import { TextField } from '../../../../../components/form/TextField';
 import type { SectionProps } from '../types';
 
 export function EcosystemInformationSection({ data, onChange }: SectionProps) {

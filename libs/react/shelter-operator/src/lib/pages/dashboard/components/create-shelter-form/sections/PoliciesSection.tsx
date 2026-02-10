@@ -1,12 +1,12 @@
 import { BOOLEAN_OPTIONS, EXIT_POLICY_OPTIONS } from '../../../types';
-import { CheckboxGroup } from '../components/CheckboxGroup';
-import { FormSection } from '../components/FormSection';
-import { NumberField } from '../components/NumberField';
-import { RadioGroup } from '../components/RadioGroup';
-import { SingleFileField } from '../components/SingleFileField';
-import { TextAreaField } from '../components/TextAreaField';
-import { TextField } from '../components/TextField';
-import { TimeRangeField } from '../components/TimeRangeField';
+import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
+import { FormSection } from '../../../../../components/form/FormSection';
+import { NumberField } from '../../../../../components/form/NumberField';
+import { RadioGroup } from '../../../../../components/form/RadioGroup';
+import { SingleFileField } from '../../../../../components/form/SingleFileField';
+import { TextAreaField } from '../../../../../components/form/TextAreaField';
+import { TextField } from '../../../../../components/form/TextField';
+import { TimeRangeField } from '../../../../../components/form/TimeRangeField';
 import type { SectionProps } from '../types';
 import { ExitPolicyChoices } from '@monorepo/react/shelter';
 

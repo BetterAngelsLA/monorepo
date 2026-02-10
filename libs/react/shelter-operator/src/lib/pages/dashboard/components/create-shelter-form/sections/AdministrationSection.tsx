@@ -1,6 +1,6 @@
 import { STATUS_OPTIONS } from '../../../types';
-import { FormSection } from '../components/FormSection';
-import { SelectField } from '../components/SelectField';
+import { FormSection } from '../../../../../components/form/FormSection';
+import { SelectField } from '../../../../../components/form/SelectField';
 import type { SectionProps } from '../types';
 
 export function AdministrationSection({ data, onChange, errors }: SectionProps) {

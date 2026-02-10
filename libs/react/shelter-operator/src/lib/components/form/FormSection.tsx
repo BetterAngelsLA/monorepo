@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { SECTION_CLASS, SECTION_TITLE_CLASS } from '../constants/styles';
+import { SECTION_CLASS, SECTION_TITLE_CLASS } from './styles';
 
 interface FormSectionProps {
   title: string;

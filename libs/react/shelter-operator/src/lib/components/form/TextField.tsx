@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import type { HTMLInputTypeAttribute } from 'react';
-import { INPUT_CLASS, INPUT_ERROR_CLASS } from '../constants/styles';
+import { INPUT_CLASS, INPUT_ERROR_CLASS } from './styles';
 import { FieldWrapper } from './FieldWrapper';
 
 interface TextFieldProps {

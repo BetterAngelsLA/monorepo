@@ -1,7 +1,7 @@
 import { OVERALL_RATING_OPTIONS } from '../../../types';
-import { FormSection } from '../components/FormSection';
-import { SelectField } from '../components/SelectField';
-import { TextAreaField } from '../components/TextAreaField';
+import { FormSection } from '../../../../../components/form/FormSection';
+import { SelectField } from '../../../../../components/form/SelectField';
+import { TextAreaField } from '../../../../../components/form/TextAreaField';
 import type { SectionProps } from '../types';
 
 export function BetterAngelsReviewSection({ data, onChange }: SectionProps) {

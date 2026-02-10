@@ -1,6 +1,6 @@
-import { FormSection } from '../components/FormSection';
-import { TextField } from '../components/TextField';
-import { TimeRangeField } from '../components/TimeRangeField';
+import { FormSection } from '../../../../../components/form/FormSection';
+import { TextField } from '../../../../../components/form/TextField';
+import { TimeRangeField } from '../../../../../components/form/TimeRangeField';
 import type { SectionProps } from '../types';
 
 export function BasicInformationSection({ data, onChange, errors }: SectionProps) {

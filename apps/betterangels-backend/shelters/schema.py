@@ -4,6 +4,7 @@ from typing import Optional
 
 import strawberry
 import strawberry_django
+from common.permissions.utils import IsAuthenticated
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import QuerySet
@@ -53,6 +54,7 @@ from shelters.models import (
     Shelter,
     ShelterProgram,
 )
+from shelters.permissions import ShelterPermissions
 from shelters.models import ShelterType as ShelterKind
 from shelters.models import (
     SpecialSituationRestriction,
@@ -63,6 +65,7 @@ from shelters.types import ShelterType
 from strawberry import ID, UNSET
 from strawberry.types import Info
 from strawberry_django.mutations import resolvers
+from strawberry_django.permissions import HasPerm
 from shelters.enums import StatusChoices
 from shelters.models import Shelter
 from shelters.types import ShelterOrder, ShelterType
@@ -162,7 +165,7 @@ class CreateShelterInput:
 
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(ShelterPermissions.ADD)])
     def create_shelter(self, info: Info, input: CreateShelterInput) -> ShelterType:
         enum_field_model_map: Dict[str, Any] = {
             "accessibility": Accessibility,

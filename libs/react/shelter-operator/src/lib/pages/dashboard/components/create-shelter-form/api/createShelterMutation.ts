@@ -6,6 +6,7 @@ import {
 } from '@monorepo/react/shelter';
 import type { ShelterFormData } from '../../../types';
 import { compactEnumValues } from '../utils/enumMappings';
+import { parseLocation, sanitizeString } from '../utils/formUtils';
 
 export const CREATE_SHELTER_MUTATION = CreateShelterDocument;
 export type CreateShelterMutationResult = CreateShelterMutation;
@@ -17,37 +18,6 @@ type ExtendedCreateShelterInput = GeneratedCreateShelterInput & {
 };
 
 export type CreateShelterInput = ExtendedCreateShelterInput;
-
-const sanitizeString = (value?: string | null) => {
-  if (!value) {
-    return undefined;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length ? trimmed : undefined;
-};
-
-const parseLocation = (value: string) => {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-
-  const fragments = trimmed.split(',').map(fragment => fragment.trim());
-  const [place, latitudeRaw, longitudeRaw] = fragments;
-  if (!place) {
-    return undefined;
-  }
-
-  const latitude = latitudeRaw ? Number(latitudeRaw) : undefined;
-  const longitude = longitudeRaw ? Number(longitudeRaw) : undefined;
-
-  return {
-    place,
-    ...(Number.isFinite(latitude) ? { latitude } : {}),
-    ...(Number.isFinite(longitude) ? { longitude } : {}),
-  };
-};
 
 const numberOrUndefined = (value: number | null | undefined) =>
   typeof value === 'number' && !Number.isNaN(value) ? value : undefined;

@@ -1,6 +1,6 @@
-import { FormSection } from '../components/FormSection';
-import { MultiFileField } from '../components/MultiFileField';
-import { SingleFileField } from '../components/SingleFileField';
+import { FormSection } from '../../../../../components/form/FormSection';
+import { MultiFileField } from '../../../../../components/form/MultiFileField';
+import { SingleFileField } from '../../../../../components/form/SingleFileField';
 import type { SectionProps } from '../types';
 
 export function MediaSection({ data, onChange }: SectionProps) {

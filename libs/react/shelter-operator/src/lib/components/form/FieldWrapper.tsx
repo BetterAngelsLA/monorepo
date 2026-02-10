@@ -4,7 +4,7 @@ import {
   FIELD_WRAPPER_CLASS,
   HELPER_TEXT_CLASS,
   LABEL_CLASS,
-} from '../constants/styles';
+} from './styles';
 
 interface FieldWrapperProps {
   label: string;

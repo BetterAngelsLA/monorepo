@@ -1,4 +1,4 @@
-import { OPTION_ITEM_CLASS, OPTION_LIST_CLASS } from '../constants/styles';
+import { OPTION_ITEM_CLASS, OPTION_LIST_CLASS } from './styles';
 import { FieldWrapper } from './FieldWrapper';
 
 export interface CheckboxOption<T extends string = string> {

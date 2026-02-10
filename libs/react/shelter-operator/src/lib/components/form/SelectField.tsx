@@ -1,7 +1,11 @@
 import clsx from 'clsx';
-import { INPUT_CLASS, INPUT_ERROR_CLASS } from '../constants/styles';
+import { INPUT_CLASS, INPUT_ERROR_CLASS } from './styles';
 import { FieldWrapper } from './FieldWrapper';
-import type { SelectOption } from '../../../types';
+
+export interface SelectOption<T extends string | number | null> {
+  value: T;
+  label: string;
+}
 
 interface SelectFieldProps<T extends string | number | null> {
   id: string;

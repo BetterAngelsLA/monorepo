@@ -10,7 +10,28 @@ import {
 import type { ShelterFormData } from '../../../types';
 
 const phoneRegex = /^\+?[\d\s().-]{7,20}$/;
-const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/i;
+
+const isValidUrl = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  if (/\s/.test(trimmed)) {
+    return false;
+  }
+
+  const withScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+
+  try {
+    const parsed = new URL(withScheme);
+    return Boolean(parsed.hostname) && parsed.hostname.includes('.');
+  } catch {
+    return false;
+  }
+};
 
 type FieldSchemaMap = {
   [K in keyof ShelterFormData]?: z.ZodTypeAny;
@@ -29,7 +50,7 @@ const fieldSchemas: FieldSchemaMap = {
     }),
   website: z
     .string()
-    .refine(value => value === '' || urlRegex.test(value), {
+    .refine(value => value === '' || isValidUrl(value), {
       message: 'Enter a valid URL',
     }),
   demographics: z
