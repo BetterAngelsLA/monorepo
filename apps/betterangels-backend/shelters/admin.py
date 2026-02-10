@@ -59,6 +59,7 @@ from .enums import (
 from .models import (
     SPA,
     Accessibility,
+    Bed,
     City,
     ContactInfo,
     Demographic,
@@ -893,6 +894,13 @@ class ShelterAdmin(ImportExportModelAdmin):
         url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
         return format_html('<a href="{}">{}</a>', url, label)
 
+
+@admin.register(Bed)
+class BedAdmin(admin.ModelAdmin):
+    list_display = ("id", "shelter_id", "status", "created_at", "updated_at")
+    list_filter = ("status",)
+    search_fields = ("shelter_id__name",)
+
     def get_urls(self) -> list[Any]:
         urls = super().get_urls()
         custom_urls: list[Any] = [
@@ -902,7 +910,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                 name="shelters_shelter_clone",
             ),
         ]
-        return cast(list[Any], custom_urls + urls)
+        return custom_urls + urls
 
     def _copy_file_field(self, original_file_field: Any) -> Optional[ContentFile]:
         """Return a duplicated ContentFile with '_copy' suffix, or None if source is empty."""
@@ -961,7 +969,7 @@ class ShelterAdmin(ImportExportModelAdmin):
 
         if not self.has_add_permission(request):
             msg = (
-                f"You do not have permission to add {self.opts.verbose_name.lower()} instances. "
+                f"You do not have permission to add {str(self.opts.verbose_name).lower()} instances. "
                 "Cloning requires add permission."
             )
             self.message_user(request, msg, messages.WARNING)

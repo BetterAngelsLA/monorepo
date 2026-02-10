@@ -1,7 +1,5 @@
-import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import {
   BottomActions,
-  IconButton,
   TextBold,
   TextButton,
   TextRegular,
@@ -17,17 +15,6 @@ export function UploadSection(props: IUploadSectionProps) {
   return (
     <View style={{ flex: 1 }}>
       <MainScrollContainer keyboardAware>
-        <IconButton
-          onPress={onCancel}
-          mb="sm"
-          accessibilityHint="closes the modal"
-          accessibilityLabel="close"
-          alignItems="flex-start"
-          variant={'transparent'}
-          borderColor="transparent"
-        >
-          <ChevronLeftIcon size="sm" />
-        </IconButton>
         <TextBold size="lg">{title}</TextBold>
         <TextRegular size="sm" mb="sm">
           {subtitle}

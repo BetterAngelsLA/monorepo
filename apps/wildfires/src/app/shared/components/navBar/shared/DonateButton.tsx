@@ -1,4 +1,4 @@
-import { mergeCss } from '../../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 
 const DONATE_HREF =
   'https://www.pledge.to/better-angels-emergency-assistance-fund';

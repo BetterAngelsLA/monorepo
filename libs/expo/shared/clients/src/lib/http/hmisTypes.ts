@@ -16,13 +16,6 @@ export interface HmisRequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
 }
 
-export class HmisError extends Error {
-  constructor(message: string, public status: number, public data?: unknown) {
-    super(message);
-    this.name = 'HmisError';
-  }
-}
-
 /**
  * HMIS API Response Types
  * These are manually created to match the shapes returned by the HMIS REST API

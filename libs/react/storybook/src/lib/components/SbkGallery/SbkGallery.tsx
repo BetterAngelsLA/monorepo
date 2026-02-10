@@ -1,4 +1,4 @@
-import { mergeCss } from '@monorepo/react/components';
+import { mergeCss } from '@monorepo/react/shared';
 import { SbkPanel } from '@monorepo/react/storybook';
 import { ReactNode, useState } from 'react';
 import { SbkGalleryCard } from './SbkGalleryCard';

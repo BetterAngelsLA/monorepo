@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import Optional, Union, cast
 
@@ -15,7 +16,7 @@ from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
 from notes.permissions import NotePermissions
 from organizations.backends import invitation_backend
-from organizations.models import Organization, OrganizationUser
+from organizations.models import Organization, OrganizationOwner, OrganizationUser
 from strawberry.types import Info
 from strawberry_django import auth
 from strawberry_django.auth.utils import get_current_user
@@ -34,9 +35,12 @@ from .types import (
     OrganizationOrder,
     OrganizationType,
     OrgInvitationInput,
+    RemoveOrganizationMemberInput,
     UpdateUserInput,
     UserType,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def annotate_member_role(org_id: str) -> Case:
@@ -211,3 +215,46 @@ class Mutation:
         )
 
         return cast(OrganizationMemberType, user)
+
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(UserOrganizationPermissions.REMOVE_ORG_MEMBER)],
+    )
+    def remove_organization_member(
+        self,
+        info: Info,
+        data: RemoveOrganizationMemberInput,
+    ) -> DeletedObjectType:
+        current_user = cast(User, get_current_user(info))
+        user_id = int(data.id)
+
+        try:
+            organization = filter_for_user(
+                Organization.objects.filter(users=current_user),
+                current_user,
+                [UserOrganizationPermissions.REMOVE_ORG_MEMBER],
+            ).get(id=data.organization_id)
+        except Organization.DoesNotExist:
+            raise PermissionDenied("You do not have permission to remove members.")
+
+        try:
+            org_user = OrganizationUser.objects.get(
+                organization=organization,
+                user_id=user_id,
+            )
+        except OrganizationUser.DoesNotExist:
+            raise ValidationError("User is not a member of this organization.")
+
+        if OrganizationOwner.objects.filter(
+            organization=organization,
+            organization_user=org_user,
+        ).exists():
+            raise ValidationError("You cannot remove the organization owner. Transfer ownership first.")
+
+        if user_id == current_user.pk:
+            raise ValidationError("You cannot remove yourself from the organization.")
+
+        with transaction.atomic():
+            org_user.delete()
+
+        return DeletedObjectType(id=user_id)

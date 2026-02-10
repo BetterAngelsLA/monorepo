@@ -12,6 +12,7 @@ type FileCategorySelectorProps = {
     subCategoryId: string;
     categoryName: string;
   }) => void;
+  disabled?: boolean;
   header?: string | ReactNode | null;
   style?: ViewStyle;
 };
@@ -21,6 +22,7 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
     categories,
     subCategories,
     onSelect,
+    disabled,
     style,
     header = 'Select the right file category and predefined name.',
   } = props;
@@ -55,6 +57,7 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
         {categoryGroups.map((categoryGroup) => (
           <SingleSelect
             key={categoryGroup.categoryId}
+            disabled={disabled}
             placeholderTextColor={Colors.PRIMARY_EXTRA_DARK}
             placeholder={categoryGroup.categoryName}
             modalTitle="Document Type"
