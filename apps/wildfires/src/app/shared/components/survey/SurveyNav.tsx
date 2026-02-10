@@ -1,7 +1,7 @@
 import { ArrowLeftIcon } from '@monorepo/react/icons';
+import { mergeCss } from '@monorepo/react/shared';
 import { useContext } from 'react';
 import { SurveyButton } from '../../../pages/introduction/firesSurvey/components/SurveyButton';
-import { mergeCss } from '@monorepo/react/shared';
 import { SurveyContext } from './provider/SurveyContext';
 
 type IProps = {

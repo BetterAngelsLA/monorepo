@@ -1,5 +1,5 @@
-import { MouseEventHandler, PropsWithChildren } from 'react';
 import { mergeCss } from '@monorepo/react/shared';
+import { MouseEventHandler, PropsWithChildren } from 'react';
 
 interface IProps extends PropsWithChildren {
   ariaLabel: string;

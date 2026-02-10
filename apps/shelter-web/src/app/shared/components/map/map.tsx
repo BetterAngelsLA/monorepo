@@ -1,5 +1,6 @@
 import { CurrentLocationDot } from '@monorepo/react/components';
 import { MapPinIcon } from '@monorepo/react/icons';
+import { mergeCss } from '@monorepo/react/shared';
 import {
   AdvancedMarker,
   ControlPosition,
@@ -17,7 +18,6 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { mergeCss } from '@monorepo/react/shared';
 import {
   DEFAULT_GESTURE_HANDLING,
   DEFAULT_MAP_ZOOM,

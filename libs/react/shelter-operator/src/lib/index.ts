@@ -1,4 +1,4 @@
-export * from './providers';
 export * from './hooks';
-export * from './pages';
 export * from './OperatorApp';
+export * from './pages';
+export * from './providers';

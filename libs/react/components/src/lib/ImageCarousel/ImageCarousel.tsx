@@ -1,6 +1,6 @@
+import { mergeCss } from '@monorepo/react/shared';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useEffect, useState } from 'react';
-import { mergeCss } from '@monorepo/react/shared';
 import { ImageSlide } from './ImageSlide';
 import { SlideCounter } from './SlideCounter';
 

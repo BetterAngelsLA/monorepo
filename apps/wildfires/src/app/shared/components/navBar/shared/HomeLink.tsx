@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 
-import LADR_LOGO from '../../../../../assets/images/la_disaster_relief_navigator_logo.png';
 import { mergeCss } from '@monorepo/react/shared';
+import LADR_LOGO from '../../../../../assets/images/la_disaster_relief_navigator_logo.png';
 
 type IProps = {
   className?: string;

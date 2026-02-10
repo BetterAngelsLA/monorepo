@@ -1,6 +1,6 @@
 // SurveyResults.tsx
-import { TResource } from '../../clients/sanityCms/types';
 import { mergeCss } from '@monorepo/react/shared';
+import { TResource } from '../../clients/sanityCms/types';
 import { SurveyResources } from '../surveyResources/SurveyResources';
 
 type IProps = {

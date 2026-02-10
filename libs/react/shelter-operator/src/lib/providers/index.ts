@@ -1,2 +1,6 @@
-export { ApiConfigProvider, useApiConfig, UserProvider } from '@monorepo/react/shared';
+export {
+  ApiConfigProvider,
+  UserProvider,
+  useApiConfig,
+} from '@monorepo/react/shared';
 export * from './auth';

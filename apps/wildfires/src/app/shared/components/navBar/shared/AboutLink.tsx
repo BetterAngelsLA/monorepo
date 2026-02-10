@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
 import { mergeCss } from '@monorepo/react/shared';
+import { Link } from 'react-router-dom';
 
 type IProps = {
   className?: string;

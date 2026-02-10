@@ -1,5 +1,5 @@
-import { PropsWithChildren, ReactElement } from 'react';
 import { mergeCss } from '@monorepo/react/shared';
+import { PropsWithChildren, ReactElement } from 'react';
 import { MaxWLayout } from './maxWLayout';
 
 interface IParams extends PropsWithChildren {

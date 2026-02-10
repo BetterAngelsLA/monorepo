@@ -1,7 +1,7 @@
 import { useMutation } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod'; // Install this resolver
-import { Button, mergeCss, useAlert } from '@monorepo/react/components';
-import { Input, toError } from '@monorepo/react/shared';
+import { Button, useAlert } from '@monorepo/react/components';
+import { Input, mergeCss, toError } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types';

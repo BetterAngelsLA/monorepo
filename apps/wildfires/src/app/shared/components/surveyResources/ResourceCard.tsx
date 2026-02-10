@@ -1,6 +1,6 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { FC } from 'react';
 import { TResource } from '../../clients/sanityCms/types';
-import { mergeCss } from '@monorepo/react/shared';
 import { ResourceLink } from './shared/ResourceLink';
 import { ResourcePortableText } from './shared/ResourcePortableText';
 import { ResourceTipsDescription } from './shared/ResourceTipsDescription';

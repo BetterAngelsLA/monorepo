@@ -1,9 +1,9 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { Link } from 'react-router-dom';
 import {
   contactPagePath,
   privacyPolicyPagePath,
 } from '../../../routes/routePaths';
-import { mergeCss } from '@monorepo/react/shared';
 import { AboutLink } from './shared/AboutLink';
 
 type IProps = {

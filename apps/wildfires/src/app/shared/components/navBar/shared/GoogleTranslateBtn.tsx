@@ -1,6 +1,6 @@
 import { ChevronLeftIcon, GlobeIcon } from '@monorepo/react/icons';
-import { useEffect, useRef, useState } from 'react';
 import { mergeCss } from '@monorepo/react/shared';
+import { useEffect, useRef, useState } from 'react';
 
 type IProps = {
   className?: string;

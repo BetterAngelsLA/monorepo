@@ -1,7 +1,7 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
 import { ModalContainer } from '../shared/modal/modalContainer';
-import { mergeCss } from '@monorepo/react/shared';
 import { Footer } from './footer';
 import { Header } from './header';
 import { HorizontalLayout } from './horizontalLayout';

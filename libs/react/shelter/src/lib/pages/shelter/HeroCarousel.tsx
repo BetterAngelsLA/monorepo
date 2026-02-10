@@ -1,4 +1,5 @@
-import { ImageCarousel, mergeCss } from '@monorepo/react/components';
+import { ImageCarousel } from '@monorepo/react/components';
+import { mergeCss } from '@monorepo/react/shared';
 import { ImagePlaceholder } from '../../components';
 import { ViewShelterQuery } from './__generated__/shelter.generated';
 

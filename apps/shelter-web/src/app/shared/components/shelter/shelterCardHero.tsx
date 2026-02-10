@@ -1,5 +1,5 @@
-import { ImagePlaceholder } from '@monorepo/react/shelter';
 import { mergeCss } from '@monorepo/react/shared';
+import { ImagePlaceholder } from '@monorepo/react/shelter';
 
 type TShelterCard = {
   className?: string;

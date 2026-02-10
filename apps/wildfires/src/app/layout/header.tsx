@@ -1,8 +1,8 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { ReactElement } from 'react';
 import { MenuDesktop } from '../shared/components/navBar/MenuDesktop';
 import { HomeLink } from '../shared/components/navBar/shared/HomeLink';
 import { MenuBtnMobile } from '../shared/components/navBar/shared/MenuBtnMobile';
-import { mergeCss } from '@monorepo/react/shared';
 
 type IParams = {
   className?: string;

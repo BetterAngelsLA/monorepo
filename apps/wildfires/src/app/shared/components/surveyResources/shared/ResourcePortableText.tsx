@@ -1,5 +1,5 @@
-import { PortableText, PortableTextBlock } from '@portabletext/react';
 import { mergeCss } from '@monorepo/react/shared';
+import { PortableText, PortableTextBlock } from '@portabletext/react';
 
 type IProps = {
   className?: string;

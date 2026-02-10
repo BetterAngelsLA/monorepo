@@ -14,9 +14,9 @@
  * */
 
 import { CloseIcon } from '@monorepo/react/icons';
+import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { ReactElement, useEffect, useState } from 'react';
-import { mergeCss } from '@monorepo/react/shared';
 import {
   ANIMATION,
   CLOSE_ANIMATION_TIMING,

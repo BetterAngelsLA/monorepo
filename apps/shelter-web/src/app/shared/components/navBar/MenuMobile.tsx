@@ -1,4 +1,5 @@
 import { CloseIcon } from '@monorepo/react/icons';
+import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { Link } from 'react-router-dom';
 import {
@@ -7,7 +8,6 @@ import {
   shelterHomePath,
 } from '../../../routes/routePaths';
 import { flyoutAtom } from '../../atoms/flyoutAtom';
-import { mergeCss } from '@monorepo/react/shared';
 
 type MenuMobileProps = {
   showOperator: boolean;
