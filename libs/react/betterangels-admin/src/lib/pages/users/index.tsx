@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@apollo/client/react';
 import { Table, useAlert, useAppDrawer } from '@monorepo/react/components';
 import { PlusIcon, ThreeDotIcon } from '@monorepo/react/icons';
-import { toError } from '@monorepo/react/shared';
+import { mergeCss, toError } from '@monorepo/react/shared';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { JSX, useRef, useState } from 'react';
 import {
@@ -18,7 +18,9 @@ import {
 } from './__generated__/users.generated';
 
 const PAGE_SIZE = 25;
-
+type IProps = {
+  className?: string;
+};
 const COLUMNS: {
   label: string;
   field: keyof OrganizationMemberOrdering;
@@ -68,7 +70,8 @@ function useOrganizationMembers(
   };
 }
 
-export default function Users() {
+export default function Users(props: IProps) {
+  const { className = '' } = props;
   const { user } = useUser();
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
@@ -78,7 +81,6 @@ export default function Users() {
     direction: Ordering;
   }>({ field: 'lastName', direction: Ordering.Asc });
   const [openMenuRowId, setOpenMenuRowId] = useState<string | null>(null);
-
   const menuRef = useRef<HTMLDivElement>(null);
   useOutsideClick(
     menuRef,
@@ -92,6 +94,14 @@ export default function Users() {
 
   const { members, totalPages, loading, isInitialLoad } =
     useOrganizationMembers(organizationId, page, sort);
+
+  const parentCss = [
+    'flex',
+    'flex-1',
+    'h-screen',
+    `${loading ? 'opacity-50 transition-opacity duration-200' : ''}`,
+    className,
+  ];
 
   const handleRemoveMember = async (member: OrganizationMemberType) => {
     if (!organizationId) {
@@ -195,11 +205,7 @@ export default function Users() {
         )}
       </div>
 
-      <div
-        className={`${
-          loading ? 'opacity-50 transition-opacity duration-200' : ''
-        } flex-1 flex`}
-      >
+      <div className={mergeCss(parentCss)}>
         {user?.canViewOrgMembers ? (
           <Table<OrganizationMemberType>
             action={(row) => {
