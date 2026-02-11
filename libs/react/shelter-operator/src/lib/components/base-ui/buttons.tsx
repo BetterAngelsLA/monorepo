@@ -54,10 +54,12 @@ export function Button(props: IButtonProps) {
 
   const buttonCss = [
     className,
-    'font-sans font-normal focus:outline-none transition-all inline-flex items-center rounded-full h-fit w-fit',
+    'font-sans font-normal focus:outline-none transition-all inline-flex items-center rounded-full h-fit whitespace-nowrap',
     textColor,
-    isFloating ? 'shadow-lg justify-between gap-0 w-full' : '',
-    isSmall ? 'justify-between gap-0 w-full' : 'justify-center',
+    isArrowRight ? 'justify-center' : 'justify-between',
+    isFloating ? 'shadow-lg gap-2 w-fit' : '',
+    isSmall ? 'gap-2 w-fit' : '',
+    isArrowRight ? '' : 'w-fit',
   ]
     .filter(Boolean)
     .join(' ');
@@ -66,14 +68,14 @@ export function Button(props: IButtonProps) {
     ? {
         backgroundColor: colours[variant],
         fontSize: '22px',
-        padding: '12px 16px',
+        padding: '12px 24px',
       }
     : isSmall
     ? {
         backgroundColor: colours[variant],
         border: '1px solid #D3D9E3',
         fontSize: '18px',
-        padding: '12px 16px',
+        padding: '8px 16px',
       }
     : isArrowRight
     ? {

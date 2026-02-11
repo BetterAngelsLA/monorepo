@@ -23,7 +23,7 @@ export const RightArrow: Story = {
 export const SmallLight: Story = {
   parameters: {
     customLayout: {
-      canvasClassName: 'flex-col w-[280px]',
+      canvasClassName: 'flex flex-col items-center justify-center w-fit h-fit',
     },
   },
   render: () => <Button variant="smalllight">Button</Button>,
@@ -32,7 +32,7 @@ export const SmallLight: Story = {
 export const SmallMedium: Story = {
   parameters: {
     customLayout: {
-      canvasClassName: 'flex-col w-[280px]',
+      canvasClassName: 'flex flex-col items-center justify-center w-fit h-fit',
     },
   },
   render: () => <Button variant="smallmedium">Button</Button>,
@@ -41,7 +41,7 @@ export const SmallMedium: Story = {
 export const SmallDark: Story = {
   parameters: {
     customLayout: {
-      canvasClassName: 'flex-col w-[280px]',
+      canvasClassName: 'flex flex-col items-center justify-center w-fit h-fit',
     },
   },
   render: () => <Button variant="smalldark">Button</Button>,
@@ -50,7 +50,7 @@ export const SmallDark: Story = {
 export const FloatingLight: Story = {
   parameters: {
     customLayout: {
-      canvasClassName: 'flex-col w-[280px]',
+      canvasClassName: 'flex flex-col items-center w-fit h-fit',
     },
   },
   render: () => <Button variant="floating-light">Button</Button>,
@@ -59,7 +59,7 @@ export const FloatingLight: Story = {
 export const FloatingDark: Story = {
   parameters: {
     customLayout: {
-      canvasClassName: 'flex-col w-[280px]',
+      canvasClassName: 'flex flex-col items-center w-fit h-fit',
     },
   },
   render: () => <Button variant="floating-dark">Button</Button>,
