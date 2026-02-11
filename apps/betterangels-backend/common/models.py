@@ -216,21 +216,16 @@ class Location(BaseModel):
         state = cls._clean(parsed_address.get("administrative_area_level_1"))
         zip_code = cls._clean(parsed_address.get("postal_code"))
 
-        # Build a case-insensitive lookup; NULLs need __isnull instead of __iexact.
-        lookup: Dict[str, Any] = {}
-        for field, val in [("street", street), ("city", city), ("state", state), ("zip_code", zip_code)]:
-            if val is None:
-                lookup[f"{field}__isnull"] = True
-            else:
-                lookup[f"{field}__iexact"] = val
+        fields = {"street": street, "city": city, "state": state, "zip_code": zip_code}
+        lookup = {
+            (f"{f}__isnull" if v is None else f"{f}__iexact"): (True if v is None else v)
+            for f, v in fields.items()
+        }
 
         address, _ = Address.objects.get_or_create(
             **lookup,
             defaults={
-                "street": street,
-                "city": city,
-                "state": state,
-                "zip_code": zip_code,
+                **fields,
                 "address_components": address_data["address_components"],
                 "formatted_address": address_data.get("formatted_address") or address_data.get("formattedAddress"),
             },
