@@ -3,6 +3,7 @@ import type {
   ClientFileUploadResponse,
   ClientFilesListParams,
   ClientFilesResponse,
+  ClientPhotoUploadResponse,
   FileCategoriesResponse,
   FileNamesResponse,
   HmisCurrentUser,
@@ -219,11 +220,11 @@ export const useHmisClient = () => {
    * @returns Promise with upload response
    */
   const uploadClientPhoto = useCallback(
-    <T = unknown>(
+    (
       clientId: string | number,
       formData: FormData
-    ): Promise<T> => {
-      return hmisClient.uploadClientPhoto<T>(clientId, formData);
+    ): Promise<ClientPhotoUploadResponse> => {
+      return hmisClient.uploadClientPhoto(clientId, formData);
     },
     [hmisClient]
   );

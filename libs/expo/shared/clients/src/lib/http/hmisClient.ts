@@ -15,6 +15,7 @@ import {
   ClientFilesResponse,
   ClientFileUploadRequest,
   ClientFileUploadResponse,
+  ClientPhotoUploadResponse,
   FileCategoriesResponse,
   FileNamesResponse,
   HmisHttpQueryParams,
@@ -454,19 +455,16 @@ class HmisClient {
    * await hmisClient.uploadClientPhoto('68998C256', formData);
    * ```
    */
-  async uploadClientPhoto<T = unknown>(
+  async uploadClientPhoto(
     clientId: string | number,
     formData: FormData
-  ): Promise<T> {
-    return this.postMultipart<T>(
+  ): Promise<ClientPhotoUploadResponse> {
+    return this.postMultipart<ClientPhotoUploadResponse>(
       `/clients/${clientId}/photo/upload`,
       formData
     );
   }
 }
-
-// Factory function to create HmisClient
-export const createHmisClient = () => new HmisClient();
 
 export const getHmisFileUrls = (
   baseUrl: string,
@@ -478,5 +476,8 @@ export const getHmisFileUrls = (
     content: `${baseUrl}/clients/${clientId}/client-files/${fileId}/content`,
   };
 };
+
+// Factory function to create HmisClient
+export const createHmisClient = () => new HmisClient();
 
 export { HmisClient };
