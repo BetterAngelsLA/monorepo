@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { ViewStyle } from 'react-native';
 
 export type BottomPromptRenderApi = {
   close: () => void;
@@ -8,6 +9,9 @@ export type BottomPromptOptions = {
   hideCloseButton?: boolean;
   onCloseStart?: () => void;
   onCloseEnd?: () => void;
+  maxHeightRatio?: number;
+  topNavStyle?: ViewStyle;
+  contentStyle?: ViewStyle;
 };
 
 export type BottomPromptContextValue = {

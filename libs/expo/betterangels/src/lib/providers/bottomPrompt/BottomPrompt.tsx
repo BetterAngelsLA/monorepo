@@ -1,6 +1,6 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { CloseButton } from '@monorepo/expo/shared/ui-components';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import {
   Animated,
   KeyboardAvoidingView,
@@ -8,11 +8,12 @@ import {
   Pressable,
   StyleSheet,
   View,
+  ViewStyle,
   useWindowDimensions,
 } from 'react-native';
 import { runBottomPromptAnimation } from './animations';
 
-const MIN_SHEET_HEIGHT = 160;
+const DEFAULT_PADDING_H = Spacings.md;
 
 type TProps = {
   children: ReactNode;
@@ -22,6 +23,8 @@ type TProps = {
   onCloseEnd?: () => void;
   maxHeightRatio?: number;
   hideCloseButton?: boolean;
+  topNavStyle?: ViewStyle;
+  contentStyle?: ViewStyle;
 };
 
 export function BottomPrompt(props: TProps) {
@@ -33,41 +36,28 @@ export function BottomPrompt(props: TProps) {
     onCloseEnd,
     maxHeightRatio = 0.4,
     hideCloseButton,
+    topNavStyle,
+    contentStyle,
   } = props;
 
-  const isClosingRef = useRef<boolean>(false);
-  const [contentHeight, setContentHeight] = useState<number | null>(null);
   const { height: screenHeight } = useWindowDimensions();
 
   const maxSheetHeight = Math.min(screenHeight * maxHeightRatio, 960);
-  const fallbackHeight = maxSheetHeight;
 
-  const measuredHeight =
-    contentHeight === null
-      ? null
-      : Math.min(Math.max(contentHeight, MIN_SHEET_HEIGHT), maxSheetHeight);
-
-  const translateY = useRef(new Animated.Value(fallbackHeight)).current;
+  const translateY = useRef(new Animated.Value(maxSheetHeight)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
 
-  const hasMeasuredHeight = measuredHeight !== null;
-
-  const renderedHeight =
-    measuredHeight !== null ? measuredHeight : fallbackHeight;
+  const isClosingRef = useRef<boolean>(false);
 
   function runEnter() {
-    if (!hasMeasuredHeight) {
-      return;
-    }
-
     isClosingRef.current = false;
 
-    translateY.setValue(renderedHeight);
+    translateY.setValue(maxSheetHeight);
 
     runBottomPromptAnimation('enter', {
       translateY,
       backdropOpacity,
-      sheetHeight: renderedHeight,
+      sheetHeight: maxSheetHeight,
     });
   }
 
@@ -83,22 +73,20 @@ export function BottomPrompt(props: TProps) {
       {
         translateY,
         backdropOpacity,
-        sheetHeight: renderedHeight,
+        sheetHeight: maxSheetHeight,
       },
       onCloseEnd
     );
   }
 
   useEffect(() => {
-    isVisible ? runEnter() : runExit();
-  }, [
-    isVisible,
-    hasMeasuredHeight,
-    renderedHeight,
-    translateY,
-    backdropOpacity,
-    onCloseEnd,
-  ]);
+    if (isVisible) {
+      runEnter();
+      return;
+    }
+
+    runExit();
+  }, [isVisible, maxSheetHeight]);
 
   function handleClose() {
     onCloseStart?.();
@@ -112,38 +100,32 @@ export function BottomPrompt(props: TProps) {
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
       </Animated.View>
 
-      {/* Content wrapper */}
+      {/* Bottom sheet */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardAvoider}
       >
         <Animated.View
           style={[
+            styles.animatedSheet,
             {
-              height: renderedHeight,
+              height: maxSheetHeight,
               transform: [{ translateY }],
             },
           ]}
         >
-          {/* Sheet */}
-          <View
-            style={styles.sheet}
-            onLayout={(e) => {
-              const nextHeight = e.nativeEvent.layout.height;
-
-              setContentHeight((prev) =>
-                prev === nextHeight ? prev : nextHeight
-              );
-            }}
-          >
+          <View style={[styles.sheet]}>
             {!hideCloseButton && (
-              <CloseButton
-                style={{ minWidth: 0 }}
-                accessibilityHint="closes the bottom prompt modal"
-                onClose={handleClose}
-              />
+              <View style={[styles.topNav, topNavStyle]}>
+                <CloseButton
+                  style={{ minWidth: 0 }}
+                  accessibilityHint="closes the bottom prompt modal"
+                  onClose={handleClose}
+                />
+              </View>
             )}
-            <View>{children}</View>
+
+            <View style={[styles.content, contentStyle]}>{children}</View>
           </View>
         </Animated.View>
       </KeyboardAvoidingView>
@@ -156,21 +138,32 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
+
   keyboardAvoider: {
     flex: 1,
     justifyContent: 'flex-end',
   },
+
+  animatedSheet: {
+    width: '100%',
+  },
+
+  topNav: { paddingHorizontal: DEFAULT_PADDING_H },
+
   sheet: {
+    flex: 1,
     backgroundColor: 'white',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    paddingHorizontal: Spacings.md,
     paddingTop: Spacings.md,
-
     shadowColor: '#000',
     shadowOpacity: 0.15,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: -4 },
     elevation: 12,
+  },
+
+  content: {
+    flex: 1,
   },
 });
