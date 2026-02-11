@@ -27,7 +27,7 @@ export function BottomPromptProvider({ children }: { children: ReactNode }) {
         hideCloseButton: opts?.hideCloseButton ?? false,
         onCloseStart: opts?.onCloseStart,
         onCloseEnd: opts?.onCloseEnd,
-        maxHeightRatio: opts?.maxHeightRatio,
+        sheetHeight: opts?.sheetHeight,
         topNavStyle: opts?.topNavStyle,
         contentStyle: opts?.contentStyle,
       });
@@ -65,7 +65,7 @@ export function BottomPromptProvider({ children }: { children: ReactNode }) {
             unmountBottomPrompt();
           }}
           hideCloseButton={options.hideCloseButton}
-          maxHeightRatio={options.maxHeightRatio}
+          sheetHeight={options.sheetHeight}
           topNavStyle={options.topNavStyle}
           contentStyle={options.contentStyle}
         >

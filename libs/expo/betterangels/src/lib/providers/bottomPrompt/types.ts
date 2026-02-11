@@ -9,7 +9,7 @@ export type BottomPromptOptions = {
   hideCloseButton?: boolean;
   onCloseStart?: () => void;
   onCloseEnd?: () => void;
-  maxHeightRatio?: number;
+  sheetHeight?: number;
   topNavStyle?: ViewStyle;
   contentStyle?: ViewStyle;
 };

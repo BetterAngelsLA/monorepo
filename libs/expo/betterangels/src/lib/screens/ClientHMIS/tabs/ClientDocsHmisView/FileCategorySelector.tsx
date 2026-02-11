@@ -106,6 +106,7 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
                     />
                   ),
                   {
+                    sheetHeight: 400,
                     contentStyle: {
                       paddingHorizontal: 0,
                     },
