@@ -2,8 +2,14 @@ import type { Config } from 'tailwindcss';
 import defaultTheme from 'tailwindcss/defaultTheme';
 import daisyui from 'daisyui';
 
-const fontConfig: Config = {
-  content: ['./src/**/*.{js,jsx,ts,tsx}'],
+const config: Config = {
+  content: [
+    join(
+      __dirname,
+      '{src,pages,components,app}/**/*!(*.stories|*.spec).{ts,tsx,html}'
+    ),
+    ...createGlobPatternsForDependencies(__dirname),
+  ],
   theme: {
     extend: {
       fontFamily: {
@@ -11,7 +17,10 @@ const fontConfig: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [daisyui],
+  daisyui: {
+    themes: false, // disable DaisyUI default themes
+  },
 };
 
-export default fontConfig;
+export default config;
