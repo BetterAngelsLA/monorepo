@@ -17,7 +17,7 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
 
     def _setup_location(self) -> None:
         # Force login to create a location
-        _, address_input = self._get_address_inputs()
+        json_address_input, address_input = self._get_address_inputs()
         assert isinstance(address_input["address_components"], list)
         self.address = baker.make(
             Address,
@@ -29,6 +29,7 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
             state=address_input["address_components"][5]["short_name"],
             zip_code=address_input["address_components"][7]["long_name"],
             formatted_address=address_input["formatted_address"],
+            address_components=json_address_input["address_components"],
         )
         self.location = baker.make(Location, address=self.address, point=Point(self.point))
 

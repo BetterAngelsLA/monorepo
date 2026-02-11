@@ -218,8 +218,7 @@ class Location(BaseModel):
 
         fields = {"street": street, "city": city, "state": state, "zip_code": zip_code}
         lookup = {
-            (f"{f}__isnull" if v is None else f"{f}__iexact"): (True if v is None else v)
-            for f, v in fields.items()
+            (f"{f}__isnull" if v is None else f"{f}__iexact"): (True if v is None else v) for f, v in fields.items()
         }
 
         address, _ = Address.objects.get_or_create(
