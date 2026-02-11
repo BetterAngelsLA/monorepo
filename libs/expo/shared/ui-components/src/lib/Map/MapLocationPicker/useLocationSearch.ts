@@ -1,21 +1,15 @@
-import {
-  TPlacePrediction,
-  getPlaceAutocomplete,
-  getPlaceDetailsById,
-} from '@monorepo/expo/shared/services';
+import { TPlacePrediction } from '@monorepo/expo/shared/services';
 import { debounce } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { usePlacesClient } from '../../hooks/usePlacesClient';
 import { TLocationData } from './types';
 
 interface UseLocationSearchOptions {
-  baseUrl: string;
   onSelect: (location: TLocationData) => void;
 }
 
-export function useLocationSearch({
-  baseUrl,
-  onSelect,
-}: UseLocationSearchOptions) {
+export function useLocationSearch({ onSelect }: UseLocationSearchOptions) {
+  const places = usePlacesClient();
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<TPlacePrediction[]>([]);
 
@@ -29,13 +23,13 @@ export function useLocationSearch({
           return;
         }
         try {
-          const results = await getPlaceAutocomplete({ baseUrl, query: q });
+          const results = await places.autocomplete(q);
           setSuggestions(results);
         } catch (err) {
           console.error('Error fetching suggestions:', err);
         }
       }, 400),
-    [baseUrl]
+    [places]
   );
 
   useEffect(() => () => debouncedSearch.cancel(), [debouncedSearch]);
@@ -51,20 +45,18 @@ export function useLocationSearch({
   const selectSuggestion = useCallback(
     async (place: TPlacePrediction) => {
       try {
-        const r = await getPlaceDetailsById({
-          baseUrl,
-          placeId: place.placeId,
-          fields: 'geometry,address_component',
+        const r = await places.getDetails(place.placeId, {
+          fields: 'location,addressComponents',
         });
-        const loc = r.geometry?.location;
+        const loc = r.location;
         if (!loc) return;
         const name = place.description.split(', ')[0];
         onSelect({
-          latitude: loc.lat,
-          longitude: loc.lng,
+          latitude: loc.latitude,
+          longitude: loc.longitude,
           name,
           address: place.description,
-          addressComponents: r.address_components || [],
+          addressComponents: r.addressComponents || [],
         });
         setQuery('');
         setSuggestions([]);
@@ -72,7 +64,7 @@ export function useLocationSearch({
         console.error('Error selecting suggestion:', err);
       }
     },
-    [baseUrl, onSelect]
+    [places, onSelect]
   );
 
   const clear = useCallback(() => {

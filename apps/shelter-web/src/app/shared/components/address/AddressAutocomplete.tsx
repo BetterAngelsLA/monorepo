@@ -1,43 +1,19 @@
 import { SearchIcon } from '@monorepo/react/icons';
-import { getCookie } from '@monorepo/react/shared';
-import axios from 'axios';
+import { TPlacePrediction } from '@monorepo/shared/places';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ISO3166Alpha2 } from '../../../types/isoCodes';
+import { usePlacesClient } from '../../hooks/usePlacesClient';
 import { Input } from '../form/input';
 import { LA_COUNTY_CENTER } from '../map/constants.maps';
 
 const DEBOUNCE_MS = 300;
-const MILES_TO_METERS = 1609.34;
 const BOUNDS_RADIUS_MILES = 25;
-
-// Get config from environment
-const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
-const csrfCookieName =
-  import.meta.env.VITE_SHELTER_CSRF_COOKIE_NAME || 'csrftoken';
-const csrfHeaderName =
-  import.meta.env.VITE_SHELTER_CSRF_HEADER_NAME || 'x-csrftoken';
 
 export type TPlaceResult = {
   id: string;
   displayName: string | null;
   formattedAddress: string | null;
   location: { lat: number; lng: number } | null;
-};
-
-type TPlacePrediction = {
-  placeId: string;
-  mainText: string;
-  secondaryText: string;
-};
-
-type TAutocompleteSuggestion = {
-  placePrediction?: {
-    placeId: string;
-    structuredFormat: {
-      mainText: { text: string };
-      secondaryText: { text: string };
-    };
-  };
 };
 
 type TProps = {
@@ -55,6 +31,7 @@ export function AddressAutocomplete(props: TProps) {
     className = '',
   } = props;
 
+  const places = usePlacesClient();
   const [inputValue, setInputValue] = useState('');
   const [predictions, setPredictions] = useState<TPlacePrediction[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -73,62 +50,25 @@ export function AddressAutocomplete(props: TProps) {
       }
 
       try {
-        const csrfToken = getCookie(csrfCookieName)[0];
+        const regionCodes = Array.isArray(countryRestrictions)
+          ? countryRestrictions
+          : countryRestrictions
+          ? [countryRestrictions]
+          : ['us'];
 
-        const response = await axios.post<{
-          suggestions: TAutocompleteSuggestion[];
-        }>(
-          `${apiUrl}/proxy/places/v1/places:autocomplete/`,
-          {
-            input,
-            locationBias: {
-              circle: {
-                center: {
-                  latitude: LA_COUNTY_CENTER.latitude,
-                  longitude: LA_COUNTY_CENTER.longitude,
-                },
-                radius: BOUNDS_RADIUS_MILES * MILES_TO_METERS,
-              },
-            },
-            includedRegionCodes: Array.isArray(countryRestrictions)
-              ? countryRestrictions
-              : countryRestrictions
-              ? [countryRestrictions]
-              : ['us'],
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Goog-FieldMask':
-                'suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat',
-              ...(csrfToken && { [csrfHeaderName]: csrfToken }),
-            },
-            withCredentials: true,
-          }
-        );
+        const results = await places.autocomplete(input, {
+          boundsCenter: LA_COUNTY_CENTER,
+          boundsRadiusMiles: BOUNDS_RADIUS_MILES,
+          includedRegionCodes: regionCodes,
+        });
 
-        setPredictions(
-          (response.data.suggestions || [])
-            .filter(
-              (
-                s
-              ): s is typeof s & {
-                placePrediction: NonNullable<typeof s.placePrediction>;
-              } => !!s.placePrediction
-            )
-            .map(({ placePrediction }) => ({
-              placeId: placePrediction.placeId,
-              mainText: placePrediction.structuredFormat?.mainText?.text || '',
-              secondaryText:
-                placePrediction.structuredFormat?.secondaryText?.text || '',
-            }))
-        );
+        setPredictions(results);
       } catch (error) {
         console.error('Error fetching suggestions:', error);
         setPredictions([]);
       }
     },
-    [countryRestrictions]
+    [countryRestrictions, places]
   );
 
   const handleInputChange = (value: string) => {
@@ -144,39 +84,26 @@ export function AddressAutocomplete(props: TProps) {
   const handleSelect = useCallback(
     async (placeId: string) => {
       try {
-        // Use legacy place details API through proxy
-        const response = await axios.get<{
-          result: {
-            name?: string;
-            formatted_address?: string;
-            geometry?: {
-              location: { lat: number; lng: number };
-            };
-          };
-        }>(`${apiUrl}/proxy/maps/api/place/details/json/`, {
-          params: {
-            place_id: placeId,
-            fields: 'name,formatted_address,geometry',
-          },
-          withCredentials: true,
+        const result = await places.getDetails(placeId, {
+          fields: 'displayName,formattedAddress,location',
         });
-
-        const result = response.data.result;
 
         onPlaceSelect({
           id: placeId,
-          displayName: result.name || null,
-          formattedAddress: result.formatted_address || null,
-          location: result.geometry?.location || null,
+          displayName: result.displayName || null,
+          formattedAddress: result.formattedAddress || null,
+          location: result.location
+            ? { lat: result.location.latitude, lng: result.location.longitude }
+            : null,
         });
 
-        setInputValue(result.formatted_address || '');
+        setInputValue(result.formattedAddress || '');
         setPredictions([]);
       } catch (error) {
         console.error('Error fetching place details:', error);
       }
     },
-    [onPlaceSelect]
+    [onPlaceSelect, places]
   );
 
   return (

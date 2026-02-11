@@ -1,4 +1,15 @@
-export { getPlaceAutocomplete } from './getPlaceAutocomplete';
-export { getPlaceDetailsById } from './getPlaceDetailsById';
-export { reverseGeocode, type TReverseGeocodeResult } from './reverseGeocode';
-export * from './types';
+export {
+  createPlacesClient,
+  getPlaceAutocomplete,
+  getPlaceDetailsById,
+  reverseGeocode,
+} from '@monorepo/shared/places';
+export type {
+  TAddressComponent,
+  TFetchClient,
+  TPlaceDetails,
+  TPlaceLatLng,
+  TPlacePrediction,
+  TPlacesClient,
+  TReverseGeocodeResult,
+} from '@monorepo/shared/places';
