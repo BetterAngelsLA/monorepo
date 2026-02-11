@@ -1,26 +1,31 @@
 import { FileCategory, FileName } from '@monorepo/expo/shared/clients';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { SingleSelect, TextOrNode } from '@monorepo/expo/shared/ui-components';
-import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import { useBottomPrompt } from '../../../../providers';
 import { CustomFileNamePrompt } from './CustomFileNamePrompt';
 
 const CUSTOM_FILE_NAME_VALUE = '__CUSTOM__';
 
-type TCustomSelection = {
-  categoryId: string;
-  categoryName: string;
-};
+type TFileSelection =
+  | {
+      type: 'predefined';
+      categoryId: string;
+      categoryName: string;
+      subCategoryId: string;
+    }
+  | {
+      type: 'custom';
+      categoryId: string;
+      categoryName: string;
+      fileName: string;
+    };
 
 type FileCategorySelectorProps = {
   categories: FileCategory[];
   subCategories: FileName[];
-  onSelect: (categoryGroup: {
-    categoryId: string;
-    subCategoryId: string;
-    categoryName: string;
-  }) => void;
+  onSelect: (selection: TFileSelection) => void;
   disabled?: boolean;
   header?: string | ReactNode | null;
   style?: ViewStyle;
@@ -37,16 +42,6 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
   } = props;
 
   const { showBottomPrompt } = useBottomPrompt();
-
-  const [customSelection, setCustomSelection] =
-    useState<TCustomSelection | null>(null);
-
-  // TODO: show Modal with Input to fill out custom filename
-  useEffect(() => {
-    console.log('');
-    console.log('*****************  customSelection:', customSelection);
-    console.log('');
-  }, [customSelection]);
 
   const categoryGroups = useMemo(() => {
     return categories
@@ -99,18 +94,13 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
                 showBottomPrompt(
                   ({ close }) => (
                     <CustomFileNamePrompt
-                      categoryName={categoryGroup.categoryName}
                       onSubmit={(customName) => {
-                        console.log('');
-                        console.log(
-                          '*****************  customName:',
-                          customName
-                        );
-                        // onSelect({
-                        //   categoryId: categoryGroup.categoryId,
-                        //   subCategoryId: customName,
-                        //   categoryName: categoryGroup.categoryName,
-                        // });
+                        onSelect({
+                          type: 'custom',
+                          categoryId: categoryGroup.categoryId,
+                          categoryName: categoryGroup.categoryName,
+                          fileName: customName,
+                        });
 
                         close();
                       }}
@@ -127,8 +117,9 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
               }
 
               onSelect({
+                type: 'predefined',
                 categoryId: categoryGroup.categoryId,
-                subCategoryId: value || '',
+                subCategoryId: value ?? '',
                 categoryName: categoryGroup.categoryName,
               });
             }}

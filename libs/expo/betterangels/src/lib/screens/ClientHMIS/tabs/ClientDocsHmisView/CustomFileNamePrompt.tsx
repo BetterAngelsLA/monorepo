@@ -3,12 +3,11 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 type TProps = {
-  categoryName: string;
   onSubmit: (value: string) => void;
 };
 
 export function CustomFileNamePrompt(props: TProps) {
-  const { categoryName, onSubmit } = props;
+  const { onSubmit } = props;
 
   const [value, setValue] = useState('');
 
