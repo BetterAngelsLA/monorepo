@@ -6,6 +6,8 @@ export type BottomPromptRenderApi = {
 
 export type BottomPromptOptions = {
   hideCloseButton?: boolean;
+  onCloseStart?: () => void;
+  onCloseEnd?: () => void;
 };
 
 export type BottomPromptContextValue = {

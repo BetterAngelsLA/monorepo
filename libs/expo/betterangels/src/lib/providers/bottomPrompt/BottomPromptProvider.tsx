@@ -8,6 +8,8 @@ export function BottomPromptProvider({ children }: { children: ReactNode }) {
     ((api: BottomPromptRenderApi) => ReactNode) | null
   >(null);
 
+  const [isVisible, setIsVisible] = useState<boolean>(false);
+
   const [options, setOptions] = useState<BottomPromptOptions>({
     hideCloseButton: true,
   });
@@ -23,12 +25,23 @@ export function BottomPromptProvider({ children }: { children: ReactNode }) {
     ) => {
       setOptions({
         hideCloseButton: opts?.hideCloseButton ?? false,
+        onCloseStart: opts?.onCloseStart,
+        onCloseEnd: opts?.onCloseEnd,
       });
 
       setRenderContent(() => render);
+      setIsVisible(true);
     },
     []
   );
+
+  const requestClose = useCallback(() => {
+    setIsVisible(false);
+  }, []);
+
+  const unmountBottomPrompt = useCallback(() => {
+    setRenderContent(null);
+  }, []);
 
   return (
     <BottomPromptContext.Provider
@@ -41,10 +54,16 @@ export function BottomPromptProvider({ children }: { children: ReactNode }) {
 
       {renderContent && (
         <BottomPrompt
-          onRequestClose={closeBottomPrompt}
+          isVisible={isVisible}
+          onRequestClose={requestClose}
+          onCloseStart={options.onCloseStart}
+          onCloseEnd={() => {
+            options.onCloseEnd?.();
+            unmountBottomPrompt();
+          }}
           hideCloseButton={options.hideCloseButton}
         >
-          {renderContent({ close: closeBottomPrompt })}
+          {renderContent({ close: requestClose })}
         </BottomPrompt>
       )}
     </BottomPromptContext.Provider>
