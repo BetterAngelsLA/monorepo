@@ -1,3 +1,33 @@
+/**
+ * BottomPromptProvider
+ *
+ * Provides global access to the BottomPrompt overlay.
+ *
+ * Wrap your app (or a subtree) with this provider to enable
+ * imperatively showing a bottom sheet from anywhere via context.
+ *
+ * Usage:
+ *   const { showBottomPrompt } = useBottomPrompt();
+ *
+ *   showBottomPrompt(({ close }) => (
+ *     <MyContent onDone={close} />
+ *   ), {
+ *     sheetHeight: 400,
+ *     hideCloseButton: false,
+ *   });
+ *
+ * Behavior:
+ * - `showBottomPrompt` mounts the BottomPrompt and renders the provided content.
+ * - The `render` function receives a `close` callback for dismissing the sheet.
+ * - `onRequestClose` triggers the exit animation.
+ * - After the exit animation completes, the sheet is unmounted.
+ *
+ * This provider ensures:
+ * - Only one bottom prompt is rendered at a time.
+ * - Content is dynamically injected.
+ * - Exit animations complete before unmounting.
+ */
+
 import { ReactNode, useCallback, useState } from 'react';
 import { BottomPrompt } from './BottomPrompt';
 import { BottomPromptContext } from './bottomPromptContext';

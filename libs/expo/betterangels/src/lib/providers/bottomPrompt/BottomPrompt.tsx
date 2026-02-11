@@ -1,3 +1,31 @@
+/**
+ * BottomPrompt
+ *
+ * An animated bottom sheet overlay with backdrop support.
+ * Used for lightweight modal-style prompts anchored to the bottom of the screen.
+ *
+ * Height:
+ * - If `sheetHeight` is provided, it is used as the requested height.
+ * - Otherwise, the sheet defaults to a percentage of the screen height.
+ * - The final height is capped to avoid covering the full screen.
+ *
+ * Keyboard:
+ * - Uses react-native-keyboard-controller to shift the sheet when the keyboard appears.
+ * - The keyboard avoider only wraps the sheet (not the full screen) to prevent
+ *   blocking backdrop pointer events.
+ *
+ * Props:
+ * @param children - Content rendered inside the sheet.
+ * @param isVisible - Controls whether the sheet is shown (triggers enter/exit animation).
+ * @param onRequestClose - Called when the backdrop or close button is pressed.
+ * @param onCloseStart - Optional callback fired when a close interaction begins.
+ * @param onCloseEnd - Optional callback fired after the exit animation completes.
+ * @param sheetHeight - Optional fixed height (in pixels) for the sheet.
+ * @param hideCloseButton - If true, hides the default close button.
+ * @param topNavStyle - Optional style override for the top navigation container.
+ * @param contentStyle - Optional style override for the content container.
+ */
+
 import { Spacings } from '@monorepo/expo/shared/static';
 import { CloseButton } from '@monorepo/expo/shared/ui-components';
 import { ReactNode, useEffect, useRef } from 'react';
@@ -159,18 +187,14 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
-
   fullscreenContainer: {
     flex: 1,
     justifyContent: 'flex-end',
   },
-
   animatedSheet: {
     width: '100%',
   },
-
   topNav: { paddingHorizontal: DEFAULT_PADDING_H },
-
   sheet: {
     flex: 1,
     backgroundColor: 'white',
@@ -183,7 +207,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -4 },
     elevation: 12,
   },
-
   content: {
     flex: 1,
   },
