@@ -2,19 +2,19 @@ import { SingleInputForm } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { View } from 'react-native';
 
-export function CustomFileNamePrompt({
-  categoryName,
-  onSubmit,
-  onCancel,
-}: {
+type TProps = {
   categoryName: string;
   onSubmit: (value: string) => void;
   onCancel: () => void;
-}) {
+};
+
+export function CustomFileNamePrompt(props: TProps) {
+  const { categoryName, onSubmit, onCancel } = props;
+
   const [value, setValue] = useState('');
 
   return (
-    <View style={{}}>
+    <View style={{ flex: 1 }}>
       <SingleInputForm
         value={value}
         placeholder="Enter file name"

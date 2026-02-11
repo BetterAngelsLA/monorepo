@@ -1,19 +1,21 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { StyleSheet, View } from 'react-native';
-
 import {
   BasicInput,
   Button,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { ReactNode, isValidElement } from 'react';
+import { ReactNode } from 'react';
+import { StyleSheet, View, ViewStyle } from 'react-native';
+
+const DEFAULT_PADDING_H = Spacings.md;
 
 export interface TProps {
   value: string;
   onChangeText: (text: string) => void;
   onDone: () => void;
-  onClear: () => void;
+  onClear?: () => void;
+  onCancel?: () => void;
   inputLabel?: string;
   placeholder?: string;
   title?: string | ReactNode;
@@ -21,6 +23,9 @@ export interface TProps {
   ctaButton?: string | ReactNode;
   disabled?: boolean;
   ctaDisabled?: boolean;
+  style?: ViewStyle;
+  contentStyle?: ViewStyle;
+  footerStyle?: ViewStyle;
 }
 
 export function SingleInputForm(props: TProps) {
@@ -31,57 +36,62 @@ export function SingleInputForm(props: TProps) {
     onChangeText,
     onDone,
     onClear,
+    onCancel,
     title,
     subtitle,
     ctaButton = 'Done',
     disabled,
     ctaDisabled = false,
+    style,
+    contentStyle,
+    footerStyle,
   } = props;
 
+  function onSubmit() {
+    console.log('submit');
+  }
+
   return (
-    <View style={styles.container}>
-      {title !== undefined && (
-        <TextBold color={Colors.PRIMARY_EXTRA_DARK} size="lg">
-          {title}
-        </TextBold>
-      )}
-
-      {subtitle !== undefined && (
-        <View>
-          {typeof subtitle === 'string' ? (
-            <TextRegular color={Colors.PRIMARY_EXTRA_DARK} size="md">
-              {subtitle}
-            </TextRegular>
-          ) : (
-            subtitle
-          )}
-        </View>
-      )}
-
-      <BasicInput
-        //   autoFocus
-        label={inputLabel}
-        placeholder={placeholder}
-        value={value}
-        // required
-        // mt="sm"
-        // errorMessage={condition ? 'file name is required' : undefined}
-        onDelete={onClear}
-        onChangeText={onChangeText}
-      />
-
-      <View style={styles.footer}>
-        {isValidElement(ctaButton) ? (
-          ctaButton
-        ) : (
-          <Button
-            onPress={onDone}
-            size="full"
-            title={ctaButton as 'string'}
-            accessibilityHint="select pinned location"
-            variant="primary"
-          />
+    <View style={[styles.container, style]}>
+      <View style={[styles.content, contentStyle]}>
+        {title !== undefined && (
+          <TextBold color={Colors.PRIMARY_EXTRA_DARK} size="lg">
+            {title}
+          </TextBold>
         )}
+
+        {subtitle !== undefined && (
+          <View>
+            {typeof subtitle === 'string' ? (
+              <TextRegular color={Colors.PRIMARY_EXTRA_DARK} size="md">
+                {subtitle}
+              </TextRegular>
+            ) : (
+              subtitle
+            )}
+          </View>
+        )}
+
+        <BasicInput
+          mt="sm"
+          label={inputLabel}
+          placeholder={placeholder}
+          value={value}
+          onDelete={onClear}
+          onChangeText={onChangeText}
+        />
+      </View>
+
+      <View style={[styles.footer, footerStyle]}>
+        <Button
+          fontSize="sm"
+          size="full"
+          height="lg"
+          variant="primary"
+          accessibilityHint="submit the form"
+          title={'hello'}
+          onPress={onSubmit}
+        />
       </View>
     </View>
   );
@@ -89,12 +99,25 @@ export function SingleInputForm(props: TProps) {
 
 const styles = StyleSheet.create({
   container: {
-    // flex: 1,
+    flex: 1,
+    paddingTop: Spacings.md,
+  },
+  content: {
+    paddingHorizontal: DEFAULT_PADDING_H,
   },
   footer: {
+    paddingHorizontal: DEFAULT_PADDING_H,
+    paddingTop: Spacings.sm,
+    paddingBottom: Spacings.md,
     marginTop: 'auto',
-    borderWidth: 4,
-    borderColor: 'blue',
-    paddingVertical: Spacings.sm,
+    width: '100%',
+    backgroundColor: 'white',
+
+    // box shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
   },
 });
