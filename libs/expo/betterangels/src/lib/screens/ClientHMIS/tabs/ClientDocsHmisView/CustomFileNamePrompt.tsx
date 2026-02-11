@@ -5,29 +5,37 @@ import { View } from 'react-native';
 type TProps = {
   categoryName: string;
   onSubmit: (value: string) => void;
-  onCancel: () => void;
 };
 
 export function CustomFileNamePrompt(props: TProps) {
-  const { categoryName, onSubmit, onCancel } = props;
+  const { categoryName, onSubmit } = props;
 
   const [value, setValue] = useState('');
+
+  const trimmedValue = value.trim();
+
+  const isSubmitDisabled = trimmedValue.length === 0;
+
+  function handleSubmit() {
+    if (isSubmitDisabled) {
+      return;
+    }
+
+    onSubmit(trimmedValue);
+  }
 
   return (
     <View style={{ flex: 1 }}>
       <SingleInputForm
         value={value}
-        placeholder="Enter file name"
-        onChangeText={(v) => {
-          console.log(v);
-          setValue(v);
-        }}
-        onDone={() => console.log('DONE')}
+        inputPlaceholder="Enter file name"
+        onChangeText={setValue}
+        onDone={handleSubmit}
+        onClear={() => setValue('')}
         title="Other"
         subtitle="If you selected Other in Predefined file name, fill out the name of the file here."
-        onClear={() => setValue('')}
-        // ctaButton={<IconLabel icon="check">Confirm</IconLabel>}
-        // isDoneDisabled={!isValidFilename(filename)}
+        ctaButtonText="Done"
+        ctaDisabled={isSubmitDisabled}
       />
     </View>
   );

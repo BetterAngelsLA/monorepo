@@ -96,35 +96,28 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
             items={categoryGroup.types}
             onChange={(value) => {
               if (value === CUSTOM_FILE_NAME_VALUE) {
-                console.log('');
-                console.log('################## CUSTOM_FILE_NAME_VALUE');
-                console.log('');
                 showBottomPrompt(
                   ({ close }) => (
                     <CustomFileNamePrompt
                       categoryName={categoryGroup.categoryName}
                       onSubmit={(customName) => {
-                        onSelect({
-                          categoryId: categoryGroup.categoryId,
-                          subCategoryId: customName,
-                          categoryName: categoryGroup.categoryName,
-                        });
+                        console.log('');
+                        console.log(
+                          '*****************  customName:',
+                          customName
+                        );
+                        // onSelect({
+                        //   categoryId: categoryGroup.categoryId,
+                        //   subCategoryId: customName,
+                        //   categoryName: categoryGroup.categoryName,
+                        // });
 
                         close();
                       }}
-                      onCancel={close}
                     />
                   ),
                   {
-                    // maxHeightRatio: 0.35,
-                    // topNavStyle: {
-                    //   borderWidth: 4,
-                    //   borderColor: 'yellow',
-                    //   paddingHorizontal: 0,
-                    // },
                     contentStyle: {
-                      // borderWidth: 4,
-                      // borderColor: 'green',
                       paddingHorizontal: 0,
                     },
                   }

@@ -15,12 +15,12 @@ export interface TProps {
   onChangeText: (text: string) => void;
   onDone: () => void;
   onClear?: () => void;
-  onCancel?: () => void;
   inputLabel?: string;
-  placeholder?: string;
-  title?: string | ReactNode;
-  subtitle?: string | ReactNode;
-  ctaButton?: string | ReactNode;
+  inputPlaceholder?: string;
+  title?: string;
+  subtitle?: string;
+  headerSlot?: ReactNode;
+  ctaButtonText?: string;
   disabled?: boolean;
   ctaDisabled?: boolean;
   style?: ViewStyle;
@@ -31,51 +31,43 @@ export interface TProps {
 export function SingleInputForm(props: TProps) {
   const {
     value,
-    placeholder,
+    inputPlaceholder,
     inputLabel,
     onChangeText,
     onDone,
     onClear,
-    onCancel,
     title,
     subtitle,
-    ctaButton = 'Done',
+    headerSlot,
+    ctaButtonText = 'Done',
     disabled,
-    ctaDisabled = false,
+    ctaDisabled,
     style,
     contentStyle,
     footerStyle,
   } = props;
 
-  function onSubmit() {
-    console.log('submit');
-  }
-
   return (
     <View style={[styles.container, style]}>
       <View style={[styles.content, contentStyle]}>
-        {title !== undefined && (
+        {title && (
           <TextBold color={Colors.PRIMARY_EXTRA_DARK} size="lg">
             {title}
           </TextBold>
         )}
 
-        {subtitle !== undefined && (
-          <View>
-            {typeof subtitle === 'string' ? (
-              <TextRegular color={Colors.PRIMARY_EXTRA_DARK} size="md">
-                {subtitle}
-              </TextRegular>
-            ) : (
-              subtitle
-            )}
-          </View>
+        {subtitle && (
+          <TextRegular color={Colors.PRIMARY_EXTRA_DARK} size="md">
+            {subtitle}
+          </TextRegular>
         )}
+
+        {!!headerSlot && headerSlot}
 
         <BasicInput
           mt="sm"
           label={inputLabel}
-          placeholder={placeholder}
+          placeholder={inputPlaceholder}
           value={value}
           onDelete={onClear}
           onChangeText={onChangeText}
@@ -89,8 +81,9 @@ export function SingleInputForm(props: TProps) {
           height="lg"
           variant="primary"
           accessibilityHint="submit the form"
-          title={'hello'}
-          onPress={onSubmit}
+          title={ctaButtonText ?? 'Done'}
+          onPress={onDone}
+          disabled={ctaDisabled || disabled}
         />
       </View>
     </View>
