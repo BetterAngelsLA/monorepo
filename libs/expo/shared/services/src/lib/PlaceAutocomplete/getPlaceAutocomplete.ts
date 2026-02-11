@@ -71,12 +71,19 @@ export async function getPlaceAutocomplete(
   const cookies = await CookieManager.get(baseUrl);
   const csrfToken = cookies[CSRF_COOKIE_NAME]?.value;
 
+  // Origin for Referer so Django's CSRF referer check passes (required when no browser Referer).
+  const refererOrigin =
+    typeof baseUrl === 'string' && baseUrl
+      ? baseUrl.replace(/\/+$/, '')
+      : baseUrl;
+
   const response = await axios.post<TPlacePredictionResponse>(
     proxyUrl,
     requestBody,
     {
       headers: {
         'Content-Type': 'application/json',
+        Referer: refererOrigin,
         'X-Goog-FieldMask':
           'suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat',
         ...(csrfToken && { [CSRF_HEADER_NAME]: csrfToken }),
