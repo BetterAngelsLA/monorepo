@@ -1,4 +1,3 @@
-from django.contrib.gis.geos import Point
 from django.db import migrations
 
 # Must match Location.GPS_PRECISION
@@ -12,48 +11,74 @@ def round_and_deduplicate_locations(apps, schema_editor):
     point + point_of_interest).  We keep the oldest (lowest pk), re-point
     Note / HmisNote FKs, and delete the rest.
     """
-    Location = apps.get_model("common", "Location")
+    execute = schema_editor.execute
 
-    # --- 1. Round all points ------------------------------------------------
-    for loc in Location.objects.all():
-        x = round(loc.point.x, GPS_PRECISION)
-        y = round(loc.point.y, GPS_PRECISION)
-        if x != loc.point.x or y != loc.point.y:
-            loc.point = Point(x, y, srid=loc.point.srid)
-            loc.save(update_fields=["point"])
+    # --- 1. Bulk-round all points in a single UPDATE -----------------------
+    execute(
+        """
+        UPDATE common_location
+        SET point = ST_SetSRID(
+            ST_MakePoint(
+                ROUND(ST_X(point::geometry)::numeric, %s),
+                ROUND(ST_Y(point::geometry)::numeric, %s)
+            ),
+            ST_SRID(point::geometry)
+        )
+        WHERE ROUND(ST_X(point::geometry)::numeric, %s) != ST_X(point::geometry)
+           OR ROUND(ST_Y(point::geometry)::numeric, %s) != ST_Y(point::geometry)
+        """,
+        [GPS_PRECISION, GPS_PRECISION, GPS_PRECISION, GPS_PRECISION],
+    )
 
-    # --- 2. Deduplicate any newly-colliding rows ----------------------------
-    from django.db.models import Count, Min
-
-    fk_models = []
+    # --- 2. Re-point FKs on any models referencing duplicate Locations ------
+    # Build the duplicate-detection CTE once; reuse for each FK table.
+    fk_tables = []
     for label in ("notes.Note", "hmis.HmisNote"):
         try:
-            fk_models.append(apps.get_model(label))
+            model = apps.get_model(label)
+            fk_tables.append(model._meta.db_table)
         except LookupError:
             pass
 
-    dupes = (
-        Location.objects.values("address_id", "point", "point_of_interest")
-        .annotate(cnt=Count("id"), keep_id=Min("id"))
-        .filter(cnt__gt=1)
-    )
-
-    for group in dupes:
-        keep_id = group["keep_id"]
-        dup_ids = list(
-            Location.objects.filter(
-                address_id=group["address_id"],
-                point=group["point"],
-                point_of_interest=group["point_of_interest"],
-            )
-            .exclude(id=keep_id)
-            .values_list("id", flat=True)
+    for table in fk_tables:
+        execute(
+            f"""
+            UPDATE {table} SET location_id = keeper.keep_id
+            FROM (
+                SELECT MIN(id) AS keep_id, address_id, point, point_of_interest
+                FROM common_location
+                GROUP BY address_id, point, point_of_interest
+                HAVING COUNT(*) > 1
+            ) keeper
+            JOIN common_location dup
+              ON dup.address_id IS NOT DISTINCT FROM keeper.address_id
+             AND dup.point = keeper.point
+             AND dup.point_of_interest IS NOT DISTINCT FROM keeper.point_of_interest
+             AND dup.id != keeper.keep_id
+            WHERE {table}.location_id = dup.id
+            """
         )
 
-        for model in fk_models:
-            model.objects.filter(location_id__in=dup_ids).update(location_id=keep_id)
-
-        Location.objects.filter(id__in=dup_ids).delete()
+    # --- 3. Delete the duplicate Location rows ------------------------------
+    execute(
+        """
+        DELETE FROM common_location
+        WHERE id IN (
+            SELECT dup.id
+            FROM common_location dup
+            JOIN (
+                SELECT MIN(id) AS keep_id, address_id, point, point_of_interest
+                FROM common_location
+                GROUP BY address_id, point, point_of_interest
+                HAVING COUNT(*) > 1
+            ) keeper
+              ON dup.address_id IS NOT DISTINCT FROM keeper.address_id
+             AND dup.point = keeper.point
+             AND dup.point_of_interest IS NOT DISTINCT FROM keeper.point_of_interest
+             AND dup.id != keeper.keep_id
+        )
+        """
+    )
 
 
 class Migration(migrations.Migration):
