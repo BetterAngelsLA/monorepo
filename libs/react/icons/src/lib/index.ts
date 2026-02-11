@@ -33,6 +33,7 @@ export { default as MenuIcon } from './components/menuIcon';
 export { default as PlusIcon } from './components/plusIcon';
 export { default as SearchIcon } from './components/searchIcon';
 export { default as ShareIcon } from './components/shareIcon';
+export { default as ThreeDotIcon } from './components/threeDotIcon';
 export { default as UserIcon } from './components/userIcon';
 export { default as UserSearchIcon } from './components/userSearchIcon';
 export { default as UsersIcon } from './components/usersIcon';
