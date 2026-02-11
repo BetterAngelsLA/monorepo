@@ -1,6 +1,6 @@
 import { TPlaceDetails } from './types';
 
-type TGetPlaceDetailsProps = {
+type TGetPlaceDetailsByIdProps = {
   fetchClient: (path: string, options?: RequestInit) => Promise<Response>;
   placeId: string;
   fields?: string;
@@ -10,7 +10,7 @@ type TGetPlaceDetailsProps = {
  * Get place details by place ID using the Google Places API (v1).
  */
 export async function getPlaceDetailsById(
-  props: TGetPlaceDetailsProps
+  props: TGetPlaceDetailsByIdProps
 ): Promise<TPlaceDetails> {
   const {
     fetchClient,

@@ -10,7 +10,10 @@ import {
 } from '@monorepo/expo/betterangels';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
-import { reverseGeocode } from '@monorepo/expo/shared/services';
+import {
+  reverseGeocode,
+  toBackendAddressComponents,
+} from '@monorepo/expo/shared/services';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
 import * as ExpoLocation from 'expo-location';
@@ -75,7 +78,7 @@ export default function LocationComponent(props: ILocationProps) {
     setErrors,
   } = props;
 
-  const { baseUrl } = useApiConfig();
+  const { fetchClient } = useApiConfig();
   const [updateNoteLocation] = useMutation(UpdateNoteLocationDocument);
 
   const [location, setLocation] = useState<TLocation>({
@@ -117,7 +120,9 @@ export default function LocationComponent(props: ILocationProps) {
             address: data.address
               ? {
                   formattedAddress: data.address,
-                  addressComponents: JSON.stringify(data.addressComponents),
+                  addressComponents: JSON.stringify(
+                    toBackendAddressComponents(data.addressComponents as [])
+                  ),
                 }
               : null,
           },
@@ -155,7 +160,7 @@ export default function LocationComponent(props: ILocationProps) {
         }
 
         const geocodeResult = await reverseGeocode({
-          baseUrl,
+          fetchClient,
           latitude,
           longitude,
         });
@@ -179,7 +184,9 @@ export default function LocationComponent(props: ILocationProps) {
                   ? {
                       formattedAddress: geocodeResult.formattedAddress,
                       addressComponents: JSON.stringify(
-                        geocodeResult.addressComponents
+                        toBackendAddressComponents(
+                          geocodeResult.addressComponents
+                        )
                       ),
                     }
                   : null,
@@ -193,7 +200,7 @@ export default function LocationComponent(props: ILocationProps) {
     };
 
     void autoSetInitialLocation();
-  }, [point, address, baseUrl, noteId, updateNoteLocation, location]);
+  }, [point, address, fetchClient, noteId, updateNoteLocation, location]);
 
   return (
     <FieldCard

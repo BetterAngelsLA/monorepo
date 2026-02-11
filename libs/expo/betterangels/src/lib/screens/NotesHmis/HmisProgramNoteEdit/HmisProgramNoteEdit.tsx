@@ -1,6 +1,7 @@
 import { CombinedGraphQLErrors } from '@apollo/client';
 import { useMutation, useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { toBackendAddressComponents } from '@monorepo/expo/shared/services';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
@@ -232,7 +233,11 @@ export function HmisProgramNoteEdit(props: TProps) {
                 point: [location.longitude, location.latitude],
                 address: {
                   formattedAddress: location.formattedAddress,
-                  addressComponents: JSON.stringify(location.components ?? []),
+                  addressComponents: JSON.stringify(
+                    toBackendAddressComponents(
+                      (location.components ?? []) as []
+                    )
+                  ),
                 },
               },
             },

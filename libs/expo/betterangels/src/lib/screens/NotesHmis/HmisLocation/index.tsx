@@ -33,13 +33,13 @@ interface ILocationProps {
 export default function HmisLocationComponent(props: ILocationProps) {
   const { expanded, setExpanded, editing, error } = props;
 
-  const { baseUrl } = useApiConfig();
+  const { fetchClient } = useApiConfig();
   const { showModalScreen } = useModalScreen();
   const { setValue, watch } = useFormContext();
   const location = watch('location');
 
   const [userLocation] = useInitialLocation(
-    baseUrl,
+    fetchClient,
     editing,
     location,
     setValue

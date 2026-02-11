@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { TAddressComponent } from './types';
 
 export type TReverseGeocodeResult = {
@@ -8,7 +7,7 @@ export type TReverseGeocodeResult = {
 };
 
 type TReverseGeocodeProps = {
-  baseUrl: string;
+  fetchClient: (path: string, options?: RequestInit) => Promise<Response>;
   latitude: number;
   longitude: number;
 };
@@ -19,14 +18,18 @@ type TReverseGeocodeProps = {
 export async function reverseGeocode(
   props: TReverseGeocodeProps
 ): Promise<TReverseGeocodeResult> {
-  const { baseUrl, latitude, longitude } = props;
+  const { fetchClient, latitude, longitude } = props;
 
-  const response = await axios.get(`${baseUrl}/proxy/maps/api/geocode/json`, {
-    params: { latlng: `${latitude},${longitude}` },
-    withCredentials: true,
+  const params = new URLSearchParams({
+    latlng: `${latitude},${longitude}`,
   });
 
-  const result = response.data.results?.[0];
+  const response = await fetchClient(
+    `/proxy/maps/api/geocode/json?${params.toString()}`
+  );
+
+  const data = await response.json();
+  const result = data.results?.[0];
   const formattedAddress =
     result?.formatted_address || `${latitude}, ${longitude}`;
   const shortAddress =
@@ -36,6 +39,12 @@ export async function reverseGeocode(
   return {
     formattedAddress,
     shortAddress,
-    addressComponents: result?.address_components || [],
+    addressComponents: (result?.address_components || []).map(
+      (c: { long_name: string; short_name: string; types: string[] }) => ({
+        longText: c.long_name,
+        shortText: c.short_name,
+        types: c.types,
+      })
+    ),
   };
 }

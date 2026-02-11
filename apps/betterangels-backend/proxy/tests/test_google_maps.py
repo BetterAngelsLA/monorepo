@@ -46,7 +46,7 @@ class GooglePlacesApiNewViewTestCase(TestCase):
     @override_settings(GOOGLE_MAPS_API_KEY="fake_api_key")
     def test_google_places_api_autocomplete(self, mock_post: Any) -> None:
         self.client.force_login(self.user)
-        url = reverse("google_places_api", args=["autocomplete"])
+        url = reverse("google_places_api", args=["places:autocomplete"])
 
         mock_response = Mock()
         mock_response.status_code = 200
@@ -80,14 +80,14 @@ class GooglePlacesApiNewViewTestCase(TestCase):
 
     def test_google_places_api_requires_post(self) -> None:
         self.client.force_login(self.user)
-        url = reverse("google_places_api", args=["autocomplete"])
+        url = reverse("google_places_api", args=["places:autocomplete"])
 
-        response = self.client.get(url)
+        response = self.client.put(url)
 
         self.assertEqual(response.status_code, 405)
 
     def test_google_places_api_requires_authentication(self) -> None:
-        url = reverse("google_places_api", args=["autocomplete"])
+        url = reverse("google_places_api", args=["places:autocomplete"])
 
         response = self.client.post(
             url,

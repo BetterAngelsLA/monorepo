@@ -1,7 +1,5 @@
 import { TPlaceLatLng, TPlacePrediction } from './types';
 
-// Default bias center for autocomplete (approx center of LA County).
-// Defined locally to avoid a circular dependency on ui-components.
 const DEFAULT_BOUNDS_CENTER: TPlaceLatLng = {
   lat: 34.04499,
   lng: -118.251601,
@@ -9,7 +7,17 @@ const DEFAULT_BOUNDS_CENTER: TPlaceLatLng = {
 
 const MILES_TO_METERS = 1609.34;
 
-type TGetPlaceAutocomplete = {
+type TAutocompleteSuggestion = {
+  placePrediction?: {
+    placeId: string;
+    structuredFormat: {
+      mainText: { text: string };
+      secondaryText: { text: string };
+    };
+  };
+};
+
+type TGetPlaceAutocompleteProps = {
   fetchClient: (path: string, options?: RequestInit) => Promise<Response>;
   query: string;
   boundsCenter?: TPlaceLatLng;
@@ -17,34 +25,20 @@ type TGetPlaceAutocomplete = {
   includedRegionCodes?: string[];
 };
 
-type TPlacePredictionResponse = {
-  suggestions: Array<{
-    placePrediction?: {
-      placeId: string;
-      structuredFormat: {
-        mainText: { text: string };
-        secondaryText: { text: string };
-      };
-    };
-  }>;
-};
-
 export async function getPlaceAutocomplete(
-  props: TGetPlaceAutocomplete
+  props: TGetPlaceAutocompleteProps
 ): Promise<TPlacePrediction[]> {
   const {
     fetchClient,
     query,
     boundsCenter = DEFAULT_BOUNDS_CENTER,
-    boundsRadiusMiles = 10,
+    boundsRadiusMiles = 25,
     includedRegionCodes = ['us'],
   } = props;
 
   if (query.length < 3) {
     return [];
   }
-
-  const boundsRadiusMeters = boundsRadiusMiles * MILES_TO_METERS;
 
   const response = await fetchClient('/proxy/places/v1/places:autocomplete/', {
     method: 'POST',
@@ -60,7 +54,7 @@ export async function getPlaceAutocomplete(
             latitude: boundsCenter.lat,
             longitude: boundsCenter.lng,
           },
-          radius: boundsRadiusMeters,
+          radius: boundsRadiusMiles * MILES_TO_METERS,
         },
       },
       includedRegionCodes,
@@ -71,12 +65,21 @@ export async function getPlaceAutocomplete(
     throw new Error(`Autocomplete request failed: ${response.status}`);
   }
 
-  const data: TPlacePredictionResponse = await response.json();
+  const data: { suggestions: TAutocompleteSuggestion[] } =
+    await response.json();
 
   return (data.suggestions || [])
-    .filter((s) => s.placePrediction)
+    .filter(
+      (
+        s
+      ): s is {
+        placePrediction: NonNullable<
+          TAutocompleteSuggestion['placePrediction']
+        >;
+      } => !!s.placePrediction
+    )
     .map((s) => {
-      const { placeId, structuredFormat } = s.placePrediction!;
+      const { placeId, structuredFormat } = s.placePrediction;
       const mainText = structuredFormat?.mainText?.text || '';
       const secondaryText = structuredFormat?.secondaryText?.text || '';
 

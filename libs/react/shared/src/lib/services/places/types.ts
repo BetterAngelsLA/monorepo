@@ -16,19 +16,6 @@ export type TAddressComponent = {
   types: string[];
 };
 
-/**
- * Convert v1 address components to the legacy format expected by the backend.
- */
-export function toBackendAddressComponents(
-  components: TAddressComponent[] | unknown[]
-): { long_name: string; short_name: string; types: string[] }[] {
-  return (components as TAddressComponent[]).map((c) => ({
-    long_name: c.longText,
-    short_name: c.shortText,
-    types: c.types,
-  }));
-}
-
 export type TPlaceDetails = {
   displayName?: string;
   formattedAddress?: string;

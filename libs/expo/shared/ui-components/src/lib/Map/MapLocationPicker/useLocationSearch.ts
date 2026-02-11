@@ -8,12 +8,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TLocationData } from './types';
 
 interface UseLocationSearchOptions {
-  baseUrl: string;
+  fetchClient: (path: string, options?: RequestInit) => Promise<Response>;
   onSelect: (location: TLocationData) => void;
 }
 
 export function useLocationSearch({
-  baseUrl,
+  fetchClient,
   onSelect,
 }: UseLocationSearchOptions) {
   const [query, setQuery] = useState('');
@@ -29,13 +29,13 @@ export function useLocationSearch({
           return;
         }
         try {
-          const results = await getPlaceAutocomplete({ baseUrl, query: q });
+          const results = await getPlaceAutocomplete({ fetchClient, query: q });
           setSuggestions(results);
         } catch (err) {
           console.error('Error fetching suggestions:', err);
         }
       }, 400),
-    [baseUrl]
+    [fetchClient]
   );
 
   useEffect(() => () => debouncedSearch.cancel(), [debouncedSearch]);
@@ -52,19 +52,19 @@ export function useLocationSearch({
     async (place: TPlacePrediction) => {
       try {
         const r = await getPlaceDetailsById({
-          baseUrl,
+          fetchClient,
           placeId: place.placeId,
-          fields: 'geometry,address_component',
+          fields: 'location,addressComponents',
         });
-        const loc = r.geometry?.location;
+        const loc = r.location;
         if (!loc) return;
         const name = place.description.split(', ')[0];
         onSelect({
-          latitude: loc.lat,
-          longitude: loc.lng,
+          latitude: loc.latitude,
+          longitude: loc.longitude,
           name,
           address: place.description,
-          addressComponents: r.address_components || [],
+          addressComponents: r.addressComponents || [],
         });
         setQuery('');
         setSuggestions([]);
@@ -72,7 +72,7 @@ export function useLocationSearch({
         console.error('Error selecting suggestion:', err);
       }
     },
-    [baseUrl, onSelect]
+    [fetchClient, onSelect]
   );
 
   const clear = useCallback(() => {
