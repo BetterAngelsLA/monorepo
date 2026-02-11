@@ -122,6 +122,56 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
 
         self.assertEqual(parsed_address_components, expected_parsed_address_components)
 
+    def test_parse_address_components_v1_format(self) -> None:
+        """parse_address_components should also accept Google Places API v1 format (longText/shortText)."""
+        v1_components = json.dumps(
+            [
+                {"longText": "106", "shortText": "106", "types": ["street_number"]},
+                {"longText": "West 1st Street", "shortText": "W 1st St", "types": ["route"]},
+                {
+                    "longText": "Downtown Los Angeles",
+                    "shortText": "Downtown Los Angeles",
+                    "types": ["neighborhood", "political"],
+                },
+                {"longText": "Los Angeles", "shortText": "Los Angeles", "types": ["locality", "political"]},
+                {
+                    "longText": "Los Angeles County",
+                    "shortText": "Los Angeles County",
+                    "types": ["administrative_area_level_2", "political"],
+                },
+                {"longText": "California", "shortText": "CA", "types": ["administrative_area_level_1", "political"]},
+                {"longText": "United States", "shortText": "US", "types": ["country", "political"]},
+                {"longText": "90012", "shortText": "90012", "types": ["postal_code"]},
+                {
+                    "longText": "An Interesting Point (Component)",
+                    "shortText": "An Interesting Point (Component)",
+                    "types": ["point_of_interest"],
+                },
+            ]
+        )
+        parsed = Location.parse_address_components(v1_components)
+        expected = {
+            "street_number": "106",
+            "route": "West 1st Street",
+            "locality": "Los Angeles",
+            "administrative_area_level_1": "CA",
+            "country": "United States",
+            "postal_code": "90012",
+            "point_of_interest": "An Interesting Point (Component)",
+        }
+        self.assertEqual(parsed, expected)
+
+    def test_get_point_of_interest_v1_format(self) -> None:
+        """get_point_of_interest should accept v1 format (longText/shortText)."""
+        address_data = {
+            "address_components": json.dumps(
+                [
+                    {"longText": "Some Place", "shortText": "Some Place", "types": ["point_of_interest"]},
+                ]
+            ),
+        }
+        self.assertEqual(Location.get_point_of_interest(address_data), "Some Place")
+
     @parametrize(
         (
             "street_number",

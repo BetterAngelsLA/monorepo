@@ -5,7 +5,7 @@ export * from './featureControls';
 export * from './hooks';
 export * from './observers';
 export * from './providers';
-export * from './services';
+
 export { Regex } from './static/regex';
 export { appZIndex } from './static/zIndex';
 export { toError } from './utils/errors/toError';

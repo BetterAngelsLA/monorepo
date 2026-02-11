@@ -1,10 +1,10 @@
 import { SearchIcon } from '@monorepo/react/icons';
+import { useApiConfig } from '@monorepo/react/shared';
 import {
   getPlaceAutocomplete,
   getPlaceDetailsById,
   TPlacePrediction,
-  useApiConfig,
-} from '@monorepo/react/shared';
+} from '@monorepo/shared/places';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ISO3166Alpha2 } from '../../../types/isoCodes';
 import { Input } from '../form/input';
@@ -63,10 +63,7 @@ export function AddressAutocomplete(props: TProps) {
         const results = await getPlaceAutocomplete({
           fetchClient,
           query: input,
-          boundsCenter: {
-            lat: LA_COUNTY_CENTER.latitude,
-            lng: LA_COUNTY_CENTER.longitude,
-          },
+          boundsCenter: LA_COUNTY_CENTER,
           boundsRadiusMiles: BOUNDS_RADIUS_MILES,
           includedRegionCodes: regionCodes,
         });

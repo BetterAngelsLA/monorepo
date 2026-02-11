@@ -1,4 +1,4 @@
-import { TAddressComponent } from './types';
+import { TAddressComponent } from '@monorepo/shared/places';
 
 export type TReverseGeocodeResult = {
   formattedAddress: string;

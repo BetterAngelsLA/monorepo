@@ -1,7 +1,7 @@
-import { TPlaceDetails } from './types';
+import { TFetchClient, TPlaceDetails } from './types';
 
 type TGetPlaceDetailsByIdProps = {
-  fetchClient: (path: string, options?: RequestInit) => Promise<Response>;
+  fetchClient: TFetchClient;
   placeId: string;
   fields?: string;
 };

@@ -10,10 +10,7 @@ import {
 } from '@monorepo/expo/betterangels';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
-import {
-  reverseGeocode,
-  toBackendAddressComponents,
-} from '@monorepo/expo/shared/services';
+import { reverseGeocode } from '@monorepo/expo/shared/services';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
 import * as ExpoLocation from 'expo-location';
@@ -121,7 +118,7 @@ export default function LocationComponent(props: ILocationProps) {
               ? {
                   formattedAddress: data.address,
                   addressComponents: JSON.stringify(
-                    toBackendAddressComponents(data.addressComponents as [])
+                    data.addressComponents ?? []
                   ),
                 }
               : null,
@@ -184,9 +181,7 @@ export default function LocationComponent(props: ILocationProps) {
                   ? {
                       formattedAddress: geocodeResult.formattedAddress,
                       addressComponents: JSON.stringify(
-                        toBackendAddressComponents(
-                          geocodeResult.addressComponents
-                        )
+                        geocodeResult.addressComponents ?? []
                       ),
                     }
                   : null,

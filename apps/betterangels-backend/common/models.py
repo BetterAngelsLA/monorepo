@@ -153,6 +153,18 @@ class Location(BaseModel):
         return str(self.point.coords)
 
     @staticmethod
+    def _get_component_value(component: dict, name_type: str) -> Optional[str]:
+        """Read a value from an address component, supporting both v1 and legacy formats.
+
+        v1 format uses longText/shortText; legacy format uses long_name/short_name.
+        """
+        if name_type == "long_name":
+            return component.get("longText") or component.get("long_name")
+        elif name_type == "short_name":
+            return component.get("shortText") or component.get("short_name")
+        return None
+
+    @staticmethod
     def parse_address_components(address_components: str) -> dict:
         address_fields = {
             "street_number": "long_name",  # House/building number
@@ -166,7 +178,14 @@ class Location(BaseModel):
 
         components = json.loads(address_components)
         parsed_address = {
-            field: next((component.get(name_type) for component in components if field in component["types"]), None)
+            field: next(
+                (
+                    Location._get_component_value(component, name_type)
+                    for component in components
+                    if field in component.get("types", [])
+                ),
+                None,
+            )
             for field, name_type in address_fields.items()
         }
 
@@ -198,7 +217,12 @@ class Location(BaseModel):
         components: list[Dict[str, str]] = json.loads(address_data["address_components"])
 
         return next(
-            (component["long_name"] for component in components if "point_of_interest" in component["types"]), None
+            (
+                Location._get_component_value(component, "long_name")
+                for component in components
+                if "point_of_interest" in component.get("types", [])
+            ),
+            None,
         )
 
     @classmethod
