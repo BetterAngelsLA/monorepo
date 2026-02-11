@@ -54,10 +54,10 @@ export function Button(props: IButtonProps) {
 
   const buttonCss = [
     className,
-    'font-sans font-normal focus:outline-none transition-all inline-flex items-center rounded-full',
+    'font-sans font-normal focus:outline-none transition-all inline-flex items-center rounded-full h-fit w-fit',
     textColor,
     isFloating ? 'shadow-lg justify-between gap-0 w-full' : '',
-    isSmall ? 'justify-between gap-0 px-4 w-full' : 'justify-center gap-[12px]',
+    isSmall ? 'justify-between gap-0 w-full' : 'justify-center',
   ]
     .filter(Boolean)
     .join(' ');
@@ -65,21 +65,15 @@ export function Button(props: IButtonProps) {
   const style = isFloating
     ? {
         backgroundColor: colours[variant],
-        width: '201.91px',
-        height: '54.58px',
-        paddingTop: '10.79px',
-        paddingBottom: '10.79px',
-        paddingLeft: '21.58px',
-        paddingRight: '21.58px',
         fontSize: '22px',
+        padding: '12px 16px',
       }
     : isSmall
     ? {
         backgroundColor: colours[variant],
-        width: '161px',
-        height: '43px',
         border: '1px solid #D3D9E3',
         fontSize: '18px',
+        padding: '12px 16px',
       }
     : isArrowRight
     ? {
