@@ -66,18 +66,4 @@ class Migration(migrations.Migration):
             deduplicate_addresses,
             reverse_code=migrations.RunPython.noop,
         ),
-        migrations.RemoveIndex(
-            model_name="address",
-            name="address_index",
-        ),
-        migrations.AddIndex(
-            model_name="address",
-            index=models.Index(
-                Lower("street"),
-                Lower("city"),
-                Lower("state"),
-                Lower("zip_code"),
-                name="address_lookup_idx",
-            ),
-        ),
     ]
