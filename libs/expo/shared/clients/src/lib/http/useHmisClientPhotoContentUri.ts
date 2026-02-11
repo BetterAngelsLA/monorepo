@@ -1,12 +1,12 @@
-import { useClientPhotoVersion } from './useClientPhotoVersion';
+import { useHmisClientPhotoVersion } from './useHmisClientPhotoVersion';
 import { useHmisFileHeaders } from './useHmisFileHeaders';
 
-export function useClientPhotoContentUri(
+export function useHmisClientPhotoContentUri(
   clientId: string | number | null | undefined
 ) {
   const { headers, baseUrl } = useHmisFileHeaders();
 
-  const version = useClientPhotoVersion(clientId);
+  const version = useHmisClientPhotoVersion(clientId);
   if (!clientId) {
     return { contentUri: null, thumbnailUri: null, headers: null };
   }

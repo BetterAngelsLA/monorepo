@@ -4,10 +4,7 @@ import {
   subscribeClientPhotoVersion,
 } from './clientPhotoVersionStore';
 
-function subscribeForClient(
-  clientId: string,
-  onStoreChange: () => void
-) {
+function subscribeForClient(clientId: string, onStoreChange: () => void) {
   return subscribeClientPhotoVersion((updatedId) => {
     if (updatedId === clientId) onStoreChange();
   });
@@ -17,7 +14,7 @@ function noopUnsubscribe() {
   /* no-op when there is no clientId */
 }
 
-export function useClientPhotoVersion(
+export function useHmisClientPhotoVersion(
   clientId: string | number | null | undefined
 ) {
   const id = clientId != null ? String(clientId) : null;
