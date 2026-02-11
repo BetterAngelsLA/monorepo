@@ -3,7 +3,6 @@ import { CloseButton } from '@monorepo/expo/shared/ui-components';
 import { ReactNode, useEffect, useRef } from 'react';
 import {
   Animated,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
   StyleSheet,
@@ -11,8 +10,10 @@ import {
   ViewStyle,
   useWindowDimensions,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { runBottomPromptAnimation } from './animations';
 
+const TOOLBAR_HEIGHT = 44;
 const DEFAULT_PADDING_H = Spacings.md;
 
 type TProps = {
@@ -86,7 +87,7 @@ export function BottomPrompt(props: TProps) {
     }
 
     runExit();
-  }, [isVisible, maxSheetHeight]);
+  }, [isVisible, maxSheetHeight, runEnter, runExit]);
 
   function handleClose() {
     onCloseStart?.();
@@ -97,12 +98,18 @@ export function BottomPrompt(props: TProps) {
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {/* Backdrop */}
       <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={handleClose}
+          accessibilityLabel="Close modal"
+          accessibilityHint="Closes the bottom prompt"
+        />
       </Animated.View>
 
       {/* Bottom sheet */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? TOOLBAR_HEIGHT : 0}
         style={styles.keyboardAvoider}
       >
         <Animated.View

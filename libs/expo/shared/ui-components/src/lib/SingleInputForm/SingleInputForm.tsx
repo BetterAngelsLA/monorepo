@@ -1,12 +1,10 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  BasicInput,
-  Button,
-  TextBold,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
 import { ReactNode } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
+import BasicInput from '../BasicInput';
+import Button from '../Button';
+import TextBold from '../TextBold';
+import TextRegular from '../TextRegular';
 
 const DEFAULT_PADDING_H = Spacings.md;
 

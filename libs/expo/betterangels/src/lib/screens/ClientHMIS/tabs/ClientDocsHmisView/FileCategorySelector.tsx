@@ -54,8 +54,7 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
             displayValue: sub.name,
           }));
 
-        // types.push({
-        types.unshift({
+        types.push({
           value: CUSTOM_FILE_NAME_VALUE,
           displayValue: 'Other (custom)',
         });
