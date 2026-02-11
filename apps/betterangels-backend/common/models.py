@@ -108,6 +108,7 @@ class Address(BaseModel):
     zip_code = models.CharField(max_length=10, blank=True, null=True)
     confidential = models.BooleanField(null=True, blank=True)
 
+    address_components = models.JSONField(blank=True, null=True)
     formatted_address = models.CharField(max_length=255, blank=True, null=True)
 
     objects = models.Manager()
@@ -216,6 +217,7 @@ class Location(BaseModel):
             state=cls._normalize(parsed_address.get("administrative_area_level_1")),
             zip_code=cls._normalize(parsed_address.get("postal_code")),
             defaults={
+                "address_components": address_data["address_components"],
                 "formatted_address": address_data.get("formatted_address") or address_data.get("formattedAddress"),
             },
         )

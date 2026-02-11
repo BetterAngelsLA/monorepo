@@ -94,7 +94,7 @@ class AttachmentAdmin(admin.ModelAdmin):
 
 @admin.register(Address)
 class AddressAdmin(admin.ModelAdmin):
-    readonly_fields = ("formatted_address",)
+    readonly_fields = ("address_components", "formatted_address")
 
 
 @admin.register(Location)

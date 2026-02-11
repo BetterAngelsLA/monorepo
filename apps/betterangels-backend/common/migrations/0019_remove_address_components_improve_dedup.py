@@ -3,6 +3,54 @@
 from django.db import migrations, models
 
 
+def normalize_and_deduplicate_addresses(apps, schema_editor):
+    """Lowercase all address fields, then merge duplicate rows.
+
+    After normalising, rows that previously differed only by case become
+    duplicates.  For each set of duplicates we keep the oldest row (lowest pk),
+    re-point every Location FK to it, and delete the rest.
+    """
+    Address = apps.get_model("common", "Address")
+    Location = apps.get_model("common", "Location")
+
+    # 1. Normalize every address row in-place.
+    from django.db.models import F
+    from django.db.models.functions import Lower, NullIf
+    from django.db.models import Value
+
+    Address.objects.update(
+        street=NullIf(Lower("street"), Value("")),
+        city=NullIf(Lower("city"), Value("")),
+        state=NullIf(Lower("state"), Value("")),
+        zip_code=NullIf(Lower("zip_code"), Value("")),
+    )
+
+    # 2. Find groups that now have more than one row.
+    from django.db.models import Count, Min
+
+    dupes = (
+        Address.objects.values("street", "city", "state", "zip_code")
+        .annotate(cnt=Count("id"), keep_id=Min("id"))
+        .filter(cnt__gt=1)
+    )
+
+    for group in dupes:
+        keep_id = group["keep_id"]
+        duplicates = Address.objects.filter(
+            street=group["street"],
+            city=group["city"],
+            state=group["state"],
+            zip_code=group["zip_code"],
+        ).exclude(id=keep_id)
+        dup_ids = list(duplicates.values_list("id", flat=True))
+
+        # Re-point Locations that reference a duplicate.
+        Location.objects.filter(address_id__in=dup_ids).update(address_id=keep_id)
+
+        # Delete the duplicate Address rows.
+        duplicates.delete()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,6 +58,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(
+            normalize_and_deduplicate_addresses,
+            reverse_code=migrations.RunPython.noop,
+        ),
         migrations.RemoveIndex(
             model_name="address",
             name="address_index",
@@ -17,9 +69,5 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name="address",
             index=models.Index(fields=["street", "city", "state", "zip_code"], name="address_lookup_idx"),
-        ),
-        migrations.RemoveField(
-            model_name="address",
-            name="address_components",
         ),
     ]

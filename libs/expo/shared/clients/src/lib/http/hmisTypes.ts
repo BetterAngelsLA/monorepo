@@ -146,6 +146,16 @@ export interface ClientFileUploadResponse {
   creator: unknown;
   clientId: string;
 }
+
+/**
+ * Client profile photo upload response.
+ */
+export interface ClientPhotoUploadResponse {
+  success: boolean;
+  data: {
+    content: string;
+  };
+}
 /**
  * File category information
  */
