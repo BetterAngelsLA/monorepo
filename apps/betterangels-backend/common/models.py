@@ -10,6 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
 from django.db import models
 from django.db.models import ForeignKey
+from django.db.models.functions import Lower
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from phonenumber_field.modelfields import PhoneNumberField
@@ -116,12 +117,10 @@ class Address(BaseModel):
     class Meta(BaseModel.Meta):
         indexes = [
             models.Index(
-                fields=[
-                    "street",
-                    "city",
-                    "state",
-                    "zip_code",
-                ],
+                Lower("street"),
+                Lower("city"),
+                Lower("state"),
+                Lower("zip_code"),
                 name="address_lookup_idx",
             )
         ]
@@ -190,33 +189,48 @@ class Location(BaseModel):
         return parsed_address
 
     @staticmethod
-    def _normalize(value: Optional[str]) -> Optional[str]:
-        """Normalize an address field for consistent dedup.
+    def _clean(value: Optional[str]) -> Optional[str]:
+        """Strip leading/trailing whitespace and collapse internal runs.
 
-        Strips leading/trailing whitespace, collapses internal runs of
-        whitespace, and lower-cases the value so that "Los Angeles" and
-        "los angeles" resolve to the same Address row.
+        Returns None for blank/empty strings.
         """
         if value is None:
             return None
-        value = " ".join(value.split()).strip().lower()
+        value = " ".join(value.split()).strip()
         return value or None
 
     @classmethod
     def get_or_create_address(cls, address_data: Dict[str, Any]) -> "Address":
-        """Gets or creates an address and returns it."""
+        """Gets or creates an address and returns it.
+
+        Uses case-insensitive lookups so that 'Los Angeles' and 'los angeles'
+        resolve to the same row.  The functional Lower() index on Address
+        makes these queries fast.
+        """
         parsed_address = cls.parse_address_components(address_data["address_components"])
 
         street_number = parsed_address.get("street_number")
         route = parsed_address.get("route")
-        street = f"{street_number} {route}".strip() if street_number and route else route
+        street = cls._clean(f"{street_number} {route}".strip() if street_number and route else route)
+        city = cls._clean(parsed_address.get("locality"))
+        state = cls._clean(parsed_address.get("administrative_area_level_1"))
+        zip_code = cls._clean(parsed_address.get("postal_code"))
+
+        # Build a case-insensitive lookup; NULLs need __isnull instead of __iexact.
+        lookup: Dict[str, Any] = {}
+        for field, val in [("street", street), ("city", city), ("state", state), ("zip_code", zip_code)]:
+            if val is None:
+                lookup[f"{field}__isnull"] = True
+            else:
+                lookup[f"{field}__iexact"] = val
 
         address, _ = Address.objects.get_or_create(
-            street=cls._normalize(street),
-            city=cls._normalize(parsed_address.get("locality")),
-            state=cls._normalize(parsed_address.get("administrative_area_level_1")),
-            zip_code=cls._normalize(parsed_address.get("postal_code")),
+            **lookup,
             defaults={
+                "street": street,
+                "city": city,
+                "state": state,
+                "zip_code": zip_code,
                 "address_components": address_data["address_components"],
                 "formatted_address": address_data.get("formatted_address") or address_data.get("formattedAddress"),
             },

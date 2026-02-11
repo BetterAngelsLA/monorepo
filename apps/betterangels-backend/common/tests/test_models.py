@@ -24,10 +24,10 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
             street=(
                 f"{address_input['address_components'][0]['long_name']} "
                 f"{address_input['address_components'][1]['long_name']}"
-            ).lower(),
-            city=address_input["address_components"][3]["long_name"].lower(),
-            state=address_input["address_components"][5]["short_name"].lower(),
-            zip_code=address_input["address_components"][7]["long_name"].lower(),
+            ),
+            city=address_input["address_components"][3]["long_name"],
+            state=address_input["address_components"][5]["short_name"],
+            zip_code=address_input["address_components"][7]["long_name"],
             formatted_address=address_input["formatted_address"],
         )
         self.location = baker.make(Location, address=self.address, point=Point(self.point))
@@ -224,10 +224,10 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         expected_street = (
             f"{address_input['address_components'][0]['long_name']} "
             f"{address_input['address_components'][1]['long_name']}"
-        ).lower()
-        expected_city = address_input["address_components"][3]["long_name"].lower()
-        expected_state = address_input["address_components"][5]["short_name"].lower()
-        expected_zip_code = address_input["address_components"][7]["long_name"].lower()
+        )
+        expected_city = address_input["address_components"][3]["long_name"]
+        expected_state = address_input["address_components"][5]["short_name"]
+        expected_zip_code = address_input["address_components"][7]["long_name"]
 
         self.assertEqual(Address.objects.count(), expected_address_count)
         self.assertEqual(Location.objects.count(), expected_location_count)
@@ -271,7 +271,7 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         _, address_input = self._get_address_inputs()
         assert isinstance(address_input["address_components"], list)
 
-        expected_street = "west 1st street" if missing_component_index == 0 else None
+        expected_street = "West 1st Street" if missing_component_index == 0 else None
         address_input["address_components"].pop(missing_component_index)
         address_input["address_components"] = json.dumps(address_input["address_components"])
         location_data = {
