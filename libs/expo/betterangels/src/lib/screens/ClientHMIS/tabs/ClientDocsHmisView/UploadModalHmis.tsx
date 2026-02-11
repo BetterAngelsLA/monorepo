@@ -59,7 +59,8 @@ export default function UploadModalHmis(props: TProps) {
     categoryName: '',
     subCategoryId: '',
   });
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  // const [isModalVisible, setIsModalVisible] = useState(false);
+  const [mediaPickerVisible, setMediaPickerVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   const { uploadClientFile } = useHmisClient();
@@ -112,17 +113,24 @@ export default function UploadModalHmis(props: TProps) {
 
       const fileBase64 = await readFileAsBase64(uri);
 
-      await uploadClientFile(
-        clientHmisId.trim(),
-        {
+      const resp = await uploadClientFile({
+        clientId: clientHmisId.trim(),
+        file: {
           content: fileBase64,
           name: name.trim(),
           mimeType: type as AllowedFileType,
         },
-        parseInt(categoryId, 10),
-        parseInt(subCategoryId, 10),
-        false
-      );
+        categoryId: parseInt(categoryId, 10),
+        // fileNameId:  parseInt(subCategoryId, 10),
+        fileNameId: 0,
+        isPrivate: false,
+        customFileName: 'Legal custom one',
+      });
+
+      console.log();
+      console.log('| -------------  resp  ------------- |');
+      console.log(resp);
+      console.log();
 
       onUploadSuccess();
     } catch (err) {
@@ -171,7 +179,7 @@ export default function UploadModalHmis(props: TProps) {
               subCategoryId,
               categoryName,
             });
-            setIsModalVisible(true);
+            setMediaPickerVisible(true);
           }}
         />
       )}
@@ -181,8 +189,8 @@ export default function UploadModalHmis(props: TProps) {
           setDocument(file);
         }}
         allowMultiple={false}
-        setModalVisible={setIsModalVisible}
-        isModalVisible={isModalVisible}
+        setModalVisible={setMediaPickerVisible}
+        isModalVisible={mediaPickerVisible}
         setFiles={(files) => {
           setDocument(files[0]);
         }}
