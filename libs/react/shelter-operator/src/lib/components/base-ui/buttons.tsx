@@ -28,10 +28,10 @@ export function Button(props: IButtonProps) {
 
   const leftIcon =
     props.leftIcon ??
-    (!isArrowRight && (isSmall ? <Plus size={24} /> : <BookCheck size={24} />));
+    (!isArrowRight && (isSmall ? <Plus size={24} /> : <BookCheck size={29} />));
   const rightIcon =
     props.rightIcon ??
-    (!isArrowRight && (isSmall ? <Plus size={24} /> : <BookCheck size={24} />));
+    (!isArrowRight && (isSmall ? <Plus size={24} /> : <BookCheck size={29} />));
 
   const colours: Record<
     | 'floating-light'
@@ -56,7 +56,7 @@ export function Button(props: IButtonProps) {
     className,
     'font-sans font-normal focus:outline-none transition-all inline-flex items-center rounded-full',
     textColor,
-    isFloating ? 'shadow-lg' : '',
+    isFloating ? 'shadow-lg justify-between gap-0 w-full' : '',
     isSmall ? 'justify-between gap-0 px-4 w-full' : 'justify-center gap-[12px]',
   ]
     .filter(Boolean)
@@ -71,6 +71,7 @@ export function Button(props: IButtonProps) {
         paddingBottom: '10.79px',
         paddingLeft: '21.58px',
         paddingRight: '21.58px',
+        fontSize: '22px',
       }
     : isSmall
     ? {
