@@ -7,7 +7,8 @@ interface IButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     | 'floating-dark'
     | 'smalllight'
     | 'smallmedium'
-    | 'smalldark';
+    | 'smalldark'
+    | 'rightarrow';
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
 }
@@ -23,15 +24,20 @@ export function Button(props: IButtonProps) {
     variant === 'smallmedium' ||
     variant === 'smalldark';
 
-  const leftIcon = props.leftIcon ?? (isSmall ? <Plus /> : <BookCheck />);
-  const rightIcon = props.rightIcon ?? (isSmall ? <Plus /> : <BookCheck />);
+  const isArrowRight = variant === 'rightarrow';
+
+  const leftIcon =
+    props.leftIcon ?? (!isArrowRight && (isSmall ? <Plus /> : <BookCheck />));
+  const rightIcon =
+    props.rightIcon ?? (!isArrowRight && (isSmall ? <Plus /> : <BookCheck />));
 
   const colours: Record<
     | 'floating-light'
     | 'floating-dark'
     | 'smalllight'
     | 'smallmedium'
-    | 'smalldark',
+    | 'smalldark'
+    | 'rightarrow',
     string
   > = {
     'floating-light': '#008CEE',
@@ -39,6 +45,7 @@ export function Button(props: IButtonProps) {
     smalllight: '#FFFFFF',
     smallmedium: '#F4F6FD',
     smalldark: '#D3D9E3',
+    rightarrow: '#FFFF00',
   };
 
   const textColor = isSmall ? 'text-gray-500' : 'text-white';
@@ -68,6 +75,13 @@ export function Button(props: IButtonProps) {
         backgroundColor: colours[variant],
         padding: '12px 24px',
         border: '1px solid #D3D9E3',
+      }
+    : isArrowRight
+    ? {
+        backgroundColor: colours[variant],
+        width: '44px',
+        height: '44px',
+        padding: '0',
       }
     : undefined;
 

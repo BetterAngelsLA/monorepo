@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { Plus } from 'lucide-react';
+import { ArrowRight, Plus } from 'lucide-react';
 import { Button } from './buttons';
 
 const meta: Meta<typeof Button> = {
@@ -9,6 +9,16 @@ const meta: Meta<typeof Button> = {
 export default meta;
 
 type Story = StoryObj<typeof Button>;
+
+export const RightArrow: Story = {
+  render: () => (
+    <Button
+      variant="rightarrow"
+      leftIcon={<ArrowRight size={24} stroke="black" />}
+      rightIcon={null}
+    />
+  ),
+};
 
 export const SmallLight: Story = {
   parameters: {
