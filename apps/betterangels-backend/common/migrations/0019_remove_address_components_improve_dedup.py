@@ -13,8 +13,7 @@ def deduplicate_addresses(apps, schema_editor):
     execute = schema_editor.execute
 
     # 1. Re-point Location FKs from duplicate Addresses to the keeper.
-    execute(
-        """
+    execute("""
         UPDATE common_location SET address_id = keeper.keep_id
         FROM (
             SELECT MIN(id) AS keep_id,
@@ -33,12 +32,10 @@ def deduplicate_addresses(apps, schema_editor):
          AND COALESCE(LOWER(dup.zip_code), '') = keeper.norm_zip
          AND dup.id != keeper.keep_id
         WHERE common_location.address_id = dup.id
-        """
-    )
+        """)
 
     # 2. Delete the duplicate Address rows.
-    execute(
-        """
+    execute("""
         DELETE FROM common_address
         WHERE id IN (
             SELECT dup.id
@@ -59,8 +56,7 @@ def deduplicate_addresses(apps, schema_editor):
              AND COALESCE(LOWER(dup.zip_code), '') = keeper.norm_zip
              AND dup.id != keeper.keep_id
         )
-        """
-    )
+        """)
 
     # 3. Round all Location GPS points to 5 decimal places (~1.1 m precision)
     #    to eliminate sub-metre jitter duplicates.
@@ -104,8 +100,7 @@ def deduplicate_locations(apps, schema_editor):
 
     # Re-point each FK table.
     for table in fk_tables:
-        execute(
-            f"""
+        execute(f"""
             UPDATE {table} SET location_id = keeper.keep_id
             FROM (
                 SELECT MIN(id) AS keep_id, address_id, point, point_of_interest
@@ -119,12 +114,10 @@ def deduplicate_locations(apps, schema_editor):
              AND dup.point_of_interest IS NOT DISTINCT FROM keeper.point_of_interest
              AND dup.id != keeper.keep_id
             WHERE {table}.location_id = dup.id
-            """
-        )
+            """)
 
     # Delete duplicate Locations.
-    execute(
-        """
+    execute("""
         DELETE FROM common_location
         WHERE id IN (
             SELECT dup.id
@@ -140,8 +133,7 @@ def deduplicate_locations(apps, schema_editor):
              AND dup.point_of_interest IS NOT DISTINCT FROM keeper.point_of_interest
              AND dup.id != keeper.keep_id
         )
-        """
-    )
+        """)
 
 
 class Migration(migrations.Migration):
