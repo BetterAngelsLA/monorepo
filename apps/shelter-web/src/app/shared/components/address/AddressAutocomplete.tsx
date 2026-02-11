@@ -1,12 +1,8 @@
 import { SearchIcon } from '@monorepo/react/icons';
-import { useApiConfig } from '@monorepo/react/shared';
-import {
-  getPlaceAutocomplete,
-  getPlaceDetailsById,
-  TPlacePrediction,
-} from '@monorepo/shared/places';
+import { TPlacePrediction } from '@monorepo/shared/places';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ISO3166Alpha2 } from '../../../types/isoCodes';
+import { usePlacesClient } from '../../hooks/usePlacesClient';
 import { Input } from '../form/input';
 import { LA_COUNTY_CENTER } from '../map/constants.maps';
 
@@ -35,7 +31,7 @@ export function AddressAutocomplete(props: TProps) {
     className = '',
   } = props;
 
-  const { fetchClient } = useApiConfig();
+  const places = usePlacesClient();
   const [inputValue, setInputValue] = useState('');
   const [predictions, setPredictions] = useState<TPlacePrediction[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -60,9 +56,7 @@ export function AddressAutocomplete(props: TProps) {
           ? [countryRestrictions]
           : ['us'];
 
-        const results = await getPlaceAutocomplete({
-          fetchClient,
-          query: input,
+        const results = await places.autocomplete(input, {
           boundsCenter: LA_COUNTY_CENTER,
           boundsRadiusMiles: BOUNDS_RADIUS_MILES,
           includedRegionCodes: regionCodes,
@@ -74,7 +68,7 @@ export function AddressAutocomplete(props: TProps) {
         setPredictions([]);
       }
     },
-    [countryRestrictions, fetchClient]
+    [countryRestrictions, places]
   );
 
   const handleInputChange = (value: string) => {
@@ -90,9 +84,7 @@ export function AddressAutocomplete(props: TProps) {
   const handleSelect = useCallback(
     async (placeId: string) => {
       try {
-        const result = await getPlaceDetailsById({
-          fetchClient,
-          placeId,
+        const result = await places.getDetails(placeId, {
           fields: 'displayName,formattedAddress,location',
         });
 
@@ -111,7 +103,7 @@ export function AddressAutocomplete(props: TProps) {
         console.error('Error fetching place details:', error);
       }
     },
-    [onPlaceSelect, fetchClient]
+    [onPlaceSelect, places]
   );
 
   return (

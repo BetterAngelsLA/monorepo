@@ -118,10 +118,10 @@ class AddressType:
     zip_code: auto
 
 
-@strawberry_django.input(Address)
+@strawberry.input
 class AddressInput:
-    address_components: auto
-    formatted_address: auto
+    address_components: Optional[strawberry.scalars.JSON] = None
+    formatted_address: Optional[str] = None
 
 
 @strawberry_django.type(Location)

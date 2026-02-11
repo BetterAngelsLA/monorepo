@@ -58,8 +58,8 @@ enum AdaAccommodationEnum {
 union AddOrganizationMemberPayload = OrganizationMemberType | OperationInfo
 
 input AddressInput {
-  addressComponents: JSON
-  formattedAddress: String
+  addressComponents: JSON = null
+  formattedAddress: String = null
 }
 
 type AddressType {

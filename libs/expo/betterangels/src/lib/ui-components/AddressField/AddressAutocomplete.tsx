@@ -1,11 +1,12 @@
-import { useApiConfig } from '@monorepo/expo/shared/clients';
 import {
   TPlaceDetails,
   TPlacePrediction,
-  getPlaceAutocomplete,
-  getPlaceDetailsById,
 } from '@monorepo/expo/shared/services';
-import { AutocompleteInput } from '@monorepo/expo/shared/ui-components';
+import {
+  AutocompleteInput,
+  usePlacesClient,
+} from '@monorepo/expo/shared/ui-components';
+import { TPlacesClient } from '@monorepo/shared/places';
 import { debounce } from 'lodash';
 import { RefObject, useMemo, useRef, useState } from 'react';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
@@ -51,7 +52,7 @@ export function AddressAutocomplete<TForm extends FieldValues>(
 
   const addressViewRef = useRef<View>(null);
 
-  const { fetchClient } = useApiConfig();
+  const places = usePlacesClient();
 
   const [predictions, setPredictions] = useState<TPlacePrediction[]>([]);
 
@@ -63,14 +64,14 @@ export function AddressAutocomplete<TForm extends FieldValues>(
       return;
     }
 
-    debouncedSearch(input, fetchClient);
+    debouncedSearch(input);
   };
 
   const debouncedSearch = useMemo(
     () =>
-      debounce(async (query: string, fc: typeof fetchClient) => {
+      debounce(async (query: string) => {
         try {
-          const result = await getPlaceAutocomplete({ fetchClient: fc, query });
+          const result = await places.autocomplete(query);
 
           setPredictions(result);
         } catch (e) {
@@ -79,7 +80,7 @@ export function AddressAutocomplete<TForm extends FieldValues>(
           setPredictions([]);
         }
       }, debounceMs),
-    [debounceMs]
+    [debounceMs, places]
   );
 
   function handleScrollToTop() {
@@ -129,10 +130,7 @@ export function AddressAutocomplete<TForm extends FieldValues>(
                     debouncedSearch.cancel();
                     setPredictions([]);
 
-                    const detailAddress = await getDetailAddress(
-                      item,
-                      fetchClient
-                    );
+                    const detailAddress = await getDetailAddress(item, places);
 
                     onChange(detailAddress);
                   }}
@@ -148,7 +146,7 @@ export function AddressAutocomplete<TForm extends FieldValues>(
 
 async function getDetailAddress(
   prediction: TPlacePrediction,
-  fetchClient: (path: string, options?: RequestInit) => Promise<Response>
+  places: TPlacesClient
 ) {
   const placeId = prediction.placeId;
 
@@ -157,7 +155,7 @@ async function getDetailAddress(
   }
 
   try {
-    const detailAddress = await getPlaceDetailsById({ fetchClient, placeId });
+    const detailAddress = await places.getDetails(placeId);
 
     return getPresentedAddress(detailAddress);
   } catch (e) {

@@ -108,7 +108,6 @@ class Address(BaseModel):
     zip_code = models.CharField(max_length=10, blank=True, null=True)
     confidential = models.BooleanField(null=True, blank=True)
 
-    address_components = models.JSONField(blank=True, null=True)
     formatted_address = models.CharField(max_length=255, blank=True, null=True)
 
     objects = models.Manager()
@@ -121,10 +120,8 @@ class Address(BaseModel):
                     "city",
                     "state",
                     "zip_code",
-                    "address_components",
-                    "formatted_address",
                 ],
-                name="address_index",
+                name="address_lookup_idx",
             )
         ]
 
@@ -191,23 +188,36 @@ class Location(BaseModel):
 
         return parsed_address
 
+    @staticmethod
+    def _normalize(value: Optional[str]) -> Optional[str]:
+        """Normalize an address field for consistent dedup.
+
+        Strips leading/trailing whitespace, collapses internal runs of
+        whitespace, and lower-cases the value so that "Los Angeles" and
+        "los angeles" resolve to the same Address row.
+        """
+        if value is None:
+            return None
+        value = " ".join(value.split()).strip().lower()
+        return value or None
+
     @classmethod
     def get_or_create_address(cls, address_data: Dict[str, Any]) -> "Address":
         """Gets or creates an address and returns it."""
-        # This function expects a Google Geocoding API payload
-        # https://developers.google.com/maps/documentation/geocoding/requests-geocoding
         parsed_address = cls.parse_address_components(address_data["address_components"])
 
         street_number = parsed_address.get("street_number")
         route = parsed_address.get("route")
         street = f"{street_number} {route}".strip() if street_number and route else route
+
         address, _ = Address.objects.get_or_create(
-            street=street,
-            city=parsed_address.get("locality"),
-            state=parsed_address.get("administrative_area_level_1"),
-            zip_code=parsed_address.get("postal_code"),
-            address_components=address_data["address_components"],
-            formatted_address=address_data["formatted_address"],
+            street=cls._normalize(street),
+            city=cls._normalize(parsed_address.get("locality")),
+            state=cls._normalize(parsed_address.get("administrative_area_level_1")),
+            zip_code=cls._normalize(parsed_address.get("postal_code")),
+            defaults={
+                "formatted_address": address_data.get("formatted_address") or address_data.get("formattedAddress"),
+            },
         )
 
         return address

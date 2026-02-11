@@ -1,4 +1,4 @@
-import { reverseGeocode } from '@monorepo/expo/shared/services';
+import { usePlacesClient } from '@monorepo/expo/shared/ui-components';
 import * as ExpoLocation from 'expo-location';
 import { useEffect, useState } from 'react';
 import { LocationDraft } from '../screens/NotesHmis/HmisProgramNoteForm';
@@ -9,11 +9,11 @@ const INITIAL_LOCATION = {
 };
 
 export function useInitialLocation(
-  fetchClient: (path: string, options?: RequestInit) => Promise<Response>,
   editing: boolean | undefined,
   location: LocationDraft | undefined,
   setValue: (name: 'location', value: LocationDraft) => void
 ) {
+  const places = usePlacesClient();
   const [userLocation, setUserLocation] =
     useState<ExpoLocation.LocationObject | null>(null);
 
@@ -38,11 +38,7 @@ export function useInitialLocation(
 
         if (editing) return;
 
-        const geocodeResult = await reverseGeocode({
-          fetchClient,
-          latitude,
-          longitude,
-        });
+        const geocodeResult = await places.reverseGeocode(latitude, longitude);
 
         setValue('location', {
           ...location,
@@ -58,7 +54,7 @@ export function useInitialLocation(
     };
 
     void autoSetInitialLocation();
-  }, [fetchClient]);
+  }, [places]);
 
   return [userLocation];
 }

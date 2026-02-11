@@ -1,21 +1,15 @@
-import {
-  TPlacePrediction,
-  getPlaceAutocomplete,
-  getPlaceDetailsById,
-} from '@monorepo/expo/shared/services';
+import { TPlacePrediction } from '@monorepo/expo/shared/services';
 import { debounce } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { usePlacesClient } from '../../hooks/usePlacesClient';
 import { TLocationData } from './types';
 
 interface UseLocationSearchOptions {
-  fetchClient: (path: string, options?: RequestInit) => Promise<Response>;
   onSelect: (location: TLocationData) => void;
 }
 
-export function useLocationSearch({
-  fetchClient,
-  onSelect,
-}: UseLocationSearchOptions) {
+export function useLocationSearch({ onSelect }: UseLocationSearchOptions) {
+  const places = usePlacesClient();
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<TPlacePrediction[]>([]);
 
@@ -29,13 +23,13 @@ export function useLocationSearch({
           return;
         }
         try {
-          const results = await getPlaceAutocomplete({ fetchClient, query: q });
+          const results = await places.autocomplete(q);
           setSuggestions(results);
         } catch (err) {
           console.error('Error fetching suggestions:', err);
         }
       }, 400),
-    [fetchClient]
+    [places]
   );
 
   useEffect(() => () => debouncedSearch.cancel(), [debouncedSearch]);
@@ -51,9 +45,7 @@ export function useLocationSearch({
   const selectSuggestion = useCallback(
     async (place: TPlacePrediction) => {
       try {
-        const r = await getPlaceDetailsById({
-          fetchClient,
-          placeId: place.placeId,
+        const r = await places.getDetails(place.placeId, {
           fields: 'location,addressComponents',
         });
         const loc = r.location;
@@ -72,7 +64,7 @@ export function useLocationSearch({
         console.error('Error selecting suggestion:', err);
       }
     },
-    [fetchClient, onSelect]
+    [places, onSelect]
   );
 
   const clear = useCallback(() => {

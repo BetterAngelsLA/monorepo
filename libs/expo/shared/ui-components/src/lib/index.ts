@@ -91,3 +91,5 @@ export { default as TextMedium } from './TextMedium';
 export { default as TextOrNode } from './TextOrNode';
 export { default as TextRegular } from './TextRegular';
 export * from './types';
+export { usePlacesClient } from './hooks/usePlacesClient';
+export type { TPlacesClient } from '@monorepo/shared/places';

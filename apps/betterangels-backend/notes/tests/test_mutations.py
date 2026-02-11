@@ -151,10 +151,10 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "street": (
                 f"{address_input['addressComponents'][0]['long_name']} "
                 f"{address_input['addressComponents'][1]['long_name']}"
-            ),
-            "city": address_input["addressComponents"][3]["long_name"],
-            "state": address_input["addressComponents"][5]["short_name"],
-            "zipCode": address_input["addressComponents"][7]["long_name"],
+            ).lower(),
+            "city": address_input["addressComponents"][3]["long_name"].lower(),
+            "state": address_input["addressComponents"][5]["short_name"].lower(),
+            "zipCode": address_input["addressComponents"][7]["long_name"].lower(),
         }
 
         updated_note_location = response["data"]["updateNoteLocation"]["location"]
@@ -565,7 +565,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
         # Confirm the note location was updated
-        self.assertEqual("104 West 1st Street", note_location_to_discard["location"]["address"]["street"])
+        self.assertEqual("104 west 1st street", note_location_to_discard["location"]["address"]["street"])
         self.assertEqual(discarded_point, note_location_to_discard["location"]["point"])
         self.assertEqual(discarded_point_of_interest, note_location_to_discard["location"]["pointOfInterest"])
 
@@ -573,7 +573,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
-        self.assertEqual(reverted_note["location"]["address"]["street"], self.street)
+        self.assertEqual(reverted_note["location"]["address"]["street"], self.street.lower())
         self.assertEqual(reverted_note["location"]["point"], self.point)
         self.assertEqual(reverted_note["location"]["pointOfInterest"], self.point_of_interest)
 
