@@ -4,7 +4,7 @@ import {
   AuthProvider,
   UserProvider,
 } from '@monorepo/react/betterangels-admin';
-import { createApolloClient } from '@monorepo/react/shared';
+import { createApolloClient } from '@monorepo/react/shared/apollo';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';

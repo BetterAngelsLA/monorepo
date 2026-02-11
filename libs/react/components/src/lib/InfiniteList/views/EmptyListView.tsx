@@ -1,5 +1,5 @@
 import { UserSearchIcon } from '@monorepo/react/icons';
-import { mergeCss } from '../../../utils';
+import { mergeCss } from '@monorepo/react/shared';
 
 type Props = {
   className?: string;

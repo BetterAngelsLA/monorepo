@@ -1,6 +1,5 @@
-import { useVisibilityObserver } from '@monorepo/react/shared';
+import { mergeCss, useVisibilityObserver } from '@monorepo/react/shared';
 import { ReactNode } from 'react';
-import { mergeCss } from '../../utils';
 import { LoadingView } from '../LoadingView';
 
 type TProps = {

@@ -613,6 +613,10 @@ type DjangoImageType {
   height: Int!
 }
 
+input DjangoModelFilterInput {
+  pk: ID!
+}
+
 type DjangoModelType {
   pk: ID!
 }
@@ -1565,6 +1569,7 @@ type Query {
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   shelter(pk: ID!): ShelterType!
+  adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelters(ordering: [ShelterOrder!] = null, filters: ShelterFilter, pagination: OffsetPaginationInput): ShelterTypeOffsetPaginated!
 }
 
@@ -1711,6 +1716,7 @@ enum ShelterChoices {
 }
 
 input ShelterFilter {
+  organization: DjangoModelFilterInput
   AND: ShelterFilter
   OR: ShelterFilter
   NOT: ShelterFilter
@@ -1728,6 +1734,7 @@ type ShelterLocationType {
 
 input ShelterOrder {
   name: Ordering
+  createdAt: Ordering
 }
 
 type ShelterPhotoType {

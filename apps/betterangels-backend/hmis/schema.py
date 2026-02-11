@@ -12,7 +12,6 @@ from common.graphql.decorators import (
 )
 from common.models import Location, PhoneNumber
 from common.permissions.utils import IsAuthenticated
-from common.utils import strip_demo_tag
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login as django_login
 from django.contrib.contenttypes.models import ContentType
@@ -177,17 +176,16 @@ class Mutation:
         Cookies are automatically forwarded from HMIS via the API bridge.
         """
         request = info.context["request"]
-        sanitized_email = strip_demo_tag(email)
 
         # Verify user exists in our system before attempting HMIS login
         try:
-            user = User.objects.get(email__iexact=sanitized_email)
+            user = User.objects.get(email__iexact=email)
         except User.DoesNotExist:
             return HmisLoginError(message="Invalid credentials or HMIS login failed")
 
         # Authenticate with HMIS (cookies are automatically set via bridge)
         hmis_api_bridge = HmisApiBridge(info=info)
-        hmis_api_bridge.login(sanitized_email, password)
+        hmis_api_bridge.login(email, password)
 
         # Create Django session
         backend = settings.AUTHENTICATION_BACKENDS[0]

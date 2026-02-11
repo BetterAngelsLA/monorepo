@@ -10,13 +10,18 @@ export interface IUploadPreview {
   files: ReactNativeFile[];
   onRemoveFile: (index: number) => void;
   title?: string;
+  disabled?: boolean;
 }
 
 export function FileUploadsPreview(props: IUploadPreview) {
-  const { files, onRemoveFile, title } = props;
+  const { files, onRemoveFile, title, disabled } = props;
 
   return (
-    <View style={{ paddingTop: Spacings.sm }}>
+    <View
+      style={{
+        paddingTop: Spacings.sm,
+      }}
+    >
       {title && (
         <TextBold mb="sm" size="md">
           {title}
@@ -24,12 +29,20 @@ export function FileUploadsPreview(props: IUploadPreview) {
       )}
 
       {files.map((file, index) => {
+        const isImage = file.type.startsWith('image');
+
         return (
-          <View key={index} style={{ marginBottom: Spacings.md }}>
+          <View
+            key={index}
+            style={{
+              marginBottom: Spacings.md,
+            }}
+          >
             <FileThumbnail
+              disabled={disabled}
               uri={file.uri}
               mimeType={file.type}
-              thumbnailSize={FullThumbenailSize}
+              thumbnailSize={isImage ? FullThumbenailSize : undefined}
               onDelete={() => onRemoveFile(index)}
             />
           </View>

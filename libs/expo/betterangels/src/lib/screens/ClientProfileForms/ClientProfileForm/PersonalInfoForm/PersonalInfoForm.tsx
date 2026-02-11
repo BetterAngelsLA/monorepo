@@ -162,7 +162,7 @@ export function PersonalInfoForm() {
       <Form.Field title="Date of Birth">
         <DatePicker
           type="numeric"
-          placeholder='Enter date'
+          placeholder="Enter date"
           validRange={{
             endDate: new Date(),
             startDate: new Date('1900-01-01'),

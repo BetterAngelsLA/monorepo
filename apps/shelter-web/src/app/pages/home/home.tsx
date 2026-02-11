@@ -1,3 +1,4 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
 import { useEffect, useState } from 'react';
@@ -20,7 +21,6 @@ import {
 } from '../../shared/components/shelter/shelterCard';
 import { ShelterSearch } from '../../shared/components/shelters/shelterSearch';
 import { ModalAnimationEnum } from '../../shared/modal/modal';
-import { mergeCss } from '../../shared/utils/styles/mergeCss';
 
 export function Home() {
   const [atomLocation, setLocation] = useAtom(locationAtom);

@@ -1,6 +1,6 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { useContext } from 'react';
 import { SurveyRadio } from '../../../pages/introduction/firesSurvey/components/SurveyRadio';
-import { mergeCss } from '../../utils/styles/mergeCss';
 import { CheckboxGroup } from '../form/CheckboxGroup';
 import { SurveyContext } from './provider/SurveyContext';
 import { TAnswer, TOption, TQuestion } from './types';

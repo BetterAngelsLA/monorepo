@@ -1,3 +1,4 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
 import BA_LOGO from '../../assets/images/ba-logo-blue-white.png';
@@ -6,7 +7,6 @@ import {
   contactPagePath,
   privacyPolicyPagePath,
 } from '../routes/routePaths';
-import { mergeCss } from '../shared/utils/styles/mergeCss';
 
 type IParams = {
   className?: string;

@@ -50,14 +50,15 @@ Once started, you can access the Django development server at
 - default address: [http://localhost:8000/admin/](http://localhost:8000/admin/)
   - or the port you've configured.
 - Login using creds
+
   - email: `admin@example.com`
   - psw: `password`
 
-   > **Connecting from Android Emulator:**
-   >
-   > If you are running the frontend on a Windows Android Emulator, `localhost` refers to the emulator itself.
-   >
-   > Update your frontend `apps/betterangels/.env` to use: `EXPO_PUBLIC_API_URL=http://10.0.2.2:8000`
+  > **Connecting from Android Emulator:**
+  >
+  > If you are running the frontend on a Windows Android Emulator, `localhost` refers to the emulator itself.
+  >
+  > Update your frontend `apps/betterangels/.env` to use: `EXPO_PUBLIC_API_URL=http://10.0.2.2:8000`
 
 #### Starting a Django Shell
 

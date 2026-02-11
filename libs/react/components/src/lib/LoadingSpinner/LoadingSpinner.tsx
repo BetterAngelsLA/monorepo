@@ -1,4 +1,4 @@
-import { mergeCss } from '../../utils';
+import { mergeCss } from '@monorepo/react/shared';
 
 export type TLoadingSpinnerSize = 'small' | 'medium' | 'large';
 

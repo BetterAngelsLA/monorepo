@@ -1,5 +1,5 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { ButtonHTMLAttributes } from 'react';
-import { mergeCss } from '../../utils';
 
 interface IButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /**

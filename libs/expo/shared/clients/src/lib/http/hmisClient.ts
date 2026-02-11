@@ -7,6 +7,7 @@ import {
   includeCredentialsInterceptor,
   userAgentInterceptor,
 } from '../common/interceptors';
+import { HmisError, HmisInvalidFileTypeError } from './hmisError';
 import {
   ALLOWED_FILE_TYPES,
   AllowedFileType,
@@ -16,7 +17,6 @@ import {
   ClientFileUploadResponse,
   FileCategoriesResponse,
   FileNamesResponse,
-  HmisError,
   HmisHttpQueryParams,
   HmisRequestOptions,
 } from './hmisTypes';
@@ -224,12 +224,10 @@ class HmisClient {
   ): Promise<ClientFileUploadResponse> {
     // Validate file type
     if (!ALLOWED_FILE_TYPES.includes(file.mimeType)) {
-      throw new HmisError(
-        `File type "${
-          file.mimeType
-        }" is not allowed. Allowed: ${ALLOWED_FILE_TYPES.join(', ')}`,
-        400
-      );
+      throw new HmisInvalidFileTypeError('Invalid file type', 400, {
+        received: file.mimeType,
+        allowed: ALLOWED_FILE_TYPES,
+      });
     }
 
     // Build data URI with proper format

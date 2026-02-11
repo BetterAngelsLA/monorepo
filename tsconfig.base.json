@@ -24,6 +24,9 @@
         "libs/expo/shared/clients/src/index.ts"
       ],
       "@monorepo/expo/shared/icons": ["libs/expo/shared/icons/src/index.ts"],
+      "@monorepo/expo/shared/services": [
+        "libs/expo/shared/services/src/index.ts"
+      ],
       "@monorepo/expo/shared/static": ["libs/expo/shared/static/src/index.ts"],
       "@monorepo/expo/shared/ui-components": [
         "libs/expo/shared/ui-components/src/index.ts"
@@ -35,6 +38,7 @@
       "@monorepo/react/components": ["libs/react/components/src/index.ts"],
       "@monorepo/react/icons": ["libs/react/icons/src/index.ts"],
       "@monorepo/react/shared": ["libs/react/shared/src/index.ts"],
+      "@monorepo/react/shared/apollo": ["libs/react/shared/src/apollo.ts"],
       "@monorepo/react/shelter": ["libs/react/shelter/src/index.ts"],
       "@monorepo/react/shelter-operator": [
         "libs/react/shelter-operator/src/index.ts"
