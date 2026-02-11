@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import {
   getClientPhotoVersion,
   subscribeClientPhotoVersion,
-} from './clientPhotoVersionStore';
+} from '../http/clientPhotoVersionStore';
 
 function subscribeForClient(clientId: string, onStoreChange: () => void) {
   return subscribeClientPhotoVersion((updatedId) => {
