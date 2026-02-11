@@ -54,6 +54,54 @@ def deduplicate_addresses(apps, schema_editor):
         # Delete the duplicate Address rows.
         Address.objects.filter(id__in=dup_ids).delete()
 
+    # After re-pointing, Locations may now be duplicated (same address + point + poi).
+    deduplicate_locations(apps, schema_editor)
+
+
+def deduplicate_locations(apps, schema_editor):
+    """Merge Location rows that now share the same address + point + point_of_interest.
+
+    This can happen after address dedup merges two Address rows — their
+    respective Location rows may become identical.  We keep the oldest
+    (lowest pk), re-point Note and HmisNote FKs, and delete the rest.
+    """
+    Location = apps.get_model("common", "Location")
+
+    from django.db.models import Count, Min
+
+    # Collect all models that have a FK to Location so we can re-point them.
+    fk_models = []
+    for label in ("notes.Note", "hmis.HmisNote"):
+        try:
+            fk_models.append(apps.get_model(label))
+        except LookupError:
+            pass
+
+    dupes = (
+        Location.objects.values("address_id", "point", "point_of_interest")
+        .annotate(cnt=Count("id"), keep_id=Min("id"))
+        .filter(cnt__gt=1)
+    )
+
+    for group in dupes:
+        keep_id = group["keep_id"]
+        dup_ids = list(
+            Location.objects.filter(
+                address_id=group["address_id"],
+                point=group["point"],
+                point_of_interest=group["point_of_interest"],
+            )
+            .exclude(id=keep_id)
+            .values_list("id", flat=True)
+        )
+
+        # Re-point any models that reference a duplicate Location.
+        for model in fk_models:
+            model.objects.filter(location_id__in=dup_ids).update(location_id=keep_id)
+
+        # Delete the duplicate Location rows.
+        Location.objects.filter(id__in=dup_ids).delete()
+
 
 class Migration(migrations.Migration):
 
