@@ -13,7 +13,7 @@ import {
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { runBottomPromptAnimation } from './animations';
 
-const TOOLBAR_HEIGHT = 44;
+const KEYBOARD_OFFSET = 10;
 const DEFAULT_PADDING_H = Spacings.md;
 
 const DEFAULT_SCREEN_RATIO = 0.4;
@@ -122,7 +122,7 @@ export function BottomPrompt(props: TProps) {
       <View style={styles.fullscreenContainer} pointerEvents="box-none">
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? TOOLBAR_HEIGHT : 0}
+          keyboardVerticalOffset={KEYBOARD_OFFSET}
         >
           <Animated.View
             pointerEvents="box-none"
