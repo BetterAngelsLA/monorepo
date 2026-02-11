@@ -28,6 +28,10 @@ export async function reverseGeocode(
     `/proxy/maps/api/geocode/json?${params.toString()}`
   );
 
+  if (!response.ok) {
+    throw new Error(`Reverse geocode request failed: ${response.status}`);
+  }
+
   const data = await response.json();
   const result = data.results?.[0];
   const formattedAddress =

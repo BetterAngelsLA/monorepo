@@ -8,6 +8,7 @@ from common.utils import canonicalise_filename, get_unique_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
+from django.contrib.gis.geos import Point
 from django.db import models
 from django.db.models import ForeignKey
 from django.db.models.functions import Lower
@@ -137,6 +138,10 @@ class Address(BaseModel):
 
 
 class Location(BaseModel):
+    # 5 decimal places ≈ 1.1 m — filters mobile GPS jitter while
+    # preserving individual-building precision.
+    GPS_PRECISION = 5
+
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
     point = PointField(geography=True)
     point_of_interest = models.CharField(max_length=255, blank=True, null=True)
@@ -199,6 +204,16 @@ class Location(BaseModel):
         value = " ".join(value.split()).strip()
         return value or None
 
+    @staticmethod
+    def _round_point(point: Point) -> Point:
+        """Round a Point's coordinates to GPS_PRECISION decimal places.
+
+        Eliminates sub-metre GPS jitter so that nearby pin-drops resolve
+        to the same Location row instead of creating duplicates.
+        """
+        p = Location.GPS_PRECISION
+        return Point(round(point.x, p), round(point.y, p), srid=point.srid)
+
     @classmethod
     def get_or_create_address(cls, address_data: Dict[str, Any]) -> "Address":
         """Gets or creates an address and returns it.
@@ -253,10 +268,11 @@ class Location(BaseModel):
 
         address = Location.get_or_create_address(location_data["address"])
         point_of_interest = location_data["point_of_interest"] or cls.get_point_of_interest(location_data["address"])
+        point = cls._round_point(location_data["point"])
 
         location, _ = Location.objects.get_or_create(
             address=address,
-            point=location_data["point"],
+            point=point,
             point_of_interest=point_of_interest,
         )
 

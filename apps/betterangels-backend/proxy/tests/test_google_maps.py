@@ -86,6 +86,35 @@ class GooglePlacesApiNewViewTestCase(TestCase):
 
         self.assertEqual(response.status_code, 405)
 
+    @patch("requests.get")
+    @override_settings(GOOGLE_MAPS_API_KEY="fake_api_key")
+    def test_google_places_api_get_with_field_mask(self, mock_get: Any) -> None:
+        self.client.force_login(self.user)
+        place_id = "places/ChIJN1t_tDeuEmsRUsoyG83frY4"
+        url = reverse("google_places_api", args=[place_id])
+        field_mask = "displayName,formattedAddress"
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"name": place_id}
+        mock_get.return_value = mock_response
+
+        response = self.client.get(url, HTTP_X_GOOG_FIELDMASK=field_mask)
+
+        self.assertEqual(response.status_code, 200)
+        mock_get.assert_called_once()
+        called_headers = mock_get.call_args[1]["headers"]
+        self.assertEqual(called_headers["X-Goog-FieldMask"], field_mask)
+
+    def test_google_places_api_post_invalid_json(self) -> None:
+        self.client.force_login(self.user)
+        url = reverse("google_places_api", args=["places:autocomplete"])
+
+        response = self.client.post(url, data="{", content_type="application/json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"error": "Invalid JSON body"})
+
     def test_google_places_api_requires_authentication(self) -> None:
         url = reverse("google_places_api", args=["places:autocomplete"])
 

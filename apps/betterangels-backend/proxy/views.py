@@ -70,7 +70,7 @@ def google_places_api(request: HttpRequest, path: str) -> HttpResponse:
                 return JsonResponse({"error": "Invalid JSON body"}, status=400)
             response = requests.post(google_places_api_url, json=body, headers=headers)
         elif request.method == "GET":
-            response = requests.get(google_places_api_url, headers=headers)
+            response = requests.get(google_places_api_url, headers=headers, params=request.GET.dict())
         else:
             return JsonResponse({"error": "Only GET and POST requests are supported"}, status=405)
 

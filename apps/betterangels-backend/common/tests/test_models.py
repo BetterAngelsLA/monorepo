@@ -12,7 +12,7 @@ from unittest_parametrize import ParametrizedTestCase, parametrize
 
 class LocationModelTestCase(ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
-        self.point = (-118.2437207, 34.0521723)
+        self.point = (-118.24372, 34.05217)
         self._setup_location()
 
     def _setup_location(self) -> None:
@@ -161,6 +161,43 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         }
         self.assertEqual(parsed, expected)
 
+    def test_parse_address_components_mixed_formats(self) -> None:
+        """parse_address_components should handle a mix of v1 and legacy components."""
+        mixed_components = json.dumps(
+            [
+                {"longText": "106", "shortText": "106", "types": ["street_number"]},
+                {"long_name": "West 1st Street", "short_name": "W 1st St", "types": ["route"]},
+                {"longText": "Los Angeles", "shortText": "Los Angeles", "types": ["locality", "political"]},
+                {"long_name": "California", "short_name": "CA", "types": ["administrative_area_level_1"]},
+                {"longText": "90012", "shortText": "90012", "types": ["postal_code"]},
+            ]
+        )
+        parsed = Location.parse_address_components(mixed_components)
+        self.assertEqual(parsed["street_number"], "106")
+        self.assertEqual(parsed["route"], "West 1st Street")
+        self.assertEqual(parsed["locality"], "Los Angeles")
+        self.assertEqual(parsed["administrative_area_level_1"], "CA")
+        self.assertEqual(parsed["postal_code"], "90012")
+
+    def test_parse_address_components_missing_types(self) -> None:
+        """Components with no 'types' key or empty types should be safely ignored."""
+        components = json.dumps(
+            [
+                {"longText": "106", "shortText": "106", "types": ["street_number"]},
+                {"longText": "West 1st Street", "shortText": "W 1st St"},  # no types key
+                {"longText": "Ghost", "shortText": "Ghost", "types": []},  # empty types
+                {"longText": "Los Angeles", "shortText": "Los Angeles", "types": ["locality"]},
+                {"longText": "CA", "shortText": "CA", "types": ["administrative_area_level_1"]},
+                {"longText": "90012", "shortText": "90012", "types": ["postal_code"]},
+            ]
+        )
+        parsed = Location.parse_address_components(components)
+        self.assertEqual(parsed["street_number"], "106")
+        self.assertIsNone(parsed["route"])  # skipped — no types key
+        self.assertEqual(parsed["locality"], "Los Angeles")
+        self.assertEqual(parsed["administrative_area_level_1"], "CA")
+        self.assertEqual(parsed["postal_code"], "90012")
+
     def test_get_point_of_interest_v1_format(self) -> None:
         """get_point_of_interest should accept v1 format (longText/shortText)."""
         address_data = {
@@ -171,6 +208,90 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
             ),
         }
         self.assertEqual(Location.get_point_of_interest(address_data), "Some Place")
+
+    def test_get_or_create_address_case_insensitive_dedup(self) -> None:
+        """Addresses differing only by case should resolve to the same Address row."""
+        components_lower = json.dumps(
+            [
+                {"long_name": "100", "short_name": "100", "types": ["street_number"]},
+                {"long_name": "Main Street", "short_name": "Main St", "types": ["route"]},
+                {"long_name": "Springfield", "short_name": "Springfield", "types": ["locality"]},
+                {"long_name": "IL", "short_name": "IL", "types": ["administrative_area_level_1"]},
+                {"long_name": "62701", "short_name": "62701", "types": ["postal_code"]},
+            ]
+        )
+        components_upper = json.dumps(
+            [
+                {"long_name": "100", "short_name": "100", "types": ["street_number"]},
+                {"long_name": "MAIN STREET", "short_name": "MAIN ST", "types": ["route"]},
+                {"long_name": "SPRINGFIELD", "short_name": "SPRINGFIELD", "types": ["locality"]},
+                {"long_name": "IL", "short_name": "IL", "types": ["administrative_area_level_1"]},
+                {"long_name": "62701", "short_name": "62701", "types": ["postal_code"]},
+            ]
+        )
+        addr1 = Location.get_or_create_address(
+            {"address_components": components_lower, "formatted_address": "100 Main Street"}
+        )
+        addr2 = Location.get_or_create_address(
+            {"address_components": components_upper, "formatted_address": "100 MAIN STREET"}
+        )
+        self.assertEqual(addr1.pk, addr2.pk)
+
+    def test_get_or_create_address_whitespace_normalization(self) -> None:
+        """Leading, trailing, and extra internal whitespace should not create duplicates."""
+        canonical = json.dumps(
+            [
+                {"long_name": "100", "short_name": "100", "types": ["street_number"]},
+                {"long_name": "Main Street", "short_name": "Main St", "types": ["route"]},
+                {"long_name": "Springfield", "short_name": "Springfield", "types": ["locality"]},
+                {"long_name": "IL", "short_name": "IL", "types": ["administrative_area_level_1"]},
+                {"long_name": "62701", "short_name": "62701", "types": ["postal_code"]},
+            ]
+        )
+        messy = json.dumps(
+            [
+                {"long_name": "100", "short_name": "100", "types": ["street_number"]},
+                {"long_name": "  Main   Street  ", "short_name": "Main St", "types": ["route"]},
+                {"long_name": " Springfield ", "short_name": "Springfield", "types": ["locality"]},
+                {"long_name": " IL ", "short_name": "IL", "types": ["administrative_area_level_1"]},
+                {"long_name": " 62701 ", "short_name": "62701", "types": ["postal_code"]},
+            ]
+        )
+        addr1 = Location.get_or_create_address(
+            {"address_components": canonical, "formatted_address": "100 Main Street"}
+        )
+        addr2 = Location.get_or_create_address({"address_components": messy, "formatted_address": "100 Main Street"})
+        self.assertEqual(addr1.pk, addr2.pk)
+
+    def test_get_or_create_address_formatted_address_variants(self) -> None:
+        """Both formattedAddress (v1) and formatted_address (legacy) persist correctly."""
+        components = json.dumps(
+            [
+                {"long_name": "200", "short_name": "200", "types": ["street_number"]},
+                {"long_name": "Oak Ave", "short_name": "Oak Ave", "types": ["route"]},
+                {"long_name": "Shelbyville", "short_name": "Shelbyville", "types": ["locality"]},
+                {"long_name": "IL", "short_name": "IL", "types": ["administrative_area_level_1"]},
+                {"long_name": "62565", "short_name": "62565", "types": ["postal_code"]},
+            ]
+        )
+        addr_v1 = Location.get_or_create_address(
+            {"address_components": components, "formattedAddress": "200 Oak Ave, Shelbyville, IL"}
+        )
+        self.assertEqual(addr_v1.formatted_address, "200 Oak Ave, Shelbyville, IL")
+
+        components2 = json.dumps(
+            [
+                {"long_name": "300", "short_name": "300", "types": ["street_number"]},
+                {"long_name": "Elm St", "short_name": "Elm St", "types": ["route"]},
+                {"long_name": "Capital City", "short_name": "Capital City", "types": ["locality"]},
+                {"long_name": "IL", "short_name": "IL", "types": ["administrative_area_level_1"]},
+                {"long_name": "62566", "short_name": "62566", "types": ["postal_code"]},
+            ]
+        )
+        addr_legacy = Location.get_or_create_address(
+            {"address_components": components2, "formatted_address": "300 Elm St, Capital City, IL"}
+        )
+        self.assertEqual(addr_legacy.formatted_address, "300 Elm St, Capital City, IL")
 
     @parametrize(
         (
@@ -285,6 +406,34 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         assert location.address
         self.assertEqual(Address.objects.count(), address_count + 1)
         self.assertEqual(location.address.street, expected_street)
+
+    def test_round_point_clamps_gps_jitter(self) -> None:
+        """_round_point should round coordinates to GPS_PRECISION (5) decimal places."""
+        raw = Point(-118.2437207, 34.0521723)
+        rounded = Location._round_point(raw)
+        self.assertEqual(rounded.x, -118.24372)
+        self.assertEqual(rounded.y, 34.05217)
+        self.assertEqual(rounded.srid, raw.srid)
+
+    def test_get_or_create_location_gps_dedup(self) -> None:
+        """Nearby GPS points that round to the same 5dp value should share one Location."""
+        json_address_input, _ = self._get_address_inputs()
+
+        loc1_data = {
+            "address": json_address_input,
+            "point": Point(-118.2437207, 34.0521723),  # rounds to (-118.24372, 34.05217)
+            "point_of_interest": None,
+        }
+        loc2_data = {
+            "address": json_address_input,
+            "point": Point(-118.2437198, 34.0521749),  # same after rounding
+            "point_of_interest": None,
+        }
+
+        loc1 = Location.get_or_create_location(loc1_data)
+        loc2 = Location.get_or_create_location(loc2_data)
+        self.assertEqual(loc1.pk, loc2.pk)
+        self.assertEqual(Location.objects.filter(point=loc1.point).count(), 1)
 
 
 class PhoneNumberTestCase(TestCase):
