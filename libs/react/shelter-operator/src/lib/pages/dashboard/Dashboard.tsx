@@ -1,7 +1,10 @@
 import { useQuery } from '@apollo/client/react';
-import { useMemo, useState } from 'react';
+import { useAtom } from 'jotai';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { filteredSheltersAtom, sheltersAtom } from '../../atoms/shelters';
 import { Shelter, ShelterRow } from '../../components/ShelterRow';
+import ShelterSearchBar from '../../components/ShelterSearchBar';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
@@ -34,14 +37,27 @@ export default function Dashboard() {
   }, [data?.adminShelters?.results]);
 
   const [page, setPage] = useState(1);
+  const [, setAllShelters] = useAtom(sheltersAtom);
+  const [filteredShelters] = useAtom(filteredSheltersAtom);
 
-  const totalPages = Math.max(1, Math.ceil(backendShelters.length / PAGE_SIZE));
+  // Update global shelters atom when data loads
+  useEffect(() => {
+    if (backendShelters.length > 0) {
+      setAllShelters(backendShelters);
+    }
+  }, [backendShelters, setAllShelters]);
 
+  if (error) console.error('[Dashboard GraphQL error]', error);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredShelters.length / PAGE_SIZE)
+  );
   const paginatedShelters = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     const end = start + PAGE_SIZE;
-    return backendShelters.slice(start, end);
-  }, [page, backendShelters]);
+    return filteredShelters.slice(start, end);
+  }, [page, filteredShelters]);
 
   return (
     <div className="flex flex-col p-8 w-full">
@@ -52,6 +68,22 @@ export default function Dashboard() {
             Back
           </button>
         </Link>
+      </div>
+
+      {/* Search bar */}
+      <ShelterSearchBar />
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '16px',
+          fontSize: '14px',
+          color: '#4b5563',
+        }}
+      >
+        {filteredShelters.length} Results
       </div>
 
       {/* TABLE */}
