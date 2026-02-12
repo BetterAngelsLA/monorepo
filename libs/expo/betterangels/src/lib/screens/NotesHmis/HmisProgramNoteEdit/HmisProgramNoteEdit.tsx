@@ -16,6 +16,11 @@ import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/ex
 import { applyManualFormErrors } from '../../../errors';
 import { normalizeService } from '../../../helpers';
 import { useSnackbar } from '../../../hooks';
+import { InteractionListHmisDocument } from '../../../ui-components/InteractionListHmis/__generated__/interactionListHmis.generated';
+import {
+  DEFAULT_PAGINATION_LIMIT,
+  DEFAULT_QUERY_ORDER,
+} from '../../../ui-components/InteractionListHmis/constants';
 import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import {
   CreateHmisServiceRequestDocument,
@@ -47,8 +52,7 @@ type TProps = {
 };
 
 export function HmisProgramNoteEdit(props: TProps) {
-  const { id, clientId } = props;
-
+  const { id, clientId, arrivedFrom } = props;
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
@@ -56,7 +60,18 @@ export function HmisProgramNoteEdit(props: TProps) {
   const [updateHmisNoteLocation] = useMutation(UpdateHmisNoteLocationDocument);
   const [deleteService] = useMutation(RemoveHmisNoteServiceRequestDocument);
   const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);
-  const [deleteHmisNote] = useMutation(DeleteHmisNoteDocument);
+  const [deleteHmisNote] = useMutation(DeleteHmisNoteDocument, {
+    refetchQueries: [
+      {
+        query: InteractionListHmisDocument,
+        variables: {
+          filters: { hmisClientProfile: clientId },
+          pagination: { offset: 0, limit: DEFAULT_PAGINATION_LIMIT },
+          ordering: DEFAULT_QUERY_ORDER,
+        },
+      },
+    ],
+  });
   const { applyTasks } = useApplyTasks();
 
   async function deleteHmisNoteFunction() {
@@ -66,7 +81,7 @@ export function HmisProgramNoteEdit(props: TProps) {
           id,
         },
       });
-      router.replace(
+      router.dismissTo(
         `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
       );
     } catch (err) {
