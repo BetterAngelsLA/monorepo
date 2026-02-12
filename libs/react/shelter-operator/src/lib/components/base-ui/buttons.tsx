@@ -8,6 +8,12 @@ interface IButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     | 'smalllight'
     | 'smallmedium'
     | 'smalldark'
+    | 'trashlight'
+    | 'trashmedium'
+    | 'trashdark'
+    | 'editlight'
+    | 'editmedium'
+    | 'editdark'
     | 'rightarrow';
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
@@ -24,14 +30,28 @@ export function Button(props: IButtonProps) {
     variant === 'smallmedium' ||
     variant === 'smalldark';
 
+  const isEdit =
+    variant === 'editlight' ||
+    variant === 'editmedium' ||
+    variant === 'editdark';
+
+  const isTrash =
+    variant === 'trashlight' ||
+    variant === 'trashmedium' ||
+    variant === 'trashdark';
+
   const isArrowRight = variant === 'rightarrow';
+
+  const shouldHaveDefaultIcons = !isArrowRight && !isEdit && !isTrash;
 
   const leftIcon =
     props.leftIcon ??
-    (!isArrowRight && (isSmall ? <Plus size={24} /> : <BookCheck size={29} />));
+    (shouldHaveDefaultIcons &&
+      (isSmall ? <Plus size={24} /> : <BookCheck size={29} />));
   const rightIcon =
     props.rightIcon ??
-    (!isArrowRight && (isSmall ? <Plus size={24} /> : <BookCheck size={29} />));
+    (shouldHaveDefaultIcons &&
+      (isSmall ? <Plus size={24} /> : <BookCheck size={29} />));
 
   const colours: Record<
     | 'floating-light'
@@ -39,6 +59,12 @@ export function Button(props: IButtonProps) {
     | 'smalllight'
     | 'smallmedium'
     | 'smalldark'
+    | 'trashlight'
+    | 'trashmedium'
+    | 'trashdark'
+    | 'editlight'
+    | 'editmedium'
+    | 'editdark'
     | 'rightarrow',
     string
   > = {
@@ -47,6 +73,12 @@ export function Button(props: IButtonProps) {
     smalllight: '#FFFFFF',
     smallmedium: '#F4F6FD',
     smalldark: '#D3D9E3',
+    editlight: '#FFFFFF',
+    editmedium: '#F4F6FD',
+    editdark: '#D3D9E3',
+    trashlight: '#FFFFFF',
+    trashmedium: '#FFECE8',
+    trashdark: '#FFC5BF',
     rightarrow: '#FFFF00',
   };
 
@@ -54,12 +86,15 @@ export function Button(props: IButtonProps) {
 
   const buttonCss = [
     className,
-    'font-sans font-normal focus:outline-none transition-all inline-flex items-center rounded-full h-fit whitespace-nowrap',
+    'font-sans font-normal focus:outline-none transition-all inline-flex items-center h-fit whitespace-nowrap',
     textColor,
-    isArrowRight ? 'justify-center' : 'justify-between',
-    isFloating ? 'shadow-lg gap-2 w-fit' : '',
-    isSmall ? 'gap-2 w-fit' : '',
-    isArrowRight ? '' : 'w-fit',
+    isArrowRight || isEdit || isTrash
+      ? 'justify-center'
+      : 'justify-between w-fit',
+    isFloating ? 'rounded-full shadow-lg gap-2 w-fit' : '',
+    isSmall ? 'rounded-full gap-2 w-fit' : '',
+    isArrowRight ? 'rounded-full' : '',
+    isEdit || isTrash ? 'rounded-lg' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -84,13 +119,36 @@ export function Button(props: IButtonProps) {
         height: '44px',
         padding: '0',
       }
+    : isEdit || isTrash
+    ? {
+        backgroundColor: colours[variant],
+        width: '40px',
+        height: '40px',
+        padding: '0',
+      }
     : undefined;
 
   return (
     <button className={buttonCss} style={style} {...rest}>
-      {leftIcon && <span>{leftIcon}</span>}
-      <span>{children}</span>
-      {rightIcon && <span>{rightIcon}</span>}
+      {leftIcon && (
+        <span
+          className={
+            isEdit || isTrash ? 'flex items-center justify-center' : ''
+          }
+        >
+          {leftIcon}
+        </span>
+      )}
+      {children && <span>{children}</span>}
+      {rightIcon && (
+        <span
+          className={
+            isEdit || isTrash ? 'flex items-center justify-center' : ''
+          }
+        >
+          {rightIcon}
+        </span>
+      )}
     </button>
   );
 }

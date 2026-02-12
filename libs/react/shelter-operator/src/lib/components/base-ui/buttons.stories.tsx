@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { ArrowRight, Plus } from 'lucide-react';
+import { ArrowRight, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Button } from './buttons';
 
 const meta: Meta<typeof Button> = {
@@ -10,6 +10,8 @@ export default meta;
 
 type Story = StoryObj<typeof Button>;
 
+// ARROW
+
 export const RightArrow: Story = {
   render: () => (
     <Button
@@ -19,6 +21,91 @@ export const RightArrow: Story = {
     />
   ),
 };
+
+// EDIT ICONS
+
+export const EditLight: Story = {
+  render: () => (
+    <Button
+      variant="editlight"
+      leftIcon={<Pencil size={22} stroke="black" />}
+      rightIcon={null}
+    />
+  ),
+};
+
+export const EditGhost: Story = {
+  render: () => (
+    <Button
+      variant="editlight"
+      leftIcon={<Pencil size={22} stroke="#747A82" />}
+      rightIcon={null}
+    />
+  ),
+};
+
+export const EditMedium: Story = {
+  render: () => (
+    <Button
+      variant="editmedium"
+      leftIcon={<Pencil size={22} stroke="black" />}
+      rightIcon={null}
+    />
+  ),
+};
+
+export const EditDark: Story = {
+  render: () => (
+    <Button
+      variant="editdark"
+      leftIcon={<Pencil size={22} stroke="black" />}
+      rightIcon={null}
+    />
+  ),
+};
+
+// TRASH BUTTONS
+export const TrashLight: Story = {
+  render: () => (
+    <Button
+      variant="trashlight"
+      leftIcon={<Trash2 size={22} stroke="#CB0808" />}
+      rightIcon={null}
+    />
+  ),
+};
+
+export const TrashGhost: Story = {
+  render: () => (
+    <Button
+      variant="trashlight"
+      leftIcon={<Trash2 size={22} stroke="#747A82" />}
+      rightIcon={null}
+    />
+  ),
+};
+
+export const TrashMedium: Story = {
+  render: () => (
+    <Button
+      variant="trashmedium"
+      leftIcon={<Trash2 size={22} stroke="#CB0808" />}
+      rightIcon={null}
+    />
+  ),
+};
+
+export const TrashDark: Story = {
+  render: () => (
+    <Button
+      variant="trashdark"
+      leftIcon={<Trash2 size={22} stroke="#CB0808" />}
+      rightIcon={null}
+    />
+  ),
+};
+
+// SMALL BUTTONS
 
 export const SmallLight: Story = {
   parameters: {
