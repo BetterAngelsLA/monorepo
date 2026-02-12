@@ -5624,6 +5624,7 @@ __metadata:
     jsonc-eslint-parser: "npm:^2.1.0"
     jwt-decode: "npm:^4.0.0"
     libphonenumber-js: "npm:^1.12.6"
+    lucide-react: "npm:^0.563.0"
     metro: "npm:^0.83.1"
     metro-react-native-babel-transformer: "npm:^0.77.0"
     mime: "npm:^4.1.0"
@@ -20194,6 +20195,15 @@ __metadata:
   dependencies:
     yallist: "npm:^3.0.2"
   checksum: 10/951d2673dcc64a7fb888bf3d13bc2fdf923faca97d89cdb405ba3dfff77e2b26e5798d405e78fcd7094c9e7b8b4dab2ddc5a4f8a11928af24a207b7c738ca3f8
+  languageName: node
+  linkType: hard
+
+"lucide-react@npm:^0.563.0":
+  version: 0.563.0
+  resolution: "lucide-react@npm:0.563.0"
+  peerDependencies:
+    react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10/7d7b95d496f031cf2c6a1281ecc1f8d68a511d4100a14186e888a231d57c0824f8951143a0a45884c727f4d53b46bbc4388d27eac29bfb9030ef081f82ee391e
   languageName: node
   linkType: hard
 
