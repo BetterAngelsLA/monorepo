@@ -1,27 +1,30 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactElement, cloneElement, useState } from 'react';
-import { ButtonProps, View } from 'react-native';
+import type { ButtonProps, GestureResponderEvent } from 'react-native';
+import { View } from 'react-native';
 import BasicModal from '../BasicModal';
 import Button from '../Button';
 import TextBold from '../TextBold';
 import TextButton from '../TextButton';
 import TextRegular from '../TextRegular';
 
-export default function RevertModal({
-  title,
-  body,
-  onRevert,
-  button,
-}: {
+type TProps = {
   title: string;
   body: string;
-  onRevert: () => void;
+  onDiscard: () => void;
   button: ReactElement<ButtonProps>;
-}) {
+};
+
+export default function DiscardModal({
+  title,
+  body,
+  onDiscard,
+  button,
+}: TProps) {
   const [visible, setVisible] = useState(false);
 
   const clonedButton = cloneElement(button, {
-    onPress: (e) => {
+    onPress: (e: GestureResponderEvent) => {
       setVisible(true);
       button.props.onPress?.(e);
     },
@@ -32,7 +35,9 @@ export default function RevertModal({
       {clonedButton}
       <BasicModal visible={visible} onClose={() => setVisible(false)}>
         <TextBold size="lg">{title}</TextBold>
-        <TextRegular mt="sm">{body}</TextRegular>
+        <TextRegular size="sm" style={{ marginTop: Spacings.sm }}>
+          {body}
+        </TextRegular>
         <View
           style={{
             flexDirection: 'row',
@@ -45,24 +50,24 @@ export default function RevertModal({
             style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
           >
             <TextButton
+              title="Keep Editing"
+              accessibilityHint="dismiss the dialog and continue editing"
+              color={Colors.PRIMARY}
               fontSize="sm"
               onPress={() => setVisible(false)}
-              color={Colors.PRIMARY}
-              accessibilityHint="continue to work on the interaction"
-              title="Cancel"
             />
           </View>
           <View style={{ flex: 1, marginLeft: Spacings.xs }}>
             <Button
+              title="Discard"
+              accessibilityHint="discard unsaved changes"
+              variant="primary"
               size="full"
               fontSize="sm"
-              accessibilityHint="reverts interaction to earlier state"
-              onPress={async () => {
-                onRevert();
+              onPress={() => {
+                onDiscard();
                 setVisible(false);
               }}
-              variant="primary"
-              title="Discard"
             />
           </View>
         </View>

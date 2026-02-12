@@ -12,9 +12,8 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { debounce } from 'lodash';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UpdateNoteDocument, ViewNoteDocument } from '../../apollo';
@@ -29,38 +28,36 @@ export default function PublicNote({ noteId }: { noteId: string }) {
   const [autoNote, setAutoNote] = useState<string>('');
   const [publicNote, setPublicNote] = useState<string>('');
   const [userChange, setUserChange] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
 
-  const updateNoteFunction = useRef(
-    debounce(async (value: string) => {
-      if (!noteId) return;
-
-      try {
-        const { data, error } = await updateNote({
-          variables: {
-            data: {
-              id: noteId,
-              publicDetails: value,
-            },
-          },
-        });
-
-        if (!data) {
-          console.error(`Failed to update interaction: ${error}`);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }, 500)
-  ).current;
-
   const onChange = (value: string) => {
     setUserChange(true);
     setPublicNote(value);
-    updateNoteFunction(value);
+  };
+
+  const handleSaveNote = async () => {
+    if (!noteId) return;
+
+    setIsSaving(true);
+    try {
+      await updateNote({
+        variables: {
+          data: {
+            id: noteId,
+            publicDetails: publicNote,
+          },
+        },
+      });
+      router.back();
+    } catch (err) {
+      console.error('Failed to save note:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   useEffect(() => {
@@ -149,12 +146,13 @@ export default function PublicNote({ noteId }: { noteId: string }) {
 
         <View style={{ flex: 1 }}>
           <Button
-            onPress={() => router.back()}
+            onPress={handleSaveNote}
             height="xl"
-            accessibilityHint="clears HMIS input"
+            accessibilityHint="saves the note"
             size="full"
             variant="primary"
             title="Save Note"
+            disabled={isSaving}
           />
         </View>
       </View>
