@@ -1,13 +1,10 @@
-import { useMutation } from '@apollo/client/react';
-import { UpdateNoteDocument } from '@monorepo/expo/betterangels';
 import {
   BasicInput,
   FieldCard,
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { debounce } from 'lodash';
-import { RefObject, useRef, useState } from 'react';
+import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
 
 interface IPurposeProps {
@@ -15,41 +12,13 @@ interface IPurposeProps {
   setExpanded: (expanded: string | undefined | null) => void;
   scrollRef: RefObject<ScrollView | null>;
   purpose: string | null | undefined;
-  noteId: string | undefined;
+  onPurposeChange: (value: string | null | undefined) => void;
 }
 
 export default function Purpose(props: IPurposeProps) {
-  const { expanded, setExpanded, scrollRef, purpose, noteId } = props;
-
-  const [updateNote] = useMutation(UpdateNoteDocument);
-
-  const [value, setValue] = useState<string | null | undefined>(purpose);
+  const { expanded, setExpanded, scrollRef, purpose, onPurposeChange } = props;
 
   const isPurpose = expanded === 'Purpose';
-
-  const updateNoteFunction = useRef(
-    debounce(async (value: string | null | undefined) => {
-      if (!noteId) return;
-
-      try {
-        await updateNote({
-          variables: {
-            data: {
-              id: noteId,
-              purpose: value,
-            },
-          },
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    }, 500)
-  ).current;
-
-  const onChange = (value: string | null | undefined) => {
-    setValue(value);
-    updateNoteFunction(value);
-  };
 
   return (
     <FieldCard
@@ -59,7 +28,7 @@ export default function Purpose(props: IPurposeProps) {
       setExpanded={() => setExpanded(isPurpose ? null : 'Purpose')}
       title="Purpose"
       actionName={
-        !value && !isPurpose ? (
+        !purpose && !isPurpose ? (
           <TextMedium size="sm">Add Purpose</TextMedium>
         ) : null
       }
@@ -73,12 +42,12 @@ export default function Purpose(props: IPurposeProps) {
         <BasicInput
           placeholder="Enter purpose"
           maxLength={100}
-          onDelete={() => onChange(null)}
-          value={value || undefined}
-          onChangeText={(e) => onChange(e)}
+          onDelete={() => onPurposeChange(null)}
+          value={purpose || undefined}
+          onChangeText={(e) => onPurposeChange(e)}
         />
       </View>
-      {value && !isPurpose && <TextRegular mb="md">{value}</TextRegular>}
+      {purpose && !isPurpose && <TextRegular mb="md">{purpose}</TextRegular>}
     </FieldCard>
   );
 }

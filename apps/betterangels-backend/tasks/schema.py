@@ -2,24 +2,26 @@ from typing import Optional, cast
 
 import strawberry
 import strawberry_django
+from accounts.models import User
 from accounts.utils import get_user_permission_group
+from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.core.exceptions import PermissionDenied
-from django.db import transaction
 from django.db.models import QuerySet
-from guardian.shortcuts import assign_perm
+from hmis.models import HmisClientProfile, HmisNote
+from notes.models import Note
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
-from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 from tasks.models import Task
 from tasks.permissions import TaskPermissions
+from tasks.services import task_create, task_delete, task_update
 
 from .types import CreateTaskInput, TaskOrder, TaskType, UpdateTaskInput
 
@@ -45,29 +47,40 @@ class Query:
 class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(TaskPermissions.ADD)])
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
-        with transaction.atomic():
-            current_user = get_current_user(info)
-            permission_group = get_user_permission_group(current_user)
+        current_user = cast(User, get_current_user(info))
+        permission_group = get_user_permission_group(current_user)
 
-            task_data = asdict(data)
-            task = resolvers.create(
-                info,
-                Task,
-                {
-                    **task_data,
-                    "created_by": current_user,
-                    "organization": permission_group.organization,
-                },
-            )
+        # Filter out UNSET values to avoid passing them to Django ORM
+        task_data = {k: v for k, v in asdict(data).items() if v is not strawberry.UNSET}
 
-            permissions = [
-                TaskPermissions.CHANGE,
-                TaskPermissions.DELETE,
-            ]
-            for perm in permissions:
-                assign_perm(perm, permission_group.group, task)
+        # Resolve FK references
+        note = None
+        if note_id := task_data.pop("note", None):
+            note = Note.objects.get(pk=str(note_id))
 
-            return cast(TaskType, task)
+        hmis_note = None
+        if hmis_note_id := task_data.pop("hmis_note", None):
+            hmis_note = HmisNote.objects.get(pk=str(hmis_note_id))
+
+        client_profile = None
+        if client_profile_id := task_data.pop("client_profile", None):
+            client_profile = ClientProfile.objects.get(pk=str(client_profile_id))
+
+        hmis_client_profile = None
+        if hmis_client_profile_id := task_data.pop("hmis_client_profile", None):
+            hmis_client_profile = HmisClientProfile.objects.get(pk=str(hmis_client_profile_id))
+
+        tasks = task_create(
+            user=current_user,
+            permission_group=permission_group,
+            data=[task_data],
+            note=note,
+            hmis_note=hmis_note,
+            client_profile=client_profile,
+            hmis_client_profile=hmis_client_profile,
+        )
+
+        return cast(TaskType, tasks[0])
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
@@ -75,9 +88,10 @@ class Mutation:
     )
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         qs: QuerySet[Task] = info.context.qs
+        clean = {k: v for k, v in asdict(data).items() if v is not strawberry.UNSET}
 
         task = qs.get(pk=data.id)
-        task = resolvers.update(info, task, asdict(data))
+        task = task_update(task=task, data=clean)
 
         return cast(TaskType, task)
 
@@ -94,7 +108,6 @@ class Mutation:
         except Task.DoesNotExist:
             raise PermissionDenied("You do not have permission to delete this task.")
 
-        task_id = task.id
-        task.delete()
+        deleted_id = task_delete(task=task)
 
-        return DeletedObjectType(id=task_id)
+        return DeletedObjectType(id=deleted_id)

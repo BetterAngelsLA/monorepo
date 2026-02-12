@@ -40,57 +40,6 @@ export const UPDATE_NOTE = gql`
     }
   }
 `;
-export const REVERT_NOTE = gql`
-  mutation RevertNote($data: RevertNoteInput!) {
-    revertNote(data: $data) {
-      ... on NoteType {
-        id
-        purpose
-        location {
-          address {
-            id
-            street
-            city
-            state
-            zipCode
-          }
-          point
-          pointOfInterest
-        }
-        providedServices {
-          id
-          service {
-            id
-            label
-            category {
-              id
-            }
-          }
-        }
-        requestedServices {
-          id
-          service {
-            id
-            label
-            category {
-              id
-            }
-          }
-        }
-        publicDetails
-        isSubmitted
-        clientProfile {
-          id
-        }
-        createdBy {
-          id
-        }
-        interactedAt
-        createdAt
-      }
-    }
-  }
-`;
 export const DELETE_NOTE = gql`
   mutation DeleteNote($data: DeleteDjangoObjectInput!) {
     deleteNote(data: $data) {

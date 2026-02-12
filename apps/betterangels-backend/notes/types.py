@@ -25,7 +25,7 @@ from django.db.models import (
     Value,
     When,
 )
-from notes.enums import ServiceRequestTypeEnum
+from notes.enums import MoodEnum, ServiceRequestTypeEnum
 from notes.permissions import NotePermissions, PrivateDetailsPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.utils.query import filter_for_user
@@ -259,6 +259,51 @@ class UpdateNoteLocationInput:
 class RevertNoteInput:
     id: ID
     revert_before_timestamp: datetime
+
+
+# --- Nested inputs for create_full_note ---
+
+
+@strawberry.input
+class CreateNoteServiceInput:
+    """A service to attach to a note (either by existing service ID or custom 'other' label)."""
+
+    service_id: Optional[ID] = None
+    service_other: Optional[str] = None
+
+
+@strawberry.input
+class CreateNoteTaskInput:
+    """A task to create and attach to the note."""
+
+    summary: str
+    description: Optional[str] = None
+    status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)
+    team: Optional[SelahTeamEnum] = None
+
+
+@strawberry.input
+class CreateFullNoteInput:
+    """
+    All-in-one input for creating a note with all nested relations atomically.
+    Used for deferred note creation (no server-side note until first submit/draft).
+    """
+
+    # Core note fields
+    purpose: Optional[str] = None
+    team: Optional[SelahTeamEnum] = None
+    public_details: Optional[str] = ""
+    private_details: Optional[str] = ""
+    client_profile: Optional[ID] = None
+    is_submitted: Optional[bool] = False
+    interacted_at: Optional[datetime] = None
+
+    # Nested relations
+    location: Optional[LocationInput] = None
+    moods: Optional[List[MoodEnum]] = None
+    provided_services: Optional[List[CreateNoteServiceInput]] = None
+    requested_services: Optional[List[CreateNoteServiceInput]] = None
+    tasks: Optional[List[CreateNoteTaskInput]] = None
 
 
 @strawberry_django.filter_type(User)

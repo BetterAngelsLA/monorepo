@@ -4,7 +4,7 @@ import {
   MainScrollContainer,
   NotesDocument,
   Ordering,
-  RevertNoteDocument,
+  SelahTeamEnum,
   UpdateNoteDocument,
   ViewNoteDocument,
   useSnackbar,
@@ -13,13 +13,12 @@ import {
 import { Colors } from '@monorepo/expo/shared/static';
 import {
   BottomActions,
-  Button,
   DeleteModal,
-  RevertModal,
+  DiscardModal,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import DateAndTime from './DateAndTime';
 import Location from './Location';
@@ -30,53 +29,14 @@ import RequestedServices from './RequestedServices';
 import Tasks from './Tasks';
 import Team from './Team';
 
-const renderModal = (
-  isRevert: string | undefined,
-  onRevert: () => void,
-  onDelete: () => void,
-  buttonTitle: string
-) => {
-  if (isRevert) {
-    return (
-      <RevertModal
-        body="All changes you made since the last save will be discarded"
-        title="Discard changes?"
-        onRevert={onRevert}
-        button={
-          <TextButton
-            fontSize="sm"
-            accessibilityHint="discards changes and reverts interaction to previous state"
-            title={buttonTitle}
-          />
-        }
-      />
-    );
-  } else {
-    return (
-      <DeleteModal
-        body="All data associated with this interaction will be deleted"
-        title="Delete interaction?"
-        onDelete={onDelete}
-        button={
-          <TextButton
-            fontSize="sm"
-            accessibilityHint="deletes interaction"
-            title={buttonTitle}
-          />
-        }
-      />
-    );
-  }
-};
-
 export default function AddNote() {
   const router = useRouter();
   const { user } = useUser();
   const { showSnackbar } = useSnackbar();
-  const { noteId, revertBeforeTimestamp, arrivedFrom } = useLocalSearchParams<{
+  const { noteId, arrivedFrom, isEditing } = useLocalSearchParams<{
     noteId: string;
-    revertBeforeTimestamp: string;
     arrivedFrom: string;
+    isEditing: string;
   }>();
 
   if (!noteId) {
@@ -105,7 +65,6 @@ export default function AddNote() {
       },
     ],
   });
-  const [revertNote] = useMutation(RevertNoteDocument);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [errors, setErrors] = useState({
     purpose: false,
@@ -117,21 +76,43 @@ export default function AddNote() {
   const scrollRef = useRef<ScrollView>(null);
   const navigation = useNavigation();
 
+  // Local form state - no longer auto-saved
+  const [formPurpose, setFormPurpose] = useState<string | null | undefined>(
+    undefined
+  );
+  const [formInteractedAt, setFormInteractedAt] = useState<
+    string | null | undefined
+  >(undefined);
+  const [formTeam, setFormTeam] = useState<SelahTeamEnum | null | undefined>(
+    undefined
+  );
+  const formInitialized = useRef(false);
+
+  // Initialize local form state from server data
+  useEffect(() => {
+    if (data?.note && !formInitialized.current) {
+      formInitialized.current = true;
+      setFormPurpose(data.note.purpose);
+      setFormInteractedAt(data.note.interactedAt);
+      setFormTeam(data.note.team);
+    }
+  }, [data]);
+
   useLayoutEffect(() => {
     navigation.setOptions({
-      purpose: revertBeforeTimestamp ? `Edit Interaction` : 'Add Interaction',
+      purpose: isEditing ? `Edit Interaction` : 'Add Interaction',
       headerLeft: () =>
-        revertBeforeTimestamp ? (
-          <RevertModal
-            body="All changes you made since the last save will be discarded"
+        isEditing ? (
+          <DiscardModal
             title="Discard changes?"
-            onRevert={revertNoteFunction}
+            body="Any unsaved changes to this interaction will be lost."
+            onDiscard={() => router.back()}
             button={
               <TextButton
                 regular
                 color={Colors.WHITE}
                 fontSize="md"
-                accessibilityHint="discards changes and reverts interaction to previous state"
+                accessibilityHint="discards changes and goes back"
                 title="Back"
               />
             }
@@ -153,7 +134,7 @@ export default function AddNote() {
           />
         ),
     });
-  }, [navigation, revertBeforeTimestamp]);
+  }, [navigation, isEditing]);
 
   async function deleteNoteFunction() {
     try {
@@ -170,22 +151,6 @@ export default function AddNote() {
         message: 'Failed to delete interaction.',
         type: 'error',
       });
-    }
-  }
-
-  async function revertNoteFunction() {
-    try {
-      await revertNote({
-        variables: {
-          data: {
-            id: noteId || '',
-            revertBeforeTimestamp: revertBeforeTimestamp || '',
-          },
-        },
-      });
-      router.back();
-    } catch (err) {
-      console.error(err);
     }
   }
 
@@ -221,6 +186,9 @@ export default function AddNote() {
         variables: {
           data: {
             id: noteId || '',
+            purpose: formPurpose,
+            interactedAt: formInteractedAt,
+            team: formTeam,
             isSubmitted: true,
           },
         },
@@ -244,6 +212,33 @@ export default function AddNote() {
     }
   }
 
+  async function saveAsDraft() {
+    try {
+      const result = await updateNote({
+        variables: {
+          data: {
+            id: noteId || '',
+            purpose: formPurpose,
+            interactedAt: formInteractedAt,
+            team: formTeam,
+          },
+        },
+      });
+      if (!result.data) {
+        throw new Error(`Failed to save draft: ${updateError}`);
+      }
+
+      router.navigate(getClientProfileUrl(data?.note.clientProfile?.id));
+    } catch (err) {
+      console.error(err);
+
+      showSnackbar({
+        message: 'Failed to save draft.',
+        type: 'error',
+      });
+    }
+  }
+
   if (!data || isLoading) {
     return null;
   }
@@ -259,9 +254,21 @@ export default function AddNote() {
         bg={Colors.NEUTRAL_EXTRA_LIGHT}
         pt="sm"
       >
-        <Purpose purpose={data.note.purpose} {...props} />
-        <DateAndTime interactedAt={data.note.interactedAt} {...props} />
-        <Team team={data.note.team} {...props} />
+        <Purpose
+          purpose={formPurpose}
+          onPurposeChange={setFormPurpose}
+          expanded={expanded}
+          setExpanded={setExpanded}
+          scrollRef={scrollRef}
+        />
+        <DateAndTime
+          interactedAt={formInteractedAt}
+          onInteractedAtChange={setFormInteractedAt}
+          expanded={expanded}
+          setExpanded={setExpanded}
+          scrollRef={scrollRef}
+        />
+        <Team team={formTeam} onTeamChange={setFormTeam} />
         <Location
           address={data.note.location?.address}
           point={data.note.location?.point}
@@ -281,42 +288,45 @@ export default function AddNote() {
           setIsPublicNoteEdited={setIsPublicNoteEdited}
           {...props}
         />
-        {revertBeforeTimestamp && (
-          <DeleteModal
-            body="All data associated with this interaction will be deleted"
-            title="Delete interaction?"
-            onDelete={deleteNoteFunction}
-            button={
-              <Button
-                accessibilityHint="deletes interaction"
-                title="Delete Interaction"
-                variant="negative"
-                size="full"
-                mt="xs"
-              />
-            }
-          />
-        )}
       </MainScrollContainer>
       <BottomActions
-        cancel={renderModal(
-          revertBeforeTimestamp,
-          revertNoteFunction,
-          deleteNoteFunction,
-          'Cancel'
-        )}
+        cancel={
+          isEditing ? (
+            <DiscardModal
+              title="Discard changes?"
+              body="Any unsaved changes to this interaction will be lost."
+              onDiscard={() => router.back()}
+              button={
+                <TextButton
+                  fontSize="sm"
+                  accessibilityHint="discards changes and goes back"
+                  title="Cancel"
+                />
+              }
+            />
+          ) : (
+            <DeleteModal
+              body="All data associated with this interaction will be deleted"
+              title="Delete interaction?"
+              onDelete={deleteNoteFunction}
+              button={
+                <TextButton
+                  fontSize="sm"
+                  accessibilityHint="deletes interaction"
+                  title="Cancel"
+                />
+              }
+            />
+          )
+        }
         optionalAction={
           !data.note.isSubmitted && (
             <TextButton
               mr="sm"
               fontSize="sm"
-              onPress={() =>
-                router.navigate(
-                  getClientProfileUrl(data?.note.clientProfile?.id)
-                )
-              }
-              accessibilityHint="saves the interaction for later"
-              title="Save for later"
+              onPress={saveAsDraft}
+              accessibilityHint="saves the interaction as a draft"
+              title="Save as Draft"
             />
           )
         }

@@ -29,6 +29,7 @@ export {
 export { default as DatePicker } from './DatePicker';
 export { default as DeleteModal } from './DeleteModal';
 export { default as DirectionsPopup } from './DirectionsPopup';
+export { default as DiscardModal } from './DiscardModal';
 export { default as Divider } from './Divider';
 export { default as EditButton } from './EditButton';
 export { default as EmailBtn } from './EmailBtn';
@@ -72,7 +73,6 @@ export {
   TPreferredCommunication,
 } from './PreferrredCommunicationIcon';
 export { default as Radio } from './Radio';
-export { default as RevertModal } from './RevertModal';
 export { default as SearchableDropdown } from './SearchableDropdown';
 export * from './SearchBar';
 export * from './SearchListBar';
