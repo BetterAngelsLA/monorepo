@@ -45,11 +45,16 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col p-8 w-full">
-      {/* Back button */}
-      <div className="mb-6">
+      {/* Header with Back and Add Shelter buttons */}
+      <div className="mb-6 flex items-center justify-between">
         <Link to="/">
           <button className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm cursor-pointer hover:bg-gray-50">
             Back
+          </button>
+        </Link>
+        <Link to="/operator/dashboard/create">
+          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm cursor-pointer hover:bg-blue-700">
+            Add Shelter
           </button>
         </Link>
       </div>
