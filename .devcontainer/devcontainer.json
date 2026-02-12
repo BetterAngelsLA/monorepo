@@ -49,8 +49,7 @@
         "monosans.djlint",
         "matangover.mypy",
         "eamodio.gitlens",
-        "GraphQL.vscode-graphql",
-        "ms-vsliveshare.vsliveshare"
+        "GraphQL.vscode-graphql"
       ]
     }
   },
