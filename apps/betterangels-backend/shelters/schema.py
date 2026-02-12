@@ -53,7 +53,11 @@ from shelters.models import (
     ShelterProgram,
 )
 from shelters.models import ShelterType as ShelterKind
-from shelters.models import SpecialSituationRestriction, Storage, TrainingService
+from shelters.models import (
+    SpecialSituationRestriction,
+    Storage,
+    TrainingService,
+)
 from shelters.permissions import ShelterPermissions
 from shelters.types import ShelterOrder, ShelterType
 from strawberry import ID, UNSET

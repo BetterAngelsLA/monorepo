@@ -40,9 +40,7 @@ export function CheckboxGroup<Choice extends string = string>({
       <div
         className={OPTION_LIST_CLASS}
         role="group"
-        aria-invalid={error ? 'true' : undefined}
         aria-describedby={messageId}
-        aria-required={required ? 'true' : undefined}
       >
         {options.map(option => {
           const checked = values.includes(option.value);

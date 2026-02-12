@@ -508,6 +508,65 @@ export type CreateServiceRequestInput = {
 
 export type CreateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
+export type CreateShelterInput = {
+  accessibility: Array<AccessibilityChoices>;
+  addNotesShelterDetails?: InputMaybe<Scalars['String']['input']>;
+  addNotesSleepingDetails?: InputMaybe<Scalars['String']['input']>;
+  bedFees?: InputMaybe<Scalars['String']['input']>;
+  cities: Array<Scalars['String']['input']>;
+  cityCouncilDistrict?: InputMaybe<Scalars['Int']['input']>;
+  curfew?: InputMaybe<Scalars['Time']['input']>;
+  demographics: Array<DemographicChoices>;
+  demographicsOther?: InputMaybe<Scalars['String']['input']>;
+  description: Scalars['String']['input'];
+  email?: InputMaybe<Scalars['String']['input']>;
+  emergencySurge?: InputMaybe<Scalars['Boolean']['input']>;
+  entryInfo?: InputMaybe<Scalars['String']['input']>;
+  entryRequirements: Array<EntryRequirementChoices>;
+  exitPolicy: Array<ExitPolicyChoices>;
+  exitPolicyOther?: InputMaybe<Scalars['String']['input']>;
+  funders: Array<FunderChoices>;
+  fundersOther?: InputMaybe<Scalars['String']['input']>;
+  generalServices: Array<GeneralServiceChoices>;
+  healthServices: Array<HealthServiceChoices>;
+  immediateNeeds: Array<ImmediateNeedChoices>;
+  instagram?: InputMaybe<Scalars['String']['input']>;
+  intakeHours?: InputMaybe<Array<TimeRangeInput>>;
+  location?: InputMaybe<ShelterLocationInput>;
+  maxStay?: InputMaybe<Scalars['Int']['input']>;
+  mealServices: Array<MealServiceChoices>;
+  name: Scalars['String']['input'];
+  onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
+  operatingHours?: InputMaybe<Array<TimeRangeInput>>;
+  organization?: InputMaybe<Scalars['ID']['input']>;
+  otherRules?: InputMaybe<Scalars['String']['input']>;
+  otherServices?: InputMaybe<Scalars['String']['input']>;
+  overallRating?: InputMaybe<Scalars['Int']['input']>;
+  parking: Array<ParkingChoices>;
+  pets: Array<PetChoices>;
+  phone?: InputMaybe<Scalars['String']['input']>;
+  programFees?: InputMaybe<Scalars['String']['input']>;
+  referralRequirement: Array<ReferralRequirementChoices>;
+  roomStyles: Array<RoomStyleChoices>;
+  roomStylesOther?: InputMaybe<Scalars['String']['input']>;
+  shelterPrograms: Array<ShelterProgramChoices>;
+  shelterProgramsOther?: InputMaybe<Scalars['String']['input']>;
+  shelterTypes: Array<ShelterChoices>;
+  shelterTypesOther?: InputMaybe<Scalars['String']['input']>;
+  spa: Array<SpaChoices>;
+  specialSituationRestrictions: Array<SpecialSituationRestrictionChoices>;
+  status?: InputMaybe<StatusChoices>;
+  storage: Array<StorageChoices>;
+  subjectiveReview?: InputMaybe<Scalars['String']['input']>;
+  supervisorialDistrict?: InputMaybe<Scalars['Int']['input']>;
+  totalBeds?: InputMaybe<Scalars['Int']['input']>;
+  trainingServices: Array<TrainingServiceChoices>;
+  visitorsAllowed?: InputMaybe<Scalars['Boolean']['input']>;
+  website?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type CreateShelterPayload = OperationInfo | ShelterType;
+
 export type CreateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type CreateTaskInput = {
@@ -643,6 +702,13 @@ export type EntryRequirementType = {
   __typename?: 'EntryRequirementType';
   name?: Maybe<EntryRequirementChoices>;
 };
+
+export enum ExitPolicyChoices {
+  Mia = 'MIA',
+  Mitigation = 'MITIGATION',
+  Other = 'OTHER',
+  Violence = 'VIOLENCE'
+}
 
 export enum EyeColorEnum {
   Blue = 'BLUE',
@@ -1160,6 +1226,12 @@ export enum MaritalStatusEnum {
   Widowed = 'WIDOWED'
 }
 
+export enum MealServiceChoices {
+  Breakfast = 'BREAKFAST',
+  Dinner = 'DINNER',
+  Lunch = 'LUNCH'
+}
+
 export enum MoodEnum {
   Agitated = 'AGITATED',
   Agreeable = 'AGREEABLE',
@@ -1207,6 +1279,7 @@ export type Mutation = {
   createNoteMood: CreateNoteMoodPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
   createServiceRequest: CreateServiceRequestPayload;
+  createShelter: CreateShelterPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
   createTask: CreateTaskPayload;
   deleteClientContact: DeleteClientContactPayload;
@@ -1325,6 +1398,11 @@ export type MutationCreateNoteServiceRequestArgs = {
 
 export type MutationCreateServiceRequestArgs = {
   data: CreateServiceRequestInput;
+};
+
+
+export type MutationCreateShelterArgs = {
+  input: CreateShelterInput;
 };
 
 
@@ -2058,6 +2136,14 @@ export enum RaceEnum {
   WhiteCaucasian = 'WHITE_CAUCASIAN'
 }
 
+export enum ReferralRequirementChoices {
+  ReferralMatched = 'REFERRAL_MATCHED',
+  ReferralNonmatched = 'REFERRAL_NONMATCHED',
+  SameDayIntake = 'SAME_DAY_INTAKE',
+  SelfReferral = 'SELF_REFERRAL',
+  ServiceProviderSubmission = 'SERVICE_PROVIDER_SUBMISSION'
+}
+
 export enum RelationshipTypeEnum {
   Aunt = 'AUNT',
   Child = 'CHILD',
@@ -2203,6 +2289,12 @@ export type ShelterFilter = {
   mapBounds?: InputMaybe<MapBoundsInput>;
   organization?: InputMaybe<DjangoModelFilterInput>;
   properties?: InputMaybe<ShelterPropertyInput>;
+};
+
+export type ShelterLocationInput = {
+  latitude?: InputMaybe<Scalars['Float']['input']>;
+  longitude?: InputMaybe<Scalars['Float']['input']>;
+  place: Scalars['String']['input'];
 };
 
 export type ShelterLocationType = {
@@ -2470,6 +2562,11 @@ export type TimeRange = {
   __typename?: 'TimeRange';
   end?: Maybe<Scalars['DateTime']['output']>;
   start?: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type TimeRangeInput = {
+  end?: InputMaybe<Scalars['Time']['input']>;
+  start?: InputMaybe<Scalars['Time']['input']>;
 };
 
 export enum TrainingServiceChoices {

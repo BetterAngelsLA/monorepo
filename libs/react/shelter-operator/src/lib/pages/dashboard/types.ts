@@ -2,6 +2,17 @@ import {
   AccessibilityChoices,
   DemographicChoices,
   EntryRequirementChoices,
+  enumDisplayAccessibilityChoices,
+  enumDisplayDemographics,
+  enumDisplayEntryRequirementChoices,
+  enumDisplayFunderChoices,
+  enumDisplayGeneralServiceChoices,
+  enumDisplayParkingChoices,
+  enumDisplayPetChoices,
+  enumDisplayShelterChoices,
+  enumDisplayShelterProgramChoices,
+  enumDisplaySpecialSituationRestrictionChoices,
+  enumDisplayStorageChoices,
   ExitPolicyChoices,
   FunderChoices,
   GeneralServiceChoices,
@@ -19,19 +30,6 @@ import {
   StatusChoices,
   StorageChoices,
   TrainingServiceChoices,
-} from '@monorepo/react/shelter';
-import {
-  enumDisplayAccessibilityChoices,
-  enumDisplayDemographics,
-  enumDisplayEntryRequirementChoices,
-  enumDisplayFunderChoices,
-  enumDisplayGeneralServiceChoices,
-  enumDisplayParkingChoices,
-  enumDisplayPetChoices,
-  enumDisplayShelterChoices,
-  enumDisplayShelterProgramChoices,
-  enumDisplaySpecialSituationRestrictionChoices,
-  enumDisplayStorageChoices,
 } from '@monorepo/react/shelter';
 
 export interface ShelterFormData {
@@ -129,7 +127,10 @@ export type SelectOption<T = string> = {
 
 export type CheckboxOption<T extends string = string> = SelectOption<T>;
 
-const toOptions = <T extends string>(labels: Record<T, string>, lastValues: T[] = []): CheckboxOption<T>[] => {
+const toOptions = <T extends string>(
+  labels: Record<T, string>,
+  lastValues: T[] = []
+): CheckboxOption<T>[] => {
   const entries = Object.entries(labels) as [T, string][];
   const tail = new Set(lastValues);
   const main = entries.filter(([value]) => !tail.has(value));
@@ -142,9 +143,13 @@ const DEMOGRAPHIC_LABELS: Record<DemographicChoices, string> = {
   [DemographicChoices.Other]: 'Other',
 };
 
-const SPECIAL_SITUATION_LABELS: Record<SpecialSituationRestrictionChoices, string> = {
+const SPECIAL_SITUATION_LABELS: Record<
+  SpecialSituationRestrictionChoices,
+  string
+> = {
   ...enumDisplaySpecialSituationRestrictionChoices,
-  [SpecialSituationRestrictionChoices.JusticeSystems]: 'Persons Exiting Justice Systems',
+  [SpecialSituationRestrictionChoices.JusticeSystems]:
+    'Persons Exiting Justice Systems',
 };
 
 const ROOM_STYLE_LABELS: Record<RoomStyleChoices, string> = {
@@ -162,7 +167,8 @@ const ROOM_STYLE_LABELS: Record<RoomStyleChoices, string> = {
 const EXIT_POLICY_LABELS: Record<ExitPolicyChoices, string> = {
   [ExitPolicyChoices.Mia]: 'Exit after 72 hours of being MIA',
   [ExitPolicyChoices.Violence]: 'Exit due to violence to self and others',
-  [ExitPolicyChoices.Mitigation]: '30 Days Mitigation plan to post someone who exits',
+  [ExitPolicyChoices.Mitigation]:
+    '30 Days Mitigation plan to post someone who exits',
   [ExitPolicyChoices.Other]: 'Other',
 };
 
@@ -191,13 +197,15 @@ const MEAL_SERVICES_LABELS: Record<MealServiceChoices, string> = {
   [MealServiceChoices.Dinner]: 'Dinner',
 };
 
-const REFERRAL_REQUIREMENT_LABELS: Record<ReferralRequirementChoices, string> = {
-  [ReferralRequirementChoices.ReferralMatched]: 'Matched Referral',
-  [ReferralRequirementChoices.ReferralNonmatched]: 'Non-Matched Referral',
-  [ReferralRequirementChoices.ServiceProviderSubmission]: 'Service Provider Submission',
-  [ReferralRequirementChoices.SelfReferral]: 'Self Referral Option',
-  [ReferralRequirementChoices.SameDayIntake]: 'Same Day Intake',
-};
+const REFERRAL_REQUIREMENT_LABELS: Record<ReferralRequirementChoices, string> =
+  {
+    [ReferralRequirementChoices.ReferralMatched]: 'Matched Referral',
+    [ReferralRequirementChoices.ReferralNonmatched]: 'Non-Matched Referral',
+    [ReferralRequirementChoices.ServiceProviderSubmission]:
+      'Service Provider Submission',
+    [ReferralRequirementChoices.SelfReferral]: 'Self Referral Option',
+    [ReferralRequirementChoices.SameDayIntake]: 'Same Day Intake',
+  };
 
 const SPA_LABELS: Record<SpaChoices, string> = {
   [SpaChoices.One]: '1 – Antelope Valley',
@@ -217,22 +225,36 @@ const STATUS_LABELS: Record<StatusChoices, string> = {
   [StatusChoices.Inactive]: 'Inactive',
 };
 
-export const DEMOGRAPHICS_OPTIONS = toOptions(DEMOGRAPHIC_LABELS, [DemographicChoices.Other]);
+export const DEMOGRAPHICS_OPTIONS = toOptions(DEMOGRAPHIC_LABELS, [
+  DemographicChoices.Other,
+]);
 export const SPECIAL_SITUATION_OPTIONS = toOptions(SPECIAL_SITUATION_LABELS);
-export const SHELTER_TYPES_OPTIONS = toOptions(enumDisplayShelterChoices, [ShelterChoices.Other]);
-export const ROOM_STYLES_OPTIONS = toOptions(ROOM_STYLE_LABELS, [RoomStyleChoices.Other]);
+export const SHELTER_TYPES_OPTIONS = toOptions(enumDisplayShelterChoices, [
+  ShelterChoices.Other,
+]);
+export const ROOM_STYLES_OPTIONS = toOptions(ROOM_STYLE_LABELS, [
+  RoomStyleChoices.Other,
+]);
 export const ACCESSIBILITY_OPTIONS = toOptions(enumDisplayAccessibilityChoices);
 export const STORAGE_OPTIONS = toOptions(enumDisplayStorageChoices);
 export const PETS_OPTIONS = toOptions(enumDisplayPetChoices);
 export const PARKING_OPTIONS = toOptions(enumDisplayParkingChoices);
-export const EXIT_POLICY_OPTIONS = toOptions(EXIT_POLICY_LABELS, [ExitPolicyChoices.Other]);
+export const EXIT_POLICY_OPTIONS = toOptions(EXIT_POLICY_LABELS, [
+  ExitPolicyChoices.Other,
+]);
 export const IMMEDIATE_NEEDS_OPTIONS = toOptions(IMMEDIATE_NEEDS_LABELS);
-export const GENERAL_SERVICES_OPTIONS = toOptions(enumDisplayGeneralServiceChoices);
+export const GENERAL_SERVICES_OPTIONS = toOptions(
+  enumDisplayGeneralServiceChoices
+);
 export const HEALTH_SERVICES_OPTIONS = toOptions(HEALTH_SERVICES_LABELS);
 export const TRAINING_SERVICES_OPTIONS = toOptions(TRAINING_SERVICES_LABELS);
 export const MEAL_SERVICES_OPTIONS = toOptions(MEAL_SERVICES_LABELS);
-export const ENTRY_REQUIREMENTS_OPTIONS = toOptions(enumDisplayEntryRequirementChoices);
-export const REFERRAL_REQUIREMENT_OPTIONS = toOptions(REFERRAL_REQUIREMENT_LABELS);
+export const ENTRY_REQUIREMENTS_OPTIONS = toOptions(
+  enumDisplayEntryRequirementChoices
+);
+export const REFERRAL_REQUIREMENT_OPTIONS = toOptions(
+  REFERRAL_REQUIREMENT_LABELS
+);
 export const SPA_OPTIONS = toOptions(SPA_LABELS);
 
 // Common LA area cities - Cities are now database models and can be added dynamically
@@ -253,8 +275,13 @@ export const LA_CITIES_OPTIONS = [
   { value: 'Compton', label: 'Compton' },
 ] as const;
 
-export const SHELTER_PROGRAMS_OPTIONS = toOptions(enumDisplayShelterProgramChoices, [ShelterProgramChoices.Other]);
-export const FUNDERS_OPTIONS = toOptions(enumDisplayFunderChoices, [FunderChoices.Other]);
+export const SHELTER_PROGRAMS_OPTIONS = toOptions(
+  enumDisplayShelterProgramChoices,
+  [ShelterProgramChoices.Other]
+);
+export const FUNDERS_OPTIONS = toOptions(enumDisplayFunderChoices, [
+  FunderChoices.Other,
+]);
 export const STATUS_OPTIONS = toOptions(STATUS_LABELS);
 
 export const BOOLEAN_OPTIONS = [

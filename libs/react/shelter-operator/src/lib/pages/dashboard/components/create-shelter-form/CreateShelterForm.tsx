@@ -207,8 +207,11 @@ const extractApolloError = (error: unknown) => {
   // Check if error has the shape of an Apollo error
   if (error && typeof error === 'object' && 'graphQLErrors' in error) {
     const apolloError = error as {
-      graphQLErrors?: Array<any>;
-      networkError?: any;
+      graphQLErrors?: Array<{
+        message: string;
+        extensions?: { errors?: Array<{ messages?: string[] }> };
+      }>;
+      networkError?: { message?: string } | null;
     };
     const graphQLErrorMessages = apolloError.graphQLErrors
       ?.map((graphQLError) => {
