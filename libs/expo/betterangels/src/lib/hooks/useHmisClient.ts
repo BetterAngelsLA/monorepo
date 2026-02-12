@@ -3,9 +3,11 @@ import type {
   ClientFileUploadResponse,
   ClientFilesListParams,
   ClientFilesResponse,
+  ClientPhotoUploadResponse,
   FileCategoriesResponse,
   FileNamesResponse,
   HmisCurrentUser,
+  HmisHttpQueryParams,
 } from '@monorepo/expo/shared/clients';
 import { createHmisClient } from '@monorepo/expo/shared/clients';
 import { useCallback, useMemo } from 'react';
@@ -18,7 +20,7 @@ import { useCallback, useMemo } from 'react';
  *
  * @example
  * ```tsx
- * const { getCurrentUser, uploadClientFile, hmisClient } = useHmisClient();
+ * const { getCurrentUser, uploadClientFile, uploadClientPhoto, hmisClient } = useHmisClient();
  *
  * // Get HMIS current user profile with default fields
  * const user = await getCurrentUser();
@@ -34,6 +36,11 @@ import { useCallback, useMemo } from 'react';
  *   12,
  *   89
  * );
+ *
+ * // Upload client photo
+ * const formData = new FormData();
+ * formData.append('file', { uri, name: 'photo.jpg', type: 'image/jpeg' });
+ * await uploadClientPhoto('68998C256', formData);
  *
  * // Custom HMIS endpoint
  * const data = await hmisClient.get('/some-hmis-endpoint', {
@@ -142,13 +149,19 @@ export const useHmisClient = () => {
     },
     [hmisClient]
   );
-  const getFileCategories = useCallback((): Promise<FileCategoriesResponse> => {
-    return hmisClient.getFileCategories();
-  }, [hmisClient]);
+  const getFileCategories = useCallback(
+    (params?: HmisHttpQueryParams): Promise<FileCategoriesResponse> => {
+      return hmisClient.getFileCategories(params);
+    },
+    [hmisClient]
+  );
 
-  const getFileNames = useCallback((): Promise<FileNamesResponse> => {
-    return hmisClient.getFileNames();
-  }, [hmisClient]);
+  const getFileNames = useCallback(
+    (params?: HmisHttpQueryParams): Promise<FileNamesResponse> => {
+      return hmisClient.getFileNames(params);
+    },
+    [hmisClient]
+  );
 
   /**
    * Update a client file's metadata (category and file name)
@@ -197,10 +210,30 @@ export const useHmisClient = () => {
     [hmisClient]
   );
 
+  /**
+   * Upload client photo
+   *
+   * POST /clients/{id}/photo/upload with multipart/form-data.
+   *
+   * @param clientId - Client ID
+   * @param formData - FormData containing the photo file (e.g. from image picker)
+   * @returns Promise with upload response
+   */
+  const uploadClientPhoto = useCallback(
+    (
+      clientId: string | number,
+      formData: FormData
+    ): Promise<ClientPhotoUploadResponse> => {
+      return hmisClient.uploadClientPhoto(clientId, formData);
+    },
+    [hmisClient]
+  );
+
   return {
     hmisClient,
     getCurrentUser,
     uploadClientFile,
+    uploadClientPhoto,
     getFileCategories,
     getFileNames,
     getClientFiles,

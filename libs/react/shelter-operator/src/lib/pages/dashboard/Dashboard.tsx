@@ -1,27 +1,107 @@
+import { useQuery } from '@apollo/client/react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useFeatureFlagActive } from '@monorepo/react/shared';
-import { FeatureFlags } from '../../static/featureFlags';
+import { Shelter, ShelterRow } from '../../components/ShelterRow';
+import {
+  ViewSheltersByOrganizationDocument,
+  ViewSheltersByOrganizationQuery,
+} from '../../graphql/__generated__/shelters.generated';
+
+const PAGE_SIZE = 8;
 
 export default function Dashboard() {
-  const bpChangesEnabled = useFeatureFlagActive(
-    FeatureFlags.BP_CHANGES_FF
+  // TODO: Replace hardcoded organizationId with value from authenticated user context
+  const { data, loading, error } = useQuery(
+    ViewSheltersByOrganizationDocument,
+    {
+      variables: { organizationId: '2' },
+    }
   );
 
-  return (
-    <div>
-      <Link to="/operator">
-        <button>Back</button>
-      </Link>
-      <div>Welcome to the Operator Dashboard</div>
+  const backendShelters: Shelter[] = useMemo(() => {
+    type ShelterResult = NonNullable<
+      ViewSheltersByOrganizationQuery['adminShelters']['results'][number]
+    >;
+    return (
+      data?.adminShelters?.results?.map((s: ShelterResult) => ({
+        id: String(s.id),
+        name: s.name ?? null,
+        address: s.location?.place ?? null,
+        totalBeds: s.totalBeds ?? null,
+        tags: null,
+      })) ?? []
+    );
+  }, [data?.adminShelters?.results]);
 
-      <Link to="/operator/dashboard/create">
-        <button>Add Shelter</button>
-      </Link>
-      {bpChangesEnabled ? (
-        <div className="mt-4 rounded-md bg-blue-50 p-4 text-sm text-blue-800">
-          BP feature flag is ON – BP changes are enabled.
+  const [page, setPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(backendShelters.length / PAGE_SIZE));
+
+  const paginatedShelters = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    return backendShelters.slice(start, end);
+  }, [page, backendShelters]);
+
+  return (
+    <div className="flex flex-col p-8 w-full">
+      {/* Back button */}
+      <div className="mb-6">
+        <Link to="/">
+          <button className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm cursor-pointer hover:bg-gray-50">
+            Back
+          </button>
+        </Link>
+      </div>
+
+      {/* TABLE */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden w-full">
+        {/* HEADER */}
+        <div className="grid grid-cols-[1fr_1.5fr_0.5fr] items-center px-6 py-3 text-xs font-semibold uppercase tracking-wider text-gray-700 bg-gray-50 border-b border-gray-200">
+          <div>Shelter Name</div>
+          <div>Address</div>
+          <div className="text-right">Capacity (beds)</div>
         </div>
-      ) : null}
+
+        {/* ROWS */}
+        {paginatedShelters.map((shelter) => (
+          <ShelterRow key={shelter.id} shelter={shelter} />
+        ))}
+      </div>
+
+      {/* PAGINATION */}
+      <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
+        <div>
+          Page {page} of {totalPages}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Prev
+          </button>
+
+          <button
+            className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+          >
+            Next
+          </button>
+        </div>
+      </div>
+
+      {loading && (
+        <div className="mt-4 text-xs text-gray-500">Loading shelters…</div>
+      )}
+      {error && (
+        <div className="mt-2 text-xs text-red-500">
+          Failed to load shelters.
+        </div>
+      )}
     </div>
   );
 }

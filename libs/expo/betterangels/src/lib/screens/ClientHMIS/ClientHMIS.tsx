@@ -21,6 +21,14 @@ const hmisTabs: ClientViewTabEnum[] = [
   ClientViewTabEnum.Tasks,
 ];
 
+const hmisTabLabels: Record<ClientViewTabEnum, string> = {
+  [ClientViewTabEnum.Profile]: ClientViewTabEnum.Profile,
+  [ClientViewTabEnum.Docs]: 'Files',
+  [ClientViewTabEnum.Interactions]: 'Notes',
+  [ClientViewTabEnum.Locations]: ClientViewTabEnum.Locations,
+  [ClientViewTabEnum.Tasks]: ClientViewTabEnum.Tasks,
+};
+
 type TProps = {
   id: string;
   arrivedFrom?: string;
@@ -97,6 +105,9 @@ export function ClientHMIS(props: TProps) {
         tabs={hmisTabs}
         selectedTab={currentTab}
         onTabPress={setCurrentTab}
+        getLabel={(tab) => {
+          return hmisTabLabels[tab];
+        }}
       />
 
       {renderTabComponent(currentTab, { client, openCard })}

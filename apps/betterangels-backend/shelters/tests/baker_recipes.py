@@ -97,7 +97,7 @@ class related_m2m_unique(related):
         self.related_model = related_model
         self.choices_enum = choices_enum
 
-    def make(self) -> Any:
+    def make(self, **attrs: Any) -> Any:
         related_objs = set()
 
         # limit to 5 related objects per type, for readability

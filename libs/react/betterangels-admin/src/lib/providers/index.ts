@@ -1,3 +1,2 @@
-export * from './api/ApiConfigProvider';
+export { ApiConfigProvider, useApiConfig, UserProvider } from '@monorepo/react/shared';
 export { default as AuthProvider } from './auth/AuthProvider';
-export { default as UserProvider } from './user/UserProvider';

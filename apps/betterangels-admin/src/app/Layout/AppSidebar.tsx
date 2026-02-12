@@ -1,10 +1,7 @@
 import { useUser } from '@monorepo/react/betterangels-admin';
-import {
-  BetterAngelsLogoBadge,
-  Sidebar,
-  mergeCss,
-} from '@monorepo/react/components';
+import { BetterAngelsLogoBadge, Sidebar } from '@monorepo/react/components';
 import { UsersIcon } from '@monorepo/react/icons';
+import { mergeCss } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 

@@ -167,6 +167,8 @@ class ShelterPropertyInput:
 
 @strawberry_django.filter_type(models.Shelter)
 class ShelterFilter:
+    organization: auto
+
     @strawberry_django.filter_field
     def properties(
         self, queryset: QuerySet, value: Optional[ShelterPropertyInput], prefix: str
@@ -219,6 +221,7 @@ class ShelterFilter:
 @strawberry_django.order_type(models.Shelter, one_of=False)
 class ShelterOrder:
     name: auto
+    created_at: auto
 
 
 @strawberry.type
@@ -329,7 +332,7 @@ class ShelterType:
         return ranges or None
 
     @strawberry_django.field
-    def intake_hours(self, root: Shelter) -> Optional[List[Optional[TimeRange]]]:
+    def intake_hours(self, root: models.Shelter) -> Optional[List[Optional[TimeRange]]]:
         ranges: List[Optional[TimeRange]] = []
         if root.intake_hours:
             for start, end in root.intake_hours:

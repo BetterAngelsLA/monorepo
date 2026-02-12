@@ -1,6 +1,5 @@
 from datetime import time
 from typing import Any, Dict, List, Optional, Protocol, cast
-from typing import Optional
 
 import strawberry
 import strawberry_django
@@ -12,7 +11,6 @@ from graphql import GraphQLError
 from places import Places
 from shelters.enums import (
     AccessibilityChoices,
-    CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
@@ -54,22 +52,19 @@ from shelters.models import (
     Shelter,
     ShelterProgram,
 )
-from shelters.permissions import ShelterPermissions
 from shelters.models import ShelterType as ShelterKind
 from shelters.models import (
     SpecialSituationRestriction,
     Storage,
     TrainingService,
 )
-from shelters.types import ShelterType
+from shelters.permissions import ShelterPermissions
+from shelters.types import ShelterOrder, ShelterType
 from strawberry import ID, UNSET
 from strawberry.types import Info
 from strawberry_django.mutations import resolvers
-from strawberry_django.permissions import HasPerm
-from shelters.enums import StatusChoices
-from shelters.models import Shelter
-from shelters.types import ShelterOrder, ShelterType
 from strawberry_django.pagination import OffsetPaginated
+from strawberry_django.permissions import HasPerm
 
 
 class ModelWithObjects(Protocol):
@@ -90,6 +85,11 @@ class Query:
     @strawberry_django.offset_paginated(OffsetPaginated[ShelterType])
     def shelters(self, ordering: Optional[list[ShelterOrder]] = None) -> QuerySet:
         return Shelter.objects.filter(status=StatusChoices.APPROVED)
+
+    admin_shelters: OffsetPaginated[ShelterType] = strawberry_django.offset_paginated(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(ShelterPermissions.VIEW)],
+    )
 
 
 @strawberry.input
@@ -131,7 +131,7 @@ class CreateShelterInput:
     entry_requirements: List[EntryRequirementChoices]
     referral_requirement: List[ReferralRequirementChoices]
     exit_policy: List[ExitPolicyChoices]
-    cities: List[CityChoices]
+    cities: List[str]
     spa: List[SPAChoices]
     shelter_programs: List[ShelterProgramChoices]
     funders: List[FunderChoices]

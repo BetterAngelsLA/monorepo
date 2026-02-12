@@ -678,6 +678,10 @@ export type DjangoImageType = {
   width: Scalars['Int']['output'];
 };
 
+export type DjangoModelFilterInput = {
+  pk: Scalars['ID']['input'];
+};
+
 export type DjangoModelType = {
   __typename?: 'DjangoModelType';
   pk: Scalars['ID']['output'];
@@ -1296,6 +1300,7 @@ export type Mutation = {
   logout: Scalars['Boolean']['output'];
   removeHmisNoteServiceRequest: RemoveHmisNoteServiceRequestPayload;
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
+  removeOrganizationMember: RemoveOrganizationMemberPayload;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
   updateClientDocument: UpdateClientDocumentPayload;
@@ -1489,6 +1494,11 @@ export type MutationRemoveHmisNoteServiceRequestArgs = {
 
 export type MutationRemoveNoteServiceRequestArgs = {
   data: RemoveNoteServiceRequestInput;
+};
+
+
+export type MutationRemoveOrganizationMemberArgs = {
+  data: RemoveOrganizationMemberInput;
 };
 
 
@@ -1900,6 +1910,7 @@ export enum PronounEnum {
 
 export type Query = {
   __typename?: 'Query';
+  adminShelters: ShelterTypeOffsetPaginated;
   bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
   caseworkerOrganizations: OrganizationTypeOffsetPaginated;
   clientContact: ClientContactType;
@@ -1932,6 +1943,13 @@ export type Query = {
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
   task: TaskType;
   tasks: TaskTypeOffsetPaginated;
+};
+
+
+export type QueryAdminSheltersArgs = {
+  filters?: InputMaybe<ShelterFilter>;
+  ordering?: Array<ShelterOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -2159,6 +2177,13 @@ export type RemoveNoteServiceRequestInput = {
 
 export type RemoveNoteServiceRequestPayload = NoteType | OperationInfo;
 
+export type RemoveOrganizationMemberInput = {
+  id: Scalars['ID']['input'];
+  organizationId: Scalars['ID']['input'];
+};
+
+export type RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo;
+
 export type RevertNoteInput = {
   id: Scalars['ID']['input'];
   revertBeforeTimestamp: Scalars['DateTime']['input'];
@@ -2262,6 +2287,7 @@ export type ShelterFilter = {
   OR?: InputMaybe<ShelterFilter>;
   geolocation?: InputMaybe<GeolocationInput>;
   mapBounds?: InputMaybe<MapBoundsInput>;
+  organization?: InputMaybe<DjangoModelFilterInput>;
   properties?: InputMaybe<ShelterPropertyInput>;
 };
 
@@ -2279,6 +2305,7 @@ export type ShelterLocationType = {
 };
 
 export type ShelterOrder = {
+  createdAt?: InputMaybe<Ordering>;
   name?: InputMaybe<Ordering>;
 };
 

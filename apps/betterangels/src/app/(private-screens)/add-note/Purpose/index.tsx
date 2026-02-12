@@ -6,7 +6,7 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { debounce } from '@monorepo/expo/shared/utils';
+import { debounce } from 'lodash';
 import { RefObject, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 

@@ -1,8 +1,8 @@
 import { MouseEvent, PropsWithChildren } from 'react';
 
+import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { modalAtom } from '../atoms/modalAtom';
-import { mergeCss } from '../utils/styles/mergeCss';
 
 interface IProps extends PropsWithChildren {
   className?: string;

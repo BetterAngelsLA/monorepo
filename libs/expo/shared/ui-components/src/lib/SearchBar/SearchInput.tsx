@@ -1,6 +1,6 @@
 import { SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { debounce } from '@monorepo/expo/shared/utils';
+import { debounce } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import { TextInputProps } from 'react-native';
 import BasicInput from '../BasicInput';

@@ -1,4 +1,4 @@
-import { mergeCss } from '../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { QuestionCard } from './QuestionCard';
 import { TAnswer, TQuestion } from './types';
 

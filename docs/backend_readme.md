@@ -17,6 +17,7 @@ The betterangels_backend is built on Django, a Python web framework. It also uti
 **Setup:**
 
 1. Run Docker
+   - **Windows/WSL Users:** Ensure "WSL Integration" for your specific distro is enabled in Docker Desktop Settings > Resources and click **Apply & Restart**.
 1. Clone the monorepo repo from github
 1. Open it in a VSCode workspace
 1. Cmd + Shift + P and select "Dev Containers: Rebuild and Reopen in Container" (this command take a few minutes to complete). It will close and reopen a new VSCode workspace
@@ -49,8 +50,15 @@ Once started, you can access the Django development server at
 - default address: [http://localhost:8000/admin/](http://localhost:8000/admin/)
   - or the port you've configured.
 - Login using creds
+
   - email: `admin@example.com`
   - psw: `password`
+
+  > **Connecting from Android Emulator:**
+  >
+  > If you are running the frontend on a Windows Android Emulator, `localhost` refers to the emulator itself.
+  >
+  > Update your frontend `apps/betterangels/.env` to use: `EXPO_PUBLIC_API_URL=http://10.0.2.2:8000`
 
 #### Starting a Django Shell
 
@@ -243,6 +251,17 @@ Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by("me
 ```
 
 ---
+
+### Supplemental Scripts
+
+#### Seeding Shelters
+
+To populate the database with test shelters:
+
+```bash
+cd apps/betterangels-backend/shelters/scripts/
+poetry run python seed_shelters.py 10
+```
 
 ### Troubleshooting
 

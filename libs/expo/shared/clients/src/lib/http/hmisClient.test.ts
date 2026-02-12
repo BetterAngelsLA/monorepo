@@ -1,5 +1,10 @@
 import { createHmisClient } from './hmisClient';
-import { HmisError } from './hmisTypes';
+import {
+  HmisError,
+  HmisFileErrorCode,
+  HmisInvalidFileTypeError,
+} from './hmisError';
+import { ALLOWED_FILE_TYPES } from './hmisTypes';
 
 // Mock the utils module to avoid expo dependencies in tests
 jest.mock('@monorepo/expo/shared/utils', () => ({
@@ -24,11 +29,11 @@ jest.mock('@react-native-async-storage/async-storage', () => {
   };
 });
 
-// Mock NitroCookies
+// Mock CookieManager
 const mockGet = jest.fn();
 const mockSetFromResponse = jest.fn();
 
-jest.mock('react-native-nitro-cookies', () => {
+jest.mock('@preeternal/react-native-cookie-manager', () => {
   return {
     __esModule: true,
     default: {
@@ -50,14 +55,17 @@ describe('HmisClient', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Mock AsyncStorage to return the HMIS API URL
+    // Mock AsyncStorage to return the HMIS API URL and Auth Domain
     mockGetItem.mockImplementation((key) => {
       if (key === 'hmis_api_url')
         return Promise.resolve('https://hmis.example.com');
+      // Auth domain is needed for getHmisAuthToken
+      if (key === 'hmis_auth_domain')
+        return Promise.resolve('https://auth.example.com');
       return Promise.resolve(null);
     });
 
-    // Mock NitroCookies to return the auth token
+    // Mock CookieManager to return the auth token
     mockGet.mockResolvedValue({
       auth_token: { value: 'mock-token' },
     });
@@ -200,10 +208,10 @@ describe('HmisClient', () => {
       });
     });
 
-    it('throws error for invalid file type', async () => {
+    it('throws HmisInvalidFileTypeError for invalid file type', async () => {
       const hmisClient = createHmisClient();
-      await expect(
-        hmisClient.uploadClientFile(
+      try {
+        await hmisClient.uploadClientFile(
           '68998C256',
           {
             content: 'VGVzdCBjb250ZW50',
@@ -212,8 +220,19 @@ describe('HmisClient', () => {
           },
           12,
           89
-        )
-      ).rejects.toThrow('File type "video/quicktime" is not allowed');
+        );
+
+        fail('Expected uploadClientFile to throw');
+      } catch (err) {
+        expect(err).toBeInstanceOf(HmisInvalidFileTypeError);
+
+        const error = err as HmisInvalidFileTypeError;
+
+        expect(error.status).toBe(400);
+        expect(error.code).toBe(HmisFileErrorCode.INVALID_FILE_TYPE);
+        expect(error.data?.received).toBe('video/quicktime');
+        expect(error.data?.allowed).toEqual(ALLOWED_FILE_TYPES);
+      }
     });
 
     it('supports private flag', async () => {

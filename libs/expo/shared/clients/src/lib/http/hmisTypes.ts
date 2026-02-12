@@ -1,17 +1,19 @@
 /**
  * HMIS REST API TypeScript types
  */
+export type HmisHttpQueryParams = Record<
+  string,
+  string | number | boolean | null | undefined
+>;
 
-export interface HmisRequestOptions extends Omit<RequestInit, 'body'> {
-  params?: Record<string, string>;
-  body?: unknown;
+export interface HmisListParams {
+  page?: number;
+  per_page?: number;
 }
 
-export class HmisError extends Error {
-  constructor(message: string, public status: number, public data?: unknown) {
-    super(message);
-    this.name = 'HmisError';
-  }
+export interface HmisRequestOptions extends Omit<RequestInit, 'body'> {
+  params?: HmisHttpQueryParams;
+  body?: unknown;
 }
 
 /**
@@ -144,6 +146,16 @@ export interface ClientFileUploadResponse {
   creator: unknown;
   clientId: string;
 }
+
+/**
+ * Client profile photo upload response.
+ */
+export interface ClientPhotoUploadResponse {
+  success: boolean;
+  data: {
+    content: string;
+  };
+}
 /**
  * File category information
  */
@@ -213,11 +225,9 @@ export interface ClientFile {
   };
   file?: {
     id: number;
+    added_date: string;
     filename: string;
     filesize: number;
-    added_date: string;
-    encodedPreviewFileContent?: string;
-    encodedThumbnailFileContent?: string;
   };
   fileName?: {
     id: number;

@@ -8,8 +8,10 @@ from common.utils import canonicalise_filename, get_unique_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
+from django.contrib.gis.geos import Point
 from django.db import models
 from django.db.models import ForeignKey
+from django.db.models.functions import Lower
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from phonenumber_field.modelfields import PhoneNumberField
@@ -116,15 +118,11 @@ class Address(BaseModel):
     class Meta(BaseModel.Meta):
         indexes = [
             models.Index(
-                fields=[
-                    "street",
-                    "city",
-                    "state",
-                    "zip_code",
-                    "address_components",
-                    "formatted_address",
-                ],
-                name="address_index",
+                Lower("street"),
+                Lower("city"),
+                Lower("state"),
+                Lower("zip_code"),
+                name="address_lookup_idx",
             )
         ]
 
@@ -140,6 +138,10 @@ class Address(BaseModel):
 
 
 class Location(BaseModel):
+    # 5 decimal places ≈ 1.1 m — filters mobile GPS jitter while
+    # preserving individual-building precision.
+    GPS_PRECISION = 5
+
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
     point = PointField(geography=True)
     point_of_interest = models.CharField(max_length=255, blank=True, null=True)
@@ -151,6 +153,18 @@ class Location(BaseModel):
             return str(self.address)
 
         return str(self.point.coords)
+
+    @staticmethod
+    def _get_component_value(component: dict, name_type: str) -> Optional[str]:
+        """Read a value from an address component, supporting both v1 and legacy formats.
+
+        v1 format uses longText/shortText; legacy format uses long_name/short_name.
+        """
+        if name_type == "long_name":
+            return component.get("longText") or component.get("long_name")
+        elif name_type == "short_name":
+            return component.get("shortText") or component.get("short_name")
+        return None
 
     @staticmethod
     def parse_address_components(address_components: str) -> dict:
@@ -166,29 +180,69 @@ class Location(BaseModel):
 
         components = json.loads(address_components)
         parsed_address = {
-            field: next((component.get(name_type) for component in components if field in component["types"]), None)
+            field: next(
+                (
+                    Location._get_component_value(component, name_type)
+                    for component in components
+                    if field in component.get("types", [])
+                ),
+                None,
+            )
             for field, name_type in address_fields.items()
         }
 
         return parsed_address
 
+    @staticmethod
+    def _clean(value: Optional[str]) -> Optional[str]:
+        """Strip leading/trailing whitespace and collapse internal runs.
+
+        Returns None for blank/empty strings.
+        """
+        if value is None:
+            return None
+        value = " ".join(value.split()).strip()
+        return value or None
+
+    @staticmethod
+    def _round_point(point: Point) -> Point:
+        """Round a Point's coordinates to GPS_PRECISION decimal places.
+
+        Eliminates sub-metre GPS jitter so that nearby pin-drops resolve
+        to the same Location row instead of creating duplicates.
+        """
+        p = Location.GPS_PRECISION
+        return Point(round(point.x, p), round(point.y, p), srid=point.srid)
+
     @classmethod
     def get_or_create_address(cls, address_data: Dict[str, Any]) -> "Address":
-        """Gets or creates an address and returns it."""
-        # This function expects a Google Geocoding API payload
-        # https://developers.google.com/maps/documentation/geocoding/requests-geocoding
+        """Gets or creates an address and returns it.
+
+        Uses case-insensitive lookups so that 'Los Angeles' and 'los angeles'
+        resolve to the same row.  The functional Lower() index on Address
+        makes these queries fast.
+        """
         parsed_address = cls.parse_address_components(address_data["address_components"])
 
         street_number = parsed_address.get("street_number")
         route = parsed_address.get("route")
-        street = f"{street_number} {route}".strip() if street_number and route else route
+        street = cls._clean(f"{street_number} {route}".strip() if street_number and route else route)
+        city = cls._clean(parsed_address.get("locality"))
+        state = cls._clean(parsed_address.get("administrative_area_level_1"))
+        zip_code = cls._clean(parsed_address.get("postal_code"))
+
+        fields = {"street": street, "city": city, "state": state, "zip_code": zip_code}
+        lookup = {
+            (f"{f}__isnull" if v is None else f"{f}__iexact"): (True if v is None else v) for f, v in fields.items()
+        }
+
         address, _ = Address.objects.get_or_create(
-            street=street,
-            city=parsed_address.get("locality"),
-            state=parsed_address.get("administrative_area_level_1"),
-            zip_code=parsed_address.get("postal_code"),
-            address_components=address_data["address_components"],
-            formatted_address=address_data["formatted_address"],
+            **lookup,
+            defaults={
+                **fields,
+                "address_components": address_data["address_components"],
+                "formatted_address": address_data.get("formatted_address") or address_data.get("formattedAddress"),
+            },
         )
 
         return address
@@ -198,7 +252,12 @@ class Location(BaseModel):
         components: list[Dict[str, str]] = json.loads(address_data["address_components"])
 
         return next(
-            (component["long_name"] for component in components if "point_of_interest" in component["types"]), None
+            (
+                Location._get_component_value(component, "long_name")
+                for component in components
+                if "point_of_interest" in component.get("types", [])
+            ),
+            None,
         )
 
     @classmethod
@@ -209,10 +268,11 @@ class Location(BaseModel):
 
         address = Location.get_or_create_address(location_data["address"])
         point_of_interest = location_data["point_of_interest"] or cls.get_point_of_interest(location_data["address"])
+        point = cls._round_point(location_data["point"])
 
         location, _ = Location.objects.get_or_create(
             address=address,
-            point=location_data["point"],
+            point=point,
             point_of_interest=point_of_interest,
         )
 

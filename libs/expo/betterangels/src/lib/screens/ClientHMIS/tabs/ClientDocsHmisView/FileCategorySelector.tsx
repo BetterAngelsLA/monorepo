@@ -1,40 +1,51 @@
+import { FileCategory, FileName } from '@monorepo/expo/shared/clients';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { SingleSelect, TextOrNode } from '@monorepo/expo/shared/ui-components';
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import { FILE_CATEGORIES, FILE_SUBCATEGORIES } from './categoryConstants';
-
-export const TEMPORARY_DOCUMENT_TYPES = FILE_CATEGORIES.filter(
-  (c) => c.status === 1
-)
-  .map((c) => ({
-    categoryId: String(c.id),
-    categoryName: c.name,
-    types: FILE_SUBCATEGORIES.filter(
-      (s) => s.status === 1 && s.ref_category === c.id
-    ).map((s) => ({
-      value: String(s.id),
-      displayValue: s.name,
-    })),
-  }))
-  .filter((group) => group.types.length > 0);
 
 type FileCategorySelectorProps = {
+  categories: FileCategory[];
+  subCategories: FileName[];
   onSelect: (categoryGroup: {
     categoryId: string;
     subCategoryId: string;
     categoryName: string;
   }) => void;
+  disabled?: boolean;
   header?: string | ReactNode | null;
   style?: ViewStyle;
 };
 
 export function FileCategorySelector(props: FileCategorySelectorProps) {
   const {
+    categories,
+    subCategories,
     onSelect,
+    disabled,
     style,
     header = 'Select the right file category and predefined name.',
   } = props;
+
+  const categoryGroups = useMemo(() => {
+    return categories
+      .filter((category) => category.status === 1)
+      .map((category) => {
+        const types = subCategories
+          .filter((sub) => sub.status === 1 && sub.ref_category === category.id)
+          .map((sub) => ({
+            value: String(sub.id),
+            displayValue: sub.name,
+          }));
+
+        return {
+          categoryId: String(category.id),
+          categoryName: category.name,
+          types,
+        };
+      })
+      .filter((group) => group.types.length > 0);
+  }, [categories, subCategories]);
 
   return (
     <View style={style}>
@@ -43,12 +54,14 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
       )}
 
       <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
-        {TEMPORARY_DOCUMENT_TYPES.map((categoryGroup) => (
+        {categoryGroups.map((categoryGroup) => (
           <SingleSelect
             key={categoryGroup.categoryId}
+            disabled={disabled}
             placeholderTextColor={Colors.PRIMARY_EXTRA_DARK}
             placeholder={categoryGroup.categoryName}
             modalTitle="Document Type"
+            items={categoryGroup.types}
             onChange={(e) => {
               onSelect({
                 categoryId: categoryGroup.categoryId,
@@ -56,7 +69,6 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
                 categoryName: categoryGroup.categoryName,
               });
             }}
-            items={categoryGroup.types}
           />
         ))}
       </View>

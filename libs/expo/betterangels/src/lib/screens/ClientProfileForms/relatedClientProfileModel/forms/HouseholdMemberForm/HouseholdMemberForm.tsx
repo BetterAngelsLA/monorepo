@@ -196,6 +196,7 @@ export function HouseholdMemberForm(props: TProps) {
               <DatePicker
                 type="numeric"
                 label="Date of Birth"
+                placeholder="Enter date"
                 disabled={isLoading}
                 validRange={{
                   endDate: new Date(),
@@ -203,6 +204,10 @@ export function HouseholdMemberForm(props: TProps) {
                 }}
                 value={value || undefined}
                 onChange={onChange}
+                onDelete={() => {
+                  onChange(null);
+                  clearErrors('dateOfBirth');
+                }}
                 error={!!errors.dateOfBirth?.message}
               />
             )}

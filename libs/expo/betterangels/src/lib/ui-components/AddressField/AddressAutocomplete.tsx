@@ -1,16 +1,17 @@
-import { useApiConfig } from '@monorepo/expo/shared/clients';
-import { AutocompleteInput } from '@monorepo/expo/shared/ui-components';
-import { debounce } from '@monorepo/expo/shared/utils';
-import { RefObject, useCallback, useRef, useState } from 'react';
+import {
+  TPlaceDetails,
+  TPlacePrediction,
+} from '@monorepo/expo/shared/services';
+import {
+  AutocompleteInput,
+  usePlacesClient,
+} from '@monorepo/expo/shared/ui-components';
+import { TPlacesClient } from '@monorepo/shared/places';
+import { debounce } from 'lodash';
+import { RefObject, useMemo, useRef, useState } from 'react';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
 import { useScrollToScreenTop } from '../../hooks';
-import {
-  TPlaceResult,
-  TPlacesPrediction,
-  getPlaceAutocomplete,
-  getPlaceDetailsById,
-} from '../../services';
 import { AddressOption } from './AddressOption';
 
 const DEFAULT_DEBOUNCE_MS = 100;
@@ -51,9 +52,9 @@ export function AddressAutocomplete<TForm extends FieldValues>(
 
   const addressViewRef = useRef<View>(null);
 
-  const { baseUrl } = useApiConfig();
+  const places = usePlacesClient();
 
-  const [predictions, setPredictions] = useState<TPlacesPrediction[]>([]);
+  const [predictions, setPredictions] = useState<TPlacePrediction[]>([]);
 
   const getPredictions = async (input: string) => {
     if (!input.trim() || input.length < 3) {
@@ -66,19 +67,20 @@ export function AddressAutocomplete<TForm extends FieldValues>(
     debouncedSearch(input);
   };
 
-  const debouncedSearch = useCallback(
-    debounce(async (query: string) => {
-      try {
-        const result = await getPlaceAutocomplete({ baseUrl, query });
+  const debouncedSearch = useMemo(
+    () =>
+      debounce(async (query: string) => {
+        try {
+          const result = await places.autocomplete(query);
 
-        setPredictions(result);
-      } catch (e) {
-        console.error(e);
+          setPredictions(result);
+        } catch (e) {
+          console.error(e);
 
-        setPredictions([]);
-      }
-    }, debounceMs),
-    []
+          setPredictions([]);
+        }
+      }, debounceMs),
+    [debounceMs, places]
   );
 
   function handleScrollToTop() {
@@ -109,7 +111,7 @@ export function AddressAutocomplete<TForm extends FieldValues>(
 
         return (
           <View ref={addressViewRef}>
-            <AutocompleteInput<TPlacesPrediction>
+            <AutocompleteInput<TPlacePrediction>
               value={value || ''}
               placeholder={placeholder}
               label={label}
@@ -122,12 +124,13 @@ export function AddressAutocomplete<TForm extends FieldValues>(
               errorMessage={error?.message}
               renderItem={(item) => (
                 <AddressOption
-                  key={item.place_id}
+                  key={item.placeId}
                   item={item}
                   onPress={async () => {
+                    debouncedSearch.cancel();
                     setPredictions([]);
 
-                    const detailAddress = await getDetailAddress(item, baseUrl);
+                    const detailAddress = await getDetailAddress(item, places);
 
                     onChange(detailAddress);
                   }}
@@ -142,22 +145,19 @@ export function AddressAutocomplete<TForm extends FieldValues>(
 }
 
 async function getDetailAddress(
-  prediction: TPlacesPrediction,
-  baseUrl: string
+  prediction: TPlacePrediction,
+  places: TPlacesClient
 ) {
-  const placeId = prediction.place_id;
+  const placeId = prediction.placeId;
 
-  if (!placeId || !baseUrl) {
+  if (!placeId) {
     return '';
   }
 
   try {
-    const deatailAddress = await getPlaceDetailsById({
-      baseUrl,
-      placeId,
-    });
+    const detailAddress = await places.getDetails(placeId);
 
-    return getPresentedAddress(deatailAddress);
+    return getPresentedAddress(detailAddress);
   } catch (e) {
     console.error(e);
 
@@ -165,8 +165,8 @@ async function getDetailAddress(
   }
 }
 
-function getPresentedAddress(deatailAddress: TPlaceResult): string {
-  const formattedAddress = deatailAddress.formatted_address || '';
+function getPresentedAddress(detailAddress: TPlaceDetails): string {
+  const formattedAddress = detailAddress.formattedAddress || '';
 
   return formattedAddress.substring(0, formattedAddress.lastIndexOf(','));
 }
