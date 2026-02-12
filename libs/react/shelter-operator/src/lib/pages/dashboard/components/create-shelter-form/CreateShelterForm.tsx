@@ -1,9 +1,20 @@
-import { FormEvent, useCallback, useState } from 'react';
-import { ApolloError, useMutation } from '@apollo/client';
-import { Link } from 'react-router-dom';
+import { useMutation } from '@apollo/client/react';
 import { Button } from '@monorepo/react/components';
+import { FormEvent, useCallback, useState } from 'react';
+import { Link } from 'react-router-dom';
+import type { ShelterFormData } from '../../types';
+import {
+  CREATE_SHELTER_MUTATION,
+  buildCreateShelterInput,
+  type CreateShelterMutationResult,
+  type CreateShelterMutationVariables,
+} from './api/createShelterMutation';
+import {
+  validateField,
+  validateShelterForm,
+  type FormErrors,
+} from './constants/validation';
 import { useCreateShelterForm } from './hooks/useCreateShelterForm';
-import { validateField, validateShelterForm, type FormErrors } from './constants/validation';
 import { AdministrationSection } from './sections/AdministrationSection';
 import { BasicInformationSection } from './sections/BasicInformationSection';
 import { BetterAngelsReviewSection } from './sections/BetterAngelsReviewSection';
@@ -15,19 +26,14 @@ import { ServicesOfferedSection } from './sections/ServicesOfferedSection';
 import { ShelterDetailsSection } from './sections/ShelterDetailsSection';
 import { SleepingDetailsSection } from './sections/SleepingDetailsSection';
 import { SummaryInformationSection } from './sections/SummaryInformationSection';
-import type { ShelterFormData } from '../../types';
-import {
-  CREATE_SHELTER_MUTATION,
-  buildCreateShelterInput,
-  type CreateShelterMutationResult,
-  type CreateShelterMutationVariables,
-} from './api/createShelterMutation';
 
 export default function CreateShelterForm() {
   const { formData, updateField, resetForm } = useCreateShelterForm();
   const [errors, setErrors] = useState<FormErrors>({});
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [submissionSuccess, setSubmissionSuccess] = useState<string | null>(null);
+  const [submissionSuccess, setSubmissionSuccess] = useState<string | null>(
+    null
+  );
   const [createShelter, { loading: isSubmitting }] = useMutation<
     CreateShelterMutationResult,
     CreateShelterMutationVariables
@@ -37,7 +43,7 @@ export default function CreateShelterForm() {
     <K extends keyof ShelterFormData>(field: K, value: ShelterFormData[K]) => {
       updateField(field, value);
       const fieldError = validateField(field, value);
-      setErrors(prev => {
+      setErrors((prev) => {
         if (fieldError) {
           return {
             ...prev,
@@ -70,7 +76,10 @@ export default function CreateShelterForm() {
           input: buildCreateShelterInput(formData),
         },
       });
-      console.log('Shelter submission successful', response.data?.createShelter);
+      console.log(
+        'Shelter submission successful',
+        response.data?.createShelter
+      );
       setSubmissionSuccess('Shelter submitted successfully.');
       resetForm();
       setErrors({});
@@ -92,35 +101,92 @@ export default function CreateShelterForm() {
       </Link>
 
       <div>
-        <h1 className="text-3xl font-semibold text-gray-900">Create New Shelter</h1>
+        <h1 className="text-3xl font-semibold text-gray-900">
+          Create New Shelter
+        </h1>
         <p className="mt-2 text-sm text-gray-600">
-          Provide as much detail as possible to ensure accurate shelter listings.
+          Provide as much detail as possible to ensure accurate shelter
+          listings.
         </p>
       </div>
 
       {submissionError ? (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+        <div
+          className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          role="alert"
+        >
           {submissionError}
         </div>
       ) : null}
       {submissionSuccess ? (
-        <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800" role="status">
+        <div
+          className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+          role="status"
+        >
           {submissionSuccess}
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="space-y-6" data-testid="create-shelter-form">
-        <BasicInformationSection data={formData} onChange={handleFieldChange} errors={errors} />
-        <SummaryInformationSection data={formData} onChange={handleFieldChange} errors={errors} />
-        <SleepingDetailsSection data={formData} onChange={handleFieldChange} errors={errors} />
-        <ShelterDetailsSection data={formData} onChange={handleFieldChange} errors={errors} />
-        <PoliciesSection data={formData} onChange={handleFieldChange} errors={errors} />
-        <ServicesOfferedSection data={formData} onChange={handleFieldChange} errors={errors} />
-        <EntryRequirementsSection data={formData} onChange={handleFieldChange} errors={errors} />
-        <EcosystemInformationSection data={formData} onChange={handleFieldChange} errors={errors} />
-        <BetterAngelsReviewSection data={formData} onChange={handleFieldChange} errors={errors} />
-        <AdministrationSection data={formData} onChange={handleFieldChange} errors={errors} />
-        <MediaSection data={formData} onChange={handleFieldChange} errors={errors} />
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6"
+        data-testid="create-shelter-form"
+      >
+        <BasicInformationSection
+          data={formData}
+          onChange={handleFieldChange}
+          errors={errors}
+        />
+        <SummaryInformationSection
+          data={formData}
+          onChange={handleFieldChange}
+          errors={errors}
+        />
+        <SleepingDetailsSection
+          data={formData}
+          onChange={handleFieldChange}
+          errors={errors}
+        />
+        <ShelterDetailsSection
+          data={formData}
+          onChange={handleFieldChange}
+          errors={errors}
+        />
+        <PoliciesSection
+          data={formData}
+          onChange={handleFieldChange}
+          errors={errors}
+        />
+        <ServicesOfferedSection
+          data={formData}
+          onChange={handleFieldChange}
+          errors={errors}
+        />
+        <EntryRequirementsSection
+          data={formData}
+          onChange={handleFieldChange}
+          errors={errors}
+        />
+        <EcosystemInformationSection
+          data={formData}
+          onChange={handleFieldChange}
+          errors={errors}
+        />
+        <BetterAngelsReviewSection
+          data={formData}
+          onChange={handleFieldChange}
+          errors={errors}
+        />
+        <AdministrationSection
+          data={formData}
+          onChange={handleFieldChange}
+          errors={errors}
+        />
+        <MediaSection
+          data={formData}
+          onChange={handleFieldChange}
+          errors={errors}
+        />
 
         <div className="flex justify-center">
           <Button
@@ -138,9 +204,14 @@ export default function CreateShelterForm() {
 }
 
 const extractApolloError = (error: unknown) => {
-  if (error instanceof ApolloError) {
-    const graphQLErrorMessages = error.graphQLErrors
-      .map(graphQLError => {
+  // Check if error has the shape of an Apollo error
+  if (error && typeof error === 'object' && 'graphQLErrors' in error) {
+    const apolloError = error as {
+      graphQLErrors?: Array<any>;
+      networkError?: any;
+    };
+    const graphQLErrorMessages = apolloError.graphQLErrors
+      ?.map((graphQLError) => {
         const formattedErrors = graphQLError.extensions?.['errors'];
         if (Array.isArray(formattedErrors) && formattedErrors.length) {
           const first = formattedErrors[0];
@@ -152,11 +223,11 @@ const extractApolloError = (error: unknown) => {
       })
       .filter(Boolean);
 
-    if (graphQLErrorMessages.length) {
+    if (graphQLErrorMessages && graphQLErrorMessages.length) {
       return graphQLErrorMessages[0] as string;
     }
 
-    if (error.networkError) {
+    if (apolloError.networkError) {
       return 'Network error while submitting shelter. Please try again.';
     }
   }

@@ -534,7 +534,7 @@ input CreateShelterInput {
   entryRequirements: [EntryRequirementChoices!]!
   referralRequirement: [ReferralRequirementChoices!]!
   exitPolicy: [ExitPolicyChoices!]!
-  cities: [CityChoices!]!
+  cities: [String!]!
   spa: [SPAChoices!]!
   shelterPrograms: [ShelterProgramChoices!]!
   funders: [FunderChoices!]!
@@ -1308,7 +1308,7 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
-  createShelter(input: CreateShelterInput!): CreateShelterPayload!
+  createShelter(input: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
 }
 
 scalar NonBlankString

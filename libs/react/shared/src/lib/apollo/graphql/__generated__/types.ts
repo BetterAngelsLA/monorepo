@@ -2285,6 +2285,7 @@ export type ShelterType = {
   id: Scalars['ID']['output'];
   immediateNeeds: Array<ImmediateNeedType>;
   instagram?: Maybe<Scalars['String']['output']>;
+  intakeHours?: Maybe<Array<Maybe<TimeRange>>>;
   interiorPhotos: Array<ShelterPhotoType>;
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;

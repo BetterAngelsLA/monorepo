@@ -88,104 +88,10 @@ export type AuthResponse = {
   status_code: Scalars['String']['output'];
 };
 
-export enum CityChoices {
-  AgouraHills = 'AGOURA_HILLS',
-  Alhambra = 'ALHAMBRA',
-  Arcadia = 'ARCADIA',
-  Artesia = 'ARTESIA',
-  Avalon = 'AVALON',
-  Azusa = 'AZUSA',
-  BaldwinPark = 'BALDWIN_PARK',
-  Bell = 'BELL',
-  Bellflower = 'BELLFLOWER',
-  BellGardens = 'BELL_GARDENS',
-  BeverlyHills = 'BEVERLY_HILLS',
-  Bradbury = 'BRADBURY',
-  Burbank = 'BURBANK',
-  Calabasas = 'CALABASAS',
-  Carson = 'CARSON',
-  Cerritos = 'CERRITOS',
-  Claremont = 'CLAREMONT',
-  Commerce = 'COMMERCE',
-  Compton = 'COMPTON',
-  Covina = 'COVINA',
-  Cudahy = 'CUDAHY',
-  CulverCity = 'CULVER_CITY',
-  DiamondBar = 'DIAMOND_BAR',
-  Downey = 'DOWNEY',
-  Duarte = 'DUARTE',
-  ElMonte = 'EL_MONTE',
-  ElSegundo = 'EL_SEGUNDO',
-  Gardena = 'GARDENA',
-  Glendale = 'GLENDALE',
-  Glendora = 'GLENDORA',
-  HawaiianGardens = 'HAWAIIAN_GARDENS',
-  Hawthorne = 'HAWTHORNE',
-  HermosaBeach = 'HERMOSA_BEACH',
-  HiddenHills = 'HIDDEN_HILLS',
-  Hollywood = 'HOLLYWOOD',
-  HuntingtonPark = 'HUNTINGTON_PARK',
-  Industry = 'INDUSTRY',
-  Inglewood = 'INGLEWOOD',
-  Irwindale = 'IRWINDALE',
-  Lakewood = 'LAKEWOOD',
-  Lancaster = 'LANCASTER',
-  Lawndale = 'LAWNDALE',
-  LaCanadaFlintridge = 'LA_CANADA_FLINTRIDGE',
-  LaHabraHeights = 'LA_HABRA_HEIGHTS',
-  LaMirada = 'LA_MIRADA',
-  LaPuente = 'LA_PUENTE',
-  LaVerne = 'LA_VERNE',
-  Lomita = 'LOMITA',
-  LongBeach = 'LONG_BEACH',
-  LosAngeles = 'LOS_ANGELES',
-  Lynwood = 'LYNWOOD',
-  Malibu = 'MALIBU',
-  ManhattanBeach = 'MANHATTAN_BEACH',
-  Maywood = 'MAYWOOD',
-  Monrovia = 'MONROVIA',
-  Montebello = 'MONTEBELLO',
-  MontereyPark = 'MONTEREY_PARK',
-  Norwalk = 'NORWALK',
-  Palmdale = 'PALMDALE',
-  PalosVerdesEstates = 'PALOS_VERDES_ESTATES',
-  Paramount = 'PARAMOUNT',
-  Pasadena = 'PASADENA',
-  PicoRivera = 'PICO_RIVERA',
-  Pomona = 'POMONA',
-  RanchoPalosVerdes = 'RANCHO_PALOS_VERDES',
-  RedondoBeach = 'REDONDO_BEACH',
-  RollingHills = 'ROLLING_HILLS',
-  RollingHillsEstates = 'ROLLING_HILLS_ESTATES',
-  Rosemead = 'ROSEMEAD',
-  SantaClarita = 'SANTA_CLARITA',
-  SantaFeSprings = 'SANTA_FE_SPRINGS',
-  SantaMonica = 'SANTA_MONICA',
-  SanDimas = 'SAN_DIMAS',
-  SanFernando = 'SAN_FERNANDO',
-  SanGabriel = 'SAN_GABRIEL',
-  SanMarino = 'SAN_MARINO',
-  SierraMadre = 'SIERRA_MADRE',
-  SignalHill = 'SIGNAL_HILL',
-  SouthElMonte = 'SOUTH_EL_MONTE',
-  SouthGate = 'SOUTH_GATE',
-  SouthPasadena = 'SOUTH_PASADENA',
-  TempleCity = 'TEMPLE_CITY',
-  Torrance = 'TORRANCE',
-  Venice = 'VENICE',
-  Vernon = 'VERNON',
-  Walnut = 'WALNUT',
-  WestlakeVillage = 'WESTLAKE_VILLAGE',
-  WestCovina = 'WEST_COVINA',
-  WestHollywood = 'WEST_HOLLYWOOD',
-  WestLosAngeles = 'WEST_LOS_ANGELES',
-  Whittier = 'WHITTIER',
-  Wilmington = 'WILMINGTON'
-}
-
 export type CityType = {
   __typename?: 'CityType';
-  name?: Maybe<CityChoices>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type ClientContactInput = {
@@ -581,7 +487,6 @@ export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateNoteServiceRequestInput = {
   noteId: Scalars['ID']['input'];
-  serviceEnum?: InputMaybe<ServiceEnum>;
   serviceId?: InputMaybe<Scalars['ID']['input']>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   serviceRequestType: ServiceRequestTypeEnum;
@@ -596,7 +501,6 @@ export type CreateProfileDataImportInput = {
 
 export type CreateServiceRequestInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
-  serviceEnum?: InputMaybe<ServiceEnum>;
   serviceId?: InputMaybe<Scalars['ID']['input']>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   status: ServiceRequestStatusEnum;
@@ -936,40 +840,6 @@ export enum HmisDobQualityEnum {
   Partial = 'PARTIAL'
 }
 
-export type HmisEnrollmentDataType = {
-  __typename?: 'HmisEnrollmentDataType';
-  field?: Maybe<Scalars['String']['output']>;
-  value?: Maybe<Scalars['String']['output']>;
-};
-
-export type HmisEnrollmentHouseholdMemberType = {
-  __typename?: 'HmisEnrollmentHouseholdMemberType';
-  enrollmentId?: Maybe<Scalars['String']['output']>;
-  personalId?: Maybe<Scalars['String']['output']>;
-};
-
-export type HmisEnrollmentListType = {
-  __typename?: 'HmisEnrollmentListType';
-  items: Array<HmisEnrollmentType>;
-  meta?: Maybe<HmisListMetaType>;
-};
-
-export type HmisEnrollmentListTypeHmisListEnrollmentsError = HmisEnrollmentListType | HmisListEnrollmentsError;
-
-export type HmisEnrollmentType = {
-  __typename?: 'HmisEnrollmentType';
-  data?: Maybe<Array<HmisEnrollmentDataType>>;
-  dateCreated?: Maybe<Scalars['String']['output']>;
-  dateUpdated?: Maybe<Scalars['String']['output']>;
-  enrollmentHouseholdMembers?: Maybe<Array<HmisEnrollmentHouseholdMemberType>>;
-  enrollmentId?: Maybe<Scalars['String']['output']>;
-  entryDate?: Maybe<Scalars['String']['output']>;
-  exitDate?: Maybe<Scalars['String']['output']>;
-  householdId?: Maybe<Scalars['String']['output']>;
-  personalId?: Maybe<Scalars['String']['output']>;
-  project?: Maybe<HmisProjectType>;
-};
-
 export enum HmisGenderEnum {
   Different = 'DIFFERENT',
   DontKnow = 'DONT_KNOW',
@@ -982,44 +852,6 @@ export enum HmisGenderEnum {
   Transgender = 'TRANSGENDER',
   WomanGirl = 'WOMAN_GIRL'
 }
-
-export type HmisGetClientError = {
-  __typename?: 'HmisGetClientError';
-  field?: Maybe<Scalars['String']['output']>;
-  message: Scalars['String']['output'];
-};
-
-export type HmisGetClientNoteError = {
-  __typename?: 'HmisGetClientNoteError';
-  field?: Maybe<Scalars['String']['output']>;
-  message: Scalars['String']['output'];
-};
-
-export type HmisListClientNotesError = {
-  __typename?: 'HmisListClientNotesError';
-  field?: Maybe<Scalars['String']['output']>;
-  message: Scalars['String']['output'];
-};
-
-export type HmisListClientsError = {
-  __typename?: 'HmisListClientsError';
-  field?: Maybe<Scalars['String']['output']>;
-  message: Scalars['String']['output'];
-};
-
-export type HmisListEnrollmentsError = {
-  __typename?: 'HmisListEnrollmentsError';
-  field?: Maybe<Scalars['String']['output']>;
-  message: Scalars['String']['output'];
-};
-
-export type HmisListMetaType = {
-  __typename?: 'HmisListMetaType';
-  currentPage?: Maybe<Scalars['Int']['output']>;
-  pageCount?: Maybe<Scalars['Int']['output']>;
-  perPage?: Maybe<Scalars['Int']['output']>;
-  totalCount?: Maybe<Scalars['Int']['output']>;
-};
 
 export type HmisLoginError = {
   __typename?: 'HmisLoginError';
@@ -1128,14 +960,11 @@ export type HmisProfileTypeOffsetPaginated = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type HmisProjectType = {
-  __typename?: 'HmisProjectType';
-  dateCreated?: Maybe<Scalars['String']['output']>;
-  dateUpdated?: Maybe<Scalars['String']['output']>;
-  organizationId?: Maybe<Scalars['String']['output']>;
-  projectId?: Maybe<Scalars['String']['output']>;
-  projectName?: Maybe<Scalars['String']['output']>;
-  projectType?: Maybe<Scalars['String']['output']>;
+export type HmisProgramType = {
+  __typename?: 'HmisProgramType';
+  enableNotes?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
 };
 
 export enum HmisRaceEnum {
@@ -1171,52 +1000,6 @@ export enum HmisSuffixEnum {
   Sr = 'SR',
   Third = 'THIRD'
 }
-
-export type HmisUpdateClientError = {
-  __typename?: 'HmisUpdateClientError';
-  field?: Maybe<Scalars['String']['output']>;
-  message: Scalars['String']['output'];
-};
-
-export type HmisUpdateClientInput = {
-  dob: Scalars['String']['input'];
-  dobDataQuality: Scalars['Int']['input'];
-  firstName: Scalars['String']['input'];
-  lastName: Scalars['String']['input'];
-  nameDataQuality: Scalars['Int']['input'];
-  personalId: Scalars['String']['input'];
-  ssn1: Scalars['String']['input'];
-  ssn2: Scalars['String']['input'];
-  ssn3: Scalars['String']['input'];
-  ssnDataQuality: Scalars['Int']['input'];
-};
-
-export type HmisUpdateClientNoteError = {
-  __typename?: 'HmisUpdateClientNoteError';
-  field?: Maybe<Scalars['String']['output']>;
-  message: Scalars['String']['output'];
-};
-
-export type HmisUpdateClientNoteInput = {
-  category?: InputMaybe<Scalars['String']['input']>;
-  date: Scalars['String']['input'];
-  enrollmentId: Scalars['String']['input'];
-  id: Scalars['String']['input'];
-  note: Scalars['String']['input'];
-  personalId: Scalars['String']['input'];
-  title: Scalars['String']['input'];
-};
-
-export type HmisUpdateClientSubItemsInput = {
-  additionalRaceEthnicity: Scalars['String']['input'];
-  alias: Scalars['String']['input'];
-  differentIdentityText: Scalars['String']['input'];
-  gender: Array<Scalars['Int']['input']>;
-  middleName: Scalars['String']['input'];
-  nameSuffix: Scalars['Int']['input'];
-  raceEthnicity: Array<Scalars['Int']['input']>;
-  veteranStatus: Scalars['Int']['input'];
-};
 
 export enum HmisVeteranStatusEnum {
   DontKnow = 'DONT_KNOW',
@@ -1437,11 +1220,7 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
-  hmisCreateClient: HmisClientTypeHmisCreateClientError;
-  hmisCreateClientNote: HmisClientNoteTypeHmisCreateClientNoteError;
-  hmisLogin: UserTypeHmisLoginError;
-  hmisUpdateClient: HmisClientTypeHmisUpdateClientError;
-  hmisUpdateClientNote: HmisClientNoteTypeHmisUpdateClientNoteError;
+  hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
   login: AuthResponse;
@@ -1609,31 +1388,9 @@ export type MutationDeleteTaskArgs = {
 };
 
 
-export type MutationHmisCreateClientArgs = {
-  clientInput: HmisCreateClientInput;
-  clientSubItemsInput: HmisCreateClientSubItemsInput;
-};
-
-
-export type MutationHmisCreateClientNoteArgs = {
-  clientNoteInput: HmisCreateClientNoteInput;
-};
-
-
 export type MutationHmisLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
-};
-
-
-export type MutationHmisUpdateClientArgs = {
-  clientInput: HmisUpdateClientInput;
-  clientSubItemsInput: HmisUpdateClientSubItemsInput;
-};
-
-
-export type MutationHmisUpdateClientNoteArgs = {
-  clientNoteInput: HmisUpdateClientNoteInput;
 };
 
 
@@ -2405,62 +2162,6 @@ export enum SelahTeamEnum {
   WdiOutreach = 'WDI_OUTREACH'
 }
 
-export enum ServiceEnum {
-  Bag = 'BAG',
-  Batteries = 'BATTERIES',
-  Bicycle = 'BICYCLE',
-  BicycleRepair = 'BICYCLE_REPAIR',
-  BirthCertificate = 'BIRTH_CERTIFICATE',
-  Blanket = 'BLANKET',
-  Book = 'BOOK',
-  CaliforniaLifelinePhone = 'CALIFORNIA_LIFELINE_PHONE',
-  Clothes = 'CLOTHES',
-  ConsentToConnect = 'CONSENT_TO_CONNECT',
-  ContactDpss = 'CONTACT_DPSS',
-  ContactFriend = 'CONTACT_FRIEND',
-  Dental = 'DENTAL',
-  DiscountScooterRides = 'DISCOUNT_SCOOTER_RIDES',
-  DmhEvaluation = 'DMH_EVALUATION',
-  DmvNoFeeIdForm = 'DMV_NO_FEE_ID_FORM',
-  Ebt = 'EBT',
-  FamilyReunification = 'FAMILY_REUNIFICATION',
-  FeminineHygiene = 'FEMININE_HYGIENE',
-  FirstAid = 'FIRST_AID',
-  Food = 'FOOD',
-  HarmReduction = 'HARM_REDUCTION',
-  HmisConsent = 'HMIS_CONSENT',
-  HygieneKit = 'HYGIENE_KIT',
-  InternetAccess = 'INTERNET_ACCESS',
-  Lahop = 'LAHOP',
-  LegalCounsel = 'LEGAL_COUNSEL',
-  MailPickUp = 'MAIL_PICK_UP',
-  Medical = 'MEDICAL',
-  MediCal = 'MEDI_CAL',
-  MetroLifeTap = 'METRO_LIFE_TAP',
-  Notary = 'NOTARY',
-  Other = 'OTHER',
-  PetCare = 'PET_CARE',
-  PetFood = 'PET_FOOD',
-  PublicBenefitsPrograms = 'PUBLIC_BENEFITS_PROGRAMS',
-  Ride = 'RIDE',
-  SafeParking = 'SAFE_PARKING',
-  Shelter = 'SHELTER',
-  Shoes = 'SHOES',
-  Shower = 'SHOWER',
-  SleepingBag = 'SLEEPING_BAG',
-  SocialSecurityCardReplacement = 'SOCIAL_SECURITY_CARD_REPLACEMENT',
-  SsiSsdi = 'SSI_SSDI',
-  StimulusAssistance = 'STIMULUS_ASSISTANCE',
-  StorageBelongings = 'STORAGE_BELONGINGS',
-  StorageDocuments = 'STORAGE_DOCUMENTS',
-  Tarp = 'TARP',
-  Tent = 'TENT',
-  TherapistAppointment = 'THERAPIST_APPOINTMENT',
-  UnemploymentCertification = 'UNEMPLOYMENT_CERTIFICATION',
-  VaccinePassport = 'VACCINE_PASSPORT',
-  Water = 'WATER'
-}
-
 export enum ServiceRequestStatusEnum {
   Completed = 'COMPLETED',
   ToDo = 'TO_DO'
@@ -2475,8 +2176,6 @@ export type ServiceRequestType = {
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   service?: Maybe<OrganizationServiceType>;
-  serviceEnum?: Maybe<ServiceEnum>;
-  serviceOther?: Maybe<Scalars['String']['output']>;
   status: ServiceRequestStatusEnum;
 };
 
@@ -2586,6 +2285,7 @@ export type ShelterType = {
   id: Scalars['ID']['output'];
   immediateNeeds: Array<ImmediateNeedType>;
   instagram?: Maybe<Scalars['String']['output']>;
+  intakeHours?: Maybe<Array<Maybe<TimeRange>>>;
   interiorPhotos: Array<ShelterPhotoType>;
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;

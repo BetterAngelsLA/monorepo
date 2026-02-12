@@ -513,7 +513,7 @@ export type CreateShelterInput = {
   addNotesShelterDetails?: InputMaybe<Scalars['String']['input']>;
   addNotesSleepingDetails?: InputMaybe<Scalars['String']['input']>;
   bedFees?: InputMaybe<Scalars['String']['input']>;
-  cities: Array<CityChoices>;
+  cities: Array<Scalars['String']['input']>;
   cityCouncilDistrict?: InputMaybe<Scalars['Int']['input']>;
   curfew?: InputMaybe<Scalars['Time']['input']>;
   demographics: Array<DemographicChoices>;

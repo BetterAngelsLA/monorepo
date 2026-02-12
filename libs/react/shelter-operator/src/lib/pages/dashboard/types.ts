@@ -1,6 +1,5 @@
 import {
   AccessibilityChoices,
-  CityChoices,
   DemographicChoices,
   EntryRequirementChoices,
   ExitPolicyChoices,
@@ -23,7 +22,6 @@ import {
 } from '@monorepo/react/shelter';
 import {
   enumDisplayAccessibilityChoices,
-  enumDisplayCityChoices,
   enumDisplayDemographics,
   enumDisplayEntryRequirementChoices,
   enumDisplayFunderChoices,
@@ -98,7 +96,7 @@ export interface ShelterFormData {
   entry_info: string;
 
   // Ecosystem Information
-  cities: CityChoices[];
+  cities: string[]; // City names - Cities are now database models
   spa: SpaChoices[];
   city_council_district: number | null;
   supervisorial_district: number | null;
@@ -236,7 +234,25 @@ export const MEAL_SERVICES_OPTIONS = toOptions(MEAL_SERVICES_LABELS);
 export const ENTRY_REQUIREMENTS_OPTIONS = toOptions(enumDisplayEntryRequirementChoices);
 export const REFERRAL_REQUIREMENT_OPTIONS = toOptions(REFERRAL_REQUIREMENT_LABELS);
 export const SPA_OPTIONS = toOptions(SPA_LABELS);
-export const LA_CITIES_OPTIONS = toOptions(enumDisplayCityChoices);
+
+// Common LA area cities - Cities are now database models and can be added dynamically
+export const LA_CITIES_OPTIONS = [
+  { value: 'Los Angeles', label: 'Los Angeles' },
+  { value: 'Pasadena', label: 'Pasadena' },
+  { value: 'Long Beach', label: 'Long Beach' },
+  { value: 'Glendale', label: 'Glendale' },
+  { value: 'Santa Monica', label: 'Santa Monica' },
+  { value: 'Burbank', label: 'Burbank' },
+  { value: 'Pomona', label: 'Pomona' },
+  { value: 'Torrance', label: 'Torrance' },
+  { value: 'Inglewood', label: 'Inglewood' },
+  { value: 'El Monte', label: 'El Monte' },
+  { value: 'Downey', label: 'Downey' },
+  { value: 'West Covina', label: 'West Covina' },
+  { value: 'Norwalk', label: 'Norwalk' },
+  { value: 'Compton', label: 'Compton' },
+] as const;
+
 export const SHELTER_PROGRAMS_OPTIONS = toOptions(enumDisplayShelterProgramChoices, [ShelterProgramChoices.Other]);
 export const FUNDERS_OPTIONS = toOptions(enumDisplayFunderChoices, [FunderChoices.Other]);
 export const STATUS_OPTIONS = toOptions(STATUS_LABELS);
