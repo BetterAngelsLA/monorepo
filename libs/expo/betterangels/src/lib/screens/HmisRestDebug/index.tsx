@@ -169,17 +169,17 @@ export default function HmisRestDebug() {
       // Use btoa for base64 encoding (available in React Native)
       const base64Content = btoa(testContent);
 
-      const result = await uploadClientFile(
-        clientId.trim(),
-        {
+      const result = await uploadClientFile({
+        clientId: clientId.trim(),
+        file: {
           content: base64Content,
           name: fileName.trim() || 'test-document.txt',
           mimeType: 'text/plain',
         },
-        parseInt(categoryId, 10),
-        parseInt(fileNameId, 10),
-        false
-      );
+        categoryId: parseInt(categoryId, 10),
+        fileNameId: parseInt(fileNameId, 10),
+        isPrivate: false,
+      });
 
       setUploadOutput(JSON.stringify(result, null, 2));
       setUploadStatus('success');

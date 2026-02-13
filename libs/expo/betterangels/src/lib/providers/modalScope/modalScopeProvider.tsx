@@ -1,0 +1,21 @@
+/**
+ * ModalScope defines the UI overlay universe for a native modal.
+ *
+ * Any provider placed here is guaranteed to render its UI
+ * above the modal’s content, but will not escape this modal.
+ *
+ * Only visual, interaction-level providers should live here
+ * (e.g. Snackbar, BottomPrompt).
+ */
+
+import { ReactNode } from 'react';
+import { BottomPromptProvider } from '../bottomPrompt';
+import SnackbarProvider from '../snackbar/SnackbarProvider';
+
+export function ModalScopeProvider({ children }: { children: ReactNode }) {
+  return (
+    <SnackbarProvider>
+      <BottomPromptProvider>{children}</BottomPromptProvider>
+    </SnackbarProvider>
+  );
+}

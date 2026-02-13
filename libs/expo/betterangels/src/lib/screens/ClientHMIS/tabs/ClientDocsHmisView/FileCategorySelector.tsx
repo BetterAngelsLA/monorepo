@@ -3,15 +3,29 @@ import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { SingleSelect, TextOrNode } from '@monorepo/expo/shared/ui-components';
 import { ReactNode, useMemo } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
+import { useBottomPrompt } from '../../../../providers';
+import { CustomFileNamePrompt } from './CustomFileNamePrompt';
+
+const CUSTOM_FILE_NAME_VALUE = '__CUSTOM__';
+
+type TFileSelection =
+  | {
+      type: 'predefined';
+      categoryId: string;
+      categoryName: string;
+      subCategoryId: string;
+    }
+  | {
+      type: 'custom';
+      categoryId: string;
+      categoryName: string;
+      fileName: string;
+    };
 
 type FileCategorySelectorProps = {
   categories: FileCategory[];
   subCategories: FileName[];
-  onSelect: (categoryGroup: {
-    categoryId: string;
-    subCategoryId: string;
-    categoryName: string;
-  }) => void;
+  onSelect: (selection: TFileSelection) => void;
   disabled?: boolean;
   header?: string | ReactNode | null;
   style?: ViewStyle;
@@ -27,6 +41,8 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
     header = 'Select the right file category and predefined name.',
   } = props;
 
+  const { showBottomPrompt } = useBottomPrompt();
+
   const categoryGroups = useMemo(() => {
     return categories
       .filter((category) => category.status === 1)
@@ -37,6 +53,11 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
             value: String(sub.id),
             displayValue: sub.name,
           }));
+
+        types.push({
+          value: CUSTOM_FILE_NAME_VALUE,
+          displayValue: 'Other (custom)',
+        });
 
         return {
           categoryId: String(category.id),
@@ -53,7 +74,12 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
         <TextOrNode textStyle={[styles.defaultHeaderText]}>{header}</TextOrNode>
       )}
 
-      <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
+      <View
+        style={{
+          gap: Spacings.xs,
+          marginBottom: Spacings.lg,
+        }}
+      >
         {categoryGroups.map((categoryGroup) => (
           <SingleSelect
             key={categoryGroup.categoryId}
@@ -62,10 +88,38 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
             placeholder={categoryGroup.categoryName}
             modalTitle="Document Type"
             items={categoryGroup.types}
-            onChange={(e) => {
+            onChange={(value) => {
+              if (value === CUSTOM_FILE_NAME_VALUE) {
+                showBottomPrompt(
+                  ({ close }) => (
+                    <CustomFileNamePrompt
+                      onSubmit={(customName) => {
+                        onSelect({
+                          type: 'custom',
+                          categoryId: categoryGroup.categoryId,
+                          categoryName: categoryGroup.categoryName,
+                          fileName: customName,
+                        });
+
+                        close();
+                      }}
+                    />
+                  ),
+                  {
+                    sheetHeight: 400,
+                    contentStyle: {
+                      paddingHorizontal: 0,
+                    },
+                  }
+                );
+
+                return;
+              }
+
               onSelect({
+                type: 'predefined',
                 categoryId: categoryGroup.categoryId,
-                subCategoryId: e || '',
+                subCategoryId: value ?? '',
                 categoryName: categoryGroup.categoryName,
               });
             }}

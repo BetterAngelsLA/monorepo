@@ -174,16 +174,16 @@ describe('HmisClient', () => {
         json: async () => mockResponse,
       });
 
-      const result = await hmisClient.uploadClientFile(
-        '68998C256',
-        {
+      const result = await hmisClient.uploadClientFile({
+        clientId: '68998C256',
+        file: {
           content: 'VGVzdCBjb250ZW50', // Base64 "Test content"
           name: 'test.txt',
           mimeType: 'text/plain',
         },
-        12, // categoryId
-        89 // fileNameId
-      );
+        categoryId: 12,
+        fileNameId: 89,
+      });
 
       expect(result).toEqual(mockResponse);
       expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -211,16 +211,16 @@ describe('HmisClient', () => {
     it('throws HmisInvalidFileTypeError for invalid file type', async () => {
       const hmisClient = createHmisClient();
       try {
-        await hmisClient.uploadClientFile(
-          '68998C256',
-          {
+        await hmisClient.uploadClientFile({
+          clientId: '68998C256',
+          file: {
             content: 'VGVzdCBjb250ZW50',
             name: 'test.mov',
             mimeType: 'video/quicktime' as any,
           },
-          12,
-          89
-        );
+          categoryId: 12,
+          fileNameId: 89,
+        });
 
         fail('Expected uploadClientFile to throw');
       } catch (err) {
@@ -244,17 +244,17 @@ describe('HmisClient', () => {
         json: async () => ({ id: 37 }),
       });
 
-      await hmisClient.uploadClientFile(
-        '68998C256',
-        {
+      await hmisClient.uploadClientFile({
+        clientId: '68998C256',
+        file: {
           content: 'VGVzdCBjb250ZW50',
           name: 'private.pdf',
           mimeType: 'application/pdf',
         },
-        12,
-        89,
-        true // isPrivate
-      );
+        categoryId: 12,
+        fileNameId: 89,
+        isPrivate: true, // isPrivate
+      });
 
       const [, options] = mockFetch.mock.calls[0];
       const body = JSON.parse(options.body);

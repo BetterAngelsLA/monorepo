@@ -15,6 +15,7 @@ interface ISingleSelectProps extends TMarginProps {
   placeholder?: string;
   placeholderTextColor?: string;
   onChange: (value: string | null) => void;
+  onAfterClose?: () => void;
   items: { displayValue?: string; value: string }[];
   required?: boolean;
   disabled?: boolean;
@@ -31,6 +32,7 @@ export function SingleSelect(props: ISingleSelectProps) {
     items,
     label,
     onChange,
+    onAfterClose,
     required,
     disabled,
     placeholder = '',
@@ -55,6 +57,7 @@ export function SingleSelect(props: ISingleSelectProps) {
         required={required}
         selectedValue={selectedItem?.value}
         onChange={onChange}
+        onAfterClose={onAfterClose}
         disabled={disabled}
         placeholder={placeholder}
         items={items}

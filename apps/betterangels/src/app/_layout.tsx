@@ -3,6 +3,7 @@ import 'expo-dev-client';
 import {
   AppUpdatePrompt,
   BlockingScreenProvider,
+  BottomPromptProvider,
   createBaTypePolicies,
   ErrorCrashView,
   KeyboardToolbarProvider,
@@ -66,19 +67,21 @@ export default function RootLayout() {
               <FeatureControlProvider>
                 <KeyboardProvider>
                   <KeyboardToolbarProvider>
-                    <SnackbarProvider>
-                      <UserProvider>
-                        <BlockingScreenProvider>
-                          <ModalScreenProvider>
-                            <AppUpdatePrompt />
-                            <StatusBar
-                              style={Platform.OS === 'ios' ? 'light' : 'auto'}
-                            />
-                            <AppRoutesStack />
-                          </ModalScreenProvider>
-                        </BlockingScreenProvider>
-                      </UserProvider>
-                    </SnackbarProvider>
+                    <BottomPromptProvider>
+                      <SnackbarProvider>
+                        <UserProvider>
+                          <BlockingScreenProvider>
+                            <ModalScreenProvider>
+                              <AppUpdatePrompt />
+                              <StatusBar
+                                style={Platform.OS === 'ios' ? 'light' : 'auto'}
+                              />
+                              <AppRoutesStack />
+                            </ModalScreenProvider>
+                          </BlockingScreenProvider>
+                        </UserProvider>
+                      </SnackbarProvider>
+                    </BottomPromptProvider>
                   </KeyboardToolbarProvider>
                 </KeyboardProvider>
               </FeatureControlProvider>
