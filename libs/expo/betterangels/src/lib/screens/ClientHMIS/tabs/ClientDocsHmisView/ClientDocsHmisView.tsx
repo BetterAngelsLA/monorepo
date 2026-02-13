@@ -68,7 +68,9 @@ export function ClientDocsHmisView({
         <IconButton
           onPress={() =>
             showModalScreen({
-              presentation: 'modal',
+              // not using 'modal' presentation as iOS 26 changes the 'modal' layout
+              // to extend beyond bottom of screen
+              presentation: 'fullScreenModal',
               title: 'Upload Files',
               renderContent: ({ close }) => (
                 <UploadModalHmis client={client} closeModal={close} />
