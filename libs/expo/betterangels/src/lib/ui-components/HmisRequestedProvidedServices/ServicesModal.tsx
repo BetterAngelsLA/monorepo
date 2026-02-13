@@ -259,9 +259,10 @@ export default function ServicesModal(props: IServicesModalProps) {
 
   // ---------- Close (revert) ----------
   const clearAll = useCallback(() => {
-    setRows(
+    setRows((prev) =>
       pipe(
-        computeInitial(),
+        prev,
+        rfilter((r) => Boolean(r.id) || Boolean(r.serviceOther)),
         rmap((r) => ({ ...r, markedForDeletion: true }))
       )
     );
