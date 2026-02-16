@@ -12,7 +12,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { debounce } from '@monorepo/expo/shared/utils';
+import { debounce } from 'lodash';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';

@@ -237,7 +237,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "location": location,
         }
 
-        expected_query_count = 19
+        expected_query_count = 14
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_hmis_note_location_fixture(variables)
 

@@ -15,6 +15,7 @@ import {
   ClientFilesResponse,
   ClientFileUploadRequest,
   ClientFileUploadResponse,
+  ClientPhotoUploadResponse,
   FileCategoriesResponse,
   FileNamesResponse,
   HmisHttpQueryParams,
@@ -436,10 +437,34 @@ class HmisClient {
   ): Promise<void> {
     await this.delete(`/clients/${clientId}/client-files/${fileId}`);
   }
-}
 
-// Factory function to create HmisClient
-export const createHmisClient = () => new HmisClient();
+  /**
+   * Upload client photo
+   *
+   * POST /clients/{id}/photo/upload with multipart/form-data body.
+   *
+   * @param clientId - The client ID
+   * @param formData - FormData containing the photo file (e.g. from image picker)
+   * @returns Promise with upload response
+   * @throws HmisError if the request fails
+   *
+   * @example
+   * ```typescript
+   * const formData = new FormData();
+   * formData.append('file', { uri, name: 'photo.jpg', type: 'image/jpeg' });
+   * await hmisClient.uploadClientPhoto('68998C256', formData);
+   * ```
+   */
+  async uploadClientPhoto(
+    clientId: string | number,
+    formData: FormData
+  ): Promise<ClientPhotoUploadResponse> {
+    return this.postMultipart<ClientPhotoUploadResponse>(
+      `/clients/${clientId}/photo/upload`,
+      formData
+    );
+  }
+}
 
 export const getHmisFileUrls = (
   baseUrl: string,
@@ -451,5 +476,8 @@ export const getHmisFileUrls = (
     content: `${baseUrl}/clients/${clientId}/client-files/${fileId}/content`,
   };
 };
+
+// Factory function to create HmisClient
+export const createHmisClient = () => new HmisClient();
 
 export { HmisClient };

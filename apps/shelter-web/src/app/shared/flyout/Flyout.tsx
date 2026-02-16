@@ -1,7 +1,7 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { PropsWithChildren, ReactElement, ReactNode } from 'react';
 import { flyoutAtom } from '../atoms/flyoutAtom';
-import { mergeCss } from '../utils/styles/mergeCss';
 import { FlyoutMask } from './Flyoutmask';
 
 export enum FlyoutAnimationEnum {
@@ -26,7 +26,7 @@ export function Flyout(props: IFlyout): ReactElement | null {
   const [_flyout, setFlyout] = useAtom(flyoutAtom);
 
   function handleMaskClick(): void {
-    if(closeOnClick) setFlyout(null);
+    if (closeOnClick) setFlyout(null);
   }
 
   const flyoutCss = [

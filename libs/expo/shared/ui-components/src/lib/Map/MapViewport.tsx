@@ -2,7 +2,7 @@ import { ReactNode, RefObject, useState } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import MapView, { Details, Region } from 'react-native-maps';
 import { defaultMapRegion } from './constants';
-import { MapLocateMeBtn } from './mapUi/MapLocateMeBtn';
+import { MapLocateMeBtn } from './MapLocateMeBtn';
 import { TMapView } from './types';
 
 type TMapProps = {

@@ -1,4 +1,4 @@
-import { useClientPhotoContentUri } from '@monorepo/expo/shared/clients';
+import { useHmisClientPhotoContentUri } from '@monorepo/expo/shared/clients';
 import {
   GlobeIcon,
   IdCardOutlineIcon,
@@ -17,6 +17,7 @@ import {
   enumDisplayPronoun,
   getExistingHmisSuffix,
 } from '../../../static';
+import { HMISProfilePhotoUploader } from './HMISProfilePhotoUploader';
 
 interface IClientHeaderProps {
   client?: HmisClientProfileType;
@@ -36,7 +37,7 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
     pronouns,
     uniqueIdentifier,
   } = client || {};
-  const { contentUri, headers } = useClientPhotoContentUri(clientId);
+  const { thumbnailUri, headers } = useHmisClientPhotoContentUri(clientId);
 
   const nameParts = [firstName, nameMiddle, lastName].filter((s) => !!s);
 
@@ -57,14 +58,22 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Avatar
-          size="xl"
-          mr="xs"
-          accessibilityLabel="client's profile photo avatar"
-          accessibilityHint="client's profile photo avatar"
-          imageUrl={contentUri}
-          headers={headers}
-        />
+        {clientId ? (
+          <HMISProfilePhotoUploader
+            clientId={clientId}
+            imageUrl={thumbnailUri}
+            headers={headers}
+          />
+        ) : (
+          <Avatar
+            size="xl"
+            mr="xs"
+            imageUrl={thumbnailUri}
+            headers={headers}
+            accessibilityLabel="client's profile photo"
+            accessibilityHint="profile photo, editing not available"
+          />
+        )}
         <TextMedium selectable style={{ flexShrink: 1 }} size="lg">
           {nameParts.join(' ')}
         </TextMedium>

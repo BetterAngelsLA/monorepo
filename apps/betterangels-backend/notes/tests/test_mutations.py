@@ -142,7 +142,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "location": location,
         }
 
-        expected_query_count = 24
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_location_fixture(variables)
 

@@ -20,3 +20,18 @@ query OrganizationMembers(
     }
   }
 }
+
+mutation RemoveOrganizationMember($data: RemoveOrganizationMemberInput!) {
+  removeOrganizationMember(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on DeletedObjectType {
+      id
+    }
+  }
+}

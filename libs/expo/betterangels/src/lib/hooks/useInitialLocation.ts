@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { usePlacesClient } from '@monorepo/expo/shared/ui-components';
 import * as ExpoLocation from 'expo-location';
 import { useEffect, useState } from 'react';
 import { LocationDraft } from '../screens/NotesHmis/HmisProgramNoteForm';
@@ -9,11 +9,11 @@ const INITIAL_LOCATION = {
 };
 
 export function useInitialLocation(
-  baseUrl: string,
   editing: boolean | undefined,
   location: LocationDraft | undefined,
   setValue: (name: 'location', value: LocationDraft) => void
 ) {
+  const places = usePlacesClient();
   const [userLocation, setUserLocation] =
     useState<ExpoLocation.LocationObject | null>(null);
 
@@ -38,26 +38,15 @@ export function useInitialLocation(
 
         if (editing) return;
 
-        const url = `${baseUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}`;
-        const { data } = await axios.get(url, {
-          params: { withCredentials: true },
-        });
-
-        const result = data.results?.[0];
-        const formattedAddress: string | null =
-          result?.formatted_address ?? null;
-        const shortName: string | null = formattedAddress
-          ? formattedAddress.split(', ')[0]
-          : null;
-        const components = result?.address_components ?? [];
+        const geocodeResult = await places.reverseGeocode(latitude, longitude);
 
         setValue('location', {
           ...location,
           longitude,
           latitude,
-          formattedAddress,
-          shortAddressName: shortName,
-          components,
+          formattedAddress: geocodeResult.formattedAddress,
+          shortAddressName: geocodeResult.shortAddress,
+          components: geocodeResult.addressComponents,
         } as LocationDraft);
       } catch (err) {
         console.error('Error auto-setting initial location', err);
@@ -65,7 +54,7 @@ export function useInitialLocation(
     };
 
     void autoSetInitialLocation();
-  }, [baseUrl]);
+  }, [places]);
 
   return [userLocation];
 }

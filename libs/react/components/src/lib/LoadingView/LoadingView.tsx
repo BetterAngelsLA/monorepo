@@ -1,5 +1,5 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { ReactNode } from 'react';
-import { mergeCss } from '../../utils';
 import { LoadingSpinner, TLoadingSpinnerSize } from '../LoadingSpinner';
 
 type TLoadingIndicatorOpts = {
