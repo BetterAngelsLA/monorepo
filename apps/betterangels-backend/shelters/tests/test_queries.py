@@ -11,6 +11,7 @@ from model_bakery.recipe import seq
 from places import Places
 from shelters.enums import (
     AccessibilityChoices,
+    BedStatusChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -31,6 +32,7 @@ from shelters.enums import (
 from shelters.models import (
     SPA,
     Accessibility,
+    Bed,
     City,
     Demographic,
     EntryRequirement,
@@ -628,3 +630,79 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         results = response["data"]["shelters"]["results"]
 
         self.assertEqual(len(results), expected_result_count)
+
+
+class BedMutationTestCase(GraphQLTestCaseMixin, TestCase):
+    def test_create_bed(self) -> None:
+        shelter = shelter_recipe.make()
+        mutation = """
+            mutation CreateBed($input: CreateBedInput!) {
+                createBed(input: $input) {
+                    id
+                    status
+                    shelter {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {
+            "input": {
+                "shelterId": shelter.pk,
+                "status": BedStatusChoices.AVAILABLE.name,
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        data = response["data"]["createBed"]
+        self.assertEqual(data["status"], BedStatusChoices.AVAILABLE.name)
+        self.assertEqual(data["shelter"]["id"], str(shelter.pk))
+
+        self.assertTrue(Bed.objects.filter(pk=data["id"]).exists())
+
+    def test_create_bed_shelter_not_found(self) -> None:
+        mutation = """
+            mutation CreateBed($input: CreateBedInput!) {
+                createBed(input: $input) {
+                    id
+                }
+            }
+        """
+        variables = {
+            "input": {
+                "shelterId": 999999,
+                "status": BedStatusChoices.AVAILABLE.name,
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertIn("Shelter matching ID 999999 could not be found.", response["errors"][0]["message"])
+
+    def test_create_bed_invalid_status(self) -> None:
+        shelter = shelter_recipe.make()
+        mutation = """
+            mutation CreateBed($input: CreateBedInput!) {
+                createBed(input: $input) {
+                    id
+                }
+            }
+        """
+        variables = {
+            "input": {
+                "shelterId": shelter.pk,
+                "status": "INVALID_STATUS",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertIn(
+            "Value 'INVALID_STATUS' does not exist in 'BedStatusChoices' enum.", response["errors"][0]["message"]
+        )

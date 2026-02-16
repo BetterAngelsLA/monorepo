@@ -92,6 +92,17 @@ type AuthResponse {
   status_code: String!
 }
 
+enum BedStatusChoices {
+  AVAILABLE
+  RESERVED
+}
+
+type BedType {
+  id: ID!
+  shelter: ShelterType!
+  status: BedStatusChoices
+}
+
 type CityType {
   id: ID!
   name: String!
@@ -336,6 +347,11 @@ type ContactInfoType {
   id: ID!
   contactName: String!
   contactNumber: PhoneNumber!
+}
+
+input CreateBedInput {
+  shelterId: ID!
+  status: BedStatusChoices!
 }
 
 union CreateClientContactPayload = ClientContactType | OperationInfo
@@ -1233,6 +1249,7 @@ type Mutation {
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload!
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
+  createBed(input: CreateBedInput!): BedType!
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
