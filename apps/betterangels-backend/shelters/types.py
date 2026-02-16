@@ -12,6 +12,7 @@ from django.db.models import Prefetch, Q, QuerySet
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
+    BedStatusChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -140,6 +141,13 @@ class FunderType:
     name: Optional[FunderChoices]
 
 
+@strawberry_django.type(models.Bed)
+class BedType:
+    id: ID
+    shelter: "ShelterType" = strawberry_django.field(field_name="shelter_id")
+    status: Optional[BedStatusChoices]
+
+
 @strawberry.input
 class GeolocationInput:
     latitude: float
@@ -163,6 +171,12 @@ class ShelterPropertyInput:
     shelter_types: Optional[List[ShelterTypeChoices]] = None
     room_styles: Optional[List[RoomStyleChoices]] = None
     parking: Optional[List[ParkingChoices]] = None
+
+
+@strawberry.input
+class CreateBedInput:
+    shelter_id: ID
+    status: BedStatusChoices
 
 
 @strawberry_django.filter_type(models.Shelter)
