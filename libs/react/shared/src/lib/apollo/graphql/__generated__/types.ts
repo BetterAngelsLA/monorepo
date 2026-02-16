@@ -158,6 +158,18 @@ export type AuthResponse = {
   status_code: Scalars['String']['output'];
 };
 
+export enum BedStatusChoices {
+  Available = 'AVAILABLE',
+  Reserved = 'RESERVED'
+}
+
+export type BedType = {
+  __typename?: 'BedType';
+  id: Scalars['ID']['output'];
+  shelter: ShelterType;
+  status?: Maybe<BedStatusChoices>;
+};
+
 export type CityType = {
   __typename?: 'CityType';
   id: Scalars['ID']['output'];
@@ -405,6 +417,11 @@ export type ContactInfoType = {
   contactName: Scalars['String']['output'];
   contactNumber: Scalars['PhoneNumber']['output'];
   id: Scalars['ID']['output'];
+};
+
+export type CreateBedInput = {
+  shelterId: Scalars['ID']['input'];
+  status: BedStatusChoices;
 };
 
 export type CreateClientContactPayload = ClientContactType | OperationInfo;
@@ -1294,6 +1311,7 @@ export enum MealServiceChoices {
 export type Mutation = {
   __typename?: 'Mutation';
   addOrganizationMember: AddOrganizationMemberPayload;
+  createBed: BedType;
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
@@ -1352,6 +1370,11 @@ export type Mutation = {
 
 export type MutationAddOrganizationMemberArgs = {
   data: OrgInvitationInput;
+};
+
+
+export type MutationCreateBedArgs = {
+  input: CreateBedInput;
 };
 
 
