@@ -1,9 +1,7 @@
-from accounts.models import User
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, ignore_warnings
-from model_bakery import baker
 from shelters.models import Shelter
 from unittest_parametrize import ParametrizedTestCase
 
