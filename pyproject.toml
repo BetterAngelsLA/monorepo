@@ -47,7 +47,7 @@ djangorestframework-stubs = { extras = [
 ipython = "^9.9.0"
 pytest-django = "^4.11.1"
 boto3-stubs = {extras = ["essential"], version = "^1.42.41"}
-model-bakery = "^1.23.2"
+model-bakery = "^1.23.3"
 unittest-parametrize = "^1.6.0"
 time-machine = "^3.2.0"
 types-python-dateutil = "^2.9.0.20260124"
