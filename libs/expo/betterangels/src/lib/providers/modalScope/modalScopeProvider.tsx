@@ -8,14 +8,14 @@
  * (e.g. Snackbar, BottomPrompt).
  */
 
+import { BottomSheetModalProvider } from '@monorepo/expo/shared/ui-components';
 import { ReactNode } from 'react';
-import { BottomPromptProvider } from '../bottomPrompt';
 import SnackbarProvider from '../snackbar/SnackbarProvider';
 
 export function ModalScopeProvider({ children }: { children: ReactNode }) {
   return (
-    <SnackbarProvider>
-      <BottomPromptProvider>{children}</BottomPromptProvider>
-    </SnackbarProvider>
+    <BottomSheetModalProvider>
+      <SnackbarProvider>{children}</SnackbarProvider>
+    </BottomSheetModalProvider>
   );
 }

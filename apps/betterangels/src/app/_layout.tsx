@@ -1,9 +1,9 @@
 import 'expo-dev-client';
 
+import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import {
   AppUpdatePrompt,
   BlockingScreenProvider,
-  BottomPromptProvider,
   createBaTypePolicies,
   ErrorCrashView,
   KeyboardToolbarProvider,
@@ -17,16 +17,15 @@ import {
   ApiConfigProvider,
   ApolloClientProvider,
 } from '@monorepo/expo/shared/clients';
+import { BottomSheetModalProvider } from '@monorepo/expo/shared/ui-components';
 import { FeatureControlProvider } from '@monorepo/react/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StatusBar } from 'expo-status-bar';
-import { KeyboardProvider } from 'react-native-keyboard-controller';
-import { apiUrl, demoApiUrl } from '../../config';
-
-import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import { type ErrorBoundaryProps } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { apiUrl, demoApiUrl } from '../../config';
 import AppRoutesStack from './AppRoutesStack';
 
 const isDevEnv = process.env['NODE_ENV'] === 'development';
@@ -60,14 +59,14 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <NativePaperProvider>
-        <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-          <QueryClientProvider client={reactqQueryClient}>
-            <ApolloClientProvider typePolicies={baApolloTypePolicies}>
-              <FeatureControlProvider>
-                <KeyboardProvider>
-                  <KeyboardToolbarProvider>
-                    <BottomPromptProvider>
+      <BottomSheetModalProvider>
+        <NativePaperProvider>
+          <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
+            <QueryClientProvider client={reactqQueryClient}>
+              <ApolloClientProvider typePolicies={baApolloTypePolicies}>
+                <FeatureControlProvider>
+                  <KeyboardProvider>
+                    <KeyboardToolbarProvider>
                       <SnackbarProvider>
                         <UserProvider>
                           <BlockingScreenProvider>
@@ -81,14 +80,14 @@ export default function RootLayout() {
                           </BlockingScreenProvider>
                         </UserProvider>
                       </SnackbarProvider>
-                    </BottomPromptProvider>
-                  </KeyboardToolbarProvider>
-                </KeyboardProvider>
-              </FeatureControlProvider>
-            </ApolloClientProvider>
-          </QueryClientProvider>
-        </ApiConfigProvider>
-      </NativePaperProvider>
+                    </KeyboardToolbarProvider>
+                  </KeyboardProvider>
+                </FeatureControlProvider>
+              </ApolloClientProvider>
+            </QueryClientProvider>
+          </ApiConfigProvider>
+        </NativePaperProvider>
+      </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );
 }

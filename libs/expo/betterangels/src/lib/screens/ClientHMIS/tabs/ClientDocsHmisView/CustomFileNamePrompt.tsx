@@ -35,6 +35,7 @@ export function CustomFileNamePrompt(props: TProps) {
         subtitle="If you selected Other in Predefined file name, fill out the name of the file here."
         ctaButtonText="Done"
         ctaDisabled={isSubmitDisabled}
+        enableBottomSheetKeyboardHandling={true}
       />
     </View>
   );

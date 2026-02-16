@@ -24,6 +24,7 @@ export interface TProps {
   style?: ViewStyle;
   contentStyle?: ViewStyle;
   footerStyle?: ViewStyle;
+  enableBottomSheetKeyboardHandling?: boolean;
 }
 
 export function SingleInputForm(props: TProps) {
@@ -43,6 +44,7 @@ export function SingleInputForm(props: TProps) {
     style,
     contentStyle,
     footerStyle,
+    enableBottomSheetKeyboardHandling,
   } = props;
 
   return (
@@ -69,6 +71,7 @@ export function SingleInputForm(props: TProps) {
           value={value}
           onDelete={onClear}
           onChangeText={onChangeText}
+          enableBottomSheetKeyboardHandling={enableBottomSheetKeyboardHandling}
         />
       </View>
 
@@ -92,15 +95,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: Spacings.md,
+    backgroundColor: 'purple',
   },
   content: {
     paddingHorizontal: DEFAULT_PADDING_H,
   },
   footer: {
+    marginTop: Spacings.xl,
     paddingHorizontal: DEFAULT_PADDING_H,
     paddingTop: Spacings.sm,
     paddingBottom: Spacings.md,
-    marginTop: 'auto',
     width: '100%',
     backgroundColor: 'white',
 

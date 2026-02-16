@@ -1,9 +1,12 @@
 import { FileCategory, FileName } from '@monorepo/expo/shared/clients';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
-import { SingleSelect, TextOrNode } from '@monorepo/expo/shared/ui-components';
+import {
+  SingleSelect,
+  TextOrNode,
+  useBottomSheet,
+} from '@monorepo/expo/shared/ui-components';
 import { ReactNode, useMemo } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import { useBottomPrompt } from '../../../../providers';
 import { CustomFileNamePrompt } from './CustomFileNamePrompt';
 
 const CUSTOM_FILE_NAME_VALUE = '__CUSTOM__';
@@ -41,7 +44,7 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
     header = 'Select the right file category and predefined name.',
   } = props;
 
-  const { showBottomPrompt } = useBottomPrompt();
+  const { showBottomSheet } = useBottomSheet();
 
   const categoryGroups = useMemo(() => {
     return categories
@@ -90,28 +93,20 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
             items={categoryGroup.types}
             onChange={(value) => {
               if (value === CUSTOM_FILE_NAME_VALUE) {
-                showBottomPrompt(
-                  ({ close }) => (
-                    <CustomFileNamePrompt
-                      onSubmit={(customName) => {
-                        onSelect({
-                          type: 'custom',
-                          categoryId: categoryGroup.categoryId,
-                          categoryName: categoryGroup.categoryName,
-                          fileName: customName,
-                        });
+                showBottomSheet(({ dismissTopSheet }) => (
+                  <CustomFileNamePrompt
+                    onSubmit={(customName) => {
+                      onSelect({
+                        type: 'custom',
+                        categoryId: categoryGroup.categoryId,
+                        categoryName: categoryGroup.categoryName,
+                        fileName: customName,
+                      });
 
-                        close();
-                      }}
-                    />
-                  ),
-                  {
-                    sheetHeight: 400,
-                    contentStyle: {
-                      paddingHorizontal: 0,
-                    },
-                  }
-                );
+                      dismissTopSheet();
+                    }}
+                  />
+                ));
 
                 return;
               }
