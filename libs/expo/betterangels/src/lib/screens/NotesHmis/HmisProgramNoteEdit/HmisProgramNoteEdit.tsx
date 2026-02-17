@@ -52,7 +52,7 @@ type TProps = {
 };
 
 export function HmisProgramNoteEdit(props: TProps) {
-  const { id, clientId, arrivedFrom } = props;
+  const { id, clientId } = props;
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
