@@ -1,3 +1,4 @@
+from functools import cache
 from typing import Any, Optional
 
 import pghistory
@@ -8,8 +9,11 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
+from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db import models
+from django.db.models import UniqueConstraint
+from django.db.models.functions import Lower
 from django_choices_field import IntegerChoicesField, TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
 from organizations.models import Organization
@@ -21,7 +25,7 @@ from .enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,
     AccessibilityChoices,
-    CityChoices,
+    BedStatusChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
@@ -73,6 +77,16 @@ class RoomStyle(models.Model):
 
     def __str__(self) -> str:
         return str(self.name)
+
+
+class Bed(BaseModel):
+    shelter_id = models.ForeignKey("Shelter", on_delete=models.CASCADE)
+    status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["shelter_id", "status"]),
+        ]
 
 
 # Shelter Details
@@ -142,11 +156,23 @@ class EntryRequirement(models.Model):
 
 
 # Ecosystem Information
-class City(models.Model):
-    name = TextChoicesField(choices_enum=CityChoices, unique=True, blank=True, null=True)
+class City(BaseModel):
+    """Cities that shelters serve. Users can add new cities directly."""
+
+    name = models.CharField(max_length=255, unique=True, db_index=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name_plural = "Cities"
+        constraints = [
+            UniqueConstraint(
+                Lower("name"),
+                name="city_name_ci_unique",
+            ),
+        ]
 
     def __str__(self) -> str:
-        return str(self.name)
+        return self.name
 
 
 class SPA(models.Model):
@@ -262,6 +288,7 @@ class Shelter(BaseModel):
 
     # Ecosystem Information
     cities = models.ManyToManyField(City)
+
     spa = models.ManyToManyField(SPA)
     city_council_district = models.PositiveSmallIntegerField(
         choices=CITY_COUNCIL_DISTRICT_CHOICES,
@@ -285,6 +312,7 @@ class Shelter(BaseModel):
     # Better Angels Review
     overall_rating = models.PositiveSmallIntegerField(choices=[(i, str(i)) for i in range(1, 6)], null=True, blank=True)
     subjective_review = CKEditor5Field(null=True, blank=True)
+    declined_ba_visit = models.BooleanField(default=False, verbose_name="Declined BA Visit")
 
     # Better Angels Admin
     status = TextChoicesField(choices_enum=StatusChoices, default=StatusChoices.DRAFT)
@@ -294,6 +322,34 @@ class Shelter(BaseModel):
 
     def __str__(self) -> str:
         return self.name
+
+    def clean(self) -> None:
+        """
+        Validate and clean _other fields based on whether 'other' is selected in corresponding M2M fields.
+
+        This provides model-level validation as a second layer of defense.
+        Also automatically cleans orphaned _other values.
+        """
+        super().clean()
+        errors = {}
+
+        for field_name in get_fields_with_other_option():
+            other_field_name = f"{field_name}_other"
+            other_value = getattr(self, other_field_name, None)
+
+            # For new instances, we can't check M2M until after save
+            if self.pk:
+                m2m_field = getattr(self, field_name)
+                has_other = m2m_field.filter(name="other").exists()
+
+                if has_other and not other_value:
+                    errors[other_field_name] = f"This field is required when 'Other' is selected in {field_name}."
+                elif not has_other and other_value:
+                    # Automatically clear orphaned other text to maintain data consistency
+                    setattr(self, other_field_name, None)
+
+        if errors:
+            raise ValidationError(errors)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         latitude = self.location.latitude if self.location else None
@@ -522,3 +578,33 @@ class TrackedShelterProgram(Shelter.shelter_programs.through):  # type: ignore[n
 class TrackedFunder(Shelter.funders.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
+
+
+def _get_fields_with_other_option() -> list[str]:
+    """
+    Auto-detect fields that have the 'other' pattern by finding fields ending with '_other'
+    that have a corresponding M2M field.
+
+    Returns:
+        List of base field names (without '_other' suffix) that have the other pattern
+    """
+    return [
+        field.name[:-6]  # Remove '_other' suffix
+        for field in Shelter._meta.get_fields()
+        if isinstance(field, models.CharField)
+        and field.name.endswith("_other")
+        and hasattr(Shelter, field.name[:-6])  # Check if base M2M field exists
+    ]
+
+
+# Fields that have corresponding _other text fields for "Please specify..." pattern
+# Auto-detected by finding fields ending with '_other' that have a corresponding M2M field
+# Used by both form validation (admin.py) and model validation (clean method)
+@cache
+def get_fields_with_other_option() -> list[str]:
+    """
+    Auto-detect and cache fields with the 'other' pattern (M2M + _other CharField).
+
+    Uses @cache decorator for lazy evaluation and automatic caching without manual state.
+    """
+    return _get_fields_with_other_option()

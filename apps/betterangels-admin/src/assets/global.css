@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* TODO: Adjust per project */
 :root {
   --font-primary: 'Poppins', 'sans-serif';
   --color-alert-60: #e55141;
@@ -39,12 +38,6 @@ html,
 body {
   color: var(--color-primary-20);
   font-family: var(--font-primary);
-}
-
-.btn-xl {
-  height: 68px;
-  font-size: 18px;
-  border-radius: 8px;
 }
 
 .btn-lg {

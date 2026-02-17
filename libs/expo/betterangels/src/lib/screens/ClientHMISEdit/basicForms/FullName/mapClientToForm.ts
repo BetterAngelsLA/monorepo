@@ -1,16 +1,21 @@
-import { HmisClientType } from '../../../../apollo';
-import { emptyState, type TFormSchema } from './formSchema';
+import { HmisClientProfileType } from '../../../../apollo';
+import {
+  fullNameFormEmptyState as emptyState,
+  type TFullNameFormSchema,
+} from './formSchema';
 
-export function mapClientToFullNameSchema(client: HmisClientType): TFormSchema {
-  const { firstName, lastName, nameDataQuality, data } = client;
-  const { middleName, alias, nameSuffix } = data || {};
+export function mapClientToFullNameSchema(
+  client: HmisClientProfileType
+): TFullNameFormSchema {
+  const { firstName, lastName, nameMiddle, alias, nameSuffix, nameQuality } =
+    client;
 
   return {
     firstName: firstName || emptyState.firstName,
-    middleName: middleName || emptyState.middleName,
+    nameMiddle: nameMiddle || emptyState.nameMiddle,
     lastName: lastName || emptyState.lastName,
     alias: alias || emptyState.alias,
-    nameDataQuality: nameDataQuality ?? emptyState.nameDataQuality,
+    nameQuality: nameQuality ?? emptyState.nameQuality,
     nameSuffix: nameSuffix ?? emptyState.nameSuffix,
   };
 }

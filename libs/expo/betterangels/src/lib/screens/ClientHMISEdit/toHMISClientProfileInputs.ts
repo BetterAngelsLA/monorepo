@@ -1,164 +1,84 @@
 import {
-  HmisClientDataType,
-  HmisClientType,
-  HmisDobQualityEnum,
-  HmisNameQualityEnum,
-  HmisSsnQualityEnum,
-  HmisSuffixEnum,
-  HmisUpdateClientInput,
-  HmisUpdateClientSubItemsInput,
-  Maybe,
+  HmisClientProfileType,
+  UpdateHmisClientProfileInput,
 } from '../../apollo';
 import {
-  toHmisDobQualityEnumInt,
-  toHmisNameQualityInt,
-  toHmisSsnQualityEnumInt,
-  toHmisSuffixEnumInt,
-} from '../../static';
-import {
-  FALLBACK_DOB_DATA_QUALITY_INT,
-  FALLBACK_GENDER_INT,
-  FALLBACK_NAME_DATA_QUALITY_INT,
-  FALLBACK_NAME_SUFFIX_INT,
-  FALLBACK_RACE_ETHNICITY_INT,
-  FALLBACK_SSN_1,
-  FALLBACK_SSN_2,
-  FALLBACK_SSN_3,
-  FALLBACK_SSN_DATA_QUALITY_INT,
-  FALLBACK_VETERAN_STATUS_INT,
+  FALLBACK_GENDER,
+  FALLBACK_NAME_SUFFIX,
+  FALLBACK_RACE_ETHNICITY,
+  FALLBACK_VETERAN_STATUS,
 } from './constants';
 
-export type TUpdateClientInputsUnion = Partial<
-  HmisClientType & HmisClientDataType
+function firstNonEmptyArray<T>(
+  ...candidates: (T[] | null | undefined)[]
+): T[] | undefined {
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate) && candidate.length > 0) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
+// required due to HMIS api not supporting PATCH
+type TRequiredHmisFields = Required<
+  Pick<
+    UpdateHmisClientProfileInput,
+    | 'gender'
+    | 'raceEthnicity'
+    | 'nameSuffix'
+    | 'veteran'
+    | 'nameMiddle'
+    | 'genderIdentityText'
+    | 'additionalRaceEthnicityDetail'
+  >
 >;
 
-function toNameDataQualityInput(
-  value?: Maybe<HmisNameQualityEnum> | ''
-): number {
-  return toHmisNameQualityInt(value) ?? FALLBACK_NAME_DATA_QUALITY_INT;
-}
-
-function toDobDataQualityInput(value?: Maybe<HmisDobQualityEnum> | ''): number {
-  return toHmisDobQualityEnumInt(value) ?? FALLBACK_DOB_DATA_QUALITY_INT;
-}
-
-function toNameSuffixInput(value?: HmisSuffixEnum | null | ''): number {
-  return toHmisSuffixEnumInt(value) ?? FALLBACK_NAME_SUFFIX_INT;
-}
-
-function toSsnDataQualityInput(value?: HmisSsnQualityEnum | null | ''): number {
-  return toHmisSsnQualityEnumInt(value) ?? FALLBACK_SSN_DATA_QUALITY_INT;
-}
-
-function toStringInput(value?: string | null): string {
-  return value || '';
-}
-
-export function toHmisUpdateClientSubItemsInput(
-  client: HmisClientType,
-  values: TUpdateClientInputsUnion,
-  formKeys: string[]
-): HmisUpdateClientSubItemsInput {
-  const inputs: HmisUpdateClientSubItemsInput = {
-    middleName: client.data?.middleName || '',
-    nameSuffix: toNameSuffixInput(client.data?.nameSuffix),
-    alias: values.alias || '',
-    additionalRaceEthnicity: values.additionalRaceEthnicity || '',
-    differentIdentityText: values.differentIdentityText || '',
-    gender: [FALLBACK_GENDER_INT],
-    raceEthnicity: [FALLBACK_RACE_ETHNICITY_INT],
-    veteranStatus: FALLBACK_VETERAN_STATUS_INT,
-  };
-
-  // override with values from form
-  for (const key of formKeys) {
-    if (key === 'middleName') {
-      inputs.middleName = toStringInput(values.middleName);
-
-      continue;
-    }
-
-    if (key === 'alias') {
-      inputs.alias = toStringInput(values.alias);
-
-      continue;
-    }
-
-    if (key === 'nameSuffix') {
-      inputs.nameSuffix = toNameSuffixInput(values.nameSuffix);
-
-      continue;
-    }
-
-    // ... update for future Form fields
+export function toUpdateHmisClientProfileInput(
+  client: HmisClientProfileType,
+  inputs: Partial<UpdateHmisClientProfileInput>
+): UpdateHmisClientProfileInput | null {
+  if (!inputs || !client) {
+    return null;
   }
 
-  return inputs;
-}
+  // remove disallowed fields
+  const { profilePhoto, ...safeInputs } = inputs;
 
-export function toHmisUpdateClientInput(
-  client: HmisClientType,
-  values: TUpdateClientInputsUnion,
-  formKeys: string[]
-): HmisUpdateClientInput {
-  const inputs: HmisUpdateClientInput = {
-    personalId: client.personalId || '',
-    firstName: toStringInput(client.firstName),
-    lastName: client.lastName || '',
-    nameDataQuality: toNameDataQualityInput(client.nameDataQuality),
-    ssn1: FALLBACK_SSN_1,
-    ssn2: FALLBACK_SSN_2,
-    ssn3: FALLBACK_SSN_3,
-    ssnDataQuality: toSsnDataQualityInput(client.ssnDataQuality),
-    dob: client.dob || '',
-    dobDataQuality: toDobDataQualityInput(client.dobDataQuality),
+  // normalize values: hmis API does not support PATCH, so we some values
+  // must always be resent, or they can be cleared accidentally.
+  const normalizedInputs: TRequiredHmisFields &
+    Partial<UpdateHmisClientProfileInput> = {
+    ...safeInputs,
+
+    gender: firstNonEmptyArray(safeInputs.gender, client.gender) ?? [
+      FALLBACK_GENDER,
+    ],
+
+    raceEthnicity: firstNonEmptyArray(
+      safeInputs.raceEthnicity,
+      client.raceEthnicity
+    ) ?? [FALLBACK_RACE_ETHNICITY],
+
+    nameSuffix:
+      safeInputs.nameSuffix ?? client.nameSuffix ?? FALLBACK_NAME_SUFFIX,
+
+    veteran: safeInputs.veteran ?? client.veteran ?? FALLBACK_VETERAN_STATUS,
+
+    nameMiddle: safeInputs.nameMiddle ?? client.nameMiddle ?? '',
+
+    genderIdentityText:
+      safeInputs.genderIdentityText ?? client.genderIdentityText ?? '',
+
+    additionalRaceEthnicityDetail:
+      safeInputs.additionalRaceEthnicityDetail ??
+      client.additionalRaceEthnicityDetail ??
+      '',
   };
-
-  // override with values from form
-  for (const key of formKeys) {
-    if (key === 'firstName') {
-      inputs.firstName = toStringInput(values.firstName);
-
-      continue;
-    }
-
-    if (key === 'lastName') {
-      inputs.lastName = toStringInput(values.lastName);
-
-      continue;
-    }
-
-    if (key === 'nameDataQuality') {
-      inputs.nameDataQuality = toNameDataQualityInput(values.nameDataQuality);
-
-      continue;
-    }
-
-    // ... update for future Form fields
-  }
-
-  return inputs;
-}
-
-type THMISClienProfileInputs = {
-  clientInput: HmisUpdateClientInput;
-  clientSubItemsInput: HmisUpdateClientSubItemsInput;
-};
-
-export function toHMISClientProfileInputs(
-  client: HmisClientType,
-  formKeys: string[],
-  values: TUpdateClientInputsUnion
-): THMISClienProfileInputs {
-  const clientInput = toHmisUpdateClientInput(client, values, formKeys);
-  const clientSubItemsInput = toHmisUpdateClientSubItemsInput(
-    client,
-    values,
-    formKeys
-  );
 
   return {
-    clientInput,
-    clientSubItemsInput,
+    id: client.id,
+    ...normalizedInputs,
   };
 }

@@ -1,7 +1,7 @@
 import { PlusIcon } from '@monorepo/react/icons';
+import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { ReactNode } from 'react';
-import { mergeCss } from '../../../utils/styles/mergeCss';
 
 type TProps = {
   zoomBy: number;

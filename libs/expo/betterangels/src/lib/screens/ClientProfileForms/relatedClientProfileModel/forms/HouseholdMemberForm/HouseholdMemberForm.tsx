@@ -1,3 +1,4 @@
+import { useLazyQuery, useMutation } from '@apollo/client/react';
 import {
   ControlledInput,
   DatePicker,
@@ -18,11 +19,11 @@ import {
   enumDisplayGender,
 } from '../../../../../static';
 import { TClientProfile } from '../../../../Client/ClientProfile/types';
-import { useGetClientProfileLazyQuery } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
+import { GetClientProfileDocument } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
 import { HouseholdMemeberDeleteBtn } from '../HouseholdMemeberDeleteBtn';
 import {
-  useCreateClientHouseholdMemberMutation,
-  useUpdateClientHouseholdMemberMutation,
+  CreateClientHouseholdMemberDocument,
+  UpdateClientHouseholdMemberDocument,
 } from './__generated__/householdMember.generated';
 import { processHouseholdMemberForm } from './processHouseholdMemberForm';
 import { defaultFormState, toFormState } from './toFormState';
@@ -63,9 +64,14 @@ export function HouseholdMemberForm(props: TProps) {
     setValue('relationshipToClient', relationshipToClient);
   }, [clientProfile, relationId, setValue]);
 
-  const [createHouseholdMember] = useCreateClientHouseholdMemberMutation();
-  const [updateHouseholdMember] = useUpdateClientHouseholdMemberMutation();
-  const [reFetchClientProfile] = useGetClientProfileLazyQuery({
+  const [createHouseholdMember] = useMutation(
+    CreateClientHouseholdMemberDocument
+  );
+  const [updateHouseholdMember] = useMutation(
+    UpdateClientHouseholdMemberDocument
+  );
+
+  const [reFetchClientProfile] = useLazyQuery(GetClientProfileDocument, {
     fetchPolicy: 'network-only',
   });
 
@@ -190,6 +196,7 @@ export function HouseholdMemberForm(props: TProps) {
               <DatePicker
                 type="numeric"
                 label="Date of Birth"
+                placeholder="Enter date"
                 disabled={isLoading}
                 validRange={{
                   endDate: new Date(),
@@ -197,6 +204,10 @@ export function HouseholdMemberForm(props: TProps) {
                 }}
                 value={value || undefined}
                 onChange={onChange}
+                onDelete={() => {
+                  onChange(null);
+                  clearErrors('dateOfBirth');
+                }}
                 error={!!errors.dateOfBirth?.message}
               />
             )}

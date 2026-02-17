@@ -3,7 +3,8 @@ from typing import List, Optional
 
 import strawberry
 import strawberry_django
-from accounts.models import User
+from accounts.groups import GroupTemplateNames
+from accounts.models import PermissionGroup, User
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
 from common.enums import SelahTeamEnum
@@ -24,7 +25,7 @@ from django.db.models import (
     Value,
     When,
 )
-from notes.enums import ServiceEnum, ServiceRequestTypeEnum
+from notes.enums import ServiceRequestTypeEnum
 from notes.permissions import NotePermissions, PrivateDetailsPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.utils.query import filter_for_user
@@ -73,8 +74,6 @@ class OrganizationServiceCategoryType:
 class ServiceRequestType:
     id: ID
     service: Optional[OrganizationServiceType]
-    service_enum: auto
-    service_other: auto
     status: auto
     due_by: auto
     completed_on: auto
@@ -86,16 +85,14 @@ class ServiceRequestType:
 @strawberry_django.input(models.ServiceRequest)
 class CreateServiceRequestInput:
     service_id: Optional[ID]
-    service_enum: Optional[ServiceEnum]
     status: auto
-    service_other: auto
+    service_other: Optional[str]
     client_profile: ID | None
 
 
 @strawberry_django.input(models.ServiceRequest)
 class CreateNoteServiceRequestInput:
     service_id: Optional[ID]
-    service_enum: Optional[ServiceEnum]
     service_other: Optional[str]
     note_id: ID
     service_request_type: ServiceRequestTypeEnum
@@ -104,7 +101,7 @@ class CreateNoteServiceRequestInput:
 @strawberry_django.input(models.ServiceRequest, partial=True)
 class UpdateServiceRequestInput:
     id: ID
-    service_other: auto
+    service_other: Optional[str]
     status: auto
     due_by: auto
 
@@ -134,7 +131,7 @@ class NoteOrder:
     interacted_at: auto
 
 
-@strawberry_django.filters.filter(models.Note)
+@strawberry_django.filter_type(models.Note)
 class NoteFilter:
     client_profile: ID | None
     created_by: ID | None
@@ -168,14 +165,13 @@ class NoteFilter:
     models.Note,
     pagination=True,
     filters=NoteFilter,
-    order=NoteOrder,  # type: ignore[literal-required]
     ordering=NoteOrder,
 )
 class NoteType:
     id: ID
     client_profile: Optional[ClientProfileType]
     created_at: auto
-    created_by: UserType
+    created_by: Optional[UserType]
     interacted_at: auto
     is_submitted: auto
     location: Optional[LocationType]
@@ -265,7 +261,7 @@ class RevertNoteInput:
     revert_before_timestamp: datetime
 
 
-@strawberry_django.filters.filter(User)
+@strawberry_django.filter_type(User)
 class InteractionAuthorFilter:
     @strawberry_django.filter_field
     def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Q:
@@ -290,12 +286,30 @@ class InteractionAuthorOrder:
     id: auto
 
 
-@strawberry_django.type(User, filters=InteractionAuthorFilter, order=InteractionAuthorOrder)  # type: ignore[literal-required]
+@strawberry_django.type(
+    User,
+    filters=InteractionAuthorFilter,
+    ordering=InteractionAuthorOrder,
+)
 class InteractionAuthorType:
     id: ID
     first_name: auto
     last_name: auto
     middle_name: auto
+
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet[User], info: Info) -> QuerySet[User]:
+        # TODO: Make unit test for this function
+        authorized_permission_groups = [template.value for template in GroupTemplateNames]
+
+        # Subquery to check if the user has any related permission group in an authorized group
+        permission_group_exists = PermissionGroup.objects.filter(
+            organization__users=OuterRef("pk"),  # Matches `User` to `Organization`
+            template__name__in=authorized_permission_groups,
+        )
+
+        # Use Exists to avoid duplicate users without `distinct()`
+        return queryset.filter(Exists(permission_group_exists))
 
 
 # Data Import

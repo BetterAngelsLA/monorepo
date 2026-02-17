@@ -10,12 +10,24 @@ import { useCameraPermissions } from 'expo-camera';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Alert, Pressable, View, ViewStyle } from 'react-native';
+import { Alert, Pressable, StyleSheet, View, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Camera from '../Camera';
 import { BaseModal } from '../Modal';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
+
+type TMediaOptionLabels = {
+  image?: string;
+  camera?: string;
+  file?: string;
+};
+
+const pickerSelectLabelDefaults: Required<TMediaOptionLabels> = {
+  image: 'From Photo Album',
+  camera: 'Take Photo',
+  file: 'Upload a file',
+};
 
 interface IMediaPickerModalProps {
   onCapture: (file: ReactNativeFile) => void;
@@ -23,10 +35,28 @@ interface IMediaPickerModalProps {
   isModalVisible: boolean;
   setFiles: (files: ReactNativeFile[]) => void;
   allowMultiple?: boolean;
+  labels?: TMediaOptionLabels;
 }
+
+const ALLOWED_UPLOAD_TYPES = [
+  // Documents
+  MimeTypes.PDF,
+  MimeTypes.DOCX,
+  MimeTypes.DOC,
+  MimeTypes.XLSX,
+  MimeTypes.XLS,
+  MimeTypes.TXT,
+
+  // Images
+  MimeTypes.JPEG,
+  MimeTypes.PNG,
+  MimeTypes.WEBP,
+  MimeTypes.GIF,
+] as const;
 
 export default function MediaPickerModal(props: IMediaPickerModalProps) {
   const {
+    labels,
     onCapture,
     setModalVisible,
     isModalVisible,
@@ -34,8 +64,13 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
     allowMultiple = true,
   } = props;
 
+  const selectorLabels: Required<TMediaOptionLabels> = {
+    ...pickerSelectLabelDefaults,
+    ...labels,
+  };
+
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [permission, requestPermission] = useCameraPermissions();
+  const [, requestPermission] = useCameraPermissions();
   const insets = useSafeAreaInsets();
 
   const closeModal = () => setModalVisible(false);
@@ -43,7 +78,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
   const pickDocuments = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: MimeTypes.PDF,
+        type: [...ALLOWED_UPLOAD_TYPES],
       });
       const { canceled, assets } = result;
       if (canceled || !assets?.length) return;
@@ -54,7 +89,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
             new ReactNativeFile({
               uri: asset.uri,
               name: asset.name || Date.now().toString(),
-              type: asset.mimeType || MimeTypes.PDF,
+              type: asset.mimeType || 'application/octet-stream',
             })
         )
       );
@@ -67,23 +102,21 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
   };
 
   const getPermissionsAndOpenCamera = async () => {
-    if (permission) {
-      const { granted } = await requestPermission();
-      if (granted) {
-        setIsCameraOpen(true);
-      } else {
-        Alert.alert(
-          'Permission Denied',
-          'You need to grant camera permission to use this app'
-        );
-      }
+    const { granted } = await requestPermission();
+    if (granted) {
+      setIsCameraOpen(true);
+    } else {
+      Alert.alert(
+        'Permission Denied',
+        'You need to grant camera permission to use this app'
+      );
     }
   };
 
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: false,
         allowsMultipleSelection: allowMultiple,
       });
@@ -99,7 +132,6 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
             });
           })
         );
-
         setFiles(uploadedImages);
         setModalVisible(false);
       }
@@ -108,37 +140,30 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
     }
   };
 
-  // Panel & content styles
   const panelStyle: ViewStyle = isCameraOpen
     ? {
-        // full-screen camera
-        flex: 1,
-        backgroundColor: Colors.WHITE,
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: Colors.BLACK,
         borderTopLeftRadius: 0,
         borderTopRightRadius: 0,
         shadowOpacity: 0,
         elevation: 0,
         margin: 0,
+        padding: 0,
+        alignSelf: 'stretch',
+        overflow: 'hidden',
       }
     : {
-        // sheet spans screen width; we create insets via content padding
         backgroundColor: 'transparent',
         borderTopLeftRadius: 0,
         borderTopRightRadius: 0,
         shadowOpacity: 0,
         elevation: 0,
-        // ❌ no margins here (prevents overflow on the right)
       };
 
   const contentStyle: ViewStyle = isCameraOpen
-    ? {
-        paddingHorizontal: 0,
-        paddingBottom: 0,
-        paddingTop: 0,
-        flex: 1,
-      }
+    ? { ...StyleSheet.absoluteFillObject, padding: 0 }
     : {
-        // ✅ use padding to inset the floating cards and keep them centered
         paddingHorizontal: 20,
         paddingBottom: insets.bottom + 20,
         paddingTop: 0,
@@ -157,11 +182,13 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
       contentStyle={contentStyle}
     >
       {isCameraOpen ? (
-        <Camera
-          setModalVisible={setModalVisible}
-          setIsCameraOpen={setIsCameraOpen}
-          onCapture={onCapture}
-        />
+        <View style={{ flex: 1, backgroundColor: Colors.BLACK }}>
+          <Camera
+            setModalVisible={setModalVisible}
+            setIsCameraOpen={setIsCameraOpen}
+            onCapture={onCapture}
+          />
+        </View>
       ) : (
         <>
           <View
@@ -183,7 +210,9 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
               accessibilityRole="button"
               accessibilityHint="opens photo library"
             >
-              <TextRegular color={Colors.PRIMARY}>From Photo Album</TextRegular>
+              <TextRegular color={Colors.PRIMARY}>
+                {selectorLabels.image}
+              </TextRegular>
             </Pressable>
 
             <Pressable
@@ -197,7 +226,9 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
               accessibilityRole="button"
               accessibilityHint="opens camera"
             >
-              <TextRegular color={Colors.PRIMARY}>Take Photo</TextRegular>
+              <TextRegular color={Colors.PRIMARY}>
+                {selectorLabels.camera}
+              </TextRegular>
             </Pressable>
 
             <Pressable
@@ -211,7 +242,9 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
               accessibilityRole="button"
               accessibilityHint="opens file library"
             >
-              <TextRegular color={Colors.PRIMARY}>Upload PDF file</TextRegular>
+              <TextRegular color={Colors.PRIMARY}>
+                {selectorLabels.file}
+              </TextRegular>
             </Pressable>
           </View>
 

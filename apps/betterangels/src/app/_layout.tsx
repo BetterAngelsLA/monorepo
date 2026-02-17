@@ -3,11 +3,8 @@ import 'expo-dev-client';
 import {
   AppUpdatePrompt,
   BlockingScreenProvider,
-  cachePolicyRegistry,
+  createBaTypePolicies,
   ErrorCrashView,
-  FeatureControlProvider,
-  FeatureFlagControlled,
-  FeatureFlags,
   KeyboardToolbarProvider,
   ModalScreenProvider,
   NativePaperProvider,
@@ -19,14 +16,33 @@ import {
   ApiConfigProvider,
   ApolloClientProvider,
 } from '@monorepo/expo/shared/clients';
+import { FeatureControlProvider } from '@monorepo/react/shared';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
 
+import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AppRoutesStack from './AppRoutesStack';
+
+const isDevEnv = process.env['NODE_ENV'] === 'development';
+
+initApolloRuntimeConfig({
+  isDevEnv: false,
+});
+
+const baApolloTypePolicies = createBaTypePolicies(isDevEnv);
+
+const reactqQueryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false, // need custom implementation for React Native
+    },
+  },
+});
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -45,32 +61,29 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <NativePaperProvider>
         <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-          <ApolloClientProvider policyConfig={cachePolicyRegistry}>
-            <FeatureControlProvider>
-              <KeyboardProvider>
-                <KeyboardToolbarProvider>
-                  <UserProvider>
-                    <BlockingScreenProvider>
-                      <SnackbarProvider>
-                        <ModalScreenProvider>
-                          <FeatureFlagControlled
-                            flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
-                          >
+          <QueryClientProvider client={reactqQueryClient}>
+            <ApolloClientProvider typePolicies={baApolloTypePolicies}>
+              <FeatureControlProvider>
+                <KeyboardProvider>
+                  <KeyboardToolbarProvider>
+                    <SnackbarProvider>
+                      <UserProvider>
+                        <BlockingScreenProvider>
+                          <ModalScreenProvider>
                             <AppUpdatePrompt />
                             <StatusBar
                               style={Platform.OS === 'ios' ? 'light' : 'auto'}
                             />
-                          </FeatureFlagControlled>
-                          {/* All Stack.Screens in AppRoutesStack */}
-                          <AppRoutesStack />
-                        </ModalScreenProvider>
-                      </SnackbarProvider>
-                    </BlockingScreenProvider>
-                  </UserProvider>
-                </KeyboardToolbarProvider>
-              </KeyboardProvider>
-            </FeatureControlProvider>
-          </ApolloClientProvider>
+                            <AppRoutesStack />
+                          </ModalScreenProvider>
+                        </BlockingScreenProvider>
+                      </UserProvider>
+                    </SnackbarProvider>
+                  </KeyboardToolbarProvider>
+                </KeyboardProvider>
+              </FeatureControlProvider>
+            </ApolloClientProvider>
+          </QueryClientProvider>
         </ApiConfigProvider>
       </NativePaperProvider>
     </GestureHandlerRootView>

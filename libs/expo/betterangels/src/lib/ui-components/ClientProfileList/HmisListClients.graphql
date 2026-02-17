@@ -1,0 +1,72 @@
+query hmisClientProfiles(
+  $filters: HmisClientProfileFilter
+  $ordering: [HmisClientProfileOrdering!]! = []
+  $pagination: OffsetPaginationInput
+) {
+  hmisClientProfiles(
+    filters: $filters
+    ordering: $ordering
+    pagination: $pagination
+  ) {
+    totalCount
+    pageInfo {
+      limit
+      offset
+    }
+    results {
+      id
+      hmisId
+      personalId
+      uniqueIdentifier
+      addedDate
+      lastUpdated
+
+      alias
+      birthDate
+
+      dobQuality
+      firstName
+      lastName
+      nameQuality
+      ssn1
+      ssn2
+      ssn3
+      ssnQuality
+
+      age
+      gender
+      genderIdentityText
+      nameMiddle
+      nameSuffix
+      raceEthnicity
+      additionalRaceEthnicityDetail
+      veteran
+
+      adaAccommodation
+      address
+      californiaId
+      email
+      eyeColor
+      hairColor
+      heightInInches
+      importantNotes
+      livingSituation
+      mailingAddress
+      maritalStatus
+      physicalDescription
+      placeOfBirth
+      preferredCommunication
+      preferredLanguage
+      pronouns
+      pronounsOther
+      residenceAddress
+      residenceGeolocation
+      spokenLanguages
+      phoneNumbers {
+        id
+        number
+        isPrimary
+      }
+    }
+  }
+}

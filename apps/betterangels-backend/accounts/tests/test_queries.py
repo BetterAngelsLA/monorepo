@@ -1,5 +1,5 @@
 from typing import Any
-from unittest.mock import ANY
+from unittest.mock import ANY, patch
 
 import time_machine
 from accounts.enums import OrgRoleEnum
@@ -8,7 +8,9 @@ from accounts.models import User
 from accounts.permissions import UserOrganizationPermissions
 from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
-from django.test import ignore_warnings
+from django.contrib.auth import get_user_model
+from django.test import ignore_warnings, override_settings
+from hmis.tests.test_mutations import LOGIN_MUTATION
 from model_bakery import baker
 from organizations.models import Organization, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
@@ -38,17 +40,16 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
-        ("organization_count, is_hmis_user, is_outreach_authorized, expected_query_count"),
+        ("organization_count, is_outreach_authorized, expected_query_count"),
         [
-            (0, False, False, 3),
-            (1, True, True, 4),
-            (2, False, True, 4),
+            (0, False, 3),
+            (1, True, 4),
+            (2, True, 4),
         ],
     )
     def test_logged_in_user_query(
         self,
         organization_count: int,
-        is_hmis_user: bool,
         is_outreach_authorized: bool,
         expected_query_count: int,
     ) -> None:
@@ -62,7 +63,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             username="testuser",
             has_accepted_tos=True,
             has_accepted_privacy_policy=True,
-            is_hmis_user=is_hmis_user,
         )
         self.graphql_client.force_login(user)
 
@@ -133,10 +133,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             response["data"]["currentUser"]["isOutreachAuthorized"],
             is_outreach_authorized,
         )
-        self.assertEqual(
-            response["data"]["currentUser"]["isHmisUser"],
-            is_hmis_user,
-        )
+        self.assertFalse(response["data"]["currentUser"]["isHmisUser"])
         self.assertEqual(
             response["data"]["currentUser"]["hasAcceptedTos"],
             user.has_accepted_tos,
@@ -150,6 +147,36 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             organization_count,
         )
         self.assertCountEqual(response["data"]["currentUser"]["organizations"], expected_organizations)
+
+    @override_settings(
+        HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=",
+        HMIS_REST_URL="https://example.com",
+        HMIS_HOST="example.com",
+    )
+    def test_logged_in_hmis_user_query(self) -> None:
+        hmis_user = baker.make(get_user_model(), _fill_optional=["email"])
+
+        with patch(
+            "hmis.api_bridge.HmisApiBridge.login",
+            autospec=True,
+        ) as mock_login:
+            mock_login.return_value = None
+
+            self.execute_graphql(
+                LOGIN_MUTATION,
+                variables={"email": hmis_user.email, "password": "anything"},
+            )
+
+        query = """
+            query {
+                currentUser {
+                    isHmisUser
+                }
+            }
+        """
+
+        response = self.execute_graphql(query)
+        self.assertTrue(response["data"]["currentUser"]["isHmisUser"])
 
     @parametrize(
         ("user_role, expected_permissions"),

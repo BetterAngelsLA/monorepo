@@ -1,4 +1,5 @@
 export * from './apollo';
+export * from './constants';
 export * from './errors';
 export * from './helpers';
 export * from './hooks';
@@ -7,7 +8,6 @@ export * from './navigation';
 export * from './providers';
 export * from './screenRouting';
 export * from './screens';
-export * from './services';
 export * from './state';
 export * from './static';
 export * from './ui-components';

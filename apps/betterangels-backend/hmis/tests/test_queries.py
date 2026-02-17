@@ -1,318 +1,346 @@
-from unittest.mock import patch
+import datetime
+from typing import Any
+from unittest.mock import ANY
 
-from common.tests.utils import GraphQLBaseTestCase
-from django.test import TestCase
+from clients.enums import (
+    AdaAccommodationEnum,
+    EyeColorEnum,
+    HairColorEnum,
+    LanguageEnum,
+    LivingSituationEnum,
+    MaritalStatusEnum,
+    PreferredCommunicationEnum,
+    PronounEnum,
+)
+from common.models import PhoneNumber
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.geos import Point
+from django.test import override_settings
 from hmis.enums import (
     HmisDobQualityEnum,
     HmisGenderEnum,
     HmisNameQualityEnum,
     HmisRaceEnum,
     HmisSsnQualityEnum,
+    HmisSuffixEnum,
     HmisVeteranStatusEnum,
 )
-
-GET_CLIENT_QUERY = """
-    query ($personalId: ID!) {
-        hmisGetClient(personalId: $personalId) {
-            __typename
-            ... on HmisClientType {
-                personalId
-                uniqueIdentifier
-                firstName
-                lastName
-                nameDataQuality
-                ssn1
-                ssn2
-                ssn3
-                ssnDataQuality
-                dob
-                dobDataQuality
-                data {
-                    middleName
-                    nameSuffix
-                    alias
-                    raceEthnicity
-                    additionalRaceEthnicity
-                    differentIdentityText
-                    gender
-                    veteranStatus
-                }
-            }
-            ... on HmisGetClientError { message field }
-        }
-    }
-"""
-
-LIST_CLIENTS_QUERY = """
-    query listClients ($filter: HmisClientFilterInput, $pagination: HmisPaginationInput) {
-        hmisListClients (filter: $filter, pagination: $pagination) {
-            ... on HmisClientListType{
-                items {
-                    personalId
-                    uniqueIdentifier
-                    firstName
-                    lastName
-                    nameDataQuality
-                    ssn1
-                    ssn2
-                    ssn3
-                    ssnDataQuality
-                    dob
-                    dobDataQuality
-                    data {
-                    middleName
-                    nameSuffix
-                    alias
-                    raceEthnicity
-                    additionalRaceEthnicity
-                    differentIdentityText
-                    gender
-                    veteranStatus
-                    }
-                }
-                meta {
-                    currentPage
-                    pageCount
-                    perPage
-                    totalCount
-                }
-            }
-            ... on HmisListClientsError {
-                message
-            }
-        }
-    }
-"""
+from hmis.models import HmisClientProfile, HmisNote
+from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
+from model_bakery import baker
+from notes.models import OrganizationService, ServiceRequest
+from test_utils.vcr_config import scrubbed_vcr
 
 
-class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
+class HmisNoteQueryTests(HmisNoteBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-    def test_hmis_get_client_success(self) -> None:
-        return_value = {
-            "personalId": "1",
-            "uniqueIdentifier": "981C4E53A",
-            "firstName": "Firsty",
-            "lastName": "Lasty",
-            "nameDataQuality": 1,
-            "ssn1": "***",
-            "ssn2": "**",
-            "ssn3": "xxxx",
-            "ssnDataQuality": 99,
-            "dob": "2001-01-01",
-            "dobDataQuality": 1,
-            "data": {
-                "middleName": "Middly",
-                "nameSuffix": 1,
-                "alias": "Nicky",
-                "raceEthnicity": [1],
-                "additionalRaceEthnicity": "add re",
-                "differentIdentityText": "diff id",
-                "gender": [1],
-                "veteranStatus": 1,
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        self.hmis_client_profile = baker.make(HmisClientProfile, hmis_id="388")
+        self.hmis_note = baker.make(
+            HmisNote,
+            hmis_id="480",
+            hmis_client_profile=self.hmis_client_profile,
+            created_by=self.org_1_case_manager_1,
+        )
+
+    @scrubbed_vcr.use_cassette("test_hmis_note_query.yaml")
+    def test_hmis_note_query(self) -> None:
+        self._setup_location()
+        self.hmis_note.location = self.location
+        self.hmis_note.save()
+        provided_services = [baker.make(ServiceRequest, service=OrganizationService.objects.first())]
+        requested_services = [baker.make(ServiceRequest, service=OrganizationService.objects.last())]
+        self.hmis_note.provided_services.set(provided_services)
+        self.hmis_note.requested_services.set(requested_services)
+
+        query = f"""
+            query ($id: ID!) {{
+                hmisNote(id: $id) {{
+                    {self.hmis_note_fields}
+                }}
+            }}
+        """
+        variables = {"id": str(self.hmis_note.pk)}
+        response = self.execute_graphql(query, variables)
+
+        hmis_note = response["data"]["hmisNote"]
+
+        # TODO: remove after service cutover
+        assert provided_services[0].service
+        assert requested_services[0].service
+
+        expected = {
+            "id": str(self.hmis_note.pk),
+            "hmisId": "480",
+            "hmisClientProfile": {
+                "id": str(self.hmis_client_profile.pk),
+                "hmisId": self.hmis_client_profile.hmis_id,
+                "firstName": self.hmis_client_profile.first_name,
+                "lastName": self.hmis_client_profile.last_name,
             },
-        }
-
-        with patch(
-            "hmis.api_bridge.HmisApiBridge.get_client",
-            return_value=return_value,
-        ):
-            resp = self.execute_graphql(
-                GET_CLIENT_QUERY,
-                variables={"personalId": "1"},
-            )
-
-        self.assertIsNone(resp.get("errors"))
-        payload = resp["data"]["hmisGetClient"]
-        self.assertEqual(payload["__typename"], "HmisClientType")
-        self.assertEqual(payload["personalId"], "1")
-
-        expected_data = {
-            "middleName": "Middly",
-            "nameSuffix": "JR",
-            "alias": "Nicky",
-            "additionalRaceEthnicity": "add re",
-            "differentIdentityText": "diff id",
-            "raceEthnicity": [HmisRaceEnum.INDIGENOUS.name],
-            "gender": [HmisGenderEnum.MAN_BOY.name],
-            "veteranStatus": HmisVeteranStatusEnum.YES.name,
-        }
-        expected_client = {
-            "__typename": "HmisClientType",
-            "personalId": "1",
-            "uniqueIdentifier": "981C4E53A",
-            "firstName": "Firsty",
-            "lastName": "Lasty",
-            "nameDataQuality": HmisNameQualityEnum.FULL.name,
-            "ssn1": "***",
-            "ssn2": "**",
-            "ssn3": "xxxx",
-            "ssnDataQuality": HmisSsnQualityEnum.NOT_COLLECTED.name,
-            "dob": "2001-01-01",
-            "dobDataQuality": HmisDobQualityEnum.FULL.name,
-            "data": expected_data,
-        }
-
-        self.assertEqual(payload, expected_client)
-
-    def test_hmis_get_client_does_not_exist(self) -> None:
-        return_value = {
-            "errors": [
+            "title": "prog note title",
+            "note": "prog note note",
+            "date": "2011-11-11",
+            "providedServices": [
                 {
-                    "path": ["getClient"],
-                    "data": None,
-                    "errorType": "404",
-                    "errorInfo": None,
-                    "locations": [{"line": 2, "column": 3, "sourceName": None}],
-                    "message": '{"name":"Not Found","message":"Page not found.","code":0,"status":404}',
-                },
-                {
-                    "path": ["getClient", "personalId"],
-                    "locations": None,
-                    "message": "Cannot return null for non-nullable type: 'ID' within parent 'Client' (/getClient/personalId)",
-                },
-            ]
-        }
-
-        with patch(
-            "hmis.api_bridge.HmisApiBridge.get_client",
-            return_value=return_value,
-        ):
-            resp = self.execute_graphql(
-                GET_CLIENT_QUERY,
-                variables={"personalId": "bad id"},
-            )
-
-        self.assertIsNone(resp.get("errors"))
-        payload = resp["data"]["hmisGetClient"]
-        self.assertEqual(payload["__typename"], "HmisGetClientError")
-        self.assertIn("Page not found", payload["message"])
-
-    def test_hmis_list_clients_success(self) -> None:
-        return_value = {
-            "items": [
-                {
-                    "personalId": "1",
-                    "uniqueIdentifier": "11111111A",
-                    "firstName": "f1",
-                    "lastName": "l1",
-                    "nameDataQuality": 1,
-                    "ssn1": "***",
-                    "ssn2": "**",
-                    "ssn3": "xxxx",
-                    "ssnDataQuality": 99,
-                    "dob": "2001-01-01",
-                    "dobDataQuality": 1,
-                    "data": {
-                        "middleName": "m1",
-                        "nameSuffix": 1,
-                        "alias": "n1",
-                        "raceEthnicity": [1],
-                        "additionalRaceEthnicity": "add re",
-                        "differentIdentityText": "diff id",
-                        "gender": [1],
-                        "veteranStatus": 1,
+                    "id": str(provided_services[0].pk),
+                    "service": {
+                        "id": str(provided_services[0].service.pk),
+                        "label": provided_services[0].service.label,
                     },
-                },
-                {
-                    "personalId": "2",
-                    "uniqueIdentifier": "22222222B",
-                    "firstName": "f2",
-                    "lastName": "l2",
-                    "nameDataQuality": 2,
-                    "ssn1": "***",
-                    "ssn2": "**",
-                    "ssn3": "xxxx",
-                    "ssnDataQuality": 99,
-                    "dob": "2002-02-02",
-                    "dobDataQuality": 2,
-                    "data": {
-                        "middleName": "m2",
-                        "nameSuffix": 2,
-                        "alias": "n2",
-                        "raceEthnicity": [2],
-                        "additionalRaceEthnicity": "add re",
-                        "differentIdentityText": "diff id",
-                        "gender": [2],
-                        "veteranStatus": 8,
-                    },
-                },
+                }
             ],
-            "meta": {
-                "per_page": 10,
-                "current_page": 1,
-                "page_count": 1,
-                "total_count": 2,
+            "requestedServices": [
+                {
+                    "id": str(requested_services[0].pk),
+                    "service": {
+                        "id": str(requested_services[0].service.pk),
+                        "label": requested_services[0].service.label,
+                    },
+                }
+            ],
+            "addedDate": "2025-11-13T08:35:34+00:00",
+            "lastUpdated": "2025-11-13T08:35:34+00:00",
+            "refClientProgram": "525",
+            "clientProgram": {
+                "id": "525",
+                "program": {
+                    "id": "2",
+                    "name": "Housing Program 01",
+                },
+            },
+            "location": {
+                "id": str(self.location.pk),
+                "address": {
+                    "street": self.address.street,
+                    "city": self.address.city,
+                    "state": self.address.state,
+                    "zipCode": self.address.zip_code,
+                },
+                "point": self.point,
+                "pointOfInterest": self.point_of_interest,
+            },
+            "createdBy": {
+                "firstName": None,
+                "id": str(self.org_1_case_manager_1.pk),
+                "lastName": None,
+                "organizations": [{"id": ANY, "name": "org_1"}],
             },
         }
 
-        with patch(
-            "hmis.api_bridge.HmisApiBridge.list_clients",
-            return_value=return_value,
-        ):
-            resp = self.execute_graphql(LIST_CLIENTS_QUERY)
+        self.assertEqual(expected, hmis_note)
 
-        self.assertIsNone(resp.get("errors"))
-        payload = resp["data"]["hmisListClients"]
-        clients = payload["items"]
-        pagination_info = payload["meta"]
+    def test_hmis_notes_query(self) -> None:
+        HmisNote.objects.filter(pk=self.hmis_note.pk).update(created_by=self.org_2_case_manager_1)
 
-        expected_clients = [
-            {
-                "personalId": "1",
-                "uniqueIdentifier": "11111111A",
-                "firstName": "f1",
-                "lastName": "l1",
-                "nameDataQuality": HmisNameQualityEnum.FULL.name,
-                "ssn1": "***",
-                "ssn2": "**",
-                "ssn3": "xxxx",
-                "ssnDataQuality": HmisSsnQualityEnum.NOT_COLLECTED.name,
-                "dob": "2001-01-01",
-                "dobDataQuality": HmisDobQualityEnum.FULL.name,
-                "data": {
-                    "middleName": "m1",
-                    "nameSuffix": "JR",
-                    "alias": "n1",
-                    "additionalRaceEthnicity": "add re",
-                    "differentIdentityText": "diff id",
-                    "raceEthnicity": [HmisRaceEnum.INDIGENOUS.name],
-                    "gender": [HmisGenderEnum.MAN_BOY.name],
-                    "veteranStatus": HmisVeteranStatusEnum.YES.name,
-                },
+        query = """
+            query ($offset: Int, $limit: Int) {
+                hmisNotes (pagination: {offset: $offset, limit: $limit}) {
+                    totalCount
+                    pageInfo {
+                        limit
+                        offset
+                    }
+                    results {
+                        id
+                        hmisId
+                        title
+                        note
+                        hmisClientProfile {
+                            id
+                            hmisId
+                            firstName
+                            lastName
+                        }
+                        createdBy {
+                            id
+                            firstName
+                            lastName
+                            organizations: organizationsOrganization {
+                                id
+                                name
+                            }
+                        }
+                        providedServices {
+                            id
+                            service { id label }
+                        }
+                        requestedServices {
+                            id
+                            service { id label }
+                        }
+                    }
+                }
+            }
+        """
+        expected_query_count = 6
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
+
+        self.assertEqual(response["data"]["hmisNotes"]["totalCount"], 1)
+        self.assertEqual(response["data"]["hmisNotes"]["pageInfo"], {"limit": 10, "offset": 0})
+
+        expected: dict[str, Any] = {
+            "id": str(self.hmis_note.pk),
+            "hmisId": "480",
+            "hmisClientProfile": {
+                "id": str(self.hmis_client_profile.pk),
+                "hmisId": self.hmis_client_profile.hmis_id,
+                "firstName": self.hmis_client_profile.first_name,
+                "lastName": self.hmis_client_profile.last_name,
             },
-            {
-                "personalId": "2",
-                "uniqueIdentifier": "22222222B",
-                "firstName": "f2",
-                "lastName": "l2",
-                "nameDataQuality": HmisNameQualityEnum.PARTIAL.name,
-                "ssn1": "***",
-                "ssn2": "**",
-                "ssn3": "xxxx",
-                "ssnDataQuality": HmisSsnQualityEnum.NOT_COLLECTED.name,
-                "dob": "2002-02-02",
-                "dobDataQuality": HmisDobQualityEnum.PARTIAL.name,
-                "data": {
-                    "middleName": "m2",
-                    "nameSuffix": "SR",
-                    "alias": "n2",
-                    "additionalRaceEthnicity": "add re",
-                    "differentIdentityText": "diff id",
-                    "raceEthnicity": [HmisRaceEnum.ASIAN.name],
-                    "gender": [HmisGenderEnum.SPECIFIC.name],
-                    "veteranStatus": HmisVeteranStatusEnum.DONT_KNOW.name,
-                },
+            "title": None,
+            "note": "",
+            "providedServices": [],
+            "requestedServices": [],
+            "createdBy": {
+                "firstName": None,
+                "id": str(self.org_2_case_manager_1.pk),
+                "lastName": None,
+                "organizations": [{"id": ANY, "name": "org_2"}],
             },
-        ]
-
-        expected_pagination_info = {
-            "perPage": 10,
-            "currentPage": 1,
-            "pageCount": 1,
-            "totalCount": 2,
         }
 
-        self.assertEqual(clients, expected_clients)
-        self.assertEqual(pagination_info, expected_pagination_info)
+        hmis_note = response["data"]["hmisNotes"]["results"][0]
+        self.assertEqual(expected, hmis_note)
+
+
+@override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
+class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.residence_geolocation = [-118.2437207, 34.0521723]
+
+        self.hmis_client_profile = baker.make(
+            HmisClientProfile,
+            # ID & Metadata Fields
+            hmis_id="1",
+            personal_id="7e401eed7ee14c36a7641ef44626695c",
+            unique_identifier="69E44770D",
+            added_date=datetime.datetime.strptime("2025-08-06 13:43:43", "%Y-%m-%d %H:%M:%S"),
+            last_updated=datetime.datetime.strptime("2025-11-06 11:14:54", "%Y-%m-%d %H:%M:%S"),
+            # Client Fields
+            alias=None,
+            birth_date=datetime.date.fromisoformat("2001-01-01"),
+            dob_quality=HmisDobQualityEnum.FULL,
+            first_name="John",
+            last_name="Smith",
+            name_quality=HmisNameQualityEnum.FULL,
+            ssn1="***",
+            ssn2="**",
+            ssn3="4321",
+            ssn_quality=HmisSsnQualityEnum.FULL,
+            # Client Sub Fields
+            age=24,
+            gender=[HmisGenderEnum.WOMAN_GIRL, HmisGenderEnum.DIFFERENT],
+            gender_identity_text="Gen Id",
+            name_middle="B",
+            name_suffix=HmisSuffixEnum.JR,
+            race_ethnicity=[HmisRaceEnum.INDIGENOUS, HmisRaceEnum.ASIAN],
+            additional_race_ethnicity_detail="AddlRace",
+            veteran=HmisVeteranStatusEnum.YES,
+            # BA Fields
+            ada_accommodation=[AdaAccommodationEnum.HEARING, AdaAccommodationEnum.MOBILITY],
+            address="123 Main St",
+            california_id="A1357246",
+            email="jbs@example.com",
+            eye_color=EyeColorEnum.BLUE,
+            hair_color=HairColorEnum.BLACK,
+            height_in_inches=72,
+            important_notes="important notes",
+            living_situation=LivingSituationEnum.OPEN_AIR,
+            mailing_address="123 Mail St",
+            marital_status=MaritalStatusEnum.DIVORCED,
+            physical_description="physdesc",
+            place_of_birth="Los Angeles",
+            preferred_communication=[PreferredCommunicationEnum.CALL],
+            preferred_language=LanguageEnum.ARABIC,
+            pronouns=PronounEnum.OTHER,
+            pronouns_other="pronouns",
+            residence_address="123 Res St",
+            residence_geolocation=Point(self.residence_geolocation),
+            spoken_languages=[LanguageEnum.ENGLISH, LanguageEnum.SPANISH],
+            created_by=self.org_1_case_manager_1,
+        )
+        content_type = ContentType.objects.get_for_model(HmisClientProfile)
+        PhoneNumber.objects.create(
+            content_type=content_type,
+            object_id=self.hmis_client_profile.pk,
+            number="2125551212",
+            is_primary=True,
+        )
+
+    @scrubbed_vcr.use_cassette("test_hmis_client_profile_query.yaml")
+    def test_hmis_client_profile_query(self) -> None:
+        query = f"""
+            query ($id: ID!) {{
+                hmisClientProfile(id: $id) {{
+                    {self.hmis_client_profile_fields}
+                }}
+            }}
+        """
+        variables = {"id": str(self.hmis_client_profile.pk)}
+        response = self.execute_graphql(query, variables)
+
+        hmis_client_profile = response["data"]["hmisClientProfile"]
+        expected = {
+            # ID & metadata fields
+            "id": str(self.hmis_client_profile.pk),
+            "hmisId": "1",
+            "personalId": "7e401eed7ee14c36a7641ef44626695c",
+            "uniqueIdentifier": "69E44770D",
+            "addedDate": "2025-08-06T20:43:43+00:00",
+            "lastUpdated": "2025-11-06T19:14:54+00:00",
+            # Client fields
+            "alias": None,
+            "birthDate": "2001-01-01",
+            "dobQuality": HmisDobQualityEnum.FULL.name,
+            "firstName": "John",
+            "lastName": "Smith",
+            "nameQuality": HmisNameQualityEnum.FULL.name,
+            "ssn1": "***",
+            "ssn2": "**",
+            "ssn3": "4321",
+            "ssnQuality": HmisSsnQualityEnum.FULL.name,
+            # SV fields
+            "age": 24,
+            "gender": [HmisGenderEnum.WOMAN_GIRL.name, HmisGenderEnum.DIFFERENT.name],
+            "genderIdentityText": "Gen Id",
+            "nameMiddle": "B",
+            "nameSuffix": HmisSuffixEnum.JR.name,
+            "raceEthnicity": [HmisRaceEnum.INDIGENOUS.name, HmisRaceEnum.ASIAN.name],
+            "additionalRaceEthnicityDetail": "AddlRace",
+            "veteran": HmisVeteranStatusEnum.YES.name,
+            # BA fields
+            "adaAccommodation": [AdaAccommodationEnum.HEARING.name, AdaAccommodationEnum.MOBILITY.name],
+            "address": "123 Main St",
+            "californiaId": "A1357246",
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "email": "jbs@example.com",
+            "eyeColor": EyeColorEnum.BLUE.name,
+            "hairColor": HairColorEnum.BLACK.name,
+            "heightInInches": 72.0,
+            "importantNotes": "important notes",
+            "livingSituation": LivingSituationEnum.OPEN_AIR.name,
+            "mailingAddress": "123 Mail St",
+            "maritalStatus": MaritalStatusEnum.DIVORCED.name,
+            "phoneNumbers": [{"id": ANY, "number": "2125551212", "isPrimary": True}],
+            "physicalDescription": "physdesc",
+            "placeOfBirth": "Los Angeles",
+            "preferredCommunication": [PreferredCommunicationEnum.CALL.name],
+            "preferredLanguage": LanguageEnum.ARABIC.name,
+            "profilePhoto": None,
+            "pronouns": PronounEnum.OTHER.name,
+            "pronounsOther": "pronouns",
+            "residenceAddress": "123 Res St",
+            "residenceGeolocation": self.residence_geolocation,
+            "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+        }
+
+        self.assertEqual(expected, hmis_client_profile)

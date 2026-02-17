@@ -3,11 +3,12 @@ import {
   Modal,
   ModalProps,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import TextBold from '../TextBold';
 import { PickerItem } from './PickerItem';
 import { NONE_VALUE } from './constants';
 import { TPickerItem } from './types';
@@ -22,6 +23,7 @@ type TProps = {
   dismissOnBackdropPress?: boolean;
   allowSelectNone?: boolean;
   selectNoneLabel?: string;
+  title?: string;
 };
 
 export function PickerModal(props: TProps) {
@@ -34,30 +36,37 @@ export function PickerModal(props: TProps) {
     animationType = 'fade',
     allowSelectNone,
     selectNoneLabel = 'Select',
+    title,
   } = props;
 
   return (
     <Modal
       visible={visible}
       animationType={animationType}
-      transparent={true}
-      hardwareAccelerated={true}
+      transparent
+      presentationStyle="overFullScreen"
+      statusBarTranslucent
+      hardwareAccelerated
       onRequestClose={onClose}
-      statusBarTranslucent={true}
     >
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.fullscreen}>
+        {/* Full-screen dimmed backdrop */}
         <Pressable
           style={styles.backdrop}
           onPress={onClose}
-          accessibilityHint="closes the modal"
-          accessibilityLabel="click to close the modal"
-        >
-          <View style={styles.content}>
+          accessibilityLabel="Close picker"
+          accessibilityHint="Closes the picker modal"
+        />
+
+        {/* Layout container (centering + padding), sits ABOVE backdrop */}
+        <View style={styles.centerWrap}>
+          <SafeAreaView style={styles.content}>
             <ScrollView
               contentContainerStyle={styles.scrollWrap}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
+              {title && <TextBold size="sm">{title}</TextBold>}
               {!!allowSelectNone && (
                 <PickerItem
                   value={NONE_VALUE}
@@ -65,6 +74,7 @@ export function PickerModal(props: TProps) {
                   onPress={onSelect}
                 />
               )}
+
               {items.map((item) => (
                 <PickerItem
                   key={item.value}
@@ -75,33 +85,37 @@ export function PickerModal(props: TProps) {
                 />
               ))}
             </ScrollView>
-          </View>
-        </Pressable>
-      </SafeAreaView>
+          </SafeAreaView>
+        </View>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  fullscreen: {
+    flex: 1,
+  },
   backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  centerWrap: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.4)',
     padding: Spacings.md,
-  },
-  scrollWrap: {
-    width: '100%',
-    flexGrow: 1,
-    padding: Spacings.sm,
-  },
-  safeArea: {
-    flex: 1,
   },
   content: {
     width: '100%',
     maxHeight: '60%',
     backgroundColor: 'white',
     borderRadius: Radiuses.xs,
+    overflow: 'hidden',
+  },
+  scrollWrap: {
+    width: '100%',
+    flexGrow: 1,
+    padding: Spacings.sm,
   },
 });

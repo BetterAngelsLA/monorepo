@@ -1,25 +1,29 @@
 import { SearchIcon } from '@monorepo/react/icons';
-import { useMapsLibrary } from '@vis.gl/react-google-maps';
-import { useCallback, useEffect, useState } from 'react';
+import { TPlacePrediction } from '@monorepo/shared/places';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ISO3166Alpha2 } from '../../../types/isoCodes';
+import { usePlacesClient } from '../../hooks/usePlacesClient';
 import { Input } from '../form/input';
 import { LA_COUNTY_CENTER } from '../map/constants.maps';
-import { getPlacesBounds } from '../map/utils/getPlacesBounds';
-import { AddressSuggestion } from './addressSuggestion';
 
-const boundsLA = getPlacesBounds({
-  boundsCenter: LA_COUNTY_CENTER,
-  boundsRadiusMiles: 25,
-});
+const DEBOUNCE_MS = 300;
+const BOUNDS_RADIUS_MILES = 25;
 
-type TPlaceAutocomplete = {
+export type TPlaceResult = {
+  id: string;
+  displayName: string | null;
+  formattedAddress: string | null;
+  location: { lat: number; lng: number } | null;
+};
+
+type TProps = {
   className?: string;
   placeholder?: string;
-  onPlaceSelect: (place: google.maps.places.PlaceResult | null) => void;
+  onPlaceSelect: (place: TPlaceResult | null) => void;
   countryRestrictions?: ISO3166Alpha2 | ISO3166Alpha2[] | null;
 };
 
-export const AddressAutocomplete = (props: TPlaceAutocomplete) => {
+export function AddressAutocomplete(props: TProps) {
   const {
     onPlaceSelect,
     countryRestrictions = 'us',
@@ -27,100 +31,79 @@ export const AddressAutocomplete = (props: TPlaceAutocomplete) => {
     className = '',
   } = props;
 
-  const [inputValue, setInputValue] = useState<string>('');
-  const [sessionToken, setSessionToken] = useState<
-    google.maps.places.AutocompleteSessionToken | undefined
-  >(undefined);
-  const [autocompleteService, setAutocompleteService] =
-    useState<google.maps.places.AutocompleteService | null>(null);
-  const [predictionResults, setPredictionResults] = useState<
-    google.maps.places.AutocompletePrediction[]
-  >([]);
-
-  const places = useMapsLibrary('places');
+  const places = usePlacesClient();
+  const [inputValue, setInputValue] = useState('');
+  const [predictions, setPredictions] = useState<TPlacePrediction[]>([]);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!places) {
-      return;
-    }
-
-    setAutocompleteService(new google.maps.places.AutocompleteService());
-    setSessionToken(new google.maps.places.AutocompleteSessionToken()); // 1
-  }, [places]);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const fetchPredictions = useCallback(
-    async (inputValue: string) => {
-      if (!autocompleteService || !inputValue || !sessionToken) {
-        setPredictionResults([]);
+    async (input: string) => {
+      if (!input || input.length < 3) {
+        setPredictions([]);
         return;
       }
 
-      const request: google.maps.places.AutocompletionRequest = {
-        input: inputValue,
-        sessionToken,
-        locationBias: boundsLA,
-        region: 'us',
-        componentRestrictions: {
-          country: countryRestrictions,
-        },
-      };
+      try {
+        const regionCodes = Array.isArray(countryRestrictions)
+          ? countryRestrictions
+          : countryRestrictions
+          ? [countryRestrictions]
+          : ['us'];
 
-      autocompleteService.getPlacePredictions(
-        request,
-        (predictions, status) => {
-          if (
-            status === google.maps.places.PlacesServiceStatus.OK &&
-            predictions
-          ) {
-            setPredictionResults(predictions);
-          } else {
-            setPredictionResults([]);
-          }
-        }
-      );
-    },
-    [autocompleteService, sessionToken]
-  );
+        const results = await places.autocomplete(input, {
+          boundsCenter: LA_COUNTY_CENTER,
+          boundsRadiusMiles: BOUNDS_RADIUS_MILES,
+          includedRegionCodes: regionCodes,
+        });
 
-  const onInputChange = useCallback(
-    (value: string) => {
-      setInputValue(value);
-      fetchPredictions(value);
-    },
-    [setInputValue, fetchPredictions]
-  );
-
-  const handleSuggestionClick = useCallback(
-    (placeId: string) => {
-      if (!window.google) {
-        console.error('Google Maps API is not loaded.');
-
-        return;
+        setPredictions(results);
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+        setPredictions([]);
       }
-
-      const placesService = new google.maps.places.PlacesService(
-        document.createElement('div')
-      );
-
-      const request: google.maps.places.PlaceDetailsRequest = {
-        placeId,
-        fields: ['geometry', 'name', 'formatted_address'],
-        sessionToken,
-      };
-
-      placesService.getDetails(request, (placeDetails, status) => {
-        if (
-          status === google.maps.places.PlacesServiceStatus.OK &&
-          placeDetails
-        ) {
-          onPlaceSelect(placeDetails);
-          setInputValue(placeDetails.formatted_address || '');
-          setSessionToken(new google.maps.places.AutocompleteSessionToken());
-          setPredictionResults([]);
-        }
-      });
     },
-    [onPlaceSelect, sessionToken]
+    [countryRestrictions, places]
+  );
+
+  const handleInputChange = (value: string) => {
+    setInputValue(value);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(
+      () => fetchPredictions(value),
+      DEBOUNCE_MS
+    );
+  };
+
+  const handleSelect = useCallback(
+    async (placeId: string) => {
+      try {
+        const result = await places.getDetails(placeId, {
+          fields: 'displayName,formattedAddress,location',
+        });
+
+        onPlaceSelect({
+          id: placeId,
+          displayName: result.displayName || null,
+          formattedAddress: result.formattedAddress || null,
+          location: result.location
+            ? { lat: result.location.latitude, lng: result.location.longitude }
+            : null,
+        });
+
+        setInputValue(result.formattedAddress || '');
+        setPredictions([]);
+      } catch (error) {
+        console.error('Error fetching place details:', error);
+      }
+    },
+    [onPlaceSelect, places]
   );
 
   return (
@@ -129,25 +112,30 @@ export const AddressAutocomplete = (props: TPlaceAutocomplete) => {
         value={inputValue}
         placeholder={placeholder}
         className="w-full"
-        onChange={onInputChange}
+        onChange={handleInputChange}
         leftIcon={<SearchIcon className="text-neutral-70 w-4 h-4" />}
       />
 
-      {!!predictionResults.length && (
-        <ul className="mt-4">
-          {predictionResults.map((suggestion) => {
-            const { place_id } = suggestion;
-
-            return (
-              <AddressSuggestion
-                key={place_id}
-                onClick={() => handleSuggestionClick(place_id)}
-                item={suggestion}
-              />
-            );
-          })}
+      {predictions.length > 0 && (
+        <ul className="mt-4" role="listbox">
+          {predictions.map(({ placeId, mainText, secondaryText }) => (
+            <li
+              key={placeId}
+              role="option"
+              aria-selected={false}
+              tabIndex={0}
+              onClick={() => handleSelect(placeId)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSelect(placeId)}
+              className="flex flex-col py-3 px-4 border-b border-neutral-90 cursor-pointer hover:bg-neutral-95 focus:bg-neutral-95 focus:outline-none"
+            >
+              <span className="text-sm font-medium">{mainText}</span>
+              <span className="text-xs text-neutral-60">
+                {secondaryText.replace(/, USA$/, '')}
+              </span>
+            </li>
+          ))}
         </ul>
       )}
     </div>
   );
-};
+}

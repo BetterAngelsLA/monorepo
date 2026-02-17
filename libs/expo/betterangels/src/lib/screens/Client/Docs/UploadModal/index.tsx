@@ -1,13 +1,11 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
-import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings, thumbnailSizes } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import * as React from 'react';
 import { useEffect } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-import { useModalScreen } from '../../../../providers';
 import FileUploadTab from './FileUploadTab';
 import MultipleDocUploads from './MultipleDocUploads';
 import SingleDocUploads from './SingleDocUploads';
@@ -15,8 +13,6 @@ import { Docs, ITab, IUploadModalProps } from './types';
 
 export default function UploadModal(props: IUploadModalProps) {
   const { client } = props;
-
-  const { closeModalScreen } = useModalScreen();
 
   const [tab, setTab] = React.useState<undefined | ITab>();
   const [docs, setDocs] = React.useState<Docs>({
@@ -163,26 +159,6 @@ export default function UploadModal(props: IUploadModalProps) {
             paddingBottom: 35 + bottomOffset,
           }}
         >
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginTop: Spacings.md,
-              marginBottom: Spacings.sm,
-            }}
-          >
-            <TextBold size="lg">Upload Files</TextBold>
-            <Pressable
-              accessible
-              accessibilityHint="closes the Upload modal"
-              accessibilityRole="button"
-              accessibilityLabel="close"
-              onPress={closeModalScreen}
-            >
-              <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
-            </Pressable>
-          </View>
           <TextRegular size="sm" mb="md">
             Select the right file type and you can rename it when it's done
             (optional).

@@ -1,7 +1,12 @@
 export { default as hexToRGBA } from './HexToRGBA';
 export * from './array';
-export { default as debounce } from './debounce';
+export * from './auth';
+export * from './date';
+export * from './debugUtils';
+export * from './file';
 export * from './format';
+export * from './html';
 export * from './image';
 export { showOpenSettingsAlert } from './showOpenSettingsAlert';
 export * from './storage';
+export * from './string';

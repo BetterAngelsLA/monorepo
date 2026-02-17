@@ -4,32 +4,25 @@
     "../../../.eslintrc.json",
     "plugin:storybook/recommended"
   ],
-  "ignorePatterns": [
-    "!**/*",
-    "storybook-static"
-  ],
+  "ignorePatterns": ["!**/*", "storybook-static", "**/*.stories.tsx"],
   "overrides": [
     {
-      "files": [
-        "*.ts",
-        "*.tsx",
-        "*.js",
-        "*.jsx"
-      ],
+      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "rules": {
+        "@nx/enforce-module-boundaries": [
+          "error",
+          {
+            "allow": ["^.*\\.svg$"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["*.ts", "*.tsx"],
       "rules": {}
     },
     {
-      "files": [
-        "*.ts",
-        "*.tsx"
-      ],
-      "rules": {}
-    },
-    {
-      "files": [
-        "*.js",
-        "*.jsx"
-      ],
+      "files": ["*.js", "*.jsx"],
       "rules": {}
     }
   ]

@@ -1,12 +1,25 @@
+import { ComponentType } from 'react';
 import { z } from 'zod';
-import { SectionSchemas } from './basicForms/config';
+import {
+  HmisClientProfileType,
+  UpdateHmisClientProfileInput,
+} from '../../apollo';
+import { hmisFormConfig } from './basicForms/config';
 
-type TSectionValues<K extends TSectionKey> = z.infer<
-  (typeof SectionSchemas)[K]
->;
+export type TSectionConfig<TSchema extends z.ZodTypeAny> = {
+  title: string;
+  Form: ComponentType;
+  schema: TSchema;
+  // Optional “output schema” that takes the form input type (TInput)
+  // and returns a value that is safe to send to the API.
+  schemaOutput?: {
+    parse: (input: z.input<TSchema>) => Partial<UpdateHmisClientProfileInput>;
+  };
+  // RHF default values — same type as the schema input.
+  emptyState: z.input<TSchema>;
+  // Maps the GraphQL client profile into form values (same as schema input type).
+  dataMapper: (client: HmisClientProfileType) => z.input<TSchema>;
+};
 
-export type TAnySectionValues = {
-  [K in TSectionKey]: TSectionValues<K>;
-}[TSectionKey];
-
-export type TSectionKey = keyof typeof SectionSchemas;
+export type THmisFormSectionKey = keyof typeof hmisFormConfig;
+export type TSectionConfigRecord = TSectionConfig<z.ZodTypeAny>;

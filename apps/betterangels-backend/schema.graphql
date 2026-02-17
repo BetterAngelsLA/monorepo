@@ -34,6 +34,10 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+directive @hmisDirective on FIELD_DEFINITION
+
+directive @isHmisAuthenticated on FIELD_DEFINITION
+
 enum AccessibilityChoices {
   MEDICAL_EQUIPMENT_PERMITTED
   WHEELCHAIR_ACCESSIBLE
@@ -84,114 +88,13 @@ enum AttachmentType {
   UNKNOWN
 }
 
-input AuthInput {
-  code: String
-  code_verifier: String
-  id_token: String
-  redirect_uri: String
-}
-
 type AuthResponse {
   status_code: String!
 }
 
-enum CityChoices {
-  AGOURA_HILLS
-  ALHAMBRA
-  ARCADIA
-  ARTESIA
-  AVALON
-  AZUSA
-  BALDWIN_PARK
-  BELL
-  BELLFLOWER
-  BELL_GARDENS
-  BEVERLY_HILLS
-  BRADBURY
-  BURBANK
-  CALABASAS
-  CARSON
-  CERRITOS
-  CLAREMONT
-  COMMERCE
-  COMPTON
-  COVINA
-  CUDAHY
-  CULVER_CITY
-  DIAMOND_BAR
-  DOWNEY
-  DUARTE
-  EL_MONTE
-  EL_SEGUNDO
-  GARDENA
-  GLENDALE
-  GLENDORA
-  HAWAIIAN_GARDENS
-  HAWTHORNE
-  HERMOSA_BEACH
-  HIDDEN_HILLS
-  HOLLYWOOD
-  HUNTINGTON_PARK
-  INDUSTRY
-  INGLEWOOD
-  IRWINDALE
-  LA_CANADA_FLINTRIDGE
-  LA_HABRA_HEIGHTS
-  LA_MIRADA
-  LA_PUENTE
-  LA_VERNE
-  LAKEWOOD
-  LANCASTER
-  LAWNDALE
-  LOMITA
-  LONG_BEACH
-  LOS_ANGELES
-  LYNWOOD
-  MALIBU
-  MANHATTAN_BEACH
-  MAYWOOD
-  MONROVIA
-  MONTEBELLO
-  MONTEREY_PARK
-  NORWALK
-  PALMDALE
-  PALOS_VERDES_ESTATES
-  PARAMOUNT
-  PASADENA
-  PICO_RIVERA
-  POMONA
-  RANCHO_PALOS_VERDES
-  REDONDO_BEACH
-  ROLLING_HILLS
-  ROLLING_HILLS_ESTATES
-  ROSEMEAD
-  SAN_DIMAS
-  SAN_FERNANDO
-  SAN_GABRIEL
-  SAN_MARINO
-  SANTA_CLARITA
-  SANTA_FE_SPRINGS
-  SANTA_MONICA
-  SIERRA_MADRE
-  SIGNAL_HILL
-  SOUTH_EL_MONTE
-  SOUTH_GATE
-  SOUTH_PASADENA
-  TEMPLE_CITY
-  TORRANCE
-  VERNON
-  VENICE
-  WALNUT
-  WEST_COVINA
-  WEST_HOLLYWOOD
-  WESTLAKE_VILLAGE
-  WEST_LOS_ANGELES
-  WHITTIER
-  WILMINGTON
-}
-
 type CityType {
-  name: CityChoices
+  id: ID!
+  name: String!
 }
 
 input ClientContactInput {
@@ -361,7 +264,7 @@ input ClientProfileOrder {
 
 input ClientProfilePhotoInput {
   clientProfile: ID!
-  photo: Upload!
+  photo: Upload
 }
 
 type ClientProfileType {
@@ -491,6 +394,70 @@ input CreateClientProfileInput {
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
 
+input CreateHmisClientProfileInput {
+  alias: String
+  birthDate: Date
+  dobQuality: HmisDobQualityEnum
+  firstName: NonBlankString!
+  lastName: NonBlankString!
+  nameQuality: HmisNameQualityEnum!
+  ssn1: String
+  ssn2: String
+  ssn3: String
+  ssnQuality: HmisSsnQualityEnum
+  gender: [HmisGenderEnum!]
+  genderIdentityText: String
+  nameMiddle: NonBlankString
+  nameSuffix: HmisSuffixEnum
+  raceEthnicity: [HmisRaceEnum!]
+  additionalRaceEthnicityDetail: String
+  veteran: HmisVeteranStatusEnum
+  adaAccommodation: [AdaAccommodationEnum!]
+  address: String
+  californiaId: String
+  email: NonBlankString
+  eyeColor: EyeColorEnum
+  hairColor: HairColorEnum
+  heightInInches: Float
+  importantNotes: String
+  livingSituation: LivingSituationEnum
+  mailingAddress: String
+  maritalStatus: MaritalStatusEnum
+  physicalDescription: String
+  placeOfBirth: String
+  preferredCommunication: [PreferredCommunicationEnum!]
+  preferredLanguage: LanguageEnum
+  profilePhoto: Upload
+  pronouns: PronounEnum
+  pronounsOther: String
+  residenceAddress: String
+  residenceGeolocation: Point
+  spokenLanguages: [LanguageEnum!]
+}
+
+union CreateHmisClientProfilePayload = HmisClientProfileType | OperationInfo
+
+union CreateHmisClientProgramPayload = ProgramEnrollmentType | OperationInfo
+
+input CreateHmisNoteInput {
+  hmisClientProfileId: String!
+  title: String
+  note: String
+  date: Date!
+  refClientProgram: String
+}
+
+union CreateHmisNotePayload = HmisNoteType | OperationInfo
+
+input CreateHmisNoteServiceRequestInput {
+  hmisNoteId: ID!
+  serviceId: ID
+  serviceOther: String
+  serviceRequestType: ServiceRequestTypeEnum!
+}
+
+union CreateHmisNoteServiceRequestPayload = ServiceRequestType | OperationInfo
+
 union CreateHmisProfilePayload = HmisProfileType | OperationInfo
 
 input CreateNoteDataImportInput {
@@ -521,7 +488,6 @@ union CreateNotePayload = NoteType | OperationInfo
 
 input CreateNoteServiceRequestInput {
   serviceId: ID
-  serviceEnum: ServiceEnum
   serviceOther: String
   noteId: ID!
   serviceRequestType: ServiceRequestTypeEnum!
@@ -536,7 +502,6 @@ input CreateProfileDataImportInput {
 
 input CreateServiceRequestInput {
   serviceId: ID
-  serviceEnum: ServiceEnum
   status: ServiceRequestStatusEnum!
   serviceOther: String
   clientProfile: ID
@@ -548,14 +513,36 @@ union CreateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 input CreateTaskInput {
   clientProfile: ID
+  hmisClientProfile: ID
   description: String
   note: ID
+  hmisNote: ID
   summary: String!
   team: SelahTeamEnum
   status: TaskStatusEnum
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
+
+type CurrentUserOrganizationType {
+  id: ID!
+  name: String!
+  userPermissions: [UserOrganizationPermissions!]
+}
+
+type CurrentUserType {
+  firstName: NonBlankString
+  lastName: NonBlankString
+  middleName: NonBlankString
+  email: NonBlankString
+  id: ID!
+  organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): [CurrentUserOrganizationType!]
+  hasAcceptedTos: Boolean
+  hasAcceptedPrivacyPolicy: Boolean
+  isOutreachAuthorized: Boolean
+  username: String
+  isHmisUser: Boolean
+}
 
 """Date (isoformat)"""
 scalar Date
@@ -624,6 +611,10 @@ type DjangoImageType {
   url: String!
   width: Int!
   height: Int!
+}
+
+input DjangoModelFilterInput {
+  pk: ID!
 }
 
 type DjangoModelType {
@@ -746,75 +737,85 @@ enum HmisAgencyEnum {
   VASH
 }
 
-type HmisClientDataType {
-  middleName: String
-  nameSuffix: HmisSuffixEnum
+input HmisClientProfileFilter {
+  AND: HmisClientProfileFilter
+  OR: HmisClientProfileFilter
+  NOT: HmisClientProfileFilter
+  DISTINCT: Boolean
+  search: String
+}
+
+input HmisClientProfileOrdering {
+  id: Ordering
+  firstName: Ordering
+  lastName: Ordering
+  addedDate: Ordering
+  lastUpdated: Ordering
+}
+
+type HmisClientProfileType {
   alias: String
-  raceEthnicity: [HmisRaceEnum!]!
-  additionalRaceEthnicity: String
-  differentIdentityText: String
-  gender: [HmisGenderEnum!]!
-  veteranStatus: HmisVeteranStatusEnum!
-}
-
-input HmisClientFilterInput {
-  search: String = null
-}
-
-type HmisClientListType {
-  items: [HmisClientType!]!
-  meta: HmisListMetaType
-}
-
-union HmisClientListTypeHmisListClientsError = HmisClientListType | HmisListClientsError
-
-type HmisClientType {
-  personalId: String
-  uniqueIdentifier: String
-  firstName: String
-  lastName: String
-  nameDataQuality: HmisNameQualityEnum
+  birthDate: Date
+  dobQuality: HmisDobQualityEnum
+  firstName: NonBlankString
+  lastName: NonBlankString
+  nameQuality: HmisNameQualityEnum
   ssn1: String
   ssn2: String
   ssn3: String
-  ssnDataQuality: HmisSsnQualityEnum
-  dob: String
-  dobDataQuality: HmisDobQualityEnum
-  data: HmisClientDataType
+  ssnQuality: HmisSsnQualityEnum
+  gender: [HmisGenderEnum!]
+  genderIdentityText: String
+  nameMiddle: NonBlankString
+  nameSuffix: HmisSuffixEnum
+  raceEthnicity: [HmisRaceEnum!]
+  additionalRaceEthnicityDetail: String
+  veteran: HmisVeteranStatusEnum
+  adaAccommodation: [AdaAccommodationEnum!]
+  address: String
+  californiaId: String
+  email: NonBlankString
+  eyeColor: EyeColorEnum
+  hairColor: HairColorEnum
+  heightInInches: Float
+  importantNotes: String
+  livingSituation: LivingSituationEnum
+  mailingAddress: String
+  maritalStatus: MaritalStatusEnum
+  physicalDescription: String
+  placeOfBirth: String
+  preferredCommunication: [PreferredCommunicationEnum!]
+  preferredLanguage: LanguageEnum
+  profilePhoto: DjangoImageType
+  pronouns: PronounEnum
+  pronounsOther: String
+  residenceAddress: String
+  residenceGeolocation: Point
+  spokenLanguages: [LanguageEnum!]
+  id: ID!
+  hmisId: String
+  personalId: String
+  uniqueIdentifier: String
+  addedDate: DateTime
+  lastUpdated: DateTime
+  age: Int
+  phoneNumbers: [PhoneNumberType!]
+  createdBy: UserType
 }
 
-union HmisClientTypeHmisCreateClientError = HmisClientType | HmisCreateClientError
+type HmisClientProfileTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
 
-union HmisClientTypeHmisGetClientError = HmisClientType | HmisGetClientError
+  """Total count of existing results."""
+  totalCount: Int!
 
-union HmisClientTypeHmisUpdateClientError = HmisClientType | HmisUpdateClientError
-
-type HmisCreateClientError {
-  message: String!
-  field: String
+  """List of paginated results."""
+  results: [HmisClientProfileType!]!
 }
 
-input HmisCreateClientInput {
-  firstName: String!
-  lastName: String!
-  nameDataQuality: Int = 99
-  ssn1: String = ""
-  ssn2: String = ""
-  ssn3: String = "xxxx"
-  ssnDataQuality: Int = 99
-  dob: String = ""
-  dobDataQuality: Int = 99
-}
-
-input HmisCreateClientSubItemsInput {
-  middleName: String = ""
-  nameSuffix: Int = 9
-  alias: String = ""
-  additionalRaceEthnicity: String = ""
-  differentIdentityText: String = ""
-  raceEthnicity: [Int!] = [99]
-  gender: [Int!] = [99]
-  veteranStatus: Int = 99
+type HmisClientProgramType {
+  id: String!
+  program: HmisProgramType!
 }
 
 enum HmisDobQualityEnum {
@@ -838,27 +839,16 @@ enum HmisGenderEnum {
   NOT_COLLECTED
 }
 
-type HmisGetClientError {
-  message: String!
-  field: String
-}
-
-type HmisListClientsError {
-  message: String!
-  field: String
-}
-
-type HmisListMetaType {
-  currentPage: Int
-  perPage: Int
-  pageCount: Int
-  totalCount: Int
-}
-
 type HmisLoginError {
   message: String!
   field: String
 }
+
+type HmisLoginSuccess {
+  user: CurrentUserType!
+}
+
+union HmisLoginSuccessHmisLoginError = HmisLoginSuccess | HmisLoginError
 
 enum HmisNameQualityEnum {
   FULL
@@ -868,9 +858,50 @@ enum HmisNameQualityEnum {
   NOT_COLLECTED
 }
 
-input HmisPaginationInput {
-  page: Int = null
-  perPage: Int = 10
+input HmisNoteFilter {
+  hmisClientProfile: ID
+  createdBy: ID
+  AND: HmisNoteFilter
+  OR: HmisNoteFilter
+  NOT: HmisNoteFilter
+  DISTINCT: Boolean
+  authors: [ID!]
+  search: String
+}
+
+input HmisNoteOrdering {
+  id: Ordering
+  addedDate: Ordering
+  lastUpdated: Ordering
+  date: Ordering
+}
+
+type HmisNoteType {
+  id: ID!
+  hmisId: String!
+  hmisClientProfile: HmisClientProfileType!
+  addedDate: DateTime
+  lastUpdated: DateTime
+  title: String
+  note: String!
+  date: Date
+  clientProgram: HmisClientProgramType
+  refClientProgram: String
+  tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]
+  createdBy: UserType
+  location: LocationType
+  requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]
+  providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]
+}
+
+type HmisNoteTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [HmisNoteType!]!
 }
 
 input HmisProfileInput {
@@ -894,6 +925,12 @@ type HmisProfileTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [HmisProfileType!]!
+}
+
+type HmisProgramType {
+  id: String!
+  name: String!
+  enableNotes: Int
 }
 
 enum HmisRaceEnum {
@@ -930,41 +967,60 @@ enum HmisSuffixEnum {
   NO_ANSWER
 }
 
-type HmisUpdateClientError {
-  message: String!
-  field: String
-}
-
-input HmisUpdateClientInput {
-  personalId: String!
-  firstName: String!
-  lastName: String!
-  nameDataQuality: Int!
-  ssn1: String!
-  ssn2: String!
-  ssn3: String!
-  ssnDataQuality: Int!
-  dob: String!
-  dobDataQuality: Int!
-}
-
-input HmisUpdateClientSubItemsInput {
-  middleName: String!
-  nameSuffix: Int!
-  alias: String!
-  additionalRaceEthnicity: String!
-  differentIdentityText: String!
-  raceEthnicity: [Int!]!
-  gender: [Int!]!
-  veteranStatus: Int!
-}
-
 enum HmisVeteranStatusEnum {
   NO
   YES
   DONT_KNOW
   NO_ANSWER
   NOT_COLLECTED
+}
+
+input IDFilterLookup {
+  """Exact match. Filter will be skipped on `null` value"""
+  exact: ID
+
+  """Assignment test. Filter will be skipped on `null` value"""
+  isNull: Boolean
+
+  """
+  Exact match of items in a given list. Filter will be skipped on `null` value
+  """
+  inList: [ID!]
+
+  """Case-insensitive exact match. Filter will be skipped on `null` value"""
+  iExact: ID
+
+  """
+  Case-sensitive containment test. Filter will be skipped on `null` value
+  """
+  contains: ID
+
+  """
+  Case-insensitive containment test. Filter will be skipped on `null` value
+  """
+  iContains: ID
+
+  """Case-sensitive starts-with. Filter will be skipped on `null` value"""
+  startsWith: ID
+
+  """Case-insensitive starts-with. Filter will be skipped on `null` value"""
+  iStartsWith: ID
+
+  """Case-sensitive ends-with. Filter will be skipped on `null` value"""
+  endsWith: ID
+
+  """Case-insensitive ends-with. Filter will be skipped on `null` value"""
+  iEndsWith: ID
+
+  """
+  Case-sensitive regular expression match. Filter will be skipped on `null` value
+  """
+  regex: ID
+
+  """
+  Case-insensitive regular expression match. Filter will be skipped on `null` value
+  """
+  iRegex: ID
 }
 
 enum ImmediateNeedChoices {
@@ -1070,7 +1126,7 @@ input LocationInput {
 }
 
 type LocationType {
-  id: ID!
+  id: ID
   address: AddressType!
   point: Point!
   pointOfInterest: String
@@ -1129,11 +1185,10 @@ type MoodType {
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
-  googleAuth(input: AuthInput!): AuthResponse!
-  appleAuth(input: AuthInput!): AuthResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
   addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
+  removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "remove_org_member"}], any: true)
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
   updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
   deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
@@ -1155,9 +1210,15 @@ type Mutation {
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
-  hmisLogin(email: String!, password: String!): UserTypeHmisLoginError!
-  hmisCreateClient(clientInput: HmisCreateClientInput!, clientSubItemsInput: HmisCreateClientSubItemsInput!): HmisClientTypeHmisCreateClientError!
-  hmisUpdateClient(clientInput: HmisUpdateClientInput!, clientSubItemsInput: HmisUpdateClientSubItemsInput!): HmisClientTypeHmisUpdateClientError!
+  hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError! @hmisDirective
+  createHmisClientProfile(data: CreateHmisClientProfileInput!): CreateHmisClientProfilePayload! @hmisDirective @isHmisAuthenticated
+  updateHmisClientProfile(data: UpdateHmisClientProfileInput!): UpdateHmisClientProfilePayload! @hmisDirective @isHmisAuthenticated
+  createHmisNote(data: CreateHmisNoteInput!): CreateHmisNotePayload! @hmisDirective @isHmisAuthenticated
+  updateHmisNote(data: UpdateHmisNoteInput!): UpdateHmisNotePayload! @hmisDirective @isHmisAuthenticated
+  createHmisClientProgram(clientId: Int!, programHmisId: Int!): CreateHmisClientProgramPayload! @hmisDirective @isHmisAuthenticated
+  updateHmisNoteLocation(data: UpdateHmisNoteLocationInput!): UpdateHmisNoteLocationPayload! @hmisDirective @isHmisAuthenticated
+  createHmisNoteServiceRequest(data: CreateHmisNoteServiceRequestInput!): CreateHmisNoteServiceRequestPayload! @hmisDirective @isHmisAuthenticated
+  removeHmisNoteServiceRequest(data: RemoveHmisNoteServiceRequestInput!): RemoveHmisNoteServiceRequestPayload! @hmisDirective @isHmisAuthenticated
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
@@ -1221,7 +1282,7 @@ type NoteType {
   id: ID!
   clientProfile: ClientProfileType
   createdAt: DateTime!
-  createdBy: UserType!
+  createdBy: UserType
   interactedAt: DateTime!
   isSubmitted: Boolean!
   location: LocationType
@@ -1317,10 +1378,13 @@ input OrganizationFilter {
   search: String
 }
 
-type OrganizationForUserType {
-  id: ID!
-  name: String!
-  userPermissions: [UserOrganizationPermissions!]
+input OrganizationMemberOrdering {
+  id: Ordering
+  email: Ordering
+  firstName: Ordering
+  lastLogin: Ordering
+  lastName: Ordering
+  memberRole: Ordering
 }
 
 type OrganizationMemberType {
@@ -1460,6 +1524,12 @@ enum PreferredCommunicationEnum {
   WHATSAPP
 }
 
+type ProgramEnrollmentType {
+  id: String!
+  clientId: String!
+  refClientProgram: String!
+}
+
 enum PronounEnum {
   HE_HIM_HIS
   SHE_HER_HERS
@@ -1468,11 +1538,11 @@ enum PronounEnum {
 }
 
 type Query {
-  currentUser: UserType!
-  caseworkerOrganizations(filters: OrganizationFilter, order: OrganizationOrder, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  currentUser: CurrentUserType!
+  caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
-  organizationMembers(organizationId: String!, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
-  clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
+  organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
+  clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
   clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
@@ -1486,17 +1556,21 @@ type Query {
   clientDocuments(clientId: String!, filters: ClientDocumentFilter, pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)
   featureControls: FeatureControlData!
-  hmisGetClient(personalId: ID!): HmisClientTypeHmisGetClientError!
-  hmisListClients(pagination: HmisPaginationInput = null, filter: HmisClientFilterInput = null): HmisClientListTypeHmisListClientsError!
+  hmisClientProfiles(pagination: OffsetPaginationInput, filters: HmisClientProfileFilter, ordering: [HmisClientProfileOrdering!]! = []): HmisClientProfileTypeOffsetPaginated! @hmisDirective @isHmisAuthenticated
+  hmisNotes(pagination: OffsetPaginationInput, filters: HmisNoteFilter, ordering: [HmisNoteOrdering!]! = []): HmisNoteTypeOffsetPaginated! @hmisDirective @isHmisAuthenticated
+  hmisClientProfile(id: ID!): HmisClientProfileType! @hmisDirective @isHmisAuthenticated
+  hmisNote(id: ID!): HmisNoteType! @hmisDirective @isHmisAuthenticated
+  hmisClientPrograms(clientId: ID!): [HmisClientProgramType!]! @hmisDirective @isHmisAuthenticated
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  notes(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder, ordering: [NoteOrder!]! = []): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+  notes(pagination: OffsetPaginationInput, filters: NoteFilter, ordering: [NoteOrder!]! = []): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  interactionAuthors(filters: InteractionAuthorFilter, order: InteractionAuthorOrder, pagination: OffsetPaginationInput): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
-  tasks(pagination: OffsetPaginationInput, filters: TaskFilter, ordering: [TaskOrder!]! = []): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
+  tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   shelter(pk: ID!): ShelterType!
-  shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
+  adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
+  shelters(ordering: [ShelterOrder!] = null, filters: ShelterFilter, pagination: OffsetPaginationInput): ShelterTypeOffsetPaginated!
 }
 
 enum RaceEnum {
@@ -1526,6 +1600,14 @@ enum RelationshipTypeEnum {
   OTHER
 }
 
+input RemoveHmisNoteServiceRequestInput {
+  serviceRequestId: ID!
+  hmisNoteId: ID!
+  serviceRequestType: ServiceRequestTypeEnum!
+}
+
+union RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo
+
 input RemoveNoteServiceRequestInput {
   serviceRequestId: ID!
   noteId: ID!
@@ -1533,6 +1615,13 @@ input RemoveNoteServiceRequestInput {
 }
 
 union RemoveNoteServiceRequestPayload = NoteType | OperationInfo
+
+input RemoveOrganizationMemberInput {
+  id: ID!
+  organizationId: ID!
+}
+
+union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo
 
 input RevertNoteInput {
   id: ID!
@@ -1595,62 +1684,6 @@ enum SelahTeamEnum {
   WDI_OUTREACH
 }
 
-enum ServiceEnum {
-  BAG
-  BATTERIES
-  BICYCLE
-  BICYCLE_REPAIR
-  BIRTH_CERTIFICATE
-  BLANKET
-  BOOK
-  CALIFORNIA_LIFELINE_PHONE
-  CLOTHES
-  CONSENT_TO_CONNECT
-  CONTACT_DPSS
-  CONTACT_FRIEND
-  DENTAL
-  DISCOUNT_SCOOTER_RIDES
-  DMH_EVALUATION
-  DMV_NO_FEE_ID_FORM
-  EBT
-  FAMILY_REUNIFICATION
-  FEMININE_HYGIENE
-  FIRST_AID
-  FOOD
-  HARM_REDUCTION
-  HMIS_CONSENT
-  HYGIENE_KIT
-  INTERNET_ACCESS
-  LAHOP
-  LEGAL_COUNSEL
-  MAIL_PICK_UP
-  MEDICAL
-  MEDI_CAL
-  METRO_LIFE_TAP
-  NOTARY
-  OTHER
-  PET_CARE
-  PET_FOOD
-  PUBLIC_BENEFITS_PROGRAMS
-  RIDE
-  SAFE_PARKING
-  SHELTER
-  SHOES
-  SHOWER
-  SLEEPING_BAG
-  SOCIAL_SECURITY_CARD_REPLACEMENT
-  SSI_SSDI
-  STIMULUS_ASSISTANCE
-  STORAGE_BELONGINGS
-  STORAGE_DOCUMENTS
-  TARP
-  TENT
-  THERAPIST_APPOINTMENT
-  UNEMPLOYMENT_CERTIFICATION
-  VACCINE_PASSPORT
-  WATER
-}
-
 enum ServiceRequestStatusEnum {
   COMPLETED
   TO_DO
@@ -1659,8 +1692,6 @@ enum ServiceRequestStatusEnum {
 type ServiceRequestType {
   id: ID!
   service: OrganizationServiceType
-  serviceEnum: ServiceEnum
-  serviceOther: String
   status: ServiceRequestStatusEnum!
   dueBy: DateTime
   completedOn: DateTime
@@ -1685,6 +1716,7 @@ enum ShelterChoices {
 }
 
 input ShelterFilter {
+  organization: DjangoModelFilterInput
   AND: ShelterFilter
   OR: ShelterFilter
   NOT: ShelterFilter
@@ -1702,6 +1734,7 @@ type ShelterLocationType {
 
 input ShelterOrder {
   name: Ordering
+  createdAt: Ordering
 }
 
 type ShelterPhotoType {
@@ -1888,17 +1921,23 @@ type SwitchType {
 
 input TaskFilter {
   clientProfile: ID
+  hmisClientProfile: ID
+  note: IDFilterLookup
+  hmisNote: IDFilterLookup
   createdBy: ID
   AND: TaskFilter
   OR: TaskFilter
   NOT: TaskFilter
   DISTINCT: Boolean
   clientProfiles: [ID!]
+  hmisClientProfiles: [ID!]
   authors: [ID!]
   organizations: [ID!]
   status: [TaskStatusEnum!]
   teams: [SelahTeamEnum!]
   search: String
+  clientProfileLookup: IDFilterLookup
+  hmisClientProfileLookup: IDFilterLookup
 }
 
 input TaskOrder {
@@ -1916,11 +1955,13 @@ enum TaskStatusEnum {
 
 type TaskType {
   id: ID!
+  hmisClientProfile: HmisClientProfileType
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
   description: String
   note: DjangoModelType
+  hmisNote: DjangoModelType
   organization: OrganizationType
   status: TaskStatusEnum
   summary: String
@@ -2014,7 +2055,69 @@ union UpdateClientProfilePayload = ClientProfileType | OperationInfo
 
 union UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo
 
-union UpdateCurrentUserPayload = UserType | OperationInfo
+union UpdateCurrentUserPayload = UserType | CurrentUserType | OperationInfo
+
+input UpdateHmisClientProfileInput {
+  alias: String
+  birthDate: Date
+  dobQuality: HmisDobQualityEnum
+  firstName: NonBlankString
+  lastName: NonBlankString
+  nameQuality: HmisNameQualityEnum
+  ssn1: String
+  ssn2: String
+  ssn3: String
+  ssnQuality: HmisSsnQualityEnum
+  gender: [HmisGenderEnum!]!
+  genderIdentityText: String
+  nameMiddle: NonBlankString
+  nameSuffix: HmisSuffixEnum
+  raceEthnicity: [HmisRaceEnum!]!
+  additionalRaceEthnicityDetail: String
+  veteran: HmisVeteranStatusEnum
+  adaAccommodation: [AdaAccommodationEnum!]
+  address: String
+  californiaId: String
+  email: NonBlankString
+  eyeColor: EyeColorEnum
+  hairColor: HairColorEnum
+  heightInInches: Float
+  importantNotes: String
+  livingSituation: LivingSituationEnum
+  mailingAddress: String
+  maritalStatus: MaritalStatusEnum
+  physicalDescription: String
+  placeOfBirth: String
+  preferredCommunication: [PreferredCommunicationEnum!]
+  preferredLanguage: LanguageEnum
+  profilePhoto: Upload
+  pronouns: PronounEnum
+  pronounsOther: String
+  residenceAddress: String
+  residenceGeolocation: Point
+  spokenLanguages: [LanguageEnum!]
+  id: ID!
+  phoneNumbers: [PhoneNumberInput!]
+}
+
+union UpdateHmisClientProfilePayload = HmisClientProfileType | OperationInfo
+
+input UpdateHmisNoteInput {
+  id: ID!
+  title: String
+  note: String
+  date: Date
+  refClientProgram: String
+}
+
+input UpdateHmisNoteLocationInput {
+  id: ID!
+  location: LocationInput!
+}
+
+union UpdateHmisNoteLocationPayload = HmisNoteType | OperationInfo
+
+union UpdateHmisNotePayload = HmisNoteType | OperationInfo
 
 union UpdateHmisProfilePayload = HmisProfileType | OperationInfo
 
@@ -2069,6 +2172,7 @@ input UpdateUserInput {
   hasAcceptedPrivacyPolicy: Boolean
 }
 
+"""Represents a file upload."""
 scalar Upload
 
 enum UserOrganizationPermissions {
@@ -2085,15 +2189,13 @@ type UserType {
   middleName: NonBlankString
   email: NonBlankString
   id: ID!
-  organizationsOrganization(filters: OrganizationFilter, order: OrganizationOrder, pagination: OffsetPaginationInput): [OrganizationForUserType!]
+  organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = []): [OrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
-  isHmisUser: Boolean
   isOutreachAuthorized: Boolean
-  username: String!
+  username: String
+  isHmisUser: Boolean
 }
-
-union UserTypeHmisLoginError = UserType | HmisLoginError
 
 enum VeteranStatusEnum {
   YES

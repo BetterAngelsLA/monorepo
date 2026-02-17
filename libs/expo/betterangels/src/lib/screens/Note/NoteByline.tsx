@@ -9,13 +9,18 @@ import { enumDisplaySelahTeam } from '../../static/enumDisplayMapping';
 import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
 
 interface INoteBylineProps {
-  createdBy: NoteSummaryQuery['note']['createdBy'];
+  createdBy?: NoteSummaryQuery['note']['createdBy'];
   organization: NoteSummaryQuery['note']['organization'];
   team?: NoteSummaryQuery['note']['team'];
 }
 
 export default function NoteByline(props: INoteBylineProps) {
   const { createdBy, organization, team } = props;
+
+  const authorName = createdBy
+    ? `${createdBy.firstName} ${createdBy.lastName}`
+    : 'Unknown User';
+
   return (
     <View
       style={{
@@ -38,13 +43,13 @@ export default function NoteByline(props: INoteBylineProps) {
           marginRight: Spacings.md,
         }}
       >
-        <TextMedium size="xsm" color={Colors.PRIMARY_EXTRA_DARK}>
-          {createdBy.firstName} {createdBy.lastName}
+        <TextMedium selectable size="xsm" color={Colors.PRIMARY_EXTRA_DARK}>
+          {authorName}
         </TextMedium>
-        <TextRegular size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
+        <TextRegular selectable size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
           {organization.name}
           {team && (
-            <TextRegular size="xs">
+            <TextRegular selectable size="xs">
               {' - '}
               {enumDisplaySelahTeam[team]}
             </TextRegular>

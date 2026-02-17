@@ -1,5 +1,6 @@
 import { Navbar } from '@monorepo/react/betterangels-admin';
-import { Alert, AppDrawer, mergeCss } from '@monorepo/react/components';
+import { Alert, AppDrawer } from '@monorepo/react/components';
+import { mergeCss } from '@monorepo/react/shared';
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';

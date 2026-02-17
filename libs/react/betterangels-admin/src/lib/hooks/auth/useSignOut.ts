@@ -1,10 +1,11 @@
+import { useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
-import useUser from '../user/useUser';
-import { useLogoutMutation } from './__generated__/auth.generated';
+import { useUser } from '@monorepo/react/shared';
+import { LogoutDocument } from './__generated__/auth.generated';
 
 export default function useSignOut() {
   const { setUser } = useUser();
-  const [logout, { loading, error }] = useLogoutMutation();
+  const [logout, { loading, error }] = useMutation(LogoutDocument);
 
   const signOut = useCallback(async () => {
     try {

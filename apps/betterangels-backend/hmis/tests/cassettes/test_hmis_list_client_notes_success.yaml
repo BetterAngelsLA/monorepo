@@ -1,0 +1,22 @@
+interactions:
+- request:
+    body: '{"query": "\n    query ($personalId: ID!, $enrollmentId: ID!, $pagination:
+      PaginationInput) {\n        listClientNotes (filter: {personalId: $personalId,
+      enrollmentId: $enrollmentId}, pagination: $pagination) {\n            ... on
+      ClientNoteList {\n                items {\n                    id\n                    title\n                    note\n                    date\n                    category\n                    client
+      { personalId }\n                    enrollment { enrollmentId }\n                }\n                meta
+      {\n                    current_page\n                    page_count\n                    per_page\n                    total_count\n                }\n            }\n            \n        }\n    }\n",
+      "variables": {"personalId": "1", "enrollmentId": "517", "pagination": {"page":
+      1, "per_page": 10}}}'
+    headers: {}
+    method: POST
+    uri: ''
+  response:
+    body:
+      string: '{"data":{"listClientNotes":{"items":[{"id":"413","title":"first last
+        housing note","note":"<p>take note</p>","date":"2025-10-16","category":null,"client":{"personalId":"1"},"enrollment":{"enrollmentId":"517"}}],"meta":{"current_page":1,"page_count":1,"per_page":10,"total_count":1}}}}'
+    headers: {}
+    status:
+      code: 200
+      message: OK
+version: 1

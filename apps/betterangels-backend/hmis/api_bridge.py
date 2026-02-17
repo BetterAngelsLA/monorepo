@@ -1,326 +1,605 @@
-import json
+import datetime
 import re
-from typing import Any, Optional
+from datetime import timezone
+from enum import Enum
+from http import HTTPMethod
+from typing import Any, Collection, Iterable, Mapping, Optional
+from zoneinfo import ZoneInfo
 
-import jwt
 import requests
 import strawberry
-from common.errors import UnauthenticatedGQLError
-from common.utils import dict_keys_to_camel
-from cryptography.fernet import Fernet, InvalidToken
+from common.constants import HMIS_AUTH_COOKIE_NAME
+from common.errors import NotFoundGQLError, UnauthenticatedGQLError
+from common.utils import dict_keys_to_snake
 from django.conf import settings
-from django.http import HttpRequest
-from django.utils.module_loading import import_string
+from django.core.exceptions import PermissionDenied, ValidationError
 from graphql import (
-    GraphQLField,
-    GraphQLObjectType,
-    GraphQLSchema,
-    parse,
-    specified_rules,
-    validate,
+    FieldNode,
+    FragmentSpreadNode,
+    GraphQLError,
+    InlineFragmentNode,
+    SelectionSetNode,
 )
-from graphql.type import GraphQLObjectType as _GraphQLObjectType
-from hmis.errors import is_hmis_unauthenticated
-from hmis.types import HmisClientFilterInput, HmisPaginationInput
+from hmis.types import (
+    CreateHmisClientProfileInput,
+    CreateHmisNoteInput,
+    UpdateHmisNoteInput,
+)
+from strawberry import UNSET, Info
+from strawberry.utils.str_converters import to_snake_case
 
-_SESSION_KEY = "hmis_auth_token"
-HMIS_GRAPHQL_ENDPOINT = getattr(settings, "HMIS_GRAPHQL_URL", None)
-HMIS_GRAPHQL_API_KEY = getattr(settings, "HMIS_API_KEY", None)
-GRAPHQL_SCHEMA_PATH = "betterangels_backend.schema.schema"
+DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+LOS_ANGELES_TZ = "America/Los_Angeles"
+CLIENT_DATE_FORMAT = "%Y-%m-%d"
+PROGRAM_NOTE_DATE_FORMAT = "%Y-%m-%d"
+NOTE_DATE_FORMAT = "%m/%d/%Y"
+
+METADATA_FIELDS = {"id", "added_date", "last_updated"}
+NOTE_FIELDS = {"title", "note", "date", "ref_client_program"}
+CLIENT_PROGRAM_FIELDS = {"clientProgram.id", "clientProgram.program.id", "clientProgram.program.name"}
+CLIENT_FIELDS = {
+    "unique_identifier",
+    "personal_id",
+    # "alias",  # TODO: Turn on when API fixes alias returning null issue
+    "birth_date",
+    "dob_quality",
+    "first_name",
+    "last_name",
+    "name_quality",
+    "ssn1",
+    "ssn2",
+    "ssn3",
+    "ssn_quality",
+}
+CLIENT_SUB_FIELDS = {
+    "age",
+    "gender",
+    "gender_identity_text",
+    "name_middle",
+    "name_suffix",
+    "race_ethnicity",
+    "additional_race_ethnicity_detail",
+    "veteran",
+}
+BA_CLIENT_FIELDS = {
+    "hmisId",
+    "adaAccommodation",
+    "address",
+    "californiaId",
+    "email",
+    "eyeColor",
+    "hairColor",
+    "heightInInches",
+    "importantNotes",
+    "livingSituation",
+    "mailingAddress",
+    "maritalStatus",
+    "nickname",
+    "phoneNumber",
+    "physicalDescription",
+    "placeOfBirth",
+    "preferredCommunication",
+    "preferredLanguage",
+    "pronouns",
+    "pronounsOther",
+    "residenceAddress",
+    "residenceGeolocation",
+    "spokenLanguages",
+}
+BA_NOTE_FIELDS = {"hmisId", "createdBy", "hmisClientProfile"}
 
 
 class HmisApiBridge:
-    """Utility class for interfacing with HMIS GraphQL API."""
+    """Utility class for interfacing with HMIS REST API."""
 
-    def __init__(self, request: HttpRequest) -> None:
-        self.request = request
-        self.session = request.session
+    def __init__(self, info: strawberry.Info) -> None:
+        self.info = info
+        request = self.info.context["request"]
+        hmis_rest_endpoint = getattr(settings, "HMIS_REST_URL", None)
+        hmis_host = getattr(settings, "HMIS_HOST", None)
+        if not all([hmis_rest_endpoint, hmis_host]):
+            raise Exception("HMIS_REST_URL and HMIS_HOST must be configured in settings")
 
-        if HMIS_GRAPHQL_ENDPOINT is None or HMIS_GRAPHQL_API_KEY is None:
-            raise Exception("HMIS not configured")
+        self.endpoint = hmis_rest_endpoint
 
-        self.endpoint = HMIS_GRAPHQL_ENDPOINT
-        self.api_key = HMIS_GRAPHQL_API_KEY
-        self.schema = self._load_graphql_schema()
-
-        token = self._get_auth_token()
+        # Extract token from X-HMIS-Token header
+        token = request.META.get("HTTP_X_HMIS_TOKEN")
         auth_header = {"Authorization": f"Bearer {token}"} if token else {}
 
+        # Forward the client User-Agent to HMIS when available.
+        # This allows callers (including curl test scripts) to control UA without us spoofing a browser.
+        forwarded_user_agent = (request.headers.get("User-Agent") or "").strip()
+        user_agent_header = {"User-Agent": forwarded_user_agent} if forwarded_user_agent else {}
+
+        self.http = requests.Session()
+
         self.headers = {
-            "Content-Type": "application/json",
-            "x-api-key": self.api_key,
+            "Accept": "application/json, text/plain, */*",
+            "Host": hmis_host,
             **auth_header,
+            **user_agent_header,
         }
 
-    def _load_graphql_schema(self) -> GraphQLSchema:
-        obj = import_string(GRAPHQL_SCHEMA_PATH)
-
-        return getattr(obj, "_schema", obj)  # type: ignore
-
-    def _make_request(self, body: dict[str, Any], timeout: Optional[float] = None) -> dict[str, Any]:
-        resp = requests.post(
-            self.endpoint,
-            headers=self.headers,
-            json=body,
-            timeout=timeout,
-        )
-
-        response = resp.json() or {}
-
-        if errors := response.get("errors"):
-            if is_hmis_unauthenticated(errors):
-                # TODO: destroy session here?
-                raise UnauthenticatedGQLError()
-
-        # If server replies non-JSON on error, .json() will raise — we treat as failure.
-        return response
-
-    def _validate_selection_for_type(
+    def _get_field_dot_paths(
         self,
-        object_typename: str,
-        selection: str,
-    ) -> str:
-        """Validate query contents against provided type."""
-        if not selection.strip():
-            raise ValueError("Empty selection set.")
+        info: Info,
+        default_fields: Optional[Iterable[str]] = None,
+        ignored_fields: Optional[Iterable[str]] = None,
+        selection_set: Optional[SelectionSetNode] = None,
+    ) -> set[str]:
+        """Accesses selected query fields from operation info and returns a set of dot paths.
 
-        gql_type = self.schema.get_type(object_typename)
-        if not isinstance(gql_type, _GraphQLObjectType):
-            raise ValueError(f"Type '{object_typename}' is not an object type in the schema.")
+        e.g.,
+        ```
+            query {
+                firstName
+                lastName
+                address {
+                    city
+                    state
+                    zip
+                }
+            }
+        ```
 
-        Q = GraphQLObjectType(name="_Q", fields=lambda: {"_x": GraphQLField(gql_type)})
-        synthetic = GraphQLSchema(query=Q, types=list(self.schema.type_map.values()))
+        returns
 
-        # Parse & validate: query { _x { <selection> } }
-        doc = parse(f"query __Q__ {{ _x {{ {selection} }} }}")
-        rules = list(specified_rules)
-        errors = validate(synthetic, doc, rules)
-        if errors:
-            raise ValueError("; ".join(e.message for e in errors))
-
-        return selection
-
-    def _build_client_mutation(self, operation: str, response_fields: str, expected_type: str) -> str:
-        operation_cap = operation.capitalize()
-        cleaned_fields = re.sub(r"\\n", "", response_fields)
-        safe_selection = self._validate_selection_for_type(expected_type, cleaned_fields)
-
-        return f"""
-            mutation (
-                $clientInput: {operation_cap}ClientInput!,
-                $clientSubItemsInput: {operation_cap}ClientSubItemsInput!
-            ) {{
-                {operation}Client(
-                    client: $clientInput,
-                    data: $clientSubItemsInput
-                ) {{
-                    {safe_selection}
-                }}
-            }}
+        `{"first_name", "last_name", "address.number", "address.city", "address.state", "address.zip"}`
         """
 
-    def _run_client_mutation(
+        sel = selection_set or info.operation.selection_set
+        out = set(default_fields or [])
+        frags = info._raw_info.fragments
+        seen = set()
+
+        ignored = set((ignored_fields or []))
+
+        def fname(n: FieldNode) -> str:
+            return n.alias.value if n.alias else n.name.value
+
+        stack: list[tuple[tuple[str, ...], SelectionSetNode]] = []
+
+        # seed from top-level
+        for n in sel.selections:
+            if isinstance(n, FieldNode) and n.selection_set:
+                stack.append(((), n.selection_set))
+            elif isinstance(n, FragmentSpreadNode):
+                name = n.name.value
+                if name not in seen:
+                    seen.add(name)
+                    stack.append(((), frags[name].selection_set))
+            elif isinstance(n, InlineFragmentNode) and n.selection_set:
+                stack.append(((), n.selection_set))
+
+        # DFS
+        while stack:
+            prefix, sset = stack.pop()
+            for n in sset.selections:
+                if isinstance(n, FieldNode):
+                    field_name = fname(n)
+                    path_tuple = (*prefix, field_name)
+                    dot_path = ".".join(path_tuple)
+
+                    if dot_path in ignored or field_name in ignored:
+                        continue
+
+                    if n.selection_set:
+                        stack.append((path_tuple, n.selection_set))
+                    else:
+                        out.add(".".join(path_tuple))
+                elif isinstance(n, FragmentSpreadNode):
+                    name = n.name.value
+                    if name not in seen:
+                        seen.add(name)
+                        stack.append((prefix, frags[name].selection_set))
+                elif isinstance(n, InlineFragmentNode) and n.selection_set:
+                    stack.append((prefix, n.selection_set))
+
+        snake_out = {to_snake_case(k) for k in out}
+
+        return {f"screenValues.{k}" if k in CLIENT_SUB_FIELDS else k for k in snake_out}
+
+    def _convert_to_utc(
+        self, dt_str: str, dt_format: str = DATETIME_FORMAT, tz: str = LOS_ANGELES_TZ
+    ) -> datetime.datetime:
+        """Converts naive local datetime string to aware UTC datetime.
+
+        dt_str: datetime string
+        dt_format: datetime string format
+        tz: local timezone
+        """
+
+        try:
+            return datetime.datetime.strptime(dt_str, dt_format).replace(tzinfo=ZoneInfo(tz)).astimezone(timezone.utc)
+        except ValueError as e:
+            raise ValueError(f"Failed to parse datetime string '{dt_str}' with format '{dt_format}': {e}") from e
+
+    def _format_timestamp_fields(self, data: dict[str, Any]) -> dict[str, Any]:
+        formatted_data = {
+            **data,
+            "added_date": self._convert_to_utc(data["added_date"]),
+            "last_updated": self._convert_to_utc(data["last_updated"]),
+        }
+
+        if date := data.get("date"):
+            formatted_data["date"] = datetime.date.fromisoformat(date)
+        if birth_date := data.get("birth_date"):
+            formatted_data["birth_date"] = datetime.date.fromisoformat(birth_date)
+
+        return formatted_data
+
+    def _enum_value(self, v: Any) -> Any:
+        return v.value if isinstance(v, Enum) else v
+
+    def _clean_client_input(
         self,
-        operation: str,
-        client_input: dict[str, Any],
-        client_sub_items_input: dict[str, Any],
+        data: Mapping[str, Any],
+        keys: Collection[str],
+        enum_list_keys: Collection[str] = (),
+        date_keys: Collection[str] = (),
     ) -> dict[str, Any]:
-        raw_query = self.request.body.decode("utf-8")
-        response_fields = self._extract_response_fields(raw_query)
+        cleaned: dict[str, Any] = {}
 
-        variables = {
-            "clientInput": dict_keys_to_camel(client_input),
-            "clientSubItemsInput": dict_keys_to_camel(client_sub_items_input),
+        for k, v in data.items():
+            if k not in keys or v is UNSET:
+                continue
+
+            if k in enum_list_keys and v is not None:
+                cleaned[k] = [self._enum_value(i) for i in v]
+                continue
+
+            if k in date_keys and v is not None:
+                if isinstance(v, (datetime.date)):
+                    cleaned[k] = v.strftime(CLIENT_DATE_FORMAT)
+                else:
+                    cleaned[k] = str(v)
+                continue
+
+            cleaned[k] = self._enum_value(v)
+
+        return cleaned
+
+    def _format_client_data(self, client_data: dict[str, Any]) -> dict[str, Any]:
+        client_data = self._format_timestamp_fields(dict_keys_to_snake(client_data))
+        client_sub_field_data = {**client_data.pop("screen_values", {})}
+
+        return {
+            "hmis_id": client_data.pop("id"),
+            **client_data,
+            **client_sub_field_data,
         }
 
-        data = self._make_request(
-            {
-                "query": self._build_client_mutation(operation, response_fields, "HmisClientType"),
-                "variables": variables,
-            }
-        )
+    def _format_note_data(self, note_data: dict[str, Any]) -> dict[str, Any]:
+        note_data = self._format_timestamp_fields(dict_keys_to_snake(note_data))
 
-        if errors := data.get("errors"):
-            return {"errors": errors}
+        return {"hmis_id": note_data.pop("id"), **note_data}
 
-        return data.get("data", {}).get(f"{operation}Client") or {}
+    def _get_field_str(self, fields: Iterable[str]) -> str:
+        return ",".join(fields)
 
-    def _extract_response_fields(
+    def _handle_error_response(self, resp: requests.Response) -> None:
+        if resp.status_code == 200:
+            return
+
+        if resp.status_code == 401:
+            raise UnauthenticatedGQLError()
+
+        if resp.status_code == 403:
+            raise PermissionDenied("Unauthorized.")
+
+        if resp.status_code == 404:
+            raise NotFoundGQLError()
+
+        if resp.status_code == 422:
+            errors = [
+                {
+                    "field": f"{k}",
+                    "location": None,
+                    "errorCode": "422",
+                    "message": f"{v}",
+                }
+                for k, v in resp.json()["messages"].items()
+            ]
+
+            raise GraphQLError("Validation Errors", extensions={"errors": errors})
+
+    def _forward_cookies_to_client(self, resp: requests.Response) -> None:
+        django_response = self.info.context.get("response")
+        if not django_response:
+            return
+
+        for cookie in resp.cookies:
+            django_response.set_cookie(
+                key=cookie.name,
+                value=cookie.value,
+                domain=cookie.domain,
+                path=cookie.path,
+                secure=cookie.secure,
+                httponly=cookie.has_nonstandard_attr("HttpOnly"),
+                samesite="Lax",
+            )
+
+    def _make_request(
         self,
-        mutation: str,
-    ) -> str:
-        """
-        Extracts everything inside the `... on Hmis...Type { ... }` block.
-        Returns the inner query portion as a string.
-        """
+        path: str,
+        body: dict[str, Any],
+        method: HTTPMethod = HTTPMethod.GET,
+        timeout: Optional[float] = None,
+    ) -> requests.Response:
+        request_args = {
+            "url": f"{self.endpoint}{path}",
+            "headers": self.headers,
+            "json": body,
+            "timeout": timeout,
+        }
+        resp = self.http.request(method, **request_args)  # type: ignore
 
-        match = re.search(r"\.\.\.\s+on\s+Hmis\w*Type\b\s*{", mutation)
-        if not match:
-            return ""
+        self._handle_error_response(resp)
 
-        start = match.end()
-        depth = 1
-        i = start
+        # Transparently forward any cookie updates from HMIS to the client
+        if "Set-Cookie" in resp.headers:
+            self._forward_cookies_to_client(resp)
 
-        while i < len(mutation) and depth > 0:
-            if mutation[i] == "{":
-                depth += 1
-            elif mutation[i] == "}":
-                depth -= 1
-            i += 1
+        return resp
 
-        return mutation[start : i - 1].strip()
-
-    def _format_query(self, original_query: bytes, expected_type: str, is_list_query: bool = False) -> str:
-        # convert from byte string
-        query = json.loads(original_query.decode("utf-8"))["query"]
-        response_fields = self._extract_response_fields(query)
-        self._validate_selection_for_type(expected_type, response_fields)
-
-        # remove hmis prefix from query name
-        query = re.sub(r"hmis([A-Z])", lambda m: m.group(1).lower(), query)
-
-        # remove our error type definition
-        query = re.sub(r"\.\.\.\s+on\s+Hmis\w*Error\s*{\s*message\s*}", "", query)
-
-        # convert HmisObjectType -> Object
-        query = re.sub(r"\bHmis(\w+)Type\b", r"\1", query)
-
-        # convert HmisObjectInput → ObjectInput
-        query = re.sub(r"Hmis", "", query)
-
-        # if returning list, update pagination args
-        if is_list_query:
-            # convert pagination fields to snake case
-            query = re.sub(r"perPage", "per_page", query)
-            query = re.sub(r"currentPage", "current_page", query)
-            query = re.sub(r"pageCount", "page_count", query)
-            query = re.sub(r"totalCount", "total_count", query)
-
-        return query
-
-    def _fernet(self) -> Fernet:
-        key = getattr(settings, "HMIS_TOKEN_KEY", None)
-        if not key:
-            raise RuntimeError("HMIS_TOKEN_KEY is not configured")
-
-        return Fernet(key)
-
-    def _set_auth_token(self, token: str) -> None:
-        """"""
-        decoded = jwt.decode(token, options={"verify_signature": False})
-        self.session.set_expiry(decoded["exp"] - 1)
-
-        f = self._fernet()
-        self.session[_SESSION_KEY] = f.encrypt(token.encode("utf-8")).decode("utf-8")
-        self.session.modified = True
-
-    def _get_auth_token(self) -> Optional[str]:
-        enc = self.session.get(_SESSION_KEY)
-
-        if not enc:
-            return None
+    def login(self, username: str, password: str) -> None:
+        headers = self.headers.copy()
+        headers.pop("Host", None)
+        headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        login_url = f"{self.endpoint}/login"
 
         try:
-            f = self._fernet()
-            return f.decrypt(enc.encode("utf-8")).decode("utf-8")
-        except (InvalidToken, ValueError):
-            self._clear_auth_token()
+            response = self.http.get(login_url, headers=headers, allow_redirects=True)
+            response.raise_for_status()
 
-            return None
+            html = response.text
 
-    def _clear_auth_token(self) -> None:
-        if _SESSION_KEY in self.session:
-            del self.session[_SESSION_KEY]
+            param_match = re.search(r'meta name="csrf-param" content="([^"]+)"', html)
+            token_match = re.search(r'meta name="csrf-token" content="([^"]+)"', html)
 
-        self.session.modified = True
+            if not param_match or not token_match:
+                raise ValidationError("Could not extract CSRF tokens from HMIS login page")
 
-    def create_auth_token(self, username: str, password: str) -> Optional[str]:
-        """
-        Call HMIS GraphQL API and encrypt and store HMIS auth token on session.
-        Returns None on failure. Does NOT verify JWT signature; for UI/expiry only.
-        """
+            csrf_key = param_match.group(1)
+            csrf_val = token_match.group(1)
 
-        query = """
-            mutation CreateAuthToken($username: String, $password: String) {
-                createAuthToken(username: $username, password: $password) { authToken }
+            payload = {
+                csrf_key: csrf_val,
+                "LoginForm[username]": username,
+                "LoginForm[password]": password,
+                "LoginForm[external_idp_id]": "",
+                "LoginForm[fingerPrint]": "",
             }
-        """
 
-        data = self._make_request(
-            body={
-                "query": query,
-                "variables": {"username": username, "password": password},
+            post_response = self.http.post(
+                url=login_url,
+                data=payload,
+                headers=headers,
+                allow_redirects=True,
+            )
+
+            if post_response.url != login_url and "login" not in post_response.url:
+                auth_token = post_response.cookies.get(HMIS_AUTH_COOKIE_NAME)
+                if not auth_token:
+                    raise ValidationError(f"Status Code: {post_response.status_code}")
+
+                # Forward cookies from login response to client
+                self._forward_cookies_to_client(post_response)
+                return
+
+            elif "Incorrect username or password" in post_response.text:
+                raise PermissionDenied("Login Failed: Invalid credentials.")
+
+            else:
+                raise ValidationError(f"Status Code: {post_response.status_code}")
+
+        except Exception as e:
+            raise ValidationError(f"An error occurred: {e}")
+
+    def get_client(self, hmis_id: str) -> dict[str, Any]:
+        fields = self._get_field_dot_paths(
+            info=self.info,
+            default_fields=METADATA_FIELDS,
+            ignored_fields={*BA_CLIENT_FIELDS, "alias"},
+        )
+
+        fields_str = self._get_field_str(fields)
+
+        resp = self._make_request(
+            path=f"/clients/{hmis_id}",
+            body={"fields": fields_str},
+        )
+
+        return self._format_client_data(resp.json())
+
+    def create_client(self, data: CreateHmisClientProfileInput) -> dict[str, Any]:
+        data_dict = strawberry.asdict(data)
+        cleaned_data = {k: (v.value if isinstance(v, Enum) else v) for k, v in data_dict.items() if v is not UNSET}
+
+        body = {
+            "client": {
+                "first_name": cleaned_data.get("first_name", None),
+                "last_name": cleaned_data.get("last_name", None),
+                "ssn3": "xxxx",
+                "name_quality": cleaned_data.get("name_quality", 99),
+                "dob_quality": 99,
+                "ssn_quality": 99,
             },
-            timeout=5.0,
+            "screenValues": {
+                "alias": cleaned_data.get("alias", None),
+                "gender": [99],
+                "name_middle": cleaned_data.get("name_middle", None),
+                "name_suffix": cleaned_data.get("name_suffix", None),
+                "race_ethnicity": [99],
+                "veteran": 99,
+            },
+            "fields": self._get_field_str(
+                METADATA_FIELDS | CLIENT_FIELDS | {f"screenValues.{k}" for k in CLIENT_SUB_FIELDS}
+            ),
+        }
+
+        resp = self._make_request(
+            method=HTTPMethod.POST,
+            path="/clients",
+            body=body,
         )
 
-        # GraphQL errors OR missing token → failure
-        if data.get("errors"):
-            return None
+        return self._format_client_data(resp.json())
 
-        token = (data.get("data", {}).get("createAuthToken") or {}).get("authToken")
+    def update_client(self, data: dict[str, Any]) -> dict[str, Any]:
+        hmis_id = data.pop("hmis_id")
 
-        if not token:
-            return None
+        hmis_data = {k: v for k, v in data.items() if k not in BA_CLIENT_FIELDS}
 
-        try:
-            self._set_auth_token(token)
-        except RuntimeError:
-            return None
-
-        # TODO: not this... just something like this
-        return "success"
-
-    def get_client(self, personal_id: str) -> Optional[dict[str, Any]]:
-        query = self._format_query(original_query=self.request.body, expected_type="HmisClientType")
-
-        data = self._make_request(
-            body={
-                "query": query,
-                "variables": {"personalId": personal_id},
-            }
+        cleaned_client_field_input = self._clean_client_input(
+            data=hmis_data,
+            keys=CLIENT_FIELDS,
+            date_keys=("birth_date"),
+        )
+        cleaned_client_sub_field_input = self._clean_client_input(
+            data=hmis_data,
+            keys=CLIENT_SUB_FIELDS,
+            enum_list_keys=("gender", "race_ethnicity"),
         )
 
-        if errors := data.get("errors"):
-            return {"errors": errors}
+        fields = self._get_field_dot_paths(
+            info=self.info, default_fields=METADATA_FIELDS, ignored_fields={*BA_CLIENT_FIELDS, "alias"}
+        )
 
-        return data.get("data", {}).get("getClient") or {}
+        combined_fields = fields | {*cleaned_client_field_input.keys()} | {*cleaned_client_sub_field_input.keys()}
+        fields_str = ", ".join(combined_fields)
 
-    def list_clients(
+        body = {
+            k: v
+            for k, v in {
+                "client": cleaned_client_field_input,
+                "screenValues": cleaned_client_sub_field_input,
+                "fields": fields_str,
+            }.items()
+            if v
+        }
+
+        resp = self._make_request(
+            method=HTTPMethod.PUT,
+            path=f"/clients/{hmis_id}",
+            body=body,
+        )
+
+        return self._format_client_data(resp.json())
+
+    def get_note(self, client_hmis_id: str, note_hmis_id: str) -> dict[str, Any]:
+        fields = self._get_field_dot_paths(
+            info=self.info,
+            default_fields=METADATA_FIELDS,
+            ignored_fields=BA_NOTE_FIELDS,
+        )
+
+        fields_str = ", ".join(fields | CLIENT_PROGRAM_FIELDS)
+
+        resp = self._make_request(
+            path=f"/clients/{client_hmis_id}/client-notes/{note_hmis_id}",
+            body={"fields": fields_str},
+        )
+
+        return self._format_note_data(resp.json())
+
+    def create_note(self, client_hmis_id: str, data: CreateHmisNoteInput) -> dict[str, Any]:
+        path = f"/clients/{client_hmis_id}/client-notes"
+        date = data.date.strftime(NOTE_DATE_FORMAT)
+        fields = METADATA_FIELDS | NOTE_FIELDS
+
+        if client_program_id := data.ref_client_program:
+            path = f"/clients/{client_hmis_id}/client-programs/{client_program_id}/client-notes"
+            date = data.date.strftime(PROGRAM_NOTE_DATE_FORMAT)
+            fields |= CLIENT_PROGRAM_FIELDS
+
+        body = {
+            "clientNote": {
+                "title": data.title,
+                "ref_client_program": data.ref_client_program or None,
+                "date": date,
+                "note": data.note,
+                "category": {"code": 1},
+                "ref_category": "1",
+                "private": "0",
+                "tracking_hour": None,
+                "tracking_minute": None,
+            },
+            "fields": self._get_field_str(fields),
+        }
+
+        resp = self._make_request(method=HTTPMethod.POST, path=path, body=body)
+
+        return self._format_note_data(resp.json())
+
+    def update_note(
         self,
-        pagination: Optional[HmisPaginationInput],
-        filter: Optional[HmisClientFilterInput],
-    ) -> Optional[dict[str, Any]]:
-        query = self._format_query(
-            original_query=self.request.body, expected_type="HmisClientListType", is_list_query=True
+        client_hmis_id: str,
+        note_hmis_id: str,
+        data: UpdateHmisNoteInput,
+    ) -> dict[str, Any]:
+        note_data = {
+            k: (v.strftime(NOTE_DATE_FORMAT) if isinstance(v, datetime.date) else v)
+            for k, v in strawberry.asdict(data).items()
+            if v is not UNSET
+        }
+
+        fields = self._get_field_dot_paths(
+            info=self.info,
+            default_fields=METADATA_FIELDS | NOTE_FIELDS,
+            ignored_fields=BA_NOTE_FIELDS,
         )
 
-        data = self._make_request(
-            body={
-                "query": query,
-                "variables": {
-                    "pagination": strawberry.asdict(pagination),
-                    "filter": strawberry.asdict(filter),
-                },
-            }
+        body = {
+            "clientNote": note_data,
+            "fields": self._get_field_str(fields | {*note_data.keys()} | CLIENT_PROGRAM_FIELDS),
+        }
+
+        resp = self._make_request(
+            method=HTTPMethod.PUT,
+            path=f"/clients/{client_hmis_id}/client-notes/{note_hmis_id}",
+            body=body,
         )
 
-        if errors := data.get("errors"):
-            return {"errors": errors}
+        return self._format_note_data(resp.json())
 
-        return data.get("data", {}).get("listClients") or {}
+    def get_client_programs(self, client_hmis_id: str) -> dict[str, Any]:
+        fields = self._get_field_dot_paths(info=self.info, ignored_fields=BA_NOTE_FIELDS)
 
-    def create_client(
+        body = {"fields": self._get_field_str(fields)}
+        resp = self._make_request(
+            path=f"/clients/{client_hmis_id}/client-programs",
+            body=body,
+        )
+
+        return dict_keys_to_snake(resp.json())
+
+    def create_client_program(
         self,
-        client_input: dict[str, Any],
-        client_sub_items_input: dict[str, Any],
-    ) -> Optional[dict[str, Any]]:
-        return self._run_client_mutation("create", client_input, client_sub_items_input)
+        client_hmis_id: str,
+        program_hmis_id: int = 2,
+    ) -> dict[str, Any]:
+        DEFAULT_ENROLLMENT_DATA = {
+            "programId": program_hmis_id,
+            "sex": 99,
+            "screenValues": {
+                "disabled": 99,
+                "enrollment_coc": "Default",
+                "health_chronic": 99,
+                "health_dev_disability": 99,
+                "health_hiv": 99,
+                "health_insurance": 99,
+                "health_mental": 99,
+                "health_phys_disability": 99,
+                "health_substance_abuse": 99,
+                "program_date": "2001-01-01",
+            },
+        }
+        fields = {"id", "ref_client", "ref_program"}
+        resp = self._make_request(
+            method=HTTPMethod.POST,
+            path=f"/clients/{client_hmis_id}/client-programs/enroll",
+            body={**DEFAULT_ENROLLMENT_DATA, "fields": self._get_field_str(fields)},
+        )
 
-    def update_client(
-        self,
-        client_input: dict[str, Any],
-        client_sub_items_input: dict[str, Any],
-    ) -> Optional[dict[str, Any]]:
-        return self._run_client_mutation("update", client_input, client_sub_items_input)
+        return dict_keys_to_snake(resp.json())

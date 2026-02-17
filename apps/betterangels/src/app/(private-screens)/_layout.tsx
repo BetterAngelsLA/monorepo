@@ -147,7 +147,50 @@ export default function PrivateLayout() {
         options={getDefaultStackNavOptions()}
       />
       <Stack.Screen
+        name="notes-hmis/index"
+        options={getDefaultStackNavOptions({
+          title: 'Interactions',
+        })}
+      />
+      <Stack.Screen
+        name="notes-hmis/create/index"
+        options={getDefaultStackNavOptions({
+          title: 'Add Note',
+        })}
+      />
+      <Stack.Screen
+        name="notes-hmis/[id]/index"
+        options={getDefaultStackNavOptions({
+          title: 'Interaction',
+        })}
+      />
+      <Stack.Screen
+        name="notes-hmis/[id]/edit"
+        options={getDefaultStackNavOptions({
+          title: 'Edit Note',
+        })}
+      />
+      <Stack.Screen
         name="file/[id]"
+        options={{
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          headerLeft: () => (
+            <TextButton
+              regular
+              color={Colors.WHITE}
+              fontSize="md"
+              accessibilityHint="goes to previous screen"
+              title="Back"
+              onPress={router.back}
+            />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="hmis-file/[id]"
         options={{
           headerTitleAlign: 'center',
           headerStyle: {
@@ -175,6 +218,18 @@ export default function PrivateLayout() {
         name="settings/about/index"
         options={getDefaultStackNavOptions({
           title: 'About App',
+        })}
+      />
+      <Stack.Screen
+        name="settings/hmis-rest"
+        options={getDefaultStackNavOptions({
+          title: 'HMIS REST (dev)',
+        })}
+      />
+      <Stack.Screen
+        name="settings/team/index"
+        options={getDefaultStackNavOptions({
+          title: 'Select Default Team',
         })}
       />
       <Stack.Screen

@@ -33,7 +33,7 @@ Welcome to the BetterAngels Monorepo! This repository contains the codebases for
 4. [Backend Development](#backend-development)
 5. [Seed Data](#seed-data)
 6. [Development Workflow](#development-workflow)
-7. [Shelter DB](#shelter-db)
+7. [Shelter LA](#shelter-la)
 8. [Licensing Details](#licensing-details)
 9. [Contributing](#contributing)
 
@@ -80,9 +80,9 @@ To maintain a consistent and efficient development process, we have established 
 
 - **[Development Workflow Guide](docs/development_workflow.md)**: This document outlines our development practices, including how to create branches, submit pull requests, and conduct code reviews.
 
-## Shelter DB
+## Shelter LA
 
-Shelter DB is a web project for discovering homeless shelters in LA County. More documentation for Shelter DB Project can be found [here](apps/shelter-web/README.md).
+Shelter LA is a web project for discovering homeless shelters in LA County. More documentation for Shelter LA Project can be found [here](apps/shelter-web/README.md).
 
 ## Licensing Details
 
@@ -108,7 +108,7 @@ Are you a passionate technologist with a heart for service? Better Angels Tech C
 
 We have immediate opportunities for volunteers in front-end and back-end development, infrastructure, and testing. Join us in the early stages of our volunteer program and make a difference.
 
-Check out our [volunteer portal](https://volunteer.betterangels.la/need/detail/?need_id=866651) to sign up as a volunteer and get started!
+Check out our [volunteer portal](https://volunteer.betterangels.la/need/index?agency_id=151112) to sign up as a volunteer and get started!
 
 ---
 

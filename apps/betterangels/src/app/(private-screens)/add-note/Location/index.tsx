@@ -1,17 +1,31 @@
+import { useMutation } from '@apollo/client/react';
 import {
+  LocationMapModal,
   MapView,
   Marker,
   PROVIDER_GOOGLE,
+  TLocationData,
+  UpdateNoteLocationDocument,
   useModalScreen,
 } from '@monorepo/expo/betterangels';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
+import {
+  FieldCard,
+  TextMedium,
+  usePlacesClient,
+} from '@monorepo/expo/shared/ui-components';
+import * as ExpoLocation from 'expo-location';
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import LocationMapModal from './LocationMapModal';
 
 const FIELD_KEY = 'Location';
+
+const INITIAL_LOCATION = {
+  longitude: -118.258815,
+  latitude: 34.048655,
+};
+
 interface ILocationProps {
   scrollRef: RefObject<ScrollView | null>;
   expanded: string | undefined | null;
@@ -62,6 +76,10 @@ export default function LocationComponent(props: ILocationProps) {
     errors,
     setErrors,
   } = props;
+
+  const places = usePlacesClient();
+  const [updateNoteLocation] = useMutation(UpdateNoteLocationDocument);
+
   const [location, setLocation] = useState<TLocation>({
     latitude: point ? point[1] : null,
     longitude: point ? point[0] : null,
@@ -70,14 +88,112 @@ export default function LocationComponent(props: ILocationProps) {
       : null,
     name: address && address.street ? address.street : null,
   });
+
   const locationRef = useRef<TLocation>(location);
+  const autoFilledRef = useRef(false);
 
   useEffect(() => {
     locationRef.current = location;
-  }, [location, locationRef]);
+  }, [location]);
 
   const isLocation = expanded === FIELD_KEY;
-  const { showModalScreen, closeModalScreen } = useModalScreen();
+
+  const { showModalScreen } = useModalScreen();
+
+  const handleSelectLocation = async (data: TLocationData) => {
+    const newLocation: TLocation = {
+      latitude: data.latitude,
+      longitude: data.longitude,
+      address: data.address,
+      name: data.name,
+    };
+
+    setLocation(newLocation);
+
+    await updateNoteLocation({
+      variables: {
+        data: {
+          id: noteId,
+          location: {
+            point: [data.longitude, data.latitude],
+            address: data.address
+              ? {
+                  formattedAddress: data.address,
+                  addressComponents: JSON.stringify(
+                    data.addressComponents ?? []
+                  ),
+                }
+              : null,
+          },
+        },
+      },
+    });
+  };
+
+  // Auto-prefill on NEW notes: no point/address → use current or default location
+  useEffect(() => {
+    const hasServerLocation = !!point && point.length === 2;
+    const hasLocalLocation = !!location?.latitude && !!location?.longitude;
+
+    if (hasServerLocation || hasLocalLocation || autoFilledRef.current) {
+      return;
+    }
+
+    autoFilledRef.current = true;
+
+    const autoSetInitialLocation = async () => {
+      try {
+        let latitude = INITIAL_LOCATION.latitude;
+        let longitude = INITIAL_LOCATION.longitude;
+
+        const { status } =
+          await ExpoLocation.requestForegroundPermissionsAsync();
+
+        if (status === 'granted') {
+          const userCurrentLocation =
+            await ExpoLocation.getCurrentPositionAsync({
+              accuracy: ExpoLocation.Accuracy.Balanced,
+            });
+          latitude = userCurrentLocation.coords.latitude;
+          longitude = userCurrentLocation.coords.longitude;
+        }
+
+        const geocodeResult = await places.reverseGeocode(latitude, longitude);
+
+        const newLocation: TLocation = {
+          latitude,
+          longitude,
+          address: geocodeResult.formattedAddress,
+          name: geocodeResult.shortAddress,
+        };
+
+        setLocation(newLocation);
+
+        await updateNoteLocation({
+          variables: {
+            data: {
+              id: noteId,
+              location: {
+                point: [longitude, latitude],
+                address: geocodeResult.formattedAddress
+                  ? {
+                      formattedAddress: geocodeResult.formattedAddress,
+                      addressComponents: JSON.stringify(
+                        geocodeResult.addressComponents ?? []
+                      ),
+                    }
+                  : null,
+              },
+            },
+          },
+        });
+      } catch (err) {
+        console.error('Error auto-setting initial location', err);
+      }
+    };
+
+    void autoSetInitialLocation();
+  }, [point, address, places, noteId, updateNoteLocation, location]);
 
   return (
     <FieldCard
@@ -98,12 +214,20 @@ export default function LocationComponent(props: ILocationProps) {
               location: !locationRef.current,
             });
           },
-          content: (
+          renderContent: ({ close }) => (
             <LocationMapModal
-              location={location}
-              noteId={noteId}
-              setLocation={setLocation}
-              onclose={closeModalScreen}
+              initialLocation={
+                location
+                  ? {
+                      latitude: location.latitude ?? 0,
+                      longitude: location.longitude ?? 0,
+                      name: location.name ?? undefined,
+                      address: location.address ?? undefined,
+                    }
+                  : undefined
+              }
+              onSelectLocation={handleSelectLocation}
+              onClose={close}
             />
           ),
         });
@@ -152,6 +276,7 @@ export default function LocationComponent(props: ILocationProps) {
     </FieldCard>
   );
 }
+
 const styles = StyleSheet.create({
   map: {
     width: '100%',

@@ -5,6 +5,7 @@ import strawberry_django
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions
+from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import CharField, F, Q, QuerySet, Value
@@ -37,13 +38,13 @@ class LoginInput:
     password: str
 
 
-@strawberry_django.ordering.order(Organization)
+@strawberry_django.order_type(Organization, one_of=False)
 class OrganizationOrder:
     name: auto
     id: auto
 
 
-@strawberry_django.filters.filter(Organization)
+@strawberry_django.filter_type(Organization)
 class OrganizationFilter:
     @strawberry_django.filter_field
     def search(
@@ -63,14 +64,14 @@ class OrganizationFilter:
         return (queryset.filter(query), Q())
 
 
-@strawberry_django.type(Organization, order=OrganizationOrder, filters=OrganizationFilter)  # type: ignore[literal-required]
+@strawberry_django.type(Organization, ordering=OrganizationOrder, filters=OrganizationFilter)
 class OrganizationType:
     id: ID
     name: auto
 
 
-@strawberry_django.type(Organization, order=OrganizationOrder, filters=OrganizationFilter, pagination=True)  # type: ignore[literal-required]
-class OrganizationForUserType(OrganizationType):
+@strawberry_django.type(Organization, ordering=OrganizationOrder, filters=OrganizationFilter, pagination=True)
+class CurrentUserOrganizationType(OrganizationType):
     @classmethod
     def get_queryset(
         cls,
@@ -119,15 +120,57 @@ class UserBaseType:
 @strawberry_django.type(User)
 class UserType(UserBaseType):
     id: ID
-    organizations_organization: Optional[List[OrganizationForUserType]]
+    organizations_organization: Optional[List[OrganizationType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
-    is_hmis_user: Optional[bool]
     is_outreach_authorized: Optional[bool]
-    username: auto
+    username: Optional[str]
+
+    @strawberry_django.field
+    def is_hmis_user(self, info: Info) -> Optional[bool]:
+        request = info.context["request"]
+        session = request.session
+
+        return bool(session.get(HMIS_SESSION_KEY_NAME, None))
 
 
 @strawberry_django.type(User)
+class CurrentUserType(UserBaseType):
+    id: ID
+    organizations_organization: Optional[List[CurrentUserOrganizationType]]
+    has_accepted_tos: Optional[bool]
+    has_accepted_privacy_policy: Optional[bool]
+    is_outreach_authorized: Optional[bool]
+    username: Optional[str]
+
+    @strawberry_django.field
+    def is_hmis_user(self, info: Info) -> Optional[bool]:
+        request = info.context["request"]
+        session = request.session
+
+        return bool(session.get(HMIS_SESSION_KEY_NAME, None))
+
+
+@strawberry_django.order_type(User, one_of=False)
+class OrganizationMemberOrdering:
+    id: auto
+    email: auto
+    first_name: auto
+    last_login: auto
+    last_name: auto
+
+    @strawberry_django.order_field
+    def member_role(
+        self,
+        info: Info,
+        queryset: QuerySet,
+        value: auto,
+        prefix: str,
+    ) -> tuple[QuerySet[User], list[strawberry_django.Ordering]]:
+        return queryset, [value.resolve(f"{prefix}_member_role")]
+
+
+@strawberry_django.type(User, pagination=True, ordering=OrganizationMemberOrdering)
 class OrganizationMemberType(UserBaseType):
     id: ID
     last_login: auto
@@ -155,4 +198,10 @@ class OrgInvitationInput:
     first_name: str
     middle_name: Optional[str] = None
     last_name: str
+    organization_id: ID
+
+
+@strawberry.input
+class RemoveOrganizationMemberInput:
+    id: ID
     organization_id: ID

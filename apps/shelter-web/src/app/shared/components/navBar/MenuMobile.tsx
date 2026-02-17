@@ -1,11 +1,19 @@
 import { CloseIcon } from '@monorepo/react/icons';
+import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { Link } from 'react-router-dom';
-import { aboutUsPath, shelterHomePath } from '../../../routes/routePaths';
+import {
+  aboutUsPath,
+  operatorPath,
+  shelterHomePath,
+} from '../../../routes/routePaths';
 import { flyoutAtom } from '../../atoms/flyoutAtom';
-import { mergeCss } from '../../utils/styles/mergeCss';
 
-export function MenuMobile() {
+type MenuMobileProps = {
+  showOperator: boolean;
+};
+
+export function MenuMobile({ showOperator }: MenuMobileProps) {
   const [_flyout, setFlyout] = useAtom(flyoutAtom);
 
   function onFlyoutClose() {
@@ -55,7 +63,7 @@ export function MenuMobile() {
             Home
           </Link>
         </div>
-        <div>
+        <div className={mergeCss(borderCss)}>
           <Link
             aria-label="navigate to about us"
             to={aboutUsPath}
@@ -64,6 +72,17 @@ export function MenuMobile() {
             About Us
           </Link>
         </div>
+        {showOperator ? (
+          <div>
+            <Link
+              aria-label="navigate to operator dashboard"
+              to={operatorPath}
+              className={mergeCss(hoverBtnCss)}
+            >
+              Operator
+            </Link>
+          </div>
+        ) : null}
       </div>
     </>
   );

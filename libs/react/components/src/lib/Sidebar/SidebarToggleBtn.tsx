@@ -1,5 +1,5 @@
-import { mergeCss } from '@monorepo/react/components';
 import { ChevronLeftIcon } from '@monorepo/react/icons';
+import { mergeCss } from '@monorepo/react/shared';
 
 type TProps = {
   open?: boolean;

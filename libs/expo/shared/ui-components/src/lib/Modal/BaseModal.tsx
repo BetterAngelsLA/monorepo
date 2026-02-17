@@ -45,6 +45,9 @@ export interface IFileViewerModal extends PropsWithChildren {
   /** Force overlay close in fullscreen (otherwise auto-enabled when title == null). */
   useOverlayClose?: boolean;
   overlayCloseColor?: string;
+
+  /** Fired after the modal has fully closed (animation finished, unmounted). */
+  onCloseComplete?: () => void;
 }
 
 const DUR_IN = 260;
@@ -55,6 +58,7 @@ export function BaseModal({
   isOpen,
   setIsOpen,
   onClose,
+  onCloseComplete,
   children,
   variant = 'fullscreen',
   direction = 'up',
@@ -95,7 +99,10 @@ export function BaseModal({
       requestAnimationFrame(() => animateTo(1));
     } else if (mounted) {
       // Parent-driven close: animate out; do not call onClose to avoid double-callbacks.
-      animateTo(0, () => setMounted(false));
+      animateTo(0, () => {
+        setMounted(false);
+        onCloseComplete?.();
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variant, isOpen]);
@@ -123,6 +130,7 @@ export function BaseModal({
       setMounted(false);
       setIsOpen?.(false);
       onClose?.();
+      onCloseComplete?.();
     });
   };
 

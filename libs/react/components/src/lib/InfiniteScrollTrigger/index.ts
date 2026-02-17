@@ -1,0 +1,1 @@
+export { InfiniteScrollTrigger } from './InfiniteScrollTrigger';

@@ -1,228 +1,118 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  ControlledInput,
-  Form,
-  SingleSelect,
-} from '@monorepo/expo/shared/ui-components';
+import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { extractHMISErrors } from '../../apollo';
-import { applyOperationFieldErrors } from '../../errors';
+import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useSnackbar } from '../../hooks';
+
+import { CombinedGraphQLErrors } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
+import { extractExtensionFieldErrors } from '../../apollo/graphql/response/extractExtensionFieldErrors';
+import { applyManualFormErrors } from '../../errors';
 import {
-  enumDisplayHmisSuffix,
-  enumHmisNameQuality,
-  toHmisNameQualityInt,
-  toHmisSuffixEnumInt,
-} from '../../static';
+  FullNameFormFieldNames,
+  FullNameFormHmis,
+  FullNameFormSchema,
+  TFullNameFormSchema,
+  fullNameFormEmptyState,
+} from '../ClientHMISEdit/basicForms';
 import {
-  FALLBACK_NAME_DATA_QUALITY_INT,
-  FALLBACK_NAME_SUFFIX_INT,
+  FALLBACK_NAME_DATA_QUALITY,
+  FALLBACK_NAME_SUFFIX,
 } from '../ClientHMISEdit/constants';
-import { useCreateHmisClientMutation } from './__generated__/createHmisClient.generated';
-import { FormSchema, TFormSchema, emptyState } from './formSchema';
+import { CreateHmisClientProfileDocument } from './__generated__/createHmisClient.generated';
 
 export function CreateClientProfileHMIS() {
   const router = useRouter();
-  const [disabled, setDisabled] = useState(false);
   const { showSnackbar } = useSnackbar();
-  const [createHMISClientMutation] = useCreateHmisClientMutation();
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    setError,
-    setValue,
-  } = useForm<TFormSchema>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: emptyState,
+  const [createHmisClientProfileMutation] = useMutation(
+    CreateHmisClientProfileDocument
+  );
+
+  const methods = useForm<TFullNameFormSchema>({
+    resolver: zodResolver(FullNameFormSchema),
+    defaultValues: fullNameFormEmptyState,
   });
 
-  const formKeys = FormSchema.keyof().options as string[];
+  const {
+    handleSubmit,
+    setError,
+    formState: { isSubmitting },
+  } = methods;
 
-  const onSubmit: SubmitHandler<TFormSchema> = async (
-    formData: TFormSchema
-  ) => {
+  const onSubmit: SubmitHandler<TFullNameFormSchema> = async (formData) => {
     try {
-      setDisabled(true);
-
       const {
         firstName,
         lastName,
-        middleName,
-        nameDataQuality,
+        nameMiddle,
+        nameQuality,
         alias,
         nameSuffix,
       } = formData;
 
-      const { data } = await createHMISClientMutation({
+      const createResponse = await createHmisClientProfileMutation({
         variables: {
-          clientInput: {
+          data: {
             firstName,
             lastName,
-            nameDataQuality:
-              toHmisNameQualityInt(nameDataQuality) ??
-              FALLBACK_NAME_DATA_QUALITY_INT,
-          },
-          clientSubItemsInput: {
-            middleName,
+            nameMiddle,
             alias,
-            nameSuffix:
-              toHmisSuffixEnumInt(nameSuffix) ?? FALLBACK_NAME_SUFFIX_INT,
+            nameSuffix: nameSuffix ?? FALLBACK_NAME_SUFFIX,
+            nameQuality: nameQuality ?? FALLBACK_NAME_DATA_QUALITY,
           },
         },
         errorPolicy: 'all',
       });
 
-      const result = data?.hmisCreateClient;
+      const { data, error } = createResponse;
 
-      if (!result) {
-        throw new Error('missing hmisCreateClient response');
-      }
+      // if form field errors: handle and exit
+      if (CombinedGraphQLErrors.is(error)) {
+        const fieldErrors = extractExtensionFieldErrors(
+          error,
+          FullNameFormFieldNames
+        );
 
-      if (result?.__typename === 'HmisCreateClientError') {
-        const { message: hmisErrorMessage } = result;
-
-        const { status, fieldErrors = [] } =
-          extractHMISErrors(hmisErrorMessage) || {};
-
-        // handle unprocessable_entity errors and exit
-        if (status === 422) {
-          const formFieldErrors = fieldErrors.filter(({ field }) =>
-            formKeys.includes(field)
-          );
-
-          applyOperationFieldErrors(formFieldErrors, setError);
+        if (fieldErrors.length) {
+          applyManualFormErrors(fieldErrors, setError);
 
           return;
         }
-
-        // HmisCreateClientError exists but not 422
-        // throw generic error
-        throw new Error(hmisErrorMessage);
       }
 
-      if (result?.__typename !== 'HmisClientType') {
-        throw new Error('invalid hmisCreateClient response');
+      // non-validation error: throw
+      if (error) {
+        throw new Error(error.message);
       }
 
-      const { personalId } = result;
+      const result = data?.createHmisClientProfile;
 
-      router.replace(`/client/${personalId}`);
+      if (result?.__typename !== 'HmisClientProfileType') {
+        throw new Error('typename is not HmisClientProfileType');
+      }
+
+      router.replace(`/client/${result.id}`);
     } catch (error) {
-      console.error('createHMISClientMutation error:', error);
+      console.error('[createHmisClientProfileMutation] error:', error);
 
       showSnackbar({
         message: 'Something went wrong. Please try again.',
         type: 'error',
       });
-    } finally {
-      setDisabled(false);
     }
   };
 
   return (
-    <Form.Page
-      actionProps={{
-        onSubmit: handleSubmit(onSubmit),
-        onLeftBtnClick: router.back,
-        disabled,
-      }}
-    >
-      <Form>
-        <Form.Fieldset>
-          <ControlledInput
-            name="firstName"
-            required
-            control={control}
-            disabled={disabled}
-            label="First name"
-            placeholder="Enter first name"
-            onDelete={() => {
-              setValue('firstName', emptyState.firstName);
-            }}
-            errorMessage={errors.firstName?.message}
-          />
-
-          <ControlledInput
-            name="middleName"
-            control={control}
-            disabled={disabled}
-            label="Middle Name"
-            placeholder="Enter middle name"
-            onDelete={() => {
-              setValue('middleName', emptyState.middleName);
-            }}
-            errorMessage={errors.middleName?.message}
-          />
-
-          <ControlledInput
-            name="lastName"
-            required
-            control={control}
-            disabled={disabled}
-            label="Last Name"
-            placeholder="Enter last name"
-            onDelete={() => {
-              setValue('lastName', emptyState.lastName);
-            }}
-            errorMessage={errors.lastName?.message}
-          />
-
-          <Controller
-            name="nameDataQuality"
-            control={control}
-            render={({ field: { value, onChange } }) => (
-              <SingleSelect
-                allowSelectNone={true}
-                disabled={disabled}
-                label="Name Data Quality"
-                placeholder="Select quality"
-                maxRadioItems={0}
-                items={Object.entries(enumHmisNameQuality).map(
-                  ([val, displayValue]) => ({ value: val, displayValue })
-                )}
-                selectedValue={value}
-                onChange={(value) => onChange(value || '')}
-                error={errors.nameDataQuality?.message}
-              />
-            )}
-          />
-
-          <Controller
-            name="nameSuffix"
-            control={control}
-            render={({ field: { value, onChange } }) => (
-              <SingleSelect
-                allowSelectNone={true}
-                disabled={disabled}
-                label="Suffix"
-                placeholder="Select suffix"
-                maxRadioItems={0}
-                items={Object.entries(enumDisplayHmisSuffix).map(
-                  ([val, displayValue]) => ({ value: val, displayValue })
-                )}
-                selectedValue={value}
-                onChange={(value) => onChange(value || '')}
-                error={errors.nameSuffix?.message}
-              />
-            )}
-          />
-
-          <ControlledInput
-            name="alias"
-            control={control}
-            disabled={disabled}
-            label="Alias"
-            placeholder={'Enter aliases'}
-            onDelete={() => {
-              setValue('alias', emptyState.alias);
-            }}
-            errorMessage={errors.alias?.message}
-          />
-        </Form.Fieldset>
-      </Form>
-    </Form.Page>
+    <FormProvider {...methods}>
+      <Form.Page
+        actionProps={{
+          onSubmit: handleSubmit(onSubmit),
+          onLeftBtnClick: router.back,
+          disabled: isSubmitting,
+        }}
+      >
+        <FullNameFormHmis />
+      </Form.Page>
+    </FormProvider>
   );
 }

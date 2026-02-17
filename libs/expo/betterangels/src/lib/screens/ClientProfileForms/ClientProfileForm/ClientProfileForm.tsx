@@ -1,17 +1,19 @@
+import { CombinedGraphQLErrors } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client/react';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import {
   UpdateClientProfileInput,
-  extractExtensionErrors,
+  extractResponseExtensions,
 } from '../../../apollo';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
 import { isValidClientProfileSectionEnum } from '../../../screenRouting';
 import {
-  useGetClientProfileQuery,
-  useUpdateClientProfileMutation,
+  GetClientProfileDocument,
+  UpdateClientProfileDocument,
 } from './__generated__/clientProfile.generated';
 import { config } from './config';
 import { extractClientFormData } from './extractClientFormData';
@@ -21,16 +23,17 @@ export default function ClientProfileForm(props: IClientProfileForms) {
   const { componentName, id } = props;
 
   const {
-    data,
+    data: fetchProfileData,
     error: fetchProfileError,
     loading: isFetchingProfile,
     refetch,
-  } = useGetClientProfileQuery({
+  } = useQuery(GetClientProfileDocument, {
     variables: { id },
   });
 
-  const [updateClientProfile, { loading: isUpdating }] =
-    useUpdateClientProfileMutation();
+  const [updateClientProfile, { loading: isUpdating }] = useMutation(
+    UpdateClientProfileDocument
+  );
 
   const methods = useForm<FormValues>({
     defaultValues: {
@@ -58,11 +61,15 @@ export default function ClientProfileForm(props: IClientProfileForms) {
 
   const onSubmit: SubmitHandler<FormValues> = async (values) => {
     try {
-      if (!data || !('clientProfile' in data)) {
+      if (!fetchProfileData || !('clientProfile' in fetchProfileData)) {
         return;
       }
 
-      const inputs = toUpdateClienProfileInputs(id, values);
+      const inputs = toUpdateClienProfileInputs(
+        id,
+        values,
+        methods.formState.dirtyFields
+      );
 
       if (!inputs) {
         return;
@@ -77,32 +84,38 @@ export default function ClientProfileForm(props: IClientProfileForms) {
           values.phoneNumbers?.filter((item) => item.number) || [];
       }
 
-      const updateResponse = await updateClientProfile({
+      const { error } = await updateClientProfile({
         variables: {
           data: inputs,
         },
         errorPolicy: 'all',
       });
 
-      const errorViaExtensions = extractExtensionErrors(updateResponse);
+      // handle fieldErrors and return if present
+      if (CombinedGraphQLErrors.is(error)) {
+        // TODO: convert to use extractExtensionFieldErrors
+        const fieldErrors = extractResponseExtensions(error);
 
-      if (errorViaExtensions) {
-        applyManualFormErrors(errorViaExtensions, methods.setError);
+        if (fieldErrors?.length) {
+          applyManualFormErrors(fieldErrors, methods.setError);
 
-        return;
+          return;
+        }
       }
 
-      const otherErrors = updateResponse.errors?.[0];
-
-      if (otherErrors) {
-        throw otherErrors.message;
+      // throw unhandled errors
+      if (error) {
+        throw new Error(error.message);
       }
 
-      refetch();
+      // Ensure the refetch completes before navigating away.
+      // In apollo client v4, if we navigate immediately,
+      // the query unmounts and refetch is cancelled.
+      await refetch();
 
       router.replace(`/client/${id}?openCard=${validComponentName}`);
     } catch (err) {
-      console.error(err);
+      console.error(`[updateClientProfile] error: ${err}`);
 
       showSnackbar({
         message: 'Sorry, there was an error updating this profile.',
@@ -112,17 +125,17 @@ export default function ClientProfileForm(props: IClientProfileForms) {
   };
 
   useEffect(() => {
-    if (!data || !('clientProfile' in data) || !id) {
+    if (!fetchProfileData || !('clientProfile' in fetchProfileData) || !id) {
       return;
     }
 
     const formData = extractClientFormData(
       validComponentName,
-      data.clientProfile
+      fetchProfileData.clientProfile
     );
 
     methods.reset(formData);
-  }, [data, id]);
+  }, [fetchProfileData, id]);
 
   if (isFetchingProfile) {
     return <LoadingView />;
@@ -154,7 +167,8 @@ export default function ClientProfileForm(props: IClientProfileForms) {
 
 function toUpdateClienProfileInputs(
   id: string,
-  values: FormValues
+  values: FormValues,
+  dirtyFields?: Partial<Record<keyof FormValues, boolean>>
 ): UpdateClientProfileInput | null {
   if (!values || !id) {
     return null;
@@ -162,11 +176,16 @@ function toUpdateClienProfileInputs(
 
   const updatedInputs: UpdateClientProfileInput = { id };
 
-  // convert dateOfBirth to date string and remove time
-  if ('dateOfBirth' in values && values.dateOfBirth) {
-    updatedInputs.dateOfBirth = values.dateOfBirth
-      .toISOString()
-      .split('T')[0] as unknown as Date;
+  // only update dateOfBirth if it was touched/changed
+  // this prevents clearing dates when the field wasn't intentionally modified
+  if ('dateOfBirth' in values && dirtyFields && 'dateOfBirth' in dirtyFields) {
+    if (values.dateOfBirth instanceof Date) {
+      updatedInputs.dateOfBirth = values.dateOfBirth
+        .toISOString()
+        .split('T')[0] as unknown as Date;
+    } else if (values.dateOfBirth === null) {
+      updatedInputs.dateOfBirth = null;
+    }
   }
 
   // profilePhoto is updated directly within component

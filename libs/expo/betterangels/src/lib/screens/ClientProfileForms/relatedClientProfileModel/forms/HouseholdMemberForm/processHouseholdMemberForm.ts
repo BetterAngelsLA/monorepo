@@ -1,22 +1,33 @@
-import { FetchResult } from '@apollo/client';
-import { UseFormSetError } from 'react-hook-form';
-import { extractExtensionErrors } from '../../../../../apollo';
+import { ApolloLink } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
+import type { UseFormSetError } from 'react-hook-form';
+import { extractResponseExtensions } from '../../../../../apollo';
 import { applyManualFormErrors } from '../../../../../errors';
 import {
   CreateClientHouseholdMemberMutation,
-  CreateClientHouseholdMemberMutationFn,
+  CreateClientHouseholdMemberMutationVariables,
   UpdateClientHouseholdMemberMutation,
-  UpdateClientHouseholdMemberMutationFn,
+  UpdateClientHouseholdMemberMutationVariables,
 } from './__generated__/householdMember.generated';
 import { THouseholdMemberFormState } from './types';
+
+type HouseholdMutationResult =
+  | ApolloLink.Result<CreateClientHouseholdMemberMutation>
+  | ApolloLink.Result<UpdateClientHouseholdMemberMutation>;
 
 type TProps = {
   formData: THouseholdMemberFormState;
   clientProfileId: string;
-  relationId: string | undefined;
+  relationId?: string;
   setError: UseFormSetError<THouseholdMemberFormState>;
-  createHouseholdMember: CreateClientHouseholdMemberMutationFn;
-  updateHouseholdMember: UpdateClientHouseholdMemberMutationFn;
+  createHouseholdMember: useMutation.MutationFunction<
+    CreateClientHouseholdMemberMutation,
+    CreateClientHouseholdMemberMutationVariables
+  >;
+  updateHouseholdMember: useMutation.MutationFunction<
+    UpdateClientHouseholdMemberMutation,
+    UpdateClientHouseholdMemberMutationVariables
+  >;
 };
 
 export async function processHouseholdMemberForm(
@@ -30,29 +41,44 @@ export async function processHouseholdMemberForm(
     createHouseholdMember,
     updateHouseholdMember,
   } = props;
-  const apiInputs = toApiInputs(formData);
 
+  const apiInputs = toApiInputs(formData);
   if (!apiInputs) {
     return false;
   }
 
-  const mutationFn = relationId ? updateHouseholdMember : createHouseholdMember;
+  let response: HouseholdMutationResult;
 
-  const response = await mutationFn({
-    variables: {
-      data: {
-        clientProfile: clientProfileId,
-        ...apiInputs,
-        ...(relationId && { id: relationId }),
+  if (relationId) {
+    // UPDATE
+    response = await updateHouseholdMember({
+      variables: {
+        data: {
+          id: relationId,
+          clientProfile: clientProfileId,
+          ...apiInputs,
+        },
       },
-    },
-    errorPolicy: 'all',
-  });
+      errorPolicy: 'all',
+    });
+  } else {
+    // CREATE
+    response = await createHouseholdMember({
+      variables: {
+        data: {
+          clientProfile: clientProfileId,
+          ...apiInputs,
+        },
+      },
+      errorPolicy: 'all',
+    });
+  }
 
-  const extensionErrors = extractExtensionErrors(response);
+  // same error handling as before
+  const responseExtensions = extractResponseExtensions(response);
 
-  if (extensionErrors) {
-    applyManualFormErrors(extensionErrors, setError);
+  if (responseExtensions) {
+    applyManualFormErrors(responseExtensions, setError);
 
     return false;
   }
@@ -71,43 +97,37 @@ function toApiInputs(values: THouseholdMemberFormState) {
     return null;
   }
 
-  // convert dateOfBirth to date string and remove time
-  if ('dateOfBirth' in values && values.dateOfBirth) {
-    values.dateOfBirth = values.dateOfBirth
+  // make a copy so we don't mutate RHF's form state
+  const next: THouseholdMemberFormState = { ...values };
+
+  if (next.dateOfBirth instanceof Date) {
+    next.dateOfBirth = next.dateOfBirth
       .toISOString()
       .split('T')[0] as unknown as Date;
+  } else if (next.dateOfBirth === null) {
+    next.dateOfBirth = null;
+  } else if (next.dateOfBirth === undefined) {
+    delete next.dateOfBirth;
   }
 
-  return values;
+  return next;
 }
 
-function isSuccessMutationResponse(
-  response: FetchResult<
-    UpdateClientHouseholdMemberMutation | CreateClientHouseholdMemberMutation
-  >
-): boolean {
-  const responseData = response.data;
+function isSuccessMutationResponse(response: HouseholdMutationResult): boolean {
+  const data = response.data;
 
-  if (!responseData) {
+  if (!data) {
     return false;
   }
 
   const modelTypename = 'ClientHouseholdMemberType';
 
-  if ('updateClientHouseholdMember' in responseData) {
-    const typename = responseData.updateClientHouseholdMember.__typename;
-
-    if (typename === modelTypename) {
-      return true;
-    }
+  if ('createClientHouseholdMember' in data) {
+    return data.createClientHouseholdMember?.__typename === modelTypename;
   }
 
-  if ('createClientHouseholdMember' in responseData) {
-    const typename = responseData.createClientHouseholdMember.__typename;
-
-    if (typename === modelTypename) {
-      return true;
-    }
+  if ('updateClientHouseholdMember' in data) {
+    return data.updateClientHouseholdMember?.__typename === modelTypename;
   }
 
   return false;

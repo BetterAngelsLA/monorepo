@@ -1,46 +1,78 @@
-import { Colors, Radiuses } from '@monorepo/expo/shared/static';
-import { ComponentProps } from 'react';
-import { View } from 'react-native';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { DatePickerInput } from 'react-native-paper-dates';
 import FormFieldLabel from '../FormFieldLabel';
-
-export type INumericDatePickerProps = Omit<
-  ComponentProps<typeof DatePickerInput>,
-  | 'locale'
-  | 'inputMode'
-  | 'mode'
-  | 'iconColor'
-  | 'textColor'
-  | 'outlineColor'
-  | 'outlineStyle'
-  | 'withDateFormatInLabel'
->;
+import { InputClearIcon } from '../Input/InputClearIcon';
+import { INumericDatePickerProps } from './types';
 
 export function NumericDatePicker(props: INumericDatePickerProps) {
-  const { label, ...rest } = props;
+  const { label, disabled, value, onChange, onDelete, ...rest } = props;
+
+  const showClear = Boolean(value && onDelete);
+
+  const handleChange = (date: Date | undefined) => {
+    if (date instanceof Date && !Number.isNaN(date.getTime())) {
+      onChange?.(date);
+    }
+  };
 
   return (
     <View>
       {typeof label === 'string' && <FormFieldLabel label={label} />}
-      <DatePickerInput
-        locale="en"
-        inputMode="start"
-        mode="outlined"
-        iconColor={Colors.PRIMARY_EXTRA_DARK}
-        textColor={Colors.PRIMARY_EXTRA_DARK}
-        outlineColor={Colors.NEUTRAL_LIGHT}
-        outlineStyle={{
-          borderRadius: Radiuses.xs,
-          borderWidth: 1,
-          borderColor: Colors.NEUTRAL_LIGHT,
-        }}
-        withDateFormatInLabel={false}
-        style={{
-          width: '100%',
-          height: 56,
-        }}
-        {...rest}
-      />
+      <View style={styles.inputWrapper}>
+        <DatePickerInput
+          locale="en"
+          inputMode="start"
+          mode="outlined"
+          iconColor={Colors.PRIMARY_EXTRA_DARK}
+          textColor={
+            disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK
+          }
+          placeholderTextColor={Colors.NEUTRAL}
+          outlineColor={Colors.NEUTRAL_LIGHT}
+          outlineStyle={{
+            borderRadius: Radiuses.xs,
+            borderWidth: 1,
+            borderColor: Colors.NEUTRAL_LIGHT,
+          }}
+          withDateFormatInLabel={false}
+          style={{
+            width: '100%',
+            height: 56,
+          }}
+          disabled={disabled}
+          {...rest}
+          value={value}
+          onChange={handleChange}
+          calendarIcon={showClear ? '' : undefined}
+        />
+
+        {showClear && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Clear date"
+            accessibilityHint="Clears the selected date"
+            hitSlop={8}
+            style={styles.clearButton}
+            disabled={disabled}
+            onPress={onDelete}
+          >
+            <InputClearIcon />
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  inputWrapper: {
+    position: 'relative',
+  },
+  clearButton: {
+    position: 'absolute',
+    right: Spacings.sm,
+    top: '50%',
+    transform: [{ translateY: -Spacings.sm / 2 }],
+  },
+});

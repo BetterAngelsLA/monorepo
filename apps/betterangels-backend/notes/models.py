@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
@@ -16,10 +17,12 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
 
-from .enums import MoodEnum, ServiceEnum, ServiceRequestStatusEnum
+from .enums import MoodEnum, ServiceRequestStatusEnum
 
 if TYPE_CHECKING:
     from pghistory.models import Events
+
+logger = logging.getLogger(__name__)
 
 
 @pghistory.track(
@@ -84,8 +87,6 @@ class ServiceRequest(BaseModel):
     service = models.ForeignKey(
         OrganizationService, on_delete=models.PROTECT, related_name="service_requests", null=True, blank=True
     )
-    service_enum = TextChoicesField(choices_enum=ServiceEnum, null=True, blank=True)
-    service_other = models.CharField(max_length=100, null=True, blank=True)
     client_profile = models.ForeignKey(
         "clients.ClientProfile",
         on_delete=models.CASCADE,
@@ -107,7 +108,7 @@ class ServiceRequest(BaseModel):
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return str(self.service_enum if not self.service_other else self.service_other)
+        return str(self.service.label if self.service else "")
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:
