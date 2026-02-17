@@ -25,6 +25,7 @@ from django.db.models import (
     Value,
     When,
 )
+from notes.deprecated.deprecated_enums import MoodEnum
 from notes.enums import ServiceRequestTypeEnum
 from notes.permissions import NotePermissions, PrivateDetailsPermissions
 from strawberry import ID, Info, auto
@@ -149,6 +150,15 @@ class NoteFilter:
         return Q(query)
 
 
+# DEPRECATED: MoodType is no longer used but kept for backward compatibility
+# with existing frontend queries. Returns empty list. Remove after frontend cleanup.
+@strawberry.type
+class MoodType:
+    """Deprecated: Mood feature removed. This type exists for API backward compatibility."""
+    id: ID
+    descriptor: strawberry.enum(MoodEnum)
+
+
 @strawberry_django.type(
     models.Note,
     pagination=True,
@@ -170,6 +180,11 @@ class NoteType:
     requested_services: List[ServiceRequestType]
     tasks: list[TaskType]
     team: Optional[SelahTeamEnum]
+
+    @strawberry.field(deprecation_reason="Mood feature removed. This field always returns an empty list.")
+    def moods(self) -> List[MoodType]:
+        """Deprecated: Returns empty list for backward compatibility."""
+        return []
 
     @strawberry_django.field(
         annotate={
@@ -240,6 +255,11 @@ class UpdateNoteInput:
     Input for updating a note with all nested relations.
     Fields set to UNSET are left unchanged. Nested relation fields
     use replace-all semantics (existing items are removed, new ones created).
+
+    For location updates:
+    - `location` (ID): Reference an existing Location by ID (backward compatible)
+    - `location_data` (LocationInput): Create/update location inline with nested data
+    If both are provided, `location_data` takes precedence.
     """
 
     id: ID
@@ -250,8 +270,11 @@ class UpdateNoteInput:
     is_submitted: Optional[bool] = strawberry.UNSET  # type: ignore[assignment]
     interacted_at: Optional[datetime] = strawberry.UNSET  # type: ignore[assignment]
 
+    # Location: ID for FK reference (backward compat), location_data for inline creation
+    location: Optional[ID] = strawberry.UNSET  # type: ignore[assignment]
+    location_data: Optional[LocationInput] = strawberry.UNSET  # type: ignore[assignment]
+
     # Nested relations (replace-all when provided)
-    location: Optional[LocationInput] = strawberry.UNSET  # type: ignore[assignment]
     provided_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET  # type: ignore[assignment]
     requested_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET  # type: ignore[assignment]
     tasks: Optional[List[CreateNoteTaskInput]] = strawberry.UNSET  # type: ignore[assignment]

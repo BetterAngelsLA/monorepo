@@ -59,9 +59,15 @@ def note_update(
     Core fields are updated in-place. Nested relation fields use
     replace-all semantics: existing items are removed and new ones created.
     Caller is responsible for permission checks.
+
+    Location handling:
+    - `location_data` (dict): Create/update location inline via Location.get_or_create_location
+    - `location` (ID): Reference existing Location by primary key
+    If both are provided, `location_data` takes precedence.
     """
     # Extract nested relation data (handle separately)
-    location_data = data.pop("location", None)
+    location_data = data.pop("location_data", None)
+    location_id = data.pop("location", None)
     provided_services_data = data.pop("provided_services", None)
     requested_services_data = data.pop("requested_services", None)
     tasks_data = data.pop("tasks", None)
@@ -74,9 +80,12 @@ def note_update(
             setattr(note, field, value)
 
         # --- Location (replace) ---
+        # Prefer location_data (inline creation) over location ID (FK reference)
         if location_data is not None:
             location = Location.get_or_create_location(location_data)
             note.location = location
+        elif location_id is not None:
+            note.location_id = location_id
 
         # Single save for core fields + location to produce one pghistory event.
         note.save()

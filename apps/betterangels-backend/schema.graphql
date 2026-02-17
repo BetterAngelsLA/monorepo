@@ -1171,6 +1171,34 @@ enum MaritalStatusEnum {
   WIDOWED
 }
 
+enum MoodEnum {
+  AGITATED
+  AGREEABLE
+  ANXIOUS
+  DEPRESSED
+  DETACHED
+  DISORGANIZED_THOUGHT
+  DISORIENTED
+  ESCALATED
+  EUTHYMIC
+  FLAT_BLUNTED
+  HAPPY
+  HOPELESS
+  INDIFFERENT
+  MANIC
+  MOTIVATED
+  OPTIMISTIC
+  PERSONABLE
+  PLEASANT
+  RESTLESS
+  SUICIDAL
+}
+
+type MoodType {
+  id: ID!
+  descriptor: MoodEnum!
+}
+
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
@@ -1280,6 +1308,7 @@ type NoteType {
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]!
   team: SelahTeamEnum
+  moods: [MoodType!]! @deprecated(reason: "Mood feature removed. This field always returns an empty list.")
   userCanEdit: Boolean!
   privateDetails: String
 }
@@ -2115,7 +2144,8 @@ input UpdateNoteInput {
   privateDetails: String
   isSubmitted: Boolean
   interactedAt: DateTime
-  location: LocationInput
+  location: ID
+  locationData: LocationInput
   providedServices: [CreateNoteServiceInput!]
   requestedServices: [CreateNoteServiceInput!]
   tasks: [CreateNoteTaskInput!]
