@@ -1,8 +1,8 @@
 from typing import Any, TypeVar
 
-from django.db.models import Model, QuerySet
 import strawberry
-
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Model, QuerySet
 
 T = TypeVar("T", bound=Model)
 
@@ -22,7 +22,7 @@ def get_object_or_permission_error(
     """
     try:
         return qs.get(pk=pk)
-    except qs.model.DoesNotExist:
+    except ObjectDoesNotExist:
         raise PermissionError(error_message)
 
 

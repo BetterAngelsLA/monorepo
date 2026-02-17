@@ -32,19 +32,27 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def test_note_query(self) -> None:
         note_id = self.note["id"]
         task = self.create_task_fixture({"summary": "task summary", "note": note_id})["data"]["createTask"]
-        # Update fields available on the note input
+        # Build LocationInput for the fixture
+        json_address_input, _ = self._get_address_inputs()
+        location_input = {
+            "address": json_address_input,
+            "point": self.point,
+            "pointOfInterest": self.point_of_interest,
+        }
+        # Update fields using the fixture
         self._update_note_fixture(
             {
                 "id": note_id,
                 "interactedAt": "2024-03-12T11:12:13+00:00",
                 "isSubmitted": False,
-                "location": self.location.pk,
+                "location": location_input,
                 "privateDetails": "Updated private details",
                 "publicDetails": "Updated public details",
                 "purpose": "Updated Note",
                 "team": SelahTeamEnum.WDI_ON_SITE.name,
             }
         )
+
         # Add purposes and next steps
         note = Note.objects.get(pk=note_id)
         self.provided_services = [baker.make(ServiceRequest, service=OrganizationService.objects.get(label="Book"))]
@@ -78,7 +86,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "purpose": "Updated Note",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
             "location": {
-                "id": str(self.location.pk),
+                "id": ANY,
                 "address": {
                     "street": self.address.street,
                     "city": self.address.city,

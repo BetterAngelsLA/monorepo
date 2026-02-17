@@ -235,6 +235,8 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         addr2 = Location.get_or_create_address(
             {"address_components": components_upper, "formatted_address": "100 MAIN STREET"}
         )
+        assert addr1 is not None
+        assert addr2 is not None
         self.assertEqual(addr1.pk, addr2.pk)
 
     def test_get_or_create_address_whitespace_normalization(self) -> None:
@@ -261,6 +263,8 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
             {"address_components": canonical, "formatted_address": "100 Main Street"}
         )
         addr2 = Location.get_or_create_address({"address_components": messy, "formatted_address": "100 Main Street"})
+        assert addr1 is not None
+        assert addr2 is not None
         self.assertEqual(addr1.pk, addr2.pk)
 
     def test_get_or_create_address_formatted_address_variants(self) -> None:
@@ -277,6 +281,7 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         addr_v1 = Location.get_or_create_address(
             {"address_components": components, "formattedAddress": "200 Oak Ave, Shelbyville, IL"}
         )
+        assert addr_v1 is not None
         self.assertEqual(addr_v1.formatted_address, "200 Oak Ave, Shelbyville, IL")
 
         components2 = json.dumps(
@@ -291,6 +296,7 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         addr_legacy = Location.get_or_create_address(
             {"address_components": components2, "formatted_address": "300 Elm St, Capital City, IL"}
         )
+        assert addr_legacy is not None
         self.assertEqual(addr_legacy.formatted_address, "300 Elm St, Capital City, IL")
 
     @parametrize(

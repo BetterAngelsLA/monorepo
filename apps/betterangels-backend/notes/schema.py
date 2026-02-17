@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import cast
 
 import strawberry
 import strawberry_django
@@ -135,10 +135,8 @@ class Mutation:
         clean = {k: v for k, v in asdict(data).items() if v is not strawberry.UNSET}
 
         # Convert nested strawberry inputs to dicts (strip nested UNSET values)
-        # location_data takes precedence over location (ID) for backward compat
-        if "location_data" in clean and clean["location_data"] is not None:
-            clean["location_data"] = strip_unset(asdict(data.location_data))
-        # location (ID) is kept as-is for FK reference (backward compat)
+        if "location" in clean and clean["location"] is not None:
+            clean["location"] = strip_unset(asdict(data.location))
         if "provided_services" in clean and clean["provided_services"] is not None:
             clean["provided_services"] = [strip_unset(asdict(s)) for s in data.provided_services]  # type: ignore[union-attr]
         if "requested_services" in clean and clean["requested_services"] is not None:
@@ -165,7 +163,7 @@ class Mutation:
         qs: QuerySet[Note] = info.context.qs
         note = get_object_or_permission_error(qs, data.id)
 
-        location_data: dict = strip_unset(strawberry.asdict(data)["location"])  # type: ignore[assignment]
+        location_data: dict = strip_unset(strawberry.asdict(data)["location"])
         note = note_update_location(note=note, location_data=location_data)
 
         return cast(NoteType, note)

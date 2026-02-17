@@ -64,7 +64,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "purpose": "Updated note purpose",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
-            "locationData": location_input,  # Use locationData for inline location creation
+            "location": location_input,  # Inline location creation
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
@@ -375,7 +375,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
                 "id": note_id,
                 "purpose": "Discarded Purpose",
                 "publicDetails": "Discarded Body",
-                "locationData": other_location_input,
+                "location": other_location_input,
             }
         )
 
@@ -435,7 +435,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
                 "id": note_id,
                 "purpose": "Updated purpose",
                 "publicDetails": "Updated Body",
-                "locationData": location_input,
+                "location": location_input,
             }
         )
 
@@ -454,7 +454,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
                 "id": note_id,
                 "purpose": "Discarded purpose",
                 "publicDetails": "Discarded Body",
-                "locationData": other_location_input,
+                "location": other_location_input,
             }
         )
 

@@ -240,29 +240,21 @@ class UpdateNoteInput:
     Input for updating a note with all nested relations.
     Fields set to UNSET are left unchanged. Nested relation fields
     use replace-all semantics (existing items are removed, new ones created).
-
-    For location updates:
-    - `location` (ID): Reference an existing Location by ID (backward compatible)
-    - `location_data` (LocationInput): Create/update location inline with nested data
-    If both are provided, `location_data` takes precedence.
     """
 
     id: ID
-    purpose: Optional[NonBlankString] = strawberry.UNSET  # type: ignore[assignment]
-    team: Optional[SelahTeamEnum] = strawberry.UNSET  # type: ignore[assignment]
-    public_details: Optional[str] = strawberry.UNSET  # type: ignore[assignment]
-    private_details: Optional[str] = strawberry.UNSET  # type: ignore[assignment]
-    is_submitted: Optional[bool] = strawberry.UNSET  # type: ignore[assignment]
-    interacted_at: Optional[datetime] = strawberry.UNSET  # type: ignore[assignment]
-
-    # Location: ID for FK reference (backward compat), location_data for inline creation
-    location: Optional[ID] = strawberry.UNSET  # type: ignore[assignment]
-    location_data: Optional[LocationInput] = strawberry.UNSET  # type: ignore[assignment]
+    purpose: Optional[NonBlankString] = strawberry.UNSET
+    team: Optional[SelahTeamEnum] = strawberry.UNSET
+    public_details: Optional[str] = strawberry.UNSET
+    private_details: Optional[str] = strawberry.UNSET
+    is_submitted: Optional[bool] = strawberry.UNSET
+    interacted_at: Optional[datetime] = strawberry.UNSET
+    location: Optional[LocationInput] = strawberry.UNSET
 
     # Nested relations (replace-all when provided)
-    provided_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET  # type: ignore[assignment]
-    requested_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET  # type: ignore[assignment]
-    tasks: Optional[List[CreateNoteTaskInput]] = strawberry.UNSET  # type: ignore[assignment]
+    provided_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET
+    requested_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET
+    tasks: Optional[List[CreateNoteTaskInput]] = strawberry.UNSET
 
 
 @strawberry_django.input(models.Note)
