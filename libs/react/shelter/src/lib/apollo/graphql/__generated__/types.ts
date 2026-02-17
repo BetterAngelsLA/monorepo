@@ -483,7 +483,6 @@ export type CreateNoteInput = {
 export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateNoteServiceInput = {
-  id?: InputMaybe<Scalars['ID']['input']>;
   serviceId?: InputMaybe<Scalars['ID']['input']>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
 };
@@ -499,7 +498,6 @@ export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType
 
 export type CreateNoteTaskInput = {
   description?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Scalars['Int']['input']>;
   summary: Scalars['String']['input'];
   team?: InputMaybe<SelahTeamEnum>;
