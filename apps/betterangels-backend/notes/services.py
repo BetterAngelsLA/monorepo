@@ -9,8 +9,8 @@ from common.models import Location
 from common.permissions.utils import assign_object_permissions
 from django.db import transaction
 from django.utils import timezone
-from notes.enums import MoodEnum, ServiceRequestStatusEnum, ServiceRequestTypeEnum
-from notes.models import Mood, Note, OrganizationService, ServiceRequest
+from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
+from notes.models import Note, OrganizationService, ServiceRequest
 from notes.permissions import (
     NotePermissions,
     PrivateDetailsPermissions,
@@ -46,61 +46,77 @@ def _resolve_service(
 # ---------------------------------------------------------------------------
 
 
-def note_create(
-    *,
-    user: User,
-    permission_group: PermissionGroup,
-    purpose: Optional[str] = None,
-    team: Optional[SelahTeamEnum] = None,
-    public_details: str = "",
-    private_details: str = "",
-    client_profile_id: Optional[str] = None,
-    is_submitted: bool = False,
-    interacted_at: Optional[datetime] = None,
-    location: Optional[Location] = None,
-) -> Note:
-    """Create a Note and assign object-level permissions."""
-    note = Note.objects.create(
-        purpose=purpose,
-        team=team,
-        public_details=public_details,
-        private_details=private_details,
-        client_profile_id=client_profile_id,
-        is_submitted=is_submitted,
-        interacted_at=interacted_at or timezone.now(),
-        location=location,
-        created_by=user,
-        organization=permission_group.organization,
-    )
-
-    assign_object_permissions(
-        permission_group.group,
-        note,
-        [
-            NotePermissions.CHANGE,
-            NotePermissions.DELETE,
-            PrivateDetailsPermissions.VIEW,
-        ],
-    )
-
-    return note
-
-
 def note_update(
     *,
     note: Note,
     data: Dict[str, Any],
+    user: Optional[User] = None,
+    permission_group: Optional[PermissionGroup] = None,
 ) -> Note:
-    """Update a Note. Caller is responsible for permission checks."""
+    """
+    Update a Note, including nested relations.
+
+    Core fields are updated in-place. Nested relation fields use
+    replace-all semantics: existing items are removed and new ones created.
+    Caller is responsible for permission checks.
+    """
+    # Extract nested relation data (handle separately)
+    location_data = data.pop("location", None)
+    provided_services_data = data.pop("provided_services", None)
+    requested_services_data = data.pop("requested_services", None)
+    tasks_data = data.pop("tasks", None)
+
     with pghistory.context(note_id=str(note.id), timestamp=timezone.now(), label="note_update"):
+        # --- Core fields ---
         for field, value in data.items():
             if field == "id":
                 continue
-            # Handle location FK — resolve ID to Location instance
-            if field == "location" and value is not None:
-                value = Location.objects.get(pk=value)
             setattr(note, field, value)
+
+        # --- Location (replace) ---
+        if location_data is not None:
+            location = Location.get_or_create_location(location_data)
+            note.location = location
+
+        # Single save for core fields + location to produce one pghistory event.
         note.save()
+
+        # --- Provided services (replace-all) ---
+        if provided_services_data is not None and user and permission_group:
+            note.provided_services.all().delete()
+            if provided_services_data:
+                note_service_request_create(
+                    user=user,
+                    permission_group=permission_group,
+                    note=note,
+                    data=provided_services_data,
+                    sr_type=ServiceRequestTypeEnum.PROVIDED,
+                )
+
+        # --- Requested services (replace-all) ---
+        if requested_services_data is not None and user and permission_group:
+            note.requested_services.all().delete()
+            if requested_services_data:
+                note_service_request_create(
+                    user=user,
+                    permission_group=permission_group,
+                    note=note,
+                    data=requested_services_data,
+                    sr_type=ServiceRequestTypeEnum.REQUESTED,
+                )
+
+        # --- Tasks (replace-all) ---
+        if tasks_data is not None and user and permission_group:
+            note.tasks.all().delete()
+            if tasks_data:
+                task_create(
+                    user=user,
+                    permission_group=permission_group,
+                    data=tasks_data,
+                    note=note,
+                    client_profile=note.client_profile,
+                )
+
     return note
 
 
@@ -115,29 +131,6 @@ def note_update_location(
         note.location = location
         note.save(update_fields=["location"])
     return note
-
-
-# ---------------------------------------------------------------------------
-# Mood
-# ---------------------------------------------------------------------------
-
-
-def mood_create(
-    *,
-    data: List[MoodEnum],
-    note: Note,
-) -> List[Mood]:
-    """Create one or more Moods for a Note (no permission check; use for internal composition)."""
-    with pghistory.context(note_id=str(note.id), timestamp=timezone.now(), label="mood_create"):
-        return Mood.objects.bulk_create([Mood(descriptor=m, note=note) for m in data])
-
-
-def mood_delete(*, mood: Mood) -> int:
-    """Delete a Mood. Caller is responsible for permission checks."""
-    deleted_id = mood.id
-    with pghistory.context(note_id=str(mood.note_id), timestamp=timezone.now(), label="mood_delete"):
-        mood.delete()
-    return deleted_id
 
 
 # ---------------------------------------------------------------------------
@@ -250,13 +243,8 @@ def note_service_request_remove(
             raise NotImplementedError(f"Unsupported service request type: {sr_type}")
 
 
-# ---------------------------------------------------------------------------
-# Note (full deferred creation)
-# ---------------------------------------------------------------------------
-
-
 @transaction.atomic
-def note_create_full(
+def note_create(
     *,
     user: User,
     permission_group: PermissionGroup,
@@ -268,7 +256,6 @@ def note_create_full(
     is_submitted: bool = False,
     interacted_at: Optional[datetime] = None,
     location_data: Optional[Dict[str, Any]] = None,
-    moods: Optional[List[MoodEnum]] = None,
     provided_services: Optional[List[Dict[str, Any]]] = None,
     requested_services: Optional[List[Dict[str, Any]]] = None,
     tasks: Optional[List[Dict[str, Any]]] = None,
@@ -276,8 +263,8 @@ def note_create_full(
     """
     Create a note with all nested relations atomically.
 
-    This is the "deferred creation" entry point: everything is held locally
-    on the client and sent in one shot on submit or save-as-draft.
+    All nested params (location, moods, services, tasks) are optional,
+    making this backward-compatible with callers that only send core fields.
     """
 
     # --- Location ---
@@ -286,22 +273,28 @@ def note_create_full(
         location = Location.get_or_create_location(location_data)
 
     # --- Note ---
-    note = note_create(
-        user=user,
-        permission_group=permission_group,
+    note = Note.objects.create(
         purpose=purpose,
         team=team,
         public_details=public_details or "",
         private_details=private_details or "",
         client_profile_id=client_profile_id,
         is_submitted=is_submitted,
-        interacted_at=interacted_at,
+        interacted_at=interacted_at or timezone.now(),
         location=location,
+        created_by=user,
+        organization=permission_group.organization,
     )
 
-    # --- Moods ---
-    if moods:
-        mood_create(data=moods, note=note)
+    assign_object_permissions(
+        permission_group.group,
+        note,
+        [
+            NotePermissions.CHANGE,
+            NotePermissions.DELETE,
+            PrivateDetailsPermissions.VIEW,
+        ],
+    )
 
     # --- Provided services ---
     if provided_services:

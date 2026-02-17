@@ -23,7 +23,41 @@ export const UPDATE_NOTE = gql`
       ... on NoteType {
         id
         purpose
+        team
         publicDetails
+        isSubmitted
+        interactedAt
+        location {
+          address {
+            id
+            street
+            city
+            state
+            zipCode
+          }
+          point
+          pointOfInterest
+        }
+        providedServices {
+          id
+          service {
+            id
+            label
+            category {
+              id
+            }
+          }
+        }
+        requestedServices {
+          id
+          service {
+            id
+            label
+            category {
+              id
+            }
+          }
+        }
         clientProfile {
           id
           firstName

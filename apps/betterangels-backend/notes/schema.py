@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Any, cast
 
 import strawberry
 import strawberry_django
@@ -7,22 +7,19 @@ from accounts.utils import get_user_permission_group
 from clients.models import ClientProfile, ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.graphql.utils import strip_unset
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
 from django.db.models import QuerySet
-from django.db.models.expressions import Subquery
 from notes.enums import ServiceRequestStatusEnum
-from notes.models import Mood, Note, NoteDataImport, NoteImportRecord, ServiceRequest
+from notes.models import Note, NoteDataImport, NoteImportRecord, ServiceRequest
 from notes.permissions import (
     NoteImportRecordPermissions,
     NotePermissions,
     ServiceRequestPermissions,
 )
 from notes.services import (
-    mood_create,
-    mood_delete,
     note_create,
-    note_create_full,
     note_service_request_create,
     note_service_request_remove,
     note_update,
@@ -38,18 +35,14 @@ from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
-from strawberry_django.utils.query import filter_for_user
 
 from .types import (
-    CreateFullNoteInput,
     CreateNoteDataImportInput,
     CreateNoteInput,
-    CreateNoteMoodInput,
     CreateNoteServiceRequestInput,
     CreateServiceRequestInput,
     ImportNoteInput,
     InteractionAuthorType,
-    MoodType,
     NoteDataImportType,
     NoteFilter,
     NoteImportRecordType,
@@ -97,44 +90,20 @@ class Mutation:
     # Notes
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
+        """
+        Create a note with optional nested relations (location, services, tasks).
+        All nested fields are optional, so this is fully backward-compatible with
+        callers that only send core note fields.
+        """
         user = cast(User, get_current_user(info))
         permission_group = get_user_permission_group(user)
+
+        location_dict = strip_unset(asdict(data.location)) if data.location else None
+        provided_list = [strip_unset(asdict(s)) for s in data.provided_services] if data.provided_services else None
+        requested_list = [strip_unset(asdict(s)) for s in data.requested_services] if data.requested_services else None
+        tasks_list = [strip_unset(asdict(t)) for t in data.tasks] if data.tasks else None
 
         note = note_create(
-            user=user,
-            permission_group=permission_group,
-            purpose=data.purpose if data.purpose is not strawberry.UNSET else None,
-            team=data.team if data.team is not strawberry.UNSET else None,
-            public_details=data.public_details if data.public_details is not strawberry.UNSET else "",
-            private_details=data.private_details if data.private_details is not strawberry.UNSET else "",
-            client_profile_id=(
-                str(data.client_profile)
-                if data.client_profile and data.client_profile is not strawberry.UNSET
-                else None
-            ),
-            is_submitted=bool(data.is_submitted) if data.is_submitted is not strawberry.UNSET else False,
-            interacted_at=data.interacted_at if data.interacted_at is not strawberry.UNSET else None,
-        )
-
-        note._private_details = note.private_details
-
-        return cast(NoteType, note)
-
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(NotePermissions.ADD)])
-    def create_full_note(self, info: Info, data: CreateFullNoteInput) -> NoteType:
-        """
-        Atomically create a note with all nested relations in one mutation.
-        Supports: location, moods, provided/requested services, and tasks.
-        """
-        user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(user)
-
-        location_dict = asdict(data.location) if data.location else None
-        provided_list = [asdict(s) for s in data.provided_services] if data.provided_services else None
-        requested_list = [asdict(s) for s in data.requested_services] if data.requested_services else None
-        tasks_list = [asdict(t) for t in data.tasks] if data.tasks else None
-
-        note = note_create_full(
             user=user,
             permission_group=permission_group,
             purpose=data.purpose,
@@ -145,13 +114,11 @@ class Mutation:
             is_submitted=bool(data.is_submitted),
             interacted_at=data.interacted_at,
             location_data=location_dict,
-            moods=data.moods,
             provided_services=provided_list,
             requested_services=requested_list,
             tasks=tasks_list,
         )
 
-        # Annotated field workaround for permission checks
         note._private_details = note.private_details
 
         return cast(NoteType, note)
@@ -161,11 +128,29 @@ class Mutation:
         extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
+        user = cast(User, get_current_user(info))
+        permission_group = get_user_permission_group(user)
+
         qs: QuerySet[Note] = info.context.qs
         clean = {k: v for k, v in asdict(data).items() if v is not strawberry.UNSET}
 
+        # Convert nested strawberry inputs to dicts (strip nested UNSET values)
+        if "location" in clean and clean["location"] is not None:
+            clean["location"] = strip_unset(asdict(data.location))
+        if "provided_services" in clean and clean["provided_services"] is not None:
+            clean["provided_services"] = [strip_unset(asdict(s)) for s in data.provided_services]  # type: ignore[union-attr]
+        if "requested_services" in clean and clean["requested_services"] is not None:
+            clean["requested_services"] = [strip_unset(asdict(s)) for s in data.requested_services]  # type: ignore[union-attr]
+        if "tasks" in clean and clean["tasks"] is not None:
+            clean["tasks"] = [strip_unset(asdict(t)) for t in data.tasks]  # type: ignore[union-attr]
+
         note = qs.get(pk=data.id)
-        note = note_update(note=note, data=clean)
+        note = note_update(
+            note=note,
+            data=clean,
+            user=user,
+            permission_group=permission_group,
+        )
         note._private_details = note.private_details
 
         return cast(NoteType, note)
@@ -178,7 +163,7 @@ class Mutation:
         qs: QuerySet[Note] = info.context.qs
         note = qs.get(id=data.id)
 
-        location_data: dict = strawberry.asdict(data)["location"]  # type: ignore[assignment]
+        location_data: dict = strip_unset(strawberry.asdict(data)["location"])  # type: ignore[assignment]
         note = note_update_location(note=note, location_data=location_data)
 
         return cast(NoteType, note)
@@ -211,43 +196,6 @@ class Mutation:
         ],
     )
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def create_note_mood(self, info: Info, data: CreateNoteMoodInput) -> MoodType:
-        user = get_current_user(info)
-
-        try:
-            note = filter_for_user(
-                Note.objects.all(),
-                user,
-                [NotePermissions.CHANGE],
-            ).get(id=str(data.note_id))
-        except Note.DoesNotExist:
-            raise PermissionError("You do not have permission to modify this note.")
-
-        moods = mood_create(data=[data.descriptor], note=note)
-        return cast(MoodType, moods[0])
-
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def delete_mood(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
-        user = get_current_user(info)
-        try:
-            mood = Mood.objects.get(
-                id=data.id,
-                note_id__in=Subquery(
-                    filter_for_user(
-                        Note.objects.all(),
-                        user,
-                        [NotePermissions.CHANGE],
-                    ).values("id")
-                ),
-            )
-        except Note.DoesNotExist:
-            raise PermissionError("User lacks proper organization or permissions")
-
-        deleted_id = mood_delete(mood=mood)
-
-        return DeletedObjectType(id=deleted_id)
-
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated], extensions=[HasPerm(ServiceRequestPermissions.ADD)]
     )
@@ -268,20 +216,15 @@ class Mutation:
         return cast(ServiceRequestType, srs[0])
 
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(ServiceRequestPermissions.ADD)]
+        permission_classes=[IsAuthenticated],
+        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
     )
     def create_note_service_request(self, info: Info, data: CreateNoteServiceRequestInput) -> ServiceRequestType:
         user = cast(User, get_current_user(info))
         permission_group = get_user_permission_group(user)
 
-        try:
-            note = filter_for_user(
-                Note.objects.all(),
-                user,
-                [NotePermissions.CHANGE],
-            ).get(id=str(data.note_id))
-        except Note.DoesNotExist:
-            raise PermissionError("You do not have permission to modify this note.")
+        qs: QuerySet[Note] = info.context.qs
+        note = qs.get(id=str(data.note_id))
 
         srs = note_service_request_create(
             user=user,
@@ -328,22 +271,16 @@ class Mutation:
 
         return cast(NoteType, note)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[PermissionedQuerySet(model=ServiceRequest, perms=[ServiceRequestPermissions.DELETE])],
+    )
     def delete_service_request(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         """
         NOTE: this function will need to change once ServiceRequests are able to be associated with zero or more than one Note
         """
-        user = get_current_user(info)
-
-        try:
-            sr = filter_for_user(
-                ServiceRequest.objects.all(),
-                user,
-                [ServiceRequestPermissions.DELETE],
-            ).get(id=data.id)
-
-        except ServiceRequest.DoesNotExist:
-            raise PermissionError("You do not have permission to modify this service request.")
+        qs: QuerySet[ServiceRequest] = info.context.qs
+        sr = qs.get(id=data.id)
 
         deleted_id = service_request_delete(service_request=sr)
 
@@ -401,9 +338,31 @@ class Mutation:
             note_input["client"] = str(cp_record.client_profile.id)
 
         import_job = NoteDataImport.objects.get(id=data.import_job_id)
+        user = cast(User, get_current_user(info))
+        permission_group = get_user_permission_group(user)
         try:
             with transaction.atomic():
-                note = Mutation.create_note(self, info, data.note)
+                note = note_create(
+                    user=user,
+                    permission_group=permission_group,
+                    purpose=data.note.purpose if data.note.purpose is not strawberry.UNSET else None,
+                    team=data.note.team if data.note.team is not strawberry.UNSET else None,
+                    public_details=data.note.public_details if data.note.public_details is not strawberry.UNSET else "",
+                    private_details=(
+                        data.note.private_details if data.note.private_details is not strawberry.UNSET else ""
+                    ),
+                    client_profile_id=(
+                        str(data.note.client_profile)
+                        if data.note.client_profile and data.note.client_profile is not strawberry.UNSET
+                        else None
+                    ),
+                    is_submitted=(
+                        bool(data.note.is_submitted) if data.note.is_submitted is not strawberry.UNSET else False
+                    ),
+                    interacted_at=(
+                        data.note.interacted_at if data.note.interacted_at is not strawberry.UNSET else None
+                    ),
+                )
                 record = NoteImportRecord.objects.create(
                     import_job=import_job,
                     source_id=data.source_id,

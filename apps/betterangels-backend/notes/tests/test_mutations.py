@@ -3,11 +3,10 @@ from unittest.mock import ANY, patch
 
 import time_machine
 from common.enums import SelahTeamEnum
-from common.models import Address, Location
+from common.models import Location
 from django.test import ignore_warnings
 from django.utils import timezone
-from model_bakery import baker
-from notes.models import Mood, Note, OrganizationService, ServiceRequest
+from notes.models import Note, OrganizationService, ServiceRequest
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
     ServiceRequestGraphQLBaseTestCase,
@@ -25,7 +24,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 28
+        expected_query_count = 30
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_fixture(
                 {
@@ -55,18 +54,24 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_update_note_mutation(self) -> None:
+        json_address_input, _ = self._get_address_inputs()
+        location_input = {
+            "address": json_address_input,
+            "point": self.point,
+            "pointOfInterest": self.point_of_interest,
+        }
         variables = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
-            "location": self.location.pk,
+            "location": location_input,
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 15
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -77,7 +82,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "tasks": [],
             "team": SelahTeamEnum.WDI_ON_SITE.name,
             "location": {
-                "id": str(self.location.pk),
+                "id": ANY,
                 "address": {
                     "street": self.address.street,
                     "city": self.address.city,
@@ -106,7 +111,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 13
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -142,7 +147,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "location": location,
         }
 
-        expected_query_count = 16
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_location_fixture(variables)
 
@@ -250,8 +255,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "service_request_type,  expected_query_count",
         [
-            ("REQUESTED", 12),
-            ("PROVIDED", 12),
+            ("REQUESTED", 8),
+            ("PROVIDED", 8),
         ],
     )
     def test_remove_note_service_request_mutation(
@@ -285,45 +290,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(len(updated_note["requestedServices"]), 0)
         self.assertEqual(len(updated_note["providedServices"]), 0)
 
-    @skip("not implemented")
-    def test_create_note_mood_mutation(self) -> None:
-        baker.make(Mood, note_id=self.note["id"])
-        variables = {
-            "descriptor": "ANXIOUS",
-            "noteId": self.note["id"],
-        }
-
-        note = Note.objects.get(id=self.note["id"])
-        self.assertEqual(note.moods.count(), 1)
-
-        expected_query_count = 9
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._create_note_mood_fixture(variables)
-
-        expected_mood = {
-            "id": ANY,
-            "descriptor": "ANXIOUS",
-        }
-        created_mood = response["data"]["createNoteMood"]
-        self.assertEqual(created_mood, expected_mood)
-        self.assertEqual(note.moods.count(), 2)
-        self.assertIn(created_mood["id"], str(note.moods.only("id")))
-
-    @skip("not implemented")
-    def test_delete_mood_mutation(self) -> None:
-        note = Note.objects.get(id=self.note["id"])
-        moods = baker.make(Mood, note_id=note.id, _quantity=2)
-        self.assertEqual(note.moods.count(), 2)
-
-        expected_query_count = 4
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._delete_mood_fixture(mood_id=moods[0].pk)
-
-        self.assertIsNotNone(response["data"]["deleteMood"])
-        self.assertEqual(note.moods.count(), 1)
-        with self.assertRaises(Mood.DoesNotExist):
-            Mood.objects.get(id=moods[0].pk)
-
     def test_delete_note_mutation(self) -> None:
         mutation = """
             mutation DeleteNote($id: ID!) {
@@ -343,7 +309,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 23
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
         self.assertIsNotNone(response["data"]["deleteNote"])
@@ -397,15 +363,19 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Select a moment to revert to
         revert_before_timestamp = timezone.now()
 
-        other_address = baker.make(Address, street="Discarded St")
-        other_location = baker.make(Location, address=other_address)
+        other_json_address_input, _ = self._get_address_inputs(street_number_override="999")
+        other_location_input = {
+            "address": other_json_address_input,
+            "point": [-118.0, 34.0],
+            "pointOfInterest": "Discarded POI",
+        }
         # Update - should be discarded
         self._update_note_fixture(
             {
                 "id": note_id,
                 "purpose": "Discarded Purpose",
                 "publicDetails": "Discarded Body",
-                "location": other_location.pk,
+                "location": other_location_input,
             }
         )
 
@@ -418,7 +388,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             }
         """
 
-        expected_query_count = 19
+        expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
@@ -430,7 +400,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         revert_before_timestamp = timezone.now()
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        expected_query_count = 14
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
@@ -453,28 +423,38 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         """
         note_id = self.note["id"]
 
+        json_address_input, _ = self._get_address_inputs()
+        location_input = {
+            "address": json_address_input,
+            "point": self.point,
+            "pointOfInterest": self.point_of_interest,
+        }
         # Update - should be persisted
         self._update_note_fixture(
             {
                 "id": note_id,
                 "purpose": "Updated purpose",
                 "publicDetails": "Updated Body",
-                "location": self.location.pk,
+                "location": location_input,
             }
         )
 
         # Select a moment to revert to
         revert_before_timestamp = timezone.now()
 
-        other_address = baker.make(Address, street="Discarded St")
-        other_location = baker.make(Location, address=other_address)
+        other_json_address_input, _ = self._get_address_inputs(street_number_override="999")
+        other_location_input = {
+            "address": other_json_address_input,
+            "point": [-118.0, 34.0],
+            "pointOfInterest": "Discarded POI",
+        }
         # Update - should be discarded
         self._update_note_fixture(
             {
                 "id": note_id,
                 "purpose": "Discarded purpose",
                 "publicDetails": "Discarded Body",
-                "location": other_location.pk,
+                "location": other_location_input,
             }
         )
 
@@ -488,7 +468,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
                 }
             }
         """
-        expected_query_count = 21
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
@@ -500,7 +480,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         revert_before_timestamp = timezone.now()
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        expected_query_count = 16
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
@@ -569,86 +549,13 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self.assertEqual(discarded_point, note_location_to_discard["location"]["point"])
         self.assertEqual(discarded_point_of_interest, note_location_to_discard["location"]["pointOfInterest"])
 
-        expected_query_count = 21
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["location"]["address"]["street"], self.street)
         self.assertEqual(reverted_note["location"]["point"], self.point)
         self.assertEqual(reverted_note["location"]["pointOfInterest"], self.point_of_interest)
-
-    @skip("not implemented")
-    def test_revert_note_mutation_removes_added_moods(self) -> None:
-        """
-        Test Actions:
-        0. Setup creates a note
-        1. Add 1 mood
-        2. Save now as revert_before_timestamp
-        3. Add another mood
-        4. Revert to revert_before_timestamp from Step 2
-        5. Assert note has only mood from Step 1
-        """
-        note_id = self.note["id"]
-
-        # Update - should be persisted
-        self._create_note_mood_fixture({"descriptor": "ANXIOUS", "noteId": note_id})
-
-        # Select a moment to revert to
-        revert_before_timestamp = timezone.now()
-
-        # Update - should be discarded
-        self._create_note_mood_fixture({"descriptor": "EUTHYMIC", "noteId": note_id})
-
-        variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        note_fields = """
-            moods {
-                descriptor
-            }
-        """
-
-        expected_query_count = 20
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
-
-        self.assertEqual(len(reverted_note["moods"]), 1)
-
-    @skip("not implemented")
-    def test_revert_note_mutation_returns_removed_moods(self) -> None:
-        """
-        Test Actions:
-        0. Setup creates a note
-        1. Add 2 moods
-        2. Save now as revert_before_timestamp
-        3. Delete 1 mood
-        4. Revert to revertBeforeTimestamp from Step 3
-        5. Assert note has 2 moods from Step 1
-        """
-        note_id = self.note["id"]
-
-        # Update - should be persisted
-        persisted_mood_variables_1 = {"descriptor": "ANXIOUS", "noteId": note_id}
-        self._create_note_mood_fixture(persisted_mood_variables_1)
-
-        persisted_mood_variables_2 = {"descriptor": "EUTHYMIC", "noteId": note_id}
-        mood_to_delete_id = self._create_note_mood_fixture(persisted_mood_variables_2)["data"]["createNoteMood"]["id"]
-
-        # Select a moment to revert to
-        revert_before_timestamp = timezone.now()
-
-        self._delete_mood_fixture(mood_id=mood_to_delete_id)
-
-        variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        note_fields = """
-            moods {
-                descriptor
-            }
-        """
-
-        expected_query_count = 27
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
-
-        self.assertEqual(len(reverted_note["moods"]), 2)
 
     # @skip("not implemented")
     # def test_revert_note_mutation_removes_added_new_tasks(self) -> None:
@@ -861,7 +768,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 46
+        expected_query_count = 42
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -934,7 +841,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 48
+        expected_query_count = 44
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -1168,7 +1075,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 52
+        expected_query_count = 48
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -1242,7 +1149,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 52
+        expected_query_count = 48
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -1459,20 +1366,18 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         # Update - should be persisted because revert fails
         self._update_note_fixture({"id": note_id, "purpose": "Discarded Purpose"})
-        self._create_note_mood_fixture({"descriptor": "ANXIOUS", "noteId": note_id})
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
         note_fields = """
             purpose
-            moods {
-                descriptor
-            }
         """
 
-        with patch("notes.models.Mood.revert_action", side_effect=Exception("oops")):
+        with patch(
+            "notes.utils.note_reverter_util.NoteReverter._revert_changes_to_all_related_models",
+            side_effect=Exception("oops"),
+        ):
             not_reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
-        self.assertEqual(len(not_reverted_note["moods"]), 1)
         self.assertEqual(not_reverted_note["purpose"], "Discarded Purpose")
 
 

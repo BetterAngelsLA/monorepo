@@ -25,7 +25,7 @@ from django.db.models import (
     Value,
     When,
 )
-from notes.enums import MoodEnum, ServiceRequestTypeEnum
+from notes.enums import ServiceRequestTypeEnum
 from notes.permissions import NotePermissions, PrivateDetailsPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.utils.query import filter_for_user
@@ -106,23 +106,11 @@ class UpdateServiceRequestInput:
     due_by: auto
 
 
-@strawberry_django.type(models.Mood)
-class MoodType:
-    id: ID
-    descriptor: auto
-
-
 @strawberry.input
 class RemoveNoteServiceRequestInput:
     service_request_id: ID
     note_id: ID
     service_request_type: ServiceRequestTypeEnum
-
-
-@strawberry_django.input(models.Mood)
-class CreateNoteMoodInput:
-    descriptor: auto
-    note_id: ID
 
 
 @strawberry_django.order_type(models.Note, one_of=False)
@@ -175,7 +163,6 @@ class NoteType:
     interacted_at: auto
     is_submitted: auto
     location: Optional[LocationType]
-    moods: List[MoodType]
     organization: OrganizationType
     provided_services: List[ServiceRequestType]
     public_details: auto
@@ -226,42 +213,7 @@ class NoteType:
         return root._private_details
 
 
-@strawberry_django.input(models.Note)
-class CreateNoteInput:
-    purpose: auto
-    team: Optional[SelahTeamEnum]
-    public_details: auto
-    private_details: auto
-    client_profile: ID | None
-    is_submitted: auto
-    interacted_at: auto
-
-
-@strawberry_django.input(models.Note, partial=True)
-class UpdateNoteInput:
-    id: ID
-    purpose: Optional[NonBlankString]
-    team: Optional[SelahTeamEnum]
-    location: Optional[ID]
-    public_details: auto
-    private_details: auto
-    is_submitted: auto
-    interacted_at: auto
-
-
-@strawberry_django.input(models.Note)
-class UpdateNoteLocationInput:
-    id: ID
-    location: LocationInput
-
-
-@strawberry_django.input(models.Note)
-class RevertNoteInput:
-    id: ID
-    revert_before_timestamp: datetime
-
-
-# --- Nested inputs for create_full_note ---
+# --- Nested inputs for note creation/update ---
 
 
 @strawberry.input
@@ -283,10 +235,46 @@ class CreateNoteTaskInput:
 
 
 @strawberry.input
-class CreateFullNoteInput:
+class UpdateNoteInput:
     """
-    All-in-one input for creating a note with all nested relations atomically.
-    Used for deferred note creation (no server-side note until first submit/draft).
+    Input for updating a note with all nested relations.
+    Fields set to UNSET are left unchanged. Nested relation fields
+    use replace-all semantics (existing items are removed, new ones created).
+    """
+
+    id: ID
+    purpose: Optional[NonBlankString] = strawberry.UNSET  # type: ignore[assignment]
+    team: Optional[SelahTeamEnum] = strawberry.UNSET  # type: ignore[assignment]
+    public_details: Optional[str] = strawberry.UNSET  # type: ignore[assignment]
+    private_details: Optional[str] = strawberry.UNSET  # type: ignore[assignment]
+    is_submitted: Optional[bool] = strawberry.UNSET  # type: ignore[assignment]
+    interacted_at: Optional[datetime] = strawberry.UNSET  # type: ignore[assignment]
+
+    # Nested relations (replace-all when provided)
+    location: Optional[LocationInput] = strawberry.UNSET  # type: ignore[assignment]
+    provided_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET  # type: ignore[assignment]
+    requested_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET  # type: ignore[assignment]
+    tasks: Optional[List[CreateNoteTaskInput]] = strawberry.UNSET  # type: ignore[assignment]
+
+
+@strawberry_django.input(models.Note)
+class UpdateNoteLocationInput:
+    id: ID
+    location: LocationInput
+
+
+@strawberry_django.input(models.Note)
+class RevertNoteInput:
+    id: ID
+    revert_before_timestamp: datetime
+
+
+@strawberry.input
+class CreateNoteInput:
+    """
+    Input for creating a note with all nested relations atomically.
+    All nested fields are optional, making this backward-compatible
+    with callers that only send core note fields.
     """
 
     # Core note fields
@@ -300,7 +288,6 @@ class CreateFullNoteInput:
 
     # Nested relations
     location: Optional[LocationInput] = None
-    moods: Optional[List[MoodEnum]] = None
     provided_services: Optional[List[CreateNoteServiceInput]] = None
     requested_services: Optional[List[CreateNoteServiceInput]] = None
     tasks: Optional[List[CreateNoteTaskInput]] = None
@@ -358,6 +345,21 @@ class InteractionAuthorType:
 
 
 # Data Import
+
+
+@strawberry_django.input(models.Note)
+class ImportNoteDataInput:
+    """Core note fields used by the import pipeline."""
+
+    purpose: auto
+    team: Optional[SelahTeamEnum]
+    public_details: auto
+    private_details: auto
+    client_profile: ID | None
+    is_submitted: auto
+    interacted_at: auto
+
+
 @strawberry_django.input(models.NoteDataImport)
 class CreateNoteDataImportInput:
     source_file: str
@@ -370,7 +372,7 @@ class ImportNoteInput:
     source_id: auto
     source_name: auto
     raw_data: auto
-    note: CreateNoteInput
+    note: ImportNoteDataInput
 
 
 # Output types for note import

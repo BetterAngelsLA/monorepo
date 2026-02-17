@@ -2,19 +2,25 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, Pill } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
-import { ServiceRequestTypeEnum, ViewNoteQuery } from '../../apollo';
+import {
+  CreateNoteServiceInput,
+  ServiceRequestTypeEnum,
+  ViewNoteQuery,
+} from '../../apollo';
 import { normalizeService } from '../../helpers';
 import { useModalScreen } from '../../providers';
 import { enumDisplayServiceType } from '../../static';
 import ServicesModal from './ServicesModal';
 
 interface IRequestedServicesProps {
-  noteId: string;
+  noteId?: string;
   scrollRef: RefObject<ScrollView | null>;
   services:
+    | CreateNoteServiceInput[]
     | ViewNoteQuery['note']['requestedServices']
     | ViewNoteQuery['note']['providedServices'];
-  refetch: () => void;
+  refetch?: () => void;
+  onServicesChange?: (services: CreateNoteServiceInput[]) => void;
   type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
 }
 
@@ -23,25 +29,57 @@ export default function RequestedProvidedServices(
 ) {
   const {
     noteId,
-    services: initialServiceRequests,
+    services: initialServices,
     scrollRef,
     refetch,
+    onServicesChange,
     type,
   } = props;
   const { showModalScreen } = useModalScreen();
 
-  if (!initialServiceRequests) {
+  if (!initialServices) {
     return null;
   }
 
-  const normalizedServiceRequests =
-    initialServiceRequests?.map(normalizeService) ?? [];
+  // Determine display labels based on data shape
+  const displayLabels: string[] = [];
+  const isLocalMode = !!onServicesChange;
+
+  if (isLocalMode) {
+    // Local mode: services are CreateNoteServiceInput[]
+    const localServices = initialServices as CreateNoteServiceInput[];
+    localServices.forEach((s) => {
+      if (s.serviceOther) {
+        displayLabels.push(s.serviceOther);
+      }
+      // For serviceId-only entries, we show the ID (label will be resolved by ServicesModal)
+    });
+  } else {
+    // Server mode: services are ViewNoteQuery shape
+    const serverServices =
+      initialServices as ViewNoteQuery['note']['providedServices'];
+    serverServices.forEach((s) => {
+      if (s.service?.label) {
+        displayLabels.push(s.service.label);
+      }
+    });
+  }
+
+  // For ServicesModal in local mode, we need normalized initial service requests
+  const normalizedServiceRequests = !isLocalMode
+    ? (initialServices as ViewNoteQuery['note']['providedServices'])?.map(
+        normalizeService
+      ) ?? []
+    : [];
 
   return (
     <FieldCard
       scrollRef={scrollRef}
       actionName={
-        initialServiceRequests.length ? (
+        displayLabels.length > 0 ||
+        (!isLocalMode &&
+          (initialServices as ViewNoteQuery['note']['providedServices'])
+            .length > 0) ? (
           <View
             style={{
               flexDirection: 'row',
@@ -49,17 +87,31 @@ export default function RequestedProvidedServices(
               gap: Spacings.xs,
             }}
           >
-            {initialServiceRequests.map((item, index) => (
-              <Pill
-                variant={
-                  type === ServiceRequestTypeEnum.Provided
-                    ? 'success'
-                    : 'warning'
-                }
-                key={index}
-                label={item.service?.label || ''}
-              />
-            ))}
+            {isLocalMode
+              ? displayLabels.map((label, index) => (
+                  <Pill
+                    variant={
+                      type === ServiceRequestTypeEnum.Provided
+                        ? 'success'
+                        : 'warning'
+                    }
+                    key={index}
+                    label={label}
+                  />
+                ))
+              : (
+                  initialServices as ViewNoteQuery['note']['providedServices']
+                ).map((item, index) => (
+                  <Pill
+                    variant={
+                      type === ServiceRequestTypeEnum.Provided
+                        ? 'success'
+                        : 'warning'
+                    }
+                    key={index}
+                    label={item.service?.label || ''}
+                  />
+                ))}
           </View>
         ) : (
           ''
@@ -76,7 +128,13 @@ export default function RequestedProvidedServices(
               noteId={noteId}
               type={type}
               initialServiceRequests={normalizedServiceRequests}
+              initialLocalServices={
+                isLocalMode
+                  ? (initialServices as CreateNoteServiceInput[])
+                  : undefined
+              }
               refetch={refetch}
+              onServicesChange={onServicesChange}
               close={close}
             />
           ),

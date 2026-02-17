@@ -14,6 +14,7 @@ export { default as HmisRestDebug } from './HmisRestDebug';
 export { default as Interactions } from './Interactions';
 export { default as InteractionsHmis } from './InteractionsHmis';
 export { default as Note } from './Note';
+export * from './NoteForm';
 export * from './NotesHmis';
 export { default as PublicNote } from './PublicNote';
 export { default as Task } from './Task';

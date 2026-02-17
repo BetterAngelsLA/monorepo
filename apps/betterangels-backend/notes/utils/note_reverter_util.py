@@ -24,10 +24,8 @@ class NoteReverter:
 
     NOTE_RELATED_MODEL_UPDATES = {
         "addNoteTask",
-        "createNoteMood",
         "createNoteServiceRequest",
         "createNoteTask",
-        "deleteMood",
         "deleteServiceRequest",
         "deleteTask",
         "removeNoteServiceRequest",

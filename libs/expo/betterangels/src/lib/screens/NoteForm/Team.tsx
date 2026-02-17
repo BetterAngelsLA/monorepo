@@ -1,10 +1,8 @@
-import {
-  SelahTeamEnum,
-  enumDisplaySelahTeam,
-} from '@monorepo/expo/betterangels';
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Picker } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
+import { SelahTeamEnum } from '../../apollo';
+import { enumDisplaySelahTeam } from '../../static';
 
 interface ITeamProps {
   team?: SelahTeamEnum | null;

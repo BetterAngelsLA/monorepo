@@ -1,3 +1,4 @@
+export type { TPlacesClient } from '@monorepo/shared/places';
 export { default as Accordion } from './Accordion';
 export { default as ActionModal } from './ActionModal';
 export { default as Alert } from './Alert';
@@ -41,6 +42,7 @@ export { default as Form } from './Form';
 export { default as FormCard } from './FormCard';
 export { default as FormFieldError } from './FormFieldError';
 export { default as FormFieldLabel } from './FormFieldLabel';
+export { usePlacesClient } from './hooks/usePlacesClient';
 export { default as IconButton } from './IconButton';
 export { default as ImageViewer } from './ImageViewer';
 export * from './InfiniteList';
@@ -91,5 +93,3 @@ export { default as TextMedium } from './TextMedium';
 export { default as TextOrNode } from './TextOrNode';
 export { default as TextRegular } from './TextRegular';
 export * from './types';
-export { usePlacesClient } from './hooks/usePlacesClient';
-export type { TPlacesClient } from '@monorepo/shared/places';
