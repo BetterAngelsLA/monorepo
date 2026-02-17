@@ -13,6 +13,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 
 import {
+  CreateNoteServiceInput,
   CreateNoteServiceRequestDocument,
   DeleteServiceRequestDocument,
   ServiceRequestTypeEnum,
@@ -47,19 +48,31 @@ type SelectedService = {
 };
 
 interface IServicesModalProps {
-  noteId: string;
+  noteId?: string;
   initialServiceRequests: {
     id: string;
     service?: { label?: string; id: string } | null;
     serviceOther?: string | null;
   }[];
-  refetch: () => void;
+  initialLocalServices?: CreateNoteServiceInput[];
+  refetch?: () => void;
+  onServicesChange?: (services: CreateNoteServiceInput[]) => void;
   close: () => void;
   type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
 }
 
 export default function ServicesModal(props: IServicesModalProps) {
-  const { initialServiceRequests, noteId, refetch, type, close } = props;
+  const {
+    initialServiceRequests,
+    initialLocalServices,
+    noteId,
+    refetch,
+    onServicesChange,
+    type,
+    close,
+  } = props;
+
+  const isLocalMode = !!onServicesChange;
 
   const { data: availableCategories } = useQuery(ServiceCategoriesDocument);
   const { showSnackbar } = useSnackbar();
@@ -148,6 +161,28 @@ export default function ServicesModal(props: IServicesModalProps) {
   );
 
   const computeInitial = useCallback(() => {
+    // Local mode: initialize from CreateNoteServiceInput[]
+    if (isLocalMode && initialLocalServices) {
+      const existing: SelectedService[] = initialLocalServices
+        .filter((s) => s.serviceId)
+        .map((s) => ({
+          serviceId: s.serviceId!,
+          label: '', // will be resolved from available categories
+          markedForDeletion: false,
+        }));
+
+      const others = initialLocalServices
+        .filter((s) => s.serviceOther)
+        .map((s) => ({
+          serviceOther: s.serviceOther!,
+          serviceRequestId: undefined,
+          markedForDeletion: false,
+        }));
+
+      return { existing, others };
+    }
+
+    // Server mode: initialize from normalized service requests
     const existing: SelectedService[] = pipe(
       initialServiceRequests,
       rfilter(hasService),
@@ -170,7 +205,13 @@ export default function ServicesModal(props: IServicesModalProps) {
     );
 
     return { existing, others };
-  }, [initialServiceRequests, hasOther, hasService]);
+  }, [
+    initialServiceRequests,
+    initialLocalServices,
+    isLocalMode,
+    hasOther,
+    hasService,
+  ]);
 
   // Centralized toggle logic for “standard” services (uses only native array ops)
   const toggleService = useCallback((serviceId: string, label: string) => {
@@ -215,6 +256,30 @@ export default function ServicesModal(props: IServicesModalProps) {
   const submitServices = useCallback(async () => {
     setIsSubmitLoading(true);
     try {
+      if (isLocalMode && onServicesChange) {
+        // Local mode: collect selected services into CreateNoteServiceInput[]
+        const selectedServices: CreateNoteServiceInput[] = [];
+
+        // Standard services that are checked (not marked for deletion)
+        for (const s of serviceRequests) {
+          if (!s.markedForDeletion) {
+            selectedServices.push({ serviceId: s.serviceId });
+          }
+        }
+
+        // Other services that are not marked for deletion
+        for (const o of serviceRequestsOthers) {
+          if (o.serviceOther && !o.markedForDeletion) {
+            selectedServices.push({ serviceOther: o.serviceOther });
+          }
+        }
+
+        onServicesChange(selectedServices);
+        close();
+        return;
+      }
+
+      // Server mode: create/delete via mutations
       const toCreate = serviceRequests.filter(
         (s) => !s.serviceRequestId && !s.markedForDeletion
       );
@@ -235,7 +300,7 @@ export default function ServicesModal(props: IServicesModalProps) {
           variables: {
             data: {
               serviceId: s.serviceId,
-              noteId,
+              noteId: noteId!,
               serviceRequestType: type,
             },
           },
@@ -253,14 +318,14 @@ export default function ServicesModal(props: IServicesModalProps) {
           variables: {
             data: {
               serviceOther: o.serviceOther,
-              noteId,
+              noteId: noteId!,
               serviceRequestType: type,
             },
           },
         });
       }
 
-      refetch();
+      refetch?.();
       close();
     } catch (e) {
       console.error('Error during service submission:', e);
@@ -272,6 +337,8 @@ export default function ServicesModal(props: IServicesModalProps) {
       setIsSubmitLoading(false);
     }
   }, [
+    isLocalMode,
+    onServicesChange,
     createServiceRequest,
     deleteService,
     noteId,

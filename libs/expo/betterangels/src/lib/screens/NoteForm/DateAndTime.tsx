@@ -1,11 +1,8 @@
-import { useMutation } from '@apollo/client/react';
-import { NotesDocument, UpdateNoteDocument } from '@monorepo/expo/betterangels';
 import {
   DatePicker,
   FieldCard,
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
-import { debounce } from 'lodash';
 import { format, isValid, setHours, setMinutes } from 'date-fns';
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -15,7 +12,7 @@ interface IDateAndTimeProps {
   setExpanded: (expanded: string | undefined | null) => void;
   scrollRef: RefObject<ScrollView | null>;
   interactedAt: Date | string | null | undefined;
-  noteId: string | undefined;
+  onInteractedAtChange: (value: string | null | undefined) => void;
 }
 
 type TDateAndTime = {
@@ -26,9 +23,13 @@ type TDateAndTime = {
 const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
 
 export default function DateAndTime(props: IDateAndTimeProps) {
-  const { expanded, setExpanded, scrollRef, interactedAt, noteId } = props;
-
-  const [updateNote] = useMutation(UpdateNoteDocument);
+  const {
+    expanded,
+    setExpanded,
+    scrollRef,
+    interactedAt,
+    onInteractedAtChange,
+  } = props;
 
   // Convert interactedAt to Date object if it's a string
   const parseInteractedAt = (
@@ -78,89 +79,61 @@ export default function DateAndTime(props: IDateAndTimeProps) {
     }
   }, [interactedAt]);
 
-  const updateNoteFunction = useRef(
-    debounce(
-      async (key: 'time' | 'date', value: string | Date | null | undefined) => {
-        if (!noteId) {
-          return;
-        }
+  const computeInteractedAt = (
+    key: 'time' | 'date',
+    value: Date | null | undefined
+  ): string | null | undefined => {
+    const currentNote = noteRef.current;
 
-        const currentNote = noteRef.current;
-
-        // Calculate the final interactedAt value
-        let interactedAt: string | null | undefined;
-
-        if (value === null || value === undefined) {
-          // If clearing date, set interactedAt to null
-          if (key === 'date') {
-            interactedAt = null;
-          } else if (key === 'time') {
-            // If clearing time but date exists, set time to start of day
-            if (currentNote.date && isValid(currentNote.date)) {
-              const dateWithStartTime = setMinutes(
-                setHours(new Date(currentNote.date), 0),
-                0
-              );
-              interactedAt = dateWithStartTime.toISOString();
-            } else {
-              // If no date, don't update (or set to null if preferred)
-              return;
-            }
-          }
+    if (value === null || value === undefined) {
+      if (key === 'date') {
+        return null;
+      } else if (key === 'time') {
+        if (currentNote.date && isValid(currentNote.date)) {
+          const dateWithStartTime = setMinutes(
+            setHours(new Date(currentNote.date), 0),
+            0
+          );
+          return dateWithStartTime.toISOString();
         } else {
-          // Normal update path - combine date and time
-          let dateValue: Date = new Date();
-          if (key === 'date' && value instanceof Date) {
-            dateValue = value;
-          } else if (currentNote.date) {
-            dateValue = new Date(currentNote.date);
-          }
-
-          let timeValue: Date = new Date();
-          if (key === 'time' && value instanceof Date) {
-            timeValue = value;
-          } else if (currentNote.time) {
-            timeValue = new Date(currentNote.time);
-          }
-
-          if (isValid(timeValue) && isValid(dateValue)) {
-            const hours = timeValue.getHours();
-            const minutes = timeValue.getMinutes();
-            const combinedDateTime = setMinutes(
-              setHours(dateValue, hours),
-              minutes
-            );
-            interactedAt = combinedDateTime.toISOString();
-          } else {
-            throw new Error(
-              'Both timeValue and dateValue should be valid Date objects'
-            );
-          }
+          return undefined;
         }
+      }
+    } else {
+      let dateValue: Date = new Date();
+      if (key === 'date' && value instanceof Date) {
+        dateValue = value;
+      } else if (currentNote.date) {
+        dateValue = new Date(currentNote.date);
+      }
 
-        try {
-          await updateNote({
-            variables: {
-              data: {
-                id: noteId,
-                interactedAt,
-              },
-            },
-            refetchQueries: [NotesDocument],
-          });
-        } catch (err) {
-          console.error(err);
-        }
-      },
-      500
-    )
-  ).current;
+      let timeValue: Date = new Date();
+      if (key === 'time' && value instanceof Date) {
+        timeValue = value;
+      } else if (currentNote.time) {
+        timeValue = new Date(currentNote.time);
+      }
+
+      if (isValid(timeValue) && isValid(dateValue)) {
+        const hours = timeValue.getHours();
+        const minutes = timeValue.getMinutes();
+        const combinedDateTime = setMinutes(
+          setHours(dateValue, hours),
+          minutes
+        );
+        return combinedDateTime.toISOString();
+      }
+    }
+    return undefined;
+  };
 
   const onChange = (key: 'date' | 'time', value: Date | null | undefined) => {
     const updatedDateTime = { ...dateTime, [key]: value };
     setDateTime(updatedDateTime);
     noteRef.current = updatedDateTime;
-    updateNoteFunction(key, value);
+
+    const computedValue = computeInteractedAt(key, value);
+    onInteractedAtChange(computedValue);
   };
 
   return (

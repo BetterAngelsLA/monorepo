@@ -1,3 +1,4 @@
+export type { TPlacesClient } from '@monorepo/shared/places';
 export { default as Accordion } from './Accordion';
 export { default as ActionModal } from './ActionModal';
 export { default as Alert } from './Alert';
@@ -29,6 +30,7 @@ export {
 export { default as DatePicker } from './DatePicker';
 export { default as DeleteModal } from './DeleteModal';
 export { default as DirectionsPopup } from './DirectionsPopup';
+export { default as DiscardModal } from './DiscardModal';
 export { default as Divider } from './Divider';
 export { default as EditButton } from './EditButton';
 export { default as EmailBtn } from './EmailBtn';
@@ -40,6 +42,7 @@ export { default as Form } from './Form';
 export { default as FormCard } from './FormCard';
 export { default as FormFieldError } from './FormFieldError';
 export { default as FormFieldLabel } from './FormFieldLabel';
+export { usePlacesClient } from './hooks/usePlacesClient';
 export { default as IconButton } from './IconButton';
 export { default as ImageViewer } from './ImageViewer';
 export * from './InfiniteList';
@@ -72,7 +75,6 @@ export {
   TPreferredCommunication,
 } from './PreferrredCommunicationIcon';
 export { default as Radio } from './Radio';
-export { default as RevertModal } from './RevertModal';
 export { default as SearchableDropdown } from './SearchableDropdown';
 export * from './SearchBar';
 export * from './SearchListBar';
@@ -91,5 +93,3 @@ export { default as TextMedium } from './TextMedium';
 export { default as TextOrNode } from './TextOrNode';
 export { default as TextRegular } from './TextRegular';
 export * from './types';
-export { usePlacesClient } from './hooks/usePlacesClient';
-export type { TPlacesClient } from '@monorepo/shared/places';

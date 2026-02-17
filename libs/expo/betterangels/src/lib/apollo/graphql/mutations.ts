@@ -23,29 +23,10 @@ export const UPDATE_NOTE = gql`
       ... on NoteType {
         id
         purpose
+        team
         publicDetails
-        clientProfile {
-          id
-          firstName
-          lastName
-          email
-        }
-        createdAt
-        createdBy {
-          id
-          username
-          email
-        }
-      }
-    }
-  }
-`;
-export const REVERT_NOTE = gql`
-  mutation RevertNote($data: RevertNoteInput!) {
-    revertNote(data: $data) {
-      ... on NoteType {
-        id
-        purpose
+        isSubmitted
+        interactedAt
         location {
           address {
             id
@@ -77,16 +58,18 @@ export const REVERT_NOTE = gql`
             }
           }
         }
-        publicDetails
-        isSubmitted
         clientProfile {
           id
+          firstName
+          lastName
+          email
         }
+        createdAt
         createdBy {
           id
+          username
+          email
         }
-        interactedAt
-        createdAt
       }
     }
   }

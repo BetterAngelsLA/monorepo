@@ -1,13 +1,3 @@
-import { useMutation } from '@apollo/client/react';
-import {
-  LocationMapModal,
-  MapView,
-  Marker,
-  PROVIDER_GOOGLE,
-  TLocationData,
-  UpdateNoteLocationDocument,
-  useModalScreen,
-} from '@monorepo/expo/betterangels';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -18,6 +8,10 @@ import {
 import * as ExpoLocation from 'expo-location';
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { LocationInput } from '../../apollo';
+import { MapView, Marker, PROVIDER_GOOGLE } from '../../maps';
+import { useModalScreen } from '../../providers';
+import { LocationMapModal, TLocationData } from '../../ui-components';
 
 const FIELD_KEY = 'Location';
 
@@ -54,6 +48,7 @@ interface ILocationProps {
       }
     | null
     | undefined;
+  onLocationChange: (location: LocationInput) => void;
 }
 
 type TLocation =
@@ -75,10 +70,10 @@ export default function LocationComponent(props: ILocationProps) {
     scrollRef,
     errors,
     setErrors,
+    onLocationChange,
   } = props;
 
   const places = usePlacesClient();
-  const [updateNoteLocation] = useMutation(UpdateNoteLocationDocument);
 
   const [location, setLocation] = useState<TLocation>({
     latitude: point ? point[1] : null,
@@ -91,6 +86,21 @@ export default function LocationComponent(props: ILocationProps) {
 
   const locationRef = useRef<TLocation>(location);
   const autoFilledRef = useRef(false);
+
+  // Sync server data into local state when props arrive (e.g. after async query)
+  useEffect(() => {
+    if (point && point.length === 2 && !location?.latitude) {
+      const formatted = address
+        ? `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`
+        : null;
+      setLocation({
+        latitude: point[1],
+        longitude: point[0],
+        address: formatted,
+        name: address?.street ?? null,
+      });
+    }
+  }, [point, address]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     locationRef.current = location;
@@ -110,23 +120,14 @@ export default function LocationComponent(props: ILocationProps) {
 
     setLocation(newLocation);
 
-    await updateNoteLocation({
-      variables: {
-        data: {
-          id: noteId,
-          location: {
-            point: [data.longitude, data.latitude],
-            address: data.address
-              ? {
-                  formattedAddress: data.address,
-                  addressComponents: JSON.stringify(
-                    data.addressComponents ?? []
-                  ),
-                }
-              : null,
-          },
-        },
-      },
+    onLocationChange({
+      point: [data.longitude, data.latitude],
+      address: data.address
+        ? {
+            formattedAddress: data.address,
+            addressComponents: JSON.stringify(data.addressComponents ?? []),
+          }
+        : undefined,
     });
   };
 
@@ -169,23 +170,16 @@ export default function LocationComponent(props: ILocationProps) {
 
         setLocation(newLocation);
 
-        await updateNoteLocation({
-          variables: {
-            data: {
-              id: noteId,
-              location: {
-                point: [longitude, latitude],
-                address: geocodeResult.formattedAddress
-                  ? {
-                      formattedAddress: geocodeResult.formattedAddress,
-                      addressComponents: JSON.stringify(
-                        geocodeResult.addressComponents ?? []
-                      ),
-                    }
-                  : null,
-              },
-            },
-          },
+        onLocationChange({
+          point: [longitude, latitude],
+          address: geocodeResult.formattedAddress
+            ? {
+                formattedAddress: geocodeResult.formattedAddress,
+                addressComponents: JSON.stringify(
+                  geocodeResult.addressComponents ?? []
+                ),
+              }
+            : undefined,
         });
       } catch (err) {
         console.error('Error auto-setting initial location', err);
@@ -193,7 +187,7 @@ export default function LocationComponent(props: ILocationProps) {
     };
 
     void autoSetInitialLocation();
-  }, [point, address, places, noteId, updateNoteLocation, location]);
+  }, [point, address, places, noteId, onLocationChange, location]);
 
   return (
     <FieldCard
