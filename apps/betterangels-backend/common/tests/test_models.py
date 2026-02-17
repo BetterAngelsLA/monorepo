@@ -301,12 +301,13 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
             "include_component_point_of_interest",
         ),
         [
-            ("106", 1, 1, False, False),  # No new address or location
-            ("104", 2, 2, False, False),  # New street -> new address -> new location
-            ("106", 1, 2, False, True),  # POI in address_components -> same address, new location (POI differs)
-            # Standalone POI -> new location. No new address because POI not in address fields.
-            ("106", 1, 2, True, False),
-            ("106", 1, 2, True, True),  # Standalone POI wins; address deduped, new location
+            # All test cases use same point -> same Location (unique constraint).
+            # Address/POI are updated on existing Location when provided.
+            ("106", 1, 1, False, False),  # Same address, same location (no change)
+            ("104", 2, 1, False, False),  # New address created, but location reused (updated)
+            ("106", 1, 1, False, True),  # Same address, POI updated on existing location
+            ("106", 1, 1, True, False),  # Same address, standalone POI updated
+            ("106", 1, 1, True, True),  # Standalone POI wins, updated on existing location
         ],
     )
     def test_get_or_create_location(
