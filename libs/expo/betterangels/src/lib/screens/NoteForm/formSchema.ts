@@ -82,9 +82,11 @@ export function buildNotePayload(
   if (include('purpose')) payload.purpose = form.purpose;
   if (include('interactedAt')) payload.interactedAt = form.interactedAt;
   if (include('team')) payload.team = form.team;
-  if (include('publicNote')) payload.publicDetails = form.publicNote || undefined;
+  if (include('publicNote'))
+    payload.publicDetails = form.publicNote || undefined;
   if (include('location')) payload.location = form.location || undefined;
-  if (include('providedServices')) payload.providedServices = form.providedServices;
+  if (include('providedServices'))
+    payload.providedServices = form.providedServices;
   if (include('requestedServices'))
     payload.requestedServices = form.requestedServices;
   if (include('tasks'))
