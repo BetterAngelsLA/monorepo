@@ -1,98 +1,57 @@
 import { useMutation, useQuery } from '@apollo/client/react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
+  CreateNoteDocument,
   DeleteNoteDocument,
-  MainScrollContainer,
+  NOTE_FORM_EMPTY_STATE,
+  NoteForm,
+  NoteFormSchema,
   NotesDocument,
   Ordering,
-  RevertNoteDocument,
+  SelahTeamEnum,
+  TNoteFormInputs,
   UpdateNoteDocument,
   ViewNoteDocument,
+  buildNotePayload,
+  formDataFromNote,
   useSnackbar,
   useUser,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
-import {
-  BottomActions,
-  Button,
-  DeleteModal,
-  RevertModal,
-  TextButton,
-} from '@monorepo/expo/shared/ui-components';
+import { DiscardModal, TextButton } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import React, { useLayoutEffect, useRef, useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import DateAndTime from './DateAndTime';
-import Location from './Location';
-import ProvidedServices from './ProvidedServices';
-import PublicNote from './PublicNote';
-import Purpose from './Purpose';
-import RequestedServices from './RequestedServices';
-import Tasks from './Tasks';
-import Team from './Team';
-
-const renderModal = (
-  isRevert: string | undefined,
-  onRevert: () => void,
-  onDelete: () => void,
-  buttonTitle: string
-) => {
-  if (isRevert) {
-    return (
-      <RevertModal
-        body="All changes you made since the last save will be discarded"
-        title="Discard changes?"
-        onRevert={onRevert}
-        button={
-          <TextButton
-            fontSize="sm"
-            accessibilityHint="discards changes and reverts interaction to previous state"
-            title={buttonTitle}
-          />
-        }
-      />
-    );
-  } else {
-    return (
-      <DeleteModal
-        body="All data associated with this interaction will be deleted"
-        title="Delete interaction?"
-        onDelete={onDelete}
-        button={
-          <TextButton
-            fontSize="sm"
-            accessibilityHint="deletes interaction"
-            title={buttonTitle}
-          />
-        }
-      />
-    );
-  }
-};
+import React, { useEffect, useLayoutEffect } from 'react';
+import { useForm } from 'react-hook-form';
 
 export default function AddNote() {
   const router = useRouter();
   const { user } = useUser();
   const { showSnackbar } = useSnackbar();
-  const { noteId, revertBeforeTimestamp, arrivedFrom } = useLocalSearchParams<{
-    noteId: string;
-    revertBeforeTimestamp: string;
-    arrivedFrom: string;
-  }>();
+  const { noteId, arrivedFrom, isEditing, clientProfileId, team } =
+    useLocalSearchParams<{
+      noteId: string;
+      arrivedFrom: string;
+      isEditing: string;
+      clientProfileId: string;
+      team: string;
+    }>();
 
   if (!noteId) {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  const {
-    data,
-    loading: isLoading,
-    refetch,
-  } = useQuery(ViewNoteDocument, {
+  const isNewNote = noteId === 'new';
+
+  // ── Data fetching ─────────────────────────────────────────────────────
+  const { data, loading: isLoading } = useQuery(ViewNoteDocument, {
     variables: { id: noteId },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
+    skip: isNewNote,
   });
+
   const [updateNote, { error: updateError }] = useMutation(UpdateNoteDocument);
+  const [createNote] = useMutation(CreateNoteDocument);
   const [deleteNote] = useMutation(DeleteNoteDocument, {
     refetchQueries: [
       {
@@ -105,223 +64,154 @@ export default function AddNote() {
       },
     ],
   });
-  const [revertNote] = useMutation(RevertNoteDocument);
-  const [expanded, setExpanded] = useState<undefined | string | null>();
-  const [errors, setErrors] = useState({
-    purpose: false,
-    location: false,
-    date: false,
-    time: false,
+
+  // ── react-hook-form ───────────────────────────────────────────────────
+  const methods = useForm<TNoteFormInputs>({
+    resolver: zodResolver(NoteFormSchema),
+    defaultValues: {
+      ...NOTE_FORM_EMPTY_STATE,
+      team: (team as SelahTeamEnum) || undefined,
+    },
+    mode: 'onSubmit',
   });
-  const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
+
+  const { watch, setValue, getValues, reset, formState } = methods;
+
+  useEffect(() => {
+    if (data?.note && !isNewNote) {
+      reset(formDataFromNote(data.note));
+    }
+  }, [data, isNewNote, reset]);
+
+  const form = watch();
+
+  // ── Navigation ────────────────────────────────────────────────────────
   const navigation = useNavigation();
+
+  const resolvedClientProfileId = isNewNote
+    ? clientProfileId
+    : data?.note?.clientProfile?.id;
+
+  const clientProfileUrl = resolvedClientProfileId
+    ? `/client/${resolvedClientProfileId}`
+    : '/';
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      purpose: revertBeforeTimestamp ? `Edit Interaction` : 'Add Interaction',
+      purpose: isEditing ? 'Edit Interaction' : 'Add Interaction',
       headerLeft: () =>
-        revertBeforeTimestamp ? (
-          <RevertModal
-            body="All changes you made since the last save will be discarded"
+        isEditing ? (
+          <DiscardModal
             title="Discard changes?"
-            onRevert={revertNoteFunction}
+            body="Any unsaved changes to this interaction will be lost."
+            onDiscard={() => router.back()}
             button={
               <TextButton
                 regular
                 color={Colors.WHITE}
                 fontSize="md"
-                accessibilityHint="discards changes and reverts interaction to previous state"
+                accessibilityHint="discards changes and goes back"
                 title="Back"
               />
             }
           />
         ) : (
-          <DeleteModal
-            body="All data associated with this interaction will be deleted"
-            title="Delete interaction?"
-            onDelete={deleteNoteFunction}
+          <DiscardModal
+            title="Discard interaction?"
+            body="All data in this interaction will be lost."
+            onDiscard={() => {
+              arrivedFrom ? router.replace(arrivedFrom) : router.back();
+            }}
             button={
               <TextButton
                 regular
                 color={Colors.WHITE}
                 fontSize="md"
-                accessibilityHint="deletes creation"
+                accessibilityHint="discards interaction and goes back"
                 title="Back"
               />
             }
           />
         ),
     });
-  }, [navigation, revertBeforeTimestamp]);
+  }, [navigation, isEditing, arrivedFrom, router]);
 
+  // ── Actions ───────────────────────────────────────────────────────────
   async function deleteNoteFunction() {
+    if (isNewNote) {
+      arrivedFrom ? router.replace(arrivedFrom) : router.back();
+      return;
+    }
     try {
-      await deleteNote({
-        variables: {
-          data: { id: noteId || '' },
-        },
-      });
+      await deleteNote({ variables: { data: { id: noteId || '' } } });
       arrivedFrom ? router.replace(arrivedFrom) : router.back();
     } catch (err) {
       console.error(err);
-
-      showSnackbar({
-        message: 'Failed to delete interaction.',
-        type: 'error',
-      });
+      showSnackbar({ message: 'Failed to delete interaction.', type: 'error' });
     }
   }
 
-  async function revertNoteFunction() {
+  async function saveNote(isSubmitted?: boolean) {
+    // On updates, only send dirty fields so unchanged ones stay UNSET
+    const dirty = isNewNote ? undefined : formState.dirtyFields;
+    const payload = buildNotePayload(getValues(), isSubmitted, dirty);
+
     try {
-      await revertNote({
-        variables: {
-          data: {
-            id: noteId || '',
-            revertBeforeTimestamp: revertBeforeTimestamp || '',
-          },
-        },
-      });
-      router.back();
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  const props = {
-    expanded,
-    setExpanded,
-    noteId,
-    scrollRef,
-    errors,
-    setErrors,
-    refetch,
-  };
-  const getClientProfileUrl = (clientProfileId: string | undefined) =>
-    clientProfileId ? `/client/${clientProfileId}` : '/';
-
-  async function submitNote() {
-    if (!data?.note.location) {
-      setErrors((prev) => {
-        return {
-          ...prev,
-          location: true,
-        };
-      });
-
-      return;
-    }
-
-    if (Object.values(errors).some((error) => error)) {
-      return;
-    }
-    try {
-      const result = await updateNote({
-        variables: {
-          data: {
-            id: noteId || '',
-            isSubmitted: true,
-          },
-        },
-      });
-      if (!result.data) {
-        throw new Error(`Failed to update interaction: ${updateError}`);
+      if (isNewNote) {
+        const result = await createNote({
+          variables: { data: { clientProfile: clientProfileId, ...payload } },
+        });
+        if (!result.data?.createNote || !('id' in result.data.createNote)) {
+          throw new Error('Failed to create interaction');
+        }
+      } else {
+        const result = await updateNote({
+          variables: { data: { id: noteId, ...payload } },
+        });
+        if (!result.data) {
+          throw new Error(`Failed to update interaction: ${updateError}`);
+        }
       }
 
-      // do not use `router.replace` as it will not reset the routing stack correctly
-      // which crashes the app on Android: see Bug Ticket DEV-1839
-      return router.dismissTo(
-        getClientProfileUrl(data?.note.clientProfile?.id)
-      );
+      if (isSubmitted) {
+        router.dismissTo(clientProfileUrl);
+      } else {
+        router.navigate(clientProfileUrl);
+      }
     } catch (err) {
       console.error(err);
-
       showSnackbar({
-        message: 'Failed to update interaction.',
+        message: `Failed to ${isSubmitted ? 'submit' : 'save'} interaction.`,
         type: 'error',
       });
     }
   }
 
-  if (!data || isLoading) {
-    return null;
-  }
+  // ── Guards ────────────────────────────────────────────────────────────
+  if (!isNewNote && (!data || isLoading)) return null;
+  if (!isNewNote && !data?.note.clientProfile) return null;
 
-  if (!data.note.clientProfile || isLoading) {
-    return null;
-  }
+  const isSubmitted = isNewNote ? false : !!data?.note.isSubmitted;
 
+  // ── Render ────────────────────────────────────────────────────────────
   return (
-    <View style={{ flex: 1 }}>
-      <MainScrollContainer
-        ref={scrollRef}
-        bg={Colors.NEUTRAL_EXTRA_LIGHT}
-        pt="sm"
-      >
-        <Purpose purpose={data.note.purpose} {...props} />
-        <DateAndTime interactedAt={data.note.interactedAt} {...props} />
-        <Team team={data.note.team} {...props} />
-        <Location
-          address={data.note.location?.address}
-          point={data.note.location?.point}
-          {...props}
-        />
-        <ProvidedServices services={data.note.providedServices} {...props} />
-        <RequestedServices services={data.note.requestedServices} {...props} />
-        <Tasks
-          clientProfileId={data.note.clientProfile.id}
-          tasks={data.note.tasks}
-          team={data.note.team}
-          {...props}
-        />
-        <PublicNote
-          note={data.note.publicDetails}
-          isPublicNoteEdited={isPublicNoteEdited}
-          setIsPublicNoteEdited={setIsPublicNoteEdited}
-          {...props}
-        />
-        {revertBeforeTimestamp && (
-          <DeleteModal
-            body="All data associated with this interaction will be deleted"
-            title="Delete interaction?"
-            onDelete={deleteNoteFunction}
-            button={
-              <Button
-                accessibilityHint="deletes interaction"
-                title="Delete Interaction"
-                variant="negative"
-                size="full"
-                mt="xs"
-              />
-            }
-          />
-        )}
-      </MainScrollContainer>
-      <BottomActions
-        cancel={renderModal(
-          revertBeforeTimestamp,
-          revertNoteFunction,
-          deleteNoteFunction,
-          'Cancel'
-        )}
-        optionalAction={
-          !data.note.isSubmitted && (
-            <TextButton
-              mr="sm"
-              fontSize="sm"
-              onPress={() =>
-                router.navigate(
-                  getClientProfileUrl(data?.note.clientProfile?.id)
-                )
-              }
-              accessibilityHint="saves the interaction for later"
-              title="Save for later"
-            />
-          )
-        }
-        onSubmit={submitNote}
-      />
-    </View>
+    <NoteForm
+      form={form}
+      setValue={setValue}
+      noteData={data?.note}
+      noteId={noteId}
+      isNewNote={isNewNote}
+      clientProfileId={resolvedClientProfileId || ''}
+      isSubmitted={isSubmitted}
+      isEditing={!!isEditing}
+      arrivedFrom={arrivedFrom}
+      onBack={() => router.back()}
+      onDiscard={() =>
+        arrivedFrom ? router.replace(arrivedFrom) : router.back()
+      }
+      onDelete={deleteNoteFunction}
+      onSaveDraft={() => saveNote()}
+      onSubmit={() => saveNote(true)}
+    />
   );
 }
