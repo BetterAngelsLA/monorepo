@@ -25,7 +25,6 @@ from django.db.models import (
     Value,
     When,
 )
-from notes.deprecated.deprecated_enums import MoodEnum
 from notes.enums import ServiceRequestTypeEnum
 from notes.permissions import NotePermissions, PrivateDetailsPermissions
 from strawberry import ID, Info, auto
@@ -150,15 +149,6 @@ class NoteFilter:
         return Q(query)
 
 
-# DEPRECATED: MoodType is no longer used but kept for backward compatibility
-# with existing frontend queries. Returns empty list. Remove after frontend cleanup.
-@strawberry.type
-class MoodType:
-    """Deprecated: Mood feature removed. This type exists for API backward compatibility."""
-    id: ID
-    descriptor: strawberry.enum(MoodEnum)
-
-
 @strawberry_django.type(
     models.Note,
     pagination=True,
@@ -180,11 +170,6 @@ class NoteType:
     requested_services: List[ServiceRequestType]
     tasks: list[TaskType]
     team: Optional[SelahTeamEnum]
-
-    @strawberry.field(deprecation_reason="Mood feature removed. This field always returns an empty list.")
-    def moods(self) -> List[MoodType]:
-        """Deprecated: Returns empty list for backward compatibility."""
-        return []
 
     @strawberry_django.field(
         annotate={
