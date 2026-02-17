@@ -483,6 +483,7 @@ export type CreateNoteInput = {
 export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateNoteServiceInput = {
+  id?: InputMaybe<Scalars['ID']['input']>;
   serviceId?: InputMaybe<Scalars['ID']['input']>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
 };
@@ -498,6 +499,7 @@ export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType
 
 export type CreateNoteTaskInput = {
   description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Scalars['Int']['input']>;
   summary: Scalars['String']['input'];
   team?: InputMaybe<SelahTeamEnum>;
@@ -2583,13 +2585,9 @@ export type UpdateNoteInput = {
   id: Scalars['ID']['input'];
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
-  location?: InputMaybe<LocationInput>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
-  providedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purpose?: InputMaybe<Scalars['NonBlankString']['input']>;
-  requestedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
-  tasks?: InputMaybe<Array<CreateNoteTaskInput>>;
   team?: InputMaybe<SelahTeamEnum>;
 };
 
