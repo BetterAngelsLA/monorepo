@@ -213,27 +213,48 @@ class NoteType:
         return root._private_details
 
 
-@strawberry_django.input(models.Note)
-class CreateNoteInput:
-    purpose: auto
-    team: Optional[SelahTeamEnum]
-    public_details: auto
-    private_details: auto
-    client_profile: ID | None
-    is_submitted: auto
-    interacted_at: auto
+# --- Nested inputs for note creation/update ---
 
 
-@strawberry_django.input(models.Note, partial=True)
+@strawberry.input
+class CreateNoteServiceInput:
+    """A service to attach to a note (either by existing service ID or custom 'other' label)."""
+
+    service_id: Optional[ID] = None
+    service_other: Optional[str] = None
+
+
+@strawberry.input
+class CreateNoteTaskInput:
+    """A task to create and attach to the note."""
+
+    summary: str
+    description: Optional[str] = None
+    status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)
+    team: Optional[SelahTeamEnum] = None
+
+
+@strawberry.input
 class UpdateNoteInput:
+    """
+    Input for updating a note with all nested relations.
+    Fields set to UNSET are left unchanged. Nested relation fields
+    use replace-all semantics (existing items are removed, new ones created).
+    """
+
     id: ID
-    purpose: Optional[NonBlankString]
-    team: Optional[SelahTeamEnum]
-    location: Optional[ID]
-    public_details: auto
-    private_details: auto
-    is_submitted: auto
-    interacted_at: auto
+    purpose: Optional[NonBlankString] = strawberry.UNSET  # type: ignore[assignment]
+    team: Optional[SelahTeamEnum] = strawberry.UNSET  # type: ignore[assignment]
+    public_details: Optional[str] = strawberry.UNSET  # type: ignore[assignment]
+    private_details: Optional[str] = strawberry.UNSET  # type: ignore[assignment]
+    is_submitted: Optional[bool] = strawberry.UNSET  # type: ignore[assignment]
+    interacted_at: Optional[datetime] = strawberry.UNSET  # type: ignore[assignment]
+
+    # Nested relations (replace-all when provided)
+    location: Optional[LocationInput] = strawberry.UNSET  # type: ignore[assignment]
+    provided_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET  # type: ignore[assignment]
+    requested_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET  # type: ignore[assignment]
+    tasks: Optional[List[CreateNoteTaskInput]] = strawberry.UNSET  # type: ignore[assignment]
 
 
 @strawberry_django.input(models.Note)
@@ -246,6 +267,30 @@ class UpdateNoteLocationInput:
 class RevertNoteInput:
     id: ID
     revert_before_timestamp: datetime
+
+
+@strawberry.input
+class CreateNoteInput:
+    """
+    Input for creating a note with all nested relations atomically.
+    All nested fields are optional, making this backward-compatible
+    with callers that only send core note fields.
+    """
+
+    # Core note fields
+    purpose: Optional[str] = None
+    team: Optional[SelahTeamEnum] = None
+    public_details: Optional[str] = ""
+    private_details: Optional[str] = ""
+    client_profile: Optional[ID] = None
+    is_submitted: Optional[bool] = False
+    interacted_at: Optional[datetime] = None
+
+    # Nested relations
+    location: Optional[LocationInput] = None
+    provided_services: Optional[List[CreateNoteServiceInput]] = None
+    requested_services: Optional[List[CreateNoteServiceInput]] = None
+    tasks: Optional[List[CreateNoteTaskInput]] = None
 
 
 @strawberry_django.filter_type(User)
@@ -300,6 +345,21 @@ class InteractionAuthorType:
 
 
 # Data Import
+
+
+@strawberry_django.input(models.Note)
+class ImportNoteDataInput:
+    """Core note fields used by the import pipeline."""
+
+    purpose: auto
+    team: Optional[SelahTeamEnum]
+    public_details: auto
+    private_details: auto
+    client_profile: ID | None
+    is_submitted: auto
+    interacted_at: auto
+
+
 @strawberry_django.input(models.NoteDataImport)
 class CreateNoteDataImportInput:
     source_file: str
@@ -312,7 +372,7 @@ class ImportNoteInput:
     source_id: auto
     source_name: auto
     raw_data: auto
-    note: CreateNoteInput
+    note: ImportNoteDataInput
 
 
 # Output types for note import

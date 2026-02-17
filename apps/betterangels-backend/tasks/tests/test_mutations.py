@@ -27,7 +27,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         client_profile = baker.make(ClientProfile)
         assert self.org
 
-        expected_query_count = 37
+        expected_query_count = 23
         with self.assertNumQueriesWithoutCache(expected_query_count):
             variables = {
                 "clientProfile": str(client_profile.pk),
@@ -80,7 +80,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "team": SelahTeamEnum.WDI_ON_SITE.name,
         }
 
-        expected_query_count = 20
+        expected_query_count = 6
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.update_task_fixture(variables)
 
@@ -156,4 +156,4 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertTrue(len(payload["messages"]) > 0)
         error_message = payload["messages"][0]["message"]
         self.assertIn("task_single_parent_check", error_message)
-        self.assertIn("violated", error_message)
+        self.assertIn("violates", error_message)

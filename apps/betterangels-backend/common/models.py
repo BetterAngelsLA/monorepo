@@ -221,8 +221,33 @@ class Location(BaseModel):
         Uses case-insensitive lookups so that 'Los Angeles' and 'los angeles'
         resolve to the same row.  The functional Lower() index on Address
         makes these queries fast.
+
+        When ``address_components`` is absent (e.g. during an update where the
+        client only sends ``formattedAddress``), falls back to a
+        ``formatted_address`` lookup so that we re-use the existing Address row
+        instead of creating a new one with all-null fields.
         """
-        parsed_address = cls.parse_address_components(address_data["address_components"])
+        raw_components = address_data.get("address_components")
+        formatted = address_data.get("formatted_address") or address_data.get("formattedAddress")
+
+        # Fast path: no address_components → look up by formatted_address
+        if not raw_components:
+            if formatted:
+                address = Address.objects.filter(formatted_address__iexact=formatted).first()
+                if address:
+                    return address
+            # Nothing to match on — create a minimal record
+            address, _ = Address.objects.get_or_create(
+                formatted_address=formatted or "",
+                street__isnull=True,
+                city__isnull=True,
+                state__isnull=True,
+                zip_code__isnull=True,
+                defaults={"formatted_address": formatted or ""},
+            )
+            return address
+
+        parsed_address = cls.parse_address_components(raw_components)
 
         street_number = parsed_address.get("street_number")
         route = parsed_address.get("route")
@@ -240,8 +265,8 @@ class Location(BaseModel):
             **lookup,
             defaults={
                 **fields,
-                "address_components": address_data["address_components"],
-                "formatted_address": address_data.get("formatted_address") or address_data.get("formattedAddress"),
+                "address_components": raw_components,
+                "formatted_address": formatted,
             },
         )
 
@@ -249,7 +274,10 @@ class Location(BaseModel):
 
     @classmethod
     def get_point_of_interest(cls, address_data: Dict[str, Any]) -> Optional[str]:
-        components: list[Dict[str, str]] = json.loads(address_data["address_components"])
+        raw = address_data.get("address_components")
+        if not raw:
+            return None
+        components: list[Dict[str, str]] = json.loads(raw)
 
         return next(
             (
@@ -262,18 +290,21 @@ class Location(BaseModel):
 
     @classmethod
     def get_or_create_location(cls, location_data: Dict[str, Any]) -> "Location":
-        """Gets or creates an location and returns it."""
-        # This function expects a Google Geocoding API payload
-        # https://developers.google.com/maps/documentation/geocoding/requests-geocoding
-
-        address = Location.get_or_create_address(location_data["address"])
-        point_of_interest = location_data["point_of_interest"] or cls.get_point_of_interest(location_data["address"])
+        """Gets or creates a location and returns it."""
         point = cls._round_point(location_data["point"])
 
+        address_data = location_data.get("address")
+        address = Location.get_or_create_address(address_data) if address_data else None
+        point_of_interest = location_data.get("point_of_interest") or (
+            cls.get_point_of_interest(address_data) if address_data else None
+        )
+
         location, _ = Location.objects.get_or_create(
-            address=address,
             point=point,
-            point_of_interest=point_of_interest,
+            defaults={
+                "address": address,
+                "point_of_interest": point_of_interest,
+            },
         )
 
         return location

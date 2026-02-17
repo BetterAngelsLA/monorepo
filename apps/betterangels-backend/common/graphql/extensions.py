@@ -5,6 +5,7 @@ from django.db.models import Model, QuerySet
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import (
+    DjangoNoPermission,
     HasRetvalPerm,
     PermDefinition,
     PermTarget,
@@ -15,7 +16,13 @@ from strawberry_django.utils.query import filter_for_user
 
 class PermissionedQuerySet(HasRetvalPerm):
     """
-    Wraps HasRetvalPerm injects a permission-filtered QuerySet into context.
+    Injects a permission-filtered QuerySet into info.context.qs.
+
+    Permission enforcement is handled entirely by the filtered queryset:
+    if the user lacks access, the queryset will be empty and qs.get()
+    will raise DoesNotExist. The parent HasRetvalPerm's return-value
+    check is skipped because the mutation may return a different type
+    than the queryset model (e.g. check Note CHANGE, return MoodType).
     """
 
     def __init__(
@@ -50,6 +57,25 @@ class PermissionedQuerySet(HasRetvalPerm):
         user = get_current_user(info)
         qs: QuerySet[Model] = filter_for_user(self.model.objects.all(), user, self.permissions)  # type: ignore
         return qs
+
+    def resolve_for_user_with_perms(
+        self,
+        resolver: Callable,
+        user: UserType | None,
+        *,
+        info: Info,
+        source: Any,
+    ) -> Any:
+        """
+        Skip HasRetvalPerm's return-value permission check.
+
+        The filtered queryset already enforces permissions — if the user
+        lacks access, qs.get() raises DoesNotExist. No need to re-check
+        perms on the returned object (which may be a different model).
+        """
+        if user is None:
+            raise DjangoNoPermission
+        return resolver()
 
     def resolve(
         self,
