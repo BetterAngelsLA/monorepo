@@ -1,13 +1,14 @@
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-
 import { useMutation } from '@apollo/client/react';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   Avatar,
   Button,
   DeleteModal,
   TextBold,
+  TextButton,
 } from '@monorepo/expo/shared/ui-components';
-import { router } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { DeleteCurrentUserDocument } from '../../apollo';
 import { useSignOut, useSnackbar, useUser } from '../../hooks';
@@ -18,6 +19,26 @@ export default function UserProfile() {
   const { showSnackbar } = useSnackbar();
 
   if (!user) throw new Error('Something went wrong');
+
+  const navigation = useNavigation();
+  const router = useRouter();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TextButton
+          color={Colors.WHITE}
+          regular
+          title="Edit"
+          accessibilityHint="goes to the edit interaction screen"
+          onPress={() =>
+            router.navigate({ pathname: `/user-profile/${user?.id}` })
+          }
+        />
+      ),
+    });
+  }, [user?.id]);
+
   const [deleteCurrentUser] = useMutation(DeleteCurrentUserDocument);
   const userInfo = [
     { title: 'Email', value: user.email },

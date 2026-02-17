@@ -153,6 +153,16 @@ export default function PrivateLayout() {
         })}
       />
       <Stack.Screen
+        name="user-profile/[id]"
+        options={{
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          title: 'Edit Profile',
+          headerTitleAlign: 'center',
+        }}
+      />
+      <Stack.Screen
         name="notes-hmis/create/index"
         options={getDefaultStackNavOptions({
           title: 'Add Note',
