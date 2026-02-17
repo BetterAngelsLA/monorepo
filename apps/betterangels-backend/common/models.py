@@ -145,11 +145,11 @@ class Location(BaseModel):
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
     point = PointField(geography=True)
     point_of_interest = models.CharField(max_length=255, blank=True, null=True)
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["point"], name="unique_location_point"),
         ]
-
 
     objects = models.Manager()
 
@@ -297,7 +297,7 @@ class Location(BaseModel):
     @classmethod
     def get_or_create_location(cls, location_data: Dict[str, Any]) -> "Location":
         """Gets or creates a location, updating address/POI if provided.
-        
+
         Location is keyed by rounded GPS point (unique constraint).
         Address and point_of_interest are updated when non-null to keep
         geocode metadata fresh without overwriting existing good data.
@@ -311,10 +311,14 @@ class Location(BaseModel):
         )
 
         # Build defaults with only non-null values to avoid overwriting good data
-        defaults = {k: v for k, v in {
-            "address": address,
-            "point_of_interest": point_of_interest,
-        }.items() if v is not None}
+        defaults = {
+            k: v
+            for k, v in {
+                "address": address,
+                "point_of_interest": point_of_interest,
+            }.items()
+            if v is not None
+        }
 
         location, _ = Location.objects.update_or_create(
             point=point,
