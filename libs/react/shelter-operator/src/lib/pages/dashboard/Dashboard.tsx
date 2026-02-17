@@ -3,12 +3,13 @@ import { useAtom } from 'jotai';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { filteredSheltersAtom, sheltersAtom } from '../../atoms/shelters';
-import { Shelter, ShelterRow } from '../../components/ShelterRow';
+import { ShelterRow } from '../../components/ShelterRow';
 import ShelterSearchBar from '../../components/ShelterSearchBar';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
+import type { Shelter } from '../../types/shelter';
 
 const PAGE_SIZE = 8;
 
