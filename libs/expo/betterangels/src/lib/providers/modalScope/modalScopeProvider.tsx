@@ -5,7 +5,7 @@
  * above the modal’s content, but will not escape this modal.
  *
  * Only visual, interaction-level providers should live here
- * (e.g. Snackbar, BottomPrompt).
+ * (e.g. Snackbar, BottomSheet).
  */
 
 import { BottomSheetModalProvider } from '@monorepo/expo/shared/ui-components';
