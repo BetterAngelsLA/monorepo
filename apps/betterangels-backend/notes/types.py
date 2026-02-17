@@ -218,16 +218,24 @@ class NoteType:
 
 @strawberry.input
 class CreateNoteServiceInput:
-    """A service to attach to a note (either by existing service ID or custom 'other' label)."""
+    """A service to attach to a note (either by existing service ID or custom 'other' label).
 
+    If `id` is provided, updates the existing ServiceRequest; otherwise creates a new one.
+    """
+
+    id: Optional[ID] = None
     service_id: Optional[ID] = None
     service_other: Optional[str] = None
 
 
 @strawberry.input
 class CreateNoteTaskInput:
-    """A task to create and attach to the note."""
+    """A task to create and attach to the note.
 
+    If `id` is provided, updates the existing Task; otherwise creates a new one.
+    """
+
+    id: Optional[ID] = None
     summary: str
     description: Optional[str] = None
     status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)
@@ -237,9 +245,12 @@ class CreateNoteTaskInput:
 @strawberry.input
 class UpdateNoteInput:
     """
-    Input for updating a note with all nested relations.
-    Fields set to UNSET are left unchanged. Nested relation fields
-    use replace-all semantics (existing items are removed, new ones created).
+    Input for updating a note's core fields and location.
+    Fields set to UNSET are left unchanged.
+
+    For nested relations (services, tasks), use dedicated mutations:
+    - createNoteServiceRequest / removeNoteServiceRequest / updateServiceRequest
+    - createTask / deleteTask / updateTask
     """
 
     id: ID
@@ -250,11 +261,6 @@ class UpdateNoteInput:
     is_submitted: Optional[bool] = strawberry.UNSET
     interacted_at: Optional[datetime] = strawberry.UNSET
     location: Optional[LocationInput] = strawberry.UNSET
-
-    # Nested relations (replace-all when provided)
-    provided_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET
-    requested_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET
-    tasks: Optional[List[CreateNoteTaskInput]] = strawberry.UNSET
 
 
 @strawberry_django.input(models.Note)

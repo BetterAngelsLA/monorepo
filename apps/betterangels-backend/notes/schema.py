@@ -128,29 +128,15 @@ class Mutation:
         extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
-        user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(user)
-
         qs: QuerySet[Note] = info.context.qs
         clean = {k: v for k, v in asdict(data).items() if v is not strawberry.UNSET}
 
         # Convert nested strawberry inputs to dicts (strip nested UNSET values)
         if "location" in clean and clean["location"] is not None:
             clean["location"] = strip_unset(asdict(data.location))
-        if "provided_services" in clean and clean["provided_services"] is not None:
-            clean["provided_services"] = [strip_unset(asdict(s)) for s in data.provided_services]  # type: ignore[union-attr]
-        if "requested_services" in clean and clean["requested_services"] is not None:
-            clean["requested_services"] = [strip_unset(asdict(s)) for s in data.requested_services]  # type: ignore[union-attr]
-        if "tasks" in clean and clean["tasks"] is not None:
-            clean["tasks"] = [strip_unset(asdict(t)) for t in data.tasks]  # type: ignore[union-attr]
 
         note = get_object_or_permission_error(qs, data.id)
-        note = note_update(
-            note=note,
-            data=clean,
-            user=user,
-            permission_group=permission_group,
-        )
+        note = note_update(note=note, data=clean)
         note._private_details = note.private_details
 
         return cast(NoteType, note)

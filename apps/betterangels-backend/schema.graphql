@@ -484,6 +484,7 @@ input CreateNoteInput {
 union CreateNotePayload = NoteType | OperationInfo
 
 input CreateNoteServiceInput {
+  id: ID = null
   serviceId: ID = null
   serviceOther: String = null
 }
@@ -498,6 +499,7 @@ input CreateNoteServiceRequestInput {
 union CreateNoteServiceRequestPayload = ServiceRequestType | OperationInfo
 
 input CreateNoteTaskInput {
+  id: ID = null
   summary: String!
   description: String = null
   status: Int = null
@@ -2116,9 +2118,6 @@ input UpdateNoteInput {
   isSubmitted: Boolean
   interactedAt: DateTime
   location: LocationInput
-  providedServices: [CreateNoteServiceInput!]
-  requestedServices: [CreateNoteServiceInput!]
-  tasks: [CreateNoteTaskInput!]
 }
 
 input UpdateNoteLocationInput {
