@@ -52,28 +52,20 @@ def note_update(
     data: Dict[str, Any],
 ) -> Note:
     """
-    Update a Note's core fields and location.
+    Update a Note's core fields only.
 
-    For nested relations (services, tasks), use dedicated service functions:
+    For location and nested relations, use dedicated service functions:
+    - note_update_location
     - note_service_request_create / note_service_request_remove
     - task_create (from tasks.services)
 
     Caller is responsible for permission checks.
     """
-    location_data = data.pop("location", None)
-
     with pghistory.context(note_id=str(note.id), timestamp=timezone.now(), label="note_update"):
-        # --- Core fields ---
         for field, value in data.items():
             if field == "id":
                 continue
             setattr(note, field, value)
-
-        # --- Location (replace) ---
-        if location_data is not None:
-            location = Location.get_or_create_location(location_data)
-            note.location = location
-
         note.save()
 
     return note

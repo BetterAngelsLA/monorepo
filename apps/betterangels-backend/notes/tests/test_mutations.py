@@ -54,24 +54,17 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_update_note_mutation(self) -> None:
-        json_address_input, _ = self._get_address_inputs()
-        location_input = {
-            "address": json_address_input,
-            "point": self.point,
-            "pointOfInterest": self.point_of_interest,
-        }
         variables = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
-            "location": location_input,  # Inline location creation
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 12
+        expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -81,17 +74,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "purpose": "Updated note purpose",
             "tasks": [],
             "team": SelahTeamEnum.WDI_ON_SITE.name,
-            "location": {
-                "id": ANY,
-                "address": {
-                    "street": self.address.street,
-                    "city": self.address.city,
-                    "state": self.address.state,
-                    "zipCode": self.address.zip_code,
-                },
-                "point": self.point,
-                "pointOfInterest": self.point_of_interest,
-            },
+            "location": None,
             "providedServices": [],
             "requestedServices": [],
             "publicDetails": "Updated public details",
@@ -351,7 +334,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         Test Actions:
         0. Setup creates a note
         1. Save now as revert_before_timestamp
-        2. Update note title, public details, point, and address
+        2. Update note purpose and public details
         3. Revert to revert_before_timestamp from Step 1
         4. Assert note has details from Step 0
         5. Save now as revert_before_timestamp
@@ -363,19 +346,12 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Select a moment to revert to
         revert_before_timestamp = timezone.now()
 
-        other_json_address_input, _ = self._get_address_inputs(street_number_override="999")
-        other_location_input = {
-            "address": other_json_address_input,
-            "point": [-118.0, 34.0],
-            "pointOfInterest": "Discarded POI",
-        }
         # Update - should be discarded
         self._update_note_fixture(
             {
                 "id": note_id,
                 "purpose": "Discarded Purpose",
                 "publicDetails": "Discarded Body",
-                "location": other_location_input,
             }
         )
 
@@ -412,9 +388,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         """
         Test Actions:
         0. Setup creates a note
-        1. Update note purpose, public details, point, and address
+        1. Update note purpose and public details
         2. Save now as revert_before_timestamp
-        3. Update note purpose, public details, point, and address
+        3. Update note purpose and public details
         4. Revert to revert_before_timestamp from Step 2
         5. Assert note has details from Step 1
         6. Save now as revert_before_timestamp
@@ -423,38 +399,24 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         """
         note_id = self.note["id"]
 
-        json_address_input, _ = self._get_address_inputs()
-        location_input = {
-            "address": json_address_input,
-            "point": self.point,
-            "pointOfInterest": self.point_of_interest,
-        }
         # Update - should be persisted
         self._update_note_fixture(
             {
                 "id": note_id,
                 "purpose": "Updated purpose",
                 "publicDetails": "Updated Body",
-                "location": location_input,
             }
         )
 
         # Select a moment to revert to
         revert_before_timestamp = timezone.now()
 
-        other_json_address_input, _ = self._get_address_inputs(street_number_override="999")
-        other_location_input = {
-            "address": other_json_address_input,
-            "point": [-118.0, 34.0],
-            "pointOfInterest": "Discarded POI",
-        }
         # Update - should be discarded
         self._update_note_fixture(
             {
                 "id": note_id,
                 "purpose": "Discarded purpose",
                 "publicDetails": "Discarded Body",
-                "location": other_location_input,
             }
         )
 
@@ -462,31 +424,24 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         note_fields = """
             purpose
             publicDetails
-            location {
-                address {
-                    street
-                }
-            }
         """
-        expected_query_count = 17
+        expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["purpose"], "Updated purpose")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
-        self.assertEqual(reverted_note["location"]["address"]["street"], "106 West 1st Street")
 
         # Select a moment to revert to
         revert_before_timestamp = timezone.now()
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        expected_query_count = 12
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["purpose"], "Updated purpose")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
-        self.assertEqual(reverted_note["location"]["address"]["street"], "106 West 1st Street")
 
     def test_revert_note_mutation_reverts_updated_location(self) -> None:
         """

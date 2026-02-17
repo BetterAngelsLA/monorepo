@@ -2117,7 +2117,6 @@ input UpdateNoteInput {
   privateDetails: String
   isSubmitted: Boolean
   interactedAt: DateTime
-  location: LocationInput
 }
 
 input UpdateNoteLocationInput {

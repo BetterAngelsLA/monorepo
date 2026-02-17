@@ -131,10 +131,6 @@ class Mutation:
         qs: QuerySet[Note] = info.context.qs
         clean = {k: v for k, v in asdict(data).items() if v is not strawberry.UNSET}
 
-        # Convert nested strawberry inputs to dicts (strip nested UNSET values)
-        if "location" in clean and clean["location"] is not None:
-            clean["location"] = strip_unset(asdict(data.location))
-
         note = get_object_or_permission_error(qs, data.id)
         note = note_update(note=note, data=clean)
         note._private_details = note.private_details

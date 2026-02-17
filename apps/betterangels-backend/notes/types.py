@@ -245,10 +245,11 @@ class CreateNoteTaskInput:
 @strawberry.input
 class UpdateNoteInput:
     """
-    Input for updating a note's core fields and location.
+    Input for updating a note's core fields only.
     Fields set to UNSET are left unchanged.
 
-    For nested relations (services, tasks), use dedicated mutations:
+    For nested relations and location, use dedicated mutations:
+    - updateNoteLocation (for location changes)
     - createNoteServiceRequest / removeNoteServiceRequest / updateServiceRequest
     - createTask / deleteTask / updateTask
     """
@@ -260,7 +261,6 @@ class UpdateNoteInput:
     private_details: Optional[str] = strawberry.UNSET
     is_submitted: Optional[bool] = strawberry.UNSET
     interacted_at: Optional[datetime] = strawberry.UNSET
-    location: Optional[LocationInput] = strawberry.UNSET
 
 
 @strawberry_django.input(models.Note)
