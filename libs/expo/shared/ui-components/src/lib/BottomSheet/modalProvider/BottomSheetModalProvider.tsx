@@ -1,9 +1,10 @@
 import {
   BottomSheetModal,
-  BottomSheetView,
   BottomSheetModalProvider as GbsBottomSheetModalProvider,
 } from '@gorhom/bottom-sheet';
+import { Radiuses } from '@monorepo/expo/shared/static';
 import { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import { StyleSheet } from 'react-native';
 import { BottomSheetBackdrop } from '../BottomSheetBackdrop';
 import { BottomSheetModal as BaBottomSheetModal } from '../BottomSheetModal';
 import {
@@ -37,6 +38,16 @@ export function BottomSheetModalProvider(props: TProps) {
 
   const [sheets, setSheets] = useState<TBottomSheetInstance[]>([]);
   const sheetRefs = useRef<Map<string, BottomSheetModal>>(new Map());
+
+  const dismissSheetById = useCallback((id: string) => {
+    const instance = sheetRefs.current.get(id);
+
+    if (!instance) {
+      return;
+    }
+
+    instance.dismiss();
+  }, []);
 
   const showBottomSheet: BottomSheetContextValue['showBottomSheet'] =
     useCallback(
@@ -91,7 +102,7 @@ export function BottomSheetModalProvider(props: TProps) {
       []
     );
 
-  const dismissTopSheet = useCallback(() => {
+  const popTopSheet = useCallback(() => {
     setSheets((prev) => {
       if (prev.length === 0) {
         return prev;
@@ -111,9 +122,9 @@ export function BottomSheetModalProvider(props: TProps) {
   const contextValue = useMemo(
     () => ({
       showBottomSheet,
-      dismissTopSheet,
+      popTopSheet,
     }),
-    [showBottomSheet, dismissTopSheet]
+    [showBottomSheet, popTopSheet]
   );
 
   return (
@@ -130,15 +141,15 @@ export function BottomSheetModalProvider(props: TProps) {
                 instance.present();
               }
             }}
+            onRequestClose={() => dismissSheetById(id)}
             enablePanDownToClose={options?.enablePanDownToClose ?? false}
             stackBehavior={options?.stackBehavior}
             maxDynamicContentSize={options?.maxHeight}
             snapPoints={options?.snapPoints}
-            backgroundStyle={options?.backgroundStyle}
-            handleComponent={null} // can customize later
-            keyboardBlurBehavior={'restore'}
-            keyboardBehavior="interactive"
             enableDynamicSizing={options?.enableDynamicSizing ?? true}
+            keyboardBlurBehavior="restore"
+            keyboardBehavior="interactive"
+            handleComponent={null} // can customize later
             backdropComponent={(backdropProps) => (
               <BottomSheetBackdrop
                 {...backdropProps}
@@ -146,39 +157,24 @@ export function BottomSheetModalProvider(props: TProps) {
                 opacity={options?.backdropOpacity}
               />
             )}
+            // triggered on Swipe down or programmatic dismissal
             onDismiss={() => {
               sheetRefs.current.delete(id);
               setSheets((prev) => prev.filter((s) => s.id !== id));
             }}
-            style={
-              {
-                // borderWidth: 4,
-                // borderColor: 'blue',
-                // borderTopLeftRadius: 24,
-                // borderTopRightRadius: 24,
-              }
-            }
-            contentStyle={{
-              backgroundColor: 'red',
-              borderWidth: 8,
-              borderColor: 'black',
-            }}
+            backgroundStyle={[styles.backgroundStyle, options?.backgroundStyle]}
           >
-            <BottomSheetView
-              style={{
-                borderWidth: 1,
-                borderColor: 'red',
-                borderTopLeftRadius: 84,
-                borderTopRightRadius: 84,
-                overflow: 'hidden',
-                backgroundColor: 'yellow',
-              }}
-            >
-              {render({ dismissTopSheet })}
-            </BottomSheetView>
+            {render({ closeSheet: () => dismissSheetById(id) })}
           </BaBottomSheetModal>
         ))}
       </BottomSheetContext.Provider>
     </GbsBottomSheetModalProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  backgroundStyle: {
+    borderTopRightRadius: Radiuses.md,
+    borderTopLeftRadius: Radiuses.md,
+  },
+});

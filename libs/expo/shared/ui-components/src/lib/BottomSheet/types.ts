@@ -6,10 +6,11 @@ export type BottomSheetContextValue = {
     render: (api: BottomSheetRenderApi) => ReactNode,
     options?: BottomSheetOptions
   ) => void;
+  popTopSheet: () => void; // stack-level dismissal
 };
 
 export type BottomSheetRenderApi = {
-  dismissTopSheet: () => void;
+  closeSheet: () => void;
 };
 
 export type BottomSheetOptions = {

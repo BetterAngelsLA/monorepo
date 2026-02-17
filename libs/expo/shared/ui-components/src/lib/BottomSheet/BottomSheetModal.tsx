@@ -1,11 +1,16 @@
 import {
   BottomSheetBackdropProps,
+  BottomSheetView,
   BottomSheetModal as GbsBottomSheetModal,
   BottomSheetModalProps as GbsBottomSheetModalProps,
 } from '@gorhom/bottom-sheet';
+import { Spacings } from '@monorepo/expo/shared/static';
+import { CloseButton } from '@monorepo/expo/shared/ui-components';
 import { ReactNode, forwardRef } from 'react';
-import { StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { BottomSheetBackdrop } from './BottomSheetBackdrop';
+
+const DEFAULT_PADDING_HORIZONTAL = Spacings.md;
 
 type BackdropOptions = {
   disableBackdrop?: boolean;
@@ -16,6 +21,8 @@ type TBottomSheetModal = GbsBottomSheetModalProps &
   BackdropOptions & {
     children: ReactNode;
     contentStyle?: StyleProp<ViewStyle>;
+    onRequestClose?: () => void;
+    hideCloseButton?: boolean;
   };
 
 export const BottomSheetModal = forwardRef<
@@ -32,8 +39,15 @@ export const BottomSheetModal = forwardRef<
     enableDynamicSizing,
     handleComponent,
     handleIndicatorStyle,
+    hideCloseButton,
+    onRequestClose,
     ...rest
   } = props;
+
+  function handleClose() {
+    onRequestClose?.();
+  }
+
   return (
     <GbsBottomSheetModal
       ref={ref}
@@ -51,7 +65,21 @@ export const BottomSheetModal = forwardRef<
       {...rest}
       style={[styles.container, style]}
     >
-      {children}
+      <BottomSheetView>
+        {!hideCloseButton && (
+          <View style={[styles.topNav]}>
+            <CloseButton
+              style={{
+                minWidth: 0,
+                paddingHorizontal: DEFAULT_PADDING_HORIZONTAL,
+              }}
+              accessibilityHint="closes the bottom prompt modal"
+              onClose={handleClose}
+            />
+          </View>
+        )}
+        {children}
+      </BottomSheetView>
     </GbsBottomSheetModal>
   );
 });
@@ -59,14 +87,8 @@ export const BottomSheetModal = forwardRef<
 const styles = StyleSheet.create({
   container: {
     elevation: 12,
-    borderWidth: 1,
-    borderColor: 'yellow',
-    backgroundColor: 'red',
-    // borderTopLeftRadius: 16,
-    // borderTopRightRadius: 16,
-    // borderTopEndRadius: 88,
-    // borderTopRightRadius: 88,
-    // borderTopLeftRadius: 88,
-    // overflow: 'hidden',
+  },
+  topNav: {
+    paddingTop: Spacings.sm,
   },
 });

@@ -93,7 +93,7 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
             items={categoryGroup.types}
             onChange={(value) => {
               if (value === CUSTOM_FILE_NAME_VALUE) {
-                showBottomSheet(({ dismissTopSheet }) => (
+                showBottomSheet(({ closeSheet }) => (
                   <CustomFileNamePrompt
                     onSubmit={(customName) => {
                       onSelect({
@@ -103,7 +103,7 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
                         fileName: customName,
                       });
 
-                      dismissTopSheet();
+                      closeSheet();
                     }}
                   />
                 ));

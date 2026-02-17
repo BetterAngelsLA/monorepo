@@ -95,7 +95,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: Spacings.md,
-    backgroundColor: 'purple',
   },
   content: {
     paddingHorizontal: DEFAULT_PADDING_H,
