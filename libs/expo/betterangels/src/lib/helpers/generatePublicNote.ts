@@ -62,12 +62,10 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
 
   const updatedI =
     'I -' +
-    // (moodIText ? ' ' + moodIText : '') +
     (serviceIText ? ' ' + serviceIText : '');
 
   const updatedR =
     'R -' +
-    // (moodRText ? ' ' + moodRText : '') +
     (serviceRText ? ' ' + serviceRText : '') +
     (requestedText ? ' ' + requestedText : '');
 
