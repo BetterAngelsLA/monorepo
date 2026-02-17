@@ -1,3 +1,12 @@
+/**
+ * Centralized BottomSheet manager.
+ *
+ * Provides a context-based API to open, stack, switch, and dismiss
+ * BottomSheet modals without coupling callers to gorhom internals.
+ *
+ * Responsible for instance lifecycle, stacking strategy, and backdrop behavior.
+ */
+
 import {
   BottomSheetModal,
   BottomSheetModalProvider as GbsBottomSheetModalProvider,
@@ -147,6 +156,7 @@ export function BottomSheetModalProvider(props: TProps) {
             maxDynamicContentSize={options?.maxHeight}
             snapPoints={options?.snapPoints}
             enableDynamicSizing={options?.enableDynamicSizing ?? true}
+            scrollable={options?.scrollable}
             keyboardBlurBehavior="restore"
             keyboardBehavior="interactive"
             handleComponent={null} // can customize later

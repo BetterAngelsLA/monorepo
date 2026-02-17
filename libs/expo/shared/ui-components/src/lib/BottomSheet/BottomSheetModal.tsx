@@ -1,5 +1,20 @@
+/**
+ * Design-system wrapper around @gorhom/bottom-sheet BottomSheetModal.
+ *
+ * Intended to be used with the app-level BottomSheetModalProvider,
+ * which manages presentation, stacking, and lifecycle via the
+ * `showBottomSheet` API.
+ *
+ * Standardizes styling and behavior (dynamic sizing, backdrop,
+ * optional close button) and supports static or scrollable content.
+ *
+ * Technically requires @gorhom/bottom-sheet's BottomSheetModalProvider
+ * in the tree, which the app-level provider already includes.
+ */
+
 import {
   BottomSheetBackdropProps,
+  BottomSheetScrollView,
   BottomSheetView,
   BottomSheetModal as GbsBottomSheetModal,
   BottomSheetModalProps as GbsBottomSheetModalProps,
@@ -9,21 +24,29 @@ import { ReactNode, forwardRef } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import CloseButton from '../CloseButton';
 import { BottomSheetBackdrop } from './BottomSheetBackdrop';
+import { BottomSheetOptions } from './types';
 
 const DEFAULT_PADDING_HORIZONTAL = Spacings.md;
 
-type BackdropOptions = {
-  disableBackdrop?: boolean;
-  backdropOpacity?: number;
+/**
+ * Subset of public BottomSheet options that apply at
+ * the wrapper component level (not provider-level).
+ */
+type WrapperLevelOptions = Pick<
+  BottomSheetOptions,
+  'disableBackdrop' | 'backdropOpacity' | 'scrollable'
+>;
+
+type BottomSheetModalOwnProps = {
+  children: ReactNode;
+  contentStyle?: StyleProp<ViewStyle>;
+  onRequestClose?: () => void;
+  hideCloseButton?: boolean;
 };
 
 type TBottomSheetModal = GbsBottomSheetModalProps &
-  BackdropOptions & {
-    children: ReactNode;
-    contentStyle?: StyleProp<ViewStyle>;
-    onRequestClose?: () => void;
-    hideCloseButton?: boolean;
-  };
+  WrapperLevelOptions &
+  BottomSheetModalOwnProps;
 
 export const BottomSheetModal = forwardRef<
   GbsBottomSheetModal,
@@ -34,6 +57,7 @@ export const BottomSheetModal = forwardRef<
     disableBackdrop,
     backdropOpacity,
     contentStyle,
+    scrollable,
     style,
     enablePanDownToClose,
     enableDynamicSizing,
@@ -47,6 +71,8 @@ export const BottomSheetModal = forwardRef<
   function handleClose() {
     onRequestClose?.();
   }
+
+  const ContentContainer = scrollable ? BottomSheetScrollView : BottomSheetView;
 
   return (
     <GbsBottomSheetModal
@@ -65,7 +91,7 @@ export const BottomSheetModal = forwardRef<
       {...rest}
       style={[styles.container, style]}
     >
-      <BottomSheetView>
+      <ContentContainer>
         {!hideCloseButton && (
           <View style={[styles.topNav]}>
             <CloseButton
@@ -79,7 +105,7 @@ export const BottomSheetModal = forwardRef<
           </View>
         )}
         {children}
-      </BottomSheetView>
+      </ContentContainer>
     </GbsBottomSheetModal>
   );
 });

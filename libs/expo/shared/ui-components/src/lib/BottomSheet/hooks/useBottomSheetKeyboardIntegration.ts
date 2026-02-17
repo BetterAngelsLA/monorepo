@@ -1,3 +1,15 @@
+/**
+ * Integrates a native input with @gorhom/bottom-sheet keyboard handling.
+ *
+ * Registers the input node and syncs focus/blur events with the
+ * BottomSheet internal keyboard state so the sheet adjusts correctly
+ * when the keyboard opens.
+ *
+ * Intended for use by BottomSheet-specific input wrappers.
+ *
+ * For more see https://gorhom.dev/react-native-bottom-sheet/keyboard-handling
+ */
+
 import { useBottomSheetInternal } from '@gorhom/bottom-sheet';
 import { RefObject, useCallback, useEffect } from 'react';
 import { findNodeHandle } from 'react-native';

@@ -1,3 +1,13 @@
+/**
+ * BottomSheet-specific single-input form.
+ *
+ * Provides a title/subtitle layout, a BottomSheet-aware input,
+ * and a primary CTA button, intended for use inside a BottomSheet.
+ *
+ * Keeps the base SingleInputForm container-agnostic while
+ * encapsulating BottomSheet keyboard behavior here.
+ */
+
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
@@ -90,7 +100,7 @@ export function BottomSheetInputForm(props: TBottomSheetInputFormProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: Spacings.md,
+    paddingTop: Spacings.sm,
   },
   content: {
     paddingHorizontal: DEFAULT_PADDING_H,

@@ -1,3 +1,12 @@
+/**
+ * BottomSheet-aware variant of BasicInput.
+ *
+ * Wraps BasicInput and integrates it with @gorhom/bottom-sheet so
+ * the sheet correctly tracks focus and adjusts when the keyboard opens.
+ *
+ * Must be used inside a BottomSheet tree.
+ */
+
 import { useRef } from 'react';
 import { TextInput } from 'react-native';
 import BasicInput, { IBasicInputProps } from '../../BasicInput';
