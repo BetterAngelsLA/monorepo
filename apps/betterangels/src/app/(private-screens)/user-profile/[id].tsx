@@ -1,10 +1,11 @@
+import { UserProfileEdit } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
 
 type TSearchParams = {
   id: string;
 };
 
-export default function UserProfileEdit() {
+export default function UserProfileEditScreen() {
   const { id } = useLocalSearchParams<TSearchParams>();
 
   if (!id) {

@@ -160,6 +160,16 @@ export default function PrivateLayout() {
           },
           title: 'Edit Profile',
           headerTitleAlign: 'center',
+          headerLeft: () => (
+            <TextButton
+              regular
+              color={Colors.WHITE}
+              fontSize="md"
+              accessibilityHint="goes to previous screen"
+              title="Back"
+              onPress={router.back}
+            />
+          ),
         }}
       />
       <Stack.Screen
