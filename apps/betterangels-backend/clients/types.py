@@ -15,6 +15,8 @@ from clients.enums import (
 )
 from common.graphql.types import (
     AttachmentInterface,
+    ImageUrls,
+    image_urls_from_file,
     NonBlankString,
     PhoneNumberInput,
     PhoneNumberScalar,
@@ -336,6 +338,10 @@ class ClientProfileType(ClientProfileBaseType):
     doc_ready_documents: Optional[List[ClientDocumentType]]
     consent_form_documents: Optional[List[ClientDocumentType]]
     other_documents: Optional[List[ClientDocumentType]]
+
+    @strawberry_django.field
+    def photo(self, root: ClientProfile, info: Info) -> Optional[ImageUrls]:
+        return image_urls_from_file(root.profile_photo)
 
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:

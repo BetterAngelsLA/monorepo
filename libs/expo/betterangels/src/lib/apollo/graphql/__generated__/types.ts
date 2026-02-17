@@ -383,6 +383,8 @@ export type ClientProfileType = {
   otherDocuments?: Maybe<Array<ClientDocumentType>>;
   phoneNumber?: Maybe<Scalars['PhoneNumber']['output']>;
   phoneNumbers?: Maybe<Array<PhoneNumberType>>;
+  photo?: Maybe<ImageUrls>;
+  photos?: Maybe<ImageUrls>;
   physicalDescription?: Maybe<Scalars['String']['output']>;
   placeOfBirth?: Maybe<Scalars['String']['output']>;
   preferredCommunication?: Maybe<Array<PreferredCommunicationEnum>>;
@@ -1224,6 +1226,13 @@ export type IdFilterLookup = {
   regex?: InputMaybe<Scalars['ID']['input']>;
   /** Case-sensitive starts-with. Filter will be skipped on `null` value */
   startsWith?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type ImageUrls = {
+  __typename?: 'ImageUrls';
+  lg?: Maybe<Scalars['String']['output']>;
+  md?: Maybe<Scalars['String']['output']>;
+  sm?: Maybe<Scalars['String']['output']>;
 };
 
 export enum ImmediateNeedChoices {

@@ -392,6 +392,8 @@ type ClientProfileType {
   docReadyDocuments: [ClientDocumentType!]
   consentFormDocuments: [ClientDocumentType!]
   otherDocuments: [ClientDocumentType!]
+  photos: ImageUrls
+  photo: ImageUrls
   displayCaseManager: String!
 }
 
@@ -1206,6 +1208,12 @@ input IDFilterLookup {
   Case-insensitive regular expression match. Filter will be skipped on `null` value
   """
   iRegex: ID
+}
+
+type ImageUrls {
+  sm: String
+  md: String
+  lg: String
 }
 
 enum ImmediateNeedChoices {
