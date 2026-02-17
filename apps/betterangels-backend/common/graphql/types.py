@@ -5,6 +5,7 @@ from typing import Any, Mapping, NewType, Optional
 import strawberry
 import strawberry_django
 from common.constants import PHONE_NUMBER_REGEX
+from common.imgproxy import get_imgproxy_url, get_imgproxy_source_url_from_file
 from common.models import Address, Attachment, Location, PhoneNumber
 from django.db.models import Q
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
@@ -12,6 +13,7 @@ from phonenumber_field.phonenumber import PhoneNumber as DjangoPhoneNumberUtil
 from strawberry import ID, Info, auto
 from strawberry.types.field import StrawberryField
 from strawberry.types.scalar import ScalarDefinition
+from common.enums import ImagePresetEnum
 
 
 def make_in_filter(field_name: str, value_type: Any) -> StrawberryField:
@@ -139,6 +141,38 @@ class AddressType:
 class AddressInput:
     address_components: Optional[strawberry.scalars.JSON] = None
     formatted_address: Optional[str] = None
+
+
+@strawberry.type
+class ImageUrls:
+    """URLs for the same image in predefined sizes (sm, md, lg, etc.)."""
+
+    url: strawberry.Private[str]
+
+    @strawberry.field
+    def sm(self) -> Optional[str]:
+        return get_imgproxy_url(self.url, ImagePresetEnum.SM)
+
+    @strawberry.field
+    def md(self) -> Optional[str]:
+        return get_imgproxy_url(self.url, ImagePresetEnum.MD)
+
+    @strawberry.field
+    def lg(self) -> Optional[str]:
+        return get_imgproxy_url(self.url, ImagePresetEnum.LG)
+
+
+def image_urls_from_file(file: Optional[object]) -> Optional[ImageUrls]:
+    """Build ImageUrls for any Django FileField/ImageField value.
+
+    Use this on any GraphQL type that exposes processed image URLs (sm/md/lg).
+    Returns None if the file is missing or the source URL cannot be determined.
+    """
+    source = get_imgproxy_source_url_from_file(file)
+    if not source:
+        return None
+
+    return ImageUrls(url=source)
 
 
 @strawberry_django.type(Location)
