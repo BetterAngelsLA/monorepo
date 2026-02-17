@@ -268,7 +268,7 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         self.assertEqual(addr1.pk, addr2.pk)
 
     def test_get_or_create_address_formatted_address_variants(self) -> None:
-        """Both formattedAddress (v1) and formatted_address (legacy) persist correctly."""
+        """Both formattedAddress (camelCase) and formatted_address (snake_case) keys work and dedupe."""
         components = json.dumps(
             [
                 {"long_name": "200", "short_name": "200", "types": ["street_number"]},
@@ -278,26 +278,19 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
                 {"long_name": "62565", "short_name": "62565", "types": ["postal_code"]},
             ]
         )
-        addr_v1 = Location.get_or_create_address(
+        # camelCase key
+        addr1 = Location.get_or_create_address(
             {"address_components": components, "formattedAddress": "200 Oak Ave, Shelbyville, IL"}
         )
-        assert addr_v1 is not None
-        self.assertEqual(addr_v1.formatted_address, "200 Oak Ave, Shelbyville, IL")
+        assert addr1 is not None
+        self.assertEqual(addr1.formatted_address, "200 Oak Ave, Shelbyville, IL")
 
-        components2 = json.dumps(
-            [
-                {"long_name": "300", "short_name": "300", "types": ["street_number"]},
-                {"long_name": "Elm St", "short_name": "Elm St", "types": ["route"]},
-                {"long_name": "Capital City", "short_name": "Capital City", "types": ["locality"]},
-                {"long_name": "IL", "short_name": "IL", "types": ["administrative_area_level_1"]},
-                {"long_name": "62566", "short_name": "62566", "types": ["postal_code"]},
-            ]
+        # snake_case key with same components should return same address
+        addr2 = Location.get_or_create_address(
+            {"address_components": components, "formatted_address": "200 Oak Ave, Shelbyville, IL"}
         )
-        addr_legacy = Location.get_or_create_address(
-            {"address_components": components2, "formatted_address": "300 Elm St, Capital City, IL"}
-        )
-        assert addr_legacy is not None
-        self.assertEqual(addr_legacy.formatted_address, "300 Elm St, Capital City, IL")
+        assert addr2 is not None
+        self.assertEqual(addr1.pk, addr2.pk)
 
     @parametrize(
         (
