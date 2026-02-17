@@ -564,11 +564,13 @@ class HmisApiBridge:
         return self._format_note_data(resp.json())
 
     def delete_note(self, client_hmis_id: str, note_hmis_id: str) -> None:
-        self._make_request(
+        resp = self._make_request(
             method=HTTPMethod.DELETE,
             path=f"/clients/{client_hmis_id}/client-notes/{note_hmis_id}",
             body={},
         )
+        if resp.status_code != 204:
+            raise ValidationError(f"Status Code: {resp.status_code}")
 
     def get_client_programs(self, client_hmis_id: str) -> dict[str, Any]:
         fields = self._get_field_dot_paths(info=self.info, ignored_fields=BA_NOTE_FIELDS)
