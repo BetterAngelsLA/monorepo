@@ -1,4 +1,4 @@
-import { SingleInputForm } from '@monorepo/expo/shared/ui-components';
+import { BottomSheetInputForm } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { View } from 'react-native';
 
@@ -25,7 +25,7 @@ export function CustomFileNamePrompt(props: TProps) {
 
   return (
     <View style={{ flex: 1 }}>
-      <SingleInputForm
+      <BottomSheetInputForm
         value={value}
         inputPlaceholder="Enter file name"
         onChangeText={setValue}
@@ -35,7 +35,6 @@ export function CustomFileNamePrompt(props: TProps) {
         subtitle="If you selected Other in Predefined file name, fill out the name of the file here."
         ctaButtonText="Done"
         ctaDisabled={isSubmitDisabled}
-        enableBottomSheetKeyboardHandling={true}
       />
     </View>
   );

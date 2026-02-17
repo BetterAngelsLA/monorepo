@@ -1,14 +1,14 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import BasicInput from '../BasicInput';
-import Button from '../Button';
-import TextBold from '../TextBold';
-import TextRegular from '../TextRegular';
+import Button from '../../Button';
+import TextBold from '../../TextBold';
+import TextRegular from '../../TextRegular';
+import { BottomSheetBasicInput } from './BottomSheetBasicInput';
 
 const DEFAULT_PADDING_H = Spacings.md;
 
-export interface TProps {
+export interface TBottomSheetInputFormProps {
   value: string;
   onChangeText: (text: string) => void;
   onDone: () => void;
@@ -24,10 +24,9 @@ export interface TProps {
   style?: ViewStyle;
   contentStyle?: ViewStyle;
   footerStyle?: ViewStyle;
-  enableBottomSheetKeyboardHandling?: boolean;
 }
 
-export function SingleInputForm(props: TProps) {
+export function BottomSheetInputForm(props: TBottomSheetInputFormProps) {
   const {
     value,
     inputPlaceholder,
@@ -44,7 +43,6 @@ export function SingleInputForm(props: TProps) {
     style,
     contentStyle,
     footerStyle,
-    enableBottomSheetKeyboardHandling,
   } = props;
 
   return (
@@ -64,14 +62,13 @@ export function SingleInputForm(props: TProps) {
 
         {!!headerSlot && headerSlot}
 
-        <BasicInput
+        <BottomSheetBasicInput
           mt="sm"
           label={inputLabel}
           placeholder={inputPlaceholder}
           value={value}
           onDelete={onClear}
           onChangeText={onChangeText}
-          enableBottomSheetKeyboardHandling={enableBottomSheetKeyboardHandling}
         />
       </View>
 
@@ -82,7 +79,7 @@ export function SingleInputForm(props: TProps) {
           height="lg"
           variant="primary"
           accessibilityHint="submit the form"
-          title={ctaButtonText ?? 'Done'}
+          title={ctaButtonText}
           onPress={onDone}
           disabled={ctaDisabled || disabled}
         />
@@ -90,7 +87,6 @@ export function SingleInputForm(props: TProps) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

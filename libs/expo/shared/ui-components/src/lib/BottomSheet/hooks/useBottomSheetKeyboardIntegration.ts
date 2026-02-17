@@ -1,48 +1,66 @@
 import { useBottomSheetInternal } from '@gorhom/bottom-sheet';
-import { useCallback, useEffect } from 'react';
+import { RefObject, useCallback, useEffect } from 'react';
 import { findNodeHandle } from 'react-native';
 
-export function useBottomSheetKeyboardIntegration(
-  ref: React.RefObject<any>,
-  enabled?: boolean
-) {
-  if (!enabled) {
-    return {
-      handleOnFocus: undefined,
-      handleOnBlur: undefined,
-    };
-  }
+type TNativeHandle = number | React.Component<unknown, unknown> | null;
 
+type FocusEvent = {
+  nativeEvent: {
+    target: number;
+  };
+};
+
+export function useBottomSheetKeyboardIntegration<T extends TNativeHandle>(
+  ref: RefObject<T>
+) {
   const { animatedKeyboardState, textInputNodesRef } = useBottomSheetInternal();
 
   const handleOnFocus = useCallback(
-    (e: any) => {
-      animatedKeyboardState.set((state) => ({
-        ...state,
-        target: e.nativeEvent.target,
-      }));
+    (event: FocusEvent) => {
+      animatedKeyboardState.set((state) => {
+        return {
+          ...state,
+          target: event.nativeEvent.target,
+        };
+      });
     },
     [animatedKeyboardState]
   );
 
-  const handleOnBlur = useCallback(
-    (e: any) => {
-      const keyboardState = animatedKeyboardState.get();
-      const nodeHandle = findNodeHandle(ref.current);
+  const handleOnBlur = useCallback(() => {
+    const keyboardState = animatedKeyboardState.get();
+    const currentRef = ref.current;
 
-      if (keyboardState.target === nodeHandle) {
-        animatedKeyboardState.set((state) => ({
-          ...state,
-          target: undefined,
-        }));
-      }
-    },
-    [animatedKeyboardState, ref]
-  );
+    if (currentRef == null) {
+      return;
+    }
+
+    const nodeHandle = findNodeHandle(currentRef);
+
+    if (keyboardState.target !== nodeHandle) {
+      return;
+    }
+
+    animatedKeyboardState.set((state) => {
+      return {
+        ...state,
+        target: undefined,
+      };
+    });
+  }, [animatedKeyboardState, ref]);
 
   useEffect(() => {
-    const nodeHandle = findNodeHandle(ref.current);
-    if (!nodeHandle) return;
+    const currentRef = ref.current;
+
+    if (currentRef == null) {
+      return;
+    }
+
+    const nodeHandle = findNodeHandle(currentRef);
+
+    if (!nodeHandle) {
+      return;
+    }
 
     textInputNodesRef.current.add(nodeHandle);
 

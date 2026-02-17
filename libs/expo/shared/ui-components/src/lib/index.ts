@@ -79,7 +79,6 @@ export * from './SearchListBar';
 export { default as SearchableDropdown } from './SearchableDropdown';
 export { default as Select } from './Select';
 export { default as SelectButton } from './SelectButton';
-export * from './SingleInputForm';
 export { default as SingleSelect } from './SingleSelect';
 export { default as Snackbar } from './Snackbar';
 export { SocialMediaIcon, TSocialMediaType } from './SocialMediaIcon';

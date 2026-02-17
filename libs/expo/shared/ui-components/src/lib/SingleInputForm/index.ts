@@ -1,1 +1,0 @@
-export { SingleInputForm } from './SingleInputForm';

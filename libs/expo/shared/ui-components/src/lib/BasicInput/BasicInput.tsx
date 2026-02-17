@@ -5,7 +5,7 @@ import {
   Radiuses,
   Spacings,
 } from '@monorepo/expo/shared/static';
-import React, { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
+import React, { forwardRef, useMemo } from 'react';
 import {
   Pressable,
   StyleProp,
@@ -16,12 +16,11 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { useBottomSheetKeyboardIntegration } from '../BottomSheet';
 import TextRegular from '../TextRegular';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-interface IBasicInputProps extends TextInputProps {
+export interface IBasicInputProps extends TextInputProps {
   label?: string;
   height?: 40 | 44 | 56 | 200;
   required?: boolean;
@@ -38,7 +37,6 @@ interface IBasicInputProps extends TextInputProps {
   icon?: React.ReactNode;
   onDelete?: () => void;
   borderRadius?: number;
-  enableBottomSheetKeyboardHandling?: boolean;
 }
 
 const CLEAR_TOUCH = Spacings.lg;
@@ -65,29 +63,12 @@ export const BasicInput = forwardRef<TextInput, IBasicInputProps>(
       autoCorrect = true,
       borderRadius = Radiuses.xs,
       errorMessage,
-      onFocus,
-      onBlur,
-      enableBottomSheetKeyboardHandling,
       ...rest
     },
     ref
   ) {
     const isControlled = value !== undefined;
     const color = disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK;
-
-    const internalRef = useRef<TextInput>(null);
-
-    // BottomSheet keyboard integration
-    // Expose the internal TextInput instance to parent refs
-    useImperativeHandle(ref, () => internalRef.current as TextInput);
-    // Attach BottomSheet keyboard focus/blur handlers (no-op if disabled)
-    const {
-      handleOnFocus: bottomSheetOnFocus,
-      handleOnBlur: bottomSheetOnBlur,
-    } = useBottomSheetKeyboardIntegration(
-      internalRef,
-      enableBottomSheetKeyboardHandling
-    );
 
     // show clear only when controlled and non-empty
     const showClear =
@@ -137,14 +118,6 @@ export const BasicInput = forwardRef<TextInput, IBasicInputProps>(
             editable={!disabled}
             autoCorrect={autoCorrect}
             placeholderTextColor={Colors.NEUTRAL_LIGHT}
-            onFocus={(e) => {
-              bottomSheetOnFocus?.(e);
-              onFocus?.(e);
-            }}
-            onBlur={(e) => {
-              bottomSheetOnBlur?.(e);
-              onBlur?.(e);
-            }}
             // keep defaultValue working if not controlled
             {...rest}
             {...(isControlled

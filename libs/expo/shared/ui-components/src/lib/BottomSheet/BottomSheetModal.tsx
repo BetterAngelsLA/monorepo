@@ -5,9 +5,9 @@ import {
   BottomSheetModalProps as GbsBottomSheetModalProps,
 } from '@gorhom/bottom-sheet';
 import { Spacings } from '@monorepo/expo/shared/static';
-import { CloseButton } from '@monorepo/expo/shared/ui-components';
 import { ReactNode, forwardRef } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import CloseButton from '../CloseButton';
 import { BottomSheetBackdrop } from './BottomSheetBackdrop';
 
 const DEFAULT_PADDING_HORIZONTAL = Spacings.md;
