@@ -1571,6 +1571,7 @@ type Query {
   shelter(pk: ID!): ShelterType!
   adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelters(ordering: [ShelterOrder!] = null, filters: ShelterFilter, pagination: OffsetPaginationInput): ShelterTypeOffsetPaginated!
+  sheltersByOrganization(filters: ShelterFilter, ordering: [ShelterOrder!]! = [], pagination: OffsetPaginationInput): ShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
 }
 
 enum RaceEnum {
