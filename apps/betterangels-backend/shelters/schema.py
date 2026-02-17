@@ -33,7 +33,9 @@ class Query:
     )
     def shelters_by_organization(self, info: Info) -> QuerySet[Shelter]:
         user = info.context.request.user
-        organization_id = getattr(user, "organization_id", None)
-        if organization_id is None:
+        # Get all organizations the user belongs to (many-to-many relationship)
+        user_orgs = user.organizations_organization.all()
+        if not user_orgs.exists():
             return Shelter.objects.none()
-        return Shelter.objects.filter(organization_id=organization_id).order_by("-created_at")
+        # Return shelters for all of the user's organizations
+        return Shelter.objects.filter(organization__in=user_orgs).order_by("-created_at")

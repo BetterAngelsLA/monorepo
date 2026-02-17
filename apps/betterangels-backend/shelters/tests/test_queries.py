@@ -631,12 +631,13 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         self.assertEqual(len(results), expected_result_count)
 
-    def test_shelters_by_org_filter(self) -> None:
+    def test_admin_shelters_by_org_filter(self) -> None:
+        """Test that admins can query shelters filtered by any organization."""
         import json
 
         from django.contrib.auth import get_user_model
         from django.contrib.auth.models import Permission
-        from notes.permissions import NotePermissions
+        from shelters.permissions import ShelterPermissions
 
         # Arrange orgs + shelters
         org = organization_recipe.make()
@@ -647,14 +648,15 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         # Auth user + perm
         User = get_user_model()
         user = User.objects.create_user("orgtest@example.com", password="pw")
-        app_label, codename = getattr(NotePermissions.ADD, "value", NotePermissions.ADD).split(".")
+        app_label, codename = getattr(ShelterPermissions.VIEW, "value", ShelterPermissions.VIEW).split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
         user.user_permissions.add(perm)
         self.client.force_login(user)
         query = """
         query SheltersByOrg($orgId: ID!, $offset: Int, $limit: Int) {
-            sheltersByOrganization(
-            organizationId: $orgId
+            adminShelters(
+            filters: { organization: { pk: $orgId } }
+            ordering: [{ createdAt: DESC }]
             pagination: { offset: $offset, limit: $limit }
             ) {
             totalCount
@@ -674,7 +676,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         response = resp.json()
         if response.get("errors"):
             self.fail(f"GQL errors: {response['errors']}")
-        payload = response["data"]["sheltersByOrganization"]
+        payload = response["data"]["adminShelters"]
         results = payload["results"]
         self.assertEqual(payload["totalCount"], 2)
         self.assertEqual(len(results), 2)
@@ -689,6 +691,61 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         ).json()
         if invalid_resp.get("errors"):
             self.fail(f"GQL errors (invalid org): {invalid_resp['errors']}")
-        invalid_payload = invalid_resp["data"]["sheltersByOrganization"]
+        invalid_payload = invalid_resp["data"]["adminShelters"]
         self.assertEqual(invalid_payload["totalCount"], 0)
         self.assertEqual(len(invalid_payload["results"]), 0)
+
+    def test_shelters_by_organization(self) -> None:
+        """Test that users can query shelters for their own organization only."""
+        import json
+
+        from django.contrib.auth import get_user_model
+        from django.contrib.auth.models import Permission
+        from shelters.permissions import ShelterPermissions
+
+        # Arrange orgs + shelters
+        org = organization_recipe.make()
+        other_org = organization_recipe.make()
+        s_older = shelter_recipe.make(organization=org, created_at=timezone.now() - timedelta(minutes=1))
+        s_newer = shelter_recipe.make(organization=org, created_at=timezone.now())
+        shelter_recipe.make(organization=other_org)  # should be excluded
+
+        # Auth user + perm + assign to organization
+        User = get_user_model()
+        user = User.objects.create_user("orgtest@example.com", password="pw")
+        app_label, codename = getattr(ShelterPermissions.VIEW, "value", ShelterPermissions.VIEW).split(".")
+        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
+        user.user_permissions.add(perm)
+        org.add_user(user)  # Add user to organization
+        self.client.force_login(user)
+
+        query = """
+        query SheltersByOrg($offset: Int, $limit: Int) {
+            sheltersByOrganization(
+            pagination: { offset: $offset, limit: $limit }
+            ) {
+            totalCount
+            pageInfo { offset limit }
+            results { id name }
+            }
+        }
+        """
+        variables = {"offset": 0, "limit": 10}
+
+        GRAPHQL_URL = "/graphql"
+        resp = self.client.post(
+            GRAPHQL_URL,
+            data=json.dumps({"query": query, "variables": variables}),
+            content_type="application/json",
+        )
+        response = resp.json()
+        if response.get("errors"):
+            self.fail(f"GQL errors: {response['errors']}")
+        payload = response["data"]["sheltersByOrganization"]
+        results = payload["results"]
+        self.assertEqual(payload["totalCount"], 2)
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0]["id"], str(s_newer.id))
+        self.assertEqual(results[1]["id"], str(s_older.id))
+        self.assertEqual(payload["pageInfo"]["offset"], 0)
+        self.assertEqual(payload["pageInfo"]["limit"], 10)
