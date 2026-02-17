@@ -224,7 +224,10 @@ class Mutation:
         permission_group = get_user_permission_group(user)
 
         qs: QuerySet[Note] = info.context.qs
-        note = qs.get(id=str(data.note_id))
+        try:
+            note = qs.get(id=str(data.note_id))
+        except Note.DoesNotExist:
+            raise PermissionError("You do not have permission to modify this note.")
 
         srs = note_service_request_create(
             user=user,
@@ -280,7 +283,10 @@ class Mutation:
         NOTE: this function will need to change once ServiceRequests are able to be associated with zero or more than one Note
         """
         qs: QuerySet[ServiceRequest] = info.context.qs
-        sr = qs.get(id=data.id)
+        try:
+            sr = qs.get(id=data.id)
+        except ServiceRequest.DoesNotExist:
+            raise PermissionError("You do not have permission to delete this service request.")
 
         deleted_id = service_request_delete(service_request=sr)
 

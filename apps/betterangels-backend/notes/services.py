@@ -263,7 +263,7 @@ def note_create(
     """
     Create a note with all nested relations atomically.
 
-    All nested params (location, moods, services, tasks) are optional,
+    All nested params (location, services, tasks) are optional,
     making this backward-compatible with callers that only send core fields.
     """
 

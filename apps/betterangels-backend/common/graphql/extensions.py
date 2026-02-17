@@ -18,11 +18,15 @@ class PermissionedQuerySet(HasRetvalPerm):
     """
     Injects a permission-filtered QuerySet into info.context.qs.
 
-    Permission enforcement is handled entirely by the filtered queryset:
-    if the user lacks access, the queryset will be empty and qs.get()
-    will raise DoesNotExist. The parent HasRetvalPerm's return-value
-    check is skipped because the mutation may return a different type
-    than the queryset model (e.g. check Note CHANGE, return MoodType).
+    The queryset is pre-filtered via ``filter_for_user`` so that only
+    objects the user has the required permissions on are accessible.
+
+    The parent ``HasRetvalPerm`` return-value permission check is skipped
+    because some mutations return a different type than the queryset model
+    (e.g. ``create_note_service_request`` checks Note CHANGE but returns a
+    ``ServiceRequestType``).  Mutations that need cross-org protection
+    must catch ``DoesNotExist`` from ``qs.get()`` and raise a
+    ``PermissionError`` explicitly.
     """
 
     def __init__(
@@ -66,12 +70,13 @@ class PermissionedQuerySet(HasRetvalPerm):
         info: Info,
         source: Any,
     ) -> Any:
-        """
-        Skip HasRetvalPerm's return-value permission check.
+        """Skip the return-value permission check.
 
-        The filtered queryset already enforces permissions — if the user
-        lacks access, qs.get() raises DoesNotExist. No need to re-check
-        perms on the returned object (which may be a different model).
+        Some mutations return a different type than ``self.model`` (e.g.
+        ``ServiceRequestType`` while checking ``NotePermissions.CHANGE``).
+        The standard ``HasRetvalPerm`` check would always fail on the
+        mismatched type.  Instead, mutations enforce access control via
+        ``qs.get()`` with an explicit ``DoesNotExist → PermissionError``.
         """
         if user is None:
             raise DjangoNoPermission

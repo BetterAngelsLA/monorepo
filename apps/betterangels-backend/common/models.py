@@ -215,7 +215,7 @@ class Location(BaseModel):
         return Point(round(point.x, p), round(point.y, p), srid=point.srid)
 
     @classmethod
-    def get_or_create_address(cls, address_data: Dict[str, Any]) -> "Address":
+    def get_or_create_address(cls, address_data: Dict[str, Any]) -> Optional["Address"]:
         """Gets or creates an address and returns it.
 
         Uses case-insensitive lookups so that 'Los Angeles' and 'los angeles'
@@ -236,16 +236,17 @@ class Location(BaseModel):
                 address = Address.objects.filter(formatted_address__iexact=formatted).first()
                 if address:
                     return address
-            # Nothing to match on — create a minimal record
-            address, _ = Address.objects.get_or_create(
-                formatted_address=formatted or "",
-                street__isnull=True,
-                city__isnull=True,
-                state__isnull=True,
-                zip_code__isnull=True,
-                defaults={"formatted_address": formatted or ""},
-            )
-            return address
+                # Create a minimal record keyed by formatted_address
+                address, _ = Address.objects.get_or_create(
+                    formatted_address=formatted,
+                    street__isnull=True,
+                    city__isnull=True,
+                    state__isnull=True,
+                    zip_code__isnull=True,
+                )
+                return address
+            # No components and no formatted address — nothing useful to store
+            return None
 
         parsed_address = cls.parse_address_components(raw_components)
 
