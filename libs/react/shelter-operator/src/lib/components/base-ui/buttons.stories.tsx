@@ -153,11 +153,11 @@ export const FloatingDark: Story = {
 };
 
 export const Playground: Story = {
-  render: (args) => (
+  render: (args: typeof meta.args) => (
     <Button
       {...args}
-      leftIcon={args.leftIcon ? <Plus /> : undefined}
-      rightIcon={args.rightIcon ? <Plus /> : undefined}
+      leftIcon={args?.leftIcon ? <Plus /> : undefined}
+      rightIcon={args?.rightIcon ? <Plus /> : undefined}
     />
   ),
   args: {
