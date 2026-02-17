@@ -92,3 +92,5 @@ export { default as TextOrNode } from './TextOrNode';
 export { default as TextRegular } from './TextRegular';
 export { default as Textarea } from './Textarea';
 export * from './types';
+export { usePlacesClient } from './hooks/usePlacesClient';
+export type { TPlacesClient } from '@monorepo/shared/places';

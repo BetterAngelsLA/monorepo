@@ -23,7 +23,6 @@
     "@graphql-codegen/cli": "*",
     "@apollo/client": "*",
     "react-native": "*",
-    "axios": "*",
     "react": "*",
     "expo-constants": "*",
     "expo-updates": "*",

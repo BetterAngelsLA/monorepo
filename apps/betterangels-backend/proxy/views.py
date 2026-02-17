@@ -39,26 +39,18 @@ def google_maps_api(request: HttpRequest, path: str) -> HttpResponse:
 
 
 @login_required
-def google_places_api(request: HttpRequest, action: str) -> HttpResponse:
+def google_places_api(request: HttpRequest, path: str) -> HttpResponse:
     """
     Proxies a request to the Google Places API (New).
-    This endpoint supports the new Places API which uses POST requests with JSON body.
+    Supports both GET and POST requests to any endpoint under places/v1/.
     Args:
         request (HttpRequest): The original HTTP request sent to the Django server.
-        action (str): The specific action to call on the Places API (e.g., 'autocomplete').
+        path (str): The path to append to the Places API base URL.
     Returns:
         HttpResponse: The HTTP response returned from the Google Places API,
                       re-packaged as a Django JsonResponse.
     """
-    if request.method != "POST":
-        return JsonResponse({"error": "Only POST requests are supported"}, status=405)
-
-    try:
-        body = json.loads(request.body) if request.body else {}
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON body"}, status=400)
-
-    google_places_api_url = f"https://places.googleapis.com/v1/places:{action}"
+    google_places_api_url = f"https://places.googleapis.com/v1/{path}"
 
     headers = {
         "Content-Type": "application/json",
@@ -71,7 +63,17 @@ def google_places_api(request: HttpRequest, action: str) -> HttpResponse:
         headers["X-Goog-FieldMask"] = field_mask
 
     try:
-        response = requests.post(google_places_api_url, json=body, headers=headers)
+        if request.method == "POST":
+            try:
+                body = json.loads(request.body) if request.body else {}
+            except json.JSONDecodeError:
+                return JsonResponse({"error": "Invalid JSON body"}, status=400)
+            response = requests.post(google_places_api_url, json=body, headers=headers)
+        elif request.method == "GET":
+            response = requests.get(google_places_api_url, headers=headers, params=request.GET.dict())
+        else:
+            return JsonResponse({"error": "Only GET and POST requests are supported"}, status=405)
+
         response.raise_for_status()
         response_data = response.json()
     except requests.RequestException:

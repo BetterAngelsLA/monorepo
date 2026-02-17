@@ -32,7 +32,6 @@
     "@types/validator": "^13.15.0",
     "@vis.gl/react-google-maps": "^1.7.1",
     "apollo-upload-client": "^19.0.0",
-    "axios": "^1.8.2",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.6.0",

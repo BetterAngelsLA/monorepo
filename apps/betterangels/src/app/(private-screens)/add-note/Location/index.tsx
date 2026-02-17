@@ -8,11 +8,13 @@ import {
   UpdateNoteLocationDocument,
   useModalScreen,
 } from '@monorepo/expo/betterangels';
-import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
-import { reverseGeocode } from '@monorepo/expo/shared/services';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
+import {
+  FieldCard,
+  TextMedium,
+  usePlacesClient,
+} from '@monorepo/expo/shared/ui-components';
 import * as ExpoLocation from 'expo-location';
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -75,7 +77,7 @@ export default function LocationComponent(props: ILocationProps) {
     setErrors,
   } = props;
 
-  const { baseUrl } = useApiConfig();
+  const places = usePlacesClient();
   const [updateNoteLocation] = useMutation(UpdateNoteLocationDocument);
 
   const [location, setLocation] = useState<TLocation>({
@@ -117,7 +119,9 @@ export default function LocationComponent(props: ILocationProps) {
             address: data.address
               ? {
                   formattedAddress: data.address,
-                  addressComponents: JSON.stringify(data.addressComponents),
+                  addressComponents: JSON.stringify(
+                    data.addressComponents ?? []
+                  ),
                 }
               : null,
           },
@@ -154,11 +158,7 @@ export default function LocationComponent(props: ILocationProps) {
           longitude = userCurrentLocation.coords.longitude;
         }
 
-        const geocodeResult = await reverseGeocode({
-          baseUrl,
-          latitude,
-          longitude,
-        });
+        const geocodeResult = await places.reverseGeocode(latitude, longitude);
 
         const newLocation: TLocation = {
           latitude,
@@ -179,7 +179,7 @@ export default function LocationComponent(props: ILocationProps) {
                   ? {
                       formattedAddress: geocodeResult.formattedAddress,
                       addressComponents: JSON.stringify(
-                        geocodeResult.addressComponents
+                        geocodeResult.addressComponents ?? []
                       ),
                     }
                   : null,
@@ -193,7 +193,7 @@ export default function LocationComponent(props: ILocationProps) {
     };
 
     void autoSetInitialLocation();
-  }, [point, address, baseUrl, noteId, updateNoteLocation, location]);
+  }, [point, address, places, noteId, updateNoteLocation, location]);
 
   return (
     <FieldCard
