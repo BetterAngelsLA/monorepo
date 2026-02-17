@@ -218,12 +218,10 @@ def note_create(
     making this backward-compatible with callers that only send core fields.
     """
 
-    # --- Location ---
     location = None
     if location_data:
         location = Location.get_or_create_location(location_data)
 
-    # --- Note ---
     note = Note.objects.create(
         purpose=purpose,
         team=team,
@@ -247,7 +245,6 @@ def note_create(
         ],
     )
 
-    # --- Provided services ---
     if provided_services:
         note_service_request_create(
             user=user,
@@ -257,7 +254,6 @@ def note_create(
             sr_type=ServiceRequestTypeEnum.PROVIDED,
         )
 
-    # --- Requested services ---
     if requested_services:
         note_service_request_create(
             user=user,
@@ -267,7 +263,6 @@ def note_create(
             sr_type=ServiceRequestTypeEnum.REQUESTED,
         )
 
-    # --- Tasks ---
     if tasks:
         task_create(
             user=user,

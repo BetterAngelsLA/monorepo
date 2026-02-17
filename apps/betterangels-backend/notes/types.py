@@ -213,9 +213,6 @@ class NoteType:
         return root._private_details
 
 
-# --- Nested inputs for note creation/update ---
-
-
 @strawberry.input
 class CreateNoteServiceInput:
     """A service to attach to a note (either by existing service ID or custom 'other' label).
