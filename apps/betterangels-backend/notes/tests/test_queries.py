@@ -39,18 +39,21 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "point": self.point,
             "pointOfInterest": self.point_of_interest,
         }
-        # Update fields using the fixture
+        # Update scalar fields
         self._update_note_fixture(
             {
                 "id": note_id,
                 "interactedAt": "2024-03-12T11:12:13+00:00",
                 "isSubmitted": False,
-                "location": location_input,
                 "privateDetails": "Updated private details",
                 "publicDetails": "Updated public details",
                 "purpose": "Updated Note",
                 "team": SelahTeamEnum.WDI_ON_SITE.name,
             }
+        )
+        # Update location via dedicated mutation
+        self._update_note_location_fixture(
+            {"id": note_id, "location": location_input}
         )
 
         # Add purposes and next steps
