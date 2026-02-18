@@ -12,10 +12,6 @@ import { useSnackbar, useUser } from '../../../hooks';
 import { UpdateUserProfileDocument } from './__generated__/UpdateUserProfile.generated';
 import { formFieldNames, FormSchema, type TFormSchema } from './formSchema';
 
-type TProps = { id: string };
-
-export function UserProfileEdit(props: TProps) {
-  const { id } = props;
   const { user } = useUser();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -49,7 +45,6 @@ export function UserProfileEdit(props: TProps) {
   const onSubmit: SubmitHandler<TFormSchema> = async (values) => {
     try {
       const data: UpdateUserProfileInput = {
-        id,
         firstName: values.firstName.trim() || undefined,
         lastName: values.lastName.trim() || undefined,
       };

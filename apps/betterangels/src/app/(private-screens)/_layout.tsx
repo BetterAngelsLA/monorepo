@@ -153,7 +153,7 @@ export default function PrivateLayout() {
         })}
       />
       <Stack.Screen
-        name="user-profile/[id]"
+        name="user-profile/edit"
         options={{
           headerStyle: {
             backgroundColor: Colors.BRAND_DARK_BLUE,

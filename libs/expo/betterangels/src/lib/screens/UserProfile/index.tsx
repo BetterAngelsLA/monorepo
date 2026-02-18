@@ -31,13 +31,11 @@ export default function UserProfile() {
           regular
           title="Edit"
           accessibilityHint="goes to the edit user profile screen"
-          onPress={() =>
-            router.navigate({ pathname: `/user-profile/${user?.id}` })
-          }
+          onPress={() => router.navigate({ pathname: '/user-profile/edit' })}
         />
       ),
     });
-  }, [user?.id]);
+  }, [user, navigation, router]);
 
   const [deleteCurrentUser] = useMutation(DeleteCurrentUserDocument);
   const userInfo = [
