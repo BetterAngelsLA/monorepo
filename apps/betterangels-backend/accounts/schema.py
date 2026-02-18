@@ -140,7 +140,7 @@ class Mutation:
         missing `Info` type resolution error. Revisit and simplify back to
         `auth.logout()` once that upstream issue is resolved.
         """
-        user = info.context.get_user()
+        user = get_current_user(info)
         ret = bool(user and user.is_authenticated)
         auth.logout(info.context.request)
         return ret
