@@ -76,7 +76,7 @@ class CreateShelterInput:
     funders: List[FunderChoices]
 
     # Custom field types — can't be auto-derived from Django model fields
-    organization: Optional[ID] = None
+    organization: ID
     location: Optional[ShelterLocationInput] = None
     operating_hours: Optional[List[TimeRangeInput]] = None
     intake_hours: Optional[List[TimeRangeInput]] = None

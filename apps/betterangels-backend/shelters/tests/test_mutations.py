@@ -36,6 +36,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             "input": {
                 "name": "Test Shelter",
                 "description": "A test shelter for unit testing",
+                "organization": str(self.org_1.pk),
                 "accessibility": [],
                 "demographics": [],
                 "specialSituationRestrictions": [],
@@ -98,6 +99,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             "input": {
                 "name": "Full Featured Shelter",
                 "description": "A shelter with all the bells and whistles",
+                "organization": str(self.org_1.pk),
                 "email": "info@shelter.org",
                 "phone": "+13105551234",
                 "website": "https://www.shelter.org",
@@ -177,6 +179,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             "input": {
                 "name": "Pet Friendly Shelter",
                 "description": "A shelter that welcomes pets",
+                "organization": str(self.org_1.pk),
                 "accessibility": ["WHEELCHAIR_ACCESSIBLE"],
                 "demographics": ["FAMILIES", "SINGLE_WOMEN"],
                 "specialSituationRestrictions": [],
@@ -238,6 +241,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             "input": {
                 "name": "Downtown Shelter",
                 "description": "Located in downtown LA",
+                "organization": str(self.org_1.pk),
                 "location": {
                     "place": "123 Main St, Los Angeles, CA 90012",
                     "latitude": 34.0522,
@@ -300,6 +304,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         variables = {
             "input": {
                 "name": "Incomplete Shelter",
+                "organization": str(self.org_1.pk),
                 # Missing description - should fail
                 "accessibility": [],
                 "demographics": [],
@@ -350,6 +355,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             "input": {
                 "name": "Reviewed Shelter",
                 "description": "A well-reviewed shelter",
+                "organization": str(self.org_1.pk),
                 "overallRating": 4,
                 "subjectiveReview": "Clean facilities with helpful staff",
                 "accessibility": [],
@@ -400,6 +406,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             "input": {
                 "name": "Persistent Shelter",
                 "description": "This should be in the database",
+                "organization": str(self.org_1.pk),
                 "accessibility": [],
                 "demographics": [],
                 "specialSituationRestrictions": [],

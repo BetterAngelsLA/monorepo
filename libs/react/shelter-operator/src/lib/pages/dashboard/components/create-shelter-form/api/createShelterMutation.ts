@@ -8,8 +8,10 @@ import type { ShelterFormData } from '../../../formTypes';
 import { sanitizeString } from '../utils/formUtils';
 
 export { CreateShelterDocument as CREATE_SHELTER_MUTATION };
-export type { CreateShelterMutation as CreateShelterMutationResult };
-export type { CreateShelterMutationVariables };
+export type {
+  CreateShelterMutation as CreateShelterMutationResult,
+  CreateShelterMutationVariables,
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -21,22 +23,50 @@ const compactEnumValues = <T extends string>(values: readonly T[]): T[] =>
 const numberOrUndefined = (value: number | null | undefined) =>
   typeof value === 'number' && !Number.isNaN(value) ? value : undefined;
 
+/** Normalise a time string ("HH:MM" or "HH:MM:SS") to "HH:MM:SS", or return undefined. */
+const timeOrUndefined = (
+  value: string | null | undefined
+): string | undefined => {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  // Accept HH:MM or HH:MM:SS
+  if (/^\d{2}:\d{2}$/.test(trimmed)) return `${trimmed}:00`;
+  if (/^\d{2}:\d{2}:\d{2}$/.test(trimmed)) return trimmed;
+  return undefined;
+};
+
+/** Ensure a URL has a scheme, or return undefined if empty. */
+const urlOrUndefined = (
+  value: string | null | undefined
+): string | undefined => {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+};
+
 // ---------------------------------------------------------------------------
 // Build the mutation input from form state
 // ---------------------------------------------------------------------------
 
 export const buildCreateShelterInput = (
   formData: ShelterFormData,
+  organizationId: string
 ): CreateShelterInput => {
   return {
     // Required
     name: formData.name.trim(),
     description: formData.description.trim(),
 
+    // Organization
+    organization: organizationId,
+
     // M2M enum arrays
     accessibility: compactEnumValues(formData.accessibility),
     demographics: compactEnumValues(formData.demographics),
-    specialSituationRestrictions: compactEnumValues(formData.specialSituationRestrictions),
+    specialSituationRestrictions: compactEnumValues(
+      formData.specialSituationRestrictions
+    ),
     shelterTypes: compactEnumValues(formData.shelterTypes),
     roomStyles: compactEnumValues(formData.roomStyles),
     storage: compactEnumValues(formData.storage),
@@ -58,7 +88,7 @@ export const buildCreateShelterInput = (
     // Optional strings
     email: sanitizeString(formData.email),
     phone: sanitizeString(formData.phone),
-    website: sanitizeString(formData.website),
+    website: urlOrUndefined(formData.website),
     instagram: sanitizeString(formData.instagram),
     otherRules: sanitizeString(formData.otherRules),
     otherServices: sanitizeString(formData.otherServices),
@@ -85,15 +115,13 @@ export const buildCreateShelterInput = (
     cityCouncilDistrict: formData.cityCouncilDistrict ?? undefined,
     supervisorialDistrict: formData.supervisorialDistrict ?? undefined,
     overallRating: formData.overallRating ?? undefined,
-    curfew: sanitizeString(formData.curfew),
+    curfew: timeOrUndefined(formData.curfew),
 
     // Structured types — passed directly, no parsing needed
     location: formData.location ?? undefined,
     operatingHours: formData.operatingHours.length
       ? formData.operatingHours
       : undefined,
-    intakeHours: formData.intakeHours.length
-      ? formData.intakeHours
-      : undefined,
+    intakeHours: formData.intakeHours.length ? formData.intakeHours : undefined,
   };
 };

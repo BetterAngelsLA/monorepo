@@ -601,7 +601,7 @@ input CreateShelterInput {
   spa: [SPAChoices!]!
   shelterPrograms: [ShelterProgramChoices!]!
   funders: [FunderChoices!]!
-  organization: ID = null
+  organization: ID!
   location: ShelterLocationInput = null
   operatingHours: [TimeRangeInput!] = null
   intakeHours: [TimeRangeInput!] = null

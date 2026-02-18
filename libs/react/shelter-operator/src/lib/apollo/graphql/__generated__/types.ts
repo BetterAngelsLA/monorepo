@@ -609,7 +609,7 @@ export type CreateShelterInput = {
   name: Scalars['String']['input'];
   onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
   operatingHours?: InputMaybe<Array<TimeRangeInput>>;
-  organization?: InputMaybe<Scalars['ID']['input']>;
+  organization: Scalars['ID']['input'];
   otherRules?: InputMaybe<Scalars['String']['input']>;
   otherServices?: InputMaybe<Scalars['String']['input']>;
   overallRating?: InputMaybe<Scalars['Int']['input']>;

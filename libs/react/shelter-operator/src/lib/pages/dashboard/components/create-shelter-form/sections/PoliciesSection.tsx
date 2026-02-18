@@ -1,12 +1,12 @@
 import { ExitPolicyChoices } from '@monorepo/react/shelter';
 import { memo } from 'react';
-import { BOOLEAN_OPTIONS, EXIT_POLICY_OPTIONS } from '../../../formOptions';
 import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
 import { FormSection } from '../../../../../components/form/FormSection';
 import { NumberField } from '../../../../../components/form/NumberField';
 import { RadioGroup } from '../../../../../components/form/RadioGroup';
 import { TextAreaField } from '../../../../../components/form/TextAreaField';
 import { TextField } from '../../../../../components/form/TextField';
+import { BOOLEAN_OPTIONS, EXIT_POLICY_OPTIONS } from '../../../formOptions';
 import type { SectionProps } from '../types';
 
 export const PoliciesSection = memo(function PoliciesSection({
@@ -28,9 +28,9 @@ export const PoliciesSection = memo(function PoliciesSection({
         id="curfew"
         name="curfew"
         label="Curfew"
+        type="time"
         value={data.curfew}
         onChange={(value) => onChange('curfew', value)}
-        helperText='Enter curfew time (e.g. "22:00:00").'
         error={errors.curfew}
       />
       <RadioGroup
@@ -56,7 +56,10 @@ export const PoliciesSection = memo(function PoliciesSection({
         values={data.exitPolicy}
         onChange={(values) => {
           onChange('exitPolicy', values);
-          if (!values.includes(ExitPolicyChoices.Other) && data.exitPolicyOther) {
+          if (
+            !values.includes(ExitPolicyChoices.Other) &&
+            data.exitPolicyOther
+          ) {
             onChange('exitPolicyOther', '');
           }
         }}
