@@ -111,11 +111,7 @@ class UpdateUserProfileTests(CurrentUserGraphQLBaseTestCase, TestCase):
 
     def test_update_user_profile(self) -> None:
         self.graphql_client.force_login(self.user)
-        variables = {
-            "id": str(self.user.pk),
-            "firstName": "Up",
-            "lastName": "Date",
-        }
+        variables = {"firstName": "Up", "lastName": "Date"}
 
         response = self.execute_graphql(self.mutation, {"data": variables})
         self.assertIsNone(response.get("errors"), response.get("errors"))
@@ -131,11 +127,9 @@ class UpdateUserProfileTests(CurrentUserGraphQLBaseTestCase, TestCase):
 
     def test_update_user_profile_empty_value(self) -> None:
         self.graphql_client.force_login(self.user)
+        variables = {"firstName": "  ", "lastName": "Date"}
 
-        response = self.execute_graphql(
-            self.mutation,
-            {"data": {"id": str(self.user.pk), "firstName": "  ", "lastName": "Date"}},
-        )
+        response = self.execute_graphql(self.mutation, {"data": variables})
         self.assertIsNotNone(response.get("errors"))
         self.assertEqual(len(response["errors"]), 1)
         self.assertIn("Value cannot be blank.", response["errors"][0]["message"])
