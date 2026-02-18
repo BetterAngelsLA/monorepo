@@ -11,7 +11,7 @@ const INITIAL_LOCATION = {
 export function useInitialLocation(
   editing: boolean | undefined,
   location: LocationDraft | undefined,
-  setValue: (name: 'location', value: LocationDraft) => void
+  setValue?: (name: 'location', value: LocationDraft) => void
 ) {
   const places = usePlacesClient();
   const [userLocation, setUserLocation] =
@@ -40,14 +40,16 @@ export function useInitialLocation(
 
         const geocodeResult = await places.reverseGeocode(latitude, longitude);
 
-        setValue('location', {
-          ...location,
-          longitude,
-          latitude,
-          formattedAddress: geocodeResult.formattedAddress,
-          shortAddressName: geocodeResult.shortAddress,
-          components: geocodeResult.addressComponents,
-        } as LocationDraft);
+        if (setValue) {
+          setValue('location', {
+            ...location,
+            longitude,
+            latitude,
+            formattedAddress: geocodeResult.formattedAddress,
+            shortAddressName: geocodeResult.shortAddress,
+            components: geocodeResult.addressComponents,
+          } as LocationDraft);
+        }
       } catch (err) {
         console.error('Error auto-setting initial location', err);
       }

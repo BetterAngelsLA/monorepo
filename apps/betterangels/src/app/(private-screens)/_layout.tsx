@@ -233,6 +233,12 @@ export default function PrivateLayout() {
         })}
       />
       <Stack.Screen
+        name="settings/location/index"
+        options={getDefaultStackNavOptions({
+          title: 'Select Default Location',
+        })}
+      />
+      <Stack.Screen
         name="tasks"
         options={getDefaultStackNavOptions({
           title: 'Tasks',
