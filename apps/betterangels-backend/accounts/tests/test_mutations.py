@@ -129,7 +129,6 @@ class UpdateUserProfileTests(CurrentUserGraphQLBaseTestCase, TestCase):
         self.assertEqual(self.user.first_name, "Up")
         self.assertEqual(self.user.last_name, "Date")
 
-
     def test_update_user_profile_empty_value(self) -> None:
         self.graphql_client.force_login(self.user)
 
