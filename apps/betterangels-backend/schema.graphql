@@ -564,6 +564,8 @@ input DeleteDjangoObjectInput {
   id: ID!
 }
 
+union DeleteHmisNotePayload = DeletedObjectType | OperationInfo
+
 union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
 
 union DeleteMoodPayload = DeletedObjectType | OperationInfo
@@ -1216,6 +1218,7 @@ type Mutation {
   updateHmisClientProfile(data: UpdateHmisClientProfileInput!): UpdateHmisClientProfilePayload! @hmisDirective @isHmisAuthenticated
   createHmisNote(data: CreateHmisNoteInput!): CreateHmisNotePayload! @hmisDirective @isHmisAuthenticated
   updateHmisNote(data: UpdateHmisNoteInput!): UpdateHmisNotePayload! @hmisDirective @isHmisAuthenticated
+  deleteHmisNote(id: ID!): DeleteHmisNotePayload! @hmisDirective @isHmisAuthenticated
   createHmisClientProgram(clientId: Int!, programHmisId: Int!): CreateHmisClientProgramPayload! @hmisDirective @isHmisAuthenticated
   updateHmisNoteLocation(data: UpdateHmisNoteLocationInput!): UpdateHmisNoteLocationPayload! @hmisDirective @isHmisAuthenticated
   createHmisNoteServiceRequest(data: CreateHmisNoteServiceRequestInput!): CreateHmisNoteServiceRequestPayload! @hmisDirective @isHmisAuthenticated
@@ -2180,7 +2183,6 @@ input UpdateUserInput {
 }
 
 input UpdateUserProfileInput {
-  id: ID!
   firstName: NonEmptyString
   lastName: NonEmptyString
 }

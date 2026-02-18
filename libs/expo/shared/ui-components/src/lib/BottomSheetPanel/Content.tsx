@@ -3,7 +3,7 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 
-export default function BottomSheetModalContent({
+export default function BottomSheetPanelContent({
   children,
 }: {
   children: ReactNode;

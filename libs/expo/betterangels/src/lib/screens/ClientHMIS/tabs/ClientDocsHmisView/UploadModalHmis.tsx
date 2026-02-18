@@ -22,6 +22,13 @@ import { getClientFilesQueryKey } from '../../../../hooks/hmisFileMetadata/useCl
 import { FileUploadsPreview } from '../../../../ui-components';
 import { FileCategorySelector } from './FileCategorySelector';
 
+export type TFileCategorySelection = {
+  categoryId: string;
+  categoryName: string;
+  subCategoryId: string;
+  customFilename?: string;
+};
+
 function toErrorMessage(err: unknown): string {
   if (err instanceof HmisInvalidFileTypeError) {
     const receivedType = err.data?.received;
@@ -54,12 +61,10 @@ export default function UploadModalHmis(props: TProps) {
 
   const { showSnackbar } = useSnackbar();
   const [document, setDocument] = useState<ReactNativeFile | undefined>();
-  const [documentCategory, setDocumentCategory] = useState({
-    categoryId: '',
-    categoryName: '',
-    subCategoryId: '',
-  });
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [fileSelection, setFileSelection] =
+    useState<TFileCategorySelection | null>(null);
+
+  const [mediaPickerVisible, setMediaPickerVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   const { uploadClientFile } = useHmisClient();
@@ -103,26 +108,41 @@ export default function UploadModalHmis(props: TProps) {
     try {
       setIsUploading(true);
 
-      if (!clientHmisId || !document) {
-        throw new Error('onSubmit called without client or document');
+      if (!clientHmisId || !document || !fileSelection) {
+        throw new Error('Missing client, document or file name/category');
       }
 
       const { uri, type, name } = document;
-      const { categoryId, subCategoryId } = documentCategory;
+      const { categoryId, subCategoryId, customFilename } = fileSelection;
+
+      if (!categoryId || !subCategoryId) {
+        throw new Error('Missing category or subcategory Id');
+      }
+
+      const parsedCategoryId = parseInt(categoryId, 10);
+      const parsedSubCategoryId = parseInt(subCategoryId, 10);
+
+      const customFileName =
+        parsedSubCategoryId === 0 ? customFilename?.trim() : undefined;
+
+      if (parsedSubCategoryId === 0 && !customFileName) {
+        throw new Error('No filename entered for subcategory_id [0]');
+      }
 
       const fileBase64 = await readFileAsBase64(uri);
 
-      await uploadClientFile(
-        clientHmisId.trim(),
-        {
+      await uploadClientFile({
+        clientId: clientHmisId.trim(),
+        file: {
           content: fileBase64,
           name: name.trim(),
           mimeType: type as AllowedFileType,
         },
-        parseInt(categoryId, 10),
-        parseInt(subCategoryId, 10),
-        false
-      );
+        categoryId: parsedCategoryId,
+        fileNameId: parsedSubCategoryId,
+        customFileName,
+        isPrivate: false,
+      });
 
       onUploadSuccess();
     } catch (err) {
@@ -151,10 +171,10 @@ export default function UploadModalHmis(props: TProps) {
           : undefined
       }
     >
-      {!!document && (
+      {!!document && fileSelection && (
         <FileUploadsPreview
           disabled={isUploading}
-          title={`Upload ${documentCategory.categoryName}`}
+          title={`Upload ${fileSelection.categoryName}`}
           files={[document]}
           onRemoveFile={() => setDocument(undefined)}
         />
@@ -165,13 +185,23 @@ export default function UploadModalHmis(props: TProps) {
           disabled={isUploading}
           categories={fileCategories}
           subCategories={fileCategoryFileNames}
-          onSelect={({ categoryId, categoryName, subCategoryId }) => {
-            setDocumentCategory({
-              categoryId,
-              subCategoryId,
-              categoryName,
-            });
-            setIsModalVisible(true);
+          onSelect={(selection) => {
+            if (selection.type === 'predefined') {
+              setFileSelection({
+                categoryId: selection.categoryId,
+                subCategoryId: selection.subCategoryId,
+                categoryName: selection.categoryName,
+              });
+            } else {
+              setFileSelection({
+                categoryId: selection.categoryId,
+                subCategoryId: '0',
+                categoryName: selection.categoryName,
+                customFilename: selection.fileName,
+              });
+            }
+
+            setMediaPickerVisible(true);
           }}
         />
       )}
@@ -181,8 +211,8 @@ export default function UploadModalHmis(props: TProps) {
           setDocument(file);
         }}
         allowMultiple={false}
-        setModalVisible={setIsModalVisible}
-        isModalVisible={isModalVisible}
+        setModalVisible={setMediaPickerVisible}
+        isModalVisible={mediaPickerVisible}
         setFiles={(files) => {
           setDocument(files[0]);
         }}

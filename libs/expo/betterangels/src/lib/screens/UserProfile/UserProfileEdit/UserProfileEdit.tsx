@@ -12,6 +12,7 @@ import { useSnackbar, useUser } from '../../../hooks';
 import { UpdateUserProfileDocument } from './__generated__/UpdateUserProfile.generated';
 import { formFieldNames, FormSchema, type TFormSchema } from './formSchema';
 
+export function UserProfileEdit() {
   const { user } = useUser();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();

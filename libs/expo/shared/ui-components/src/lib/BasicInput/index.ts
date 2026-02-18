@@ -1,1 +1,1 @@
-export { BasicInput as default } from './BasicInput';
+export { BasicInput as default, type IBasicInputProps } from './BasicInput';
