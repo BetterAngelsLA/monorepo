@@ -217,12 +217,18 @@ class ReferralRequirement(models.Model):
         return str(self.name)
 
 
+from .managers import AdminShelterManager  # noqa: E402
+
+
 @pghistory.track(
     pghistory.InsertEvent("shelter.add"),
     pghistory.UpdateEvent("shelter.update"),
     pghistory.DeleteEvent("shelter.remove"),
 )
 class Shelter(BaseModel):
+    objects: models.Manager["Shelter"] = models.Manager()
+    admin_objects = AdminShelterManager()
+
     # Basic Information
     name = models.CharField(max_length=255)
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, blank=True, null=True)

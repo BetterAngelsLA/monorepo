@@ -30,7 +30,7 @@ from shelters.enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
-from strawberry import ID, asdict, auto
+from strawberry import ID, Info, asdict, auto
 
 
 @strawberry_django.type(models.ContactInfo)
@@ -167,7 +167,22 @@ class ShelterPropertyInput:
 
 @strawberry_django.filter_type(models.Shelter)
 class ShelterFilter:
-    organization: auto
+    @strawberry_django.filter_field
+    def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
+        request = info.context.request
+        user = request.user
+
+        if not user.is_authenticated:
+            if not value:
+                return Q()
+
+            return Q(**{f"{prefix}organization__in": value})
+
+        allowed_organizations = user.organizations_organization.all()
+        if value:
+            allowed_organizations = allowed_organizations.filter(pk__in=value)
+
+        return Q(**{f"{prefix}organization__in": allowed_organizations})
 
     @strawberry_django.filter_field
     def properties(
@@ -230,8 +245,7 @@ class TimeRange:
     end: Optional[datetime]
 
 
-@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
-class ShelterType:
+class ShelterTypeMixin:
     id: ID
     accessibility: List[AccessibilityType]
     additional_contacts: List[ContactInfoType]
@@ -330,3 +344,16 @@ class ShelterType:
                 else:
                     ranges.append(None)
         return ranges or None
+
+
+@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
+class ShelterType(ShelterTypeMixin):
+    pass
+
+
+@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
+class AdminShelterType(ShelterTypeMixin):
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet:  # type: ignore[override]
+        user = info.context.request.user
+        return queryset.model.admin_objects.for_user(user)  # type: ignore[no-any-return, attr-defined]
