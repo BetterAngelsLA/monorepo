@@ -1,7 +1,5 @@
 """Shared fixtures and test configuration for reports app tests."""
 
-from __future__ import annotations
-
 from model_bakery import baker
 from organizations.fields import SlugField
 
