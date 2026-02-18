@@ -20,7 +20,10 @@ export type Scalars = {
   JSON: { input: any; output: any; }
   LatitudeScalar: { input: any; output: any; }
   LongitudeScalar: { input: any; output: any; }
+  /** Coerces blank input to None. Use for optional string fields where blank means 'no value'. */
   NonBlankString: { input: string; output: string; }
+  /** Rejects blank input. Use for required string fields. */
+  NonEmptyString: { input: any; output: any; }
   PhoneNumber: { input: any; output: any; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
   Point: { input: any; output: any; }
@@ -1207,6 +1210,7 @@ export type Mutation = {
   updateServiceRequest: UpdateServiceRequestPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
+  updateUserProfile: UpdateUserProfilePayload;
 };
 
 
@@ -1459,6 +1463,11 @@ export type MutationUpdateSocialMediaProfileArgs = {
 
 export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
+};
+
+
+export type MutationUpdateUserProfileArgs = {
+  data: UpdateUserProfileInput;
 };
 
 export type NoteDataImportType = {
@@ -2611,6 +2620,13 @@ export type UpdateUserInput = {
   lastName?: InputMaybe<Scalars['NonBlankString']['input']>;
   middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
 };
+
+export type UpdateUserProfileInput = {
+  firstName?: InputMaybe<Scalars['NonEmptyString']['input']>;
+  lastName?: InputMaybe<Scalars['NonEmptyString']['input']>;
+};
+
+export type UpdateUserProfilePayload = CurrentUserType | OperationInfo;
 
 export enum UserOrganizationPermissions {
   AccessOrgPortal = 'ACCESS_ORG_PORTAL',
