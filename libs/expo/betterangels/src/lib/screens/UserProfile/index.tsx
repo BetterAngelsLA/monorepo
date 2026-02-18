@@ -30,7 +30,7 @@ export default function UserProfile() {
           color={Colors.WHITE}
           regular
           title="Edit"
-          accessibilityHint="goes to the edit interaction screen"
+          accessibilityHint="goes to the edit user profile screen"
           onPress={() =>
             router.navigate({ pathname: `/user-profile/${user?.id}` })
           }
