@@ -1,4 +1,4 @@
-query GetFeatureControls {
+query GetBaFeatureControls {
   featureControls {
     flags {
       name

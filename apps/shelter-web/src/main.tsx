@@ -1,8 +1,10 @@
 import { ApolloProvider } from '@apollo/client/react';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
-import { FeatureControlProvider } from '@monorepo/react/shared';
 import { createApolloClient } from '@monorepo/react/shared/apollo';
-import { createShelterTypePolicies } from '@monorepo/react/shelter';
+import {
+  ShelterFeatureControlProvider,
+  createShelterTypePolicies,
+} from '@monorepo/react/shelter';
 import {
   ApiConfigProvider,
   AuthProvider,
@@ -45,7 +47,7 @@ root.render(
   <StrictMode>
     <ApiConfigProvider apiUrl={apiUrl}>
       <ApolloProvider client={apolloClient}>
-        <FeatureControlProvider>
+        <ShelterFeatureControlProvider>
           <BrowserRouter basename={basename}>
             <UserProvider>
               <AuthProvider>
@@ -53,7 +55,7 @@ root.render(
               </AuthProvider>
             </UserProvider>
           </BrowserRouter>
-        </FeatureControlProvider>
+        </ShelterFeatureControlProvider>
       </ApolloProvider>
     </ApiConfigProvider>
   </StrictMode>

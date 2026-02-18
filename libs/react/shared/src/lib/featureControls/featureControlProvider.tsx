@@ -1,78 +1,35 @@
-import { useQuery, useApolloClient } from '@apollo/client/react';
-import { useEffect, useState } from 'react';
-import {
-  FeatureControlContext,
-  FeatureControlDictionary,
-  FeatureControlGroups,
-} from './featureControlContext';
-import {
-  GetFeatureControlsDocument,
-  GetFeatureControlsQuery,
-} from './__generated__/featureControlProvider.generated';
+import { ReactElement, ReactNode } from 'react';
+import { FeatureControlGroups } from './types';
+import { FeatureControlContext } from './featureControlContext';
 
 interface FeatureControlProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  featureControls: FeatureControlGroups;
+  loading: boolean;
+  error?: Error;
+  refetchFeatureFlags: () => Promise<unknown>;
+  clearFeatureFlags?: () => void;
 }
 
-type FeatureControlItem = {
-  name: string;
-  isActive?: boolean | null;
-  lastModified?: any | null;
-};
-
-const toDictionary = (items: FeatureControlItem[]): FeatureControlDictionary =>
-  items.reduce((acc, item) => {
-    acc[item.name] = {
-      isActive: item.isActive ?? false,
-      lastModified: item.lastModified ?? null,
-    };
-    return acc;
-  }, {} as FeatureControlDictionary);
-
-export const FeatureControlProvider = ({
+export function FeatureControlProvider({
   children,
-}: FeatureControlProviderProps): React.ReactElement => {
-  const [featureControlGroups, setFeatureControlGroups] =
-    useState<FeatureControlGroups>({
-      flags: {},
-      switches: {},
-      samples: {},
-    });
-
-  const client = useApolloClient();
-  const { data, refetch, loading, error } = useQuery<GetFeatureControlsQuery>(
-    GetFeatureControlsDocument,
-    {
-      fetchPolicy: 'network-only',
-    }
-  );
-
-  const clearFeatureFlags = () => {
-    client.cache.evict({ fieldName: 'featureControls' });
-    client.cache.gc();
-  };
-
-  useEffect(() => {
-    if (data?.featureControls) {
-      setFeatureControlGroups({
-        flags: toDictionary(data.featureControls.flags),
-        switches: toDictionary(data.featureControls.switches),
-        samples: toDictionary(data.featureControls.samples),
-      });
-    }
-  }, [data]);
-
+  featureControls,
+  loading,
+  error,
+  refetchFeatureFlags,
+  clearFeatureFlags = () => {},
+}: FeatureControlProviderProps): ReactElement {
   return (
     <FeatureControlContext.Provider
       value={{
-        ...featureControlGroups,
+        ...featureControls,
         loading,
         error,
-        refetchFeatureFlags: refetch,
+        refetchFeatureFlags,
         clearFeatureFlags,
       }}
     >
       {children}
     </FeatureControlContext.Provider>
   );
-};
+}
