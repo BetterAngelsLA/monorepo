@@ -203,7 +203,6 @@ class OrgInvitationInput:
 
 @strawberry.input
 class UpdateUserProfileInput:
-    id: ID
     first_name: Optional[NonEmptyString] = strawberry.UNSET
     last_name: Optional[NonEmptyString] = strawberry.UNSET
 

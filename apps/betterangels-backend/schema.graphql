@@ -2180,7 +2180,6 @@ input UpdateUserInput {
 }
 
 input UpdateUserProfileInput {
-  id: ID!
   firstName: NonEmptyString
   lastName: NonEmptyString
 }

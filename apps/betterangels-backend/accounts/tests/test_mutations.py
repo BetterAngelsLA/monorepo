@@ -129,26 +129,6 @@ class UpdateUserProfileTests(CurrentUserGraphQLBaseTestCase, TestCase):
         self.assertEqual(self.user.first_name, "Up")
         self.assertEqual(self.user.last_name, "Date")
 
-    def test_update_user_profile_other_user(self) -> None:
-        other_user = baker.make(User, first_name="Other", last_name="User")
-        self.graphql_client.force_login(self.user)
-
-        response = self.execute_graphql(
-            self.mutation,
-            {"data": {"id": str(other_user.pk), "firstName": "Up", "lastName": "Date"}},
-        )
-        payload = response["data"]["updateUserProfile"]
-        self.assertEqual(len(payload["messages"]), 1)
-        self.assertEqual(payload["messages"][0]["kind"], "PERMISSION")
-        self.assertEqual(payload["messages"][0]["message"], "You do not have permission to modify this user.")
-
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.first_name, "Dale")
-        self.assertEqual(self.user.last_name, "Cooper")
-
-        other_user.refresh_from_db()
-        self.assertEqual(other_user.first_name, "Other")
-        self.assertEqual(other_user.last_name, "User")
 
     def test_update_user_profile_empty_value(self) -> None:
         self.graphql_client.force_login(self.user)

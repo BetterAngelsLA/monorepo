@@ -162,9 +162,6 @@ class Mutation:
     def update_user_profile(self, info: Info, data: UpdateUserProfileInput) -> CurrentUserType:
         user = cast(User, get_current_user(info))
 
-        if str(user.pk) != str(data.id):
-            raise PermissionDenied("You do not have permission to modify this user.")
-
         user_data: dict = strawberry.asdict(data)
         user = resolvers.update(info, user, {**user_data, "id": user.pk})
 

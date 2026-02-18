@@ -2666,7 +2666,6 @@ export type UpdateUserInput = {
 
 export type UpdateUserProfileInput = {
   firstName?: InputMaybe<Scalars['NonEmptyString']['input']>;
-  id: Scalars['ID']['input'];
   lastName?: InputMaybe<Scalars['NonEmptyString']['input']>;
 };
 
