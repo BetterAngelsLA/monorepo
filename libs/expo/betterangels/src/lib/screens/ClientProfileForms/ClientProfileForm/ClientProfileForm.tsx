@@ -165,6 +165,11 @@ export default function ClientProfileForm(props: IClientProfileForms) {
   );
 }
 
+/** Format a Date as YYYY-MM-DD for API (avoids ISO datetime serialization). */
+function toDateOnlyString(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
 function toUpdateClienProfileInputs(
   id: string,
   values: FormValues,
@@ -180,9 +185,7 @@ function toUpdateClienProfileInputs(
   // this prevents clearing dates when the field wasn't intentionally modified
   if ('dateOfBirth' in values && dirtyFields && 'dateOfBirth' in dirtyFields) {
     if (values.dateOfBirth instanceof Date) {
-      updatedInputs.dateOfBirth = values.dateOfBirth
-        .toISOString()
-        .split('T')[0] as unknown as Date;
+      updatedInputs.dateOfBirth = toDateOnlyString(values.dateOfBirth);
     } else if (values.dateOfBirth === null) {
       updatedInputs.dateOfBirth = null;
     }
@@ -193,8 +196,15 @@ function toUpdateClienProfileInputs(
     delete values.profilePhoto;
   }
 
-  return {
+  const result: UpdateClientProfileInput = {
     ...values,
     ...updatedInputs,
   };
+
+  // Always send dateOfBirth as YYYY-MM-DD when present (Date serializes as ISO datetime)
+  if (result.dateOfBirth instanceof Date) {
+    result.dateOfBirth = toDateOnlyString(result.dateOfBirth);
+  }
+
+  return result;
 }

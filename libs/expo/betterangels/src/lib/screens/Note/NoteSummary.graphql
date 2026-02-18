@@ -34,10 +34,6 @@ query NoteSummary($id: ID!) {
         point
         pointOfInterest
       }
-      moods {
-        id
-        descriptor
-      }
       providedServices {
         id
         service {
