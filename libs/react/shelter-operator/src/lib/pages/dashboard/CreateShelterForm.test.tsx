@@ -16,7 +16,7 @@ import {
 } from './components/create-shelter-form/api/createShelterMutation';
 import { createEmptyShelterFormData } from './components/create-shelter-form/constants/defaultShelterFormData';
 import { validateShelterForm } from './components/create-shelter-form/constants/validation';
-import type { ShelterFormData } from './types';
+import type { ShelterFormData } from './formTypes';
 
 const renderForm = (mocks: MockedResponse[] = []) =>
   render(
@@ -66,7 +66,7 @@ describe('CreateShelterForm', () => {
       name: 'Safe Haven',
       description: 'Safe haven description',
       demographics: [DemographicChoices.All],
-      special_situation_restrictions: [SpecialSituationRestrictionChoices.None],
+      specialSituationRestrictions: [SpecialSituationRestrictionChoices.None],
       storage: [StorageChoices.SharedStorage],
       pets: [PetChoices.Cats],
       parking: [ParkingChoices.Automobile],

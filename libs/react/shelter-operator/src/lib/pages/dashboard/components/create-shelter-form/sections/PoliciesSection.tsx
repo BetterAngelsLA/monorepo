@@ -1,106 +1,91 @@
-import { BOOLEAN_OPTIONS, EXIT_POLICY_OPTIONS } from '../../../types';
+import { ExitPolicyChoices } from '@monorepo/react/shelter';
+import { memo } from 'react';
+import { BOOLEAN_OPTIONS, EXIT_POLICY_OPTIONS } from '../../../formOptions';
 import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
 import { FormSection } from '../../../../../components/form/FormSection';
 import { NumberField } from '../../../../../components/form/NumberField';
 import { RadioGroup } from '../../../../../components/form/RadioGroup';
-import { SingleFileField } from '../../../../../components/form/SingleFileField';
 import { TextAreaField } from '../../../../../components/form/TextAreaField';
 import { TextField } from '../../../../../components/form/TextField';
-import { TimeRangeField } from '../../../../../components/form/TimeRangeField';
 import type { SectionProps } from '../types';
-import { ExitPolicyChoices } from '@monorepo/react/shelter';
 
-export function PoliciesSection({ data, onChange, errors }: SectionProps) {
+export const PoliciesSection = memo(function PoliciesSection({
+  data,
+  onChange,
+  errors,
+}: SectionProps) {
   return (
     <FormSection title="Policies">
       <NumberField
         id="max-stay"
-        name="max_stay"
+        name="maxStay"
         label="Maximum Stay (days)"
-        value={data.max_stay}
-        onChange={value => onChange('max_stay', value)}
+        value={data.maxStay}
+        onChange={(value) => onChange('maxStay', value)}
         min={0}
       />
-      <TimeRangeField
-        id="intake-hours"
-        name="intake_hours"
-        label="Intake Hours"
-        value={data.intake_hours}
-        onChange={value => onChange('intake_hours', value)}
-        helperText="Add intake time windows"
-        error={errors.intake_hours}
-        required={false}
-      />
-      <TimeRangeField
+      <TextField
         id="curfew"
         name="curfew"
         label="Curfew"
         value={data.curfew}
-        onChange={value => onChange('curfew', value)}
-        helperText="Add curfew windows"
+        onChange={(value) => onChange('curfew', value)}
+        helperText='Enter curfew time (e.g. "22:00:00").'
         error={errors.curfew}
-        required={false}
       />
       <RadioGroup
         name="on-site-security"
         label="On-Site Security"
         options={BOOLEAN_OPTIONS}
-        value={data.on_site_security}
-        onChange={value => onChange('on_site_security', value)}
-        error={errors.on_site_security}
+        value={data.onSiteSecurity}
+        onChange={(value) => onChange('onSiteSecurity', value)}
+        error={errors.onSiteSecurity}
       />
       <RadioGroup
         name="visitors-allowed"
         label="Visitors Allowed"
         options={BOOLEAN_OPTIONS}
-        value={data.visitors_allowed}
-        onChange={value => onChange('visitors_allowed', value)}
-        error={errors.visitors_allowed}
+        value={data.visitorsAllowed}
+        onChange={(value) => onChange('visitorsAllowed', value)}
+        error={errors.visitorsAllowed}
       />
       <CheckboxGroup
         name="exit-policy"
         label="Exit Policy"
         options={EXIT_POLICY_OPTIONS}
-        values={data.exit_policy}
-        onChange={values => {
-          onChange('exit_policy', values);
-          if (!values.includes(ExitPolicyChoices.Other) && data.exit_policy_other) {
-            onChange('exit_policy_other', '');
+        values={data.exitPolicy}
+        onChange={(values) => {
+          onChange('exitPolicy', values);
+          if (!values.includes(ExitPolicyChoices.Other) && data.exitPolicyOther) {
+            onChange('exitPolicyOther', '');
           }
         }}
       />
-      {data.exit_policy.includes(ExitPolicyChoices.Other) ? (
+      {data.exitPolicy.includes(ExitPolicyChoices.Other) ? (
         <TextField
           id="exit-policy-other"
-          name="exit_policy_other"
+          name="exitPolicyOther"
           label="Other Exit Policy"
-          value={data.exit_policy_other}
-          onChange={value => onChange('exit_policy_other', value)}
+          value={data.exitPolicyOther}
+          onChange={(value) => onChange('exitPolicyOther', value)}
         />
       ) : null}
       <RadioGroup
         name="emergency-surge"
         label="Emergency Surge Options"
         options={BOOLEAN_OPTIONS}
-        value={data.emergency_surge}
-        onChange={value => onChange('emergency_surge', value)}
-        error={errors.emergency_surge}
+        value={data.emergencySurge}
+        onChange={(value) => onChange('emergencySurge', value)}
+        error={errors.emergencySurge}
       />
       <TextAreaField
         id="other-rules"
-        name="other_rules"
+        name="otherRules"
         label="Other Rules"
-        value={data.other_rules}
-        onChange={value => onChange('other_rules', value)}
+        value={data.otherRules}
+        onChange={(value) => onChange('otherRules', value)}
         rows={3}
-      />
-      <SingleFileField
-        id="agreement-form"
-        name="agreement_form"
-        label="Agreement Form"
-        value={data.agreement_form}
-        onChange={file => onChange('agreement_form', file)}
       />
     </FormSection>
   );
-}
+});

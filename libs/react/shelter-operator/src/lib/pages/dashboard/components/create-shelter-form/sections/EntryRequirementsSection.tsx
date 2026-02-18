@@ -1,54 +1,59 @@
+import { memo } from 'react';
 import {
   ENTRY_REQUIREMENTS_OPTIONS,
   REFERRAL_REQUIREMENT_OPTIONS,
-} from '../../../types';
+} from '../../../formOptions';
 import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
 import { FormSection } from '../../../../../components/form/FormSection';
 import { TextAreaField } from '../../../../../components/form/TextAreaField';
 import { TextField } from '../../../../../components/form/TextField';
 import type { SectionProps } from '../types';
 
-export function EntryRequirementsSection({ data, onChange, errors }: SectionProps) {
+export const EntryRequirementsSection = memo(function EntryRequirementsSection({
+  data,
+  onChange,
+  errors,
+}: SectionProps) {
   return (
     <FormSection title="Entry Requirements">
       <CheckboxGroup
         name="entry-requirements"
         label="Entry Requirements"
         options={ENTRY_REQUIREMENTS_OPTIONS}
-        values={data.entry_requirements}
-        onChange={values => onChange('entry_requirements', values)}
-        error={errors.entry_requirements}
+        values={data.entryRequirements}
+        onChange={(values) => onChange('entryRequirements', values)}
+        error={errors.entryRequirements}
       />
       <CheckboxGroup
         name="referral-requirement"
         label="Referral Requirement"
         options={REFERRAL_REQUIREMENT_OPTIONS}
-        values={data.referral_requirement}
-        onChange={values => onChange('referral_requirement', values)}
-        error={errors.referral_requirement}
+        values={data.referralRequirement}
+        onChange={(values) => onChange('referralRequirement', values)}
+        error={errors.referralRequirement}
       />
       <TextField
         id="bed-fees"
-        name="bed_fees"
+        name="bedFees"
         label="Bed Fees"
-        value={data.bed_fees}
-        onChange={value => onChange('bed_fees', value)}
+        value={data.bedFees}
+        onChange={(value) => onChange('bedFees', value)}
       />
       <TextField
         id="program-fees"
-        name="program_fees"
+        name="programFees"
         label="Program Fees"
-        value={data.program_fees}
-        onChange={value => onChange('program_fees', value)}
+        value={data.programFees}
+        onChange={(value) => onChange('programFees', value)}
       />
       <TextAreaField
         id="entry-info"
-        name="entry_info"
+        name="entryInfo"
         label="Entry Information"
-        value={data.entry_info}
-        onChange={value => onChange('entry_info', value)}
+        value={data.entryInfo}
+        onChange={(value) => onChange('entryInfo', value)}
         rows={3}
       />
     </FormSection>
   );
-}
+});

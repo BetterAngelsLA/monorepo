@@ -1,10 +1,20 @@
-import { ACCESSIBILITY_OPTIONS, STORAGE_OPTIONS, PETS_OPTIONS, PARKING_OPTIONS } from '../../../types';
+import { memo } from 'react';
+import {
+  ACCESSIBILITY_OPTIONS,
+  PARKING_OPTIONS,
+  PETS_OPTIONS,
+  STORAGE_OPTIONS,
+} from '../../../formOptions';
 import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
 import { FormSection } from '../../../../../components/form/FormSection';
 import { TextAreaField } from '../../../../../components/form/TextAreaField';
 import type { SectionProps } from '../types';
 
-export function ShelterDetailsSection({ data, onChange, errors }: SectionProps) {
+export const ShelterDetailsSection = memo(function ShelterDetailsSection({
+  data,
+  onChange,
+  errors,
+}: SectionProps) {
   return (
     <FormSection title="Shelter Details">
       <CheckboxGroup
@@ -12,14 +22,14 @@ export function ShelterDetailsSection({ data, onChange, errors }: SectionProps) 
         label="Accessibility"
         options={ACCESSIBILITY_OPTIONS}
         values={data.accessibility}
-        onChange={values => onChange('accessibility', values)}
+        onChange={(values) => onChange('accessibility', values)}
       />
       <CheckboxGroup
         name="storage"
         label="Storage"
         options={STORAGE_OPTIONS}
         values={data.storage}
-        onChange={values => onChange('storage', values)}
+        onChange={(values) => onChange('storage', values)}
         error={errors.storage}
         required
       />
@@ -28,7 +38,7 @@ export function ShelterDetailsSection({ data, onChange, errors }: SectionProps) 
         label="Pets"
         options={PETS_OPTIONS}
         values={data.pets}
-        onChange={values => onChange('pets', values)}
+        onChange={(values) => onChange('pets', values)}
         error={errors.pets}
         required
       />
@@ -37,18 +47,18 @@ export function ShelterDetailsSection({ data, onChange, errors }: SectionProps) 
         label="Parking"
         options={PARKING_OPTIONS}
         values={data.parking}
-        onChange={values => onChange('parking', values)}
+        onChange={(values) => onChange('parking', values)}
         error={errors.parking}
         required
       />
       <TextAreaField
         id="shelter-details-notes"
-        name="add_notes_shelter_details"
+        name="addNotesShelterDetails"
         label="Additional Notes"
-        value={data.add_notes_shelter_details}
-        onChange={value => onChange('add_notes_shelter_details', value)}
+        value={data.addNotesShelterDetails}
+        onChange={(value) => onChange('addNotesShelterDetails', value)}
         rows={3}
       />
     </FormSection>
   );
-}
+});

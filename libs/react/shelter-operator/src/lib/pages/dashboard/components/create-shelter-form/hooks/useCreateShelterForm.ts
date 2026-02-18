@@ -1,20 +1,17 @@
 import { useCallback, useState } from 'react';
-import type { ShelterFormData } from '../../../types';
+import type { ShelterFormData } from '../../../formTypes';
 import { createEmptyShelterFormData } from '../constants/defaultShelterFormData';
 
 export function useCreateShelterForm(initialData?: ShelterFormData) {
   const [formData, setFormData] = useState<ShelterFormData>(
-    initialData ?? createEmptyShelterFormData()
+    initialData ?? createEmptyShelterFormData(),
   );
 
   const updateField = useCallback(
     <K extends keyof ShelterFormData>(field: K, value: ShelterFormData[K]) => {
-      setFormData(prev => ({
-        ...prev,
-        [field]: value,
-      }));
+      setFormData((prev) => ({ ...prev, [field]: value }));
     },
-    []
+    [],
   );
 
   const resetForm = useCallback(() => {
@@ -25,10 +22,5 @@ export function useCreateShelterForm(initialData?: ShelterFormData) {
     setFormData(next);
   }, []);
 
-  return {
-    formData,
-    updateField,
-    resetForm,
-    replaceForm,
-  };
+  return { formData, updateField, resetForm, replaceForm };
 }

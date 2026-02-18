@@ -1,16 +1,21 @@
+import { DemographicChoices, ShelterChoices } from '@monorepo/react/shelter';
+import { memo } from 'react';
 import {
   DEMOGRAPHICS_OPTIONS,
-  SPECIAL_SITUATION_OPTIONS,
   SHELTER_TYPES_OPTIONS,
-} from '../../../types';
-import { DemographicChoices, ShelterChoices } from '@monorepo/react/shelter';
+  SPECIAL_SITUATION_OPTIONS,
+} from '../../../formOptions';
 import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
 import { FormSection } from '../../../../../components/form/FormSection';
 import { TextAreaField } from '../../../../../components/form/TextAreaField';
 import { TextField } from '../../../../../components/form/TextField';
 import type { SectionProps } from '../types';
 
-export function SummaryInformationSection({ data, onChange, errors }: SectionProps) {
+export const SummaryInformationSection = memo(function SummaryInformationSection({
+  data,
+  onChange,
+  errors,
+}: SectionProps) {
   return (
     <FormSection title="Summary Information">
       <CheckboxGroup
@@ -18,10 +23,10 @@ export function SummaryInformationSection({ data, onChange, errors }: SectionPro
         label="Demographics Served"
         options={DEMOGRAPHICS_OPTIONS}
         values={data.demographics}
-        onChange={values => {
+        onChange={(values) => {
           onChange('demographics', values);
-          if (!values.includes(DemographicChoices.Other) && data.demographics_other) {
-            onChange('demographics_other', '');
+          if (!values.includes(DemographicChoices.Other) && data.demographicsOther) {
+            onChange('demographicsOther', '');
           }
         }}
         error={errors.demographics}
@@ -30,40 +35,40 @@ export function SummaryInformationSection({ data, onChange, errors }: SectionPro
       {data.demographics.includes(DemographicChoices.Other) ? (
         <TextField
           id="demographics-other"
-          name="demographics_other"
+          name="demographicsOther"
           label="Other Demographics"
-          value={data.demographics_other}
-          onChange={value => onChange('demographics_other', value)}
+          value={data.demographicsOther}
+          onChange={(value) => onChange('demographicsOther', value)}
         />
       ) : null}
       <CheckboxGroup
         name="special-situation"
         label="Special Situation Restrictions"
         options={SPECIAL_SITUATION_OPTIONS}
-        values={data.special_situation_restrictions}
-        onChange={values => onChange('special_situation_restrictions', values)}
-        error={errors.special_situation_restrictions}
+        values={data.specialSituationRestrictions}
+        onChange={(values) => onChange('specialSituationRestrictions', values)}
+        error={errors.specialSituationRestrictions}
         required
       />
       <CheckboxGroup
         name="shelter-types"
         label="Shelter Types"
         options={SHELTER_TYPES_OPTIONS}
-        values={data.shelter_types}
-        onChange={values => {
-          onChange('shelter_types', values);
-          if (!values.includes(ShelterChoices.Other) && data.shelter_types_other) {
-            onChange('shelter_types_other', '');
+        values={data.shelterTypes}
+        onChange={(values) => {
+          onChange('shelterTypes', values);
+          if (!values.includes(ShelterChoices.Other) && data.shelterTypesOther) {
+            onChange('shelterTypesOther', '');
           }
         }}
       />
-      {data.shelter_types.includes(ShelterChoices.Other) ? (
+      {data.shelterTypes.includes(ShelterChoices.Other) ? (
         <TextField
           id="shelter-types-other"
-          name="shelter_types_other"
+          name="shelterTypesOther"
           label="Other Shelter Types"
-          value={data.shelter_types_other}
-          onChange={value => onChange('shelter_types_other', value)}
+          value={data.shelterTypesOther}
+          onChange={(value) => onChange('shelterTypesOther', value)}
         />
       ) : null}
       <TextAreaField
@@ -71,11 +76,11 @@ export function SummaryInformationSection({ data, onChange, errors }: SectionPro
         name="description"
         label="Description"
         value={data.description}
-        onChange={value => onChange('description', value)}
+        onChange={(value) => onChange('description', value)}
         rows={4}
         required
         error={errors.description}
       />
     </FormSection>
   );
-}
+});

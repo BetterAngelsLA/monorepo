@@ -1,4 +1,3 @@
-import { z, type ZodRawShape } from 'zod';
 import {
   DemographicChoices,
   ParkingChoices,
@@ -7,19 +6,15 @@ import {
   StatusChoices,
   StorageChoices,
 } from '@monorepo/react/shelter';
-import type { ShelterFormData } from '../../../types';
+import { z, type ZodRawShape } from 'zod';
+import type { ShelterFormData } from '../../../formTypes';
 
 const phoneRegex = /^\+?[\d\s().-]{7,20}$/;
 
 const isValidUrl = (value: string) => {
   const trimmed = value.trim();
-  if (!trimmed) {
-    return false;
-  }
-
-  if (/\s/.test(trimmed)) {
-    return false;
-  }
+  if (!trimmed) return false;
+  if (/\s/.test(trimmed)) return false;
 
   const withScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(trimmed)
     ? trimmed
@@ -39,24 +34,24 @@ type FieldSchemaMap = {
 
 const fieldSchemas: FieldSchemaMap = {
   name: z.string().min(1, 'Shelter name is required'),
-  organization: z.string().optional(),
-  location: z.string().optional(),
   description: z.string().min(1, 'Description is required'),
-  email: z.union([z.string().email('Enter a valid email address'), z.literal('')]).optional(),
+  email: z
+    .union([z.string().email('Enter a valid email address'), z.literal('')])
+    .optional(),
   phone: z
     .string()
-    .refine(value => value === '' || phoneRegex.test(value), {
+    .refine((value) => value === '' || phoneRegex.test(value), {
       message: 'Enter a valid phone number',
     }),
   website: z
     .string()
-    .refine(value => value === '' || isValidUrl(value), {
+    .refine((value) => value === '' || isValidUrl(value), {
       message: 'Enter a valid URL',
     }),
   demographics: z
     .array(z.nativeEnum(DemographicChoices))
     .min(1, 'Select at least one demographic'),
-  special_situation_restrictions: z
+  specialSituationRestrictions: z
     .array(z.nativeEnum(SpecialSituationRestrictionChoices))
     .min(1, 'Select at least one special situation'),
   storage: z
@@ -68,25 +63,18 @@ const fieldSchemas: FieldSchemaMap = {
   parking: z
     .array(z.nativeEnum(ParkingChoices))
     .min(1, 'Select at least one parking option'),
-  total_beds: z
+  totalBeds: z
     .number()
     .int('Total beds must be a whole number')
     .min(0, 'Total beds must be zero or greater')
     .optional()
     .nullable(),
-  max_stay: z
+  maxStay: z
     .number()
     .int('Max stay must be a whole number')
     .min(0, 'Max stay must be zero or greater')
     .optional()
     .nullable(),
-  room_styles: z.array(z.string()),
-  shelter_types: z.array(z.string()),
-  intake_hours: z.string().optional(),
-  curfew: z.string().optional(),
-  exit_policy: z.array(z.string()),
-  entry_requirements: z.array(z.string()).optional(),
-  referral_requirement: z.array(z.string()).optional(),
   status: z.nativeEnum(StatusChoices).refine(Boolean, 'Status is required'),
 };
 
@@ -117,12 +105,10 @@ export const validateShelterForm = (data: ShelterFormData) => {
 
 export const validateField = <K extends keyof ShelterFormData>(
   field: K,
-  value: ShelterFormData[K]
+  value: ShelterFormData[K],
 ): string | undefined => {
   const schema = fieldSchemas[field];
-  if (!schema) {
-    return undefined;
-  }
+  if (!schema) return undefined;
 
   const result = schema.safeParse(value);
   return result.success ? undefined : result.error.issues[0]?.message;

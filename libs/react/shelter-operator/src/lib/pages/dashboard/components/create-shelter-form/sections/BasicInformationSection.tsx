@@ -1,9 +1,13 @@
+import { memo } from 'react';
 import { FormSection } from '../../../../../components/form/FormSection';
 import { TextField } from '../../../../../components/form/TextField';
-import { TimeRangeField } from '../../../../../components/form/TimeRangeField';
 import type { SectionProps } from '../types';
 
-export function BasicInformationSection({ data, onChange, errors }: SectionProps) {
+export const BasicInformationSection = memo(function BasicInformationSection({
+  data,
+  onChange,
+  errors,
+}: SectionProps) {
   return (
     <FormSection title="Basic Information">
       <TextField
@@ -11,7 +15,7 @@ export function BasicInformationSection({ data, onChange, errors }: SectionProps
         name="name"
         label="Shelter Name"
         value={data.name}
-        onChange={value => onChange('name', value)}
+        onChange={(value) => onChange('name', value)}
         required
         error={errors.name}
       />
@@ -20,17 +24,19 @@ export function BasicInformationSection({ data, onChange, errors }: SectionProps
         name="organization"
         label="Organization"
         value={data.organization}
-        onChange={value => onChange('organization', value)}
+        onChange={(value) => onChange('organization', value)}
         helperText="Select from existing organizations or type to add a new one."
         error={errors.organization}
       />
       <TextField
-        id="shelter-location"
-        name="location"
-        label="Location"
-        value={data.location}
-        onChange={value => onChange('location', value)}
-        helperText='Use the format: "search query, latitude, longitude".'
+        id="shelter-location-place"
+        name="location-place"
+        label="Location (Address)"
+        value={data.location?.place ?? ''}
+        onChange={(value) =>
+          onChange('location', value ? { ...data.location, place: value } : null)
+        }
+        helperText="Enter the shelter address."
         error={errors.location}
       />
       <TextField
@@ -39,7 +45,7 @@ export function BasicInformationSection({ data, onChange, errors }: SectionProps
         label="Email"
         type="email"
         value={data.email}
-        onChange={value => onChange('email', value)}
+        onChange={(value) => onChange('email', value)}
         error={errors.email}
       />
       <TextField
@@ -48,7 +54,7 @@ export function BasicInformationSection({ data, onChange, errors }: SectionProps
         label="Phone"
         type="tel"
         value={data.phone}
-        onChange={value => onChange('phone', value)}
+        onChange={(value) => onChange('phone', value)}
         error={errors.phone}
       />
       <TextField
@@ -57,7 +63,7 @@ export function BasicInformationSection({ data, onChange, errors }: SectionProps
         label="Website"
         type="url"
         value={data.website}
-        onChange={value => onChange('website', value)}
+        onChange={(value) => onChange('website', value)}
         error={errors.website}
       />
       <TextField
@@ -65,30 +71,8 @@ export function BasicInformationSection({ data, onChange, errors }: SectionProps
         name="instagram"
         label="Instagram"
         value={data.instagram}
-        onChange={value => onChange('instagram', value)}
-      />
-      <TextField
-        id="shelter-facebook"
-        name="facebook"
-        label="Facebook"
-        value={data.facebook}
-        onChange={value => onChange('facebook', value)}
-      />
-      <TextField
-        id="shelter-social"
-        name="other_social_media"
-        label="Other Social Media"
-        value={data.other_social_media}
-        onChange={value => onChange('other_social_media', value)}
-      />
-      <TimeRangeField
-        id="shelter-hours"
-        name="operating_hours"
-        label="Operating Hours"
-        value={data.operating_hours}
-        onChange={value => onChange('operating_hours', value)}
-        helperText="Add one or more time ranges"
+        onChange={(value) => onChange('instagram', value)}
       />
     </FormSection>
   );
-}
+});

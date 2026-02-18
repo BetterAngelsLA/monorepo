@@ -1,5 +1,5 @@
-import { ShelterFormData } from '../../../types';
 import { StatusChoices } from '@monorepo/react/shelter';
+import type { ShelterFormData } from '../../../formTypes';
 
 /**
  * Provide a fresh copy of the shelter form defaults so callers avoid
@@ -9,83 +9,74 @@ export const createEmptyShelterFormData = (): ShelterFormData => ({
   // Basic Information
   name: '',
   organization: '',
-  location: '',
+  location: null,
   email: '',
   phone: '',
   website: '',
   instagram: '',
-  facebook: '',
-  other_social_media: '',
-  operating_hours: '',
+  operatingHours: [],
 
   // Summary Information
   demographics: [],
-  demographics_other: '',
-  special_situation_restrictions: [],
-  shelter_types: [],
-  shelter_types_other: '',
+  demographicsOther: '',
+  specialSituationRestrictions: [],
+  shelterTypes: [],
+  shelterTypesOther: '',
   description: '',
 
   // Sleeping Details
-  total_beds: null,
-  room_styles: [],
-  room_styles_other: '',
-  add_notes_sleeping_details: '',
+  totalBeds: null,
+  roomStyles: [],
+  roomStylesOther: '',
+  addNotesSleepingDetails: '',
 
   // Shelter Details
   accessibility: [],
   storage: [],
   pets: [],
   parking: [],
-  add_notes_shelter_details: '',
+  addNotesShelterDetails: '',
 
   // Policies
-  max_stay: null,
-  intake_hours: '',
+  maxStay: null,
+  intakeHours: [],
   curfew: '',
-  on_site_security: null,
-  visitors_allowed: null,
-  exit_policy: [],
-  exit_policy_other: '',
-  emergency_surge: null,
-  other_rules: '',
-  agreement_form: null,
+  onSiteSecurity: null,
+  visitorsAllowed: null,
+  exitPolicy: [],
+  exitPolicyOther: '',
+  emergencySurge: null,
+  otherRules: '',
 
   // Services Offered
-  immediate_needs: [],
-  general_services: [],
-  health_services: [],
-  training_services: [],
-  meal_services: [],
-  other_services: '',
+  immediateNeeds: [],
+  generalServices: [],
+  healthServices: [],
+  trainingServices: [],
+  mealServices: [],
+  otherServices: '',
 
   // Entry Requirements
-  entry_requirements: [],
-  referral_requirement: [],
-  bed_fees: '',
-  program_fees: '',
-  entry_info: '',
+  entryRequirements: [],
+  referralRequirement: [],
+  bedFees: '',
+  programFees: '',
+  entryInfo: '',
 
   // Ecosystem Information
   cities: [],
   spa: [],
-  city_council_district: null,
-  supervisorial_district: null,
-  shelter_programs: [],
-  shelter_programs_other: '',
+  cityCouncilDistrict: null,
+  supervisorialDistrict: null,
+  shelterPrograms: [],
+  shelterProgramsOther: '',
   funders: [],
-  funders_other: '',
+  fundersOther: '',
 
   // Better Angels Review
-  overall_rating: null,
-  subjective_review: '',
+  overallRating: null,
+  subjectiveReview: '',
 
-  // Better Angels Administration
+  // Administration
   status: StatusChoices.Draft,
-
-  // Media
-  hero_image: null,
-  exterior_photos: [],
-  interior_photos: [],
-  videos: [],
 });

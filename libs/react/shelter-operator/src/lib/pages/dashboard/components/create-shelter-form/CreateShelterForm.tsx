@@ -2,7 +2,7 @@ import { useMutation } from '@apollo/client/react';
 import { Button } from '@monorepo/react/components';
 import { FormEvent, useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { ShelterFormData } from '../../types';
+import type { ShelterFormData } from '../../formTypes';
 import {
   CREATE_SHELTER_MUTATION,
   buildCreateShelterInput,
@@ -20,7 +20,6 @@ import { BasicInformationSection } from './sections/BasicInformationSection';
 import { BetterAngelsReviewSection } from './sections/BetterAngelsReviewSection';
 import { EcosystemInformationSection } from './sections/EcosystemInformationSection';
 import { EntryRequirementsSection } from './sections/EntryRequirementsSection';
-import { MediaSection } from './sections/MediaSection';
 import { PoliciesSection } from './sections/PoliciesSection';
 import { ServicesOfferedSection } from './sections/ServicesOfferedSection';
 import { ShelterDetailsSection } from './sections/ShelterDetailsSection';
@@ -45,10 +44,7 @@ export default function CreateShelterForm() {
       const fieldError = validateField(field, value);
       setErrors((prev) => {
         if (fieldError) {
-          return {
-            ...prev,
-            [field]: fieldError,
-          };
+          return { ...prev, [field]: fieldError };
         }
         if (prev[field]) {
           const { [field]: _omit, ...rest } = prev;
@@ -71,33 +67,26 @@ export default function CreateShelterForm() {
     }
 
     try {
-      const response = await createShelter({
+      await createShelter({
         variables: {
           input: buildCreateShelterInput(formData),
         },
       });
-      console.log(
-        'Shelter submission successful',
-        response.data?.createShelter
-      );
       setSubmissionSuccess('Shelter submitted successfully.');
       resetForm();
       setErrors({});
     } catch (error) {
-      console.error('Shelter submission failed', error);
       setSubmissionError(extractApolloError(error));
     }
   };
 
   return (
     <div className="space-y-6">
-      <Link to="/operator/dashboard" className="inline-block">
-        <button
-          type="button"
-          className="border border-gray-300 rounded-md px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-        >
-          Back to Dashboard
-        </button>
+      <Link
+        to="/operator/dashboard"
+        className="inline-block border border-gray-300 rounded-md px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+      >
+        Back to Dashboard
       </Link>
 
       <div>
@@ -182,11 +171,6 @@ export default function CreateShelterForm() {
           onChange={handleFieldChange}
           errors={errors}
         />
-        <MediaSection
-          data={formData}
-          onChange={handleFieldChange}
-          errors={errors}
-        />
 
         <div className="flex justify-center">
           <Button
@@ -203,8 +187,7 @@ export default function CreateShelterForm() {
   );
 }
 
-const extractApolloError = (error: unknown) => {
-  // Check if error has the shape of an Apollo error
+function extractApolloError(error: unknown): string {
   if (error && typeof error === 'object' && 'graphQLErrors' in error) {
     const apolloError = error as {
       graphQLErrors?: Array<{
@@ -226,7 +209,7 @@ const extractApolloError = (error: unknown) => {
       })
       .filter(Boolean);
 
-    if (graphQLErrorMessages && graphQLErrorMessages.length) {
+    if (graphQLErrorMessages?.length) {
       return graphQLErrorMessages[0] as string;
     }
 
@@ -236,4 +219,4 @@ const extractApolloError = (error: unknown) => {
   }
 
   return 'Unable to submit shelter. Please try again.';
-};
+}

@@ -37,6 +37,7 @@ from .types import (
     OrgInvitationInput,
     RemoveOrganizationMemberInput,
     UpdateUserInput,
+    UpdateUserProfileInput,
     UserType,
 )
 
@@ -156,6 +157,15 @@ class Mutation:
         )
 
         return cast(UserType, user)
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def update_user_profile(self, info: Info, data: UpdateUserProfileInput) -> CurrentUserType:
+        user = cast(User, get_current_user(info))
+
+        user_data: dict = strawberry.asdict(data)
+        user = resolvers.update(info, user, {**user_data, "id": user.pk})
+
+        return cast(CurrentUserType, user)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_current_user(self, info: Info) -> DeletedObjectType:

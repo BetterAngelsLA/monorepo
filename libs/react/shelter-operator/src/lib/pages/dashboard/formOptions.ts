@@ -1,7 +1,18 @@
 import {
-  AccessibilityChoices,
   DemographicChoices,
-  EntryRequirementChoices,
+  ExitPolicyChoices,
+  FunderChoices,
+  HealthServiceChoices,
+  ImmediateNeedChoices,
+  MealServiceChoices,
+  ReferralRequirementChoices,
+  RoomStyleChoices,
+  ShelterChoices,
+  ShelterProgramChoices,
+  SpaChoices,
+  SpecialSituationRestrictionChoices,
+  StatusChoices,
+  TrainingServiceChoices,
   enumDisplayAccessibilityChoices,
   enumDisplayDemographics,
   enumDisplayEntryRequirementChoices,
@@ -13,119 +24,22 @@ import {
   enumDisplayShelterProgramChoices,
   enumDisplaySpecialSituationRestrictionChoices,
   enumDisplayStorageChoices,
-  ExitPolicyChoices,
-  FunderChoices,
-  GeneralServiceChoices,
-  HealthServiceChoices,
-  ImmediateNeedChoices,
-  MealServiceChoices,
-  ParkingChoices,
-  PetChoices,
-  ReferralRequirementChoices,
-  RoomStyleChoices,
-  ShelterChoices,
-  ShelterProgramChoices,
-  SpaChoices,
-  SpecialSituationRestrictionChoices,
-  StatusChoices,
-  StorageChoices,
-  TrainingServiceChoices,
 } from '@monorepo/react/shelter';
 
-export interface ShelterFormData {
-  // Basic Information
-  name: string;
-  organization: string; // List selection from existing organizations
-  location: string; // Format: "<search query>, <latitude>, <longitude>"
-  email: string;
-  phone: string;
-  website: string;
-  instagram: string;
-  facebook: string;
-  other_social_media: string;
-  operating_hours: string; // Format: "HH:MM:SS-HH:MM:SS,HH:MM:SS-HH:MM:SS,..."
+// ---------------------------------------------------------------------------
+// Shared option type
+// ---------------------------------------------------------------------------
 
-  // Summary Information
-  demographics: DemographicChoices[];
-  demographics_other: string;
-  special_situation_restrictions: SpecialSituationRestrictionChoices[];
-  shelter_types: ShelterChoices[];
-  shelter_types_other: string;
-  description: string;
-
-  // Sleeping Details
-  total_beds: number | null;
-  room_styles: RoomStyleChoices[];
-  room_styles_other: string;
-  add_notes_sleeping_details: string;
-
-  // Shelter Details
-  accessibility: AccessibilityChoices[];
-  storage: StorageChoices[];
-  pets: PetChoices[];
-  parking: ParkingChoices[];
-  add_notes_shelter_details: string;
-
-  // Policies
-  max_stay: number | null;
-  intake_hours: string; // Format: "HH:MM:SS-HH:MM:SS,HH:MM:SS-HH:MM:SS,..."
-  curfew: string; // Format: "HH:MM:SS-HH:MM:SS,HH:MM:SS-HH:MM:SS,..."
-  on_site_security: boolean | null;
-  visitors_allowed: boolean | null;
-  exit_policy: ExitPolicyChoices[];
-  exit_policy_other: string;
-  emergency_surge: boolean | null;
-  other_rules: string;
-  agreement_form: File | null; // Media upload
-
-  // Services Offered
-  immediate_needs: ImmediateNeedChoices[];
-  general_services: GeneralServiceChoices[];
-  health_services: HealthServiceChoices[];
-  training_services: TrainingServiceChoices[];
-  meal_services: MealServiceChoices[];
-  other_services: string;
-
-  // Entry Requirements
-  entry_requirements: EntryRequirementChoices[];
-  referral_requirement: ReferralRequirementChoices[];
-  bed_fees: string;
-  program_fees: string;
-  entry_info: string;
-
-  // Ecosystem Information
-  cities: string[]; // City names - Cities are now database models
-  spa: SpaChoices[];
-  city_council_district: number | null;
-  supervisorial_district: number | null;
-  shelter_programs: ShelterProgramChoices[];
-  shelter_programs_other: string;
-  funders: FunderChoices[];
-  funders_other: string;
-
-  // Better Angels Review
-  overall_rating: number | null;
-  subjective_review: string;
-
-  // Better Angels Administration
-  status: StatusChoices;
-  updated_at?: string; // Read-only
-  updated_by?: string; // Read-only
-
-  // Media
-  hero_image: File | null;
-  exterior_photos: File[];
-  interior_photos: File[];
-  videos: File[];
-}
-
-// Helper type for select/checkbox options
-export type SelectOption<T = string> = {
+export interface SelectOption<T = string> {
   value: T;
   label: string;
-};
+}
 
 export type CheckboxOption<T extends string = string> = SelectOption<T>;
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 const toOptions = <T extends string>(
   labels: Record<T, string>,
@@ -137,6 +51,10 @@ const toOptions = <T extends string>(
   const end = entries.filter(([value]) => tail.has(value));
   return [...main, ...end].map(([value, label]) => ({ value, label }));
 };
+
+// ---------------------------------------------------------------------------
+// Label records (only where shared lib doesn't already export display maps)
+// ---------------------------------------------------------------------------
 
 const DEMOGRAPHIC_LABELS: Record<DemographicChoices, string> = {
   ...enumDisplayDemographics,
@@ -225,6 +143,10 @@ const STATUS_LABELS: Record<StatusChoices, string> = {
   [StatusChoices.Inactive]: 'Inactive',
 };
 
+// ---------------------------------------------------------------------------
+// Exported option arrays
+// ---------------------------------------------------------------------------
+
 export const DEMOGRAPHICS_OPTIONS = toOptions(DEMOGRAPHIC_LABELS, [
   DemographicChoices.Other,
 ]);
@@ -256,8 +178,15 @@ export const REFERRAL_REQUIREMENT_OPTIONS = toOptions(
   REFERRAL_REQUIREMENT_LABELS
 );
 export const SPA_OPTIONS = toOptions(SPA_LABELS);
+export const SHELTER_PROGRAMS_OPTIONS = toOptions(
+  enumDisplayShelterProgramChoices,
+  [ShelterProgramChoices.Other]
+);
+export const FUNDERS_OPTIONS = toOptions(enumDisplayFunderChoices, [
+  FunderChoices.Other,
+]);
+export const STATUS_OPTIONS = toOptions(STATUS_LABELS);
 
-// Common LA area cities - Cities are now database models and can be added dynamically
 export const LA_CITIES_OPTIONS = [
   { value: 'Los Angeles', label: 'Los Angeles' },
   { value: 'Pasadena', label: 'Pasadena' },
@@ -275,15 +204,6 @@ export const LA_CITIES_OPTIONS = [
   { value: 'Compton', label: 'Compton' },
 ] as const;
 
-export const SHELTER_PROGRAMS_OPTIONS = toOptions(
-  enumDisplayShelterProgramChoices,
-  [ShelterProgramChoices.Other]
-);
-export const FUNDERS_OPTIONS = toOptions(enumDisplayFunderChoices, [
-  FunderChoices.Other,
-]);
-export const STATUS_OPTIONS = toOptions(STATUS_LABELS);
-
 export const BOOLEAN_OPTIONS = [
   { value: null, label: 'Unknown' },
   { value: true, label: 'Yes' },
@@ -300,10 +220,7 @@ export const CITY_COUNCIL_DISTRICT_OPTIONS = [
 
 export const SUPERVISORIAL_DISTRICT_OPTIONS = [
   { value: null, label: 'None' },
-  ...Array.from({ length: 5 }, (_, i) => ({
-    value: i + 1,
-    label: `${i + 1}`,
-  })),
+  ...Array.from({ length: 5 }, (_, i) => ({ value: i + 1, label: `${i + 1}` })),
 ] as const;
 
 export const OVERALL_RATING_OPTIONS = [
