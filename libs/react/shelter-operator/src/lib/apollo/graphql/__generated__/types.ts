@@ -569,6 +569,8 @@ export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
 
+export type DeleteHmisNotePayload = DeletedObjectType | OperationInfo;
+
 export type DeleteHmisProfilePayload = HmisProfileType | OperationInfo;
 
 export type DeleteMoodPayload = DeletedObjectType | OperationInfo;
@@ -1217,6 +1219,7 @@ export type Mutation = {
   deleteClientHouseholdMember: DeleteClientHouseholdMemberPayload;
   deleteClientProfile: DeleteClientProfilePayload;
   deleteCurrentUser: DeleteCurrentUserPayload;
+  deleteHmisNote: DeleteHmisNotePayload;
   deleteHmisProfile: DeleteHmisProfilePayload;
   deleteMood: DeleteMoodPayload;
   deleteNote: DeleteNotePayload;
@@ -1359,6 +1362,11 @@ export type MutationDeleteClientHouseholdMemberArgs = {
 
 export type MutationDeleteClientProfileArgs = {
   data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteHmisNoteArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
