@@ -46,6 +46,7 @@ from .enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
+from .managers import AdminShelterManager, ShelterManager
 from .widgets import TimeRangeField
 
 
@@ -217,17 +218,14 @@ class ReferralRequirement(models.Model):
         return str(self.name)
 
 
-from .managers import AdminShelterManager  # noqa: E402
-
-
 @pghistory.track(
     pghistory.InsertEvent("shelter.add"),
     pghistory.UpdateEvent("shelter.update"),
     pghistory.DeleteEvent("shelter.remove"),
 )
 class Shelter(BaseModel):
-    objects: models.Manager["Shelter"] = models.Manager()
-    admin_objects = AdminShelterManager()
+    objects: ShelterManager = ShelterManager()
+    admin_objects: AdminShelterManager = AdminShelterManager()
 
     # Basic Information
     name = models.CharField(max_length=255)

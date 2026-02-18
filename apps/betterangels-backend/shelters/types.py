@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
 import strawberry
 import strawberry_django
+from accounts.models import User
 from accounts.types import OrganizationType
 from common.graphql.types import LatitudeScalar, LongitudeScalar, PhoneNumberScalar
 from django.contrib.gis.db.models.functions import Distance
@@ -31,6 +32,7 @@ from shelters.enums import (
     TrainingServiceChoices,
 )
 from strawberry import ID, Info, asdict, auto
+from strawberry_django.auth.utils import get_current_user
 
 
 @strawberry_django.type(models.ContactInfo)
@@ -169,16 +171,16 @@ class ShelterPropertyInput:
 class ShelterFilter:
     @strawberry_django.filter_field
     def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
-        request = info.context.request
-        user = request.user
+        user = get_current_user(info)
 
-        if not user.is_authenticated:
+        if user is None or not user.is_authenticated:
             if not value:
                 return Q()
 
             return Q(**{f"{prefix}organization__in": value})
 
-        allowed_organizations = user.organizations_organization.all()
+        current_user = cast(User, user)
+        allowed_organizations = current_user.organizations_organization.all()
         if value:
             allowed_organizations = allowed_organizations.filter(pk__in=value)
 
@@ -348,12 +350,14 @@ class ShelterTypeMixin:
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
 class ShelterType(ShelterTypeMixin):
-    pass
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
+        return models.Shelter.objects.approved()
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
 class AdminShelterType(ShelterTypeMixin):
     @classmethod
-    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet:  # type: ignore[override]
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = info.context.request.user
-        return queryset.model.admin_objects.for_user(user)  # type: ignore[no-any-return, attr-defined]
+        return models.Shelter.admin_objects.for_user(user)
