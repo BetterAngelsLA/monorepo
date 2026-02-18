@@ -7,14 +7,14 @@ import {
   RoomStyleChoices,
   ShelterChoices,
   SpecialSituationRestrictionChoices,
+  TLocationSource,
   ViewSheltersDocument,
   ViewSheltersQuery,
   ViewSheltersQueryVariables,
+  sheltersAtom,
 } from '@monorepo/react/shelter';
 import { useAtom } from 'jotai';
 import { useCallback, useEffect } from 'react';
-import { TLocationSource } from '../../atoms/locationAtom';
-import { sheltersAtom } from '../../atoms/sheltersAtom';
 import { TLatLng, TMapBounds } from '../map/types.maps';
 import { ShelterCard } from '../shelter/shelterCard';
 import { SearchSource } from './searchSource';

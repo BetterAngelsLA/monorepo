@@ -1,7 +1,7 @@
 import { Button } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
+import { shelterFiltersAtom } from '@monorepo/react/shelter';
 import { useResetAtom } from 'jotai/utils';
-import { shelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 
 type IProps = {
   className?: string;

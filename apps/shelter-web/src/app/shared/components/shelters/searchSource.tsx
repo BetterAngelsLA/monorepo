@@ -1,4 +1,4 @@
-import { TLocationSource } from '../../atoms/locationAtom';
+import { TLocationSource } from '@monorepo/react/shelter';
 
 type TProps = {
   className?: string;

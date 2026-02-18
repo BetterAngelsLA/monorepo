@@ -1,12 +1,9 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { PropsWithChildren, ReactElement, ReactNode } from 'react';
-import { flyoutAtom } from '../atoms/flyoutAtom';
-import { FlyoutMask } from './Flyoutmask';
-
-export enum FlyoutAnimationEnum {
-  FLYOUT_LEFT = 'animate-slideRightToLeft',
-}
+import { FlyoutMask } from './FlyoutMask';
+import { FlyoutAnimationEnum } from './enums';
+import { flyoutAtom } from './flyoutAtom';
 
 export interface IFlyout extends PropsWithChildren {
   className?: string;
@@ -39,6 +36,7 @@ export function Flyout(props: IFlyout): ReactElement | null {
     'shadow-lg',
     'z-[1000]',
     'rounded-l-2xl',
+    'border-4 border-red-500',
     animation,
     className,
   ];

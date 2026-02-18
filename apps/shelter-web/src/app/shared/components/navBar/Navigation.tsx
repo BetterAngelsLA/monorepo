@@ -1,5 +1,6 @@
 import { MenuIcon } from '@monorepo/react/icons';
 import { useFeatureFlagActive } from '@monorepo/react/shared';
+import { FlyoutAnimationEnum, flyoutAtom } from '@monorepo/react/shelter';
 import { useAtom } from 'jotai';
 import { Link } from 'react-router-dom';
 import { FeatureFlags } from '../../../constants/featureFlags';
@@ -8,8 +9,6 @@ import {
   operatorPath,
   shelterHomePath,
 } from '../../../routes/routePaths';
-import { flyoutAtom } from '../../atoms/flyoutAtom';
-import { FlyoutAnimationEnum } from '../../flyout/Flyout';
 import { MenuMobile } from './MenuMobile';
 
 export function Navigation() {

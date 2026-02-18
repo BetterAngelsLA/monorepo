@@ -1,8 +1,8 @@
 import { useAtom } from 'jotai';
 import { ReactElement, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { modalAtom } from '../atoms/modalAtom';
-import { Modal } from './modal';
+import { Modal } from './Modal';
+import { modalAtom } from './modalAtom';
 
 type IProps = {
   className?: string;

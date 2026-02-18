@@ -9,6 +9,7 @@ import GeneralInfo from './GeneralInfo';
 import Header from './Header';
 import OperatingHours from './OperatingHours';
 import OtherServices from './OtherServices';
+import { ReportUpdateButton } from './ReportUpdateButton/ReportUpdateButton';
 import Restrictions from './Restrictions';
 import RoomStyles from './RoomStyles';
 import ShelterDetail from './ShelterDetail';
@@ -111,6 +112,10 @@ export default function ShelterPage({ id }: { id: string }) {
         {hasRestrictions && <Restrictions shelter={shelter} />}
         {hasOtherServices && <OtherServices shelter={shelter} />}
         {hasEcosystemInfo && <EcosystemInfo shelter={shelter} />}
+
+        <div className="my-4 flex justify-center">
+          <ReportUpdateButton />
+        </div>
       </div>
     </div>
   );

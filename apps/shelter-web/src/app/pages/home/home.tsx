@@ -1,12 +1,15 @@
 import { mergeCss } from '@monorepo/react/shared';
+import {
+  ModalAnimationEnum,
+  locationAtom,
+  modalAtom,
+  sheltersAtom,
+} from '@monorepo/react/shelter';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
 import { useEffect, useState } from 'react';
 import { SHELTERS_MAP_ID } from '../../constants/app.constants';
 import { MaxWLayout } from '../../layout/maxWLayout';
-import { locationAtom } from '../../shared/atoms/locationAtom';
-import { modalAtom } from '../../shared/atoms/modalAtom';
-import { sheltersAtom } from '../../shared/atoms/sheltersAtom';
 import { LA_COUNTY_CENTER } from '../../shared/components/map/constants.maps';
 import { Map } from '../../shared/components/map/map';
 import {
@@ -20,7 +23,6 @@ import {
   TShelter,
 } from '../../shared/components/shelter/shelterCard';
 import { ShelterSearch } from '../../shared/components/shelters/shelterSearch';
-import { ModalAnimationEnum } from '../../shared/modal/modal';
 
 export function Home() {
   const [atomLocation, setLocation] = useAtom(locationAtom);

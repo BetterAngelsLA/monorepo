@@ -1,12 +1,14 @@
 import { FilterIcon } from '@monorepo/react/icons';
+import {
+  ModalAnimationEnum,
+  locationAtom,
+  modalAtom,
+  shelterFiltersAtom,
+} from '@monorepo/react/shelter';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
 import { useResetAtom } from 'jotai/utils';
 import { useEffect, useState } from 'react';
-import { locationAtom } from '../../atoms/locationAtom';
-import { modalAtom } from '../../atoms/modalAtom';
-import { shelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
-import { ModalAnimationEnum } from '../../modal/modal';
 import {
   AddressAutocomplete,
   TPlaceResult,

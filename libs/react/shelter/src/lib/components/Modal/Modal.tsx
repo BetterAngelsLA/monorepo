@@ -2,8 +2,8 @@ import { CloseIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { PropsWithChildren, ReactElement, ReactNode } from 'react';
-import { modalAtom } from '../atoms/modalAtom';
-import { ModalMask } from './modalMask';
+import { ModalMask } from './ModalMask';
+import { modalAtom } from './modalAtom';
 
 export enum ModalAnimationEnum {
   SLIDE_UP = 'animate-slideInUp',

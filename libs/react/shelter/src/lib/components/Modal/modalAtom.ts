@@ -1,6 +1,6 @@
 import { atom } from 'jotai';
 import { ReactNode } from 'react';
-import { ModalAnimationEnum, TModalType } from '../modal/modal';
+import { ModalAnimationEnum, TModalType } from './Modal';
 
 type TProps = {
   content: ReactNode | null;
@@ -13,3 +13,5 @@ type TProps = {
 };
 
 export const modalAtom = atom<TProps | null>(null);
+
+//  yarn nx run shelter-web:lint
