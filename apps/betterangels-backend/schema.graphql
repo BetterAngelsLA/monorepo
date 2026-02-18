@@ -564,6 +564,8 @@ input DeleteDjangoObjectInput {
   id: ID!
 }
 
+union DeleteHmisNotePayload = DeletedObjectType | OperationInfo
+
 union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
 
 union DeleteMoodPayload = DeletedObjectType | OperationInfo
@@ -1186,6 +1188,7 @@ type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
+  updateUserProfile(data: UpdateUserProfileInput!): UpdateUserProfilePayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
   addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
   removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "remove_org_member"}], any: true)
@@ -1215,6 +1218,7 @@ type Mutation {
   updateHmisClientProfile(data: UpdateHmisClientProfileInput!): UpdateHmisClientProfilePayload! @hmisDirective @isHmisAuthenticated
   createHmisNote(data: CreateHmisNoteInput!): CreateHmisNotePayload! @hmisDirective @isHmisAuthenticated
   updateHmisNote(data: UpdateHmisNoteInput!): UpdateHmisNotePayload! @hmisDirective @isHmisAuthenticated
+  deleteHmisNote(id: ID!): DeleteHmisNotePayload! @hmisDirective @isHmisAuthenticated
   createHmisClientProgram(clientId: Int!, programHmisId: Int!): CreateHmisClientProgramPayload! @hmisDirective @isHmisAuthenticated
   updateHmisNoteLocation(data: UpdateHmisNoteLocationInput!): UpdateHmisNoteLocationPayload! @hmisDirective @isHmisAuthenticated
   createHmisNoteServiceRequest(data: CreateHmisNoteServiceRequestInput!): CreateHmisNoteServiceRequestPayload! @hmisDirective @isHmisAuthenticated
@@ -1238,7 +1242,13 @@ type Mutation {
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
 }
 
+"""
+Coerces blank input to None. Use for optional string fields where blank means 'no value'.
+"""
 scalar NonBlankString
+
+"""Rejects blank input. Use for required string fields."""
+scalar NonEmptyString
 
 type NoteDataImportType {
   id: UUID!
@@ -2171,6 +2181,13 @@ input UpdateUserInput {
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
 }
+
+input UpdateUserProfileInput {
+  firstName: NonEmptyString
+  lastName: NonEmptyString
+}
+
+union UpdateUserProfilePayload = CurrentUserType | OperationInfo
 
 """Represents a file upload."""
 scalar Upload

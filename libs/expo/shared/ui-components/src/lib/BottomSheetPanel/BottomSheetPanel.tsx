@@ -3,13 +3,13 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { appZIndex } from '@monorepo/react/shared';
 import { ReactNode, useRef } from 'react';
 import { StyleSheet } from 'react-native';
-import BottomSheetModalContent from './Content';
+import BottomSheetPanelContent from './Content';
 
-interface IBottmomSheetModalProps extends BottomSheetProps {
+interface IProps extends BottomSheetProps {
   children: ReactNode;
 }
 
-export function BottomSheetModal(props: IBottmomSheetModalProps) {
+export function BottomSheetPanel(props: IProps) {
   const { children, ...rest } = props;
 
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -23,7 +23,7 @@ export function BottomSheetModal(props: IBottmomSheetModalProps) {
       ref={bottomSheetRef}
       {...rest}
     >
-      <BottomSheetModalContent>{children}</BottomSheetModalContent>
+      <BottomSheetPanelContent>{children}</BottomSheetPanelContent>
     </BottomSheet>
   );
 }
