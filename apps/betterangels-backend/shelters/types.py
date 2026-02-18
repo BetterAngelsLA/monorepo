@@ -247,6 +247,7 @@ class TimeRange:
     end: Optional[datetime]
 
 
+@strawberry.type
 class ShelterTypeMixin:
     id: ID
     accessibility: List[AccessibilityType]
