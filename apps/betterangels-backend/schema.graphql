@@ -468,23 +468,25 @@ input CreateNoteDataImportInput {
 union CreateNoteDataImportPayload = NoteDataImportType | OperationInfo
 
 input CreateNoteInput {
-  purpose: String
-  team: SelahTeamEnum
-  publicDetails: String
-  privateDetails: String
-  clientProfile: ID
-  isSubmitted: Boolean
-  interactedAt: DateTime
+  purpose: String = null
+  team: SelahTeamEnum = null
+  publicDetails: String = ""
+  privateDetails: String = ""
+  clientProfile: ID = null
+  isSubmitted: Boolean = false
+  interactedAt: DateTime = null
+  location: LocationInput = null
+  providedServices: [CreateNoteServiceInput!] = null
+  requestedServices: [CreateNoteServiceInput!] = null
+  tasks: [CreateNoteTaskInput!] = null
 }
-
-input CreateNoteMoodInput {
-  descriptor: MoodEnum!
-  noteId: ID!
-}
-
-union CreateNoteMoodPayload = MoodType | OperationInfo
 
 union CreateNotePayload = NoteType | OperationInfo
+
+input CreateNoteServiceInput {
+  serviceId: ID = null
+  serviceOther: String = null
+}
 
 input CreateNoteServiceRequestInput {
   serviceId: ID
@@ -494,6 +496,13 @@ input CreateNoteServiceRequestInput {
 }
 
 union CreateNoteServiceRequestPayload = ServiceRequestType | OperationInfo
+
+input CreateNoteTaskInput {
+  summary: String!
+  description: String = null
+  status: Int = null
+  team: SelahTeamEnum = null
+}
 
 input CreateProfileDataImportInput {
   sourceFile: String!
@@ -567,8 +576,6 @@ input DeleteDjangoObjectInput {
 union DeleteHmisNotePayload = DeletedObjectType | OperationInfo
 
 union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
-
-union DeleteMoodPayload = DeletedObjectType | OperationInfo
 
 union DeleteNotePayload = NoteType | OperationInfo
 
@@ -1045,12 +1052,22 @@ input ImportClientProfileInput {
 
 union ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo
 
+input ImportNoteDataInput {
+  purpose: String
+  team: SelahTeamEnum
+  publicDetails: String
+  privateDetails: String
+  clientProfile: ID
+  isSubmitted: Boolean
+  interactedAt: DateTime
+}
+
 input ImportNoteInput {
   importJobId: UUID!
   sourceId: String!
   sourceName: String!
   rawData: JSON!
-  note: CreateNoteInput!
+  note: ImportNoteDataInput!
 }
 
 union ImportNotePayload = NoteImportRecordType | OperationInfo
@@ -1156,34 +1173,6 @@ enum MaritalStatusEnum {
   WIDOWED
 }
 
-enum MoodEnum {
-  AGITATED
-  AGREEABLE
-  ANXIOUS
-  DEPRESSED
-  DETACHED
-  DISORGANIZED_THOUGHT
-  DISORIENTED
-  ESCALATED
-  EUTHYMIC
-  FLAT_BLUNTED
-  HAPPY
-  HOPELESS
-  INDIFFERENT
-  MANIC
-  MOTIVATED
-  OPTIMISTIC
-  PERSONABLE
-  PLEASANT
-  RESTLESS
-  SUICIDAL
-}
-
-type MoodType {
-  id: ID!
-  descriptor: MoodEnum!
-}
-
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
@@ -1225,15 +1214,13 @@ type Mutation {
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  createNoteMood(data: CreateNoteMoodInput!): CreateNoteMoodPayload!
-  deleteMood(data: DeleteDjangoObjectInput!): DeleteMoodPayload!
   createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
-  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
-  updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_servicerequest"}], any: true)
-  removeNoteServiceRequest(data: RemoveNoteServiceRequestInput!): RemoveNoteServiceRequestPayload!
-  deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload!
+  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_servicerequest"}], any: true)
+  removeNoteServiceRequest(data: RemoveNoteServiceRequestInput!): RemoveNoteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "delete_servicerequest"}], any: true)
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
@@ -1289,7 +1276,6 @@ type NoteType {
   interactedAt: DateTime!
   isSubmitted: Boolean!
   location: LocationType
-  moods: [MoodType!]!
   organization: OrganizationType!
   providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   publicDetails: String!
@@ -2128,11 +2114,15 @@ input UpdateNoteInput {
   id: ID!
   purpose: NonBlankString
   team: SelahTeamEnum
-  location: ID
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean
   interactedAt: DateTime
+  location: ID
+  locationData: LocationInput
+  providedServices: [CreateNoteServiceInput!]
+  requestedServices: [CreateNoteServiceInput!]
+  tasks: [CreateNoteTaskInput!]
 }
 
 input UpdateNoteLocationInput {
