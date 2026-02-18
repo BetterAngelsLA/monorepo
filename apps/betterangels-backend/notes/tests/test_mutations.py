@@ -1358,7 +1358,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             "notes.utils.note_reverter_util.NoteReverter._revert_changes_to_all_related_models",
             side_effect=Exception("oops"),
         ):
-            response = self._revert_note_fixture(variables, note_fields)
+            self._revert_note_fixture(variables, note_fields)
 
         # Verify atomicity: the note should remain in its pre-revert state
         note = Note.objects.get(pk=note_id)
