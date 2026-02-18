@@ -223,7 +223,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         ("search_value, expected_client_profile_count"),
         [
-            ("tod av gust toa", 1),  # name search matching inactive client
+            ("tod ch gust toa", 1),  # name search matching inactive client
             ("tod pea", 0),  # no match first_name, last_name search
             ("HMISid", 2),  # hmis_id search matching two clients
             ("HMISidL", 1),  # hmis_id search matching one client
