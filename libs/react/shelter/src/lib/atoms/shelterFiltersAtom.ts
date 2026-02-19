@@ -1,5 +1,5 @@
 import { atomWithReset } from 'jotai/utils';
-import { TShelterPropertyFilters } from '../../../../../../apps/shelter-web/src/app/shared/components/shelters/sheltersDisplay';
+import { TShelterPropertyFilters } from '../components/ShelterSearch';
 
 export const nullShelterFilters: TShelterPropertyFilters = {
   pets: [],

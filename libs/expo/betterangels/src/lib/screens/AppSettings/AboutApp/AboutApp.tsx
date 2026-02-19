@@ -5,6 +5,7 @@ import { useAppVersion } from '../../../hooks';
 import { MainScrollContainer } from '../../../ui-components';
 import { AppDataCard } from './AppDataCard';
 
+// asdf
 export function AboutApp() {
   const { version, runtimeVersionShort, otaUpdateIdShort } = useAppVersion();
 

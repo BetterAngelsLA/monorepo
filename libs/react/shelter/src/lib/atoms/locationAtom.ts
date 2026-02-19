@@ -1,5 +1,5 @@
 import { atom } from 'jotai';
-import { TLatLng } from '../../../../../../apps/shelter-web/src/app/shared/components/map/types.maps';
+import { TLatLng } from '../components/Map/types.maps';
 
 export type TLocationSource = 'currentLocation' | 'address';
 
