@@ -3,6 +3,7 @@ from typing import Any
 from unittest.mock import ANY
 
 from accounts.tests.baker_recipes import organization_recipe
+from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
 from django.test import TestCase
@@ -58,6 +59,11 @@ from unittest_parametrize import ParametrizedTestCase, parametrize
 class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
+        # Warm the ContentType cache so with_hero_image_file() never
+        # adds extra queries inside assertNumQueries / CaptureQueriesContext.
+        ContentType.objects.get_for_model(ExteriorPhoto)
+        ContentType.objects.get_for_model(InteriorPhoto)
+
         file_content = (
             b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04\x01\x0a\x00"
             b"\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4c\x01\x00\x3b"
@@ -582,9 +588,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         with CaptureQueriesContext(connection) as context:
             response = self.execute_graphql(query, variables={"filters": filters})
-        # PostGIS spatial_ref_sys may be cached or not, and ContentType
-        # lookups from with_hero_image_file may or may not be cached.
-        self.assertIn(len(context.captured_queries), [2, 3, 4, 5])
+        # PostGIS spatial_ref_sys may be cached or not.
+        self.assertIn(len(context.captured_queries), [2, 3])
 
         result_ids = [s["id"] for s in response["data"]["shelters"]["results"]]
         expected_ids = [str(s.id) for s in [s4, s3, s2]]
