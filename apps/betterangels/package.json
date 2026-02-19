@@ -107,7 +107,6 @@
     "@preeternal/react-native-cookie-manager": "*",
     "@tanstack/react-query": "*",
     "mime": "*",
-    "react-native-google-places-autocomplete": "*",
     "react-router-dom": "*",
     "clsx": "*",
     "tailwind-merge": "*",
