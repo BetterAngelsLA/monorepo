@@ -479,13 +479,6 @@ export type CreateNoteInput = {
   team?: InputMaybe<SelahTeamEnum>;
 };
 
-export type CreateNoteMoodInput = {
-  descriptor: MoodEnum;
-  noteId: Scalars['ID']['input'];
-};
-
-export type CreateNoteMoodPayload = MoodType | OperationInfo;
-
 export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateNoteServiceRequestInput = {
@@ -572,8 +565,6 @@ export type DeleteDjangoObjectInput = {
 export type DeleteHmisNotePayload = DeletedObjectType | OperationInfo;
 
 export type DeleteHmisProfilePayload = HmisProfileType | OperationInfo;
-
-export type DeleteMoodPayload = DeletedObjectType | OperationInfo;
 
 export type DeleteNotePayload = NoteType | OperationInfo;
 
@@ -1165,35 +1156,6 @@ export enum MaritalStatusEnum {
   Widowed = 'WIDOWED'
 }
 
-export enum MoodEnum {
-  Agitated = 'AGITATED',
-  Agreeable = 'AGREEABLE',
-  Anxious = 'ANXIOUS',
-  Depressed = 'DEPRESSED',
-  Detached = 'DETACHED',
-  DisorganizedThought = 'DISORGANIZED_THOUGHT',
-  Disoriented = 'DISORIENTED',
-  Escalated = 'ESCALATED',
-  Euthymic = 'EUTHYMIC',
-  FlatBlunted = 'FLAT_BLUNTED',
-  Happy = 'HAPPY',
-  Hopeless = 'HOPELESS',
-  Indifferent = 'INDIFFERENT',
-  Manic = 'MANIC',
-  Motivated = 'MOTIVATED',
-  Optimistic = 'OPTIMISTIC',
-  Personable = 'PERSONABLE',
-  Pleasant = 'PLEASANT',
-  Restless = 'RESTLESS',
-  Suicidal = 'SUICIDAL'
-}
-
-export type MoodType = {
-  __typename?: 'MoodType';
-  descriptor: MoodEnum;
-  id: Scalars['ID']['output'];
-};
-
 export type Mutation = {
   __typename?: 'Mutation';
   addOrganizationMember: AddOrganizationMemberPayload;
@@ -1209,7 +1171,6 @@ export type Mutation = {
   createHmisProfile: CreateHmisProfilePayload;
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
-  createNoteMood: CreateNoteMoodPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
   createServiceRequest: CreateServiceRequestPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
@@ -1221,7 +1182,6 @@ export type Mutation = {
   deleteCurrentUser: DeleteCurrentUserPayload;
   deleteHmisNote: DeleteHmisNotePayload;
   deleteHmisProfile: DeleteHmisProfilePayload;
-  deleteMood: DeleteMoodPayload;
   deleteNote: DeleteNotePayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
@@ -1320,11 +1280,6 @@ export type MutationCreateNoteDataImportArgs = {
 };
 
 
-export type MutationCreateNoteMoodArgs = {
-  data: CreateNoteMoodInput;
-};
-
-
 export type MutationCreateNoteServiceRequestArgs = {
   data: CreateNoteServiceRequestInput;
 };
@@ -1371,11 +1326,6 @@ export type MutationDeleteHmisNoteArgs = {
 
 
 export type MutationDeleteHmisProfileArgs = {
-  data: DeleteDjangoObjectInput;
-};
-
-
-export type MutationDeleteMoodArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -1569,7 +1519,6 @@ export type NoteType = {
   interactedAt: Scalars['DateTime']['output'];
   isSubmitted: Scalars['Boolean']['output'];
   location?: Maybe<LocationType>;
-  moods: Array<MoodType>;
   organization: OrganizationType;
   privateDetails?: Maybe<Scalars['String']['output']>;
   providedServices: Array<ServiceRequestType>;
