@@ -2,6 +2,7 @@ import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
+  MapLocationPicker,
   PROVIDER_GOOGLE,
   TextMedium,
   TextRegular,
@@ -12,7 +13,7 @@ import { useInitialLocation, useSnackbar } from '../../../hooks';
 import { MapView, Marker } from '../../../maps';
 import { useModalScreen } from '../../../providers';
 import { useUserDefaultNoteLocation } from '../../../state';
-import { LocationMapModal, MainScrollContainer } from '../../../ui-components';
+import { MainScrollContainer } from '../../../ui-components';
 import { LocationDraft } from '../../NotesHmis/HmisProgramNoteForm';
 
 export function DefaultLocation() {
@@ -69,7 +70,7 @@ export function DefaultLocation() {
             presentation: 'modal',
             title: 'Type or Pin Location',
             renderContent: ({ close }) => (
-              <LocationMapModal
+              <MapLocationPicker
                 userLocation={userLocation}
                 initialLocation={
                   defaultLocation &&
