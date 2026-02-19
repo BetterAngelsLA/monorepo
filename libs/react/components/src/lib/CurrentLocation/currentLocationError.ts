@@ -5,16 +5,12 @@ export type TLocationError =
   | 'FEATURE_UNAVAILABLE'
   | 'UNKNOWN';
 
-const GeolocationErrorNameMap = {
+const GeolocationErrorNameMap: Record<number, TLocationError> = {
   1: 'PERMISSION_DENIED',
   2: 'POSITION_UNAVAILABLE',
   3: 'TIMEOUT',
-} as const;
+};
 
-export type GeolocationErrorKey = keyof typeof GeolocationErrorNameMap;
-
-export function getGeolocationErrorName(
-  errorCode: GeolocationErrorKey
-): TLocationError {
-  return GeolocationErrorNameMap[errorCode];
+export function getGeolocationErrorName(errorCode: number): TLocationError {
+  return GeolocationErrorNameMap[errorCode] ?? 'UNKNOWN';
 }
