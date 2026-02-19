@@ -3,8 +3,8 @@ import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { modalAtom } from '../../../../components/Modal';
 
-const FORM_LINK =
-  'https://docs.google.com/forms/d/e/1FAIpQLSdITelKDnUI1oDz8JvQ_tCGoNtjNKyl7AJmYWVTJYqACGMY4A/viewform';
+// const FORM_LINK =
+//   'https://docs.google.com/forms/d/e/1FAIpQLSdITelKDnUI1oDz8JvQ_tCGoNtjNKyl7AJmYWVTJYqACGMY4A/viewform';
 
 type TProps = {
   className?: string;
@@ -19,7 +19,7 @@ export function ReportUpdateButton(props: TProps) {
   function showModal() {
     setModal({
       content: (
-        <div className="w-full border-8 border-red-500">HELLO HELLO</div>
+        <div className="w-full border-8 border-red-500">Still in progress</div>
       ),
       // NOTE: still in progress
 

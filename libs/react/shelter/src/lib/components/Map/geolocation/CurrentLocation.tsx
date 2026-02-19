@@ -1,6 +1,6 @@
 import { mergeCss } from '@monorepo/react/shared';
-import { TLatLng } from 'libs/react/shelter/src/lib/components/Map/types.maps';
 import { PropsWithChildren } from 'react';
+import { TLatLng } from '../types.maps';
 import {
   GeolocationErrorKey,
   TLocationError,

@@ -1,5 +1,5 @@
 export * from './Flyout';
-export { ImagePlaceholder } from './ImagePlaceholder/ImagePlaceholder';
+export * from './ImagePlaceholder';
 export * from './Input';
 export * from './Map';
 export * from './Modal';
@@ -8,4 +8,4 @@ export * from './ShelterCard';
 export * from './ShelterFilters';
 export * from './ShelterSearch';
 export * from './SignIn';
-export { WysiwygContainer } from './WysiwygContainer/WysiwygContainer';
+export * from './WysiwygContainer';

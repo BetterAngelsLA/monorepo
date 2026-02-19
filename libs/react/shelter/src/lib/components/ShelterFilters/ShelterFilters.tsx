@@ -1,7 +1,7 @@
 import { mergeCss } from '@monorepo/react/shared';
-import { shelterFiltersAtom } from '@monorepo/react/shelter';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
+import { shelterFiltersAtom } from '../../atoms';
 import { TShelterPropertyFilters } from '../ShelterSearch';
 import { FilterSelector } from './FilterSelector';
 import {

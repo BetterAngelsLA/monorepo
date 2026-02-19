@@ -1,6 +1,6 @@
 import { ReactElement, ReactNode } from 'react';
-import { FeatureControlGroups } from './types';
 import { FeatureControlContext } from './featureControlContext';
+import { FeatureControlGroups } from './types';
 
 interface FeatureControlProviderProps {
   children: ReactNode;
@@ -17,6 +17,7 @@ export function FeatureControlProvider({
   loading,
   error,
   refetchFeatureFlags,
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   clearFeatureFlags = () => {},
 }: FeatureControlProviderProps): ReactElement {
   return (
