@@ -24,11 +24,17 @@ export function ZoomButton(props: TProps) {
       return;
     }
 
+    const currentZoom = map.getZoom();
+
+    if (currentZoom === null) {
+      return;
+    }
+
     if (onClick) {
       onClick();
     }
 
-    map.setZoom(map.getZoom()! + zoomBy);
+    map.setZoom(currentZoom + zoomBy);
   }
 
   const parentCss = [

@@ -8,7 +8,6 @@ import {
   MapCameraChangedEvent,
   MapCameraProps,
   MapControl,
-  useApiLoadingStatus,
   useMap,
 } from '@vis.gl/react-google-maps';
 import {
@@ -60,7 +59,6 @@ export function Map(props: TMap) {
     markers = [],
   } = props;
   const map = useMap();
-  const mapApiStatus = useApiLoadingStatus();
 
   const [cameraProps, setCameraProps] = useState<MapCameraProps>({
     center: toGoogleLatLng(defaultCenter) as google.maps.LatLngLiteral,
@@ -72,12 +70,9 @@ export function Map(props: TMap) {
     useState<PermissionState | null>(null);
   const hasGrantedLocation = sessionStorage.getItem('hasGrantedLocation');
 
-  const handleCameraChange = useCallback(
-    (event: MapCameraChangedEvent) => {
-      setCameraProps(event.detail);
-    },
-    []
-  );
+  const handleCameraChange = useCallback((event: MapCameraChangedEvent) => {
+    setCameraProps(event.detail);
+  }, []);
 
   function handleCenterToUserLocation(location: TLatLng) {
     if (!map) {
