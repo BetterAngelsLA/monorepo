@@ -283,11 +283,21 @@ export default function ServicesModal(props: IServicesModalProps) {
     showSnackbar,
   ]);
 
-  // ---------- Close (revert) ----------
-  const reset = useCallback(() => {
+  // ---------- Clear (uncheck everything) ----------
+  const clearAll = useCallback(() => {
     const { existing, others } = computeInitial();
-    setServiceRequests(existing);
-    setServiceRequestsOthers(others);
+    setServiceRequests(
+      pipe(
+        existing,
+        rmap((s) => ({ ...s, markedForDeletion: true }))
+      )
+    );
+    setServiceRequestsOthers(
+      pipe(
+        others,
+        rmap((o) => ({ ...o, markedForDeletion: true }))
+      )
+    );
   }, [computeInitial]);
 
   // ---------- Bootstrap ----------
@@ -400,7 +410,7 @@ export default function ServicesModal(props: IServicesModalProps) {
       >
         <View style={{ flex: 1 }}>
           <Button
-            onPress={reset}
+            onPress={clearAll}
             size="full"
             variant="secondary"
             title="Reset"
