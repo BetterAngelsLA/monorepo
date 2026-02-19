@@ -2,31 +2,24 @@ import { Button } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { modalAtom } from '../../../../components/Modal';
-
-// const FORM_LINK =
-//   'https://docs.google.com/forms/d/e/1FAIpQLSdITelKDnUI1oDz8JvQ_tCGoNtjNKyl7AJmYWVTJYqACGMY4A/viewform';
+import { ReportUpdateNotice } from './ReportUpdateNotice';
 
 type TProps = {
   className?: string;
-  disabled?: boolean;
 };
 
 export function ReportUpdateButton(props: TProps) {
-  const { className, disabled } = props;
+  const { className } = props;
 
   const [_modal, setModal] = useAtom(modalAtom);
 
+  function closeModal() {
+    setModal(null);
+  }
+
   function showModal() {
     setModal({
-      content: (
-        <div className="w-full border-8 border-red-500">Still in progress</div>
-      ),
-      // NOTE: still in progress
-
-      // animation: ModalAnimationEnum.SLIDE_UP,
-      // type: 'fullscreen',
-      // footer: <FiltersActions className="pb-8" onDone={onSubmitFilters} />,
-      // onClose: resetFilters,
+      content: <ReportUpdateNotice close={closeModal} />,
     });
   }
 
@@ -36,7 +29,7 @@ export function ReportUpdateButton(props: TProps) {
       size="sm"
       variant="text"
       onClick={showModal}
-      disabled={disabled}
+      aria-haspopup="dialog"
     >
       Report an Update
     </Button>
