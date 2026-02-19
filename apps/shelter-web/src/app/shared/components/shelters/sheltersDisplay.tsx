@@ -59,7 +59,9 @@ export function SheltersDisplay(props: TProps) {
     queryVariables.filters.geolocation = {
       latitude,
       longitude,
-      rangeInMiles,
+      // Only apply range limit when there's no map bounds filter;
+      // map bounds already constrains the spatial area.
+      ...(mapBoundsFilter ? {} : { rangeInMiles }),
     };
   }
 
