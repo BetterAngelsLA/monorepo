@@ -342,7 +342,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
 
-        expected_query_count = 28
+        expected_query_count = 22
 
         variables = {"ordering": {"name": "ASC"}}
 
@@ -582,8 +582,9 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         with CaptureQueriesContext(connection) as context:
             response = self.execute_graphql(query, variables={"filters": filters})
-        # PostGIS spatial_ref_sys may be cached or not, so accept either 2 or 3 queries
-        self.assertIn(len(context.captured_queries), [2, 3])
+        # PostGIS spatial_ref_sys may be cached or not, and ContentType
+        # lookups from with_hero_image_file may or may not be cached.
+        self.assertIn(len(context.captured_queries), [2, 3, 4, 5])
 
         result_ids = [s["id"] for s in response["data"]["shelters"]["results"]]
         expected_ids = [str(s.id) for s in [s4, s3, s2]]

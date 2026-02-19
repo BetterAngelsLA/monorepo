@@ -7,9 +7,10 @@ from accounts.models import User
 from accounts.types import OrganizationType
 from common.graphql.types import LatitudeScalar, LongitudeScalar, PhoneNumberScalar
 from django.contrib.gis.db.models.functions import Distance
+from django.core.files.storage import default_storage
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Prefetch, Q, QuerySet
+from django.db.models import Q, QuerySet
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
@@ -300,39 +301,18 @@ class ShelterTypeMixin:
     training_services: List[TrainingServiceType]
     website: auto
 
-    _exterior_photos: Optional[List[ShelterPhotoType]] = None
-    _interior_photos: Optional[List[ShelterPhotoType]] = None
-
-    # NOTE: This is a temporary workaround because Shelter specced without a hero image.
-    # Will remove once we add a hero_image field to the Shelter model.
-    @strawberry_django.field(
-        prefetch_related=[
-            lambda x: Prefetch(
-                "exterior_photos",
-                queryset=models.ExteriorPhoto.objects.filter(),
-                to_attr="_exterior_photos",
-            ),
-            lambda x: Prefetch(
-                "interior_photos",
-                queryset=models.InteriorPhoto.objects.filter(),
-                to_attr="_interior_photos",
-            ),
-        ],
-    )
+    @strawberry_django.field
     def hero_image(self, root: models.Shelter) -> Optional[str]:
-        try:
-            hero = root.hero_image
-            if hero and hasattr(hero, "file") and hero.file:
-                return str(hero.file.url)
-        except Exception:
-            pass
+        """Return the hero image URL.
 
-        photo = next(
-            (photos[0] for photos in (self._exterior_photos, self._interior_photos) if photos),
-            None,
-        )
-
-        return str(photo.file.url) if photo else None
+        The file path is annotated on the queryset via
+        ``ShelterQuerySet.with_hero_image_file()`` so this resolver
+        just reads the annotation — zero extra queries.
+        """
+        file_path = getattr(root, "_hero_image_file", None)
+        if file_path:
+            return default_storage.url(file_path)
+        return None
 
     @strawberry_django.field
     def distance_in_miles(self, root: models.Shelter) -> Optional[float]:
@@ -357,7 +337,7 @@ class ShelterTypeMixin:
 class ShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
-        return models.Shelter.objects.approved()
+        return models.Shelter.objects.approved().with_hero_image_file()
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
@@ -365,4 +345,4 @@ class AdminShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = info.context.request.user
-        return models.Shelter.admin_objects.for_user(user)
+        return models.Shelter.admin_objects.for_user(user).with_hero_image_file()
