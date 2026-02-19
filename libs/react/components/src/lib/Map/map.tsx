@@ -76,12 +76,9 @@ export function Map(props: TMap) {
     console.info(`[map] loading status: ${mapApiStatus}`);
   }, [mapApiStatus]);
 
-  const handleCameraChange = useCallback(
-    (event: MapCameraChangedEvent) => {
-      setCameraProps(event.detail);
-    },
-    [map]
-  );
+  const handleCameraChange = useCallback((event: MapCameraChangedEvent) => {
+    setCameraProps(event.detail);
+  }, []);
 
   function handleCenterToUserLocation(location: TLatLng) {
     if (!map) {

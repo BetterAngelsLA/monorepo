@@ -546,13 +546,6 @@ input CreateNoteInput {
   interactedAt: DateTime
 }
 
-input CreateNoteMoodInput {
-  descriptor: MoodEnum!
-  noteId: ID!
-}
-
-union CreateNoteMoodPayload = MoodType | OperationInfo
-
 union CreateNotePayload = NoteType | OperationInfo
 
 input CreateNoteServiceRequestInput {
@@ -695,8 +688,6 @@ input DeleteDjangoObjectInput {
 union DeleteHmisNotePayload = DeletedObjectType | OperationInfo
 
 union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
-
-union DeleteMoodPayload = DeletedObjectType | OperationInfo
 
 union DeleteNotePayload = NoteType | OperationInfo
 
@@ -1293,34 +1284,6 @@ enum MealServiceChoices {
   DINNER
 }
 
-enum MoodEnum {
-  AGITATED
-  AGREEABLE
-  ANXIOUS
-  DEPRESSED
-  DETACHED
-  DISORGANIZED_THOUGHT
-  DISORIENTED
-  ESCALATED
-  EUTHYMIC
-  FLAT_BLUNTED
-  HAPPY
-  HOPELESS
-  INDIFFERENT
-  MANIC
-  MOTIVATED
-  OPTIMISTIC
-  PERSONABLE
-  PLEASANT
-  RESTLESS
-  SUICIDAL
-}
-
-type MoodType {
-  id: ID!
-  descriptor: MoodEnum!
-}
-
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
@@ -1365,8 +1328,6 @@ type Mutation {
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  createNoteMood(data: CreateNoteMoodInput!): CreateNoteMoodPayload!
-  deleteMood(data: DeleteDjangoObjectInput!): DeleteMoodPayload!
   createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
   createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
   updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_servicerequest"}], any: true)
@@ -1434,7 +1395,6 @@ type NoteType {
   interactedAt: DateTime!
   isSubmitted: Boolean!
   location: LocationType
-  moods: [MoodType!]!
   organization: OrganizationType!
   providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   publicDetails: String!
