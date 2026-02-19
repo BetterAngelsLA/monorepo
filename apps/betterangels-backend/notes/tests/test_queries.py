@@ -52,9 +52,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         )
         # Update location via dedicated mutation
-        self._update_note_location_fixture(
-            {"id": note_id, "location": location_input}
-        )
+        self._update_note_location_fixture({"id": note_id, "location": location_input})
 
         # Add purposes and next steps
         note = Note.objects.get(pk=note_id)

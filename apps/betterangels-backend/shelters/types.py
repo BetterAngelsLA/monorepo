@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
 import strawberry
 import strawberry_django
+from accounts.models import User
 from accounts.types import OrganizationType
 from common.graphql.types import LatitudeScalar, LongitudeScalar, PhoneNumberScalar
 from django.contrib.gis.db.models.functions import Distance
@@ -30,7 +31,8 @@ from shelters.enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
-from strawberry import ID, asdict, auto
+from strawberry import ID, Info, asdict, auto
+from strawberry_django.auth.utils import get_current_user
 
 
 @strawberry_django.type(models.ContactInfo)
@@ -167,7 +169,22 @@ class ShelterPropertyInput:
 
 @strawberry_django.filter_type(models.Shelter)
 class ShelterFilter:
-    organization: auto
+    @strawberry_django.filter_field
+    def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
+        user = get_current_user(info)
+
+        if user is None or not user.is_authenticated:
+            if not value:
+                return Q()
+
+            return Q(**{f"{prefix}organization__in": value})
+
+        current_user = cast(User, user)
+        allowed_organizations = current_user.organizations_organization.all()
+        if value:
+            allowed_organizations = allowed_organizations.filter(pk__in=value)
+
+        return Q(**{f"{prefix}organization__in": allowed_organizations})
 
     @strawberry_django.filter_field
     def properties(
@@ -230,8 +247,8 @@ class TimeRange:
     end: Optional[datetime]
 
 
-@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
-class ShelterType:
+@strawberry.type
+class ShelterTypeMixin:
     id: ID
     accessibility: List[AccessibilityType]
     additional_contacts: List[ContactInfoType]
@@ -330,3 +347,18 @@ class ShelterType:
                 else:
                     ranges.append(None)
         return ranges or None
+
+
+@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
+class ShelterType(ShelterTypeMixin):
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
+        return models.Shelter.objects.approved()
+
+
+@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
+class AdminShelterType(ShelterTypeMixin):
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
+        user = info.context.request.user
+        return models.Shelter.admin_objects.for_user(user)

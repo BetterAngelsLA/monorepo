@@ -37,6 +37,7 @@ from .types import (
     OrgInvitationInput,
     RemoveOrganizationMemberInput,
     UpdateUserInput,
+    UpdateUserProfileInput,
     UserType,
 )
 
@@ -140,7 +141,7 @@ class Mutation:
         missing `Info` type resolution error. Revisit and simplify back to
         `auth.logout()` once that upstream issue is resolved.
         """
-        user = info.context.get_user()
+        user = get_current_user(info)
         ret = bool(user and user.is_authenticated)
         auth.logout(info.context.request)
         return ret
@@ -168,6 +169,15 @@ class Mutation:
         )
 
         return cast(UserType, user)
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def update_user_profile(self, info: Info, data: UpdateUserProfileInput) -> CurrentUserType:
+        user = cast(User, get_current_user(info))
+
+        user_data: dict = strawberry.asdict(data)
+        user = resolvers.update(info, user, {**user_data, "id": user.pk})
+
+        return cast(CurrentUserType, user)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_current_user(self, info: Info) -> DeletedObjectType:

@@ -1,0 +1,9 @@
+mutation UpdateUserProfile($data: UpdateUserProfileInput!) {
+  updateUserProfile(data: $data) {
+    ... on CurrentUserType {
+      id
+      firstName
+      lastName
+    }
+  }
+}
