@@ -1,3 +1,4 @@
+/// <reference types="google.maps" />
 import {
   DEFAULT_BOUNDS_MILES,
   LA_COUNTY_CENTER,

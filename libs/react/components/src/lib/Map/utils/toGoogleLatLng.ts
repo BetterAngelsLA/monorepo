@@ -1,3 +1,4 @@
+/// <reference types="google.maps" />
 import { TLatLng } from '../types.maps';
 
 export function toGoogleLatLng(

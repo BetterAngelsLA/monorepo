@@ -1,3 +1,4 @@
+/// <reference types="google.maps" />
 import CurrentLocationDot from '../CurrentLocationDot';
 import { MapPinIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';

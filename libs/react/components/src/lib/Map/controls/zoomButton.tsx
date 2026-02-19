@@ -26,7 +26,7 @@ export function ZoomButton(props: TProps) {
 
     const currentZoom = map.getZoom();
 
-    if (currentZoom === null) {
+    if (currentZoom == null) {
       return;
     }
 

@@ -1,3 +1,4 @@
+/// <reference types="google.maps" />
 export type TLatLng = {
   latitude: number;
   longitude: number;
