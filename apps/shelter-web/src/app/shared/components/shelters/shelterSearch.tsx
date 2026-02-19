@@ -90,6 +90,7 @@ export function ShelterSearch(props: TProps) {
       <SheltersDisplay
         className="mt-8"
         coordinates={location}
+        coordinatesSource={location?.source}
         mapBoundsFilter={mapBoundsFilter}
         propertyFilters={queryFilters}
       />
