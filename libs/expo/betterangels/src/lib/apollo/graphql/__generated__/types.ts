@@ -70,8 +70,6 @@ export type AddressType = {
 
 export type AdminShelterType = {
   __typename?: 'AdminShelterType';
-  ExteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
-  InteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
   accessibility: Array<AccessibilityType>;
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
@@ -2289,8 +2287,6 @@ export type ShelterPropertyInput = {
 
 export type ShelterType = {
   __typename?: 'ShelterType';
-  ExteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
-  InteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
   accessibility: Array<AccessibilityType>;
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
