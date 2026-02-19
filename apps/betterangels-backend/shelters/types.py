@@ -210,13 +210,13 @@ class ShelterFilter:
 
         bbox: tuple = (
             value.west_lng,
-            value.north_lat,
-            value.east_lng,
             value.south_lat,
+            value.east_lng,
+            value.north_lat,
         )
         polygon = Polygon.from_bbox(bbox)
 
-        return queryset.filter(geolocation__contained=polygon), Q()
+        return queryset.filter(geolocation__within=polygon), Q()
 
     @strawberry_django.filter_field
     def geolocation(

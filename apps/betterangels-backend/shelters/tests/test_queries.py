@@ -396,8 +396,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         with CaptureQueriesContext(connection) as context:
             response = self.execute_graphql(query, variables={"filters": filters})
-        # PostGIS spatial_ref_sys may be cached or not, so accept either 2 or 3 queries
-        self.assertIn(len(context.captured_queries), [2, 3])
+            # PostGIS spatial_ref_sys may be cached or not, so accept either 2 or 3 queries
+            self.assertIn(len(context.captured_queries), [2, 3])
 
         results = response["data"]["shelters"]["results"]
 
@@ -484,6 +484,58 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         self.assertEqual(len(result_ids), 3)
         self.assertEqual(result_ids, expected_ids)
+
+    def test_shelter_map_bounds_filter_regression_asymmetric_bounds(self) -> None:
+        inside = Shelter.objects.create(
+            location=Places(
+                place="inside",
+                latitude=34.05,
+                longitude=-118.25,
+            ),
+            status=StatusChoices.APPROVED,
+        )
+        outside = Shelter.objects.create(
+            location=Places(
+                place="outside",
+                latitude=36.0,
+                longitude=-118.25,
+            ),
+            status=StatusChoices.APPROVED,
+        )
+        north_boundary = Shelter.objects.create(
+            location=Places(
+                place="north-boundary",
+                latitude=35.0,
+                longitude=-118.25,
+            ),
+            status=StatusChoices.APPROVED,
+        )
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {
+            "mapBounds": {
+                "westLng": -119,
+                "northLat": 35,
+                "eastLng": -117,
+                "southLat": 33,
+            }
+        }
+
+        response = self.execute_graphql(query, variables={"filters": filters})
+
+        result_ids = {s["id"] for s in response["data"]["shelters"]["results"]}
+        self.assertIn(str(inside.id), result_ids)
+        self.assertNotIn(str(outside.id), result_ids)
+        self.assertNotIn(str(north_boundary.id), result_ids)
 
     def test_shelter_combined_filters(self) -> None:
         reference_point = {
