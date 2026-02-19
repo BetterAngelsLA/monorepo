@@ -12,7 +12,6 @@ from organizations.models import Organization
 from rangefilter.filters import DateRangeFilterBuilder
 
 from .models import (
-    Mood,
     Note,
     NoteDataImport,
     NoteImportRecord,
@@ -20,37 +19,6 @@ from .models import (
     OrganizationServiceCategory,
     ServiceRequest,
 )
-
-
-@admin.register(Mood)
-class MoodAdmin(admin.ModelAdmin):
-    list_display = (
-        "descriptor",
-        "note",
-        "note_client",
-    )
-    list_filter = (
-        "descriptor",
-        "created_at",
-        "updated_at",
-    )
-    search_fields = (
-        "note__title",
-        "note__created_by__email",
-        "note__client_profile__email",
-    )
-    readonly_fields = ("created_at",)
-
-    def note_client(self, obj: Mood) -> str:
-        return str(obj.note.client_profile)
-
-    def created_by(self, obj: Mood) -> str:
-        return str(obj.note.created_by)
-
-
-class MoodInline(admin.TabularInline):
-    model = Mood
-    extra = 1
 
 
 class NoteResource(resources.ModelResource):
@@ -161,9 +129,7 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
         "created_by__email",
         "organization__name",
     )
-    inlines = [
-        MoodInline,
-    ]
+    inlines = []
     readonly_fields = (
         "created_by",
         "interacted_at",

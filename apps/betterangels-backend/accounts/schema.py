@@ -10,6 +10,7 @@ from accounts.permissions import UserOrganizationPermissions
 from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.conf import settings
+from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
@@ -18,7 +19,6 @@ from notes.permissions import NotePermissions
 from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 from strawberry.types import Info
-from strawberry_django import auth
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
@@ -132,7 +132,19 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    logout = auth.logout()
+    @strawberry.mutation
+    def logout(self, info: Info) -> bool:
+        """Log out the current user and destroy their session.
+
+        This local resolver exists because upgrading gunicorn also pulled in a
+        newer strawberry-django stack that caused schema export to fail with a
+        missing `Info` type resolution error. Revisit and simplify back to
+        `auth.logout()` once that upstream issue is resolved.
+        """
+        user = get_current_user(info)
+        ret = bool(user and user.is_authenticated)
+        auth.logout(info.context.request)
+        return ret
 
     @strawberry.mutation
     def login(self, input: LoginInput) -> AuthResponse:
