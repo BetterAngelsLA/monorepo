@@ -13,5 +13,3 @@ type TProps = {
 };
 
 export const modalAtom = atom<TProps | null>(null);
-
-//  yarn nx run shelter-web:lint

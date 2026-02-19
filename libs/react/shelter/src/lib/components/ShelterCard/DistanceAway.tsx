@@ -1,7 +1,3 @@
-// import { TLatLng } from '../../../../../../../libs/react/shelter/src/lib/components/Map/types.maps';
-// import { calcDistance } from '../../utils/distance/calcDistance';
-// import { formatDistance } from '../../utils/distance/formatDistance';
-
 import { calcDistance, formatDistance } from '@monorepo/react/shared';
 import { TLatLng } from '../Map';
 

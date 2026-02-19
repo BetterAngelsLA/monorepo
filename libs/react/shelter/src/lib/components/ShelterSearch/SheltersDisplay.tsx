@@ -1,5 +1,3 @@
-// libs/react/shelter/src/lib/components/ShelterSearch/SheltersDisplay.tsx
-
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { InfiniteList } from '@monorepo/react/components';
 import { useAtom } from 'jotai';

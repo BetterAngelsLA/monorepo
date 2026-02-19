@@ -1,9 +1,9 @@
 import { SearchIcon } from '@monorepo/react/icons';
 import { TPlacePrediction } from '@monorepo/shared/places';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { LA_COUNTY_CENTER } from '../../../../../../../libs/react/shelter/src/lib/components/Map/constants.maps';
 import { usePlacesClient } from '../../places';
 import { Input } from '../Input';
+import { LA_COUNTY_CENTER } from '../Map';
 import { ISO3166Alpha2 } from './isoCodes';
 import { TPlaceResult } from './types';
 

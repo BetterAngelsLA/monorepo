@@ -21,6 +21,8 @@ export function ReportUpdateButton(props: TProps) {
       content: (
         <div className="w-full border-8 border-red-500">HELLO HELLO</div>
       ),
+      // NOTE: still in progress
+
       // animation: ModalAnimationEnum.SLIDE_UP,
       // type: 'fullscreen',
       // footer: <FiltersActions className="pb-8" onDone={onSubmitFilters} />,

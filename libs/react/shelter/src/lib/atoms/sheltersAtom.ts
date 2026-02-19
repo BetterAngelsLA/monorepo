@@ -1,4 +1,4 @@
 import { atom } from 'jotai';
-import { TShelter } from '../../../../../../apps/shelter-web/src/app/shared/components/shelter/shelterCard';
+import { TShelter } from '../components';
 
 export const sheltersAtom = atom<TShelter[]>([]);

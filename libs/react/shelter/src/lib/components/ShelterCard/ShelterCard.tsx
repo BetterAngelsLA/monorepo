@@ -1,5 +1,3 @@
-// libs/react/shelter/src/lib/components/ShelterCard/ShelterCard.tsx
-
 import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { ReactNode } from 'react';

@@ -1,5 +1,3 @@
-// libs/react/shelter
-
 import { useApolloClient, useQuery } from '@apollo/client/react';
 import {
   FeatureControlProvider,
