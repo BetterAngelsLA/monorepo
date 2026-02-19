@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
-    "types": ["node", "vite/client"]
+    "types": ["node", "vite/client", "google.maps"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": [
