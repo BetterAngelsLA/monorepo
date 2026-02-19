@@ -468,7 +468,12 @@ class ShelterResource(resources.ModelResource):
             addy_for_location_method = addy_data.json()["results"][0]
             addy_for_location_method["address_components"] = json.dumps(addy_for_location_method["address_components"])
             addy_address = Location.get_or_create_address(addy_for_location_method)
-            if None in [addy_address.street, addy_address.city, addy_address.state, addy_address.zip_code]:
+            if addy_address is None or None in [
+                addy_address.street,
+                addy_address.city,
+                addy_address.state,
+                addy_address.zip_code,
+            ]:
                 raise IndexError
             row["location"] = addy_to_places_object
         except IndexError:
