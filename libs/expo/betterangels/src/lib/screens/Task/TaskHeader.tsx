@@ -94,7 +94,7 @@ export default function TaskHeader(props: TTaskHeaderProps) {
 
   function openTaskForm() {
     showModalScreen({
-      presentation: 'modal',
+      presentation: 'fullScreenModal',
       renderContent: ({ close }) => (
         <TaskForm
           initialValues={{
