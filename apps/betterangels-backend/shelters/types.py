@@ -320,8 +320,12 @@ class ShelterTypeMixin:
         ],
     )
     def hero_image(self, root: models.Shelter) -> Optional[str]:
-        if self.hero_image:
-            return str(self.hero_image.file.url)
+        try:
+            hero = root.hero_image
+            if hero and hasattr(hero, "file") and hero.file:
+                return str(hero.file.url)
+        except Exception:
+            pass
 
         photo = next(
             (photos[0] for photos in (self._exterior_photos, self._interior_photos) if photos),
