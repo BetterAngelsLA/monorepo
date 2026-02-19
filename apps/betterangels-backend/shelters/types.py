@@ -7,9 +7,9 @@ from accounts.models import User
 from accounts.types import OrganizationType
 from common.graphql.types import LatitudeScalar, LongitudeScalar, PhoneNumberScalar
 from django.contrib.gis.db.models.functions import Distance
-from django.core.files.storage import default_storage
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
+from django.core.files.storage import default_storage
 from django.db.models import Q, QuerySet
 from shelters import models
 from shelters.enums import (

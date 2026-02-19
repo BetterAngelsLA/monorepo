@@ -724,19 +724,21 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
         points to a valid ExteriorPhoto or InteriorPhoto."""
         from django.contrib.contenttypes.models import ContentType
 
-        shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
-        photo = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
+        for photo_model in (ExteriorPhoto, InteriorPhoto):
+            with self.subTest(photo_model=photo_model.__name__):
+                shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
+                photo = photo_model.objects.create(shelter=shelter, file=self.file)
 
-        ct = ContentType.objects.get_for_model(ExteriorPhoto)
-        Shelter.objects.filter(pk=shelter.pk).update(
-            hero_image_content_type=ct,
-            hero_image_object_id=photo.pk,
-        )
+                ct = ContentType.objects.get_for_model(photo_model)
+                Shelter.objects.filter(pk=shelter.pk).update(
+                    hero_image_content_type=ct,
+                    hero_image_object_id=photo.pk,
+                )
 
-        response = self.execute_graphql(self.HERO_IMAGE_QUERY)
-        results = response["data"]["shelters"]["results"]
-        self.assertEqual(len(results), 1)
-        self.assertIn(photo.file.name, results[0]["heroImage"])
+                response = self.execute_graphql(self.HERO_IMAGE_QUERY)
+                results = response["data"]["shelters"]["results"]
+                hero_images = {r["id"]: r["heroImage"] for r in results}
+                self.assertIn(photo.file.name, hero_images[str(shelter.pk)])
 
     def test_hero_image_falls_back_to_exterior_photo(self) -> None:
         """When no GFK hero_image is set, fall back to the first exterior
@@ -843,23 +845,23 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
 
     def test_hero_image_multiple_shelters_mixed_states(self) -> None:
         """Multiple shelters with different hero_image states should all
-        resolve without errors — no single broken shelter crashes the
-        entire query."""
+        resolve without errors and return the correct heroImage per shelter."""
         from django.contrib.contenttypes.models import ContentType
 
-        # Shelter 1: Valid GFK
+        ct = ContentType.objects.get_for_model(ExteriorPhoto)
+
+        # Shelter 1: Valid GFK → explicit hero image
         s1 = shelter_recipe.make(status=StatusChoices.APPROVED)
         p1 = ExteriorPhoto.objects.create(shelter=s1, file=self.file)
-        ct = ContentType.objects.get_for_model(ExteriorPhoto)
         Shelter.objects.filter(pk=s1.pk).update(
             hero_image_content_type=ct,
             hero_image_object_id=p1.pk,
         )
 
-        # Shelter 2: No photos at all
-        shelter_recipe.make(status=StatusChoices.APPROVED)
+        # Shelter 2: No photos at all → None
+        s2 = shelter_recipe.make(status=StatusChoices.APPROVED)
 
-        # Shelter 3: Orphaned GFK (deleted object) with fallback
+        # Shelter 3: Orphaned GFK (deleted object) with interior fallback
         s3 = shelter_recipe.make(status=StatusChoices.APPROVED)
         orphan_photo = ExteriorPhoto.objects.create(
             shelter=s3,
@@ -870,7 +872,7 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
             hero_image_object_id=orphan_photo.pk,
         )
         orphan_photo.delete()
-        InteriorPhoto.objects.create(
+        fallback = InteriorPhoto.objects.create(
             shelter=s3,
             file=SimpleUploadedFile(name="fallback3.jpg", content=self.file_content),
         )
@@ -879,3 +881,8 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
         self.assertNotIn("errors", response)
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 3)
+
+        hero_images = {int(r["id"]): r["heroImage"] for r in results}
+        self.assertIn(p1.file.name, hero_images[s1.pk])
+        self.assertIsNone(hero_images[s2.pk])
+        self.assertEqual(hero_images[s3.pk], fallback.file.url)
