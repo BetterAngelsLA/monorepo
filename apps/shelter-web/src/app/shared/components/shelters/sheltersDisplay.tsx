@@ -99,7 +99,7 @@ export function SheltersDisplay(props: TProps) {
 
   useEffect(() => {
     setSheltersData(items || []);
-  }, [items.length]);
+  }, [items, setSheltersData]);
 
   const renderListHeader = useCallback(
     (visible: number, total: number | undefined) => {

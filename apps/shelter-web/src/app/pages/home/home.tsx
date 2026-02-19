@@ -1,7 +1,7 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { SHELTERS_MAP_ID } from '../../constants/app.constants';
 import { MaxWLayout } from '../../layout/maxWLayout';
 import { locationAtom } from '../../shared/atoms/locationAtom';
@@ -22,8 +22,17 @@ import {
 import { ShelterSearch } from '../../shared/components/shelters/shelterSearch';
 import { ModalAnimationEnum } from '../../shared/modal/modal';
 
+const FOOTER_STYLE = [
+  'font-semibold',
+  'text-sm',
+  'text-center',
+  'cursor-pointer',
+  'text-primary-60',
+  'active:text-primary-dark',
+];
+
 export function Home() {
-  const [atomLocation, setLocation] = useAtom(locationAtom);
+  const [_atomLocation, setLocation] = useAtom(locationAtom);
   const [_modal, setModal] = useAtom(modalAtom);
   const [shelters] = useAtom(sheltersAtom);
   const [shelterMarkers, setShelterMarkers] = useState<TMarker[]>([]);
@@ -33,6 +42,30 @@ export function Home() {
   const [hasInitialized, setHasInitialized] = useState(false);
   const map = useMap();
   const mapBounds = map?.getBounds();
+
+  const handleClick = useCallback(
+    (markerId: string | null | undefined) => {
+      if (!markerId) {
+        return;
+      }
+      setModal({
+        content: (
+          <ShelterCard
+            className="mt-4"
+            shelter={
+              shelters.find((shelter) => shelter.id === markerId) as TShelter
+            }
+            footer={
+              <div className={mergeCss(FOOTER_STYLE)}>View Details</div>
+            }
+          />
+        ),
+        animation: ModalAnimationEnum.EXPAND,
+        closeOnMaskClick: true,
+      });
+    },
+    [setModal, shelters]
+  );
 
   useEffect(() => {
     const markers = shelters
@@ -47,35 +80,7 @@ export function Home() {
       });
 
     setShelterMarkers(markers);
-  }, [shelters]);
-
-  const footerStyle = [
-    'font-semibold',
-    'text-sm',
-    'text-center',
-    'cursor-pointer',
-    'text-primary-60',
-    'active:text-primary-dark',
-  ];
-
-  const handleClick = (markerId: string | null | undefined) => {
-    if (!markerId) {
-      return;
-    }
-    setModal({
-      content: (
-        <ShelterCard
-          className="mt-4"
-          shelter={
-            shelters.find((shelter) => shelter.id === markerId) as TShelter
-          }
-          footer={<div className={mergeCss(footerStyle)}>View Details</div>}
-        />
-      ),
-      animation: ModalAnimationEnum.EXPAND,
-      closeOnMaskClick: true,
-    });
-  };
+  }, [handleClick, shelters]);
 
   function onCenterSelect(center: TLatLng) {
     setLocation({
@@ -93,22 +98,21 @@ export function Home() {
     setShowSearchButton(false);
   }
 
-  const applyMapCenter = (
-    lat: number,
-    lng: number,
-    source: 'address' | 'currentLocation'
-  ) => {
-    const location = { latitude: lat, longitude: lng };
-    setDefaultCenter(location);
-    setLocation({ ...location, source });
-  };
+  const applyMapCenter = useCallback(
+    (lat: number, lng: number, source: 'address' | 'currentLocation') => {
+      const location = { latitude: lat, longitude: lng };
+      setDefaultCenter(location);
+      setLocation({ ...location, source });
+    },
+    [setLocation]
+  );
 
   useEffect(() => {
     if (mapBounds) {
       setMapBoundsFilter(toMapBounds(mapBounds));
       setHasInitialized(true);
     }
-  }, [atomLocation]);
+  }, [mapBounds]);
 
   useEffect(() => {
     if (!mapBounds || hasInitialized) return;
@@ -146,7 +150,7 @@ export function Home() {
         'address'
       );
     }
-  }, [mapBounds, hasInitialized]);
+  }, [applyMapCenter, mapBounds, hasInitialized]);
 
   return (
     <>

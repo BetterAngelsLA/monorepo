@@ -72,10 +72,6 @@ export function Map(props: TMap) {
     useState<PermissionState | null>(null);
   const hasGrantedLocation = sessionStorage.getItem('hasGrantedLocation');
 
-  useEffect(() => {
-    console.info(`[map] loading status: ${mapApiStatus}`);
-  }, [mapApiStatus]);
-
   const handleCameraChange = useCallback(
     (event: MapCameraChangedEvent) => {
       setCameraProps(event.detail);
