@@ -5549,6 +5549,7 @@ __metadata:
     "@types/apollo-upload-client": "npm:^19.0.0"
     "@types/google.maps": "npm:^3.58.1"
     "@types/jest": "npm:29.5.14"
+    "@types/lodash": "npm:^4.17.23"
     "@types/node": "npm:^20.0.0"
     "@types/react": "npm:~19.1.10"
     "@types/react-dom": "npm:~19.1.7"
@@ -5567,7 +5568,6 @@ __metadata:
     "@yarnpkg/sdks": "npm:^3.1.1"
     apollo-upload-client: "npm:^19.0.0"
     autoprefixer: "npm:10.4.13"
-    axios: "npm:^1.8.2"
     babel-jest: "npm:30.2.0"
     babel-loader: "npm:^10.0.0"
     babel-plugin-react-native-web: "npm:^0.19.8"
@@ -5644,6 +5644,7 @@ __metadata:
     react-native: "npm:0.81.5"
     react-native-blob-util: "npm:^0.21.2"
     react-native-gesture-handler: "npm:~2.28.0"
+    react-native-google-places-autocomplete: "npm:^2.6.4"
     react-native-keyboard-controller: "npm:~1.19.6"
     react-native-maps: "npm:^1.26.20"
     react-native-mmkv: "npm:^4.1.0"
@@ -9549,6 +9550,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/lodash@npm:^4.17.23":
+  version: 4.17.23
+  resolution: "@types/lodash@npm:4.17.23"
+  checksum: 10/05935534a44aadef67c2158b2fb4a042a226970088106a40ddc67e4f063783149fe5cf02279d7dd4a1e72c98d9189b9430face659645dbf77270f8c4c3e387f5
+  languageName: node
+  linkType: hard
+
 "@types/mdx@npm:^2.0.0":
   version: 2.0.13
   resolution: "@types/mdx@npm:2.0.13"
@@ -11606,7 +11614,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.12.0, axios@npm:^1.6.0, axios@npm:^1.8.2":
+"axios@npm:^1.12.0, axios@npm:^1.6.0":
   version: 1.13.2
   resolution: "axios@npm:1.13.2"
   dependencies:
@@ -22949,7 +22957,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"qs@npm:^6.4.0, qs@npm:~6.14.0":
+"qs@npm:^6.14.1, qs@npm:^6.4.0, qs@npm:~6.14.0":
   version: 6.14.1
   resolution: "qs@npm:6.14.1"
   dependencies:
@@ -23234,6 +23242,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-google-places-autocomplete@npm:^2.6.4":
+  version: 2.6.4
+  resolution: "react-native-google-places-autocomplete@npm:2.6.4"
+  dependencies:
+    lodash.debounce: "npm:^4.0.8"
+    qs: "npm:^6.14.1"
+    react-native-uuid: "npm:^2.0.3"
+  peerDependencies:
+    react-native: ">= 0.59"
+  checksum: 10/1a7bbee5e986516451c434ef98f96a7fee7c820d0e0b9124de3b67f927e16f13ddfaf11b57cd7692fdf279cdc10ad4f75768020c3f770fa9cce88865ca83d85b
+  languageName: node
+  linkType: hard
+
 "react-native-is-edge-to-edge@npm:^1.1.6, react-native-is-edge-to-edge@npm:^1.2.1":
   version: 1.2.1
   resolution: "react-native-is-edge-to-edge@npm:1.2.1"
@@ -23439,6 +23460,13 @@ __metadata:
   peerDependencies:
     react-native: "*"
   checksum: 10/62457a360745bb65fda2349bb95d2a90ad70f87005aa464fa8dd4919fa34bf2007f64bf6bbb1a76b5cdb579e3df9da6a23040a0eddf64456cadf6e766069854f
+  languageName: node
+  linkType: hard
+
+"react-native-uuid@npm:^2.0.3":
+  version: 2.0.3
+  resolution: "react-native-uuid@npm:2.0.3"
+  checksum: 10/8e2422c5af99f9b7e6d36e62c0ff7173d9d3f886d55e3131238a426426f4ee9e1382b3335e93c5c0e96b54f914b6b6a68f9a1bf5768a50f68be5c15ec85d8ee6
   languageName: node
   linkType: hard
 

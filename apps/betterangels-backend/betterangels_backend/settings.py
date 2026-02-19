@@ -17,6 +17,7 @@ from typing import List
 import django_stubs_ext
 import environ
 import structlog
+from corsheaders.defaults import default_headers
 
 django_stubs_ext.monkeypatch()
 
@@ -68,6 +69,7 @@ env = environ.Env(
     SECURE_HSTS_PRELOAD=(bool, False),
     SECURE_HSTS_SECONDS=(int, 0),
     ACCOUNT_LOGIN_BY_CODE_ENABLED=(bool, False),
+    ACCOUNT_LOGIN_BY_CODE_TIMEOUT=(int, 300),
     USE_IAM_AUTH=(bool, False),
 )
 
@@ -158,6 +160,7 @@ MIDDLEWARE = [
 ACCOUNT_ADAPTER = "accounts.adapters.AccountAdapter"
 ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
 ACCOUNT_LOGIN_BY_CODE_ENABLED = env("ACCOUNT_LOGIN_BY_CODE_ENABLED")
+ACCOUNT_LOGIN_BY_CODE_TIMEOUT = env.int("ACCOUNT_LOGIN_BY_CODE_TIMEOUT", default=300)
 
 ROOT_URLCONF = "betterangels_backend.urls"
 
@@ -346,7 +349,7 @@ AWS_SES_REGION_NAME = env("AWS_SES_REGION_NAME") or env("AWS_REGION")
 AWS_SES_REGION_ENDPOINT = env("AWS_SES_REGION_ENDPOINT")
 USE_SES_V2 = True
 
-EMAIL_BACKEND = "common.backends.email.CustomPostOfficeEmailBackend"
+EMAIL_BACKEND = "post_office.backends.EmailBackend"
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 POST_OFFICE = {
     "BACKENDS": {
@@ -354,7 +357,7 @@ POST_OFFICE = {
     },
     "CELERY_ENABLED": True,
 }
-EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
+EMAIL_FILE_PATH = str(BASE_DIR / "tmp" / "app-emails")
 INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 
 # Django Guardian
@@ -446,6 +449,10 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = env("CORS_ALLOW_ALL_ORIGINS")
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
 CORS_ALLOWED_ORIGIN_REGEXES = env("CORS_ALLOWED_ORIGIN_REGEXES")
+CORS_ALLOW_HEADERS = [
+    *default_headers,
+    "x-goog-fieldmask",
+]
 CSRF_COOKIE_DOMAIN = env("CSRF_COOKIE_DOMAIN")
 CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE")
 CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")

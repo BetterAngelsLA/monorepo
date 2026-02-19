@@ -31,10 +31,6 @@ export const GET_NOTES = gql`
           point
           pointOfInterest
         }
-        moods {
-          id
-          descriptor
-        }
         providedServices {
           id
           service {
@@ -105,10 +101,6 @@ export const GET_NOTE = gql`
         }
         point
         pointOfInterest
-      }
-      moods {
-        id
-        descriptor
       }
       providedServices {
         id

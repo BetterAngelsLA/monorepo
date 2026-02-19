@@ -47,6 +47,7 @@ from .enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
+from .managers import AdminShelterManager, ShelterManager
 from .widgets import TimeRangeField
 
 
@@ -250,6 +251,9 @@ class ReferralRequirement(models.Model):
     pghistory.DeleteEvent("shelter.remove"),
 )
 class Shelter(BaseModel):
+    objects: ShelterManager = ShelterManager()
+    admin_objects: AdminShelterManager = AdminShelterManager()
+
     # Basic Information
     name = models.CharField(max_length=255)
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, blank=True, null=True)

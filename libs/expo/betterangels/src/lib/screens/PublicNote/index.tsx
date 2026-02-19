@@ -12,7 +12,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { debounce } from '@monorepo/expo/shared/utils';
+import { debounce } from 'lodash';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
@@ -67,7 +67,6 @@ export default function PublicNote({ noteId }: { noteId: string }) {
     if (!data || !('note' in data) || userChange) return;
     const autoNote = generatePublicNote({
       purpose: data.note.purpose,
-      moods: data.note.moods,
       providedServices: data.note.providedServices,
       requestedServices: data.note.requestedServices,
     });

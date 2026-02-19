@@ -1,4 +1,4 @@
-import { mergeCss } from '../../utils';
+import { mergeCss } from '@monorepo/react/shared';
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 

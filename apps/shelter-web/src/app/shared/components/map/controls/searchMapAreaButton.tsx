@@ -1,4 +1,5 @@
-import { Button, mergeCss } from '@monorepo/react/components';
+import { Button } from '@monorepo/react/components';
+import { mergeCss } from '@monorepo/react/shared';
 
 type TProps = {
   onClick?: () => void;

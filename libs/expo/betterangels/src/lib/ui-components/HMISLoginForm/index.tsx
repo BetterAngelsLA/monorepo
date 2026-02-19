@@ -37,8 +37,9 @@ export default function HMISLoginForm() {
     setErrorMsg('');
     setSubmitting(true);
     try {
+      const cleanedEmail = email.replace('+demo@', '@').toLowerCase().trim();
       const { data, error } = await hmisLogin({
-        variables: { email, password },
+        variables: { email: cleanedEmail, password },
       });
 
       const res = data?.hmisLogin;

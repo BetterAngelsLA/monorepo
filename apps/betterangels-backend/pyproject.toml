@@ -21,7 +21,7 @@ python = "3.14.2"
 psycopg = "^3.3.2"
 django = "^6.0.2"
 django-environ = "^0.12.0"
-gunicorn = {git = "https://github.com/benoitc/gunicorn.git", rev = "b19c648a67b119737b53ab12a141a93ba64f210b", extras = ["gevent"]}
+gunicorn = { version = "25.1.0", extras = ["gevent"] }
 django-extensions = "^4.1"
 django-cors-headers = "^4.7.0"
 whitenoise = "^6.9.0"
@@ -31,7 +31,7 @@ celery = { extras = ["redis"], version = "^5.6.2" }
 django-ses = "^4.6.0"
 hiredis = "^3.3.0"
 django-organizations = "^2.5.0"
-strawberry-graphql-django = "^0.75.0"
+strawberry-graphql-django = "^0.75.1"
 django-guardian = "^3.0.3"
 django-choices-field = "^4.0.0"
 django-pghistory = "^3.9.1"
