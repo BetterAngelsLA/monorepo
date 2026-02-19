@@ -72,6 +72,7 @@ from .models import (
     InteriorPhoto,
     Parking,
     Pet,
+    Room,
     RoomStyle,
     Shelter,
     ShelterProgram,
@@ -900,6 +901,47 @@ class BedAdmin(admin.ModelAdmin):
     list_display = ("id", "shelter_id", "status", "created_at", "updated_at")
     list_filter = ("status",)
     search_fields = ("shelter_id__name",)
+
+
+@admin.register(Room)
+class RoomAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "shelter_id",
+        "room_identifier",
+        "room_type",
+        "status",
+        "medical_respite",
+        "last_cleaned_inspected",
+    )
+    list_filter = ("status", "room_type", "medical_respite", "shelter_id")
+    search_fields = ("room_identifier", "shelter_id__name", "notes")
+    autocomplete_fields = ["shelter_id"]
+    fieldsets = (
+        (
+            "Basic Information",
+            {
+                "fields": (
+                    "shelter_id",
+                    "room_identifier",
+                    "room_type",
+                    "room_type_other",
+                    "status",
+                )
+            },
+        ),
+        (
+            "Details",
+            {
+                "fields": (
+                    "amenities",
+                    "medical_respite",
+                    "last_cleaned_inspected",
+                    "notes",
+                )
+            },
+        ),
+    )
 
     def get_urls(self) -> list[Any]:
         urls = super().get_urls()

@@ -228,3 +228,10 @@ class ReferralRequirementChoices(models.TextChoices):
 class BedStatusChoices(models.TextChoices):
     AVAILABLE = "available", _("Available")
     RESERVED = "reserved", _("Reserved")
+
+
+@strawberry.enum
+class RoomStatusChoices(models.TextChoices):
+    AVAILABLE = "available", _("Available")
+    RESERVED = "reserved", _("Reserved")
+    NEEDS_MAINTENANCE = "needs_maintenance", _("Needs Maintenance")
