@@ -18,3 +18,7 @@ export * from './SearchInput';
 export * from './SearchList';
 export * from './Sidebar';
 export * from './Table';
+export * from './Map/map';
+export * from './AddressAutocomplete/AddressAutocomplete';
+export * from './CurrentLocation/currentLocation';
+export * from './CurrentLocation/currentLocationError';

@@ -1,7 +1,5 @@
-import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { OperatorApp } from '@monorepo/react/shelter-operator';
 import { Route, RouteObject } from 'react-router-dom';
-import { FeatureFlags } from '../constants/featureFlags';
 import { Policy } from '../pages/Policy';
 import Gallery from '../pages/gallery/gallery';
 import { Home } from '../pages/home/home';
@@ -14,7 +12,7 @@ import {
   shelterHomePath,
 } from './routePaths';
 
-export const buildRouteChildren = (operatorEnabled: boolean): RouteObject[] => {
+export const buildRouteChildren = (): RouteObject[] => {
   return [
     {
       path: shelterHomePath,
@@ -32,23 +30,15 @@ export const buildRouteChildren = (operatorEnabled: boolean): RouteObject[] => {
       path: privacyPolicyPath,
       element: <Policy />,
     },
-    ...(operatorEnabled
-      ? [
-          {
-            path: `${operatorPath}/*`,
-            element: <OperatorApp />,
-          },
-        ]
-      : []),
+    {
+      path: `${operatorPath}/*`,
+      element: <OperatorApp />,
+    },
   ];
 };
 
 export const useRouteChildren = () => {
-  const operatorEnabled = useFeatureFlagActive(
-    FeatureFlags.SHELTER_OPERATOR_APP
-  );
-
-  return buildRouteChildren(operatorEnabled).map((route) => (
+  return buildRouteChildren().map((route) => (
     <Route key={route.path} path={route.path} element={route.element} />
   ));
 };

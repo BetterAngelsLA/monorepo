@@ -1,9 +1,8 @@
 from typing import TYPE_CHECKING
 
 from django.db import models
-from django.db.models import Exists, OuterRef, QuerySet
-from organizations.models import Organization
-from shelters.enums import StatusChoices
+from django.db.models import QuerySet
+from shelters.selectors import admin_shelter_list, shelter_list
 
 if TYPE_CHECKING:
     from accounts.models import User
@@ -12,7 +11,7 @@ if TYPE_CHECKING:
 
 class ShelterQuerySet(QuerySet["Shelter"]):
     def approved(self) -> "ShelterQuerySet":
-        return self.filter(status=StatusChoices.APPROVED)
+        return shelter_list(self)  # type: ignore[return-value]
 
 
 class ShelterManager(models.Manager["Shelter"]):
@@ -25,8 +24,7 @@ class ShelterManager(models.Manager["Shelter"]):
 
 class AdminShelterQuerySet(ShelterQuerySet):
     def for_user(self, user: "User") -> "AdminShelterQuerySet":
-        user_org_membership = Organization.objects.filter(pk=OuterRef("organization_id"), users=user)
-        return self.filter(Exists(user_org_membership))
+        return admin_shelter_list(self, user=user)  # type: ignore[return-value]
 
 
 class AdminShelterManager(models.Manager["Shelter"]):
