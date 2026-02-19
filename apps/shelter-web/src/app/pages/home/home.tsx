@@ -13,6 +13,7 @@ import {
   TLatLng,
   TMapBounds,
   TMarker,
+  toGoogleLatLng,
   toMapBounds,
 } from '@monorepo/react/components';
 import {
@@ -32,7 +33,8 @@ const FOOTER_STYLE = [
 ];
 
 export function Home() {
-  const [_atomLocation, setLocation] = useAtom(locationAtom);
+  const [location, setLocation] = useAtom(locationAtom);
+  const [userLocation, setUserLocation] = useState<TLatLng | null>(null);
   const [_modal, setModal] = useAtom(modalAtom);
   const [shelters] = useAtom(sheltersAtom);
   const [shelterMarkers, setShelterMarkers] = useState<TMarker[]>([]);
@@ -83,6 +85,7 @@ export function Home() {
   }, [handleClick, shelters]);
 
   function onCenterSelect(center: TLatLng) {
+    setUserLocation(center);
     setLocation({
       ...center,
       source: 'currentLocation',
@@ -108,6 +111,16 @@ export function Home() {
   );
 
   useEffect(() => {
+    if (!map || !location) return;
+
+    const center = toGoogleLatLng(location);
+
+    if (center) {
+      map.setCenter(center);
+    }
+  }, [map, location]);
+
+  useEffect(() => {
     if (mapBounds) {
       setMapBoundsFilter(toMapBounds(mapBounds));
       setHasInitialized(true);
@@ -128,13 +141,16 @@ export function Home() {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          applyMapCenter(
-            position.coords.latitude,
-            position.coords.longitude,
-            'currentLocation'
-          );
+          const { latitude, longitude } = position.coords;
+
+          setUserLocation({ latitude, longitude });
+          sessionStorage.setItem('hasGrantedLocation', 'true');
+
+          applyMapCenter(latitude, longitude, 'currentLocation');
         },
         () => {
+          sessionStorage.removeItem('hasGrantedLocation');
+
           applyMapCenter(
             LA_COUNTY_CENTER.latitude,
             LA_COUNTY_CENTER.longitude,
@@ -160,6 +176,8 @@ export function Home() {
           className="h-[70vh] md:h-80"
           mapId={SHELTERS_MAP_ID}
           markers={shelterMarkers}
+          userLocation={userLocation}
+          showCurrentLocationBtn={!!sessionStorage.getItem('hasGrantedLocation')}
           showSearchButton={showSearchButton}
           setShowSearchButton={setShowSearchButton}
           onCenterSelect={onCenterSelect}

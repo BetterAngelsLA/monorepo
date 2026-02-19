@@ -36,7 +36,7 @@ export function ShelterFilters(props: IProps) {
 
   useEffect(() => {
     onChange && onChange(filters);
-  }, [filters]);
+  }, [filters, onChange]);
 
   return (
     <div className={mergeCss(parentCss)}>

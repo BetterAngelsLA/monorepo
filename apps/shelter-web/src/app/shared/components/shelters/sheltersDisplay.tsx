@@ -1,5 +1,5 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
-import { InfiniteList } from '@monorepo/react/components';
+import { InfiniteList, TLatLng, TMapBounds } from '@monorepo/react/components';
 import {
   DemographicChoices,
   ParkingChoices,
@@ -13,9 +13,7 @@ import {
 } from '@monorepo/react/shelter';
 import { useAtom } from 'jotai';
 import { useCallback, useEffect } from 'react';
-import { TLocationSource } from '../../atoms/locationAtom';
 import { sheltersAtom } from '../../atoms/sheltersAtom';
-import { TLatLng, TMapBounds } from '@monorepo/react/components';
 import { ShelterCard } from '../shelter/shelterCard';
 import { SearchSource } from './searchSource';
 
@@ -35,7 +33,6 @@ const SEARCH_RANGE_MILES = 20;
 type TProps = {
   className?: string;
   coordinates?: TLatLng | null;
-  coordinatesSource?: TLocationSource;
   mapBoundsFilter?: TMapBounds | null;
   propertyFilters?: TShelterPropertyFilters;
   rangeInMiles?: number;
@@ -44,7 +41,6 @@ type TProps = {
 export function SheltersDisplay(props: TProps) {
   const {
     coordinates,
-    coordinatesSource,
     mapBoundsFilter,
     propertyFilters,
     rangeInMiles = SEARCH_RANGE_MILES,
@@ -113,11 +109,11 @@ export function SheltersDisplay(props: TProps) {
       return (
         <div className="mb-4">
           <div className="text-xl font-semibold">{text}</div>
-          <SearchSource coordinatesSource={coordinatesSource} />
+          <SearchSource />
         </div>
       );
     },
-    [coordinatesSource]
+    []
   );
 
   return (

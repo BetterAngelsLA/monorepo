@@ -18,7 +18,7 @@ export function FilterPills(props: IProps) {
 
   for (const [key, valueArr] of Object.entries(filters)) {
     valueArr?.forEach((val) => {
-      const label = getFilterLabel(key as any, val);
+      const label = getFilterLabel(key as keyof TShelterPropertyFilters, val);
 
       if (label) {
         pillTextArr.push(label);
