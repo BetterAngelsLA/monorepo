@@ -7,14 +7,14 @@ import { MaxWLayout } from '../../layout/maxWLayout';
 import { locationAtom } from '../../shared/atoms/locationAtom';
 import { modalAtom } from '../../shared/atoms/modalAtom';
 import { sheltersAtom } from '../../shared/atoms/sheltersAtom';
-import { LA_COUNTY_CENTER } from '../../shared/components/map/constants.maps';
-import { Map } from '../../shared/components/map/map';
 import {
+  LA_COUNTY_CENTER,
+  Map,
   TLatLng,
   TMapBounds,
   TMarker,
-} from '../../shared/components/map/types.maps';
-import { toMapBounds } from '../../shared/components/map/utils/toMapBounds';
+  toMapBounds,
+} from '@monorepo/react/components';
 import {
   ShelterCard,
   TShelter,

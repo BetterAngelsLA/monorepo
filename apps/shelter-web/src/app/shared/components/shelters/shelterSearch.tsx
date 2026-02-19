@@ -11,8 +11,7 @@ import {
   AddressAutocomplete,
   TPlaceResult,
 } from '../address/AddressAutocomplete';
-import { TMapBounds } from '../map/types.maps';
-import { toGoogleLatLng } from '../map/utils/toGoogleLatLng';
+import { TMapBounds, toGoogleLatLng } from '@monorepo/react/components';
 import { FilterPills } from '../shelterFilter/filterPills';
 import { FiltersActions } from '../shelterFilter/filtersActions';
 import { ShelterFilters } from '../shelterFilter/shelterFilters';

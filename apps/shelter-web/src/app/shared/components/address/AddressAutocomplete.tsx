@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ISO3166Alpha2 } from '../../../types/isoCodes';
 import { usePlacesClient } from '../../hooks/usePlacesClient';
 import { Input } from '../form/input';
-import { LA_COUNTY_CENTER } from '../map/constants.maps';
+import { LA_COUNTY_CENTER } from '@monorepo/react/components';
 
 const DEBOUNCE_MS = 300;
 const BOUNDS_RADIUS_MILES = 25;

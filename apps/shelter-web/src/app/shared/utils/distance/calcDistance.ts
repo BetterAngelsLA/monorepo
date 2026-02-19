@@ -1,5 +1,5 @@
 import haversine from 'haversine-distance';
-import { TLatLng } from '../../components/map/types.maps';
+import { TLatLng } from '@monorepo/react/components';
 import { metersToMiles } from './convert';
 
 type TParams = {

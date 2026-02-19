@@ -1,6 +1,6 @@
 import { calcDistance } from '../../utils/distance/calcDistance';
 import { formatDistance } from '../../utils/distance/formatDistance';
-import { TLatLng } from '../map/types.maps';
+import { TLatLng } from '@monorepo/react/components';
 
 type TProps = {
   className?: string;

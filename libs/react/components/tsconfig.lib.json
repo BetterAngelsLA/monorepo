@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
     "declaration": true,
-    "types": ["node"],
+    "types": ["node", "google.maps"],
     "composite": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],

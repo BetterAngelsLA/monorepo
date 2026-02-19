@@ -1,5 +1,5 @@
+import { TLatLng } from '@monorepo/react/components';
 import { atom } from 'jotai';
-import { TLatLng } from '../components/map/types.maps';
 
 export type TLocationSource = 'currentLocation' | 'address';
 

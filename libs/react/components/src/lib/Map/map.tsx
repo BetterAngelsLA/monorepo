@@ -1,4 +1,4 @@
-import { CurrentLocationDot } from '@monorepo/react/components';
+import CurrentLocationDot from '../CurrentLocationDot';
 import { MapPinIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import {
@@ -80,7 +80,7 @@ export function Map(props: TMap) {
     (event: MapCameraChangedEvent) => {
       setCameraProps(event.detail);
     },
-    [map]
+    []
   );
 
   function handleCenterToUserLocation(location: TLatLng) {
