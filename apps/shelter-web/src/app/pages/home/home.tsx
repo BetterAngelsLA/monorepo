@@ -43,7 +43,6 @@ export function Home() {
   const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
   const [hasInitialized, setHasInitialized] = useState(false);
   const map = useMap();
-  const mapBounds = map?.getBounds();
 
   const handleClick = useCallback(
     (markerId: string | null | undefined) => {
@@ -118,17 +117,17 @@ export function Home() {
     if (center) {
       map.setCenter(center);
     }
+
+    const bounds = map.getBounds();
+
+    if (bounds) {
+      setMapBoundsFilter(toMapBounds(bounds));
+    }
   }, [map, location]);
 
   useEffect(() => {
-    if (mapBounds) {
-      setMapBoundsFilter(toMapBounds(mapBounds));
-      setHasInitialized(true);
-    }
-  }, [mapBounds]);
-
-  useEffect(() => {
-    if (!mapBounds || hasInitialized) return;
+    if (!map || hasInitialized) return;
+    setHasInitialized(true);
 
     const savedCenter = sessionStorage.getItem('mapCenter');
 
@@ -166,7 +165,7 @@ export function Home() {
         'address'
       );
     }
-  }, [applyMapCenter, mapBounds, hasInitialized]);
+  }, [map, hasInitialized, applyMapCenter]);
 
   return (
     <>
