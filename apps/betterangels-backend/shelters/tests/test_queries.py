@@ -485,6 +485,48 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         self.assertEqual(len(result_ids), 3)
         self.assertEqual(result_ids, expected_ids)
 
+    def test_shelter_map_bounds_filter_regression_asymmetric_bounds(self) -> None:
+        inside = Shelter.objects.create(
+            location=Places(
+                place="inside",
+                latitude=34.05,
+                longitude=-118.25,
+            ),
+            status=StatusChoices.APPROVED,
+        )
+        Shelter.objects.create(
+            location=Places(
+                place="outside",
+                latitude=36.0,
+                longitude=-118.25,
+            ),
+            status=StatusChoices.APPROVED,
+        )
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {
+            "mapBounds": {
+                "westLng": -119,
+                "northLat": 35,
+                "eastLng": -117,
+                "southLat": 33,
+            }
+        }
+
+        response = self.execute_graphql(query, variables={"filters": filters})
+
+        result_ids = {s["id"] for s in response["data"]["shelters"]["results"]}
+        self.assertEqual(result_ids, {str(inside.id)})
+
     def test_shelter_combined_filters(self) -> None:
         reference_point = {
             "latitude": 4,
