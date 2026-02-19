@@ -1,6 +1,7 @@
 import datetime
+from types import SimpleNamespace
 from typing import Any
-from unittest.mock import ANY
+from unittest.mock import ANY, Mock
 
 from accounts.tests.baker_recipes import organization_recipe
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -51,6 +52,7 @@ from shelters.models import (
     TrainingService,
 )
 from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
+from shelters.types import ShelterFilter
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
@@ -526,6 +528,30 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         result_ids = {s["id"] for s in response["data"]["shelters"]["results"]}
         self.assertEqual(result_ids, {str(inside.id)})
+
+    def test_shelter_map_bounds_filter_uses_within_lookup(self) -> None:
+        queryset = Mock()
+        filtered_queryset = Mock()
+        queryset.filter.return_value = filtered_queryset
+
+        value = SimpleNamespace(
+            west_lng=-119,
+            north_lat=35,
+            east_lng=-117,
+            south_lat=33,
+        )
+
+        updated_queryset, _ = ShelterFilter.map_bounds(
+            ShelterFilter(),
+            queryset=queryset,
+            value=value,
+            prefix="",
+        )
+
+        self.assertEqual(updated_queryset, filtered_queryset)
+        queryset.filter.assert_called_once()
+        self.assertIn("geolocation__within", queryset.filter.call_args.kwargs)
+        self.assertNotIn("geolocation__contained", queryset.filter.call_args.kwargs)
 
     def test_shelter_combined_filters(self) -> None:
         reference_point = {
