@@ -25,7 +25,7 @@ export function Sidebar(props: TProps) {
 
   useEffect(() => {
     onOpenChange?.(isOpen);
-  }, [isOpen]);
+  }, [isOpen, onOpenChange]);
 
   const parentCss = [
     'h-screen',

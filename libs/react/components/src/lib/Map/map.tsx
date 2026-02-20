@@ -1,5 +1,4 @@
 /// <reference types="google.maps" />
-import { CurrentLocationDot } from '@monorepo/react/components';
 import { MapPinIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import {
@@ -12,16 +11,15 @@ import {
   useMap,
 } from '@vis.gl/react-google-maps';
 import { Dispatch, SetStateAction, useCallback, useState } from 'react';
+import CurrentLocationDot from '../CurrentLocationDot';
 import {
   DEFAULT_GESTURE_HANDLING,
   DEFAULT_MAP_ZOOM,
   LA_COUNTY_CENTER,
 } from './constants.maps';
-import {
-  CurrentLocationBtn,
-  SearchMapAreaButton,
-  ZoomControls,
-} from './controls';
+import { CurrentLocationBtn } from './controls/currentLocationBtn';
+import { SearchMapAreaButton } from './controls/searchMapAreaButton';
+import { ZoomControls } from './controls/zoomControls';
 import { TLatLng, TMapGestureHandling, TMapZoom, TMarker } from './types.maps';
 import { toGoogleLatLng } from './utils/toGoogleLatLng';
 
