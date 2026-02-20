@@ -16,7 +16,7 @@ export function Flyoutcontainer(props: IProps): ReactElement | null {
 
     useEffect((): void => {
         setFlyout(null);
-    }, [location.pathname]);
+    }, [location.pathname, setFlyout]);
 
     if (!flyout?.content) return null;
 

@@ -13,9 +13,6 @@ type TProps = {
 export function ZoomButton(props: TProps) {
   const { zoomBy, icon, className, onClick } = props;
 
-  // Temporary suppression to allow incremental cleanup without regressions.
-  // ⚠️ If you're modifying this file, please remove this ignore and fix the issue.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const zoomIcon = icon || getIcon(zoomBy);
 
   const map = useMap();
@@ -27,11 +24,17 @@ export function ZoomButton(props: TProps) {
       return;
     }
 
+    const currentZoom = map.getZoom();
+
+    if (currentZoom == null) {
+      return;
+    }
+
     if (onClick) {
       onClick();
     }
 
-    map.setZoom(map.getZoom()! + zoomBy);
+    map.setZoom(currentZoom + zoomBy);
   }
 
   const parentCss = [

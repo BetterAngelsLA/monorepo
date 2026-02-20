@@ -1,5 +1,5 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
-import { InfiniteList } from '@monorepo/react/components';
+import { InfiniteList, TLatLng, TMapBounds } from '@monorepo/react/components';
 import {
   DemographicChoices,
   ParkingChoices,
@@ -15,7 +15,6 @@ import { useAtom } from 'jotai';
 import { useCallback, useEffect } from 'react';
 import { TLocationSource } from '../../atoms/locationAtom';
 import { sheltersAtom } from '../../atoms/sheltersAtom';
-import { TLatLng, TMapBounds } from '../map/types.maps';
 import { ShelterCard } from '../shelter/shelterCard';
 import { SearchSource } from './searchSource';
 
@@ -63,7 +62,9 @@ export function SheltersDisplay(props: TProps) {
     queryVariables.filters.geolocation = {
       latitude,
       longitude,
-      rangeInMiles,
+      // Only apply range limit when there's no map bounds filter;
+      // map bounds already constrains the spatial area.
+      ...(mapBoundsFilter ? {} : { rangeInMiles }),
     };
   }
 
@@ -99,7 +100,7 @@ export function SheltersDisplay(props: TProps) {
 
   useEffect(() => {
     setSheltersData(items || []);
-  }, [items.length]);
+  }, [items, setSheltersData]);
 
   const renderListHeader = useCallback(
     (visible: number, total: number | undefined) => {

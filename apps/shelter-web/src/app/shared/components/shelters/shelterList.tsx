@@ -1,5 +1,5 @@
 import { mergeCss } from '@monorepo/react/shared';
-import { TLatLng } from '../map/types.maps';
+import { TLatLng } from '@monorepo/react/components';
 import { ShelterCard, TShelter } from '../shelter/shelterCard';
 
 type TShelterList = {
