@@ -1,5 +1,6 @@
 export { default as BlockingScreenProvider } from './blockingScreen/BlockingScreenProvider';
 export { useBlockingScreen } from './blockingScreen/useBlockingScreen';
+export * from './featureControls';
 export { default as KeyboardToolbarProvider } from './keyboardToolbar/keyboardToolbarProvider';
 export * from './modalScope';
 export * from './modalScreen';

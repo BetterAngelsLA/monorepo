@@ -11,7 +11,8 @@ import {
 } from '../../apollo/graphql/__generated__/types';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { AddUserFormDrawer } from '../../components';
-import { useOutsideClick, useUser } from '../../hooks';
+import { useOutsideClick } from '../../hooks';
+import { useUser } from '../../providers';
 import {
   OrganizationMembersDocument,
   RemoveOrganizationMemberDocument,
