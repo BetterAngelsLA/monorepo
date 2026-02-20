@@ -1,4 +1,4 @@
-import Button from '../../Button';
+import { Button } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 
 type TProps = {

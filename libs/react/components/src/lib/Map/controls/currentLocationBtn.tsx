@@ -3,7 +3,7 @@ import { useMap } from '@vis.gl/react-google-maps';
 import { CurrentLocation } from '../../CurrentLocation/currentLocation';
 import { TLocationError } from '../../CurrentLocation/currentLocationError';
 import { TLatLng } from '../types.maps';
-import { ControlBtnWrapper } from './ControlBtnWrapper';
+import { ControlBtnWrapper } from './controlBtnWrapper';
 
 type TProps = {
   className?: string;

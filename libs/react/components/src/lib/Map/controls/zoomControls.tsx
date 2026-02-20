@@ -1,6 +1,6 @@
 import { useMap } from '@vis.gl/react-google-maps';
-import { ControlBtnWrapper } from './ControlBtnWrapper';
-import { ZoomButton } from './ZoomButton';
+import { ControlBtnWrapper } from './controlBtnWrapper';
+import { ZoomButton } from './zoomButton';
 
 type TProps = {
   className?: string;
