@@ -7,6 +7,7 @@ import {
   TLocationData,
   UpdateNoteLocationDocument,
   useModalScreen,
+  useUserDefaultNoteLocation,
 } from '@monorepo/expo/betterangels';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
@@ -89,6 +90,8 @@ export default function LocationComponent(props: ILocationProps) {
     name: address && address.street ? address.street : null,
   });
 
+  const [defaultLocation] = useUserDefaultNoteLocation();
+
   const locationRef = useRef<TLocation>(location);
   const autoFilledRef = useRef(false);
 
@@ -149,13 +152,22 @@ export default function LocationComponent(props: ILocationProps) {
         const { status } =
           await ExpoLocation.requestForegroundPermissionsAsync();
 
-        if (status === 'granted') {
+        if (status === 'granted' && !defaultLocation) {
           const userCurrentLocation =
             await ExpoLocation.getCurrentPositionAsync({
               accuracy: ExpoLocation.Accuracy.Balanced,
             });
           latitude = userCurrentLocation.coords.latitude;
           longitude = userCurrentLocation.coords.longitude;
+        }
+
+        if (
+          defaultLocation &&
+          defaultLocation.latitude &&
+          defaultLocation.longitude
+        ) {
+          latitude = defaultLocation.latitude;
+          longitude = defaultLocation.longitude;
         }
 
         const geocodeResult = await places.reverseGeocode(latitude, longitude);
