@@ -3,6 +3,7 @@ import 'expo-dev-client';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import {
   AppUpdatePrompt,
+  BaFeatureControlProvider,
   BlockingScreenProvider,
   createBaTypePolicies,
   ErrorCrashView,
@@ -18,7 +19,6 @@ import {
   ApolloClientProvider,
 } from '@monorepo/expo/shared/clients';
 import { BottomSheetModalProvider } from '@monorepo/expo/shared/ui-components';
-import { FeatureControlProvider } from '@monorepo/react/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -64,7 +64,7 @@ export default function RootLayout() {
           <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
             <QueryClientProvider client={reactqQueryClient}>
               <ApolloClientProvider typePolicies={baApolloTypePolicies}>
-                <FeatureControlProvider>
+                <BaFeatureControlProvider>
                   <KeyboardProvider>
                     <KeyboardToolbarProvider>
                       <SnackbarProvider>
@@ -82,7 +82,7 @@ export default function RootLayout() {
                       </SnackbarProvider>
                     </KeyboardToolbarProvider>
                   </KeyboardProvider>
-                </FeatureControlProvider>
+                </BaFeatureControlProvider>
               </ApolloClientProvider>
             </QueryClientProvider>
           </ApiConfigProvider>

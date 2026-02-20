@@ -1,9 +1,10 @@
-import { SignIn as SharedSignIn, SignInProps as SharedSignInProps } from '@monorepo/react/shared';
+import { SignIn as SharedSignIn, SignInProps } from '@monorepo/react/shelter';
 
 export default function SignIn() {
-  const sharedProps: SharedSignInProps = {
+  const sharedProps: SignInProps = {
     onSuccessRedirect: '/operator',
-    description: 'Welcome! Sign in for Better Angels and start making a difference in the LA Community.'
+    description:
+      'Welcome! Sign in for Better Angels and start making a difference in the LA Community.',
   };
 
   return <SharedSignIn {...sharedProps} />;

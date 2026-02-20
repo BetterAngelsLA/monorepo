@@ -1,6 +1,6 @@
 import { useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
-import { useUser } from '@monorepo/react/shared';
+import { useUser } from '../../providers';
 import { LogoutDocument } from './__generated__/auth.generated';
 
 export default function useSignOut() {

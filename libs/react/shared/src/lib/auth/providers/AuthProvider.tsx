@@ -1,6 +1,5 @@
 import { ReactNode, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useUser } from '../../hooks';
 
 export interface AuthProviderConfig {
   /** Route access configuration mapping paths to access types */
@@ -15,6 +14,8 @@ export interface AuthProviderProps {
   children: ReactNode;
   /** Configuration for routes and redirects */
   config: AuthProviderConfig;
+  user: unknown | null | undefined;
+  isLoading: boolean;
 }
 
 type AccessType = 'safe' | 'unsafe' | 'neutral';
@@ -35,11 +36,12 @@ function getRouteAccess(
   return 'neutral';
 }
 
-export default function AuthProvider({ children, config }: AuthProviderProps) {
+export function AuthProvider(props: AuthProviderProps) {
+  const { children, config, user, isLoading } = props;
+
   const navigate = useNavigate();
   const location = useLocation();
   const hasRedirected = useRef(false);
-  const { user, isLoading } = useUser();
 
   // Reset redirect guard when user or location changes
   useEffect(() => {
@@ -47,24 +49,33 @@ export default function AuthProvider({ children, config }: AuthProviderProps) {
   }, [user, location.pathname]);
 
   useEffect(() => {
-    if (isLoading || hasRedirected.current) return;
+    if (isLoading || hasRedirected.current) {
+      return;
+    }
 
     const access = getRouteAccess(location.pathname, config.routeAccess);
 
     if (access === 'safe' && !user) {
       hasRedirected.current = true;
+
       navigate(config.signInRoute, {
         state: { from: location.pathname },
         replace: true,
       });
+
+      return;
     }
 
     if (access === 'unsafe' && user) {
       const from =
         (location.state as { from?: string })?.from ||
         config.defaultAuthenticatedRoute;
+
       hasRedirected.current = true;
+
       navigate(from, { replace: true });
+
+      return;
     }
   }, [
     user,
