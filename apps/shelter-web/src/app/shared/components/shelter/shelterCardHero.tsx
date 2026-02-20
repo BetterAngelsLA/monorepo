@@ -37,7 +37,7 @@ export function ShelterCardHero(props: TShelterCard) {
       <div className={mergeCss(className)}>
         <img
           src={urls[0]}
-          alt={`${shelterName} shelter`}
+          alt={`Primary view of ${shelterName} shelter`}
           loading="lazy"
           className={mergeCss(imageCss)}
         />
@@ -57,7 +57,7 @@ export function ShelterCardHero(props: TShelterCard) {
           <img
             key={i}
             src={src}
-            alt={`${shelterName} shelter ${i + 1}`}
+            alt={`View ${i + 1} of ${shelterName} shelter`}
             loading="lazy"
             className={mergeCss(imageCss)}
           />
@@ -78,7 +78,7 @@ export function ShelterCardHero(props: TShelterCard) {
               <img
                 key={i}
                 src={src}
-                alt={`${shelterName} shelter ${i + 1}`}
+                alt={`View ${i + 1} of ${shelterName} shelter`}
                 loading="lazy"
                 className={mergeCss(thumbImg)}
               />
