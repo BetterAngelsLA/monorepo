@@ -1,0 +1,19 @@
+query GetShelterFeatureControls {
+  featureControls {
+    flags {
+      name
+      isActive
+      lastModified
+    }
+    switches {
+      name
+      isActive
+      lastModified
+    }
+    samples {
+      name
+      isActive
+      lastModified
+    }
+  }
+}
