@@ -1,7 +1,7 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { locationAtom, sheltersAtom } from '../../atoms';
 import {
   LA_COUNTY_CENTER,
@@ -14,13 +14,24 @@ import {
   TMarker,
   TShelter,
   modalAtom,
+  toGoogleLatLng,
   toMapBounds,
 } from '../../components';
 import { SHELTERS_MAP_ID } from '../../constants';
 import { MaxWLayout } from '../../layout';
 
+const FOOTER_STYLE = [
+  'font-semibold',
+  'text-sm',
+  'text-center',
+  'cursor-pointer',
+  'text-primary-60',
+  'active:text-primary-dark',
+];
+
 export function HomePage() {
-  const [atomLocation, setLocation] = useAtom(locationAtom);
+  const [location, setLocation] = useAtom(locationAtom);
+  const [userLocation, setUserLocation] = useState<TLatLng | null>(null);
   const [_modal, setModal] = useAtom(modalAtom);
   const [shelters] = useAtom(sheltersAtom);
   const [shelterMarkers, setShelterMarkers] = useState<TMarker[]>([]);
@@ -29,7 +40,30 @@ export function HomePage() {
   const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
   const [hasInitialized, setHasInitialized] = useState(false);
   const map = useMap();
-  const mapBounds = map?.getBounds();
+
+  const handleClick = useCallback(
+    (markerId: string | null | undefined) => {
+      if (!markerId) {
+        return;
+      }
+      setModal({
+        content: (
+          <ShelterCard
+            className="mt-4"
+            shelter={
+              shelters.find((shelter) => shelter.id === markerId) as TShelter
+            }
+            footer={
+              <div className={mergeCss(FOOTER_STYLE)}>View Details</div>
+            }
+          />
+        ),
+        animation: ModalAnimationEnum.EXPAND,
+        closeOnMaskClick: true,
+      });
+    },
+    [setModal, shelters]
+  );
 
   useEffect(() => {
     const markers = shelters
@@ -44,37 +78,10 @@ export function HomePage() {
       });
 
     setShelterMarkers(markers);
-  }, [shelters]);
-
-  const footerStyle = [
-    'font-semibold',
-    'text-sm',
-    'text-center',
-    'cursor-pointer',
-    'text-primary-60',
-    'active:text-primary-dark',
-  ];
-
-  const handleClick = (markerId: string | null | undefined) => {
-    if (!markerId) {
-      return;
-    }
-    setModal({
-      content: (
-        <ShelterCard
-          className="mt-4"
-          shelter={
-            shelters.find((shelter) => shelter.id === markerId) as TShelter
-          }
-          footer={<div className={mergeCss(footerStyle)}>View Details</div>}
-        />
-      ),
-      animation: ModalAnimationEnum.EXPAND,
-      closeOnMaskClick: true,
-    });
-  };
+  }, [handleClick, shelters]);
 
   function onCenterSelect(center: TLatLng) {
+    setUserLocation(center);
     setLocation({
       ...center,
       source: 'currentLocation',
@@ -90,25 +97,34 @@ export function HomePage() {
     setShowSearchButton(false);
   }
 
-  const applyMapCenter = (
-    lat: number,
-    lng: number,
-    source: 'address' | 'currentLocation'
-  ) => {
-    const location = { latitude: lat, longitude: lng };
-    setDefaultCenter(location);
-    setLocation({ ...location, source });
-  };
+  const applyMapCenter = useCallback(
+    (lat: number, lng: number, source: 'address' | 'currentLocation') => {
+      const location = { latitude: lat, longitude: lng };
+      setDefaultCenter(location);
+      setLocation({ ...location, source });
+    },
+    [setLocation]
+  );
 
   useEffect(() => {
-    if (mapBounds) {
-      setMapBoundsFilter(toMapBounds(mapBounds));
-      setHasInitialized(true);
+    if (!map || !location) return;
+
+    const center = toGoogleLatLng(location);
+
+    if (center) {
+      map.setCenter(center);
     }
-  }, [atomLocation]);
+
+    const bounds = map.getBounds();
+
+    if (bounds) {
+      setMapBoundsFilter(toMapBounds(bounds));
+    }
+  }, [map, location]);
 
   useEffect(() => {
-    if (!mapBounds || hasInitialized) return;
+    if (!map || hasInitialized) return;
+    setHasInitialized(true);
 
     const savedCenter = sessionStorage.getItem('mapCenter');
 
@@ -121,13 +137,16 @@ export function HomePage() {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          applyMapCenter(
-            position.coords.latitude,
-            position.coords.longitude,
-            'currentLocation'
-          );
+          const { latitude, longitude } = position.coords;
+
+          setUserLocation({ latitude, longitude });
+          sessionStorage.setItem('hasGrantedLocation', 'true');
+
+          applyMapCenter(latitude, longitude, 'currentLocation');
         },
         () => {
+          sessionStorage.removeItem('hasGrantedLocation');
+
           applyMapCenter(
             LA_COUNTY_CENTER.latitude,
             LA_COUNTY_CENTER.longitude,
@@ -143,7 +162,7 @@ export function HomePage() {
         'address'
       );
     }
-  }, [mapBounds, hasInitialized]);
+  }, [map, hasInitialized, applyMapCenter]);
 
   return (
     <>
@@ -153,6 +172,8 @@ export function HomePage() {
           className="h-[70vh] md:h-80"
           mapId={SHELTERS_MAP_ID}
           markers={shelterMarkers}
+          userLocation={userLocation}
+          showCurrentLocationBtn={!!sessionStorage.getItem('hasGrantedLocation')}
           showSearchButton={showSearchButton}
           setShowSearchButton={setShowSearchButton}
           onCenterSelect={onCenterSelect}

@@ -1,17 +1,13 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { PropsWithChildren } from 'react';
 import { TLatLng } from '../types.maps';
-import {
-  GeolocationErrorKey,
-  TLocationError,
-  getGeolocationErrorName,
-} from './currentLocationError';
+import { TLocationError, getGeolocationErrorName } from './currentLocationError';
 
 const POSITION_TIMEOUT_MS = 20 * 1000;
 
 interface ICurrentLocation extends PropsWithChildren {
   onChange: (location: TLatLng) => void;
-  onError: (error: TLocationError) => void;
+  onError?: (error: TLocationError) => void;
   className?: string;
   timeout?: number;
 }
@@ -25,25 +21,23 @@ export function CurrentLocation(props: ICurrentLocation) {
     children,
   } = props;
 
-  if (!navigator.geolocation) {
-    onError && onError('FEATURE_UNAVAILABLE');
+  if (typeof navigator === 'undefined' || !navigator.geolocation) {
+    onError?.('FEATURE_UNAVAILABLE');
 
     return null;
   }
 
   const onLocationSuccess = (position: GeolocationPosition): void => {
     sessionStorage.setItem('hasGrantedLocation', 'true');
-    onChange &&
-      onChange({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      });
+    onChange({
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+    });
   };
 
   const onLocationError = (err: GeolocationPositionError): void => {
     sessionStorage.removeItem('hasGrantedLocation');
-    onError &&
-      onError(getGeolocationErrorName(err.code as GeolocationErrorKey));
+    onError?.(getGeolocationErrorName(err.code));
   };
 
   const getLocation = (): void => {

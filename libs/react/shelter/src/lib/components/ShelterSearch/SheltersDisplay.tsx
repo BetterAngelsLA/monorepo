@@ -48,7 +48,7 @@ export function SheltersDisplay(props: TProps) {
     queryVariables.filters.geolocation = {
       latitude,
       longitude,
-      rangeInMiles,
+      ...(mapBoundsFilter ? {} : { rangeInMiles }),
     };
   }
 
@@ -84,7 +84,7 @@ export function SheltersDisplay(props: TProps) {
 
   useEffect(() => {
     setSheltersData(items || []);
-  }, [items.length]);
+  }, [items, setSheltersData]);
 
   const renderListHeader = useCallback(
     (visible: number, total: number | undefined) => {

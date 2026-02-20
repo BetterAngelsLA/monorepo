@@ -10,16 +10,9 @@ import {
   MapCameraChangedEvent,
   MapCameraProps,
   MapControl,
-  useApiLoadingStatus,
   useMap,
 } from '@vis.gl/react-google-maps';
-import {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
+import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import {
   DEFAULT_GESTURE_HANDLING,
   DEFAULT_MAP_ZOOM,
@@ -43,6 +36,8 @@ type TMap = {
   controlsPosition?: ControlPosition;
   showSearchButton?: boolean;
   setShowSearchButton: Dispatch<SetStateAction<boolean>>;
+  userLocation?: TLatLng | null;
+  showCurrentLocationBtn?: boolean;
   onCenterSelect?: (center: TLatLng) => void;
   onSearchMapArea?: (bounds?: google.maps.LatLngBounds) => void;
   markers?: TMarker[];
@@ -59,33 +54,22 @@ export function Map(props: TMap) {
     controlsPosition = ControlPosition.INLINE_END_BLOCK_END,
     showSearchButton = false,
     setShowSearchButton,
+    userLocation,
+    showCurrentLocationBtn = false,
     onCenterSelect,
     onSearchMapArea,
     markers = [],
   } = props;
   const map = useMap();
-  const mapApiStatus = useApiLoadingStatus();
 
   const [cameraProps, setCameraProps] = useState<MapCameraProps>({
     center: toGoogleLatLng(defaultCenter) as google.maps.LatLngLiteral,
     zoom: defaultZoom,
   });
-  const [userLocation, setUserLocation] =
-    useState<google.maps.LatLngLiteral | null>(null);
-  const [geolocationPermission, setGeolocationPermission] =
-    useState<PermissionState | null>(null);
-  const hasGrantedLocation = sessionStorage.getItem('hasGrantedLocation');
 
-  useEffect(() => {
-    console.info(`[map] loading status: ${mapApiStatus}`);
-  }, [mapApiStatus]);
-
-  const handleCameraChange = useCallback(
-    (event: MapCameraChangedEvent) => {
-      setCameraProps(event.detail);
-    },
-    [map]
-  );
+  const handleCameraChange = useCallback((event: MapCameraChangedEvent) => {
+    setCameraProps(event.detail);
+  }, []);
 
   function handleCenterToUserLocation(location: TLatLng) {
     if (!map) {
@@ -110,51 +94,7 @@ export function Map(props: TMap) {
     map.setCenter(newCenter);
   }
 
-  useEffect(() => {
-    let permissionStatus: PermissionStatus;
-    const permissionQuery = navigator.permissions;
-
-    if (!permissionQuery) {
-      return;
-    }
-
-    permissionQuery
-      .query({ name: 'geolocation' as PermissionName })
-      .then((result) => {
-        setGeolocationPermission(result.state);
-        permissionStatus = result;
-
-        result.onchange = () => {
-          setGeolocationPermission(result.state);
-        };
-      });
-
-    return () => {
-      if (permissionStatus) {
-        permissionStatus.onchange = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!map || !navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const newCenter = { lat: latitude, lng: longitude };
-        setUserLocation(newCenter);
-        sessionStorage.setItem('hasGrantedLocation', 'true');
-      },
-      (error) => {
-        console.error('Geolocation error', error);
-        sessionStorage.removeItem('hasGrantedLocation');
-
-        setUserLocation(null);
-      },
-      { enableHighAccuracy: true }
-    );
-  }, [map, geolocationPermission]);
+  const userLocationLatLng = toGoogleLatLng(userLocation);
 
   const mapCss = ['h-12', 'w-full', className];
   return (
@@ -167,8 +107,8 @@ export function Map(props: TMap) {
       onIdle={() => setShowSearchButton(true)}
       {...cameraProps}
     >
-      {userLocation && (
-        <AdvancedMarker position={userLocation} zIndex={999}>
+      {userLocationLatLng && (
+        <AdvancedMarker position={userLocationLatLng} zIndex={999}>
           <CurrentLocationDot />
         </AdvancedMarker>
       )}
@@ -194,7 +134,7 @@ export function Map(props: TMap) {
       <MapControl position={controlsPosition}>
         <div className="mr-4">
           <ZoomControls />
-          {hasGrantedLocation && (
+          {showCurrentLocationBtn && (
             <CurrentLocationBtn
               className="mt-5"
               onLocationSuccess={handleCenterToUserLocation}
