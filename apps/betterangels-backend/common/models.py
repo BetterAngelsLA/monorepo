@@ -104,25 +104,25 @@ class Attachment(BaseModel):
 
 
 class Address(BaseModel):
-    street = models.CharField(max_length=255, blank=True, default="")
-    city = models.CharField(max_length=100, blank=True, default="")
-    state = models.CharField(max_length=100, blank=True, default="")
-    zip_code = models.CharField(max_length=10, blank=True, default="")
+    street = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    state = models.CharField(max_length=100, blank=True, null=True)
+    zip_code = models.CharField(max_length=10, blank=True, null=True)
     confidential = models.BooleanField(null=True, blank=True)
 
     address_components = models.JSONField(blank=True, null=True)
-    formatted_address = models.CharField(max_length=255, blank=True, default="")
+    formatted_address = models.CharField(max_length=255, blank=True, null=True)
 
     objects = models.Manager()
 
     class Meta(BaseModel.Meta):
-        constraints = [
-            models.UniqueConstraint(
+        indexes = [
+            models.Index(
                 Lower("street"),
                 Lower("city"),
                 Lower("state"),
                 Lower("zip_code"),
-                name="address_unique_insensitive",
+                name="address_lookup_idx",
             )
         ]
 
@@ -147,11 +147,6 @@ class Location(BaseModel):
     point_of_interest = models.CharField(max_length=255, blank=True, null=True)
 
     objects = models.Manager()
-
-    class Meta(BaseModel.Meta):
-        constraints = [
-            models.UniqueConstraint(fields=["point"], name="unique_location_point"),
-        ]
 
     def __str__(self) -> str:
         if self.address and str(self.address) != Address.ADDRESS_DEFAULT:
@@ -202,12 +197,12 @@ class Location(BaseModel):
     def _clean(value: Optional[str]) -> Optional[str]:
         """Strip leading/trailing whitespace and collapse internal runs.
 
-        Returns empty string for blank/empty/None values.
+        Returns None for blank/empty strings.
         """
-        if not value:
-            return ""
+        if value is None:
+            return None
         value = " ".join(value.split()).strip()
-        return value
+        return value or None
 
     @staticmethod
     def _round_point(point: Point) -> Point:
@@ -237,16 +232,16 @@ class Location(BaseModel):
         zip_code = cls._clean(parsed_address.get("postal_code"))
 
         fields = {"street": street, "city": city, "state": state, "zip_code": zip_code}
-        lookup = {f"{f}__iexact": v for f, v in fields.items()}
+        lookup = {
+            (f"{f}__isnull" if v is None else f"{f}__iexact"): (True if v is None else v) for f, v in fields.items()
+        }
 
         address, _ = Address.objects.get_or_create(
             **lookup,
             defaults={
                 **fields,
                 "address_components": address_data["address_components"],
-                "formatted_address": address_data.get("formatted_address")
-                or address_data.get("formattedAddress")
-                or "",
+                "formatted_address": address_data.get("formatted_address") or address_data.get("formattedAddress"),
             },
         )
 
@@ -276,11 +271,9 @@ class Location(BaseModel):
         point = cls._round_point(location_data["point"])
 
         location, _ = Location.objects.get_or_create(
+            address=address,
             point=point,
-            defaults={
-                "address": address,
-                "point_of_interest": point_of_interest,
-            },
+            point_of_interest=point_of_interest,
         )
 
         return location
