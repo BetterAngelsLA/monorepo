@@ -303,11 +303,11 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         ),
         [
             ("106", 1, 1, False, False),  # No new address or location
-            ("104", 2, 1, False, False),  # New street -> new address, but same point -> same location
-            ("106", 1, 1, False, True),  # POI in address_components -> same address, same point -> same location
-            # Standalone POI, same point -> same location. No new address because POI not in address fields.
-            ("106", 1, 1, True, False),
-            ("106", 1, 1, True, True),  # Standalone POI wins; address deduped, same point -> same location
+            ("104", 2, 2, False, False),  # New street -> new address -> new location
+            ("106", 1, 2, False, True),  # POI in address_components -> same address, new location (POI differs)
+            # Standalone POI -> new location. No new address because POI not in address fields.
+            ("106", 1, 2, True, False),
+            ("106", 1, 2, True, True),  # Standalone POI wins; address deduped, new location
         ],
     )
     def test_get_or_create_location(
@@ -336,14 +336,32 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         }
         location = Location.get_or_create_location(location_data)
 
+        expected_point_of_interest = None
+        if include_component_point_of_interest:
+            expected_point_of_interest = "An Interesting Point (Component)"
+        if include_standalone_point_of_interest:
+            expected_point_of_interest = "An Interesting Point (Standalone)"
+
+        assert isinstance(address_input["address_components"], list)
+        expected_street = (
+            f"{address_input['address_components'][0]['long_name']} "
+            f"{address_input['address_components'][1]['long_name']}"
+        )
+        expected_city = address_input["address_components"][3]["long_name"]
+        expected_state = address_input["address_components"][5]["short_name"]
+        expected_zip_code = address_input["address_components"][7]["long_name"]
+
         self.assertEqual(Address.objects.count(), expected_address_count)
         self.assertEqual(Location.objects.count(), expected_location_count)
 
-        # Same point always returns the original location (point is the unique key).
-        self.assertEqual(location.pk, self.location.pk)
         assert location.address
         assert location.point
+        self.assertEqual(location.address.street, expected_street)
+        self.assertEqual(location.address.city, expected_city)
+        self.assertEqual(location.address.state, expected_state)
+        self.assertEqual(location.address.zip_code, expected_zip_code)
         self.assertEqual(location.point.coords, self.point)
+        self.assertEqual(location.point_of_interest, expected_point_of_interest)
 
     def test_get_or_create_location_missing_components(self) -> None:
         address_count = Address.objects.count()
@@ -351,17 +369,17 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
 
         location_data = {
             "address": json_address_input,
-            "point": Point(-118.30000, 34.10000),
+            "point": Point(self.point),
             "point_of_interest": None,
         }
         location = Location.get_or_create_location(location_data)
 
         self.assertEqual(Address.objects.count(), address_count + 1)
         assert location.address
-        self.assertEqual(location.address.street, "")
-        self.assertEqual(location.address.city, "")
-        self.assertEqual(location.address.state, "")
-        self.assertEqual(location.address.zip_code, "")
+        self.assertIsNone(location.address.street)
+        self.assertIsNone(location.address.city)
+        self.assertIsNone(location.address.state)
+        self.assertIsNone(location.address.zip_code)
 
     @parametrize(
         ("missing_component_index"),
@@ -375,12 +393,12 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         _, address_input = self._get_address_inputs()
         assert isinstance(address_input["address_components"], list)
 
-        expected_street = "West 1st Street" if missing_component_index == 0 else ""
+        expected_street = "West 1st Street" if missing_component_index == 0 else None
         address_input["address_components"].pop(missing_component_index)
         address_input["address_components"] = json.dumps(address_input["address_components"])
         location_data = {
             "address": address_input,
-            "point": Point(-118.40000 - missing_component_index * 0.01, 34.20000),
+            "point": Point(self.point),
             "point_of_interest": None,
         }
         location = Location.get_or_create_location(location_data)
