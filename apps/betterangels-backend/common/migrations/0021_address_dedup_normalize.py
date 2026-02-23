@@ -12,8 +12,7 @@ def deduplicate_and_normalize(apps, schema_editor):
     execute = schema_editor.execute
 
     # 1. Re-point Location FKs from duplicate Addresses to the keeper (MIN id).
-    execute(
-        """
+    execute("""
         UPDATE common_location SET address_id = keeper.keep_id
         FROM (
             SELECT MIN(id) AS keep_id,
@@ -32,12 +31,10 @@ def deduplicate_and_normalize(apps, schema_editor):
          AND COALESCE(LOWER(dup.zip_code), '') = keeper.norm_zip
          AND dup.id <> keeper.keep_id
         WHERE common_location.address_id = dup.id
-    """
-    )
+    """)
 
     # 2. Delete orphaned duplicate Addresses.
-    execute(
-        """
+    execute("""
         DELETE FROM common_address
         WHERE id NOT IN (
             SELECT MIN(id)
@@ -47,8 +44,7 @@ def deduplicate_and_normalize(apps, schema_editor):
                      COALESCE(LOWER(state), ''),
                      COALESCE(LOWER(zip_code), '')
         )
-    """
-    )
+    """)
 
     # 3. Normalize NULLs to empty strings.
     execute("UPDATE common_address SET street = '' WHERE street IS NULL")
