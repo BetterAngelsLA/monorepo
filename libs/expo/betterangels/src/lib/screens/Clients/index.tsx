@@ -7,7 +7,7 @@ import { useUser } from '../../hooks';
 import { pagePaddingHorizontal } from '../../static';
 import {
   ClientCard,
-  ClientCardHMIS,
+  ClientCardHmis,
   ClientCardModal,
   ClientProfileList,
   Header,
@@ -55,7 +55,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       }
 
       return (
-        <ClientCardHMIS client={client} onPress={() => handleClientPress(id)} />
+        <ClientCardHmis client={client} onPress={() => handleClientPress(id)} />
       );
     },
     [handleClientPress]

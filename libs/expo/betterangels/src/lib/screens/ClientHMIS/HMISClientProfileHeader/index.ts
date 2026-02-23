@@ -1,2 +1,2 @@
-export { HMISClientProfileHeader } from './HMISClientProfileHeader';
-export { HMISProfilePhotoUploader } from './HMISProfilePhotoUploader';
+export { HmisClientProfileHeader } from './HmisClientProfileHeader';
+export { HmisProfilePhotoUploader } from './HmisProfilePhotoUploader';

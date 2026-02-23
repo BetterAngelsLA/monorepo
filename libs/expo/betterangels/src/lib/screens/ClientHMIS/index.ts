@@ -1,1 +1,1 @@
-export { ClientHMIS } from './ClientHMIS';
+export { ClientHmis } from './ClientHmis';

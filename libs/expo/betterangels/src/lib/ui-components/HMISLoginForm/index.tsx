@@ -9,9 +9,9 @@ import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEmailEnvironment, useUser } from '../../hooks';
 import { useRememberedEmail } from '../../hooks/useRememberEmail/useRememberEmail';
-import { HmisLoginDocument } from './__generated__/HMISLogin.generated';
+import { HmisLoginDocument } from './__generated__/HmisLogin.generated';
 
-export default function HMISLoginForm() {
+export default function HmisLoginForm() {
   const {
     email,
     setEmail,

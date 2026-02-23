@@ -1,5 +1,5 @@
 import {
-  HMISLoginForm,
+  HmisLoginForm,
   LoginForm,
   SignInContainer,
 } from '@monorepo/expo/betterangels';
@@ -10,7 +10,7 @@ import { privacyPolicyUrl, termsOfServiceUrl } from '../../config';
 type Provider = 'hmis' | 'ba';
 
 const providerToForm: Record<Provider, React.ComponentType> = {
-  hmis: HMISLoginForm,
+  hmis: HmisLoginForm,
   ba: LoginForm,
 };
 

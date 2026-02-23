@@ -1,1 +1,1 @@
-export { ClientTasksHMISView } from './ClientTasksHMISView';
+export { ClientTasksHmisView } from './ClientTasksHmisView';

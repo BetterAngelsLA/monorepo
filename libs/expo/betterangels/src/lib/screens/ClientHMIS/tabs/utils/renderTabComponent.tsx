@@ -5,8 +5,8 @@ import { ClientViewTabEnum } from '../../../Client/ClientTabs';
 import { ClientDocsHmisView } from '../ClientDocsHmisView';
 import { ClientInteractionsHmisView } from '../ClientInteractionsHmisView';
 import { ClientLocationsHmisView } from '../ClientLocationsHmisView';
-import { ClientProfileHMISView } from '../ClientProfileHMISView';
-import { ClientTasksHMISView } from '../ClientTasksHMISView';
+import { ClientProfileHmisView } from '../ClientProfileHmisView';
+import { ClientTasksHmisView } from '../ClientTasksHmisView';
 
 type RenderArgs = {
   client?: HmisClientProfileType;
@@ -17,7 +17,7 @@ const tabRendererMap: Partial<
   Record<ClientViewTabEnum, (args: RenderArgs) => ReactElement | null>
 > = {
   [ClientViewTabEnum.Profile]: ({ client, openCard }) => (
-    <ClientProfileHMISView client={client} openCard={openCard} />
+    <ClientProfileHmisView client={client} openCard={openCard} />
   ),
   [ClientViewTabEnum.Docs]: ({ client }) => (
     <ClientDocsHmisView client={client} />
@@ -29,7 +29,7 @@ const tabRendererMap: Partial<
     <ClientLocationsHmisView clientProfileId={client?.id} />
   ),
   [ClientViewTabEnum.Tasks]: ({ client }) => (
-    <ClientTasksHMISView client={client} />
+    <ClientTasksHmisView client={client} />
   ),
 };
 

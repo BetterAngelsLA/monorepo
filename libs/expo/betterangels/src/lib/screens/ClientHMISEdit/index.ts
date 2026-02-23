@@ -1,1 +1,1 @@
-export { ClientHMISEdit } from './ClientHMISEdit';
+export { ClientHmisEdit } from './ClientHmisEdit';

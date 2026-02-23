@@ -1,1 +1,1 @@
-export { CreateClientProfileHMIS } from './CreateClientProfileHMIS';
+export { CreateClientProfileHmis } from './CreateClientProfileHmis';

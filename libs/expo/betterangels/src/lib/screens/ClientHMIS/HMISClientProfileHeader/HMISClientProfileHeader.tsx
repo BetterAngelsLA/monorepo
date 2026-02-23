@@ -17,13 +17,13 @@ import {
   enumDisplayPronoun,
   getExistingHmisSuffix,
 } from '../../../static';
-import { HMISProfilePhotoUploader } from './HMISProfilePhotoUploader';
+import { HmisProfilePhotoUploader } from './HmisProfilePhotoUploader';
 
 interface IClientHeaderProps {
   client?: HmisClientProfileType;
 }
 
-export function HMISClientProfileHeader(props: IClientHeaderProps) {
+export function HmisClientProfileHeader(props: IClientHeaderProps) {
   const { client } = props;
 
   const {
@@ -59,7 +59,7 @@ export function HMISClientProfileHeader(props: IClientHeaderProps) {
     <View style={styles.container}>
       <View style={styles.headerRow}>
         {clientId ? (
-          <HMISProfilePhotoUploader
+          <HmisProfilePhotoUploader
             clientId={clientId}
             imageUrl={thumbnailUri}
             headers={headers}

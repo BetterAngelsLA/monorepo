@@ -8,7 +8,7 @@ import {
   MainModalActionBtn,
 } from '../../../ui-components/MainModal';
 
-interface HMISProfilePhotoModalProps {
+interface HmisProfilePhotoModalProps {
   closeModal: () => void;
   isModalVisible: boolean;
   imageUrl: string;
@@ -16,13 +16,13 @@ interface HMISProfilePhotoModalProps {
   onAddOrChangePhoto?: () => void;
 }
 
-export function HMISProfilePhotoModal({
+export function HmisProfilePhotoModal({
   isModalVisible,
   closeModal,
   imageUrl,
   headers,
   onAddOrChangePhoto,
-}: HMISProfilePhotoModalProps) {
+}: HmisProfilePhotoModalProps) {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   useEffect(() => {

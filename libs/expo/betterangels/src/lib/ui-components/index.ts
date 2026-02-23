@@ -2,7 +2,7 @@ export { default as AddressField } from './AddressField';
 export { AppUpdatePrompt } from './AppUpdatePrompt';
 export { default as AuthContainer } from './AuthContainer';
 export * from './ClientCard';
-export * from './ClientCardHMIS';
+export * from './ClientCardHmis';
 export { default as ClientCardModal } from './ClientCardModal';
 export {
   ClientProfileCard,
@@ -19,11 +19,16 @@ export { FileUploadsPreview } from './FileUploadsPreview/FileUploadPreview';
 export * from './Filters';
 export * from './GirpNoteForm';
 export { default as Header } from './Header';
-export { default as HMISLoginForm } from './HMISLoginForm';
+export { default as HmisLoginForm } from './HmisLoginForm';
 export { default as HmisRequestedProvidedServices } from './HmisRequestedProvidedServices';
 export * from './InteractionList';
 export * from './InteractionListHmis';
 export * from './Layout';
+export {
+  LocationMapModal,
+  type ILocationMapModalProps,
+  type TLocationData,
+} from './LocationMapModal';
 export { default as LoginForm } from './LoginForm';
 export { default as MainContainer } from './MainContainer';
 export * from './MainModal';
@@ -46,8 +51,3 @@ export * from './TaskList';
 export { default as TaskStatusBtn } from './TaskStatusBtn';
 export * from './UserPreferences';
 export { default as WebBrowserLink } from './WebBrowserLink';
-export {
-  LocationMapModal,
-  type ILocationMapModalProps,
-  type TLocationData,
-} from './LocationMapModal';

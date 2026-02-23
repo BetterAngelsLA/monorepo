@@ -6,13 +6,13 @@ import { HmisClientProfileType } from '../../../../apollo';
 import { ClientProfileSectionEnum } from '../../../../screenRouting';
 import { MainScrollContainer } from '../../../../ui-components';
 import { ExpandableProfileContainer } from '../../../Client/ClientProfile/ExpandableProfileContainer';
-import { getHMISEditButtonRoute } from '../../../Client/ClientProfile/utils/getHMISEditButtonRoute';
+import { getHmisEditButtonRoute } from '../../../Client/ClientProfile/utils/getHmisEditButtonRoute';
 import {
   DemographicInfoCardHmis,
   FullNameCardHmis,
   ImportantNotesCard,
   PersonalInfoCardHmis,
-} from './ClientCardsHMIS';
+} from './ClientCardsHmis';
 
 type TProps = {
   client?: HmisClientProfileType;
@@ -21,7 +21,7 @@ type TProps = {
 
 const DEFAULT_OPEN_CARD = ClientProfileSectionEnum.FullName;
 
-export function ClientProfileHMISView(props: TProps) {
+export function ClientProfileHmisView(props: TProps) {
   const { client, openCard } = props;
   const scrollRef = useRef<ScrollView>(null);
   const router = useRouter();
@@ -46,7 +46,7 @@ export function ClientProfileHMISView(props: TProps) {
       return;
     }
 
-    const route = getHMISEditButtonRoute({
+    const route = getHmisEditButtonRoute({
       profileId: id,
       section: card,
     });

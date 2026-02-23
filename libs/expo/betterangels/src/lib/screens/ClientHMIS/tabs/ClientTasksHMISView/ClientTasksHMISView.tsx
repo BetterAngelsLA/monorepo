@@ -49,7 +49,7 @@ type TProps = {
   client: HmisClientProfileType | undefined;
 };
 
-export function ClientTasksHMISView(props: TProps) {
+export function ClientTasksHmisView(props: TProps) {
   const { client } = props;
 
   const [search, setSearch] = useState('');

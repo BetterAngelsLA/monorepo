@@ -1,6 +1,6 @@
 import {
   Client,
-  ClientHMIS,
+  ClientHmis,
   ClientProfileSectionEnum,
   isValidClientProfileSectionEnum,
   useResetClientInteractionsMapState,
@@ -38,7 +38,7 @@ export default function ClientScreen() {
   if (isHmisUser) {
     updateHmisInteractionsMapState(id);
     return (
-      <ClientHMIS id={id} arrivedFrom={arrivedFrom} openCard={openCardName} />
+      <ClientHmis id={id} arrivedFrom={arrivedFrom} openCard={openCardName} />
     );
   }
 

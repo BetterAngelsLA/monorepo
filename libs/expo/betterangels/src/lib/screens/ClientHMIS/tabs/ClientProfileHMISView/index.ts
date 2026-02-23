@@ -1,1 +1,1 @@
-export { ClientProfileHMISView } from './ClientProfileHMISView';
+export { ClientProfileHmisView } from './ClientProfileHmisView';

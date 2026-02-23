@@ -65,7 +65,7 @@ export const hmisFormConfig = {
   Record<ClientProfileSectionEnum, TSectionConfigRecord>
 >;
 
-export function parseAsSectionKeyHMIS(
+export function parseAsSectionKeyHmis(
   value: unknown
 ): THmisFormSectionKey | null {
   if (typeof value === 'string' && value in hmisFormConfig) {

@@ -1,6 +1,6 @@
 import { TFieldError } from '../../../errors/formErrors/types';
 
-export type THMISErrors = {
+export type THmisErrors = {
   code?: number;
   status?: number;
   name?: string;
@@ -9,13 +9,13 @@ export type THMISErrors = {
   fieldErrors?: TFieldError[];
 };
 
-export function extractHMISErrors(hmisError?: string): THMISErrors | null {
+export function extractHmisErrors(hmisError?: string): THmisErrors | null {
   if (!hmisError) {
     return null;
   }
 
   try {
-    const errJSON: THMISErrors = JSON.parse(hmisError);
+    const errJSON: THmisErrors = JSON.parse(hmisError);
 
     const { code, status, name, message, messages } = errJSON;
 
@@ -49,7 +49,7 @@ export function extractHMISErrors(hmisError?: string): THMISErrors | null {
       fieldErrors,
     };
   } catch (e) {
-    console.error('[error parsing extractHMISErrors]', e);
+    console.error('[error parsing extractHmisErrors]', e);
 
     return {};
   }

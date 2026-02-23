@@ -9,7 +9,7 @@ type TProps = {
   section: ClientProfileSectionEnum;
 };
 
-export function getHMISEditButtonRoute(props: TProps) {
+export function getHmisEditButtonRoute(props: TProps) {
   const { profileId, section } = props;
 
   return getEditClientProfileRoute({

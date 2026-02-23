@@ -9,8 +9,8 @@ import { useSnackbar } from '../../hooks';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
 import { ClientViewTabEnum } from '../Client/ClientTabs';
-import { HMISClientProfileHeader } from './HMISClientProfileHeader';
-import { HmisClientProfileDocument } from './__generated__/getHMISClient.generated';
+import { HmisClientProfileHeader } from './HmisClientProfileHeader';
+import { HmisClientProfileDocument } from './__generated__/getHmisClient.generated';
 import { renderTabComponent } from './tabs/utils/renderTabComponent';
 
 const hmisTabs: ClientViewTabEnum[] = [
@@ -35,7 +35,7 @@ type TProps = {
   openCard?: ClientProfileSectionEnum | null;
 };
 
-export function ClientHMIS(props: TProps) {
+export function ClientHmis(props: TProps) {
   const { id, arrivedFrom, openCard } = props;
 
   const router = useRouter();
@@ -86,7 +86,7 @@ export function ClientHMIS(props: TProps) {
   }
 
   if (error) {
-    console.error(`[ClientHMIS] error for client id [${id}]:`, error);
+    console.error(`[ClientHmis] error for client id [${id}]:`, error);
 
     return null;
   }
@@ -99,7 +99,7 @@ export function ClientHMIS(props: TProps) {
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      {showHeader && <HMISClientProfileHeader client={client} />}
+      {showHeader && <HmisClientProfileHeader client={client} />}
 
       <Tabs
         tabs={hmisTabs}

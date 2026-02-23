@@ -20,7 +20,7 @@ export interface IClientCardProps {
   onPress?: () => void;
 }
 
-export function ClientCardHMIS(props: IClientCardProps) {
+export function ClientCardHmis(props: IClientCardProps) {
   const {
     client: {
       hmisId: clientId,

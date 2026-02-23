@@ -1,5 +1,5 @@
 export { extractExtensionFieldErrors } from './extractExtensionFieldErrors';
-export { extractHMISErrors } from './extractHMISErrors';
+export { extractHmisErrors } from './extractHmisErrors';
 export { extractOperationErrors } from './extractOperationErrors';
 export { extractOperationFieldErrors } from './extractOperationFieldErrors';
 export { extractOperationInfo } from './extractOperationInfo';

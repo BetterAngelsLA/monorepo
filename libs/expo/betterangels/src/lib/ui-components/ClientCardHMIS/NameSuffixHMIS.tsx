@@ -13,7 +13,7 @@ export interface IClientCardProps {
   style?: ViewStyle;
 }
 
-export function NameSuffixHMIS(props: IClientCardProps) {
+export function NameSuffixHmis(props: IClientCardProps) {
   const { suffix, style } = props;
 
   if (!suffix || IgnoredSuffix.includes(suffix)) {

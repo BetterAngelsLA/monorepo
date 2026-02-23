@@ -14,14 +14,14 @@ import {
   FullNameFormSchema,
   TFullNameFormSchema,
   fullNameFormEmptyState,
-} from '../ClientHMISEdit/basicForms';
+} from '../ClientHmisEdit/basicForms';
 import {
   FALLBACK_NAME_DATA_QUALITY,
   FALLBACK_NAME_SUFFIX,
-} from '../ClientHMISEdit/constants';
+} from '../ClientHmisEdit/constants';
 import { CreateHmisClientProfileDocument } from './__generated__/createHmisClient.generated';
 
-export function CreateClientProfileHMIS() {
+export function CreateClientProfileHmis() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [createHmisClientProfileMutation] = useMutation(

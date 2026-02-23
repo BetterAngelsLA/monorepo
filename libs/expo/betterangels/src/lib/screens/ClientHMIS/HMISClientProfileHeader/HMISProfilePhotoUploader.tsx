@@ -10,10 +10,10 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSnackbar } from '../../../hooks';
 import { useHmisClient } from '../../../hooks/useHmisClient';
-import { HmisClientProfileDocument } from '../__generated__/getHMISClient.generated';
-import { HMISProfilePhotoModal } from './HMISProfilePhotoModal';
+import { HmisClientProfileDocument } from '../__generated__/getHmisClient.generated';
+import { HmisProfilePhotoModal } from './HmisProfilePhotoModal';
 
-interface HMISProfilePhotoUploaderProps {
+interface HmisProfilePhotoUploaderProps {
   clientId: string;
   imageUrl: string | null;
   headers?: Record<string, string> | null;
@@ -28,12 +28,12 @@ function buildFormData(file: ReactNativeFile): FormData {
   return formData;
 }
 
-export function HMISProfilePhotoUploader({
+export function HmisProfilePhotoUploader({
   clientId,
   imageUrl,
   headers,
   onUploadSuccess,
-}: HMISProfilePhotoUploaderProps) {
+}: HmisProfilePhotoUploaderProps) {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [uploading, setUploading] = useState(false);
   const { showSnackbar } = useSnackbar();
@@ -117,7 +117,7 @@ export function HMISProfilePhotoUploader({
         setFiles={(files) => handleUpload(files[0])}
       />
 
-      <HMISProfilePhotoModal
+      <HmisProfilePhotoModal
         isModalVisible={isProfileOpen}
         closeModal={() => setModalType(null)}
         imageUrl={imageUrl ?? ''}

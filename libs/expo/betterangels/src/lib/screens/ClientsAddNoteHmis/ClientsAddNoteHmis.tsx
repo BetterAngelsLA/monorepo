@@ -5,7 +5,7 @@ import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { pagePaddingHorizontal } from '../../static';
 import {
-  ClientCardHMIS,
+  ClientCardHmis,
   Header,
   HmisListClients,
   HorizontalContainer,
@@ -31,7 +31,7 @@ export function ClientsAddNoteHmis({ Logo }: { Logo: ElementType }) {
       }
 
       return (
-        <ClientCardHMIS client={client} onPress={() => handleClientPress(id)} />
+        <ClientCardHmis client={client} onPress={() => handleClientPress(id)} />
       );
     },
     [handleClientPress]

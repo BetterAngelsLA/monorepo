@@ -14,17 +14,17 @@ import {
 } from '../../apollo';
 import { applyManualFormErrors, applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
-import { HmisClientProfileDocument } from '../ClientHMIS/__generated__/getHMISClient.generated';
+import { HmisClientProfileDocument } from '../ClientHmis/__generated__/getHmisClient.generated';
 import { UpdateHmisClientProfileDocument } from './__generated__/updateHmisClient.generated';
-import { hmisFormConfig, parseAsSectionKeyHMIS } from './basicForms/config';
-import { toUpdateHmisClientProfileInput } from './toHMISClientProfileInputs';
+import { hmisFormConfig, parseAsSectionKeyHmis } from './basicForms/config';
+import { toUpdateHmisClientProfileInput } from './toHmisClientProfileInputs';
 
 type TProps = {
   id: string;
   componentName: string;
 };
 
-export function ClientHMISEdit(props: TProps) {
+export function ClientHmisEdit(props: TProps) {
   const { componentName, id } = props;
 
   const router = useRouter();
@@ -33,7 +33,7 @@ export function ClientHMISEdit(props: TProps) {
 
   const [client, setClient] = useState<HmisClientProfileType>();
 
-  const sectionName = parseAsSectionKeyHMIS(componentName);
+  const sectionName = parseAsSectionKeyHmis(componentName);
 
   if (!sectionName) {
     throw new Error(`Invalid componentName [${componentName}].`);
