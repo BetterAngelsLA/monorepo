@@ -31,7 +31,7 @@ import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { getSigningFingerprint } from '@monorepo/signing-fingerprint';
-import { apiUrl, demoApiUrl } from '../../config';
+import { apiUrl, demoApiUrl, googlePlacesApiKey } from '../../config';
 import AppRoutesStack from './AppRoutesStack';
 
 const isDevEnv = process.env['NODE_ENV'] === 'development';
@@ -75,7 +75,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <BottomSheetModalProvider>
         <NativePaperProvider>
-          <GooglePlacesProvider platformHeaders={platformHeaders}>
+          <GooglePlacesProvider apiKey={googlePlacesApiKey} platformHeaders={platformHeaders}>
             <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
               <QueryClientProvider client={reactQueryClient}>
                 <ApolloClientProvider typePolicies={baApolloTypePolicies}>
