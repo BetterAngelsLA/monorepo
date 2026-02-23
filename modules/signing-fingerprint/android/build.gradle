@@ -1,0 +1,11 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+android {
+  namespace "org.betterangels.signingfingerprint"
+  defaultConfig {
+    minSdkVersion 21
+  }
+}

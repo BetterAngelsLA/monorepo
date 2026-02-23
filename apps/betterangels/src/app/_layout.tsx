@@ -31,7 +31,7 @@ import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
-import { getSigningFingerprint } from '../../modules/signing-fingerprint';
+import { getSigningFingerprint } from '../../../../modules/signing-fingerprint';
 import AppRoutesStack from './AppRoutesStack';
 
 const isDevEnv = process.env['NODE_ENV'] === 'development';
@@ -42,7 +42,7 @@ initApolloRuntimeConfig({
 
 const baApolloTypePolicies = createBaTypePolicies(isDevEnv);
 
-const reactqQueryClient = new QueryClient({
+const reactQueryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false, // need custom implementation for React Native
@@ -77,7 +77,7 @@ export default function RootLayout() {
         <NativePaperProvider>
           <GooglePlacesProvider platformHeaders={platformHeaders}>
             <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-              <QueryClientProvider client={reactqQueryClient}>
+              <QueryClientProvider client={reactQueryClient}>
                 <ApolloClientProvider typePolicies={baApolloTypePolicies}>
                   <BaFeatureControlProvider>
                     <KeyboardProvider>
