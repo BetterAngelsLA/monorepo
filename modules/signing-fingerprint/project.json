@@ -1,8 +1,0 @@
-{
-  "name": "signing-fingerprint",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "modules/signing-fingerprint",
-  "projectType": "library",
-  "tags": [],
-  "targets": {}
-}

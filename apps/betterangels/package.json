@@ -115,7 +115,7 @@
   },
   "expo": {
     "autolinking": {
-      "nativeModulesDir": "../../modules"
+      "nativeModulesDir": "../../libs/expo/modules"
     }
   },
   "scripts": {
