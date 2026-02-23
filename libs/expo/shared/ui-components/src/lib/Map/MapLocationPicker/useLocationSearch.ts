@@ -1,7 +1,7 @@
 import { TPlacePrediction } from '@monorepo/expo/shared/services';
 import { debounce } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { usePlacesClient } from '../../hooks/usePlacesClient';
+import { useGooglePlaces } from '../../providers/GooglePlacesProvider';
 import { TLocationData } from './types';
 
 interface UseLocationSearchOptions {
@@ -9,7 +9,7 @@ interface UseLocationSearchOptions {
 }
 
 export function useLocationSearch({ onSelect }: UseLocationSearchOptions) {
-  const places = usePlacesClient();
+  const places = useGooglePlaces();
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<TPlacePrediction[]>([]);
 

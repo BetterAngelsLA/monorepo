@@ -132,7 +132,6 @@ INSTALLED_APPS = [
     "hmis",
     "legal",
     "notes",
-    "proxy",
     "reports",
     "shelters",
     "tasks",

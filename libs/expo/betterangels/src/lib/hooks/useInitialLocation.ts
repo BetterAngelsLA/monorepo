@@ -1,4 +1,4 @@
-import { usePlacesClient } from '@monorepo/expo/shared/ui-components';
+import { useGooglePlaces } from '@monorepo/expo/shared/ui-components';
 import * as ExpoLocation from 'expo-location';
 import { useEffect, useState } from 'react';
 import { LocationDraft } from '../screens/NotesHmis/HmisProgramNoteForm';
@@ -13,7 +13,7 @@ export function useInitialLocation(
   location: LocationDraft | undefined,
   setValue: (name: 'location', value: LocationDraft) => void
 ) {
-  const places = usePlacesClient();
+  const places = useGooglePlaces();
   const [userLocation, setUserLocation] =
     useState<ExpoLocation.LocationObject | null>(null);
 

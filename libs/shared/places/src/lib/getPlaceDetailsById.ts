@@ -1,7 +1,8 @@
-import { TFetchClient, TPlaceDetails } from './types';
+import { TGoogleFetch } from './googleFetch';
+import { TPlaceDetails } from './types';
 
 type TGetPlaceDetailsByIdProps = {
-  fetchClient: TFetchClient;
+  googleFetch: TGoogleFetch;
   placeId: string;
   fields?: string;
 };
@@ -13,17 +14,20 @@ export async function getPlaceDetailsById(
   props: TGetPlaceDetailsByIdProps
 ): Promise<TPlaceDetails> {
   const {
-    fetchClient,
+    googleFetch,
     placeId,
     fields = 'displayName,formattedAddress,location,addressComponents',
   } = props;
 
-  const response = await fetchClient(`/proxy/places/v1/places/${placeId}/`, {
-    method: 'GET',
-    headers: {
-      'X-Goog-FieldMask': fields,
-    },
-  });
+  const response = await googleFetch(
+    `https://places.googleapis.com/v1/places/${placeId}`,
+    {
+      method: 'GET',
+      headers: {
+        'X-Goog-FieldMask': fields,
+      },
+    }
+  );
 
   if (!response.ok) {
     throw new Error(`Place details request failed: ${response.status}`);

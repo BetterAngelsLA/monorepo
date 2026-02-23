@@ -4,9 +4,9 @@ import {
 } from '@monorepo/expo/shared/services';
 import {
   AutocompleteInput,
-  usePlacesClient,
+  useGooglePlaces,
 } from '@monorepo/expo/shared/ui-components';
-import { TPlacesClient } from '@monorepo/shared/places';
+import { GooglePlacesClient } from '@monorepo/shared/places';
 import { debounce } from 'lodash';
 import { RefObject, useMemo, useRef, useState } from 'react';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
@@ -52,7 +52,7 @@ export function AddressAutocomplete<TForm extends FieldValues>(
 
   const addressViewRef = useRef<View>(null);
 
-  const places = usePlacesClient();
+  const places = useGooglePlaces();
 
   const [predictions, setPredictions] = useState<TPlacePrediction[]>([]);
 
@@ -146,7 +146,7 @@ export function AddressAutocomplete<TForm extends FieldValues>(
 
 async function getDetailAddress(
   prediction: TPlacePrediction,
-  places: TPlacesClient
+  places: GooglePlacesClient
 ) {
   const placeId = prediction.placeId;
 

@@ -18,7 +18,10 @@ import {
   ApiConfigProvider,
   ApolloClientProvider,
 } from '@monorepo/expo/shared/clients';
-import { BottomSheetModalProvider } from '@monorepo/expo/shared/ui-components';
+import {
+  BottomSheetModalProvider,
+  GooglePlacesProvider,
+} from '@monorepo/expo/shared/ui-components';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -61,31 +64,35 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <BottomSheetModalProvider>
         <NativePaperProvider>
-          <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-            <QueryClientProvider client={reactqQueryClient}>
-              <ApolloClientProvider typePolicies={baApolloTypePolicies}>
-                <BaFeatureControlProvider>
-                  <KeyboardProvider>
-                    <KeyboardToolbarProvider>
-                      <SnackbarProvider>
-                        <UserProvider>
-                          <BlockingScreenProvider>
-                            <ModalScreenProvider>
-                              <AppUpdatePrompt />
-                              <StatusBar
-                                style={Platform.OS === 'ios' ? 'light' : 'auto'}
-                              />
-                              <AppRoutesStack />
-                            </ModalScreenProvider>
-                          </BlockingScreenProvider>
-                        </UserProvider>
-                      </SnackbarProvider>
-                    </KeyboardToolbarProvider>
-                  </KeyboardProvider>
-                </BaFeatureControlProvider>
-              </ApolloClientProvider>
-            </QueryClientProvider>
-          </ApiConfigProvider>
+          <GooglePlacesProvider>
+            <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
+              <QueryClientProvider client={reactqQueryClient}>
+                <ApolloClientProvider typePolicies={baApolloTypePolicies}>
+                  <BaFeatureControlProvider>
+                    <KeyboardProvider>
+                      <KeyboardToolbarProvider>
+                        <SnackbarProvider>
+                          <UserProvider>
+                            <BlockingScreenProvider>
+                              <ModalScreenProvider>
+                                <AppUpdatePrompt />
+                                <StatusBar
+                                  style={
+                                    Platform.OS === 'ios' ? 'light' : 'auto'
+                                  }
+                                />
+                                <AppRoutesStack />
+                              </ModalScreenProvider>
+                            </BlockingScreenProvider>
+                          </UserProvider>
+                        </SnackbarProvider>
+                      </KeyboardToolbarProvider>
+                    </KeyboardProvider>
+                  </BaFeatureControlProvider>
+                </ApolloClientProvider>
+              </QueryClientProvider>
+            </ApiConfigProvider>
+          </GooglePlacesProvider>
         </NativePaperProvider>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>

@@ -1,4 +1,5 @@
-import { TFetchClient, TPlaceLatLng, TPlacePrediction } from './types';
+import { TGoogleFetch } from './googleFetch';
+import { TPlaceLatLng, TPlacePrediction } from './types';
 
 // Default bias center for autocomplete (approx center of LA County).
 const DEFAULT_BOUNDS_CENTER: TPlaceLatLng = {
@@ -9,7 +10,7 @@ const DEFAULT_BOUNDS_CENTER: TPlaceLatLng = {
 const MILES_TO_METERS = 1609.34;
 
 type TGetPlaceAutocompleteProps = {
-  fetchClient: TFetchClient;
+  googleFetch: TGoogleFetch;
   query: string;
   boundsCenter?: TPlaceLatLng;
   boundsRadiusMiles?: number;
@@ -32,7 +33,7 @@ export async function getPlaceAutocomplete(
   props: TGetPlaceAutocompleteProps
 ): Promise<TPlacePrediction[]> {
   const {
-    fetchClient,
+    googleFetch,
     query,
     boundsCenter = DEFAULT_BOUNDS_CENTER,
     boundsRadiusMiles = 10,
@@ -45,26 +46,29 @@ export async function getPlaceAutocomplete(
 
   const boundsRadiusMeters = boundsRadiusMiles * MILES_TO_METERS;
 
-  const response = await fetchClient('/proxy/places/v1/places:autocomplete/', {
-    method: 'POST',
-    headers: {
-      'X-Goog-FieldMask':
-        'suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat',
-    },
-    body: JSON.stringify({
-      input: query,
-      locationBias: {
-        circle: {
-          center: {
-            latitude: boundsCenter.latitude,
-            longitude: boundsCenter.longitude,
-          },
-          radius: boundsRadiusMeters,
-        },
+  const response = await googleFetch(
+    'https://places.googleapis.com/v1/places:autocomplete',
+    {
+      method: 'POST',
+      headers: {
+        'X-Goog-FieldMask':
+          'suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat',
       },
-      includedRegionCodes,
-    }),
-  });
+      body: JSON.stringify({
+        input: query,
+        locationBias: {
+          circle: {
+            center: {
+              latitude: boundsCenter.latitude,
+              longitude: boundsCenter.longitude,
+            },
+            radius: boundsRadiusMeters,
+          },
+        },
+        includedRegionCodes,
+      }),
+    }
+  );
 
   if (!response.ok) {
     throw new Error(`Autocomplete request failed: ${response.status}`);

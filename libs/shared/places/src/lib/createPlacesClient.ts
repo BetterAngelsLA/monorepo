@@ -1,12 +1,8 @@
 import { getPlaceAutocomplete } from './getPlaceAutocomplete';
 import { getPlaceDetailsById } from './getPlaceDetailsById';
+import { createGoogleFetch } from './googleFetch';
 import { reverseGeocode, TReverseGeocodeResult } from './reverseGeocode';
-import {
-  TFetchClient,
-  TPlaceLatLng,
-  TPlacePrediction,
-  TPlaceDetails,
-} from './types';
+import { TPlaceDetails, TPlaceLatLng, TPlacePrediction } from './types';
 
 type TAutocompleteOptions = {
   boundsCenter?: TPlaceLatLng;
@@ -33,13 +29,20 @@ export type TPlacesClient = {
   ) => Promise<TReverseGeocodeResult>;
 };
 
-export function createPlacesClient(fetchClient: TFetchClient): TPlacesClient {
+/**
+ * Creates a places client that calls Google APIs directly.
+ * The API key is baked into an internal fetch wrapper so
+ * individual methods never need to handle it.
+ */
+export function createPlacesClient(apiKey: string): TPlacesClient {
+  const googleFetch = createGoogleFetch(apiKey);
+
   return {
     autocomplete: (query, options) =>
-      getPlaceAutocomplete({ fetchClient, query, ...options }),
+      getPlaceAutocomplete({ googleFetch, query, ...options }),
     getDetails: (placeId, options) =>
-      getPlaceDetailsById({ fetchClient, placeId, ...options }),
+      getPlaceDetailsById({ googleFetch, placeId, ...options }),
     reverseGeocode: (latitude, longitude) =>
-      reverseGeocode({ fetchClient, latitude, longitude }),
+      reverseGeocode({ googleFetch, latitude, longitude }),
   };
 }

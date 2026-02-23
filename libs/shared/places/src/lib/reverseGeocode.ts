@@ -1,3 +1,4 @@
+import { TGoogleFetch } from './googleFetch';
 import { TAddressComponent } from './types';
 
 export type TReverseGeocodeResult = {
@@ -7,7 +8,7 @@ export type TReverseGeocodeResult = {
 };
 
 type TReverseGeocodeProps = {
-  fetchClient: (path: string, options?: RequestInit) => Promise<Response>;
+  googleFetch: TGoogleFetch;
   latitude: number;
   longitude: number;
 };
@@ -18,14 +19,14 @@ type TReverseGeocodeProps = {
 export async function reverseGeocode(
   props: TReverseGeocodeProps
 ): Promise<TReverseGeocodeResult> {
-  const { fetchClient, latitude, longitude } = props;
+  const { googleFetch, latitude, longitude } = props;
 
   const params = new URLSearchParams({
     latlng: `${latitude},${longitude}`,
   });
 
-  const response = await fetchClient(
-    `/proxy/maps/api/geocode/json?${params.toString()}`
+  const response = await googleFetch(
+    `https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`
   );
 
   if (!response.ok) {

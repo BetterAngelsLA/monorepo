@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BasicInput from '../../BasicInput';
 import IconButton from '../../IconButton';
 import TextRegular from '../../TextRegular';
-import { usePlacesClient } from '../../hooks/usePlacesClient';
+import { useGooglePlaces } from '../../providers/GooglePlacesProvider';
 import { MapDirectionsActionSheet } from '../MapDirectionsActionSheet';
 import type { TMapView } from '../types';
 import { SelectedLocationPanel } from './SelectedLocationPanel';
@@ -35,7 +35,7 @@ export function MapLocationPicker({
   onClose,
   userLocation: propUserLocation,
 }: IMapLocationPickerProps) {
-  const places = usePlacesClient();
+  const places = useGooglePlaces();
   const mapRef = useRef<TMapView>(null);
   const insets = useSafeAreaInsets();
 

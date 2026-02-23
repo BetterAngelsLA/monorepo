@@ -13,7 +13,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
   TextMedium,
-  usePlacesClient,
+  useGooglePlaces,
 } from '@monorepo/expo/shared/ui-components';
 import * as ExpoLocation from 'expo-location';
 import { RefObject, useEffect, useRef, useState } from 'react';
@@ -77,7 +77,7 @@ export default function LocationComponent(props: ILocationProps) {
     setErrors,
   } = props;
 
-  const places = usePlacesClient();
+  const places = useGooglePlaces();
   const [updateNoteLocation] = useMutation(UpdateNoteLocationDocument);
 
   const [location, setLocation] = useState<TLocation>({
