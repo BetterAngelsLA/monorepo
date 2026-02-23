@@ -111,7 +111,8 @@
     "clsx": "*",
     "tailwind-merge": "*",
     "lodash": "*",
-    "haversine-distance": "*"
+    "haversine-distance": "*",
+    "expo-modules-core": "*"
   },
   "expo": {
     "autolinking": {
