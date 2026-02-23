@@ -1,4 +1,4 @@
-import { TPlacePrediction } from '@monorepo/expo/shared/services';
+import { TPlacePrediction } from '@monorepo/shared/places';
 import {
   AutocompleteInput,
   useGooglePlaces,

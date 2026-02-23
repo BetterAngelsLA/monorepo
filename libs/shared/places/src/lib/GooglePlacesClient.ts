@@ -263,8 +263,6 @@ export class GooglePlacesClient {
       headers.set(k, v);
     }
 
-    const response = await fetch(url, { ...options, headers });
-
-    return response;
+    return fetch(url, { ...options, headers });
   }
 }

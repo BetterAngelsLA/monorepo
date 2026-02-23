@@ -1,4 +1,4 @@
-import { TPlacePrediction } from '@monorepo/expo/shared/services';
+import { TPlacePrediction } from '@monorepo/shared/places';
 import { debounce } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useGooglePlaces } from '../../providers/GooglePlacesProvider';
