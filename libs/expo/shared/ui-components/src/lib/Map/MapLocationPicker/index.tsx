@@ -171,12 +171,17 @@ export function MapLocationPicker({
     try {
       let loc = userLocation;
       if (!loc) {
-        const { status } =
-          await ExpoLocation.requestForegroundPermissionsAsync();
-        if (status !== 'granted') return;
-        loc = await ExpoLocation.getCurrentPositionAsync({
-          accuracy: ExpoLocation.Accuracy.Balanced,
-        });
+        const lastKnown = await ExpoLocation.getLastKnownPositionAsync();
+        if (lastKnown) {
+          loc = lastKnown;
+        } else {
+          const { status } =
+            await ExpoLocation.requestForegroundPermissionsAsync();
+          if (status !== 'granted') return;
+          loc = await ExpoLocation.getCurrentPositionAsync({
+            accuracy: ExpoLocation.Accuracy.Balanced,
+          });
+        }
         setUserLocation(loc);
       }
       animateMap(loc.coords.latitude, loc.coords.longitude);

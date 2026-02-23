@@ -13,9 +13,11 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
   TextMedium,
+  getFreshLocation,
+  getUserLocation,
   useGooglePlaces,
 } from '@monorepo/expo/shared/ui-components';
-import * as ExpoLocation from 'expo-location';
+import haversine from 'haversine-distance';
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -141,52 +143,69 @@ export default function LocationComponent(props: ILocationProps) {
 
     autoFilledRef.current = true;
 
-    const autoSetInitialLocation = async () => {
-      try {
-        let latitude = INITIAL_LOCATION.latitude;
-        let longitude = INITIAL_LOCATION.longitude;
+    const geocodeAndSave = async (lat: number, lng: number) => {
+      const geocodeResult = await places.reverseGeocode(lat, lng);
 
-        const { status } =
-          await ExpoLocation.requestForegroundPermissionsAsync();
+      const newLocation: TLocation = {
+        latitude: lat,
+        longitude: lng,
+        address: geocodeResult.formattedAddress,
+        name: geocodeResult.shortAddress,
+      };
 
-        if (status === 'granted') {
-          const userCurrentLocation =
-            await ExpoLocation.getCurrentPositionAsync({
-              accuracy: ExpoLocation.Accuracy.Balanced,
-            });
-          latitude = userCurrentLocation.coords.latitude;
-          longitude = userCurrentLocation.coords.longitude;
-        }
+      setLocation(newLocation);
 
-        const geocodeResult = await places.reverseGeocode(latitude, longitude);
-
-        const newLocation: TLocation = {
-          latitude,
-          longitude,
-          address: geocodeResult.formattedAddress,
-          name: geocodeResult.shortAddress,
-        };
-
-        setLocation(newLocation);
-
-        await updateNoteLocation({
-          variables: {
-            data: {
-              id: noteId,
-              location: {
-                point: [longitude, latitude],
-                address: geocodeResult.formattedAddress
-                  ? {
-                      formattedAddress: geocodeResult.formattedAddress,
-                      addressComponents: JSON.stringify(
-                        geocodeResult.addressComponents ?? []
-                      ),
-                    }
-                  : null,
-              },
+      await updateNoteLocation({
+        variables: {
+          data: {
+            id: noteId,
+            location: {
+              point: [lng, lat],
+              address: geocodeResult.formattedAddress
+                ? {
+                    formattedAddress: geocodeResult.formattedAddress,
+                    addressComponents: JSON.stringify(
+                      geocodeResult.addressComponents ?? []
+                    ),
+                  }
+                : null,
             },
           },
-        });
+        },
+      });
+    };
+
+    const REFINE_THRESHOLD_METRES = 50;
+
+    const autoSetInitialLocation = async () => {
+      try {
+        // 1. Get location (last-known first, then GPS)
+        const result = await getUserLocation();
+        const initialCoords = result?.location?.coords;
+
+        if (!initialCoords) {
+          // No permission or no location available — use hard-coded default
+          await geocodeAndSave(
+            INITIAL_LOCATION.latitude,
+            INITIAL_LOCATION.longitude
+          );
+          return;
+        }
+
+        // 2. Instantly pre-fill from the obtained position
+        await geocodeAndSave(initialCoords.latitude, initialCoords.longitude);
+
+        // 3. Refine with a fresh GPS fix if position changed significantly
+        try {
+          const fresh = await getFreshLocation();
+          if (
+            haversine(initialCoords, fresh.coords) > REFINE_THRESHOLD_METRES
+          ) {
+            await geocodeAndSave(fresh.coords.latitude, fresh.coords.longitude);
+          }
+        } catch {
+          // Fresh GPS unavailable — keep the initial position
+        }
       } catch (err) {
         console.error('Error auto-setting initial location', err);
       }

@@ -3,21 +3,30 @@ import {
   LocationObject,
   getCurrentPositionAsync,
   getForegroundPermissionsAsync,
+  getLastKnownPositionAsync,
   requestForegroundPermissionsAsync,
 } from 'expo-location';
 
-type TResponse = {
+export type TGetUserLocationResponse = {
   location?: LocationObject;
   requireSettingsUpdate?: true;
 };
 
-export async function getUserLocation(): Promise<TResponse | null> {
+/**
+ * Get the user's current device location.
+ *
+ * Strategy:
+ * 1. Try `getLastKnownPositionAsync` first — instant, returns the OS-cached
+ *    location without powering up GPS.  Works with emulator mock locations.
+ * 2. Fall back to `getCurrentPositionAsync` if no cached position exists.
+ */
+export async function getUserLocation(): Promise<TGetUserLocationResponse | null> {
   try {
     const existingPerms = await getForegroundPermissionsAsync();
 
     // if permission already granted, fetch location and return
     if (existingPerms.granted) {
-      const userCurrentLocation = await fetchCurrentLocation();
+      const userCurrentLocation = await fetchLocation();
 
       return {
         location: userCurrentLocation,
@@ -29,7 +38,7 @@ export async function getUserLocation(): Promise<TResponse | null> {
 
     // if permission now granted, fetch location and return
     if (newPerms.granted) {
-      const userCurrentLocation = await fetchCurrentLocation();
+      const userCurrentLocation = await fetchLocation();
 
       return {
         location: userCurrentLocation,
@@ -59,11 +68,27 @@ export async function getUserLocation(): Promise<TResponse | null> {
   }
 }
 
-async function fetchCurrentLocation() {
+/**
+ * Try the instant OS-cached position first; only fire up the GPS
+ * radio if there is nothing cached.
+ */
+async function fetchLocation(): Promise<LocationObject> {
+  const lastKnown = await getLastKnownPositionAsync();
+  if (lastKnown) return lastKnown;
+
   return await getCurrentPositionAsync({
     // Accuracy.Balanced is accurate to within one hundred meters.
     // Accuracy.High (within 10 meters) can take over 10 seconds sometimes.
-    // To use High may need to fetch Location progressively (from lower accuracy to highter).
+    accuracy: Accuracy.Balanced,
+  });
+}
+
+/**
+ * Request a fresh GPS fix.  Useful for refining after an initial
+ * last-known position has already been shown.
+ */
+export async function getFreshLocation(): Promise<LocationObject> {
+  return await getCurrentPositionAsync({
     accuracy: Accuracy.Balanced,
   });
 }

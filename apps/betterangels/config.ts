@@ -1,6 +1,25 @@
 // config.ts
 import Constants from 'expo-constants';
+import { requireOptionalNativeModule } from 'expo-modules-core';
 import { Platform } from 'react-native';
+
+/**
+ * Read the app config that was embedded in the native binary at EAS build time.
+ * In dev client mode, Constants.expoConfig is overridden by the Metro dev server
+ * manifest (which re-evaluates app.config.js with local env vars). This function
+ * bypasses that and reads the raw native module value instead.
+ */
+function getEmbeddedExtra(): Record<string, unknown> | undefined {
+  const ExponentConstants = requireOptionalNativeModule<{
+    manifest?: string | Record<string, unknown>;
+  }>('ExponentConstants');
+  if (!ExponentConstants?.manifest) return undefined;
+  const config =
+    typeof ExponentConstants.manifest === 'string'
+      ? JSON.parse(ExponentConstants.manifest)
+      : ExponentConstants.manifest;
+  return config?.extra;
+}
 
 function loadConfig() {
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -8,14 +27,19 @@ function loadConfig() {
 
   // Resolve Google Places API key:
   //   1. EXPO_PUBLIC_* env var (inlined by Metro at bundle time)
-  //   2. Constants.expoConfig.extra (baked into native binary at build time)
-  const extra = Constants.expoConfig?.extra;
+  //   2. Constants.expoConfig.extra (dev server manifest)
+  //   3. Embedded native binary config (build-time values, bypasses dev server)
+  const devExtra = Constants.expoConfig?.extra;
+  const embeddedExtra = getEmbeddedExtra();
+
   const googlePlacesApiKey =
     (Platform.OS === 'ios'
       ? process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY ||
-        extra?.iosGoogleMapsApiKey
+        devExtra?.iosGoogleMapsApiKey ||
+        embeddedExtra?.iosGoogleMapsApiKey
       : process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY ||
-        extra?.androidGoogleMapsApiKey) ?? '';
+        devExtra?.androidGoogleMapsApiKey ||
+        embeddedExtra?.androidGoogleMapsApiKey) ?? '';
 
   if (!apiUrl || !demoApiUrl || !googlePlacesApiKey) {
     throw new Error(

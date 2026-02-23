@@ -1,5 +1,6 @@
 export { coordsToRegion } from './coordsToRegion';
-export { getUserLocation } from './getUserLocation';
+export { getFreshLocation, getUserLocation } from './getUserLocation';
+export type { TGetUserLocationResponse } from './getUserLocation';
 export { goToLocation } from './goToLocation';
 export { goToUserLocation } from './goToUserLocation';
 export { panMap } from './panMap';
