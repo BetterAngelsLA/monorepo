@@ -1,12 +1,8 @@
-import {
-  TPlaceDetails,
-  TPlacePrediction,
-} from '@monorepo/expo/shared/services';
+import { TPlacePrediction } from '@monorepo/expo/shared/services';
 import {
   AutocompleteInput,
   useGooglePlaces,
 } from '@monorepo/expo/shared/ui-components';
-import { GooglePlacesClient } from '@monorepo/shared/places';
 import { debounce } from 'lodash';
 import { RefObject, useMemo, useRef, useState } from 'react';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
@@ -130,9 +126,15 @@ export function AddressAutocomplete<TForm extends FieldValues>(
                     debouncedSearch.cancel();
                     setPredictions([]);
 
-                    const detailAddress = await getDetailAddress(item, places);
-
-                    onChange(detailAddress);
+                    try {
+                      const details = await places.getDetails(item.placeId);
+                      const full = details.formattedAddress || '';
+                      // Strip trailing country (everything after last comma)
+                      onChange(full.substring(0, full.lastIndexOf(',')));
+                    } catch (e) {
+                      console.error(e);
+                      onChange('');
+                    }
                   }}
                 />
               )}
@@ -142,31 +144,4 @@ export function AddressAutocomplete<TForm extends FieldValues>(
       }}
     />
   );
-}
-
-async function getDetailAddress(
-  prediction: TPlacePrediction,
-  places: GooglePlacesClient
-) {
-  const placeId = prediction.placeId;
-
-  if (!placeId) {
-    return '';
-  }
-
-  try {
-    const detailAddress = await places.getDetails(placeId);
-
-    return getPresentedAddress(detailAddress);
-  } catch (e) {
-    console.error(e);
-
-    return '';
-  }
-}
-
-function getPresentedAddress(detailAddress: TPlaceDetails): string {
-  const formattedAddress = detailAddress.formattedAddress || '';
-
-  return formattedAddress.substring(0, formattedAddress.lastIndexOf(','));
 }
