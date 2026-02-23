@@ -2,7 +2,7 @@ import { usePlacesClient } from '@monorepo/expo/shared/ui-components';
 import * as ExpoLocation from 'expo-location';
 import { useEffect, useState } from 'react';
 import { LocationDraft } from '../screens/NotesHmis/HmisProgramNoteForm';
-import { useUserDefaultNoteLocation } from '../state';
+import { useUserDefaultNoteLocation } from '../state/userPreferencesState/hooks/useUserDefaultNoteLocation';
 
 const INITIAL_LOCATION = {
   longitude: -118.258815,

@@ -1,5 +1,5 @@
 import { useAtom } from 'jotai';
-import { useUser } from '../../../hooks';
+import useUser from '../../../hooks/user/useUser';
 import { userPreferencesLocationAtomFamily } from '../atoms/userPreferencesLocationAtomFamily';
 
 export function useUserDefaultNoteLocation() {
