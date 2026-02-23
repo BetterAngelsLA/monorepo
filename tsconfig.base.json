@@ -44,7 +44,8 @@
         "libs/react/shelter-operator/src/index.ts"
       ],
       "@monorepo/react/storybook": ["libs/react/storybook/src/index.ts"],
-      "@monorepo/shared/places": ["libs/shared/places/src/index.ts"]
+      "@monorepo/shared/places": ["libs/shared/places/src/index.ts"],
+      "@monorepo/signing-fingerprint": ["modules/signing-fingerprint/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

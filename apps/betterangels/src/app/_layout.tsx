@@ -30,8 +30,8 @@ import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { getSigningFingerprint } from '@monorepo/signing-fingerprint';
 import { apiUrl, demoApiUrl } from '../../config';
-import { getSigningFingerprint } from '../../../../modules/signing-fingerprint';
 import AppRoutesStack from './AppRoutesStack';
 
 const isDevEnv = process.env['NODE_ENV'] === 'development';
