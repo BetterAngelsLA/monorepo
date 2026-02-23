@@ -1,34 +1,25 @@
 import { createContext, useContext } from 'react';
-import type { QueryResult } from '@apollo/client/react';
-import type { GetFeatureControlsQuery } from './__generated__/featureControlProvider.generated';
+import { FeatureControlGroups } from './types';
 
-export type FeatureControlDictionary = {
-  [key: string]: { isActive: boolean; lastModified?: string | null };
-};
-
-export interface FeatureControlGroups {
-  flags: FeatureControlDictionary;
-  switches: FeatureControlDictionary;
-  samples: FeatureControlDictionary;
-}
-
-export interface TFeatureControlContext extends FeatureControlGroups {
+export interface FeatureControlContextValue extends FeatureControlGroups {
   loading: boolean;
-  error: Error | undefined;
+  error?: Error;
+  refetchFeatureFlags: () => Promise<unknown>;
   clearFeatureFlags: () => void;
-  refetchFeatureFlags: QueryResult<GetFeatureControlsQuery>['refetch'];
 }
 
 export const FeatureControlContext = createContext<
-  TFeatureControlContext | undefined
+  FeatureControlContextValue | undefined
 >(undefined);
 
-export const useFeatureControls = (): TFeatureControlContext => {
+export function useFeatureControls(): FeatureControlContextValue {
   const context = useContext(FeatureControlContext);
-  if (context === undefined) {
+
+  if (!context) {
     throw new Error(
       'useFeatureControls must be used within a FeatureControlProvider'
     );
   }
+
   return context;
-};
+}

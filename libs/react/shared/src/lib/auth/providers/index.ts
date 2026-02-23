@@ -1,2 +1,2 @@
-export { default as AuthProvider } from './AuthProvider';
-export type { AuthProviderProps, AuthProviderConfig } from './AuthProvider';
+export { AuthProvider } from './AuthProvider';
+export type { AuthProviderConfig, AuthProviderProps } from './AuthProvider';
