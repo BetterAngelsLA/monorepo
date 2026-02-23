@@ -6,64 +6,62 @@ import {
   getLastKnownPositionAsync,
   requestForegroundPermissionsAsync,
 } from 'expo-location';
+import haversine from 'haversine-distance';
 
 export type TGetUserLocationResponse = {
   location?: LocationObject;
   requireSettingsUpdate?: true;
 };
 
+export type TGetUserLocationOptions = {
+  /** If provided, a fresh GPS fix is requested after the initial result.
+   *  Called only when the fresh position differs from the initial by more
+   *  than `refineThresholdMetres` (default 50). */
+  onRefine?: (location: LocationObject) => void;
+  /** Minimum distance in metres before `onRefine` fires. Default: 50. */
+  refineThresholdMetres?: number;
+};
+
+const DEFAULT_REFINE_THRESHOLD = 50;
+
 /**
  * Get the user's current device location.
  *
- * Strategy:
- * 1. Try `getLastKnownPositionAsync` first — instant, returns the OS-cached
- *    location without powering up GPS.  Works with emulator mock locations.
- * 2. Fall back to `getCurrentPositionAsync` if no cached position exists.
+ * Returns the best available position instantly (OS-cached first, then GPS).
+ * Optionally refines with a fresh GPS fix in the background via `onRefine`.
  */
-export async function getUserLocation(): Promise<TGetUserLocationResponse | null> {
+export async function getUserLocation(
+  options?: TGetUserLocationOptions
+): Promise<TGetUserLocationResponse | null> {
   try {
     const existingPerms = await getForegroundPermissionsAsync();
 
-    // if permission already granted, fetch location and return
     if (existingPerms.granted) {
-      const userCurrentLocation = await fetchLocation();
-
-      return {
-        location: userCurrentLocation,
-      };
+      const location = await fetchLocation();
+      scheduleRefine(location, options);
+      return { location };
     }
 
-    // permission not granted, so let's request permission from user
     const newPerms = await requestForegroundPermissionsAsync();
 
-    // if permission now granted, fetch location and return
     if (newPerms.granted) {
-      const userCurrentLocation = await fetchLocation();
-
-      return {
-        location: userCurrentLocation,
-      };
+      const location = await fetchLocation();
+      scheduleRefine(location, options);
+      return { location };
     }
 
-    // if `canAskAgain` changed, we assume that the user has actively
-    // updated permission, so do nothing this time.
-    // mostly for Android, where `canAskAgain` works differently, but ok for both
+    // If `canAskAgain` changed, the user actively updated permission
     if (existingPerms.canAskAgain !== newPerms.canAskAgain) {
       return null;
     }
 
-    // if we cannot ask for permission again,
-    // user needs to update settings first and then try again
     if (!newPerms.canAskAgain) {
-      return {
-        requireSettingsUpdate: true,
-      };
+      return { requireSettingsUpdate: true };
     }
 
     return null;
   } catch (error) {
     console.warn('[getUserLocation] Error getting user location:', error);
-
     return null;
   }
 }
@@ -77,18 +75,30 @@ async function fetchLocation(): Promise<LocationObject> {
   if (lastKnown) return lastKnown;
 
   return await getCurrentPositionAsync({
-    // Accuracy.Balanced is accurate to within one hundred meters.
-    // Accuracy.High (within 10 meters) can take over 10 seconds sometimes.
     accuracy: Accuracy.Balanced,
   });
 }
 
 /**
- * Request a fresh GPS fix.  Useful for refining after an initial
- * last-known position has already been shown.
+ * Fire-and-forget: request a fresh GPS fix and call `onRefine` if the
+ * position moved significantly.
  */
-export async function getFreshLocation(): Promise<LocationObject> {
-  return await getCurrentPositionAsync({
-    accuracy: Accuracy.Balanced,
-  });
+function scheduleRefine(
+  initial: LocationObject,
+  options?: TGetUserLocationOptions
+) {
+  if (!options?.onRefine) return;
+
+  const { onRefine } = options;
+  const threshold = options.refineThresholdMetres ?? DEFAULT_REFINE_THRESHOLD;
+
+  getCurrentPositionAsync({ accuracy: Accuracy.Balanced })
+    .then((fresh) => {
+      if (haversine(initial.coords, fresh.coords) > threshold) {
+        onRefine(fresh);
+      }
+    })
+    .catch(() => {
+      // Fresh GPS unavailable — keep the initial position
+    });
 }

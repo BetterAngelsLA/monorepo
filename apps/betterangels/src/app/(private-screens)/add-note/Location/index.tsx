@@ -13,11 +13,9 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
   TextMedium,
-  getFreshLocation,
   getUserLocation,
   useGooglePlaces,
 } from '@monorepo/expo/shared/ui-components';
-import haversine from 'haversine-distance';
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -175,37 +173,20 @@ export default function LocationComponent(props: ILocationProps) {
       });
     };
 
-    const REFINE_THRESHOLD_METRES = 50;
-
     const autoSetInitialLocation = async () => {
       try {
-        // 1. Get location (last-known first, then GPS)
-        const result = await getUserLocation();
-        const initialCoords = result?.location?.coords;
+        const result = await getUserLocation({
+          onRefine: (refined) => {
+            geocodeAndSave(refined.coords.latitude, refined.coords.longitude);
+          },
+        });
 
-        if (!initialCoords) {
-          // No permission or no location available — use hard-coded default
-          await geocodeAndSave(
-            INITIAL_LOCATION.latitude,
-            INITIAL_LOCATION.longitude
-          );
-          return;
-        }
+        const coords = result?.location?.coords;
 
-        // 2. Instantly pre-fill from the obtained position
-        await geocodeAndSave(initialCoords.latitude, initialCoords.longitude);
-
-        // 3. Refine with a fresh GPS fix if position changed significantly
-        try {
-          const fresh = await getFreshLocation();
-          if (
-            haversine(initialCoords, fresh.coords) > REFINE_THRESHOLD_METRES
-          ) {
-            await geocodeAndSave(fresh.coords.latitude, fresh.coords.longitude);
-          }
-        } catch {
-          // Fresh GPS unavailable — keep the initial position
-        }
+        await geocodeAndSave(
+          coords?.latitude ?? INITIAL_LOCATION.latitude,
+          coords?.longitude ?? INITIAL_LOCATION.longitude
+        );
       } catch (err) {
         console.error('Error auto-setting initial location', err);
       }

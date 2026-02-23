@@ -8,11 +8,8 @@ import { useMapsLibrary } from '@vis.gl/react-google-maps';
 import { useCallback, useMemo } from 'react';
 
 /**
- * Returns a Places client backed by the Google Maps JS SDK libraries
+ * Places client backed by the Google Maps JS SDK libraries
  * loaded via `<APIProvider>` from `@vis.gl/react-google-maps`.
- *
- * No API key handling needed — key is provided by the APIProvider.
- * Calls the SDK directly (no REST, no fetch, no proxy).
  */
 export function usePlacesClient() {
   const placesLib = useMapsLibrary('places');
