@@ -22,15 +22,12 @@ import {
   BottomSheetModalProvider,
   GooglePlacesProvider,
 } from '@monorepo/expo/shared/ui-components';
-import { TPlatformHeaders } from '@monorepo/shared/places';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import * as Application from 'expo-application';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
-import { getSigningFingerprint } from '@monorepo/signing-fingerprint';
 import { apiUrl, demoApiUrl, googlePlacesApiKey } from '../../config';
 import AppRoutesStack from './AppRoutesStack';
 
@@ -50,14 +47,6 @@ const reactQueryClient = new QueryClient({
   },
 });
 
-const platformHeaders: TPlatformHeaders =
-  Platform.OS === 'ios'
-    ? { iosBundleId: Application.applicationId ?? undefined }
-    : {
-        androidPackage: Application.applicationId ?? undefined,
-        androidCertFingerprint: getSigningFingerprint() ?? undefined,
-      };
-
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: '(tabs)',
@@ -75,7 +64,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <BottomSheetModalProvider>
         <NativePaperProvider>
-          <GooglePlacesProvider apiKey={googlePlacesApiKey} platformHeaders={platformHeaders}>
+          <GooglePlacesProvider apiKey={googlePlacesApiKey}>
             <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
               <QueryClientProvider client={reactQueryClient}>
                 <ApolloClientProvider typePolicies={baApolloTypePolicies}>
