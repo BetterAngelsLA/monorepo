@@ -2,6 +2,7 @@ import { usePlacesClient } from '@monorepo/expo/shared/ui-components';
 import * as ExpoLocation from 'expo-location';
 import { useEffect, useState } from 'react';
 import { LocationDraft } from '../screens/NotesHmis/HmisProgramNoteForm';
+import { useUserDefaultNoteLocation } from '../state';
 
 const INITIAL_LOCATION = {
   longitude: -118.258815,
@@ -16,6 +17,7 @@ export function useInitialLocation(
   const places = usePlacesClient();
   const [userLocation, setUserLocation] =
     useState<ExpoLocation.LocationObject | null>(null);
+  const [defaultLocation] = useUserDefaultNoteLocation();
 
   useEffect(() => {
     const autoSetInitialLocation = async () => {
@@ -30,10 +32,22 @@ export function useInitialLocation(
             await ExpoLocation.getCurrentPositionAsync({
               accuracy: ExpoLocation.Accuracy.Balanced,
             });
-          latitude = userCurrentLocation.coords.latitude;
-          longitude = userCurrentLocation.coords.longitude;
+
+          if (!defaultLocation) {
+            latitude = userCurrentLocation.coords.latitude;
+            longitude = userCurrentLocation.coords.longitude;
+          }
 
           setUserLocation(userCurrentLocation);
+        }
+
+        if (
+          defaultLocation &&
+          defaultLocation.latitude &&
+          defaultLocation.longitude
+        ) {
+          latitude = defaultLocation.latitude;
+          longitude = defaultLocation.longitude;
         }
 
         if (editing) return;

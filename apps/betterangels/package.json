@@ -110,7 +110,8 @@
     "react-router-dom": "*",
     "clsx": "*",
     "tailwind-merge": "*",
-    "lodash": "*"
+    "lodash": "*",
+    "haversine-distance": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",
