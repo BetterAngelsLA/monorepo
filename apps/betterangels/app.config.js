@@ -153,6 +153,9 @@ export default {
       eas: {
         projectId: '53171ba4-60ca-40cb-b3e6-b0c2393677b8',
       },
+      iosGoogleMapsApiKey: process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY,
+      androidGoogleMapsApiKey:
+        process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
     },
     newArchEnabled: true,
     owner: 'better-angels',
