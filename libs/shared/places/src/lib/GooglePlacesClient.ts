@@ -47,6 +47,19 @@ type TPlacePredictionResponse = {
 };
 
 /**
+ * Optional platform-identification headers required by Google when
+ * the API key is restricted to a specific iOS or Android app.
+ */
+export type TPlatformHeaders = {
+  /** iOS bundle identifier, e.g. 'la.betterangels.app' */
+  iosBundleId?: string;
+  /** Android package name, e.g. 'la.betterangels.app' */
+  androidPackage?: string;
+  /** Android signing-certificate SHA-1 fingerprint (uppercase hex, no colons) */
+  androidCertFingerprint?: string;
+};
+
+/**
  * A client for the Google Places & Geocoding REST APIs.
  *
  * Instantiate once with your API key; every method call uses it
@@ -59,9 +72,22 @@ type TPlacePredictionResponse = {
  */
 export class GooglePlacesClient {
   private readonly apiKey: string;
+  private readonly platformHeaders: Record<string, string>;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, platform?: TPlatformHeaders) {
     this.apiKey = apiKey;
+
+    const headers: Record<string, string> = {};
+    if (platform?.iosBundleId) {
+      headers['X-Ios-Bundle-Identifier'] = platform.iosBundleId;
+    }
+    if (platform?.androidPackage) {
+      headers['X-Android-Package'] = platform.androidPackage;
+    }
+    if (platform?.androidCertFingerprint) {
+      headers['X-Android-Cert'] = platform.androidCertFingerprint;
+    }
+    this.platformHeaders = headers;
   }
 
   // ---- Public API ----
@@ -184,8 +210,14 @@ export class GooglePlacesClient {
       key: this.apiKey,
     });
 
+    const headers = new Headers();
+    for (const [k, v] of Object.entries(this.platformHeaders)) {
+      headers.set(k, v);
+    }
+
     const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`
+      `https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`,
+      { headers }
     );
 
     if (!response.ok) {
@@ -226,6 +258,9 @@ export class GooglePlacesClient {
     headers.set('X-Goog-Api-Key', this.apiKey);
     if (!headers.has('Content-Type')) {
       headers.set('Content-Type', 'application/json');
+    }
+    for (const [k, v] of Object.entries(this.platformHeaders)) {
+      headers.set(k, v);
     }
     return fetch(url, { ...options, headers });
   }

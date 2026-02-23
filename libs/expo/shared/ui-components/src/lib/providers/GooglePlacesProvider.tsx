@@ -1,15 +1,35 @@
-import { GooglePlacesClient } from '@monorepo/shared/places';
+import { GooglePlacesClient, TPlatformHeaders } from '@monorepo/shared/places';
 import { createContext, ReactNode, useContext, useMemo } from 'react';
+import { Platform } from 'react-native';
 
 const GOOGLE_PLACES_API_KEY =
-  process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY ?? '';
+  (Platform.OS === 'ios'
+    ? process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY
+    : process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY) ?? '';
+
+if (__DEV__) {
+  if (!GOOGLE_PLACES_API_KEY) {
+    console.warn(
+      '[GooglePlacesProvider] No API key found. Set EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY ' +
+        '/ EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY in your .env.'
+    );
+  }
+}
 
 const GooglePlacesContext = createContext<GooglePlacesClient | null>(null);
 
-export function GooglePlacesProvider({ children }: { children: ReactNode }) {
+type GooglePlacesProviderProps = {
+  children: ReactNode;
+  platformHeaders?: TPlatformHeaders;
+};
+
+export function GooglePlacesProvider({
+  children,
+  platformHeaders,
+}: GooglePlacesProviderProps) {
   const client = useMemo(
-    () => new GooglePlacesClient(GOOGLE_PLACES_API_KEY),
-    []
+    () => new GooglePlacesClient(GOOGLE_PLACES_API_KEY, platformHeaders),
+    [platformHeaders]
   );
 
   return (
