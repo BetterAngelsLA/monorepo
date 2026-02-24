@@ -1,1 +1,0 @@
-export { ClientInteractionsHmisView } from './ClientInteractionsHmisView';

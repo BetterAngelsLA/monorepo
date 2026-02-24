@@ -8,10 +8,10 @@ import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { ContactInfoCard } from './ClientProfileCards/ContactInfoCard';
 import { DemographicInfoCard } from './ClientProfileCards/DemographicInfoCard';
 import { FullNameCard } from './ClientProfileCards/FullNameCard';
-import { HmisProfilesCard } from './ClientProfileCards/HmisProfilesCard';
 import { HouseholdMembersCard } from './ClientProfileCards/HouseholdMembersCard';
 import { ImportantNotesCard } from './ClientProfileCards/ImportantNotesCard';
 import { PersonalInfoCard } from './ClientProfileCards/PersonalInfoCard';
+import { ProfilesCardHmis } from './ClientProfileCards/ProfilesCardHmis';
 import { RelevantContactsCard } from './ClientProfileCards/RelevantContactsCard';
 import { ExpandableProfileContainer } from './ExpandableProfileContainer';
 import { getEditButtonRoute } from './utils/getEditButtonRoute';
@@ -128,7 +128,7 @@ export default function ClientProfileView(props: ProfileProps) {
           onOpenCloseClick={onOpenCloseClick}
           onEditClick={onClickEdit}
         >
-          <HmisProfilesCard clientProfile={clientProfile} />
+          <ProfilesCardHmis clientProfile={clientProfile} />
         </ExpandableProfileContainer>
       </View>
     </MainScrollContainer>

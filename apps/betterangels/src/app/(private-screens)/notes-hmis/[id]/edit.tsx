@@ -1,4 +1,4 @@
-import { HmisProgramNoteEdit } from '@monorepo/expo/betterangels';
+import { ProgramNoteEditHmis } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
 
 type TSearchParams = {
@@ -7,7 +7,7 @@ type TSearchParams = {
   arrivedFrom?: string;
 };
 
-export default function InteractionsHmisEdit() {
+export default function InteractionsEditHmis() {
   const { id, clientId, arrivedFrom } = useLocalSearchParams<TSearchParams>();
 
   if (!id || !clientId) {
@@ -15,7 +15,7 @@ export default function InteractionsHmisEdit() {
   }
 
   return (
-    <HmisProgramNoteEdit
+    <ProgramNoteEditHmis
       id={id}
       clientId={clientId}
       arrivedFrom={arrivedFrom}

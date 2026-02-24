@@ -1,0 +1,1 @@
+export { ProfilesViewHmis } from './ProfilesViewHmis';

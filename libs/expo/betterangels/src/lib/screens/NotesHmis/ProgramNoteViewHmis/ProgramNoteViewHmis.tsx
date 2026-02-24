@@ -1,0 +1,149 @@
+import { useQuery } from '@apollo/client/react';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import {
+  LoadingView,
+  TextBold,
+  TextButton,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
+import { sanitizeHtmlString } from '@monorepo/expo/shared/utils';
+import { useNavigation, useRouter } from 'expo-router';
+import { useEffect, useRef } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { MainScrollContainer } from '../../../ui-components';
+import NoteLocationHmis from './NoteLocationHmis';
+import ProgramNoteServicesHmis from './ProgramNoteServicesHmis';
+import ProgramNoteTitleHmis from './ProgramNoteTitleHmis';
+import { ViewNoteHmisDocument } from './__generated__/ProgramNoteViewHmis.generated';
+
+type TProps = {
+  id: string;
+  clientId: string;
+};
+
+export function ProgramNoteViewHmis(props: TProps) {
+  const { id, clientId } = props;
+  const scrollRef = useRef<ScrollView>(null);
+
+  const { data, error, loading } = useQuery(ViewNoteHmisDocument, {
+    variables: { id },
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
+  });
+  const hmisNote = data?.hmisNote;
+  const navigation = useNavigation();
+  const router = useRouter();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TextButton
+          color={Colors.WHITE}
+          regular
+          title="Edit"
+          accessibilityHint="edit note form"
+          onPress={() =>
+            router.navigate({
+              pathname: `notes-hmis/${id}/edit`,
+              params: { clientId },
+            })
+          }
+        />
+      ),
+    });
+  }, [id, clientId, navigation, router]);
+
+  if (loading) {
+    return <LoadingView />;
+  }
+
+  if (error) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+
+  if (hmisNote?.__typename !== 'HmisNoteType') {
+    return null;
+  }
+
+  const {
+    note,
+    hmisClientProfile,
+    clientProgram,
+    providedServices,
+    requestedServices,
+  } = hmisNote;
+  const { firstName, lastName } = hmisClientProfile || {};
+  const { program } = clientProgram || {};
+  const programName = program?.name;
+  const clientName = buildFullName(firstName, lastName);
+  const sanitizedNote = sanitizeHtmlString(note);
+
+  return (
+    <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} ref={scrollRef}>
+      <View style={styles.container}>
+        <ProgramNoteTitleHmis hmisNote={hmisNote} />
+
+        {!!clientName && <TextBold selectable>{clientName}</TextBold>}
+
+        {programName && (
+          <View>
+            <TextBold mb="xs">Program</TextBold>
+            <TextRegular selectable>{programName}</TextRegular>
+          </View>
+        )}
+        {hmisNote.location?.point && <NoteLocationHmis hmisNote={hmisNote} />}
+
+        {((providedServices && providedServices?.length > 0) ||
+          (requestedServices && requestedServices.length > 0)) && (
+          <ProgramNoteServicesHmis note={hmisNote} />
+        )}
+
+        {!!sanitizedNote.length && (
+          <View>
+            <TextBold mb="xs">Note</TextBold>
+            <View style={styles.noteContainer}>
+              <TextRegular selectable>{sanitizedNote}</TextRegular>
+            </View>
+          </View>
+        )}
+      </View>
+    </MainScrollContainer>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: Colors.WHITE,
+    marginBottom: Spacings.xs,
+    paddingHorizontal: Spacings.sm,
+    paddingVertical: Spacings.md,
+    gap: Spacings.md,
+    borderRadius: Radiuses.xs,
+    borderColor: Colors.NEUTRAL_LIGHT,
+    borderWidth: 1,
+  },
+  noteContainer: {
+    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+    padding: Spacings.sm,
+    borderRadius: Radiuses.xxs,
+  },
+});
+
+function buildFullName(
+  firstName?: string | null,
+  lastName?: string | null
+): string {
+  const nameParts = [];
+
+  if (firstName) {
+    nameParts.push(firstName);
+  }
+
+  if (lastName) {
+    nameParts.push(lastName);
+  }
+
+  const name = nameParts.join(' ');
+
+  return name.trim();
+}

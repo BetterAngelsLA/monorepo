@@ -3,11 +3,11 @@ import { ViewStyle } from 'react-native';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
 import { TClientProfile } from '../../Client/ClientProfile/types';
 import { ClientContactForm } from './forms/ClientContactsForm';
-import { HmisProfileForm } from './forms/HmisProfileForm/HmisProfileForm';
 import { HouseholdMemberForm } from './forms/HouseholdMemberForm';
+import { ProfileFormHmis } from './forms/ProfileFormHmis/ProfileFormHmis';
 import { ClientContactsView } from './views/ClientContactsView';
-import { HmisProfilesView } from './views/HmisProfilesView';
 import { HouseholdMemebersView } from './views/HouseholdMemebersView';
+import { ProfilesViewHmis } from './views/ProfilesViewHmis';
 
 type TRelationComponentProps = {
   clientProfile?: TClientProfile;
@@ -26,8 +26,8 @@ export const clientRelatedModelConfig: Record<string, TRelationConfig> = {
   [ClientProfileSectionEnum.HmisIds]: {
     titlePlural: 'HMIS IDs',
     titleSingular: 'HMIS ID',
-    ViewComponent: HmisProfilesView,
-    FormComponent: HmisProfileForm,
+    ViewComponent: ProfilesViewHmis,
+    FormComponent: ProfileFormHmis,
   },
   [ClientProfileSectionEnum.Household]: {
     titlePlural: 'Household',

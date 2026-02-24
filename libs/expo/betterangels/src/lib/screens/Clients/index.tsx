@@ -7,19 +7,19 @@ import { useUser } from '../../hooks';
 import { pagePaddingHorizontal } from '../../static';
 import {
   ClientCard,
-  ClientCardHMIS,
+  ClientCardHmis,
   ClientCardModal,
   ClientProfileList,
   Header,
-  HmisListClients,
   HorizontalContainer,
+  ListClientsHmis,
 } from '../../ui-components';
-import { HmisClientProfilesQuery } from '../../ui-components/ClientProfileList/__generated__/HmisListClients.generated';
+import { ClientProfilesHmisQuery } from '../../ui-components/ClientProfileList/__generated__/ListClientsHmis.generated';
 import { ClientProfilesQuery } from './__generated__/Clients.generated';
 
 type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
-type THmisClientProfile =
-  HmisClientProfilesQuery['hmisClientProfiles']['results'][number];
+type TClientProfileHmis =
+  ClientProfilesHmisQuery['hmisClientProfiles']['results'][number];
 
 export default function Clients({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] = useState<TClientProfile | null>(
@@ -46,8 +46,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     [setCurrentClient, handleClientPress]
   );
 
-  const renderHmisClientItem = useCallback(
-    (client: THmisClientProfile) => {
+  const renderClientItemHmis = useCallback(
+    (client: TClientProfileHmis) => {
       const { id } = client;
 
       if (!id) {
@@ -55,7 +55,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       }
 
       return (
-        <ClientCardHMIS client={client} onPress={() => handleClientPress(id)} />
+        <ClientCardHmis client={client} onPress={() => handleClientPress(id)} />
       );
     },
     [handleClientPress]
@@ -77,9 +77,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         </HorizontalContainer>
 
         {isHmisUser ? (
-          <HmisListClients
+          <ListClientsHmis
             filters={{ search }}
-            renderItem={renderHmisClientItem}
+            renderItem={renderClientItemHmis}
             style={{ paddingHorizontal: pagePaddingHorizontal }}
           />
         ) : (

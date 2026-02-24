@@ -1,7 +1,7 @@
-import { HmisProgramNoteView } from '@monorepo/expo/betterangels';
+import { ProgramNoteViewHmis } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
 
-export default function InteractionsHmisView() {
+export default function InteractionsViewHmis() {
   const { id, clientId } = useLocalSearchParams<{
     id: string;
     clientId: string;
@@ -11,5 +11,5 @@ export default function InteractionsHmisView() {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  return <HmisProgramNoteView id={id} clientId={clientId} />;
+  return <ProgramNoteViewHmis id={id} clientId={clientId} />;
 }

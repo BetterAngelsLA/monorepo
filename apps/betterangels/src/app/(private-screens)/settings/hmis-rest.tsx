@@ -1,5 +1,5 @@
-import { HmisRestDebug } from '@monorepo/expo/betterangels';
+import { RestDebugHmis } from '@monorepo/expo/betterangels';
 
-export default function HmisRestScreen() {
-  return <HmisRestDebug />;
+export default function RestScreenHmis() {
+  return <RestDebugHmis />;
 }
