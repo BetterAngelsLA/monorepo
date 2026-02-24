@@ -1,7 +1,7 @@
 import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { View, ViewStyle } from 'react-native';
 import { HmisSuffixEnum, Maybe } from '../../apollo';
-import { getExistingHmisSuffix } from '../../static';
+import { getExistingSuffixHmis } from '../../static';
 
 const IgnoredSuffix: HmisSuffixEnum[] = [
   HmisSuffixEnum.DontKnow,
@@ -22,7 +22,7 @@ export function NameSuffixHMIS(props: IClientCardProps) {
 
   return (
     <View style={style}>
-      <TextBold>{getExistingHmisSuffix(suffix)}</TextBold>
+      <TextBold>{getExistingSuffixHmis(suffix)}</TextBold>
     </View>
   );
 }
