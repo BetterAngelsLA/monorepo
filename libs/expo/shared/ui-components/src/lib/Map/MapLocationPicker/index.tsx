@@ -4,7 +4,6 @@ import {
   SearchIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import * as ExpoLocation from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import RNMapView, {
@@ -21,6 +20,7 @@ import TextRegular from '../../TextRegular';
 import { useGooglePlaces } from '../../providers/GooglePlacesProvider';
 import { MapDirectionsActionSheet } from '../MapDirectionsActionSheet';
 import type { TMapView } from '../types';
+import { getUserLocation } from '../utils/getUserLocation';
 import { SelectedLocationPanel } from './SelectedLocationPanel';
 import { IMapLocationPickerProps, TLocationData } from './types';
 import { useLocationSearch } from './useLocationSearch';
@@ -171,17 +171,9 @@ export function MapLocationPicker({
     try {
       let loc = userLocation;
       if (!loc) {
-        const lastKnown = await ExpoLocation.getLastKnownPositionAsync();
-        if (lastKnown) {
-          loc = lastKnown;
-        } else {
-          const { status } =
-            await ExpoLocation.requestForegroundPermissionsAsync();
-          if (status !== 'granted') return;
-          loc = await ExpoLocation.getCurrentPositionAsync({
-            accuracy: ExpoLocation.Accuracy.Balanced,
-          });
-        }
+        const result = await getUserLocation();
+        loc = result?.location ?? null;
+        if (!loc) return;
         setUserLocation(loc);
       }
       animateMap(loc.coords.latitude, loc.coords.longitude);
