@@ -8,6 +8,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
+from model_bakery import baker
 from model_bakery.recipe import seq
 from places import Places
 from shelters.enums import (
@@ -54,6 +55,7 @@ from shelters.models import (
     TrainingService,
 )
 from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
+from accounts.models import User
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
@@ -891,6 +893,11 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
 
 
 class BedMutationTestCase(GraphQLTestCaseMixin, TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.user = baker.make(User, is_superuser=True)
+        self.graphql_client.force_login(self.user)
+
     def test_create_bed(self) -> None:
         shelter = shelter_recipe.make()
         mutation = """
