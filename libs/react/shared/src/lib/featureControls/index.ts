@@ -1,4 +1,4 @@
-export { FeatureControlProvider } from './FeatureControlProvider';
+// export { FeatureControlProvider } from './FeatureControlProvider';
 export { useFeatureControls } from './featureControlContext';
 export { toFeatureControlDictionary } from './toFeatureControlDictionary';
 export * from './types';
