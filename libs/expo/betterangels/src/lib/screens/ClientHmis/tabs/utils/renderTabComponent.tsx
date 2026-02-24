@@ -4,7 +4,7 @@ import { ClientProfileSectionEnum } from '../../../../screenRouting';
 import { ClientViewTabEnum } from '../../../Client/ClientTabs';
 import { ClientDocsHmisView } from '../ClientDocsHmisView';
 import { ClientInteractionsHmisView } from '../ClientInteractionsHmisView';
-import { ClientLocationsHmisView } from '../ClientLocationsHmisView';
+import { ClientLocationsHmisView } from '../ClientLocationsViewHmis';
 import { ClientProfileHMISView } from '../ClientProfileHMISView';
 import { ClientTasksHMISView } from '../ClientTasksHMISView';
 

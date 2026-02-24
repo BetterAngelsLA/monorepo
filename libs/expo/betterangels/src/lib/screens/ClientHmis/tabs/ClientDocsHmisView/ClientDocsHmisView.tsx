@@ -13,7 +13,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { HmisClientProfileType } from '../../../../apollo';
 import { useHmisFileCategoryAndNames } from '../../../../hooks';
-import { useClientFiles } from '../../../../hooks/hmisFileMetadata';
+import { useClientFiles } from '../../../../hooks/fileMetadataHmis';
 import { useModalScreen } from '../../../../providers';
 import HmisDocuments from './HmisDocuments';
 import UploadModalHmis from './UploadModalHmis';

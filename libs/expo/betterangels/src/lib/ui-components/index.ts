@@ -19,12 +19,17 @@ export { FileUploadsPreview } from './FileUploadsPreview/FileUploadPreview';
 export * from './Filters';
 export * from './GirpNoteForm';
 export { default as Header } from './Header';
-export { default as HMISLoginForm } from './HMISLoginForm';
 export { default as HmisRequestedProvidedServices } from './HmisRequestedProvidedServices';
 export * from './InteractionList';
 export * from './InteractionListHmis';
 export * from './Layout';
+export {
+  LocationMapModal,
+  type ILocationMapModalProps,
+  type TLocationData,
+} from './LocationMapModal';
 export { default as LoginForm } from './LoginForm';
+export { default as LoginFormHmis } from './LoginFormHmis';
 export { default as MainContainer } from './MainContainer';
 export * from './MainModal';
 export { default as MainPlusModal } from './MainPlusModal';
@@ -46,8 +51,3 @@ export * from './TaskList';
 export { default as TaskStatusBtn } from './TaskStatusBtn';
 export * from './UserPreferences';
 export { default as WebBrowserLink } from './WebBrowserLink';
-export {
-  LocationMapModal,
-  type ILocationMapModalProps,
-  type TLocationData,
-} from './LocationMapModal';

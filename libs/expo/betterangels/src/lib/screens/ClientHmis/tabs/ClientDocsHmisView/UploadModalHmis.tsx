@@ -18,7 +18,7 @@ import {
   useHmisFileCategoryAndNames,
   useSnackbar,
 } from '../../../../hooks';
-import { getClientFilesQueryKey } from '../../../../hooks/hmisFileMetadata/useClientFiles';
+import { getClientFilesQueryKey } from '../../../../hooks/fileMetadataHmis/useClientFiles';
 import { FileUploadsPreview } from '../../../../ui-components';
 import { FileCategorySelector } from './FileCategorySelector';
 

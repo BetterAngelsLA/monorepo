@@ -1,6 +1,6 @@
 import {
-  HMISLoginForm,
   LoginForm,
+  LoginFormHmis,
   SignInContainer,
 } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
@@ -10,7 +10,7 @@ import { privacyPolicyUrl, termsOfServiceUrl } from '../../config';
 type Provider = 'hmis' | 'ba';
 
 const providerToForm: Record<Provider, React.ComponentType> = {
-  hmis: HMISLoginForm,
+  hmis: LoginFormHmis,
   ba: LoginForm,
 };
 
