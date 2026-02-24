@@ -14,11 +14,11 @@ export interface DropdownProps {
   hasFooter?: boolean;
 }
 
-export default function dropdown({ label, placeholder }: DropdownProps) {
+export const Dropdown = ({ label, placeholder }: DropdownProps) => {
   return (
     <div>
       <p>{label}</p>
       <p>{placeholder}</p>
     </div>
   );
-}
+};
