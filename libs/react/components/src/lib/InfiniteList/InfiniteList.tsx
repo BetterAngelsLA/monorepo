@@ -1,5 +1,5 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { ReactNode, useCallback, useMemo } from 'react';
-import { mergeCss } from '../../utils';
 import { InfiniteScrollTrigger } from '../InfiniteScrollTrigger';
 import { LoadingView } from '../LoadingView';
 import { EmptyListView } from './views/EmptyListView';

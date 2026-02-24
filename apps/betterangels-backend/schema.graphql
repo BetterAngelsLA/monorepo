@@ -70,6 +70,72 @@ type AddressType {
   zipCode: String
 }
 
+type AdminShelterType {
+  id: ID!
+  accessibility: [AccessibilityType!]!
+  additionalContacts: [ContactInfoType!]!
+  addNotesSleepingDetails: String
+  addNotesShelterDetails: String
+  bedFees: String
+  cities: [CityType!]!
+  cityCouncilDistrict: Int
+  curfew: Time
+  demographics: [DemographicType!]!
+  demographicsOther: String
+  description: String!
+  email: String
+  entryInfo: String
+  entryRequirements: [EntryRequirementType!]!
+  exteriorPhotos: [ShelterPhotoType!]!
+  funders: [FunderType!]!
+  fundersOther: String
+  generalServices: [GeneralServiceType!]!
+  healthServices: [HealthServiceType!]!
+  immediateNeeds: [ImmediateNeedType!]!
+  instagram: String
+  interiorPhotos: [ShelterPhotoType!]!
+  location: ShelterLocationType
+  maxStay: Int
+  name: String!
+  onSiteSecurity: Boolean
+  organization: OrganizationType
+  otherRules: String
+  otherServices: String
+  overallRating: Int
+  parking: [ParkingType!]!
+  pets: [PetType!]!
+  phone: PhoneNumber
+  programFees: String
+  roomStyles: [RoomStyleType!]!
+  roomStylesOther: String
+  shelterPrograms: [ShelterProgramType!]!
+  shelterProgramsOther: String
+  shelterTypes: [ShelterTypeType!]!
+  shelterTypesOther: String
+  spa: [SPAType!]!
+  specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  status: StatusChoices!
+  storage: [StorageType!]!
+  subjectiveReview: String
+  supervisorialDistrict: Int
+  totalBeds: Int
+  trainingServices: [TrainingServiceType!]!
+  website: String
+  heroImage: String
+  distanceInMiles: Float
+  operatingHours: [TimeRange]
+}
+
+type AdminShelterTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [AdminShelterType!]!
+}
+
 interface AttachmentInterface {
   id: ID!
   file: DjangoFileType!
@@ -493,13 +559,6 @@ input CreateNoteInput {
   interactedAt: DateTime
 }
 
-input CreateNoteMoodInput {
-  descriptor: MoodEnum!
-  noteId: ID!
-}
-
-union CreateNoteMoodPayload = MoodType | OperationInfo
-
 union CreateNotePayload = NoteType | OperationInfo
 
 input CreateNoteServiceRequestInput {
@@ -580,9 +639,9 @@ input DeleteDjangoObjectInput {
   id: ID!
 }
 
-union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
+union DeleteHmisNotePayload = DeletedObjectType | OperationInfo
 
-union DeleteMoodPayload = DeletedObjectType | OperationInfo
+union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
 
 union DeleteNotePayload = NoteType | OperationInfo
 
@@ -627,10 +686,6 @@ type DjangoImageType {
   url: String!
   width: Int!
   height: Int!
-}
-
-input DjangoModelFilterInput {
-  pk: ID!
 }
 
 type DjangoModelType {
@@ -1170,38 +1225,11 @@ enum MaritalStatusEnum {
   WIDOWED
 }
 
-enum MoodEnum {
-  AGITATED
-  AGREEABLE
-  ANXIOUS
-  DEPRESSED
-  DETACHED
-  DISORGANIZED_THOUGHT
-  DISORIENTED
-  ESCALATED
-  EUTHYMIC
-  FLAT_BLUNTED
-  HAPPY
-  HOPELESS
-  INDIFFERENT
-  MANIC
-  MOTIVATED
-  OPTIMISTIC
-  PERSONABLE
-  PLEASANT
-  RESTLESS
-  SUICIDAL
-}
-
-type MoodType {
-  id: ID!
-  descriptor: MoodEnum!
-}
-
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
+  updateUserProfile(data: UpdateUserProfileInput!): UpdateUserProfilePayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
   addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
   removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "remove_org_member"}], any: true)
@@ -1231,6 +1259,7 @@ type Mutation {
   updateHmisClientProfile(data: UpdateHmisClientProfileInput!): UpdateHmisClientProfilePayload! @hmisDirective @isHmisAuthenticated
   createHmisNote(data: CreateHmisNoteInput!): CreateHmisNotePayload! @hmisDirective @isHmisAuthenticated
   updateHmisNote(data: UpdateHmisNoteInput!): UpdateHmisNotePayload! @hmisDirective @isHmisAuthenticated
+  deleteHmisNote(id: ID!): DeleteHmisNotePayload! @hmisDirective @isHmisAuthenticated
   createHmisClientProgram(clientId: Int!, programHmisId: Int!): CreateHmisClientProgramPayload! @hmisDirective @isHmisAuthenticated
   updateHmisNoteLocation(data: UpdateHmisNoteLocationInput!): UpdateHmisNoteLocationPayload! @hmisDirective @isHmisAuthenticated
   createHmisNoteServiceRequest(data: CreateHmisNoteServiceRequestInput!): CreateHmisNoteServiceRequestPayload! @hmisDirective @isHmisAuthenticated
@@ -1240,8 +1269,6 @@ type Mutation {
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  createNoteMood(data: CreateNoteMoodInput!): CreateNoteMoodPayload!
-  deleteMood(data: DeleteDjangoObjectInput!): DeleteMoodPayload!
   createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
   createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
   updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_servicerequest"}], any: true)
@@ -1249,13 +1276,19 @@ type Mutation {
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload!
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
-  createBed(input: CreateBedInput!): BedType!
+  createBed(input: CreateBedInput!): BedType! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
 }
 
+"""
+Coerces blank input to None. Use for optional string fields where blank means 'no value'.
+"""
 scalar NonBlankString
+
+"""Rejects blank input. Use for required string fields."""
+scalar NonEmptyString
 
 type NoteDataImportType {
   id: UUID!
@@ -1303,7 +1336,6 @@ type NoteType {
   interactedAt: DateTime!
   isSubmitted: Boolean!
   location: LocationType
-  moods: [MoodType!]!
   organization: OrganizationType!
   providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   publicDetails: String!
@@ -1585,9 +1617,9 @@ type Query {
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
+  adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
+  shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
   shelter(pk: ID!): ShelterType!
-  adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
-  shelters(ordering: [ShelterOrder!] = null, filters: ShelterFilter, pagination: OffsetPaginationInput): ShelterTypeOffsetPaginated!
 }
 
 enum RaceEnum {
@@ -1733,11 +1765,11 @@ enum ShelterChoices {
 }
 
 input ShelterFilter {
-  organization: DjangoModelFilterInput
   AND: ShelterFilter
   OR: ShelterFilter
   NOT: ShelterFilter
   DISTINCT: Boolean
+  organizations: [ID!]
   properties: ShelterPropertyInput
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
@@ -1843,8 +1875,6 @@ type ShelterType {
   totalBeds: Int
   trainingServices: [TrainingServiceType!]!
   website: String
-  ExteriorPhotos: [ShelterPhotoType!]
-  InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
   operatingHours: [TimeRange]
@@ -2188,6 +2218,13 @@ input UpdateUserInput {
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
 }
+
+input UpdateUserProfileInput {
+  firstName: NonEmptyString
+  lastName: NonEmptyString
+}
+
+union UpdateUserProfilePayload = CurrentUserType | OperationInfo
 
 """Represents a file upload."""
 scalar Upload

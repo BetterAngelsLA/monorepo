@@ -1,5 +1,5 @@
 import { WFLinkIcon } from '@monorepo/react/icons';
-import { mergeCss } from '../../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 
 type IProps = {
   title: string;

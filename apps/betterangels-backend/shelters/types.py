@@ -1,14 +1,16 @@
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
 import strawberry
 import strawberry_django
+from accounts.models import User
 from accounts.types import OrganizationType
 from common.graphql.types import LatitudeScalar, LongitudeScalar, PhoneNumberScalar
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Prefetch, Q, QuerySet
+from django.core.files.storage import default_storage
+from django.db.models import Q, QuerySet
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
@@ -31,7 +33,8 @@ from shelters.enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
-from strawberry import ID, asdict, auto
+from strawberry import ID, Info, asdict, auto
+from strawberry_django.auth.utils import get_current_user
 
 
 @strawberry_django.type(models.ContactInfo)
@@ -181,7 +184,22 @@ class CreateBedInput:
 
 @strawberry_django.filter_type(models.Shelter)
 class ShelterFilter:
-    organization: auto
+    @strawberry_django.filter_field
+    def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
+        user = get_current_user(info)
+
+        if user is None or not user.is_authenticated:
+            if not value:
+                return Q()
+
+            return Q(**{f"{prefix}organization__in": value})
+
+        current_user = cast(User, user)
+        allowed_organizations = current_user.organizations_organization.all()
+        if value:
+            allowed_organizations = allowed_organizations.filter(pk__in=value)
+
+        return Q(**{f"{prefix}organization__in": allowed_organizations})
 
     @strawberry_django.filter_field
     def properties(
@@ -207,13 +225,13 @@ class ShelterFilter:
 
         bbox: tuple = (
             value.west_lng,
-            value.north_lat,
-            value.east_lng,
             value.south_lat,
+            value.east_lng,
+            value.north_lat,
         )
         polygon = Polygon.from_bbox(bbox)
 
-        return queryset.filter(geolocation__contained=polygon), Q()
+        return queryset.filter(geolocation__within=polygon), Q()
 
     @strawberry_django.filter_field
     def geolocation(
@@ -244,8 +262,8 @@ class TimeRange:
     end: Optional[datetime]
 
 
-@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
-class ShelterType:
+@strawberry.type
+class ShelterTypeMixin:
     id: ID
     accessibility: List[AccessibilityType]
     additional_contacts: List[ContactInfoType]
@@ -297,35 +315,18 @@ class ShelterType:
     training_services: List[TrainingServiceType]
     website: auto
 
-    _exterior_photos: Optional[List[ShelterPhotoType]] = None
-    _interior_photos: Optional[List[ShelterPhotoType]] = None
-
-    # NOTE: This is a temporary workaround because Shelter specced without a hero image.
-    # Will remove once we add a hero_image field to the Shelter model.
-    @strawberry_django.field(
-        prefetch_related=[
-            lambda x: Prefetch(
-                "exterior_photos",
-                queryset=models.ExteriorPhoto.objects.filter(),
-                to_attr="_exterior_photos",
-            ),
-            lambda x: Prefetch(
-                "interior_photos",
-                queryset=models.InteriorPhoto.objects.filter(),
-                to_attr="_interior_photos",
-            ),
-        ],
-    )
+    @strawberry_django.field
     def hero_image(self, root: models.Shelter) -> Optional[str]:
-        if self.hero_image:
-            return str(self.hero_image.file.url)
+        """Return the hero image URL.
 
-        photo = next(
-            (photos[0] for photos in (self._exterior_photos, self._interior_photos) if photos),
-            None,
-        )
-
-        return str(photo.file.url) if photo else None
+        The file path is annotated on the queryset via
+        ``ShelterQuerySet.with_hero_image_file()`` so this resolver
+        just reads the annotation — zero extra queries.
+        """
+        file_path = getattr(root, "_hero_image_file", None)
+        if file_path:
+            return default_storage.url(file_path)
+        return None
 
     @strawberry_django.field
     def distance_in_miles(self, root: models.Shelter) -> Optional[float]:
@@ -344,3 +345,18 @@ class ShelterType:
                 else:
                     ranges.append(None)
         return ranges or None
+
+
+@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
+class ShelterType(ShelterTypeMixin):
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
+        return models.Shelter.objects.approved().with_hero_image_file()
+
+
+@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
+class AdminShelterType(ShelterTypeMixin):
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
+        user = info.context.request.user
+        return models.Shelter.admin_objects.for_user(user).with_hero_image_file()

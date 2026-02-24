@@ -10,9 +10,9 @@ from common.errors import UnauthenticatedGQLError
 from common.graphql.decorators import (
     apply_schema_directives_and_permissions_to_all_fields,
 )
+from common.graphql.types import DeletedObjectType
 from common.models import Location, PhoneNumber
 from common.permissions.utils import IsAuthenticated
-from common.utils import strip_demo_tag
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login as django_login
 from django.contrib.contenttypes.models import ContentType
@@ -177,17 +177,16 @@ class Mutation:
         Cookies are automatically forwarded from HMIS via the API bridge.
         """
         request = info.context["request"]
-        sanitized_email = strip_demo_tag(email)
 
         # Verify user exists in our system before attempting HMIS login
         try:
-            user = User.objects.get(email__iexact=sanitized_email)
+            user = User.objects.get(email__iexact=email)
         except User.DoesNotExist:
             return HmisLoginError(message="Invalid credentials or HMIS login failed")
 
         # Authenticate with HMIS (cookies are automatically set via bridge)
         hmis_api_bridge = HmisApiBridge(info=info)
-        hmis_api_bridge.login(sanitized_email, password)
+        hmis_api_bridge.login(email, password)
 
         # Create Django session
         backend = settings.AUTHENTICATION_BACKENDS[0]
@@ -314,6 +313,27 @@ class Mutation:
         hmis_note.client_program = client_program  # type: ignore
 
         return cast(HmisNoteType, hmis_note)
+
+    @strawberry_django.mutation
+    def delete_hmis_note(self, info: Info, id: ID) -> DeletedObjectType:
+        try:
+            hmis_note = HmisNote.objects.get(pk=id)
+        except HmisNote.DoesNotExist:
+            raise ObjectDoesNotExist(f"Note matching ID {id} could not be found.")
+
+        if not hmis_note.hmis_client_profile.hmis_id:
+            raise ValidationError("Missing Client hmis_id")
+
+        hmis_api_bridge = HmisApiBridge(info=info)
+        hmis_api_bridge.delete_note(
+            client_hmis_id=hmis_note.hmis_client_profile.hmis_id,
+            note_hmis_id=hmis_note.hmis_id,
+        )
+
+        note_id = hmis_note.id
+        hmis_note.delete()
+
+        return DeletedObjectType(id=note_id)
 
     @strawberry_django.mutation
     def create_hmis_client_program(self, info: Info, client_id: int, program_hmis_id: int) -> ProgramEnrollmentType:

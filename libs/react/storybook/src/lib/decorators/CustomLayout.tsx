@@ -1,4 +1,4 @@
-import { mergeCss } from '@monorepo/react/components';
+import { mergeCss } from '@monorepo/react/shared';
 import type { Decorator } from '@storybook/react';
 import { SbkPanel } from '../components';
 

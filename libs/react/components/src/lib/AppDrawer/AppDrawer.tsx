@@ -13,6 +13,7 @@
  *    });
  * */
 
+import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import {
   MouseEvent,
@@ -22,7 +23,6 @@ import {
   useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { mergeCss } from '../../utils';
 import { AppDrawerFooter } from './AppDrawerFooter';
 import { AppDrawerHeader } from './AppDrawerHeader';
 import { AppDrawerMask } from './AppDrawerMask';

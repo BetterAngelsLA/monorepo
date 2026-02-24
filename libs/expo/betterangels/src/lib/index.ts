@@ -8,7 +8,6 @@ export * from './navigation';
 export * from './providers';
 export * from './screenRouting';
 export * from './screens';
-export * from './services';
 export * from './state';
 export * from './static';
 export * from './ui-components';

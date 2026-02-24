@@ -1,30 +1,26 @@
-from typing import Optional, cast
+from typing import cast
 
 import strawberry
 import strawberry_django
 from common.permissions.utils import IsAuthenticated
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import QuerySet
-from shelters.enums import StatusChoices
 from shelters.models import Bed, Shelter
 from shelters.permissions import BedPermissions, ShelterPermissions
-from shelters.types import BedType, CreateBedInput, ShelterOrder, ShelterType
+from shelters.types import AdminShelterType, BedType, CreateBedInput, ShelterType
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
 
 @strawberry.type
 class Query:
-    shelter: ShelterType = strawberry_django.field()
-
-    @strawberry_django.offset_paginated(OffsetPaginated[ShelterType])
-    def shelters(self, ordering: Optional[list[ShelterOrder]] = None) -> QuerySet:
-        return Shelter.objects.filter(status=StatusChoices.APPROVED)
-
-    admin_shelters: OffsetPaginated[ShelterType] = strawberry_django.offset_paginated(
+    admin_shelters: OffsetPaginated[AdminShelterType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(ShelterPermissions.VIEW)],
     )
+
+    shelters: OffsetPaginated[ShelterType] = strawberry_django.offset_paginated()
+
+    shelter: ShelterType = strawberry_django.field()
 
 
 @strawberry.type

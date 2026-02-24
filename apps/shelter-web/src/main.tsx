@@ -1,12 +1,16 @@
 import { ApolloProvider } from '@apollo/client/react';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
-import { createApolloClient } from '@monorepo/react/shared';
-import { FeatureControlProvider } from '@monorepo/react/shared';
-import { createShelterTypePolicies } from '@monorepo/react/shelter';
+import { createApolloClient } from '@monorepo/react/shared/apollo';
+import {
+  ApiConfigProvider,
+  ShelterFeatureControlProvider,
+  UserProvider,
+  createShelterTypePolicies,
+} from '@monorepo/react/shelter';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import App from './app/app';
+import { App } from './app';
 
 const isDevEnv = import.meta.env.DEV;
 
@@ -27,6 +31,8 @@ const apolloClient = createApolloClient({
   isDevEnv,
 });
 
+const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
+
 // to allow preview by branch
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 
@@ -36,12 +42,16 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <ApolloProvider client={apolloClient}>
-      <FeatureControlProvider>
-        <BrowserRouter basename={basename}>
-          <App />
-        </BrowserRouter>
-      </FeatureControlProvider>
-    </ApolloProvider>
+    <ApiConfigProvider apiUrl={apiUrl}>
+      <ApolloProvider client={apolloClient}>
+        <ShelterFeatureControlProvider>
+          <BrowserRouter basename={basename}>
+            <UserProvider>
+              <App />
+            </UserProvider>
+          </BrowserRouter>
+        </ShelterFeatureControlProvider>
+      </ApolloProvider>
+    </ApiConfigProvider>
   </StrictMode>
 );

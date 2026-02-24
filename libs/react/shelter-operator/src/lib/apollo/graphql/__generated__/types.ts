@@ -20,7 +20,10 @@ export type Scalars = {
   JSON: { input: any; output: any; }
   LatitudeScalar: { input: any; output: any; }
   LongitudeScalar: { input: any; output: any; }
+  /** Coerces blank input to None. Use for optional string fields where blank means 'no value'. */
   NonBlankString: { input: string; output: string; }
+  /** Rejects blank input. Use for required string fields. */
+  NonEmptyString: { input: any; output: any; }
   PhoneNumber: { input: any; output: any; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
   Point: { input: any; output: any; }
@@ -63,6 +66,72 @@ export type AddressType = {
   state?: Maybe<Scalars['String']['output']>;
   street?: Maybe<Scalars['String']['output']>;
   zipCode?: Maybe<Scalars['String']['output']>;
+};
+
+export type AdminShelterType = {
+  __typename?: 'AdminShelterType';
+  accessibility: Array<AccessibilityType>;
+  addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
+  addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
+  additionalContacts: Array<ContactInfoType>;
+  bedFees?: Maybe<Scalars['String']['output']>;
+  cities: Array<CityType>;
+  cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
+  curfew?: Maybe<Scalars['Time']['output']>;
+  demographics: Array<DemographicType>;
+  demographicsOther?: Maybe<Scalars['String']['output']>;
+  description: Scalars['String']['output'];
+  distanceInMiles?: Maybe<Scalars['Float']['output']>;
+  email?: Maybe<Scalars['String']['output']>;
+  entryInfo?: Maybe<Scalars['String']['output']>;
+  entryRequirements: Array<EntryRequirementType>;
+  exteriorPhotos: Array<ShelterPhotoType>;
+  funders: Array<FunderType>;
+  fundersOther?: Maybe<Scalars['String']['output']>;
+  generalServices: Array<GeneralServiceType>;
+  healthServices: Array<HealthServiceType>;
+  heroImage?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  immediateNeeds: Array<ImmediateNeedType>;
+  instagram?: Maybe<Scalars['String']['output']>;
+  interiorPhotos: Array<ShelterPhotoType>;
+  location?: Maybe<ShelterLocationType>;
+  maxStay?: Maybe<Scalars['Int']['output']>;
+  name: Scalars['String']['output'];
+  onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
+  operatingHours?: Maybe<Array<Maybe<TimeRange>>>;
+  organization?: Maybe<OrganizationType>;
+  otherRules?: Maybe<Scalars['String']['output']>;
+  otherServices?: Maybe<Scalars['String']['output']>;
+  overallRating?: Maybe<Scalars['Int']['output']>;
+  parking: Array<ParkingType>;
+  pets: Array<PetType>;
+  phone?: Maybe<Scalars['PhoneNumber']['output']>;
+  programFees?: Maybe<Scalars['String']['output']>;
+  roomStyles: Array<RoomStyleType>;
+  roomStylesOther?: Maybe<Scalars['String']['output']>;
+  shelterPrograms: Array<ShelterProgramType>;
+  shelterProgramsOther?: Maybe<Scalars['String']['output']>;
+  shelterTypes: Array<ShelterTypeType>;
+  shelterTypesOther?: Maybe<Scalars['String']['output']>;
+  spa: Array<SpaType>;
+  specialSituationRestrictions: Array<SpecialSituationRestrictionType>;
+  status: StatusChoices;
+  storage: Array<StorageType>;
+  subjectiveReview?: Maybe<Scalars['String']['output']>;
+  supervisorialDistrict?: Maybe<Scalars['Int']['output']>;
+  totalBeds?: Maybe<Scalars['Int']['output']>;
+  trainingServices: Array<TrainingServiceType>;
+  website?: Maybe<Scalars['String']['output']>;
+};
+
+export type AdminShelterTypeOffsetPaginated = {
+  __typename?: 'AdminShelterTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<AdminShelterType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export type AttachmentInterface = {
@@ -493,13 +562,6 @@ export type CreateNoteInput = {
   team?: InputMaybe<SelahTeamEnum>;
 };
 
-export type CreateNoteMoodInput = {
-  descriptor: MoodEnum;
-  noteId: Scalars['ID']['input'];
-};
-
-export type CreateNoteMoodPayload = MoodType | OperationInfo;
-
 export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateNoteServiceRequestInput = {
@@ -583,9 +645,9 @@ export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
 
-export type DeleteHmisProfilePayload = HmisProfileType | OperationInfo;
+export type DeleteHmisNotePayload = DeletedObjectType | OperationInfo;
 
-export type DeleteMoodPayload = DeletedObjectType | OperationInfo;
+export type DeleteHmisProfilePayload = HmisProfileType | OperationInfo;
 
 export type DeleteNotePayload = NoteType | OperationInfo;
 
@@ -634,10 +696,6 @@ export type DjangoImageType = {
   size: Scalars['Int']['output'];
   url: Scalars['String']['output'];
   width: Scalars['Int']['output'];
-};
-
-export type DjangoModelFilterInput = {
-  pk: Scalars['ID']['input'];
 };
 
 export type DjangoModelType = {
@@ -1177,35 +1235,6 @@ export enum MaritalStatusEnum {
   Widowed = 'WIDOWED'
 }
 
-export enum MoodEnum {
-  Agitated = 'AGITATED',
-  Agreeable = 'AGREEABLE',
-  Anxious = 'ANXIOUS',
-  Depressed = 'DEPRESSED',
-  Detached = 'DETACHED',
-  DisorganizedThought = 'DISORGANIZED_THOUGHT',
-  Disoriented = 'DISORIENTED',
-  Escalated = 'ESCALATED',
-  Euthymic = 'EUTHYMIC',
-  FlatBlunted = 'FLAT_BLUNTED',
-  Happy = 'HAPPY',
-  Hopeless = 'HOPELESS',
-  Indifferent = 'INDIFFERENT',
-  Manic = 'MANIC',
-  Motivated = 'MOTIVATED',
-  Optimistic = 'OPTIMISTIC',
-  Personable = 'PERSONABLE',
-  Pleasant = 'PLEASANT',
-  Restless = 'RESTLESS',
-  Suicidal = 'SUICIDAL'
-}
-
-export type MoodType = {
-  __typename?: 'MoodType';
-  descriptor: MoodEnum;
-  id: Scalars['ID']['output'];
-};
-
 export type Mutation = {
   __typename?: 'Mutation';
   addOrganizationMember: AddOrganizationMemberPayload;
@@ -1222,7 +1251,6 @@ export type Mutation = {
   createHmisProfile: CreateHmisProfilePayload;
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
-  createNoteMood: CreateNoteMoodPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
   createServiceRequest: CreateServiceRequestPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
@@ -1232,8 +1260,8 @@ export type Mutation = {
   deleteClientHouseholdMember: DeleteClientHouseholdMemberPayload;
   deleteClientProfile: DeleteClientProfilePayload;
   deleteCurrentUser: DeleteCurrentUserPayload;
+  deleteHmisNote: DeleteHmisNotePayload;
   deleteHmisProfile: DeleteHmisProfilePayload;
-  deleteMood: DeleteMoodPayload;
   deleteNote: DeleteNotePayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
@@ -1262,6 +1290,7 @@ export type Mutation = {
   updateServiceRequest: UpdateServiceRequestPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
+  updateUserProfile: UpdateUserProfilePayload;
 };
 
 
@@ -1336,11 +1365,6 @@ export type MutationCreateNoteDataImportArgs = {
 };
 
 
-export type MutationCreateNoteMoodArgs = {
-  data: CreateNoteMoodInput;
-};
-
-
 export type MutationCreateNoteServiceRequestArgs = {
   data: CreateNoteServiceRequestInput;
 };
@@ -1381,12 +1405,12 @@ export type MutationDeleteClientProfileArgs = {
 };
 
 
-export type MutationDeleteHmisProfileArgs = {
-  data: DeleteDjangoObjectInput;
+export type MutationDeleteHmisNoteArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
-export type MutationDeleteMoodArgs = {
+export type MutationDeleteHmisProfileArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -1526,6 +1550,11 @@ export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
 };
 
+
+export type MutationUpdateUserProfileArgs = {
+  data: UpdateUserProfileInput;
+};
+
 export type NoteDataImportType = {
   __typename?: 'NoteDataImportType';
   id: Scalars['UUID']['output'];
@@ -1575,7 +1604,6 @@ export type NoteType = {
   interactedAt: Scalars['DateTime']['output'];
   isSubmitted: Scalars['Boolean']['output'];
   location?: Maybe<LocationType>;
-  moods: Array<MoodType>;
   organization: OrganizationType;
   privateDetails?: Maybe<Scalars['String']['output']>;
   providedServices: Array<ServiceRequestType>;
@@ -1855,7 +1883,7 @@ export enum PronounEnum {
 
 export type Query = {
   __typename?: 'Query';
-  adminShelters: ShelterTypeOffsetPaginated;
+  adminShelters: AdminShelterTypeOffsetPaginated;
   bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
   caseworkerOrganizations: OrganizationTypeOffsetPaginated;
   clientContact: ClientContactType;
@@ -2045,7 +2073,7 @@ export type QueryShelterArgs = {
 
 export type QuerySheltersArgs = {
   filters?: InputMaybe<ShelterFilter>;
-  ordering?: InputMaybe<Array<ShelterOrder>>;
+  ordering?: Array<ShelterOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2224,7 +2252,7 @@ export type ShelterFilter = {
   OR?: InputMaybe<ShelterFilter>;
   geolocation?: InputMaybe<GeolocationInput>;
   mapBounds?: InputMaybe<MapBoundsInput>;
-  organization?: InputMaybe<DjangoModelFilterInput>;
+  organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   properties?: InputMaybe<ShelterPropertyInput>;
 };
 
@@ -2282,8 +2310,6 @@ export type ShelterPropertyInput = {
 
 export type ShelterType = {
   __typename?: 'ShelterType';
-  ExteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
-  InteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
   accessibility: Array<AccessibilityType>;
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
@@ -2677,6 +2703,13 @@ export type UpdateUserInput = {
   lastName?: InputMaybe<Scalars['NonBlankString']['input']>;
   middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
 };
+
+export type UpdateUserProfileInput = {
+  firstName?: InputMaybe<Scalars['NonEmptyString']['input']>;
+  lastName?: InputMaybe<Scalars['NonEmptyString']['input']>;
+};
+
+export type UpdateUserProfilePayload = CurrentUserType | OperationInfo;
 
 export enum UserOrganizationPermissions {
   AccessOrgPortal = 'ACCESS_ORG_PORTAL',

@@ -1,19 +1,27 @@
-import { useQuery } from '@apollo/client/react';
-import { Table, useAppDrawer } from '@monorepo/react/components';
-import { PlusIcon } from '@monorepo/react/icons';
+import { useMutation, useQuery } from '@apollo/client/react';
+import { Table, useAlert, useAppDrawer } from '@monorepo/react/components';
+import { PlusIcon, ThreeDotIcon } from '@monorepo/react/icons';
+import { mergeCss, toError } from '@monorepo/react/shared';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { JSX, useState } from 'react';
+import { JSX, useRef, useState } from 'react';
 import {
   Ordering,
   OrganizationMemberOrdering,
   OrganizationMemberType,
 } from '../../apollo/graphql/__generated__/types';
+import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { AddUserFormDrawer } from '../../components';
-import { useUser } from '../../hooks';
-import { OrganizationMembersDocument } from './__generated__/users.generated';
+import { useOutsideClick } from '../../hooks';
+import { useUser } from '../../providers';
+import {
+  OrganizationMembersDocument,
+  RemoveOrganizationMemberDocument,
+} from './__generated__/users.generated';
 
 const PAGE_SIZE = 25;
-
+type IProps = {
+  className?: string;
+};
 const COLUMNS: {
   label: string;
   field: keyof OrganizationMemberOrdering;
@@ -63,19 +71,88 @@ function useOrganizationMembers(
   };
 }
 
-export default function Users() {
+export default function Users(props: IProps) {
+  const { className = '' } = props;
   const { user } = useUser();
   const { showDrawer } = useAppDrawer();
+  const { showAlert } = useAlert();
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<{
     field: keyof OrganizationMemberOrdering;
     direction: Ordering;
   }>({ field: 'lastName', direction: Ordering.Asc });
+  const [openMenuRowId, setOpenMenuRowId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useOutsideClick(
+    menuRef,
+    () => setOpenMenuRowId(null),
+    openMenuRowId !== null
+  );
 
   const organizationId = user?.organizations?.[0]?.id ?? '';
+  const [removeOrganizationMember, { loading: isRemovingOrganizationMember }] =
+    useMutation(RemoveOrganizationMemberDocument);
 
   const { members, totalPages, loading, isInitialLoad } =
     useOrganizationMembers(organizationId, page, sort);
+
+  const parentCss = [
+    'flex',
+    'flex-1',
+    'h-screen',
+    `${loading ? 'opacity-50 transition-opacity duration-200' : ''}`,
+    className,
+  ];
+
+  const handleRemoveMember = async (member: OrganizationMemberType) => {
+    if (!organizationId) {
+      return;
+    }
+
+    try {
+      const response = await removeOrganizationMember({
+        variables: {
+          data: {
+            id: member.id,
+            organizationId,
+          },
+        },
+        refetchQueries: [OrganizationMembersDocument],
+        awaitRefetchQueries: true,
+      });
+
+      const errorMessage = extractOperationInfoMessage(
+        response,
+        'removeOrganizationMember'
+      );
+
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+
+      const deletedMember = response.data?.removeOrganizationMember;
+
+      if (deletedMember?.__typename !== 'DeletedObjectType') {
+        throw new Error('Sorry, something went wrong.');
+      }
+
+      showAlert({
+        type: 'success',
+        content: `${member.firstName ?? 'User'} ${
+          member.lastName ?? ''
+        } successfully removed.`,
+      });
+    } catch (err) {
+      const error = toError(err);
+      console.error(`error removing user: ${error.message}`);
+      showAlert({
+        type: 'error',
+        content: error.message,
+      });
+    } finally {
+      setOpenMenuRowId(null);
+    }
+  };
 
   if (!organizationId) return null;
   if (isInitialLoad)
@@ -108,7 +185,7 @@ export default function Users() {
   ));
 
   return (
-    <div>
+    <div className="h-full flex flex-col">
       <div className="flex items-center justify-between gap-5 mb-16">
         <div>
           <h1 className="mb-3 text-2xl font-bold">User Management</h1>
@@ -129,11 +206,41 @@ export default function Users() {
         )}
       </div>
 
-      <div
-        className={loading ? 'opacity-50 transition-opacity duration-200' : ''}
-      >
+      <div className={mergeCss(parentCss)}>
         {user?.canViewOrgMembers ? (
           <Table<OrganizationMemberType>
+            action={(row) => {
+              const isOpen = openMenuRowId === row.id;
+              return (
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenMenuRowId((prev) =>
+                        prev === row.id ? null : row.id
+                      );
+                    }}
+                    className="flex items-center justify-center h-8 w-8 rounded-[8px] bg-neutral-99 relative z-0"
+                  >
+                    <ThreeDotIcon className="w-6" fill="#052b73" />
+                  </button>
+                  {isOpen && (
+                    <div
+                      ref={menuRef}
+                      className="absolute flex flex-col items-start top-full right-1/2 shadow-md bg-white z-10 p-2 rounded-lg"
+                    >
+                      <button
+                        className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left text-alert-60"
+                        onClick={() => void handleRemoveMember(row)}
+                        disabled={isRemovingOrganizationMember}
+                      >
+                        Remove User
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            }}
             data={members}
             page={page}
             totalPages={totalPages}

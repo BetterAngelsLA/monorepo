@@ -1,3 +1,3 @@
-export * from './api/ApiConfigProvider';
-export { default as AuthProvider } from './auth/AuthProvider';
-export { default as UserProvider } from './user/UserProvider';
+export * from './api';
+export * from './auth';
+export * from './user';
