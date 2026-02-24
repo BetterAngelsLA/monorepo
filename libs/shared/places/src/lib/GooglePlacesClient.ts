@@ -62,9 +62,6 @@ export type TPlatformHeaders = {
 /**
  * A client for the Google Places & Geocoding REST APIs.
  *
- * Instantiate once with your API key; every method call uses it
- * automatically — no need to pass the key around.
- *
  * ```ts
  * const client = new GooglePlacesClient(apiKey);
  * const results = await client.autocomplete('pizza');
