@@ -4,8 +4,8 @@ import {
   HmisSuffixEnum,
 } from '../../../../../apollo';
 import {
-  enumDisplayHmisSuffix,
-  enumHmisNameQuality,
+  enumDisplaySuffixHmis,
+  enumNameQualityHmis,
 } from '../../../../../static';
 import {
   ClientProfileCard,
@@ -38,7 +38,7 @@ export function FullNameCardHmis(props: TProps) {
     },
     {
       header: ['Name Data Quality'],
-      rows: [[enumHmisNameQuality[nameQuality as HmisNameQualityEnum]]],
+      rows: [[enumNameQualityHmis[nameQuality as HmisNameQualityEnum]]],
     },
     {
       header: ['Nickname'],
@@ -46,7 +46,7 @@ export function FullNameCardHmis(props: TProps) {
     },
     {
       header: ['Suffix'],
-      rows: [[enumDisplayHmisSuffix[nameSuffix as HmisSuffixEnum]]],
+      rows: [[enumDisplaySuffixHmis[nameSuffix as HmisSuffixEnum]]],
     },
   ];
 

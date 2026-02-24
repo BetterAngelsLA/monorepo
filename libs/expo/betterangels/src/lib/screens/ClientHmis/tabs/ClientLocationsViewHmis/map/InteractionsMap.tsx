@@ -15,7 +15,7 @@ import { useCallback, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import { useSnackbar } from '../../../../../hooks';
-import { useHmisClientInteractionsMapState } from '../../../../../state';
+import { useClientInteractionsMapStateHmis } from '../../../../../state';
 import { EmptyState } from '../EmptyState';
 import { useInteractionPointFeatures } from './hooks/useInteractionPointFeatures';
 import { useInteractionsMapRegion } from './hooks/useInteractionsMapRegion';
@@ -47,7 +47,7 @@ export function InteractionsMap(props: TProps) {
 
   const mapRef = useRef<TMapView | null>(null);
   const { showSnackbar } = useSnackbar();
-  const [_mapState, setMapState] = useHmisClientInteractionsMapState();
+  const [_mapState, setMapState] = useClientInteractionsMapStateHmis();
 
   // 1. Pull data
   const { pointFeatures, loading, error, interactions } =

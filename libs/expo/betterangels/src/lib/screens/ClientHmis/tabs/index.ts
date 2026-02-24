@@ -1,4 +1,4 @@
-export { ClientDocsHmisView } from './ClientDocsHmisView';
-export { ClientInteractionsHmisView } from './ClientInteractionsHmisView';
-export { ClientLocationsHmisView } from './ClientLocationsViewHmis';
-export { ClientProfileHMISView } from './ClientProfileHMISView';
+export { ClientDocsViewHmis } from './ClientDocsViewHmis';
+export { ClientInteractionsViewHmis } from './ClientInteractionsViewHmis';
+export { ClientLocationsViewHmis } from './ClientLocationsViewHmis';
+export { ClientProfileViewHmis } from './ClientProfileViewHmis';

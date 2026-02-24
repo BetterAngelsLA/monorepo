@@ -9,8 +9,8 @@ import { Controller, useFormContext } from 'react-hook-form';
 import {
   enumDisplayLanguage,
   enumDisplayLivingSituation,
-  enumHmisDobQuality,
-  enumHmisVeteranStatusEnum,
+  enumDobQualityHmis,
+  enumVeteranStatusHmis,
 } from '../../../../static';
 import {
   TPersonalInfoFormSchema,
@@ -64,7 +64,7 @@ export function PersonalInfoFormHmis() {
               label="DOB Data Quality"
               placeholder="Select quality"
               maxRadioItems={0}
-              items={Object.entries(enumHmisDobQuality).map(
+              items={Object.entries(enumDobQualityHmis).map(
                 ([val, displayValue]) => ({ value: val, displayValue })
               )}
               selectedValue={value}
@@ -83,7 +83,7 @@ export function PersonalInfoFormHmis() {
               label="Veteran Status"
               placeholder="Select status"
               maxRadioItems={0}
-              items={Object.entries(enumHmisVeteranStatusEnum).map(
+              items={Object.entries(enumVeteranStatusHmis).map(
                 ([val, displayValue]) => ({ value: val, displayValue })
               )}
               selectedValue={value}

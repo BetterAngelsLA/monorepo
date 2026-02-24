@@ -1,2 +1,2 @@
 export { ClientProfileList } from './ClientProfileList';
-export { HmisListClients } from './HmisListClients';
+export { ListClientsHmis } from './ListClientsHmis';

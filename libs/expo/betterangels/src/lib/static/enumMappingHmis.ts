@@ -189,7 +189,7 @@ export function toSuffixEnumIntHmis(
   return NameSuffixIntMapHmis[value as HmisSuffixEnum] ?? null;
 }
 
-export function toHmisDobQualityEnumInt(
+export function toDobQualityEnumIntHmis(
   value?: HmisDobQualityEnum | string | null
 ): number | null {
   return DobQualityIntMapHmis[value as HmisDobQualityEnum] ?? null;

@@ -1,0 +1,1 @@
+export { ProfilesCardHmis } from './ProfilesCardHmis';

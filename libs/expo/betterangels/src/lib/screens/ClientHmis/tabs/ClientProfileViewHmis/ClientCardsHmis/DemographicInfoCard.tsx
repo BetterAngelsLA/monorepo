@@ -6,8 +6,8 @@ import {
   enumDisplayHairColor,
   enumDisplayMaritalStatus,
   enumDisplayPronoun,
-  enumHmisGender,
-  enumHmisRace,
+  enumGenderHmis,
+  enumRaceHmis,
 } from '../../../../../static';
 import {
   ClientProfileCard,
@@ -38,12 +38,12 @@ export function DemographicInfoCardHmis(props: TProps) {
 
   const genderValues = (gender || [])
     .filter((key) => !!key)
-    .map((key) => enumHmisGender[key])
+    .map((key) => enumGenderHmis[key])
     .join(', ');
 
   const raceEthnicityValues = (raceEthnicity || [])
     .filter((key) => !!key)
-    .map((key) => enumHmisRace[key])
+    .map((key) => enumRaceHmis[key])
     .join(', ');
 
   const formattedHeight = getFormattedLength({

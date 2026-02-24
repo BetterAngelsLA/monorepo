@@ -1,0 +1,1 @@
+export { ProfileDeleteBtnHmis } from './ProfileDeleteBtnHmis';

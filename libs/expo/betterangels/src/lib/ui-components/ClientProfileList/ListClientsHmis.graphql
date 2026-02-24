@@ -1,6 +1,19 @@
-query ClientProfileHmis($id: ID!) {
-  hmisClientProfile(id: $id) {
-    ... on HmisClientProfileType {
+query ClientProfilesHmis(
+  $filters: HmisClientProfileFilter
+  $ordering: [HmisClientProfileOrdering!]! = []
+  $pagination: OffsetPaginationInput
+) {
+  hmisClientProfiles(
+    filters: $filters
+    ordering: $ordering
+    pagination: $pagination
+  ) {
+    totalCount
+    pageInfo {
+      limit
+      offset
+    }
+    results {
       id
       hmisId
       personalId

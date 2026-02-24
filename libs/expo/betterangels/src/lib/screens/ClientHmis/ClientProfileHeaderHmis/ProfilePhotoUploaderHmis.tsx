@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSnackbar } from '../../../hooks';
 import { useClientHmis } from '../../../hooks/useClientHmis';
-import { HmisClientProfileDocument } from '../__generated__/getClientHmis.generated';
+import { ClientProfileHmisDocument } from '../__generated__/getClientHmis.generated';
 import { ProfilePhotoModalHmis } from './ProfilePhotoModalHmis';
 
 interface ProfilePhotoUploaderHmisProps {
@@ -46,7 +46,7 @@ export function ProfilePhotoUploaderHmis({
       const formData = buildFormData(file);
       await uploadClientPhoto(clientId, formData);
       await apolloClient.refetchQueries({
-        include: [HmisClientProfileDocument],
+        include: [ClientProfileHmisDocument],
       });
       incrementClientPhotoVersion(clientId);
       onUploadSuccess?.();

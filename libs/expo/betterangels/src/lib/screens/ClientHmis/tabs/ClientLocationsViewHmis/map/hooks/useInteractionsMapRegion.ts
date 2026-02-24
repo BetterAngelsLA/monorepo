@@ -4,8 +4,8 @@ import {
   defaultRegionDelta,
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo } from 'react';
-import { useHmisClientInteractionsMapState } from '../../../../../../state';
-import { HmisNoteQuery } from '../../../../../NotesHmis/ProgramNoteEditHmis/__generated__/hmisGetClientNote.generated';
+import { useClientInteractionsMapStateHmis } from '../../../../../../state';
+import { HmisNoteQuery } from '../../../../../NotesHmis/ProgramNoteEditHmis/__generated__/getClientNoteHmis.generated';
 
 type TProps = {
   interaction?: HmisNoteQuery['hmisNote'];
@@ -13,7 +13,7 @@ type TProps = {
 };
 
 export function useInteractionsMapRegion({ interaction, delta }: TProps) {
-  const [mapState] = useHmisClientInteractionsMapState();
+  const [mapState] = useClientInteractionsMapStateHmis();
 
   const region = mapState?.region;
 

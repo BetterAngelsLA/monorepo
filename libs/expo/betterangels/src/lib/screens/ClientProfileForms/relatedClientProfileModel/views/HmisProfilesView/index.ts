@@ -1,1 +1,0 @@
-export { HmisProfilesView } from './HmisProfilesView';

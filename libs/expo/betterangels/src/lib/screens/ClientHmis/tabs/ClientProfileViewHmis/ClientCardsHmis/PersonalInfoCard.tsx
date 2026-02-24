@@ -7,8 +7,8 @@ import {
 import {
   enumDisplayLanguage,
   enumDisplayLivingSituation,
-  enumHmisDobQuality,
-  enumHmisVeteranStatusEnum,
+  enumDobQualityHmis,
+  enumVeteranStatusHmis,
 } from '../../../../../static';
 import {
   ClientProfileCard,
@@ -46,11 +46,11 @@ export function PersonalInfoCardHmis(props: TProps) {
     },
     {
       header: ['Quality of DOB'],
-      rows: [[enumHmisDobQuality[dobQuality as HmisDobQualityEnum]]],
+      rows: [[enumDobQualityHmis[dobQuality as HmisDobQualityEnum]]],
     },
     {
       header: ['Veteran Status'],
-      rows: [[enumHmisVeteranStatusEnum[veteran as HmisVeteranStatusEnum]]],
+      rows: [[enumVeteranStatusHmis[veteran as HmisVeteranStatusEnum]]],
     },
     {
       header: ['CA ID#'],

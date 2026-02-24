@@ -9,11 +9,11 @@ import { useSnackbar } from '../../hooks';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
 import { ClientViewTabEnum } from '../Client/ClientTabs';
-import { HMISClientProfileHeader } from './HMISClientProfileHeader';
-import { HmisClientProfileDocument } from './__generated__/getHMISClient.generated';
+import { ClientProfileHeaderHmis } from './ClientProfileHeaderHmis';
+import { ClientProfileHmisDocument } from './__generated__/getClientHmis.generated';
 import { renderTabComponent } from './tabs/utils/renderTabComponent';
 
-const hmisTabs: ClientViewTabEnum[] = [
+const tabsHmis: ClientViewTabEnum[] = [
   ClientViewTabEnum.Profile,
   ClientViewTabEnum.Docs,
   ClientViewTabEnum.Interactions,
@@ -21,7 +21,7 @@ const hmisTabs: ClientViewTabEnum[] = [
   ClientViewTabEnum.Tasks,
 ];
 
-const hmisTabLabels: Record<ClientViewTabEnum, string> = {
+const tabLabelsHmis: Record<ClientViewTabEnum, string> = {
   [ClientViewTabEnum.Profile]: ClientViewTabEnum.Profile,
   [ClientViewTabEnum.Docs]: 'Files',
   [ClientViewTabEnum.Interactions]: 'Notes',
@@ -51,7 +51,7 @@ export function ClientHmis(props: TProps) {
     }
   }, [activeTab]);
 
-  const { data, loading, error } = useQuery(HmisClientProfileDocument, {
+  const { data, loading, error } = useQuery(ClientProfileHmisDocument, {
     variables: { id },
   });
 
@@ -99,14 +99,14 @@ export function ClientHmis(props: TProps) {
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      {showHeader && <HMISClientProfileHeader client={client} />}
+      {showHeader && <ClientProfileHeaderHmis client={client} />}
 
       <Tabs
-        tabs={hmisTabs}
+        tabs={tabsHmis}
         selectedTab={currentTab}
         onTabPress={setCurrentTab}
         getLabel={(tab) => {
-          return hmisTabLabels[tab];
+          return tabLabelsHmis[tab];
         }}
       />
 

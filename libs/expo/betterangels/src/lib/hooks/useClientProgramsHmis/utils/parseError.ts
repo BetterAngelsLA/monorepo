@@ -22,7 +22,7 @@ export function parseError(error?: string): TParsedError {
       message,
     };
   } catch (e) {
-    console.error('[useHmisClientPrograms.parseError error]', e);
+    console.error('[useClientProgramsHmis.parseError error]', e);
 
     return {};
   }

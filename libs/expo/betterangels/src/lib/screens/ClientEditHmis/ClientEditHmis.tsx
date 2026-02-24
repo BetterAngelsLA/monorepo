@@ -14,7 +14,7 @@ import {
 } from '../../apollo';
 import { applyManualFormErrors, applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
-import { HmisClientProfileDocument } from '../ClientHmis/__generated__/getClientHmis.generated';
+import { ClientProfileHmisDocument } from '../ClientHmis/__generated__/getClientHmis.generated';
 import { UpdateClientProfileHmisDocument } from './__generated__/updateClientHmis.generated';
 import { formConfigHmis, parseAsSectionKeyHmis } from './basicForms/config';
 import { toUpdateClientProfileInputHmis } from './toClientProfileInputsHmis';
@@ -69,7 +69,7 @@ export function ClientEditHmis(props: TProps) {
     data: clientData,
     loading: clientDataLoading,
     refetch,
-  } = useQuery(HmisClientProfileDocument, {
+  } = useQuery(ClientProfileHmisDocument, {
     variables: { id },
   });
 
