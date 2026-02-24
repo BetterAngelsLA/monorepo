@@ -56,6 +56,7 @@ from shelters.models import (
     TrainingService,
 )
 from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
+from accounts.models import User
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
