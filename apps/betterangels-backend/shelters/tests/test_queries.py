@@ -2,6 +2,7 @@ import datetime
 from typing import Any
 from unittest.mock import ANY
 
+from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -55,7 +56,6 @@ from shelters.models import (
     TrainingService,
 )
 from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
-from accounts.models import User
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
