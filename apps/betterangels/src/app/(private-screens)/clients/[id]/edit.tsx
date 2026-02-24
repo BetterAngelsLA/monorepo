@@ -1,5 +1,5 @@
 import {
-  ClientHMISEdit,
+  ClientEditHmis,
   ClientProfileForm,
   useUser,
 } from '@monorepo/expo/betterangels';
@@ -17,7 +17,7 @@ export default function EditClientScreen() {
   const { isHmisUser } = useUser();
 
   if (isHmisUser) {
-    return <ClientHMISEdit id={clientId} componentName={componentName} />;
+    return <ClientEditHmis id={clientId} componentName={componentName} />;
   }
 
   return <ClientProfileForm id={clientId} componentName={componentName} />;

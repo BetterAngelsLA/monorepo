@@ -2,7 +2,7 @@ export { default as AddressField } from './AddressField';
 export { AppUpdatePrompt } from './AppUpdatePrompt';
 export { default as AuthContainer } from './AuthContainer';
 export * from './ClientCard';
-export * from './ClientCardHMIS';
+export * from './ClientCardHmis-1';
 export { default as ClientCardModal } from './ClientCardModal';
 export {
   ClientProfileCard,
@@ -19,7 +19,6 @@ export { FileUploadsPreview } from './FileUploadsPreview/FileUploadPreview';
 export * from './Filters';
 export * from './GirpNoteForm';
 export { default as Header } from './Header';
-export { default as HmisRequestedProvidedServices } from './HmisRequestedProvidedServices';
 export * from './InteractionList';
 export * from './InteractionListHmis';
 export * from './Layout';
@@ -42,6 +41,7 @@ export { default as NoteTasks } from './NoteTasks';
 export { default as ProgramNoteCard } from './ProgramNoteCard';
 export { default as RequestedProvidedServices } from './RequestedProvidedServices';
 export { default as OtherCategory } from './RequestedProvidedServices/OtherCategory';
+export { default as RequestedProvidedServicesHmis } from './RequestedProvidedServicesHmis';
 export { default as SelectStatus } from './SelectStatus';
 export { default as SignInContainer } from './SignInContainer';
 export { default as TaskCard } from './TaskCard';
