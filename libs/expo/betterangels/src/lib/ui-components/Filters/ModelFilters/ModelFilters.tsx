@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { ViewStyle } from 'react-native';
 import { useUser } from '../../../hooks';
 import { FilterClients } from '../FilterClients';
-import { FilterHmisClients } from '../FilterHmisClients';
+import { FilterClientsHmis } from '../FilterClientsHmis';
 import { FilterOrganizations } from '../FilterOrganizations';
 import { FilterStatic } from '../FilterStatic';
 import { FilterUsers } from '../FilterUsers';
@@ -151,7 +151,7 @@ export function ModelFilters(props: TProps) {
 
         if (type === 'hmisClientProfiles') {
           return (
-            <FilterHmisClients
+            <FilterClientsHmis
               key="hmisClients"
               title={headerTitle}
               buttonLabel={buttonLabel}

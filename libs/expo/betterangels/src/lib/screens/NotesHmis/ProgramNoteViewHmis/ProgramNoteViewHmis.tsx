@@ -11,21 +11,21 @@ import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
-import HmisNoteLocation from './HmisNoteLocation';
-import HmisProgramNoteServices from './HmisProgramNoteServices';
-import HmisProgramNoteTitle from './HmisProgramNoteTitle';
-import { ViewHmisNoteDocument } from './__generated__/HmisProgramNoteView.generated';
+import NoteLocationHmis from './NoteLocationHmis';
+import ProgramNoteServicesHmis from './ProgramNoteServicesHmis';
+import ProgramNoteTitleHmis from './ProgramNoteTitleHmis';
+import { ViewNoteHmisDocument } from './__generated__/ProgramNoteViewHmis.generated';
 
 type TProps = {
   id: string;
   clientId: string;
 };
 
-export function HmisProgramNoteView(props: TProps) {
+export function ProgramNoteViewHmis(props: TProps) {
   const { id, clientId } = props;
   const scrollRef = useRef<ScrollView>(null);
 
-  const { data, error, loading } = useQuery(ViewHmisNoteDocument, {
+  const { data, error, loading } = useQuery(ViewNoteHmisDocument, {
     variables: { id },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -81,7 +81,7 @@ export function HmisProgramNoteView(props: TProps) {
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} ref={scrollRef}>
       <View style={styles.container}>
-        <HmisProgramNoteTitle hmisNote={hmisNote} />
+        <ProgramNoteTitleHmis hmisNote={hmisNote} />
 
         {!!clientName && <TextBold selectable>{clientName}</TextBold>}
 
@@ -91,11 +91,11 @@ export function HmisProgramNoteView(props: TProps) {
             <TextRegular selectable>{programName}</TextRegular>
           </View>
         )}
-        {hmisNote.location?.point && <HmisNoteLocation hmisNote={hmisNote} />}
+        {hmisNote.location?.point && <NoteLocationHmis hmisNote={hmisNote} />}
 
         {((providedServices && providedServices?.length > 0) ||
           (requestedServices && requestedServices.length > 0)) && (
-          <HmisProgramNoteServices note={hmisNote} />
+          <ProgramNoteServicesHmis note={hmisNote} />
         )}
 
         {!!sanitizedNote.length && (

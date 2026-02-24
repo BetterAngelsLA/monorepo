@@ -1,4 +1,4 @@
-query ViewHmisNote($id: ID!) {
+query ViewNoteHmis($id: ID!) {
   hmisNote(id: $id) {
     ... on HmisNoteType {
       id

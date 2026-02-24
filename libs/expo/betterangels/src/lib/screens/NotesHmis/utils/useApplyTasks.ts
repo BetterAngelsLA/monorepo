@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
 import { DeleteTaskDocument } from '../../../ui-components/TaskForm/__generated__/deleteTask.generated';
 import { UpdateTaskDocument } from '../../../ui-components/TaskForm/__generated__/updateTask.generated';
-import type { DraftTask } from '../HmisProgramNoteForm';
+import type { DraftTask } from '../ProgramNoteFormHmis';
 import splitTasks from './splitTasks';
 
 export function useApplyTasks() {

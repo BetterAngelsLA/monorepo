@@ -1,1 +1,1 @@
-export { HmisProgramNoteView } from './HmisProgramNoteView';
+export { ProgramNoteViewHmis } from './ProgramNoteViewHmis';

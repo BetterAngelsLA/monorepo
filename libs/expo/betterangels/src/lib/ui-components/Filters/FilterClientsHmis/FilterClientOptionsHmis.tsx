@@ -9,10 +9,10 @@ import { useMemo, useState } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
 import { HmisClientProfileType, Ordering } from '../../../apollo';
 import {
-  FilterHmisClientProfilesDocument,
-  FilterHmisClientProfilesQuery,
-  FilterHmisClientProfilesQueryVariables,
-} from './__generated__/filterHmisClientProfiles.generated';
+  FilterClientProfilesHmisDocument,
+  FilterClientProfilesHmisQuery,
+  FilterClientProfilesHmisQueryVariables,
+} from './__generated__/filterClientProfilesHmis.generated';
 
 export type TProps = {
   onCommit: (selected: TFilterOption[]) => void;
@@ -24,7 +24,7 @@ export type TProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-export function FilterHmisClientOptions(props: TProps) {
+export function FilterClientOptionsHmis(props: TProps) {
   const {
     onCommit,
     initialSelected = [],
@@ -39,10 +39,10 @@ export function FilterHmisClientOptions(props: TProps) {
   const { items, total, loading, loadMore, hasMore, error } =
     useInfiniteScrollQuery<
       HmisClientProfileType,
-      FilterHmisClientProfilesQuery,
-      FilterHmisClientProfilesQueryVariables
+      FilterClientProfilesHmisQuery,
+      FilterClientProfilesHmisQueryVariables
     >({
-      document: FilterHmisClientProfilesDocument,
+      document: FilterClientProfilesHmisDocument,
       queryFieldName: 'hmisClientProfiles',
       variables: {
         ordering: {

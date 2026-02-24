@@ -1,4 +1,4 @@
-query FilterHmisClientProfiles(
+query FilterClientProfilesHmis(
   $filters: HmisClientProfileFilter
   $pagination: OffsetPaginationInput
   $ordering: [HmisClientProfileOrdering!]! = []

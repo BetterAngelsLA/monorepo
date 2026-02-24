@@ -3,12 +3,12 @@ import { Colors, Radiuses } from '@monorepo/expo/shared/static';
 import { DirectionsPopup, TextBold } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { MapView, Marker, PROVIDER_GOOGLE } from '../../../maps';
-import { ViewHmisNoteQuery } from './__generated__/HmisProgramNoteView.generated';
+import { ViewNoteHmisQuery } from './__generated__/ProgramNoteViewHmis.generated';
 
-export default function NoteLocation({
+export default function NoteLocationHmis({
   hmisNote,
 }: {
-  hmisNote: ViewHmisNoteQuery['hmisNote'] | undefined;
+  hmisNote: ViewNoteHmisQuery['hmisNote'] | undefined;
 }) {
   return (
     <View>

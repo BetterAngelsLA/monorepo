@@ -1,12 +1,12 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { ViewHmisNoteQuery } from './__generated__/HmisProgramNoteView.generated';
+import { ViewNoteHmisQuery } from './__generated__/ProgramNoteViewHmis.generated';
 
-export default function HmisProgramNote({
+export default function ProgramNoteHmis({
   hmisNote,
 }: {
-  hmisNote: ViewHmisNoteQuery['hmisNote'] | undefined;
+  hmisNote: ViewNoteHmisQuery['hmisNote'] | undefined;
 }) {
   if (hmisNote?.__typename !== 'HmisNoteType') return null;
   return (

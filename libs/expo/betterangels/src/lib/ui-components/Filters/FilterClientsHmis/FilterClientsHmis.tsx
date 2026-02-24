@@ -2,7 +2,7 @@ import { Filters, TFilterOption } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
 import { useModalScreen } from '../../../providers';
-import { FilterHmisClientOptions } from './FilterHmisClientOptions';
+import { FilterClientOptionsHmis } from './FilterClientOptionsHmis';
 
 type TProps = {
   buttonLabel: string;
@@ -13,7 +13,7 @@ type TProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-export function FilterHmisClients(props: TProps) {
+export function FilterClientsHmis(props: TProps) {
   const {
     buttonLabel,
     onChange,
@@ -30,7 +30,7 @@ export function FilterHmisClients(props: TProps) {
     showModalScreen({
       presentation: 'modal',
       renderContent: ({ close }) => (
-        <FilterHmisClientOptions
+        <FilterClientOptionsHmis
           initialSelected={selected}
           onCommit={(next: TFilterOption[]) => {
             setSelected(next);

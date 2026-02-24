@@ -1,4 +1,4 @@
-import { useHmisClientPhotoContentUri } from '@monorepo/expo/shared/clients';
+import { useClientPhotoContentUriHmis } from '@monorepo/expo/shared/clients';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
@@ -13,7 +13,7 @@ export default function ProgramNoteCardClient(
 ) {
   const { clientProfile } = props;
 
-  const { thumbnailUri, headers } = useHmisClientPhotoContentUri(
+  const { thumbnailUri, headers } = useClientPhotoContentUriHmis(
     clientProfile?.hmisId
   );
 
