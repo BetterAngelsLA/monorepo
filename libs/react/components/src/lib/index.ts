@@ -6,6 +6,7 @@ export { default as Card } from './Card';
 export * from './Checkbox';
 export * from './CurrentLocation/CurrentLocation';
 export * from './CurrentLocation/CurrentLocationError';
+export { useLocationPermission } from './CurrentLocation/useLocationPermission';
 export { default as CurrentLocationDot } from './CurrentLocationDot';
 export * from './Dropdown';
 export { default as ExpandableContainer } from './ExpandableContainer';

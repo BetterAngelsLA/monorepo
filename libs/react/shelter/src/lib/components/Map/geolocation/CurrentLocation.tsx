@@ -31,7 +31,6 @@ export function CurrentLocation(props: ICurrentLocation) {
   }
 
   const onLocationSuccess = (position: GeolocationPosition): void => {
-    sessionStorage.setItem('hasGrantedLocation', 'true');
     onChange({
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
@@ -39,7 +38,6 @@ export function CurrentLocation(props: ICurrentLocation) {
   };
 
   const onLocationError = (err: GeolocationPositionError): void => {
-    sessionStorage.removeItem('hasGrantedLocation');
     onError?.(getGeolocationErrorName(err.code));
   };
 

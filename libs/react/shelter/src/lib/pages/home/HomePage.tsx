@@ -1,3 +1,4 @@
+import { useLocationPermission } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
@@ -40,6 +41,7 @@ export function HomePage() {
   const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
   const [hasInitialized, setHasInitialized] = useState(false);
   const map = useMap();
+  const hasLocationPermission = useLocationPermission();
 
   const handleClick = useCallback(
     (markerId: string | null | undefined) => {
@@ -138,13 +140,10 @@ export function HomePage() {
           const { latitude, longitude } = position.coords;
 
           setUserLocation({ latitude, longitude });
-          sessionStorage.setItem('hasGrantedLocation', 'true');
 
           applyMapCenter(latitude, longitude, 'currentLocation');
         },
         () => {
-          sessionStorage.removeItem('hasGrantedLocation');
-
           applyMapCenter(
             LA_COUNTY_CENTER.latitude,
             LA_COUNTY_CENTER.longitude,
@@ -171,9 +170,7 @@ export function HomePage() {
           mapId={SHELTERS_MAP_ID}
           markers={shelterMarkers}
           userLocation={userLocation}
-          showCurrentLocationBtn={
-            !!sessionStorage.getItem('hasGrantedLocation')
-          }
+          showCurrentLocationBtn={hasLocationPermission}
           showSearchButton={showSearchButton}
           setShowSearchButton={setShowSearchButton}
           onCenterSelect={onCenterSelect}
