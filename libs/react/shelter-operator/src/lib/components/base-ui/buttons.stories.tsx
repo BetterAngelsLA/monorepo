@@ -5,7 +5,7 @@ import { Button, ButtonVariant } from './buttons';
 
 const meta: Meta<typeof Button> = {
   component: Button,
-  title: 'Button',
+  title: 'Base UI/Button',
 };
 export default meta;
 
