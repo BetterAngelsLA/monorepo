@@ -46,7 +46,7 @@ export function AppDrawer(props: IProps): ReactElement | null {
   // destroy Drawer if change page
   useEffect((): void => {
     setDrawer(null);
-  }, [location.pathname]);
+  }, [location.pathname, setDrawer]);
 
   useEffect(() => {
     if (!drawer?.visible) {
@@ -73,9 +73,13 @@ export function AppDrawer(props: IProps): ReactElement | null {
     }
 
     return;
-  }, [visible, shouldRender]);
+  }, [setDrawer, visible, shouldRender]);
 
   if (!shouldRender) {
+    return null;
+  }
+
+  if (!drawer) {
     return null;
   }
 
@@ -95,7 +99,7 @@ export function AppDrawer(props: IProps): ReactElement | null {
     handleClose();
   }
 
-  const { content, header, footer, contentClassName } = drawer!;
+  const { content, header, footer, contentClassName } = drawer;
 
   const animation = DRAWER_ANIMATION[placement];
 

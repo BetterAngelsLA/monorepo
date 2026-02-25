@@ -322,6 +322,7 @@ class Shelter(BaseModel):
     status = TextChoicesField(choices_enum=StatusChoices, default=StatusChoices.DRAFT)
 
     class Meta:
+        indexes = [models.Index(fields=["status"])]
         permissions = permission_enums_to_django_meta_permissions([ShelterFieldPermissions])
 
     def __str__(self) -> str:

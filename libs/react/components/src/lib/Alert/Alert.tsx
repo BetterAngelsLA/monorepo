@@ -53,9 +53,13 @@ export function Alert(): ReactElement | null {
     }
 
     return;
-  }, [visible, shouldRender]);
+  }, [setAlert, visible, shouldRender]);
 
   if (!shouldRender) {
+    return null;
+  }
+
+  if (!alert) {
     return null;
   }
 
@@ -69,7 +73,7 @@ export function Alert(): ReactElement | null {
     });
   }
 
-  const { content, type } = alert!;
+  const { content, type } = alert;
   const { color, Icon } = alertConfig[type];
 
   const parentCss = [

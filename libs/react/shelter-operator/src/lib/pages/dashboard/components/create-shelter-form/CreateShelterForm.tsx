@@ -3,7 +3,7 @@ import { Button } from '@monorepo/react/components';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import { FormEvent, useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useUser } from '../../../../hooks';
+import { useUser } from '@monorepo/react/shelter';
 import type { ShelterFormData } from '../../formTypes';
 import {
   CREATE_SHELTER_MUTATION,

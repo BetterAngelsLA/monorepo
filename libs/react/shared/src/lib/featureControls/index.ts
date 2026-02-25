@@ -1,4 +1,5 @@
-export { FeatureControlProvider } from './featureControlProvider';
+export { FeatureControlProvider } from './FeatureControlProvider';
 export { useFeatureControls } from './featureControlContext';
-export { default as useFeatureFlagActive } from './useFeatureFlagActive';
-export type { FeatureControlGroups } from './featureControlContext';
+export { toFeatureControlDictionary } from './toFeatureControlDictionary';
+export * from './types';
+export { useFeatureFlagActive } from './useFeatureFlagActive';
