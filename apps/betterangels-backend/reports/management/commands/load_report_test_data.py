@@ -14,6 +14,7 @@ import random
 from datetime import timedelta
 
 from accounts.models import User
+from clients.models import ClientProfile
 from common.enums import SelahTeamEnum
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -82,6 +83,21 @@ SERVICE_CATEGORIES = {
     ],
 }
 
+FIRST_NAMES = [
+    "Alex", "Jordan", "Sam", "Taylor", "Morgan", "Casey", "Riley",
+    "Jamie", "Avery", "Quinn", "Cameron", "Dakota", "Rowan", "Hayden",
+    "Reese", "Finley", "Emerson", "Skyler", "River", "Drew",
+    "Charlie", "Phoenix", "Sage", "Kai", "Blake", "Remy", "Justice",
+    "Lennox", "Frankie", "Indigo", "Harley", "Ellis", "Oakley", "Arden",
+    "Shiloh", "Marlowe", "Leighton", "Kendall", "Peyton", "Micah",
+]
+
+LAST_NAMES = [
+    "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller",
+    "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez",
+    "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin",
+]
+
 TEAMS = list(SelahTeamEnum)
 
 
@@ -128,7 +144,13 @@ class Command(BaseCommand):
         services = self._create_services(org)
         self.stdout.write(self.style.SUCCESS(f"  Created {len(services)} services in {len(SERVICE_CATEGORIES)} categories."))
 
-        # 2. Create notes spread across the last 3 months
+        # 2. Create a pool of client profiles (~50 unique clients)
+        num_clients = min(50, num_notes)
+        self.stdout.write(f"Creating {num_clients} client profiles...")
+        clients = self._create_client_profiles(num_clients, user)
+        self.stdout.write(self.style.SUCCESS(f"  Created {len(clients)} client profiles."))
+
+        # 3. Create notes spread across the last 3 months
         self.stdout.write(f"Creating {num_notes} notes...")
         now = timezone.now()
         three_months_ago = now - timedelta(days=90)
@@ -151,6 +173,7 @@ class Command(BaseCommand):
                 purpose=purpose,
                 is_submitted=True,
                 public_details=f"Test interaction #{i + 1} - {purpose} by {team.label}",
+                client_profile=random.choice(clients),
             )
 
             # Add provided services (1-4 random services)
@@ -188,6 +211,18 @@ class Command(BaseCommand):
         self.stdout.write(f"  Teams used: {len(TEAMS)}")
         self.stdout.write(f"  Purposes used: {len(PURPOSES)}")
         self.stdout.write(f"  Services available: {len(services)}")
+        self.stdout.write(f"  Unique clients: {len(clients)}")
+
+    def _create_client_profiles(self, count, user):
+        """Create a pool of client profiles with random names."""
+        profiles = []
+        for i in range(count):
+            profile = ClientProfile.objects.create(
+                first_name=random.choice(FIRST_NAMES),
+                last_name=random.choice(LAST_NAMES),
+            )
+            profiles.append(profile)
+        return profiles
 
     def _create_services(self, org):
         """Create service categories and services, reusing existing ones."""
@@ -201,14 +236,6 @@ class Command(BaseCommand):
                 svc, _ = OrganizationService.objects.get_or_create(
                     label=label,
                     organization=org,
-                    defaults={"category": category, "priority": idx},
-                )
-                all_services.append(svc)
-        return all_services
-                    defaults={"category": category, "priority": idx},
-                )
-                all_services.append(svc)
-        return all_services
                     defaults={"category": category, "priority": idx},
                 )
                 all_services.append(svc)

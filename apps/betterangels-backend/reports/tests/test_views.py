@@ -234,6 +234,7 @@ REPORT_SUMMARY_QUERY = """
     query ReportSummary($startDate: Date, $endDate: Date) {
         reportSummary(startDate: $startDate, endDate: $endDate) {
             totalNotes
+            uniqueClients
             startDate
             endDate
             notesByDate {
@@ -246,6 +247,10 @@ REPORT_SUMMARY_QUERY = """
             }
             notesByPurpose {
                 name
+                count
+            }
+            uniqueClientsByDate {
+                date
                 count
             }
             topProvidedServices {
@@ -339,6 +344,8 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         self.assertEqual(len(data["notesByPurpose"]), 2)
         self.assertIsInstance(data["topProvidedServices"], list)
         self.assertIsInstance(data["topRequestedServices"], list)
+        self.assertIsInstance(data["uniqueClients"], int)
+        self.assertIsInstance(data["uniqueClientsByDate"], list)
 
     def test_summary_empty_range(self) -> None:
         org, user = self._setup_org_user_with_access()
@@ -355,6 +362,8 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         self.assertEqual(data["totalNotes"], 0)
         self.assertEqual(data["notesByDate"], [])
         self.assertEqual(data["notesByTeam"], [])
+        self.assertEqual(data["uniqueClients"], 0)
+        self.assertEqual(data["uniqueClientsByDate"], [])
 
     def test_summary_filters_by_org(self) -> None:
         org, user = self._setup_org_user_with_access()

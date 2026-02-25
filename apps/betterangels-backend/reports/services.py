@@ -7,7 +7,7 @@ from notes.admin import NoteResource
 from post_office import mail
 
 from .models import ScheduledReport
-from .selectors import get_notes_for_org
+from .selectors import note_list_for_org
 
 
 def get_previous_month_range() -> tuple[datetime, datetime]:
@@ -35,7 +35,11 @@ def generate_report_data(
         # end_date here is exclusive (from get_previous_month_range),
         # but get_notes_for_org expects inclusive — subtract one day.
         inclusive_end = (end_date - timedelta(days=1)).date() if isinstance(end_date, datetime) else end_date
-        notes = get_notes_for_org(report.organization, start_date.date(), inclusive_end).order_by("interacted_at")
+        notes = note_list_for_org(
+            org=report.organization,
+            start_date=start_date.date(),
+            end_date=inclusive_end,
+        ).order_by("interacted_at")
 
         resource = NoteResource()
         dataset = resource.export(queryset=notes)

@@ -1668,11 +1668,13 @@ union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo
 
 type ReportSummaryType {
   totalNotes: Int!
+  uniqueClients: Int!
   startDate: String!
   endDate: String!
   notesByDate: [DateCountType!]!
   notesByTeam: [NameCountType!]!
   notesByPurpose: [NameCountType!]!
+  uniqueClientsByDate: [DateCountType!]!
   topProvidedServices: [NameCountType!]!
   topRequestedServices: [NameCountType!]!
 }

@@ -2155,6 +2155,8 @@ export type ReportSummaryType = {
   topProvidedServices: Array<NameCountType>;
   topRequestedServices: Array<NameCountType>;
   totalNotes: Scalars['Int']['output'];
+  uniqueClients: Scalars['Int']['output'];
+  uniqueClientsByDate: Array<DateCountType>;
 };
 
 export type RevertNoteInput = {

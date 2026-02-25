@@ -173,7 +173,7 @@ export default function Reports({ className = '' }: IProps) {
         <>
           {/* KPI row */}
           <Row gutter={[16, 16]}>
-            <Col xs={24} sm={8}>
+            <Col xs={24} sm={6}>
               <Card>
                 <Statistic
                   title="Total Interactions"
@@ -181,7 +181,15 @@ export default function Reports({ className = '' }: IProps) {
                 />
               </Card>
             </Col>
-            <Col xs={24} sm={8}>
+            <Col xs={24} sm={6}>
+              <Card>
+                <Statistic
+                  title="Unique Clients"
+                  value={summary.uniqueClients}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={6}>
               <Card>
                 <Statistic
                   title="Active Teams"
@@ -189,7 +197,7 @@ export default function Reports({ className = '' }: IProps) {
                 />
               </Card>
             </Col>
-            <Col xs={24} sm={8}>
+            <Col xs={24} sm={6}>
               <Card>
                 <Statistic title="Services Provided" value={totalServices} />
               </Card>
@@ -217,6 +225,30 @@ export default function Reports({ className = '' }: IProps) {
                     }}
                     yAxis={{ title: { text: 'Interactions' } }}
                     color={CHART_COLORS.primary}
+                  />
+                </ChartCard>
+              </Col>
+            )}
+
+            {summary.uniqueClientsByDate.length > 0 && (
+              <Col xs={24} lg={12}>
+                <ChartCard title="Unique Clients Over Time">
+                  <Column
+                    data={summary.uniqueClientsByDate}
+                    xField="date"
+                    yField="count"
+                    height={300}
+                    xAxis={{
+                      label: {
+                        autoRotate: true,
+                        formatter: (v: string) => {
+                          const d = new Date(v);
+                          return `${d.getMonth() + 1}/${d.getDate()}`;
+                        },
+                      },
+                    }}
+                    yAxis={{ title: { text: 'Clients' } }}
+                    color="#6A1B9A"
                   />
                 </ChartCard>
               </Col>

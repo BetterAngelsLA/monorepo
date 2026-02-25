@@ -1,18 +1,27 @@
+"""
+Reports app DRF permissions.
+
+Reference: https://github.com/HackSoftware/Django-Styleguide#apis--serializers
+"""
+
 from accounts.permissions import UserOrganizationPermissions
 from organizations.models import Organization
 from rest_framework.permissions import BasePermission
+from rest_framework.request import Request
+from rest_framework.views import APIView
 
 
 class HasOrgPortalAccess(BasePermission):
     """
     DRF permission that checks the user belongs to an organization
-    and has the ACCESS_ORG_PORTAL object-level permission on it.
+    and has the ``ACCESS_ORG_PORTAL`` object-level permission on it.
     """
 
     message = "You do not have permission to access reports."
 
-    def has_permission(self, request, view):
+    def has_permission(self, request: Request, view: APIView) -> bool:
         user = request.user
+
         if not user or not user.is_authenticated:
             return False
 

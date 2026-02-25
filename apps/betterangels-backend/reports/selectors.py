@@ -1,17 +1,24 @@
-"""Selectors for the reports app — query logic separated from views/schema."""
+"""
+Selectors for the reports app.
 
-from collections import Counter
+Selectors are responsible for fetching data from the database.
+They should not contain write logic — that belongs in services.
+
+Reference: https://github.com/HackSoftware/Django-Styleguide#selectors
+"""
+
 from datetime import date, timedelta
 from typing import Any
 
-from django.db.models import Count, QuerySet
+from common.enums import SelahTeamEnum
+from django.db.models import Count, F, QuerySet
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 from notes.models import Note
 from organizations.models import Organization
 
 
-def get_default_date_range() -> tuple[date, date]:
+def report_default_date_range() -> tuple[date, date]:
     """Return the default date range (current month)."""
     now = timezone.now()
     start = date(now.year, now.month, 1)
@@ -22,15 +29,16 @@ def get_default_date_range() -> tuple[date, date]:
     return start, end
 
 
-def get_notes_for_org(
+def note_list_for_org(
+    *,
     org: Organization,
     start_date: date,
     end_date: date,
 ) -> QuerySet[Note]:
     """
-    Return a queryset of Notes for an organization within an inclusive date range.
+    Return Notes for an organization within an inclusive date range.
 
-    The end_date is inclusive — internally we add one day for the ORM lt filter.
+    The end_date is inclusive — internally we add one day for the ORM ``lt`` filter.
     """
     filter_end = end_date + timedelta(days=1)
     return Note.objects.filter(
@@ -40,84 +48,126 @@ def get_notes_for_org(
     )
 
 
-def get_notes_by_date(qs: QuerySet[Note]) -> list[dict[str, Any]]:
+def note_count_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
     """Aggregate note counts grouped by date."""
-    return [
-        {"date": entry["trunc_date"].isoformat(), "count": entry["count"]}
-        for entry in (
-            qs.annotate(trunc_date=TruncDate("interacted_at"))
-            .values("trunc_date")
-            .annotate(count=Count("id"))
-            .order_by("trunc_date")
+    return list(
+        notes.annotate(trunc_date=TruncDate("interacted_at"))
+        .values("trunc_date")
+        .annotate(count=Count("id"))
+        .order_by("trunc_date")
+        .values(
+            date=F("trunc_date"),
+            count=F("count"),
         )
-    ]
+    )
 
 
-def get_notes_by_team(qs: QuerySet[Note]) -> list[dict[str, Any]]:
-    """Aggregate note counts grouped by team, using display labels."""
-    results = []
-    for entry in (
-        qs.exclude(team__isnull=True).exclude(team="").values("team").annotate(count=Count("id")).order_by("-count")
-    ):
-        try:
-            from common.enums import SelahTeamEnum
-
-            display = SelahTeamEnum(entry["team"]).label
-        except (ValueError, KeyError):
-            display = entry["team"]
-        results.append({"name": display, "count": entry["count"]})
-    return results
+def _team_value_to_label(value: str) -> str:
+    """Convert a SelahTeamEnum value to its human-readable label."""
+    try:
+        return SelahTeamEnum(value).label
+    except (ValueError, KeyError):
+        return value
 
 
-def get_notes_by_purpose(qs: QuerySet[Note], limit: int = 10) -> list[dict[str, Any]]:
+def note_count_by_team(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
+    """Aggregate note counts grouped by team, with display labels."""
+    rows = (
+        notes.exclude(team__isnull=True).exclude(team="").values("team").annotate(count=Count("id")).order_by("-count")
+    )
+    return [{"name": _team_value_to_label(row["team"]), "count": row["count"]} for row in rows]
+
+
+def note_count_by_purpose(*, notes: QuerySet[Note], limit: int = 10) -> list[dict[str, Any]]:
     """Aggregate note counts grouped by purpose."""
-    return [
-        {"name": entry["purpose"], "count": entry["count"]}
-        for entry in (
-            qs.exclude(purpose__isnull=True)
-            .exclude(purpose="")
-            .values("purpose")
-            .annotate(count=Count("id"))
-            .order_by("-count")[:limit]
+    return list(
+        notes.exclude(purpose__isnull=True)
+        .exclude(purpose="")
+        .values("purpose")
+        .annotate(count=Count("id"))
+        .order_by("-count")[:limit]
+        .values(
+            name=F("purpose"),
+            count=F("count"),
         )
-    ]
+    )
 
 
-def get_top_services(
-    qs: QuerySet[Note],
+def note_top_services(
+    *,
+    notes: QuerySet[Note],
     relation: str,
     limit: int = 15,
 ) -> list[dict[str, Any]]:
     """
-    Count services across notes via a related service-request relation.
+    Count services across notes via a many-to-many service-request relation.
+
+    Uses a single aggregation query instead of Python-level iteration.
 
     Args:
-        qs: Base Note queryset.
-        relation: Either "provided_services" or "requested_services".
+        notes: Base Note queryset.
+        relation: ``"provided_services"`` or ``"requested_services"``.
         limit: Max number of results.
     """
-    counter: Counter[str] = Counter()
-    for note in qs.prefetch_related(f"{relation}__service"):
-        for sr in getattr(note, relation).all():
-            counter[str(sr.service.label)] += 1
-    return [{"name": name, "count": count} for name, count in counter.most_common(limit)]
+    label_field = f"{relation}__service__label"
+    return list(
+        notes.filter(**{f"{relation}__service__isnull": False})
+        .values(name=F(label_field))
+        .annotate(count=Count("id"))
+        .order_by("-count")[:limit]
+    )
 
 
-def get_report_summary(org: Organization, start_date: date, end_date: date) -> dict[str, Any]:
+def note_unique_clients_count(*, notes: QuerySet[Note]) -> int:
+    """Count distinct client profiles across the given notes."""
+    return (
+        notes.filter(client_profile__isnull=False)
+        .values("client_profile")
+        .distinct()
+        .count()
+    )
+
+
+def note_unique_clients_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
+    """Count distinct client profiles grouped by interaction date."""
+    return list(
+        notes.filter(client_profile__isnull=False)
+        .annotate(trunc_date=TruncDate("interacted_at"))
+        .values("trunc_date")
+        .annotate(count=Count("client_profile", distinct=True))
+        .order_by("trunc_date")
+        .values(
+            date=F("trunc_date"),
+            count=F("count"),
+        )
+    )
+
+
+def _dates_to_iso(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Convert date objects in aggregation results to ISO strings."""
+    for entry in rows:
+        if hasattr(entry["date"], "isoformat"):
+            entry["date"] = entry["date"].isoformat()
+    return rows
+
+
+def report_summary(*, org: Organization, start_date: date, end_date: date) -> dict[str, Any]:
     """
-    Build the full report summary dict for an organization and date range.
+    Build the full report summary for an organization and date range.
 
-    Returns a dict ready to be serialized by the GraphQL type or DRF serializer.
+    Returns a dict ready to be serialized by the GraphQL layer or a DRF view.
     """
-    notes_qs = get_notes_for_org(org, start_date, end_date)
+    notes = note_list_for_org(org=org, start_date=start_date, end_date=end_date)
 
     return {
-        "total_notes": notes_qs.count(),
+        "total_notes": notes.count(),
+        "unique_clients": note_unique_clients_count(notes=notes),
         "start_date": start_date.isoformat(),
         "end_date": end_date.isoformat(),
-        "notes_by_date": get_notes_by_date(notes_qs),
-        "notes_by_team": get_notes_by_team(notes_qs),
-        "notes_by_purpose": get_notes_by_purpose(notes_qs),
-        "top_provided_services": get_top_services(notes_qs, "provided_services"),
-        "top_requested_services": get_top_services(notes_qs, "requested_services"),
+        "notes_by_date": _dates_to_iso(note_count_by_date(notes=notes)),
+        "notes_by_team": note_count_by_team(notes=notes),
+        "notes_by_purpose": note_count_by_purpose(notes=notes),
+        "unique_clients_by_date": _dates_to_iso(note_unique_clients_by_date(notes=notes)),
+        "top_provided_services": note_top_services(notes=notes, relation="provided_services"),
+        "top_requested_services": note_top_services(notes=notes, relation="requested_services"),
     }
