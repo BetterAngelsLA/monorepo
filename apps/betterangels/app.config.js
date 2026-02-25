@@ -39,6 +39,9 @@ export default {
       config: {
         usesNonExemptEncryption: false,
       },
+      infoPlist: {
+        UIDesignRequiresCompatibility: true,
+      },
     },
     android: {
       adaptiveIcon: {
