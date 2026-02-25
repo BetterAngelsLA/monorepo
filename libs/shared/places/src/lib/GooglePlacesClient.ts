@@ -1,3 +1,5 @@
+import { milesToMeters } from '@monorepo/shared/units';
+
 import {
   TAddressComponent,
   TPlaceDetails,
@@ -11,8 +13,6 @@ const DEFAULT_BOUNDS_CENTER: TPlaceLatLng = {
   latitude: 34.04499,
   longitude: -118.251601,
 };
-
-const MILES_TO_METERS = 1609.34;
 
 // ---- Option types ----
 
@@ -117,7 +117,7 @@ export class GooglePlacesClient {
                 latitude: boundsCenter.latitude,
                 longitude: boundsCenter.longitude,
               },
-              radius: boundsRadiusMiles * MILES_TO_METERS,
+              radius: milesToMeters(boundsRadiusMiles),
             },
           },
           includedRegionCodes,
