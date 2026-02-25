@@ -12,11 +12,12 @@ Usage:
 
 import random
 from datetime import timedelta
+from typing import Any
 
 from accounts.models import User
 from clients.models import ClientProfile
 from common.enums import SelahTeamEnum
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandParser
 from django.utils import timezone
 from notes.enums import ServiceRequestStatusEnum
 from notes.models import (
@@ -84,18 +85,69 @@ SERVICE_CATEGORIES = {
 }
 
 FIRST_NAMES = [
-    "Alex", "Jordan", "Sam", "Taylor", "Morgan", "Casey", "Riley",
-    "Jamie", "Avery", "Quinn", "Cameron", "Dakota", "Rowan", "Hayden",
-    "Reese", "Finley", "Emerson", "Skyler", "River", "Drew",
-    "Charlie", "Phoenix", "Sage", "Kai", "Blake", "Remy", "Justice",
-    "Lennox", "Frankie", "Indigo", "Harley", "Ellis", "Oakley", "Arden",
-    "Shiloh", "Marlowe", "Leighton", "Kendall", "Peyton", "Micah",
+    "Alex",
+    "Jordan",
+    "Sam",
+    "Taylor",
+    "Morgan",
+    "Casey",
+    "Riley",
+    "Jamie",
+    "Avery",
+    "Quinn",
+    "Cameron",
+    "Dakota",
+    "Rowan",
+    "Hayden",
+    "Reese",
+    "Finley",
+    "Emerson",
+    "Skyler",
+    "River",
+    "Drew",
+    "Charlie",
+    "Phoenix",
+    "Sage",
+    "Kai",
+    "Blake",
+    "Remy",
+    "Justice",
+    "Lennox",
+    "Frankie",
+    "Indigo",
+    "Harley",
+    "Ellis",
+    "Oakley",
+    "Arden",
+    "Shiloh",
+    "Marlowe",
+    "Leighton",
+    "Kendall",
+    "Peyton",
+    "Micah",
 ]
 
 LAST_NAMES = [
-    "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller",
-    "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez",
-    "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin",
+    "Smith",
+    "Johnson",
+    "Williams",
+    "Brown",
+    "Jones",
+    "Garcia",
+    "Miller",
+    "Davis",
+    "Rodriguez",
+    "Martinez",
+    "Hernandez",
+    "Lopez",
+    "Gonzalez",
+    "Wilson",
+    "Anderson",
+    "Thomas",
+    "Taylor",
+    "Moore",
+    "Jackson",
+    "Martin",
 ]
 
 TEAMS = list(SelahTeamEnum)
@@ -104,7 +156,7 @@ TEAMS = list(SelahTeamEnum)
 class Command(BaseCommand):
     help = "Load realistic test data for reports (Notes with teams, purposes, services) into test_org."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
             "--clear",
             action="store_true",
@@ -117,14 +169,16 @@ class Command(BaseCommand):
             help="Number of notes to create (default: 200).",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         # Find test_org
         try:
             org = Organization.objects.get(name="test_org")
         except Organization.DoesNotExist:
-            self.stderr.write(self.style.ERROR(
-                "Organization 'test_org' not found. Make sure IS_LOCAL_DEV is True and migrations have run."
-            ))
+            self.stderr.write(
+                self.style.ERROR(
+                    "Organization 'test_org' not found. Make sure IS_LOCAL_DEV is True and migrations have run."
+                )
+            )
             return
 
         # Find a user in the org to use as created_by
@@ -142,7 +196,9 @@ class Command(BaseCommand):
         # 1. Create service categories and services
         self.stdout.write("Creating service categories and services...")
         services = self._create_services(org)
-        self.stdout.write(self.style.SUCCESS(f"  Created {len(services)} services in {len(SERVICE_CATEGORIES)} categories."))
+        self.stdout.write(
+            self.style.SUCCESS(f"  Created {len(services)} services in {len(SERVICE_CATEGORIES)} categories.")
+        )
 
         # 2. Create a pool of client profiles (~50 unique clients)
         num_clients = min(50, num_notes)
@@ -194,29 +250,31 @@ class Command(BaseCommand):
                 for svc in requested_svcs:
                     sr = ServiceRequest.objects.create(
                         service=svc,
-                        status=random.choice([
-                            ServiceRequestStatusEnum.TO_DO,
-                            ServiceRequestStatusEnum.COMPLETED,
-                        ]),
+                        status=random.choice(
+                            [
+                                ServiceRequestStatusEnum.TO_DO,
+                                ServiceRequestStatusEnum.COMPLETED,
+                            ]
+                        ),
                         created_by=user,
                     )
                     note.requested_services.add(sr)
 
             notes_created += 1
 
-        self.stdout.write(self.style.SUCCESS(
-            f"\nDone! Created {notes_created} notes for test_org spanning the last 90 days."
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(f"\nDone! Created {notes_created} notes for test_org spanning the last 90 days.")
+        )
         self.stdout.write(f"  Date range: {three_months_ago.date()} to {now.date()}")
         self.stdout.write(f"  Teams used: {len(TEAMS)}")
         self.stdout.write(f"  Purposes used: {len(PURPOSES)}")
         self.stdout.write(f"  Services available: {len(services)}")
         self.stdout.write(f"  Unique clients: {len(clients)}")
 
-    def _create_client_profiles(self, count, user):
+    def _create_client_profiles(self, count: int, user: User) -> list[ClientProfile]:
         """Create a pool of client profiles with random names."""
-        profiles = []
-        for i in range(count):
+        profiles: list[ClientProfile] = []
+        for _ in range(count):
             profile = ClientProfile.objects.create(
                 first_name=random.choice(FIRST_NAMES),
                 last_name=random.choice(LAST_NAMES),
@@ -224,9 +282,9 @@ class Command(BaseCommand):
             profiles.append(profile)
         return profiles
 
-    def _create_services(self, org):
+    def _create_services(self, org: Organization) -> list[OrganizationService]:
         """Create service categories and services, reusing existing ones."""
-        all_services = []
+        all_services: list[OrganizationService] = []
         for cat_name, svc_labels in SERVICE_CATEGORIES.items():
             category, _ = OrganizationServiceCategory.objects.get_or_create(
                 name=cat_name,

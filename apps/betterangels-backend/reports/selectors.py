@@ -65,7 +65,7 @@ def note_count_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
 def _team_value_to_label(value: str) -> str:
     """Convert a SelahTeamEnum value to its human-readable label."""
     try:
-        return SelahTeamEnum(value).label
+        return str(SelahTeamEnum(value).label)
     except (ValueError, KeyError):
         return value
 
@@ -120,12 +120,7 @@ def note_top_services(
 
 def note_unique_clients_count(*, notes: QuerySet[Note]) -> int:
     """Count distinct client profiles across the given notes."""
-    return (
-        notes.filter(client_profile__isnull=False)
-        .values("client_profile")
-        .distinct()
-        .count()
-    )
+    return notes.filter(client_profile__isnull=False).values("client_profile").distinct().count()
 
 
 def note_unique_clients_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:

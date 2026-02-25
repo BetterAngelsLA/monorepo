@@ -7,6 +7,7 @@ Reference: https://github.com/HackSoftware/Django-Styleguide#apis--serializers
 """
 
 from datetime import datetime, timedelta
+from typing import Any
 
 from django.http import HttpResponse
 from django.utils import timezone
@@ -37,7 +38,7 @@ class ExportInteractionDataApi(APIView):
         month = serializers.IntegerField(required=False, min_value=1, max_value=12)
         year = serializers.IntegerField(required=False, min_value=2000, max_value=2100)
 
-        def validate(self, attrs):  # type: ignore[override]
+        def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:  # type: ignore[override]
             start = attrs.get("start_date")
             end = attrs.get("end_date")
 

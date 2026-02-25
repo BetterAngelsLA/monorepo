@@ -270,7 +270,7 @@ REPORT_SUMMARY_QUERY = """
 class TestReportSummaryGraphQL(GraphQLBaseTestCase):
     """Tests for the reportSummary GraphQL query."""
 
-    def _setup_org_user_with_access(self):
+    def _setup_org_user_with_access(self) -> tuple[Organization, User]:
         """Create org + user with ACCESS_ORG_PORTAL permission."""
         from guardian.shortcuts import assign_perm
 
