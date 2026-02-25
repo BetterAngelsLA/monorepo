@@ -148,7 +148,7 @@ jobs:
           project-id: ${{ steps.preview-build.outputs.project-id }}
 
       - name: 🧷 Write commit status metadata for EAS
-        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        if: github.event_name == 'merge_group'
         working-directory: apps/${{ matrix.project }}
         env:
           GITHUB_STATUS_CONTEXT: Betterangels E2E Tests
@@ -167,6 +167,7 @@ jobs:
           } >> .env
 
       - name: 🧪 Run E2E Tests
+        if: github.event_name == 'merge_group'
         working-directory: apps/${{ matrix.project }}
         run: |
           eas workflow:run .eas/workflows/e2e-test.yml --non-interactive
