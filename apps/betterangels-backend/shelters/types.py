@@ -14,6 +14,7 @@ from django.db.models import Q, QuerySet
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
+    BedStatusChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -331,6 +332,25 @@ class ShelterTypeMixin:
                 else:
                     ranges.append(None)
         return ranges or None
+
+
+@strawberry.input
+class CreateBedInput:
+    shelterId: strawberry.ID
+    status: BedStatusChoices
+
+
+@strawberry_django.type(models.Bed)
+class BedType:
+    id: ID
+    status: BedStatusChoices
+
+
+@strawberry.type
+class CreateBedPayload:
+    id: strawberry.ID
+    status: Optional[BedStatusChoices]
+    shelterId: strawberry.ID
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)

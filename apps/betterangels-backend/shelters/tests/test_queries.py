@@ -12,6 +12,7 @@ from model_bakery.recipe import seq
 from places import Places
 from shelters.enums import (
     AccessibilityChoices,
+    BedStatusChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -32,6 +33,7 @@ from shelters.enums import (
 from shelters.models import (
     SPA,
     Accessibility,
+    Bed,
     City,
     Demographic,
     EntryRequirement,
@@ -686,6 +688,100 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         results = response["data"]["shelters"]["results"]
 
         self.assertEqual(len(results), expected_result_count)
+
+    def test_shelter_soft_delete(self) -> None:
+        shelter = shelter_recipe.make()
+
+        mutation = """
+            mutation DeleteShelter($id: ID!) {
+                deleteShelter(id: $id) {
+                    success
+                }
+            }
+        """
+        variables = {"id": shelter.pk}
+
+        expected_query_count = 9
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(mutation, variables)
+
+        self.assertTrue(response["data"]["deleteShelter"]["success"])
+
+        shelter.refresh_from_db()
+        self.assertIsNotNone(shelter.deleted_at)
+
+    def test_delete_shelter_not_found(self) -> None:
+        mutation = """
+            mutation DeleteShelter($id: ID!) {
+                deleteShelter(id: $id) {
+                    success
+                }
+            }
+        """
+        variables = {"id": 999999}  # Non-existent shelter ID
+
+        expected_query_count = 1
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertEqual(response["errors"][0]["message"], "Shelter not found.")
+
+    def test_create_bed_success(self) -> None:
+        shelter = shelter_recipe.make()
+        query = """
+            mutation CreateBed($input: CreateBedInput!) {
+                createBed(input: $input) {
+                    id
+                    status
+                    shelterId
+                }
+            }
+        """
+        variables: dict[str, Any] = {"input": {"shelterId": shelter.pk, "status": BedStatusChoices.AVAILABLE.name}}
+
+        response = self.execute_graphql(query, variables)
+        assert response.get("errors") is None, f"Unexpected errors: {response.get('errors')}"
+        payload = response["data"]["createBed"]
+
+        bed = Bed.objects.get(pk=int(payload["id"]))
+        self.assertEqual(bed.shelter_id, shelter)
+        self.assertEqual(payload["status"], BedStatusChoices.AVAILABLE.name)
+        self.assertEqual(payload["shelterId"], str(shelter.id))
+
+    def test_create_bed_shelter_not_found(self) -> None:
+        non_existent_id = 999999
+        query = """
+            mutation CreateBed($input: CreateBedInput!) {
+                createBed(input: $input) {
+                    id
+                }
+            }
+        """
+        variables = {"input": {"shelterId": non_existent_id, "status": BedStatusChoices.AVAILABLE.name}}
+        response = self.execute_graphql(query, variables)
+
+        self.assertIsNone(response["data"])
+        errors = response.get("errors") or []
+        self.assertTrue(any("Shelter not found" in e.get("message", "") for e in errors))
+
+    def test_create_bed_invalid_status(self) -> None:
+        shelter = shelter_recipe.make()
+        query = """
+            mutation CreateBed($input: CreateBedInput!) {
+                createBed(input: $input) {
+                    id
+                }
+            }
+        """
+
+        variables = {"input": {"shelterId": shelter.pk, "status": "INVALID_STATUS"}}
+        response = self.execute_graphql(query, variables)
+
+        self.assertIsNone(response["data"])
+        errors = response.get("errors") or []
+        self.assertGreaterEqual(len(errors), 1)
 
 
 class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):

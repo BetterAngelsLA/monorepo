@@ -157,6 +157,11 @@ export type AuthResponse = {
   status_code: Scalars['String']['output'];
 };
 
+export enum BedStatusChoices {
+  Available = 'AVAILABLE',
+  Reserved = 'RESERVED'
+}
+
 export type CityType = {
   __typename?: 'CityType';
   id: Scalars['ID']['output'];
@@ -406,6 +411,18 @@ export type ContactInfoType = {
   id: Scalars['ID']['output'];
 };
 
+export type CreateBedInput = {
+  shelterId: Scalars['ID']['input'];
+  status: BedStatusChoices;
+};
+
+export type CreateBedPayload = {
+  __typename?: 'CreateBedPayload';
+  id: Scalars['ID']['output'];
+  shelterId: Scalars['ID']['output'];
+  status?: Maybe<BedStatusChoices>;
+};
+
 export type CreateClientContactPayload = ClientContactType | OperationInfo;
 
 export type CreateClientDocumentInput = {
@@ -641,6 +658,11 @@ export type DeleteHmisProfilePayload = HmisProfileType | OperationInfo;
 export type DeleteNotePayload = NoteType | OperationInfo;
 
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
+
+export type DeleteShelterPayload = {
+  __typename?: 'DeleteShelterPayload';
+  success: Scalars['Boolean']['output'];
+};
 
 export type DeleteSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
@@ -1227,6 +1249,7 @@ export enum MaritalStatusEnum {
 export type Mutation = {
   __typename?: 'Mutation';
   addOrganizationMember: AddOrganizationMemberPayload;
+  createBed: CreateBedPayload;
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
@@ -1252,6 +1275,7 @@ export type Mutation = {
   deleteHmisProfile: DeleteHmisProfilePayload;
   deleteNote: DeleteNotePayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
+  deleteShelter: DeleteShelterPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
   hmisLogin: HmisLoginSuccessHmisLoginError;
@@ -1284,6 +1308,11 @@ export type Mutation = {
 
 export type MutationAddOrganizationMemberArgs = {
   data: OrgInvitationInput;
+};
+
+
+export type MutationCreateBedArgs = {
+  input: CreateBedInput;
 };
 
 
@@ -1405,6 +1434,11 @@ export type MutationDeleteNoteArgs = {
 
 export type MutationDeleteServiceRequestArgs = {
   data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteShelterArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
