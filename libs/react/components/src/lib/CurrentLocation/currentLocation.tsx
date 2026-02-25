@@ -4,7 +4,7 @@ import { TLatLng } from '../Map/types.maps';
 import {
   TLocationError,
   getGeolocationErrorName,
-} from './currentLocationError';
+} from './CurrentLocationError';
 
 const POSITION_TIMEOUT_MS = 20 * 1000;
 
@@ -13,6 +13,8 @@ interface ICurrentLocation extends PropsWithChildren {
   onError?: (error: TLocationError) => void;
   className?: string;
   timeout?: number;
+  enableHighAccuracy?: boolean;
+  maximumAge?: number;
 }
 
 export function CurrentLocation(props: ICurrentLocation) {
@@ -20,6 +22,8 @@ export function CurrentLocation(props: ICurrentLocation) {
     onChange,
     onError,
     timeout = POSITION_TIMEOUT_MS,
+    enableHighAccuracy = true,
+    maximumAge = 0,
     className,
     children,
   } = props;
@@ -31,7 +35,6 @@ export function CurrentLocation(props: ICurrentLocation) {
   }
 
   const onLocationSuccess = (position: GeolocationPosition): void => {
-    sessionStorage.setItem('hasGrantedLocation', 'true');
     onChange({
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
@@ -39,15 +42,14 @@ export function CurrentLocation(props: ICurrentLocation) {
   };
 
   const onLocationError = (err: GeolocationPositionError): void => {
-    sessionStorage.removeItem('hasGrantedLocation');
     onError?.(getGeolocationErrorName(err.code));
   };
 
   const getLocation = (): void => {
     const options: PositionOptions = {
-      enableHighAccuracy: true,
-      timeout, // error out if takes longer
-      maximumAge: 0,
+      enableHighAccuracy,
+      timeout,
+      maximumAge,
     };
 
     navigator.geolocation.getCurrentPosition(

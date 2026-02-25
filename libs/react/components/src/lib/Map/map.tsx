@@ -17,9 +17,9 @@ import {
   DEFAULT_MAP_ZOOM,
   LA_COUNTY_CENTER,
 } from './constants.maps';
-import { CurrentLocationBtn } from './controls/currentLocationBtn';
-import { SearchMapAreaButton } from './controls/searchMapAreaButton';
-import { ZoomControls } from './controls/zoomControls';
+import { CurrentLocationBtn } from './controls/CurrentLocationBtn';
+import { SearchMapAreaButton } from './controls/SearchMapAreaButton';
+import { ZoomControls } from './controls/ZoomControls';
 import { TLatLng, TMapGestureHandling, TMapZoom, TMarker } from './types.maps';
 import { toGoogleLatLng } from './utils/toGoogleLatLng';
 

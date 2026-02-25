@@ -1,9 +1,9 @@
 import { FindMeIcon } from '@monorepo/react/icons';
 import { useMap } from '@vis.gl/react-google-maps';
-import { CurrentLocation } from '../../CurrentLocation/currentLocation';
-import { TLocationError } from '../../CurrentLocation/currentLocationError';
+import { CurrentLocation } from '../../CurrentLocation/CurrentLocation';
+import { TLocationError } from '../../CurrentLocation/CurrentLocationError';
 import { TLatLng } from '../types.maps';
-import { ControlBtnWrapper } from './controlBtnWrapper';
+import { ControlBtnWrapper } from './ControlBtnWrapper';
 
 type TProps = {
   className?: string;

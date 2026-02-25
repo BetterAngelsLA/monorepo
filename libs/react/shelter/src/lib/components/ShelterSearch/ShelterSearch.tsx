@@ -49,7 +49,7 @@ export function ShelterSearch(props: TProps) {
     }
 
     setQueryFilters(filters);
-  }, [filters, submitQueryTs]);
+  }, [submitQueryTs]);
 
   function onSubmitFilters() {
     setSubmitQueryTs(Date.now());
