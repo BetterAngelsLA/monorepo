@@ -93,7 +93,7 @@ export function InfiniteList<T>(props: InfiniteListProps<T>) {
     }
 
     return ListEmptyComponent ?? <EmptyListView />;
-  }, [isAnyLoading, error, ListEmptyComponent, ErrorView]);
+  }, [ListEmptyComponent]);
 
   const onLoadMore = useCallback(() => {
     if (!isAnyLoading && hasMore && loadMore) {
