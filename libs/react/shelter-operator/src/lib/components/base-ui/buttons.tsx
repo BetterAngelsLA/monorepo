@@ -51,13 +51,11 @@ const variantClasses: Record<ButtonVariant, string> = {
   'edit-light': 'bg-white text-white size-10 p-0 rounded-lg justify-center',
   'edit-medium':
     'bg-[#F4F6FD] text-white size-10 p-0 rounded-lg justify-center',
-  'edit-dark':
-    'bg-[#D3D9E3] text-white size-10 p-0 rounded-lg justify-center',
+  'edit-dark': 'bg-[#D3D9E3] text-white size-10 p-0 rounded-lg justify-center',
   'trash-light': 'bg-white text-white size-10 p-0 rounded-lg justify-center',
   'trash-medium':
     'bg-[#FFECE8] text-white size-10 p-0 rounded-lg justify-center',
-  'trash-dark':
-    'bg-[#FFC5BF] text-white size-10 p-0 rounded-lg justify-center',
+  'trash-dark': 'bg-[#FFC5BF] text-white size-10 p-0 rounded-lg justify-center',
   'right-arrow':
     'bg-[#FFF82E] text-white size-11 p-0 rounded-full justify-center',
 };
@@ -76,12 +74,10 @@ export function Button(props: IButtonProps) {
 
   const leftIcon =
     props.leftIcon ??
-    (!isIconOnly &&
-      (isSmall ? <Plus size={24} /> : <BookCheck size={29} />));
+    (!isIconOnly && (isSmall ? <Plus size={24} /> : <BookCheck size={29} />));
   const rightIcon =
     props.rightIcon ??
-    (!isIconOnly &&
-      (isSmall ? <Plus size={24} /> : <BookCheck size={29} />));
+    (!isIconOnly && (isSmall ? <Plus size={24} /> : <BookCheck size={29} />));
 
   const buttonCss = [
     'font-sans font-normal focus:outline-none transition-all inline-flex items-center h-fit whitespace-nowrap',
@@ -94,17 +90,13 @@ export function Button(props: IButtonProps) {
   return (
     <button className={buttonCss} style={style} {...rest}>
       {leftIcon && (
-        <span
-          className={isIconOnly ? 'flex items-center justify-center' : ''}
-        >
+        <span className={isIconOnly ? 'flex items-center justify-center' : ''}>
           {leftIcon}
         </span>
       )}
       {children && <span>{children}</span>}
       {rightIcon && (
-        <span
-          className={isIconOnly ? 'flex items-center justify-center' : ''}
-        >
+        <span className={isIconOnly ? 'flex items-center justify-center' : ''}>
           {rightIcon}
         </span>
       )}
