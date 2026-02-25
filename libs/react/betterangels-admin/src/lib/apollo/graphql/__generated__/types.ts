@@ -614,6 +614,12 @@ export type CurrentUserTypeOrganizationsOrganizationArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+export type DateCountType = {
+  __typename?: 'DateCountType';
+  count: Scalars['Int']['output'];
+  date: Scalars['String']['output'];
+};
+
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
 export type DeleteClientDocumentPayload = ClientDocumentType | OperationInfo;
@@ -1532,6 +1538,12 @@ export type MutationUpdateUserProfileArgs = {
   data: UpdateUserProfileInput;
 };
 
+export type NameCountType = {
+  __typename?: 'NameCountType';
+  count: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type NoteDataImportType = {
   __typename?: 'NoteDataImportType';
   id: Scalars['UUID']['output'];
@@ -1885,6 +1897,7 @@ export type Query = {
   notes: NoteTypeOffsetPaginated;
   organizationMember: OrganizationMemberType;
   organizationMembers: OrganizationMemberTypeOffsetPaginated;
+  reportSummary: ReportSummaryType;
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
@@ -2031,6 +2044,12 @@ export type QueryOrganizationMembersArgs = {
 };
 
 
+export type QueryReportSummaryArgs = {
+  endDate?: InputMaybe<Scalars['Date']['input']>;
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+};
+
+
 export type QueryServiceCategoriesArgs = {
   ordering?: Array<OrganizationServiceCategoryOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -2125,6 +2144,18 @@ export type RemoveOrganizationMemberInput = {
 };
 
 export type RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo;
+
+export type ReportSummaryType = {
+  __typename?: 'ReportSummaryType';
+  endDate: Scalars['String']['output'];
+  notesByDate: Array<DateCountType>;
+  notesByPurpose: Array<NameCountType>;
+  notesByTeam: Array<NameCountType>;
+  startDate: Scalars['String']['output'];
+  topProvidedServices: Array<NameCountType>;
+  topRequestedServices: Array<NameCountType>;
+  totalNotes: Scalars['Int']['output'];
+};
 
 export type RevertNoteInput = {
   id: Scalars['ID']['input'];
