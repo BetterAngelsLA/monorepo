@@ -33,6 +33,7 @@ export function Sidebar(props: TProps) {
     'border-neutral-90',
     'bg-neutral-99',
     'relative',
+    'overflow-visible',
     isOpen ? openClassName : closedClassName,
     className,
   ];
@@ -43,7 +44,6 @@ export function Sidebar(props: TProps) {
     'w-full',
     'h-full',
     'overflow-y-auto',
-    'pt-8',
     'pl-6',
     'pr-8',
   ];
@@ -60,7 +60,7 @@ export function Sidebar(props: TProps) {
     <div className={mergeCss(parentCss)}>
       <SidebarToggleBtn
         open={isOpen}
-        className="absolute top-8 right-0 -mr-4"
+        className="absolute top-8 -translate-y-1/2 right-0 translate-x-1/2 z-10"
         onClick={toggleOpen}
       />
       <div className={mergeCss(contentCss)}>
