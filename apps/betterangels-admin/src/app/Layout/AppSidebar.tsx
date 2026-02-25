@@ -1,10 +1,7 @@
 import { useUser } from '@monorepo/react/betterangels-admin';
-import {
-  BetterAngelsLogoBadge,
-  Sidebar,
-  mergeCss,
-} from '@monorepo/react/components';
-import { UsersIcon } from '@monorepo/react/icons';
+import { BetterAngelsLogoBadge, Sidebar } from '@monorepo/react/components';
+import { BarChartIcon, UsersIcon } from '@monorepo/react/icons';
+import { mergeCss } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -41,6 +38,16 @@ export function AppSidebar(props: IProps) {
             Users
           </Sidebar.Link>
         )}
+        <Sidebar.Link
+          to="/reports"
+          isActive={location.pathname === '/reports'}
+          collapsed={!isOpen}
+          icon={(color: string) => (
+            <BarChartIcon className="w-4" fill={color} />
+          )}
+        >
+          Reports
+        </Sidebar.Link>
       </Sidebar.Content>
     </Sidebar>
   );

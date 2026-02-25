@@ -1,12 +1,12 @@
-import { Link, router } from 'expo-router';
-import { ReactNode, useEffect } from 'react';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { useFeatureControls } from '@monorepo/react/shared';
+import { Link, router } from 'expo-router';
+import { ReactNode, useEffect } from 'react';
+import { StyleSheet, Text } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useUser } from '../../hooks';
-import { useFeatureControls } from '../../providers';
 
 type AuthLayoutProps = {
   children: ReactNode;
@@ -20,12 +20,14 @@ export default function SignInContainer({
   privacyPolicyUrl,
 }: AuthLayoutProps) {
   const { user } = useUser();
-  const { switchEnvironment } = useApiConfig();
+  const { switchEnvironment, environment } = useApiConfig();
   const { refetchFeatureFlags } = useFeatureControls();
 
   // On mount, optionally switch env when unauthenticated.
   useEffect(() => {
-    if (!user) switchEnvironment('production');
+    if (!user && environment !== 'production') {
+      switchEnvironment('production');
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -58,23 +60,38 @@ export default function SignInContainer({
       </TextRegular>
       {children}
       {termsOfServiceUrl && privacyPolicyUrl ? (
-        <TextRegular textAlign="center" size="sm" color={Colors.BLACK} mt="xl">
-          By continuing, you agree to our{' '}
-          <Link
-            style={{ textDecorationLine: 'underline' }}
-            href={termsOfServiceUrl}
+        <Text style={styles.legalWrapper}>
+          <TextRegular
+            textAlign="center"
+            color={Colors.PRIMARY_EXTRA_DARK}
+            size="xs"
           >
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link
-            style={{ textDecorationLine: 'underline' }}
-            href={privacyPolicyUrl}
-          >
-            Privacy Policy.
-          </Link>
-        </TextRegular>
+            By continuing, you agree to our{' '}
+            <Link
+              style={{ textDecorationLine: 'underline' }}
+              href={termsOfServiceUrl}
+            >
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link
+              style={{ textDecorationLine: 'underline' }}
+              href={privacyPolicyUrl}
+            >
+              Privacy Policy.
+            </Link>
+          </TextRegular>
+        </Text>
       ) : null}
     </KeyboardAwareScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  legalWrapper: {
+    maxWidth: 310,
+    alignSelf: 'center',
+    marginTop: 20,
+    fontWeight: 400,
+  },
+});

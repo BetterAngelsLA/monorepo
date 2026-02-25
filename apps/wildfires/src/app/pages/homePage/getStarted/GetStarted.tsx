@@ -1,5 +1,5 @@
 import { ArrowLeftIcon } from '@monorepo/react/icons';
-import { mergeCss } from '../../../shared/utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { SurveyButton } from '../../introduction/firesSurvey/components/SurveyButton';
 import { GetStartedHeader } from './GetStartedHeader';
 

@@ -1,11 +1,11 @@
 query FilterOrganizations(
   $filters: OrganizationFilter
-  $order: OrganizationOrder
+  $ordering: [OrganizationOrder!]! = []
   $pagination: OffsetPaginationInput
 ) {
   caseworkerOrganizations(
     filters: $filters
-    order: $order
+    ordering: $ordering
     pagination: $pagination
   ) {
     totalCount

@@ -1,4 +1,5 @@
-import { SearchList, mergeCss } from '@monorepo/react/components';
+import { SearchList } from '@monorepo/react/components';
+import { mergeCss } from '@monorepo/react/shared';
 
 type TSearchItem<T> = {
   searchText: string;

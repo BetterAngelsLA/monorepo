@@ -1,4 +1,4 @@
-import { mergeCss } from '../../../shared/utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { TableBody } from './TableBody';
 import { TableHeader } from './TableHeader';
 

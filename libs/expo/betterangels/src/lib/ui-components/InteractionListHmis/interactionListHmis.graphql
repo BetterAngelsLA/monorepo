@@ -1,0 +1,64 @@
+query InteractionListHmis(
+  $filters: HmisNoteFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [HmisNoteOrdering!]! = []
+) {
+  hmisNotes(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    totalCount
+    pageInfo {
+      limit
+      offset
+    }
+    results {
+      id
+      hmisId
+      lastUpdated
+      addedDate
+      title
+      note
+      date
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
+      }
+      refClientProgram
+      providedServices {
+        id
+        service {
+          id
+          label
+        }
+      }
+      requestedServices {
+        id
+        service {
+          id
+          label
+        }
+      }
+      hmisClientProfile {
+        id
+        hmisId
+        firstName
+        lastName
+      }
+      addedDate
+      createdBy {
+        id
+        firstName
+        lastName
+        organizationsOrganization {
+          id
+          name
+        }
+      }
+    }
+  }
+}

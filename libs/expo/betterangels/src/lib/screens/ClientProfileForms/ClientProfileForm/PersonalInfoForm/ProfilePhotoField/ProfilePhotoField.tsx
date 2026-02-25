@@ -1,3 +1,4 @@
+import { useMutation } from '@apollo/client/react';
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -12,7 +13,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { UpdateClientProfileInput } from '../../../../../apollo';
 import { useSnackbar } from '../../../../../hooks';
 import { ClientProfileDocument } from '../../../../Client/__generated__/Client.generated';
-import { useUpdateClientProfilePhotoMutation } from './__generated__/updateClientProfilePhoto.generated';
+import { UpdateClientProfilePhotoDocument } from './__generated__/updateClientProfilePhoto.generated';
 
 type TProps = {
   clientId: string;
@@ -27,16 +28,19 @@ export function ProfilePhotoField(props: TProps) {
   const { showSnackbar } = useSnackbar();
   const { watch } = useFormContext<UpdateClientProfileInput>();
 
-  const [updatePhoto, { loading }] = useUpdateClientProfilePhotoMutation({
-    refetchQueries: [
-      {
-        query: ClientProfileDocument,
-        variables: {
-          id: clientId,
+  const [updatePhoto, { loading }] = useMutation(
+    UpdateClientProfilePhotoDocument,
+    {
+      refetchQueries: [
+        {
+          query: ClientProfileDocument,
+          variables: {
+            id: clientId,
+          },
         },
-      },
-    ],
-  });
+      ],
+    }
+  );
 
   const profilePhoto = watch('profilePhoto');
 

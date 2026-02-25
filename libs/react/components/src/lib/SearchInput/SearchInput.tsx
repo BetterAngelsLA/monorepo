@@ -1,5 +1,5 @@
 import { SearchIcon } from '@monorepo/react/icons';
-import { debounce } from '@monorepo/react/shared';
+import { debounce } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import { Input } from '../../../../components/src/lib/Input';
 

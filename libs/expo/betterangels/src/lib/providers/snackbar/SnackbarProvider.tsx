@@ -5,11 +5,24 @@ import {
 import { ReactElement, ReactNode, useState } from 'react';
 import { SnackbarContext } from './SnackbarContext';
 
-export type TShowSnackbar = {
+type TShowSnackbarBase = {
   message: string;
-  showDuration?: number;
   type?: TSnackbarType;
 };
+
+// requires manual close
+type TPersisted = TShowSnackbarBase & {
+  persist: true;
+  durationMs?: never;
+};
+
+// auto closes
+type TAutoClose = TShowSnackbarBase & {
+  durationMs?: number;
+  persist?: never;
+};
+
+export type TShowSnackbar = TPersisted | TAutoClose;
 
 type TSnackbarProvider = {
   children: ReactNode;
@@ -28,11 +41,14 @@ export default function SnackbarProvider(
   );
 
   const showSnackbar = (props: TShowSnackbar) => {
-    const { message, showDuration, type } = props;
+    const { message, type } = props;
+
+    const visibleDuration =
+      'persist' in props ? Number.POSITIVE_INFINITY : props.durationMs;
 
     setVisible(true);
     setMessage(message);
-    setDuration(showDuration);
+    setDuration(visibleDuration);
     setSnackbarType(type);
   };
 

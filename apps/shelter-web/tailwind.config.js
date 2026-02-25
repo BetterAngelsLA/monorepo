@@ -22,6 +22,7 @@ module.exports = {
       },
       colors: {
         'brand-yellow': 'var(--color-brand-yellow)',
+        'brand-dark-blue': 'var(--color-brand-dark-blue)',
         'primary-20': 'var(--color-primary-20)',
         'primary-60': 'var(--color-primary-60)',
         'primary-95': 'var(--color-primary-95)',
@@ -36,25 +37,25 @@ module.exports = {
         'primary-dark': 'var(--color-primary-dark)',
         'dark-blue': 'var(--color-dark-blue)',
       },
-    },
-    keyframes: {
-      slideInUp: {
-        '0%': { transform: 'translate3d(0, 10%, 0)' },
-        '100%': { transform: 'translate3d(0, 0, 0)' },
+      keyframes: {
+        slideInUp: {
+          '0%': { transform: 'translate3d(0, 10%, 0)' },
+          '100%': { transform: 'translate3d(0, 0, 0)' },
+        },
+        expandInOut: {
+          '0%': { transform: 'scale(.85, .5)' },
+          '100%': { transform: 'scale(1, 1)' },
+        },
+        slideInRightToLeft: {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
       },
-      expandInOut: {
-        '0%': { transform: 'scale(.85, .5)' },
-        '100%': { transform: 'scale(1, 1)' },
+      animation: {
+        slideInUp: 'slideInUp 250ms ease-in-out 0ms',
+        expandInOut: 'expandInOut 200ms ease-in-out 0ms',
+        slideRightToLeft: 'slideInRightToLeft 0.3s ease-out forwards',
       },
-      slideInRightToLeft: {
-        '0%': { transform: 'translateX(100%)' },
-        '100%': { transform: 'translateX(0)' },
-      },
-    },
-    animation: {
-      slideInUp: 'slideInUp 250ms ease-in-out 0ms',
-      expandInOut: 'expandInOut 200ms ease-in-out 0ms',
-      slideRightToLeft: 'slideInRightToLeft 0.3s ease-out forwards',
     },
   },
   plugins: [],

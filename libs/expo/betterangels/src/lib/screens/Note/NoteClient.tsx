@@ -27,7 +27,7 @@ export default function NoteClient(props: INoteClientProps) {
         accessibilityHint={`client's profile photo`}
       />
       <View style={{ paddingRight: Spacings.lg }}>
-        <TextMedium size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
+        <TextMedium selectable size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
           {clientProfile.firstName} {clientProfile.lastName}
         </TextMedium>
       </View>

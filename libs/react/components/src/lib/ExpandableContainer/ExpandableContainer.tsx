@@ -1,4 +1,5 @@
 import { ChevronLeftIcon } from '@monorepo/react/icons';
+import { mergeCss } from '@monorepo/react/shared';
 import {
   Dispatch,
   PropsWithChildren,
@@ -7,7 +8,6 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { mergeCss } from '../../utils/mergeCss';
 
 interface IProps extends PropsWithChildren {
   className?: string;

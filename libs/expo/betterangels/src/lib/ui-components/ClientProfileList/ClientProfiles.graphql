@@ -1,9 +1,13 @@
 query ClientProfiles(
   $filters: ClientProfileFilter
   $pagination: OffsetPaginationInput
-  $order: ClientProfileOrder
+  $ordering: [ClientProfileOrder!]! = []
 ) {
-  clientProfiles(filters: $filters, pagination: $pagination, order: $order) {
+  clientProfiles(
+    filters: $filters
+    pagination: $pagination
+    ordering: $ordering
+  ) {
     totalCount
     pageInfo {
       limit

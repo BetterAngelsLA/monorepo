@@ -1,6 +1,7 @@
+export { PersonalInfoFormHmis } from './PersonalInfoFormHmis';
 export {
-  personalInfoFormEmptyState,
   PersonalInfoFormSchema,
+  PersonalInfoFormSchemaOut,
+  personalInfoFormEmptyState,
 } from './formSchema';
 export { mapClientToPersonalInfoSchema } from './mapClientToForm';
-export { PersonalInfoFormHmis } from './PersonalInfoFormHmis';

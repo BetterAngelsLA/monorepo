@@ -1,18 +1,31 @@
-import { HmisClientType } from '../../../../apollo';
+import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
+import { HmisClientProfileType } from '../../../../apollo';
 import {
   personalInfoFormEmptyState as emptyState,
   type TPersonalInfoFormSchema,
 } from './formSchema';
 
 export function mapClientToPersonalInfoSchema(
-  client: HmisClientType
+  client: HmisClientProfileType
 ): TPersonalInfoFormSchema {
-  const { dob, dobDataQuality, data } = client;
-  const { veteranStatus } = data || {};
+  const {
+    birthDate,
+    dobQuality,
+    veteran,
+    livingSituation,
+    preferredLanguage,
+    californiaId,
+  } = client;
+
+  const mappedBirthDate =
+    toLocalCalendarDate(birthDate ?? undefined) ?? emptyState.birthDate;
 
   return {
-    dob: dob || emptyState.dob,
-    dobDataQuality: dobDataQuality ?? emptyState.dobDataQuality,
-    veteranStatus: veteranStatus || emptyState.veteranStatus,
+    birthDate: mappedBirthDate,
+    dobQuality: dobQuality ?? emptyState.dobQuality,
+    veteran: veteran ?? emptyState.veteran,
+    livingSituation: livingSituation ?? emptyState.livingSituation,
+    preferredLanguage: preferredLanguage ?? emptyState.preferredLanguage,
+    californiaId: californiaId ?? emptyState.californiaId,
   };
 }

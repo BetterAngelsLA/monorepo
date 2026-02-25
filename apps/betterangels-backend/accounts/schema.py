@@ -1,5 +1,6 @@
+import logging
 import uuid
-from typing import cast
+from typing import Optional, Union, cast
 
 import strawberry
 import strawberry_django
@@ -9,15 +10,15 @@ from accounts.permissions import UserOrganizationPermissions
 from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.conf import settings
+from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
 from notes.permissions import NotePermissions
 from organizations.backends import invitation_backend
-from organizations.models import Organization, OrganizationUser
+from organizations.models import Organization, OrganizationOwner, OrganizationUser
 from strawberry.types import Info
-from strawberry_django import auth
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
@@ -27,13 +28,20 @@ from strawberry_django.utils.query import filter_for_user
 from .models import PermissionGroup, User
 from .types import (
     AuthResponse,
+    CurrentUserType,
     LoginInput,
+    OrganizationMemberOrdering,
     OrganizationMemberType,
+    OrganizationOrder,
     OrganizationType,
     OrgInvitationInput,
+    RemoveOrganizationMemberInput,
     UpdateUserInput,
+    UpdateUserProfileInput,
     UserType,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def annotate_member_role(org_id: str) -> Case:
@@ -63,7 +71,7 @@ def annotate_member_role(org_id: str) -> Case:
 @strawberry.type
 class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
-    def current_user(self, info: Info) -> UserType:
+    def current_user(self, info: Info) -> CurrentUserType:
         return get_current_user(info)  # type: ignore
 
     @strawberry_django.offset_paginated(
@@ -71,7 +79,7 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(NotePermissions.ADD)],
     )
-    def caseworker_organizations(self) -> QuerySet[Organization]:
+    def caseworker_organizations(self, ordering: Optional[list[OrganizationOrder]] = None) -> QuerySet[Organization]:
         queryset: QuerySet[Organization] = Organization.objects.filter(
             permission_groups__name__icontains=GroupTemplateNames.CASEWORKER
         )
@@ -104,7 +112,9 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
-    def organization_members(self, info: Info, organization_id: str) -> QuerySet[User]:
+    def organization_members(
+        self, info: Info, organization_id: str, ordering: Optional[list[OrganizationMemberOrdering]] = None
+    ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
         try:
             organization = filter_for_user(
@@ -122,7 +132,19 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    logout = auth.logout()
+    @strawberry.mutation
+    def logout(self, info: Info) -> bool:
+        """Log out the current user and destroy their session.
+
+        This local resolver exists because upgrading gunicorn also pulled in a
+        newer strawberry-django stack that caused schema export to fail with a
+        missing `Info` type resolution error. Revisit and simplify back to
+        `auth.logout()` once that upstream issue is resolved.
+        """
+        user = get_current_user(info)
+        ret = bool(user and user.is_authenticated)
+        auth.logout(info.context.request)
+        return ret
 
     @strawberry.mutation
     def login(self, input: LoginInput) -> AuthResponse:
@@ -130,7 +152,7 @@ class Mutation:
         return AuthResponse(status_code="")
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def update_current_user(self, info: Info, data: UpdateUserInput) -> UserType:
+    def update_current_user(self, info: Info, data: UpdateUserInput) -> Union[UserType, CurrentUserType]:
         user = cast(User, get_current_user(info))
         if str(user.pk) != str(data.id):
             raise PermissionError("You do not have permission to modify this user.")
@@ -147,6 +169,15 @@ class Mutation:
         )
 
         return cast(UserType, user)
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def update_user_profile(self, info: Info, data: UpdateUserProfileInput) -> CurrentUserType:
+        user = cast(User, get_current_user(info))
+
+        user_data: dict = strawberry.asdict(data)
+        user = resolvers.update(info, user, {**user_data, "id": user.pk})
+
+        return cast(CurrentUserType, user)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_current_user(self, info: Info) -> DeletedObjectType:
@@ -206,3 +237,46 @@ class Mutation:
         )
 
         return cast(OrganizationMemberType, user)
+
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(UserOrganizationPermissions.REMOVE_ORG_MEMBER)],
+    )
+    def remove_organization_member(
+        self,
+        info: Info,
+        data: RemoveOrganizationMemberInput,
+    ) -> DeletedObjectType:
+        current_user = cast(User, get_current_user(info))
+        user_id = int(data.id)
+
+        try:
+            organization = filter_for_user(
+                Organization.objects.filter(users=current_user),
+                current_user,
+                [UserOrganizationPermissions.REMOVE_ORG_MEMBER],
+            ).get(id=data.organization_id)
+        except Organization.DoesNotExist:
+            raise PermissionDenied("You do not have permission to remove members.")
+
+        try:
+            org_user = OrganizationUser.objects.get(
+                organization=organization,
+                user_id=user_id,
+            )
+        except OrganizationUser.DoesNotExist:
+            raise ValidationError("User is not a member of this organization.")
+
+        if OrganizationOwner.objects.filter(
+            organization=organization,
+            organization_user=org_user,
+        ).exists():
+            raise ValidationError("You cannot remove the organization owner. Transfer ownership first.")
+
+        if user_id == current_user.pk:
+            raise ValidationError("You cannot remove yourself from the organization.")
+
+        with transaction.atomic():
+            org_user.delete()
+
+        return DeletedObjectType(id=user_id)

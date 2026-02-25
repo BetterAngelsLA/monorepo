@@ -1,13 +1,16 @@
 import { Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { useEffect, useRef } from 'react';
 import {
   Modal,
   ModalProps,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import TextBold from '../TextBold';
 import { PickerItem } from './PickerItem';
 import { NONE_VALUE } from './constants';
 import { TPickerItem } from './types';
@@ -18,10 +21,12 @@ type TProps = {
   selectedValue?: string | null;
   onClose: () => void;
   onSelect: (newValue: string) => void;
+  onAfterClose?: () => void;
   animationType?: ModalProps['animationType'];
   dismissOnBackdropPress?: boolean;
   allowSelectNone?: boolean;
   selectNoneLabel?: string;
+  title?: string;
 };
 
 export function PickerModal(props: TProps) {
@@ -31,10 +36,24 @@ export function PickerModal(props: TProps) {
     visible,
     onSelect,
     onClose,
+    onAfterClose,
     animationType = 'fade',
     allowSelectNone,
     selectNoneLabel = 'Select',
+    title,
   } = props;
+
+  const wasVisibleRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      if (wasVisibleRef.current && !visible) {
+        onAfterClose?.();
+      }
+    }
+
+    wasVisibleRef.current = !!visible;
+  }, [visible, onAfterClose]);
 
   return (
     <Modal
@@ -45,6 +64,9 @@ export function PickerModal(props: TProps) {
       statusBarTranslucent
       hardwareAccelerated
       onRequestClose={onClose}
+      onDismiss={() => {
+        onAfterClose?.();
+      }} // iOS only
     >
       <View style={styles.fullscreen}>
         {/* Full-screen dimmed backdrop */}
@@ -63,6 +85,7 @@ export function PickerModal(props: TProps) {
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
+              {title && <TextBold size="sm">{title}</TextBold>}
               {!!allowSelectNone && (
                 <PickerItem
                   value={NONE_VALUE}

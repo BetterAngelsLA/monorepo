@@ -9,7 +9,6 @@ from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,
     AccessibilityChoices,
-    CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -98,17 +97,38 @@ class related_m2m_unique(related):
         self.related_model = related_model
         self.choices_enum = choices_enum
 
-    def make(self) -> Any:
+    def make(self, **attrs: Any) -> Any:
         related_objs = set()
 
         # limit to 5 related objects per type, for readability
         quantity = random.randint(0, min(len(self.choices_enum), 5))
 
         for i in range(quantity):
-            related_object, _ = self.related_model.objects.get_or_create(name=(list(self.choices_enum)[i]))
+            choice_value = list(self.choices_enum)[i]
+            try:
+                name_field = self.related_model._meta.get_field("name")
+                if hasattr(name_field, "choices_enum"):
+                    related_object, _ = self.related_model.objects.get_or_create(name=choice_value.value)
+                else:
+                    related_object, _ = self.related_model.objects.get_or_create(name=choice_value)
+            except Exception:
+                # Fallback: use choice value
+                related_object, _ = self.related_model.objects.get_or_create(name=choice_value.value)
             related_objs.add(related_object)
 
         return related_objs
+
+
+def make_cities() -> list[City]:
+    """Create random city objects for testing."""
+    quantity = random.randint(1, 3)
+    cities = []
+    city_names = ["Los Angeles", "Santa Monica", "Pasadena", "Long Beach", "Glendale", "Burbank"]
+    for _ in range(quantity):
+        city_name = random.choice(city_names)
+        city, _ = City.objects.get_or_create(name=city_name)
+        cities.append(city)
+    return cities
 
 
 shelter_contact_recipe = Recipe(
@@ -150,7 +170,7 @@ shelter_recipe = Recipe(
     total_beds=lambda: round(random.randint(20, 200), -1),
     website=seq("shelter", suffix=".com"),  # type: ignore
     accessibility=related_m2m_unique(Accessibility, AccessibilityChoices),
-    cities=related_m2m_unique(City, CityChoices),
+    cities=make_cities,
     demographics=related_m2m_unique(Demographic, DemographicChoices),
     entry_requirements=related_m2m_unique(EntryRequirement, EntryRequirementChoices),
     funders=related_m2m_unique(Funder, FunderChoices),

@@ -14,7 +14,7 @@
       "ios": {
         "simulator": true
       },
-      "node": "22.14.0"
+      "node": "22.21.1"
     },
     "preview": {
       "distribution": "internal",
@@ -26,7 +26,7 @@
         "EXPO_PUBLIC_DEMO_API_URL": "http://localhost:8000",
         "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "INFO"
       },
-      "node": "22.14.0"
+      "node": "22.21.1"
     },
     "production": {
       "android": {
@@ -41,7 +41,7 @@
         "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "WARN"
       },
       "channel": "production",
-      "node": "22.14.0"
+      "node": "22.21.1"
     }
   },
   "submit": {

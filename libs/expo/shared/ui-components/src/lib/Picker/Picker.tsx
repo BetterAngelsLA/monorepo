@@ -10,6 +10,7 @@ import { IPickerProps } from './types';
 export default function Picker(props: IPickerProps) {
   const {
     onChange,
+    onAfterClose,
     error,
     selectedValue,
     placeholder,
@@ -19,6 +20,8 @@ export default function Picker(props: IPickerProps) {
     label,
     required,
     disabled,
+    modalTitle,
+    placeholderTextColor,
   } = props;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -48,6 +51,7 @@ export default function Picker(props: IPickerProps) {
         disabled={disabled}
         required={required}
         placeholder={placeholder}
+        placeholderTextColor={placeholderTextColor}
         selectedValue={selectedValue}
         onFocus={open}
         items={items}
@@ -56,6 +60,7 @@ export default function Picker(props: IPickerProps) {
       />
 
       <PickerModal
+        title={modalTitle}
         visible={isModalVisible}
         items={items}
         selectedValue={selectedValue}
@@ -63,6 +68,7 @@ export default function Picker(props: IPickerProps) {
         selectNoneLabel={selectNoneLabel || placeholder}
         onSelect={onSelect}
         onClose={close}
+        onAfterClose={onAfterClose}
       />
     </>
   );

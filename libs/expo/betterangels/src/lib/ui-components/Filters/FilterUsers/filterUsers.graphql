@@ -1,11 +1,11 @@
 query FilterUsers(
   $filters: InteractionAuthorFilter
-  $order: InteractionAuthorOrder
+  $ordering: [InteractionAuthorOrder!]! = []
   $pagination: OffsetPaginationInput
 ) {
   interactionAuthors(
     filters: $filters
-    order: $order
+    ordering: $ordering
     pagination: $pagination
   ) {
     totalCount

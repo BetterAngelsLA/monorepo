@@ -1,4 +1,4 @@
-import { FetchResult } from '@apollo/client';
+import { ApolloLink } from '@apollo/client';
 import {
   OperationInfo,
   OperationMessage,
@@ -6,7 +6,7 @@ import {
 } from '../__generated__/types';
 import { extractOperationInfo } from './extractOperationInfo';
 import { extractOperationInfoMessage } from './extractOperationInfoMessage';
-import { hasTypename } from './hasTypename';
+import { hasTypename } from './utils';
 
 type TOperationErrorsResponse = {
   validationErrors?: OperationMessage[];
@@ -14,7 +14,7 @@ type TOperationErrorsResponse = {
 };
 
 type TProps = {
-  response: FetchResult;
+  response: ApolloLink.Result;
   queryKey: string;
   fields: string[];
   resultTypename: string;

@@ -1,16 +1,15 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Loading } from '@monorepo/expo/shared/ui-components';
-import { debounce } from '@monorepo/expo/shared/utils';
-import { useEffect, useMemo, useState } from 'react';
-import { FlatList, RefreshControl, View } from 'react-native';
-import { uniqueBy } from 'remeda';
-import { NotesQuery, Ordering, useNotesQuery } from '../../../apollo';
-import { MainContainer, NoteCard } from '../../../ui-components';
+import { SearchBar, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { useCallback, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { NoteType } from '../../../apollo';
+import { pagePaddingHorizontal } from '../../../static';
+import {
+  CreateClientInteractionBtn,
+  InteractionList,
+  NoteCard,
+} from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
-import InteractionsHeader from './InteractionsHeader';
-import InteractionsSorting from './InteractionsSorting';
-
-const paginationLimit = 10;
 
 export default function Interactions({
   client,
@@ -18,124 +17,71 @@ export default function Interactions({
   client: ClientProfileQuery | undefined;
 }) {
   const [search, setSearch] = useState<string>('');
-  const [filterSearch, setFilterSearch] = useState('');
-  const [offset, setOffset] = useState<number>(0);
-  const [hasMore, setHasMore] = useState<boolean>(true);
 
-  const { data, loading, error, refetch } = useNotesQuery({
-    variables: {
-      pagination: { limit: paginationLimit, offset: offset },
-      ordering: [{ interactedAt: Ordering.Desc }, { id: Ordering.Desc }],
-      filters: {
-        clientProfile: client?.clientProfile?.id,
-        search: filterSearch,
-      },
-    },
-    fetchPolicy: 'cache-and-network',
-    nextFetchPolicy: 'cache-first',
-  });
-  const [notes, setNotes] = useState<NotesQuery['notes']['results']>([]);
-  const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
-  const [refreshing, setRefreshing] = useState(false);
-  const [totalCount, setTotalCount] = useState<number>(0);
-
-  function loadMoreInteractions() {
-    if (hasMore && !loading) {
-      setOffset((prevOffset) => prevOffset + paginationLimit);
-    }
-  }
-
-  const debounceFetch = useMemo(
-    () =>
-      debounce((text) => {
-        setFilterSearch(text);
-      }, 500),
+  const renderItemFn = useCallback(
+    (note: NoteType) => <NoteCard note={note} variant="clientProfile" />,
     []
   );
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    setOffset(0);
-    try {
-      const response = await refetch({
-        pagination: { limit: paginationLimit, offset: 0 },
-      });
-      if (response.data && 'notes' in response.data) {
-        const { totalCount } = response.data.notes;
-        setTotalCount(totalCount);
-        setHasMore(paginationLimit < totalCount);
+  const renderListHeader = useCallback(
+    (visible: number, total: number | undefined) => {
+      if (!client) {
+        return null;
       }
-    } catch (err) {
-      console.error(err);
-    }
-    setRefreshing(false);
-  };
 
-  const onChange = (e: string) => {
-    setSearch(e);
+      const text =
+        total === undefined
+          ? `Displaying ${visible} interactions`
+          : `Displaying ${visible} of ${total} interactions`;
 
-    debounceFetch(e);
-  };
+      return (
+        <View style={styles.listHeader}>
+          <TextRegular size="sm">{text}</TextRegular>
 
-  useEffect(() => {
-    if (!data || !('notes' in data)) {
-      return;
-    }
-
-    const { results, totalCount } = data.notes;
-    setTotalCount(totalCount);
-
-    if (offset === 0) {
-      setNotes(results);
-    } else {
-      setNotes((prevNotes) =>
-        uniqueBy([...prevNotes, ...results], (note) => note.id)
+          <CreateClientInteractionBtn
+            clientProfileId={client.clientProfile.id}
+          />
+        </View>
       );
-    }
+    },
+    [client]
+  );
 
-    setHasMore(offset + paginationLimit < totalCount);
-  }, [data, offset]);
-
-  if (error) throw new Error('Something went wrong!');
+  if (!client) {
+    return null;
+  }
 
   return (
-    <MainContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <FlatList
-        ListHeaderComponent={
-          <>
-            <InteractionsHeader search={search} setSearch={onChange} />
-            <InteractionsSorting
-              sort={sort}
-              setSort={setSort}
-              notes={notes}
-              client={client}
-              totalCount={totalCount}
-            />
-          </>
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={Colors.PRIMARY}
-          />
-        }
-        ItemSeparatorComponent={() => <View style={{ height: Spacings.xs }} />}
-        data={notes}
-        renderItem={({ item: note }) => (
-          <NoteCard note={note} variant="clientProfile" />
-        )}
-        keyExtractor={(note) => note.id}
-        ListFooterComponent={() =>
-          loading ? (
-            <View style={{ marginTop: 10, alignItems: 'center' }}>
-              <Loading size="large" color={Colors.NEUTRAL_DARK} />
-            </View>
-          ) : null
-        }
-        onEndReached={loadMoreInteractions}
-        onEndReachedThreshold={0.5}
+    <View style={styles.container}>
+      <SearchBar
+        value={search}
+        placeholder="Search client interactions"
+        onChange={(text) => setSearch(text)}
+        onClear={() => setSearch('')}
+        style={{ marginBottom: Spacings.xs }}
       />
-    </MainContainer>
+      <InteractionList
+        filters={{ search, clientProfile: client?.clientProfile.id }}
+        renderHeader={renderListHeader}
+        renderItem={renderItemFn}
+        paginationLimit={10}
+      />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+    paddingTop: Spacings.md,
+    paddingHorizontal: pagePaddingHorizontal,
+  },
+  listHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacings.xs,
+  },
+});

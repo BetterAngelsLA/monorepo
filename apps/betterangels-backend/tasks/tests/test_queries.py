@@ -61,6 +61,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "lastName": self.org_1_case_manager_1.last_name,
             },
             "description": "task description",
+            "hmisNote": None,
             "note": {"pk": str(self.note.pk)},
             "organization": {
                 "id": str(self.org_1.pk),
@@ -103,6 +104,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "lastName": self.org_1_case_manager_1.last_name,
             },
             "description": "task description",
+            "hmisNote": None,
             "note": {"pk": str(self.note.pk)},
             "organization": {
                 "id": str(self.org_1.pk),
@@ -120,7 +122,12 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def test_tasks_query_authors_filter(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
 
-        task_id = self.create_task_fixture({"summary": "task 2 summary"})["data"]["createTask"]["id"]
+        task_id = self.create_task_fixture(
+            {
+                "clientProfile": str(self.client_profile.pk),
+                "summary": "task 2 summary",
+            }
+        )["data"]["createTask"]["id"]
         filters = {"authors": [str(self.org_1_case_manager_2.pk)]}
         variables = {"filters": filters}
 
@@ -156,7 +163,12 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def test_tasks_query_organizations_filter(self) -> None:
         self.graphql_client.force_login(self.org_2_case_manager_1)
 
-        task_id = self.create_task_fixture({"summary": "task 2 summary"})["data"]["createTask"]["id"]
+        task_id = self.create_task_fixture(
+            {
+                "summary": "task 2 summary",
+                "clientProfile": str(self.client_profile.pk),
+            }
+        )["data"]["createTask"]["id"]
         filters = {"organizations": [str(self.org_2.pk)]}
         variables = {"filters": filters}
 
@@ -168,7 +180,12 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
     def test_tasks_query_search_filter(self) -> None:
-        task_id = self.create_task_fixture({"summary": "task 2 summary"})["data"]["createTask"]["id"]
+        task_id = self.create_task_fixture(
+            {
+                "clientProfile": str(self.client_profile.pk),
+                "summary": "task 2 summary",
+            }
+        )["data"]["createTask"]["id"]
         filters = {"search": "2 sum"}
         variables = {"filters": filters}
 
@@ -182,12 +199,11 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def test_tasks_query_status_filter(self) -> None:
         task_id = self.create_task_fixture(
             {
+                "clientProfile": str(self.client_profile.pk),
                 "status": TaskStatusEnum.COMPLETED.name,
                 "summary": "task 2 summary",
             }
-        )[
-            "data"
-        ]["createTask"]["id"]
+        )["data"]["createTask"]["id"]
 
         filters = {"status": TaskStatusEnum.COMPLETED.name}
         variables = {"filters": filters}
@@ -202,12 +218,11 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def test_tasks_query_teams_filter(self) -> None:
         task_id = self.create_task_fixture(
             {
+                "clientProfile": str(self.client_profile.pk),
                 "summary": "task 2 summary",
                 "team": SelahTeamEnum.SLCC_ON_SITE.name,
             }
-        )[
-            "data"
-        ]["createTask"]["id"]
+        )["data"]["createTask"]["id"]
 
         filters = {"teams": [SelahTeamEnum.SLCC_ON_SITE.name]}
         variables = {"filters": filters}

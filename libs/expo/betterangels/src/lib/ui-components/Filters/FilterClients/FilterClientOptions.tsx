@@ -9,8 +9,9 @@ import { useMemo, useState } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
 import { Ordering } from '../../../apollo';
 import {
+  FilterClientProfilesDocument,
   FilterClientProfilesQuery,
-  useFilterClientProfilesQuery,
+  FilterClientProfilesQueryVariables,
 } from './__generated__/filterClientProfiles.generated';
 
 type TClientResult = NonNullable<
@@ -40,11 +41,15 @@ export function FilterClientOptions(props: TProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const { items, total, loading, loadMore, hasMore, error } =
-    useInfiniteScrollQuery<TClientResult, typeof useFilterClientProfilesQuery>({
-      useQueryHook: useFilterClientProfilesQuery,
+    useInfiniteScrollQuery<
+      TClientResult,
+      FilterClientProfilesQuery,
+      FilterClientProfilesQueryVariables
+    >({
+      document: FilterClientProfilesDocument,
       queryFieldName: 'clientProfiles',
       variables: {
-        order: {
+        ordering: {
           firstName: Ordering.AscNullsLast,
           lastName: Ordering.AscNullsLast,
           id: Ordering.Desc,

@@ -4,10 +4,7 @@ import {
   UserIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  TextMedium,
-  TextRegular
-} from '@monorepo/expo/shared/ui-components';
+import { TextMedium, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { enumDisplayLanguage } from '../../../static/enumDisplayMapping';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
@@ -41,7 +38,7 @@ export function ClientHeader(props: IClientHeaderProps) {
           clientId={client?.id ?? ''}
           imageUrl={client?.profilePhoto?.url}
         />
-        <TextMedium size="lg">
+        <TextMedium selectable size="lg">
           {client?.firstName} {client?.lastName}{' '}
           {client?.nickname && `(${client.nickname})`}
         </TextMedium>
@@ -88,7 +85,7 @@ export function ClientHeader(props: IClientHeaderProps) {
           }}
         >
           <LocationDotIcon color={Colors.PRIMARY_EXTRA_DARK} />
-          <TextRegular>{client.residenceAddress}</TextRegular>
+          <TextRegular selectable>{client.residenceAddress}</TextRegular>
         </View>
       )}
     </View>

@@ -1,6 +1,7 @@
-import { gql, useMutation } from '@apollo/client';
-import CookieManager from '@react-native-cookies/cookies';
+import { gql } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
+import CookieManager from '@preeternal/react-native-cookie-manager';
 import useUser from './useUser';
 
 export const LOGOUT_MUTATION = gql`
@@ -16,11 +17,11 @@ export default function useSignOut() {
   const signOut = useCallback(async () => {
     try {
       await logout();
-      setUser(undefined);
-      CookieManager.clearAll();
     } catch (err) {
       console.error(err);
     }
+    await CookieManager.clearAll();
+    setUser(undefined);
   }, [logout, setUser]);
 
   return { signOut, loading, error };

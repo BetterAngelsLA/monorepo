@@ -1,7 +1,7 @@
 import { PropsWithChildren } from 'react';
 
-import { mergeCss } from '@monorepo/react/components';
 import { CloseIcon } from '@monorepo/react/icons';
+import { mergeCss } from '@monorepo/react/shared';
 import { useAppDrawer } from './state/useAppDrawer';
 
 interface IProps extends PropsWithChildren {

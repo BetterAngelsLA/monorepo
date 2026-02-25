@@ -1,18 +1,20 @@
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
 import strawberry
 import strawberry_django
+from accounts.models import User
 from accounts.types import OrganizationType
 from common.graphql.types import LatitudeScalar, LongitudeScalar, PhoneNumberScalar
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Prefetch, Q, QuerySet
+from django.core.files.storage import default_storage
+from django.db.models import Q, QuerySet
+from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
     BedStatusChoices,
-    CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -31,36 +33,11 @@ from shelters.enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
-from shelters.models import (
-    SPA,
-    Accessibility,
-    Bed,
-    City,
-    ContactInfo,
-    Demographic,
-    EntryRequirement,
-    ExteriorPhoto,
-    Funder,
-    GeneralService,
-    HealthService,
-    ImmediateNeed,
-    InteriorPhoto,
-    Parking,
-    Pet,
-    RoomStyle,
-    Shelter,
-    ShelterProgram,
-)
-from shelters.models import ShelterType as ShelterKind
-from shelters.models import (
-    SpecialSituationRestriction,
-    Storage,
-    TrainingService,
-)
-from strawberry import ID, asdict, auto
+from strawberry import ID, Info, asdict, auto
+from strawberry_django.auth.utils import get_current_user
 
 
-@strawberry_django.type(ContactInfo)
+@strawberry_django.type(models.ContactInfo)
 class ContactInfoType:
     id: ID
     contact_name: auto
@@ -81,87 +58,88 @@ class ShelterPhotoType:
     file: strawberry_django.DjangoFileType
 
 
-@strawberry_django.type(Demographic)
+@strawberry_django.type(models.Demographic)
 class DemographicType:
     name: Optional[DemographicChoices]
 
 
-@strawberry_django.type(SpecialSituationRestriction)
+@strawberry_django.type(models.SpecialSituationRestriction)
 class SpecialSituationRestrictionType:
     name: Optional[SpecialSituationRestrictionChoices]
 
 
-@strawberry_django.type(ShelterKind)
+@strawberry_django.type(models.ShelterType)
 class ShelterTypeType:
     name: Optional[ShelterTypeChoices]
 
 
-@strawberry_django.type(RoomStyle)
+@strawberry_django.type(models.RoomStyle)
 class RoomStyleType:
     name: Optional[RoomStyleChoices]
 
 
-@strawberry_django.type(Accessibility)
+@strawberry_django.type(models.Accessibility)
 class AccessibilityType:
     name: Optional[AccessibilityChoices]
 
 
-@strawberry_django.type(Storage)
+@strawberry_django.type(models.Storage)
 class StorageType:
     name: Optional[StorageChoices]
 
 
-@strawberry_django.type(Pet)
+@strawberry_django.type(models.Pet)
 class PetType:
     name: Optional[PetChoices]
 
 
-@strawberry_django.type(Parking)
+@strawberry_django.type(models.Parking)
 class ParkingType:
     name: Optional[ParkingChoices]
 
 
-@strawberry_django.type(ImmediateNeed)
+@strawberry_django.type(models.ImmediateNeed)
 class ImmediateNeedType:
     name: Optional[ImmediateNeedChoices]
 
 
-@strawberry_django.type(GeneralService)
+@strawberry_django.type(models.GeneralService)
 class GeneralServiceType:
     name: Optional[GeneralServiceChoices]
 
 
-@strawberry_django.type(HealthService)
+@strawberry_django.type(models.HealthService)
 class HealthServiceType:
     name: Optional[HealthServiceChoices]
 
 
-@strawberry_django.type(TrainingService)
+@strawberry_django.type(models.TrainingService)
 class TrainingServiceType:
     name: Optional[TrainingServiceChoices]
 
 
-@strawberry_django.type(EntryRequirement)
+@strawberry_django.type(models.EntryRequirement)
 class EntryRequirementType:
     name: Optional[EntryRequirementChoices]
 
 
-@strawberry_django.type(City)
+@strawberry_django.type(models.City)
 class CityType:
-    name: Optional[CityChoices]
+    id: auto
+    name: auto
 
 
-@strawberry_django.type(SPA)
+@strawberry_django.type(models.SPA)
 class SPAType:
     name: Optional[SPAChoices]
 
 
-@strawberry_django.type(ShelterProgram)
+@strawberry_django.type(models.ShelterProgram)
 class ShelterProgramType:
     name: Optional[ShelterProgramChoices]
 
 
-@strawberry_django.type(Funder)
+@strawberry_django.type(models.Funder)
 class FunderType:
     name: Optional[FunderChoices]
 
@@ -191,12 +169,29 @@ class ShelterPropertyInput:
     parking: Optional[List[ParkingChoices]] = None
 
 
-@strawberry_django.filters.filter(Shelter)
+@strawberry_django.filter_type(models.Shelter)
 class ShelterFilter:
+    @strawberry_django.filter_field
+    def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
+        user = get_current_user(info)
+
+        if user is None or not user.is_authenticated:
+            if not value:
+                return Q()
+
+            return Q(**{f"{prefix}organization__in": value})
+
+        current_user = cast(User, user)
+        allowed_organizations = current_user.organizations_organization.all()
+        if value:
+            allowed_organizations = allowed_organizations.filter(pk__in=value)
+
+        return Q(**{f"{prefix}organization__in": allowed_organizations})
+
     @strawberry_django.filter_field
     def properties(
         self, queryset: QuerySet, value: Optional[ShelterPropertyInput], prefix: str
-    ) -> Tuple[QuerySet[Shelter], Q]:
+    ) -> Tuple[QuerySet[models.Shelter], Q]:
         if value is None:
             return queryset, Q()
 
@@ -211,24 +206,24 @@ class ShelterFilter:
         queryset: QuerySet,
         value: Optional[MapBoundsInput],
         prefix: str,
-    ) -> Tuple[QuerySet[Shelter], Q]:
+    ) -> Tuple[QuerySet[models.Shelter], Q]:
         if not value:
             return queryset, Q()
 
         bbox: tuple = (
             value.west_lng,
-            value.north_lat,
-            value.east_lng,
             value.south_lat,
+            value.east_lng,
+            value.north_lat,
         )
         polygon = Polygon.from_bbox(bbox)
 
-        return queryset.filter(geolocation__contained=polygon), Q()
+        return queryset.filter(geolocation__within=polygon), Q()
 
     @strawberry_django.filter_field
     def geolocation(
         self, queryset: QuerySet, value: Optional[GeolocationInput], prefix: str
-    ) -> Tuple[QuerySet[Shelter], Q]:
+    ) -> Tuple[QuerySet[models.Shelter], Q]:
         if value is None:
             return queryset, Q()
 
@@ -242,9 +237,10 @@ class ShelterFilter:
         return queryset, Q()
 
 
-@strawberry_django.ordering.order(Shelter)
+@strawberry_django.order_type(models.Shelter, one_of=False)
 class ShelterOrder:
     name: auto
+    created_at: auto
 
 
 @strawberry.type
@@ -253,8 +249,8 @@ class TimeRange:
     end: Optional[datetime]
 
 
-@strawberry_django.type(Shelter, filters=ShelterFilter, order=ShelterOrder)  # type: ignore
-class ShelterType:
+@strawberry.type
+class ShelterTypeMixin:
     id: ID
     accessibility: List[AccessibilityType]
     additional_contacts: List[ContactInfoType]
@@ -306,45 +302,28 @@ class ShelterType:
     training_services: List[TrainingServiceType]
     website: auto
 
-    _exterior_photos: Optional[List[ShelterPhotoType]] = None
-    _interior_photos: Optional[List[ShelterPhotoType]] = None
+    @strawberry_django.field
+    def hero_image(self, root: models.Shelter) -> Optional[str]:
+        """Return the hero image URL.
 
-    # NOTE: This is a temporary workaround because Shelter specced without a hero image.
-    # Will remove once we add a hero_image field to the Shelter model.
-    @strawberry_django.field(
-        prefetch_related=[
-            lambda x: Prefetch(
-                "exterior_photos",
-                queryset=ExteriorPhoto.objects.filter(),
-                to_attr="_exterior_photos",
-            ),
-            lambda x: Prefetch(
-                "interior_photos",
-                queryset=InteriorPhoto.objects.filter(),
-                to_attr="_interior_photos",
-            ),
-        ],
-    )
-    def hero_image(self, root: Shelter) -> Optional[str]:
-        if self.hero_image:
-            return str(self.hero_image.file.url)
-
-        photo = next(
-            (photos[0] for photos in (self._exterior_photos, self._interior_photos) if photos),
-            None,
-        )
-
-        return str(photo.file.url) if photo else None
+        The file path is annotated on the queryset via
+        ``ShelterQuerySet.with_hero_image_file()`` so this resolver
+        just reads the annotation — zero extra queries.
+        """
+        file_path = getattr(root, "_hero_image_file", None)
+        if file_path:
+            return default_storage.url(file_path)
+        return None
 
     @strawberry_django.field
-    def distance_in_miles(self, root: Shelter) -> Optional[float]:
+    def distance_in_miles(self, root: models.Shelter) -> Optional[float]:
         if distance := getattr(root, "distance", None):
             return float(distance.mi)
 
         return None
 
     @strawberry_django.field
-    def operating_hours(self, root: Shelter) -> Optional[List[Optional[TimeRange]]]:
+    def operating_hours(self, root: models.Shelter) -> Optional[List[Optional[TimeRange]]]:
         ranges: List[Optional[TimeRange]] = []
         if root.operating_hours:
             for start, end in root.operating_hours:
@@ -361,7 +340,7 @@ class CreateBedInput:
     status: BedStatusChoices
 
 
-@strawberry_django.type(Bed)
+@strawberry_django.type(models.Bed)
 class BedType:
     id: ID
     status: BedStatusChoices
@@ -372,3 +351,18 @@ class CreateBedPayload:
     id: strawberry.ID
     status: Optional[BedStatusChoices]
     shelterId: strawberry.ID
+
+
+@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
+class ShelterType(ShelterTypeMixin):
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
+        return models.Shelter.objects.approved().with_hero_image_file()
+
+
+@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
+class AdminShelterType(ShelterTypeMixin):
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
+        user = info.context.request.user
+        return models.Shelter.admin_objects.for_user(user).with_hero_image_file()

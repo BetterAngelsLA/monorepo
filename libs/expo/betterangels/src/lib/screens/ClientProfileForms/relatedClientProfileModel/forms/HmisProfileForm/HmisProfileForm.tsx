@@ -1,4 +1,5 @@
-import { FetchResult } from '@apollo/client';
+import { ApolloLink, CombinedGraphQLErrors } from '@apollo/client';
+import { useLazyQuery, useMutation } from '@apollo/client/react';
 import {
   ControlledInput,
   Form,
@@ -9,8 +10,8 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import {
-  extractExtensionErrors,
   extractOperationInfo,
+  extractResponseExtensions,
 } from '../../../../../apollo';
 import { applyManualFormErrors } from '../../../../../errors';
 import { useSnackbar } from '../../../../../hooks';
@@ -20,13 +21,13 @@ import {
 } from '../../../../../screenRouting';
 import { enumDisplayHmisAgency } from '../../../../../static';
 import { TClientProfile } from '../../../../Client/ClientProfile/types';
-import { useGetClientProfileLazyQuery } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
+import { GetClientProfileDocument } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
 import { HmisProfileDeleteBtn } from '../HmisProfileDeleteBtn';
 import {
+  CreateHmisProfileDocument,
   CreateHmisProfileMutation,
+  UpdateHmisProfileDocument,
   UpdateHmisProfileMutation,
-  useCreateHmisProfileMutation,
-  useUpdateHmisProfileMutation,
 } from './__generated__/hmisProfile.generated';
 import { defaultFormState, toFormState } from './toFormState';
 import { THmisProfileFormState } from './types';
@@ -43,8 +44,8 @@ export function HmisProfileForm(props: TProps) {
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [updateHmisProfile] = useUpdateHmisProfileMutation();
-  const [createHmisProfile] = useCreateHmisProfileMutation();
+  const [updateHmisProfile] = useMutation(UpdateHmisProfileDocument);
+  const [createHmisProfile] = useMutation(CreateHmisProfileDocument);
 
   const {
     control,
@@ -57,7 +58,7 @@ export function HmisProfileForm(props: TProps) {
     defaultValues: defaultFormState,
   });
 
-  const [reFetchClientProfile] = useGetClientProfileLazyQuery({
+  const [reFetchClientProfile] = useLazyQuery(GetClientProfileDocument, {
     fetchPolicy: 'network-only',
   });
 
@@ -86,39 +87,58 @@ export function HmisProfileForm(props: TProps) {
     try {
       setIsLoading(true);
 
-      const mutationVariables = {
-        variables: {
-          data: {
-            clientProfile: clientProfile.id,
-            ...validFormState,
-            ...(isEditMode ? { id: relationId } : {}),
-          },
-        },
+      const baseInput = {
+        clientProfile: clientProfile.id,
+        ...validFormState,
       };
 
-      const mutation = isEditMode ? updateHmisProfile : createHmisProfile;
-      const mutationKey = isEditMode
-        ? 'updateHmisProfile'
-        : 'createHmisProfile';
+      let response;
 
-      const response = await mutation({
-        ...mutationVariables,
-        errorPolicy: 'all',
-      });
-
-      const extensionErrors = extractExtensionErrors(response);
-
-      if (extensionErrors) {
-        applyManualFormErrors(extensionErrors, setError);
-
-        return;
+      if (isEditMode) {
+        response = await updateHmisProfile({
+          variables: {
+            data: {
+              id: relationId,
+              ...baseInput,
+            },
+          },
+          errorPolicy: 'all',
+        });
+      } else {
+        response = await createHmisProfile({
+          variables: {
+            data: baseInput,
+          },
+          errorPolicy: 'all',
+        });
       }
 
-      const responseData = response.data;
+      const { data: responseData, error } = response;
+
+      // handle fieldErrors and return if present
+      if (CombinedGraphQLErrors.is(error)) {
+        // TODO: convert to use extractExtensionFieldErrors
+        const fieldErrors = extractResponseExtensions(error);
+
+        if (fieldErrors?.length) {
+          applyManualFormErrors(fieldErrors, setError);
+
+          return;
+        }
+      }
+
+      // throw unhandled errors
+      if (error) {
+        throw new Error(error.message);
+      }
 
       if (!responseData) {
         throw new Error('Missing HMIS mutation response data');
       }
+
+      const mutationKey = isEditMode
+        ? 'updateHmisProfile'
+        : 'createHmisProfile';
 
       const uniquenessError = hasUniquenessError(response, mutationKey);
 
@@ -241,7 +261,9 @@ function isSuccessMutationResponse(
 }
 
 function hasUniquenessError(
-  response: FetchResult<UpdateHmisProfileMutation | CreateHmisProfileMutation>,
+  response: ApolloLink.Result<
+    UpdateHmisProfileMutation | CreateHmisProfileMutation
+  >,
   key: 'updateHmisProfile' | 'createHmisProfile'
 ): string | null {
   const operationInfo = extractOperationInfo(response, key);

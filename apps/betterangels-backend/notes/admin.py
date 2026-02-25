@@ -8,12 +8,10 @@ from import_export import fields, resources
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
 from import_export.widgets import ForeignKeyWidget
-from notes.enums import ServiceEnum
 from organizations.models import Organization
 from rangefilter.filters import DateRangeFilterBuilder
 
 from .models import (
-    Mood,
     Note,
     NoteDataImport,
     NoteImportRecord,
@@ -21,37 +19,6 @@ from .models import (
     OrganizationServiceCategory,
     ServiceRequest,
 )
-
-
-@admin.register(Mood)
-class MoodAdmin(admin.ModelAdmin):
-    list_display = (
-        "descriptor",
-        "note",
-        "note_client",
-    )
-    list_filter = (
-        "descriptor",
-        "created_at",
-        "updated_at",
-    )
-    search_fields = (
-        "note__title",
-        "note__created_by__email",
-        "note__client_profile__email",
-    )
-    readonly_fields = ("created_at",)
-
-    def note_client(self, obj: Mood) -> str:
-        return str(obj.note.client_profile)
-
-    def created_by(self, obj: Mood) -> str:
-        return str(obj.note.created_by)
-
-
-class MoodInline(admin.TabularInline):
-    model = Mood
-    extra = 1
 
 
 class NoteResource(resources.ModelResource):
@@ -98,9 +65,7 @@ class NoteResource(resources.ModelResource):
         return note.purpose or None
 
     def _join_services(self, services: QuerySet) -> str:
-        return ", ".join(
-            s.service_other if s.service_enum == ServiceEnum.OTHER else str(s.service_enum.label) for s in services
-        )
+        return ", ".join(str(s.service.label) for s in services)
 
     def dehydrate_requested_services(self, note: Note) -> str:
         return self._join_services(note.requested_services.all())
@@ -127,6 +92,15 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
 
     def get_export_formats(self) -> list:
         return [CSV]
+
+    autocomplete_fields = (
+        "client_profile",
+        "created_by",
+        "location",
+        "organization",
+        "provided_services",
+        "requested_services",
+    )
 
     list_display = (
         "note_purpose",
@@ -155,10 +129,9 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
         "created_by__email",
         "organization__name",
     )
-    inlines = [
-        MoodInline,
-    ]
+    inlines = []
     readonly_fields = (
+        "created_by",
         "interacted_at",
         "updated_at",
     )
@@ -231,11 +204,7 @@ class ServiceRequestAdmin(admin.ModelAdmin):
 
     @admin.display(description="Service")
     def service_name(self, obj: ServiceRequest) -> Optional[str]:
-        # TODO: undo after cutover
-        if not obj.service_enum:
-            return None
-
-        return str(obj.service_enum.label if obj.service_enum != ServiceEnum.OTHER else obj.service_other)
+        return str(obj.service.label if obj.service else "")
 
 
 @admin.register(NoteDataImport)

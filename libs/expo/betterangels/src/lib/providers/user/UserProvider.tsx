@@ -1,11 +1,12 @@
+import { useQuery } from '@apollo/client/react';
 import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
 import { GraphQLFormattedError } from 'graphql';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppState } from '../../hooks';
 import UserContext, { TUser } from './UserContext';
 import {
+  CurrentUserDocument,
   CurrentUserQuery,
-  useCurrentUserQuery,
 } from './__generated__/UserProvider.generated';
 
 interface UserProviderProps {
@@ -16,7 +17,7 @@ const parseUser = (user?: CurrentUserQuery['currentUser']): TUser | undefined =>
   user
     ? {
         id: user.id,
-        username: user.username,
+        username: user.username ?? undefined,
         firstName: user.firstName ?? undefined,
         lastName: user.lastName ?? undefined,
         email: user.email,
@@ -37,7 +38,7 @@ export default function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<TUser | undefined>();
 
   const { appBecameActive } = useAppState();
-  const { data, loading, error, refetch } = useCurrentUserQuery({
+  const { data, loading, error, refetch } = useQuery(CurrentUserDocument, {
     fetchPolicy: 'network-only',
     errorPolicy: 'all',
   });
@@ -63,15 +64,18 @@ export default function UserProvider({ children }: UserProviderProps) {
       const res = await refetch();
       updateUser(res);
     } catch (err) {
-      console.error('Error refetching user data:', err);
       setUser(undefined);
     }
   }, [refetch, updateUser]);
 
   useEffect(() => {
-    if (appBecameActive) {
-      refetchUser();
+    if (!appBecameActive) {
+      return;
     }
+
+    // Refetch user data when app becomes active
+    // The server will handle session validation and return null user if expired
+    refetchUser();
   }, [appBecameActive, refetchUser]);
 
   const contextValue = useMemo(

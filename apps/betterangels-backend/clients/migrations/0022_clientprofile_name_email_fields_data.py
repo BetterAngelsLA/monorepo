@@ -5,8 +5,7 @@ from django.db import migrations
 
 def copy_name_and_email_fields(apps, schema_editor):
     with schema_editor.connection.cursor() as cursor:
-        cursor.execute(
-            """
+        cursor.execute("""
                 UPDATE clients_clientprofile AS cp
                 SET
                     first_name = NULLIF(TRIM(u.first_name), ''),
@@ -15,14 +14,12 @@ def copy_name_and_email_fields(apps, schema_editor):
                     email = NULLIF(TRIM(u.email), '')
                 FROM accounts_user AS u
                 WHERE cp.user_id = u.id
-            """
-        )
+            """)
 
 
 def clear_name_and_email_fields(apps, schema_editor):
     with schema_editor.connection.cursor() as cursor:
-        cursor.execute(
-            """
+        cursor.execute("""
                 UPDATE clients_clientprofile
                 SET
                     first_name = NULL,
@@ -34,8 +31,7 @@ def clear_name_and_email_fields(apps, schema_editor):
                     last_name IS NOT NULL OR
                     middle_name IS NOT NULL OR
                     email IS NOT NULL;
-            """
-        )
+            """)
 
 
 class Migration(migrations.Migration):

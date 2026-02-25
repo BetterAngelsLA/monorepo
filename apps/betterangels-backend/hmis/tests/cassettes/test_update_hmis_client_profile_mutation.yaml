@@ -1,0 +1,29 @@
+interactions:
+  - request:
+      body:
+        '{"client": {"alias": "the raven", "birth_date": "1909-01-19", "dob_quality":
+        1, "first_name": "Eddie", "last_name": "Po", "name_quality": 1, "ssn1": "13",
+        "ssn2": "57", "ssn3": "9246", "ssn_quality": 1}, "screenValues": {"gender":
+        [1], "gender_identity_text": "genid", "name_middle": "Allen", "name_suffix":
+        3, "race_ethnicity": [5], "additional_race_ethnicity_detail": null, "veteran":
+        0}, "fields": "last_name, personal_id, phone_numbers.id, messages.message, last_updated,
+        screenValues.race_ethnicity, screenValues.veteran, screenValues.gender_identity_text,
+        messages.field, messages.kind, additional_race_ethnicity_detail, screenValues.name_suffix,
+        name_suffix, name_middle, veteran, phone_numbers.is_primary, birth_date, first_name,
+        phone_numbers.number, added_date, screenValues.additional_race_ethnicity_detail,
+        unique_identifier, profile_photo.name, ssn1, gender, ssn3, dob_quality, ssn2,
+        screenValues.age, id, gender_identity_text, race_ethnicity, name_quality, hmis_id,
+        screenValues.gender, screenValues.name_middle, ssn_quality"}'
+      headers: {}
+      method: PUT
+      uri: ''
+    response:
+      body:
+        string:
+          '{"id":384,"ssn1":"***","ssn2":"**","ssn3":"9246","first_name":"Eddie","last_name":"Po","name_quality":1,"ssn_quality":1,"birth_date":"1909-01-19","dob_quality":1,"unique_identifier":"9AD65C3CF","added_date":"2025-11-06
+          17:54:48","last_updated":"2025-11-10 12:53:33","gender":[1],"screenValues":{"name_middle":"Allen","name_suffix":3,"age":116,"gender":[1],"gender_identity_text":"genid","race_ethnicity":[5],"additional_race_ethnicity_detail":null,"veteran":0},"personal_id":"484ace328eff443391317f2cfe30d349"}'
+      headers: {}
+      status:
+        code: 200
+        message: OK
+version: 1

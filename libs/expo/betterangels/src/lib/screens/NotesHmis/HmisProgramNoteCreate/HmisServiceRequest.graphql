@@ -1,0 +1,51 @@
+mutation CreateHmisServiceRequest($data: CreateHmisNoteServiceRequestInput!) {
+  createHmisNoteServiceRequest(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on ServiceRequestType {
+      id
+      service {
+        id
+        label
+      }
+      status
+      dueBy
+      completedOn
+      clientProfile {
+        id
+      }
+      createdBy {
+        id
+      }
+      createdAt
+    }
+  }
+}
+
+mutation RemoveHmisNoteServiceRequest(
+  $data: RemoveHmisNoteServiceRequestInput!
+) {
+  removeHmisNoteServiceRequest(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on HmisNoteType {
+      id
+      requestedServices {
+        id
+      }
+      providedServices {
+        id
+      }
+    }
+  }
+}

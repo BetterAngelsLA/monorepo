@@ -1,27 +1,31 @@
-from graphql import GraphQLError
 import strawberry
 import strawberry_django
-from django.db.models import QuerySet
+from common.permissions.utils import IsAuthenticated
 from graphql import GraphQLError
-from shelters.enums import StatusChoices
 from shelters.models import Bed, Shelter
-from shelters.types import CreateBedInput, CreateBedPayload, ShelterType
+from shelters.permissions import ShelterPermissions
+from shelters.types import AdminShelterType, CreateBedInput, CreateBedPayload, ShelterType
 from strawberry.types import Info
 from strawberry_django.pagination import OffsetPaginated
+from strawberry_django.permissions import HasPerm
 
 
 @strawberry.type
 class Query:
-    shelter: ShelterType = strawberry_django.field()
+    admin_shelters: OffsetPaginated[AdminShelterType] = strawberry_django.offset_paginated(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(ShelterPermissions.VIEW)],
+    )
 
-    @strawberry_django.offset_paginated(OffsetPaginated[ShelterType])
-    def shelters(self) -> QuerySet:
-        return Shelter.objects.filter(status=StatusChoices.APPROVED)
+    shelters: OffsetPaginated[ShelterType] = strawberry_django.offset_paginated()
+
+    shelter: ShelterType = strawberry_django.field()
 
 
 @strawberry.type
 class DeleteShelterPayload:
     success: bool
+
 
 @strawberry.type
 class Mutation:

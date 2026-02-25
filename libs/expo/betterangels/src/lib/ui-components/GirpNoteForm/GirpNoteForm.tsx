@@ -15,13 +15,21 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { generateGirpNote } from './generateGirpNote';
 
+export type TGirpServiceType = {
+  id: string;
+  service?: {
+    label: string;
+  } | null;
+  serviceOther?: string | null;
+};
+
 type TProps = {
   onDone: (note: string) => void;
   note?: string;
   disabled?: boolean;
   purpose?: string;
-  providedServices?: string[];
-  requestedServices?: string[];
+  providedServices?: TGirpServiceType[];
+  requestedServices?: TGirpServiceType[];
 };
 
 export function GirpNoteForm(props: TProps) {
@@ -39,11 +47,19 @@ export function GirpNoteForm(props: TProps) {
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
 
+  const providedServicesList = (providedServices ?? [])
+    .map((s) => s.service?.label ?? s.serviceOther)
+    .filter((v): v is string => v != null);
+
+  const requestedServicesList = (requestedServices ?? [])
+    .map((s) => s.service?.label ?? s.serviceOther)
+    .filter((v): v is string => v != null);
+
   function generateNote() {
     const generated = generateGirpNote({
       purpose,
-      providedServices,
-      requestedServices,
+      providedServicesList,
+      requestedServicesList,
     });
 
     setLocalNote(generated);
@@ -52,12 +68,7 @@ export function GirpNoteForm(props: TProps) {
   return (
     <>
       <KeyboardAwareScrollView>
-        <View
-          style={{
-            gap: Spacings.sm,
-            flex: 1,
-          }}
-        >
+        <View style={styles.container}>
           <TextBold size="lg">Write Note</TextBold>
           <TextRegular size="md">
             Use the generated text below to get started. When finished, tap
@@ -66,6 +77,7 @@ export function GirpNoteForm(props: TProps) {
 
           <View style={{ flexGrow: 1 }}>
             <TextInput
+              editable={!disabled}
               value={localNote}
               onChangeText={setLocalNote}
               multiline
@@ -101,6 +113,7 @@ export function GirpNoteForm(props: TProps) {
           }}
         >
           <Button
+            disabled={disabled}
             onPress={() => {
               localNote ? setLocalNote('') : generateNote();
             }}
@@ -131,6 +144,10 @@ export function GirpNoteForm(props: TProps) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    gap: Spacings.sm,
+    flex: 1,
+  },
   input: {
     flex: 1,
     padding: Spacings.sm,

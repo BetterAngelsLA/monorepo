@@ -47,7 +47,7 @@ export function ClientCaseManager(props: TProps) {
 
       {!!ccmHref && (
         <Link href={ccmHref} style={styles.ccmLink}>
-          <TextRegular>{primaryCCM.name}</TextRegular>
+          <TextRegular selectable>{primaryCCM.name}</TextRegular>
         </Link>
       )}
 

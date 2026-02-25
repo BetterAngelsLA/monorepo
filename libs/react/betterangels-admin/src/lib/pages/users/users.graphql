@@ -1,10 +1,12 @@
 query OrganizationMembers(
   $organizationId: String!
+  $ordering: [OrganizationMemberOrdering!]! = []
   $pagination: OffsetPaginationInput
 ) {
   organizationMembers(
     organizationId: $organizationId
     pagination: $pagination
+    ordering: $ordering
   ) {
     totalCount
     results {
@@ -15,6 +17,21 @@ query OrganizationMembers(
       lastName
       memberRole
       middleName
+    }
+  }
+}
+
+mutation RemoveOrganizationMember($data: RemoveOrganizationMemberInput!) {
+  removeOrganizationMember(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on DeletedObjectType {
+      id
     }
   }
 }

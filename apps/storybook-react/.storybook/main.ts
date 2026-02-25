@@ -9,9 +9,9 @@ import {
   REACT_APP_LIB_STORIES,
   REACT_SHARED_LIB_STORIES,
   RN_SHARED_LIB_STORIES,
-} from '../config';
-import { appendReactQueryForRnSvg } from './plugins/appendReactQueryForRnSvg';
-import { rawSvgPlugin } from './plugins/rawSvgPlugin';
+} from '../config/index.ts';
+import { appendReactQueryForRnSvg } from './plugins/appendReactQueryForRnSvg.ts';
+import { rawSvgPlugin } from './plugins/rawSvgPlugin.ts';
 
 const config: StorybookConfig = {
   stories: [

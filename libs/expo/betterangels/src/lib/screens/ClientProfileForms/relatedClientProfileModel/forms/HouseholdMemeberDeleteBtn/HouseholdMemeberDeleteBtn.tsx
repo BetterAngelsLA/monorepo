@@ -1,3 +1,4 @@
+import { useMutation } from '@apollo/client/react';
 import { useRouter } from 'expo-router';
 import { Dispatch, SetStateAction } from 'react';
 import {
@@ -7,7 +8,7 @@ import {
 import { useSnackbar } from '../../../../../hooks';
 import { ClientProfileDocument } from '../../../../Client/__generated__/Client.generated';
 import { DeleteButton } from '../DeleteButton';
-import { useDeleteClientHouseholdMemberMutation } from './__generated__/deleteHouseholdMember.generated';
+import { DeleteClientHouseholdMemberDocument } from './__generated__/deleteHouseholdMember.generated';
 
 const deleteableItemName = 'Household Member';
 
@@ -24,8 +25,9 @@ export function HouseholdMemeberDeleteBtn(props: TProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  const [deleteHouseholdMember, { loading, error }] =
-    useDeleteClientHouseholdMemberMutation();
+  const [deleteHouseholdMember, { loading, error }] = useMutation(
+    DeleteClientHouseholdMemberDocument
+  );
 
   const onDelete = async () => {
     try {

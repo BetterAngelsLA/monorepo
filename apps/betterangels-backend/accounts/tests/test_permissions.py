@@ -5,6 +5,7 @@ from accounts.models import User
 from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
+from organizations.models import OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 from .baker_recipes import organization_recipe
@@ -181,3 +182,104 @@ class AddOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedT
                 User.objects.get(email=variables["email"])
         else:
             self.assertEqual(response["data"]["addOrganizationMember"]["email"], "new+perm@example.com")
+
+
+class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.org_1 = organization_recipe.make(name="org 1")
+        self.org_2 = organization_recipe.make(name="org 2")
+
+        # NOTE: use a dedicated removable member so we don't accidentally target the org owner
+        self.org_member = baker.make(User, first_name="org member")
+        self.removable_member = baker.make(
+            User,
+            first_name="removable member",
+            email="removable@example.com",
+        )
+        self.org_1_admin = baker.make(User, first_name="org 1 admin")
+        self.org_2_admin = baker.make(User, first_name="org 2 admin")
+
+        self.org_1.add_user(self.org_member)
+        self.org_1.add_user(self.removable_member)
+        self.org_1.add_user(self.org_1_admin)
+        self.org_2.add_user(self.org_2_admin)
+
+        self.omb_1 = OrgPermissionManager(self.org_1)
+        self.omb_1.set_role(self.org_1_admin, OrgRoleEnum.ADMIN)
+        self.omb_2 = OrgPermissionManager(self.org_2)
+        self.omb_2.set_role(self.org_2_admin, OrgRoleEnum.ADMIN)
+
+    @parametrize(
+        "user, expected_error",
+        [
+            ("org_member", "You don't have permission to access this app."),
+            ("org_1_admin", None),
+            ("org_2_admin", "You do not have permission to remove members."),
+        ],
+    )
+    def test_remove_organization_member_permission(self, user: str, expected_error: Optional[str]) -> None:
+        self.graphql_client.force_login(getattr(self, user))
+
+        mutation = """
+            mutation ($data: RemoveOrganizationMemberInput!) {
+                removeOrganizationMember(data: $data) {
+                    ... on OperationInfo {
+                        messages { kind field message }
+                    }
+                    ... on DeletedObjectType {
+                        id
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "id": self.removable_member.pk,
+            "organizationId": self.org_1.pk,
+        }
+
+        response = self.execute_graphql(mutation, {"data": variables})
+
+        if expected_error:
+            # Permission can fail in two ways:
+            # 1) hard GraphQL error => data is None
+            if response.get("data") is None:
+                self.assertEqual(len(response["errors"]), 1)
+                self.assertEqual(response["errors"][0]["message"], expected_error)
+            else:
+                # 2) union OperationInfo => messages inside data
+                self.assertEqual(len(response["data"]["removeOrganizationMember"]["messages"]), 1)
+                self.assertEqual(
+                    response["data"]["removeOrganizationMember"]["messages"][0]["message"],
+                    expected_error,
+                )
+
+            # membership should still exist
+            self.assertTrue(
+                OrganizationUser.objects.filter(
+                    organization=self.org_1,
+                    user=self.removable_member,
+                ).exists()
+            )
+
+        else:
+            # success: make sure we actually got data; if not, show errors (avoids NoneType crash)
+            self.assertIsNotNone(
+                response.get("data"),
+                f"Expected success but got errors: {response.get('errors')}",
+            )
+
+            self.assertEqual(
+                response["data"]["removeOrganizationMember"]["id"],
+                self.removable_member.pk,
+            )
+            self.assertFalse(
+                OrganizationUser.objects.filter(
+                    organization=self.org_1,
+                    user=self.removable_member,
+                ).exists()
+            )
+            # user still exists
+            self.assertTrue(User.objects.filter(pk=self.removable_member.pk).exists())

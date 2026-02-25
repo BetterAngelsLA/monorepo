@@ -71,6 +71,8 @@ export const csrfLink = ({
           } catch (err) {
             console.error('Error in CSRF Apollo Link:', err);
             observer.error(err);
+
+            return undefined;
           }
         };
 

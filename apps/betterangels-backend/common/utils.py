@@ -6,7 +6,7 @@ from typing import Any
 from urllib.parse import unquote
 
 from django.db.models import Model
-from strawberry.utils.str_converters import to_camel_case
+from strawberry.utils.str_converters import to_camel_case, to_snake_case
 
 
 def canonicalise_filename(mime_type: str, filename: str) -> str:
@@ -94,3 +94,8 @@ def get_unique_file_path(instance: Model, filename: str) -> str:
 def dict_keys_to_camel(d: dict[str, Any]) -> dict[str, Any]:
     """Return a new dict with camelCase keys."""
     return {to_camel_case(k): v for k, v in d.items()}
+
+
+def dict_keys_to_snake(d: dict[str, Any]) -> dict[str, Any]:
+    """Return a new dict with snake_case keys."""
+    return {to_snake_case(k): v for k, v in d.items()}

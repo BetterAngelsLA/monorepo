@@ -17,9 +17,11 @@ If you are a volunteer be sure to also read the [Volunteer Contributors](#volunt
 - [Xcode](https://developer.apple.com/xcode/resources/)
 - [Android SDK Platform-Tools](https://developer.android.com/studio/releases/platform-tools)
 - Expo Dev Builds
-  - [Android](https://expo.dev/accounts/better-angels/projects/betterangels/builds/d76c28fb-9433-4f49-a062-6dfb961bc59a)
-  - [iOS](https://expo.dev/accounts/better-angels/projects/betterangels/builds/eee2cfba-66d7-4cfe-ad56-4bd7cd69e2cb)
-  - [iOS Simulator](https://expo.dev/accounts/better-angels/projects/betterangels/builds/905d580b-59fa-4c50-9372-9469b6305b43)
+  - [Android](https://expo.dev/accounts/better-angels/projects/betterangels/builds/6b3af6ab-9f4e-4e96-98bf-59a9730244ea)
+  - [iOS](https://expo.dev/accounts/better-angels/projects/betterangels/builds/c2212b9e-2778-41c2-8a94-61a43605aedb)
+  - [iOS Simulator](https://expo.dev/accounts/better-angels/projects/betterangels/builds/0626f53b-99cd-4e2b-972a-a7fe9e82d6eb)
+
+> If any of these Dev Builds are missing, and you have access to the `#tech-volunteers` Slack channel, there may be a pinned message with updated build info.
 
 **Setup:**
 
@@ -65,10 +67,10 @@ Run the following on the host machine—**not in the container**:
    source ~/.zshrc
    ```
 
-1. Install node version 22.14.0
+1. Install node version 22.21.1
 
    ```bash
-   nvm install 22.14.0
+   nvm install 22.21.1
    ```
 
 1. Clone the monorepo
@@ -119,14 +121,45 @@ Run the following on the host machine—**not in the container**:
    Start the Shelter app
 
    ```bash
-   yarn nx start shelter
+   yarn shelter
    ```
 
    If your current node version is incorrect, run the following and try again.
 
    ```bash
-   nvm use 22.14.0
+   nvm use 22.21.1
    ```
+
+#### Accessing the Shelter Web App from Your Phone While Using WSL
+
+If you're running the Shelter web app (`yarn shelter`) in WSL and want to test it on your phone over your local network, you'll need to configure port forwarding since WSL2 uses a virtual network isolated from your physical network adapters.
+
+1. **Find your Windows machine's IP address** (not the WSL IP). Run in **Windows PowerShell**:
+   ```powershell
+   ipconfig
+   ```
+   Look for your WiFi adapter's IPv4 address (typically `192.168.x.x`)
+
+2. **Configure port forwarding from Windows to WSL**. Run in **PowerShell (as Administrator)**:
+   ```powershell
+   netsh interface portproxy add v4tov4 listenport=8083 listenaddress=0.0.0.0 connectport=8083 connectaddress=<WSL_IP>
+   ```
+   Replace `<WSL_IP>` with your WSL IP address (find it by running `wsl hostname -I` in Windows)
+
+3. **Allow the port through Windows Firewall**. Run in **PowerShell (as Administrator)**:
+   ```powershell
+   New-NetFirewallRule -DisplayName "Vite Dev Server" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8083
+   ```
+
+4. **Connect from your phone**:
+   - Ensure your phone is on the same WiFi network as your Windows machine
+   - Open your browser and navigate to: `http://<WINDOWS_IP>:8083`
+   - Replace `<WINDOWS_IP>` with the IP address from step 1
+
+**To remove the port forwarding later:**
+```powershell
+netsh interface portproxy delete v4tov4 listenport=8083 listenaddress=0.0.0.0
+```
 
 #### Starting the iOS emulator
 
@@ -245,54 +278,92 @@ Before you begin, ensure you have the following installed on your Windows machin
 
 1. **Configure WSL2**
 
-- Open a WSL2 terminal (e.g., Ubuntu).
-- Set up your SSH key for GitHub or other version control systems.
+   - Open a WSL2 terminal (e.g., Ubuntu).
+   - Set up your SSH key for GitHub or other version control systems.
 
 2. **Clone Your Repository**
 
-- Inside the WSL2 terminal, navigate to the directory where you want to work and clone your repository.
+   Inside the WSL2 terminal, navigate to the directory where you want to work and clone your repository.
 
 3. **Node.js, npm, yarn**
 
-- Install a specific version of Node.js using NVM (Node Version Manager):
+   Install a specific version of Node.js using NVM (Node Version Manager):
 
-  ```
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
-  ```
+   ```
+   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
+   ```
 
-  Restart your WSL2 terminal or run **source ~/.nvm/nvm.sh** to apply the changes.
+   Restart your WSL2 terminal or run **source ~/.nvm/nvm.sh** to apply the changes.
 
-  ```
-  nvm install 22.14.0
-  ```
+   ```
+   nvm install 22.21.1
+   ```
 
-  Should you encounter any problems, refer to [NVM Installation Guide](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating)
+   Should you encounter any problems, refer to [NVM Installation Guide](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating).
 
-  <br>
+   <br>
 
-- Enable Corepack to manage package managers like Yarn:
-  ```
-  corepack enable
-  ```
+   Enable Corepack to manage package managers like Yarn:
+
+   ```
+   corepack enable
+   ```
 
 4. **Android Studio**
 
-- Install Android Studio: [Download Android Studio](https://developer.android.com/studio)
+   Install Android Studio: [Download Android Studio](https://developer.android.com/studio)
 
 5. **WSL2 Configuration Script**
 
-- Run the following script to configure Android development tools:
+   In the root of the monorepo project, run the following script to configure Android development tools:
 
-  ```
-  ./wsl2-config.sh
-  ```
+   ```
+   ./wsl2-config.sh
+   source ~/.bashrc
+   ```
 
-- This script sets environment variables and creates a symbolic link for `adb`.
+   This script sets environment variables, configures the WSL network bridge for the emulator, and creates necessary shims for `adb`.
 
-6. **Final Steps**
+   > [!IMPORTANT] Maintenance Note: This script places a shim file inside your Android SDK folder. If you update your Android SDK Platform-Tools via Android Studio, that shim will be deleted. If you suddenly see `adb ENOENT` errors after an update, simply re-run this script to restore the environment.
 
-- Restart your WSL2 terminal or run `source ~/.bashrc` to apply the changes.
-- [Test your setup](#getting-started) by starting an Android emulator and running an Expo project.
+
+   **Troubleshooting**
+
+   If you run the setup script and see this error:
+
+   ```
+   Error: Could not detect Windows User Profile via cmd.exe.
+   ```
+
+   Ensure you are running this in a valid WSL2 environment.
+
+   **The Issue:** The WSL "Interop" service (which allows Linux to run Windows executables) has stalled or crashed. This often happens after Windows updates or long uptimes.
+
+   **The Fix:** You must fully restart the WSL subsystem. Closing the terminal is not enough.
+
+   1. Close all WSL terminals and VS Code windows.
+   2. Open PowerShell or Command Prompt in Windows.
+   3. Run: `wsl --shutdown`
+   4. Wait a few seconds, then reopen your WSL terminal and re-run the script.
+
+6. **Verify Setup**
+
+   Ensure the configuration was successful by checking the ADB version from your WSL terminal:
+
+   ```
+   adb --version
+   ```
+
+   Success: You should see output similar to `Android Debug Bridge version x.x.x.`
+
+7. **Launch the Application**
+
+   - Ensure your Android Emulator is running on Windows.
+   - Start the development server and launch the app:
+
+     ```
+     yarn nx run betterangels:start --android
+     ```
 
 **Conclusion**
 
@@ -309,7 +380,11 @@ This section provides guidelines to help new volunteer contributors get set up a
 
 ### Getting Started
 
-Follow these steps to get started as a contributor. Begin by following the [Installation Guide](#installation-guide) up to but not including **Step 6: Clone the monorepo**. Complete steps 1-3 below, then continue with the installation guide from **Step 7: Go to the monorepo and run yarn install**.
+Follow these steps to get started as a contributor. Begin by:
+
+1. Following the [Installation Guide](#installation-guide) up to but not including **Step 6: Clone the monorepo**.
+2. Complete steps 1-3 below
+3. Then continue with the installation guide from **Step 7: Go to the monorepo and run yarn install**.
 
 #### 1. Forking the Repository
 

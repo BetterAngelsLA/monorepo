@@ -1,0 +1,33 @@
+interactions:
+- request:
+    body: '{"client": {"first_name": "Edgar", "last_name": "Poe", "ssn3": "xxxx",
+      "name_quality": 1, "dob_quality": 99, "ssn_quality": 99}, "screenValues": {"alias":
+      null, "gender": [99], "name_middle": null, "name_suffix": null, "race_ethnicity":
+      [99], "veteran": 99}, "fields": "id,ssn1,screenValues.age,screenValues.additional_race_ethnicity_detail,ssn_quality,ssn3,last_name,screenValues.name_middle,ssn2,personal_id,screenValues.name_suffix,first_name,dob_quality,alias,unique_identifier,birth_date,screenValues.gender_identity_text,added_date,screenValues.race_ethnicity,name_quality,last_updated,screenValues.veteran,screenValues.gender"}'
+    headers: {}
+    method: POST
+    uri: ''
+  response:
+    body:
+      string: '{"id":392,"ssn1":"***","ssn2":"**","ssn3":"xxxx","first_name":"Edgar","last_name":"Poe","alias":null,"name_quality":1,"ssn_quality":99,"birth_date":null,"dob_quality":99,"unique_identifier":"7941206B0","added_date":"2025-11-19
+        23:42:34","last_updated":"2025-11-19 23:42:34","screenValues":{"name_middle":null,"name_suffix":null,"age":0,"gender":[99],"gender_identity_text":null,"race_ethnicity":[99],"additional_race_ethnicity_detail":null,"veteran":99},"personal_id":null}'
+    headers: {}
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"programId": 1, "screenValues": {"disabled": 99, "enrollment_coc": "Default",
+      "health_chronic": 99, "health_dev_disability": 99, "health_hiv": 99, "health_insurance":
+      99, "health_mental": 99, "health_phys_disability": 99, "health_substance_abuse":
+      99, "program_date": "2001-01-01"}, "fields": "ref_program,id,ref_client"}'
+    headers: {}
+    method: POST
+    uri: ''
+  response:
+    body:
+      string: '{"id":999,"ref_client":32,"ref_program":530}'
+    headers: {}
+    status:
+      code: 200
+      message: OK
+version: 1

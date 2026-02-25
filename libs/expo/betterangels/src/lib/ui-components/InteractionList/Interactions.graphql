@@ -1,0 +1,67 @@
+query Interactions(
+  $filters: NoteFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [NoteOrder!]! = []
+) {
+  notes(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    totalCount
+    pageInfo {
+      limit
+      offset
+    }
+    results {
+      id
+      purpose
+      team
+      organization {
+        id
+        name
+      }
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
+      }
+      providedServices {
+        id
+        service {
+          id
+          label
+        }
+      }
+      requestedServices {
+        id
+        service {
+          id
+          label
+        }
+      }
+      publicDetails
+      isSubmitted
+      clientProfile {
+        id
+        email
+        firstName
+        lastName
+        profilePhoto {
+          name
+          url
+        }
+      }
+      createdBy {
+        id
+        email
+        username
+        firstName
+        lastName
+      }
+      interactedAt
+    }
+  }
+}

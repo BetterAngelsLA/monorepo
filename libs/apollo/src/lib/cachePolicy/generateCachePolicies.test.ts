@@ -9,7 +9,7 @@ import {
   type MockInstance,
 } from 'vitest';
 import { generateCachePolicies } from './generateCachePolicies';
-import type { TCachePolicyConfig } from './types';
+import { TCachePolicyConfig } from './types';
 
 function fp(partial: Partial<FieldPolicy>): FieldPolicy {
   return {

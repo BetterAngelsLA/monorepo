@@ -1,5 +1,5 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { ElementType, useEffect, useState } from 'react';
-import { mergeCss } from '../../utils/styles/mergeCss';
 import { Checkbox as DefaultCheckbox, ICheckboxProps } from './Checkbox';
 
 const SELECT_ALL_KEY = 'select_all';

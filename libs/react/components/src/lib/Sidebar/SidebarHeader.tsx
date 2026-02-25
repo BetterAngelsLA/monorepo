@@ -1,4 +1,4 @@
-import { mergeCss } from '@monorepo/react/components';
+import { mergeCss } from '@monorepo/react/shared';
 import { ReactNode } from 'react';
 
 type TProps = {
@@ -9,9 +9,17 @@ type TProps = {
 export function SidebarHeader(props: TProps) {
   const { className, children } = props;
 
-  const parentCss = ['flex', 'w-full', 'mb-8', className];
+  const parentCss = [
+    'flex',
+    'w-full',
+    'h-16',
+    'items-center',
+    'mb-4',
+    'flex-shrink-0',
+    className,
+  ];
 
-  const headerContentCss = ['flex', 'flex-row'];
+  const headerContentCss = ['flex', 'flex-row', 'items-center'];
 
   return (
     <div className={mergeCss(parentCss)}>

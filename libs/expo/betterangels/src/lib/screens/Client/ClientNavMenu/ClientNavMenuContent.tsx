@@ -1,50 +1,22 @@
 import { DeleteIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { DeleteModal } from '@monorepo/expo/shared/ui-components';
-import { useDeleteClientProfile } from '../ClientProfile/hooks/useDeleteClientProfile';
 import { ClientNavMenuBtn } from './ClientNavMenuBtn';
+// ClientNavMenuContent.tsx
 
 type TProps = {
-  clientProfileId?: string;
-  onItemClick?: () => void;
+  onDeleteClick: () => void;
+  isDeleting?: boolean;
 };
 
-export function ClientNavMenuContent(props: TProps) {
-  const { clientProfileId, onItemClick } = props;
-
-  const { deleteProfile, loading: isDeleting } = useDeleteClientProfile({
-    clientProfileId,
-  });
-
-  const onDeleteClientProfile = async () => {
-    if (!clientProfileId || isDeleting) {
-      return;
-    }
-
-    await deleteProfile(clientProfileId);
-  };
-
+export function ClientNavMenuContent({ onDeleteClick, isDeleting }: TProps) {
   return (
-    <>
-      {clientProfileId && (
-        <DeleteModal
-          title="Delete Profile?"
-          body="All data associated with this client will be deleted. This action cannot be undone."
-          onDelete={() => {
-            onItemClick?.();
-            onDeleteClientProfile();
-          }}
-          button={
-            <ClientNavMenuBtn
-              disabled={isDeleting}
-              text="Delete Profile"
-              accessibilityHint="delete client profile"
-              color={Colors.ERROR}
-              icon={<DeleteIcon color={Colors.ERROR} size="sm" />}
-            />
-          }
-        />
-      )}
-    </>
+    <ClientNavMenuBtn
+      disabled={isDeleting}
+      text="Delete Profile"
+      accessibilityHint="delete client profile"
+      color={Colors.ERROR}
+      icon={<DeleteIcon color={Colors.ERROR} size="sm" />}
+      onPress={onDeleteClick}
+    />
   );
 }

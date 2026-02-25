@@ -9,7 +9,7 @@ import { MainModalActionBtn } from './MainModalActionBtn';
 import { MainModalCloseBtn } from './MainModalCloseBtn';
 
 export type TMainModalAction = {
-  title: string;
+  title: string | ReactNode;
   Icon: ElementType;
   route?: string;
   params?: Record<string, string>;
@@ -31,11 +31,14 @@ interface IMainModalProps {
   ml?: number;
   /** Fixed height or 'auto' */
   height?: DimensionValue;
+  /** Fired after the modal has fully closed (animation finished, unmounted). */
+  onCloseComplete?: () => void;
 }
 
 export function MainModal({
   isModalVisible,
   closeModal,
+  onCloseComplete,
   actions,
   bottomSection,
   topSection,
@@ -53,6 +56,7 @@ export function MainModal({
       title={null}
       isOpen={isModalVisible}
       onClose={closeModal}
+      onCloseComplete={onCloseComplete}
       variant="sheet"
       direction={vertical ? 'up' : 'right'}
       panelOffset={ml}
@@ -75,11 +79,13 @@ export function MainModal({
         {topSection}
 
         {actions.map((action, idx: number) => {
-          if (isValidElement(action))
+          if (isValidElement(action)) {
             return <Fragment key={idx}>{action}</Fragment>;
+          }
 
           const { title, route, params, Icon, onPress } =
             action as TMainModalAction;
+
           return (
             <MainModalActionBtn
               key={idx}

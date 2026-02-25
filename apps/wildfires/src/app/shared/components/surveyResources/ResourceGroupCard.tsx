@@ -1,6 +1,6 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { TResource } from '../../clients/sanityCms/types';
 import { sortByPriority } from '../../utils/sort';
-import { mergeCss } from '../../utils/styles/mergeCss';
 import { SectionBanner } from '../banners/SectionBanner';
 import { ResourceCard } from './ResourceCard';
 

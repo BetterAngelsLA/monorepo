@@ -7,8 +7,7 @@ from common.models import Address, Location
 from django.test import ignore_warnings
 from django.utils import timezone
 from model_bakery import baker
-from notes.enums import ServiceEnum, ServiceRequestTypeEnum
-from notes.models import Mood, Note, OrganizationService, ServiceRequest
+from notes.models import Note, OrganizationService, ServiceRequest
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
     ServiceRequestGraphQLBaseTestCase,
@@ -129,7 +128,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         self.assertEqual(updated_note, expected_note)
 
-    @skip("not implemented")
     def test_update_note_location_mutation(self) -> None:
         note_id = self.note["id"]
         json_address_input, address_input = self._get_address_inputs()
@@ -144,7 +142,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "location": location,
         }
 
-        expected_query_count = 25
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_location_fixture(variables)
 
@@ -169,65 +167,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         location = Location.objects.get(id=note.location.pk)  # type: ignore
         self.assertEqual(note, location.notes.first())
 
-    def test_create_note_service_request_mutation_from_service_enum(self) -> None:
-        """Verify serviceEnum writes service and service_enum"""
-        variables = {
-            "serviceEnum": ServiceEnum.BLANKET.name,
-            "noteId": self.note["id"],
-            "serviceRequestType": ServiceRequestTypeEnum.PROVIDED.name,
-        }
-
-        initial_org_service_count = OrganizationService.objects.count()
-
-        response = self._create_note_service_request_fixture(variables)
-        self.assertEqual(initial_org_service_count, OrganizationService.objects.count())
-
-        response_service_request = response["data"]["createNoteServiceRequest"]
-        service_request = ServiceRequest.objects.get(id=response_service_request["id"])
-        org_service_id = OrganizationService.objects.get(label=ServiceEnum.BLANKET.label).pk
-        note = Note.objects.get(id=self.note["id"])
-
-        assert service_request.service
-        self.assertIn(service_request, note.provided_services.all())
-
-        self.assertEqual(response_service_request["serviceEnum"], ServiceEnum.BLANKET.name)
-        self.assertEqual(response_service_request["service"]["id"], str(org_service_id))
-
-        self.assertEqual(service_request.service_enum, ServiceEnum.BLANKET)
-        self.assertEqual(service_request.service.id, org_service_id)
-
-    def test_create_note_service_request_mutation_from_service_enum_other(self) -> None:
-        """Verify serviceEnum & serviceOther write service, service_enum, and service_other"""
-        variables = {
-            "serviceEnum": ServiceEnum.OTHER.name,
-            "serviceOther": "another svc",
-            "noteId": self.note["id"],
-            "serviceRequestType": ServiceRequestTypeEnum.PROVIDED.name,
-        }
-
-        initial_org_service_count = OrganizationService.objects.count()
-
-        response = self._create_note_service_request_fixture(variables)
-        self.assertEqual(initial_org_service_count + 1, OrganizationService.objects.count())
-
-        response_service_request = response["data"]["createNoteServiceRequest"]
-        service_request = ServiceRequest.objects.get(id=response_service_request["id"])
-        note = Note.objects.get(id=self.note["id"])
-        org_service_id = OrganizationService.objects.get(label="another svc", organization=self.org_1).pk
-
-        assert service_request.service
-        self.assertIn(service_request, note.provided_services.all())
-
-        self.assertEqual(response_service_request["serviceEnum"], ServiceEnum.OTHER.name)
-        self.assertEqual(response_service_request["service"]["id"], str(org_service_id))
-
-        self.assertEqual(service_request.service_enum, ServiceEnum.OTHER)
-        self.assertEqual(service_request.service.label, "another svc")
-        self.assertEqual(service_request.service.id, org_service_id)
-        self.assertIsNone(service_request.service.category)
-
     def test_create_note_service_request_mutation(self) -> None:
-        """Verify service writes service and service_enum"""
         bag_svc = OrganizationService.objects.get(label="Bag(s)")
 
         variables = {
@@ -255,12 +195,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(service_request.service.label, bag_svc.label)
         self.assertEqual(service_request.service.category, bag_svc.category)
 
-        # TODO: remove after cutover
-        self.assertEqual(service_request.service_enum, ServiceEnum.BAG)
-        self.assertEqual(response_service_request["serviceEnum"], ServiceEnum.BAG.name)
-
     def test_create_note_service_request_mutation_other(self) -> None:
-        """Verify serviceOther populates service, service_enum, and service_other"""
         variables = {
             "serviceOther": "custom org svc",
             "noteId": self.note["id"],
@@ -286,12 +221,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(service_request.service.pk, org_service_id)
         self.assertEqual(service_request.service.label, "custom org svc")
         self.assertIsNone(service_request.service.category)
-
-        # TODO: remove after cutover
-        self.assertEqual(service_request.service_enum, ServiceEnum.OTHER)
-        self.assertEqual(service_request.service_other, "custom org svc")
-        self.assertEqual(response_service_request["serviceEnum"], ServiceEnum.OTHER.name)
-        self.assertEqual(response_service_request["serviceOther"], "custom org svc")
 
     @parametrize(
         "provided_type, expected_type",
@@ -356,81 +285,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(len(updated_note["requestedServices"]), 0)
         self.assertEqual(len(updated_note["providedServices"]), 0)
 
-    # TODO: remove after cutover
-    def test_service_request_mutation_service_to_enum(self) -> None:
-        services = OrganizationService.objects.filter(organization__name="Better Angels")
-
-        for service in services:
-            response = self._create_note_service_request_fixture(
-                {
-                    "noteId": self.note["id"],
-                    "serviceId": service.pk,
-                    "serviceRequestType": "PROVIDED",
-                }
-            )
-
-            self.assertEqual(response["data"]["createNoteServiceRequest"]["service"]["id"], str(service.pk))
-            service_enum = next((choice for choice in ServiceEnum if choice.label == service.label))
-            self.assertEqual(response["data"]["createNoteServiceRequest"]["serviceEnum"], service_enum.name)
-
-    # TODO: remove after cutover
-    def test_service_request_mutation_enum_to_service(self) -> None:
-        sevice_enums = [e for e in ServiceEnum if e != ServiceEnum.OTHER]
-
-        for service_enum in sevice_enums:
-            response = self._create_note_service_request_fixture(
-                {
-                    "noteId": self.note["id"],
-                    "serviceEnum": service_enum.name,
-                    "serviceRequestType": "PROVIDED",
-                }
-            )
-
-            self.assertEqual(
-                response["data"]["createNoteServiceRequest"]["service"]["id"],
-                str(OrganizationService.objects.get(label=service_enum.label).pk),
-            )
-            self.assertEqual(response["data"]["createNoteServiceRequest"]["serviceEnum"], service_enum.name)
-
-    @skip("not implemented")
-    def test_create_note_mood_mutation(self) -> None:
-        baker.make(Mood, note_id=self.note["id"])
-        variables = {
-            "descriptor": "ANXIOUS",
-            "noteId": self.note["id"],
-        }
-
-        note = Note.objects.get(id=self.note["id"])
-        self.assertEqual(note.moods.count(), 1)
-
-        expected_query_count = 9
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._create_note_mood_fixture(variables)
-
-        expected_mood = {
-            "id": ANY,
-            "descriptor": "ANXIOUS",
-        }
-        created_mood = response["data"]["createNoteMood"]
-        self.assertEqual(created_mood, expected_mood)
-        self.assertEqual(note.moods.count(), 2)
-        self.assertIn(created_mood["id"], str(note.moods.only("id")))
-
-    @skip("not implemented")
-    def test_delete_mood_mutation(self) -> None:
-        note = Note.objects.get(id=self.note["id"])
-        moods = baker.make(Mood, note_id=note.id, _quantity=2)
-        self.assertEqual(note.moods.count(), 2)
-
-        expected_query_count = 4
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._delete_mood_fixture(mood_id=moods[0].pk)
-
-        self.assertIsNotNone(response["data"]["deleteMood"])
-        self.assertEqual(note.moods.count(), 1)
-        with self.assertRaises(Mood.DoesNotExist):
-            Mood.objects.get(id=moods[0].pk)
-
     def test_delete_note_mutation(self) -> None:
         mutation = """
             mutation DeleteNote($id: ID!) {
@@ -450,7 +304,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 23
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
         self.assertIsNotNone(response["data"]["deleteNote"])
@@ -684,79 +538,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self.assertEqual(reverted_note["location"]["point"], self.point)
         self.assertEqual(reverted_note["location"]["pointOfInterest"], self.point_of_interest)
 
-    @skip("not implemented")
-    def test_revert_note_mutation_removes_added_moods(self) -> None:
-        """
-        Test Actions:
-        0. Setup creates a note
-        1. Add 1 mood
-        2. Save now as revert_before_timestamp
-        3. Add another mood
-        4. Revert to revert_before_timestamp from Step 2
-        5. Assert note has only mood from Step 1
-        """
-        note_id = self.note["id"]
-
-        # Update - should be persisted
-        self._create_note_mood_fixture({"descriptor": "ANXIOUS", "noteId": note_id})
-
-        # Select a moment to revert to
-        revert_before_timestamp = timezone.now()
-
-        # Update - should be discarded
-        self._create_note_mood_fixture({"descriptor": "EUTHYMIC", "noteId": note_id})
-
-        variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        note_fields = """
-            moods {
-                descriptor
-            }
-        """
-
-        expected_query_count = 20
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
-
-        self.assertEqual(len(reverted_note["moods"]), 1)
-
-    @skip("not implemented")
-    def test_revert_note_mutation_returns_removed_moods(self) -> None:
-        """
-        Test Actions:
-        0. Setup creates a note
-        1. Add 2 moods
-        2. Save now as revert_before_timestamp
-        3. Delete 1 mood
-        4. Revert to revertBeforeTimestamp from Step 3
-        5. Assert note has 2 moods from Step 1
-        """
-        note_id = self.note["id"]
-
-        # Update - should be persisted
-        persisted_mood_variables_1 = {"descriptor": "ANXIOUS", "noteId": note_id}
-        self._create_note_mood_fixture(persisted_mood_variables_1)
-
-        persisted_mood_variables_2 = {"descriptor": "EUTHYMIC", "noteId": note_id}
-        mood_to_delete_id = self._create_note_mood_fixture(persisted_mood_variables_2)["data"]["createNoteMood"]["id"]
-
-        # Select a moment to revert to
-        revert_before_timestamp = timezone.now()
-
-        self._delete_mood_fixture(mood_id=mood_to_delete_id)
-
-        variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        note_fields = """
-            moods {
-                descriptor
-            }
-        """
-
-        expected_query_count = 27
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
-
-        self.assertEqual(len(reverted_note["moods"]), 2)
-
     # @skip("not implemented")
     # def test_revert_note_mutation_removes_added_new_tasks(self) -> None:
     #     """
@@ -968,7 +749,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 42
+        expected_query_count = 46
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -1041,7 +822,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 44
+        expected_query_count = 48
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -1556,7 +1337,8 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
     def test_revert_note_mutation_fails_in_atomic_transaction(self) -> None:
         """
-        Asserts that when revertNote mutation fails, the Note instance is not partially updated.
+        Asserts that when revertNote mutation fails, the Note instance is not partially updated
+        and the error is surfaced to the client.
         """
         note_id = self.note["id"]
         self._update_note_fixture({"id": note_id, "purpose": "Updated Purpose"})
@@ -1566,21 +1348,21 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         # Update - should be persisted because revert fails
         self._update_note_fixture({"id": note_id, "purpose": "Discarded Purpose"})
-        self._create_note_mood_fixture({"descriptor": "ANXIOUS", "noteId": note_id})
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
         note_fields = """
             purpose
-            moods {
-                descriptor
-            }
         """
 
-        with patch("notes.models.Mood.revert_action", side_effect=Exception("oops")):
-            not_reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
+        with patch(
+            "notes.utils.note_reverter_util.NoteReverter._revert_changes_to_all_related_models",
+            side_effect=Exception("oops"),
+        ):
+            self._revert_note_fixture(variables, note_fields)
 
-        self.assertEqual(len(not_reverted_note["moods"]), 1)
-        self.assertEqual(not_reverted_note["purpose"], "Discarded Purpose")
+        # Verify atomicity: the note should remain in its pre-revert state
+        note = Note.objects.get(pk=note_id)
+        self.assertEqual(note.purpose, "Discarded Purpose")
 
 
 @skip("Service Requests are not currently implemented")

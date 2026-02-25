@@ -1,6 +1,6 @@
 import { BenefitsCalIcon, DeoIcon, EddIcon } from '@monorepo/react/icons';
+import { mergeCss } from '@monorepo/react/shared';
 import Fema from '../../../../assets/images/FEMA-Logo.png';
-import { mergeCss } from '../../utils/styles/mergeCss';
 import UsefulLinksCard from './UsefulLinksCard';
 
 type IParams = {

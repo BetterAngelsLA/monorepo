@@ -13,6 +13,7 @@ node_modules
 
 # IDEs and editors
 /.idea
+.claude/
 .project
 .classpath
 .c9/
@@ -69,6 +70,9 @@ cache/
 
 apps/betterangels-e2e/artifacts
 
+# iOS build files
+apps/betterangels/ios/
+
 # Python
 __pycache__
 .mypy_cache
@@ -89,3 +93,4 @@ vitest.config.*.timestamp*
 # storybook
 debug-storybook.log
 storybook-static
+.cache/

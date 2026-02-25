@@ -1,12 +1,8 @@
 from typing import Any, Dict
 
 from clients.models import ClientProfile
-from common.models import Address, Location
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.gis.geos import Point
 from model_bakery import baker
-from notes.enums import ServiceEnum
-from notes.models import OrganizationService, ServiceRequest
 from test_utils.mixins import HasGraphQLProtocol
 
 
@@ -48,8 +44,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     id
                     label
                 }
-                serviceEnum
-                serviceOther
                 dueBy
                 status
             }
@@ -59,8 +53,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     id
                     label
                 }
-                serviceEnum
-                serviceOther
                 dueBy
                 status
             }
@@ -70,17 +62,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.client_profile_2 = baker.make(ClientProfile, first_name="Harry", last_name="Truman")
         self._setup_note()
         self._setup_location()
-
-        ps = [ServiceEnum.BAG, ServiceEnum.BOOK]
-        rs = [ServiceEnum.EBT, ServiceEnum.FOOD]
-        self.provided_services = [
-            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s.label), service_enum=s)
-            for s in ps
-        ]
-        self.requested_services = [
-            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s.label), service_enum=s)
-            for s in rs
-        ]
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note
@@ -94,23 +75,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         )["data"]["createNote"]
         # Logout after setting up the note
         self.graphql_client.logout()
-
-    def _setup_location(self) -> None:
-        self.address = baker.make(
-            Address,
-            street=self.street,
-            city=self.city,
-            state=self.state,
-            zip_code=self.zip_code,
-        )
-        self.point = [-118.2437207, 34.0521723]
-        self.point_of_interest = "An Interesting Point"
-        self.location = baker.make(
-            Location,
-            address=self.address,
-            point=Point(self.point),
-            point_of_interest=self.point_of_interest,
-        )
 
     def _create_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_note_fixture("create", variables)
@@ -180,45 +144,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _create_note_mood_fixture(self, variables: Dict) -> Dict[str, Any]:
-        mutation: str = """
-            mutation CreateNoteMood($data: CreateNoteMoodInput!) {
-                createNoteMood(data: $data) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on MoodType {
-                        id
-                        descriptor
-                    }
-                }
-            }
-        """
-        return self.execute_graphql(mutation, {"data": variables})
-
-    def _delete_mood_fixture(self, mood_id: int) -> Dict[str, Any]:
-        mutation: str = """
-            mutation DeleteMood($id: ID!) {
-                deleteMood(data: { id: $id }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on DeletedObjectType {
-                        id
-                    }
-                }
-            }
-        """
-        return self.execute_graphql(mutation, {"id": mood_id})
-
     def _create_note_service_request_fixture(self, variables: Dict) -> Dict[str, Any]:
         mutation: str = """
             mutation CreateNoteServiceRequest($data: CreateNoteServiceRequestInput!) {
@@ -236,8 +161,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                             id
                             label
                         }
-                        serviceEnum
-                        serviceOther
                         status
                         dueBy
                         completedOn
@@ -323,8 +246,6 @@ class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
                     ... on ServiceRequestType {{
                         id
                         service
-                        serviceEnum
-                        serviceOther
                         status
                         dueBy
                         completedOn

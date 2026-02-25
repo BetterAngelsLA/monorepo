@@ -5,6 +5,7 @@ import django.db.models.deletion
 import django.utils.timezone
 import django_choices_field.fields
 import notes.enums
+import notes.deprecated.deprecated_enums
 from notes.permissions import NotePermissions, ServiceRequestPermissions, PrivateDetailsPermissions
 import pgtrigger.compiler
 from django.utils.translation import gettext_lazy as _
@@ -263,7 +264,7 @@ class Migration(migrations.Migration):
                             ("restless", "Restless"),
                             ("suicidal", "Suicidal"),
                         ],
-                        choices_enum=notes.enums.MoodEnum,
+                        choices_enum=notes.deprecated.deprecated_enums.MoodEnum,
                         max_length=20,
                     ),
                 ),
@@ -410,7 +411,7 @@ class Migration(migrations.Migration):
                             ("restless", "Restless"),
                             ("suicidal", "Suicidal"),
                         ],
-                        choices_enum=notes.enums.MoodEnum,
+                        choices_enum=notes.deprecated.deprecated_enums.MoodEnum,
                         max_length=20,
                     ),
                 ),
@@ -550,7 +551,7 @@ class Migration(migrations.Migration):
                             ("water", "Water"),
                             ("other", "Other"),
                         ],
-                        choices_enum=notes.enums.ServiceEnum,
+                        choices_enum=notes.deprecated.deprecated_enums.ServiceEnum,
                         max_length=14,
                     ),
                 ),
@@ -631,7 +632,7 @@ class Migration(migrations.Migration):
                             ("water", "Water"),
                             ("other", "Other"),
                         ],
-                        choices_enum=notes.enums.ServiceEnum,
+                        choices_enum=notes.deprecated.deprecated_enums.ServiceEnum,
                         max_length=14,
                     ),
                 ),
@@ -882,7 +883,7 @@ class Migration(migrations.Migration):
                             ("restless", "Restless"),
                             ("suicidal", "Suicidal"),
                         ],
-                        choices_enum=notes.enums.MoodEnum,
+                        choices_enum=notes.deprecated.deprecated_enums.MoodEnum,
                         max_length=20,
                     ),
                 ),
@@ -990,7 +991,7 @@ class Migration(migrations.Migration):
                             ("water", "Water"),
                             ("other", "Other"),
                         ],
-                        choices_enum=notes.enums.ServiceEnum,
+                        choices_enum=notes.deprecated.deprecated_enums.ServiceEnum,
                         max_length=14,
                     ),
                 ),

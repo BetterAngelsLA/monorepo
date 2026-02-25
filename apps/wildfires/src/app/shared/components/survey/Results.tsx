@@ -1,5 +1,5 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { useContext } from 'react';
-import { mergeCss } from '../../utils/styles/mergeCss';
 import { SurveyContext } from './provider/SurveyContext';
 import { QuestionHeader } from './shared/QuestionHeader';
 

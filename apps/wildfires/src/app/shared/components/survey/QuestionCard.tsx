@@ -1,4 +1,4 @@
-import { mergeCss } from '../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/react/shared';
 import { QuestionForm } from './QuestionForm';
 import { QuestionHeader } from './shared/QuestionHeader';
 import { TAnswer, TQuestion } from './types';

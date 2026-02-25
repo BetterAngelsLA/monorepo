@@ -3,14 +3,34 @@ platform: ${MAESTRO_PLATFORM}
 ---
 - openLink: betterangels-dev://expo-development-client/?url=https://u.expo.dev/${MAESTRO_PROJECT_ID}/group/${MAESTRO_GROUP_ID}?platform=${MAESTRO_PLATFORM}%26disableOnboarding%3D1
 
-- runFlow:
-    when:
-      platform: ios
-      visible: 'Open'
+# Loop until Better Angels appears or max 10 attempts; kill/relaunch if Reload is seen
+- evalScript: ${output.counter = 0}
+- repeat:
+    while:
+      true: ${output.counter < 10}
+      notVisible: 'Better Angels'
     commands:
-      - tapOn: 'Open'
+      - extendedWaitUntil:
+          visible: 'Reload'
+          timeout: 1000
+          optional: true
+      - runFlow:
+          when:
+            visible: 'Reload'
+          commands:
+            - takeScreenshot: error-restart-kill
+            - killApp
+            - openLink: betterangels-dev://expo-development-client/?url=https://u.expo.dev/${MAESTRO_PROJECT_ID}/group/${MAESTRO_GROUP_ID}?platform=${MAESTRO_PLATFORM}%26disableOnboarding%3D1
+      - runFlow:
+          when:
+            platform: ios
+            visible: 'Open'
+          commands:
+            - tapOn: 'Open'
+      - evalScript: ${output.counter = output.counter + 1}
 
-- assertVisible: 'Get Started'
+- assertVisible: 'Better Angels'
+- assertVisible: 'HMIS'
 - tapOn:
-    id: 'get-started-button'
+    id: 'better-angels-login'
 - assertVisible: 'Welcome!'

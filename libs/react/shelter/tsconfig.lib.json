@@ -2,8 +2,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
+    "module": "esnext",
+    "moduleResolution": "Bundler",
     "declaration": true,
-    "types": ["node"],
+    "types": ["node", "vite/client"],
     "composite": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],

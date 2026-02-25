@@ -7,6 +7,7 @@ export type TPickerItem = {
 
 export interface IPickerProps extends TMarginProps {
   onChange: (value: string | null) => void;
+  onAfterClose?: () => void;
   error?: string;
   selectedValue?: string | null;
   placeholder: string;
@@ -16,4 +17,6 @@ export interface IPickerProps extends TMarginProps {
   disabled?: boolean;
   selectNoneLabel?: string;
   allowSelectNone?: boolean;
+  modalTitle?: string;
+  placeholderTextColor?: string;
 }

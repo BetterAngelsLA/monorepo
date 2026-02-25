@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
       reporters: ['default'],
       passWithNoTests: true,
       coverage: {
+        include: ['src/**/*.{ts,tsx}'],
         reportsDirectory: '../../coverage/apps/storybook-react',
         provider: 'v8' as const,
       },

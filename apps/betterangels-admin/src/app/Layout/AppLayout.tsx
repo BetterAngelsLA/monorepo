@@ -1,5 +1,6 @@
 import { Navbar } from '@monorepo/react/betterangels-admin';
-import { Alert, AppDrawer, mergeCss } from '@monorepo/react/components';
+import { Alert, AppDrawer } from '@monorepo/react/components';
+import { mergeCss } from '@monorepo/react/shared';
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
@@ -19,7 +20,7 @@ export function AppLayout(props: IProps): ReactElement {
       <div className="flex flex-col flex-1">
         <Navbar />
 
-        <div className="flex-1 bg-white overflow-auto px-5 sm:px-20 py-[5.375rem]">
+        <div className="flex-1 bg-white overflow-auto px-5 sm:px-20 py-8">
           <Outlet />
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { ChevronUpIcon } from '@monorepo/react/icons';
+import { mergeCss } from '@monorepo/react/shared';
 import {
   PropsWithChildren,
   ReactElement,
@@ -8,7 +9,6 @@ import {
   useState,
 } from 'react';
 import { usePrint } from '../../../providers/PrintProvider';
-import { mergeCss } from '../../../utils/styles/mergeCss';
 
 interface IProps extends PropsWithChildren {
   className?: string;

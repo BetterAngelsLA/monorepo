@@ -57,14 +57,14 @@ type HiddenMeasureRowProps = {
 // Hidden measurer
 // Only renders labels we *haven't* cached yet (+ current overflow probe)
 // =======================
-const HiddenMeasureRow: React.FC<HiddenMeasureRowProps> = ({
+const HiddenMeasureRow = ({
   pillsToMeasure,
   pillVariant,
   onPillWidth,
   overflowProbe,
   onOverflowWidth,
   gap,
-}) => (
+}: HiddenMeasureRowProps): React.ReactElement => (
   <View
     style={{ opacity: 0, height: 0, overflow: 'hidden' }}
     collapsable={false}
@@ -100,7 +100,7 @@ const HiddenMeasureRow: React.FC<HiddenMeasureRowProps> = ({
 // =======================
 const byCase = (s: string, ci: boolean) => (ci ? s.toLowerCase() : s);
 
-export const SinglePillRow: React.FC<SinglePillRowProps> = React.memo(
+export const SinglePillRow = React.memo(
   ({
     pills,
     pillVariant,
@@ -110,7 +110,7 @@ export const SinglePillRow: React.FC<SinglePillRowProps> = React.memo(
     caseInsensitive = false,
     estimateCharWidth = 7,
     estimateBasePadding = 22,
-  }) => {
+  }: SinglePillRowProps): React.ReactElement => {
     const fontScale = PixelRatio.getFontScale(); // include user accessibility setting in cache key
 
     // UI state

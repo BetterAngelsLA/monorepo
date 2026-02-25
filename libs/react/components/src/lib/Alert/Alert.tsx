@@ -14,9 +14,9 @@
  * */
 
 import { CloseIcon } from '@monorepo/react/icons';
+import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { ReactElement, useEffect, useState } from 'react';
-import { mergeCss } from '../../utils';
 import {
   ANIMATION,
   CLOSE_ANIMATION_TIMING,
@@ -53,9 +53,13 @@ export function Alert(): ReactElement | null {
     }
 
     return;
-  }, [visible, shouldRender]);
+  }, [setAlert, visible, shouldRender]);
 
   if (!shouldRender) {
+    return null;
+  }
+
+  if (!alert) {
     return null;
   }
 
@@ -69,7 +73,7 @@ export function Alert(): ReactElement | null {
     });
   }
 
-  const { content, type } = alert!;
+  const { content, type } = alert;
   const { color, Icon } = alertConfig[type];
 
   const parentCss = [
