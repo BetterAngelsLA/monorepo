@@ -1,4 +1,5 @@
 import { useQuery } from '@apollo/client/react';
+import { useUser } from '@monorepo/react/shelter';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Shelter, ShelterRow } from '../../components/ShelterRow';
@@ -6,7 +7,6 @@ import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
-import { useUser } from '@monorepo/react/shelter';
 
 const PAGE_SIZE = 8;
 
@@ -18,11 +18,12 @@ export default function Dashboard() {
   );
 
   // Sync selectedOrganizationId when user data loads asynchronously
+  const orgId = user?.organization?.id;
   useEffect(() => {
-    if (!selectedOrganizationId && user?.organization?.id) {
-      setSelectedOrganizationId(user.organization.id);
+    if (orgId && !selectedOrganizationId) {
+      setSelectedOrganizationId(orgId);
     }
-  }, [user?.organization?.id, selectedOrganizationId]);
+  }, [orgId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data, loading, error } = useQuery(
     ViewSheltersByOrganizationDocument,

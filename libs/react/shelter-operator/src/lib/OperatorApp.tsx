@@ -9,9 +9,9 @@ export function OperatorApp() {
   return (
     <OperatorAuthProvider>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route index element={<Dashboard />} />
         <Route path="dashboard/create" element={<CreateShelterForm />} />
-        <Route path="/shelter/:id" element={<ShelterDashboardPage />} />
+        <Route path="shelter/:id" element={<ShelterDashboardPage />} />
         <Route path="sign-in" element={<SignIn />} />
       </Routes>
     </OperatorAuthProvider>

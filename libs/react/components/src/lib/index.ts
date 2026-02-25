@@ -1,3 +1,4 @@
+export * from './AddressAutocomplete/AddressAutocomplete';
 export * from './Alert';
 export * from './AppDrawer';
 export * from './BetterAngelsLogoBadge';
@@ -15,7 +16,6 @@ export * from './InfiniteList';
 export * from './InfiniteScrollTrigger';
 export * from './LoadingSpinner';
 export * from './LoadingView';
-export * from './AddressAutocomplete/AddressAutocomplete';
 export * from './Map/constants.maps';
 export * from './Map/Map';
 export * from './Map/types.maps';
