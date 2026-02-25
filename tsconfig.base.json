@@ -43,7 +43,10 @@
       "@monorepo/react/shelter-operator": [
         "libs/react/shelter-operator/src/index.ts"
       ],
-      "@monorepo/react/storybook": ["libs/react/storybook/src/index.ts"]
+      "@monorepo/react/storybook": ["libs/react/storybook/src/index.ts"],
+      "@monorepo/shared/places": ["libs/shared/places/src/index.ts"],
+      "@monorepo/shared/units": ["libs/shared/units/src/index.ts"],
+      "@monorepo/signing-fingerprint": ["libs/expo/modules/signing-fingerprint/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

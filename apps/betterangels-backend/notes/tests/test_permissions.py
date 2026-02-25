@@ -1,8 +1,7 @@
 from typing import Optional
 from unittest import skip
 
-from model_bakery import baker
-from notes.models import Mood, Note, OrganizationService, ServiceRequest
+from notes.models import Note, OrganizationService, ServiceRequest
 from notes.tests.utils import NoteGraphQLBaseTestCase, ServiceRequestGraphQLBaseTestCase
 from unittest_parametrize import parametrize
 
@@ -282,60 +281,6 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         private_details_visible = len([note for note in notes_data if note.get("privateDetails") is not None])
 
         self.assertEqual(private_details_visible, expected_private_details_count)
-
-
-@skip("not implemented")
-class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
-    @parametrize(
-        "user_label, should_succeed",
-        [
-            ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
-            (None, False),  # Anonymous user should not succeed
-        ],
-    )
-    def test_create_note_mood_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
-        self._handle_user_login(user_label)
-
-        variables = {
-            "descriptor": "AGREEABLE",
-            "noteId": self.note["id"],
-        }
-        response = self._create_note_mood_fixture(variables)
-
-        if should_succeed:
-            self.assertIsNotNone(response["data"]["createNoteMood"]["id"])
-        else:
-            if user_label == "org_2_case_manager_1":
-                self.assertEqual(
-                    response["errors"][0]["message"],
-                    "You do not have permission to modify this note.",
-                )
-            elif user_label is None:
-                self.assertGraphQLUnauthenticated(response)
-            else:
-                self.assertEqual(
-                    response["errors"][0]["message"],
-                    "You must be logged in to perform this action.",
-                )
-        self.assertTrue(Mood.objects.filter(note_id=self.note["id"]).exists() == should_succeed)
-
-    @parametrize(
-        "user_label, should_succeed",
-        [
-            ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
-            (None, False),  # Anonymous user should not succeed
-        ],
-    )
-    def test_delete_mood_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
-        self._handle_user_login(user_label)
-        mood = baker.make(Mood, note_id=self.note["id"])
-        self._delete_mood_fixture(mood_id=mood.pk)
-
-        self.assertTrue(Mood.objects.filter(id=mood.pk).exists() != should_succeed)
 
 
 class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):

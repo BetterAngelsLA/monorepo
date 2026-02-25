@@ -20,7 +20,7 @@ import TextRegular from '../TextRegular';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-interface IBasicInputProps extends TextInputProps {
+export interface IBasicInputProps extends TextInputProps {
   label?: string;
   height?: 40 | 44 | 56 | 200;
   required?: boolean;

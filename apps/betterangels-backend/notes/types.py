@@ -106,23 +106,11 @@ class UpdateServiceRequestInput:
     due_by: auto
 
 
-@strawberry_django.type(models.Mood)
-class MoodType:
-    id: ID
-    descriptor: auto
-
-
 @strawberry.input
 class RemoveNoteServiceRequestInput:
     service_request_id: ID
     note_id: ID
     service_request_type: ServiceRequestTypeEnum
-
-
-@strawberry_django.input(models.Mood)
-class CreateNoteMoodInput:
-    descriptor: auto
-    note_id: ID
 
 
 @strawberry_django.order_type(models.Note, one_of=False)
@@ -175,7 +163,6 @@ class NoteType:
     interacted_at: auto
     is_submitted: auto
     location: Optional[LocationType]
-    moods: List[MoodType]
     organization: OrganizationType
     provided_services: List[ServiceRequestType]
     public_details: auto

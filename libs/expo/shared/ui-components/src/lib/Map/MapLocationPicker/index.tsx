@@ -1,30 +1,26 @@
 import {
-  getPlaceDetailsById,
-  reverseGeocode,
-} from '@monorepo/expo/shared/services';
-import { useApiConfig } from '@monorepo/expo/shared/clients';
-import {
   LocationArrowIcon,
   LocationPinIcon,
   SearchIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import BasicInput from '../../BasicInput';
-import IconButton from '../../IconButton';
-import TextRegular from '../../TextRegular';
-import * as ExpoLocation from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import RNMapView, {
-  Marker,
-  PROVIDER_GOOGLE,
   MapPressEvent,
+  Marker,
   PoiClickEvent,
+  PROVIDER_GOOGLE,
 } from 'react-native-maps';
 import openMap from 'react-native-open-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { TMapView } from '../types';
+import BasicInput from '../../BasicInput';
+import IconButton from '../../IconButton';
+import TextRegular from '../../TextRegular';
+import { useGooglePlaces } from '../../providers/GooglePlacesProvider';
 import { MapDirectionsActionSheet } from '../MapDirectionsActionSheet';
+import type { TMapView } from '../types';
+import { getUserLocation } from '../utils/getUserLocation';
 import { SelectedLocationPanel } from './SelectedLocationPanel';
 import { IMapLocationPickerProps, TLocationData } from './types';
 import { useLocationSearch } from './useLocationSearch';
@@ -39,7 +35,7 @@ export function MapLocationPicker({
   onClose,
   userLocation: propUserLocation,
 }: IMapLocationPickerProps) {
-  const { baseUrl } = useApiConfig();
+  const places = useGooglePlaces();
   const mapRef = useRef<TMapView>(null);
   const insets = useSafeAreaInsets();
 
@@ -64,7 +60,6 @@ export function MapLocationPicker({
     selectSuggestion,
     clear: clearSearch,
   } = useLocationSearch({
-    baseUrl,
     onSelect: (loc) => {
       setLocation(loc);
       setMinimized(false);
@@ -108,20 +103,16 @@ export function MapLocationPicker({
     ): Promise<TLocationData> => {
       try {
         if (placeId) {
-          const r = await getPlaceDetailsById({ baseUrl, placeId });
+          const r = await places.getDetails(placeId);
           return {
             latitude: lat,
             longitude: lng,
-            name: poiName || r.formatted_address?.split(', ')[0] || '',
-            address: r.formatted_address || '',
-            addressComponents: r.address_components || [],
+            name: poiName || r.formattedAddress?.split(', ')[0] || '',
+            address: r.formattedAddress || '',
+            addressComponents: r.addressComponents || [],
           };
         }
-        const r = await reverseGeocode({
-          baseUrl,
-          latitude: lat,
-          longitude: lng,
-        });
+        const r = await places.reverseGeocode(lat, lng);
         return {
           latitude: lat,
           longitude: lng,
@@ -140,7 +131,7 @@ export function MapLocationPicker({
         };
       }
     },
-    [baseUrl]
+    [places]
   );
 
   // Handlers
@@ -180,12 +171,9 @@ export function MapLocationPicker({
     try {
       let loc = userLocation;
       if (!loc) {
-        const { status } =
-          await ExpoLocation.requestForegroundPermissionsAsync();
-        if (status !== 'granted') return;
-        loc = await ExpoLocation.getCurrentPositionAsync({
-          accuracy: ExpoLocation.Accuracy.Balanced,
-        });
+        const result = await getUserLocation();
+        loc = result?.location ?? null;
+        if (!loc) return;
         setUserLocation(loc);
       }
       animateMap(loc.coords.latitude, loc.coords.longitude);

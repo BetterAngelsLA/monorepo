@@ -17,7 +17,7 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
 
-from .enums import MoodEnum, ServiceRequestStatusEnum
+from .enums import ServiceRequestStatusEnum
 
 if TYPE_CHECKING:
     from pghistory.models import Events
@@ -221,21 +221,6 @@ class NoteRequestedServices(Note.requested_services.through):  # type: ignore[na
 
         elif action == "remove":
             note.requested_services.add(service_request)
-
-
-@pghistory.track(
-    pghistory.InsertEvent("mood.add"),
-    pghistory.DeleteEvent("mood.remove"),
-)
-class Mood(BaseModel):
-    descriptor = TextChoicesField(choices_enum=MoodEnum)
-    note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
-
-    objects = models.Manager()
-
-    def revert_action(self, action: str, *args: Any, **kwargs: Any) -> None:
-        if action == "add":
-            self.delete()
 
 
 class NoteUserObjectPermission(UserObjectPermissionBase):

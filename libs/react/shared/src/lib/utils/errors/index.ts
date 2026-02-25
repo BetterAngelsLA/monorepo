@@ -1,0 +1,1 @@
+export { toError } from './toError';

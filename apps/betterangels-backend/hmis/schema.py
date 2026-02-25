@@ -10,6 +10,7 @@ from common.errors import UnauthenticatedGQLError
 from common.graphql.decorators import (
     apply_schema_directives_and_permissions_to_all_fields,
 )
+from common.graphql.types import DeletedObjectType
 from common.models import Location, PhoneNumber
 from common.permissions.utils import IsAuthenticated
 from django.contrib.auth import get_user_model
@@ -312,6 +313,27 @@ class Mutation:
         hmis_note.client_program = client_program  # type: ignore
 
         return cast(HmisNoteType, hmis_note)
+
+    @strawberry_django.mutation
+    def delete_hmis_note(self, info: Info, id: ID) -> DeletedObjectType:
+        try:
+            hmis_note = HmisNote.objects.get(pk=id)
+        except HmisNote.DoesNotExist:
+            raise ObjectDoesNotExist(f"Note matching ID {id} could not be found.")
+
+        if not hmis_note.hmis_client_profile.hmis_id:
+            raise ValidationError("Missing Client hmis_id")
+
+        hmis_api_bridge = HmisApiBridge(info=info)
+        hmis_api_bridge.delete_note(
+            client_hmis_id=hmis_note.hmis_client_profile.hmis_id,
+            note_hmis_id=hmis_note.hmis_id,
+        )
+
+        note_id = hmis_note.id
+        hmis_note.delete()
+
+        return DeletedObjectType(id=note_id)
 
     @strawberry_django.mutation
     def create_hmis_client_program(self, info: Info, client_id: int, program_hmis_id: int) -> ProgramEnrollmentType:

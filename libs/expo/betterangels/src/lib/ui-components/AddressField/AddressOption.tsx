@@ -1,7 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { TouchableOpacity } from 'react-native';
-import { TPlacePrediction } from '@monorepo/expo/shared/services';
+import { TPlacePrediction } from '@monorepo/shared/places';
 
 type TAddressOption = {
   item: TPlacePrediction;

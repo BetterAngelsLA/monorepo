@@ -1,4 +1,3 @@
-import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
@@ -33,17 +32,11 @@ interface ILocationProps {
 export default function HmisLocationComponent(props: ILocationProps) {
   const { expanded, setExpanded, editing, error } = props;
 
-  const { baseUrl } = useApiConfig();
   const { showModalScreen } = useModalScreen();
   const { setValue, watch } = useFormContext();
   const location = watch('location');
 
-  const [userLocation] = useInitialLocation(
-    baseUrl,
-    editing,
-    location,
-    setValue
-  );
+  const [userLocation] = useInitialLocation(editing, location, setValue);
 
   const setLocation = (locationData: LocationDraft) => {
     setValue('location', locationData, {

@@ -8,12 +8,14 @@ import {
   UpdateNoteLocationDocument,
   useModalScreen,
 } from '@monorepo/expo/betterangels';
-import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
-import { reverseGeocode } from '@monorepo/expo/shared/services';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
-import * as ExpoLocation from 'expo-location';
+import {
+  FieldCard,
+  TextMedium,
+  getUserLocation,
+  useGooglePlaces,
+} from '@monorepo/expo/shared/ui-components';
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -75,7 +77,7 @@ export default function LocationComponent(props: ILocationProps) {
     setErrors,
   } = props;
 
-  const { baseUrl } = useApiConfig();
+  const places = useGooglePlaces();
   const [updateNoteLocation] = useMutation(UpdateNoteLocationDocument);
 
   const [location, setLocation] = useState<TLocation>({
@@ -117,7 +119,9 @@ export default function LocationComponent(props: ILocationProps) {
             address: data.address
               ? {
                   formattedAddress: data.address,
-                  addressComponents: JSON.stringify(data.addressComponents),
+                  addressComponents: JSON.stringify(
+                    data.addressComponents ?? []
+                  ),
                 }
               : null,
           },
@@ -137,63 +141,59 @@ export default function LocationComponent(props: ILocationProps) {
 
     autoFilledRef.current = true;
 
-    const autoSetInitialLocation = async () => {
-      try {
-        let latitude = INITIAL_LOCATION.latitude;
-        let longitude = INITIAL_LOCATION.longitude;
+    const geocodeAndSave = async (lat: number, lng: number) => {
+      const geocodeResult = await places.reverseGeocode(lat, lng);
 
-        const { status } =
-          await ExpoLocation.requestForegroundPermissionsAsync();
+      const newLocation: TLocation = {
+        latitude: lat,
+        longitude: lng,
+        address: geocodeResult.formattedAddress,
+        name: geocodeResult.shortAddress,
+      };
 
-        if (status === 'granted') {
-          const userCurrentLocation =
-            await ExpoLocation.getCurrentPositionAsync({
-              accuracy: ExpoLocation.Accuracy.Balanced,
-            });
-          latitude = userCurrentLocation.coords.latitude;
-          longitude = userCurrentLocation.coords.longitude;
-        }
+      setLocation(newLocation);
 
-        const geocodeResult = await reverseGeocode({
-          baseUrl,
-          latitude,
-          longitude,
-        });
-
-        const newLocation: TLocation = {
-          latitude,
-          longitude,
-          address: geocodeResult.formattedAddress,
-          name: geocodeResult.shortAddress,
-        };
-
-        setLocation(newLocation);
-
-        await updateNoteLocation({
-          variables: {
-            data: {
-              id: noteId,
-              location: {
-                point: [longitude, latitude],
-                address: geocodeResult.formattedAddress
-                  ? {
-                      formattedAddress: geocodeResult.formattedAddress,
-                      addressComponents: JSON.stringify(
-                        geocodeResult.addressComponents
-                      ),
-                    }
-                  : null,
-              },
+      await updateNoteLocation({
+        variables: {
+          data: {
+            id: noteId,
+            location: {
+              point: [lng, lat],
+              address: geocodeResult.formattedAddress
+                ? {
+                    formattedAddress: geocodeResult.formattedAddress,
+                    addressComponents: JSON.stringify(
+                      geocodeResult.addressComponents ?? []
+                    ),
+                  }
+                : null,
             },
           },
+        },
+      });
+    };
+
+    const autoSetInitialLocation = async () => {
+      try {
+        const result = await getUserLocation({
+          onRefine: (refined) => {
+            geocodeAndSave(refined.coords.latitude, refined.coords.longitude);
+          },
         });
+
+        const coords = result?.location?.coords;
+
+        await geocodeAndSave(
+          coords?.latitude ?? INITIAL_LOCATION.latitude,
+          coords?.longitude ?? INITIAL_LOCATION.longitude
+        );
       } catch (err) {
         console.error('Error auto-setting initial location', err);
       }
     };
 
     void autoSetInitialLocation();
-  }, [point, address, baseUrl, noteId, updateNoteLocation, location]);
+  }, [point, address, places, noteId, updateNoteLocation, location]);
 
   return (
     <FieldCard

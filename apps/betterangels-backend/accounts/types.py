@@ -6,7 +6,7 @@ from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions
 from common.constants import HMIS_SESSION_KEY_NAME
-from common.graphql.types import NonBlankString
+from common.graphql.types import NonBlankString, NonEmptyString
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import CharField, F, Q, QuerySet, Value
 from django.db.models.functions import Concat
@@ -199,6 +199,12 @@ class OrgInvitationInput:
     middle_name: Optional[str] = None
     last_name: str
     organization_id: ID
+
+
+@strawberry.input
+class UpdateUserProfileInput:
+    first_name: Optional[NonEmptyString] = strawberry.UNSET
+    last_name: Optional[NonEmptyString] = strawberry.UNSET
 
 
 @strawberry.input

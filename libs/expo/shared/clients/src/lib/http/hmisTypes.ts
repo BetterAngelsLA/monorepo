@@ -101,6 +101,22 @@ export const ALLOWED_FILE_TYPES = [
 export type AllowedFileType = (typeof ALLOWED_FILE_TYPES)[number];
 
 /**
+ * uploadClientFile input params
+ */
+export type UploadClientFileParams = {
+  clientId: string | number;
+  file: {
+    content: string;
+    name: string;
+    mimeType: AllowedFileType;
+  };
+  categoryId: number;
+  fileNameId: number;
+  isPrivate?: boolean | null;
+  customFileName?: string;
+};
+
+/**
  * Client file upload request payload
  */
 export interface ClientFileUploadRequest {
@@ -108,6 +124,7 @@ export interface ClientFileUploadRequest {
     ref_category: number;
     ref_file_name: number;
     private: boolean | null;
+    name?: string;
   };
   base64_file_content: string; // Data URI format: "data:mime/type;base64,encodedcontent"
   file_name: string;
@@ -145,6 +162,16 @@ export interface ClientFileUploadResponse {
   dateUpdated: unknown;
   creator: unknown;
   clientId: string;
+}
+
+/**
+ * Client profile photo upload response.
+ */
+export interface ClientPhotoUploadResponse {
+  success: boolean;
+  data: {
+    content: string;
+  };
 }
 /**
  * File category information
