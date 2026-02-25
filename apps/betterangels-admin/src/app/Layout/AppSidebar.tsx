@@ -38,18 +38,16 @@ export function AppSidebar(props: IProps) {
             Users
           </Sidebar.Link>
         )}
-        {user?.canAccessOrgPortal && (
-          <Sidebar.Link
-            to="/reports"
-            isActive={location.pathname === '/reports'}
-            collapsed={!isOpen}
-            icon={(color: string) => (
-              <BarChartIcon className="w-4" fill={color} />
-            )}
-          >
-            Reports
-          </Sidebar.Link>
-        )}
+        <Sidebar.Link
+          to="/reports"
+          isActive={location.pathname === '/reports'}
+          collapsed={!isOpen}
+          icon={(color: string) => (
+            <BarChartIcon className="w-4" fill={color} />
+          )}
+        >
+          Reports
+        </Sidebar.Link>
       </Sidebar.Content>
     </Sidebar>
   );
