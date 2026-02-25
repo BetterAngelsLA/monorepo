@@ -21,7 +21,7 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.0.60',
+    version: '1.0.61',
     orientation: 'portrait',
     icon: IS_PRODUCTION
       ? './src/app/assets/images/icon.png'
@@ -34,7 +34,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.0.71',
+      buildNumber: '1.0.72',
       associatedDomains: [`applinks:${HOSTNAME}`],
       config: {
         usesNonExemptEncryption: false,
@@ -70,7 +70,7 @@ export default {
         },
       ],
       config: {},
-      versionCode: 70,
+      versionCode: 71,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
@@ -156,6 +156,9 @@ export default {
       eas: {
         projectId: '53171ba4-60ca-40cb-b3e6-b0c2393677b8',
       },
+      iosGoogleMapsApiKey: process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY,
+      androidGoogleMapsApiKey:
+        process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
     },
     newArchEnabled: true,
     owner: 'better-angels',
