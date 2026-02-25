@@ -1,5 +1,4 @@
-from collections import Counter
-from datetime import date, timedelta
+from datetime import date
 from typing import List, Optional, cast
 
 import strawberry
@@ -7,13 +6,11 @@ import strawberry_django
 from accounts.models import Organization, User
 from accounts.permissions import UserOrganizationPermissions
 from common.permissions.utils import IsAuthenticated
-from django.db.models import Count
-from django.db.models.functions import TruncDate
-from django.utils import timezone
-from notes.models import Note
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.utils.query import filter_for_user
+
+from .selectors import get_default_date_range, get_report_summary
 
 
 @strawberry.type
@@ -61,90 +58,20 @@ class Query:
         if org is None:
             raise PermissionError("You do not have access to any organization portal.")
 
-        # Default to current month if no dates provided
-        now = timezone.now()
-        if start_date is None:
-            start_date = date(now.year, now.month, 1)
-        if end_date is None:
-            # Last day of the current month
-            if now.month == 12:
-                end_date = date(now.year + 1, 1, 1) - timedelta(days=1)
-            else:
-                end_date = date(now.year, now.month + 1, 1) - timedelta(days=1)
+        if start_date is None or end_date is None:
+            default_start, default_end = get_default_date_range()
+            start_date = start_date or default_start
+            end_date = end_date or default_end
 
-        # Query range is inclusive of end_date, so we add 1 day for the filter
-        filter_end = end_date + timedelta(days=1)
-
-        notes_qs = Note.objects.filter(
-            interacted_at__gte=start_date,
-            interacted_at__lt=filter_end,
-            organization=org,
-        )
-
-        total_notes = notes_qs.count()
-
-        # Notes by date (for timeline chart)
-        notes_by_date_raw = list(
-            notes_qs.annotate(trunc_date=TruncDate("interacted_at"))
-            .values("trunc_date")
-            .annotate(count=Count("id"))
-            .order_by("trunc_date")
-        )
-        notes_by_date = [
-            DateCountType(date=entry["trunc_date"].isoformat(), count=entry["count"]) for entry in notes_by_date_raw
-        ]
-
-        # Notes by team (for bar chart)
-        notes_by_team_raw = list(
-            notes_qs.exclude(team__isnull=True)
-            .exclude(team="")
-            .values("team")
-            .annotate(count=Count("id"))
-            .order_by("-count")
-        )
-        notes_by_team = []
-        for entry in notes_by_team_raw:
-            try:
-                from common.enums import SelahTeamEnum
-
-                display = SelahTeamEnum(entry["team"]).label
-            except (ValueError, KeyError):
-                display = entry["team"]
-            notes_by_team.append(NameCountType(name=display, count=entry["count"]))
-
-        # Notes by purpose (for pie chart)
-        notes_by_purpose_raw = list(
-            notes_qs.exclude(purpose__isnull=True)
-            .exclude(purpose="")
-            .values("purpose")
-            .annotate(count=Count("id"))
-            .order_by("-count")[:10]
-        )
-        notes_by_purpose = [
-            NameCountType(name=entry["purpose"], count=entry["count"]) for entry in notes_by_purpose_raw
-        ]
-
-        # Top provided services
-        provided_services: Counter[str] = Counter()
-        for note in notes_qs.prefetch_related("provided_services__service"):
-            for sr in note.provided_services.all():
-                provided_services[str(sr.service.label)] += 1
-        top_provided = [NameCountType(name=name, count=count) for name, count in provided_services.most_common(15)]
-
-        # Top requested services
-        requested_services: Counter[str] = Counter()
-        for note in notes_qs.prefetch_related("requested_services__service"):
-            for sr in note.requested_services.all():
-                requested_services[str(sr.service.label)] += 1
-        top_requested = [NameCountType(name=name, count=count) for name, count in requested_services.most_common(15)]
+        summary = get_report_summary(org, start_date, end_date)
 
         return ReportSummaryType(
-            total_notes=total_notes,
-            start_date=start_date.isoformat(),
-            end_date=end_date.isoformat(),
-            notes_by_date=notes_by_date,
-            notes_by_team=notes_by_team,
-            notes_by_purpose=notes_by_purpose,
-            top_provided_services=top_provided,
-            top_requested_services=top_requested,
+            total_notes=summary["total_notes"],
+            start_date=summary["start_date"],
+            end_date=summary["end_date"],
+            notes_by_date=[DateCountType(**d) for d in summary["notes_by_date"]],
+            notes_by_team=[NameCountType(**d) for d in summary["notes_by_team"]],
+            notes_by_purpose=[NameCountType(**d) for d in summary["notes_by_purpose"]],
+            top_provided_services=[NameCountType(**d) for d in summary["top_provided_services"]],
+            top_requested_services=[NameCountType(**d) for d in summary["top_requested_services"]],
         )

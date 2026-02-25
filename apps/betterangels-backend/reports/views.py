@@ -1,122 +1,82 @@
-"""Reports app REST views for on-demand CSV export."""
+"""Reports app DRF views for on-demand CSV export."""
 
 from datetime import datetime, timedelta
 
-from accounts.permissions import UserOrganizationPermissions
-from django.contrib.auth.decorators import login_required
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.utils import timezone
 from notes.admin import NoteResource
-from notes.models import Note
-from organizations.models import Organization
+from rest_framework import serializers, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .permissions import HasOrgPortalAccess
+from .selectors import get_notes_for_org
 
 
-def _get_org_and_check_permission(request: HttpRequest) -> Organization | JsonResponse:
-    """Validate the user has an org and ACCESS_ORG_PORTAL permission. Returns org or error response."""
-    user = request.user
-    org = Organization.objects.filter(users=user).first()
-    if not org:
-        return JsonResponse({"error": "You are not a member of any organization."}, status=403)
-    if not user.has_perm(UserOrganizationPermissions.ACCESS_ORG_PORTAL, org):
-        return JsonResponse({"error": "You do not have permission to export reports."}, status=403)
-    return org
+class DateRangeSerializer(serializers.Serializer):
+    """Validates and parses date-range query parameters."""
+
+    start_date = serializers.DateField(required=False)
+    end_date = serializers.DateField(required=False)
+    # Legacy single-month params
+    month = serializers.IntegerField(required=False, min_value=1, max_value=12)
+    year = serializers.IntegerField(required=False, min_value=2000, max_value=2100)
+
+    def validate(self, attrs):
+        start = attrs.get("start_date")
+        end = attrs.get("end_date")
+
+        if start and end:
+            if start > end:
+                raise serializers.ValidationError("start_date must be before or equal to end_date.")
+            attrs["_resolved_start"] = start
+            attrs["_resolved_end"] = end
+            return attrs
+
+        # Fallback to month/year (legacy)
+        now = timezone.now()
+        month = attrs.get("month", (now.month - 1) or 12)
+        year = attrs.get("year", now.year if now.month > 1 else now.year - 1)
+
+        attrs["_resolved_start"] = datetime(year, month, 1).date()
+        if month == 12:
+            attrs["_resolved_end"] = (datetime(year + 1, 1, 1) - timedelta(days=1)).date()
+        else:
+            attrs["_resolved_end"] = (datetime(year, month + 1, 1) - timedelta(days=1)).date()
+        return attrs
 
 
-def _parse_date_range(request: HttpRequest) -> tuple[datetime, datetime] | JsonResponse:
+class ExportInteractionDataView(APIView):
     """
-    Parse date range from query params.
+    GET /reports/export/
 
-    Supports two modes:
-      1. start_date & end_date (YYYY-MM-DD format, end_date is inclusive)
-      2. month & year (legacy, single-month export)
-
-    Returns (start_date, end_date_exclusive) or a JsonResponse error.
+    Export interaction data as CSV for the authenticated user's organization.
+    Requires ACCESS_ORG_PORTAL permission.
     """
-    start_str = request.GET.get("start_date")
-    end_str = request.GET.get("end_date")
 
-    if start_str and end_str:
-        try:
-            start = datetime.strptime(start_str, "%Y-%m-%d")
-            end = datetime.strptime(end_str, "%Y-%m-%d")
-        except ValueError:
-            return JsonResponse({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
+    permission_classes = [IsAuthenticated, HasOrgPortalAccess]
 
-        if start > end:
-            return JsonResponse({"error": "start_date must be before or equal to end_date."}, status=400)
+    def get(self, request: Request) -> HttpResponse:
+        from organizations.models import Organization
 
-        start_date = timezone.make_aware(datetime(start.year, start.month, start.day))
-        # end_date is inclusive, so make it exclusive by going to next day
-        end_plus_one = datetime(end.year, end.month, end.day) + timedelta(days=1)
-        end_date = timezone.make_aware(end_plus_one)
-        return (start_date, end_date)
+        org = Organization.objects.filter(users=request.user).first()
 
-    # Fallback to month/year params
-    now = timezone.now()
-    default_month = (now.month - 1) or 12
-    default_year = now.year if now.month > 1 else now.year - 1
+        serializer = DateRangeSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        start_date = serializer.validated_data["_resolved_start"]
+        end_date = serializer.validated_data["_resolved_end"]
 
-    try:
-        month = int(request.GET.get("month", default_month))
-        year = int(request.GET.get("year", default_year))
-    except (ValueError, TypeError):
-        return JsonResponse({"error": "Invalid month or year parameter."}, status=400)
+        notes = get_notes_for_org(org, start_date, end_date).order_by("interacted_at")
 
-    if not (1 <= month <= 12):
-        return JsonResponse({"error": "Month must be between 1 and 12."}, status=400)
-    if not (2000 <= year <= 2100):
-        return JsonResponse({"error": "Year must be between 2000 and 2100."}, status=400)
+        resource = NoteResource()
+        dataset = resource.export(queryset=notes)
 
-    start_date = timezone.make_aware(datetime(year, month, 1))
-    if month == 12:
-        end_date = timezone.make_aware(datetime(year + 1, 1, 1))
-    else:
-        end_date = timezone.make_aware(datetime(year, month + 1, 1))
+        start_str = start_date.strftime("%Y%m%d")
+        end_str = end_date.strftime("%Y%m%d")
+        filename = f"interaction_data_{start_str}_{end_str}.csv"
 
-    return (start_date, end_date)
-
-
-@login_required
-def export_interaction_data(request: HttpRequest) -> HttpResponse:
-    """
-    Export interaction data as CSV for the user's organization.
-
-    Query parameters (date range mode):
-        start_date (str): Start date in YYYY-MM-DD format (inclusive).
-        end_date (str): End date in YYYY-MM-DD format (inclusive).
-
-    Query parameters (legacy month mode):
-        month (int): Month number (1-12). Defaults to the previous month.
-        year (int): Four-digit year. Defaults to the year of the previous month.
-
-    Requires the ACCESS_ORG_PORTAL permission on the user's organization.
-    """
-    if request.method != "GET":
-        return JsonResponse({"error": "Method not allowed"}, status=405)
-
-    result = _get_org_and_check_permission(request)
-    if isinstance(result, JsonResponse):
-        return result
-    org = result
-
-    date_result = _parse_date_range(request)
-    if isinstance(date_result, JsonResponse):
-        return date_result
-    start_date, end_date = date_result
-
-    notes = Note.objects.filter(
-        interacted_at__gte=start_date,
-        interacted_at__lt=end_date,
-        organization=org,
-    ).order_by("interacted_at")
-
-    resource = NoteResource()
-    dataset = resource.export(queryset=notes)
-
-    start_str = start_date.strftime("%Y%m%d")
-    end_str = (end_date - timedelta(days=1)).strftime("%Y%m%d")
-    filename = f"interaction_data_{start_str}_{end_str}.csv"
-
-    response = HttpResponse(dataset.csv, content_type="text/csv")
-    response["Content-Disposition"] = f'attachment; filename="{filename}"'
-    return response
+        response = HttpResponse(dataset.csv, content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response

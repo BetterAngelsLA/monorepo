@@ -2,10 +2,10 @@
 
 from django.urls import path
 
-from .views import export_interaction_data
+from .views import ExportInteractionDataView
 
 app_name = "reports"
 
 urlpatterns = [
-    path("export/", export_interaction_data, name="export_interaction_data"),
+    path("export/", ExportInteractionDataView.as_view(), name="export_interaction_data"),
 ]
