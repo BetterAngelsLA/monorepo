@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { ArrowRight, Pencil, Plus, Trash2 } from 'lucide-react';
-import { Button } from './buttons';
+import { ReactNode } from 'react';
+import { Button, ButtonVariant } from './buttons';
 
 const meta: Meta<typeof Button> = {
   component: Button,
@@ -10,100 +11,60 @@ export default meta;
 
 type Story = StoryObj<typeof Button>;
 
+const iconStory = (variant: ButtonVariant, icon: ReactNode): Story => ({
+  render: () => <Button variant={variant} leftIcon={icon} rightIcon={null} />,
+});
+
 // ARROW
 
-export const RightArrow: Story = {
-  render: () => (
-    <Button
-      variant="rightarrow"
-      leftIcon={<ArrowRight size={24} stroke="black" />}
-      rightIcon={null}
-    />
-  ),
-};
+export const RightArrow = iconStory(
+  'right-arrow',
+  <ArrowRight size={24} stroke="black" />
+);
 
 // EDIT ICONS
 
-export const EditLight: Story = {
-  render: () => (
-    <Button
-      variant="editlight"
-      leftIcon={<Pencil size={22} stroke="black" />}
-      rightIcon={null}
-    />
-  ),
-};
+export const EditLight = iconStory(
+  'edit-light',
+  <Pencil size={22} stroke="black" />
+);
 
-export const EditGhost: Story = {
-  render: () => (
-    <Button
-      variant="editlight"
-      leftIcon={<Pencil size={22} stroke="#747A82" />}
-      rightIcon={null}
-    />
-  ),
-};
+export const EditGhost = iconStory(
+  'edit-light',
+  <Pencil size={22} stroke="#747A82" />
+);
 
-export const EditMedium: Story = {
-  render: () => (
-    <Button
-      variant="editmedium"
-      leftIcon={<Pencil size={22} stroke="black" />}
-      rightIcon={null}
-    />
-  ),
-};
+export const EditMedium = iconStory(
+  'edit-medium',
+  <Pencil size={22} stroke="black" />
+);
 
-export const EditDark: Story = {
-  render: () => (
-    <Button
-      variant="editdark"
-      leftIcon={<Pencil size={22} stroke="black" />}
-      rightIcon={null}
-    />
-  ),
-};
+export const EditDark = iconStory(
+  'edit-dark',
+  <Pencil size={22} stroke="black" />
+);
 
 // TRASH BUTTONS
-export const TrashLight: Story = {
-  render: () => (
-    <Button
-      variant="trashlight"
-      leftIcon={<Trash2 size={22} stroke="#CB0808" />}
-      rightIcon={null}
-    />
-  ),
-};
 
-export const TrashGhost: Story = {
-  render: () => (
-    <Button
-      variant="trashlight"
-      leftIcon={<Trash2 size={22} stroke="#747A82" />}
-      rightIcon={null}
-    />
-  ),
-};
+export const TrashLight = iconStory(
+  'trash-light',
+  <Trash2 size={22} stroke="#CB0808" />
+);
 
-export const TrashMedium: Story = {
-  render: () => (
-    <Button
-      variant="trashmedium"
-      leftIcon={<Trash2 size={22} stroke="#CB0808" />}
-      rightIcon={null}
-    />
-  ),
-};
+export const TrashGhost = iconStory(
+  'trash-light',
+  <Trash2 size={22} stroke="#747A82" />
+);
 
-export const TrashDark: Story = {
-  render: () => (
-    <Button
-      variant="trashdark"
-      leftIcon={<Trash2 size={22} stroke="#CB0808" />}
-      rightIcon={null}
-    />
-  ),
-};
+export const TrashMedium = iconStory(
+  'trash-medium',
+  <Trash2 size={22} stroke="#CB0808" />
+);
+
+export const TrashDark = iconStory(
+  'trash-dark',
+  <Trash2 size={22} stroke="#CB0808" />
+);
 
 // SMALL BUTTONS
 
@@ -113,7 +74,7 @@ export const SmallLight: Story = {
       canvasClassName: 'flex flex-col items-center justify-center w-fit h-fit',
     },
   },
-  render: () => <Button variant="smalllight">Button</Button>,
+  render: () => <Button variant="small-light">Button</Button>,
 };
 
 export const SmallMedium: Story = {
@@ -122,7 +83,7 @@ export const SmallMedium: Story = {
       canvasClassName: 'flex flex-col items-center justify-center w-fit h-fit',
     },
   },
-  render: () => <Button variant="smallmedium">Button</Button>,
+  render: () => <Button variant="small-medium">Button</Button>,
 };
 
 export const SmallDark: Story = {
@@ -131,8 +92,10 @@ export const SmallDark: Story = {
       canvasClassName: 'flex flex-col items-center justify-center w-fit h-fit',
     },
   },
-  render: () => <Button variant="smalldark">Button</Button>,
+  render: () => <Button variant="small-dark">Button</Button>,
 };
+
+// FLOATING BUTTONS
 
 export const FloatingLight: Story = {
   parameters: {
@@ -151,6 +114,8 @@ export const FloatingDark: Story = {
   },
   render: () => <Button variant="floating-dark">Button</Button>,
 };
+
+// PLAYGROUND
 
 export const Playground: Story = {
   render: (args: typeof meta.args) => (
