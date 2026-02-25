@@ -99,7 +99,7 @@ class ShelterFilter:
         )
         polygon = Polygon.from_bbox(bbox)
 
-        return queryset.filter(geolocation__contained=polygon), Q()
+        return queryset.filter(geolocation__within=polygon), Q()
 
     @strawberry_django.filter_field
     def geolocation(

@@ -116,6 +116,7 @@ class ShelterTypeMixin:
     # NOTE: This is a temporary workaround because Shelter specced without a hero image.
     # Will remove once we add a hero_image field to the Shelter model.
     @strawberry_django.field(
+        only=["hero_image_content_type_id", "hero_image_object_id"],
         prefetch_related=[
             lambda x: Prefetch(
                 "exterior_photos",
@@ -147,7 +148,7 @@ class ShelterTypeMixin:
 
         return None
 
-    @strawberry_django.field
+    @strawberry_django.field(only=["operating_hours"])
     def operating_hours(self, root: models.Shelter) -> Optional[List[Optional[TimeRange]]]:
         ranges: List[Optional[TimeRange]] = []
         if root.operating_hours:
@@ -158,7 +159,7 @@ class ShelterTypeMixin:
                     ranges.append(None)
         return ranges or None
 
-    @strawberry_django.field
+    @strawberry_django.field(only=["intake_hours"])
     def intake_hours(self, root: models.Shelter) -> Optional[List[Optional[TimeRange]]]:
         ranges: List[Optional[TimeRange]] = []
         if root.intake_hours:
