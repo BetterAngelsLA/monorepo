@@ -4,7 +4,12 @@ from common.permissions.utils import IsAuthenticated
 from graphql import GraphQLError
 from shelters.models import Bed, Shelter
 from shelters.permissions import ShelterPermissions
-from shelters.types import AdminShelterType, CreateBedInput, CreateBedPayload, ShelterType
+from shelters.types import (
+    AdminShelterType,
+    CreateBedInput,
+    CreateBedPayload,
+    ShelterType,
+)
 from strawberry.types import Info
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm

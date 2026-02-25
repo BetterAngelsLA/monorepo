@@ -739,9 +739,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                 }
             }
         """
-        variables: dict[str, Any] = {
-            "input": {"shelterId": shelter.pk, "status": BedStatusChoices.AVAILABLE.name}
-        }
+        variables: dict[str, Any] = {"input": {"shelterId": shelter.pk, "status": BedStatusChoices.AVAILABLE.name}}
 
         response = self.execute_graphql(query, variables)
         assert response.get("errors") is None, f"Unexpected errors: {response.get('errors')}"
@@ -984,4 +982,3 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
         self.assertIn(p1.file.name, hero_images[s1.pk])
         self.assertIsNone(hero_images[s2.pk])
         self.assertEqual(hero_images[s3.pk], fallback.file.url)
-

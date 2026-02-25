@@ -1,28 +1,28 @@
 import { Link, RouteObject } from 'react-router-dom';
-import Dashboard from '../../../../shelter-operator/Dashboard';
-import Login from '../../../../shelter-operator/Login';
-import OperatorPortal from '../../../../shelter-operator/OperatorPortal';
-import Gallery from '../pages/gallery/gallery';
-import { Home } from '../pages/home/home';
-import { Policy } from '../pages/Policy';
-import Shelter from '../pages/shelter/shelter';
+import Dashboard from '../pages/operator/Dashboard';
+import Login from '../pages/operator/Login';
+import OperatorPortal from '../pages/operator/OperatorPortal';
+import { GalleryRoute } from './gallery.route';
+import { HomeRoute } from './home.route';
+import { PolicyRoute } from './policy.route';
+import { ShelterRoute } from './shelter.route';
 
 export const routeChildren: RouteObject[] = [
   {
     path: '/',
-    element: <Home />,
+    element: <HomeRoute />,
   },
   {
     path: '/shelter/:id',
-    element: <Shelter />,
+    element: <ShelterRoute />,
   },
   {
     path: '/shelter/:id/gallery',
-    element: <Gallery />,
+    element: <GalleryRoute />,
   },
   {
     path: '/privacy-policy',
-    element: <Policy />,
+    element: <PolicyRoute />,
   },
   {
     path: '/operator',
