@@ -29,7 +29,6 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
             state=address_input["address_components"][5]["short_name"],
             zip_code=address_input["address_components"][7]["long_name"],
             formatted_address=address_input["formatted_address"],
-            address_components=json_address_input["address_components"],
         )
         self.location = baker.make(Location, address=self.address, point=Point(self.point))
 

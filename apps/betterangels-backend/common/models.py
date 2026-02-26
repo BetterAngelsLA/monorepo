@@ -110,7 +110,6 @@ class Address(BaseModel):
     zip_code = models.CharField(max_length=10, blank=True, null=True)
     confidential = models.BooleanField(null=True, blank=True)
 
-    address_components = models.JSONField(blank=True, null=True)
     formatted_address = models.CharField(max_length=255, blank=True, null=True)
 
     objects = models.Manager()
@@ -271,7 +270,6 @@ class Location(BaseModel):
             **lookup,
             defaults={
                 **fields,
-                "address_components": raw_components,
                 "formatted_address": formatted,
             },
         )
