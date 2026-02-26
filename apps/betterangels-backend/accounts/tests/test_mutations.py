@@ -89,6 +89,56 @@ class CurrentUserGraphQLTests(CurrentUserGraphQLBaseTestCase, TestCase):
         self.assertEqual(User.objects.count(), initial_user_count - 1)
 
 
+@ignore_warnings(category=UserWarning)
+class UpdateUserProfileTests(CurrentUserGraphQLBaseTestCase, TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.mutation = """
+            mutation UpdateUserProfile($data: UpdateUserProfileInput!) {
+                updateUserProfile(data: $data) {
+                    ... on OperationInfo {
+                        messages { kind field message }
+                    }
+                    ... on CurrentUserType {
+                        id
+                        firstName
+                        lastName
+                    }
+                }
+            }
+        """
+
+    def test_update_user_profile(self) -> None:
+        self.graphql_client.force_login(self.user)
+        variables = {"firstName": "Up", "lastName": "Date"}
+
+        response = self.execute_graphql(self.mutation, {"data": variables})
+        self.assertIsNone(response.get("errors"), response.get("errors"))
+
+        payload = response["data"]["updateUserProfile"]
+        self.assertEqual(payload["firstName"], "Up")
+        self.assertEqual(payload["lastName"], "Date")
+        self.assertEqual(payload["id"], str(self.user.pk))
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, "Up")
+        self.assertEqual(self.user.last_name, "Date")
+
+    def test_update_user_profile_empty_value(self) -> None:
+        self.graphql_client.force_login(self.user)
+        variables = {"firstName": "  ", "lastName": "Date"}
+
+        response = self.execute_graphql(self.mutation, {"data": variables})
+        self.assertIsNotNone(response.get("errors"))
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertIn("Value cannot be blank.", response["errors"][0]["message"])
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, "Dale")
+        self.assertEqual(self.user.last_name, "Cooper")
+
+
 class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
     def setUp(self) -> None:
         super().setUp()

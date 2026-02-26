@@ -1,10 +1,8 @@
 import { useQuery } from '@apollo/client/react';
-import { useAtom } from 'jotai';
-import { useEffect, useMemo, useState } from 'react';
+import { useUser } from '@monorepo/react/shelter';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { filteredSheltersAtom, sheltersAtom } from '../../atoms/shelters';
 import { ShelterRow } from '../../components/ShelterRow';
-import ShelterSearchBar from '../../components/ShelterSearchBar';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
@@ -12,22 +10,61 @@ import {
 import type { Shelter } from '../../types/shelter';
 
 const PAGE_SIZE = 8;
+const SEARCH_DEBOUNCE_MS = 300;
 
 export default function Dashboard() {
-  // TODO: Replace hardcoded organizationId with value from authenticated user context
-  const { data, loading, error } = useQuery(
+  const { user } = useUser();
+  const organizations = user?.organizations ?? [];
+  const [selectedOrganizationId, setSelectedOrganizationId] = useState(
+    () => user?.organization?.id ?? ''
+  );
+
+  // Sync selectedOrganizationId when user data loads asynchronously
+  const orgId = user?.organization?.id;
+  useEffect(() => {
+    if (orgId && !selectedOrganizationId) {
+      setSelectedOrganizationId(orgId);
+    }
+  }, [orgId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout>>(null);
+
+  // Debounce: only update the query variable after the user stops typing
+  useEffect(() => {
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearch(searchInput);
+      setPage(1);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [searchInput]);
+
+  const { data, loading, error, previousData } = useQuery(
     ViewSheltersByOrganizationDocument,
     {
-      variables: { organizationId: '2' },
+      variables: {
+        organizationId: selectedOrganizationId,
+        name: debouncedSearch || undefined,
+        offset: (page - 1) * PAGE_SIZE,
+        limit: PAGE_SIZE,
+      },
+      skip: !selectedOrganizationId,
     }
   );
 
-  const backendShelters: Shelter[] = useMemo(() => {
+  // Use previous results while loading to prevent flicker
+  const activeData = data ?? previousData;
+
+  const shelters: Shelter[] = useMemo(() => {
     type ShelterResult = NonNullable<
       ViewSheltersByOrganizationQuery['adminShelters']['results'][number]
     >;
     return (
-      data?.adminShelters?.results?.map((s: ShelterResult) => ({
+      activeData?.adminShelters?.results?.map((s: ShelterResult) => ({
         id: String(s.id),
         name: s.name ?? null,
         address: s.location?.place ?? null,
@@ -35,56 +72,63 @@ export default function Dashboard() {
         tags: null,
       })) ?? []
     );
-  }, [data?.adminShelters?.results]);
+  }, [activeData?.adminShelters?.results]);
 
-  const [page, setPage] = useState(1);
-  const [, setAllShelters] = useAtom(sheltersAtom);
-  const [filteredShelters] = useAtom(filteredSheltersAtom);
-
-  // Update global shelters atom when data loads
-  useEffect(() => {
-    if (backendShelters.length > 0) {
-      setAllShelters(backendShelters);
-    }
-  }, [backendShelters, setAllShelters]);
+  const totalCount = activeData?.adminShelters?.totalCount ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   if (error) console.error('[Dashboard GraphQL error]', error);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredShelters.length / PAGE_SIZE)
-  );
-  const paginatedShelters = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    const end = start + PAGE_SIZE;
-    return filteredShelters.slice(start, end);
-  }, [page, filteredShelters]);
-
   return (
     <div className="flex flex-col p-8 w-full">
-      {/* Back button */}
-      <div className="mb-6">
-        <Link to="/">
-          <button className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm cursor-pointer hover:bg-gray-50">
-            Back
-          </button>
+      {/* Header with Back and Add Shelter buttons */}
+      <div className="mb-6 flex items-center justify-between">
+        <Link
+          to="/"
+          className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm cursor-pointer hover:bg-gray-50"
+        >
+          Back
         </Link>
+
+        <div className="flex items-center gap-3">
+          {organizations.length > 1 && (
+            <select
+              value={selectedOrganizationId}
+              onChange={(e) => {
+                setSelectedOrganizationId(e.target.value);
+                setPage(1);
+              }}
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              {organizations.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                </option>
+              ))}
+            </select>
+          )}
+          <Link
+            to="/operator/dashboard/create"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm cursor-pointer hover:bg-blue-700"
+          >
+            Add Shelter
+          </Link>
+        </div>
       </div>
 
       {/* Search bar */}
-      <ShelterSearchBar />
+      <form className="w-full flex items-center gap-2">
+        <input
+          type="text"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search shelters"
+          className="px-6 py-2 rounded-3xl border outline-none shadow-sm my-4"
+        />
+      </form>
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '16px',
-          fontSize: '14px',
-          color: '#4b5563',
-        }}
-      >
-        {filteredShelters.length} Results
+      <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
+        {totalCount} Results
       </div>
 
       {/* TABLE */}
@@ -97,7 +141,24 @@ export default function Dashboard() {
         </div>
 
         {/* ROWS */}
-        {paginatedShelters.map((shelter) => (
+        {loading && (
+          <div className="px-6 py-8 text-center text-sm text-gray-500">
+            Loading shelters…
+          </div>
+        )}
+        {!loading && shelters.length === 0 && (
+          <div className="px-6 py-8 text-center text-sm text-gray-500">
+            No shelters yet.{' '}
+            <Link
+              to="/operator/dashboard/create"
+              className="text-blue-600 hover:underline"
+            >
+              Create your first shelter
+            </Link>
+            .
+          </div>
+        )}
+        {shelters.map((shelter) => (
           <ShelterRow key={shelter.id} shelter={shelter} />
         ))}
       </div>
@@ -127,9 +188,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {loading && (
-        <div className="mt-4 text-xs text-gray-500">Loading shelters…</div>
-      )}
       {error && (
         <div className="mt-2 text-xs text-red-500">
           Failed to load shelters.

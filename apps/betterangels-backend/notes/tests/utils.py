@@ -144,45 +144,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _create_note_mood_fixture(self, variables: Dict) -> Dict[str, Any]:
-        mutation: str = """
-            mutation CreateNoteMood($data: CreateNoteMoodInput!) {
-                createNoteMood(data: $data) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on MoodType {
-                        id
-                        descriptor
-                    }
-                }
-            }
-        """
-        return self.execute_graphql(mutation, {"data": variables})
-
-    def _delete_mood_fixture(self, mood_id: int) -> Dict[str, Any]:
-        mutation: str = """
-            mutation DeleteMood($id: ID!) {
-                deleteMood(data: { id: $id }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on DeletedObjectType {
-                        id
-                    }
-                }
-            }
-        """
-        return self.execute_graphql(mutation, {"id": mood_id})
-
     def _create_note_service_request_fixture(self, variables: Dict) -> Dict[str, Any]:
         mutation: str = """
             mutation CreateNoteServiceRequest($data: CreateNoteServiceRequestInput!) {

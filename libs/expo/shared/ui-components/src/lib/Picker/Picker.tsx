@@ -10,6 +10,7 @@ import { IPickerProps } from './types';
 export default function Picker(props: IPickerProps) {
   const {
     onChange,
+    onAfterClose,
     error,
     selectedValue,
     placeholder,
@@ -67,6 +68,7 @@ export default function Picker(props: IPickerProps) {
         selectNoneLabel={selectNoneLabel || placeholder}
         onSelect={onSelect}
         onClose={close}
+        onAfterClose={onAfterClose}
       />
     </>
   );

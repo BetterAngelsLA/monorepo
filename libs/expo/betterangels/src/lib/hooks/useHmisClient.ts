@@ -1,5 +1,4 @@
 import type {
-  AllowedFileType,
   ClientFileUploadResponse,
   ClientFilesListParams,
   ClientFilesResponse,
@@ -8,6 +7,7 @@ import type {
   FileNamesResponse,
   HmisCurrentUser,
   HmisHttpQueryParams,
+  UploadClientFileParams,
 } from '@monorepo/expo/shared/clients';
 import { createHmisClient } from '@monorepo/expo/shared/clients';
 import { useCallback, useMemo } from 'react';
@@ -95,34 +95,14 @@ export const useHmisClient = () => {
   );
 
   /**
-   * Upload a file for a client
+   * Upload a file for a client.
    *
-   * @param clientId - Client ID (internal numeric or external string like '68998C256')
-   * @param file - File object with base64 content, name, and mimeType
-   * @param categoryId - File category ID in HMIS
-   * @param fileNameId - File name ID from HMIS
-   * @param isPrivate - Whether the file should be private (optional, defaults to null)
-   * @returns Upload response with file metadata
+   * Accepts {@link UploadClientFileParams} and forwards the call to
+   * `HmisClient.uploadClientFile`.
    */
   const uploadClientFile = useCallback(
-    (
-      clientId: string | number,
-      file: {
-        content: string;
-        name: string;
-        mimeType: AllowedFileType;
-      },
-      categoryId: number,
-      fileNameId: number,
-      isPrivate?: boolean | null
-    ): Promise<ClientFileUploadResponse> => {
-      return hmisClient.uploadClientFile(
-        clientId,
-        file,
-        categoryId,
-        fileNameId,
-        isPrivate
-      );
+    (props: UploadClientFileParams): Promise<ClientFileUploadResponse> => {
+      return hmisClient.uploadClientFile(props);
     },
     [hmisClient]
   );

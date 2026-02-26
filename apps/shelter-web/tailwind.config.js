@@ -1,4 +1,5 @@
 const { createGlobPatternsForDependencies } = require('@nx/react/tailwind');
+const daisyui = require('daisyui');
 const { join } = require('path');
 
 /** @type {import('tailwindcss').Config} */
@@ -7,6 +8,10 @@ module.exports = {
     join(
       __dirname,
       '{src,pages,components,app}/**/*!(*.stories|*.spec).{ts,tsx,html}'
+    ),
+    join(
+      __dirname,
+      '../../libs/react/shelter-operator/src/**/*!(*.stories|*.spec).{ts,tsx,html}'
     ),
     ...createGlobPatternsForDependencies(__dirname),
   ],
@@ -58,5 +63,8 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [daisyui],
+  daisyui: {
+    themes: false,
+  },
 };

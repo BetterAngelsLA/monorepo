@@ -12,12 +12,10 @@ from common.models import Location
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
 from django.db.models import QuerySet
-from django.db.models.expressions import Subquery
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
 from notes.models import (
-    Mood,
     Note,
     NoteDataImport,
     NoteImportRecord,
@@ -43,12 +41,10 @@ from strawberry_django.utils.query import filter_for_user
 from .types import (
     CreateNoteDataImportInput,
     CreateNoteInput,
-    CreateNoteMoodInput,
     CreateNoteServiceRequestInput,
     CreateServiceRequestInput,
     ImportNoteInput,
     InteractionAuthorType,
-    MoodType,
     NoteDataImportType,
     NoteFilter,
     NoteImportRecordType,
@@ -193,60 +189,6 @@ class Mutation:
             HasRetvalPerm(perms=NotePermissions.DELETE),
         ],
     )
-
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def create_note_mood(self, info: Info, data: CreateNoteMoodInput) -> MoodType:
-        with transaction.atomic(), pghistory.context(
-            note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
-        ):
-            user = get_current_user(info)
-
-            mood_data = asdict(data)
-            note_id = str(mood_data.pop("note_id"))
-
-            try:
-                note = filter_for_user(
-                    Note.objects.all(),
-                    user,
-                    [NotePermissions.CHANGE],
-                ).get(id=note_id)
-            except Note.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this note.")
-
-            mood = resolvers.create(
-                info,
-                Mood,
-                {
-                    **mood_data,
-                    "note": note,
-                },
-            )
-
-            return cast(MoodType, mood)
-
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def delete_mood(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
-        user = get_current_user(info)
-        try:
-            mood = Mood.objects.get(
-                id=data.id,
-                note_id__in=Subquery(
-                    filter_for_user(
-                        Note.objects.all(),
-                        user,
-                        [NotePermissions.CHANGE],
-                    ).values("id")
-                ),
-            )
-        except Note.DoesNotExist:
-            raise PermissionError("User lacks proper organization or permissions")
-
-        mood_id = mood.id
-
-        with pghistory.context(note_id=str(mood.note_id), timestamp=timezone.now(), label=info.field_name):
-            mood.delete()
-
-        return DeletedObjectType(id=mood_id)
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated], extensions=[HasPerm(ServiceRequestPermissions.ADD)]

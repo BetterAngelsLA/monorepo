@@ -56,13 +56,23 @@ def _serialize_phone_number(v: DjangoPhoneNumber) -> str:
 
 
 def _parse_non_blank_string(v: str) -> Optional[str]:
+    """Coerces blank input to None. Use for optional string fields where blank means 'no value'."""
     return v.strip() if v and v.strip() else None
+
+
+def _parse_non_empty_string(v: str) -> str:
+    """Rejects blank input. Use for required string fields."""
+    if not v or not v.strip():
+        raise ValueError("Value cannot be blank.")
+
+    return v.strip()
 
 
 # Custom scalar types
 LatitudeScalar = NewType("LatitudeScalar", float)
 LongitudeScalar = NewType("LongitudeScalar", float)
 NonBlankString = NewType("NonBlankString", str)
+NonEmptyString = NewType("NonEmptyString", str)
 PhoneNumberScalar = NewType("PhoneNumberScalar", str)
 
 # Scalar configurations for StrawberryConfig.scalar_map
@@ -79,8 +89,15 @@ SCALAR_MAP: Mapping[object, ScalarDefinition] = {
     ),
     NonBlankString: strawberry.scalar(
         name="NonBlankString",
+        description="Coerces blank input to None. Use for optional string fields where blank means 'no value'.",
         serialize=lambda v: v,
         parse_value=_parse_non_blank_string,
+    ),
+    NonEmptyString: strawberry.scalar(
+        name="NonEmptyString",
+        description="Rejects blank input. Use for required string fields.",
+        serialize=lambda v: v,
+        parse_value=_parse_non_empty_string,
     ),
     PhoneNumberScalar: strawberry.scalar(
         name="PhoneNumber",

@@ -1,8 +1,15 @@
-query ViewSheltersByOrganization($organizationId: ID!) {
+query ViewSheltersByOrganization(
+  $organizationId: ID!
+  $name: String
+  $offset: Int
+  $limit: Int
+) {
   adminShelters(
-    filters: { organization: { pk: $organizationId } }
+    filters: { organizations: [$organizationId], name: $name }
     ordering: [{ createdAt: DESC }]
+    pagination: { offset: $offset, limit: $limit }
   ) {
+    totalCount
     results {
       id
       name
