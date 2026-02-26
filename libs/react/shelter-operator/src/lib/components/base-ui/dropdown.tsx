@@ -248,7 +248,7 @@ export function Dropdown(props: DropdownProps) {
       className={`flex flex-col gap-1 w-full ${className ?? ''}`}
     >
       {label && (
-        <p className="text-sm font-semibold text-base-content">
+        <p className="text-sm text-base-content">
           {label} <span className="text-error">*</span>
         </p>
       )}
