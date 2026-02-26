@@ -15,6 +15,6 @@ export type TClientProfileHouseholdMemeber = NonNullable<
   NonNullable<ClientProfileQuery['clientProfile']>['householdMembers']
 >[number];
 
-export type TClientProfileHmis = NonNullable<
+export type TClientProfileHmisProfile = NonNullable<
   NonNullable<ClientProfileQuery['clientProfile']>['hmisProfiles']
 >[number];

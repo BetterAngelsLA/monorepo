@@ -6,7 +6,7 @@ import {
   getRelatedModelAddRoute,
   getRelatedModelEditRoute,
 } from '../../../../../screenRouting/clientProfileRoutes';
-import { ProfileCardHmis } from '../../../../Client/ClientProfile/ClientProfileCards/ProfilesCardHmis/ProfileCardHmis';
+import { HmisProfileCard } from '../../../../Client/ClientProfile/ClientProfileCards/HmisProfilesCard/HmisProfileCard';
 import { TClientProfile } from '../../../../Client/ClientProfile/types';
 import { AddButton } from '../AddButton';
 import { ViewItemContainer } from '../ViewItemContainer';
@@ -46,7 +46,7 @@ export function ProfilesViewHmis(props: TProps) {
             key={idx}
             onClickEdit={() => router.navigate(editRoute)}
           >
-            <ProfileCardHmis hmisProfile={hmisProfile} />
+            <HmisProfileCard hmisProfile={hmisProfile} />
           </ViewItemContainer>
         );
       })}

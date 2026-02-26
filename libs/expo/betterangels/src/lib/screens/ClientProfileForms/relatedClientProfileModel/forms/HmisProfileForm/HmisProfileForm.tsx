@@ -22,13 +22,13 @@ import {
 import { enumDisplayAgencyHmis } from '../../../../../static';
 import { TClientProfile } from '../../../../Client/ClientProfile/types';
 import { GetClientProfileDocument } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
-import { ProfileDeleteBtnHmis } from '../ProfileDeleteBtnHmis';
+import { HmisProfileDeleteBtn } from '../HmisProfileDeleteBtn';
 import {
-  CreateProfileHmisDocument,
-  CreateProfileHmisMutation,
-  UpdateProfileHmisDocument,
-  UpdateProfileHmisMutation,
-} from './__generated__/profileHmis.generated';
+  CreateHmisProfileDocument,
+  CreateHmisProfileMutation,
+  UpdateHmisProfileDocument,
+  UpdateHmisProfileMutation,
+} from './__generated__/hmisProfile.generated';
 import { defaultFormState, toFormState } from './toFormState';
 import { TProfileFormStateHmis } from './types';
 
@@ -37,15 +37,15 @@ type TProps = {
   relationId?: string;
 };
 
-export function ProfileFormHmis(props: TProps) {
+export function HmisProfileForm(props: TProps) {
   const { clientProfile, relationId } = props;
 
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [updateHmisProfile] = useMutation(UpdateProfileHmisDocument);
-  const [createHmisProfile] = useMutation(CreateProfileHmisDocument);
+  const [updateHmisProfile] = useMutation(UpdateHmisProfileDocument);
+  const [createHmisProfile] = useMutation(CreateHmisProfileDocument);
 
   const {
     control,
@@ -225,7 +225,7 @@ export function ProfileFormHmis(props: TProps) {
       </Form>
 
       {isEditMode && (
-        <ProfileDeleteBtnHmis
+        <HmisProfileDeleteBtn
           relationId={relationId}
           clientProfileId={clientProfile.id}
           setIsLoading={setIsLoading}
@@ -237,7 +237,7 @@ export function ProfileFormHmis(props: TProps) {
 }
 
 function isSuccessMutationResponse(
-  responseData: UpdateProfileHmisMutation | CreateProfileHmisMutation
+  responseData: UpdateHmisProfileMutation | CreateHmisProfileMutation
 ): boolean {
   const modelTypename = 'HmisProfileType';
 
@@ -262,7 +262,7 @@ function isSuccessMutationResponse(
 
 function hasUniquenessError(
   response: ApolloLink.Result<
-    UpdateProfileHmisMutation | CreateProfileHmisMutation
+    UpdateHmisProfileMutation | CreateHmisProfileMutation
   >,
   key: 'updateHmisProfile' | 'createHmisProfile'
 ): string | null {

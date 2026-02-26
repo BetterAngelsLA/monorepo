@@ -1,4 +1,4 @@
-mutation UpdateProfileHmis($data: HmisProfileInput!) {
+mutation UpdateHmisProfile($data: HmisProfileInput!) {
   updateHmisProfile(data: $data) {
     ... on OperationInfo {
       messages {
@@ -14,7 +14,7 @@ mutation UpdateProfileHmis($data: HmisProfileInput!) {
   }
 }
 
-mutation CreateProfileHmis($data: HmisProfileInput!) {
+mutation CreateHmisProfile($data: HmisProfileInput!) {
   createHmisProfile(data: $data) {
     ... on OperationInfo {
       messages {

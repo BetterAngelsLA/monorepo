@@ -4,14 +4,14 @@ import {
   ClientProfileCard,
   TClientProfileCardItem,
 } from '../../../../../ui-components';
-import { TClientProfileHmis } from '../../types';
+import { TClientProfileHmisProfile } from '../../types';
 
 type TProps = {
-  hmisProfile?: TClientProfileHmis;
+  hmisProfile?: TClientProfileHmisProfile;
   style?: ViewStyle;
 };
 
-export function ProfileCardHmis(props: TProps) {
+export function HmisProfileCard(props: TProps) {
   const { hmisProfile, style } = props;
 
   if (!hmisProfile) {

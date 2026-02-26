@@ -1,4 +1,4 @@
-mutation DeleteProfileHmis($id: ID!) {
+mutation DeleteHmisProfile($id: ID!) {
   deleteHmisProfile(data: { id: $id }) {
     ... on OperationInfo {
       messages {

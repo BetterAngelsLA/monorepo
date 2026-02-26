@@ -1,0 +1,1 @@
+export { HmisProfileDeleteBtn } from './HmisProfileDeleteBtn';

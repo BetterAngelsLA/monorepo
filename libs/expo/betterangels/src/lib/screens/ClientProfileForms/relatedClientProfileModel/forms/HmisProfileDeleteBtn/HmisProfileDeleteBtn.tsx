@@ -8,7 +8,7 @@ import {
 } from '../../../../../screenRouting';
 import { ClientProfileDocument } from '../../../../Client/__generated__/Client.generated';
 import { DeleteButton } from '../DeleteButton';
-import { DeleteProfileHmisDocument } from './__generated__/deleteProfileHmis.generated';
+import { DeleteHmisProfileDocument } from './__generated__/deleteHmisProfile.generated';
 
 const deleteableItemName = 'HMIS ID';
 
@@ -19,14 +19,14 @@ type TProps = {
   setIsLoading?: Dispatch<SetStateAction<boolean>>;
 };
 
-export function ProfileDeleteBtnHmis(props: TProps) {
+export function HmisProfileDeleteBtn(props: TProps) {
   const { clientProfileId, disabled, relationId, setIsLoading } = props;
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
   const [deleteHmisProfile, { loading, error }] = useMutation(
-    DeleteProfileHmisDocument
+    DeleteHmisProfileDocument
   );
 
   const onDelete = async () => {
