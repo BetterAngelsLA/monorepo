@@ -2,10 +2,9 @@ from typing import TYPE_CHECKING
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models import Case, Exists, OuterRef, QuerySet, Subquery, When
+from django.db.models import Case, OuterRef, QuerySet, Subquery, When
 from django.db.models.functions import Coalesce
-from organizations.models import Organization
-from shelters.enums import StatusChoices
+from shelters.selectors import admin_shelter_list, shelter_list
 
 if TYPE_CHECKING:
     from accounts.models import User
@@ -14,7 +13,7 @@ if TYPE_CHECKING:
 
 class ShelterQuerySet(QuerySet["Shelter"]):
     def approved(self) -> "ShelterQuerySet":
-        return self.filter(status=StatusChoices.APPROVED)
+        return shelter_list(self)  # type: ignore[return-value]
 
     def with_hero_image_file(self) -> "ShelterQuerySet":
         """Annotate each shelter with ``_hero_image_file`` — the file path
@@ -88,8 +87,7 @@ class ShelterManager(models.Manager["Shelter"]):
 
 class AdminShelterQuerySet(ShelterQuerySet):
     def for_user(self, user: "User") -> "AdminShelterQuerySet":
-        user_org_membership = Organization.objects.filter(pk=OuterRef("organization_id"), users=user)
-        return self.filter(Exists(user_org_membership))
+        return admin_shelter_list(self, user=user)  # type: ignore[return-value]
 
 
 class AdminShelterManager(models.Manager["Shelter"]):
