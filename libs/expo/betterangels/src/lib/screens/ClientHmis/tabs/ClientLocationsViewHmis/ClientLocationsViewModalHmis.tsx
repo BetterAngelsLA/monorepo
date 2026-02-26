@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useClientInteractionsMapStateHmis } from '../../../../state';
-import { ProgramNoteCard } from '../../../../ui-components';
+import { NoteCardHmis } from '../../../../ui-components';
 
 export function ClientLocationsViewModalHmis() {
   const [titleHeight, setTitleHeight] = useState<number>(1);
@@ -64,7 +64,7 @@ export function ClientLocationsViewModalHmis() {
       >
         {selectedInteractions.map((interaction) => {
           return (
-            <ProgramNoteCard
+            <NoteCardHmis
               onPress={() => {
                 router.navigate({
                   pathname: `/notes-hmis/${interaction.id}`,

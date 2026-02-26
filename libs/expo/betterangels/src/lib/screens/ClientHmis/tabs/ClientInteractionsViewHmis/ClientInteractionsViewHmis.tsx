@@ -8,7 +8,7 @@ import { HmisClientProfileType, HmisNoteType } from '../../../../apollo';
 import {
   InteractionListHmis,
   MainScrollContainer,
-  ProgramNoteCard,
+  NoteCardHmis,
 } from '../../../../ui-components';
 
 type TProps = { client?: HmisClientProfileType };
@@ -18,7 +18,7 @@ export function ClientInteractionsViewHmis(props: TProps) {
 
   const renderItemFn = useCallback(
     (item: HmisNoteType) => (
-      <ProgramNoteCard
+      <NoteCardHmis
         onPress={() => {
           router.navigate({
             pathname: `/notes-hmis/${item.id}`,

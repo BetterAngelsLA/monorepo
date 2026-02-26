@@ -4,13 +4,11 @@ import { Avatar, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { HmisNoteType } from '../../apollo';
 
-interface IProgramNoteCardClientProps {
+interface INoteCardClientHmisProps {
   clientProfile?: HmisNoteType['hmisClientProfile'];
 }
 
-export default function ProgramNoteCardClient(
-  props: IProgramNoteCardClientProps
-) {
+export default function NoteCardClientHmis(props: INoteCardClientHmisProps) {
   const { clientProfile } = props;
 
   const { thumbnailUri, headers } = useClientPhotoContentUriHmis(

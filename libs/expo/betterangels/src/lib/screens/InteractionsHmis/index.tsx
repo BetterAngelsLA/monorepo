@@ -11,7 +11,7 @@ import {
   HorizontalContainer,
   InteractionListHmis,
   ModelFilters,
-  ProgramNoteCard,
+  NoteCardHmis,
   TModelFilters,
   toModelFilterValues,
 } from '../../ui-components';
@@ -46,7 +46,7 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
 
   const renderInteractionItem = useCallback(
     (item: HmisNoteType) => (
-      <ProgramNoteCard
+      <NoteCardHmis
         onPress={() => {
           router.navigate({
             pathname: `/notes-hmis/${item.id}`,

@@ -16,10 +16,7 @@ import ProvidedServicesHmis from './ProvidedServicesHmis';
 import RequestedServicesHmis from './RequestedServicesHmis';
 import TasksHmis from './TasksHmis';
 import { FORM_KEYS } from './constants';
-import {
-  TProgramNoteFormInputsHmis,
-  programNoteFormEmptyStateHmis,
-} from './formSchema';
+import { TNoteFormInputsHmis, noteFormEmptyStateHmis } from './formSchema';
 import { FieldCardHmisNote } from './shared/FieldCardHmisNote';
 import { renderValue } from './shared/renderValue';
 import { TFormKeys } from './types';
@@ -30,7 +27,7 @@ type TProps = {
   editing?: boolean;
 };
 
-export function ProgramNoteFormHmis(props: TProps) {
+export function NoteFormHmis(props: TProps) {
   const { clientId, disabled, editing } = props;
 
   const {
@@ -40,7 +37,7 @@ export function ProgramNoteFormHmis(props: TProps) {
     clearErrors,
     getFieldState,
     formState: { errors, isSubmitting, submitCount },
-  } = useFormContext<TProgramNoteFormInputsHmis>();
+  } = useFormContext<TNoteFormInputsHmis>();
 
   const { showModalScreen } = useModalScreen();
   const [expandedField, setExpandedField] = useState<TFormKeys | null>(null);
@@ -182,7 +179,7 @@ export function ProgramNoteFormHmis(props: TProps) {
           disabled={formDisabled}
           placeholder="Enter title"
           onDelete={() => {
-            setValue('title', programNoteFormEmptyStateHmis.title);
+            setValue('title', noteFormEmptyStateHmis.title);
           }}
         />
       </FieldCardHmisNote>

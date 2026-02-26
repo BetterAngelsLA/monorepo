@@ -3,12 +3,12 @@ import { PillContainer } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { InteractionListHmisQuery } from '../InteractionListHmis/__generated__/interactionListHmis.generated';
 
-interface IProgramNoteCardServicesProps {
+interface INoteCardServicesHmisProps {
   note: InteractionListHmisQuery['hmisNotes']['results'][number];
 }
 
-export default function ProgramNoteCardServices(
-  props: IProgramNoteCardServicesProps
+export default function NoteCardServicesHmis(
+  props: INoteCardServicesHmisProps
 ) {
   const { note } = props;
   return (

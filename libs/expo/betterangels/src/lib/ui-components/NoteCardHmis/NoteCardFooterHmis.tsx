@@ -3,13 +3,11 @@ import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { View } from 'react-native';
 
-interface IProgramNoteCardFooterProps {
+interface INoteCardFooterHmisProps {
   interactedAt: string;
 }
 
-export default function ProgramNoteCardFooter(
-  props: IProgramNoteCardFooterProps
-) {
+export default function NoteCardFooterHmis(props: INoteCardFooterHmisProps) {
   const { interactedAt } = props;
   return (
     <View

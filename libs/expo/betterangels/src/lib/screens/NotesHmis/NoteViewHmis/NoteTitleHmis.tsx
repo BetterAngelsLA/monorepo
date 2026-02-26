@@ -1,9 +1,9 @@
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format, parseISO, startOfDay } from 'date-fns';
 import { View } from 'react-native';
-import { ViewNoteHmisQuery } from './__generated__/ProgramNoteViewHmis.generated';
+import { ViewNoteHmisQuery } from './__generated__/NoteViewHmis.generated';
 
-export default function ProgramNoteTitleHmis({
+export default function NoteTitleHmis({
   hmisNote,
 }: {
   hmisNote: ViewNoteHmisQuery['hmisNote'] | undefined;

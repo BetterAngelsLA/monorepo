@@ -3,10 +3,10 @@ import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format, parseISO, startOfDay } from 'date-fns';
 import { Pressable, StyleSheet } from 'react-native';
 import { InteractionListHmisQuery } from '../InteractionListHmis/__generated__/interactionListHmis.generated';
-import ProgramNoteCardByline from './ProgramNoteCardByline';
-import ProgramNoteCardClient from './ProgramNoteCardClient';
-import ProgramNoteCardHeader from './ProgramNoteCardHeader';
-import ProgramNoteCardServices from './ProgramNoteCardServices';
+import NoteCardBylineHmis from './NoteCardBylineHmis';
+import NoteCardClientHmis from './NoteCardClientHmis';
+import NoteCardHeaderHmis from './NoteCardHeaderHmis';
+import NoteCardServicesHmis from './NoteCardServicesHmis';
 
 interface INoteCardProps {
   hmisNote: InteractionListHmisQuery['hmisNotes']['results'][number];
@@ -15,7 +15,7 @@ interface INoteCardProps {
   onPress?: () => void;
 }
 
-export default function ProgramNoteCard(props: INoteCardProps) {
+export default function NoteCardHmis(props: INoteCardProps) {
   const { hmisNote, variant, hasBorder, onPress } = props;
   const date = startOfDay(parseISO(hmisNote.date));
 
@@ -35,14 +35,14 @@ export default function ProgramNoteCard(props: INoteCardProps) {
         },
       ]}
     >
-      {!!hmisNote.title && <ProgramNoteCardHeader purpose={hmisNote.title} />}
+      {!!hmisNote.title && <NoteCardHeaderHmis purpose={hmisNote.title} />}
       {variant === 'interactions' && (
-        <ProgramNoteCardClient clientProfile={hmisNote.hmisClientProfile} />
+        <NoteCardClientHmis clientProfile={hmisNote.hmisClientProfile} />
       )}
-      <ProgramNoteCardByline createdBy={hmisNote.createdBy} />
+      <NoteCardBylineHmis createdBy={hmisNote.createdBy} />
       {(!!hmisNote.providedServices?.length ||
         !!hmisNote.requestedServices?.length) && (
-        <ProgramNoteCardServices note={hmisNote} />
+        <NoteCardServicesHmis note={hmisNote} />
       )}
       {hmisNote.date && (
         <TextRegular size="sm">{format(date, 'MM/dd/yyyy')}</TextRegular>

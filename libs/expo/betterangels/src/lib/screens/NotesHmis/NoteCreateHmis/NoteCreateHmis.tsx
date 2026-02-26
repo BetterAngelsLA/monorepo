@@ -12,15 +12,15 @@ import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
 import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import {
-  ProgramNoteFormHmis,
-  ProgramNoteFormSchemaHmis,
-  ProgramNoteFormSchemaOutputHmis,
-  TProgramNoteFormInputsHmis,
-} from '../ProgramNoteFormHmis';
+  NoteFormHmis,
+  NoteFormSchemaHmis,
+  NoteFormSchemaOutputHmis,
+  TNoteFormInputsHmis,
+} from '../NoteFormHmis';
 import {
-  getProgramNoteFormEmptyStateHmis,
+  getNoteFormEmptyStateHmis,
   NoteFormFieldNamesHmis,
-} from '../ProgramNoteFormHmis/formSchema';
+} from '../NoteFormHmis/formSchema';
 import splitBucket from '../utils/splitBucket';
 import { useApplyTasks } from '../utils/useApplyTasks';
 import { CreateNoteHmisDocument } from './__generated__/createClientNoteHmis.generated';
@@ -35,7 +35,7 @@ type TProps = {
   arrivedFrom?: string;
 };
 
-export function ProgramNoteCreateHmis(props: TProps) {
+export function NoteCreateHmis(props: TProps) {
   const { clientId } = props;
 
   const router = useRouter();
@@ -108,22 +108,20 @@ export function ProgramNoteCreateHmis(props: TProps) {
     }
   }
 
-  const methods = useForm<TProgramNoteFormInputsHmis>({
-    resolver: zodResolver(ProgramNoteFormSchemaHmis),
-    defaultValues: getProgramNoteFormEmptyStateHmis(),
+  const methods = useForm<TNoteFormInputsHmis>({
+    resolver: zodResolver(NoteFormSchemaHmis),
+    defaultValues: getNoteFormEmptyStateHmis(),
     mode: 'onSubmit',
   });
 
-  const onSubmit: SubmitHandler<TProgramNoteFormInputsHmis> = async (
-    values
-  ) => {
+  const onSubmit: SubmitHandler<TNoteFormInputsHmis> = async (values) => {
     try {
       // 1. Separate Draft Tasks from the Note fields
-      // We do this because 'draftTasks' is not part of the HmisProgramNoteSchemaOutput
+      // We do this because 'draftTasks' is not part of the HmisNoteSchemaOutput
       const { tasks, ...noteFields } = values;
 
       // 2. Validate/Parse Note fields
-      const payload = ProgramNoteFormSchemaOutputHmis.parse(noteFields);
+      const payload = NoteFormSchemaOutputHmis.parse(noteFields);
       const { location, services, ...rest } = payload;
 
       // 3. Create Note
@@ -202,7 +200,7 @@ export function ProgramNoteCreateHmis(props: TProps) {
         `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
       );
     } catch (error) {
-      console.error('[HmisProgramNoteCreate] error:', error);
+      console.error('[HmisNoteCreate] error:', error);
       showSnackbar({
         message: 'Something went wrong. Please try again.',
         type: 'error',
@@ -224,7 +222,7 @@ export function ProgramNoteCreateHmis(props: TProps) {
           disabled: isSubmitting,
         }}
       >
-        <ProgramNoteFormHmis clientId={clientId} />
+        <NoteFormHmis clientId={clientId} />
       </Form.Page>
     </FormProvider>
   );

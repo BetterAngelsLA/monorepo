@@ -12,16 +12,16 @@ import { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
 import NoteLocationHmis from './NoteLocationHmis';
-import ProgramNoteServicesHmis from './ProgramNoteServicesHmis';
-import ProgramNoteTitleHmis from './ProgramNoteTitleHmis';
-import { ViewNoteHmisDocument } from './__generated__/ProgramNoteViewHmis.generated';
+import NoteServicesHmis from './NoteServicesHmis';
+import NoteTitleHmis from './NoteTitleHmis';
+import { ViewNoteHmisDocument } from './__generated__/NoteViewHmis.generated';
 
 type TProps = {
   id: string;
   clientId: string;
 };
 
-export function ProgramNoteViewHmis(props: TProps) {
+export function NoteViewHmis(props: TProps) {
   const { id, clientId } = props;
   const scrollRef = useRef<ScrollView>(null);
 
@@ -81,7 +81,7 @@ export function ProgramNoteViewHmis(props: TProps) {
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} ref={scrollRef}>
       <View style={styles.container}>
-        <ProgramNoteTitleHmis hmisNote={hmisNote} />
+        <NoteTitleHmis hmisNote={hmisNote} />
 
         {!!clientName && <TextBold selectable>{clientName}</TextBold>}
 
@@ -95,7 +95,7 @@ export function ProgramNoteViewHmis(props: TProps) {
 
         {((providedServices && providedServices?.length > 0) ||
           (requestedServices && requestedServices.length > 0)) && (
-          <ProgramNoteServicesHmis note={hmisNote} />
+          <NoteServicesHmis note={hmisNote} />
         )}
 
         {!!sanitizedNote.length && (

@@ -1,9 +1,9 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { PillContainer, TextBold } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { ViewNoteHmisQuery } from './__generated__/ProgramNoteViewHmis.generated';
+import { ViewNoteHmisQuery } from './__generated__/NoteViewHmis.generated';
 
-export default function ProgramNoteServicesHmis({
+export default function NoteServicesHmis({
   note,
 }: {
   note: ViewNoteHmisQuery['hmisNote'];

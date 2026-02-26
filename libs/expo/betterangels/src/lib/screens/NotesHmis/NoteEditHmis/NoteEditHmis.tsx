@@ -26,17 +26,17 @@ import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import {
   CreateServiceRequestHmisDocument,
   RemoveServiceRequestHmisDocument,
-} from '../ProgramNoteCreateHmis/__generated__/ServiceRequestHmis.generated';
-import { UpdateNoteLocationHmisDocument } from '../ProgramNoteCreateHmis/__generated__/updateNoteLocationHmis.generated';
+} from '../NoteCreateHmis/__generated__/ServiceRequestHmis.generated';
+import { UpdateNoteLocationHmisDocument } from '../NoteCreateHmis/__generated__/updateNoteLocationHmis.generated';
 import {
   NoteFormFieldNamesHmis,
-  ProgramNoteFormHmis,
-  ProgramNoteFormSchemaHmis,
-  ProgramNoteFormSchemaOutputHmis,
-  TProgramNoteFormInputsHmis,
-  TProgramNoteFormOutputsHmis,
-  programNoteFormEmptyStateHmis,
-} from '../ProgramNoteFormHmis';
+  NoteFormHmis,
+  NoteFormSchemaHmis,
+  NoteFormSchemaOutputHmis,
+  TNoteFormInputsHmis,
+  TNoteFormOutputsHmis,
+  noteFormEmptyStateHmis,
+} from '../NoteFormHmis';
 import splitBucket from '../utils/splitBucket';
 import { useApplyTasks } from '../utils/useApplyTasks';
 import { HmisNoteDocument } from './__generated__/getClientNoteHmis.generated';
@@ -52,7 +52,7 @@ type TProps = {
   onSuccess?: () => void;
 };
 
-export function ProgramNoteEditHmis(props: TProps) {
+export function NoteEditHmis(props: TProps) {
   const { id, clientId } = props;
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -155,9 +155,9 @@ export function ProgramNoteEditHmis(props: TProps) {
     }
   }
 
-  const methods = useForm<TProgramNoteFormInputsHmis>({
-    resolver: zodResolver(ProgramNoteFormSchemaHmis),
-    defaultValues: programNoteFormEmptyStateHmis,
+  const methods = useForm<TNoteFormInputsHmis>({
+    resolver: zodResolver(NoteFormSchemaHmis),
+    defaultValues: noteFormEmptyStateHmis,
   });
 
   const {
@@ -184,7 +184,7 @@ export function ProgramNoteEditHmis(props: TProps) {
       noteResult.requestedServices?.map(normalizeService) ?? [];
 
     methods.reset({
-      ...programNoteFormEmptyStateHmis,
+      ...noteFormEmptyStateHmis,
       title: noteResult.title ?? '',
       date: toLocalCalendarDate(noteResult.date),
       note: noteResult.note ?? '',
@@ -219,16 +219,14 @@ export function ProgramNoteEditHmis(props: TProps) {
 
   const formDisabled = !noteData || isSubmitting;
 
-  const onSubmit: SubmitHandler<TProgramNoteFormInputsHmis> = async (
-    values
-  ) => {
+  const onSubmit: SubmitHandler<TNoteFormInputsHmis> = async (values) => {
     if (formDisabled) {
       return;
     }
 
     try {
-      const payload: TProgramNoteFormOutputsHmis =
-        ProgramNoteFormSchemaOutputHmis.parse(values);
+      const payload: TNoteFormOutputsHmis =
+        NoteFormSchemaOutputHmis.parse(values);
 
       const { services, location, tasks, ...rest } = payload;
 
@@ -330,7 +328,7 @@ export function ProgramNoteEditHmis(props: TProps) {
           disabled: formDisabled,
         }}
       >
-        <ProgramNoteFormHmis
+        <NoteFormHmis
           editing={true}
           clientId={clientId}
           disabled={formDisabled}

@@ -62,7 +62,7 @@ export type ServicesDraft = Partial<
   >
 >;
 
-export const ProgramNoteFormSchemaHmis = z.object({
+export const NoteFormSchemaHmis = z.object({
   title: z.string().min(1, 'Purpose is required.'),
   date: z
     .date()
@@ -87,32 +87,26 @@ export const ProgramNoteFormSchemaHmis = z.object({
 // ----------------------------------------------------------------------
 
 // We explicitly intersect to ensure the TypeScript type for draftTasks is robust
-export type TProgramNoteFormInputsHmis = z.input<
-  typeof ProgramNoteFormSchemaHmis
->;
+export type TNoteFormInputsHmis = z.input<typeof NoteFormSchemaHmis>;
 
 // ----------------------------------------------------------------------
 // 4. Output Schema (API Payload)
 // ----------------------------------------------------------------------
 
-export const ProgramNoteFormSchemaOutputHmis = ProgramNoteFormSchemaHmis.extend(
-  {
-    date: z.date(), // required
-  }
-).transform(({ date, ...rest }) => ({
+export const NoteFormSchemaOutputHmis = NoteFormSchemaHmis.extend({
+  date: z.date(), // required
+}).transform(({ date, ...rest }) => ({
   ...rest,
   date: format(date, 'yyyy-MM-dd'),
 }));
 
-export type TProgramNoteFormOutputsHmis = z.output<
-  typeof ProgramNoteFormSchemaOutputHmis
->;
+export type TNoteFormOutputsHmis = z.output<typeof NoteFormSchemaOutputHmis>;
 
 // ----------------------------------------------------------------------
 // 5. Empty States
 // ----------------------------------------------------------------------
 
-export const programNoteFormEmptyStateHmis: TProgramNoteFormInputsHmis = {
+export const noteFormEmptyStateHmis: TNoteFormInputsHmis = {
   title: '',
   date: undefined,
   refClientProgram: '',
@@ -122,18 +116,17 @@ export const programNoteFormEmptyStateHmis: TProgramNoteFormInputsHmis = {
   services: {},
 };
 
-export const getProgramNoteFormEmptyStateHmis =
-  (): TProgramNoteFormInputsHmis => ({
-    ...programNoteFormEmptyStateHmis,
-    date: new Date(),
-  });
+export const getNoteFormEmptyStateHmis = (): TNoteFormInputsHmis => ({
+  ...noteFormEmptyStateHmis,
+  date: new Date(),
+});
 
 // ----------------------------------------------------------------------
 // 6. Field Names
 // ----------------------------------------------------------------------
 
-type NoteFormFieldNameHmis = keyof typeof ProgramNoteFormSchemaHmis.shape;
+type NoteFormFieldNameHmis = keyof typeof NoteFormSchemaHmis.shape;
 
 export const NoteFormFieldNamesHmis = Object.keys(
-  ProgramNoteFormSchemaHmis.shape
+  NoteFormSchemaHmis.shape
 ) as NoteFormFieldNameHmis[];

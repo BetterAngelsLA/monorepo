@@ -2,13 +2,11 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextMedium } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 
-interface IProgramNoteCardHeaderProps {
+interface INoteCardHeaderHmisProps {
   purpose: string | null | undefined;
 }
 
-export default function ProgramNoteCardHeader(
-  props: IProgramNoteCardHeaderProps
-) {
+export default function NoteCardHeaderHmis(props: INoteCardHeaderHmisProps) {
   const { purpose } = props;
   return (
     <View style={{ flexDirection: 'row', marginBottom: Spacings.xs }}>

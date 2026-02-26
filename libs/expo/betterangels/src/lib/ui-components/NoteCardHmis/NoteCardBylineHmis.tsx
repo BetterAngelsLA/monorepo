@@ -7,13 +7,11 @@ import {
 import { View } from 'react-native';
 import { UserType } from '../../apollo';
 
-interface IProgramNoteCardBylineProps {
+interface INoteCardBylineHmisProps {
   createdBy?: UserType | null;
 }
 
-export default function ProgramNoteCardByline(
-  props: IProgramNoteCardBylineProps
-) {
+export default function NoteCardBylineHmis(props: INoteCardBylineHmisProps) {
   const { createdBy } = props;
 
   const authorName = createdBy

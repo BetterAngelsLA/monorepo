@@ -10,7 +10,7 @@ import { ScrollView, View } from 'react-native';
 import { SelahTeamEnum, TaskStatusEnum, UpdateTaskInput } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
-import { DraftTask as LocalDraftTask } from '../../screens/NotesHmis/ProgramNoteFormHmis/formSchema';
+import { DraftTask as LocalDraftTask } from '../../screens/NotesHmis/NoteFormHmis/formSchema';
 import { CreateTaskDocument } from '../TaskForm/__generated__/createTask.generated';
 import { DeleteTaskDocument } from '../TaskForm/__generated__/deleteTask.generated';
 import { UpdateTaskDocument } from '../TaskForm/__generated__/updateTask.generated';

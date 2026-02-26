@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
 import { ServiceRequestTypeEnum } from '../../apollo';
 import { useModalScreen } from '../../providers';
-import { ServicesDraft } from '../../screens/NotesHmis/ProgramNoteFormHmis';
+import { ServicesDraft } from '../../screens/NotesHmis/NoteFormHmis';
 import { enumDisplayServiceType } from '../../static';
 import ServicesModal from './ServicesModal';
 

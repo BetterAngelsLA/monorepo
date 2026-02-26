@@ -1,4 +1,4 @@
-import { ProgramNoteEditHmis } from '@monorepo/expo/betterangels';
+import { NoteEditHmis } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
 
 type TSearchParams = {
@@ -14,11 +14,5 @@ export default function InteractionsEditHmis() {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  return (
-    <ProgramNoteEditHmis
-      id={id}
-      clientId={clientId}
-      arrivedFrom={arrivedFrom}
-    />
-  );
+  return <NoteEditHmis id={id} clientId={clientId} arrivedFrom={arrivedFrom} />;
 }

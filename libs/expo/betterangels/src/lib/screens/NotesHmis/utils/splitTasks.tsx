@@ -1,4 +1,4 @@
-import { DraftTask } from '../ProgramNoteFormHmis';
+import { DraftTask } from '../NoteFormHmis';
 
 export default function splitTasks(tasks?: DraftTask[]) {
   const draftTasks = tasks ?? [];

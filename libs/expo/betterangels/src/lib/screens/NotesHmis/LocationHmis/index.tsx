@@ -8,7 +8,7 @@ import { useInitialLocation } from '../../../hooks';
 import { MapView, Marker, PROVIDER_GOOGLE } from '../../../maps';
 import { useModalScreen } from '../../../providers';
 import { LocationMapModal, TLocationData } from '../../../ui-components';
-import { LocationDraft } from '../ProgramNoteFormHmis';
+import { LocationDraft } from '../NoteFormHmis';
 
 const FIELD_KEY = 'location';
 

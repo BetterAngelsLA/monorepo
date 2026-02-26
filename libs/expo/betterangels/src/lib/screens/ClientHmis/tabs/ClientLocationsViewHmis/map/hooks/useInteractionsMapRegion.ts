@@ -5,7 +5,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo } from 'react';
 import { useClientInteractionsMapStateHmis } from '../../../../../../state';
-import { HmisNoteQuery } from '../../../../../NotesHmis/ProgramNoteEditHmis/__generated__/getClientNoteHmis.generated';
+import { HmisNoteQuery } from '../../../../../NotesHmis/NoteEditHmis/__generated__/getClientNoteHmis.generated';
 
 type TProps = {
   interaction?: HmisNoteQuery['hmisNote'];
