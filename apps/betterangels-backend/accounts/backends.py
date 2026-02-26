@@ -1,7 +1,6 @@
 import uuid
 from typing import Any, Optional
 
-import waffle
 from django.contrib.auth.models import AbstractBaseUser
 from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
@@ -14,18 +13,7 @@ from rest_framework.request import Request
 
 from .forms import UserCreationForm
 from .models import ExtendedOrganizationInvitation, User
-
-DEMO_LOGIN_EMAIL_SWITCH = "demo_login_email"
-
-
-def _demo_login_email(email: str) -> str:
-    """Return the email with '+demo' inserted before the '@' sign.
-
-    In the demo environment the mobile app requires users to enter
-    ``user+demo@domain.com`` so the frontend routes to the demo API.
-    """
-    local, domain = email.rsplit("@", 1)
-    return f"{local}+demo@{domain}"
+from .utils import demo_email_context
 
 
 class CustomInvitations(InvitationBackend):
@@ -50,9 +38,8 @@ class CustomInvitations(InvitationBackend):
         return user
 
     def send_invitation(self, user: User, sender: Optional[AbstractBaseUser] = None, **kwargs: Any) -> int:
-        is_demo = waffle.switch_is_active(DEMO_LOGIN_EMAIL_SWITCH)
-        login_email = _demo_login_email(user.email) if is_demo else user.email
-        context = {"invitee_email": user.email, "login_email": login_email, "is_demo": is_demo, **kwargs}
+        assert user.email, "Cannot send invitation to a user without an email address"
+        context = {"invitee_email": user.email, **demo_email_context(user.email), **kwargs}
         msg = self.email_message(
             user,
             self.invitation_subject,
