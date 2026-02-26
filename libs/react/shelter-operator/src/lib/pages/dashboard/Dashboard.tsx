@@ -77,7 +77,9 @@ export default function Dashboard() {
   const totalCount = activeData?.adminShelters?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  if (error) console.error('[Dashboard GraphQL error]', error);
+  useEffect(() => {
+    if (error) console.error('[Dashboard GraphQL error]', error);
+  }, [error]);
 
   return (
     <div className="flex flex-col p-8 w-full">
