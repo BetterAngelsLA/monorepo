@@ -8,7 +8,7 @@ from graphql import GraphQLError
 from shelters.models import Bed, Shelter
 from shelters.permissions import BedPermissions, ShelterPermissions
 from shelters.services import shelter_create
-from shelters.types import AdminShelterType, CreateShelterInput, BedType, CreateBedInput, ShelterType
+from shelters.types import AdminShelterType, BedType, CreateBedInput, CreateShelterInput, ShelterType
 from strawberry import UNSET
 from strawberry.types import Info
 from strawberry_django.pagination import OffsetPaginated
