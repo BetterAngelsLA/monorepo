@@ -129,7 +129,7 @@ export function Button(props: IButtonProps) {
     : undefined;
 
   return (
-    <button className={buttonCss} style={style} {...rest}>
+    <button className={buttonCss} {...rest} style={{ ...style, ...rest.style }}>
       {leftIcon && (
         <span
           className={
