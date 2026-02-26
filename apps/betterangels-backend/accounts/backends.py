@@ -38,7 +38,8 @@ class CustomInvitations(InvitationBackend):
         return user
 
     def send_invitation(self, user: User, sender: Optional[AbstractBaseUser] = None, **kwargs: Any) -> int:
-        assert user.email, "Cannot send invitation to a user without an email address"
+        if not user.email:
+            raise ValueError("Cannot send invitation to a user without an email address")
         context = {"invitee_email": user.email, **demo_email_context(user.email), **kwargs}
         msg = self.email_message(
             user,
