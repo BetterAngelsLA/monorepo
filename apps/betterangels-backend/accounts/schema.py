@@ -14,7 +14,7 @@ from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
+from django.db.models import Case, CharField, Exists, OuterRef, Q, QuerySet, Value, When
 from notes.permissions import NotePermissions
 from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
@@ -113,7 +113,11 @@ class Query:
         extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
     def organization_members(
-        self, info: Info, organization_id: str, ordering: Optional[list[OrganizationMemberOrdering]] = None
+        self,
+        info: Info,
+        organization_id: str,
+        ordering: Optional[list[OrganizationMemberOrdering]] = None,
+        search: Optional[str] = None,
     ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
         try:
@@ -126,6 +130,19 @@ class Query:
             raise PermissionError("You do not have permission to view this organization's members.")
 
         queryset: QuerySet[User] = organization.users.all()
+
+        if search is not None:
+            raw_terms = [t for t in search.strip().split() if t]
+
+            has_long = any(len(t) >= 2 for t in raw_terms)
+
+            terms = raw_terms if has_long else []
+
+            if terms:
+                q = Q()
+                for term in terms:
+                    q &= Q(first_name__icontains=term) | Q(last_name__icontains=term) | Q(email__icontains=term)
+                queryset = queryset.filter(q)
 
         return queryset.annotate(_member_role=annotate_member_role(organization_id))
 
