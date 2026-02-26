@@ -34,7 +34,7 @@ export default function HmisTasks(props: HmisTasksProps) {
       : undefined;
 
     showModalScreen({
-      presentation: 'modal',
+      presentation: 'fullScreenModal',
       title: 'Follow-Up Task',
       renderContent: ({ close }) => (
         <HmisTaskModal
