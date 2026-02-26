@@ -426,6 +426,8 @@ export type CreateBedInput = {
   status: BedStatusChoices;
 };
 
+export type CreateBedPayload = BedType | OperationInfo;
+
 export type CreateClientContactPayload = ClientContactType | OperationInfo;
 
 export type CreateClientDocumentInput = {
@@ -1319,7 +1321,7 @@ export enum MealServiceChoices {
 export type Mutation = {
   __typename?: 'Mutation';
   addOrganizationMember: AddOrganizationMemberPayload;
-  createBed: BedType;
+  createBed: CreateBedPayload;
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
@@ -1382,7 +1384,7 @@ export type MutationAddOrganizationMemberArgs = {
 
 
 export type MutationCreateBedArgs = {
-  input: CreateBedInput;
+  data: CreateBedInput;
 };
 
 
@@ -1458,7 +1460,7 @@ export type MutationCreateServiceRequestArgs = {
 
 
 export type MutationCreateShelterArgs = {
-  input: CreateShelterInput;
+  data: CreateShelterInput;
 };
 
 
