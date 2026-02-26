@@ -896,7 +896,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         return format_html('<a href="{}">{}</a>', url, label)
 
     def get_urls(self) -> list[Any]:
-        urls = super().get_urls()
+        urls: list[Any] = super().get_urls()
         custom_urls: list[Any] = [
             path(
                 "<path:object_id>/clone/",
