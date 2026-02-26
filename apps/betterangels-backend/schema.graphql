@@ -121,8 +121,6 @@ type AdminShelterType {
   totalBeds: Int
   trainingServices: [TrainingServiceType!]!
   website: String
-  ExteriorPhotos: [ShelterPhotoType!]
-  InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
   operatingHours: [TimeRange]
@@ -1886,8 +1884,6 @@ type ShelterType {
   totalBeds: Int
   trainingServices: [TrainingServiceType!]!
   website: String
-  ExteriorPhotos: [ShelterPhotoType!]
-  InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
   operatingHours: [TimeRange]
