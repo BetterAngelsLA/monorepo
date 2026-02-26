@@ -1,3 +1,4 @@
+export * from './AddressAutocomplete/AddressAutocomplete';
 export * from './Alert';
 export * from './AppDrawer';
 export * from './BetterAngelsLogoBadge';
@@ -18,7 +19,6 @@ export * from './LoadingView';
 export * from './Map/constants.maps';
 export * from './Map/Map';
 export * from './Map/types.maps';
-export { getPlacesBounds } from './Map/utils/getPlacesBounds';
 export { toGoogleLatLng } from './Map/utils/toGoogleLatLng';
 export { toMapBounds } from './Map/utils/toMapBounds';
 export { default as Pill } from './Pill';
