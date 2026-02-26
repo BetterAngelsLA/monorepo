@@ -26,7 +26,7 @@ class PermissionedQuerySet(HasRetvalPerm):
     (e.g. ``create_note_service_request`` checks Note CHANGE but returns a
     ``ServiceRequestType``).  Mutations that need cross-org protection
     must catch ``DoesNotExist`` from ``qs.get()`` and raise a
-    ``PermissionError`` explicitly.
+    ``PermissionDenied`` explicitly.
     """
 
     def __init__(
@@ -76,9 +76,11 @@ class PermissionedQuerySet(HasRetvalPerm):
         ``ServiceRequestType`` while checking ``NotePermissions.CHANGE``).
         The standard ``HasRetvalPerm`` check would always fail on the
         mismatched type.  Instead, mutations enforce access control via
-        ``qs.get()`` with an explicit ``DoesNotExist → PermissionError``.
+        ``qs.get()`` with an explicit ``DoesNotExist → PermissionDenied``.
         """
         if user is None:
+            # DjangoNoPermission is the strawberry-django internal signal;
+            # PermissionDenied would bypass the framework's error handling.
             raise DjangoNoPermission
         return resolver()
 

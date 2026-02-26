@@ -244,10 +244,10 @@ class Location(BaseModel):
                 # Create a minimal record keyed by formatted_address
                 address, _ = Address.objects.get_or_create(
                     formatted_address=formatted,
-                    street__isnull=True,
-                    city__isnull=True,
-                    state__isnull=True,
-                    zip_code__isnull=True,
+                    street=None,
+                    city=None,
+                    state=None,
+                    zip_code=None,
                 )
                 return address
             # No components and no formatted address — nothing useful to store

@@ -1,7 +1,7 @@
 from typing import Any, TypeVar
 
 import strawberry
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db.models import Model, QuerySet
 
 T = TypeVar("T", bound=Model)
@@ -13,7 +13,7 @@ def get_object_or_permission_error(
     error_message: str = "You do not have permission to perform this action.",
 ) -> T:
     """
-    Get an object from a permission-filtered QuerySet or raise PermissionError.
+    Get an object from a permission-filtered QuerySet or raise PermissionDenied.
 
     This helper standardizes the pattern required by PermissionedQuerySet:
     since the queryset is already filtered by row-level permissions,
@@ -23,7 +23,7 @@ def get_object_or_permission_error(
     try:
         return qs.get(pk=pk)
     except ObjectDoesNotExist:
-        raise PermissionError(error_message)
+        raise PermissionDenied(error_message)
 
 
 def strip_unset(obj: Any) -> Any:

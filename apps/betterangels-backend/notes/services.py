@@ -81,6 +81,7 @@ def note_update_location(
         location = Location.get_or_create_location(location_data)
         note.location = location
         note.save(update_fields=["location"])
+
     return note
 
 
@@ -162,7 +163,7 @@ def note_service_request_create(
 ) -> List[ServiceRequest]:
     """Create ServiceRequests and link them to a Note's M2M."""
     with pghistory.context(note_id=str(note.id), timestamp=timezone.now(), label="note_service_request_create"):
-        srs = service_request_create(
+        service_requests = service_request_create(
             user=user,
             permission_group=permission_group,
             data=data,
@@ -171,11 +172,11 @@ def note_service_request_create(
         )
 
         if sr_type == ServiceRequestTypeEnum.PROVIDED:
-            note.provided_services.add(*srs)
+            note.provided_services.add(*service_requests)
         elif sr_type == ServiceRequestTypeEnum.REQUESTED:
-            note.requested_services.add(*srs)
+            note.requested_services.add(*service_requests)
 
-    return srs
+    return service_requests
 
 
 def note_service_request_remove(

@@ -129,7 +129,7 @@ class Mutation:
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
         qs: QuerySet[Note] = info.context.qs
-        clean = {k: v for k, v in asdict(data).items() if v is not strawberry.UNSET}
+        clean = strip_unset(asdict(data))
 
         note = get_object_or_permission_error(qs, data.id)
         note = note_update(note=note, data=clean)
@@ -182,7 +182,7 @@ class Mutation:
 
         client_profile = ClientProfile.objects.get(pk=data.client_profile) if data.client_profile else None
 
-        srs = service_request_create(
+        service_requests = service_request_create(
             user=user,
             permission_group=permission_group,
             data=[asdict(data)],
@@ -190,7 +190,7 @@ class Mutation:
             client_profile=client_profile,
         )
 
-        return cast(ServiceRequestType, srs[0])
+        return cast(ServiceRequestType, service_requests[0])
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
@@ -205,7 +205,7 @@ class Mutation:
             qs, str(data.note_id), error_message="You do not have permission to modify this note."
         )
 
-        srs = note_service_request_create(
+        service_requests = note_service_request_create(
             user=user,
             permission_group=permission_group,
             note=note,
@@ -218,7 +218,7 @@ class Mutation:
             sr_type=data.service_request_type,
         )
 
-        return cast(ServiceRequestType, srs[0])
+        return cast(ServiceRequestType, service_requests[0])
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
@@ -226,7 +226,7 @@ class Mutation:
     )
     def update_service_request(self, info: Info, data: UpdateServiceRequestInput) -> ServiceRequestType:
         qs: QuerySet[ServiceRequest] = info.context.qs
-        clean = {k: v for k, v in asdict(data).items() if v is not strawberry.UNSET}
+        clean = strip_unset(asdict(data))
 
         sr = get_object_or_permission_error(qs, data.id)
         sr = service_request_update(service_request=sr, data=clean)
