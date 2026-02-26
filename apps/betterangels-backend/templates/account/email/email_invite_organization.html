@@ -82,8 +82,15 @@
                                         </ul>
                                     </li>
                                     <li style="margin-top:6px;">
-                                        Log in using <strong>{{ invitee_email }}</strong>.
+                                        Log in using <strong>{{ login_email }}</strong>.
                                     </li>
+                                    {% if is_demo %}
+                                    <li style="margin-top:6px; color:#B45309;">
+                                        <strong>Demo environment:</strong> You must enter your email as
+                                        <strong>{{ login_email }}</strong> (with &ldquo;+demo&rdquo; before the @)
+                                        in the app so it connects to the correct server.
+                                    </li>
+                                    {% endif %}
                                     <li style="margin-top:6px;">Enter the one-time passcode you'll receive via email.</li>
                                 </ol>
                             </td>
