@@ -2122,6 +2122,7 @@ export type QueryOrganizationMembersArgs = {
   ordering?: InputMaybe<Array<OrganizationMemberOrdering>>;
   organizationId: Scalars['String']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 
