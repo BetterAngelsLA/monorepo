@@ -1860,6 +1860,7 @@ input ShelterFilter {
   OR: ShelterFilter
   NOT: ShelterFilter
   DISTINCT: Boolean
+  name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
   mapBounds: MapBoundsInput
