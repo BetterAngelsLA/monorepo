@@ -1,7 +1,0 @@
-{
-  "name": "expo-shared-services",
-  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/expo/shared/services/src",
-  "projectType": "library",
-  "tags": []
-}
