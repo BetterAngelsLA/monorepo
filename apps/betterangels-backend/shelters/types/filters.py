@@ -53,6 +53,12 @@ class ShelterPropertyInput:
 @strawberry_django.filter_type(models.Shelter)
 class ShelterFilter:
     @strawberry_django.filter_field
+    def name(self, info: Info, value: Optional[str], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}name__icontains": value})
+
+    @strawberry_django.filter_field
     def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
         user = get_current_user(info)
 

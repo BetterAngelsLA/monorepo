@@ -1,10 +1,5 @@
-export type Shelter = {
-  id: string;
-  name: string | null;
-  address: string | null;
-  totalBeds: number | null;
-  tags: string[] | null;
-};
+import type { Shelter } from '../types/shelter';
+
 type Props = { shelter: Shelter };
 
 export function ShelterRow({ shelter }: Props) {

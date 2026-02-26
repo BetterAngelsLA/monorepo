@@ -1,14 +1,16 @@
 import { useQuery } from '@apollo/client/react';
 import { useUser } from '@monorepo/react/shelter';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Shelter, ShelterRow } from '../../components/ShelterRow';
+import { ShelterRow } from '../../components/ShelterRow';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
+import type { Shelter } from '../../types/shelter';
 
 const PAGE_SIZE = 8;
+const SEARCH_DEBOUNCE_MS = 300;
 
 export default function Dashboard() {
   const { user } = useUser();
@@ -25,20 +27,44 @@ export default function Dashboard() {
     }
   }, [orgId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { data, loading, error } = useQuery(
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout>>(null);
+
+  // Debounce: only update the query variable after the user stops typing
+  useEffect(() => {
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearch(searchInput);
+      setPage(1);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [searchInput]);
+
+  const { data, loading, error, previousData } = useQuery(
     ViewSheltersByOrganizationDocument,
     {
-      variables: { organizationId: selectedOrganizationId },
+      variables: {
+        organizationId: selectedOrganizationId,
+        name: debouncedSearch || undefined,
+        offset: (page - 1) * PAGE_SIZE,
+        limit: PAGE_SIZE,
+      },
       skip: !selectedOrganizationId,
     }
   );
 
-  const backendShelters: Shelter[] = useMemo(() => {
+  // Use previous results while loading to prevent flicker
+  const activeData = data ?? previousData;
+
+  const shelters: Shelter[] = useMemo(() => {
     type ShelterResult = NonNullable<
       ViewSheltersByOrganizationQuery['adminShelters']['results'][number]
     >;
     return (
-      data?.adminShelters?.results?.map((s: ShelterResult) => ({
+      activeData?.adminShelters?.results?.map((s: ShelterResult) => ({
         id: String(s.id),
         name: s.name ?? null,
         address: s.location?.place ?? null,
@@ -46,17 +72,14 @@ export default function Dashboard() {
         tags: null,
       })) ?? []
     );
-  }, [data?.adminShelters?.results]);
+  }, [activeData?.adminShelters?.results]);
 
-  const [page, setPage] = useState(1);
+  const totalCount = activeData?.adminShelters?.totalCount ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  const totalPages = Math.max(1, Math.ceil(backendShelters.length / PAGE_SIZE));
-
-  const paginatedShelters = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    const end = start + PAGE_SIZE;
-    return backendShelters.slice(start, end);
-  }, [page, backendShelters]);
+  useEffect(() => {
+    if (error) console.error('[Dashboard GraphQL error]', error);
+  }, [error]);
 
   return (
     <div className="flex flex-col p-8 w-full">
@@ -95,6 +118,21 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Search bar */}
+      <form className="w-full flex items-center gap-2">
+        <input
+          type="text"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search shelters"
+          className="px-6 py-2 rounded-3xl border outline-none shadow-sm my-4"
+        />
+      </form>
+
+      <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
+        {totalCount} Results
+      </div>
+
       {/* TABLE */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden w-full">
         {/* HEADER */}
@@ -110,7 +148,7 @@ export default function Dashboard() {
             Loading shelters…
           </div>
         )}
-        {!loading && paginatedShelters.length === 0 && (
+        {!loading && shelters.length === 0 && (
           <div className="px-6 py-8 text-center text-sm text-gray-500">
             No shelters yet.{' '}
             <Link
@@ -122,7 +160,7 @@ export default function Dashboard() {
             .
           </div>
         )}
-        {paginatedShelters.map((shelter) => (
+        {shelters.map((shelter) => (
           <ShelterRow key={shelter.id} shelter={shelter} />
         ))}
       </div>
