@@ -622,6 +622,11 @@ type CurrentUserType {
 """Date (isoformat)"""
 scalar Date
 
+type DateCountType {
+  date: String!
+  count: Int!
+}
+
 """Date with time (isoformat)"""
 scalar DateTime
 
@@ -1291,6 +1296,11 @@ type Mutation {
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
 }
 
+type NameCountType {
+  name: String!
+  count: Int!
+}
+
 """
 Coerces blank input to None. Use for optional string fields where blank means 'no value'.
 """
@@ -1624,6 +1634,7 @@ type Query {
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  reportSummary(startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
@@ -1680,6 +1691,19 @@ input RemoveOrganizationMemberInput {
 }
 
 union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo
+
+type ReportSummaryType {
+  totalNotes: Int!
+  uniqueClients: Int!
+  startDate: String!
+  endDate: String!
+  notesByDate: [DateCountType!]!
+  notesByTeam: [NameCountType!]!
+  notesByPurpose: [NameCountType!]!
+  uniqueClientsByDate: [DateCountType!]!
+  topProvidedServices: [NameCountType!]!
+  topRequestedServices: [NameCountType!]!
+}
 
 input RevertNoteInput {
   id: ID!
