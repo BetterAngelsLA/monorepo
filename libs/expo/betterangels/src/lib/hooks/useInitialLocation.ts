@@ -5,6 +5,7 @@ import {
 import { LocationObject } from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import { LocationDraft } from '../screens/NotesHmis/HmisProgramNoteForm';
+import { useUserDefaultNoteLocation } from '../state/userPreferencesState/hooks/useUserDefaultNoteLocation';
 
 const INITIAL_LOCATION = {
   longitude: -118.258815,
@@ -14,10 +15,11 @@ const INITIAL_LOCATION = {
 export function useInitialLocation(
   editing: boolean | undefined,
   location: LocationDraft | undefined,
-  setValue: (name: 'location', value: LocationDraft) => void
+  setValue?: (name: 'location', value: LocationDraft) => void
 ) {
   const places = useGooglePlaces();
   const [userLocation, setUserLocation] = useState<LocationObject | null>(null);
+  const [defaultLocation] = useUserDefaultNoteLocation();
 
   const editingRef = useRef(editing);
   editingRef.current = editing;
@@ -27,11 +29,26 @@ export function useInitialLocation(
   setValueRef.current = setValue;
 
   useEffect(() => {
+    if (
+      defaultLocation &&
+      defaultLocation.latitude &&
+      defaultLocation.longitude
+    ) {
+      setValueRef.current?.('location', {
+        ...locationRef.current,
+        longitude: defaultLocation.longitude,
+        latitude: defaultLocation.latitude,
+        formattedAddress: defaultLocation.formattedAddress,
+        shortAddressName: defaultLocation.shortAddressName,
+        components: defaultLocation.components,
+      } as LocationDraft);
+    }
+
     const geocodeAndSet = async (loc: LocationObject) => {
       const { latitude, longitude } = loc.coords;
       const geocodeResult = await places.reverseGeocode(latitude, longitude);
 
-      setValueRef.current('location', {
+      setValueRef.current?.('location', {
         ...locationRef.current,
         longitude,
         latitude,
@@ -56,7 +73,7 @@ export function useInitialLocation(
           setUserLocation(result.location);
         }
 
-        if (editingRef.current) return;
+        if (editingRef.current || defaultLocation) return;
 
         if (result?.location) {
           await geocodeAndSet(result.location);
@@ -65,7 +82,7 @@ export function useInitialLocation(
             INITIAL_LOCATION.latitude,
             INITIAL_LOCATION.longitude
           );
-          setValueRef.current('location', {
+          setValueRef.current?.('location', {
             ...locationRef.current,
             longitude: INITIAL_LOCATION.longitude,
             latitude: INITIAL_LOCATION.latitude,
