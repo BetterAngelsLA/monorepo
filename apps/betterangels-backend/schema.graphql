@@ -161,6 +161,17 @@ type AuthResponse {
   status_code: String!
 }
 
+enum BedStatusChoices {
+  AVAILABLE
+  RESERVED
+}
+
+type BedType {
+  id: ID!
+  shelter: ShelterType!
+  status: BedStatusChoices
+}
+
 type CityType {
   id: ID!
   name: String!
@@ -405,6 +416,11 @@ type ContactInfoType {
   id: ID!
   contactName: String!
   contactNumber: PhoneNumber!
+}
+
+input CreateBedInput {
+  shelterId: ID!
+  status: BedStatusChoices!
 }
 
 union CreateClientContactPayload = ClientContactType | OperationInfo
@@ -1370,6 +1386,7 @@ type Mutation {
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
   createShelter(input: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
+  createBed(input: CreateBedInput!): BedType! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
 }
 
 type NameCountType {

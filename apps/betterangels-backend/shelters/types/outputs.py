@@ -10,6 +10,7 @@ from accounts.types import OrganizationType
 from common.graphql.types import PhoneNumberScalar
 from django.db.models import Prefetch, QuerySet
 from shelters import models
+from shelters.enums import BedStatusChoices
 from shelters.selectors import admin_shelter_list, shelter_list
 from shelters.types.lookups import (
     AccessibilityType,
@@ -184,3 +185,10 @@ class AdminShelterType(ShelterTypeMixin):
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
         return admin_shelter_list(queryset, user=user)
+
+
+@strawberry_django.type(models.Bed)
+class BedType:
+    id: ID
+    shelter: "ShelterType"
+    status: Optional[BedStatusChoices]

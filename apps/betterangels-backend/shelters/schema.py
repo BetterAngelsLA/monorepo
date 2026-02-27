@@ -3,11 +3,18 @@ from typing import cast
 import strawberry
 import strawberry_django
 from common.permissions.utils import IsAuthenticated
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from graphql import GraphQLError
-from shelters.permissions import ShelterPermissions
+from shelters.models import Bed, Shelter
+from shelters.permissions import BedPermissions, ShelterPermissions
 from shelters.services import shelter_create
-from shelters.types import AdminShelterType, CreateShelterInput, ShelterType
+from shelters.types import (
+    AdminShelterType,
+    BedType,
+    CreateBedInput,
+    CreateShelterInput,
+    ShelterType,
+)
 from strawberry import UNSET
 from strawberry.types import Info
 from strawberry_django.pagination import OffsetPaginated
@@ -41,3 +48,17 @@ class Mutation:
             raise GraphQLError("Validation Errors", extensions={"errors": errors}) from exc
 
         return cast(ShelterType, shelter)
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(BedPermissions.ADD)])
+    def create_bed(self, input: CreateBedInput) -> BedType:
+        try:
+            shelter = Shelter.objects.get(pk=input.shelter_id)
+        except Shelter.DoesNotExist:
+            raise ObjectDoesNotExist(f"Shelter matching ID {input.shelter_id} could not be found.")
+
+        bed = Bed.objects.create(
+            shelter=shelter,
+            status=input.status,
+        )
+
+        return cast(BedType, bed)

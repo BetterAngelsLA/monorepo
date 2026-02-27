@@ -9,6 +9,13 @@ class AccessibilityPermissions(models.TextChoices):
     VIEW = "shelters.view_accessibility", _("Can view accessibility")
 
 
+class BedPermissions(models.TextChoices):
+    ADD = "shelters.add_bed", _("Can add bed")
+    CHANGE = "shelters.change_bed", _("Can change bed")
+    DELETE = "shelters.delete_bed", _("Can delete bed")
+    VIEW = "shelters.view_bed", _("Can view bed")
+
+
 class CareerServicePermissions(models.TextChoices):
     ADD = "shelters.add_careerservice", _("Can add career service")
     CHANGE = "shelters.change_careerservice", _("Can change career service")
