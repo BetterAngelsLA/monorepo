@@ -21,7 +21,7 @@ const options: DropdownOption[] = [
   { label: 'Modification Date', value: 'modification_date6' },
 ];
 
-export const SingleSelect = () => {
+export const SingleSelectSearch = () => {
   const [value, setValue] = useState<DropdownOption | null>(null);
   return (
     <div className="w-80 p-4">
@@ -39,7 +39,7 @@ export const SingleSelect = () => {
   );
 };
 
-export const MultiSelect = () => {
+export const MultiSelectSearch = () => {
   const [value, setValue] = useState<DropdownOption[] | null>(null);
   return (
     <div className="w-80 p-4">
@@ -51,6 +51,42 @@ export const MultiSelect = () => {
         onChange={(v) => setValue(v ? (v as DropdownOption[]) : null)}
         isMulti={true}
         isSearchable={true}
+        hasFooter={true}
+      />
+    </div>
+  );
+};
+
+export const SingleSelect = () => {
+  const [value, setValue] = useState<DropdownOption | null>(null);
+  return (
+    <div className="w-80 p-4">
+      <Dropdown
+        label="Field Label"
+        placeholder="Please select"
+        options={options}
+        value={value}
+        onChange={(v) => setValue(v ? (v as DropdownOption) : null)}
+        isMulti={false}
+        isSearchable={false}
+        hasFooter={false}
+      />
+    </div>
+  );
+};
+
+export const MultiSelect = () => {
+  const [value, setValue] = useState<DropdownOption[] | null>(null);
+  return (
+    <div className="w-80 p-4">
+      <Dropdown
+        label="Field Label"
+        placeholder="Please select"
+        options={options}
+        value={value}
+        onChange={(v) => setValue(v ? (v as DropdownOption[]) : null)}
+        isMulti={true}
+        isSearchable={false}
         hasFooter={true}
       />
     </div>
