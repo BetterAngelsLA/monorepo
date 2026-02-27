@@ -94,7 +94,9 @@ export function Dropdown(props: DropdownProps) {
 
   const handleRemoveChip = (option: DropdownOption) => {
     if (hasFooter) {
-      setStagedValues(stagedValues.filter((v) => v.value !== option.value));
+      const next = stagedValues.filter((v) => v.value !== option.value);
+      setStagedValues(next);
+      emitChange(next);
     } else {
       const next = selectedValues.filter((v) => v.value !== option.value);
       onChange(next.length > 0 ? next : null);
