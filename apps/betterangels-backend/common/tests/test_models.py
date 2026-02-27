@@ -1,6 +1,7 @@
 import json
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from accounts.models import User
 from common.models import Address, Attachment, Location, PhoneNumber
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
@@ -472,7 +473,7 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         from organizations.models import Organization
 
         org = Organization.objects.create(name="test_org_shared")
-        user = baker.make("accounts.User")
+        user: User = baker.make("accounts.User")
 
         # Note A creates a Location at self.point with the setUp address.
         note_a = baker.make(Note, location=self.location, organization=org, created_by=user)
@@ -501,7 +502,7 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         from organizations.models import Organization
 
         org = Organization.objects.create(name="test_org_independent")
-        user = baker.make("accounts.User")
+        user: User = baker.make("accounts.User")
 
         note_a = baker.make(Note, location=self.location, organization=org, created_by=user)
 
