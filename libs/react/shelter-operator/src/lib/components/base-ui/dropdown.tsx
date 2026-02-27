@@ -1,5 +1,5 @@
 import { ChevronDown } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from './buttons';
 
@@ -107,14 +107,16 @@ export function Dropdown(props: DropdownProps) {
       setMenuStyle({
         position: 'fixed',
         top: rect.bottom + 6,
-        left: rect.left,
+        left: rect.left + rect.width / 2,
+        transform: 'translateX(-50%)',
         width: rect.width,
+        boxSizing: 'border-box',
         zIndex: 9999,
       });
     }
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isOpen) {
       updateMenuPosition();
       if (hasFooter) setStagedValues(selectedValues);
@@ -122,8 +124,14 @@ export function Dropdown(props: DropdownProps) {
   }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen) window.addEventListener('scroll', updateMenuPosition, true);
-    return () => window.removeEventListener('scroll', updateMenuPosition, true);
+    if (isOpen) {
+      window.addEventListener('scroll', updateMenuPosition, true);
+      window.addEventListener('resize', updateMenuPosition);
+    }
+    return () => {
+      window.removeEventListener('scroll', updateMenuPosition, true);
+      window.removeEventListener('resize', updateMenuPosition);
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -259,10 +267,20 @@ export function Dropdown(props: DropdownProps) {
         aria-expanded={isOpen}
         aria-disabled={disabled}
         tabIndex={disabled ? -1 : 0}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={() => {
+          if (disabled) return;
+          if (!isOpen) updateMenuPosition();
+          setIsOpen(!isOpen);
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Escape') handleClose('escape');
-          if (e.key === 'Enter' || e.key === ' ') !isOpen && setIsOpen(true);
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (!isOpen) {
+              updateMenuPosition();
+              setIsOpen(true);
+            }
+          }
         }}
         className={[
           'flex items-center justify-between gap-2 w-full px-4 rounded-full border-2 bg-base-100 cursor-pointer select-none transition-colors h-12',
