@@ -5,7 +5,6 @@ from django.db.models import Model, QuerySet
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import (
-    DjangoNoPermission,
     HasRetvalPerm,
     PermDefinition,
     PermTarget,
@@ -16,17 +15,7 @@ from strawberry_django.utils.query import filter_for_user
 
 class PermissionedQuerySet(HasRetvalPerm):
     """
-    Injects a permission-filtered QuerySet into info.context.qs.
-
-    The queryset is pre-filtered via ``filter_for_user`` so that only
-    objects the user has the required permissions on are accessible.
-
-    The parent ``HasRetvalPerm`` return-value permission check is skipped
-    because some mutations return a different type than the queryset model
-    (e.g. ``create_note_service_request`` checks Note CHANGE but returns a
-    ``ServiceRequestType``).  Mutations that need cross-org protection
-    must catch ``DoesNotExist`` from ``qs.get()`` and raise a
-    ``PermissionDenied`` explicitly.
+    Wraps HasRetvalPerm injects a permission-filtered QuerySet into context.
     """
 
     def __init__(
@@ -61,28 +50,6 @@ class PermissionedQuerySet(HasRetvalPerm):
         user = get_current_user(info)
         qs: QuerySet[Model] = filter_for_user(self.model.objects.all(), user, self.permissions)  # type: ignore
         return qs
-
-    def resolve_for_user_with_perms(
-        self,
-        resolver: Callable,
-        user: UserType | None,
-        *,
-        info: Info,
-        source: Any,
-    ) -> Any:
-        """Skip the return-value permission check.
-
-        Some mutations return a different type than ``self.model`` (e.g.
-        ``ServiceRequestType`` while checking ``NotePermissions.CHANGE``).
-        The standard ``HasRetvalPerm`` check would always fail on the
-        mismatched type.  Instead, mutations enforce access control via
-        ``qs.get()`` with an explicit ``DoesNotExist → PermissionDenied``.
-        """
-        if user is None:
-            # DjangoNoPermission is the strawberry-django internal signal;
-            # PermissionDenied would bypass the framework's error handling.
-            raise DjangoNoPermission
-        return resolver()
 
     def resolve(
         self,
