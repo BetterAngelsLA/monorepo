@@ -1,6 +1,7 @@
 import json
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from accounts.models import User
 from common.models import Address, Attachment, Location, PhoneNumber
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
@@ -300,13 +301,13 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
             "include_component_point_of_interest",
         ),
         [
-            # All test cases use same point -> same Location (unique constraint).
-            # Address/POI are updated on existing Location when provided.
+            # All test cases use same point → same Location (unique constraint).
+            # With get_or_create, existing Location metadata is never overwritten.
             ("106", 1, 1, False, False),  # Same address, same location (no change)
-            ("104", 2, 1, False, False),  # New address created, but location reused (updated)
-            ("106", 1, 1, False, True),  # Same address, POI updated on existing location
-            ("106", 1, 1, True, False),  # Same address, standalone POI updated
-            ("106", 1, 1, True, True),  # Standalone POI wins, updated on existing location
+            ("104", 2, 1, False, False),  # New Address created, but Location reused unchanged
+            ("106", 1, 1, False, True),  # Same address; POI not set (Location already exists)
+            ("106", 1, 1, True, False),  # Same address; standalone POI ignored (Location already exists)
+            ("106", 1, 1, True, True),  # Both POIs ignored; Location already exists
         ],
     )
     def test_get_or_create_location(
@@ -335,40 +336,69 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         }
         location = Location.get_or_create_location(location_data)
 
-        expected_point_of_interest = None
-        if include_component_point_of_interest:
-            expected_point_of_interest = "An Interesting Point (Component)"
-        if include_standalone_point_of_interest:
-            expected_point_of_interest = "An Interesting Point (Standalone)"
-
-        assert isinstance(address_input["address_components"], list)
-        expected_street = (
-            f"{address_input['address_components'][0]['long_name']} "
-            f"{address_input['address_components'][1]['long_name']}"
-        )
-        expected_city = address_input["address_components"][3]["long_name"]
-        expected_state = address_input["address_components"][5]["short_name"]
-        expected_zip_code = address_input["address_components"][7]["long_name"]
-
         self.assertEqual(Address.objects.count(), expected_address_count)
         self.assertEqual(Location.objects.count(), expected_location_count)
 
+        # Location is always the original one from setUp; metadata is unchanged.
+        self.assertEqual(location.pk, self.location.pk)
         assert location.address
         assert location.point
-        self.assertEqual(location.address.street, expected_street)
-        self.assertEqual(location.address.city, expected_city)
-        self.assertEqual(location.address.state, expected_state)
-        self.assertEqual(location.address.zip_code, expected_zip_code)
+        self.assertEqual(location.address.pk, self.address.pk)
+        self.assertEqual(location.address.street, "106 West 1st Street")
         self.assertEqual(location.point.coords, self.point)
-        self.assertEqual(location.point_of_interest, expected_point_of_interest)
+        # setUp Location had no POI, and get_or_create never overwrites.
+        self.assertIsNone(location.point_of_interest)
 
-    def test_get_or_create_location_missing_components(self) -> None:
-        address_count = Address.objects.count()
-        json_address_input, _ = self._get_address_inputs(delete_components=True)
+    def test_get_or_create_location_does_not_overwrite_poi(self) -> None:
+        """Same point with POI data → Location is reused, POI is NOT overwritten."""
+        # Seed the location with a known POI
+        self.location.point_of_interest = "Original POI"
+        self.location.save()
 
+        json_address_input, _ = self._get_address_inputs(include_point_of_interest=True)
         location_data = {
             "address": json_address_input,
             "point": Point(self.point),
+            "point_of_interest": "New Standalone POI",
+        }
+        location = Location.get_or_create_location(location_data)
+
+        self.assertEqual(Location.objects.count(), 1)
+        self.assertEqual(location.pk, self.location.pk)
+        self.assertEqual(location.point_of_interest, "Original POI")
+
+    def test_get_or_create_location_sets_defaults_on_create(self) -> None:
+        """New point → a new Location is created with address and POI from defaults."""
+        new_point = (-118.25000, 34.06000)
+        json_address_input, address_input = self._get_address_inputs(
+            street_number_override="200",
+            include_point_of_interest=True,
+        )
+        location_data = {
+            "address": json_address_input,
+            "point": Point(new_point),
+            "point_of_interest": "Standalone POI",
+        }
+        location = Location.get_or_create_location(location_data)
+
+        self.assertEqual(Location.objects.count(), 2)
+        self.assertNotEqual(location.pk, self.location.pk)
+        assert location.address
+        self.assertEqual(location.address.street, "200 West 1st Street")
+        # Standalone POI takes precedence over component POI
+        self.assertEqual(location.point_of_interest, "Standalone POI")
+        self.assertEqual(location.point.coords, new_point)
+
+    def test_get_or_create_location_missing_components(self) -> None:
+        """When address_components is empty, Address fields are all None."""
+        address_count = Address.objects.count()
+        json_address_input, _ = self._get_address_inputs(delete_components=True)
+
+        # Use a different point so get_or_create actually creates a new Location.
+        unique_point = (-118.30000, 34.10000)
+        location_data = {
+            "address": json_address_input,
+            "point": Point(unique_point),
             "point_of_interest": None,
         }
         location = Location.get_or_create_location(location_data)
@@ -395,9 +425,12 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         expected_street = "West 1st Street" if missing_component_index == 0 else None
         address_input["address_components"].pop(missing_component_index)
         address_input["address_components"] = json.dumps(address_input["address_components"])
+
+        # Use a unique point per parametrize variant so get_or_create creates fresh Locations.
+        unique_point = (-118.40000 - missing_component_index * 0.01, 34.20000)
         location_data = {
             "address": address_input,
-            "point": Point(self.point),
+            "point": Point(unique_point),
             "point_of_interest": None,
         }
         location = Location.get_or_create_location(location_data)
@@ -433,6 +466,62 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         loc2 = Location.get_or_create_location(loc2_data)
         self.assertEqual(loc1.pk, loc2.pk)
         self.assertEqual(Location.objects.filter(point=loc1.point).count(), 1)
+
+    def test_shared_location_not_mutated_by_second_note(self) -> None:
+        """Two notes at the same GPS point share one Location; the second note must not alter the first's metadata."""
+        from notes.models import Note
+        from organizations.models import Organization
+
+        org = Organization.objects.create(name="test_org_shared")
+        user: User = baker.make("accounts.User")
+
+        # Note A creates a Location at self.point with the setUp address.
+        note_a = baker.make(Note, location=self.location, organization=org, created_by=user)
+
+        # Note B arrives at the same point but with a different address.
+        json_address_input_b, _ = self._get_address_inputs(street_number_override="999")
+        loc_b = Location.get_or_create_location(
+            {"address": json_address_input_b, "point": Point(self.point), "point_of_interest": "New POI"}
+        )
+        note_b = baker.make(Note, location=loc_b, organization=org, created_by=user)
+
+        # Both notes point to the same Location.
+        self.assertEqual(note_a.location_id, note_b.location_id)
+
+        # The Location's address is still Note A's original address.
+        note_a.refresh_from_db()
+        assert note_a.location
+        assert note_a.location.address
+        self.assertEqual(note_a.location.address.street, "106 West 1st Street")
+        # POI was None at creation and must remain None.
+        self.assertIsNone(note_a.location.point_of_interest)
+
+    def test_different_point_creates_independent_location(self) -> None:
+        """Changing to a new GPS point creates a separate Location; the original is untouched."""
+        from notes.models import Note
+        from organizations.models import Organization
+
+        org = Organization.objects.create(name="test_org_independent")
+        user: User = baker.make("accounts.User")
+
+        note_a = baker.make(Note, location=self.location, organization=org, created_by=user)
+
+        new_point = (-118.26000, 34.07000)
+        json_address_input, _ = self._get_address_inputs(street_number_override="500")
+        loc_new = Location.get_or_create_location(
+            {"address": json_address_input, "point": Point(new_point), "point_of_interest": None}
+        )
+        note_b = baker.make(Note, location=loc_new, organization=org, created_by=user)
+
+        # Two distinct Location rows.
+        self.assertNotEqual(note_a.location_id, note_b.location_id)
+        self.assertEqual(Location.objects.count(), 2)
+
+        # Original location unchanged.
+        note_a.refresh_from_db()
+        assert note_a.location and note_a.location.address
+        self.assertEqual(note_a.location.address.street, "106 West 1st Street")
+        self.assertEqual(note_a.location.point.coords, self.point)
 
 
 class PhoneNumberTestCase(TestCase):
