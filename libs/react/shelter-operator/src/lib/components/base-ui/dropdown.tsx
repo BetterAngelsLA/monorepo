@@ -283,7 +283,7 @@ export function Dropdown(props: DropdownProps) {
           }
         }}
         className={[
-          'flex items-center justify-between gap-2 w-full px-4 rounded-full border-2 bg-base-100 cursor-pointer select-none transition-colors h-12',
+          'relative flex items-center justify-between gap-2 w-full px-4 rounded-full border-2 bg-base-100 cursor-pointer select-none transition-colors h-12',
           isOpen
             ? 'border-primary'
             : 'border-base-300 hover:border-base-content/30',
@@ -294,32 +294,40 @@ export function Dropdown(props: DropdownProps) {
       >
         {isMulti && hasDisplayValues ? (
           <div
-            className="flex items-center gap-2 flex-1 min-w-0"
-            style={{
-              overflowX: 'auto',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-            }}
+            className="absolute inset-0 flex items-center pl-4 pr-8"
+            style={{ overflow: 'hidden' }}
           >
-            {displayValues.map((v) => (
-              <span
-                key={v.value}
-                style={{ backgroundColor: '#e5e7eb', flexShrink: 0 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-gray-700 whitespace-nowrap"
-              >
-                {v.label}
-                <button
-                  type="button"
-                  className="hover:text-red-500 leading-none"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveChip(v);
-                  }}
+            <div
+              className="flex items-center gap-2"
+              style={{
+                overflowX: 'auto',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                width: '100%',
+              }}
+            >
+              {displayValues.map((v, index) => (
+                <span
+                  key={v.value}
+                  style={{ backgroundColor: '#e5e7eb', flexShrink: 0 }}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-gray-700 whitespace-nowrap ${
+                    index === 0 ? 'ml-4' : ''
+                  }`}
                 >
-                  <X size={16} />
-                </button>
-              </span>
-            ))}
+                  {v.label}
+                  <button
+                    type="button"
+                    className="hover:text-red-500 leading-none"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveChip(v);
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                </span>
+              ))}
+            </div>
           </div>
         ) : (
           <p
@@ -331,9 +339,9 @@ export function Dropdown(props: DropdownProps) {
           </p>
         )}
         <ChevronDown
-          className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 text-base-content/60 ${
+          className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 text-base-content/60 z-10 ${
             isOpen ? 'rotate-180' : ''
-          }`}
+          } ${isMulti && hasDisplayValues ? 'ml-auto' : ''}`}
         />
       </div>
 
