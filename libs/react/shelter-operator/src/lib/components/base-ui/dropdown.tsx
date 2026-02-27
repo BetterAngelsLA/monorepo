@@ -39,6 +39,7 @@ export function Dropdown(props: DropdownProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [stagedValues, setStagedValues] = useState<DropdownOption[]>([]);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+  const [hoveredChip, setHoveredChip] = useState<string | number | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -249,6 +250,7 @@ export function Dropdown(props: DropdownProps) {
         aria-expanded={isOpen}
         aria-disabled={disabled}
         tabIndex={disabled ? -1 : 0}
+        style={{ borderColor: isOpen ? '#008CEE' : '#e5e7eb' }}
         onClick={() => {
           if (disabled) return;
           if (!isOpen) updateMenuPosition();
@@ -265,10 +267,7 @@ export function Dropdown(props: DropdownProps) {
           }
         }}
         className={[
-          'relative flex items-center justify-between gap-2 w-full px-4 rounded-full border-2 bg-base-100 cursor-pointer select-none transition-colors h-12',
-          isOpen
-            ? 'border-primary'
-            : 'border-base-300 hover:border-base-content/30',
+          'relative flex items-center justify-between gap-2 w-full px-4 rounded-full border bg-base-100 cursor-pointer select-none transition-colors h-12',
           disabled ? 'opacity-50 cursor-not-allowed' : '',
         ]
           .filter(Boolean)
@@ -295,13 +294,22 @@ export function Dropdown(props: DropdownProps) {
                   className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-gray-700 whitespace-nowrap ${
                     index === 0 ? 'ml-4' : ''
                   }`}
+                  onMouseEnter={() => setHoveredChip(v.value)}
+                  onMouseLeave={() => setHoveredChip(null)}
                 >
                   {v.label}
                   <button
                     type="button"
-                    className="hover:text-red-500 leading-none"
+                    style={{
+                      opacity: hoveredChip === v.value ? 1 : 0,
+                      width: hoveredChip === v.value ? '16px' : '0px',
+                      transition: 'opacity 0.15s, width 0.15s',
+                      overflow: 'hidden',
+                    }}
+                    className="leading-none hover:text-red-500 outline-none focus:outline-none flex-shrink-0"
                     onClick={(e) => {
                       e.stopPropagation();
+                      e.preventDefault();
                       handleRemoveChip(v);
                     }}
                   >
