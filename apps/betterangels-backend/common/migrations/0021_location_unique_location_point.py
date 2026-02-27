@@ -14,11 +14,7 @@ def deduplicate_locations(apps, schema_editor):
 
     from django.db.models import Min, Count
 
-    dupes = (
-        Location.objects.values("point")
-        .annotate(cnt=Count("id"), min_id=Min("id"))
-        .filter(cnt__gt=1)
-    )
+    dupes = Location.objects.values("point").annotate(cnt=Count("id"), min_id=Min("id")).filter(cnt__gt=1)
 
     for entry in dupes:
         keeper_id = entry["min_id"]
