@@ -251,6 +251,7 @@ export function Dropdown(props: DropdownProps) {
         ref={triggerRef}
         role="combobox"
         aria-expanded={isOpen}
+        aria-controls="dropdown-menu-portal"
         aria-disabled={disabled}
         tabIndex={disabled ? -1 : 0}
         style={{ borderColor: isOpen ? '#008CEE' : '#e5e7eb' }}
@@ -290,7 +291,7 @@ export function Dropdown(props: DropdownProps) {
                 width: '100%',
               }}
             >
-              {displayValues.map((v, index) => (
+              {displayValues.map((v) => (
                 <span
                   key={v.value}
                   style={{ backgroundColor: '#e5e7eb', flexShrink: 0 }}

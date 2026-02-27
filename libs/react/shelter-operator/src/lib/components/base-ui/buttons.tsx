@@ -63,7 +63,7 @@ const variantClasses: Record<ButtonVariant, string> = {
 export function Button(props: IButtonProps) {
   const {
     variant = 'floating-light',
-    type = 'button',
+    type: _type = 'button',
     className,
     style,
     children,
