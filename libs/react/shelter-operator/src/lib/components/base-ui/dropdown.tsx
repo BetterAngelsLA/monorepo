@@ -1,4 +1,4 @@
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from './buttons';
@@ -316,7 +316,7 @@ export function Dropdown(props: DropdownProps) {
                     handleRemoveChip(v);
                   }}
                 >
-                  ×
+                  <X size={16} />
                 </button>
               </span>
             ))}
