@@ -3,13 +3,52 @@
 from django.db import migrations, models
 
 
+def deduplicate_locations(apps, schema_editor):
+    """Merge duplicate Location rows (same point) before adding the unique constraint.
+
+    For each group of duplicates, the Location with the lowest pk is kept.
+    All ForeignKey references from Note and HmisNote are re-pointed to the
+    keeper, and the duplicate rows are deleted.
+    """
+    Location = apps.get_model("common", "Location")
+
+    from django.db.models import Min, Count
+
+    dupes = (
+        Location.objects.values("point")
+        .annotate(cnt=Count("id"), min_id=Min("id"))
+        .filter(cnt__gt=1)
+    )
+
+    for entry in dupes:
+        keeper_id = entry["min_id"]
+        duplicates = Location.objects.filter(point=entry["point"]).exclude(id=keeper_id)
+        dup_ids = list(duplicates.values_list("id", flat=True))
+
+        # Re-point Note.location references
+        Note = apps.get_model("notes", "Note")
+        Note.objects.filter(location_id__in=dup_ids).update(location_id=keeper_id)
+
+        # Re-point HmisNote.location references
+        try:
+            HmisNote = apps.get_model("hmis", "HmisNote")
+            HmisNote.objects.filter(location_id__in=dup_ids).update(location_id=keeper_id)
+        except LookupError:
+            pass
+
+        duplicates.delete()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
         ("common", "0020_address_functional_index"),
+        ("notes", "__latest__"),
+        ("hmis", "__latest__"),
     ]
 
     operations = [
+        migrations.RunPython(deduplicate_locations, migrations.RunPython.noop),
         migrations.AddConstraint(
             model_name="location",
             constraint=models.UniqueConstraint(fields=("point",), name="unique_location_point"),
