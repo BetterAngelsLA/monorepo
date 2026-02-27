@@ -559,13 +559,22 @@ export type CreateNoteInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
+  location?: InputMaybe<LocationInput>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
+  providedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purpose?: InputMaybe<Scalars['String']['input']>;
+  requestedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
+  tasks?: InputMaybe<Array<CreateNoteTaskInput>>;
   team?: InputMaybe<SelahTeamEnum>;
 };
 
 export type CreateNotePayload = NoteType | OperationInfo;
+
+export type CreateNoteServiceInput = {
+  serviceId?: InputMaybe<Scalars['ID']['input']>;
+  serviceOther?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type CreateNoteServiceRequestInput = {
   noteId: Scalars['ID']['input'];
@@ -575,6 +584,13 @@ export type CreateNoteServiceRequestInput = {
 };
 
 export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
+
+export type CreateNoteTaskInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['Int']['input']>;
+  summary: Scalars['String']['input'];
+  team?: InputMaybe<SelahTeamEnum>;
+};
 
 export type CreateProfileDataImportInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
@@ -1207,9 +1223,19 @@ export type ImportClientProfileInput = {
 
 export type ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo;
 
+export type ImportNoteDataInput = {
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
+  interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
+  isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
+  privateDetails?: InputMaybe<Scalars['String']['input']>;
+  publicDetails?: InputMaybe<Scalars['String']['input']>;
+  purpose?: InputMaybe<Scalars['String']['input']>;
+  team?: InputMaybe<SelahTeamEnum>;
+};
+
 export type ImportNoteInput = {
   importJobId: Scalars['UUID']['input'];
-  note: CreateNoteInput;
+  note: ImportNoteDataInput;
   rawData: Scalars['JSON']['input'];
   sourceId: Scalars['String']['input'];
   sourceName: Scalars['String']['input'];
@@ -2794,7 +2820,6 @@ export type UpdateNoteInput = {
   id: Scalars['ID']['input'];
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
-  location?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purpose?: InputMaybe<Scalars['NonBlankString']['input']>;

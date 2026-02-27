@@ -57,7 +57,7 @@ class Mutation:
             raise ObjectDoesNotExist(f"Shelter matching ID {input.shelter_id} could not be found.")
 
         bed = Bed.objects.create(
-            shelter_id=shelter,
+            shelter=shelter,
             status=input.status,
         )
 

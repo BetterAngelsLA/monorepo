@@ -190,5 +190,5 @@ class AdminShelterType(ShelterTypeMixin):
 @strawberry_django.type(models.Bed)
 class BedType:
     id: ID
-    shelter: "ShelterType" = strawberry_django.field(field_name="shelter_id")
+    shelter: "ShelterType"
     status: Optional[BedStatusChoices]
