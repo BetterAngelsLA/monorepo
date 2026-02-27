@@ -291,46 +291,62 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         assert addr2 is not None
         self.assertEqual(addr1.pk, addr2.pk)
 
-    def test_get_or_create_location_same_address(self) -> None:
-        """Same point + same address → returns the existing Location unchanged."""
+    @parametrize(
+        (
+            "street_number",
+            "expected_address_count",
+            "expected_location_count",
+            "include_standalone_point_of_interest",
+            "include_component_point_of_interest",
+        ),
+        [
+            # All test cases use same point → same Location (unique constraint).
+            # With get_or_create, existing Location metadata is never overwritten.
+            ("106", 1, 1, False, False),  # Same address, same location (no change)
+            ("104", 2, 1, False, False),  # New Address created, but Location reused unchanged
+            ("106", 1, 1, False, True),  # Same address; POI not set (Location already exists)
+            ("106", 1, 1, True, False),  # Same address; standalone POI ignored (Location already exists)
+            ("106", 1, 1, True, True),  # Both POIs ignored; Location already exists
+        ],
+    )
+    def test_get_or_create_location(
+        self,
+        street_number: str,
+        expected_address_count: int,
+        expected_location_count: int,
+        include_standalone_point_of_interest: bool,
+        include_component_point_of_interest: bool,
+    ) -> None:
         self.assertEqual(Address.objects.count(), 1)
         self.assertEqual(Location.objects.count(), 1)
+        json_address_input: Dict[str, str]
+        address_input: Dict[str, Union[str, List[Dict[str, Any]]]]
+        json_address_input, address_input = self._get_address_inputs(
+            street_number_override=street_number,
+            include_point_of_interest=include_component_point_of_interest,
+        )
 
-        json_address_input, _ = self._get_address_inputs(street_number_override="106")
         location_data = {
             "address": json_address_input,
             "point": Point(self.point),
-            "point_of_interest": None,
+            "point_of_interest": (
+                "An Interesting Point (Standalone)" if include_standalone_point_of_interest else None
+            ),
         }
         location = Location.get_or_create_location(location_data)
 
-        self.assertEqual(Address.objects.count(), 1)
-        self.assertEqual(Location.objects.count(), 1)
+        self.assertEqual(Address.objects.count(), expected_address_count)
+        self.assertEqual(Location.objects.count(), expected_location_count)
+
+        # Location is always the original one from setUp; metadata is unchanged.
         self.assertEqual(location.pk, self.location.pk)
         assert location.address
+        assert location.point
+        self.assertEqual(location.address.pk, self.address.pk)
         self.assertEqual(location.address.street, "106 West 1st Street")
-
-    def test_get_or_create_location_does_not_overwrite_address(self) -> None:
-        """Same point but different address data → Location is reused, address is NOT overwritten."""
-        self.assertEqual(Address.objects.count(), 1)
-        self.assertEqual(Location.objects.count(), 1)
-
-        json_address_input, _ = self._get_address_inputs(street_number_override="104")
-        location_data = {
-            "address": json_address_input,
-            "point": Point(self.point),
-            "point_of_interest": None,
-        }
-        location = Location.get_or_create_location(location_data)
-
-        # A new Address row is created by get_or_create_address, but the
-        # existing Location is returned unchanged — its address FK still
-        # points to the original address.
-        self.assertEqual(Address.objects.count(), 2)
-        self.assertEqual(Location.objects.count(), 1)
-        self.assertEqual(location.pk, self.location.pk)
-        assert location.address
-        self.assertEqual(location.address.street, "106 West 1st Street")
+        self.assertEqual(location.point.coords, self.point)
+        # setUp Location had no POI, and get_or_create never overwrites.
+        self.assertIsNone(location.point_of_interest)
 
     def test_get_or_create_location_does_not_overwrite_poi(self) -> None:
         """Same point with POI data → Location is reused, POI is NOT overwritten."""

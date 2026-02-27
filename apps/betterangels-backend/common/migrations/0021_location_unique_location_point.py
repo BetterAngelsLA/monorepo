@@ -10,29 +10,27 @@ def deduplicate_locations(apps, schema_editor):
     All ForeignKey references from Note and HmisNote are re-pointed to the
     keeper, and the duplicate rows are deleted.
     """
-    Location = apps.get_model("common", "Location")
+    from django.db.models import Count, Min
 
-    from django.db.models import Min, Count
+    Location = apps.get_model("common", "Location")
+    Note = apps.get_model("notes", "Note")
+
+    try:
+        HmisNote = apps.get_model("hmis", "HmisNote")
+    except LookupError:
+        HmisNote = None
 
     dupes = Location.objects.values("point").annotate(cnt=Count("id"), min_id=Min("id")).filter(cnt__gt=1)
 
     for entry in dupes:
         keeper_id = entry["min_id"]
-        duplicates = Location.objects.filter(point=entry["point"]).exclude(id=keeper_id)
-        dup_ids = list(duplicates.values_list("id", flat=True))
+        dup_ids = list(Location.objects.filter(point=entry["point"]).exclude(id=keeper_id).values_list("id", flat=True))
 
-        # Re-point Note.location references
-        Note = apps.get_model("notes", "Note")
         Note.objects.filter(location_id__in=dup_ids).update(location_id=keeper_id)
-
-        # Re-point HmisNote.location references
-        try:
-            HmisNote = apps.get_model("hmis", "HmisNote")
+        if HmisNote is not None:
             HmisNote.objects.filter(location_id__in=dup_ids).update(location_id=keeper_id)
-        except LookupError:
-            pass
 
-        duplicates.delete()
+        Location.objects.filter(id__in=dup_ids).delete()
 
 
 class Migration(migrations.Migration):
