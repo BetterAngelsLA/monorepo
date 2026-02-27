@@ -205,11 +205,14 @@ export function Dropdown(props: DropdownProps) {
       {hasFooter && (
         <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-base-200 bg-base-100">
           <Button
-            variant="smalldark"
+            variant="small-medium"
             leftIcon={false}
             rightIcon={false}
-            style={{ fontSize: '13px', padding: '6px 14px' }}
-            onClick={() => setStagedValues([])}
+            className="!text-[13px] !py-[1px] !px-[14px]"
+            onClick={() => {
+              setStagedValues([]);
+              emitChange([]);
+            }}
           >
             Unselect All
           </Button>

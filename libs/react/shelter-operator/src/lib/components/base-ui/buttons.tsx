@@ -45,7 +45,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   'small-light':
     'bg-white border border-[#D3D9E3] text-[#747A82] text-lg py-2 px-4 rounded-full gap-2 w-fit justify-between',
   'small-medium':
-    'bg-[#F4F6FD] border border-[#D3D9E3] text-[#747A82] text-lg py-2 px-4 rounded-full gap-2 w-fit justify-between',
+    'bg-[#F4F6FD] border border-[#D3D9E3] text-lg py-2 px-4 rounded-full gap-2 w-fit justify-between',
   'small-dark':
     'bg-[#D3D9E3] border border-[#D3D9E3] text-[#747A82] text-lg py-2 px-4 rounded-full gap-2 w-fit justify-between',
   'edit-light': 'bg-white text-white size-10 p-0 rounded-lg justify-center',
@@ -89,7 +89,7 @@ export function Button(props: IButtonProps) {
     .join(' ');
 
   return (
-    <button className={buttonCss} {...rest} style={{ ...style}}>
+    <button className={buttonCss} {...rest} style={{ ...style }}>
       {leftIcon && (
         <span className={isIconOnly ? 'flex items-center justify-center' : ''}>
           {leftIcon}
