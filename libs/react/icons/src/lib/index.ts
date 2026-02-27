@@ -1,4 +1,5 @@
 export { default as ArrowLeftIcon } from './components/arrowLeftIcon';
+export { default as BarChartIcon } from './components/barChartIcon';
 export { default as BaShelterLogoIcon } from './components/baShelterLogoIcon';
 export { default as BedIcon } from './components/bedIcon';
 export { default as BenefitsCalIcon } from './components/benefitscalIcon';

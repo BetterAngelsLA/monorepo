@@ -19,7 +19,7 @@ export default function Navbar() {
     }
   };
   return (
-    <div className="navbar bg-neutral-99 flex justify-end px-6 py-7">
+    <div className="navbar bg-neutral-99 flex items-center justify-end px-6 h-16">
       <Dropdown
         title={
           <div className="h-10 w-10 flex items-center justify-center bg-white rounded-lg border border-neutral-90">

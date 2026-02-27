@@ -110,7 +110,6 @@ class Address(BaseModel):
     zip_code = models.CharField(max_length=10, blank=True, null=True)
     confidential = models.BooleanField(null=True, blank=True)
 
-    address_components = models.JSONField(blank=True, null=True)
     formatted_address = models.CharField(max_length=255, blank=True, null=True)
 
     objects = models.Manager()
@@ -145,6 +144,11 @@ class Location(BaseModel):
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
     point = PointField(geography=True)
     point_of_interest = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["point"], name="unique_location_point"),
+        ]
 
     objects = models.Manager()
 
@@ -215,14 +219,40 @@ class Location(BaseModel):
         return Point(round(point.x, p), round(point.y, p), srid=point.srid)
 
     @classmethod
-    def get_or_create_address(cls, address_data: Dict[str, Any]) -> "Address":
+    def get_or_create_address(cls, address_data: Dict[str, Any]) -> Optional["Address"]:
         """Gets or creates an address and returns it.
 
         Uses case-insensitive lookups so that 'Los Angeles' and 'los angeles'
         resolve to the same row.  The functional Lower() index on Address
         makes these queries fast.
+
+        When ``address_components`` is absent (e.g. during an update where the
+        client only sends ``formattedAddress``), falls back to a
+        ``formatted_address`` lookup so that we re-use the existing Address row
+        instead of creating a new one with all-null fields.
         """
-        parsed_address = cls.parse_address_components(address_data["address_components"])
+        raw_components = address_data.get("address_components")
+        formatted = address_data.get("formatted_address") or address_data.get("formattedAddress")
+
+        # Fast path: no address_components → look up by formatted_address
+        if not raw_components:
+            if formatted:
+                address = Address.objects.filter(formatted_address__iexact=formatted).first()
+                if address:
+                    return address
+                # Create a minimal record keyed by formatted_address
+                address, _ = Address.objects.get_or_create(
+                    formatted_address=formatted,
+                    street=None,
+                    city=None,
+                    state=None,
+                    zip_code=None,
+                )
+                return address
+            # No components and no formatted address — nothing useful to store
+            return None
+
+        parsed_address = cls.parse_address_components(raw_components)
 
         street_number = parsed_address.get("street_number")
         route = parsed_address.get("route")
@@ -240,8 +270,7 @@ class Location(BaseModel):
             **lookup,
             defaults={
                 **fields,
-                "address_components": address_data["address_components"],
-                "formatted_address": address_data.get("formatted_address") or address_data.get("formattedAddress"),
+                "formatted_address": formatted,
             },
         )
 
@@ -249,7 +278,10 @@ class Location(BaseModel):
 
     @classmethod
     def get_point_of_interest(cls, address_data: Dict[str, Any]) -> Optional[str]:
-        components: list[Dict[str, str]] = json.loads(address_data["address_components"])
+        raw = address_data.get("address_components")
+        if not raw:
+            return None
+        components: list[Dict[str, str]] = json.loads(raw)
 
         return next(
             (
@@ -262,18 +294,33 @@ class Location(BaseModel):
 
     @classmethod
     def get_or_create_location(cls, location_data: Dict[str, Any]) -> "Location":
-        """Gets or creates an location and returns it."""
-        # This function expects a Google Geocoding API payload
-        # https://developers.google.com/maps/documentation/geocoding/requests-geocoding
+        """Gets or creates a location, updating address/POI if provided.
 
-        address = Location.get_or_create_address(location_data["address"])
-        point_of_interest = location_data["point_of_interest"] or cls.get_point_of_interest(location_data["address"])
+        Location is keyed by rounded GPS point (unique constraint).
+        Address and point_of_interest are updated when non-null to keep
+        geocode metadata fresh without overwriting existing good data.
+        """
         point = cls._round_point(location_data["point"])
 
-        location, _ = Location.objects.get_or_create(
-            address=address,
+        address_data = location_data.get("address")
+        address = Location.get_or_create_address(address_data) if address_data else None
+        point_of_interest = location_data.get("point_of_interest") or (
+            cls.get_point_of_interest(address_data) if address_data else None
+        )
+
+        # Build defaults with only non-null values to avoid overwriting good data
+        defaults = {
+            k: v
+            for k, v in {
+                "address": address,
+                "point_of_interest": point_of_interest,
+            }.items()
+            if v is not None
+        }
+
+        location, _ = Location.objects.update_or_create(
             point=point,
-            point_of_interest=point_of_interest,
+            defaults=defaults,
         )
 
         return location

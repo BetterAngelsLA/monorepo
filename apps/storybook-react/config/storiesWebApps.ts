@@ -1,3 +1,4 @@
+import type { StoriesSpecifier } from '@storybook/types';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { storyFileTypes } from './constants.ts';

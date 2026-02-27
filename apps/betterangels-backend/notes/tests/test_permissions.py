@@ -313,8 +313,12 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
             self.assertEqual(service_request_count, ServiceRequest.objects.count())
             if user_label == "org_2_case_manager_1":
                 self.assertEqual(
-                    response["errors"][0]["message"],
-                    "You do not have permission to modify this note.",
+                    response["data"]["createNoteServiceRequest"]["messages"][0],
+                    {
+                        "kind": "PERMISSION",
+                        "field": None,
+                        "message": "You do not have permission to modify this note.",
+                    },
                 )
             elif user_label is None:
                 self.assertGraphQLUnauthenticated(response)

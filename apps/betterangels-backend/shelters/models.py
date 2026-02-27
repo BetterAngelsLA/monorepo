@@ -37,6 +37,7 @@ from .enums import (
     ParkingChoices,
     PetChoices,
     ReferralRequirementChoices,
+    RoomStatusChoices,
     RoomStyleChoices,
     ShelterChoices,
     ShelterProgramChoices,
@@ -81,13 +82,39 @@ class RoomStyle(models.Model):
 
 
 class Bed(BaseModel):
-    shelter_id = models.ForeignKey("Shelter", on_delete=models.CASCADE)
+    shelter = models.ForeignKey("Shelter", on_delete=models.CASCADE, related_name="beds")
     status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
 
     class Meta:
         indexes = [
-            models.Index(fields=["shelter_id", "status"]),
+            models.Index(fields=["shelter", "status"]),
         ]
+
+
+class Room(BaseModel):
+    shelter = models.ForeignKey("Shelter", on_delete=models.CASCADE, related_name="rooms")
+    room_identifier = models.CharField(max_length=255)
+    room_type = TextChoicesField(choices_enum=RoomStyleChoices, blank=True, null=True)
+    room_type_other = models.CharField(max_length=255, blank=True, null=True)
+    status = TextChoicesField(choices_enum=RoomStatusChoices, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    amenities = models.TextField(blank=True, null=True)
+    medical_respite = models.BooleanField(default=False, blank=True)
+    last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["shelter", "room_identifier"],
+                name="unique_room_per_shelter",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["shelter", "status"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.shelter.name} - {self.room_identifier}"
 
 
 # Shelter Details

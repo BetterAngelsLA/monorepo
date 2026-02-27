@@ -16,7 +16,7 @@ export function ModalContainer(props: IProps): ReactElement | null {
 
   useEffect((): void => {
     setModal(null);
-  }, [location.pathname]);
+  }, [location.pathname, setModal]);
 
   if (!modal?.content) {
     return null;

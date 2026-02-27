@@ -291,9 +291,7 @@ export function Dropdown(props: DropdownProps) {
                 <span
                   key={v.value}
                   style={{ backgroundColor: '#e5e7eb', flexShrink: 0 }}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-gray-700 whitespace-nowrap ${
-                    index === 0 ? 'ml-4' : ''
-                  }`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-gray-700 whitespace-nowrap"
                   onMouseEnter={() => setHoveredChip(v.value)}
                   onMouseLeave={() => setHoveredChip(null)}
                 >

@@ -13,6 +13,7 @@ from rest_framework.request import Request
 
 from .forms import UserCreationForm
 from .models import ExtendedOrganizationInvitation, User
+from .utils import demo_email_context
 
 
 class CustomInvitations(InvitationBackend):
@@ -37,7 +38,9 @@ class CustomInvitations(InvitationBackend):
         return user
 
     def send_invitation(self, user: User, sender: Optional[AbstractBaseUser] = None, **kwargs: Any) -> int:
-        context = {"invitee_email": user.email, **kwargs}
+        if not user.email:
+            raise ValueError("Cannot send invitation to a user without an email address")
+        context = {"invitee_email": user.email, **demo_email_context(user.email), **kwargs}
         msg = self.email_message(
             user,
             self.invitation_subject,
