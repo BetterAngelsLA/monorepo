@@ -1,4 +1,4 @@
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown, Search, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from './buttons';
@@ -161,27 +161,7 @@ export function Dropdown(props: DropdownProps) {
     >
       {isSearchable && (
         <div className="flex items-center gap-2 px-4 py-3 border-b border-base-200">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            className="text-base-content/40 flex-shrink-0"
-          >
-            <circle
-              cx="7"
-              cy="7"
-              r="4.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-            <path
-              d="M10.5 10.5L13.5 13.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
+          <Search size={16} />
           <input
             ref={searchRef}
             type="text"
