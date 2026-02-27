@@ -39,8 +39,8 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("common", "0020_address_functional_index"),
-        ("notes", "__latest__"),
-        ("hmis", "__latest__"),
+        ("notes", "0030_remove_mood_model"),
+        ("hmis", "0005_hmisnote_location"),
     ]
 
     operations = [

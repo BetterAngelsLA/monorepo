@@ -294,11 +294,12 @@ class Location(BaseModel):
 
     @classmethod
     def get_or_create_location(cls, location_data: Dict[str, Any]) -> "Location":
-        """Gets or creates a location, updating address/POI if provided.
+        """Gets or creates a location.
 
         Location is keyed by rounded GPS point (unique constraint).
-        Address and point_of_interest are updated when non-null to keep
-        geocode metadata fresh without overwriting existing good data.
+        Address and point_of_interest are set only at creation time so that
+        later notes at the same spot never silently overwrite metadata
+        visible to other notes sharing the same Location row.
         """
         point = cls._round_point(location_data["point"])
 
@@ -308,7 +309,8 @@ class Location(BaseModel):
             cls.get_point_of_interest(address_data) if address_data else None
         )
 
-        # Build defaults with only non-null values to avoid overwriting good data
+        # Build defaults with only non-null values so that the initial
+        # creation stores useful metadata without blanking fields.
         defaults = {
             k: v
             for k, v in {
@@ -318,7 +320,7 @@ class Location(BaseModel):
             if v is not None
         }
 
-        location, _ = Location.objects.update_or_create(
+        location, _ = Location.objects.get_or_create(
             point=point,
             defaults=defaults,
         )
