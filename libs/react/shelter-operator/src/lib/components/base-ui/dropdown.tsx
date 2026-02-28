@@ -1,5 +1,5 @@
 import { ChevronDown, Search, X } from 'lucide-react';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from './buttons';
 
@@ -44,6 +44,8 @@ export function Dropdown(props: DropdownProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
 
   const selectedValues: DropdownOption[] = value
     ? Array.isArray(value)
@@ -51,13 +53,11 @@ export function Dropdown(props: DropdownProps) {
       : [value]
     : [];
 
-  const activeValues = hasFooter ? stagedValues : selectedValues;
-  const displayValues = hasFooter ? stagedValues : selectedValues;
-  const hasSelection = selectedValues.length > 0;
-  const hasDisplayValues = displayValues.length > 0;
+  const effectiveValues = hasFooter ? stagedValues : selectedValues;
+  const hasEffectiveSelection = effectiveValues.length > 0;
 
   const isSelected = (option: DropdownOption) =>
-    activeValues.some((v) => v.value === option.value);
+    effectiveValues.some((v) => v.value === option.value);
 
   const baseFiltered = options.filter((o) =>
     o.label.toLowerCase().includes(searchQuery.toLowerCase())
@@ -81,13 +81,15 @@ export function Dropdown(props: DropdownProps) {
   const handleOptionClick = (option: DropdownOption) => {
     if (isMulti) {
       const next = isSelected(option)
-        ? activeValues.filter((v) => v.value !== option.value)
-        : [...activeValues, option];
-      hasFooter
-        ? setStagedValues(next)
-        : onChange(next.length > 0 ? next : null);
+        ? effectiveValues.filter((v) => v.value !== option.value)
+        : [...effectiveValues, option];
+      if (hasFooter) {
+        setStagedValues(next);
+      } else {
+        emitChange(next);
+      }
     } else {
-      onChange(option);
+      emitChange([option]);
       setIsOpen(false);
       setSearchQuery('');
     }
@@ -100,7 +102,7 @@ export function Dropdown(props: DropdownProps) {
       emitChange(next);
     } else {
       const next = selectedValues.filter((v) => v.value !== option.value);
-      onChange(next.length > 0 ? next : null);
+      emitChange(next);
     }
   };
 
@@ -141,9 +143,7 @@ export function Dropdown(props: DropdownProps) {
     const handler = (e: MouseEvent) => {
       const target = e.target as Node;
       const clickedInsideTrigger = containerRef.current?.contains(target);
-      const clickedInsideMenu = document
-        .getElementById('dropdown-menu-portal')
-        ?.contains(target);
+      const clickedInsideMenu = menuRef.current?.contains(target);
       if (!clickedInsideTrigger && !clickedInsideMenu) {
         if (isOpen) handleClose('clickOutside');
       }
@@ -158,7 +158,8 @@ export function Dropdown(props: DropdownProps) {
 
   const menu = (
     <div
-      id="dropdown-menu-portal"
+      ref={menuRef}
+      id={menuId}
       style={menuStyle}
       className="bg-base-100 border border-base-300 rounded-2xl shadow-lg flex flex-col overflow-hidden"
     >
@@ -211,7 +212,6 @@ export function Dropdown(props: DropdownProps) {
             className="!text-[13px] !py-[1px] !px-[14px]"
             onClick={() => {
               setStagedValues([]);
-              emitChange([]);
             }}
           >
             Unselect All
@@ -251,7 +251,7 @@ export function Dropdown(props: DropdownProps) {
         ref={triggerRef}
         role="combobox"
         aria-expanded={isOpen}
-        aria-controls="dropdown-menu-portal"
+        aria-controls={menuId}
         aria-disabled={disabled}
         tabIndex={disabled ? -1 : 0}
         style={{ borderColor: isOpen ? '#008CEE' : '#e5e7eb' }}
@@ -277,7 +277,7 @@ export function Dropdown(props: DropdownProps) {
           .filter(Boolean)
           .join(' ')}
       >
-        {isMulti && hasDisplayValues ? (
+        {isMulti && hasEffectiveSelection ? (
           <div
             className="absolute inset-0 flex items-center pl-4 pr-8"
             style={{ overflow: 'hidden' }}
@@ -291,7 +291,7 @@ export function Dropdown(props: DropdownProps) {
                 width: '100%',
               }}
             >
-              {displayValues.map((v) => (
+              {effectiveValues.map((v) => (
                 <span
                   key={v.value}
                   style={{ backgroundColor: '#e5e7eb', flexShrink: 0 }}
@@ -324,16 +324,16 @@ export function Dropdown(props: DropdownProps) {
         ) : (
           <p
             className={`text-sm flex-1 truncate ${
-              hasSelection ? 'text-base-content' : 'text-base-content/40'
+              hasEffectiveSelection ? 'text-base-content' : 'text-base-content/40'
             }`}
           >
-            {hasSelection ? selectedValues[0].label : placeholder}
+            {hasEffectiveSelection ? effectiveValues[0].label : placeholder}
           </p>
         )}
         <ChevronDown
           className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 text-base-content/60 z-10 ${
             isOpen ? 'rotate-180' : ''
-          } ${isMulti && hasDisplayValues ? 'ml-auto' : ''}`}
+          } ${isMulti && hasEffectiveSelection ? 'ml-auto' : ''}`}
         />
       </div>
 

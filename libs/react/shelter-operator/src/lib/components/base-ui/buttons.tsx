@@ -89,7 +89,7 @@ export function Button(props: IButtonProps) {
     .join(' ');
 
   return (
-    <button className={buttonCss} {...rest} style={{ ...style }}>
+    <button type={_type} className={buttonCss} {...rest} style={{ ...style }}>
       {leftIcon && (
         <span className={isIconOnly ? 'flex items-center justify-center' : ''}>
           {leftIcon}
