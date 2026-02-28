@@ -3,6 +3,12 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { storyFileTypes } from './constants.ts';
 
+export interface StoriesSpecifier {
+  directory: string;
+  files: string | string[];
+  titlePrefix?: string;
+}
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export const SHELTER_APP_LIB_DIR = '../../../libs/react/shelter/src/lib';
