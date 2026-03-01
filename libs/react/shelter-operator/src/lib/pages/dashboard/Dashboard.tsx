@@ -1,4 +1,5 @@
 import { useQuery } from '@apollo/client/react';
+import { useSignOut } from '@monorepo/react/shared';
 import { useUser } from '@monorepo/react/shelter';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -13,7 +14,8 @@ const PAGE_SIZE = 8;
 const SEARCH_DEBOUNCE_MS = 300;
 
 export default function Dashboard() {
-  const { user } = useUser();
+  const { user, setUser } = useUser();
+  const { signOut } = useSignOut(setUser);
   const organizations = user?.organizations ?? [];
   const [selectedOrganizationId, setSelectedOrganizationId] = useState(
     () => user?.organization?.id ?? ''
@@ -115,6 +117,12 @@ export default function Dashboard() {
           >
             Add Shelter
           </Link>
+          <button
+            onClick={signOut}
+            className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm cursor-pointer hover:bg-gray-50"
+          >
+            Sign Out
+          </button>
         </div>
       </div>
 
