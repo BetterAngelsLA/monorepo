@@ -70,6 +70,8 @@ export type AddressType = {
 
 export type AdminShelterType = {
   __typename?: 'AdminShelterType';
+  ExteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
+  InteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
   accessibility: Array<AccessibilityType>;
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
@@ -688,6 +690,12 @@ export type CurrentUserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   ordering?: Array<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type DateCountType = {
+  __typename?: 'DateCountType';
+  count: Scalars['Int']['output'];
+  date: Scalars['String']['output'];
 };
 
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
@@ -1637,6 +1645,12 @@ export type MutationUpdateUserProfileArgs = {
   data: UpdateUserProfileInput;
 };
 
+export type NameCountType = {
+  __typename?: 'NameCountType';
+  count: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type NoteDataImportType = {
   __typename?: 'NoteDataImportType';
   id: Scalars['UUID']['output'];
@@ -1990,6 +2004,7 @@ export type Query = {
   notes: NoteTypeOffsetPaginated;
   organizationMember: OrganizationMemberType;
   organizationMembers: OrganizationMemberTypeOffsetPaginated;
+  reportSummary: ReportSummaryType;
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
@@ -2136,6 +2151,12 @@ export type QueryOrganizationMembersArgs = {
 };
 
 
+export type QueryReportSummaryArgs = {
+  endDate?: InputMaybe<Scalars['Date']['input']>;
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+};
+
+
 export type QueryServiceCategoriesArgs = {
   ordering?: Array<OrganizationServiceCategoryOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -2238,6 +2259,20 @@ export type RemoveOrganizationMemberInput = {
 };
 
 export type RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo;
+
+export type ReportSummaryType = {
+  __typename?: 'ReportSummaryType';
+  endDate: Scalars['String']['output'];
+  notesByDate: Array<DateCountType>;
+  notesByPurpose: Array<NameCountType>;
+  notesByTeam: Array<NameCountType>;
+  startDate: Scalars['String']['output'];
+  topProvidedServices: Array<NameCountType>;
+  topRequestedServices: Array<NameCountType>;
+  totalNotes: Scalars['Int']['output'];
+  uniqueClients: Scalars['Int']['output'];
+  uniqueClientsByDate: Array<DateCountType>;
+};
 
 export type RevertNoteInput = {
   id: Scalars['ID']['input'];
@@ -2342,6 +2377,7 @@ export type ShelterFilter = {
   OR?: InputMaybe<ShelterFilter>;
   geolocation?: InputMaybe<GeolocationInput>;
   mapBounds?: InputMaybe<MapBoundsInput>;
+  name?: InputMaybe<Scalars['String']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   properties?: InputMaybe<ShelterPropertyInput>;
 };
@@ -2406,6 +2442,8 @@ export type ShelterPropertyInput = {
 
 export type ShelterType = {
   __typename?: 'ShelterType';
+  ExteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
+  InteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
   accessibility: Array<AccessibilityType>;
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
