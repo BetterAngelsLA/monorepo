@@ -15,7 +15,7 @@ const SEARCH_DEBOUNCE_MS = 300;
 
 export default function Dashboard() {
   const { user, setUser } = useUser();
-  const { signOut } = useSignOut(setUser);
+  const { signOut, loading: signingOut } = useSignOut(setUser);
   const organizations = user?.organizations ?? [];
   const [selectedOrganizationId, setSelectedOrganizationId] = useState(
     () => user?.organization?.id ?? ''
@@ -119,9 +119,10 @@ export default function Dashboard() {
           </Link>
           <button
             onClick={signOut}
-            className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm cursor-pointer hover:bg-gray-50"
+            disabled={signingOut}
+            className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm cursor-pointer hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Sign Out
+            {signingOut ? 'Signing out...' : 'Sign Out'}
           </button>
         </div>
       </div>
