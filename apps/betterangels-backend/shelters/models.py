@@ -37,6 +37,7 @@ from .enums import (
     ParkingChoices,
     PetChoices,
     ReferralRequirementChoices,
+    ReservationStatusChoices,
     RoomStatusChoices,
     RoomStyleChoices,
     ShelterChoices,
@@ -115,6 +116,53 @@ class Room(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.shelter.name} - {self.room_identifier}"
+
+
+class Reservation(BaseModel):
+    shelter = models.ForeignKey("Shelter", on_delete=models.CASCADE, related_name="reservations")
+    room = models.ForeignKey(Room, on_delete=models.SET_NULL, blank=True, null=True, related_name="reservations")
+    bed = models.ForeignKey(Bed, on_delete=models.SET_NULL, blank=True, null=True, related_name="reservations")
+    status = TextChoicesField(
+        choices_enum=ReservationStatusChoices, default=ReservationStatusChoices.OPEN
+    )
+    start_date = models.DateField()
+    duration = models.DurationField()
+    clients = models.ManyToManyField(
+        "clients.ClientProfile", through="ReservationClient", related_name="reservations"
+    )
+    notes = models.TextField(blank=True, null=True)
+    created_by = models.ForeignKey(
+        "accounts.User", on_delete=models.SET_NULL, blank=True, null=True, related_name="created_reservations"
+    )
+    checked_in_at = models.DateTimeField(blank=True, null=True)
+    checked_out_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["shelter", "status"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"Reservation #{self.pk} at {self.shelter} ({self.status})"
+
+
+class ReservationClient(BaseModel):
+    reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, related_name="reservation_clients")
+    client_profile = models.ForeignKey(
+        "clients.ClientProfile", on_delete=models.CASCADE, related_name="reservation_clients"
+    )
+    is_primary = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["reservation", "client_profile"],
+                name="unique_client_per_reservation",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.client_profile} - Reservation #{self.reservation_id}"
 
 
 # Shelter Details

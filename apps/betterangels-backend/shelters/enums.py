@@ -235,3 +235,13 @@ class RoomStatusChoices(models.TextChoices):
     AVAILABLE = "available", _("Available")
     RESERVED = "reserved", _("Reserved")
     NEEDS_MAINTENANCE = "needs_maintenance", _("Needs Maintenance")
+
+
+@strawberry.enum
+class ReservationStatusChoices(models.TextChoices):
+    OPEN = "open", _("Open")
+    CONFIRMED = "confirmed", _("Confirmed")
+    CHECKED_IN = "checked_in", _("Checked In")
+    COMPLETED = "completed", _("Completed")
+    CANCELLED = "cancelled", _("Cancelled")
+    NO_SHOW = "no_show", _("No Show")

@@ -72,6 +72,8 @@ from .models import (
     InteriorPhoto,
     Parking,
     Pet,
+    Reservation,
+    ReservationClient,
     Room,
     RoomStyle,
     Shelter,
@@ -1047,3 +1049,49 @@ class CityAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     readonly_fields = ("created_at",)
     ordering = ("name",)
+
+
+class ReservationClientInline(admin.TabularInline):
+    model = ReservationClient
+    extra = 1
+    autocomplete_fields = ["client_profile"]
+
+
+@admin.register(Reservation)
+class ReservationAdmin(admin.ModelAdmin):
+    list_display = ("id", "shelter", "status", "start_date", "duration", "created_by", "created_at")
+    list_filter = ("status",)
+    search_fields = ("shelter__name",)
+    autocomplete_fields = ["shelter", "room", "bed", "created_by"]
+    inlines = [ReservationClientInline]
+    fieldsets = (
+        (
+            "Reservation Details",
+            {
+                "fields": (
+                    "shelter",
+                    "room",
+                    "bed",
+                    "status",
+                    "start_date",
+                    "duration",
+                    "created_by",
+                )
+            },
+        ),
+        (
+            "Check-in / Check-out",
+            {
+                "fields": (
+                    "checked_in_at",
+                    "checked_out_at",
+                )
+            },
+        ),
+        (
+            "Notes",
+            {
+                "fields": ("notes",)
+            },
+        ),
+    )
