@@ -244,4 +244,4 @@ class ReservationStatusChoices(models.TextChoices):
     CHECKED_IN = "checked_in", _("Checked In")
     COMPLETED = "completed", _("Completed")
     CANCELLED = "cancelled", _("Cancelled")
-    NO_SHOW = "no_show", _("No Show")
+    CHECK_IN_OVERDUE = "check_in_overdue", _("Check-in Overdue")

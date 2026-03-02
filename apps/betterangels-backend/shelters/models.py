@@ -123,7 +123,7 @@ class Reservation(BaseModel):
     room = models.ForeignKey(Room, on_delete=models.SET_NULL, blank=True, null=True, related_name="reservations")
     bed = models.ForeignKey(Bed, on_delete=models.SET_NULL, blank=True, null=True, related_name="reservations")
     status = TextChoicesField(
-        choices_enum=ReservationStatusChoices, default=ReservationStatusChoices.OPEN
+        choices_enum=ReservationStatusChoices, default=ReservationStatusChoices.CONFIRMED
     )
     start_date = models.DateField()
     duration = models.DurationField()
