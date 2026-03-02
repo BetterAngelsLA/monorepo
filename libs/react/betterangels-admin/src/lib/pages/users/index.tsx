@@ -59,7 +59,7 @@ function useOrganizationMembers(
         organizationId: orgId,
         pagination: { offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE },
         ordering: [{ [sort.field]: sort.direction }],
-        search,
+        filters: { search },
       },
       skip: !orgId,
       fetchPolicy: 'cache-and-network',
