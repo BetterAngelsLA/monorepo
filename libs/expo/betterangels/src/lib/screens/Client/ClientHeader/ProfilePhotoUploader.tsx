@@ -18,8 +18,6 @@ interface Props {
 type ModalType = 'picker' | 'profile' | null;
 
 export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
-  console.log('ProfilePhotoUploader ProfilePhotoUploader ProfilePhotoUploader');
-
   const [modalType, setModalType] = useState<ModalType>(null);
   const { showSnackbar } = useSnackbar();
 

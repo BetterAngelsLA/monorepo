@@ -6,21 +6,40 @@ import { BaseModal } from '../Modal';
 import { CameraView } from './CameraView';
 
 type Props = {
-  isOpen: boolean;
+  /**
+   * Called when the user cancels or permission is denied.
+   * Parent must unmount <CameraModal /> in response.
+   */
   onClose: () => void;
+
+  /**
+   * Called when a photo is successfully captured.
+   * Parent is responsible for unmounting after handling.
+   */
   onCapture: (file: ReactNativeFile) => void;
 };
 
-export function CameraModal(props: Props) {
-  const { isOpen, onClose, onCapture } = props;
+/**
+ * CameraModal
+ *
+ * IMPORTANT:
+ * This component is intentionally mount-driven.
+ *
+ * It MUST be conditionally rendered:
+ *
+ *   {isActive && <CameraModal ... />}
+ *
+ * Not using an `isOpen` prop as:
+ * Toggling visibility (rendering `null`) does NOT fully detach
+ * the native camera preview. It must be fully unmounted to
+ * properly release the surface and avoid blocking gestures.
+ */
 
+export function CameraModal({ onClose, onCapture }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
 
+  // Request permission on mount
   useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
     async function ensurePermission() {
       const result = await requestPermission();
 
@@ -35,11 +54,7 @@ export function CameraModal(props: Props) {
     }
 
     ensurePermission();
-  }, [isOpen, requestPermission, onClose]);
-
-  if (!isOpen) {
-    return null;
-  }
+  }, [requestPermission, onClose]);
 
   if (!permission?.granted) {
     return null;
@@ -47,7 +62,7 @@ export function CameraModal(props: Props) {
 
   return (
     <BaseModal
-      isOpen={isOpen}
+      isOpen={true}
       backdropOpacity={0.5}
       variant="sheet"
       direction="up"

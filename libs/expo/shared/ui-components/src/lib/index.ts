@@ -12,7 +12,7 @@ export { default as BottomActions } from './BottomActions';
 export * from './BottomSheet';
 export * from './BottomSheetPanel';
 export { default as Button } from './Button';
-export { default as Camera, CameraModal, CameraView } from './Camera';
+export * from './Camera';
 export { default as CardWrapper } from './CardWrapper';
 export { default as Checkbox } from './Checkbox';
 export { default as CircularLoading } from './CircularLoading';

@@ -57,8 +57,6 @@ type TProps = {
 };
 
 export default function UploadModalHmis(props: TProps) {
-  console.log('UploadModalHmis UploadModalHmis UploadModalHmis');
-
   const { client, closeModal } = props;
 
   const { showSnackbar } = useSnackbar();

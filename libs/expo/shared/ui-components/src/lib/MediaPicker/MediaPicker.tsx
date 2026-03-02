@@ -118,14 +118,15 @@ export function MediaPicker(props: MediaPickerModalProps) {
         />
       </BottomSheetModalControlled>
 
-      <CameraModal
-        isOpen={mediaPickerActive && currentMode === 'imageCapture'}
-        onClose={() => setCurrentMode('menu')}
-        onCapture={(file) => {
-          onCameraCapture(file);
-          onMediaPickerClose();
-        }}
-      />
+      {mediaPickerActive && currentMode === 'imageCapture' && (
+        <CameraModal
+          onClose={() => setCurrentMode('menu')}
+          onCapture={(file) => {
+            onCameraCapture(file);
+            onMediaPickerClose();
+          }}
+        />
+      )}
     </>
   );
 }
