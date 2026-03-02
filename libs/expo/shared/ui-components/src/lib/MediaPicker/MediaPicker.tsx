@@ -14,7 +14,7 @@ type MediaPickerModalProps = {
   onClose: () => void;
   onCameraCapture: (file: ReactNativeFile) => void;
   onFilesSelected: (files: ReactNativeFile[]) => void;
-  allowMultiple?: boolean;
+  allowMultiple: boolean;
   labels?: {
     image?: string;
     camera?: string;

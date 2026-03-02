@@ -14,7 +14,7 @@ type UseDocumentPickerParams = {
 };
 
 export function useDocumentPicker(params: UseDocumentPickerParams) {
-  const { allowMultiple = false, mimeTypes } = params;
+  const { allowMultiple, mimeTypes } = params;
 
   const pickerMimeTypes = useMemo<string[]>(() => {
     return mimeTypes ? [...mimeTypes] : [...ALLOWED_UPLOAD_TYPES];

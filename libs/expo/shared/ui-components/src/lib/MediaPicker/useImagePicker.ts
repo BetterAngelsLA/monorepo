@@ -13,7 +13,7 @@ type UseImagePickerParams = {
 };
 
 export function useImagePicker(params: UseImagePickerParams) {
-  const { allowMultiple = true } = params;
+  const { allowMultiple } = params;
 
   const pickImage = useCallback(async (): Promise<ImagePickerResult> => {
     try {
