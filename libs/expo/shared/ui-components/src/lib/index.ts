@@ -61,7 +61,6 @@ export { default as LocateMeButton } from './LocateMeButton';
 export * from './Map';
 export { default as MapClusterMarker } from './MapClusterMarker';
 export * from './MediaPicker';
-export { default as MediaPickerModal } from './MediaPickerModal';
 export { BaseModal } from './Modal';
 export { default as MultiSelect, MultiSelect_V2 } from './MultiSelect';
 export { default as PdfViewer } from './PdfViewer';

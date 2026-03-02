@@ -2,7 +2,7 @@ import { useMutation } from '@apollo/client/react';
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { WFEdit } from '@monorepo/expo/shared/icons';
 import { Spacings } from '@monorepo/expo/shared/static';
-import { Avatar, MediaPickerModal } from '@monorepo/expo/shared/ui-components';
+import { Avatar, MediaPicker } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSnackbar } from '../../../hooks';
@@ -18,6 +18,8 @@ interface Props {
 type ModalType = 'picker' | 'profile' | null;
 
 export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
+  console.log('ProfilePhotoUploader ProfilePhotoUploader ProfilePhotoUploader');
+
   const [modalType, setModalType] = useState<ModalType>(null);
   const { showSnackbar } = useSnackbar();
 
@@ -83,12 +85,12 @@ export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
         </View>
       </Pressable>
 
-      <MediaPickerModal
-        isModalVisible={isPickerOpen}
-        setModalVisible={(v) => setModalType(v ? 'picker' : null)}
+      <MediaPicker
         allowMultiple={false}
-        onCapture={handleUpload}
-        setFiles={(files) => handleUpload(files[0])}
+        isOpen={isPickerOpen}
+        onClose={() => setModalType(null)}
+        onCameraCapture={handleUpload}
+        onFilesSelected={(files) => handleUpload(files[0])}
       />
 
       {imageUrl && (

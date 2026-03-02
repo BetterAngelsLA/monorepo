@@ -5,7 +5,7 @@ import {
 } from '@monorepo/expo/shared/clients';
 import { WFEdit } from '@monorepo/expo/shared/icons';
 import { Spacings } from '@monorepo/expo/shared/static';
-import { Avatar, MediaPickerModal } from '@monorepo/expo/shared/ui-components';
+import { Avatar, MediaPicker } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSnackbar } from '../../../hooks';
@@ -34,6 +34,10 @@ export function HMISProfilePhotoUploader({
   headers,
   onUploadSuccess,
 }: HMISProfilePhotoUploaderProps) {
+  console.log(
+    'HMISProfilePhotoUploader HMISProfilePhotoUploader HMISProfilePhotoUploader'
+  );
+
   const [modalType, setModalType] = useState<ModalType>(null);
   const [uploading, setUploading] = useState(false);
   const { showSnackbar } = useSnackbar();
@@ -109,12 +113,12 @@ export function HMISProfilePhotoUploader({
         </View>
       </Pressable>
 
-      <MediaPickerModal
-        isModalVisible={isPickerOpen}
-        setModalVisible={(v) => setModalType(v ? 'picker' : null)}
+      <MediaPicker
         allowMultiple={false}
-        onCapture={handleUpload}
-        setFiles={(files) => handleUpload(files[0])}
+        isOpen={isPickerOpen}
+        onClose={() => setModalType(null)}
+        onCameraCapture={handleUpload}
+        onFilesSelected={(files) => handleUpload(files[0])}
       />
 
       <HMISProfilePhotoModal

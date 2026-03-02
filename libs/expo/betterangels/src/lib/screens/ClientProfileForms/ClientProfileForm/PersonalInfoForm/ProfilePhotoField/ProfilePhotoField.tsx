@@ -5,7 +5,7 @@ import {
   Avatar,
   EditButton,
   Form,
-  MediaPickerModal,
+  MediaPicker,
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -21,6 +21,8 @@ type TProps = {
 };
 
 export function ProfilePhotoField(props: TProps) {
+  console.log('ProfilePhotoField ProfilePhotoField ProfilePhotoField');
+
   const { clientId, title = 'Profile Photo' } = props;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -87,12 +89,13 @@ export function ProfilePhotoField(props: TProps) {
           accessibilityHint={`client's profile photo`}
         />
       </Pressable>
-      <MediaPickerModal
-        onCapture={(file) => onUpload(file)}
+
+      <MediaPicker
         allowMultiple={false}
-        setModalVisible={setIsModalVisible}
-        isModalVisible={isModalVisible}
-        setFiles={(files) => onUpload(files[0])}
+        isOpen={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        onCameraCapture={onUpload}
+        onFilesSelected={(files) => onUpload(files[0])}
       />
     </View>
   );

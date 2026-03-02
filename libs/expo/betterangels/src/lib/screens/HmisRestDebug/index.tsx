@@ -3,7 +3,7 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   Button,
-  MediaPickerModal,
+  MediaPicker,
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -39,6 +39,8 @@ type Section =
   | 'photoUpload';
 
 export default function HmisRestDebug() {
+  console.log('HmisRestDebug HmisRestDebug HmisRestDebug');
+
   const {
     getCurrentUser,
     uploadClientFile,
@@ -1427,12 +1429,13 @@ export default function HmisRestDebug() {
           </>
         )}
       </View>
-      <MediaPickerModal
-        onCapture={handlePhotoUpload}
-        setModalVisible={setPhotoPickerVisible}
-        isModalVisible={photoPickerVisible}
-        setFiles={(files) => handlePhotoUpload(files[0])}
+
+      <MediaPicker
         allowMultiple={false}
+        isOpen={photoPickerVisible}
+        onClose={() => setPhotoPickerVisible(false)}
+        onCameraCapture={handlePhotoUpload}
+        onFilesSelected={(files) => handlePhotoUpload(files[0])}
       />
     </MainScrollContainer>
   );
