@@ -6,7 +6,7 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { resizeImage } from '@monorepo/expo/shared/utils';
-import { CameraType, CameraView, FlashMode } from 'expo-camera';
+import { CameraType, CameraView, FlashMode, ImageType } from 'expo-camera';
 import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,70 +14,88 @@ import IconButton from '../IconButton';
 import TextButton from '../TextButton';
 import TextMedium from '../TextMedium';
 
-interface ICameraProps {
+interface CameraProps {
   onCapture: (file: ReactNativeFile) => void;
-  setIsCameraOpen: (isCameraOpen: boolean) => void;
-  setModalVisible: (isModalVisible: boolean) => void;
+  onCancel: () => void;
+  imageType?: ImageType;
 }
 
-export default function Camera(props: ICameraProps) {
-  const { onCapture, setIsCameraOpen, setModalVisible } = props;
-  const [type, setType] = useState<CameraType>('back');
-  const [flash, setFlash] = useState<FlashMode>('off');
+export default function Camera(props: CameraProps) {
+  const { onCapture, onCancel, imageType = 'jpg' } = props;
+
+  const [cameraType, setCameraType] = useState<CameraType>('back');
+  const [flashMode, setFlashMode] = useState<FlashMode>('off');
+  const [isCapturing, setIsCapturing] = useState(false);
 
   const cameraRef = useRef<CameraView | null>(null);
   const insets = useSafeAreaInsets();
 
-  const toggleFlashLight = () =>
-    setFlash((cur) => (cur === 'off' ? 'on' : 'off'));
-  const toggleCameraType = () =>
-    setType((cur) => (cur === 'back' ? 'front' : 'back'));
-  const closeCamera = () => setIsCameraOpen(false);
+  function toggleFlash() {
+    setFlashMode((current) => {
+      return current === 'on' ? 'off' : 'on';
+    });
+  }
 
-  const captureImage = async () => {
-    if (!cameraRef.current) return;
+  function toggleCameraType() {
+    setCameraType((current) => {
+      return current === 'front' ? 'back' : 'front';
+    });
+  }
+
+  async function handleCapture() {
+    if (!cameraRef.current) {
+      return;
+    }
+
+    if (isCapturing) {
+      return;
+    }
+
+    setIsCapturing(true);
 
     try {
       const photo = await cameraRef.current.takePictureAsync();
-      if (photo) {
-        const resizedPhoto = await resizeImage({ uri: photo.uri });
-        const file = new ReactNativeFile({
-          uri: resizedPhoto.uri,
-          name: `${Date.now().toString()}.jpg`,
-          type: 'image/jpeg',
-        });
-        onCapture(file);
+
+      if (!photo) {
+        setIsCapturing(false);
+
+        return;
       }
-      setIsCameraOpen(false);
-      setModalVisible(false);
-    } catch (err) {
-      console.error(err);
+
+      const resizedPhoto = await resizeImage({ uri: photo.uri });
+
+      const file = new ReactNativeFile({
+        uri: resizedPhoto.uri,
+        name: `${Date.now().toString()}.${imageType}`,
+        type: `image/${imageType}`,
+      });
+
+      onCapture(file);
+    } catch (error) {
+      console.error(error);
+      setIsCapturing(false);
     }
-  };
+  }
 
   return (
     <View style={styles.root}>
-      {/* Full-bleed camera preview (cover) */}
       <CameraView
         ref={cameraRef}
-        style={[StyleSheet.absoluteFillObject]}
-        // If some Android devices still show thin bars, uncomment:
-        // style={[StyleSheet.absoluteFillObject, { transform: [{ scaleX: 1.06 }, { scaleY: 1.06 }] }]}
-        facing={type}
-        flash={flash}
+        style={StyleSheet.absoluteFillObject}
+        facing={cameraType}
+        flash={flashMode}
       />
 
-      {/* Top overlay (flash) */}
       <View style={[styles.topBar, { paddingTop: insets.top + Spacings.xs }]}>
         <IconButton
-          onPress={toggleFlashLight}
+          onPress={toggleFlash}
           accessibilityLabel="flash"
           accessibilityHint={
-            flash === 'off' ? 'enables flash' : 'disables flash'
+            flashMode === 'off' ? 'enables flash' : 'disables flash'
           }
           variant="transparent"
         >
-          {flash === 'off' ? (
+          {flashMode === 'off' ? (
             <BoltSlashIcon size="md" color={Colors.WHITE} />
           ) : (
             <BoltIcon size="md" color={Colors.WHITE} />
@@ -85,7 +103,6 @@ export default function Camera(props: ICameraProps) {
         </IconButton>
       </View>
 
-      {/* Bottom overlay (controls) */}
       <View
         style={[
           styles.bottomBar,
@@ -103,25 +120,27 @@ export default function Camera(props: ICameraProps) {
           <TextButton
             style={{ flex: 1 }}
             color={Colors.WHITE}
-            onPress={closeCamera}
+            onPress={onCancel}
             accessibilityHint="closes camera"
             title="Cancel"
           />
 
           <Pressable
-            onPress={captureImage}
+            onPress={handleCapture}
             style={{ flex: 2, alignItems: 'center' }}
             accessibilityRole="button"
-            accessible
             accessibilityLabel="capture"
-            accessibilityHint="captures image"
+            accessibilityHint="taka a photo"
           >
             {({ pressed }) => (
               <View style={styles.shutterOuter}>
                 <View
                   style={[
                     styles.shutterInner,
-                    { height: pressed ? 38 : 45, width: pressed ? 38 : 45 },
+                    {
+                      height: pressed ? 38 : 45,
+                      width: pressed ? 38 : 45,
+                    },
                   ]}
                 />
               </View>
@@ -194,6 +213,3 @@ const styles = StyleSheet.create({
     width: 41,
   },
 });
-
-export { CameraModal } from './CameraModal';
-export { CameraView } from './CameraView';
