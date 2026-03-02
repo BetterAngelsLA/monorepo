@@ -145,11 +145,6 @@ class Location(BaseModel):
     point = PointField(geography=True)
     point_of_interest = models.CharField(max_length=255, blank=True, null=True)
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["point"], name="unique_location_point"),
-        ]
-
     objects = models.Manager()
 
     def __str__(self) -> str:
@@ -240,13 +235,15 @@ class Location(BaseModel):
                 address = Address.objects.filter(formatted_address__iexact=formatted).first()
                 if address:
                     return address
-                # Create a minimal record keyed by formatted_address
                 address, _ = Address.objects.get_or_create(
-                    formatted_address=formatted,
-                    street=None,
-                    city=None,
-                    state=None,
-                    zip_code=None,
+                    formatted_address__iexact=formatted,
+                    defaults={
+                        "formatted_address": formatted,
+                        "street": None,
+                        "city": None,
+                        "state": None,
+                        "zip_code": None,
+                    },
                 )
                 return address
             # No components and no formatted address — nothing useful to store
@@ -281,48 +278,30 @@ class Location(BaseModel):
         raw = address_data.get("address_components")
         if not raw:
             return None
-        components: list[Dict[str, str]] = json.loads(raw)
-
-        return next(
-            (
-                Location._get_component_value(component, "long_name")
-                for component in components
-                if "point_of_interest" in component.get("types", [])
-            ),
-            None,
-        )
+        return cls.parse_address_components(raw).get("point_of_interest")
 
     @classmethod
     def get_or_create_location(cls, location_data: Dict[str, Any]) -> "Location":
-        """Gets or creates a location, updating address/POI if provided.
+        """Return an existing Location or create a new one.
 
-        Location is keyed by rounded GPS point (unique constraint).
-        Address and point_of_interest are updated when non-null to keep
-        geocode metadata fresh without overwriting existing good data.
+        Deduplication is based on the triple (point, address, point_of_interest).
+        If all three match an existing row, that row is reused — no data is
+        overwritten.  Otherwise a new Location is created.
         """
         point = cls._round_point(location_data["point"])
 
         address_data = location_data.get("address")
         address = Location.get_or_create_address(address_data) if address_data else None
-        point_of_interest = location_data.get("point_of_interest") or (
-            cls.get_point_of_interest(address_data) if address_data else None
-        )
 
-        # Build defaults with only non-null values to avoid overwriting good data
-        defaults = {
-            k: v
-            for k, v in {
-                "address": address,
-                "point_of_interest": point_of_interest,
-            }.items()
-            if v is not None
-        }
+        poi = location_data.get("point_of_interest")
+        if poi is None and address_data:
+            poi = cls.get_point_of_interest(address_data)
 
-        location, _ = Location.objects.update_or_create(
+        location, _ = Location.objects.get_or_create(
             point=point,
-            defaults=defaults,
+            address=address,
+            point_of_interest=poi,
         )
-
         return location
 
 
