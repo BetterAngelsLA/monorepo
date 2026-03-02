@@ -7,10 +7,12 @@ export function resolveShowHandle(params: {
 }): boolean {
   const { userValue, variant, snapPoints } = params;
 
+  // userValue always wins
   if (userValue !== undefined) {
     return userValue;
   }
 
+  // `bare` means we provide the bare minimum
   if (variant === 'bare') {
     return false;
   }
@@ -18,5 +20,6 @@ export function resolveShowHandle(params: {
   const hasMultipleSnapPoints =
     Array.isArray(snapPoints) && snapPoints.length > 1;
 
+  // show `handle` only with multiple `snapPoints`, else it's useless
   return hasMultipleSnapPoints;
 }

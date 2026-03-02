@@ -68,14 +68,15 @@ function mergeViewStyles(
  * Resolves a complete BottomSheetOptions object.
  *
  * Steps:
- * 1️⃣ Determine variant (default if unspecified)
- * 2️⃣ Merge base + variant + user options
- * 3️⃣ Normalize style props (container/sheet/content)
- * 4️⃣ Apply dynamic option resolution (e.g. showHandle)
+ * 1. Determine variant (default if unspecified)
+ * 2. Merge base + variant + user options
+ * 3. Normalize style props (container/sheet/content)
+ * 4. Apply dynamic option resolution (e.g. showHandle)
  *
  * @param options Optional user-provided configuration
  * @returns Fully resolved BottomSheetOptions object
  */
+
 export function resolveBottomSheetOptions(
   options?: BottomSheetOptions
 ): BottomSheetOptions {
@@ -85,12 +86,7 @@ export function resolveBottomSheetOptions(
   const base = DEFAULT_BOTTOM_SHEET_OPTIONS;
   const variantOptions = BOTTOM_SHEET_VARIANT_OPTIONS[variant] ?? {};
 
-  /**
-   * Static merge:
-   * Base → Variant → User
-   *
-   * User options always win.
-   */
+  // Merge: User options win
   const merged: BottomSheetOptions = {
     ...base,
     ...variantOptions,
@@ -113,13 +109,7 @@ export function resolveBottomSheetOptions(
     ),
   };
 
-  /**
-   * Dynamic resolution:
-   * Handle visibility depends on:
-   * - Explicit user override
-   * - Variant rules
-   * - snapPoints length
-   */
+  // Resolve handle visibility
   const resolvedShowHandle = resolveShowHandle({
     userValue: user.showHandle,
     variant,

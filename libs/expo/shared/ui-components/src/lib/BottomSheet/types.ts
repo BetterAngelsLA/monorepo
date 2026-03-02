@@ -3,11 +3,9 @@ import { ReactNode } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
 
 /**
- * ---------------------------------------------------------------------------
  * Variants
- * ---------------------------------------------------------------------------
  *
- * Variants represent high-level UX modes.
+ * represent high-level UX modes.
  *
  * They influence default styling and behavior but do NOT directly
  * render anything. Resolution happens in `resolveBottomSheetOptions`.
@@ -15,9 +13,7 @@ import { StyleProp, ViewStyle } from 'react-native';
 export type BottomSheetVariant = 'default' | 'bare';
 
 /**
- * ---------------------------------------------------------------------------
  * Gorhom-Level Options
- * ---------------------------------------------------------------------------
  *
  * Options that are understood directly by `@gorhom/bottom-sheet`.
  *
@@ -30,9 +26,7 @@ export type BottomSheetGorhomOptions = Pick<
 >;
 
 /**
- * ---------------------------------------------------------------------------
  * Provider-Level Options (Lifecycle & Stacking)
- * ---------------------------------------------------------------------------
  *
  * These options are consumed exclusively by `BottomSheetModalProvider`.
  *
@@ -46,9 +40,9 @@ export type BottomSheetProviderOptions = {
   /**
    * Determines how the new sheet interacts with existing sheets.
    *
-   * - 'push'    → stack on top
-   * - 'switch'  → replace only the top sheet
-   * - 'replace' → dismiss all existing sheets (default)
+   * - 'push': stack on top
+   * - 'switch': replace only the top sheet
+   * - 'replace': dismiss all existing sheets (default)
    */
   stackBehavior?: BottomSheetModalProps['stackBehavior'];
 
@@ -59,14 +53,11 @@ export type BottomSheetProviderOptions = {
 };
 
 /**
- * ---------------------------------------------------------------------------
  * Wrapper-Level Options (Sheet Structure & Layout)
- * ---------------------------------------------------------------------------
  *
  * These options affect sheet structure and rendering behavior,
- * but are NOT part of Gorhom's API.
- *
- * They are interpreted by `BottomSheetBase`.
+ * -  not part of Gorhom's API
+ * -  interpreted by `BottomSheetBase`
  */
 export type BottomSheetWrapperOptions = {
   /**
@@ -100,9 +91,7 @@ export type BottomSheetWrapperOptions = {
 };
 
 /**
- * ---------------------------------------------------------------------------
  * Header-Level Options
- * ---------------------------------------------------------------------------
  *
  * These options control rendering of the `BottomSheetHeader`
  * component and do NOT belong to Gorhom.
@@ -130,9 +119,7 @@ export interface BottomSheetHeaderOptions {
 }
 
 /**
- * ---------------------------------------------------------------------------
  * Public BottomSheetOptions
- * ---------------------------------------------------------------------------
  *
  * This is the single configuration object callers use.
  *
@@ -173,9 +160,7 @@ export type BottomSheetOptions = BottomSheetGorhomOptions &
   };
 
 /**
- * ---------------------------------------------------------------------------
  * Render API
- * ---------------------------------------------------------------------------
  *
  * Passed to caller-provided render function.
  */

@@ -34,10 +34,6 @@ export function HMISProfilePhotoUploader({
   headers,
   onUploadSuccess,
 }: HMISProfilePhotoUploaderProps) {
-  console.log(
-    'HMISProfilePhotoUploader HMISProfilePhotoUploader HMISProfilePhotoUploader'
-  );
-
   const [modalType, setModalType] = useState<ModalType>(null);
   const [uploading, setUploading] = useState(false);
   const { showSnackbar } = useSnackbar();

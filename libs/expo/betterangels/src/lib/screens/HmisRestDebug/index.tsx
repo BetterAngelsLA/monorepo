@@ -39,8 +39,6 @@ type Section =
   | 'photoUpload';
 
 export default function HmisRestDebug() {
-  console.log('HmisRestDebug HmisRestDebug HmisRestDebug');
-
   const {
     getCurrentUser,
     uploadClientFile,

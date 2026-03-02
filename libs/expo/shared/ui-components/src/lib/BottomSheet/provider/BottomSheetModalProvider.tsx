@@ -197,12 +197,12 @@ export function BottomSheetModalProvider(props: TProps) {
       };
 
       setSheets((previousSheets) => {
-        // Push → stack on top
+        // Push: add stack on top
         if (stackBehavior === 'push') {
           return [...previousSheets, instance];
         }
 
-        // Switch → replace only the top sheet
+        // Switch: replace the top sheet only
         if (stackBehavior === 'switch') {
           if (previousSheets.length > 0) {
             const top = previousSheets[previousSheets.length - 1];
@@ -216,7 +216,7 @@ export function BottomSheetModalProvider(props: TProps) {
           return [...previousSheets.slice(0, -1), instance];
         }
 
-        // Replace (default) → dismiss all existing sheets
+        // Replace: dismiss all existing sheets (default)
         previousSheets.forEach((sheet) => {
           const inst = sheetRefs.current.get(sheet.id);
 
@@ -232,7 +232,7 @@ export function BottomSheetModalProvider(props: TProps) {
   /**
    * Public API: popTopSheet
    *
-   * Dismisses the top-most sheet only.
+   * Dismiss top sheet only.
    */
   const popTopSheet = useCallback(() => {
     setSheets((prev) => {

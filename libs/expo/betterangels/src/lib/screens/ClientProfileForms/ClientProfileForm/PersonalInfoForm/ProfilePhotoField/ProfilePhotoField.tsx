@@ -21,8 +21,6 @@ type TProps = {
 };
 
 export function ProfilePhotoField(props: TProps) {
-  console.log('ProfilePhotoField ProfilePhotoField ProfilePhotoField');
-
   const { clientId, title = 'Profile Photo' } = props;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
