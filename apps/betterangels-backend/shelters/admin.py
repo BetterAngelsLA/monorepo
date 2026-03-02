@@ -72,6 +72,7 @@ from .models import (
     InteriorPhoto,
     Parking,
     Pet,
+    Room,
     RoomStyle,
     Shelter,
     ShelterProgram,
@@ -468,7 +469,12 @@ class ShelterResource(resources.ModelResource):
             addy_for_location_method = addy_data.json()["results"][0]
             addy_for_location_method["address_components"] = json.dumps(addy_for_location_method["address_components"])
             addy_address = Location.get_or_create_address(addy_for_location_method)
-            if None in [addy_address.street, addy_address.city, addy_address.state, addy_address.zip_code]:
+            if addy_address is None or None in [
+                addy_address.street,
+                addy_address.city,
+                addy_address.state,
+                addy_address.zip_code,
+            ]:
                 raise IndexError
             row["location"] = addy_to_places_object
         except IndexError:
@@ -894,15 +900,8 @@ class ShelterAdmin(ImportExportModelAdmin):
         url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
         return format_html('<a href="{}">{}</a>', url, label)
 
-
-@admin.register(Bed)
-class BedAdmin(admin.ModelAdmin):
-    list_display = ("id", "shelter_id", "status", "created_at", "updated_at")
-    list_filter = ("status",)
-    search_fields = ("shelter_id__name",)
-
     def get_urls(self) -> list[Any]:
-        urls = super().get_urls()
+        urls: list[Any] = super().get_urls()
         custom_urls: list[Any] = [
             path(
                 "<path:object_id>/clone/",
@@ -990,6 +989,54 @@ class BedAdmin(admin.ModelAdmin):
 
         messages.success(request, _("Shelter '%s' has been cloned successfully.") % shelter.name)
         return redirect("admin:shelters_shelter_change", shelter_copy.pk)
+
+
+@admin.register(Bed)
+class BedAdmin(admin.ModelAdmin):
+    list_display = ("id", "shelter", "status", "created_at", "updated_at")
+    list_filter = ("status",)
+    search_fields = ("shelter__name",)
+
+
+@admin.register(Room)
+class RoomAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "shelter",
+        "room_identifier",
+        "room_type",
+        "status",
+        "medical_respite",
+        "last_cleaned_inspected",
+    )
+    list_filter = ("status", "room_type", "medical_respite")
+    search_fields = ("room_identifier", "shelter__name", "notes")
+    autocomplete_fields = ["shelter"]
+    fieldsets = (
+        (
+            "Basic Information",
+            {
+                "fields": (
+                    "shelter",
+                    "room_identifier",
+                    "room_type",
+                    "room_type_other",
+                    "status",
+                )
+            },
+        ),
+        (
+            "Details",
+            {
+                "fields": (
+                    "amenities",
+                    "medical_respite",
+                    "last_cleaned_inspected",
+                    "notes",
+                )
+            },
+        ),
+    )
 
 
 @admin.register(City)

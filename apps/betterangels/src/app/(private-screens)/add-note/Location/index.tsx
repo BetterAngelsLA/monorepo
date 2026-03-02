@@ -7,6 +7,7 @@ import {
   TLocationData,
   UpdateNoteLocationDocument,
   useModalScreen,
+  useUserDefaultNoteLocation,
 } from '@monorepo/expo/betterangels';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
@@ -88,6 +89,8 @@ export default function LocationComponent(props: ILocationProps) {
       : null,
     name: address && address.street ? address.street : null,
   });
+
+  const [defaultLocation] = useUserDefaultNoteLocation();
 
   const locationRef = useRef<TLocation>(location);
   const autoFilledRef = useRef(false);
@@ -183,10 +186,21 @@ export default function LocationComponent(props: ILocationProps) {
 
         const coords = result?.location?.coords;
 
-        await geocodeAndSave(
-          coords?.latitude ?? INITIAL_LOCATION.latitude,
-          coords?.longitude ?? INITIAL_LOCATION.longitude
-        );
+        if (
+          defaultLocation &&
+          defaultLocation.latitude &&
+          defaultLocation.longitude
+        ) {
+          await geocodeAndSave(
+            defaultLocation.latitude,
+            defaultLocation.longitude
+          );
+        } else {
+          await geocodeAndSave(
+            coords?.latitude ?? INITIAL_LOCATION.latitude,
+            coords?.longitude ?? INITIAL_LOCATION.longitude
+          );
+        }
       } catch (err) {
         console.error('Error auto-setting initial location', err);
       }

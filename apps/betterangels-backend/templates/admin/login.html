@@ -145,7 +145,6 @@
       codeStep.innerHTML = `
         <label for="${codeFieldId}" class="required">Code:</label>
         <input type="text" id="${codeFieldId}" name="${codeFieldId}" placeholder="Enter code" required autocomplete="one-time-code" inputmode="numeric" pattern="\\d*" class="admin-text-input">`;
-      codeStep.hidden = false;
 
       // clear session for CSRF refresh
       await fetch(logoutUrl, {
@@ -160,6 +159,7 @@
       if (res.ok || res.status === 401) {
         awaitingCode = true;
         emailStep.hidden = true;
+        codeStep.hidden  = false;
         submitBtn.value  = 'Verify Code';
         showStatus('Code sent! Check your email.');
         document.getElementById(codeFieldId).focus();
