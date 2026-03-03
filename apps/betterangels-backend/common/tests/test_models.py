@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from common.models import Address, Attachment, Location, PhoneNumber
 from common.tests.utils import build_address_inputs
@@ -38,7 +38,7 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         delete_street_number: bool = False,
         include_point_of_interest: bool = False,
         delete_components: bool = False,
-    ):
+    ) -> Tuple[Dict[str, str], Dict[str, Union[str, List[Dict[str, Any]]]]]:
         """Returns address input in two formats (snake_case keys for model-level tests)."""
         return build_address_inputs(
             camel_case=False,
@@ -300,6 +300,9 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
             self.assertIsNone(location.point_of_interest)
 
     def test_get_or_create_location_missing_components(self) -> None:
+        """When components are empty but formatted_address matches an existing
+        row, the existing Address is reused (via the unique constraint on
+        formatted_address)."""
         address_count = Address.objects.count()
         json_address_input, _ = self._get_address_inputs(delete_components=True)
 
@@ -310,12 +313,10 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         }
         location = Location.get_or_create_location(location_data)
 
-        self.assertEqual(Address.objects.count(), address_count + 1)
+        # No new Address created — existing row matched by formatted_address
+        self.assertEqual(Address.objects.count(), address_count)
         assert location.address
-        self.assertIsNone(location.address.street)
-        self.assertIsNone(location.address.city)
-        self.assertIsNone(location.address.state)
-        self.assertIsNone(location.address.zip_code)
+        self.assertEqual(location.address.pk, self.address.pk)
 
     @parametrize(
         ("missing_component_index"),
@@ -325,6 +326,8 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         ],
     )
     def test_get_or_create_location_partial_street(self, missing_component_index: int) -> None:
+        """Partial components with a *new* formatted_address create a new Address
+        with the expected partial street value."""
         address_count = Address.objects.count()
         _, address_input = self._get_address_inputs()
         assert isinstance(address_input["address_components"], list)
@@ -332,6 +335,8 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         expected_street = "West 1st Street" if missing_component_index == 0 else None
         address_input["address_components"].pop(missing_component_index)
         address_input["address_components"] = json.dumps(address_input["address_components"])
+        # Use a distinct formatted_address so it doesn't match the setUp row
+        address_input["formatted_address"] = "Partial Street Test Address"
         location_data = {
             "address": address_input,
             "point": Point(self.point),

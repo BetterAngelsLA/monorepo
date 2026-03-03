@@ -8,6 +8,12 @@ from common.constants import HMIS_SESSION_KEY_NAME
 from common.models import Address, Location
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
+from django.contrib.sites.models import Site
+from django.test import TestCase
+from model_bakery import baker
+from test_utils.assert_mixins import GraphQLAssertionsMixin
+from test_utils.mixins import GraphQLTestCaseMixin
+from unittest_parametrize import ParametrizedTestCase
 
 # ---------------------------------------------------------------------------
 # Shared address fixture builder
@@ -34,7 +40,9 @@ _ADDRESS_COMPONENTS: List[Dict[str, Any]] = [
     {"long_name": "90012", "short_name": "90012", "types": ["postal_code"]},
 ]
 
-_FORMATTED_ADDRESS = "106 West 1st Street, Los Angeles, CA 90012, USA"
+_FORMATTED_ADDRESS_TEMPLATE = "{street_number} West 1st Street, Los Angeles, CA 90012, USA"
+_DEFAULT_STREET_NUMBER = "106"
+_FORMATTED_ADDRESS = _FORMATTED_ADDRESS_TEMPLATE.format(street_number=_DEFAULT_STREET_NUMBER)
 
 _POI_COMPONENT: Dict[str, Any] = {
     "long_name": "An Interesting Point (Component)",
@@ -65,9 +73,11 @@ def build_address_inputs(
     fmt_key = "formattedAddress" if camel_case else "formatted_address"
 
     components = [dict(c) for c in _ADDRESS_COMPONENTS]  # shallow copy each
+    formatted = _FORMATTED_ADDRESS
 
     if street_number_override:
         components[0] = {**components[0], "long_name": street_number_override}
+        formatted = _FORMATTED_ADDRESS_TEMPLATE.format(street_number=street_number_override)
 
     if delete_street_number:
         components.pop(0)
@@ -80,23 +90,15 @@ def build_address_inputs(
 
     address_input: Dict[str, Union[str, List[Dict[str, Any]]]] = {
         comp_key: components,
-        fmt_key: _FORMATTED_ADDRESS,
+        fmt_key: formatted,
     }
 
     json_address_input: Dict[str, str] = {
-        fmt_key: _FORMATTED_ADDRESS,
+        fmt_key: formatted,
         comp_key: json.dumps(components),
     }
 
     return json_address_input, address_input
-
-
-from django.contrib.sites.models import Site
-from django.test import TestCase
-from model_bakery import baker
-from test_utils.assert_mixins import GraphQLAssertionsMixin
-from test_utils.mixins import GraphQLTestCaseMixin
-from unittest_parametrize import ParametrizedTestCase
 
 
 class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, ParametrizedTestCase, TestCase):
