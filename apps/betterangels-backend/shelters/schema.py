@@ -5,9 +5,9 @@ import strawberry_django
 from common.permissions.utils import IsAuthenticated
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from graphql import GraphQLError
-from shelters.models import Bed, Shelter
+from shelters.models import Shelter
 from shelters.permissions import BedPermissions, ShelterPermissions
-from shelters.services import shelter_create
+from shelters.services import bed_create, shelter_create
 from shelters.types import (
     AdminShelterType,
     BedType,
@@ -35,11 +35,11 @@ class Query:
 @strawberry.type
 class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(ShelterPermissions.ADD)])
-    def create_shelter(self, info: Info, input: CreateShelterInput) -> ShelterType:
-        data = {k: v for k, v in strawberry.asdict(input).items() if v is not UNSET}
+    def create_shelter(self, info: Info, data: CreateShelterInput) -> ShelterType:
+        clean = {k: v for k, v in strawberry.asdict(data).items() if v is not UNSET}
 
         try:
-            shelter = shelter_create(data=data)
+            shelter = shelter_create(data=clean)
         except ValidationError as exc:
             if hasattr(exc, "message_dict"):
                 errors = [{"field": f, "messages": msgs} for f, msgs in exc.message_dict.items()]
@@ -49,16 +49,11 @@ class Mutation:
 
         return cast(ShelterType, shelter)
 
-    @strawberry.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(BedPermissions.ADD)])
-    def create_bed(self, input: CreateBedInput) -> BedType:
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(BedPermissions.ADD)])
+    def create_bed(self, info: Info, data: CreateBedInput) -> BedType:
         try:
-            shelter = Shelter.objects.get(pk=input.shelter_id)
+            bed = bed_create(data=strawberry.asdict(data))
         except Shelter.DoesNotExist:
-            raise ObjectDoesNotExist(f"Shelter matching ID {input.shelter_id} could not be found.")
-
-        bed = Bed.objects.create(
-            shelter=shelter,
-            status=input.status,
-        )
+            raise ObjectDoesNotExist(f"Shelter matching ID {data.shelter_id} could not be found.")
 
         return cast(BedType, bed)

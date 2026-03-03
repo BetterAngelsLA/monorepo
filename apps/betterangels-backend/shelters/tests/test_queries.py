@@ -901,18 +901,20 @@ class BedMutationTestCase(GraphQLTestCaseMixin, TestCase):
     def test_create_bed(self) -> None:
         shelter = shelter_recipe.make()
         mutation = """
-            mutation CreateBed($input: CreateBedInput!) {
-                createBed(input: $input) {
-                    id
-                    status
-                    shelter {
+            mutation CreateBed($data: CreateBedInput!) {
+                createBed(data: $data) {
+                    ... on BedType {
                         id
+                        status
+                        shelter {
+                            id
+                        }
                     }
                 }
             }
         """
         variables = {
-            "input": {
+            "data": {
                 "shelterId": shelter.pk,
                 "status": BedStatusChoices.AVAILABLE.name,
             }
@@ -929,14 +931,23 @@ class BedMutationTestCase(GraphQLTestCaseMixin, TestCase):
 
     def test_create_bed_shelter_not_found(self) -> None:
         mutation = """
-            mutation CreateBed($input: CreateBedInput!) {
-                createBed(input: $input) {
-                    id
+            mutation CreateBed($data: CreateBedInput!) {
+                createBed(data: $data) {
+                    ... on BedType {
+                        id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
                 }
             }
         """
         variables = {
-            "input": {
+            "data": {
                 "shelterId": 999999,
                 "status": BedStatusChoices.AVAILABLE.name,
             }
@@ -944,21 +955,23 @@ class BedMutationTestCase(GraphQLTestCaseMixin, TestCase):
 
         response = self.execute_graphql(mutation, variables)
 
-        self.assertIsNone(response["data"])
-        self.assertEqual(len(response["errors"]), 1)
-        self.assertIn("Shelter matching ID 999999 could not be found.", response["errors"][0]["message"])
+        messages = response["data"]["createBed"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("Shelter matching ID 999999 could not be found.", messages[0]["message"])
 
     def test_create_bed_invalid_status(self) -> None:
         shelter = shelter_recipe.make()
         mutation = """
-            mutation CreateBed($input: CreateBedInput!) {
-                createBed(input: $input) {
-                    id
+            mutation CreateBed($data: CreateBedInput!) {
+                createBed(data: $data) {
+                    ... on BedType {
+                        id
+                    }
                 }
             }
         """
         variables = {
-            "input": {
+            "data": {
                 "shelterId": shelter.pk,
                 "status": "INVALID_STATUS",
             }
