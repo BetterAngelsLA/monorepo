@@ -2,6 +2,10 @@ import { useQuery } from '@apollo/client/react';
 import { useUser } from '@monorepo/react/shelter';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Dropdown,
+  DropdownOption,
+} from '../../components/base-ui/dropdown';
 import { ShelterRow } from '../../components/ShelterRow';
 import {
   ViewSheltersByOrganizationDocument,
@@ -94,20 +98,27 @@ export default function Dashboard() {
 
         <div className="flex items-center gap-3">
           {organizations.length > 1 && (
-            <select
-              value={selectedOrganizationId}
-              onChange={(e) => {
-                setSelectedOrganizationId(e.target.value);
-                setPage(1);
+            <Dropdown
+              label="Organization"
+              placeholder="Select organization"
+              options={organizations.map((org) => ({
+                label: org.name,
+                value: org.id,
+              }))}
+              value={
+                organizations
+                  .filter((org) => org.id === selectedOrganizationId)
+                  .map((org) => ({ label: org.name, value: org.id }))[0] ??
+                null
+              }
+              onChange={(selected) => {
+                const option = selected as DropdownOption | null;
+                if (option) {
+                  setSelectedOrganizationId(String(option.value));
+                  setPage(1);
+                }
               }}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            >
-              {organizations.map((org) => (
-                <option key={org.id} value={org.id}>
-                  {org.name}
-                </option>
-              ))}
-            </select>
+            />
           )}
           <Link
             to="/operator/dashboard/create"
