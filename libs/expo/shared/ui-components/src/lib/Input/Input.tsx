@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacings.sm,
     flex: 1,
     fontFamily: 'Poppins-Regular',
-    fontSize: FontSizes.md.fontSize,
+    fontSize: FontSizes.xsm.fontSize,
     includeFontPadding: false,
     ...Platform.select({ web: { outline: 'none' as const } }),
   },
