@@ -1,7 +1,7 @@
 import type { Meta } from '@storybook/react';
 import { useState } from 'react';
-import type { DropdownOption } from './dropdown';
-import { Dropdown } from './dropdown';
+import type { DropdownOption } from './types';
+import { Dropdown } from './Dropdown';
 
 const meta: Meta<typeof Dropdown> = {
   component: Dropdown,
@@ -30,7 +30,7 @@ export const SingleSelect = () => {
         placeholder="Please select"
         options={options}
         value={value}
-        onChange={(v) => setValue(v ? (v as DropdownOption) : null)}
+        onChange={(v) => setValue(v)}
       />
     </div>
   );
@@ -45,7 +45,7 @@ export const SingleSelectSearchable = () => {
         placeholder="Please select"
         options={options}
         value={value}
-        onChange={(v) => setValue(v ? (v as DropdownOption) : null)}
+        onChange={(v) => setValue(v)}
         isSearchable
       />
     </div>
@@ -61,7 +61,7 @@ export const MultiSelect = () => {
         placeholder="Please select"
         options={options}
         value={value}
-        onChange={(v) => setValue(v ? (v as DropdownOption[]) : null)}
+        onChange={(v) => setValue(v)}
         isMulti
       />
     </div>
@@ -77,11 +77,38 @@ export const MultiSelectSearchable = () => {
         placeholder="Please select"
         options={options}
         value={value}
-        onChange={(v) => setValue(v ? (v as DropdownOption[]) : null)}
+        onChange={(v) => setValue(v)}
         isMulti
         isSearchable
         required
       />
+    </div>
+  );
+};
+
+/**
+ * The dropdown is inside an `overflow-hidden` container. Because the menu
+ * is portal-rendered to `document.body`, it escapes the overflow boundary.
+ */
+export const InsideOverflowHidden = () => {
+  const [value, setValue] = useState<DropdownOption[] | null>(null);
+  return (
+    <div className="p-4 space-y-4">
+      <p className="text-sm text-gray-500">
+        The grey box below has <code>overflow: hidden</code>. The dropdown menu
+        escapes it because the menu is rendered via a portal.
+      </p>
+      <div className="w-80 h-24 overflow-hidden border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
+        <Dropdown
+          label="Portal Demo"
+          placeholder="Open me"
+          options={options}
+          value={value}
+          onChange={(v) => setValue(v)}
+          isMulti
+          isSearchable
+        />
+      </div>
     </div>
   );
 };

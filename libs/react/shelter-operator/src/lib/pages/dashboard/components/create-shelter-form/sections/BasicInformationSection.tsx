@@ -1,9 +1,6 @@
 import type { TOrganization } from '@monorepo/react/shared';
 import { memo } from 'react';
-import {
-  Dropdown,
-  DropdownOption,
-} from '../../../../../components/base-ui/dropdown';
+import { Dropdown } from '../../../../../components/base-ui/dropdown';
 import { FormSection } from '../../../../../components/form/FormSection';
 import { TextField } from '../../../../../components/form/TextField';
 import { LocationPicker } from '../components/LocationPicker';
@@ -53,9 +50,8 @@ export const BasicInformationSection = memo(function BasicInformationSection({
                 .filter((org) => org.id === selectedOrganizationId)
                 .map((org) => ({ label: org.name, value: org.id }))[0] ?? null
             }
-            onChange={(selected) => {
-              const option = selected as DropdownOption | null;
-              if (option) onOrganizationChange(String(option.value));
+            onChange={(option) => {
+              if (option) onOrganizationChange(option.value);
             }}
           />
         ) : (

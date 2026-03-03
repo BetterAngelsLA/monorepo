@@ -8,10 +8,7 @@ import {
   SPA_OPTIONS,
   SUPERVISORIAL_DISTRICT_OPTIONS,
 } from '../../../formOptions';
-import {
-  Dropdown,
-  DropdownOption,
-} from '../../../../../components/base-ui/dropdown';
+import { Dropdown } from '../../../../../components/base-ui/dropdown';
 import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
 import { FormSection } from '../../../../../components/form/FormSection';
 import { TextField } from '../../../../../components/form/TextField';
@@ -49,12 +46,8 @@ export const EcosystemInformationSection = memo(
                 }
               : null
           }
-          onChange={(selected) => {
-            const option = selected as DropdownOption | null;
-            onChange(
-              'cityCouncilDistrict',
-              option ? (option.value as number) : null
-            );
+          onChange={(option) => {
+            onChange('cityCouncilDistrict', option ? option.value : null);
           }}
         />
         <Dropdown
@@ -71,12 +64,8 @@ export const EcosystemInformationSection = memo(
                 }
               : null
           }
-          onChange={(selected) => {
-            const option = selected as DropdownOption | null;
-            onChange(
-              'supervisorialDistrict',
-              option ? (option.value as number) : null
-            );
+          onChange={(option) => {
+            onChange('supervisorialDistrict', option ? option.value : null);
           }}
         />
         <CheckboxGroup

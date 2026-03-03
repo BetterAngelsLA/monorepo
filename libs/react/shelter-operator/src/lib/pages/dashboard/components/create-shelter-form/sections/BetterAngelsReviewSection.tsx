@@ -1,9 +1,6 @@
 import { memo } from 'react';
 import { OVERALL_RATING_OPTIONS } from '../../../formOptions';
-import {
-  Dropdown,
-  DropdownOption,
-} from '../../../../../components/base-ui/dropdown';
+import { Dropdown } from '../../../../../components/base-ui/dropdown';
 import { FormSection } from '../../../../../components/form/FormSection';
 import { TextAreaField } from '../../../../../components/form/TextAreaField';
 import type { SectionProps } from '../types';
@@ -26,9 +23,8 @@ export const BetterAngelsReviewSection = memo(
                 }
               : null
           }
-          onChange={(selected) => {
-            const option = selected as DropdownOption | null;
-            onChange('overallRating', option ? (option.value as number) : null);
+          onChange={(option) => {
+            onChange('overallRating', option ? option.value : null);
           }}
         />
         <TextAreaField
