@@ -63,7 +63,7 @@ const variantClasses: Record<ButtonVariant, string> = {
 export function Button(props: IButtonProps) {
   const {
     variant = 'floating-light',
-    type: _type = 'button',
+    type = 'button',
     className,
     style,
     children,
@@ -89,7 +89,7 @@ export function Button(props: IButtonProps) {
     .join(' ');
 
   return (
-    <button type={_type} className={buttonCss} {...rest} style={{ ...style }}>
+    <button type={type} className={buttonCss} {...rest} style={style}>
       {leftIcon && (
         <span className={isIconOnly ? 'flex items-center justify-center' : ''}>
           {leftIcon}

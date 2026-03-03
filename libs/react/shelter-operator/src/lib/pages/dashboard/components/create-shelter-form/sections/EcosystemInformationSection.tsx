@@ -8,9 +8,12 @@ import {
   SPA_OPTIONS,
   SUPERVISORIAL_DISTRICT_OPTIONS,
 } from '../../../formOptions';
+import {
+  Dropdown,
+  DropdownOption,
+} from '../../../../../components/base-ui/dropdown';
 import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
 import { FormSection } from '../../../../../components/form/FormSection';
-import { SelectField } from '../../../../../components/form/SelectField';
 import { TextField } from '../../../../../components/form/TextField';
 import type { SectionProps } from '../types';
 
@@ -32,21 +35,49 @@ export const EcosystemInformationSection = memo(
           values={data.spa}
           onChange={(values) => onChange('spa', values)}
         />
-        <SelectField
-          id="city-council-district"
-          name="cityCouncilDistrict"
+        <Dropdown
           label="City Council District"
-          options={CITY_COUNCIL_DISTRICT_OPTIONS}
-          value={data.cityCouncilDistrict}
-          onChange={(value) => onChange('cityCouncilDistrict', value)}
+          placeholder="Select a district"
+          options={CITY_COUNCIL_DISTRICT_OPTIONS.filter(
+            (o) => o.value !== null
+          ).map((o) => ({ label: o.label, value: o.value as number }))}
+          value={
+            data.cityCouncilDistrict !== null
+              ? {
+                  label: String(data.cityCouncilDistrict),
+                  value: data.cityCouncilDistrict,
+                }
+              : null
+          }
+          onChange={(selected) => {
+            const option = selected as DropdownOption | null;
+            onChange(
+              'cityCouncilDistrict',
+              option ? (option.value as number) : null
+            );
+          }}
         />
-        <SelectField
-          id="supervisorial-district"
-          name="supervisorialDistrict"
+        <Dropdown
           label="Supervisorial District"
-          options={SUPERVISORIAL_DISTRICT_OPTIONS}
-          value={data.supervisorialDistrict}
-          onChange={(value) => onChange('supervisorialDistrict', value)}
+          placeholder="Select a district"
+          options={SUPERVISORIAL_DISTRICT_OPTIONS.filter(
+            (o) => o.value !== null
+          ).map((o) => ({ label: o.label, value: o.value as number }))}
+          value={
+            data.supervisorialDistrict !== null
+              ? {
+                  label: String(data.supervisorialDistrict),
+                  value: data.supervisorialDistrict,
+                }
+              : null
+          }
+          onChange={(selected) => {
+            const option = selected as DropdownOption | null;
+            onChange(
+              'supervisorialDistrict',
+              option ? (option.value as number) : null
+            );
+          }}
         />
         <CheckboxGroup
           name="shelter-programs"
@@ -79,10 +110,7 @@ export const EcosystemInformationSection = memo(
           values={data.funders}
           onChange={(values) => {
             onChange('funders', values);
-            if (
-              !values.includes(FunderChoices.Other) &&
-              data.fundersOther
-            ) {
+            if (!values.includes(FunderChoices.Other) && data.fundersOther) {
               onChange('fundersOther', '');
             }
           }}

@@ -21,55 +21,32 @@ const options: DropdownOption[] = [
   { label: 'Modification Date', value: 'modification_date6' },
 ];
 
-export const SingleSelectSearch = () => {
-  const [value, setValue] = useState<DropdownOption | null>(null);
-  return (
-    <div className="w-80 p-4">
-      <Dropdown
-        label="Field Label"
-        placeholder="Please select"
-        options={options}
-        value={value}
-        onChange={(v) => setValue(v ? (v as DropdownOption) : null)}
-        isMulti={false}
-        isSearchable={true}
-        hasFooter={false}
-      />
-    </div>
-  );
-};
-
-export const MultiSelectSearch = () => {
-  const [value, setValue] = useState<DropdownOption[] | null>(null);
-  return (
-    <div className="w-80 p-4">
-      <Dropdown
-        label="Field Label"
-        placeholder="Please select"
-        options={options}
-        value={value}
-        onChange={(v) => setValue(v ? (v as DropdownOption[]) : null)}
-        isMulti={true}
-        isSearchable={true}
-        hasFooter={true}
-      />
-    </div>
-  );
-};
-
 export const SingleSelect = () => {
   const [value, setValue] = useState<DropdownOption | null>(null);
   return (
     <div className="w-80 p-4">
       <Dropdown
-        label="Field Label"
+        label="Sort By"
         placeholder="Please select"
         options={options}
         value={value}
         onChange={(v) => setValue(v ? (v as DropdownOption) : null)}
-        isMulti={false}
-        isSearchable={false}
-        hasFooter={false}
+      />
+    </div>
+  );
+};
+
+export const SingleSelectSearchable = () => {
+  const [value, setValue] = useState<DropdownOption | null>(null);
+  return (
+    <div className="w-80 p-4">
+      <Dropdown
+        label="Sort By"
+        placeholder="Please select"
+        options={options}
+        value={value}
+        onChange={(v) => setValue(v ? (v as DropdownOption) : null)}
+        isSearchable
       />
     </div>
   );
@@ -80,14 +57,30 @@ export const MultiSelect = () => {
   return (
     <div className="w-80 p-4">
       <Dropdown
-        label="Field Label"
+        label="Categories"
         placeholder="Please select"
         options={options}
         value={value}
         onChange={(v) => setValue(v ? (v as DropdownOption[]) : null)}
-        isMulti={true}
-        isSearchable={false}
-        hasFooter={true}
+        isMulti
+      />
+    </div>
+  );
+};
+
+export const MultiSelectSearchable = () => {
+  const [value, setValue] = useState<DropdownOption[] | null>(null);
+  return (
+    <div className="w-80 p-4">
+      <Dropdown
+        label="Categories"
+        placeholder="Please select"
+        options={options}
+        value={value}
+        onChange={(v) => setValue(v ? (v as DropdownOption[]) : null)}
+        isMulti
+        isSearchable
+        required
       />
     </div>
   );

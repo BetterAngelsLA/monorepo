@@ -1,15 +1,5 @@
-import { ChevronDown, Search, X } from 'lucide-react';
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { createPortal } from 'react-dom';
-import { Button } from './buttons';
+import { Check, ChevronDown, Search, X } from 'lucide-react';
+import { useCallback, useId, useMemo, useState } from 'react';
 
 export interface DropdownOption {
   label: string;
@@ -24,7 +14,7 @@ export interface DropdownProps {
   onChange: (value: DropdownOption | DropdownOption[] | null) => void;
   isMulti?: boolean;
   isSearchable?: boolean;
-  hasFooter?: boolean;
+  required?: boolean;
   disabled?: boolean;
   className?: string;
 }
@@ -38,21 +28,13 @@ export function Dropdown(props: DropdownProps) {
     onChange,
     isMulti = false,
     isSearchable = false,
-    hasFooter = false,
+    required = false,
     disabled = false,
     className,
   } = props;
 
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [stagedValues, setStagedValues] = useState<DropdownOption[]>([]);
-  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
-  const [hoveredChip, setHoveredChip] = useState<string | number | null>(null);
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
 
   const selectedValues = useMemo<DropdownOption[]>(
@@ -60,29 +42,17 @@ export function Dropdown(props: DropdownProps) {
     [value]
   );
 
-  const effectiveValues = useMemo(
-    () => (hasFooter ? stagedValues : selectedValues),
-    [hasFooter, stagedValues, selectedValues]
-  );
-  const hasEffectiveSelection = effectiveValues.length > 0;
+  const hasSelection = selectedValues.length > 0;
 
-  const isSelected = useCallback(
-    (option: DropdownOption) =>
-      effectiveValues.some((v) => v.value === option.value),
-    [effectiveValues]
+  const selectedSet = useMemo(
+    () => new Set(selectedValues.map((v) => v.value)),
+    [selectedValues]
   );
 
-  const baseFiltered = options.filter((o) =>
-    o.label.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredOptions = useMemo(
-    () => [
-      ...baseFiltered.filter((o) => isSelected(o)),
-      ...baseFiltered.filter((o) => !isSelected(o)),
-    ],
-    [options, searchQuery, effectiveValues]
-  );
+  const filteredOptions = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return options.filter((o) => o.label.toLowerCase().includes(query));
+  }, [options, searchQuery]);
 
   const emitChange = useCallback(
     (values: DropdownOption[]) => {
@@ -93,249 +63,78 @@ export function Dropdown(props: DropdownProps) {
     [onChange, isMulti]
   );
 
-  const handleClose = useCallback(
-    (reason: 'clickOutside' | 'apply' | 'escape') => {
-      if (hasFooter && reason === 'clickOutside') emitChange(stagedValues);
-      setIsOpen(false);
-      setSearchQuery('');
-    },
-    [hasFooter, stagedValues, emitChange]
-  );
+  const close = useCallback(() => {
+    setIsOpen(false);
+    setSearchQuery('');
+  }, []);
 
   const handleOptionClick = useCallback(
     (option: DropdownOption) => {
       if (isMulti) {
-        const next = isSelected(option)
-          ? effectiveValues.filter((v) => v.value !== option.value)
-          : [...effectiveValues, option];
-        if (hasFooter) setStagedValues(next);
-        else emitChange(next);
+        const next = selectedSet.has(option.value)
+          ? selectedValues.filter((v) => v.value !== option.value)
+          : [...selectedValues, option];
+        emitChange(next);
       } else {
         emitChange([option]);
-        setIsOpen(false);
-        setSearchQuery('');
+        close();
       }
     },
-    [isMulti, isSelected, effectiveValues, hasFooter, emitChange]
+    [isMulti, selectedSet, selectedValues, emitChange, close]
   );
 
   const handleRemoveChip = useCallback(
     (option: DropdownOption) => {
-      if (hasFooter) {
-        const next = stagedValues.filter((v) => v.value !== option.value);
-        setStagedValues(next);
-        emitChange(next);
-      } else {
-        const next = selectedValues.filter((v) => v.value !== option.value);
-        emitChange(next);
-      }
+      emitChange(selectedValues.filter((v) => v.value !== option.value));
     },
-    [hasFooter, stagedValues, selectedValues, emitChange]
-  );
-
-  const updateMenuPosition = useCallback(() => {
-    if (triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setMenuStyle({
-        position: 'fixed',
-        top: rect.bottom + 6,
-        left: rect.left + rect.width / 2,
-        transform: 'translateX(-50%)',
-        width: rect.width,
-        boxSizing: 'border-box',
-        zIndex: 9999,
-      });
-    }
-  }, []);
-
-  useLayoutEffect(() => {
-    if (isOpen) {
-      updateMenuPosition();
-      if (hasFooter) setStagedValues(selectedValues);
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen) {
-      window.addEventListener('scroll', updateMenuPosition, true);
-      window.addEventListener('resize', updateMenuPosition);
-    }
-    return () => {
-      window.removeEventListener('scroll', updateMenuPosition, true);
-      window.removeEventListener('resize', updateMenuPosition);
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const target = e.target as Node;
-      const clickedInsideTrigger = containerRef.current?.contains(target);
-      const clickedInsideMenu = menuRef.current?.contains(target);
-      if (!clickedInsideTrigger && !clickedInsideMenu) {
-        if (isOpen) handleClose('clickOutside');
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [isOpen, stagedValues]);
-
-  useEffect(() => {
-    if (isOpen && isSearchable) searchRef.current?.focus();
-  }, [isOpen, isSearchable]);
-
-  const menu = (
-    <div
-      ref={menuRef}
-      id={menuId}
-      style={menuStyle}
-      className="bg-base-100 border border-base-300 rounded-2xl shadow-lg flex flex-col overflow-hidden"
-    >
-      {isSearchable && (
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-base-200">
-          <Search size={16} />
-          <input
-            ref={searchRef}
-            type="text"
-            className="flex-1 text-sm bg-transparent text-base-content placeholder:text-base-content/40 border-none outline-none focus:outline-none focus:ring-0 focus:border-none"
-            placeholder="Type to search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
-
-      <div className="overflow-y-auto" style={{ maxHeight: '352px' }}>
-        {filteredOptions.length > 0 ? (
-          filteredOptions.map((option) => (
-            <p
-              key={option.value}
-              role="option"
-              aria-selected={isSelected(option)}
-              className={[
-                'px-4 py-3 text-sm cursor-pointer transition-colors',
-                isSelected(option)
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-base-content hover:bg-base-200',
-              ].join(' ')}
-              onClick={() => handleOptionClick(option)}
-            >
-              {option.label}
-            </p>
-          ))
-        ) : (
-          <p className="px-4 py-3 text-sm text-base-content/40 text-center">
-            No results found
-          </p>
-        )}
-      </div>
-
-      {hasFooter && (
-        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-base-200 bg-base-100">
-          <Button
-            variant="small-medium"
-            leftIcon={false}
-            rightIcon={false}
-            className="!text-[13px] !py-[1px] !px-[14px]"
-            onClick={() => {
-              setStagedValues([]);
-            }}
-          >
-            Unselect All
-          </Button>
-          <Button
-            variant="floating-light"
-            leftIcon={false}
-            rightIcon={false}
-            style={{
-              fontSize: '13px',
-              padding: '6px 14px',
-            }}
-            onClick={() => {
-              emitChange(stagedValues);
-              handleClose('apply');
-            }}
-          >
-            Apply
-          </Button>
-        </div>
-      )}
-    </div>
+    [selectedValues, emitChange]
   );
 
   return (
-    <div
-      ref={containerRef}
-      className={`flex flex-col gap-1 w-full ${className ?? ''}`}
-    >
+    <div className={`relative flex flex-col gap-1 w-full ${className ?? ''}`}>
       {label && (
-        <p className="text-sm text-base-content">
-          {label} <span className="text-error">*</span>
+        <p className="text-sm text-gray-900">
+          {label}
+          {required && <span className="text-red-500"> *</span>}
         </p>
       )}
 
       <div
-        ref={triggerRef}
         role="combobox"
         aria-expanded={isOpen}
         aria-controls={menuId}
         aria-disabled={disabled}
         tabIndex={disabled ? -1 : 0}
-        style={{ borderColor: isOpen ? '#008CEE' : '#e5e7eb' }}
-        onClick={() => {
-          if (disabled) return;
-          if (!isOpen) updateMenuPosition();
-          setIsOpen(!isOpen);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') handleClose('escape');
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            if (!isOpen) {
-              updateMenuPosition();
-              setIsOpen(true);
-            }
-          }
-        }}
         className={[
-          'relative flex items-center justify-between gap-2 w-full px-4 rounded-full border bg-base-100 cursor-pointer select-none transition-colors h-12',
+          'relative flex items-center justify-between gap-2 w-full px-4 rounded-full border bg-white cursor-pointer select-none transition-colors h-12',
+          isOpen ? 'border-[#008CEE]' : 'border-gray-200',
           disabled ? 'opacity-50 cursor-not-allowed' : '',
         ]
           .filter(Boolean)
           .join(' ')}
+        onClick={() => {
+          if (!disabled) setIsOpen((o) => !o);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') close();
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (!isOpen) setIsOpen(true);
+          }
+        }}
       >
-        {isMulti && hasEffectiveSelection ? (
-          <div
-            className="absolute inset-0 flex items-center pl-4 pr-8"
-            style={{ overflow: 'hidden' }}
-          >
-            <div
-              className="flex items-center gap-2"
-              style={{
-                overflowX: 'auto',
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none',
-                width: '100%',
-              }}
-            >
-              {effectiveValues.map((v) => (
+        {isMulti && hasSelection ? (
+          <div className="absolute inset-0 flex items-center pl-4 pr-10 gap-2">
+            <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+              {selectedValues.slice(0, 2).map((v) => (
                 <span
                   key={v.value}
-                  style={{ backgroundColor: '#e5e7eb', flexShrink: 0 }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-gray-700 whitespace-nowrap"
-                  onMouseEnter={() => setHoveredChip(v.value)}
-                  onMouseLeave={() => setHoveredChip(null)}
+                  className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-200 text-xs text-gray-700 whitespace-nowrap flex-shrink-0"
                 >
                   {v.label}
                   <button
                     type="button"
-                    style={{
-                      opacity: hoveredChip === v.value ? 1 : 0,
-                      width: hoveredChip === v.value ? '16px' : '0px',
-                      transition: 'opacity 0.15s, width 0.15s',
-                      overflow: 'hidden',
-                    }}
-                    className="leading-none hover:text-red-500 outline-none focus:outline-none flex-shrink-0"
+                    className="w-0 overflow-hidden opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-150 leading-none hover:text-red-500 outline-none focus:outline-none flex-shrink-0"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
@@ -347,28 +146,107 @@ export function Dropdown(props: DropdownProps) {
                 </span>
               ))}
             </div>
+            {selectedValues.length > 2 && (
+              <span className="px-2 py-1 rounded-full bg-gray-200 text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
+                +{selectedValues.length - 2}
+              </span>
+            )}
           </div>
         ) : (
           <p
             className={`text-sm flex-1 truncate ${
-              hasEffectiveSelection
-                ? 'text-base-content'
-                : 'text-base-content/40'
+              hasSelection ? 'text-gray-900' : 'text-gray-400'
             }`}
           >
-            {hasEffectiveSelection ? effectiveValues[0].label : placeholder}
+            {hasSelection ? selectedValues[0].label : placeholder}
           </p>
         )}
         <ChevronDown
-          className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 text-base-content/60 z-10 ${
+          className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 text-gray-400 z-10 ${
             isOpen ? 'rotate-180' : ''
-          } ${isMulti && hasEffectiveSelection ? 'ml-auto' : ''}`}
+          } ${isMulti && hasSelection ? 'ml-auto' : ''}`}
         />
       </div>
 
-      {isOpen && createPortal(menu, document.body)}
+      {isOpen && (
+        <>
+          {/* Backdrop — click-outside dismiss */}
+          <div className="fixed inset-0 z-40" onClick={close} />
+
+          {/* Menu */}
+          <div
+            id={menuId}
+            className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-gray-200 rounded-2xl shadow-lg flex flex-col overflow-hidden"
+          >
+            {isSearchable && (
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+                <Search size={16} />
+                <input
+                  autoFocus
+                  type="text"
+                  className="flex-1 text-sm bg-transparent text-gray-900 placeholder:text-gray-400 border-none outline-none focus:outline-none focus:ring-0 focus:border-none"
+                  placeholder="Type to search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            )}
+
+            <div role="listbox" className="overflow-y-auto max-h-[352px]">
+              {filteredOptions.length > 0 ? (
+                filteredOptions.map((option) => {
+                  const active = selectedSet.has(option.value);
+                  return (
+                    <div
+                      key={option.value}
+                      role="option"
+                      aria-selected={active}
+                      className={`flex items-center justify-between px-4 py-3 text-sm cursor-pointer transition-colors ${
+                        active
+                          ? 'bg-blue-50 text-blue-600 font-medium'
+                          : 'text-gray-900 hover:bg-gray-50'
+                      }`}
+                      onClick={() => handleOptionClick(option)}
+                    >
+                      {option.label}
+                      {active && <Check size={16} className="flex-shrink-0" />}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="px-4 py-3 text-sm text-gray-400 text-center">
+                  No results found
+                </div>
+              )}
+            </div>
+
+            {isMulti && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  className={`text-sm transition-colors cursor-pointer ${
+                    hasSelection
+                      ? 'text-red-500 hover:text-red-600'
+                      : 'text-gray-300 cursor-default'
+                  }`}
+                  disabled={!hasSelection}
+                  onClick={() => emitChange([])}
+                >
+                  Clear all
+                </button>
+                <button
+                  type="button"
+                  className="text-sm font-medium text-blue-600 hover:text-blue-700 cursor-pointer transition-colors"
+                  onClick={close}
+                >
+                  Done
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
-
-export default Dropdown;

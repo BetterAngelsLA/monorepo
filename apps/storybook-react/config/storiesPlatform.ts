@@ -1,4 +1,4 @@
-import type { StoriesSpecifier } from '@storybook/types'; // ✅ public, type-only
+import type { StoriesSpecifier } from 'storybook/internal/types';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { storyFileTypes } from './constants.ts';
