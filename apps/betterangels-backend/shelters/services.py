@@ -113,7 +113,7 @@ _SHELTER_M2M_FIELDS = _get_m2m_field_names(Shelter)
 def shelter_create(*, data: Dict[str, Any]) -> Shelter:
     """Create a new Shelter with all M2M relationships.
 
-    Accepts a plain dict (e.g. from ``strawberry.asdict(input)`` with
+    Accepts a plain dict (e.g. from ``strawberry.asdict(data)`` with
     ``UNSET`` keys already removed).
 
     Steps:
