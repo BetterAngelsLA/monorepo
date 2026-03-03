@@ -1,5 +1,5 @@
-import { mergeCss } from '@monorepo/react/shared';
-import { ReactNode, useEffect, useRef } from 'react';
+import { appZIndex, mergeCss } from '@monorepo/react/shared';
+import { MouseEvent, ReactNode, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 type TModalSize = 'sm' | 'md' | 'lg' | 'xl';
@@ -59,7 +59,7 @@ export function Modal({
 
   if (!isOpen) return null;
 
-  function handleBackdropClick(e: React.MouseEvent<HTMLDialogElement>) {
+  function handleBackdropClick(e: MouseEvent<HTMLDialogElement>) {
     if (e.target === dialogRef.current) {
       onClose();
     }
@@ -68,7 +68,6 @@ export function Modal({
   const dialogCss = [
     'fixed',
     'inset-0',
-    'z-[10000]',
     'bg-transparent',
     'p-0',
     'm-0',
@@ -93,6 +92,7 @@ export function Modal({
     <dialog
       ref={dialogRef}
       className={mergeCss(dialogCss)}
+      style={{ zIndex: appZIndex.p2 }}
       onClick={handleBackdropClick}
     >
       <div className={mergeCss(boxCss)}>{children}</div>
