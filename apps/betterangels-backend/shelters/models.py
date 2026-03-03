@@ -164,7 +164,12 @@ class ReservationClient(BaseModel):
             UniqueConstraint(
                 fields=["reservation", "client_profile"],
                 name="unique_client_per_reservation",
-            )
+            ),
+            UniqueConstraint(
+                fields=["reservation"],
+                condition=models.Q(is_primary=True),
+                name="unique_primary_client_per_reservation",
+            ),
         ]
 
     def __str__(self) -> str:
