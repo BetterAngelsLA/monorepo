@@ -2,10 +2,7 @@ import { useQuery } from '@apollo/client/react';
 import { useUser } from '@monorepo/react/shelter';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Dropdown,
-  DropdownOption,
-} from '../../components/base-ui/dropdown';
+import { Dropdown, DropdownOption } from '../../components/base-ui/dropdown';
 import { ShelterRow } from '../../components/ShelterRow';
 import {
   ViewSheltersByOrganizationDocument,
@@ -108,8 +105,7 @@ export default function Dashboard() {
               value={
                 organizations
                   .filter((org) => org.id === selectedOrganizationId)
-                  .map((org) => ({ label: org.name, value: org.id }))[0] ??
-                null
+                  .map((org) => ({ label: org.name, value: org.id }))[0] ?? null
               }
               onChange={(selected) => {
                 const option = selected as DropdownOption | null;
