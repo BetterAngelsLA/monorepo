@@ -1,6 +1,14 @@
 import { BottomSheetModalProps } from '@gorhom/bottom-sheet';
-import { ReactNode } from 'react';
+import { ComponentType, ReactNode } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
+
+export type BottomSheetProviderConfig = {
+  /**
+   * App-level default options applied to every sheet.
+   * Can be overridden via showBottomSheet().
+   */
+  defaultOptions?: BottomSheetOptions;
+};
 
 /**
  * Variants
@@ -157,6 +165,19 @@ export type BottomSheetOptions = BottomSheetGorhomOptions &
      * Applied to BottomSheetView / BottomSheetScrollView.
      */
     contentStyle?: StyleProp<ViewStyle>;
+
+    /**
+     * Optional container override used by `@gorhom/bottom-sheet`.
+     * Typically configured globally via `BottomSheetProviderConfig`.
+     *
+     * Allows rendering the sheet inside a custom wrapper instead of the
+     * default root container.
+     *
+     * This is primarily used to solve z-index issues when using native
+     * navigation stacks (e.g. `react-native-screens` or modal screens),
+     * where the BottomSheet may otherwise render *behind* the current screen.
+     */
+    containerComponent?: ComponentType<{ children?: ReactNode }>;
   };
 
 /**

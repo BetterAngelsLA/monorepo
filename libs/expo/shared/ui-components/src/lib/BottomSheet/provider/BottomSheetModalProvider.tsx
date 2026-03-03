@@ -1,21 +1,64 @@
 /**
  * BottomSheetModalProvider
  *
- * Centralized BottomSheet manager.
+ * Centralized BottomSheet manager responsible for coordinating
+ * the lifecycle, stacking behavior, and configuration of all
+ * BottomSheet modals within the application.
  *
  * Responsibilities:
  * - Exposes context API (`showBottomSheet`, `popTopSheet`)
+ * - Applies provider-level default options
  * - Resolves sheet configuration via `resolveBottomSheetOptions`
- * - Manages stacking strategy (push | switch | replace)
+ * - Manages sheet stacking strategy (push | switch | replace)
  * - Controls sheet lifecycle (present / dismiss)
- * - Cleans up references on dismissal
+ * - Cleans up internal references when sheets are dismissed
  *
- * This layer does NOT:
- * - Know about header rendering
- * - Know about handle rendering
- * - Know about sheet styling
+ * This provider implements a **stack-based sheet system**:
  *
- * All presentation concerns are delegated to `BottomSheetBase`.
+ * - Multiple sheets may exist simultaneously
+ * - The last sheet in the stack is the visible/top sheet
+ * - `stackBehavior` determines how new sheets interact with existing ones
+ *
+ *
+ * --------------------------------------------------------------------------
+ * DEFAULT OPTIONS
+ * --------------------------------------------------------------------------
+ *
+ * The provider may define `defaultOptions` that apply to every sheet
+ * opened via `showBottomSheet()`.
+ *
+ * These defaults are merged with options passed directly to
+ * `showBottomSheet()`.
+ *
+ * Resolution order:
+ *
+ *   provider defaultOptions
+ *     → showBottomSheet options
+ *       → resolveBottomSheetOptions()
+ *
+ *
+ * --------------------------------------------------------------------------
+ * PRESENTATION LAYER
+ * --------------------------------------------------------------------------
+ *
+ * All rendering responsibilities are delegated to `BottomSheetBase`.
+ *
+ *
+ * --------------------------------------------------------------------------
+ * CONTAINER OVERRIDES
+ * --------------------------------------------------------------------------
+ *
+ * In certain navigation setups (for example React Navigation modal screens),
+ * BottomSheet may render behind the current screen due to how native
+ * screens manage view hierarchies.
+ *
+ * This can be resolved by providing a custom `containerComponent`,
+ * such as `BottomSheetFullScreenContainer`, which renders the sheet
+ * inside `FullWindowOverlay`.
+ *
+ * This option can be configured globally via `defaultOptions`
+ * or overridden per sheet via `showBottomSheet()`.
+ *
  *
  * --------------------------------------------------------------------------
  * USAGE EXAMPLES
@@ -110,11 +153,14 @@ import { BottomSheetBase } from '../core/BottomSheetBase';
 import {
   BottomSheetContextValue,
   BottomSheetOptions,
+  BottomSheetProviderConfig,
   BottomSheetRenderApi,
   ShowBottomSheetParams,
 } from '../types';
 import { resolveBottomSheetOptions } from '../utils/resolveBottomSheetOptions';
 import { BottomSheetContext } from './BottomSheetContext';
+
+const EMPTY_SHEET_OPTIONS: BottomSheetOptions = {};
 
 /**
  * Internal representation of an active sheet instance.
@@ -140,12 +186,17 @@ function generateSheetId(): string {
   return `sheet-${sheetIdCounter}`;
 }
 
-type TProps = {
+type BottomSheetProviderProps = BottomSheetProviderConfig & {
   children: ReactNode;
 };
 
-export function BottomSheetModalProvider(props: TProps) {
-  const { children } = props;
+export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
+  const { children, defaultOptions } = props;
+
+  const providerDefaults = useMemo<BottomSheetOptions>(
+    () => defaultOptions ?? EMPTY_SHEET_OPTIONS,
+    [defaultOptions]
+  );
 
   /**
    * Active sheets in render order.
@@ -181,53 +232,62 @@ export function BottomSheetModalProvider(props: TProps) {
    * - Adds new sheet instance to state
    */
   const showBottomSheet: BottomSheetContextValue['showBottomSheet'] =
-    useCallback((params: ShowBottomSheetParams) => {
-      const { render, options } = params;
+    useCallback(
+      (params: ShowBottomSheetParams) => {
+        const { render, options } = params;
 
-      const id = generateSheetId();
+        const id = generateSheetId();
 
-      const resolvedOptions = resolveBottomSheetOptions(options);
+        const mergedOptions: BottomSheetOptions = {
+          ...providerDefaults,
+          ...options,
+        };
 
-      const { stackBehavior = 'replace', ...instanceOptions } = resolvedOptions;
+        const resolvedOptions = resolveBottomSheetOptions(mergedOptions);
 
-      const instance: TBottomSheetInstance = {
-        id,
-        render,
-        options: instanceOptions,
-      };
+        const { stackBehavior = 'replace', ...instanceOptions } =
+          resolvedOptions;
 
-      setSheets((previousSheets) => {
-        // Push: add stack on top
-        if (stackBehavior === 'push') {
-          return [...previousSheets, instance];
-        }
+        const instance: TBottomSheetInstance = {
+          id,
+          render,
+          options: instanceOptions,
+        };
 
-        // Switch: replace the top sheet only
-        if (stackBehavior === 'switch') {
-          if (previousSheets.length > 0) {
-            const top = previousSheets[previousSheets.length - 1];
-            const topInstance = sheetRefs.current.get(top.id);
+        setSheets((previousSheets) => {
+          // Push: add stack on top
+          if (stackBehavior === 'push') {
+            return [...previousSheets, instance];
+          }
 
-            if (topInstance) {
-              topInstance.dismiss();
+          // Switch: replace the top sheet only
+          if (stackBehavior === 'switch') {
+            if (previousSheets.length > 0) {
+              const top = previousSheets[previousSheets.length - 1];
+              const topInstance = sheetRefs.current.get(top.id);
+
+              if (topInstance) {
+                topInstance.dismiss();
+              }
             }
+
+            return [...previousSheets.slice(0, -1), instance];
           }
 
-          return [...previousSheets.slice(0, -1), instance];
-        }
+          // Replace: dismiss all existing sheets (default)
+          previousSheets.forEach((sheet) => {
+            const inst = sheetRefs.current.get(sheet.id);
 
-        // Replace: dismiss all existing sheets (default)
-        previousSheets.forEach((sheet) => {
-          const inst = sheetRefs.current.get(sheet.id);
+            if (inst) {
+              inst.dismiss();
+            }
+          });
 
-          if (inst) {
-            inst.dismiss();
-          }
+          return [instance];
         });
-
-        return [instance];
-      });
-    }, []);
+      },
+      [providerDefaults]
+    );
 
   /**
    * Public API: popTopSheet

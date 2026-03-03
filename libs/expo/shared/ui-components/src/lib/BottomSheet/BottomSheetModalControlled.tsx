@@ -1,3 +1,26 @@
+/**
+ * BottomSheetModalControlled
+ *
+ * Declarative wrapper around the BottomSheet provider API.
+ *
+ * This component allows a BottomSheet to be controlled using a simple
+ * `isOpen` boolean instead of calling `showBottomSheet()` imperatively.
+ *
+ * Typical usage:
+ *
+ *   <BottomSheetModalControlled
+ *     isOpen={isMenuOpen}
+ *     onClose={() => setIsMenuOpen(false)}
+ *   >
+ *     <SomeMenu />
+ *   </BottomSheetModalControlled>
+ *
+ * Notes:
+ * - The sheet content is rendered through the provider's stacking system.
+ * - The component itself renders null.
+ * - `options` are forwarded to `showBottomSheet()`
+ */
+
 import { ReactNode, useEffect, useRef } from 'react';
 import { useBottomSheet } from './provider/useBottomSheet';
 import { BottomSheetOptions } from './types';

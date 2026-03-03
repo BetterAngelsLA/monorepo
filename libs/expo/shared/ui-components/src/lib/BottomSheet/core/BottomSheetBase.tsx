@@ -11,6 +11,7 @@
  *     - Backdrop behavior
  *     - Scroll container selection
  *     - Header rendering
+ *     - Container selection (`containerComponent`)
  * - Applies design-system styling (radius, padding, elevation)
  *
  * This component does NOT:
@@ -40,7 +41,6 @@ import { StyleSheet } from 'react-native';
 import { BOTTOM_SHEET_PADDING, BOTTOM_SHEET_RADIUS } from '../constants';
 import { BottomSheetOptions } from '../types';
 import { BottomSheetBackdrop } from './BottomSheetBackdrop';
-import { BottomSheetContainer } from './BottomSheetContainer';
 import { BottomSheetHeader } from './BottomSheetHeader';
 
 type BottomSheetModalOwnProps = {
@@ -78,6 +78,7 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
       enablePanDownToClose,
       enableDynamicSizing,
       snapPoints,
+      containerComponent,
 
       // Wrapper-level
       disableBackdrop,
@@ -115,11 +116,11 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
       <GbsBottomSheetModal
         ref={ref}
         {...gorhomProps}
-        containerComponent={BottomSheetContainer}
         snapPoints={snapPoints}
         enablePanDownToClose={enablePanDownToClose}
         enableDynamicSizing={enableDynamicSizing}
         handleComponent={resolvedHandleComponent}
+        containerComponent={containerComponent}
         backdropComponent={(backdropProps: BottomSheetBackdropProps) => (
           <BottomSheetBackdrop
             {...backdropProps}

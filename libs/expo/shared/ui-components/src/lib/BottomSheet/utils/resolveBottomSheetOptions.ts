@@ -3,32 +3,10 @@
  *
  * Central configuration resolution layer for the BottomSheet system.
  *
- * Responsibilities:
- * - Merge global defaults
- * - Apply variant-level overrides
- * - Apply user-provided overrides
- * - Resolve dynamic behavior (e.g. handle visibility)
- * - Normalize style merging
- *
- * Resolution order (lowest → highest precedence):
- *
- *   DEFAULT_BOTTOM_SHEET_OPTIONS
- *       → BOTTOM_SHEET_VARIANT_OPTIONS[variant]
- *           → user-provided options
- *
  * After static merging, dynamic rules are applied
  * (e.g. resolving `showHandle` based on variant + snapPoints).
  *
  * This file is the single source of truth for option resolution.
- *
- * It does NOT:
- * - Render anything
- * - Control lifecycle
- * - Interact with Gorhom directly
- *
- * Those responsibilities belong to:
- *   - BottomSheetBase (rendering)
- *   - BottomSheetModalProvider (lifecycle/stacking)
  */
 
 import { StyleProp, ViewStyle } from 'react-native';
