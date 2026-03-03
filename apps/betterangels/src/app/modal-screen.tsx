@@ -1,5 +1,6 @@
 import {
   KeyboardToolbarProvider,
+  SnackbarProvider,
   useModalScreen,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -13,15 +14,21 @@ export default function BaseModalScreen() {
   }
 
   return (
-    <KeyboardToolbarProvider>
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: Colors.WHITE,
-        }}
-      >
-        {content}
-      </View>
-    </KeyboardToolbarProvider>
+    // Not using <BottomSheetModalProvider> as BottomSheetBase uses custom containerComponent.
+    // Using `containerComponent` solves the stacking issue and keeping only a single
+    // BottomSheetModalProvider at root prevents stale layout calculations as switching
+    // between root and modal-screen etc...
+    <SnackbarProvider>
+      <KeyboardToolbarProvider>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: Colors.WHITE,
+          }}
+        >
+          {content}
+        </View>
+      </KeyboardToolbarProvider>
+    </SnackbarProvider>
   );
 }

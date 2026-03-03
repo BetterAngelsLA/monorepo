@@ -112,7 +112,8 @@
     "tailwind-merge": "*",
     "lodash": "*",
     "haversine-distance": "*",
-    "expo-modules-core": "*"
+    "expo-modules-core": "*",
+    "react-native-screens": "*"
   },
   "expo": {
     "autolinking": {
