@@ -39,7 +39,7 @@ export const SuccessToast: Story = {
     <Toast
       status="success"
       title="Success Toast"
-      description="Error Message"
+      description="Success Message"
       action={{ label: 'Success', onClick: () => undefined }}
       onClose={() => undefined}
     />
