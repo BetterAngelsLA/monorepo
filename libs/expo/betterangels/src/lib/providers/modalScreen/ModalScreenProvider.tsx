@@ -107,7 +107,6 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      // <ModalScopeProvider>{modal.renderContent(api)}</ModalScopeProvider>
       return modal.renderContent(api);
     } catch (e) {
       console.error('[ModalScreenProvider] renderContent error:', e);
