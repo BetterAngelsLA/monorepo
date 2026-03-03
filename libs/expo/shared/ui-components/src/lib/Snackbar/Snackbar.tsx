@@ -6,7 +6,7 @@ import {
 } from 'react-native-paper';
 import TextRegular from '../TextRegular';
 
-export type TSnackbarType = 'default' | 'success' | 'error';
+export type TSnackbarType = 'default' | 'success' | 'error' | 'warning';
 
 export interface ISnackbar extends RnpSnackbarProps {
   type?: TSnackbarType;
@@ -14,7 +14,12 @@ export interface ISnackbar extends RnpSnackbarProps {
   actionLabel?: string;
 }
 
-const typeStyles = {
+type TypeStyle = {
+  container: object;
+  textColor: string;
+};
+
+const VARIANTS: Record<TSnackbarType, TypeStyle> = {
   error: {
     container: {
       backgroundColor: Colors.ERROR_EXTRA_LIGHT,
@@ -22,9 +27,7 @@ const typeStyles = {
       borderColor: Colors.ERROR,
       borderRadius: Radiuses.xxs,
     },
-    text: {
-      color: Colors.PRIMARY_EXTRA_DARK,
-    },
+    textColor: Colors.PRIMARY_EXTRA_DARK,
   },
   success: {
     container: {
@@ -33,9 +36,7 @@ const typeStyles = {
       borderColor: Colors.SUCCESS,
       borderRadius: Radiuses.xxs,
     },
-    text: {
-      color: Colors.PRIMARY_EXTRA_DARK,
-    },
+    textColor: Colors.PRIMARY_EXTRA_DARK,
   },
   warning: {
     container: {
@@ -44,18 +45,14 @@ const typeStyles = {
       borderColor: Colors.WARNING,
       borderRadius: Radiuses.xxs,
     },
-    text: {
-      color: Colors.PRIMARY_EXTRA_DARK,
-    },
+    textColor: Colors.PRIMARY_EXTRA_DARK,
   },
   default: {
     container: {
       backgroundColor: Colors.PRIMARY,
       borderWidth: 0,
     },
-    text: {
-      color: Colors.PRIMARY_EXTRA_DARK,
-    },
+    textColor: Colors.PRIMARY_EXTRA_DARK,
   },
 } as const;
 
@@ -70,16 +67,16 @@ export function Snackbar(props: ISnackbar): ReactElement {
     ...rest
   } = props;
 
-  const t = typeStyles[type];
+  const variant = VARIANTS[type];
 
   return (
     <RnpSnackbar
-      style={[t.container, style]}
+      style={[variant.container, style]}
       contentStyle={contentStyle}
       action={{
         label: actionLabel,
         onPress: onActionPress,
-        textColor: t.text.color,
+        textColor: variant.textColor,
         labelStyle: {
           fontFamily: 'Poppins-SemiBold',
           fontWeight: '700',
@@ -88,9 +85,13 @@ export function Snackbar(props: ISnackbar): ReactElement {
       }}
       {...rest}
     >
-      <TextRegular size="sm" color={t.text.color}>
-        {children}
-      </TextRegular>
+      {typeof children === 'string' || typeof children === 'number' ? (
+        <TextRegular size="sm" color={variant.textColor}>
+          {children}
+        </TextRegular>
+      ) : (
+        children
+      )}
     </RnpSnackbar>
   );
 }
