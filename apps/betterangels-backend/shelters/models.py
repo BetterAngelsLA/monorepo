@@ -142,6 +142,16 @@ class Reservation(BaseModel):
             models.Index(fields=["shelter", "status"]),
         ]
 
+    def clean(self) -> None:
+        super().clean()
+        errors = {}
+        if self.room_id and self.room.shelter_id != self.shelter_id:
+            errors["room"] = "The selected room must belong to the same shelter as the reservation."
+        if self.bed_id and self.bed.shelter_id != self.shelter_id:
+            errors["bed"] = "The selected bed must belong to the same shelter as the reservation."
+        if errors:
+            raise ValidationError(errors)
+
     def __str__(self) -> str:
         return f"Reservation #{self.pk} at {self.shelter} ({self.status})"
 
