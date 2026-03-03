@@ -1,5 +1,13 @@
 import { ChevronDown, Search, X } from 'lucide-react';
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from './buttons';
 
@@ -47,66 +55,85 @@ export function Dropdown(props: DropdownProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
 
-  const selectedValues: DropdownOption[] = value
-    ? Array.isArray(value)
-      ? value
-      : [value]
-    : [];
+  const selectedValues = useMemo<DropdownOption[]>(
+    () => (value ? (Array.isArray(value) ? value : [value]) : []),
+    [value]
+  );
 
-  const effectiveValues = hasFooter ? stagedValues : selectedValues;
+  const effectiveValues = useMemo(
+    () => (hasFooter ? stagedValues : selectedValues),
+    [hasFooter, stagedValues, selectedValues]
+  );
   const hasEffectiveSelection = effectiveValues.length > 0;
 
-  const isSelected = (option: DropdownOption) =>
-    effectiveValues.some((v) => v.value === option.value);
+  const isSelected = useCallback(
+    (option: DropdownOption) =>
+      effectiveValues.some((v) => v.value === option.value),
+    [effectiveValues]
+  );
 
   const baseFiltered = options.filter((o) =>
     o.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredOptions = [
-    ...baseFiltered.filter((o) => isSelected(o)),
-    ...baseFiltered.filter((o) => !isSelected(o)),
-  ];
+  const filteredOptions = useMemo(
+    () => [
+      ...baseFiltered.filter((o) => isSelected(o)),
+      ...baseFiltered.filter((o) => !isSelected(o)),
+    ],
+    [options, searchQuery, effectiveValues]
+  );
 
-  const emitChange = (values: DropdownOption[]) => {
-    onChange(isMulti ? (values.length > 0 ? values : null) : values[0] ?? null);
-  };
+  const emitChange = useCallback(
+    (values: DropdownOption[]) => {
+      onChange(
+        isMulti ? (values.length > 0 ? values : null) : values[0] ?? null
+      );
+    },
+    [onChange, isMulti]
+  );
 
-  const handleClose = (reason: 'clickOutside' | 'apply' | 'escape') => {
-    if (hasFooter && reason === 'clickOutside') emitChange(stagedValues);
-    setIsOpen(false);
-    setSearchQuery('');
-  };
-
-  const handleOptionClick = (option: DropdownOption) => {
-    if (isMulti) {
-      const next = isSelected(option)
-        ? effectiveValues.filter((v) => v.value !== option.value)
-        : [...effectiveValues, option];
-      if (hasFooter) {
-        setStagedValues(next);
-      } else {
-        emitChange(next);
-      }
-    } else {
-      emitChange([option]);
+  const handleClose = useCallback(
+    (reason: 'clickOutside' | 'apply' | 'escape') => {
+      if (hasFooter && reason === 'clickOutside') emitChange(stagedValues);
       setIsOpen(false);
       setSearchQuery('');
-    }
-  };
+    },
+    [hasFooter, stagedValues, emitChange]
+  );
 
-  const handleRemoveChip = (option: DropdownOption) => {
-    if (hasFooter) {
-      const next = stagedValues.filter((v) => v.value !== option.value);
-      setStagedValues(next);
-      emitChange(next);
-    } else {
-      const next = selectedValues.filter((v) => v.value !== option.value);
-      emitChange(next);
-    }
-  };
+  const handleOptionClick = useCallback(
+    (option: DropdownOption) => {
+      if (isMulti) {
+        const next = isSelected(option)
+          ? effectiveValues.filter((v) => v.value !== option.value)
+          : [...effectiveValues, option];
+        if (hasFooter) setStagedValues(next);
+        else emitChange(next);
+      } else {
+        emitChange([option]);
+        setIsOpen(false);
+        setSearchQuery('');
+      }
+    },
+    [isMulti, isSelected, effectiveValues, hasFooter, emitChange]
+  );
 
-  const updateMenuPosition = () => {
+  const handleRemoveChip = useCallback(
+    (option: DropdownOption) => {
+      if (hasFooter) {
+        const next = stagedValues.filter((v) => v.value !== option.value);
+        setStagedValues(next);
+        emitChange(next);
+      } else {
+        const next = selectedValues.filter((v) => v.value !== option.value);
+        emitChange(next);
+      }
+    },
+    [hasFooter, stagedValues, selectedValues, emitChange]
+  );
+
+  const updateMenuPosition = useCallback(() => {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       setMenuStyle({
@@ -119,7 +146,7 @@ export function Dropdown(props: DropdownProps) {
         zIndex: 9999,
       });
     }
-  };
+  }, []);
 
   useLayoutEffect(() => {
     if (isOpen) {
@@ -324,7 +351,9 @@ export function Dropdown(props: DropdownProps) {
         ) : (
           <p
             className={`text-sm flex-1 truncate ${
-              hasEffectiveSelection ? 'text-base-content' : 'text-base-content/40'
+              hasEffectiveSelection
+                ? 'text-base-content'
+                : 'text-base-content/40'
             }`}
           >
             {hasEffectiveSelection ? effectiveValues[0].label : placeholder}
