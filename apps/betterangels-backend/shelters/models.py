@@ -122,14 +122,10 @@ class Reservation(BaseModel):
     shelter = models.ForeignKey("Shelter", on_delete=models.CASCADE, related_name="reservations")
     room = models.ForeignKey(Room, on_delete=models.SET_NULL, blank=True, null=True, related_name="reservations")
     bed = models.ForeignKey(Bed, on_delete=models.SET_NULL, blank=True, null=True, related_name="reservations")
-    status = TextChoicesField(
-        choices_enum=ReservationStatusChoices, default=ReservationStatusChoices.CONFIRMED
-    )
+    status = TextChoicesField(choices_enum=ReservationStatusChoices, default=ReservationStatusChoices.CONFIRMED)
     start_date = models.DateField()
     duration = models.DurationField()
-    clients = models.ManyToManyField(
-        "clients.ClientProfile", through="ReservationClient", related_name="reservations"
-    )
+    clients = models.ManyToManyField("clients.ClientProfile", through="ReservationClient", related_name="reservations")
     notes = models.TextField(blank=True, null=True)
     created_by = models.ForeignKey(
         "accounts.User", on_delete=models.SET_NULL, blank=True, null=True, related_name="created_reservations"

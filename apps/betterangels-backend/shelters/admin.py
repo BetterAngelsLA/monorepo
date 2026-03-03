@@ -1090,8 +1090,6 @@ class ReservationAdmin(admin.ModelAdmin):
         ),
         (
             "Notes",
-            {
-                "fields": ("notes",)
-            },
+            {"fields": ("notes",)},
         ),
     )
