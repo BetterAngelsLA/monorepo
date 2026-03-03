@@ -8,49 +8,50 @@ interface MenuPosition {
 }
 
 /**
- * Tracks the screen position of a trigger element so a portal-rendered menu
- * can be placed directly below it. Re-measures on scroll and resize via
- * `requestAnimationFrame` to stay in sync without jank.
+ * Measures the screen position of a trigger element once when the menu opens
+ * so a portal-rendered menu can be placed directly below it.
+ *
+ * Closes the menu if the user scrolls (outside the menu itself) or resizes,
+ * since repositioning on every scroll frame causes visible jitter.
  */
 export function usePortalPosition(
   triggerRef: RefObject<HTMLElement | null>,
-  isOpen: boolean
+  isOpen: boolean,
+  onClose: () => void,
+  menuRef: RefObject<HTMLElement | null>
 ): MenuPosition {
   const [pos, setPos] = useState<MenuPosition>({ top: 0, left: 0, width: 0 });
 
+  // Measure once when the menu opens.
   useLayoutEffect(() => {
     if (!isOpen || !triggerRef.current) return;
-
-    let rafId = 0;
-
-    const measure = () => {
-      if (!triggerRef.current) return;
-      const rect = triggerRef.current.getBoundingClientRect();
-      setPos({
-        top: rect.bottom + MENU_GAP,
-        left: rect.left,
-        width: rect.width,
-      });
-    };
-
-    const scheduleMeasure = () => {
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(measure);
-    };
-
-    // Measure immediately (layout effect — before paint).
-    measure();
-
-    // Re-measure when the page scrolls or the window resizes.
-    window.addEventListener('scroll', scheduleMeasure, true);
-    window.addEventListener('resize', scheduleMeasure);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      window.removeEventListener('scroll', scheduleMeasure, true);
-      window.removeEventListener('resize', scheduleMeasure);
-    };
+    const rect = triggerRef.current.getBoundingClientRect();
+    setPos({
+      top: rect.bottom + MENU_GAP,
+      left: rect.left,
+      width: rect.width,
+    });
   }, [isOpen, triggerRef]);
+
+  // Close on external scroll or window resize.
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+
+    const handleScroll = (e: Event) => {
+      // Don't close when the user scrolls inside the dropdown menu itself.
+      if (menuRef.current?.contains(e.target as Node)) return;
+      onClose();
+    };
+
+    const handleResize = () => onClose();
+
+    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [isOpen, onClose, menuRef]);
 
   return pos;
 }

@@ -20,6 +20,7 @@ interface DropdownMenuProps<T extends string | number> {
   onClose: () => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
   listRef: RefObject<HTMLDivElement | null>;
+  menuRef: RefObject<HTMLDivElement | null>;
 }
 
 export function DropdownMenu<T extends string | number>({
@@ -39,6 +40,7 @@ export function DropdownMenu<T extends string | number>({
   onClose,
   onKeyDown,
   listRef,
+  menuRef,
 }: DropdownMenuProps<T>) {
   return (
     <>
@@ -48,6 +50,7 @@ export function DropdownMenu<T extends string | number>({
         onClick={onClose}
       />
       <div
+        ref={menuRef}
         id={menuId}
         style={{
           position: 'fixed',

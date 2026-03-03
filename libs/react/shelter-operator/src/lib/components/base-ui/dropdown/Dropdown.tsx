@@ -1,5 +1,12 @@
 import { ChevronDown } from 'lucide-react';
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from './constants';
 import { DropdownChips } from './DropdownChips';
@@ -30,12 +37,19 @@ export function Dropdown<T extends string | number = string | number>(
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [focusedIndex, setFocusedIndex] = useState(-1);
+
+  const close = useCallback(() => {
+    setIsOpen(false);
+    setSearchQuery('');
+    setFocusedIndex(-1);
+  }, []);
   const menuId = useId();
   const triggerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const labelId = `${menuId}-label`;
 
-  const menuPos = usePortalPosition(triggerRef, isOpen);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuPos = usePortalPosition(triggerRef, isOpen, close, menuRef);
 
   // Scroll focused option into view
   useEffect(() => {
@@ -85,12 +99,6 @@ export function Dropdown<T extends string | number = string | number>(
     },
     [onChange, isMulti]
   );
-
-  const close = useCallback(() => {
-    setIsOpen(false);
-    setSearchQuery('');
-    setFocusedIndex(-1);
-  }, []);
 
   const handleOptionClick = useCallback(
     (option: DropdownOption<T>) => {
@@ -236,6 +244,7 @@ export function Dropdown<T extends string | number = string | number>(
             onClose={close}
             onKeyDown={handleKeyDown}
             listRef={listRef}
+            menuRef={menuRef}
           />,
           document.body
         )}
