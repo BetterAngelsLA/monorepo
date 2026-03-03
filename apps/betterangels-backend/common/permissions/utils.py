@@ -2,10 +2,8 @@ from typing import Any, Sequence, Tuple, Type
 
 import strawberry
 from common.errors import UnauthenticatedGQLError
-from django.contrib.auth.models import Group
-from django.db.models import Model, TextChoices
+from django.db.models import TextChoices
 from django.utils.encoding import force_str
-from guardian.shortcuts import assign_perm
 from strawberry_django.auth.utils import get_current_user
 
 
@@ -37,18 +35,3 @@ class IsAuthenticated(strawberry.BasePermission):
             raise UnauthenticatedGQLError()
 
         return True
-
-
-def assign_object_permissions(
-    group: Group,
-    obj: Model,
-    permissions: Sequence[str],
-) -> None:
-    """Assign a list of object-level permissions on ``obj`` to ``group``.
-
-    This is a thin wrapper around ``guardian.shortcuts.assign_perm`` that
-    eliminates the repeated ``for perm in perms: assign_perm(…)`` loop
-    scattered across mutations and services.
-    """
-    for perm in permissions:
-        assign_perm(perm, group, obj)

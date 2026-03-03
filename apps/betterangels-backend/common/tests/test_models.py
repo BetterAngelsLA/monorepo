@@ -29,6 +29,7 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
             state=address_input["address_components"][5]["short_name"],
             zip_code=address_input["address_components"][7]["long_name"],
             formatted_address=address_input["formatted_address"],
+            address_components=json_address_input["address_components"],
         )
         self.location = baker.make(Location, address=self.address, point=Point(self.point))
 
@@ -234,8 +235,6 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         addr2 = Location.get_or_create_address(
             {"address_components": components_upper, "formatted_address": "100 MAIN STREET"}
         )
-        assert addr1 is not None
-        assert addr2 is not None
         self.assertEqual(addr1.pk, addr2.pk)
 
     def test_get_or_create_address_whitespace_normalization(self) -> None:
@@ -262,12 +261,10 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
             {"address_components": canonical, "formatted_address": "100 Main Street"}
         )
         addr2 = Location.get_or_create_address({"address_components": messy, "formatted_address": "100 Main Street"})
-        assert addr1 is not None
-        assert addr2 is not None
         self.assertEqual(addr1.pk, addr2.pk)
 
     def test_get_or_create_address_formatted_address_variants(self) -> None:
-        """Both formattedAddress (camelCase) and formatted_address (snake_case) keys work and dedupe."""
+        """Both formattedAddress (v1) and formatted_address (legacy) persist correctly."""
         components = json.dumps(
             [
                 {"long_name": "200", "short_name": "200", "types": ["street_number"]},
@@ -277,19 +274,24 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
                 {"long_name": "62565", "short_name": "62565", "types": ["postal_code"]},
             ]
         )
-        # camelCase key
-        addr1 = Location.get_or_create_address(
+        addr_v1 = Location.get_or_create_address(
             {"address_components": components, "formattedAddress": "200 Oak Ave, Shelbyville, IL"}
         )
-        assert addr1 is not None
-        self.assertEqual(addr1.formatted_address, "200 Oak Ave, Shelbyville, IL")
+        self.assertEqual(addr_v1.formatted_address, "200 Oak Ave, Shelbyville, IL")
 
-        # snake_case key with same components should return same address
-        addr2 = Location.get_or_create_address(
-            {"address_components": components, "formatted_address": "200 Oak Ave, Shelbyville, IL"}
+        components2 = json.dumps(
+            [
+                {"long_name": "300", "short_name": "300", "types": ["street_number"]},
+                {"long_name": "Elm St", "short_name": "Elm St", "types": ["route"]},
+                {"long_name": "Capital City", "short_name": "Capital City", "types": ["locality"]},
+                {"long_name": "IL", "short_name": "IL", "types": ["administrative_area_level_1"]},
+                {"long_name": "62566", "short_name": "62566", "types": ["postal_code"]},
+            ]
         )
-        assert addr2 is not None
-        self.assertEqual(addr1.pk, addr2.pk)
+        addr_legacy = Location.get_or_create_address(
+            {"address_components": components2, "formatted_address": "300 Elm St, Capital City, IL"}
+        )
+        self.assertEqual(addr_legacy.formatted_address, "300 Elm St, Capital City, IL")
 
     @parametrize(
         (
@@ -300,13 +302,12 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
             "include_component_point_of_interest",
         ),
         [
-            # All test cases use same point -> same Location (unique constraint).
-            # Address/POI are updated on existing Location when provided.
-            ("106", 1, 1, False, False),  # Same address, same location (no change)
-            ("104", 2, 1, False, False),  # New address created, but location reused (updated)
-            ("106", 1, 1, False, True),  # Same address, POI updated on existing location
-            ("106", 1, 1, True, False),  # Same address, standalone POI updated
-            ("106", 1, 1, True, True),  # Standalone POI wins, updated on existing location
+            ("106", 1, 1, False, False),  # No new address or location
+            ("104", 2, 2, False, False),  # New street -> new address -> new location
+            ("106", 1, 2, False, True),  # POI in address_components -> same address, new location (POI differs)
+            # Standalone POI -> new location. No new address because POI not in address fields.
+            ("106", 1, 2, True, False),
+            ("106", 1, 2, True, True),  # Standalone POI wins; address deduped, new location
         ],
     )
     def test_get_or_create_location(
