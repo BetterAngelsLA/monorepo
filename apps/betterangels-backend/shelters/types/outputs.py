@@ -1,6 +1,7 @@
 """Output types for shelter queries and mutations."""
 
 from datetime import datetime
+from itertools import chain
 from typing import Any, List, Optional, cast
 
 import strawberry
@@ -139,14 +140,17 @@ class ShelterTypeMixin:
         ],
     )
     def hero_image(self, root: models.Shelter) -> Optional[str]:
-        if root.hero_image:
-            return str(root.hero_image.file.url)
-
         photo = next(
-            (photos[0] for photos in (self._exterior_photos, self._interior_photos) if photos),
+            filter(
+                None,
+                chain(
+                    [getattr(root, "hero_image", None)],
+                    self._exterior_photos or [],
+                    self._interior_photos or [],
+                ),
+            ),
             None,
         )
-
         return str(photo.file.url) if photo else None
 
     @strawberry_django.field
