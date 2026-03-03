@@ -79,7 +79,7 @@ export default function CreateShelterForm() {
     try {
       await createShelter({
         variables: {
-          input: buildCreateShelterInput(formData, selectedOrganizationId),
+          data: buildCreateShelterInput(formData, selectedOrganizationId),
         },
       });
       resetForm();

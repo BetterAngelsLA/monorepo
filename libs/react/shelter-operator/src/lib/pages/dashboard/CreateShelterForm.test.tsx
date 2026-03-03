@@ -78,7 +78,7 @@ describe('CreateShelterForm', () => {
         request: {
           query: CREATE_SHELTER_MUTATION,
           variables: {
-            input: buildCreateShelterInput(formDataForMutation),
+            data: buildCreateShelterInput(formDataForMutation),
           },
         },
         result: {
