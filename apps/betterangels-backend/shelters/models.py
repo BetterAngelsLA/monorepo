@@ -125,7 +125,9 @@ class Reservation(BaseModel):
     status = TextChoicesField(choices_enum=ReservationStatusChoices, default=ReservationStatusChoices.CONFIRMED)
     start_date = models.DateField()
     duration = models.DurationField()
-    clients = models.ManyToManyField("clients.ClientProfile", through="ReservationClient", related_name="reservations")
+    clients: models.ManyToManyField = models.ManyToManyField(
+        "clients.ClientProfile", through="ReservationClient", related_name="reservations"
+    )
     notes = models.TextField(blank=True, null=True)
     created_by = models.ForeignKey(
         "accounts.User", on_delete=models.SET_NULL, blank=True, null=True, related_name="created_reservations"
@@ -141,9 +143,9 @@ class Reservation(BaseModel):
     def clean(self) -> None:
         super().clean()
         errors = {}
-        if self.room_id and self.room.shelter_id != self.shelter_id:
+        if self.room_id and self.room and self.room.shelter_id != self.shelter_id:
             errors["room"] = "The selected room must belong to the same shelter as the reservation."
-        if self.bed_id and self.bed.shelter_id != self.shelter_id:
+        if self.bed_id and self.bed and self.bed.shelter_id != self.shelter_id:
             errors["bed"] = "The selected bed must belong to the same shelter as the reservation."
         if errors:
             raise ValidationError(errors)
