@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
+import strawberry
 import strawberry_django
 from accounts.groups import GroupTemplateNames
 from accounts.models import PermissionGroup, User
@@ -82,9 +83,32 @@ class ServiceRequestType:
 
 
 @strawberry_django.input(models.ServiceRequest)
+class CreateServiceRequestInput:
+    service_id: Optional[ID]
+    status: auto
+    service_other: Optional[str]
+    client_profile: ID | None
+
+
+@strawberry_django.input(models.ServiceRequest)
 class CreateNoteServiceRequestInput:
     service_id: Optional[ID]
     service_other: Optional[str]
+    note_id: ID
+    service_request_type: ServiceRequestTypeEnum
+
+
+@strawberry_django.input(models.ServiceRequest, partial=True)
+class UpdateServiceRequestInput:
+    id: ID
+    service_other: Optional[str]
+    status: auto
+    due_by: auto
+
+
+@strawberry.input
+class RemoveNoteServiceRequestInput:
+    service_request_id: ID
     note_id: ID
     service_request_type: ServiceRequestTypeEnum
 
@@ -114,15 +138,13 @@ class NoteFilter:
         query = Q()
 
         for term in search_terms:
-            q_search = Q(
+            query &= (
                 Q(client_profile__first_name__icontains=term)
                 | Q(client_profile__last_name__icontains=term)
                 | Q(public_details__icontains=term)
             )
 
-            query &= q_search
-
-        return Q(query)
+        return query
 
 
 @strawberry_django.type(
@@ -189,27 +211,43 @@ class NoteType:
         return root._private_details
 
 
-@strawberry_django.input(models.Note)
-class CreateNoteInput:
-    purpose: auto
-    team: Optional[SelahTeamEnum]
-    public_details: auto
-    private_details: auto
-    client_profile: ID | None
-    is_submitted: auto
-    interacted_at: auto
+@strawberry.input
+class CreateNoteServiceInput:
+    """A service to attach to a note (either by existing service ID or custom 'other' label)."""
+
+    service_id: Optional[ID] = None
+    service_other: Optional[str] = None
 
 
-@strawberry_django.input(models.Note, partial=True)
+@strawberry.input
+class CreateNoteTaskInput:
+    """A task to create and attach to the note."""
+
+    summary: str
+    description: Optional[str] = None
+    status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)
+    team: Optional[SelahTeamEnum] = None
+
+
+@strawberry.input
 class UpdateNoteInput:
+    """
+    Input for updating a note's core scalar fields only.
+    Fields set to UNSET are left unchanged.
+
+    For location and nested relations, use dedicated mutations:
+    - updateNoteLocation (for location changes)
+    - createNoteServiceRequest / removeNoteServiceRequest / updateServiceRequest
+    - createTask / deleteTask / updateTask
+    """
+
     id: ID
-    purpose: Optional[NonBlankString]
-    team: Optional[SelahTeamEnum]
-    location: Optional[ID]
-    public_details: auto
-    private_details: auto
-    is_submitted: auto
-    interacted_at: auto
+    purpose: Optional[NonBlankString] = strawberry.UNSET
+    team: Optional[SelahTeamEnum] = strawberry.UNSET
+    public_details: Optional[str] = strawberry.UNSET
+    private_details: Optional[str] = strawberry.UNSET
+    is_submitted: Optional[bool] = strawberry.UNSET
+    interacted_at: Optional[datetime] = strawberry.UNSET
 
 
 @strawberry_django.input(models.Note)
@@ -224,6 +262,30 @@ class RevertNoteInput:
     revert_before_timestamp: datetime
 
 
+@strawberry.input
+class CreateNoteInput:
+    """
+    Input for creating a note with all nested relations atomically.
+    All nested fields are optional, making this backward-compatible
+    with callers that only send core note fields.
+    """
+
+    # Core note fields
+    purpose: Optional[str] = None
+    team: Optional[SelahTeamEnum] = None
+    public_details: Optional[str] = ""
+    private_details: Optional[str] = ""
+    client_profile: Optional[ID] = None
+    is_submitted: Optional[bool] = False
+    interacted_at: Optional[datetime] = None
+
+    # Nested relations
+    location: Optional[LocationInput] = None
+    provided_services: Optional[List[CreateNoteServiceInput]] = None
+    requested_services: Optional[List[CreateNoteServiceInput]] = None
+    tasks: Optional[List[CreateNoteTaskInput]] = None
+
+
 @strawberry_django.filter_type(User)
 class InteractionAuthorFilter:
     @strawberry_django.filter_field
@@ -235,11 +297,9 @@ class InteractionAuthorFilter:
         query = Q()
 
         for term in search_terms:
-            q_search = Q(Q(first_name__icontains=term) | Q(last_name__icontains=term) | Q(middle_name__icontains=term))
+            query &= Q(first_name__icontains=term) | Q(last_name__icontains=term) | Q(middle_name__icontains=term)
 
-            query &= q_search
-
-        return Q(query)
+        return query
 
 
 @strawberry_django.order_type(User, one_of=False)
@@ -276,6 +336,21 @@ class InteractionAuthorType:
 
 
 # Data Import
+
+
+@strawberry_django.input(models.Note)
+class ImportNoteDataInput:
+    """Core note fields used by the import pipeline."""
+
+    purpose: auto
+    team: Optional[SelahTeamEnum]
+    public_details: auto
+    private_details: auto
+    client_profile: ID | None
+    is_submitted: auto
+    interacted_at: auto
+
+
 @strawberry_django.input(models.NoteDataImport)
 class CreateNoteDataImportInput:
     source_file: str
@@ -288,7 +363,7 @@ class ImportNoteInput:
     source_id: auto
     source_name: auto
     raw_data: auto
-    note: CreateNoteInput
+    note: ImportNoteDataInput
 
 
 # Output types for note import

@@ -2,10 +2,9 @@ from unittest.mock import ANY, patch
 
 import time_machine
 from common.enums import SelahTeamEnum
-from common.models import Address, Location
+from common.models import Location
 from django.test import ignore_warnings
 from django.utils import timezone
-from model_bakery import baker
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.tests.utils import NoteGraphQLBaseTestCase
 from tasks.tests.utils import TaskGraphQLUtilsMixin
@@ -20,7 +19,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 35
+        expected_query_count = 30
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_fixture(
                 {
@@ -54,14 +53,13 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "purpose": "Updated note purpose",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
-            "location": self.location.pk,
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 23
+        expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -71,17 +69,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "purpose": "Updated note purpose",
             "tasks": [],
             "team": SelahTeamEnum.WDI_ON_SITE.name,
-            "location": {
-                "id": str(self.location.pk),
-                "address": {
-                    "street": self.address.street,
-                    "city": self.address.city,
-                    "state": self.address.state,
-                    "zipCode": self.address.zip_code,
-                },
-                "point": self.point,
-                "pointOfInterest": self.point_of_interest,
-            },
+            "location": None,
             "providedServices": [],
             "requestedServices": [],
             "publicDetails": "Updated public details",
@@ -101,7 +89,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 20
+        expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -137,7 +125,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "location": location,
         }
 
-        expected_query_count = 19
+        expected_query_count = 14
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_location_fixture(variables)
 
@@ -303,7 +291,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         Test Actions:
         0. Setup creates a note
         1. Save now as revert_before_timestamp
-        2. Update note title, public details, point, and address
+        2. Update note purpose and public details
         3. Revert to revert_before_timestamp from Step 1
         4. Assert note has details from Step 0
         5. Save now as revert_before_timestamp
@@ -315,15 +303,12 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         # Select a moment to revert to
         revert_before_timestamp = timezone.now()
 
-        other_address = baker.make(Address, street="Discarded St")
-        other_location = baker.make(Location, address=other_address)
         # Update - should be discarded
         self._update_note_fixture(
             {
                 "id": note_id,
                 "purpose": "Discarded Purpose",
                 "publicDetails": "Discarded Body",
-                "location": other_location.pk,
             }
         )
 
@@ -336,7 +321,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
             }
         """
 
-        expected_query_count = 30
+        expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
@@ -348,7 +333,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         revert_before_timestamp = timezone.now()
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        expected_query_count = 14
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
@@ -360,9 +345,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         """
         Test Actions:
         0. Setup creates a note
-        1. Update note purpose, public details, point, and address
+        1. Update note purpose and public details
         2. Save now as revert_before_timestamp
-        3. Update note purpose, public details, point, and address
+        3. Update note purpose and public details
         4. Revert to revert_before_timestamp from Step 2
         5. Assert note has details from Step 1
         6. Save now as revert_before_timestamp
@@ -377,22 +362,18 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
                 "id": note_id,
                 "purpose": "Updated purpose",
                 "publicDetails": "Updated Body",
-                "location": self.location.pk,
             }
         )
 
         # Select a moment to revert to
         revert_before_timestamp = timezone.now()
 
-        other_address = baker.make(Address, street="Discarded St")
-        other_location = baker.make(Location, address=other_address)
         # Update - should be discarded
         self._update_note_fixture(
             {
                 "id": note_id,
                 "purpose": "Discarded purpose",
                 "publicDetails": "Discarded Body",
-                "location": other_location.pk,
             }
         )
 
@@ -400,31 +381,24 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         note_fields = """
             purpose
             publicDetails
-            location {
-                address {
-                    street
-                }
-            }
         """
-        expected_query_count = 32
+        expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["purpose"], "Updated purpose")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
-        self.assertEqual(reverted_note["location"]["address"]["street"], "106 West 1st Street")
 
         # Select a moment to revert to
         revert_before_timestamp = timezone.now()
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        expected_query_count = 26
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["purpose"], "Updated purpose")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
-        self.assertEqual(reverted_note["location"]["address"]["street"], "106 West 1st Street")
 
     def test_revert_note_mutation_reverts_updated_location(self) -> None:
         """
@@ -487,161 +461,13 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         self.assertEqual(discarded_point, note_location_to_discard["location"]["point"])
         self.assertEqual(discarded_point_of_interest, note_location_to_discard["location"]["pointOfInterest"])
 
-        expected_query_count = 21
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["location"]["address"]["street"], self.street)
         self.assertEqual(reverted_note["location"]["point"], self.point)
         self.assertEqual(reverted_note["location"]["pointOfInterest"], self.point_of_interest)
-
-    # @skip("not implemented")
-    # def test_revert_note_mutation_removes_added_new_tasks(self) -> None:
-    #     """
-    #     Test Actions:
-    #     0. Setup creates a note
-    #     1. Create 1 new purpose and 1 new next step
-    #     2. Save now as revert_before_timestamp
-    #     3. Create another purpose and 1 new next step
-    #     4. Revert to revert_before_timestamp from Step 2
-    #     5. Assert note has only the associations from Step 2
-    #     """
-    #     note_id = self.note["id"]
-    #     note = Note.objects.get(id=note_id)
-    #     total_task_count = Task.objects.count()
-
-    #     # Add associations that will be persisted
-    #     self._create_note_task_fixture(
-    #         {
-    #             "title": "New Note Purpose",
-    #             "noteId": note_id,
-    #             "status": "TO_DO",
-    #             "taskType": "PURPOSE",
-    #         }
-    #     )
-
-    #     self._create_note_task_fixture(
-    #         {
-    #             "title": "New Note Next Step",
-    #             "noteId": note_id,
-    #             "status": "TO_DO",
-    #             "taskType": "NEXT_STEP",
-    #         }
-    #     )
-    #     self.assertEqual(note.purposes.count(), 1)
-    #     self.assertEqual(note.next_steps.count(), 1)
-
-    #     # Select a moment to revert to
-    #     revert_before_timestamp = timezone.now()
-
-    #     # Add associations that will be discarded
-    #     self._create_note_task_fixture(
-    #         {
-    #             "title": "Discarded Purpose",
-    #             "noteId": note_id,
-    #             "status": "TO_DO",
-    #             "taskType": "PURPOSE",
-    #         }
-    #     )
-
-    #     self._create_note_task_fixture(
-    #         {
-    #             "title": "Discarded Next Step",
-    #             "noteId": note_id,
-    #             "status": "TO_DO",
-    #             "taskType": "NEXT_STEP",
-    #         }
-    #     )
-    #     self.assertEqual(note.purposes.count(), 2)
-    #     self.assertEqual(note.next_steps.count(), 2)
-
-    #     # Revert to revert_before_timestamp state
-    #     variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-
-    #     expected_query_count = 42
-    #     with self.assertNumQueriesWithoutCache(expected_query_count):
-    #         reverted_note = self._revert_note_fixture(variables, self.task_note_fields)["data"]["revertNote"]
-
-    #     self.assertEqual(len(reverted_note["purposes"]), 1)
-    #     self.assertEqual(len(reverted_note["nextSteps"]), 1)
-
-    #     self.assertEqual(note.purposes.count(), 1)
-    #     self.assertEqual(note.next_steps.count(), 1)
-
-    #     # Assert that discarded tasks were deleted
-    #     self.assertEqual(Task.objects.count(), total_task_count + 2)
-
-    # @skip("Functionality for adding existing Tasks to a Note is not complete")
-    # def test_revert_note_mutation_removes_added_existing_tasks(self) -> None:
-    #     """
-    #     Test Actions:
-    #     0. Setup creates a note
-    #     1. Add 1 purpose and 1 next step
-    #     2. Save now as revert_before_timestamp
-    #     3. Add another purpose and next step
-    #     4. Revert to revert_before_timestamp from Step 2
-    #     5. Assert note has only the associations from Step 2
-    #     """
-    #     note_id = self.note["id"]
-    #     note = Note.objects.get(id=note_id)
-
-    #     # Add associations that will be persisted
-    #     self._add_note_task_fixture(
-    #         {
-    #             "noteId": note_id,
-    #             "taskId": self.purpose_1["id"],
-    #             "taskType": "PURPOSE",
-    #         }
-    #     )
-    #     self._add_note_task_fixture(
-    #         {
-    #             "noteId": note_id,
-    #             "taskId": self.next_step_1["id"],
-    #             "taskType": "NEXT_STEP",
-    #         }
-    #     )
-    #     self.assertEqual(note.purposes.count(), 1)
-    #     self.assertEqual(note.next_steps.count(), 1)
-
-    #     # Select a moment to revert to
-    #     revert_before_timestamp = timezone.now()
-
-    #     # Add associations that will be discarded
-    #     self._add_note_task_fixture(
-    #         {
-    #             "noteId": note_id,
-    #             "taskId": self.purpose_2["id"],
-    #             "taskType": "PURPOSE",
-    #         }
-    #     )
-    #     self._add_note_task_fixture(
-    #         {
-    #             "noteId": note_id,
-    #             "taskId": self.next_step_2["id"],
-    #             "taskType": "NEXT_STEP",
-    #         }
-    #     )
-    #     self.assertEqual(note.purposes.count(), 2)
-    #     self.assertEqual(note.next_steps.count(), 2)
-
-    #     # Revert to revert_before_timestamp state
-    #     variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-
-    #     expected_query_count = 27
-    #     with self.assertNumQueriesWithoutCache(expected_query_count):
-    #         reverted_note = self._revert_note_fixture(variables, self.task_note_fields)["data"]["revertNote"]
-
-    #     self.assertEqual(len(reverted_note["purposes"]), 1)
-    #     self.assertEqual(len(reverted_note["nextSteps"]), 1)
-
-    #     self.assertEqual(note.purposes.count(), 1)
-    #     self.assertEqual(note.next_steps.count(), 1)
-
-    #     # Assert that unassociated tasks were not deleted
-    #     self.assertEqual(
-    #         Task.objects.filter(id__in=[self.next_step_2["id"], self.purpose_2["id"]]).count(),
-    #         2,
-    #     )
 
     def test_revert_note_mutation_removes_added_service_requests(self) -> None:
         """
@@ -706,7 +532,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 46
+        expected_query_count = 42
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -779,7 +605,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 48
+        expected_query_count = 44
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -796,153 +622,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
             ).count(),
             0,
         )
-
-    # @skip("not implemented")
-    # def test_revert_note_mutation_returns_removed_new_tasks(self) -> None:
-    #     """
-    #     Test Actions:
-    #     0. Setup creates a note
-    #     1. Create 2 new purposes and 2 new next steps
-    #     2. Save now as revert_before_timestamp
-    #     3. Delete 1 purpose and 1 next step
-    #     4. Revert to revert_before_timestamp from Step 2
-    #     5. Assert note has only the associations from Step 2
-    #     """
-    #     note_id = self.note["id"]
-    #     note = Note.objects.get(id=note_id)
-    #     total_task_count = Task.objects.count()
-
-    #     # Add associations that will be persisted
-    #     for i in [1, 2]:
-    #         purpose_response = self._create_note_task_fixture(
-    #             {
-    #                 "title": f"New Note Purpose {i}",
-    #                 "noteId": note_id,
-    #                 "status": "TO_DO",
-    #                 "taskType": "PURPOSE",
-    #             }
-    #         )["data"]["createNoteTask"]
-
-    #         next_step_response = self._create_note_task_fixture(
-    #             {
-    #                 "title": f"New Note Next Step {i}",
-    #                 "noteId": note_id,
-    #                 "status": "TO_DO",
-    #                 "taskType": "NEXT_STEP",
-    #             }
-    #         )["data"]["createNoteTask"]
-
-    #     self.assertEqual(note.purposes.count(), 2)
-    #     self.assertEqual(note.next_steps.count(), 2)
-
-    #     # Select a moment to revert to
-    #     revert_before_timestamp = timezone.now()
-
-    #     # Delete tasks - should be discarded
-    #     self.delete_task_fixture(purpose_response["id"])
-    #     self.delete_task_fixture(next_step_response["id"])
-
-    #     self.assertEqual(note.purposes.count(), 1)
-    #     self.assertEqual(note.next_steps.count(), 1)
-
-    #     # Revert to revert_before_timestamp state
-    #     variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-
-    #     expected_query_count = 52
-    #     with self.assertNumQueriesWithoutCache(expected_query_count):
-    #         reverted_note = self._revert_note_fixture(variables, self.task_note_fields)["data"]["revertNote"]
-
-    #     self.assertEqual(len(reverted_note["purposes"]), 2)
-    #     self.assertEqual(len(reverted_note["nextSteps"]), 2)
-
-    #     self.assertEqual(note.purposes.count(), 2)
-    #     self.assertEqual(note.next_steps.count(), 2)
-
-    #     self.assertEqual(Task.objects.count(), total_task_count + 4)
-
-    # @skip("Functionality for adding existing Tasks to a Note is not complete")
-    # def test_revert_note_mutation_returns_removed_existing_tasks(self) -> None:
-    #     """
-    #     Test Actions:
-    #     0. Setup creates a note
-    #     1. Add 2 purposes and 2 next steps
-    #     2. Save now as revert_before_timestamp
-    #     3. Remove 1 purpose and 1 next step
-    #     4. Revert to revert_before_timestamp from Step 2
-    #     5. Assert note has only the associations from Step 1
-    #     """
-    #     note_id = self.note["id"]
-    #     note = Note.objects.get(id=note_id)
-
-    #     # Add associations that will be persisted
-    #     self._add_note_task_fixture(
-    #         {
-    #             "noteId": note_id,
-    #             "taskId": self.purpose_1["id"],
-    #             "taskType": "PURPOSE",
-    #         }
-    #     )
-
-    #     self._add_note_task_fixture(
-    #         {
-    #             "noteId": note_id,
-    #             "taskId": self.next_step_1["id"],
-    #             "taskType": "NEXT_STEP",
-    #         }
-    #     )
-
-    #     # Add associations that will be removed and then reverted
-    #     self._add_note_task_fixture(
-    #         {
-    #             "noteId": note_id,
-    #             "taskId": self.purpose_2["id"],
-    #             "taskType": "PURPOSE",
-    #         }
-    #     )
-
-    #     self._add_note_task_fixture(
-    #         {
-    #             "noteId": note_id,
-    #             "taskId": self.next_step_2["id"],
-    #             "taskType": "NEXT_STEP",
-    #         }
-    #     )
-    #     self.assertEqual(note.purposes.count(), 2)
-    #     self.assertEqual(note.next_steps.count(), 2)
-
-    #     # Select a moment to revert to
-    #     revert_before_timestamp = timezone.now()
-
-    #     # Remove task - should be discarded
-    #     self._remove_note_task_fixture(
-    #         {
-    #             "noteId": note_id,
-    #             "taskId": self.purpose_2["id"],
-    #             "taskType": "PURPOSE",
-    #         }
-    #     )
-
-    #     self._remove_note_task_fixture(
-    #         {
-    #             "noteId": note_id,
-    #             "taskId": self.next_step_2["id"],
-    #             "taskType": "NEXT_STEP",
-    #         }
-    #     )
-    #     self.assertEqual(note.purposes.count(), 1)
-    #     self.assertEqual(note.next_steps.count(), 1)
-
-    #     variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-
-    #     expected_query_count = 27
-    #     with self.assertNumQueriesWithoutCache(expected_query_count):
-    #         reverted_note = self._revert_note_fixture(variables, self.task_note_fields)["data"]["revertNote"]
-
-    #     self.assertEqual(len(reverted_note["purposes"]), 2)
-    #     self.assertEqual(len(reverted_note["nextSteps"]), 2)
-
-    #     self.assertEqual(note.purposes.count(), 2)
-    #     self.assertEqual(note.next_steps.count(), 2)
 
     def test_revert_note_mutation_returns_removed_service_requests(self) -> None:
         """
@@ -1013,7 +692,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 52
+        expected_query_count = 48
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -1087,7 +766,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 52
+        expected_query_count = 48
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -1098,128 +777,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         self.assertEqual(note.requested_services.count(), 2)
 
         self.assertEqual(ServiceRequest.objects.count(), total_service_request_count + 4)
-
-    # @skip("not implemented")
-    # def test_revert_note_mutation_restores_updated_tasks(self) -> None:
-    #     """
-    #     Test Actions:
-    #     0. Setup creates a note
-    #     1. Create 1 purpose and 1 next step
-    #     2. Save now as revert_before_timestamp
-    #     3. Update the purpose and next step titles
-    #     4. Revert to revert_before_timestamp from Step 2
-    #     5. Assert note has only the associations from Step 2
-    #     """
-    #     note_id = self.note["id"]
-
-    #     # Add associations that will be persisted
-    #     purpose = self._create_note_task_fixture(
-    #         {
-    #             "title": "Purpose Title",
-    #             "noteId": note_id,
-    #             "status": "TO_DO",
-    #             "taskType": "PURPOSE",
-    #         }
-    #     )["data"]["createNoteTask"]
-
-    #     next_step = self._create_note_task_fixture(
-    #         {
-    #             "title": "Next Step Title",
-    #             "noteId": note_id,
-    #             "status": "TO_DO",
-    #             "taskType": "NEXT_STEP",
-    #         }
-    #     )["data"]["createNoteTask"]
-
-    #     # Select a moment to revert to
-    #     revert_before_timestamp = timezone.now()
-
-    #     # Make updates that will be discarded
-    #     self.update_task_fixture({"id": purpose["id"], "title": "Discarded Purpose Title"})
-    #     self.update_task_fixture({"id": next_step["id"], "title": "Discarded Next Step Title"})
-
-    #     # Revert to revert_before_timestamp state
-    #     variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-
-    #     expected_query_count = 24
-    #     with self.assertNumQueriesWithoutCache(expected_query_count):
-    #         reverted_note = self._revert_note_fixture(variables, self.task_note_fields)["data"]["revertNote"]
-
-    #     self.assertEqual(reverted_note["purposes"][0]["title"], "Purpose Title")
-    #     self.assertEqual(reverted_note["nextSteps"][0]["title"], "Next Step Title")
-
-    # @skip("not implemented")
-    # def test_revert_note_mutation_restores_updated_task_location(self) -> None:
-    #     """
-    #     Test Actions:
-    #     0. Setup creates a note
-    #     1. Create 1 next step
-    #     2. Update next step location
-    #     3. Save now as revert_before_timestamp
-    #     3. Update the next step location again
-    #     4. Revert to revert_before_timestamp from Step 3
-    #     5. Assert note has only the associations from Step 2
-    #     """
-    #     note_id = self.note["id"]
-
-    #     task = self._create_note_task_fixture(
-    #         {
-    #             "title": "Next Step Title",
-    #             "noteId": note_id,
-    #             "status": "TO_DO",
-    #             "taskType": "NEXT_STEP",
-    #         }
-    #     )["data"]["createNoteTask"]
-
-    #     json_address_input, address_input = self._get_address_inputs()
-    #     location = {
-    #         "address": json_address_input,
-    #         "point": self.point,
-    #         "pointOfInterest": self.point_of_interest,
-    #     }
-
-    #     self._update_task_location_fixture({"id": task["id"], "location": location})
-
-    #     # Select a moment to revert to
-    #     revert_before_timestamp = timezone.now()
-
-    #     discarded_json_address_input, discarded_address_input = self._get_address_inputs(street_number_override="104")
-    #     discarded_point = [-118.0, 34.0]
-    #     discarded_point_of_interest = "Another interesting point"
-    #     discarded_location = {
-    #         "address": discarded_json_address_input,
-    #         "point": discarded_point,
-    #         "pointOfInterest": discarded_point_of_interest,
-    #     }
-    #     self._update_task_location_fixture({"id": task["id"], "location": discarded_location})
-
-    #     # Revert to revert_before_timestamp state
-    #     variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-    #     note_fields = """
-    #         nextSteps {
-    #             id
-    #             title
-    #             location {
-    #                 address {
-    #                     street
-    #                     city
-    #                     state
-    #                     zipCode
-    #                 }
-    #                 point
-    #                 pointOfInterest
-    #             }
-    #         }
-    #     """
-
-    #     expected_query_count = 20
-    #     with self.assertNumQueriesWithoutCache(expected_query_count):
-    #         reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
-
-    #     next_step = reverted_note["nextSteps"][0]
-    #     self.assertEqual(next_step["location"]["address"]["street"], self.street)
-    #     self.assertEqual(next_step["location"]["point"], self.point)
-    #     self.assertEqual(next_step["location"]["pointOfInterest"], self.point_of_interest)
 
     def test_revert_note_mutation_fails_in_atomic_transaction(self) -> None:
         """
@@ -1244,7 +801,10 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
             "notes.utils.note_reverter_util.NoteReverter._revert_changes_to_all_related_models",
             side_effect=Exception("oops"),
         ):
-            self._revert_note_fixture(variables, note_fields)
+            response = self._revert_note_fixture(variables, note_fields)
+
+        # The error should propagate, not be silently swallowed
+        self.assertIsNotNone(response.get("errors"), "Expected an error response when revert fails")
 
         # Verify atomicity: the note should remain in its pre-revert state
         note = Note.objects.get(pk=note_id)

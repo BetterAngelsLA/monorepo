@@ -3,11 +3,18 @@ from typing import cast
 import strawberry
 import strawberry_django
 from common.permissions.utils import IsAuthenticated
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from graphql import GraphQLError
-from shelters.permissions import ShelterPermissions
-from shelters.services import shelter_create
-from shelters.types import AdminShelterType, CreateShelterInput, ShelterType
+from shelters.models import Shelter
+from shelters.permissions import BedPermissions, ShelterPermissions
+from shelters.services import bed_create, shelter_create
+from shelters.types import (
+    AdminShelterType,
+    BedType,
+    CreateBedInput,
+    CreateShelterInput,
+    ShelterType,
+)
 from strawberry import UNSET
 from strawberry.types import Info
 from strawberry_django.pagination import OffsetPaginated
@@ -28,11 +35,11 @@ class Query:
 @strawberry.type
 class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(ShelterPermissions.ADD)])
-    def create_shelter(self, info: Info, input: CreateShelterInput) -> ShelterType:
-        data = {k: v for k, v in strawberry.asdict(input).items() if v is not UNSET}
+    def create_shelter(self, info: Info, data: CreateShelterInput) -> ShelterType:
+        clean = {k: v for k, v in strawberry.asdict(data).items() if v is not UNSET}
 
         try:
-            shelter = shelter_create(data=data)
+            shelter = shelter_create(data=clean)
         except ValidationError as exc:
             if hasattr(exc, "message_dict"):
                 errors = [{"field": f, "messages": msgs} for f, msgs in exc.message_dict.items()]
@@ -41,3 +48,12 @@ class Mutation:
             raise GraphQLError("Validation Errors", extensions={"errors": errors}) from exc
 
         return cast(ShelterType, shelter)
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(BedPermissions.ADD)])
+    def create_bed(self, info: Info, data: CreateBedInput) -> BedType:
+        try:
+            bed = bed_create(data=strawberry.asdict(data))
+        except Shelter.DoesNotExist:
+            raise ObjectDoesNotExist(f"Shelter matching ID {data.shelter_id} could not be found.")
+
+        return cast(BedType, bed)
