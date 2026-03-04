@@ -149,16 +149,17 @@ import {
   BottomSheetModalProvider as GbsBottomSheetModalProvider,
 } from '@gorhom/bottom-sheet';
 import { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
-import { BackdropOverlay } from '../core/BackdropOverlay';
-import { BottomSheetBase } from '../core/BottomSheetBase';
+import { BackdropOverlay } from '../../core/BackdropOverlay';
+import { BottomSheetBase } from '../../core/BottomSheetBase';
 import {
   BottomSheetContextValue,
   BottomSheetOptions,
   BottomSheetProviderConfig,
   BottomSheetRenderApi,
   ShowBottomSheetParams,
-} from '../types';
-import { resolveBottomSheetOptions } from '../utils/resolveBottomSheetOptions';
+} from '../../types';
+import { resolveBottomSheetOptions } from '../../utils/resolveBottomSheetOptions';
+import { BottomSheetLayoutProvider } from '../BottomSheetLayout/BottomSheetLayoutProvider';
 import { BottomSheetContext } from './BottomSheetContext';
 
 const EMPTY_SHEET_OPTIONS: BottomSheetOptions = {};
@@ -338,51 +339,56 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
 
   return (
     <GbsBottomSheetModalProvider>
-      <BottomSheetContext.Provider value={contextValue}>
-        {children}
+      <BottomSheetLayoutProvider>
+        <BottomSheetContext.Provider value={contextValue}>
+          {children}
 
-        {singleBackdrop && BackdropContainer && (
-          <BackdropContainer>
-            <BackdropOverlay visible={backdropVisible} onPress={popTopSheet} />
-          </BackdropContainer>
-        )}
+          {singleBackdrop && BackdropContainer && (
+            <BackdropContainer>
+              <BackdropOverlay
+                visible={backdropVisible}
+                onPress={popTopSheet}
+              />
+            </BackdropContainer>
+          )}
 
-        {sheets.map(({ id, render, options }) => (
-          <BottomSheetBase
-            key={id}
-            ref={(instance) => {
-              if (!instance) {
-                return;
-              }
+          {sheets.map(({ id, render, options }) => (
+            <BottomSheetBase
+              key={id}
+              ref={(instance) => {
+                if (!instance) {
+                  return;
+                }
 
-              sheetRefs.current.set(id, instance);
-              instance.present();
-            }}
-            options={options}
-            keyboardBlurBehavior="restore"
-            keyboardBehavior="interactive"
-            onRequestClose={() => {
-              dismissSheetById(id);
-            }}
-            onDismiss={() => {
-              options.onClose?.();
+                sheetRefs.current.set(id, instance);
+                instance.present();
+              }}
+              options={options}
+              keyboardBlurBehavior="restore"
+              keyboardBehavior="interactive"
+              onRequestClose={() => {
+                dismissSheetById(id);
+              }}
+              onDismiss={() => {
+                options.onClose?.();
 
-              sheetRefs.current.delete(id);
+                sheetRefs.current.delete(id);
 
-              setClosingSheetIds((prev) => {
-                const next = new Set(prev);
-                next.delete(id);
+                setClosingSheetIds((prev) => {
+                  const next = new Set(prev);
+                  next.delete(id);
 
-                return next;
-              });
+                  return next;
+                });
 
-              setSheets((prev) => prev.filter((s) => s.id !== id));
-            }}
-          >
-            {render({ closeSheet: () => dismissSheetById(id) })}
-          </BottomSheetBase>
-        ))}
-      </BottomSheetContext.Provider>
+                setSheets((prev) => prev.filter((s) => s.id !== id));
+              }}
+            >
+              {render({ closeSheet: () => dismissSheetById(id) })}
+            </BottomSheetBase>
+          ))}
+        </BottomSheetContext.Provider>
+      </BottomSheetLayoutProvider>
     </GbsBottomSheetModalProvider>
   );
 }

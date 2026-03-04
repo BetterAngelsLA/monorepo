@@ -22,7 +22,7 @@
  */
 
 import { ReactNode, useEffect, useRef } from 'react';
-import { useBottomSheet } from './provider/useBottomSheet';
+import { useBottomSheet } from './providers/BottomSheetModal/useBottomSheet';
 import { BottomSheetOptions } from './types';
 
 type TProps = {

@@ -19,7 +19,6 @@ import {
   ApolloClientProvider,
 } from '@monorepo/expo/shared/clients';
 import {
-  BottomSheetFullScreenContainer,
   BottomSheetModalProvider,
   GooglePlacesProvider,
 } from '@monorepo/expo/shared/ui-components';
@@ -64,10 +63,10 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <BottomSheetModalProvider
-        singleBackdrop={true}
-        defaultOptions={{
-          containerComponent: BottomSheetFullScreenContainer,
-        }}
+      // singleBackdrop={true}
+      // defaultOptions={{
+      //   containerComponent: BottomSheetFullScreenContainer,
+      // }}
       >
         <NativePaperProvider>
           <GooglePlacesProvider apiKey={googlePlacesApiKey}>
