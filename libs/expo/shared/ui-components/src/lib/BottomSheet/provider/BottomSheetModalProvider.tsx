@@ -199,6 +199,10 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
     [defaultOptions]
   );
 
+  const [closingSheetIds, setClosingSheetIds] = useState<Set<string>>(
+    new Set()
+  );
+
   /**
    * Active sheets in render order.
    * Last item in array = top-most sheet.
@@ -221,6 +225,8 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
     if (!instance) {
       return;
     }
+
+    setClosingSheetIds((prev) => new Set(prev).add(id));
 
     instance.dismiss();
   }, []);
@@ -326,20 +332,19 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
     [showBottomSheet, popTopSheet]
   );
 
-  const OverlayContainer = providerDefaults.containerComponent;
+  const BackdropContainer = providerDefaults.containerComponent;
+  const backdropVisible =
+    singleBackdrop && sheets.some((sheet) => !closingSheetIds.has(sheet.id));
 
   return (
     <GbsBottomSheetModalProvider>
       <BottomSheetContext.Provider value={contextValue}>
         {children}
 
-        {singleBackdrop && OverlayContainer && (
-          <OverlayContainer>
-            <BackdropOverlay
-              visible={sheets.length > 0}
-              onPress={popTopSheet}
-            />
-          </OverlayContainer>
+        {singleBackdrop && BackdropContainer && (
+          <BackdropContainer>
+            <BackdropOverlay visible={backdropVisible} onPress={popTopSheet} />
+          </BackdropContainer>
         )}
 
         {sheets.map(({ id, render, options }) => (
@@ -363,6 +368,14 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
               options.onClose?.();
 
               sheetRefs.current.delete(id);
+
+              setClosingSheetIds((prev) => {
+                const next = new Set(prev);
+                next.delete(id);
+
+                return next;
+              });
+
               setSheets((prev) => prev.filter((s) => s.id !== id));
             }}
           >

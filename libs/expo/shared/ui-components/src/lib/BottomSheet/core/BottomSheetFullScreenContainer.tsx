@@ -58,7 +58,7 @@
  */
 
 import { ReactNode } from 'react';
-import { Platform } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { FullWindowOverlay } from 'react-native-screens';
 
 type TProps = {
@@ -68,9 +68,20 @@ type TProps = {
 export function BottomSheetFullScreenContainer(props: TProps) {
   const { children } = props;
 
-  if (Platform.OS !== 'ios') {
-    return children ?? null;
+  if (Platform.OS === 'ios') {
+    return <FullWindowOverlay>{children}</FullWindowOverlay>;
   }
 
-  return <FullWindowOverlay>{children}</FullWindowOverlay>;
+  return (
+    <View pointerEvents="box-none" style={styles.container}>
+      {children}
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    elevation: 1,
+  },
+});

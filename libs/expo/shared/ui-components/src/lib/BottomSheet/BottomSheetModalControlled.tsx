@@ -37,6 +37,7 @@ export function BottomSheetModalControlled(props: TProps) {
   const { showBottomSheet } = useBottomSheet();
 
   const closeSheetRef = useRef<(() => void) | null>(null);
+  const closingFromStateRef = useRef(false);
 
   // Mutable ref container to stabilize sheet inputs by render + lifecycle callbacks
   const stableInputsRef = useRef({
@@ -52,6 +53,7 @@ export function BottomSheetModalControlled(props: TProps) {
   useEffect(() => {
     if (!isOpen) {
       if (closeSheetRef.current) {
+        closingFromStateRef.current = true;
         closeSheetRef.current();
         closeSheetRef.current = null;
       }
@@ -66,13 +68,20 @@ export function BottomSheetModalControlled(props: TProps) {
     showBottomSheet({
       render: ({ closeSheet }) => {
         closeSheetRef.current = closeSheet;
+
         return stableInputsRef.current.children;
       },
       options: {
         ...(stableInputsRef.current.options ?? {}),
         onClose: () => {
           closeSheetRef.current = null;
-          stableInputsRef.current.onClose?.();
+
+          // only notify parent if sheet initiated the close
+          if (!closingFromStateRef.current) {
+            stableInputsRef.current.onClose?.();
+          }
+
+          closingFromStateRef.current = false;
         },
       },
     });
