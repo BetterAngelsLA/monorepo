@@ -405,7 +405,20 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
         self.assertEqual(response["data"]["organizationMembers"]["totalCount"], 3)
         self.assertCountEqual(expected_members, actual_members)
 
-    def test_organization_members_search_multi_term(self) -> None:
+    @parametrize(
+        "search_term, expected_match, expected_min_total_count",
+        [
+            ("jo smi", ("John", "Smith"), None),
+            ("john s", ("John", "Smith"), None),
+            ("s", None, 3),
+        ],
+    )
+    def test_organization_members_search(
+        self,
+        search_term: str,
+        expected_match: tuple[str, str] | None,
+        expected_min_total_count: int | None,
+    ) -> None:
         self.graphql_client.force_login(self.org_admin)
 
         john_user = baker.make(User, first_name="John", last_name="Smith", email="john.smith@example.com")
@@ -422,10 +435,8 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
                 ) {
                     totalCount
                     results {
-                        id
                         firstName
                         lastName
-                        email
                     }
                 }
             }
@@ -435,65 +446,16 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
             query,
             variables={
                 "organizationId": str(self.org.pk),
-                "filters": {"search": "jo smi"},
+                "filters": {"search": search_term},
             },
         )
 
-        results = response["data"]["organizationMembers"]["results"]
+        members = response["data"]["organizationMembers"]
+        if expected_match is None:
+            self.assertIsNotNone(expected_min_total_count)
+            self.assertGreaterEqual(members["totalCount"], expected_min_total_count)
+            return
+
+        results = members["results"]
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["firstName"], "John")
-        self.assertEqual(results[0]["lastName"], "Smith")
-
-    def test_organization_members_search_last_initial(self) -> None:
-        self.graphql_client.force_login(self.org_admin)
-
-        user = baker.make(User, first_name="John", last_name="Smith", email="johnsmith@example.com")
-        self.org.add_user(user)
-
-        query = """
-            query ($organizationId: String!, $filters: OrganizationMemberFilter) {
-                organizationMembers(
-                    organizationId: $organizationId,
-                    filters: $filters
-                ) {
-                    results { firstName lastName }
-                }
-            }
-        """
-
-        response = self.execute_graphql(
-            query,
-            variables={
-                "organizationId": str(self.org.pk),
-                "filters": {"search": "john s"},
-            },
-        )
-
-        results = response["data"]["organizationMembers"]["results"]
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0], {"firstName": "John", "lastName": "Smith"})
-
-    def test_organization_members_search_single_letter_does_not_filter(self) -> None:
-        self.graphql_client.force_login(self.org_admin)
-
-        query = """
-            query ($organizationId: String!, $filters: OrganizationMemberFilter) {
-                organizationMembers(
-                    organizationId: $organizationId,
-                    filters: $filters
-                ) {
-                    totalCount
-                }
-            }
-        """
-
-        response = self.execute_graphql(
-            query,
-            variables={
-                "organizationId": str(self.org.pk),
-                "filters": {"search": "s"},
-            },
-        )
-
-        total_count = response["data"]["organizationMembers"]["totalCount"]
-        self.assertGreaterEqual(total_count, 3)
+        self.assertEqual(results[0], {"firstName": expected_match[0], "lastName": expected_match[1]})

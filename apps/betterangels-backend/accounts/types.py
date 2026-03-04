@@ -78,7 +78,8 @@ class OrganizationMemberFilter:
             return queryset, Q()
 
         search_terms = value.split()
-        if not any(len(term) >= 2 for term in search_terms):
+        clean_value = value.replace(" ", "")
+        if len(clean_value) < 2:
             return queryset, Q()
 
         query = Q()
