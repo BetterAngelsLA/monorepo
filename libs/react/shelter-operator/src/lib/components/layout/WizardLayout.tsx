@@ -18,14 +18,12 @@ export function WizardLayout({ steps, stepPaths }: WizardLayoutProps) {
 
   return (
     <FormProvider {...methods}>
-      <div className="flex flex-col items-center w-full min-h-screen bg-white">
+      <div className="w-full  flex flex-col items-center min-h-screen bg-white">
         <div className="w-full flex justify-center py-2 px-8">
-          <div className="w-[600px] max-w-full">
-            <WizardProgressBar
-              steps={steps}
-              currentStep={currentStep === -1 ? 0 : currentStep}
-            />
-          </div>
+          <WizardProgressBar
+            steps={steps}
+            currentStep={currentStep === -1 ? 0 : currentStep}
+          />
         </div>
         <div className="w-full flex-1 px-8 py-6">
           <Outlet />

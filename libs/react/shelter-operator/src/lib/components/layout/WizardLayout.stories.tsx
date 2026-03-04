@@ -5,6 +5,16 @@ import { WizardLayout, type WizardLayoutProps } from './WizardLayout';
 const meta: Meta<WizardLayoutProps> = {
   component: WizardLayout,
   title: 'Wizard/WizardLayout',
+  parameters: {
+    layout: 'fullscreen',
+  },
+  decorators: [
+    (Story) => (
+      <div className="p-8 w-[800px]">
+        <Story />
+      </div>
+    ),
+  ],
 };
 export default meta;
 
