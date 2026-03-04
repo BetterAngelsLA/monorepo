@@ -53,10 +53,6 @@ export function BottomSheetLayoutProvider(props: TProps) {
 
   const setContainerHeight = useCallback(
     (height: number) => {
-      console.log(
-        `********* BottomSheetLayoutProvider - setContainerHeight [${height}]`
-      );
-
       requestAnimationFrame(() => {
         containerLayoutState.value = {
           height,
@@ -83,10 +79,6 @@ export function BottomSheetLayoutProvider(props: TProps) {
 
       const activeHeight = stack[stack.length - 1]?.height;
 
-      console.log(
-        `********* BottomSheetLayoutProvider - onLayout - idx [${index}] activeHeight [${activeHeight}]`
-      );
-
       if (activeHeight != null) {
         setContainerHeight(activeHeight);
       }
@@ -108,10 +100,6 @@ export function BottomSheetLayoutProvider(props: TProps) {
 
       const activeHeight = stack[stack.length - 1]?.height;
 
-      console.log(
-        `********* BottomSheetLayoutProvider - registerContainer - idx [${index}] activeHeight [${activeHeight}]`
-      );
-
       if (activeHeight != null) {
         setContainerHeight(activeHeight);
       }
@@ -130,10 +118,6 @@ export function BottomSheetLayoutProvider(props: TProps) {
       }
 
       const activeHeight = stack[stack.length - 1]?.height;
-
-      console.log(
-        `********* BottomSheetLayoutProvider - unregisterContainer - idx [${index}] activeHeight [${activeHeight}]`
-      );
 
       if (activeHeight != null) {
         setContainerHeight(activeHeight);

@@ -62,12 +62,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <BottomSheetModalProvider
-      // singleBackdrop={true}
-      // defaultOptions={{
-      //   containerComponent: BottomSheetFullScreenContainer,
-      // }}
-      >
+      <BottomSheetModalProvider>
         <NativePaperProvider>
           <GooglePlacesProvider apiKey={googlePlacesApiKey}>
             <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
