@@ -1,7 +1,9 @@
 import { useQuery } from '@apollo/client/react';
 import { useUser } from '@monorepo/react/shelter';
+import { BookCheck, Plus, UserCog } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Button } from '../../components/base-ui/buttons';
 import { Dropdown } from '../../components/base-ui/dropdown';
 import { ShelterRow } from '../../components/ShelterRow';
 import {
@@ -10,8 +12,8 @@ import {
 } from '../../graphql/__generated__/shelters.generated';
 import type { Shelter } from '../../types/shelter';
 
-const PAGE_SIZE = 8;
 const SEARCH_DEBOUNCE_MS = 300;
+const PAGE_SIZE = 8;
 
 export default function Dashboard() {
   const { user } = useUser();
@@ -115,11 +117,33 @@ export default function Dashboard() {
               }}
             />
           )}
-          <Link
-            to="/operator/dashboard/create"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm cursor-pointer hover:bg-blue-700"
-          >
-            Add Shelter
+
+          <Link to="/#">
+            <Button
+              variant="floating-light"
+              leftIcon={<BookCheck size={24} />}
+              rightIcon={false}
+            >
+              Reserve
+            </Button>
+          </Link>
+
+          <Link to="/operator/dashboard/create">
+            <Button
+              variant="floating-light"
+              leftIcon={<Plus size={24} />}
+              rightIcon={false}
+            >
+              Create Shelter
+            </Button>
+          </Link>
+
+          <Link to="/#">
+            <Button
+              variant="floating-light"
+              leftIcon={<UserCog size={24} />}
+              rightIcon={false}
+            />
           </Link>
         </div>
       </div>
