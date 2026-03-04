@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { UserOrganizationPermissions } from '../../apollo/graphql/__generated__/types';
 import ActiveOrgContext, {
   TOrganizationWithPermissions,
@@ -30,13 +30,34 @@ export function ActiveOrgProvider({
 }: ActiveOrgProviderProps) {
   const [activeOrgId, setActiveOrgIdState] = useState<string | undefined>(
     () => {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored && organizations.some((o) => o.id === stored)) {
-        return stored;
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored && organizations.some((o) => o.id === stored)) {
+          return stored;
+        }
+      } catch (err) {
+        console.error('Failed to read localStorage:', err);
       }
       return organizations[0]?.id;
     }
   );
+
+  // Re-validate when the organizations list changes (e.g. after async load)
+  useEffect(() => {
+    if (activeOrgId && organizations.some((o) => o.id === activeOrgId)) {
+      return; // current selection is still valid
+    }
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored && organizations.some((o) => o.id === stored)) {
+        setActiveOrgIdState(stored);
+        return;
+      }
+    } catch (err) {
+      console.error('Failed to read localStorage:', err);
+    }
+    setActiveOrgIdState(organizations[0]?.id);
+  }, [organizations]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeOrg = useMemo(
     () => organizations.find((o) => o.id === activeOrgId) ?? organizations[0],
@@ -47,7 +68,11 @@ export function ActiveOrgProvider({
     (orgId: string) => {
       if (organizations.some((o) => o.id === orgId)) {
         setActiveOrgIdState(orgId);
-        localStorage.setItem(STORAGE_KEY, orgId);
+        try {
+          localStorage.setItem(STORAGE_KEY, orgId);
+        } catch (err) {
+          console.error('Failed to write localStorage:', err);
+        }
       }
     },
     [organizations]

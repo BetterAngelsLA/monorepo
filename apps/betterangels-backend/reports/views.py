@@ -67,7 +67,7 @@ class ExportInteractionDataApi(APIView):
         start_date = serializer.validated_data["_resolved_start"]
         end_date = serializer.validated_data["_resolved_end"]
 
-        org = request.permitted_org  # type: ignore[attr-defined]  # set by HasOrgPortalAccess
+        org = request.permitted_org  # type: ignore[attr-defined]  # set by HasReportAccess
         notes = note_list_for_org(org=org, start_date=start_date, end_date=end_date).order_by("interacted_at")
 
         resource = NoteResource()

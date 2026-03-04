@@ -8,6 +8,7 @@ from accounts.models import User
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import ignore_warnings
 from django.utils import timezone
+from guardian.shortcuts import assign_perm
 from model_bakery import baker
 from notes.models import Note
 from organizations.models import Organization
@@ -27,8 +28,6 @@ def org() -> Organization:
 @pytest.fixture
 def user_with_access(org: Organization) -> User:
     """Create a user with VIEW_REPORTS permission on the org."""
-    from guardian.shortcuts import assign_perm
-
     user = baker.make(User)
     user.set_password("testpass")
     user.save()
@@ -72,7 +71,7 @@ class TestExportInteractionDataView:
         assert response.status_code == 403
 
     def test_user_without_permission_gets_403(self, api_client: APIClient, user_without_access: User) -> None:
-        """User in org but without ACCESS_ORG_PORTAL permission gets 403."""
+        """User in org but without VIEW_REPORTS permission gets 403."""
         api_client.force_authenticate(user=user_without_access)
         response = api_client.get("/reports/export/")
         assert response.status_code == 403
@@ -229,6 +228,36 @@ class TestExportInteractionDataView:
         lines = [line for line in content.strip().split("\n") if line.strip()]
         assert len(lines) == 3  # header + 2 rows from user's org only
 
+    def test_org_id_targets_authorized_org(self, api_client: APIClient, org: Organization) -> None:
+        """Multi-org user with org_id targeting an authorized org gets 200."""
+        other_org = baker.make(Organization, name="Other Org")
+        user = baker.make(User)
+        user.set_password("testpass")
+        user.save()
+        org.add_user(user)
+        other_org.add_user(user)
+        assign_perm("view_reports", user, org)
+        # No permission on other_org
+
+        api_client.force_authenticate(user=user)
+        response = api_client.get(f"/reports/export/?start_date=2025-01-01&end_date=2025-01-31&org_id={org.id}")
+        assert response.status_code == 200
+
+    def test_org_id_targeting_unauthorized_org_gets_403(self, api_client: APIClient, org: Organization) -> None:
+        """Multi-org user with org_id targeting an org they lack VIEW_REPORTS on gets 403."""
+        other_org = baker.make(Organization, name="Other Org")
+        user = baker.make(User)
+        user.set_password("testpass")
+        user.save()
+        org.add_user(user)
+        other_org.add_user(user)
+        assign_perm("view_reports", user, org)
+        # No permission on other_org
+
+        api_client.force_authenticate(user=user)
+        response = api_client.get(f"/reports/export/?start_date=2025-01-01&end_date=2025-01-31&org_id={other_org.id}")
+        assert response.status_code == 403
+
 
 REPORT_SUMMARY_QUERY = """
     query ReportSummary($startDate: Date, $endDate: Date) {
@@ -272,8 +301,6 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
 
     def _setup_org_user_with_access(self) -> tuple[Organization, User]:
         """Create org + user with VIEW_REPORTS permission."""
-        from guardian.shortcuts import assign_perm
-
         org = baker.make(Organization, name="Test Org")
         user = baker.make(User)
         user.set_password("testpass")

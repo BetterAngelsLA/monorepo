@@ -59,7 +59,7 @@ class Query:
         )
 
         if org is None:
-            raise PermissionError("You do not have access to any organization portal.")
+            raise PermissionError("You do not have permission to view reports.")
 
         if start_date is None or end_date is None:
             default_start, default_end = report_default_date_range()
