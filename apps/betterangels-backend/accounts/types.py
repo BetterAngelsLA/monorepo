@@ -74,13 +74,11 @@ class OrganizationMemberFilter:
         value: Optional[str],
         prefix: str,
     ) -> Tuple[QuerySet[User], Q]:
-        if value is None:
+
+        if value is None or len(value.strip()) < 2:
             return queryset, Q()
 
         search_terms = value.split()
-        clean_value = value.replace(" ", "")
-        if len(clean_value) < 2:
-            return queryset, Q()
 
         query = Q()
         for term in search_terms:
