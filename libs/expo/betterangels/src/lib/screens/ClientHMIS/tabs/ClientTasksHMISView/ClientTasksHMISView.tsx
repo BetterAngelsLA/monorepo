@@ -9,14 +9,41 @@ import {
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { HmisClientProfileType, TaskType } from '../../../../apollo';
+import {
+  HmisClientProfileType,
+  TaskStatusEnum,
+  TaskType,
+  toTaskFilter,
+} from '../../../../apollo';
 import { useSnackbar } from '../../../../hooks';
 import { useModalScreen } from '../../../../providers';
-import { pagePaddingHorizontal } from '../../../../static';
-import { TaskCard, TaskForm, TaskList } from '../../../../ui-components';
+import {
+  enumDisplayTaskStatus,
+  pagePaddingHorizontal,
+} from '../../../../static';
+import {
+  ModelFilters,
+  TaskCard,
+  TaskForm,
+  TaskList,
+  TModelFilters,
+  toModelFilterValues,
+} from '../../../../ui-components';
 import { TaskFormData } from '../../../../ui-components/NoteTasks';
 import { CreateTaskDocument } from '../../../../ui-components/TaskForm/__generated__/createTask.generated';
 import { TasksDocument } from '../../../../ui-components/TaskList/__generated__/Tasks.generated';
+
+function getInitialTaskFilters(): TModelFilters {
+  return {
+    taskStatus: [
+      { id: TaskStatusEnum.ToDo, label: enumDisplayTaskStatus.TO_DO },
+      {
+        id: TaskStatusEnum.InProgress,
+        label: enumDisplayTaskStatus.IN_PROGRESS,
+      },
+    ],
+  };
+}
 
 type TProps = {
   client: HmisClientProfileType | undefined;
@@ -29,6 +56,23 @@ export function ClientTasksHMISView(props: TProps) {
   const [createTask] = useMutation(CreateTaskDocument);
   const { showSnackbar } = useSnackbar();
   const { showModalScreen } = useModalScreen();
+
+  const [filtersKey, setFiltersKey] = useState(0);
+  const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
+    getInitialTaskFilters()
+  );
+
+  function onFilterChange(selectedFilters: TModelFilters) {
+    setCurrentFilters(selectedFilters);
+  }
+
+  function onFilterReset() {
+    const initial = getInitialTaskFilters();
+
+    setSearch('');
+    setCurrentFilters(initial);
+    setFiltersKey((k) => k + 1);
+  }
 
   const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
     if (!client?.id) return;
@@ -100,13 +144,19 @@ export function ClientTasksHMISView(props: TProps) {
 
   function openTaskForm() {
     showModalScreen({
-      presentation: 'modal',
+      presentation: 'fullScreenModal',
       renderContent: ({ close }) => (
         <TaskForm onCancel={close} onSubmit={(task) => onSubmit(task, close)} />
       ),
       title: 'Follow-Up Task',
     });
   }
+
+  const serverFilters = toTaskFilter({
+    search,
+    ...toModelFilterValues(currentFilters),
+    hmisClientProfileLookup: { exact: client.id },
+  });
 
   return (
     <View style={styles.container}>
@@ -116,10 +166,23 @@ export function ClientTasksHMISView(props: TProps) {
         onChange={(text) => setSearch(text)}
         onClear={() => setSearch('')}
         style={{ marginBottom: Spacings.xs }}
+        actionSlotRight={{
+          label: 'Reset',
+          accessibilityHint: 'reset search and filters',
+          onPress: onFilterReset,
+        }}
+      />
+
+      <ModelFilters
+        style={styles.filters}
+        key={filtersKey}
+        selected={currentFilters}
+        onChange={onFilterChange}
+        filters={['teams', 'taskStatus', 'authors', 'organizations']}
       />
 
       <TaskList
-        filters={{ search, hmisClientProfileLookup: { exact: client.id } }}
+        filters={serverFilters}
         renderItem={renderTaskItem}
         renderHeader={renderListHeaderText}
       />
@@ -140,5 +203,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacings.xs,
+  },
+  filters: {
+    marginBottom: Spacings.sm,
   },
 });

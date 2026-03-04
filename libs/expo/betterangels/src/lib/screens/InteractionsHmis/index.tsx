@@ -67,7 +67,7 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
 
   return (
     <View style={styles.container}>
-      <Header title="Interactions" Logo={Logo} />
+      <Header title="Notes" Logo={Logo} />
       <HorizontalContainer
         style={{
           paddingTop: Spacings.sm,

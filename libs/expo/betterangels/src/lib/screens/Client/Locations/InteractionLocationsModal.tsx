@@ -1,6 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  BottomSheetModal,
+  BottomSheetPanel,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -32,7 +32,7 @@ export function InteractionLocationsModal() {
     `Total ${selectedInteractions.length} interactions`;
 
   return (
-    <BottomSheetModal
+    <BottomSheetPanel
       index={0}
       enableDynamicSizing
       enablePanDownToClose={false}
@@ -71,7 +71,7 @@ export function InteractionLocationsModal() {
           );
         })}
       </View>
-    </BottomSheetModal>
+    </BottomSheetPanel>
   );
 }
 

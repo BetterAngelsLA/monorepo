@@ -140,7 +140,7 @@ export function TasksTab(props: TProps) {
 
   function openTaskForm() {
     showModalScreen({
-      presentation: 'modal',
+      presentation: 'fullScreenModal',
       renderContent: ({ close }) => (
         <TaskForm onCancel={close} onSubmit={(task) => onSubmit(task, close)} />
       ),

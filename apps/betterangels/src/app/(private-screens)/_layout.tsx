@@ -149,8 +149,28 @@ export default function PrivateLayout() {
       <Stack.Screen
         name="notes-hmis/index"
         options={getDefaultStackNavOptions({
-          title: 'Interactions',
+          title: 'Notes',
         })}
+      />
+      <Stack.Screen
+        name="user-profile/edit"
+        options={{
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          title: 'Edit Profile',
+          headerTitleAlign: 'center',
+          headerLeft: () => (
+            <TextButton
+              regular
+              color={Colors.WHITE}
+              fontSize="md"
+              accessibilityHint="goes to previous screen"
+              title="Back"
+              onPress={router.back}
+            />
+          ),
+        }}
       />
       <Stack.Screen
         name="notes-hmis/create/index"
@@ -161,7 +181,7 @@ export default function PrivateLayout() {
       <Stack.Screen
         name="notes-hmis/[id]/index"
         options={getDefaultStackNavOptions({
-          title: 'Interaction',
+          title: 'Note',
         })}
       />
       <Stack.Screen
@@ -230,6 +250,12 @@ export default function PrivateLayout() {
         name="settings/team/index"
         options={getDefaultStackNavOptions({
           title: 'Select Default Team',
+        })}
+      />
+      <Stack.Screen
+        name="settings/location/index"
+        options={getDefaultStackNavOptions({
+          title: 'Select Default Location',
         })}
       />
       <Stack.Screen

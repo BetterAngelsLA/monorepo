@@ -1,0 +1,1 @@
+export { hasWysiwygContent } from './hasWysiwygContent';

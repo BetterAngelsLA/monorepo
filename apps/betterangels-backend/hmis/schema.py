@@ -1,4 +1,4 @@
-from typing import Any, Iterable, cast
+from typing import Any, Dict, Iterable, cast
 
 import strawberry
 import strawberry_django
@@ -10,6 +10,7 @@ from common.errors import UnauthenticatedGQLError
 from common.graphql.decorators import (
     apply_schema_directives_and_permissions_to_all_fields,
 )
+from common.graphql.types import DeletedObjectType
 from common.models import Location, PhoneNumber
 from common.permissions.utils import IsAuthenticated
 from django.contrib.auth import get_user_model
@@ -314,6 +315,27 @@ class Mutation:
         return cast(HmisNoteType, hmis_note)
 
     @strawberry_django.mutation
+    def delete_hmis_note(self, info: Info, id: ID) -> DeletedObjectType:
+        try:
+            hmis_note = HmisNote.objects.get(pk=id)
+        except HmisNote.DoesNotExist:
+            raise ObjectDoesNotExist(f"Note matching ID {id} could not be found.")
+
+        if not hmis_note.hmis_client_profile.hmis_id:
+            raise ValidationError("Missing Client hmis_id")
+
+        hmis_api_bridge = HmisApiBridge(info=info)
+        hmis_api_bridge.delete_note(
+            client_hmis_id=hmis_note.hmis_client_profile.hmis_id,
+            note_hmis_id=hmis_note.hmis_id,
+        )
+
+        note_id = hmis_note.id
+        hmis_note.delete()
+
+        return DeletedObjectType(id=note_id)
+
+    @strawberry_django.mutation
     def create_hmis_client_program(self, info: Info, client_id: int, program_hmis_id: int) -> ProgramEnrollmentType:
         try:
             hmis_client_profile = HmisClientProfile.objects.get(pk=client_id)
@@ -341,8 +363,8 @@ class Mutation:
         with transaction.atomic():
             hmis_note = HmisNote.objects.get(id=data.id)
 
-            location_data: dict = strawberry.asdict(data)
-            location = Location.get_or_create_location(location_data["location"])
+            location_data: Dict[str, Any] = strawberry.asdict(data)["location"]  # type: ignore[assignment]
+            location = Location.get_or_create_location(location_data)
             hmis_note = resolvers.update(
                 info,
                 hmis_note,

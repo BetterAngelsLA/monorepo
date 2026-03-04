@@ -1,7 +1,12 @@
 import { CombinedGraphQLErrors } from '@apollo/client';
 import { useMutation, useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
+import {
+  Button,
+  DeleteModal,
+  Form,
+  LoadingView,
+} from '@monorepo/expo/shared/ui-components';
 import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
@@ -11,6 +16,11 @@ import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/ex
 import { applyManualFormErrors } from '../../../errors';
 import { normalizeService } from '../../../helpers';
 import { useSnackbar } from '../../../hooks';
+import { InteractionListHmisDocument } from '../../../ui-components/InteractionListHmis/__generated__/interactionListHmis.generated';
+import {
+  DEFAULT_PAGINATION_LIMIT,
+  DEFAULT_QUERY_ORDER,
+} from '../../../ui-components/InteractionListHmis/constants';
 import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import {
   CreateHmisServiceRequestDocument,
@@ -29,7 +39,10 @@ import {
 import splitBucket from '../utils/splitBucket';
 import { useApplyTasks } from '../utils/useApplyTasks';
 import { HmisNoteDocument } from './__generated__/hmisGetClientNote.generated';
-import { UpdateHmisNoteDocument } from './__generated__/hmisUpdateClientNote.generated';
+import {
+  DeleteHmisNoteDocument,
+  UpdateHmisNoteDocument,
+} from './__generated__/hmisUpdateClientNote.generated';
 
 type TProps = {
   id: string;
@@ -40,7 +53,6 @@ type TProps = {
 
 export function HmisProgramNoteEdit(props: TProps) {
   const { id, clientId } = props;
-
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
@@ -48,7 +60,39 @@ export function HmisProgramNoteEdit(props: TProps) {
   const [updateHmisNoteLocation] = useMutation(UpdateHmisNoteLocationDocument);
   const [deleteService] = useMutation(RemoveHmisNoteServiceRequestDocument);
   const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);
+  const [deleteHmisNote] = useMutation(DeleteHmisNoteDocument, {
+    refetchQueries: [
+      {
+        query: InteractionListHmisDocument,
+        variables: {
+          filters: { hmisClientProfile: clientId },
+          pagination: { offset: 0, limit: DEFAULT_PAGINATION_LIMIT },
+          ordering: DEFAULT_QUERY_ORDER,
+        },
+      },
+    ],
+  });
   const { applyTasks } = useApplyTasks();
+
+  async function deleteHmisNoteFunction() {
+    try {
+      await deleteHmisNote({
+        variables: {
+          id,
+        },
+      });
+      router.dismissTo(
+        `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
+      );
+    } catch (err) {
+      console.error(err);
+
+      showSnackbar({
+        message: 'Failed to delete note.',
+        type: 'error',
+      });
+    }
+  }
 
   async function applyBucket(
     id: string,
@@ -289,6 +333,20 @@ export function HmisProgramNoteEdit(props: TProps) {
           editing={true}
           clientId={clientId}
           disabled={formDisabled}
+        />
+        <DeleteModal
+          body="All data associated with this note will be deleted"
+          title="Delete note?"
+          onDelete={deleteHmisNoteFunction}
+          button={
+            <Button
+              accessibilityHint="deletes note"
+              title="Delete Note"
+              variant="negative"
+              size="full"
+              mt="xs"
+            />
+          }
         />
       </Form.Page>
     </FormProvider>

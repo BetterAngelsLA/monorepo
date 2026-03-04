@@ -1,5 +1,5 @@
 import { InputHTMLAttributes, useId } from 'react';
-import { mergeCss } from '../../utils/mergeCss';
+import { mergeCss } from '../../utils';
 import './Input.css';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -8,7 +8,7 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
-export default function Input(props: InputProps) {
+export function Input(props: InputProps) {
   const {
     label,
     id: propId,

@@ -42,7 +42,7 @@ class NoteReverter:
     @staticmethod
     def _revert_changes_to_related_real_models(context_ids: list[UUID]) -> None:
         """
-        Reverts changes made to Note-related REAL model instances (have pgh_obj_id, i.e., Locations, Moods)
+        Reverts changes made to Note-related REAL model instances (have pgh_obj_id, e.g., Locations, Services)
         """
         for event in Events.objects.filter(pgh_context_id__in=context_ids, pgh_obj_id__isnull=False):
             action = event.pgh_label.split(".")[1]

@@ -1,7 +1,9 @@
 import 'expo-dev-client';
 
+import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import {
   AppUpdatePrompt,
+  BaFeatureControlProvider,
   BlockingScreenProvider,
   createBaTypePolicies,
   ErrorCrashView,
@@ -16,16 +18,17 @@ import {
   ApiConfigProvider,
   ApolloClientProvider,
 } from '@monorepo/expo/shared/clients';
-import { FeatureControlProvider } from '@monorepo/react/shared';
+import {
+  BottomSheetModalProvider,
+  GooglePlacesProvider,
+} from '@monorepo/expo/shared/ui-components';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StatusBar } from 'expo-status-bar';
-import { KeyboardProvider } from 'react-native-keyboard-controller';
-import { apiUrl, demoApiUrl } from '../../config';
-
-import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import { type ErrorBoundaryProps } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { apiUrl, demoApiUrl, googlePlacesApiKey } from '../../config';
 import AppRoutesStack from './AppRoutesStack';
 
 const isDevEnv = process.env['NODE_ENV'] === 'development';
@@ -36,7 +39,7 @@ initApolloRuntimeConfig({
 
 const baApolloTypePolicies = createBaTypePolicies(isDevEnv);
 
-const reactqQueryClient = new QueryClient({
+const reactQueryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false, // need custom implementation for React Native
@@ -59,33 +62,39 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <NativePaperProvider>
-        <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-          <QueryClientProvider client={reactqQueryClient}>
-            <ApolloClientProvider typePolicies={baApolloTypePolicies}>
-              <FeatureControlProvider>
-                <KeyboardProvider>
-                  <KeyboardToolbarProvider>
-                    <SnackbarProvider>
-                      <UserProvider>
-                        <BlockingScreenProvider>
-                          <ModalScreenProvider>
-                            <AppUpdatePrompt />
-                            <StatusBar
-                              style={Platform.OS === 'ios' ? 'light' : 'auto'}
-                            />
-                            <AppRoutesStack />
-                          </ModalScreenProvider>
-                        </BlockingScreenProvider>
-                      </UserProvider>
-                    </SnackbarProvider>
-                  </KeyboardToolbarProvider>
-                </KeyboardProvider>
-              </FeatureControlProvider>
-            </ApolloClientProvider>
-          </QueryClientProvider>
-        </ApiConfigProvider>
-      </NativePaperProvider>
+      <BottomSheetModalProvider>
+        <NativePaperProvider>
+          <GooglePlacesProvider apiKey={googlePlacesApiKey}>
+            <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
+              <QueryClientProvider client={reactQueryClient}>
+                <ApolloClientProvider typePolicies={baApolloTypePolicies}>
+                  <BaFeatureControlProvider>
+                    <KeyboardProvider>
+                      <KeyboardToolbarProvider>
+                        <SnackbarProvider>
+                          <UserProvider>
+                            <BlockingScreenProvider>
+                              <ModalScreenProvider>
+                                <AppUpdatePrompt />
+                                <StatusBar
+                                  style={
+                                    Platform.OS === 'ios' ? 'light' : 'auto'
+                                  }
+                                />
+                                <AppRoutesStack />
+                              </ModalScreenProvider>
+                            </BlockingScreenProvider>
+                          </UserProvider>
+                        </SnackbarProvider>
+                      </KeyboardToolbarProvider>
+                    </KeyboardProvider>
+                  </BaFeatureControlProvider>
+                </ApolloClientProvider>
+              </QueryClientProvider>
+            </ApiConfigProvider>
+          </GooglePlacesProvider>
+        </NativePaperProvider>
+      </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );
 }

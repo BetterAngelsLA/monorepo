@@ -8,6 +8,7 @@ from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.graphql.utils import strip_unset
 from common.permissions.utils import IsAuthenticated
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
@@ -51,7 +52,7 @@ class Mutation:
         permission_group = get_user_permission_group(current_user)
 
         # Filter out UNSET values to avoid passing them to Django ORM
-        task_data = {k: v for k, v in asdict(data).items() if v is not strawberry.UNSET}
+        task_data = strip_unset(asdict(data))
 
         # Resolve FK references
         note = None
@@ -88,7 +89,7 @@ class Mutation:
     )
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         qs: QuerySet[Task] = info.context.qs
-        clean = {k: v for k, v in asdict(data).items() if v is not strawberry.UNSET}
+        clean = strip_unset(asdict(data))
 
         task = qs.get(pk=data.id)
         task = task_update(task=task, data=clean)

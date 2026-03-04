@@ -7,7 +7,7 @@ from accounts.utils import get_user_permission_group
 from clients.models import ClientProfile, ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.graphql.utils import strip_unset
+from common.graphql.utils import get_object_or_permission_error, strip_unset
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
 from django.db.models import QuerySet
@@ -144,7 +144,7 @@ class Mutation:
         if "tasks" in clean and clean["tasks"] is not None:
             clean["tasks"] = [strip_unset(asdict(t)) for t in data.tasks]  # type: ignore[union-attr]
 
-        note = qs.get(pk=data.id)
+        note = get_object_or_permission_error(qs, data.id)
         note = note_update(
             note=note,
             data=clean,
@@ -161,7 +161,7 @@ class Mutation:
     )
     def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
         qs: QuerySet[Note] = info.context.qs
-        note = qs.get(id=data.id)
+        note = get_object_or_permission_error(qs, data.id)
 
         location_data: dict = strip_unset(strawberry.asdict(data)["location"])  # type: ignore[assignment]
         note = note_update_location(note=note, location_data=location_data)
@@ -174,17 +174,12 @@ class Mutation:
     )
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
         qs: QuerySet[Note] = info.context.qs
-        note = qs.get(id=data.id)
+        note = get_object_or_permission_error(qs, data.id)
 
-        try:
-            NoteReverter(note_id=data.id).revert_to_revert_before_timestamp(
-                revert_before_timestamp=data.revert_before_timestamp.isoformat()
-            )
-            note.refresh_from_db()
-
-        except Exception as e:
-            # TODO: add error handling/logging, for now it either fully succeeds or fails silently
-            print(e)
+        NoteReverter(note_id=data.id).revert_to_revert_before_timestamp(
+            revert_before_timestamp=data.revert_before_timestamp.isoformat()
+        )
+        note.refresh_from_db()
 
         return cast(NoteType, note)
 
@@ -205,7 +200,7 @@ class Mutation:
 
         client_profile = ClientProfile.objects.get(pk=data.client_profile) if data.client_profile else None
 
-        srs = service_request_create(
+        service_requests = service_request_create(
             user=user,
             permission_group=permission_group,
             data=[asdict(data)],
@@ -213,7 +208,7 @@ class Mutation:
             client_profile=client_profile,
         )
 
-        return cast(ServiceRequestType, srs[0])
+        return cast(ServiceRequestType, service_requests[0])
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
@@ -224,9 +219,11 @@ class Mutation:
         permission_group = get_user_permission_group(user)
 
         qs: QuerySet[Note] = info.context.qs
-        note = qs.get(id=str(data.note_id))
+        note = get_object_or_permission_error(
+            qs, str(data.note_id), error_message="You do not have permission to modify this note."
+        )
 
-        srs = note_service_request_create(
+        service_requests = note_service_request_create(
             user=user,
             permission_group=permission_group,
             note=note,
@@ -239,7 +236,7 @@ class Mutation:
             sr_type=data.service_request_type,
         )
 
-        return cast(ServiceRequestType, srs[0])
+        return cast(ServiceRequestType, service_requests[0])
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
@@ -247,9 +244,9 @@ class Mutation:
     )
     def update_service_request(self, info: Info, data: UpdateServiceRequestInput) -> ServiceRequestType:
         qs: QuerySet[ServiceRequest] = info.context.qs
-        clean = {k: v for k, v in asdict(data).items() if v is not strawberry.UNSET}
+        clean = strip_unset(asdict(data))
 
-        sr = qs.get(id=data.id)
+        sr = get_object_or_permission_error(qs, data.id)
         sr = service_request_update(service_request=sr, data=clean)
 
         return cast(ServiceRequestType, sr)
@@ -260,7 +257,7 @@ class Mutation:
     )
     def remove_note_service_request(self, info: Info, data: RemoveNoteServiceRequestInput) -> NoteType:
         qs: QuerySet[Note] = info.context.qs
-        note = qs.get(id=data.note_id)
+        note = get_object_or_permission_error(qs, data.note_id)
 
         service_request = ServiceRequest.objects.get(id=data.service_request_id)
         note_service_request_remove(
@@ -280,7 +277,9 @@ class Mutation:
         NOTE: this function will need to change once ServiceRequests are able to be associated with zero or more than one Note
         """
         qs: QuerySet[ServiceRequest] = info.context.qs
-        sr = qs.get(id=data.id)
+        sr = get_object_or_permission_error(
+            qs, data.id, error_message="You do not have permission to delete this service request."
+        )
 
         deleted_id = service_request_delete(service_request=sr)
 

@@ -30,3 +30,13 @@ query ViewShelters(
     }
   }
 }
+
+mutation CreateShelter($data: CreateShelterInput!) {
+  createShelter(data: $data) {
+    ... on ShelterType {
+      id
+      name
+      status
+    }
+  }
+}

@@ -39,3 +39,18 @@ mutation UpdateHmisNote($data: UpdateHmisNoteInput!) {
     }
   }
 }
+
+mutation DeleteHmisNote($id: ID!) {
+  deleteHmisNote(id: $id) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on DeletedObjectType {
+      id
+    }
+  }
+}

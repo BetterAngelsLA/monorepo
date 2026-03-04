@@ -1,7 +1,11 @@
-import { usePlacesClient } from '@monorepo/expo/shared/ui-components';
-import * as ExpoLocation from 'expo-location';
-import { useEffect, useState } from 'react';
+import {
+  getUserLocation,
+  useGooglePlaces,
+} from '@monorepo/expo/shared/ui-components';
+import { LocationObject } from 'expo-location';
+import { useEffect, useRef, useState } from 'react';
 import { LocationDraft } from '../screens/NotesHmis/HmisProgramNoteForm';
+import { useUserDefaultNoteLocation } from '../state/userPreferencesState/hooks/useUserDefaultNoteLocation';
 
 const INITIAL_LOCATION = {
   longitude: -118.258815,
@@ -11,43 +15,82 @@ const INITIAL_LOCATION = {
 export function useInitialLocation(
   editing: boolean | undefined,
   location: LocationDraft | undefined,
-  setValue: (name: 'location', value: LocationDraft) => void
+  setValue?: (name: 'location', value: LocationDraft) => void
 ) {
-  const places = usePlacesClient();
-  const [userLocation, setUserLocation] =
-    useState<ExpoLocation.LocationObject | null>(null);
+  const places = useGooglePlaces();
+  const [userLocation, setUserLocation] = useState<LocationObject | null>(null);
+  const [defaultLocation] = useUserDefaultNoteLocation();
+
+  const editingRef = useRef(editing);
+  editingRef.current = editing;
+  const locationRef = useRef(location);
+  locationRef.current = location;
+  const setValueRef = useRef(setValue);
+  setValueRef.current = setValue;
 
   useEffect(() => {
+    if (
+      defaultLocation &&
+      defaultLocation.latitude &&
+      defaultLocation.longitude
+    ) {
+      setValueRef.current?.('location', {
+        ...locationRef.current,
+        longitude: defaultLocation.longitude,
+        latitude: defaultLocation.latitude,
+        formattedAddress: defaultLocation.formattedAddress,
+        shortAddressName: defaultLocation.shortAddressName,
+        components: defaultLocation.components,
+      } as LocationDraft);
+    }
+
+    const geocodeAndSet = async (loc: LocationObject) => {
+      const { latitude, longitude } = loc.coords;
+      const geocodeResult = await places.reverseGeocode(latitude, longitude);
+
+      setValueRef.current?.('location', {
+        ...locationRef.current,
+        longitude,
+        latitude,
+        formattedAddress: geocodeResult.formattedAddress,
+        shortAddressName: geocodeResult.shortAddress,
+        components: geocodeResult.addressComponents,
+      } as LocationDraft);
+    };
+
     const autoSetInitialLocation = async () => {
       try {
-        let { latitude, longitude } = INITIAL_LOCATION;
+        const result = await getUserLocation({
+          onRefine: (refined) => {
+            setUserLocation(refined);
+            if (!editingRef.current) {
+              geocodeAndSet(refined);
+            }
+          },
+        });
 
-        const { status } =
-          await ExpoLocation.requestForegroundPermissionsAsync();
-
-        if (status === 'granted') {
-          const userCurrentLocation =
-            await ExpoLocation.getCurrentPositionAsync({
-              accuracy: ExpoLocation.Accuracy.Balanced,
-            });
-          latitude = userCurrentLocation.coords.latitude;
-          longitude = userCurrentLocation.coords.longitude;
-
-          setUserLocation(userCurrentLocation);
+        if (result?.location) {
+          setUserLocation(result.location);
         }
 
-        if (editing) return;
+        if (editingRef.current || defaultLocation) return;
 
-        const geocodeResult = await places.reverseGeocode(latitude, longitude);
-
-        setValue('location', {
-          ...location,
-          longitude,
-          latitude,
-          formattedAddress: geocodeResult.formattedAddress,
-          shortAddressName: geocodeResult.shortAddress,
-          components: geocodeResult.addressComponents,
-        } as LocationDraft);
+        if (result?.location) {
+          await geocodeAndSet(result.location);
+        } else {
+          const geocodeResult = await places.reverseGeocode(
+            INITIAL_LOCATION.latitude,
+            INITIAL_LOCATION.longitude
+          );
+          setValueRef.current?.('location', {
+            ...locationRef.current,
+            longitude: INITIAL_LOCATION.longitude,
+            latitude: INITIAL_LOCATION.latitude,
+            formattedAddress: geocodeResult.formattedAddress,
+            shortAddressName: geocodeResult.shortAddress,
+            components: geocodeResult.addressComponents,
+          } as LocationDraft);
+        }
       } catch (err) {
         console.error('Error auto-setting initial location', err);
       }

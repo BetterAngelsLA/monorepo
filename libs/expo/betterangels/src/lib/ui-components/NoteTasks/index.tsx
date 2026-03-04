@@ -191,7 +191,7 @@ export default function NoteTasks(props: INoteTasksProps) {
       : undefined;
 
     showModalScreen({
-      presentation: 'modal',
+      presentation: 'fullScreenModal',
       title: 'Follow-Up Task',
       renderContent: ({ close }) => (
         <NoteTasksModal

@@ -138,15 +138,13 @@ class NoteFilter:
         query = Q()
 
         for term in search_terms:
-            q_search = Q(
+            query &= (
                 Q(client_profile__first_name__icontains=term)
                 | Q(client_profile__last_name__icontains=term)
                 | Q(public_details__icontains=term)
             )
 
-            query &= q_search
-
-        return Q(query)
+        return query
 
 
 @strawberry_django.type(
@@ -304,11 +302,9 @@ class InteractionAuthorFilter:
         query = Q()
 
         for term in search_terms:
-            q_search = Q(Q(first_name__icontains=term) | Q(last_name__icontains=term) | Q(middle_name__icontains=term))
+            query &= Q(first_name__icontains=term) | Q(last_name__icontains=term) | Q(middle_name__icontains=term)
 
-            query &= q_search
-
-        return Q(query)
+        return query
 
 
 @strawberry_django.order_type(User, one_of=False)

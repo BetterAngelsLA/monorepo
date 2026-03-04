@@ -1,8 +1,3 @@
-export type TFetchClient = (
-  path: string,
-  options?: RequestInit
-) => Promise<Response>;
-
 export type TPlaceLatLng = {
   latitude: number;
   longitude: number;

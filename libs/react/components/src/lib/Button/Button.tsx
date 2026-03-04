@@ -14,7 +14,7 @@ interface IButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
    * - `primary`: primary-20 background, white text.
    * - `secondary`: neutral-99 background, primary-20 text.
    */
-  variant?: 'primary' | 'secondary' | 'accent';
+  variant?: 'primary' | 'secondary' | 'accent' | 'text';
 }
 
 export function Button(props: IButtonProps) {
@@ -32,13 +32,14 @@ export function Button(props: IButtonProps) {
     primary: 'bg-primary-20 text-white',
     secondary: 'bg-neutral-99 text-primary-20 active:bg-neutral-98',
     accent: 'bg-primary-60 text-white',
+    text: 'text-primary-60 tracking-[.035em] h-auto',
   };
 
   const buttonCss = [
-    className,
     'font-semibold text-sm focus:outline-none rounded-lg',
     sizeClasses[size],
-    variantClasses[variant],
+    variantClasses[variant], // should come after sizeClasses
+    className,
   ];
 
   return <button className={mergeCss(buttonCss)} {...rest} />;
