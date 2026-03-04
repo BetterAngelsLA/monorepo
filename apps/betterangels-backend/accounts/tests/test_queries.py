@@ -350,6 +350,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
                     firstName
                     lastName
                     lastLogin
+                    dateJoined
                     memberRole
                 }
             }
@@ -369,10 +370,12 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
             "firstName": "ad",
             "lastName": "min",
             "lastLogin": "2025-07-22T10:00:00+00:00",
+            "dateJoined": ANY,
             "memberRole": OrgRoleEnum.ADMIN.name,
         }
 
         self.assertEqual(response["data"]["organizationMember"], expected_member)
+        self.assertIsNotNone(response["data"]["organizationMember"]["dateJoined"])
 
     def test_organization_members_query(self) -> None:
         self.graphql_client.force_login(self.org_admin)
@@ -383,6 +386,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
                     totalCount
                     results {
                         id
+                        dateJoined
                         memberRole
                     }
                 }
@@ -404,3 +408,6 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
         )
         self.assertEqual(response["data"]["organizationMembers"]["totalCount"], 3)
         self.assertCountEqual(expected_members, actual_members)
+        self.assertTrue(
+            all(member["dateJoined"] is not None for member in response["data"]["organizationMembers"]["results"])
+        )

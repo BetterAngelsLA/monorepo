@@ -135,10 +135,10 @@ class AddressType:
     zip_code: auto
 
 
-@strawberry_django.input(Address)
+@strawberry.input
 class AddressInput:
-    address_components: auto
-    formatted_address: auto
+    address_components: Optional[strawberry.scalars.JSON] = None
+    formatted_address: Optional[str] = None
 
 
 @strawberry_django.type(Location)
@@ -165,13 +165,6 @@ class AttachmentInterface:
     original_filename: auto
     created_at: auto
     updated_at: auto
-
-    # @strawberry.field
-    # def thumbnail(
-    #     self, params: ThumbNailTransformEnum
-    # ) -> Optional[ThumbnailType]:
-    #     # Example for future dynamic thumbnail transformation
-    #     pass
 
 
 @strawberry.type

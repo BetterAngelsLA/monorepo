@@ -891,6 +891,30 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
         self.assertIsNone(hero_images[s2.pk])
         self.assertEqual(hero_images[s3.pk], fallback.file.url)
 
+    def test_hero_image_with_stale_content_type(self) -> None:
+        """Regression: when hero_image_content_type points to a ContentType
+        whose model_class() returns None (e.g. the model was removed), the
+        resolver must not crash with "'NoneType' object has no attribute
+        '_base_manager'"."""
+        from django.contrib.contenttypes.models import ContentType
+
+        shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
+        fallback = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
+
+        # Create a ContentType that doesn't map to any installed model
+        stale_ct = ContentType.objects.create(app_label="deleted_app", model="deletedmodel")
+        Shelter.objects.filter(pk=shelter.pk).update(
+            hero_image_content_type=stale_ct,
+            hero_image_object_id=1,
+        )
+
+        response = self.execute_graphql(self.HERO_IMAGE_QUERY)
+        self.assertNotIn("errors", response)
+        results = response["data"]["shelters"]["results"]
+        self.assertEqual(len(results), 1)
+        # Should fall back to the exterior photo
+        self.assertEqual(results[0]["heroImage"], fallback.file.url)
+
 
 class BedMutationTestCase(GraphQLTestCaseMixin, TestCase):
     def setUp(self) -> None:

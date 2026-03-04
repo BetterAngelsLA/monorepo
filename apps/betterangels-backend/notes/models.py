@@ -147,7 +147,7 @@ class Note(BaseModel):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     interacted_at = models.DateTimeField(default=timezone.now, db_index=True)
     is_submitted = models.BooleanField(default=False)
-    location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
+    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True, blank=True, related_name="notes")
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     private_details = models.TextField(blank=True)
     provided_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="provided_notes")
