@@ -30,7 +30,6 @@
  */
 
 import {
-  BottomSheetBackdropProps,
   BottomSheetScrollView,
   BottomSheetView,
   BottomSheetModal as GbsBottomSheetModal,
@@ -112,6 +111,14 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
      */
     const resolvedHandleComponent = showHandle === true ? undefined : null;
 
+    let backdropComponent: GbsBottomSheetModalProps['backdropComponent'];
+
+    if (!disableBackdrop) {
+      backdropComponent = (backdropProps) => (
+        <BottomSheetBackdrop {...backdropProps} opacity={backdropOpacity} />
+      );
+    }
+
     return (
       <GbsBottomSheetModal
         ref={ref}
@@ -121,13 +128,7 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
         enableDynamicSizing={enableDynamicSizing}
         handleComponent={resolvedHandleComponent}
         containerComponent={containerComponent}
-        backdropComponent={(backdropProps: BottomSheetBackdropProps) => (
-          <BottomSheetBackdrop
-            {...backdropProps}
-            disableBackdrop={disableBackdrop}
-            opacity={backdropOpacity}
-          />
-        )}
+        backdropComponent={backdropComponent}
         style={[styles.container, containerStyle]}
         backgroundStyle={[styles.sheet, sheetStyle]}
       >

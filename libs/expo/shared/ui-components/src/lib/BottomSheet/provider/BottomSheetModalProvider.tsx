@@ -149,6 +149,7 @@ import {
   BottomSheetModalProvider as GbsBottomSheetModalProvider,
 } from '@gorhom/bottom-sheet';
 import { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import { BackdropOverlay } from '../core/BackdropOverlay';
 import { BottomSheetBase } from '../core/BottomSheetBase';
 import {
   BottomSheetContextValue,
@@ -191,7 +192,7 @@ type BottomSheetProviderProps = BottomSheetProviderConfig & {
 };
 
 export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
-  const { children, defaultOptions } = props;
+  const { children, defaultOptions, singleBackdrop = false } = props;
 
   const providerDefaults = useMemo<BottomSheetOptions>(
     () => defaultOptions ?? EMPTY_SHEET_OPTIONS,
@@ -241,6 +242,9 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
         const mergedOptions: BottomSheetOptions = {
           ...providerDefaults,
           ...options,
+          ...(singleBackdrop && options?.disableBackdrop === undefined
+            ? { disableBackdrop: true }
+            : null),
         };
 
         const resolvedOptions = resolveBottomSheetOptions(mergedOptions);
@@ -276,17 +280,17 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
 
           // Replace: dismiss all existing sheets (default)
           previousSheets.forEach((sheet) => {
-            const inst = sheetRefs.current.get(sheet.id);
+            const existing = sheetRefs.current.get(sheet.id);
 
-            if (inst) {
-              inst.dismiss();
+            if (existing) {
+              existing.dismiss();
             }
           });
 
           return [instance];
         });
       },
-      [providerDefaults]
+      [providerDefaults, singleBackdrop]
     );
 
   /**
@@ -322,10 +326,21 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
     [showBottomSheet, popTopSheet]
   );
 
+  const OverlayContainer = providerDefaults.containerComponent;
+
   return (
     <GbsBottomSheetModalProvider>
       <BottomSheetContext.Provider value={contextValue}>
         {children}
+
+        {singleBackdrop && OverlayContainer && (
+          <OverlayContainer>
+            <BackdropOverlay
+              visible={sheets.length > 0}
+              onPress={popTopSheet}
+            />
+          </OverlayContainer>
+        )}
 
         {sheets.map(({ id, render, options }) => (
           <BottomSheetBase
@@ -339,9 +354,11 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
               instance.present();
             }}
             options={options}
-            onRequestClose={() => dismissSheetById(id)}
             keyboardBlurBehavior="restore"
             keyboardBehavior="interactive"
+            onRequestClose={() => {
+              dismissSheetById(id);
+            }}
             onDismiss={() => {
               options.onClose?.();
 

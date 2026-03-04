@@ -112,7 +112,7 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
       console.error('[ModalScreenProvider] renderContent error:', e);
       return null;
     }
-  }, [modal.renderContent, api]);
+  }, [modal, api]);
 
   return (
     <ModalScreenContext.Provider

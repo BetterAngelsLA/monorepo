@@ -64,6 +64,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <BottomSheetModalProvider
+        singleBackdrop={true}
         defaultOptions={{
           containerComponent: BottomSheetFullScreenContainer,
         }}

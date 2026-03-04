@@ -14,10 +14,10 @@ export default function BaseModalScreen() {
   }
 
   return (
-    // Not using <BottomSheetModalProvider> as BottomSheetBase uses custom containerComponent.
-    // Using `containerComponent` solves the stacking issue and keeping only a single
-    // BottomSheetModalProvider at root prevents stale layout calculations as switching
-    // between root and modal-screen etc...
+    // Not including <BottomSheetModalProvider> here as the app BottomSheetModalProvider
+    // is configured to use a custom containerComponent. This solves the stacking issue and
+    // keeping only a single BottomSheetModalProvider at root prevents stale layout calculations
+    // as switching between root and modal-screen etc...
     <SnackbarProvider>
       <KeyboardToolbarProvider>
         <View
