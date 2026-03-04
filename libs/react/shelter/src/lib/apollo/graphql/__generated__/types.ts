@@ -2178,6 +2178,7 @@ export type QueryOrganizationMembersArgs = {
 
 export type QueryReportSummaryArgs = {
   endDate?: InputMaybe<Scalars['Date']['input']>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
   startDate?: InputMaybe<Scalars['Date']['input']>;
 };
 
@@ -2880,7 +2881,8 @@ export enum UserOrganizationPermissions {
   AddOrgMember = 'ADD_ORG_MEMBER',
   ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
   RemoveOrgMember = 'REMOVE_ORG_MEMBER',
-  ViewOrgMembers = 'VIEW_ORG_MEMBERS'
+  ViewOrgMembers = 'VIEW_ORG_MEMBERS',
+  ViewReports = 'VIEW_REPORTS'
 }
 
 export type UserType = {
