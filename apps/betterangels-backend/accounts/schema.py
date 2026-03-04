@@ -6,7 +6,7 @@ import strawberry
 import strawberry_django
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
-from accounts.permissions import UserOrganizationPermissions
+from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
 from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.conf import settings
@@ -23,7 +23,6 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
-from strawberry_django.utils.query import filter_for_user
 
 from .models import PermissionGroup, User
 from .types import (
@@ -90,13 +89,12 @@ class Query:
     )
     def organization_member(self, info: Info, organization_id: str, user_id: str) -> OrganizationMemberType:
         current_user = cast(User, get_current_user(info))
-        try:
-            organization = filter_for_user(
-                Organization.objects.filter(users=current_user),
-                current_user,
-                [UserOrganizationPermissions.VIEW_ORG_MEMBERS],
-            ).get(id=organization_id)
-        except Organization.DoesNotExist:
+        organization = get_user_permitted_org(
+            current_user,
+            [UserOrganizationPermissions.VIEW_ORG_MEMBERS],
+            org_id=organization_id,
+        )
+        if organization is None:
             raise PermissionError("You do not have permission to view this organization's members.")
 
         user: User = (
@@ -116,13 +114,12 @@ class Query:
         self, info: Info, organization_id: str, ordering: Optional[list[OrganizationMemberOrdering]] = None
     ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
-        try:
-            organization = filter_for_user(
-                Organization.objects.filter(users=current_user),
-                current_user,
-                [UserOrganizationPermissions.VIEW_ORG_MEMBERS],
-            ).get(id=organization_id)
-        except Organization.DoesNotExist:
+        organization = get_user_permitted_org(
+            current_user,
+            [UserOrganizationPermissions.VIEW_ORG_MEMBERS],
+            org_id=organization_id,
+        )
+        if organization is None:
             raise PermissionError("You do not have permission to view this organization's members.")
 
         queryset: QuerySet[User] = organization.users.all()
@@ -197,14 +194,12 @@ class Mutation:
     )
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)
-
-        try:
-            organization = filter_for_user(
-                Organization.objects.filter(users=current_user),
-                current_user,
-                [UserOrganizationPermissions.ADD_ORG_MEMBER],
-            ).get(id=data.organization_id)
-        except Organization.DoesNotExist:
+        organization = get_user_permitted_org(
+            current_user,
+            [UserOrganizationPermissions.ADD_ORG_MEMBER],
+            org_id=str(data.organization_id),
+        )
+        if organization is None:
             raise PermissionDenied("You do not have permission to add members.")
 
         with transaction.atomic():
@@ -250,13 +245,12 @@ class Mutation:
         current_user = cast(User, get_current_user(info))
         user_id = int(data.id)
 
-        try:
-            organization = filter_for_user(
-                Organization.objects.filter(users=current_user),
-                current_user,
-                [UserOrganizationPermissions.REMOVE_ORG_MEMBER],
-            ).get(id=data.organization_id)
-        except Organization.DoesNotExist:
+        organization = get_user_permitted_org(
+            current_user,
+            [UserOrganizationPermissions.REMOVE_ORG_MEMBER],
+            org_id=str(data.organization_id),
+        )
+        if organization is None:
             raise PermissionDenied("You do not have permission to remove members.")
 
         try:

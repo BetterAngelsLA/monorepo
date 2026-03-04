@@ -26,14 +26,14 @@ def org() -> Organization:
 
 @pytest.fixture
 def user_with_access(org: Organization) -> User:
-    """Create a user with ACCESS_ORG_PORTAL permission on the org."""
+    """Create a user with VIEW_REPORTS permission on the org."""
     from guardian.shortcuts import assign_perm
 
     user = baker.make(User)
     user.set_password("testpass")
     user.save()
     org.add_user(user)
-    assign_perm("access_org_portal", user, org)
+    assign_perm("view_reports", user, org)
     return user
 
 
@@ -271,7 +271,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
     """Tests for the reportSummary GraphQL query."""
 
     def _setup_org_user_with_access(self) -> tuple[Organization, User]:
-        """Create org + user with ACCESS_ORG_PORTAL permission."""
+        """Create org + user with VIEW_REPORTS permission."""
         from guardian.shortcuts import assign_perm
 
         org = baker.make(Organization, name="Test Org")
@@ -279,7 +279,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         user.set_password("testpass")
         user.save()
         org.add_user(user)
-        assign_perm("access_org_portal", user, org)
+        assign_perm("view_reports", user, org)
         return org, user
 
     def test_unauthenticated_returns_error(self) -> None:

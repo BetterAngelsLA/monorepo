@@ -12,13 +12,12 @@ from typing import Any
 from django.http import HttpResponse
 from django.utils import timezone
 from notes.admin import NoteResource
-from organizations.models import Organization
 from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
-from .permissions import HasOrgPortalAccess
+from .permissions import HasReportAccess
 from .selectors import note_list_for_org
 
 
@@ -29,7 +28,7 @@ class ExportInteractionDataApi(APIView):
     Export interaction data as CSV for the authenticated user's organization.
     """
 
-    permission_classes = [IsAuthenticated, HasOrgPortalAccess]
+    permission_classes = [IsAuthenticated, HasReportAccess]
 
     class InputSerializer(serializers.Serializer):
         start_date = serializers.DateField(required=False)
@@ -68,7 +67,7 @@ class ExportInteractionDataApi(APIView):
         start_date = serializer.validated_data["_resolved_start"]
         end_date = serializer.validated_data["_resolved_end"]
 
-        org = Organization.objects.filter(users=request.user).first()
+        org = request.permitted_org  # type: ignore[attr-defined]  # set by HasOrgPortalAccess
         notes = note_list_for_org(org=org, start_date=start_date, end_date=end_date).order_by("interacted_at")
 
         resource = NoteResource()
