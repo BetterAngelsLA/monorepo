@@ -1,5 +1,5 @@
 import haversine from 'haversine-distance';
-import { metersToMiles } from './convert';
+import { metersToMiles } from '@monorepo/shared/units';
 
 type TLatLng = {
   latitude: number;

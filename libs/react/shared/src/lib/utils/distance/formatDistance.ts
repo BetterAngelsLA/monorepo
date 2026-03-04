@@ -1,4 +1,4 @@
-import { milesToFeet } from './convert';
+import { milesToFeet } from '@monorepo/shared/units';
 
 type TParams = {
   distance: number;

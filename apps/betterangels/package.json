@@ -111,7 +111,13 @@
     "clsx": "*",
     "tailwind-merge": "*",
     "lodash": "*",
-    "haversine-distance": "*"
+    "haversine-distance": "*",
+    "expo-modules-core": "*"
+  },
+  "expo": {
+    "autolinking": {
+      "nativeModulesDir": "../../libs/expo/modules"
+    }
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",

@@ -94,3 +94,6 @@ vitest.config.*.timestamp*
 debug-storybook.log
 storybook-static
 .cache/
+
+# The canonical schema lives at apps/betterangels-backend/schema.graphql
+/schema.graphql

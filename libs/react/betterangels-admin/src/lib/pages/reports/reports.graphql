@@ -1,0 +1,32 @@
+query ReportSummary($startDate: Date, $endDate: Date) {
+  reportSummary(startDate: $startDate, endDate: $endDate) {
+    totalNotes
+    uniqueClients
+    startDate
+    endDate
+    notesByDate {
+      date
+      count
+    }
+    notesByTeam {
+      name
+      count
+    }
+    notesByPurpose {
+      name
+      count
+    }
+    uniqueClientsByDate {
+      date
+      count
+    }
+    topProvidedServices {
+      name
+      count
+    }
+    topRequestedServices {
+      name
+      count
+    }
+  }
+}

@@ -4,10 +4,10 @@ from typing import Any
 from django.core.files.base import ContentFile
 from django.utils import timezone
 from notes.admin import NoteResource
-from notes.models import Note
 from post_office import mail
 
 from .models import ScheduledReport
+from .selectors import note_list_for_org
 
 
 def get_previous_month_range() -> tuple[datetime, datetime]:
@@ -32,10 +32,13 @@ def generate_report_data(
     year_str = start_date.strftime("%Y")
 
     if report.report_type == ScheduledReport.ReportType.INTERACTION_DATA:
-        notes = Note.objects.filter(
-            interacted_at__gte=start_date,
-            interacted_at__lt=end_date,
-            organization=report.organization,
+        # end_date here is exclusive (from get_previous_month_range),
+        # but get_notes_for_org expects inclusive — subtract one day.
+        inclusive_end = (end_date - timedelta(days=1)).date() if isinstance(end_date, datetime) else end_date
+        notes = note_list_for_org(
+            org=report.organization,
+            start_date=start_date.date(),
+            end_date=inclusive_end,
         ).order_by("interacted_at")
 
         resource = NoteResource()

@@ -1,0 +1,8 @@
+{
+  "name": "signing-fingerprint",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/expo/modules/signing-fingerprint",
+  "projectType": "library",
+  "tags": [],
+  "targets": {}
+}

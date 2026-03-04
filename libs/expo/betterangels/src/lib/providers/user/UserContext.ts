@@ -1,9 +1,7 @@
+import { TOrganization } from '@monorepo/react/shared';
 import { createContext, Dispatch, SetStateAction } from 'react';
 
-export type TOrganization = {
-  id: string;
-  name: string;
-};
+export type { TOrganization };
 
 export type TUser = {
   id: string;

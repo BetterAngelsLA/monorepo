@@ -4,7 +4,6 @@ import {
   SearchIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import * as ExpoLocation from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import RNMapView, {
@@ -18,9 +17,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BasicInput from '../../BasicInput';
 import IconButton from '../../IconButton';
 import TextRegular from '../../TextRegular';
-import { usePlacesClient } from '../../hooks/usePlacesClient';
+import { useGooglePlaces } from '../../providers/GooglePlacesProvider';
 import { MapDirectionsActionSheet } from '../MapDirectionsActionSheet';
 import type { TMapView } from '../types';
+import { getUserLocation } from '../utils/getUserLocation';
 import { SelectedLocationPanel } from './SelectedLocationPanel';
 import { IMapLocationPickerProps, TLocationData } from './types';
 import { useLocationSearch } from './useLocationSearch';
@@ -35,7 +35,7 @@ export function MapLocationPicker({
   onClose,
   userLocation: propUserLocation,
 }: IMapLocationPickerProps) {
-  const places = usePlacesClient();
+  const places = useGooglePlaces();
   const mapRef = useRef<TMapView>(null);
   const insets = useSafeAreaInsets();
 
@@ -171,12 +171,9 @@ export function MapLocationPicker({
     try {
       let loc = userLocation;
       if (!loc) {
-        const { status } =
-          await ExpoLocation.requestForegroundPermissionsAsync();
-        if (status !== 'granted') return;
-        loc = await ExpoLocation.getCurrentPositionAsync({
-          accuracy: ExpoLocation.Accuracy.Balanced,
-        });
+        const result = await getUserLocation();
+        loc = result?.location ?? null;
+        if (!loc) return;
         setUserLocation(loc);
       }
       animateMap(loc.coords.latitude, loc.coords.longitude);
