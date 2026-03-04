@@ -120,6 +120,11 @@ export default function Users(props: IProps) {
     className,
   ];
 
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
   const handleRemoveMember = async (member: OrganizationMemberType) => {
     if (!organizationId) {
       return;
@@ -208,7 +213,7 @@ export default function Users(props: IProps) {
       </div>
       <div className="flex items-center justify-between gap-5 mb-6">
         <div>
-          <SearchInput debounceMs={300} onChange={setSearch} />
+          <SearchInput debounceMs={300} onChange={handleSearchChange} />
         </div>
         {user?.canAddOrgMember && (
           <button
