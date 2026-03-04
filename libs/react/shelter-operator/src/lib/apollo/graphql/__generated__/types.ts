@@ -1831,6 +1831,7 @@ export type OrganizationFilter = {
 };
 
 export type OrganizationMemberOrdering = {
+  dateJoined?: InputMaybe<Ordering>;
   email?: InputMaybe<Ordering>;
   firstName?: InputMaybe<Ordering>;
   id?: InputMaybe<Ordering>;
@@ -1841,6 +1842,7 @@ export type OrganizationMemberOrdering = {
 
 export type OrganizationMemberType = {
   __typename?: 'OrganizationMemberType';
+  dateJoined: Scalars['DateTime']['output'];
   email?: Maybe<Scalars['NonBlankString']['output']>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
   id: Scalars['ID']['output'];

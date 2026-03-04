@@ -32,6 +32,14 @@ const COLUMNS: {
   { label: 'Job Role', field: 'memberRole', render: (m) => m.memberRole },
   { label: 'Email', field: 'email', render: (m) => m.email ?? '' },
   {
+    label: 'Created At',
+    field: 'dateJoined',
+    render: (m) =>
+      m.dateJoined
+        ? formatDistanceToNow(parseISO(m.dateJoined), { addSuffix: true })
+        : 'Unknown',
+  },
+  {
     label: 'Last Login',
     field: 'lastLogin',
     render: (m) =>
