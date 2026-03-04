@@ -77,7 +77,6 @@ export const NoteFormSchemaHmis = z.object({
 
   // FIX 1: Remove .default([]). This makes the field REQUIRED in the type definition,
   // preventing the "undefined is not assignable to LocalDraftTask[]" error.
-  // We handle the default value via the 'getHmisProgramNoteFormEmptyState' function.
   tasks: z.array(TaskFormSchema).optional(),
   services: z.custom<ServicesDraft>().optional(),
 });

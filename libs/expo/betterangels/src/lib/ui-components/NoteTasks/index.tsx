@@ -147,7 +147,6 @@ export default function NoteTasks(props: INoteTasksProps) {
               team: cleanTeam || team || null,
               // Handle linking to either Note type
               note: noteId || null,
-              // Ensure this field name matches your Schema (hmisNote vs hmisProgramNote)
               hmisNote: hmisNoteId || null,
             },
           },
