@@ -13,7 +13,7 @@ from typing import Any, Dict, List
 
 from django.db import models, transaction
 from places import Places
-from shelters.models import Shelter
+from shelters.models import Bed, Shelter
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -113,7 +113,7 @@ _SHELTER_M2M_FIELDS = _get_m2m_field_names(Shelter)
 def shelter_create(*, data: Dict[str, Any]) -> Shelter:
     """Create a new Shelter with all M2M relationships.
 
-    Accepts a plain dict (e.g. from ``strawberry.asdict(input)`` with
+    Accepts a plain dict (e.g. from ``strawberry.asdict(data)`` with
     ``UNSET`` keys already removed).
 
     Steps:
@@ -135,3 +135,20 @@ def shelter_create(*, data: Dict[str, Any]) -> Shelter:
     _set_m2m_from_enums(shelter, m2m_data)
 
     return shelter
+
+
+@transaction.atomic
+def bed_create(*, data: Dict[str, Any]) -> Bed:
+    """Create a new Bed associated with an existing Shelter.
+
+    Accepts a plain dict with ``shelter_id`` and ``status``.
+
+    Raises:
+        ``Shelter.DoesNotExist`` when the referenced shelter is not found.
+        ``django.core.exceptions.ValidationError`` on invalid data.
+    """
+    shelter = Shelter.objects.get(pk=data["shelter_id"])
+    bed = Bed(shelter=shelter, status=data["status"])
+    bed.full_clean()
+    bed.save()
+    return bed

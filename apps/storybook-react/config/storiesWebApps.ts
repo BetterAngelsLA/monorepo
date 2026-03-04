@@ -1,6 +1,6 @@
-import type { StoriesSpecifier } from '@storybook/types';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import type { StoriesSpecifier } from 'storybook/internal/types';
 import { storyFileTypes } from './constants.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
