@@ -1,5 +1,6 @@
 import type { TOrganization } from '@monorepo/react/shared';
 import { memo } from 'react';
+import { Dropdown } from '../../../../../components/base-ui/dropdown';
 import { FormSection } from '../../../../../components/form/FormSection';
 import { TextField } from '../../../../../components/form/TextField';
 import { LocationPicker } from '../components/LocationPicker';
@@ -38,21 +39,21 @@ export const BasicInformationSection = memo(function BasicInformationSection({
           Organization
         </label>
         {organizations.length > 0 ? (
-          <select
-            id="shelter-organization"
-            value={selectedOrganizationId}
-            onChange={(e) => onOrganizationChange(e.target.value)}
-            className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="" disabled>
-              Select an organization
-            </option>
-            {organizations.map((org) => (
-              <option key={org.id} value={org.id}>
-                {org.name}
-              </option>
-            ))}
-          </select>
+          <Dropdown
+            placeholder="Select an organization"
+            options={organizations.map((org) => ({
+              label: org.name,
+              value: org.id,
+            }))}
+            value={
+              organizations
+                .filter((org) => org.id === selectedOrganizationId)
+                .map((org) => ({ label: org.name, value: org.id }))[0] ?? null
+            }
+            onChange={(option) => {
+              if (option) onOrganizationChange(option.value);
+            }}
+          />
         ) : (
           <p className="text-sm text-red-600">
             You don't belong to any organizations.

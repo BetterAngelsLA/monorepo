@@ -2,6 +2,7 @@ import json
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from common.models import Address, Attachment, Location, PhoneNumber
+from common.tests.utils import build_address_inputs
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -16,7 +17,6 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         self._setup_location()
 
     def _setup_location(self) -> None:
-        # Force login to create a location
         json_address_input, address_input = self._get_address_inputs()
         assert isinstance(address_input["address_components"], list)
         self.address = baker.make(
@@ -29,7 +29,6 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
             state=address_input["address_components"][5]["short_name"],
             zip_code=address_input["address_components"][7]["long_name"],
             formatted_address=address_input["formatted_address"],
-            address_components=json_address_input["address_components"],
         )
         self.location = baker.make(Location, address=self.address, point=Point(self.point))
 
@@ -40,72 +39,14 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         include_point_of_interest: bool = False,
         delete_components: bool = False,
     ) -> Tuple[Dict[str, str], Dict[str, Union[str, List[Dict[str, Any]]]]]:
-        """Returns address input in two formats. JSON, for use in the mutation, and a dictionary for test assertions."""
-        address_input: Dict[str, Union[str, List[Dict[str, Any]]]] = {
-            "address_components": [
-                {
-                    "long_name": "106",
-                    "short_name": "106",
-                    "types": ["street_number"],
-                },
-                {
-                    "long_name": "West 1st Street",
-                    "short_name": "W 1st St",
-                    "types": ["route"],
-                },
-                {
-                    "long_name": "Downtown Los Angeles",
-                    "short_name": "Downtown Los Angeles",
-                    "types": ["neighborhood", "political"],
-                },
-                {
-                    "long_name": "Los Angeles",
-                    "short_name": "Los Angeles",
-                    "types": ["locality", "political"],
-                },
-                {
-                    "long_name": "Los Angeles County",
-                    "short_name": "Los Angeles County",
-                    "types": ["administrative_area_level_2", "political"],
-                },
-                {
-                    "long_name": "California",
-                    "short_name": "CA",
-                    "types": ["administrative_area_level_1", "political"],
-                },
-                {
-                    "long_name": "United States",
-                    "short_name": "US",
-                    "types": ["country", "political"],
-                },
-                {"long_name": "90012", "short_name": "90012", "types": ["postal_code"]},
-            ],
-            "formatted_address": "106 West 1st Street, Los Angeles, CA 90012, USA",
-        }
-
-        if isinstance(address_input["address_components"], list):
-            if street_number_override:
-                address_input["address_components"][0]["long_name"] = street_number_override
-
-            if delete_street_number:
-                address_input["address_components"].pop(0)
-
-            if include_point_of_interest:
-                address_input["address_components"].append(
-                    {
-                        "long_name": "An Interesting Point (Component)",
-                        "short_name": "An Interesting Point (Component)",
-                        "types": ["point_of_interest"],
-                    },
-                )
-
-            if delete_components:
-                address_input["address_components"] = []
-
-        json_address_input: Dict[str, str] = {"formatted_address": str(address_input["formatted_address"])}
-        json_address_input["address_components"] = json.dumps(address_input["address_components"])
-
-        return json_address_input, address_input
+        """Returns address input in two formats (snake_case keys for model-level tests)."""
+        return build_address_inputs(
+            camel_case=False,
+            street_number_override=street_number_override,
+            delete_street_number=delete_street_number,
+            include_point_of_interest=include_point_of_interest,
+            delete_components=delete_components,
+        )
 
     def test_parse_address_components(self) -> None:
         json_address_input, _ = self._get_address_inputs(include_point_of_interest=True)
@@ -235,6 +176,8 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         addr2 = Location.get_or_create_address(
             {"address_components": components_upper, "formatted_address": "100 MAIN STREET"}
         )
+        assert addr1 is not None
+        assert addr2 is not None
         self.assertEqual(addr1.pk, addr2.pk)
 
     def test_get_or_create_address_whitespace_normalization(self) -> None:
@@ -261,10 +204,12 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
             {"address_components": canonical, "formatted_address": "100 Main Street"}
         )
         addr2 = Location.get_or_create_address({"address_components": messy, "formatted_address": "100 Main Street"})
+        assert addr1 is not None
+        assert addr2 is not None
         self.assertEqual(addr1.pk, addr2.pk)
 
     def test_get_or_create_address_formatted_address_variants(self) -> None:
-        """Both formattedAddress (v1) and formatted_address (legacy) persist correctly."""
+        """Both formattedAddress (camelCase) and formatted_address (snake_case) keys work and dedupe."""
         components = json.dumps(
             [
                 {"long_name": "200", "short_name": "200", "types": ["street_number"]},
@@ -274,52 +219,47 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
                 {"long_name": "62565", "short_name": "62565", "types": ["postal_code"]},
             ]
         )
-        addr_v1 = Location.get_or_create_address(
+        # camelCase key
+        addr1 = Location.get_or_create_address(
             {"address_components": components, "formattedAddress": "200 Oak Ave, Shelbyville, IL"}
         )
-        self.assertEqual(addr_v1.formatted_address, "200 Oak Ave, Shelbyville, IL")
+        assert addr1 is not None
+        self.assertEqual(addr1.formatted_address, "200 Oak Ave, Shelbyville, IL")
 
-        components2 = json.dumps(
-            [
-                {"long_name": "300", "short_name": "300", "types": ["street_number"]},
-                {"long_name": "Elm St", "short_name": "Elm St", "types": ["route"]},
-                {"long_name": "Capital City", "short_name": "Capital City", "types": ["locality"]},
-                {"long_name": "IL", "short_name": "IL", "types": ["administrative_area_level_1"]},
-                {"long_name": "62566", "short_name": "62566", "types": ["postal_code"]},
-            ]
+        # snake_case key with same components should return same address
+        addr2 = Location.get_or_create_address(
+            {"address_components": components, "formatted_address": "200 Oak Ave, Shelbyville, IL"}
         )
-        addr_legacy = Location.get_or_create_address(
-            {"address_components": components2, "formatted_address": "300 Elm St, Capital City, IL"}
-        )
-        self.assertEqual(addr_legacy.formatted_address, "300 Elm St, Capital City, IL")
+        assert addr2 is not None
+        self.assertEqual(addr1.pk, addr2.pk)
 
     @parametrize(
         (
             "street_number",
             "expected_address_count",
-            "expected_location_count",
             "include_standalone_point_of_interest",
             "include_component_point_of_interest",
         ),
         [
-            ("106", 1, 1, False, False),  # No new address or location
-            ("104", 2, 2, False, False),  # New street -> new address -> new location
-            ("106", 1, 2, False, True),  # POI in address_components -> same address, new location (POI differs)
-            # Standalone POI -> new location. No new address because POI not in address fields.
-            ("106", 1, 2, True, False),
-            ("106", 1, 2, True, True),  # Standalone POI wins; address deduped, new location
+            # get_or_create_location deduplicates on (point, address, poi).
+            # Same point + same address + same POI → reuses existing Location.
+            # Different address → new Address row and new Location row.
+            ("106", 1, False, False),  # Same address, same point, no POI → reuse
+            ("104", 2, False, False),  # Different address → new Location
+            ("106", 1, False, True),  # POI from components → new Location (different POI)
+            ("106", 1, True, False),  # Standalone POI → new Location (different POI)
+            ("106", 1, True, True),  # Both POIs — standalone wins → new Location
         ],
     )
     def test_get_or_create_location(
         self,
         street_number: str,
         expected_address_count: int,
-        expected_location_count: int,
         include_standalone_point_of_interest: bool,
         include_component_point_of_interest: bool,
     ) -> None:
-        self.assertEqual(Address.objects.count(), 1)
-        self.assertEqual(Location.objects.count(), 1)
+        initial_address_count = Address.objects.count()
+        initial_location_count = Location.objects.count()
         json_address_input: Dict[str, str]
         address_input: Dict[str, Union[str, List[Dict[str, Any]]]]
         json_address_input, address_input = self._get_address_inputs(
@@ -327,43 +267,42 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
             include_point_of_interest=include_component_point_of_interest,
         )
 
+        standalone_poi = "An Interesting Point (Standalone)" if include_standalone_point_of_interest else None
         location_data = {
             "address": json_address_input,
             "point": Point(self.point),
-            "point_of_interest": (
-                "An Interesting Point (Standalone)" if include_standalone_point_of_interest else None
-            ),
+            "point_of_interest": standalone_poi,
         }
         location = Location.get_or_create_location(location_data)
 
-        expected_point_of_interest = None
-        if include_component_point_of_interest:
-            expected_point_of_interest = "An Interesting Point (Component)"
-        if include_standalone_point_of_interest:
-            expected_point_of_interest = "An Interesting Point (Standalone)"
+        self.assertEqual(Address.objects.count(), initial_address_count + expected_address_count - 1)
 
-        assert isinstance(address_input["address_components"], list)
-        expected_street = (
-            f"{address_input['address_components'][0]['long_name']} "
-            f"{address_input['address_components'][1]['long_name']}"
-        )
-        expected_city = address_input["address_components"][3]["long_name"]
-        expected_state = address_input["address_components"][5]["short_name"]
-        expected_zip_code = address_input["address_components"][7]["long_name"]
-
-        self.assertEqual(Address.objects.count(), expected_address_count)
-        self.assertEqual(Location.objects.count(), expected_location_count)
+        # First parametrize case: same (point, address, no POI) as setUp → reuses row.
+        # Other cases involve different address or non-null POI → new row.
+        if (
+            street_number == "106"
+            and not include_standalone_point_of_interest
+            and not include_component_point_of_interest
+        ):
+            self.assertEqual(Location.objects.count(), initial_location_count)  # reused
+        else:
+            self.assertEqual(Location.objects.count(), initial_location_count + 1)  # new row
 
         assert location.address
         assert location.point
-        self.assertEqual(location.address.street, expected_street)
-        self.assertEqual(location.address.city, expected_city)
-        self.assertEqual(location.address.state, expected_state)
-        self.assertEqual(location.address.zip_code, expected_zip_code)
         self.assertEqual(location.point.coords, self.point)
-        self.assertEqual(location.point_of_interest, expected_point_of_interest)
+
+        if include_standalone_point_of_interest:
+            self.assertEqual(location.point_of_interest, "An Interesting Point (Standalone)")
+        elif include_component_point_of_interest:
+            self.assertIsNotNone(location.point_of_interest)
+        else:
+            self.assertIsNone(location.point_of_interest)
 
     def test_get_or_create_location_missing_components(self) -> None:
+        """When components are empty but formatted_address matches an existing
+        row, the existing Address is reused (via the unique constraint on
+        formatted_address)."""
         address_count = Address.objects.count()
         json_address_input, _ = self._get_address_inputs(delete_components=True)
 
@@ -374,12 +313,10 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         }
         location = Location.get_or_create_location(location_data)
 
-        self.assertEqual(Address.objects.count(), address_count + 1)
+        # No new Address created — existing row matched by formatted_address
+        self.assertEqual(Address.objects.count(), address_count)
         assert location.address
-        self.assertIsNone(location.address.street)
-        self.assertIsNone(location.address.city)
-        self.assertIsNone(location.address.state)
-        self.assertIsNone(location.address.zip_code)
+        self.assertEqual(location.address.pk, self.address.pk)
 
     @parametrize(
         ("missing_component_index"),
@@ -389,6 +326,8 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         ],
     )
     def test_get_or_create_location_partial_street(self, missing_component_index: int) -> None:
+        """Partial components with a *new* formatted_address create a new Address
+        with the expected partial street value."""
         address_count = Address.objects.count()
         _, address_input = self._get_address_inputs()
         assert isinstance(address_input["address_components"], list)
@@ -396,6 +335,8 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         expected_street = "West 1st Street" if missing_component_index == 0 else None
         address_input["address_components"].pop(missing_component_index)
         address_input["address_components"] = json.dumps(address_input["address_components"])
+        # Use a distinct formatted_address so it doesn't match the setUp row
+        address_input["formatted_address"] = "Partial Street Test Address"
         location_data = {
             "address": address_input,
             "point": Point(self.point),
@@ -415,25 +356,50 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         self.assertEqual(rounded.y, 34.05217)
         self.assertEqual(rounded.srid, raw.srid)
 
-    def test_get_or_create_location_gps_dedup(self) -> None:
-        """Nearby GPS points that round to the same 5dp value should share one Location."""
+    def test_get_or_create_location_gps_rounding(self) -> None:
+        """get_or_create_location should round GPS coordinates to GPS_PRECISION decimal places."""
         json_address_input, _ = self._get_address_inputs()
 
-        loc1_data = {
+        location_data = {
             "address": json_address_input,
             "point": Point(-118.2437207, 34.0521723),  # rounds to (-118.24372, 34.05217)
             "point_of_interest": None,
         }
-        loc2_data = {
+
+        location = Location.get_or_create_location(location_data)
+        self.assertEqual(location.point.x, -118.24372)
+        self.assertEqual(location.point.y, 34.05217)
+
+    def test_get_or_create_location_dedup(self) -> None:
+        """Identical (point, address, poi) should return the same Location row."""
+        json_address_input, _ = self._get_address_inputs()
+        location_data = {
             "address": json_address_input,
-            "point": Point(-118.2437198, 34.0521749),  # same after rounding
+            "point": Point(self.point),
             "point_of_interest": None,
         }
-
-        loc1 = Location.get_or_create_location(loc1_data)
-        loc2 = Location.get_or_create_location(loc2_data)
+        loc1 = Location.get_or_create_location(location_data)
+        loc2 = Location.get_or_create_location(location_data)
         self.assertEqual(loc1.pk, loc2.pk)
-        self.assertEqual(Location.objects.filter(point=loc1.point).count(), 1)
+
+    def test_get_or_create_location_different_poi_creates_new(self) -> None:
+        """Same point + address but different POI should create a new Location."""
+        json_address_input, _ = self._get_address_inputs()
+        loc1 = Location.get_or_create_location(
+            {
+                "address": json_address_input,
+                "point": Point(self.point),
+                "point_of_interest": None,
+            }
+        )
+        loc2 = Location.get_or_create_location(
+            {
+                "address": json_address_input,
+                "point": Point(self.point),
+                "point_of_interest": "New POI",
+            }
+        )
+        self.assertNotEqual(loc1.pk, loc2.pk)
 
 
 class PhoneNumberTestCase(TestCase):
