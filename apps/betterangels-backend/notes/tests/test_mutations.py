@@ -242,44 +242,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=self.note["id"])
         self.assertIn(service_request, getattr(note, expected_type).all())
 
-    @parametrize(
-        "service_request_type,  expected_query_count",
-        [
-            ("REQUESTED", 10),
-            ("PROVIDED", 10),
-        ],
-    )
-    def test_remove_note_service_request_mutation(
-        self,
-        service_request_type: str,
-        expected_query_count: int,
-    ) -> None:
-        # First create note service request
-        bag_svc = OrganizationService.objects.get(label="Bag(s)")
-        variables = {
-            "serviceId": str(bag_svc.pk),
-            "noteId": self.note["id"],
-            "serviceRequestType": service_request_type,
-        }
-
-        response_service_request = self._create_note_service_request_fixture(variables)["data"][
-            "createNoteServiceRequest"
-        ]
-
-        variables = {
-            "serviceRequestId": response_service_request["id"],
-            "noteId": self.note["id"],
-            "serviceRequestType": service_request_type,
-        }
-
-        # Remove note service request
-        expected_query_count = expected_query_count
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            updated_note = self._remove_note_service_request_fixture(variables)["data"]["removeNoteServiceRequest"]
-
-        self.assertEqual(len(updated_note["requestedServices"]), 0)
-        self.assertEqual(len(updated_note["providedServices"]), 0)
-
     def test_delete_note_mutation(self) -> None:
         mutation = """
             mutation DeleteNote($id: ID!) {

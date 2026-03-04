@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import List, Optional
 
-import strawberry
 import strawberry_django
 from accounts.groups import GroupTemplateNames
 from accounts.models import PermissionGroup, User
@@ -86,13 +85,6 @@ class ServiceRequestType:
 class CreateNoteServiceRequestInput:
     service_id: Optional[ID]
     service_other: Optional[str]
-    note_id: ID
-    service_request_type: ServiceRequestTypeEnum
-
-
-@strawberry.input
-class RemoveNoteServiceRequestInput:
-    service_request_id: ID
     note_id: ID
     service_request_type: ServiceRequestTypeEnum
 

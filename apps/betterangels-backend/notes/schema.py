@@ -50,7 +50,6 @@ from .types import (
     NoteType,
     OrganizationServiceCategoryType,
     OrganizationServiceType,
-    RemoveNoteServiceRequestInput,
     RevertNoteInput,
     ServiceRequestType,
     UpdateNoteInput,
@@ -255,32 +254,6 @@ class Mutation:
                 raise NotImplementedError
 
             return cast(ServiceRequestType, service_request)
-
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def remove_note_service_request(self, info: Info, data: RemoveNoteServiceRequestInput) -> NoteType:
-        with transaction.atomic(), pghistory.context(
-            note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
-        ):
-            user = get_current_user(info)
-            try:
-                note = filter_for_user(
-                    Note.objects.all(),
-                    user,
-                    [NotePermissions.CHANGE],
-                ).get(id=data.note_id)
-            except Note.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this note.")
-
-            service_request = ServiceRequest.objects.get(id=data.service_request_id)
-
-            if data.service_request_type == ServiceRequestTypeEnum.REQUESTED:
-                note.requested_services.remove(service_request)
-            elif data.service_request_type == ServiceRequestTypeEnum.PROVIDED:
-                note.provided_services.remove(service_request)
-            else:
-                raise NotImplementedError
-
-            return cast(NoteType, note)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_service_request(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
