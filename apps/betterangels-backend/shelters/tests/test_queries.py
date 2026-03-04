@@ -2,16 +2,19 @@ import datetime
 from typing import Any
 from unittest.mock import ANY
 
+from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
+from model_bakery import baker
 from model_bakery.recipe import seq
 from places import Places
 from shelters.enums import (
     AccessibilityChoices,
+    BedStatusChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -32,6 +35,7 @@ from shelters.enums import (
 from shelters.models import (
     SPA,
     Accessibility,
+    Bed,
     City,
     Demographic,
     EntryRequirement,
@@ -886,3 +890,121 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
         self.assertIn(p1.file.name, hero_images[s1.pk])
         self.assertIsNone(hero_images[s2.pk])
         self.assertEqual(hero_images[s3.pk], fallback.file.url)
+
+    def test_hero_image_with_stale_content_type(self) -> None:
+        """Regression: when hero_image_content_type points to a ContentType
+        whose model_class() returns None (e.g. the model was removed), the
+        resolver must not crash with "'NoneType' object has no attribute
+        '_base_manager'"."""
+        from django.contrib.contenttypes.models import ContentType
+
+        shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
+        fallback = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
+
+        # Create a ContentType that doesn't map to any installed model
+        stale_ct = ContentType.objects.create(app_label="deleted_app", model="deletedmodel")
+        Shelter.objects.filter(pk=shelter.pk).update(
+            hero_image_content_type=stale_ct,
+            hero_image_object_id=1,
+        )
+
+        response = self.execute_graphql(self.HERO_IMAGE_QUERY)
+        self.assertNotIn("errors", response)
+        results = response["data"]["shelters"]["results"]
+        self.assertEqual(len(results), 1)
+        # Should fall back to the exterior photo
+        self.assertEqual(results[0]["heroImage"], fallback.file.url)
+
+
+class BedMutationTestCase(GraphQLTestCaseMixin, TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.user = baker.make(User, is_superuser=True)
+        self.graphql_client.force_login(self.user)
+
+    def test_create_bed(self) -> None:
+        shelter = shelter_recipe.make()
+        mutation = """
+            mutation CreateBed($data: CreateBedInput!) {
+                createBed(data: $data) {
+                    ... on BedType {
+                        id
+                        status
+                        shelter {
+                            id
+                        }
+                    }
+                }
+            }
+        """
+        variables = {
+            "data": {
+                "shelterId": shelter.pk,
+                "status": BedStatusChoices.AVAILABLE.name,
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        data = response["data"]["createBed"]
+        self.assertEqual(data["status"], BedStatusChoices.AVAILABLE.name)
+        self.assertEqual(data["shelter"]["id"], str(shelter.pk))
+
+        self.assertTrue(Bed.objects.filter(pk=data["id"]).exists())
+
+    def test_create_bed_shelter_not_found(self) -> None:
+        mutation = """
+            mutation CreateBed($data: CreateBedInput!) {
+                createBed(data: $data) {
+                    ... on BedType {
+                        id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                }
+            }
+        """
+        variables = {
+            "data": {
+                "shelterId": 999999,
+                "status": BedStatusChoices.AVAILABLE.name,
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        messages = response["data"]["createBed"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("Shelter matching ID 999999 could not be found.", messages[0]["message"])
+
+    def test_create_bed_invalid_status(self) -> None:
+        shelter = shelter_recipe.make()
+        mutation = """
+            mutation CreateBed($data: CreateBedInput!) {
+                createBed(data: $data) {
+                    ... on BedType {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {
+            "data": {
+                "shelterId": shelter.pk,
+                "status": "INVALID_STATUS",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertIn(
+            "Value 'INVALID_STATUS' does not exist in 'BedStatusChoices' enum.", response["errors"][0]["message"]
+        )

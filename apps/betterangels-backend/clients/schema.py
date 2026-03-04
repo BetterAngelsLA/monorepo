@@ -25,14 +25,13 @@ from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, PhoneNumber
 from common.permissions.enums import AttachmentPermissions
-from common.permissions.utils import IsAuthenticated
+from common.permissions.utils import IsAuthenticated, assign_object_permissions
 from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import ForeignKey, Prefetch
 from graphql import GraphQLError
-from guardian.shortcuts import assign_perm
 from phonenumber_field.validators import validate_international_phonenumber
 from strawberry.types import Info
 from strawberry_django import mutations
@@ -613,8 +612,7 @@ class Mutation:
                 AttachmentPermissions.DELETE,
                 AttachmentPermissions.CHANGE,
             ]
-            for perm in permissions:
-                assign_perm(perm, permission_group.group, client_document)
+            assign_object_permissions(permission_group.group, client_document, permissions)
 
             return cast(ClientDocumentType, client_document)
 
