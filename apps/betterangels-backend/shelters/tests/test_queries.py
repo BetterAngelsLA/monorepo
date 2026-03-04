@@ -1032,6 +1032,7 @@ class RoomMutationTestCase(GraphQLTestCaseMixin, TestCase):
                         notes
                         amenities
                         medicalRespite
+                        lastCleanedInspected
                         shelter {
                             id
                         }
@@ -1049,6 +1050,7 @@ class RoomMutationTestCase(GraphQLTestCaseMixin, TestCase):
                 "notes": "Corner room",
                 "amenities": "WiFi, AC",
                 "medicalRespite": True,
+                "lastCleanedInspected": "2025-01-15T10:30:00",
             }
         }
 
@@ -1062,6 +1064,7 @@ class RoomMutationTestCase(GraphQLTestCaseMixin, TestCase):
         self.assertEqual(data["notes"], "Corner room")
         self.assertEqual(data["amenities"], "WiFi, AC")
         self.assertTrue(data["medicalRespite"])
+        self.assertIn("2025-01-15", data["lastCleanedInspected"])
         self.assertEqual(data["shelter"]["id"], str(shelter.pk))
         self.assertTrue(Room.objects.filter(pk=data["id"]).exists())
 

@@ -164,6 +164,7 @@ def room_create(*, data: Dict[str, Any]) -> Room:
         ``Shelter.DoesNotExist`` when the referenced shelter is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
+    data = {**data}
     shelter = Shelter.objects.get(pk=data.pop("shelter_id"))
     room = Room(shelter=shelter, **data)
     room.full_clean()
