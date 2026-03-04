@@ -83,27 +83,11 @@ class ServiceRequestType:
 
 
 @strawberry_django.input(models.ServiceRequest)
-class CreateServiceRequestInput:
-    service_id: Optional[ID]
-    status: auto
-    service_other: Optional[str]
-    client_profile: ID | None
-
-
-@strawberry_django.input(models.ServiceRequest)
 class CreateNoteServiceRequestInput:
     service_id: Optional[ID]
     service_other: Optional[str]
     note_id: ID
     service_request_type: ServiceRequestTypeEnum
-
-
-@strawberry_django.input(models.ServiceRequest, partial=True)
-class UpdateServiceRequestInput:
-    id: ID
-    service_other: Optional[str]
-    status: auto
-    due_by: auto
 
 
 @strawberry.input

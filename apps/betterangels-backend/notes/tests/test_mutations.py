@@ -1,4 +1,3 @@
-from unittest import skip
 from unittest.mock import ANY, patch
 
 import time_machine
@@ -8,11 +7,7 @@ from django.test import ignore_warnings
 from django.utils import timezone
 from model_bakery import baker
 from notes.models import Note, OrganizationService, ServiceRequest
-from notes.tests.utils import (
-    NoteGraphQLBaseTestCase,
-    ServiceRequestGraphQLBaseTestCase,
-    ServiceRequestGraphQLUtilMixin,
-)
+from notes.tests.utils import NoteGraphQLBaseTestCase
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 from unittest_parametrize import parametrize
 
@@ -313,7 +308,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             Note.objects.get(id=self.note["id"])
 
 
-class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin, ServiceRequestGraphQLUtilMixin):
+class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     """
     Asserts that when revertNote mutation is called, the Note instance and all of
     it's related model instances are reverted to their states at the specified moment.
@@ -1264,77 +1259,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
     #     self.assertEqual(next_step["location"]["point"], self.point)
     #     self.assertEqual(next_step["location"]["pointOfInterest"], self.point_of_interest)
 
-    @skip("not implemented")
-    def test_revert_note_mutation_restores_updated_custom_service_requests(self) -> None:
-        """
-        Test Actions:
-        0. Setup creates a note
-        1. Create 1 custom service request and 1 custom provided service
-        2. Save now as revert_before_timestamp
-        3. Update the service request and provided service titles
-        4. Revert to revert_before_timestamp from Step 2
-        5. Assert note has only the associations from Step 2
-        """
-        note_id = self.note["id"]
-
-        # Add associations that will be persisted
-        provided_service = self._create_note_service_request_fixture(
-            {
-                "service": "OTHER",
-                "serviceOther": "Other Provided Service",
-                "noteId": note_id,
-                "serviceRequestType": "PROVIDED",
-            }
-        )["data"]["createNoteServiceRequest"]
-
-        requested_service = self._create_note_service_request_fixture(
-            {
-                "service": "BLANKET",
-                "serviceOther": None,
-                "noteId": note_id,
-                "serviceRequestType": "REQUESTED",
-            }
-        )["data"]["createNoteServiceRequest"]
-
-        # Select a moment to revert to
-        revert_before_timestamp = timezone.now()
-
-        # Make updates that will be discarded
-        self._update_service_request_fixture(
-            {
-                "id": provided_service["id"],
-                "serviceOther": "Discarded Provided Service Title",
-            }
-        )
-        self._update_service_request_fixture(
-            {
-                "id": requested_service["id"],
-                "dueBy": "2024-03-11T11:12:13+00:00",
-                "status": "COMPLETED",
-            }
-        )
-
-        variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        note_fields = """
-            providedServices {
-                id
-                serviceOther
-            }
-            requestedServices {
-                id
-                status
-                dueBy
-            }
-        """
-
-        expected_query_count = 24
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
-
-        self.assertEqual(reverted_note["providedServices"][0]["serviceOther"], "Other Provided Service")
-        self.assertEqual(reverted_note["requestedServices"][0]["status"], "TO_DO")
-        self.assertEqual(reverted_note["requestedServices"][0]["dueBy"], None)
-
     def test_revert_note_mutation_fails_in_atomic_transaction(self) -> None:
         """
         Asserts that when revertNote mutation fails, the Note instance is not partially updated
@@ -1363,113 +1287,3 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Verify atomicity: the note should remain in its pre-revert state
         note = Note.objects.get(pk=note_id)
         self.assertEqual(note.purpose, "Discarded Purpose")
-
-
-@skip("Service Requests are not currently implemented")
-@ignore_warnings(category=UserWarning)
-@time_machine.travel("2024-03-11 10:11:12", tick=False)
-class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self._handle_user_login("org_1_case_manager_1")
-
-    def test_create_service_request_mutation(self) -> None:
-        expected_query_count = 29
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._create_service_request_fixture(
-                {
-                    "service": "BLANKET",
-                    "status": "TO_DO",
-                }
-            )
-        response_service_request = response["data"]["createServiceRequest"]
-        expected_service_request = {
-            "id": ANY,
-            "service": "BLANKET",
-            "serviceOther": None,
-            "dueBy": None,
-            "completedOn": None,
-            "status": "TO_DO",
-            "clientProfile": None,
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "createdAt": "2024-03-11T10:11:12+00:00",
-        }
-        self.assertEqual(response_service_request, expected_service_request)
-
-    @time_machine.travel("2024-03-11 12:34:56", tick=False)
-    def test_update_service_request_mutation(self) -> None:
-        variables = {
-            "id": self.service_request["id"],
-            "dueBy": "2024-03-11T11:12:13+00:00",
-            "status": "COMPLETED",
-        }
-
-        expected_query_count = 15
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._update_service_request_fixture(variables)
-
-        updated_service_request = response["data"]["updateServiceRequest"]
-        expected_service_request = {
-            "id": self.service_request["id"],
-            "service": "BLANKET",
-            "serviceOther": None,
-            "status": "COMPLETED",
-            "dueBy": "2024-03-11T11:12:13+00:00",
-            "completedOn": "2024-03-11T12:34:56+00:00",
-            "clientProfile": None,
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "createdAt": "2024-03-11T10:11:12+00:00",
-        }
-        self.assertEqual(updated_service_request, expected_service_request)
-
-    @time_machine.travel("2024-03-11 12:34:56", tick=False)
-    def test_partial_update_service_request_mutation(self) -> None:
-        variables = {
-            "id": self.service_request["id"],
-        }
-
-        expected_query_count = 15
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._update_service_request_fixture(variables)
-
-        updated_service_request = response["data"]["updateServiceRequest"]
-        expected_service_request = {
-            "id": self.service_request["id"],
-            "service": "BLANKET",
-            "serviceOther": None,
-            "status": "TO_DO",
-            "dueBy": None,
-            "completedOn": None,
-            "clientProfile": None,
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "createdAt": "2024-03-11T10:11:12+00:00",
-        }
-        self.assertEqual(updated_service_request, expected_service_request)
-
-    def test_delete_service_request_mutation(self) -> None:
-        mutation = """
-            mutation DeleteServiceRequest($id: ID!) {
-                deleteServiceRequest(data: { id: $id }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on DeletedObjectType {
-                        id
-                    }
-                }
-            }
-        """
-        variables = {"id": self.service_request["id"]}
-
-        expected_query_count = 10
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(mutation, variables)
-
-        self.assertIsNotNone(response["data"]["deleteServiceRequest"])
-
-        with self.assertRaises(ServiceRequest.DoesNotExist):
-            ServiceRequest.objects.get(id=self.service_request["id"])

@@ -42,7 +42,6 @@ from .types import (
     CreateNoteDataImportInput,
     CreateNoteInput,
     CreateNoteServiceRequestInput,
-    CreateServiceRequestInput,
     ImportNoteInput,
     InteractionAuthorType,
     NoteDataImportType,
@@ -56,7 +55,6 @@ from .types import (
     ServiceRequestType,
     UpdateNoteInput,
     UpdateNoteLocationInput,
-    UpdateServiceRequestInput,
 )
 
 
@@ -193,34 +191,6 @@ class Mutation:
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated], extensions=[HasPerm(ServiceRequestPermissions.ADD)]
     )
-    def create_service_request(self, info: Info, data: CreateServiceRequestInput) -> ServiceRequestType:
-        with transaction.atomic():
-            user = get_current_user(info)
-            permission_group = get_user_permission_group(user)
-
-            service_request_data = asdict(data)
-            service_request = resolvers.create(
-                info,
-                ServiceRequest,
-                {
-                    **service_request_data,
-                    "created_by": user,
-                },
-            )
-
-            permissions = [
-                ServiceRequestPermissions.VIEW,
-                ServiceRequestPermissions.CHANGE,
-                ServiceRequestPermissions.DELETE,
-            ]
-            for perm in permissions:
-                assign_perm(perm, permission_group.group, service_request)
-
-            return cast(ServiceRequestType, service_request)
-
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(ServiceRequestPermissions.ADD)]
-    )
     def create_note_service_request(self, info: Info, data: CreateNoteServiceRequestInput) -> ServiceRequestType:
         with transaction.atomic(), pghistory.context(
             note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
@@ -283,26 +253,6 @@ class Mutation:
                 note.requested_services.add(service_request)
             else:
                 raise NotImplementedError
-
-            return cast(ServiceRequestType, service_request)
-
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(perms=[ServiceRequestPermissions.CHANGE])]
-    )
-    def update_service_request(self, info: Info, data: UpdateServiceRequestInput) -> ServiceRequestType:
-        with transaction.atomic():
-            service_request_data = asdict(data)
-            service_request = ServiceRequest.objects.get(id=data.id)
-            note_id = service_request.get_note_id()
-
-            with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
-                service_request = resolvers.update(
-                    info,
-                    service_request,
-                    {
-                        **service_request_data,
-                    },
-                )
 
             return cast(ServiceRequestType, service_request)
 

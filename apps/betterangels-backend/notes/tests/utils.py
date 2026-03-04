@@ -3,7 +3,6 @@ from typing import Any, Dict
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
-from test_utils.mixins import HasGraphQLProtocol
 
 
 class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
@@ -221,61 +220,3 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
 
         return self.execute_graphql(mutation, {"id": service_request_id})
-
-
-class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
-    def _create_service_request_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
-        return self._create_or_update_service_request_fixture("create", variables)
-
-    def _update_service_request_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
-        return self._create_or_update_service_request_fixture("update", variables)
-
-    def _create_or_update_service_request_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
-        assert operation in ["create", "update"], "Invalid operation specified."
-
-        mutation: str = f"""
-            mutation {operation.capitalize()}ServiceRequest($data: {operation.capitalize()}ServiceRequestInput!) {{ # noqa: B950
-                {operation}ServiceRequest(data: $data) {{
-                    ... on OperationInfo {{
-                        messages {{
-                            kind
-                            field
-                            message
-                        }}
-                    }}
-                    ... on ServiceRequestType {{
-                        id
-                        service
-                        status
-                        dueBy
-                        completedOn
-                        createdBy {{
-                            id
-                        }}
-                        createdAt
-                    }}
-                }}
-            }}
-        """
-        return self.execute_graphql(mutation, {"data": variables})
-
-
-class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase, ServiceRequestGraphQLUtilMixin):
-    def setUp(self) -> None:
-        super().setUp()
-
-        self.client_profile_1 = baker.make(ClientProfile)
-        self.client_profile_2 = baker.make(ClientProfile)
-        self._setup_service_request()
-
-    def _setup_service_request(self) -> None:
-        # Force login the case manager to create a service_request
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        self.service_request: Dict[str, Any] = self._create_service_request_fixture(
-            {
-                "service": "BLANKET",
-                "status": "TO_DO",
-            },
-        )["data"]["createServiceRequest"]
-        # Logout after setting up the service request
-        self.graphql_client.logout()
