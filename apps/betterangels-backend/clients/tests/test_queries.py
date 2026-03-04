@@ -3,7 +3,6 @@ from typing import Optional
 from unittest.mock import ANY
 
 import time_machine
-from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import (
     AdaAccommodationEnum,
@@ -39,7 +38,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.test import override_settings
 from model_bakery import baker
 from notes.models import Note
-from organizations.models import OrganizationUser
 from unittest_parametrize import parametrize
 
 
@@ -768,104 +766,3 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         actual_doc_ids = [d["id"] for d in response["data"]["clientDocuments"]["results"]]
         self.assertEqual([], actual_doc_ids)
-
-
-class OrganizationMembersSearchFilterTestCase(ClientProfileGraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-
-        self.organization = self.org_1
-
-        self.john_smith = baker.make(
-            User,
-            first_name="John",
-            last_name="Smith",
-            email="john.smith@example.com",
-        )
-        self.john_doe = baker.make(
-            User,
-            first_name="John",
-            last_name="Doe",
-            email="john.doe@example.com",
-        )
-        self.alice_smith = baker.make(
-            User,
-            first_name="Alice",
-            last_name="Smith",
-            email="alice.smith@example.com",
-        )
-
-        baker.make(OrganizationUser, organization=self.organization, user=self.john_smith)
-        baker.make(OrganizationUser, organization=self.organization, user=self.john_doe)
-        baker.make(OrganizationUser, organization=self.organization, user=self.alice_smith)
-
-    def test_organization_members_search_multi_term(self) -> None:
-        query = """
-            query ($organizationId: String!, $search: String) {
-                organizationMembers(
-                    organizationId: $organizationId,
-                    filters: { search: $search }
-                ) {
-                    totalCount
-                    results {
-                        id
-                        firstName
-                        lastName
-                        email
-                    }
-                }
-            }
-        """
-
-        response = self.execute_graphql(
-            query,
-            variables={"organizationId": str(self.organization.id), "search": "jo smi"},
-        )
-
-        results = response["data"]["organizationMembers"]["results"]
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["firstName"], "John")
-        self.assertEqual(results[0]["lastName"], "Smith")
-
-    def test_organization_members_search_last_initial(self) -> None:
-        query = """
-            query ($organizationId: String!, $search: String) {
-                organizationMembers(
-                    organizationId: $organizationId,
-                    filters: { search: $search }
-                ) {
-                    results { firstName lastName }
-                }
-            }
-        """
-
-        response = self.execute_graphql(
-            query,
-            variables={"organizationId": str(self.organization.id), "search": "john s"},
-        )
-
-        results = response["data"]["organizationMembers"]["results"]
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0], {"firstName": "John", "lastName": "Smith"})
-
-    def test_organization_members_search_single_letter_does_not_filter(self) -> None:
-        query = """
-            query ($organizationId: String!, $search: String) {
-                organizationMembers(
-                    organizationId: $organizationId,
-                    filters: { search: $search }
-                ) {
-                    totalCount
-                }
-            }
-        """
-
-        response = self.execute_graphql(
-            query,
-            variables={"organizationId": str(self.organization.id), "search": "s"},
-        )
-
-        total_count = response["data"]["organizationMembers"]["totalCount"]
-        self.assertGreaterEqual(total_count, 3)

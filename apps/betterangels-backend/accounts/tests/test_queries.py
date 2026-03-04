@@ -404,3 +404,96 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
         )
         self.assertEqual(response["data"]["organizationMembers"]["totalCount"], 3)
         self.assertCountEqual(expected_members, actual_members)
+
+    def test_organization_members_search_multi_term(self) -> None:
+        self.graphql_client.force_login(self.org_admin)
+
+        john_user = baker.make(User, first_name="John", last_name="Smith", email="john.smith@example.com")
+        non_match_user = baker.make(User, first_name="Johnny", last_name="Doe", email="johnny.doe@example.com")
+
+        self.org.add_user(john_user)
+        self.org.add_user(non_match_user)
+
+        query = """
+            query ($organizationId: String!, $filters: OrganizationMemberFilter) {
+                organizationMembers(
+                    organizationId: $organizationId,
+                    filters: $filters
+                ) {
+                    totalCount
+                    results {
+                        id
+                        firstName
+                        lastName
+                        email
+                    }
+                }
+            }
+        """
+
+        response = self.execute_graphql(
+            query,
+            variables={
+                "organizationId": str(self.org.pk),
+                "filters": {"search": "jo smi"},
+            },
+        )
+
+        results = response["data"]["organizationMembers"]["results"]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["firstName"], "John")
+        self.assertEqual(results[0]["lastName"], "Smith")
+
+    def test_organization_members_search_last_initial(self) -> None:
+        self.graphql_client.force_login(self.org_admin)
+
+        user = baker.make(User, first_name="John", last_name="Smith", email="johnsmith@example.com")
+        self.org.add_user(user)
+
+        query = """
+            query ($organizationId: String!, $filters: OrganizationMemberFilter) {
+                organizationMembers(
+                    organizationId: $organizationId,
+                    filters: $filters
+                ) {
+                    results { firstName lastName }
+                }
+            }
+        """
+
+        response = self.execute_graphql(
+            query,
+            variables={
+                "organizationId": str(self.org.pk),
+                "filters": {"search": "john s"},
+            },
+        )
+
+        results = response["data"]["organizationMembers"]["results"]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0], {"firstName": "John", "lastName": "Smith"})
+
+    def test_organization_members_search_single_letter_does_not_filter(self) -> None:
+        self.graphql_client.force_login(self.org_admin)
+
+        query = """
+            query ($organizationId: String!, $filters: OrganizationMemberFilter) {
+                organizationMembers(
+                    organizationId: $organizationId,
+                    filters: $filters
+                ) {
+                    totalCount
+                }
+            }
+        """
+
+        response = self.execute_graphql(
+            query,
+            variables={
+                "organizationId": str(self.org.pk),
+                "filters": {"search": "s"},
+            },
+        )
+
+        total_count = response["data"]["organizationMembers"]["totalCount"]
+        self.assertGreaterEqual(total_count, 3)

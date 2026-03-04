@@ -77,15 +77,12 @@ class OrganizationMemberFilter:
         if value is None:
             return queryset, Q()
 
-        raw_terms = [t for t in value.strip().split() if t]
-        has_long = any(len(t) >= 2 for t in raw_terms)
-        terms = raw_terms if has_long else []
-
-        if not terms:
+        search_terms = value.split()
+        if not any(len(term) >= 2 for term in search_terms):
             return queryset, Q()
 
         query = Q()
-        for term in terms:
+        for term in search_terms:
             query &= Q(first_name__icontains=term) | Q(last_name__icontains=term) | Q(email__icontains=term)
 
         return queryset.filter(query), Q()
