@@ -1,7 +1,8 @@
 """Output types for shelter queries and mutations."""
 
 from datetime import datetime
-from typing import List, Optional, cast
+from itertools import chain
+from typing import Any, List, Optional, cast
 
 import strawberry
 import strawberry_django
@@ -10,6 +11,7 @@ from accounts.types import OrganizationType
 from common.graphql.types import PhoneNumberScalar
 from django.db.models import Prefetch, QuerySet
 from shelters import models
+from shelters.enums import BedStatusChoices
 from shelters.selectors import admin_shelter_list, shelter_list
 from shelters.types.lookups import (
     AccessibilityType,
@@ -35,6 +37,13 @@ from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
 from .filters import ShelterFilter, ShelterOrder
+
+
+def _resolve_time_ranges(values: Any) -> Optional[List[Optional["TimeRange"]]]:
+    """Convert model TimeRangeField values to a list of TimeRange output types."""
+    if not values:
+        return None
+    return [TimeRange(start=start, end=end) if start is not None or end is not None else None for start, end in values]
 
 
 @strawberry.type
@@ -131,14 +140,17 @@ class ShelterTypeMixin:
         ],
     )
     def hero_image(self, root: models.Shelter) -> Optional[str]:
-        if self.hero_image:
-            return str(self.hero_image.file.url)
-
         photo = next(
-            (photos[0] for photos in (self._exterior_photos, self._interior_photos) if photos),
+            filter(
+                None,
+                chain(
+                    [getattr(root, "hero_image", None)],
+                    self._exterior_photos or [],
+                    self._interior_photos or [],
+                ),
+            ),
             None,
         )
-
         return str(photo.file.url) if photo else None
 
     @strawberry_django.field
@@ -150,25 +162,11 @@ class ShelterTypeMixin:
 
     @strawberry_django.field(only=["operating_hours"])
     def operating_hours(self, root: models.Shelter) -> Optional[List[Optional[TimeRange]]]:
-        ranges: List[Optional[TimeRange]] = []
-        if root.operating_hours:
-            for start, end in root.operating_hours:
-                if start is not None or end is not None:
-                    ranges.append(TimeRange(start=start, end=end))
-                else:
-                    ranges.append(None)
-        return ranges or None
+        return _resolve_time_ranges(root.operating_hours)
 
     @strawberry_django.field(only=["intake_hours"])
     def intake_hours(self, root: models.Shelter) -> Optional[List[Optional[TimeRange]]]:
-        ranges: List[Optional[TimeRange]] = []
-        if root.intake_hours:
-            for start, end in root.intake_hours:
-                if start is not None or end is not None:
-                    ranges.append(TimeRange(start=start, end=end))
-                else:
-                    ranges.append(None)
-        return ranges or None
+        return _resolve_time_ranges(root.intake_hours)
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
@@ -184,3 +182,10 @@ class AdminShelterType(ShelterTypeMixin):
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
         return admin_shelter_list(queryset, user=user)
+
+
+@strawberry_django.type(models.Bed)
+class BedType:
+    id: ID
+    shelter: "ShelterType"
+    status: Optional[BedStatusChoices]

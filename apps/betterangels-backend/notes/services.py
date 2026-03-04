@@ -71,15 +71,20 @@ def note_update(
     return note
 
 
+@transaction.atomic
 def note_update_location(
     *,
     note: Note,
     location_data: Dict[str, Any],
 ) -> Note:
-    """Resolve a Location and attach it to a Note. Caller is responsible for permission checks."""
+    """Replace a Note's Location. Caller is responsible for permission checks.
+
+    Uses get_or_create so that identical (point, address, poi) triples share
+    a Location row.  When the triple changes the FK points to a different row,
+    which pghistory records for reverts.
+    """
     with pghistory.context(note_id=str(note.id), timestamp=timezone.now(), label="note_update_location"):
-        location = Location.get_or_create_location(location_data)
-        note.location = location
+        note.location = Location.get_or_create_location(location_data)
         note.save(update_fields=["location"])
 
     return note
