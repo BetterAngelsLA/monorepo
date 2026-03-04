@@ -21,7 +21,7 @@ export const WizardProgressBar = memo(
     };
 
     return (
-      <div className="w-[732px] flex flex-col gap-2 px-4 py-6">
+      <div className="w-full flex flex-col gap-1 py-2">
         <div className="flex items-center w-full">
           {steps.map((_, index) => {
             const state = getStepState(index);
@@ -33,7 +33,7 @@ export const WizardProgressBar = memo(
                 className={`flex items-center ${!isLast ? 'flex-1' : ''}`}
               >
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all duration-300"
+                  className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all duration-300"
                   style={{
                     backgroundColor:
                       state === 'completed' ? '#008CEE' : '#ffffff',
@@ -41,7 +41,7 @@ export const WizardProgressBar = memo(
                   }}
                 >
                   {state === 'completed' ? (
-                    <Check size={14} strokeWidth={3} color="#ffffff" />
+                    <Check size={10} strokeWidth={3} color="#ffffff" />
                   ) : null}
                 </div>
 
@@ -68,7 +68,7 @@ export const WizardProgressBar = memo(
           })}
         </div>
 
-        <div className="flex w-full mt-2">
+        <div className="flex w-full">
           {steps.map((step, index) => {
             const state = getStepState(index);
             const isLast = index === steps.length - 1;
@@ -77,7 +77,7 @@ export const WizardProgressBar = memo(
               <div
                 key={index}
                 className={[
-                  'text-sm transition-colors duration-300',
+                  'text-xs transition-colors duration-300',
                   !isLast ? 'flex-1' : '',
                 ].join(' ')}
                 style={{

@@ -7,6 +7,16 @@ import {
 const meta: Meta<WizardProgressBarProps> = {
   component: WizardProgressBar,
   title: 'Wizard/WizardProgressBar',
+  parameters: {
+    layout: 'fullscreen',
+  },
+  decorators: [
+    (Story) => (
+      <div className="p-8 w-[700px]">
+        <Story />
+      </div>
+    ),
+  ],
 };
 export default meta;
 
