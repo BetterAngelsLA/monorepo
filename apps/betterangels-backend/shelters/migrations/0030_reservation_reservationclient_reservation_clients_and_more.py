@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("start_date", models.DateField()),
-                ("duration", models.DurationField()),
+                ("duration", models.PositiveIntegerField(help_text="Duration in days")),
                 ("notes", models.TextField(blank=True, null=True)),
                 ("checked_in_at", models.DateTimeField(blank=True, null=True)),
                 ("checked_out_at", models.DateTimeField(blank=True, null=True)),

@@ -124,7 +124,7 @@ class Reservation(BaseModel):
     bed = models.ForeignKey(Bed, on_delete=models.SET_NULL, blank=True, null=True, related_name="reservations")
     status = TextChoicesField(choices_enum=ReservationStatusChoices, default=ReservationStatusChoices.CONFIRMED)
     start_date = models.DateField()
-    duration = models.DurationField()
+    duration = models.PositiveIntegerField(help_text="Duration in days")
     clients: models.ManyToManyField = models.ManyToManyField(
         "clients.ClientProfile", through="ReservationClient", related_name="reservations"
     )
