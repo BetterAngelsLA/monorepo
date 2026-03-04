@@ -20,8 +20,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
     def test_create_shelter_minimal_fields(self) -> None:
         """Test creating a shelter with only required fields"""
         mutation = """
-            mutation ($input: CreateShelterInput!) {
-                createShelter(input: $input) {
+            mutation ($data: CreateShelterInput!) {
+                createShelter(data: $data) {
                     ... on ShelterType {
                         id
                         name
@@ -33,7 +33,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         """
 
         variables = {
-            "input": {
+            "data": {
                 "name": "Test Shelter",
                 "description": "A test shelter for unit testing",
                 "organization": str(self.org_1.pk),
@@ -76,8 +76,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
     def test_create_shelter_with_optional_fields(self) -> None:
         """Test creating a shelter with optional fields"""
         mutation = """
-            mutation ($input: CreateShelterInput!) {
-                createShelter(input: $input) {
+            mutation ($data: CreateShelterInput!) {
+                createShelter(data: $data) {
                     ... on ShelterType {
                         id
                         name
@@ -96,7 +96,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         """
 
         variables = {
-            "input": {
+            "data": {
                 "name": "Full Featured Shelter",
                 "description": "A shelter with all the bells and whistles",
                 "organization": str(self.org_1.pk),
@@ -150,8 +150,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
     def test_create_shelter_with_many_to_many_fields(self) -> None:
         """Test creating a shelter with many-to-many relationships"""
         mutation = """
-            mutation ($input: CreateShelterInput!) {
-                createShelter(input: $input) {
+            mutation ($data: CreateShelterInput!) {
+                createShelter(data: $data) {
                     ... on ShelterType {
                         id
                         name
@@ -176,7 +176,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         """
 
         variables = {
-            "input": {
+            "data": {
                 "name": "Pet Friendly Shelter",
                 "description": "A shelter that welcomes pets",
                 "organization": str(self.org_1.pk),
@@ -222,8 +222,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
     def test_create_shelter_with_location(self) -> None:
         """Test creating a shelter with location data"""
         mutation = """
-            mutation ($input: CreateShelterInput!) {
-                createShelter(input: $input) {
+            mutation ($data: CreateShelterInput!) {
+                createShelter(data: $data) {
                     ... on ShelterType {
                         id
                         name
@@ -238,7 +238,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         """
 
         variables = {
-            "input": {
+            "data": {
                 "name": "Downtown Shelter",
                 "description": "Located in downtown LA",
                 "organization": str(self.org_1.pk),
@@ -284,8 +284,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
     def test_create_shelter_missing_required_field(self) -> None:
         """Test that creating a shelter without required fields fails"""
         mutation = """
-            mutation ($input: CreateShelterInput!) {
-                createShelter(input: $input) {
+            mutation ($data: CreateShelterInput!) {
+                createShelter(data: $data) {
                     ... on ShelterType {
                         id
                         name
@@ -302,7 +302,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         """
 
         variables = {
-            "input": {
+            "data": {
                 "name": "Incomplete Shelter",
                 "organization": str(self.org_1.pk),
                 # Missing description - should fail
@@ -339,8 +339,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
     def test_create_shelter_with_rating(self) -> None:
         """Test creating a shelter with rating and review"""
         mutation = """
-            mutation ($input: CreateShelterInput!) {
-                createShelter(input: $input) {
+            mutation ($data: CreateShelterInput!) {
+                createShelter(data: $data) {
                     ... on ShelterType {
                         id
                         name
@@ -352,7 +352,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         """
 
         variables = {
-            "input": {
+            "data": {
                 "name": "Reviewed Shelter",
                 "description": "A well-reviewed shelter",
                 "organization": str(self.org_1.pk),
@@ -392,8 +392,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
     def test_create_shelter_persists_to_database(self) -> None:
         """Test that created shelter is actually saved in the database"""
         mutation = """
-            mutation ($input: CreateShelterInput!) {
-                createShelter(input: $input) {
+            mutation ($data: CreateShelterInput!) {
+                createShelter(data: $data) {
                     ... on ShelterType {
                         id
                         name
@@ -403,7 +403,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         """
 
         variables = {
-            "input": {
+            "data": {
                 "name": "Persistent Shelter",
                 "description": "This should be in the database",
                 "organization": str(self.org_1.pk),

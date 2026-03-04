@@ -1,4 +1,3 @@
-import daisyui from 'daisyui';
 import type { Config } from 'tailwindcss';
 import defaultTheme from 'tailwindcss/defaultTheme';
 
@@ -63,10 +62,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [daisyui],
-  daisyui: {
-    themes: false, // disable DaisyUI default themes
-  },
+  plugins: [],
 };
 
 export default config;
