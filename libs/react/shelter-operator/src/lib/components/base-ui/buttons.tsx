@@ -1,5 +1,5 @@
 import { BookCheck, Plus } from 'lucide-react';
-import { ButtonHTMLAttributes, MouseEventHandler, ReactNode } from 'react';
+import { ButtonHTMLAttributes, ReactNode } from 'react';
 
 export type ButtonVariant =
   | 'floating-light'
@@ -66,7 +66,6 @@ export function Button(props: IButtonProps) {
     type = 'button',
     className,
     style,
-    onClick,
     children,
     ...rest
   } = props;
@@ -89,19 +88,8 @@ export function Button(props: IButtonProps) {
     .filter(Boolean)
     .join(' ');
 
-  const handleClick: MouseEventHandler<HTMLButtonElement> = (event) => {
-    if (props.disabled) return;
-    onClick?.(event);
-  };
-
   return (
-    <button
-      type={type}
-      className={buttonCss}
-      onClick={handleClick}
-      {...rest}
-      style={style}
-    >
+    <button type={type} className={buttonCss} {...rest} style={style}>
       {leftIcon && (
         <span className={isIconOnly ? 'flex items-center justify-center' : ''}>
           {leftIcon}

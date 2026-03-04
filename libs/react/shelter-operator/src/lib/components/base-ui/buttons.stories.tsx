@@ -1,13 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { ArrowRight, Pencil, Plus, Trash2 } from 'lucide-react';
-import { ReactNode, useState } from 'react';
-import {
-  MemoryRouter,
-  Route,
-  Routes,
-  useLocation,
-  useNavigate,
-} from 'react-router-dom';
+import { ReactNode } from 'react';
 import { Button, ButtonVariant } from './buttons';
 
 const meta: Meta<typeof Button> = {
@@ -138,52 +131,4 @@ export const Playground: Story = {
     leftIcon: false,
     rightIcon: false,
   },
-};
-
-function ClickHandlerDemo() {
-  const [count, setCount] = useState(0);
-
-  return (
-    <Button
-      variant="floating-light"
-      leftIcon={false}
-      rightIcon={<Plus />}
-      onClick={() => setCount((current) => current + 1)}
-    >
-      Clicked {count}
-    </Button>
-  );
-}
-
-export const ClickHandler: Story = {
-  render: () => <ClickHandlerDemo />,
-};
-
-function NavigateButtonDemo() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  return (
-    <div className="flex flex-col items-center gap-3">
-      <Button
-        variant="floating-light"
-        leftIcon={false}
-        rightIcon={<Plus />}
-        onClick={() => navigate('/operator/dashboard/create')}
-      >
-        Go to Create Shelter
-      </Button>
-      <p className="text-sm text-gray-500">Path: {location.pathname}</p>
-    </div>
-  );
-}
-
-export const NavigateHandler: Story = {
-  render: () => (
-    <MemoryRouter initialEntries={['/operator/dashboard']}>
-      <Routes>
-        <Route path="*" element={<NavigateButtonDemo />} />
-      </Routes>
-    </MemoryRouter>
-  ),
 };
