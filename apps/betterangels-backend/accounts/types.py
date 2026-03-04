@@ -154,6 +154,7 @@ class OrganizationMemberOrdering:
     first_name: auto
     last_login: auto
     last_name: auto
+    date_joined: auto
 
     @strawberry_django.order_field
     def member_role(
@@ -170,6 +171,7 @@ class OrganizationMemberOrdering:
 class OrganizationMemberType(UserBaseType):
     id: ID
     last_login: auto
+    date_joined: auto
 
     @strawberry_django.field
     def member_role(self, info: Info) -> OrgRoleEnum:

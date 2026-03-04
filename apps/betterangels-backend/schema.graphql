@@ -1547,6 +1547,7 @@ input OrganizationMemberOrdering {
   firstName: Ordering
   lastLogin: Ordering
   lastName: Ordering
+  dateJoined: Ordering
   memberRole: Ordering
 }
 
@@ -1557,6 +1558,7 @@ type OrganizationMemberType {
   email: NonBlankString
   id: ID!
   lastLogin: DateTime
+  dateJoined: DateTime!
   memberRole: OrgRoleEnum!
 }
 
