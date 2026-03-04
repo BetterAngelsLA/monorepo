@@ -1,7 +1,7 @@
 import { TClientProfile } from '../../../../Client/ClientProfile/types';
-import { TProfileFormStateHmis } from './types';
+import { THmisProfileFormState } from './types';
 
-export const defaultFormState: TProfileFormStateHmis = {
+export const defaultFormState: THmisProfileFormState = {
   hmisId: '',
   agency: undefined,
 };
@@ -11,7 +11,7 @@ type TProps = {
   relationId?: string;
 };
 
-export function toFormState(props: TProps): TProfileFormStateHmis {
+export function toFormState(props: TProps): THmisProfileFormState {
   const { clientProfile, relationId } = props;
 
   if (!relationId) {

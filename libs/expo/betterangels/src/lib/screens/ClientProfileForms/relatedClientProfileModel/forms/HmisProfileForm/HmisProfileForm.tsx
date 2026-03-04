@@ -19,7 +19,7 @@ import {
   ClientProfileSectionEnum,
   getViewClientProfileRoute,
 } from '../../../../../screenRouting';
-import { enumDisplayAgencyHmis } from '../../../../../static';
+import { enumDisplayHmisAgency } from '../../../../../static';
 import { TClientProfile } from '../../../../Client/ClientProfile/types';
 import { GetClientProfileDocument } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
 import { HmisProfileDeleteBtn } from '../HmisProfileDeleteBtn';
@@ -30,7 +30,7 @@ import {
   UpdateHmisProfileMutation,
 } from './__generated__/hmisProfile.generated';
 import { defaultFormState, toFormState } from './toFormState';
-import { TProfileFormStateHmis } from './types';
+import { THmisProfileFormState } from './types';
 
 type TProps = {
   clientProfile?: TClientProfile;
@@ -54,7 +54,7 @@ export function HmisProfileForm(props: TProps) {
     setError,
     setValue,
     clearErrors,
-  } = useForm<TProfileFormStateHmis>({
+  } = useForm<THmisProfileFormState>({
     defaultValues: defaultFormState,
   });
 
@@ -75,14 +75,14 @@ export function HmisProfileForm(props: TProps) {
 
   const isEditMode = !!relationId;
 
-  const onSubmit: SubmitHandler<TProfileFormStateHmis> = async (
+  const onSubmit: SubmitHandler<THmisProfileFormState> = async (
     formState: any
   ) => {
     if (!formIsValid) {
       return;
     }
 
-    const validFormState = formState as Required<TProfileFormStateHmis>;
+    const validFormState = formState as Required<THmisProfileFormState>;
 
     try {
       setIsLoading(true);
@@ -195,7 +195,7 @@ export function HmisProfileForm(props: TProps) {
                 disabled={isLoading}
                 label="Type of HMIS ID"
                 placeholder="Select type of HMIS ID"
-                items={Object.entries(enumDisplayAgencyHmis).map(
+                items={Object.entries(enumDisplayHmisAgency).map(
                   ([value, displayValue]) => ({ value, displayValue })
                 )}
                 selectedValue={field.value}

@@ -16,7 +16,7 @@ type TProps = {
   style?: ViewStyle;
 };
 
-export function ProfilesViewHmis(props: TProps) {
+export function HmisProfilesView(props: TProps) {
   const { clientProfile, style } = props;
 
   const router = useRouter();

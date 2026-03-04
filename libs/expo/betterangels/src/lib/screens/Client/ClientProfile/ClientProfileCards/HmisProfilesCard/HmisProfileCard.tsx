@@ -1,5 +1,5 @@
 import { View, ViewStyle } from 'react-native';
-import { enumDisplayAgencyHmis } from '../../../../../static';
+import { enumDisplayHmisAgency } from '../../../../../static';
 import {
   ClientProfileCard,
   TClientProfileCardItem,
@@ -30,7 +30,7 @@ export function HmisProfileCard(props: TProps) {
   return (
     <View style={style}>
       <ClientProfileCard
-        title={enumDisplayAgencyHmis[agency]}
+        title={enumDisplayHmisAgency[agency]}
         items={content}
         compact
       />

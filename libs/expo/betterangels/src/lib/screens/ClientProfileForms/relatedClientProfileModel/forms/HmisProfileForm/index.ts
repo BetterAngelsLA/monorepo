@@ -1,1 +1,1 @@
-export { ProfileFormHmis } from './HmisProfileForm';
+export { HmisProfileForm } from './HmisProfileForm';

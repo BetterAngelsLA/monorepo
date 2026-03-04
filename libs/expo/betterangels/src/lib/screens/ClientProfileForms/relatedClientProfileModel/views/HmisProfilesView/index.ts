@@ -1,0 +1,1 @@
+export { HmisProfilesView } from './HmisProfilesView';

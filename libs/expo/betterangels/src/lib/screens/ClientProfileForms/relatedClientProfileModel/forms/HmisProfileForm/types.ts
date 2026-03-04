@@ -1,6 +1,6 @@
 import { HmisAgencyEnum } from '../../../../../apollo';
 
-export type TProfileFormStateHmis = {
+export type THmisProfileFormState = {
   hmisId: string;
   agency?: HmisAgencyEnum;
 };

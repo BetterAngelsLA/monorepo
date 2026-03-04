@@ -49,7 +49,7 @@ export const enumDisplayLivingSituation: {
   [LivingSituationEnum.Other]: 'Other',
 };
 
-export const enumDisplayAgencyHmis: {
+export const enumDisplayHmisAgency: {
   [key in HmisAgencyEnum]: string;
 } = {
   [HmisAgencyEnum.Lahsa]: 'LAHSA',
