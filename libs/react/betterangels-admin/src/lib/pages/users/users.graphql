@@ -17,6 +17,7 @@ query OrganizationMembers(
       lastName
       memberRole
       middleName
+      dateJoined
     }
   }
 }
