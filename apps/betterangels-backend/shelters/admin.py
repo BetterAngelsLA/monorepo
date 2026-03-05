@@ -74,6 +74,7 @@ from .models import (
     Pet,
     Room,
     RoomStyle,
+    Schedule,
     Shelter,
     ShelterProgram,
     ShelterType,
@@ -339,6 +340,43 @@ class VideoInline(admin.TabularInline):
     max_num = 0
 
 
+class ScheduleForm(forms.ModelForm):
+    class Meta:
+        model = Schedule
+        fields = "__all__"
+        widgets = {
+            "open_time": forms.TimeInput(attrs={"type": "time"}),
+            "close_time": forms.TimeInput(attrs={"type": "time"}),
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
+        }
+
+
+class ScheduleInline(admin.StackedInline):
+    model = Schedule
+    form = ScheduleForm
+    extra = 0
+    ordering = ["schedule_type", "day", "open_time"]
+    verbose_name = "Schedule Entry"
+    verbose_name_plural = "Schedule"
+    inline_key = "schedule"
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": ("schedule_type", "day", ("open_time", "close_time"), "is_closed"),
+            },
+        ),
+        (
+            "Advanced Options",
+            {
+                "classes": ("collapse",),
+                "fields": (("start_date", "end_date"), "condition", "demographic", "is_exception"),
+            },
+        ),
+    )
+
+
 class ShelterResource(resources.ModelResource):
 
     organization = Field(
@@ -597,7 +635,7 @@ class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
     list_select_related = ("organization",)
 
-    inlines = [ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
+    inlines = [ContactInfoInline, ScheduleInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
     fieldsets = (
         (
             "Basic Information",
