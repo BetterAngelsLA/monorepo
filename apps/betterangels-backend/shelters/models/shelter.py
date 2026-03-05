@@ -304,4 +304,3 @@ def get_fields_with_other_option() -> list[str]:
     Uses @cache decorator for lazy evaluation and automatic caching without manual state.
     """
     return _get_fields_with_other_option()
-    return _get_fields_with_other_option()
