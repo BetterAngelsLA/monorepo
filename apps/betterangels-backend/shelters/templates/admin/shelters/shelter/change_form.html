@@ -160,7 +160,7 @@
             var pfx = prefix + '-' + idx;
 
             var deleteEl = document.getElementById('id_' + pfx + '-DELETE');
-            if (deleteEl && deleteEl.checked) return '\u2014 Deleted';
+            if (deleteEl && deleteEl.checked) return document.createTextNode('\u2014 Deleted');
 
             var typeEl = document.getElementById('id_' + pfx + '-schedule_type');
             var dayEl = document.getElementById('id_' + pfx + '-day');
@@ -174,7 +174,7 @@
             var demoEl = document.getElementById('id_' + pfx + '-demographic');
 
             var schedType = typeEl ? typeEl.value : '';
-            if (!schedType) return 'New schedule entry';
+            if (!schedType) return document.createTextNode('New schedule entry');
 
             var day = dayEl ? dayEl.value : '';
             var dayLabel = day ? (dayEl.options[dayEl.selectedIndex].text) : 'Every day';
@@ -206,11 +206,21 @@
                 tags.push((startVal || '?') + ' \u2013 ' + (endVal || '?'));
             }
 
-            // Title: "Monday: 9:00 AM – 5:00 PM" (type shown in group header above)
-            var title = dayLabel;
-            if (hours) title += ': ' + hours;
-            if (tags.length) title += ' <span class="schedule-tag">' + tags.join(' \u00b7 ') + '</span>';
-            return title;
+            // Build DOM: "Monday: 9:00 AM – 5:00 PM" with styled tag spans
+            var container = document.createElement('span');
+            container.appendChild(document.createTextNode(dayLabel));
+            if (hours) container.appendChild(document.createTextNode(': ' + hours));
+            if (tags.length) {
+                container.appendChild(document.createTextNode(' '));
+                for (var t = 0; t < tags.length; t++) {
+                    var tagSpan = document.createElement('span');
+                    tagSpan.className = 'schedule-tag';
+                    tagSpan.textContent = tags[t];
+                    container.appendChild(tagSpan);
+                    if (t < tags.length - 1) container.appendChild(document.createTextNode(' \u00b7 '));
+                }
+            }
+            return container;
         }
 
         function insertTypeDividers() {
@@ -254,7 +264,8 @@
                     label.className = 'inline_label';
                     h3.insertBefore(label, h3.firstChild);
                 }
-                label.innerHTML = buildTitle(formDiv);
+                while (label.firstChild) label.removeChild(label.firstChild);
+                label.appendChild(buildTitle(formDiv));
             }
             insertTypeDividers();
         }
