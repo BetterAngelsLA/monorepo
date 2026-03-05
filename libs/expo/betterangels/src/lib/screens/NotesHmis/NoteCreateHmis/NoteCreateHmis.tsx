@@ -1,5 +1,6 @@
 import { CombinedGraphQLErrors } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
+import { useApolloClient } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
@@ -11,6 +12,7 @@ import {
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
 import { ClientViewTabEnum } from '../../Client/ClientTabs';
+import { InteractionListHmisDocument } from '../../../ui-components/InteractionListHmis/__generated__/interactionListHmis.generated';
 import {
   NoteFormHmis,
   NoteFormSchemaHmis,
@@ -39,6 +41,7 @@ export function NoteCreateHmis(props: TProps) {
   const { clientId } = props;
 
   const router = useRouter();
+  const apolloClient = useApolloClient();
   const { showSnackbar } = useSnackbar();
   const [createHmisNote] = useMutation(CreateNoteHmisDocument);
   const [updateHmisNoteLocation] = useMutation(UpdateNoteLocationHmisDocument);
@@ -194,6 +197,10 @@ export function NoteCreateHmis(props: TProps) {
         ServiceRequestTypeEnum.Requested,
         draftServices[ServiceRequestTypeEnum.Requested]
       );
+
+      await apolloClient.refetchQueries({
+        include: [InteractionListHmisDocument],
+      });
 
       // 5. Success - Redirect
       router.replace(
