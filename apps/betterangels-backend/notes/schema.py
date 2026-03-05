@@ -167,7 +167,11 @@ class Mutation:
     )
 
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(ServiceRequestPermissions.ADD)]
+        permission_classes=[IsAuthenticated],
+        extensions=[
+            HasPerm(ServiceRequestPermissions.ADD),
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
+        ],
     )
     def create_note_service_request(self, info: Info, data: CreateNoteServiceRequestInput) -> ServiceRequestType:
         user = cast(User, get_current_user(info))
@@ -193,7 +197,10 @@ class Mutation:
 
         return cast(ServiceRequestType, service_requests[0])
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[PermissionedQuerySet(model=ServiceRequest, perms=[ServiceRequestPermissions.DELETE])],
+    )
     def delete_service_request(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         """
         NOTE: this function will need to change once ServiceRequests are able to be associated with zero or more than one Note
