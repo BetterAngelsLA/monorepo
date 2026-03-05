@@ -214,7 +214,7 @@ describe('getQueryPolicyFactory', () => {
   it('derives keyFields from itemIdPath when entityIdFields is not provided', async () => {
     type NotesQuery = {
       notes: {
-        results: Array<{ __typename: 'ProgramNote'; noteId: string }>;
+        results: Array<{ __typename: 'HmisNote'; noteId: string }>;
       };
     };
     type NotesVars = {
@@ -223,7 +223,7 @@ describe('getQueryPolicyFactory', () => {
 
     const conf = getQueryPolicyFactory<NotesQuery, NotesVars>({
       key: 'notes',
-      entityTypename: 'ProgramNote',
+      entityTypename: 'HmisNote',
       cacheKeyVariables: [] as const,
       itemIdPath: ['noteId'],
     });

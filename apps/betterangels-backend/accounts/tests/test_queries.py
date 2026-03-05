@@ -189,6 +189,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     UserOrganizationPermissions.ADD_ORG_MEMBER.name,
                     UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
                     UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
+                    UserOrganizationPermissions.VIEW_REPORTS.name,
                 ],
             ),
             (
@@ -199,6 +200,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
                     UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
                     UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
+                    UserOrganizationPermissions.VIEW_REPORTS.name,
                 ],
             ),
         ],
@@ -408,6 +410,63 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
         )
         self.assertEqual(response["data"]["organizationMembers"]["totalCount"], 3)
         self.assertCountEqual(expected_members, actual_members)
+
+    @parametrize(
+        "search_term, expected_match, expected_min_total_count",
+        [
+            ("jo smi", ("John", "Smith"), None),
+            ("john s", ("John", "Smith"), None),
+            ("s", None, 3),
+        ],
+    )
+    def test_organization_members_search(
+        self,
+        search_term: str,
+        expected_match: tuple[str, str] | None,
+        expected_min_total_count: int | None,
+    ) -> None:
+        self.graphql_client.force_login(self.org_admin)
+
+        john_user = baker.make(User, first_name="John", last_name="Smith", email="john.smith@example.com")
+        non_match_user = baker.make(User, first_name="Johnny", last_name="Doe", email="johnny.doe@example.com")
+
+        self.org.add_user(john_user)
+        self.org.add_user(non_match_user)
+
+        query = """
+            query ($organizationId: String!, $filters: OrganizationMemberFilter) {
+                organizationMembers(
+                    organizationId: $organizationId,
+                    filters: $filters
+                ) {
+                    totalCount
+                    results {
+                        firstName
+                        lastName
+                        dateJoined
+                    }
+                }
+            }
+        """
+
+        response = self.execute_graphql(
+            query,
+            variables={
+                "organizationId": str(self.org.pk),
+                "filters": {"search": search_term},
+            },
+        )
+
+        members = response["data"]["organizationMembers"]
+        if expected_match is None:
+            self.assertIsNotNone(expected_min_total_count)
+            self.assertGreaterEqual(members["totalCount"], expected_min_total_count)
+            return
+
+        results = members["results"]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["firstName"], expected_match[0])
+        self.assertEqual(results[0]["lastName"], expected_match[1])
         self.assertTrue(
             all(member["dateJoined"] is not None for member in response["data"]["organizationMembers"]["results"])
         )

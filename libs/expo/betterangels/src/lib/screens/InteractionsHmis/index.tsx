@@ -3,7 +3,7 @@ import { SearchBar } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { HmisNoteType, toHmisNoteFilter } from '../../apollo';
+import { HmisNoteType, toNoteFilterHmis } from '../../apollo';
 import useUser from '../../hooks/user/useUser';
 import { TUser } from '../../providers/user/UserContext';
 import {
@@ -11,7 +11,7 @@ import {
   HorizontalContainer,
   InteractionListHmis,
   ModelFilters,
-  ProgramNoteCard,
+  NoteCardHmis,
   TModelFilters,
   toModelFilterValues,
 } from '../../ui-components';
@@ -46,7 +46,7 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
 
   const renderInteractionItem = useCallback(
     (item: HmisNoteType) => (
-      <ProgramNoteCard
+      <NoteCardHmis
         onPress={() => {
           router.navigate({
             pathname: `/notes-hmis/${item.id}`,
@@ -60,7 +60,7 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
     []
   );
 
-  const serverFilters = toHmisNoteFilter({
+  const serverFilters = toNoteFilterHmis({
     search,
     ...toModelFilterValues(currentFilters),
   });

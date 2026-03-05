@@ -16,7 +16,7 @@ import dayjs from 'dayjs';
 import { useState } from 'react';
 import { ChartCard } from '../../components';
 import { useCSVDownload } from '../../hooks';
-import { useApiConfig, useUser } from '../../providers';
+import { useActiveOrg, useApiConfig } from '../../providers';
 import { ReportSummaryDocument } from './__generated__/reports.generated';
 
 const { RangePicker } = DatePicker;
@@ -44,7 +44,7 @@ const CHART_COLORS = {
 
 export default function Reports({ className = '' }: IProps) {
   const { fetchClient } = useApiConfig();
-  const { user } = useUser();
+  const { activeOrg } = useActiveOrg();
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>(getDefaultRange);
   const { download, isDownloading, error, clearError } =
     useCSVDownload(fetchClient);
@@ -54,11 +54,16 @@ export default function Reports({ className = '' }: IProps) {
   const endStr = formatDate(endDate);
 
   const { data, loading } = useQuery(ReportSummaryDocument, {
-    variables: { startDate: startStr, endDate: endStr },
+    variables: {
+      organizationId: activeOrg?.id,
+      startDate: startStr,
+      endDate: endStr,
+    },
+    skip: !activeOrg,
   });
   const summary = data?.reportSummary ?? null;
 
-  const orgName = user?.organizations?.[0]?.name ?? 'Your Organization';
+  const orgName = activeOrg?.name ?? 'Your Organization';
 
   const handleRangeChange = (dates: [Dayjs | null, Dayjs | null] | null) => {
     if (dates?.[0] && dates?.[1]) {
@@ -67,7 +72,7 @@ export default function Reports({ className = '' }: IProps) {
     }
   };
 
-  const handleDownload = () => download(startStr, endStr);
+  const handleDownload = () => download(startStr, endStr, activeOrg?.id);
 
   const totalServices =
     summary?.topProvidedServices.reduce((s, x) => s + x.count, 0) ?? 0;

@@ -3,7 +3,6 @@ from typing import List, Optional, Tuple
 import strawberry
 import strawberry_django
 from accounts.enums import OrgRoleEnum
-from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
@@ -15,8 +14,6 @@ from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
 from .models import User
-
-ADMIN_PORTAL_PERMISSION_GROUPS = [GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER]
 
 
 @strawberry.input
@@ -64,6 +61,29 @@ class OrganizationFilter:
         return (queryset.filter(query), Q())
 
 
+@strawberry_django.filter_type(User)
+class OrganizationMemberFilter:
+    @strawberry_django.filter_field
+    def search(
+        self,
+        queryset: QuerySet[User],
+        info: Info,
+        value: Optional[str],
+        prefix: str,
+    ) -> Tuple[QuerySet[User], Q]:
+
+        if value is None or len(value.strip()) < 2:
+            return queryset, Q()
+
+        search_terms = value.split()
+
+        query = Q()
+        for term in search_terms:
+            query &= Q(first_name__icontains=term) | Q(last_name__icontains=term) | Q(email__icontains=term)
+
+        return queryset.filter(query), Q()
+
+
 @strawberry_django.type(Organization, ordering=OrganizationOrder, filters=OrganizationFilter)
 class OrganizationType:
     id: ID
@@ -92,7 +112,6 @@ class CurrentUserOrganizationType(OrganizationType):
                 ),
                 filter=Q(
                     permission_groups__group__user=user,
-                    permission_groups__template__name__in=ADMIN_PORTAL_PERMISSION_GROUPS,
                 ),
                 distinct=True,
             )
@@ -171,7 +190,12 @@ class OrganizationMemberOrdering:
         return queryset, [value.resolve(f"{prefix}_member_role")]
 
 
-@strawberry_django.type(User, pagination=True, ordering=OrganizationMemberOrdering)
+@strawberry_django.type(
+    User,
+    pagination=True,
+    ordering=OrganizationMemberOrdering,
+    filters=OrganizationMemberFilter,
+)
 class OrganizationMemberType(UserBaseType):
     id: ID
     last_login: auto
