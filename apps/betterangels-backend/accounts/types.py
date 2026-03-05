@@ -3,7 +3,6 @@ from typing import List, Optional, Tuple
 import strawberry
 import strawberry_django
 from accounts.enums import OrgRoleEnum
-from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
@@ -15,8 +14,6 @@ from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
 from .models import User
-
-ADMIN_PORTAL_PERMISSION_GROUPS = [GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER]
 
 
 @strawberry.input
@@ -115,7 +112,6 @@ class CurrentUserOrganizationType(OrganizationType):
                 ),
                 filter=Q(
                     permission_groups__group__user=user,
-                    permission_groups__template__name__in=ADMIN_PORTAL_PERMISSION_GROUPS,
                 ),
                 distinct=True,
             )
