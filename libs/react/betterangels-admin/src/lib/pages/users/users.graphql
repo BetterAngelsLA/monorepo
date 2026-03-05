@@ -2,11 +2,13 @@ query OrganizationMembers(
   $organizationId: String!
   $ordering: [OrganizationMemberOrdering!]! = []
   $pagination: OffsetPaginationInput
+  $filters: OrganizationMemberFilter
 ) {
   organizationMembers(
     organizationId: $organizationId
     pagination: $pagination
     ordering: $ordering
+    filters: $filters
   ) {
     totalCount
     results {
