@@ -49,11 +49,11 @@ export * from './InfiniteList';
 export * from './Input';
 export { default as KeyboardAwareScrollView } from './KeyboardAwareScrollView';
 export {
-  Length,
-  TLengthUnit,
   feetInchesToInches,
   getFormattedLength,
   inchesToFeetInches,
+  Length,
+  TLengthUnit,
 } from './Length';
 export * from './LengthInput';
 export { default as Loading } from './Loading';
