@@ -5,7 +5,6 @@ import {
   TRenderListResultsHeader,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useFocusEffect } from '@react-navigation/native';
 import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
@@ -71,12 +70,6 @@ export function InteractionListHmis(props: TProps) {
   const renderItemFn = useCallback(
     (item: HmisNoteType) => renderItem(item),
     [renderItem]
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      reload();
-    }, [reload])
   );
 
   if (error) {

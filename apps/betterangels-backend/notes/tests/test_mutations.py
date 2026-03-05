@@ -66,7 +66,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 18
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -106,7 +106,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 10
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -127,6 +127,149 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "team": None,
         }
         self.assertEqual(updated_note, expected_note)
+
+    def test_update_note_with_nested_relations_mutation(self) -> None:
+        """Test that updateNote can create nested services and tasks via replace-all semantics."""
+        bag_svc = OrganizationService.objects.get(label="Bag(s)")
+
+        variables = {
+            "id": self.note["id"],
+            "providedServices": [{"serviceId": str(bag_svc.pk)}],
+            "requestedServices": [{"serviceOther": "custom requested svc"}],
+            "tasks": [{"summary": "Follow up call"}],
+        }
+
+        response = self._update_note_fixture(variables)
+        updated_note = response["data"]["updateNote"]
+
+        self.assertEqual(len(updated_note["providedServices"]), 1)
+        self.assertEqual(updated_note["providedServices"][0]["service"]["label"], "Bag(s)")
+        self.assertEqual(len(updated_note["requestedServices"]), 1)
+        self.assertEqual(updated_note["requestedServices"][0]["service"]["label"], "custom requested svc")
+        self.assertEqual(len(updated_note["tasks"]), 1)
+        self.assertEqual(updated_note["tasks"][0]["summary"], "Follow up call")
+
+        # Verify DB state
+        note = Note.objects.get(id=self.note["id"])
+        self.assertEqual(note.provided_services.count(), 1)
+        self.assertEqual(note.requested_services.count(), 1)
+        self.assertEqual(note.tasks.count(), 1)
+
+    def test_update_note_replaces_nested_relations(self) -> None:
+        """Test that sending nested relations replaces existing ones (delete old + create new)."""
+        bag_svc = OrganizationService.objects.get(label="Bag(s)")
+        blanket_svc = OrganizationService.objects.get(label="Blanket")
+
+        # First update: add a provided service and a task
+        self._update_note_fixture(
+            {
+                "id": self.note["id"],
+                "providedServices": [{"serviceId": str(bag_svc.pk)}],
+                "tasks": [{"summary": "Old task"}],
+            }
+        )
+        note = Note.objects.get(id=self.note["id"])
+        self.assertEqual(note.provided_services.count(), 1)
+        self.assertEqual(note.tasks.count(), 1)
+        old_service = note.provided_services.first()
+        assert old_service is not None
+        old_service_id = old_service.pk
+
+        # Second update: replace with different service and task
+        response = self._update_note_fixture(
+            {
+                "id": self.note["id"],
+                "providedServices": [{"serviceId": str(blanket_svc.pk)}],
+                "tasks": [{"summary": "New task A"}, {"summary": "New task B"}],
+            }
+        )
+        updated_note = response["data"]["updateNote"]
+
+        # New items replaced old ones
+        self.assertEqual(len(updated_note["providedServices"]), 1)
+        self.assertEqual(updated_note["providedServices"][0]["service"]["label"], "Blanket")
+        self.assertEqual(len(updated_note["tasks"]), 2)
+
+        note.refresh_from_db()
+        self.assertEqual(note.provided_services.count(), 1)
+        self.assertEqual(note.tasks.count(), 2)
+
+        # Old items were deleted
+        self.assertFalse(ServiceRequest.objects.filter(pk=old_service_id).exists())
+        new_service = note.provided_services.first()
+        assert new_service is not None
+        self.assertNotEqual(new_service.pk, old_service_id)
+
+    def test_update_note_empty_list_clears_relations(self) -> None:
+        """Test that sending an empty list removes all existing nested relations."""
+        bag_svc = OrganizationService.objects.get(label="Bag(s)")
+
+        # First: add services and tasks
+        self._update_note_fixture(
+            {
+                "id": self.note["id"],
+                "providedServices": [{"serviceId": str(bag_svc.pk)}],
+                "requestedServices": [{"serviceOther": "something"}],
+                "tasks": [{"summary": "Some task"}],
+            }
+        )
+        note = Note.objects.get(id=self.note["id"])
+        self.assertEqual(note.provided_services.count(), 1)
+        self.assertEqual(note.requested_services.count(), 1)
+        self.assertEqual(note.tasks.count(), 1)
+
+        # Second: send empty lists to clear them
+        response = self._update_note_fixture(
+            {
+                "id": self.note["id"],
+                "providedServices": [],
+                "requestedServices": [],
+                "tasks": [],
+            }
+        )
+        updated_note = response["data"]["updateNote"]
+
+        self.assertEqual(updated_note["providedServices"], [])
+        self.assertEqual(updated_note["requestedServices"], [])
+        self.assertEqual(updated_note["tasks"], [])
+
+        note.refresh_from_db()
+        self.assertEqual(note.provided_services.count(), 0)
+        self.assertEqual(note.requested_services.count(), 0)
+        self.assertEqual(note.tasks.count(), 0)
+
+    def test_update_note_omitted_relations_unchanged(self) -> None:
+        """Test that omitting nested relations (UNSET) leaves existing ones untouched."""
+        bag_svc = OrganizationService.objects.get(label="Bag(s)")
+
+        # First: add a provided service
+        self._update_note_fixture(
+            {
+                "id": self.note["id"],
+                "providedServices": [{"serviceId": str(bag_svc.pk)}],
+                "tasks": [{"summary": "Existing task"}],
+            }
+        )
+        note = Note.objects.get(id=self.note["id"])
+        self.assertEqual(note.provided_services.count(), 1)
+        self.assertEqual(note.tasks.count(), 1)
+
+        # Second: update only a scalar field — relations should be untouched
+        response = self._update_note_fixture(
+            {
+                "id": self.note["id"],
+                "purpose": "Changed purpose only",
+            }
+        )
+        updated_note = response["data"]["updateNote"]
+
+        self.assertEqual(updated_note["purpose"], "Changed purpose only")
+        self.assertEqual(len(updated_note["providedServices"]), 1)
+        self.assertEqual(len(updated_note["tasks"]), 1)
+
+        note.refresh_from_db()
+        self.assertEqual(note.provided_services.count(), 1)
+        self.assertEqual(note.tasks.count(), 1)
 
     def test_update_note_location_mutation(self) -> None:
         note_id = self.note["id"]

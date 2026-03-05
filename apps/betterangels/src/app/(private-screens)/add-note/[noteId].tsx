@@ -1,8 +1,9 @@
-import { useMutation, useQuery } from '@apollo/client/react';
+import { useApolloClient, useMutation, useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   CreateNoteDocument,
   DeleteNoteDocument,
+  InteractionsDocument,
   NOTE_FORM_EMPTY_STATE,
   NoteForm,
   NoteFormSchema,
@@ -25,6 +26,7 @@ import { useForm } from 'react-hook-form';
 
 export default function AddNote() {
   const router = useRouter();
+  const apolloClient = useApolloClient();
   const { user } = useUser();
   const { showSnackbar } = useSnackbar();
   const { noteId, arrivedFrom, isEditing, clientProfileId, team } =
@@ -164,6 +166,9 @@ export default function AddNote() {
         if (!result.data?.createNote || !('id' in result.data.createNote)) {
           throw new Error('Failed to create interaction');
         }
+        await apolloClient.refetchQueries({
+          include: [InteractionsDocument],
+        });
       } else {
         const result = await updateNote({
           variables: { data: { id: noteId, ...payload } },

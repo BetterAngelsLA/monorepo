@@ -5,7 +5,6 @@ import {
   TRenderListResultsHeader,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useFocusEffect } from '@react-navigation/native';
 import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { InputMaybe, NoteFilter, NoteOrder, NoteType } from '../../apollo';
@@ -70,12 +69,6 @@ export function InteractionList(props: TProps) {
   const renderItemFn = useCallback(
     (item: NoteType) => renderItem(item),
     [renderItem]
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      reload();
-    }, [reload])
   );
 
   if (error) {
