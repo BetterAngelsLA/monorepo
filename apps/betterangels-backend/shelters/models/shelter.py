@@ -2,7 +2,7 @@
 
 import datetime
 from functools import cache
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import pghistory
 from common.models import BaseModel
@@ -13,10 +13,6 @@ from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
 from django.db import models
-
-if TYPE_CHECKING:
-    from shelters.enums import ScheduleTypeChoices
-
 from django.db.models import UniqueConstraint
 from django_choices_field import TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
@@ -29,10 +25,12 @@ from shelters.enums import (
     BedStatusChoices,
     RoomStatusChoices,
     RoomStyleChoices,
+    ScheduleTypeChoices,
     StatusChoices,
 )
 from shelters.managers import AdminShelterManager, ShelterManager
 from shelters.permissions import ShelterFieldPermissions
+from shelters.selectors import shelters_open_at
 from shelters.widgets import TimeRangeField
 
 from .lookups import (
@@ -171,15 +169,12 @@ class Shelter(BaseModel):
 
     def is_open_at(
         self,
-        dt: "datetime.datetime",
-        schedule_type: "ScheduleTypeChoices | None" = None,
+        dt: datetime.datetime,
+        schedule_type: ScheduleTypeChoices | None = None,
     ) -> bool:
         """Return whether this shelter is open at *dt* per its schedule."""
-        from shelters.enums import ScheduleTypeChoices as _STC
-        from shelters.selectors import shelters_open_at
-
         if schedule_type is None:
-            schedule_type = _STC.OPERATING
+            schedule_type = ScheduleTypeChoices.OPERATING
         return shelters_open_at(
             type(self).objects.filter(pk=self.pk),
             dt=dt,
