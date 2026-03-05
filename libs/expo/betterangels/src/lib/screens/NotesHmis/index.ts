@@ -1,3 +1,3 @@
-export * from './HmisProgramNoteCreate';
-export { HmisProgramNoteView } from './HmisProgramNoteView';
-export * from './HmisProgramNoteEdit';
+export * from './NoteCreateHmis';
+export * from './NoteEditHmis';
+export { NoteViewHmis } from './NoteViewHmis';

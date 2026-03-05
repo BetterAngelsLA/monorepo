@@ -4,9 +4,9 @@ import {
   getQueryPolicyFactory,
 } from '@monorepo/apollo';
 import {
-  HmisClientProfilesQuery,
-  HmisClientProfilesQueryVariables,
-} from '../../ui-components/ClientProfileList/__generated__/HmisListClients.generated';
+  ClientProfilesHmisQuery,
+  ClientProfilesHmisQueryVariables,
+} from '../../ui-components/ClientProfileList/__generated__/ListClientsHmis.generated';
 import {
   FilterClientProfilesQuery,
   FilterClientProfilesQueryVariables,
@@ -73,8 +73,8 @@ const policyFactoryList = [
     cacheKeyVariables: ['filters', 'ordering'] as const,
   }),
   getQueryPolicyFactory<
-    HmisClientProfilesQuery,
-    HmisClientProfilesQueryVariables
+    ClientProfilesHmisQuery,
+    ClientProfilesHmisQueryVariables
   >({
     key: 'hmisClientProfiles',
     entityTypename: 'HmisClientProfileType',
