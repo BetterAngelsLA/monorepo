@@ -49,17 +49,24 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_update_note_mutation(self) -> None:
+        json_address_input, _ = self._get_address_inputs()
+        location_input = {
+            "address": json_address_input,
+            "point": self.point,
+            "pointOfInterest": self.point_of_interest,
+        }
         variables = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
+            "location": location_input,
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 9
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -69,7 +76,17 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "purpose": "Updated note purpose",
             "tasks": [],
             "team": SelahTeamEnum.WDI_ON_SITE.name,
-            "location": None,
+            "location": {
+                "id": ANY,
+                "address": {
+                    "street": self.address.street,
+                    "city": self.address.city,
+                    "state": self.address.state,
+                    "zipCode": self.address.zip_code,
+                },
+                "point": self.point,
+                "pointOfInterest": self.point_of_interest,
+            },
             "providedServices": [],
             "requestedServices": [],
             "publicDetails": "Updated public details",
@@ -89,7 +106,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 9
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -110,6 +127,149 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "team": None,
         }
         self.assertEqual(updated_note, expected_note)
+
+    def test_update_note_with_nested_relations_mutation(self) -> None:
+        """Test that updateNote can create nested services and tasks via replace-all semantics."""
+        bag_svc = OrganizationService.objects.get(label="Bag(s)")
+
+        variables = {
+            "id": self.note["id"],
+            "providedServices": [{"serviceId": str(bag_svc.pk)}],
+            "requestedServices": [{"serviceOther": "custom requested svc"}],
+            "tasks": [{"summary": "Follow up call"}],
+        }
+
+        response = self._update_note_fixture(variables)
+        updated_note = response["data"]["updateNote"]
+
+        self.assertEqual(len(updated_note["providedServices"]), 1)
+        self.assertEqual(updated_note["providedServices"][0]["service"]["label"], "Bag(s)")
+        self.assertEqual(len(updated_note["requestedServices"]), 1)
+        self.assertEqual(updated_note["requestedServices"][0]["service"]["label"], "custom requested svc")
+        self.assertEqual(len(updated_note["tasks"]), 1)
+        self.assertEqual(updated_note["tasks"][0]["summary"], "Follow up call")
+
+        # Verify DB state
+        note = Note.objects.get(id=self.note["id"])
+        self.assertEqual(note.provided_services.count(), 1)
+        self.assertEqual(note.requested_services.count(), 1)
+        self.assertEqual(note.tasks.count(), 1)
+
+    def test_update_note_replaces_nested_relations(self) -> None:
+        """Test that sending nested relations replaces existing ones (delete old + create new)."""
+        bag_svc = OrganizationService.objects.get(label="Bag(s)")
+        blanket_svc = OrganizationService.objects.get(label="Blanket")
+
+        # First update: add a provided service and a task
+        self._update_note_fixture(
+            {
+                "id": self.note["id"],
+                "providedServices": [{"serviceId": str(bag_svc.pk)}],
+                "tasks": [{"summary": "Old task"}],
+            }
+        )
+        note = Note.objects.get(id=self.note["id"])
+        self.assertEqual(note.provided_services.count(), 1)
+        self.assertEqual(note.tasks.count(), 1)
+        old_service = note.provided_services.first()
+        assert old_service is not None
+        old_service_id = old_service.pk
+
+        # Second update: replace with different service and task
+        response = self._update_note_fixture(
+            {
+                "id": self.note["id"],
+                "providedServices": [{"serviceId": str(blanket_svc.pk)}],
+                "tasks": [{"summary": "New task A"}, {"summary": "New task B"}],
+            }
+        )
+        updated_note = response["data"]["updateNote"]
+
+        # New items replaced old ones
+        self.assertEqual(len(updated_note["providedServices"]), 1)
+        self.assertEqual(updated_note["providedServices"][0]["service"]["label"], "Blanket")
+        self.assertEqual(len(updated_note["tasks"]), 2)
+
+        note.refresh_from_db()
+        self.assertEqual(note.provided_services.count(), 1)
+        self.assertEqual(note.tasks.count(), 2)
+
+        # Old items were deleted
+        self.assertFalse(ServiceRequest.objects.filter(pk=old_service_id).exists())
+        new_service = note.provided_services.first()
+        assert new_service is not None
+        self.assertNotEqual(new_service.pk, old_service_id)
+
+    def test_update_note_empty_list_clears_relations(self) -> None:
+        """Test that sending an empty list removes all existing nested relations."""
+        bag_svc = OrganizationService.objects.get(label="Bag(s)")
+
+        # First: add services and tasks
+        self._update_note_fixture(
+            {
+                "id": self.note["id"],
+                "providedServices": [{"serviceId": str(bag_svc.pk)}],
+                "requestedServices": [{"serviceOther": "something"}],
+                "tasks": [{"summary": "Some task"}],
+            }
+        )
+        note = Note.objects.get(id=self.note["id"])
+        self.assertEqual(note.provided_services.count(), 1)
+        self.assertEqual(note.requested_services.count(), 1)
+        self.assertEqual(note.tasks.count(), 1)
+
+        # Second: send empty lists to clear them
+        response = self._update_note_fixture(
+            {
+                "id": self.note["id"],
+                "providedServices": [],
+                "requestedServices": [],
+                "tasks": [],
+            }
+        )
+        updated_note = response["data"]["updateNote"]
+
+        self.assertEqual(updated_note["providedServices"], [])
+        self.assertEqual(updated_note["requestedServices"], [])
+        self.assertEqual(updated_note["tasks"], [])
+
+        note.refresh_from_db()
+        self.assertEqual(note.provided_services.count(), 0)
+        self.assertEqual(note.requested_services.count(), 0)
+        self.assertEqual(note.tasks.count(), 0)
+
+    def test_update_note_omitted_relations_unchanged(self) -> None:
+        """Test that omitting nested relations (UNSET) leaves existing ones untouched."""
+        bag_svc = OrganizationService.objects.get(label="Bag(s)")
+
+        # First: add a provided service
+        self._update_note_fixture(
+            {
+                "id": self.note["id"],
+                "providedServices": [{"serviceId": str(bag_svc.pk)}],
+                "tasks": [{"summary": "Existing task"}],
+            }
+        )
+        note = Note.objects.get(id=self.note["id"])
+        self.assertEqual(note.provided_services.count(), 1)
+        self.assertEqual(note.tasks.count(), 1)
+
+        # Second: update only a scalar field — relations should be untouched
+        response = self._update_note_fixture(
+            {
+                "id": self.note["id"],
+                "purpose": "Changed purpose only",
+            }
+        )
+        updated_note = response["data"]["updateNote"]
+
+        self.assertEqual(updated_note["purpose"], "Changed purpose only")
+        self.assertEqual(len(updated_note["providedServices"]), 1)
+        self.assertEqual(len(updated_note["tasks"]), 1)
+
+        note.refresh_from_db()
+        self.assertEqual(note.provided_services.count(), 1)
+        self.assertEqual(note.tasks.count(), 1)
 
     def test_update_note_location_mutation(self) -> None:
         note_id = self.note["id"]
@@ -233,8 +393,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "service_request_type,  expected_query_count",
         [
-            ("REQUESTED", 8),
-            ("PROVIDED", 8),
+            ("REQUESTED", 7),
+            ("PROVIDED", 7),
         ],
     )
     def test_remove_note_service_request_mutation(
@@ -287,7 +447,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 22
+        expected_query_count = 21
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
         self.assertIsNotNone(response["data"]["deleteNote"])
@@ -341,12 +501,19 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Select a moment to revert to
         revert_before_timestamp = timezone.now()
 
+        other_json_address_input, _ = self._get_address_inputs(street_number_override="999")
+        other_location_input = {
+            "address": other_json_address_input,
+            "point": [-118.0, 34.0],
+            "pointOfInterest": "Discarded POI",
+        }
         # Update - should be discarded
         self._update_note_fixture(
             {
                 "id": note_id,
                 "purpose": "Discarded Purpose",
                 "publicDetails": "Discarded Body",
+                "location": other_location_input,
             }
         )
 
@@ -394,24 +561,38 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         """
         note_id = self.note["id"]
 
+        json_address_input, _ = self._get_address_inputs()
+        location_input = {
+            "address": json_address_input,
+            "point": self.point,
+            "pointOfInterest": self.point_of_interest,
+        }
         # Update - should be persisted
         self._update_note_fixture(
             {
                 "id": note_id,
                 "purpose": "Updated purpose",
                 "publicDetails": "Updated Body",
+                "location": location_input,
             }
         )
 
         # Select a moment to revert to
         revert_before_timestamp = timezone.now()
 
+        other_json_address_input, _ = self._get_address_inputs(street_number_override="999")
+        other_location_input = {
+            "address": other_json_address_input,
+            "point": [-118.0, 34.0],
+            "pointOfInterest": "Discarded POI",
+        }
         # Update - should be discarded
         self._update_note_fixture(
             {
                 "id": note_id,
                 "purpose": "Discarded purpose",
                 "publicDetails": "Discarded Body",
+                "location": other_location_input,
             }
         )
 
@@ -570,7 +751,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 42
+        expected_query_count = 38
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -643,7 +824,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 44
+        expected_query_count = 40
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 

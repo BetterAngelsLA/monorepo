@@ -2337,6 +2337,10 @@ input UpdateNoteInput {
   privateDetails: String
   isSubmitted: Boolean
   interactedAt: DateTime
+  location: LocationInput
+  providedServices: [CreateNoteServiceInput!]
+  requestedServices: [CreateNoteServiceInput!]
+  tasks: [CreateNoteTaskInput!]
 }
 
 input UpdateNoteLocationInput {

@@ -1,5 +1,4 @@
 import { FilePlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
-import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.generated';
 import { CreateClientInteractionBtn } from './CreateClientInteraction';
@@ -13,17 +12,12 @@ interface IMainPlusModalProps {
 
 export default function ClientCardModal(props: IMainPlusModalProps) {
   const { isModalVisible, closeModal, clientProfile } = props;
-  const router = useRouter();
 
   const actions = useMemo(() => {
     function renderCreateInteractionBtn() {
       return (
         <CreateClientInteractionBtn
           clientProfileId={clientProfile.id}
-          onCreated={(noteId) => {
-            closeModal();
-            router.navigate(`/add-note/${noteId}`);
-          }}
           style={{ width: '100%' }}
         >
           <MainModalActionBtnBody title="Add Interaction" Icon={FilePlusIcon} />
@@ -39,7 +33,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
         route: `/client/${clientProfile.id}?newTab=Docs`,
       },
     ];
-  }, [clientProfile.id, closeModal, router]);
+  }, [clientProfile.id]);
 
   return (
     <MainModal
