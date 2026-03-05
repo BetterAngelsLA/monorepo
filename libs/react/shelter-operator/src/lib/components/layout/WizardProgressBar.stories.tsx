@@ -29,23 +29,16 @@ const defaultSteps = [
   { label: 'Confirmation' },
 ];
 
-const defaultSteps2 = [
-  { label: 'Add Profile' },
-  { label: 'Select Shelter' },
-  { label: 'Select Room or Bed' },
-  { label: 'Confirmation' },
-];
-
 export const FirstStep: Story = {
   args: {
-    steps: defaultSteps2,
+    steps: defaultSteps,
     currentStep: 0,
   },
 };
 
 export const SecondStep: Story = {
   args: {
-    steps: defaultSteps2,
+    steps: defaultSteps,
     currentStep: 1,
   },
 };
@@ -71,34 +64,27 @@ export const Completed: Story = {
   },
 };
 
+const manySteps = [
+  { label: '' },
+  { label: '' },
+  { label: '' },
+  { label: '' },
+  { label: '' },
+  { label: '' },
+  { label: '' },
+  { label: '' },
+];
+
 export const ManySteps: Story = {
   args: {
-    steps: [
-      { label: '' },
-      { label: '' },
-      { label: '' },
-      { label: '' },
-      { label: '' },
-      { label: '' },
-      { label: '' },
-      { label: '' },
-    ],
+    steps: manySteps,
     currentStep: 0,
   },
 };
 
 export const ManyStepsMiddle: Story = {
   args: {
-    steps: [
-      { label: '' },
-      { label: '' },
-      { label: '' },
-      { label: '' },
-      { label: '' },
-      { label: '' },
-      { label: '' },
-      { label: '' },
-    ],
+    steps: manySteps,
     currentStep: 4,
   },
 };

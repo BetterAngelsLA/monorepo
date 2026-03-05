@@ -11,10 +11,10 @@ export function WizardLayout({ steps, stepPaths }: WizardLayoutProps) {
   const location = useLocation();
   const methods = useForm();
 
-  const currentStep = stepPaths.findIndex(
-    (path) =>
-      location.pathname.endsWith(path) || location.pathname.includes(path)
-  );
+  const currentStep = stepPaths.findIndex((path) => {
+    const segments = location.pathname.split('/');
+    return segments.includes(path);
+  });
 
   return (
     <FormProvider {...methods}>
