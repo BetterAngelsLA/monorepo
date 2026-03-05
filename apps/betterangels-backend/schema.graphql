@@ -1368,8 +1368,8 @@ type Mutation {
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
-  deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload!
+  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "delete_servicerequest"}], any: true)
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
