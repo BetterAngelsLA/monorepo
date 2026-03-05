@@ -441,6 +441,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
                     results {
                         firstName
                         lastName
+                        dateJoined
                     }
                 }
             }
@@ -462,7 +463,8 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
 
         results = members["results"]
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0], {"firstName": expected_match[0], "lastName": expected_match[1]})
+        self.assertEqual(results[0]["firstName"], expected_match[0])
+        self.assertEqual(results[0]["lastName"], expected_match[1])
         self.assertTrue(
             all(member["dateJoined"] is not None for member in response["data"]["organizationMembers"]["results"])
         )
