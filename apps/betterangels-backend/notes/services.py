@@ -46,6 +46,7 @@ def _resolve_service(
 # ---------------------------------------------------------------------------
 
 
+@transaction.atomic
 def note_update(
     *,
     note: Note,
