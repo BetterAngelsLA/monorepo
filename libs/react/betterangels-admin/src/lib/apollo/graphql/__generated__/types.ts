@@ -1830,7 +1830,16 @@ export type OrganizationFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type OrganizationMemberFilter = {
+  AND?: InputMaybe<OrganizationMemberFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<OrganizationMemberFilter>;
+  OR?: InputMaybe<OrganizationMemberFilter>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type OrganizationMemberOrdering = {
+  dateJoined?: InputMaybe<Ordering>;
   email?: InputMaybe<Ordering>;
   firstName?: InputMaybe<Ordering>;
   id?: InputMaybe<Ordering>;
@@ -1841,6 +1850,7 @@ export type OrganizationMemberOrdering = {
 
 export type OrganizationMemberType = {
   __typename?: 'OrganizationMemberType';
+  dateJoined: Scalars['DateTime']['output'];
   email?: Maybe<Scalars['NonBlankString']['output']>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
   id: Scalars['ID']['output'];
@@ -2170,6 +2180,7 @@ export type QueryOrganizationMemberArgs = {
 
 
 export type QueryOrganizationMembersArgs = {
+  filters?: InputMaybe<OrganizationMemberFilter>;
   ordering?: InputMaybe<Array<OrganizationMemberOrdering>>;
   organizationId: Scalars['String']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;

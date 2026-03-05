@@ -1,2 +1,2 @@
-export * from './useHmisClientPhotoContentUri';
-export * from './useHmisFileHeaders';
+export * from './useClientPhotoContentUriHmis';
+export * from './useFileHeadersHmis';

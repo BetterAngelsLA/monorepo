@@ -64,6 +64,29 @@ class OrganizationFilter:
         return (queryset.filter(query), Q())
 
 
+@strawberry_django.filter_type(User)
+class OrganizationMemberFilter:
+    @strawberry_django.filter_field
+    def search(
+        self,
+        queryset: QuerySet[User],
+        info: Info,
+        value: Optional[str],
+        prefix: str,
+    ) -> Tuple[QuerySet[User], Q]:
+
+        if value is None or len(value.strip()) < 2:
+            return queryset, Q()
+
+        search_terms = value.split()
+
+        query = Q()
+        for term in search_terms:
+            query &= Q(first_name__icontains=term) | Q(last_name__icontains=term) | Q(email__icontains=term)
+
+        return queryset.filter(query), Q()
+
+
 @strawberry_django.type(Organization, ordering=OrganizationOrder, filters=OrganizationFilter)
 class OrganizationType:
     id: ID
@@ -158,6 +181,7 @@ class OrganizationMemberOrdering:
     first_name: auto
     last_login: auto
     last_name: auto
+    date_joined: auto
 
     @strawberry_django.order_field
     def member_role(
@@ -170,10 +194,16 @@ class OrganizationMemberOrdering:
         return queryset, [value.resolve(f"{prefix}_member_role")]
 
 
-@strawberry_django.type(User, pagination=True, ordering=OrganizationMemberOrdering)
+@strawberry_django.type(
+    User,
+    pagination=True,
+    ordering=OrganizationMemberOrdering,
+    filters=OrganizationMemberFilter,
+)
 class OrganizationMemberType(UserBaseType):
     id: ID
     last_login: auto
+    date_joined: auto
 
     @strawberry_django.field
     def member_role(self, info: Info) -> OrgRoleEnum:

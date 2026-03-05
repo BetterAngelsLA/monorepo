@@ -996,6 +996,7 @@ class BedAdmin(admin.ModelAdmin):
     list_display = ("id", "shelter", "status", "created_at", "updated_at")
     list_filter = ("status",)
     search_fields = ("shelter__name",)
+    autocomplete_fields = ["shelter"]
 
 
 @admin.register(Room)

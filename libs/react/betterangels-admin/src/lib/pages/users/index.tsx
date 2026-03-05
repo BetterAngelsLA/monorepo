@@ -1,5 +1,10 @@
 import { useMutation, useQuery } from '@apollo/client/react';
-import { Table, useAlert, useAppDrawer } from '@monorepo/react/components';
+import {
+  SearchInput,
+  Table,
+  useAlert,
+  useAppDrawer,
+} from '@monorepo/react/components';
 import { PlusIcon, ThreeDotIcon } from '@monorepo/react/icons';
 import { mergeCss, toError } from '@monorepo/react/shared';
 import { formatDistanceToNow, parseISO } from 'date-fns';
@@ -32,6 +37,14 @@ const COLUMNS: {
   { label: 'Job Role', field: 'memberRole', render: (m) => m.memberRole },
   { label: 'Email', field: 'email', render: (m) => m.email ?? '' },
   {
+    label: 'Created At',
+    field: 'dateJoined',
+    render: (m) =>
+      m.dateJoined
+        ? formatDistanceToNow(parseISO(m.dateJoined), { addSuffix: true })
+        : 'Unknown',
+  },
+  {
     label: 'Last Login',
     field: 'lastLogin',
     render: (m) =>
@@ -44,7 +57,8 @@ const COLUMNS: {
 function useOrganizationMembers(
   orgId: string,
   page: number,
-  sort: { field: string; direction: Ordering }
+  sort: { field: string; direction: Ordering },
+  search?: string
 ) {
   const { data, loading, previousData } = useQuery(
     OrganizationMembersDocument,
@@ -53,6 +67,7 @@ function useOrganizationMembers(
         organizationId: orgId,
         pagination: { offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE },
         ordering: [{ [sort.field]: sort.direction }],
+        filters: { search },
       },
       skip: !orgId,
       fetchPolicy: 'cache-and-network',
@@ -76,6 +91,7 @@ export default function Users(props: IProps) {
   const { user } = useUser();
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<{
     field: keyof OrganizationMemberOrdering;
@@ -94,7 +110,7 @@ export default function Users(props: IProps) {
     useMutation(RemoveOrganizationMemberDocument);
 
   const { members, totalPages, loading, isInitialLoad } =
-    useOrganizationMembers(organizationId, page, sort);
+    useOrganizationMembers(organizationId, page, sort, search);
 
   const parentCss = [
     'flex',
@@ -103,6 +119,11 @@ export default function Users(props: IProps) {
     `${loading ? 'opacity-50 transition-opacity duration-200' : ''}`,
     className,
   ];
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
 
   const handleRemoveMember = async (member: OrganizationMemberType) => {
     if (!organizationId) {
@@ -186,10 +207,13 @@ export default function Users(props: IProps) {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between gap-5 mb-16">
+      <div className="mb-10">
+        <h1 className="mb-3 text-2xl font-bold">User Management</h1>
+        <p className="max-w-[800px]">Manage users in your organization.</p>
+      </div>
+      <div className="flex items-center justify-between gap-5 mb-6">
         <div>
-          <h1 className="mb-3 text-2xl font-bold">User Management</h1>
-          <p className="max-w-[800px]">Manage users in your organization.</p>
+          <SearchInput debounceMs={300} onChange={handleSearchChange} />
         </div>
         {user?.canAddOrgMember && (
           <button
