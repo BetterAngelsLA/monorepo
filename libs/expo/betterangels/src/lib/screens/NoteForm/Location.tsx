@@ -4,7 +4,7 @@ import {
   FieldCard,
   TextMedium,
   getUserLocation,
-  usePlacesClient,
+  useGooglePlaces,
 } from '@monorepo/expo/shared/ui-components';
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -74,7 +74,7 @@ export default function LocationComponent(props: ILocationProps) {
     onLocationChange,
   } = props;
 
-  const places = usePlacesClient();
+  const places = useGooglePlaces();
 
   const [location, setLocation] = useState<TLocation>({
     latitude: point ? point[1] : null,
