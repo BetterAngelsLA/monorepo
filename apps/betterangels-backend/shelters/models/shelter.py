@@ -16,6 +16,7 @@ from django.db import models
 
 if TYPE_CHECKING:
     from shelters.enums import ScheduleTypeChoices
+
 from django.db.models import UniqueConstraint
 from django_choices_field import TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
@@ -302,4 +303,5 @@ def get_fields_with_other_option() -> list[str]:
 
     Uses @cache decorator for lazy evaluation and automatic caching without manual state.
     """
+    return _get_fields_with_other_option()
     return _get_fields_with_other_option()

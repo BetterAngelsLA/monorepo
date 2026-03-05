@@ -4,12 +4,11 @@ Small single-field models used as targets for Shelter's ManyToManyFields.
 Each wraps a TextChoicesField / IntegerChoicesField with ``unique=True``.
 """
 
+from common.models import BaseModel
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.db.models.functions import Lower
 from django_choices_field import IntegerChoicesField, TextChoicesField
-
-from common.models import BaseModel
 from shelters.enums import (
     AccessibilityChoices,
     DemographicChoices,
