@@ -2,8 +2,7 @@ import {
   UserOrganizationPermissions,
   useActiveOrg,
 } from '@monorepo/react/betterangels-admin';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
 const permissionRoutes: {
   permission: UserOrganizationPermissions;
@@ -20,18 +19,19 @@ const permissionRoutes: {
 ];
 
 export default function Home() {
-  const navigate = useNavigate();
-  const { hasPermission } = useActiveOrg();
+  const { hasPermission, organizations, activeOrg } = useActiveOrg();
 
-  useEffect(() => {
-    const firstAllowed = permissionRoutes.find((r) =>
-      hasPermission(r.permission)
+  if (organizations.length === 0 || !activeOrg) {
+    return (
+      <div className="flex items-center justify-center h-full">Loading...</div>
     );
+  }
 
-    if (firstAllowed) {
-      navigate(firstAllowed.path, { replace: true });
-    }
-  }, [navigate, hasPermission]);
+  const firstAllowed = permissionRoutes.find((r) =>
+    hasPermission(r.permission)
+  );
+
+  if (firstAllowed) return <Navigate to={firstAllowed.path} replace />;
 
   return (
     <div className="flex items-center justify-center h-full text-neutral-55">
