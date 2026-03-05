@@ -1,9 +1,11 @@
+import { UserOrganizationPermissions } from '@monorepo/react/betterangels-admin';
 import { RouteObject } from 'react-router-dom';
 import Home from '../pages/home';
 import { ReportsPage } from '../pages/reports';
 import { ServicesPage } from '../pages/services';
 import { TeamsPage } from '../pages/teams';
 import { UsersPage } from '../pages/users';
+import { PermissionGuard } from './PermissionGuard';
 
 export const routeChildren: RouteObject[] = [
   {
@@ -12,11 +14,19 @@ export const routeChildren: RouteObject[] = [
   },
   {
     path: '/users',
-    element: <UsersPage />,
+    element: (
+      <PermissionGuard permission={UserOrganizationPermissions.ViewOrgMembers}>
+        <UsersPage />
+      </PermissionGuard>
+    ),
   },
   {
     path: '/reports',
-    element: <ReportsPage />,
+    element: (
+      <PermissionGuard permission={UserOrganizationPermissions.ViewReports}>
+        <ReportsPage />
+      </PermissionGuard>
+    ),
   },
   {
     path: '/teams',

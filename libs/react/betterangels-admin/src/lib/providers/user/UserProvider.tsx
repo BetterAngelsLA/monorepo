@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client/react';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { UserOrganizationPermissions } from '../../apollo/graphql/__generated__/types';
+import { ActiveOrgProvider } from '../activeOrg';
 import UserContext, { TUser } from './UserContext';
 import {
   CurrentOrgUserDocument,
@@ -17,36 +17,17 @@ const parseUser = (
   if (!user) {
     return undefined;
   }
-  const userOrganization = user.organizations?.[0];
-  if (!userOrganization) {
+  if (!user.organizations?.length) {
     return undefined;
   }
 
-  const userPermissions = userOrganization.userPermissions ?? [];
-  const permissionMap: Record<UserOrganizationPermissions, string> = {
-    [UserOrganizationPermissions.AccessOrgPortal]: 'canAccessOrgPortal',
-    [UserOrganizationPermissions.AddOrgMember]: 'canAddOrgMember',
-    [UserOrganizationPermissions.ChangeOrgMemberRole]: 'canChangeOrgMemberRole',
-    [UserOrganizationPermissions.RemoveOrgMember]: 'canRemoveOrgMember',
-    [UserOrganizationPermissions.ViewOrgMembers]: 'canViewOrgMembers',
-  };
-
-  const permFlags = Object.fromEntries(
-    Object.entries(permissionMap).map(([perm, key]) => [
-      key,
-      userPermissions.includes(perm as UserOrganizationPermissions),
-    ])
-  );
-
   return {
     id: user.id,
-    organization: userOrganization,
     username: user.username ?? undefined,
     firstName: user.firstName ?? undefined,
     lastName: user.lastName ?? undefined,
     email: user.email,
     organizations: user.organizations ?? null,
-    ...permFlags,
   };
 };
 
@@ -109,6 +90,10 @@ export function UserProvider({ children }: UserProviderProps) {
   }
 
   return (
-    <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>
+    <UserContext.Provider value={contextValue}>
+      <ActiveOrgProvider organizations={user?.organizations ?? []}>
+        {children}
+      </ActiveOrgProvider>
+    </UserContext.Provider>
   );
 }

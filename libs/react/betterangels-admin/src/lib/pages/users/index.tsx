@@ -13,11 +13,12 @@ import {
   Ordering,
   OrganizationMemberOrdering,
   OrganizationMemberType,
+  UserOrganizationPermissions,
 } from '../../apollo/graphql/__generated__/types';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { AddUserFormDrawer } from '../../components';
 import { useOutsideClick } from '../../hooks';
-import { useUser } from '../../providers';
+import { useActiveOrg } from '../../providers';
 import {
   OrganizationMembersDocument,
   RemoveOrganizationMemberDocument,
@@ -88,7 +89,7 @@ function useOrganizationMembers(
 
 export default function Users(props: IProps) {
   const { className = '' } = props;
-  const { user } = useUser();
+  const { activeOrg, hasPermission } = useActiveOrg();
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
   const [search, setSearch] = useState('');
@@ -105,7 +106,7 @@ export default function Users(props: IProps) {
     openMenuRowId !== null
   );
 
-  const organizationId = user?.organizations?.[0]?.id ?? '';
+  const organizationId = activeOrg?.id ?? '';
   const [removeOrganizationMember, { loading: isRemovingOrganizationMember }] =
     useMutation(RemoveOrganizationMemberDocument);
 
@@ -215,7 +216,7 @@ export default function Users(props: IProps) {
         <div>
           <SearchInput debounceMs={300} onChange={handleSearchChange} />
         </div>
-        {user?.canAddOrgMember && (
+        {hasPermission(UserOrganizationPermissions.AddOrgMember) && (
           <button
             onClick={() =>
               showDrawer({
@@ -223,7 +224,7 @@ export default function Users(props: IProps) {
                 contentClassName: 'p-0',
               })
             }
-            className="btn btn-primary btn-lg gap-2 inline-flex px-4"
+            className="btn btn-primary btn-lg gap-2 inline-flex items-center px-4"
           >
             <PlusIcon color="white" className="w-3 h-3" /> Add User
           </button>
@@ -231,7 +232,7 @@ export default function Users(props: IProps) {
       </div>
 
       <div className={mergeCss(parentCss)}>
-        {user?.canViewOrgMembers ? (
+        {hasPermission(UserOrganizationPermissions.ViewOrgMembers) ? (
           <Table<OrganizationMemberType>
             action={(row) => {
               const isOpen = openMenuRowId === row.id;
