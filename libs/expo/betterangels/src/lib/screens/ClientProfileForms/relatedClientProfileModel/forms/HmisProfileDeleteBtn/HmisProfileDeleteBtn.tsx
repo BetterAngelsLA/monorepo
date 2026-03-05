@@ -1,11 +1,11 @@
 import { useMutation } from '@apollo/client/react';
 import { useRouter } from 'expo-router';
 import { Dispatch, SetStateAction } from 'react';
+import { useSnackbar } from '../../../../../hooks';
 import {
   ClientProfileSectionEnum,
   getViewClientProfileRoute,
-} from '../../../../../../lib/screenRouting';
-import { useSnackbar } from '../../../../../hooks';
+} from '../../../../../screenRouting';
 import { ClientProfileDocument } from '../../../../Client/__generated__/Client.generated';
 import { DeleteButton } from '../DeleteButton';
 import { DeleteHmisProfileDocument } from './__generated__/deleteHmisProfile.generated';

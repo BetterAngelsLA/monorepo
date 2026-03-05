@@ -1,6 +1,6 @@
 import { atom } from 'jotai';
 import { atomFamily } from 'jotai-family';
-import { LocationDraft } from '../../../screens/NotesHmis/HmisProgramNoteForm';
+import { LocationDraft } from '../../../screens/NotesHmis/NoteFormHmis';
 import { userPreferencesAtomFamily } from './userPreferencesAtomFamily';
 
 export const userPreferencesLocationAtomFamily = atomFamily(

@@ -29,6 +29,7 @@ from .types import (
     AuthResponse,
     CurrentUserType,
     LoginInput,
+    OrganizationMemberFilter,
     OrganizationMemberOrdering,
     OrganizationMemberType,
     OrganizationOrder,
@@ -111,7 +112,11 @@ class Query:
         extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
     def organization_members(
-        self, info: Info, organization_id: str, ordering: Optional[list[OrganizationMemberOrdering]] = None
+        self,
+        info: Info,
+        organization_id: str,
+        ordering: Optional[list[OrganizationMemberOrdering]] = None,
+        filters: Optional[OrganizationMemberFilter] = None,
     ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
         organization = get_user_permitted_org(
