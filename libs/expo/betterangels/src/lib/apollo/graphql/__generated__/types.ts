@@ -599,15 +599,6 @@ export type CreateProfileDataImportInput = {
   sourceFile: Scalars['String']['input'];
 };
 
-export type CreateServiceRequestInput = {
-  clientProfile?: InputMaybe<Scalars['ID']['input']>;
-  serviceId?: InputMaybe<Scalars['ID']['input']>;
-  serviceOther?: InputMaybe<Scalars['String']['input']>;
-  status: ServiceRequestStatusEnum;
-};
-
-export type CreateServiceRequestPayload = OperationInfo | ServiceRequestType;
-
 export type CreateShelterInput = {
   accessibility: Array<AccessibilityChoices>;
   addNotesShelterDetails?: InputMaybe<Scalars['String']['input']>;
@@ -1361,7 +1352,6 @@ export type Mutation = {
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
-  createServiceRequest: CreateServiceRequestPayload;
   createShelter: CreateShelterPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
   createTask: CreateTaskPayload;
@@ -1382,7 +1372,6 @@ export type Mutation = {
   login: AuthResponse;
   logout: Scalars['Boolean']['output'];
   removeHmisNoteServiceRequest: RemoveHmisNoteServiceRequestPayload;
-  removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   removeOrganizationMember: RemoveOrganizationMemberPayload;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
@@ -1397,7 +1386,6 @@ export type Mutation = {
   updateHmisProfile: UpdateHmisProfilePayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
-  updateServiceRequest: UpdateServiceRequestPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
   updateUserProfile: UpdateUserProfilePayload;
@@ -1477,11 +1465,6 @@ export type MutationCreateNoteDataImportArgs = {
 
 export type MutationCreateNoteServiceRequestArgs = {
   data: CreateNoteServiceRequestInput;
-};
-
-
-export type MutationCreateServiceRequestArgs = {
-  data: CreateServiceRequestInput;
 };
 
 
@@ -1576,11 +1559,6 @@ export type MutationRemoveHmisNoteServiceRequestArgs = {
 };
 
 
-export type MutationRemoveNoteServiceRequestArgs = {
-  data: RemoveNoteServiceRequestInput;
-};
-
-
 export type MutationRemoveOrganizationMemberArgs = {
   data: RemoveOrganizationMemberInput;
 };
@@ -1648,11 +1626,6 @@ export type MutationUpdateNoteArgs = {
 
 export type MutationUpdateNoteLocationArgs = {
   data: UpdateNoteLocationInput;
-};
-
-
-export type MutationUpdateServiceRequestArgs = {
-  data: UpdateServiceRequestInput;
 };
 
 
@@ -2272,14 +2245,6 @@ export type RemoveHmisNoteServiceRequestInput = {
 
 export type RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo;
 
-export type RemoveNoteServiceRequestInput = {
-  noteId: Scalars['ID']['input'];
-  serviceRequestId: Scalars['ID']['input'];
-  serviceRequestType: ServiceRequestTypeEnum;
-};
-
-export type RemoveNoteServiceRequestPayload = NoteType | OperationInfo;
-
 export type RemoveOrganizationMemberInput = {
   id: Scalars['ID']['input'];
   organizationId: Scalars['ID']['input'];
@@ -2838,15 +2803,6 @@ export type UpdateNoteLocationInput = {
 export type UpdateNoteLocationPayload = NoteType | OperationInfo;
 
 export type UpdateNotePayload = NoteType | OperationInfo;
-
-export type UpdateServiceRequestInput = {
-  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
-  id: Scalars['ID']['input'];
-  serviceOther?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<ServiceRequestStatusEnum>;
-};
-
-export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type UpdateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
