@@ -235,3 +235,17 @@ class RoomStatusChoices(models.TextChoices):
     AVAILABLE = "available", _("Available")
     RESERVED = "reserved", _("Reserved")
     NEEDS_MAINTENANCE = "needs_maintenance", _("Needs Maintenance")
+
+
+@strawberry.enum
+class BedTypeChoices(models.TextChoices):
+    TWIN = "twin", _("Twin")
+    BUNK = "bunk", _("Bunk")
+    ROLLAWAY = "rollaway", _("Rollaway")
+    OTHER = "other", _("Other")
+
+
+@strawberry.enum
+class MedicalNeedChoices(models.TextChoices):
+    ERC = "erc", _("ERC (Enrich Residential Care)")
+    DMH = "dmh", _("DMH Beds (Dept of Mental Health)")
