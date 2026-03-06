@@ -1,5 +1,5 @@
 from functools import cache
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import pghistory
 from admin_async_upload.models import AsyncFileField
@@ -52,6 +52,9 @@ from .enums import (
 from .managers import AdminShelterManager, ShelterManager
 from .widgets import TimeRangeField
 
+if TYPE_CHECKING:
+    from django.db.models.manager import RelatedManager
+
 
 # Summary Info
 class Demographic(models.Model):
@@ -95,10 +98,15 @@ class Bed(BaseModel):
         related_name="occupied_beds",
     )
     bed_type = TextChoicesField(choices_enum=BedTypeChoices, blank=True, null=True)
+    demographics: "RelatedManager[Demographic]"
     demographics = models.ManyToManyField("Demographic", blank=True)
+    accessibility: "RelatedManager[Accessibility]"
     accessibility = models.ManyToManyField("Accessibility", blank=True)
+    funders: "RelatedManager[Funder]"
     funders = models.ManyToManyField("Funder", blank=True)
+    pets: "RelatedManager[Pet]"
     pets = models.ManyToManyField("Pet", blank=True)
+    storage: "RelatedManager[Storage]"
     storage = models.ManyToManyField("Storage", blank=True)
     maintenance_flag = models.BooleanField(default=False, blank=True)
     last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
