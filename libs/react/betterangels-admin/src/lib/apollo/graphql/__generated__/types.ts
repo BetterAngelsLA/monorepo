@@ -160,6 +160,18 @@ export type AuthResponse = {
   status_code: Scalars['String']['output'];
 };
 
+export enum BedStatusChoices {
+  Available = 'AVAILABLE',
+  Reserved = 'RESERVED'
+}
+
+export type BedType = {
+  __typename?: 'BedType';
+  id: Scalars['ID']['output'];
+  shelter: ShelterType;
+  status?: Maybe<BedStatusChoices>;
+};
+
 export type CityType = {
   __typename?: 'CityType';
   id: Scalars['ID']['output'];
@@ -409,6 +421,13 @@ export type ContactInfoType = {
   id: Scalars['ID']['output'];
 };
 
+export type CreateBedInput = {
+  shelterId: Scalars['ID']['input'];
+  status: BedStatusChoices;
+};
+
+export type CreateBedPayload = BedType | OperationInfo;
+
 export type CreateClientContactPayload = ClientContactType | OperationInfo;
 
 export type CreateClientDocumentInput = {
@@ -542,13 +561,22 @@ export type CreateNoteInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
+  location?: InputMaybe<LocationInput>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
+  providedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purpose?: InputMaybe<Scalars['String']['input']>;
+  requestedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
+  tasks?: InputMaybe<Array<CreateNoteTaskInput>>;
   team?: InputMaybe<SelahTeamEnum>;
 };
 
 export type CreateNotePayload = NoteType | OperationInfo;
+
+export type CreateNoteServiceInput = {
+  serviceId?: InputMaybe<Scalars['ID']['input']>;
+  serviceOther?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type CreateNoteServiceRequestInput = {
   noteId: Scalars['ID']['input'];
@@ -558,6 +586,13 @@ export type CreateNoteServiceRequestInput = {
 };
 
 export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
+
+export type CreateNoteTaskInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['Int']['input']>;
+  summary: Scalars['String']['input'];
+  team?: InputMaybe<SelahTeamEnum>;
+};
 
 export type CreateProfileDataImportInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
@@ -1190,9 +1225,19 @@ export type ImportClientProfileInput = {
 
 export type ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo;
 
+export type ImportNoteDataInput = {
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
+  interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
+  isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
+  privateDetails?: InputMaybe<Scalars['String']['input']>;
+  publicDetails?: InputMaybe<Scalars['String']['input']>;
+  purpose?: InputMaybe<Scalars['String']['input']>;
+  team?: InputMaybe<SelahTeamEnum>;
+};
+
 export type ImportNoteInput = {
   importJobId: Scalars['UUID']['input'];
-  note: CreateNoteInput;
+  note: ImportNoteDataInput;
   rawData: Scalars['JSON']['input'];
   sourceId: Scalars['String']['input'];
   sourceName: Scalars['String']['input'];
@@ -1302,6 +1347,7 @@ export enum MealServiceChoices {
 export type Mutation = {
   __typename?: 'Mutation';
   addOrganizationMember: AddOrganizationMemberPayload;
+  createBed: CreateBedPayload;
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
@@ -1360,6 +1406,11 @@ export type Mutation = {
 
 export type MutationAddOrganizationMemberArgs = {
   data: OrgInvitationInput;
+};
+
+
+export type MutationCreateBedArgs = {
+  data: CreateBedInput;
 };
 
 
@@ -1435,7 +1486,7 @@ export type MutationCreateServiceRequestArgs = {
 
 
 export type MutationCreateShelterArgs = {
-  input: CreateShelterInput;
+  data: CreateShelterInput;
 };
 
 
@@ -1779,7 +1830,16 @@ export type OrganizationFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type OrganizationMemberFilter = {
+  AND?: InputMaybe<OrganizationMemberFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<OrganizationMemberFilter>;
+  OR?: InputMaybe<OrganizationMemberFilter>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type OrganizationMemberOrdering = {
+  dateJoined?: InputMaybe<Ordering>;
   email?: InputMaybe<Ordering>;
   firstName?: InputMaybe<Ordering>;
   id?: InputMaybe<Ordering>;
@@ -1790,6 +1850,7 @@ export type OrganizationMemberOrdering = {
 
 export type OrganizationMemberType = {
   __typename?: 'OrganizationMemberType';
+  dateJoined: Scalars['DateTime']['output'];
   email?: Maybe<Scalars['NonBlankString']['output']>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
   id: Scalars['ID']['output'];
@@ -2119,6 +2180,7 @@ export type QueryOrganizationMemberArgs = {
 
 
 export type QueryOrganizationMembersArgs = {
+  filters?: InputMaybe<OrganizationMemberFilter>;
   ordering?: InputMaybe<Array<OrganizationMemberOrdering>>;
   organizationId: Scalars['String']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -2127,6 +2189,7 @@ export type QueryOrganizationMembersArgs = {
 
 export type QueryReportSummaryArgs = {
   endDate?: InputMaybe<Scalars['Date']['input']>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
   startDate?: InputMaybe<Scalars['Date']['input']>;
 };
 
@@ -2771,7 +2834,6 @@ export type UpdateNoteInput = {
   id: Scalars['ID']['input'];
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
-  location?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purpose?: InputMaybe<Scalars['NonBlankString']['input']>;
@@ -2830,7 +2892,8 @@ export enum UserOrganizationPermissions {
   AddOrgMember = 'ADD_ORG_MEMBER',
   ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
   RemoveOrgMember = 'REMOVE_ORG_MEMBER',
-  ViewOrgMembers = 'VIEW_ORG_MEMBERS'
+  ViewOrgMembers = 'VIEW_ORG_MEMBERS',
+  ViewReports = 'VIEW_REPORTS'
 }
 
 export type UserType = {

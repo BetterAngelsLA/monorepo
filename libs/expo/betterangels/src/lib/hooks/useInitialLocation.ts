@@ -4,7 +4,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { LocationObject } from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
-import { LocationDraft } from '../screens/NotesHmis/HmisProgramNoteForm';
+import { LocationDraft } from '../screens/NotesHmis/NoteFormHmis';
 import { useUserDefaultNoteLocation } from '../state/userPreferencesState/hooks/useUserDefaultNoteLocation';
 
 const INITIAL_LOCATION = {

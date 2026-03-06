@@ -1,1 +1,0 @@
-export { ClientDocsHmisView } from './ClientDocsHmisView';
