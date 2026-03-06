@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client/react';
 import { useUser } from '@monorepo/react/shelter';
-import { BookCheck, Plus, UserCog } from 'lucide-react';
+import { BookCheck, Filter, Plus, Settings2, UserCog } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons';
@@ -24,6 +24,7 @@ export default function Dashboard() {
 
   // Sync selectedOrganizationId when user data loads asynchronously
   const orgId = user?.organization?.id;
+
   useEffect(() => {
     if (orgId && !selectedOrganizationId) {
       setSelectedOrganizationId(orgId);
@@ -72,6 +73,7 @@ export default function Dashboard() {
         name: s.name ?? null,
         address: s.location?.place ?? null,
         totalBeds: s.totalBeds ?? null,
+        occupiedBeds: null,
         tags: null,
       })) ?? []
     );
@@ -120,8 +122,8 @@ export default function Dashboard() {
 
           <Link to="/#">
             <Button
-              variant="floating-light"
-              leftIcon={<BookCheck size={24} />}
+              variant="small-light"
+              leftIcon={<BookCheck size={20} />}
               rightIcon={false}
             >
               Reserve
@@ -130,8 +132,8 @@ export default function Dashboard() {
 
           <Link to="/operator/dashboard/create">
             <Button
-              variant="floating-light"
-              leftIcon={<Plus size={24} />}
+              variant="small-light"
+              leftIcon={<Plus size={20} />}
               rightIcon={false}
             >
               Create Shelter
@@ -140,8 +142,8 @@ export default function Dashboard() {
 
           <Link to="/#">
             <Button
-              variant="floating-light"
-              leftIcon={<UserCog size={24} />}
+              variant="small-light"
+              leftIcon={<UserCog size={26} />}
               rightIcon={false}
             />
           </Link>
@@ -149,27 +151,48 @@ export default function Dashboard() {
       </div>
 
       {/* Search bar */}
-      <form className="w-full flex items-center gap-2">
+      <form
+        className="my-4 w-full flex items-center justify-between gap-3"
+        style={{ fontFamily: 'Poppins, sans-serif' }}
+      >
         <input
           type="text"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Search shelters"
-          className="px-6 py-2 rounded-3xl border outline-none shadow-sm my-4"
+          className="w-full max-w-[380px] px-6 py-2 rounded-3xl border outline-none shadow-sm"
         />
+
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="small-light"
+            leftIcon={<Filter size={20} />}
+            rightIcon={false}
+          >
+            Filter
+          </Button>
+
+          <Button
+            variant="small-light"
+            leftIcon={<Settings2 size={20} />}
+            rightIcon={false}
+          >
+            Sort
+          </Button>
+        </div>
       </form>
 
-      <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
-        {totalCount} Results
-      </div>
-
       {/* TABLE */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden w-full">
+      <div className="bg-white rounded-2xl overflow-hidden w-full">
         {/* HEADER */}
-        <div className="grid grid-cols-[1fr_1.5fr_0.5fr] items-center px-6 py-3 text-xs font-semibold uppercase tracking-wider text-gray-700 bg-gray-50 border-b border-gray-200">
+        <div
+          className="grid grid-cols-[1fr_1fr_1.2fr_0.8fr] items-center px-6 py-3 text-xs font-semibold tracking-wider text-gray-700"
+          style={{ fontFamily: 'Poppins, sans-serif' }}
+        >
           <div>Shelter Name</div>
           <div>Address</div>
-          <div className="text-right">Capacity (beds)</div>
+          <div className="text-left">Capacity</div>
+          <div className="text-right">Tags</div>
         </div>
 
         {/* ROWS */}
