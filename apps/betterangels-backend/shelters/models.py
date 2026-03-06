@@ -53,7 +53,7 @@ from .managers import AdminShelterManager, ShelterManager
 from .widgets import TimeRangeField
 
 if TYPE_CHECKING:
-    from django.db.models.manager import RelatedManager
+    from django.db.models import Manager as RelatedManager
 
 
 # Summary Info
