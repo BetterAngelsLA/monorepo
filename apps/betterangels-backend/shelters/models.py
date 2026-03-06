@@ -123,8 +123,8 @@ class Reservation(BaseModel):
     room = models.ForeignKey(Room, on_delete=models.SET_NULL, blank=True, null=True, related_name="reservations")
     bed = models.ForeignKey(Bed, on_delete=models.SET_NULL, blank=True, null=True, related_name="reservations")
     status = TextChoicesField(choices_enum=ReservationStatusChoices, default=ReservationStatusChoices.CONFIRMED)
-    start_date = models.DateField()
-    duration = models.PositiveIntegerField(help_text="Duration in days")
+    start_date = models.DateField(blank=True, null=True)
+    duration = models.PositiveIntegerField(help_text="Duration in days", blank=True, null=True)
     clients: models.ManyToManyField = models.ManyToManyField(
         "clients.ClientProfile", through="ReservationClient", related_name="reservations"
     )
