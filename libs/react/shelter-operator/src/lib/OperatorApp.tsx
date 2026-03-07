@@ -24,6 +24,14 @@ export function OperatorApp() {
           <Route path="select-room" element={<SelectRoomPage />} />
           <Route path="confirmation" element={<ConfirmationPage />} />
         </Route>
+        <Route
+          path="shelter/:shelterId/reservation/*"
+          element={<ReservationPage />}
+        >
+          <Route path="add-profile" element={<AddProfilePage />} />
+          <Route path="select-room" element={<SelectRoomPage />} />
+          <Route path="confirmation" element={<ConfirmationPage />} />
+        </Route>
       </Routes>
     </OperatorAuthProvider>
   );

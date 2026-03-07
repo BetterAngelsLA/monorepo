@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { WizardLayout } from '../../components/layouts/WizardLayout';
 import type { WizardStep } from '../../components/layouts/WizardProgressBar';
 
 const ALL_STEPS: WizardStep[] = [
-  { label: 'Add Profile' },
-  { label: 'Select Shelter' },
-  { label: 'Select Room / Bed' },
-  { label: 'Confirmation' },
+  { id: 'add-profile', label: 'Add Profile' },
+  { id: 'select-shelter', label: 'Select Shelter' },
+  { id: 'select-room', label: 'Select Room / Bed' },
+  { id: 'confirmation', label: 'Confirmation' },
 ];
 
 const ALL_PATHS = [
@@ -18,12 +18,12 @@ const ALL_PATHS = [
 ];
 
 export function ReservationPage() {
-  const { state } = useLocation();
-  const isShelterLevel = !!state?.shelterId;
+  const { shelterId } = useParams();
+  const isShelterLevel = !!shelterId;
 
   const steps = useMemo(() => {
     if (isShelterLevel) {
-      return ALL_STEPS.filter((step) => step.label !== 'Select Shelter');
+      return ALL_STEPS.filter((step) => step.id !== 'select-shelter');
     }
     return ALL_STEPS;
   }, [isShelterLevel]);

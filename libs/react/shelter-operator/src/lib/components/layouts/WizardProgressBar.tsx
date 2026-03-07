@@ -2,6 +2,7 @@ import { Check } from 'lucide-react';
 import { memo } from 'react';
 
 export interface WizardStep {
+  id: string;
   label: string;
 }
 

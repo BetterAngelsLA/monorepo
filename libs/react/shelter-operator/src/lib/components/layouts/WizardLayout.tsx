@@ -1,5 +1,5 @@
 import { FormProvider, useForm } from 'react-hook-form';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, matchPath } from 'react-router-dom';
 import { useUser } from '@monorepo/react/shelter';
 import { OperatorHeader } from '../OperatorHeader';
 import { WizardProgressBar, type WizardStep } from './WizardProgressBar';
@@ -24,10 +24,9 @@ export function WizardLayout({
   const { user } = useUser();
   const defaultOrgName = organizationName || user?.organization?.name;
 
-  const currentStep = stepPaths.findIndex((path) => {
-    const segments = location.pathname.split('/');
-    return segments.includes(path);
-  });
+  const currentStep = stepPaths.findIndex((path) =>
+    matchPath({ path: `*/${path}`, end: false }, location.pathname)
+  );
 
   return (
     <FormProvider {...methods}>
