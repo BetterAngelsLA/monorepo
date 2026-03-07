@@ -6,8 +6,16 @@ type IParams = {
   className?: string;
 };
 
-export function Header(props: IParams): ReactElement {
+export function Header(props: IParams): ReactElement | null {
   const { className = '' } = props;
+  const pathname =
+    typeof window !== 'undefined' ? window.location.pathname : '';
+  const isOperatorRoute =
+    pathname === '/operator' || pathname.startsWith('/operator/');
+
+  if (isOperatorRoute) {
+    return null;
+  }
 
   const parentCss = [
     className,

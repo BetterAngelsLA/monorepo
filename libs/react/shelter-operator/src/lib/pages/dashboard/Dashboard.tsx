@@ -1,11 +1,11 @@
 import { useQuery } from '@apollo/client/react';
 import { useUser } from '@monorepo/react/shelter';
-import { BookCheck, Filter, Plus, Settings2, UserCog } from 'lucide-react';
+import { Filter, Plus, Settings2, UserCog } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons';
 import { Dropdown } from '../../components/base-ui/dropdown';
-import { ShelterRow } from '../../components/ShelterRow';
+import { Table, type TableColumn } from '../../components/Table';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
@@ -82,6 +82,79 @@ export default function Dashboard() {
   const totalCount = activeData?.adminShelters?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
+  const tableColumns: TableColumn<Shelter>[] = useMemo(
+    () => [
+      {
+        key: 'name',
+        label: 'Shelter Name',
+        width: '1fr',
+        align: 'left',
+        cellClassName:
+          'font-medium text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap',
+        render: (shelter) => shelter.name ?? 'N/A',
+      },
+      {
+        key: 'address',
+        label: 'Address',
+        width: '1fr',
+        align: 'left',
+        cellClassName:
+          'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
+        render: (shelter) => shelter.address ?? 'N/A',
+      },
+      {
+        key: 'capacity',
+        label: 'Capacity',
+        width: '1.2fr',
+        align: 'left',
+        cellClassName: 'whitespace-nowrap text-gray-700',
+        render: (shelter) => {
+          const hasCapacity =
+            typeof shelter.totalBeds === 'number' && shelter.totalBeds > 0;
+          const usedBeds = hasCapacity
+            ? Math.min(
+                Math.max(shelter.occupiedBeds ?? shelter.totalBeds ?? 0, 0),
+                shelter.totalBeds
+              )
+            : null;
+          const progressPct =
+            hasCapacity && usedBeds !== null
+              ? (usedBeds / shelter.totalBeds) * 100
+              : 0;
+
+          if (!hasCapacity || usedBeds === null) {
+            return <div className="whitespace-nowrap">N/A</div>;
+          }
+
+          return (
+            <div className="flex items-center gap-3">
+              <div className="h-4 w-[150px] overflow-hidden rounded-full border border-slate-300 bg-slate-200">
+                <div
+                  className="h-full rounded-full bg-[#FFC5BF] transition-[width] duration-300"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+              <span className="leading-5 text-slate-700">
+                {usedBeds} / {shelter.totalBeds} beds
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        key: 'tags',
+        label: 'Tags',
+        width: '0.8fr',
+        align: 'right',
+        cellClassName:
+          'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
+        render: (shelter) =>
+          shelter.tags?.length ? shelter.tags.join(', ') : 'N/A',
+      },
+    ],
+    []
+  );
+
   useEffect(() => {
     if (error) console.error('[Dashboard GraphQL error]', error);
   }, [error]);
@@ -119,16 +192,6 @@ export default function Dashboard() {
               }}
             />
           )}
-
-          <Link to="/#">
-            <Button
-              variant="small-light"
-              leftIcon={<BookCheck size={20} />}
-              rightIcon={false}
-            >
-              Reserve
-            </Button>
-          </Link>
 
           <Link to="/operator/dashboard/create">
             <Button
@@ -183,25 +246,17 @@ export default function Dashboard() {
       </form>
 
       {/* TABLE */}
-      <div className="bg-white rounded-2xl overflow-hidden w-full">
-        {/* HEADER */}
-        <div
-          className="grid grid-cols-[1fr_1fr_1.2fr_0.8fr] items-center px-6 py-3 text-xs font-semibold tracking-wider text-gray-700"
-          style={{ fontFamily: 'Poppins, sans-serif' }}
-        >
-          <div>Shelter Name</div>
-          <div>Address</div>
-          <div className="text-left">Capacity</div>
-          <div className="text-right">Tags</div>
-        </div>
-
-        {/* ROWS */}
-        {loading && (
+      <Table
+        columns={tableColumns}
+        rows={shelters}
+        getRowKey={(shelter) => shelter.id}
+        loading={loading}
+        loadingState={
           <div className="px-6 py-8 text-center text-sm text-gray-500">
             Loading shelters…
           </div>
-        )}
-        {!loading && shelters.length === 0 && (
+        }
+        emptyState={
           <div className="px-6 py-8 text-center text-sm text-gray-500">
             No shelters yet.{' '}
             <Link
@@ -212,11 +267,10 @@ export default function Dashboard() {
             </Link>
             .
           </div>
-        )}
-        {shelters.map((shelter) => (
-          <ShelterRow key={shelter.id} shelter={shelter} />
-        ))}
-      </div>
+        }
+        headerStyle={{ fontFamily: 'Poppins, sans-serif' }}
+        rowStyle={{ fontFamily: 'Poppins, sans-serif' }}
+      />
 
       {/* PAGINATION */}
       <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
