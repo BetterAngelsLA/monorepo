@@ -11,5 +11,5 @@ const STEPS: WizardStep[] = [
 const PATHS = ['add-profile', 'select-shelter', 'select-room', 'confirmation'];
 
 export function ReservationPage() {
-  return <WizardLayout steps={STEPS} stepPaths={PATHS} />;
+  return <WizardLayout steps={STEPS} stepPaths={PATHS} pageTitle="Shelter Reservation" />;
 }

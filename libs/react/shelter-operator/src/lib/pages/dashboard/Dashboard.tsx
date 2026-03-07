@@ -3,6 +3,7 @@ import { useUser } from '@monorepo/react/shelter';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Dropdown } from '../../components/base-ui/dropdown';
+import { StandardLayout } from '../../components/layouts/StandardLayout';
 import { ShelterRow } from '../../components/ShelterRow';
 import {
   ViewSheltersByOrganizationDocument,
@@ -83,46 +84,47 @@ export default function Dashboard() {
   }, [error]);
 
   return (
-    <div className="flex flex-col p-8 w-full">
-      {/* Header with Back and Add Shelter buttons */}
-      <div className="mb-6 flex items-center justify-between">
-        <Link
-          to="/"
-          className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm cursor-pointer hover:bg-gray-50"
-        >
-          Back
-        </Link>
-
-        <div className="flex items-center gap-3">
-          {organizations.length > 1 && (
-            <Dropdown
-              label="Organization"
-              placeholder="Select organization"
-              options={organizations.map((org) => ({
-                label: org.name,
-                value: org.id,
-              }))}
-              value={
-                organizations
-                  .filter((org) => org.id === selectedOrganizationId)
-                  .map((org) => ({ label: org.name, value: org.id }))[0] ?? null
-              }
-              onChange={(option) => {
-                if (option) {
-                  setSelectedOrganizationId(option.value);
-                  setPage(1);
-                }
-              }}
-            />
-          )}
+    <StandardLayout pageTitle="Dashboard">
+      <div className="flex flex-col p-8 w-full">
+        {/* Header with Back and Add Shelter buttons */}
+        <div className="mb-6 flex items-center justify-between">
           <Link
-            to="/operator/dashboard/create"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm cursor-pointer hover:bg-blue-700"
+            to="/"
+            className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm cursor-pointer hover:bg-gray-50"
           >
-            Add Shelter
+            Back
           </Link>
+
+          <div className="flex items-center gap-3">
+            {organizations.length > 1 && (
+              <Dropdown
+                label="Organization"
+                placeholder="Select organization"
+                options={organizations.map((org) => ({
+                  label: org.name,
+                  value: org.id,
+                }))}
+                value={
+                  organizations
+                    .filter((org) => org.id === selectedOrganizationId)
+                    .map((org) => ({ label: org.name, value: org.id }))[0] ?? null
+                }
+                onChange={(option) => {
+                  if (option) {
+                    setSelectedOrganizationId(option.value);
+                    setPage(1);
+                  }
+                }}
+              />
+            )}
+            <Link
+              to="/operator/dashboard/create"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm cursor-pointer hover:bg-blue-700"
+            >
+              Add Shelter
+            </Link>
+          </div>
         </div>
-      </div>
 
       {/* Search bar */}
       <form className="w-full flex items-center gap-2">
@@ -196,11 +198,12 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {error && (
-        <div className="mt-2 text-xs text-red-500">
-          Failed to load shelters.
-        </div>
-      )}
-    </div>
+        {error && (
+          <div className="mt-2 text-xs text-red-500">
+            Failed to load shelters.
+          </div>
+        )}
+      </div>
+    </StandardLayout>
   );
 }

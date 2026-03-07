@@ -4,6 +4,7 @@ import { APIProvider } from '@vis.gl/react-google-maps';
 import { FormEvent, useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '@monorepo/react/shelter';
+import { StandardLayout } from '../../../../components/layouts/StandardLayout';
 import type { ShelterFormData } from '../../formTypes';
 import {
   CREATE_SHELTER_MUTATION,
@@ -91,26 +92,27 @@ export default function CreateShelterForm() {
   };
 
   return (
-    <APIProvider
-      apiKey={import.meta.env.VITE_SHELTER_GOOGLE_MAPS_API_KEY as string}
-    >
-      <div className="space-y-6">
-        <Link
-          to="/operator"
-          className="inline-block border border-gray-300 rounded-md px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-        >
-          Back to Dashboard
-        </Link>
+    <StandardLayout pageTitle="Create New Shelter">
+      <APIProvider
+        apiKey={import.meta.env.VITE_SHELTER_GOOGLE_MAPS_API_KEY as string}
+      >
+        <div className="space-y-6 p-8">
+          <Link
+            to="/operator"
+            className="inline-block border border-gray-300 rounded-md px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            Back to Dashboard
+          </Link>
 
-        <div>
-          <h1 className="text-3xl font-semibold text-gray-900">
-            Create New Shelter
-          </h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Provide as much detail as possible to ensure accurate shelter
-            listings.
-          </p>
-        </div>
+          <div>
+            <h1 className="text-3xl font-semibold text-gray-900">
+              Create New Shelter
+            </h1>
+            <p className="mt-2 text-sm text-gray-600">
+              Provide as much detail as possible to ensure accurate shelter
+              listings.
+            </p>
+          </div>
 
         {submissionError ? (
           <div
@@ -180,19 +182,20 @@ export default function CreateShelterForm() {
             errors={errors}
           />
 
-          <div className="flex justify-center">
-            <Button
-              size="xl"
-              type="submit"
-              className="!h-auto !bg-green-600 !text-black px-6 py-3 hover:!bg-green-700 transition-colors disabled:opacity-50"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Submitting…' : 'Create Shelter'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </APIProvider>
+            <div className="flex justify-center">
+              <Button
+                size="xl"
+                type="submit"
+                className="!h-auto !bg-green-600 !text-black px-6 py-3 hover:!bg-green-700 transition-colors disabled:opacity-50"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Submitting…' : 'Create Shelter'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </APIProvider>
+    </StandardLayout>
   );
 }
 
