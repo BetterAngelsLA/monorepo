@@ -1,5 +1,5 @@
 from functools import cache
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional
 
 import pghistory
 from admin_async_upload.models import AsyncFileField
@@ -52,9 +52,6 @@ from .enums import (
 from .managers import AdminShelterManager, ShelterManager
 from .widgets import TimeRangeField
 
-if TYPE_CHECKING:
-    from django.db.models import Manager as RelatedManager
-
 
 # Summary Info
 class Demographic(models.Model):
@@ -84,40 +81,6 @@ class RoomStyle(models.Model):
 
     def __str__(self) -> str:
         return str(self.name)
-
-
-class Bed(BaseModel):
-    shelter = models.ForeignKey("Shelter", on_delete=models.CASCADE, related_name="beds")
-    status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
-    status_notes = models.TextField(blank=True, null=True)
-    occupant = models.ForeignKey(
-        "clients.ClientProfile",
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name="occupied_beds",
-    )
-    bed_type = TextChoicesField(choices_enum=BedTypeChoices, blank=True, null=True)
-    demographics: "RelatedManager[Demographic]"
-    demographics = models.ManyToManyField("Demographic", blank=True)
-    accessibility: "RelatedManager[Accessibility]"
-    accessibility = models.ManyToManyField("Accessibility", blank=True)
-    funders: "RelatedManager[Funder]"
-    funders = models.ManyToManyField("Funder", blank=True)
-    pets: "RelatedManager[Pet]"
-    pets = models.ManyToManyField("Pet", blank=True)
-    storage: "RelatedManager[Storage]"
-    storage = models.ManyToManyField("Storage", blank=True)
-    maintenance_flag = models.BooleanField(default=False, blank=True)
-    last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
-    medical_needs = TextChoicesField(choices_enum=MedicalNeedChoices, blank=True, null=True)
-    b7 = models.BooleanField(default=False, blank=True)
-    fees = models.CharField(max_length=255, blank=True, null=True)
-
-    class Meta:
-        indexes = [
-            models.Index(fields=["shelter", "status"]),
-        ]
 
 
 class Room(BaseModel):
@@ -272,6 +235,35 @@ class ReferralRequirement(models.Model):
 
     def __str__(self) -> str:
         return str(self.name)
+
+
+class Bed(BaseModel):
+    shelter = models.ForeignKey("Shelter", on_delete=models.CASCADE, related_name="beds")
+    status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
+    status_notes = models.TextField(blank=True, null=True)
+    occupant = models.ForeignKey(
+        "clients.ClientProfile",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="occupied_beds",
+    )
+    bed_type = TextChoicesField(choices_enum=BedTypeChoices, blank=True, null=True)
+    demographics = models.ManyToManyField(Demographic, blank=True)
+    accessibility = models.ManyToManyField(Accessibility, blank=True)
+    funders = models.ManyToManyField(Funder, blank=True)
+    pets = models.ManyToManyField(Pet, blank=True)
+    storage = models.ManyToManyField(Storage, blank=True)
+    maintenance_flag = models.BooleanField(default=False, blank=True)
+    last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
+    medical_needs = TextChoicesField(choices_enum=MedicalNeedChoices, blank=True, null=True)
+    b7 = models.BooleanField(default=False, blank=True)
+    fees = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["shelter", "status"]),
+        ]
 
 
 @pghistory.track(
