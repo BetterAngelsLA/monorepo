@@ -922,6 +922,80 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "Shelter with day=NULL (every-day) schedule must appear in Open Now",
         )
 
+    def test_shelter_open_now_excludes_partial_day_exception(self) -> None:
+        """A shelter with a partial-day exception covering the current time
+        should NOT appear in Open Now results, but a shelter whose partial
+        exception does NOT cover the current time should still appear."""
+        shelter_during = shelter_recipe.make(status=StatusChoices.APPROVED)
+        shelter_outside = shelter_recipe.make(status=StatusChoices.APPROVED)
+
+        # Monday 1:00 PM PST — within partial exception window for shelter_during
+        fixed_pst = datetime.datetime(
+            2026, 1, 5, 13, 0,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=-8)),
+        )
+
+        # Both shelters have regular Monday operating hours 8am-6pm
+        for shelter in (shelter_during, shelter_outside):
+            Schedule.objects.create(
+                shelter=shelter,
+                schedule_type=ScheduleTypeChoices.OPERATING,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=datetime.time(8, 0),
+                end_time=datetime.time(18, 0),
+                is_exception=False,
+            )
+
+        # shelter_during: partial exception 12pm-2pm on Monday (covers 1 PM)
+        Schedule.objects.create(
+            shelter=shelter_during,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(12, 0),
+            end_time=datetime.time(14, 0),
+            is_exception=True,
+        )
+
+        # shelter_outside: partial exception 3pm-4pm on Monday (does NOT cover 1 PM)
+        Schedule.objects.create(
+            shelter=shelter_outside,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(15, 0),
+            end_time=datetime.time(16, 0),
+            is_exception=True,
+        )
+
+        query = """
+            query ViewShelters($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        with patch(
+            "shelters.types.filters.get_current_shelter_schedule_datetime",
+            return_value=fixed_pst,
+        ):
+            response = self.execute_graphql(
+                query,
+                variables={"filters": {"openNow": True}},
+            )
+
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertNotIn(
+            str(shelter_during.pk),
+            result_ids,
+            "Shelter with partial exception covering current time must be excluded",
+        )
+        self.assertIn(
+            str(shelter_outside.pk),
+            result_ids,
+            "Shelter with partial exception NOT covering current time must appear",
+        )
+
 
 class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
     """Regression tests for the hero_image resolver.
