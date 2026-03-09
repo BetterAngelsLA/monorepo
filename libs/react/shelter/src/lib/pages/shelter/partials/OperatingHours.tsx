@@ -3,10 +3,7 @@ import { ChevronUpIcon } from '@monorepo/react/icons';
 import { useAtom } from 'jotai';
 import { useMemo, useState } from 'react';
 import { ScheduleTypeChoices, ShelterType } from '../../../apollo';
-import {
-  ModalAnimationEnum,
-  modalAtom,
-} from '../../../components/Modal';
+import { ModalAnimationEnum, modalAtom } from '../../../components/Modal';
 import {
   EffectiveWindow,
   getOperatingStatus,
@@ -60,12 +57,16 @@ function StatusLine({
 }) {
   return (
     <p
-      className={
-        `${emphasized ? 'rounded-full border px-3 py-1.5' : ''} text-sm ${statusToneClass(status.tone)} ${emphasized ? statusSurfaceClass(status.tone) : ''} ${className}`.trim()
-      }
+      className={`${
+        emphasized ? 'rounded-full border px-3 py-1.5' : ''
+      } text-sm ${statusToneClass(status.tone)} ${
+        emphasized ? statusSurfaceClass(status.tone) : ''
+      } ${className}`.trim()}
     >
       <span className="font-semibold">{status.statusText}</span>
-      {status.detailText ? <span className="font-normal"> {status.detailText}</span> : null}
+      {status.detailText ? (
+        <span className="font-normal"> {status.detailText}</span>
+      ) : null}
     </p>
   );
 }
@@ -110,7 +111,7 @@ function OperatingHoursDialog({
                 onClick={() => setSelectedType(scheduleType)}
                 className={
                   isSelected
-                    ? 'rounded-full bg-primary-60 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.04em] text-white'
+                    ? 'rounded-full border border-primary-60 bg-primary-60 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.04em] text-white transition-colors'
                     : 'rounded-full border border-neutral-90 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.04em] text-neutral-40 transition-colors hover:border-primary-60 hover:text-primary-60'
                 }
               >
@@ -121,21 +122,13 @@ function OperatingHoursDialog({
         </div>
       ) : null}
 
-      <section className="rounded-xl border border-neutral-90 bg-neutral-99/40 px-4 py-4">
-        <div className="mb-3">
-          <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.04em] text-primary-60">
-            {TYPE_LABELS[selectedType]}
-          </span>
-        </div>
-
-        <div className="flex flex-col divide-y divide-neutral-90/80">
+      <section className="flex h-[420px] flex-col rounded-xl border border-neutral-90 bg-neutral-99/40 px-4 py-4">
+        <div className="flex flex-1 flex-col divide-y divide-neutral-90/80 overflow-y-auto pr-1">
           {selectedWeek.map((day) => (
             <div
               key={`${selectedType}-${day.date.toISOString()}`}
               className={
-                day.isToday
-                  ? 'rounded-lg bg-primary-95 px-3 py-3'
-                  : 'px-1 py-3'
+                day.isToday ? 'rounded-lg bg-primary-95 px-3 py-3' : 'px-1 py-3'
               }
             >
               <div className="flex items-start gap-4 text-sm">
@@ -157,7 +150,9 @@ function OperatingHoursDialog({
                   {day.windows.length > 0 ? (
                     day.windows.map((window, index) => (
                       <div
-                        key={`${day.date.toISOString()}-${window.startTime}-${window.endTime}-${index}`}
+                        key={`${day.date.toISOString()}-${window.startTime}-${
+                          window.endTime
+                        }-${index}`}
                         className={
                           day.isToday
                             ? 'font-semibold text-neutral-20'
@@ -199,7 +194,10 @@ export function OperatingHours({
   }, [entries]);
 
   const operatingSchedules = useMemo(
-    () => entries.filter((entry) => entry.scheduleType === ScheduleTypeChoices.Operating),
+    () =>
+      entries.filter(
+        (entry) => entry.scheduleType === ScheduleTypeChoices.Operating
+      ),
     [entries]
   );
   const status = useMemo(

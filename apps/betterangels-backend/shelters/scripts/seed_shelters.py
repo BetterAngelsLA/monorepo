@@ -50,6 +50,8 @@ def main() -> None:
             _quantity=num_shelters,
             _fill_optional=True,
             status=StatusChoices.APPROVED,
+            hero_image_content_type=None,
+            hero_image_object_id=None,
         )
 
         image_path = Path(__file__).with_name("shelter_seed_image.png")
@@ -145,10 +147,15 @@ def main() -> None:
                 )
 
             # Random operating exceptions: closed for 1–2 unique days.
-            exception_days = random.sample(
-                list(DayOfWeekChoices),
-                k=random.randint(1, 2),
-            )
+            # Guarantee the first shelter always has a Monday exception so the
+            # Open Now filter has at least one shelter to exclude during demos.
+            if shelter is shelters[0]:
+                exception_days = [DayOfWeekChoices.MONDAY]
+            else:
+                exception_days = random.sample(
+                    list(DayOfWeekChoices),
+                    k=random.randint(1, 2),
+                )
             for day in exception_days:
                 Schedule.objects.create(
                     **{
@@ -159,13 +166,6 @@ def main() -> None:
                         "end_time": None,
                         "is_exception": True,
                         "start_date": None,
-                        "end_date": None,
-                    }
-                )
-
-
-if __name__ == "__main__":
-    main()
                         "end_date": None,
                     }
                 )

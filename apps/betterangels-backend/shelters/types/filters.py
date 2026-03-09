@@ -1,6 +1,8 @@
 """Filter and ordering types for shelter queries."""
 
+import datetime
 from typing import List, Optional, Tuple, cast
+from zoneinfo import ZoneInfo
 
 import strawberry
 import strawberry_django
@@ -16,13 +18,22 @@ from shelters.enums import (
     ParkingChoices,
     PetChoices,
     RoomStyleChoices,
+    ScheduleTypeChoices,
 )
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import (
     SpecialSituationRestrictionChoices,
 )
+from shelters.selectors import shelters_open_at
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
+
+
+SHELTER_SCHEDULE_TIME_ZONE = ZoneInfo("America/Los_Angeles")
+
+
+def get_current_shelter_schedule_datetime() -> datetime.datetime:
+    return datetime.datetime.now(datetime.timezone.utc).astimezone(SHELTER_SCHEDULE_TIME_ZONE)
 
 
 @strawberry.input
@@ -86,6 +97,19 @@ class ShelterFilter:
         filters = {f"{k}__name__in": v for k, v in value_dict.items() if v is not None}
 
         return queryset.filter(**filters).distinct(), Q()
+
+    @strawberry_django.filter_field
+    def open_now(
+        self, queryset: QuerySet, value: Optional[bool], prefix: str
+    ) -> Tuple[QuerySet[models.Shelter], Q]:
+        if not value:
+            return queryset, Q()
+
+        return shelters_open_at(
+            queryset,
+            dt=get_current_shelter_schedule_datetime(),
+            schedule_type=ScheduleTypeChoices.OPERATING,
+        ), Q()
 
     @strawberry_django.filter_field
     def map_bounds(

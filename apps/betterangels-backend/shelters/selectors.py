@@ -61,14 +61,23 @@ def shelters_open_at(
         Q(schedules__end_date__isnull=True) | Q(schedules__end_date__gte=date),
     )
 
-    # Step 3: shelters with a closed exception active on this date
-    # (an exception row with no start_time means "closed all day")
-    exception_closed = Q(
-        schedules__schedule_type=schedule_type,
-        schedules__is_exception=True,
-        schedules__start_time__isnull=True,
-        schedules__start_date__lte=date,
-        schedules__end_date__gte=date,
+    # Step 3: shelters with a closed exception active on this date.
+    # Use an Exists subquery so all conditions bind to a *single* Schedule
+    # row.  A plain ``exclude(schedules__…)`` over a multi-valued reverse FK
+    # can cross-match fields from different rows and incorrectly drop shelters.
+    from shelters.models import Schedule
+
+    has_closed_exception = Exists(
+        Schedule.objects.filter(
+            shelter=OuterRef("pk"),
+            schedule_type=schedule_type,
+            day=day,
+            is_exception=True,
+            start_time__isnull=True,
+        ).filter(
+            Q(start_date__isnull=True) | Q(start_date__lte=date),
+            Q(end_date__isnull=True) | Q(end_date__gte=date),
+        )
     )
 
-    return queryset.filter(open_filter & date_filter).exclude(exception_closed).distinct()
+    return queryset.filter(open_filter & date_filter).exclude(has_closed_exception).distinct()

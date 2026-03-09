@@ -49,7 +49,7 @@ export function Modal(props: IModal): ReactElement | null {
   }
 
   const modalCss = [
-    'z-max',
+    'z-[2001]',
     'transform-gpu',
     'overflow-x-hidden',
     'overflow-y-auto',

@@ -168,10 +168,12 @@ function getConcreteWindows(
   const dayStart = new Date(date);
   dayStart.setHours(0, 0, 0, 0);
 
-  return getEffectiveTimeWindows(schedules, date, scheduleType).map((window) => ({
-    start: new Date(dayStart.getTime() + window.open * 60_000),
-    end: new Date(dayStart.getTime() + window.close * 60_000),
-  }));
+  return getEffectiveTimeWindows(schedules, date, scheduleType).map(
+    (window) => ({
+      start: new Date(dayStart.getTime() + window.open * 60_000),
+      end: new Date(dayStart.getTime() + window.close * 60_000),
+    })
+  );
 }
 
 function formatClock(date: Date): string {
@@ -221,7 +223,9 @@ export function getOperatingStatus(
   scheduleType: ScheduleTypeChoices = ScheduleTypeChoices.Operating
 ): OperatingStatus {
   const concreteWindows = Array.from({ length: 9 }, (_, index) => index - 1)
-    .flatMap((offset) => getConcreteWindows(schedules, addDays(now, offset), scheduleType))
+    .flatMap((offset) =>
+      getConcreteWindows(schedules, addDays(now, offset), scheduleType)
+    )
     .sort((left, right) => left.start.getTime() - right.start.getTime());
 
   const currentWindow = concreteWindows.find(
@@ -262,6 +266,8 @@ export function getOperatingStatus(
     statusText: 'Closed',
     detailText: isSameDay(nextWindow.start, now)
       ? `Opens ${formatClock(nextWindow.start)}`
-      : `Opens ${format(nextWindow.start, 'EEEE')} ${formatClock(nextWindow.start)}`,
+      : `Opens ${format(nextWindow.start, 'EEEE')} ${formatClock(
+          nextWindow.start
+        )}`,
   };
 }

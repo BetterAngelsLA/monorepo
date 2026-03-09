@@ -1,3 +1,7 @@
+import {
+  Checkbox,
+  ExpandableContainer,
+} from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
@@ -34,6 +38,13 @@ export function ShelterFilters(props: IProps) {
     });
   }
 
+  function onOpenNowChange(checked: boolean) {
+    setFilters((prev) => ({
+      ...prev,
+      openNow: checked,
+    }));
+  }
+
   useEffect(() => {
     onChange && onChange(filters);
   }, [filters, onChange]);
@@ -47,6 +58,16 @@ export function ShelterFilters(props: IProps) {
         </div>
       </div>
       <div>
+        <div className="mt-8">
+          <ExpandableContainer header="Availability">
+            <Checkbox
+              label="Open now"
+              checked={!!filters.openNow}
+              onChange={onOpenNowChange}
+            />
+          </ExpandableContainer>
+        </div>
+
         <FilterSelector
           className="mt-8"
           onChange={onFilterChange}

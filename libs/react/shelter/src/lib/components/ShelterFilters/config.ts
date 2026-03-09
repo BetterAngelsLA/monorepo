@@ -40,6 +40,8 @@ export function getFilterLabel(
   value: TFilterOptionType
 ): string | null {
   switch (category) {
+    case 'openNow':
+      return 'Open now';
     case 'demographics':
       return enumDisplayDemographics[value as DemographicChoices] || null;
     case 'pets':

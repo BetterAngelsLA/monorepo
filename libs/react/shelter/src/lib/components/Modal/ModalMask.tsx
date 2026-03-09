@@ -23,7 +23,7 @@ export function ModalMask(props: IProps) {
     'right-0',
     'bottom-0',
     'fixed',
-    'z-max',
+    'z-[2000]',
     'flex',
     'justify-center',
     'items-center',
