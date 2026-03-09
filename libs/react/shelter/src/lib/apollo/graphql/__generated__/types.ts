@@ -113,6 +113,7 @@ export type AdminShelterType = {
   programFees?: Maybe<Scalars['String']['output']>;
   roomStyles: Array<RoomStyleType>;
   roomStylesOther?: Maybe<Scalars['String']['output']>;
+  schedules: Array<ScheduleType>;
   shelterPrograms: Array<ShelterProgramType>;
   shelterProgramsOther?: Maybe<Scalars['String']['output']>;
   shelterTypes: Array<ShelterTypeType>;
@@ -414,6 +415,16 @@ export type ClientSearchInput = {
   middleName?: InputMaybe<Scalars['String']['input']>;
 };
 
+export enum ConditionChoices {
+  AirQualitySmoke = 'AIR_QUALITY_SMOKE',
+  EmergencyEvacuation = 'EMERGENCY_EVACUATION',
+  Fire = 'FIRE',
+  Heat = 'HEAT',
+  PublicHealthEmergency = 'PUBLIC_HEALTH_EMERGENCY',
+  RainSevereWeather = 'RAIN_SEVERE_WEATHER',
+  Wind = 'WIND'
+}
+
 export type ContactInfoType = {
   __typename?: 'ContactInfoType';
   contactName: Scalars['String']['output'];
@@ -649,6 +660,7 @@ export type CreateShelterInput = {
   referralRequirement: Array<ReferralRequirementChoices>;
   roomStyles: Array<RoomStyleChoices>;
   roomStylesOther?: InputMaybe<Scalars['String']['input']>;
+  schedules?: InputMaybe<Array<ScheduleInput>>;
   shelterPrograms: Array<ShelterProgramChoices>;
   shelterProgramsOther?: InputMaybe<Scalars['String']['input']>;
   shelterTypes: Array<ShelterChoices>;
@@ -716,6 +728,16 @@ export type DateCountType = {
   count: Scalars['Int']['output'];
   date: Scalars['String']['output'];
 };
+
+export enum DayOfWeekChoices {
+  Friday = 'FRIDAY',
+  Monday = 'MONDAY',
+  Saturday = 'SATURDAY',
+  Sunday = 'SUNDAY',
+  Thursday = 'THURSDAY',
+  Tuesday = 'TUESDAY',
+  Wednesday = 'WEDNESDAY'
+}
 
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
@@ -2358,6 +2380,38 @@ export type SampleType = {
   name: Scalars['String']['output'];
 };
 
+export type ScheduleInput = {
+  closeTime?: InputMaybe<Scalars['Time']['input']>;
+  condition?: InputMaybe<ConditionChoices>;
+  days?: InputMaybe<Array<DayOfWeekChoices>>;
+  endDate?: InputMaybe<Scalars['Date']['input']>;
+  isException?: Scalars['Boolean']['input'];
+  openTime?: InputMaybe<Scalars['Time']['input']>;
+  scheduleType?: ScheduleTypeChoices;
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+};
+
+export type ScheduleType = {
+  __typename?: 'ScheduleType';
+  closeTime?: Maybe<Scalars['Time']['output']>;
+  condition?: Maybe<ConditionChoices>;
+  day?: Maybe<DayOfWeekChoices>;
+  demographic?: Maybe<DemographicType>;
+  endDate?: Maybe<Scalars['Date']['output']>;
+  id: Scalars['ID']['output'];
+  isException: Scalars['Boolean']['output'];
+  openTime?: Maybe<Scalars['Time']['output']>;
+  scheduleType: ScheduleTypeChoices;
+  startDate?: Maybe<Scalars['Date']['output']>;
+};
+
+export enum ScheduleTypeChoices {
+  Intake = 'INTAKE',
+  MealService = 'MEAL_SERVICE',
+  Operating = 'OPERATING',
+  StaffAvailability = 'STAFF_AVAILABILITY'
+}
+
 export enum SelahTeamEnum {
   BowtieRiversideOutreach = 'BOWTIE_RIVERSIDE_OUTREACH',
   EchoParkOnSite = 'ECHO_PARK_ON_SITE',
@@ -2522,6 +2576,7 @@ export type ShelterType = {
   programFees?: Maybe<Scalars['String']['output']>;
   roomStyles: Array<RoomStyleType>;
   roomStylesOther?: Maybe<Scalars['String']['output']>;
+  schedules: Array<ScheduleType>;
   shelterPrograms: Array<ShelterProgramType>;
   shelterProgramsOther?: Maybe<Scalars['String']['output']>;
   shelterTypes: Array<ShelterTypeType>;
