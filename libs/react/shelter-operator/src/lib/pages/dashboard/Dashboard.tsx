@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client/react';
 import { useUser } from '@monorepo/react/shelter';
-import { Filter, Settings2 } from 'lucide-react';
+import { Filter, Search, Settings2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons';
@@ -33,6 +33,7 @@ export default function Dashboard() {
 
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
   const [page, setPage] = useState(1);
   const debounceTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
@@ -167,21 +168,26 @@ export default function Dashboard() {
           setPage(1);
         }}
       />
-      <div className="flex flex-col p-8 w-full">
-        {/* Search bar */}
+      <div className="flex flex-col w-full">
+        {/* Search, filter, sort, and view controls */}
         <form
-          className="my-4 w-full flex items-center justify-between gap-3"
+          className="my-1 flex w-full flex-wrap items-center gap-3 bg-white px-3"
           style={{ fontFamily: 'Poppins, sans-serif' }}
         >
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search shelters"
-            className="w-full max-w-[380px] px-6 py-2 rounded-3xl border outline-none shadow-sm"
-          />
+          <label className="flex h-11 w-full max-w-[380px] items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FCF500] text-[#1E3342]">
+              <Search size={20} />
+            </span>
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search shelters"
+              className="h-full w-full rounded-full bg-transparent pr-3 text-base text-[#4A4F57] outline-none transition-colors placeholder:text-[#7A818A]"
+            />
+          </label>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex flex-wrap items-center gap-2">
             <Button
               variant="small-light"
               leftIcon={<Filter size={20} />}
@@ -197,6 +203,32 @@ export default function Dashboard() {
             >
               Sort
             </Button>
+
+            <div className="relative grid h-11 grid-cols-2 items-center rounded-full border border-[#D3D9E3] bg-[#F5F5F5] p-1">
+              <span
+                className={`pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                  viewMode === 'list' ? 'translate-x-0' : 'translate-x-full'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`relative z-10 h-9 rounded-full px-2 text-base transition-colors ${
+                  viewMode === 'list' ? 'text-[#1F2937]' : 'text-[#747A82]'
+                }`}
+              >
+                List View
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('card')}
+                className={`relative z-10 h-9 rounded-full px-2 text-base transition-colors ${
+                  viewMode === 'card' ? 'text-[#1F2937]' : 'text-[#747A82]'
+                }`}
+              >
+                Card View
+              </button>
+            </div>
           </div>
         </form>
 
