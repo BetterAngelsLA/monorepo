@@ -345,10 +345,17 @@ class ScheduleForm(forms.ModelForm):
         model = Schedule
         fields = "__all__"
         widgets = {
-            "open_time": forms.TimeInput(attrs={"type": "time"}),
-            "close_time": forms.TimeInput(attrs={"type": "time"}),
+            "start_time": forms.TimeInput(attrs={"type": "time"}),
+            "end_time": forms.TimeInput(attrs={"type": "time"}),
             "start_date": forms.DateInput(attrs={"type": "date"}),
             "end_date": forms.DateInput(attrs={"type": "date"}),
+        }
+        help_texts = {
+            "is_exception": (
+                "Check this to mark an override or closure. "
+                "Exceptions subtract from the regular schedule: "
+                "leave times blank for an all-day closure, or set times to close a specific window."
+            ),
         }
 
 
@@ -356,7 +363,7 @@ class ScheduleInline(admin.StackedInline):
     model = Schedule
     form = ScheduleForm
     extra = 0
-    ordering = ["is_exception", "schedule_type", "day", "open_time"]
+    ordering = ["is_exception", "schedule_type", "day", "start_time"]
     verbose_name = "Schedule Entry"
     verbose_name_plural = "Schedule"
     inline_key = "schedule"
@@ -368,7 +375,7 @@ class ScheduleInline(admin.StackedInline):
                     "is_exception",
                     "schedule_type",
                     "day",
-                    ("open_time", "close_time"),
+                    ("start_time", "end_time"),
                     ("start_date", "end_date"),
                     "condition",
                     "demographic",

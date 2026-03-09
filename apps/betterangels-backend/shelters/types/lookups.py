@@ -112,8 +112,8 @@ class ScheduleType:
     id: ID
     schedule_type: auto
     day: auto
-    open_time: auto
-    close_time: auto
+    start_time: auto
+    end_time: auto
     start_date: auto
     end_date: auto
     condition: auto

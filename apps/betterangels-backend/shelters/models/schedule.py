@@ -25,8 +25,8 @@ class Schedule(BaseModel):
         blank=True,
         help_text="Day of week. Leave blank for date-range entries that apply every day.",
     )
-    open_time = models.TimeField(null=True, blank=True)
-    close_time = models.TimeField(null=True, blank=True)
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
 
     # Date range — use both for a range, or set start_date == end_date for a single date
     start_date = models.DateField(
@@ -50,12 +50,12 @@ class Schedule(BaseModel):
     class Meta:
         constraints = [
             UniqueConstraint(
-                fields=["shelter", "schedule_type", "day", "open_time", "start_date"],
+                fields=["shelter", "schedule_type", "day", "start_time", "start_date"],
                 name="unique_schedule_per_shelter_type_day_time_date",
                 nulls_distinct=False,
             ),
         ]
-        ordering = ["is_exception", "schedule_type", "day", "open_time"]
+        ordering = ["is_exception", "schedule_type", "day", "start_time"]
 
     def __str__(self) -> str:
         if self.is_exception:
@@ -67,14 +67,14 @@ class Schedule(BaseModel):
             else:
                 date_part = "(no dates)"
             time_part = (
-                f" {self.open_time.strftime('%I:%M%p')}\u2013{self.close_time.strftime('%I:%M%p')}"
-                if self.open_time and self.close_time
+                f" {self.start_time.strftime('%I:%M%p')}\u2013{self.end_time.strftime('%I:%M%p')}"
+                if self.start_time and self.end_time
                 else " Closed all day"
             )
             return f"{self.shelter.name} - {self.get_schedule_type_display()} - Exception {date_part}{time_part}"
 
         day_part = self.get_day_display() if self.day else "Every day"
         label = f"{self.shelter.name} - {self.get_schedule_type_display()} - {day_part}"
-        if self.open_time and self.close_time:
-            return f"{label} ({self.open_time.strftime('%I:%M%p')}-{self.close_time.strftime('%I:%M%p')})"
+        if self.start_time and self.end_time:
+            return f"{label} ({self.start_time.strftime('%I:%M%p')}-{self.end_time.strftime('%I:%M%p')})"
         return label

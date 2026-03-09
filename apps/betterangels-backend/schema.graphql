@@ -1887,8 +1887,8 @@ type SampleType {
 input ScheduleInput {
   scheduleType: ScheduleTypeChoices! = OPERATING
   days: [DayOfWeekChoices!] = null
-  openTime: Time = null
-  closeTime: Time = null
+  startTime: Time = null
+  endTime: Time = null
   startDate: Date = null
   endDate: Date = null
   condition: ConditionChoices = null
@@ -1899,8 +1899,8 @@ type ScheduleType {
   id: ID!
   scheduleType: ScheduleTypeChoices!
   day: DayOfWeekChoices
-  openTime: Time
-  closeTime: Time
+  startTime: Time
+  endTime: Time
   startDate: Date
   endDate: Date
   condition: ConditionChoices

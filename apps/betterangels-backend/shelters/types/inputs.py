@@ -54,8 +54,8 @@ class TimeRangeInput:
 class ScheduleInput:
     schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING
     days: Optional[List[DayOfWeekChoices]] = None
-    open_time: Optional[time] = None
-    close_time: Optional[time] = None
+    start_time: Optional[time] = None
+    end_time: Optional[time] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     condition: Optional[ConditionChoices] = None

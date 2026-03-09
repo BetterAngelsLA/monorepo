@@ -13,12 +13,9 @@
     .tz-label { font-size: .75rem; font-weight: normal; color: #666; margin-left: .5em; }
     .schedule-tag { font-size: .70rem; color: #8b5e3c; background: #fef3e2; padding: 1px 5px; border-radius: 3px; margin-left: .4em; vertical-align: middle; }
     .schedule-tag--exception { color: #92400e; background: #fef3c7; }
-    /* Type-group dividers injected by JS */
-    .schedule-type-divider { margin: 1em 0 .2em; padding: 6px 10px; background: #f0f0f0; border-left: 3px solid #79aec8; font-size: .85rem; font-weight: 600; color: #333; }
-    /* Exception / Normal mode dividers */
-    .schedule-mode-divider { margin: 1.5em 0 .2em; padding: 6px 10px; font-size: .9rem; font-weight: 700; color: #fff; border-radius: 3px; }
-    .schedule-mode-divider--normal { background: #2563eb; }
-    .schedule-mode-divider--exception { background: #d97706; }
+    /* Per-form mode styling */
+    #schedules-group .inline-related { border-left: 3px solid #79aec8; transition: border-color .15s, background-color .15s; }
+    #schedules-group .inline-related.schedule-mode--exception { border-left-color: #d97706; background: #fffbeb; }
     /* is_exception row styling */
     #schedules-group .field-is_exception { padding: 8px 12px; background: #fafafa; border-bottom: 1px solid #e5e7eb; }
     #schedules-group .field-is_exception label { font-weight: 700; font-size: .9rem; }
@@ -173,6 +170,13 @@
             var condRow = getFormRow(formDiv, 'condition');
             var demoRow = getFormRow(formDiv, 'demographic');
 
+            // Per-form visual indicator
+            if (isException) {
+                formDiv.classList.add('schedule-mode--exception');
+            } else {
+                formDiv.classList.remove('schedule-mode--exception');
+            }
+
             if (isException) {
                 // Exception mode: hide day, show dates prominently
                 if (dayRow) dayRow.classList.add('schedule-hidden');
@@ -218,8 +222,8 @@
 
             var typeEl = document.getElementById('id_' + pfx + '-schedule_type');
             var dayEl = document.getElementById('id_' + pfx + '-day');
-            var openEl = document.getElementById('id_' + pfx + '-open_time');
-            var closeEl = document.getElementById('id_' + pfx + '-close_time');
+            var openEl = document.getElementById('id_' + pfx + '-start_time');
+            var closeEl = document.getElementById('id_' + pfx + '-end_time');
             var exceptionEl = document.getElementById('id_' + pfx + '-is_exception');
             var conditionEl = document.getElementById('id_' + pfx + '-condition');
             var startDateEl = document.getElementById('id_' + pfx + '-start_date');
@@ -303,48 +307,6 @@
             return container;
         }
 
-        /* ── Group dividers: separate Normal / Exception sections ── */
-        function insertDividers() {
-            var schedGroup = document.getElementById('schedules-group');
-            if (!schedGroup) return;
-            // Remove existing dividers
-            var old = schedGroup.querySelectorAll('.schedule-type-divider, .schedule-mode-divider');
-            for (var d = 0; d < old.length; d++) old[d].parentNode.removeChild(old[d]);
-
-            var forms = schedGroup.querySelectorAll('.inline-related:not(.empty-form)');
-            var lastMode = null;   // 'normal' or 'exception'
-            var lastType = null;
-
-            for (var i = 0; i < forms.length; i++) {
-                var formDiv = forms[i];
-                var pfx = 'schedules-' + (formDiv.id || '').replace('schedules-', '');
-                var deleteEl = document.getElementById('id_' + pfx + '-DELETE');
-                if (deleteEl && deleteEl.checked) continue;
-
-                var exEl = document.getElementById('id_' + pfx + '-is_exception');
-                var mode = (exEl && exEl.checked) ? 'exception' : 'normal';
-
-                if (mode !== lastMode) {
-                    var modeDivider = document.createElement('div');
-                    modeDivider.className = 'schedule-mode-divider schedule-mode-divider--' + mode;
-                    modeDivider.textContent = mode === 'exception' ? '\u26A0 Exceptions / Closures' : '\uD83D\uDD52 Regular Schedule';
-                    formDiv.parentNode.insertBefore(modeDivider, formDiv);
-                    lastMode = mode;
-                    lastType = null; // reset type tracking across mode boundaries
-                }
-
-                var tEl = document.getElementById('id_' + pfx + '-schedule_type');
-                var typeVal = tEl ? tEl.value : '';
-                if (mode === 'normal' && typeVal && typeVal !== lastType) {
-                    var divider = document.createElement('div');
-                    divider.className = 'schedule-type-divider';
-                    divider.textContent = TYPE_LABELS[typeVal] || typeVal;
-                    formDiv.parentNode.insertBefore(divider, formDiv);
-                    lastType = typeVal;
-                }
-            }
-        }
-
         /* ── Master update ─────────────────────────────────── */
         function updateFormTitles() {
             var schedGroup = document.getElementById('schedules-group');
@@ -363,14 +325,13 @@
                 while (label.firstChild) label.removeChild(label.firstChild);
                 label.appendChild(buildTitle(formDiv));
             }
-            insertDividers();
         }
 
         // Initial update
         toggleAllModes();
         updateFormTitles();
 
-        // Single observer for collapse init + title/divider + mode updates
+        // Single observer for collapse init + title + mode updates
         var updating = false;
         function scheduleUpdate() {
             if (updating) return;

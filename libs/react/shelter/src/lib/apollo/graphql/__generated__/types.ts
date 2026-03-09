@@ -2381,28 +2381,28 @@ export type SampleType = {
 };
 
 export type ScheduleInput = {
-  closeTime?: InputMaybe<Scalars['Time']['input']>;
   condition?: InputMaybe<ConditionChoices>;
   days?: InputMaybe<Array<DayOfWeekChoices>>;
   endDate?: InputMaybe<Scalars['Date']['input']>;
+  endTime?: InputMaybe<Scalars['Time']['input']>;
   isException?: Scalars['Boolean']['input'];
-  openTime?: InputMaybe<Scalars['Time']['input']>;
   scheduleType?: ScheduleTypeChoices;
   startDate?: InputMaybe<Scalars['Date']['input']>;
+  startTime?: InputMaybe<Scalars['Time']['input']>;
 };
 
 export type ScheduleType = {
   __typename?: 'ScheduleType';
-  closeTime?: Maybe<Scalars['Time']['output']>;
   condition?: Maybe<ConditionChoices>;
   day?: Maybe<DayOfWeekChoices>;
   demographic?: Maybe<DemographicType>;
   endDate?: Maybe<Scalars['Date']['output']>;
+  endTime?: Maybe<Scalars['Time']['output']>;
   id: Scalars['ID']['output'];
   isException: Scalars['Boolean']['output'];
-  openTime?: Maybe<Scalars['Time']['output']>;
   scheduleType: ScheduleTypeChoices;
   startDate?: Maybe<Scalars['Date']['output']>;
+  startTime?: Maybe<Scalars['Time']['output']>;
 };
 
 export enum ScheduleTypeChoices {
