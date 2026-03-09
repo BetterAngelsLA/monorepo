@@ -174,7 +174,8 @@ export const bodyInterceptor: FetchInterceptor = async (input, init, next) => {
     body = JSON.stringify(body);
   }
 
-  // Set Content-Type header if there's a body and it's not already set
+  // Set Content-Type header if there's a body and it's not already set.
+  // For FormData, let fetch set the header (it adds the multipart boundary).
   if (body && !isFormData && !headers.has(HEADER_NAMES.CONTENT_TYPE)) {
     headers.set(HEADER_NAMES.CONTENT_TYPE, HEADER_VALUES.CONTENT_TYPE_JSON);
   }
