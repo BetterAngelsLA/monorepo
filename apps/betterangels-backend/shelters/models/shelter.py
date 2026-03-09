@@ -75,6 +75,8 @@ class Shelter(BaseModel):
     phone = PhoneNumberField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
     instagram = models.URLField(blank=True, null=True)
+    # TODO: Remove after 0031_migrate_legacy_hours_to_schedule has run in all environments.
+    # Data has been migrated to the Schedule model.
     operating_hours = TimeRangeField(null=True, blank=True)
 
     # Hero Image
@@ -105,6 +107,8 @@ class Shelter(BaseModel):
 
     # Policies
     max_stay = models.PositiveIntegerField(blank=True, null=True, verbose_name="Max Stay (days)")
+    # TODO: Remove after 0031_migrate_legacy_hours_to_schedule has run in all environments.
+    # Data has been migrated to the Schedule model.
     intake_hours = TimeRangeField(null=True, blank=True)
     curfew = models.TimeField(null=True, blank=True)
     on_site_security = models.BooleanField(null=True, blank=True)

@@ -105,3 +105,17 @@ class ShelterProgramType:
 @strawberry_django.type(models.Funder)
 class FunderType:
     name: auto
+
+
+@strawberry_django.type(models.Schedule)
+class ScheduleType:
+    id: ID
+    schedule_type: auto
+    day: auto
+    open_time: auto
+    close_time: auto
+    start_date: auto
+    end_date: auto
+    condition: auto
+    demographic: DemographicType | None
+    is_exception: auto

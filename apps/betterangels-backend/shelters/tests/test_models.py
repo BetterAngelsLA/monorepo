@@ -137,19 +137,23 @@ class ScheduleModelTestCase(TestCase):
         self.assertEqual(schedule.day, DayOfWeekChoices.MONDAY)
         self.assertEqual(schedule.open_time, datetime.time(9, 0))
         self.assertEqual(schedule.close_time, datetime.time(17, 0))
-        self.assertFalse(schedule.is_closed)
 
-    def test_create_closed_day(self) -> None:
-        schedule = Schedule.objects.create(
+    def test_no_schedule_means_closed(self) -> None:
+        """A shelter with no schedule rows for a day is considered closed."""
+        # Only create a row for Monday — no row for Sunday.
+        Schedule.objects.create(
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
-            day=DayOfWeekChoices.SUNDAY,
-            is_closed=True,
+            day=DayOfWeekChoices.MONDAY,
+            open_time=datetime.time(9, 0),
+            close_time=datetime.time(17, 0),
         )
-        self.assertTrue(schedule.is_closed)
-        self.assertIsNone(schedule.open_time)
-        self.assertIsNone(schedule.close_time)
-        self.assertIn("(Closed)", str(schedule))
+        self.assertFalse(
+            self.shelter.schedules.filter(
+                schedule_type=ScheduleTypeChoices.OPERATING,
+                day=DayOfWeekChoices.SUNDAY,
+            ).exists()
+        )
 
     def test_multiple_time_windows(self) -> None:
         """Multiple time windows per day are separate Schedule rows."""
@@ -262,20 +266,22 @@ class ScheduleModelTestCase(TestCase):
         self.assertEqual(schedule.demographic, demographic)
 
     def test_exception_override(self) -> None:
-        """A single-date exception uses start_date == end_date, day is optional."""
+        """A single-date exception uses start_date == end_date, day is optional.
+        An exception with no times means closed all day."""
         schedule = Schedule.objects.create(
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
-            is_closed=True,
             is_exception=True,
             start_date=datetime.date(2026, 12, 25),
             end_date=datetime.date(2026, 12, 25),
         )
         self.assertTrue(schedule.is_exception)
         self.assertIsNone(schedule.day)
+        self.assertIsNone(schedule.open_time)
         self.assertEqual(schedule.start_date, datetime.date(2026, 12, 25))
         self.assertEqual(schedule.end_date, datetime.date(2026, 12, 25))
-        self.assertIn("Every day", str(schedule))
+        self.assertIn("Exception", str(schedule))
+        self.assertIn("Closed all day", str(schedule))
 
     def test_cascade_delete(self) -> None:
         Schedule.objects.create(
@@ -300,7 +306,7 @@ class ScheduleModelTestCase(TestCase):
         add_events = Events.objects.filter(pgh_label="shelter.schedule.add")
         self.assertEqual(add_events.count(), 1)
 
-        schedule.is_closed = True
+        schedule.open_time = datetime.time(10, 0)
         schedule.save()
         update_events = Events.objects.filter(pgh_label="shelter.schedule.update")
         self.assertEqual(update_events.count(), 1)
@@ -319,11 +325,14 @@ class ScheduleModelTestCase(TestCase):
         )
         self.assertIn("Intake Hours", str(schedule))
         self.assertIn("Friday", str(schedule))
-        self.assertNotIn("(Closed)", str(schedule))
 
-        schedule.is_closed = True
-        schedule.save()
-        self.assertIn("(Closed)", str(schedule))
+        # No times → label only
+        no_times = Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.SUNDAY,
+        )
+        self.assertIn("Sunday", str(no_times))
 
     def test_default_schedule_type(self) -> None:
         schedule = Schedule.objects.create(
@@ -352,13 +361,8 @@ class ScheduleModelTestCase(TestCase):
             open_time=datetime.time(9, 0),
             close_time=datetime.time(17, 0),
         )
-        # Closed shelter: Wed is_closed=True
-        Schedule.objects.create(
-            shelter=closed_shelter,
-            schedule_type=ScheduleTypeChoices.OPERATING,
-            day=DayOfWeekChoices.WEDNESDAY,
-            is_closed=True,
-        )
+        # Closed shelter: no schedule row with times for Wednesday
+        # (absence of a row = closed)
 
         result = Shelter.objects.open_at(query_dt)
 
@@ -385,14 +389,14 @@ class ScheduleModelTestCase(TestCase):
         self.assertNotIn(future_shelter, Shelter.objects.open_at(query_dt))
 
     def test_exception_subtracts_availability(self) -> None:
-        """An is_exception + is_closed entry for a specific date should
+        """An is_exception entry with no times for a specific date should
         override the regular weekly schedule, causing the shelter to appear
         closed when the exception's date range is active.
 
         Scenario
         --------
         - Shelter has regular Wednesday 9 AM – 5 PM operating hours.
-        - An exception marks Dec 25 as closed (is_exception=True, is_closed=True).
+        - An exception with no times marks Dec 25 as closed all day.
         - Querying "open on Wed at 2:30 PM" on Dec 25 should NOT return the shelter.
         - The same query on a normal Wednesday (e.g., Dec 4) SHOULD return it.
         """
@@ -408,10 +412,10 @@ class ScheduleModelTestCase(TestCase):
         )
 
         # Exception: closed all day on Christmas (Dec 25, 2024 is a Wednesday)
+        # An exception with no times = closed all day.
         Schedule.objects.create(
             shelter=shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
-            is_closed=True,
             is_exception=True,
             start_date=datetime.date(2024, 12, 25),
             end_date=datetime.date(2024, 12, 25),
@@ -426,3 +430,71 @@ class ScheduleModelTestCase(TestCase):
         christmas = datetime.datetime(2024, 12, 25, 14, 30)
         self.assertNotIn(shelter, Shelter.objects.open_at(christmas))
         self.assertFalse(shelter.is_open_at(christmas))
+
+
+class CreateSchedulesServiceTestCase(TestCase):
+    """Tests for _create_schedules multi-day fan-out."""
+
+    def setUp(self) -> None:
+        self.shelter = Shelter.objects.create(name="Fan-out Shelter")
+
+    def test_multi_day_fanout(self) -> None:
+        """A single input with days=[MON, TUE, WED] creates 3 Schedule rows."""
+        from shelters.services import _create_schedules
+
+        _create_schedules(
+            self.shelter,
+            [
+                {
+                    "schedule_type": ScheduleTypeChoices.OPERATING,
+                    "days": [
+                        DayOfWeekChoices.MONDAY,
+                        DayOfWeekChoices.TUESDAY,
+                        DayOfWeekChoices.WEDNESDAY,
+                    ],
+                    "open_time": datetime.time(9, 0),
+                    "close_time": datetime.time(17, 0),
+                }
+            ],
+        )
+        self.assertEqual(self.shelter.schedules.count(), 3)
+        created_days = set(self.shelter.schedules.values_list("day", flat=True))
+        self.assertEqual(
+            created_days,
+            {DayOfWeekChoices.MONDAY, DayOfWeekChoices.TUESDAY, DayOfWeekChoices.WEDNESDAY},
+        )
+
+    def test_empty_days_creates_every_day_row(self) -> None:
+        """An empty days list creates a single row with day=None (every day)."""
+        from shelters.services import _create_schedules
+
+        _create_schedules(
+            self.shelter,
+            [
+                {
+                    "schedule_type": ScheduleTypeChoices.OPERATING,
+                    "days": [],
+                    "open_time": datetime.time(9, 0),
+                    "close_time": datetime.time(17, 0),
+                }
+            ],
+        )
+        self.assertEqual(self.shelter.schedules.count(), 1)
+        self.assertIsNone(self.shelter.schedules.first().day)
+
+    def test_no_days_key_creates_every_day_row(self) -> None:
+        """Omitting the 'days' key entirely creates a single row with day=None."""
+        from shelters.services import _create_schedules
+
+        _create_schedules(
+            self.shelter,
+            [
+                {
+                    "schedule_type": ScheduleTypeChoices.OPERATING,
+                    "open_time": datetime.time(8, 0),
+                    "close_time": datetime.time(20, 0),
+                }
+            ],
+        )
+        self.assertEqual(self.shelter.schedules.count(), 1)
+        self.assertIsNone(self.shelter.schedules.first().day)

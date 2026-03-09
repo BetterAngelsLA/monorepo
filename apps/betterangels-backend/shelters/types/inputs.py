@@ -53,10 +53,9 @@ class TimeRangeInput:
 @strawberry.input
 class ScheduleInput:
     schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING
-    day: Optional[DayOfWeekChoices] = None
+    days: Optional[List[DayOfWeekChoices]] = None
     open_time: Optional[time] = None
     close_time: Optional[time] = None
-    is_closed: bool = False
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     condition: Optional[ConditionChoices] = None

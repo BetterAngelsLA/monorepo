@@ -27,7 +27,6 @@ class Schedule(BaseModel):
     )
     open_time = models.TimeField(null=True, blank=True)
     close_time = models.TimeField(null=True, blank=True)
-    is_closed = models.BooleanField(default=False, blank=True)
 
     # Date range — use both for a range, or set start_date == end_date for a single date
     start_date = models.DateField(
@@ -56,13 +55,26 @@ class Schedule(BaseModel):
                 nulls_distinct=False,
             ),
         ]
-        ordering = ["schedule_type", "day", "open_time"]
+        ordering = ["is_exception", "schedule_type", "day", "open_time"]
 
     def __str__(self) -> str:
+        if self.is_exception:
+            date_part = ""
+            if self.start_date and self.end_date and self.start_date == self.end_date:
+                date_part = str(self.start_date)
+            elif self.start_date:
+                date_part = f"{self.start_date} \u2013 {self.end_date or '?'}"
+            else:
+                date_part = "(no dates)"
+            time_part = (
+                f" {self.open_time.strftime('%I:%M%p')}\u2013{self.close_time.strftime('%I:%M%p')}"
+                if self.open_time and self.close_time
+                else " Closed all day"
+            )
+            return f"{self.shelter.name} - {self.get_schedule_type_display()} - Exception {date_part}{time_part}"
+
         day_part = self.get_day_display() if self.day else "Every day"
         label = f"{self.shelter.name} - {self.get_schedule_type_display()} - {day_part}"
-        if self.is_closed:
-            return f"{label} (Closed)"
         if self.open_time and self.close_time:
             return f"{label} ({self.open_time.strftime('%I:%M%p')}-{self.close_time.strftime('%I:%M%p')})"
         return label

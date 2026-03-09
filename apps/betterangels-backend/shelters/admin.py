@@ -356,7 +356,7 @@ class ScheduleInline(admin.StackedInline):
     model = Schedule
     form = ScheduleForm
     extra = 0
-    ordering = ["schedule_type", "day", "open_time"]
+    ordering = ["is_exception", "schedule_type", "day", "open_time"]
     verbose_name = "Schedule Entry"
     verbose_name_plural = "Schedule"
     inline_key = "schedule"
@@ -364,14 +364,15 @@ class ScheduleInline(admin.StackedInline):
         (
             None,
             {
-                "fields": ("schedule_type", "day", ("open_time", "close_time"), "is_closed"),
-            },
-        ),
-        (
-            "Advanced Options",
-            {
-                "classes": ("collapse",),
-                "fields": (("start_date", "end_date"), "condition", "demographic", "is_exception"),
+                "fields": (
+                    "is_exception",
+                    "schedule_type",
+                    "day",
+                    ("open_time", "close_time"),
+                    ("start_date", "end_date"),
+                    "condition",
+                    "demographic",
+                ),
             },
         ),
     )

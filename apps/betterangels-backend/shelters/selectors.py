@@ -50,7 +50,6 @@ def shelters_open_at(
     open_filter = Q(
         schedules__schedule_type=schedule_type,
         schedules__day=day,
-        schedules__is_closed=False,
         schedules__is_exception=False,
         schedules__open_time__lte=time,
         schedules__close_time__gte=time,
@@ -63,10 +62,11 @@ def shelters_open_at(
     )
 
     # Step 3: shelters with a closed exception active on this date
+    # (an exception row with no open_time means "closed all day")
     exception_closed = Q(
         schedules__schedule_type=schedule_type,
         schedules__is_exception=True,
-        schedules__is_closed=True,
+        schedules__open_time__isnull=True,
         schedules__start_date__lte=date,
         schedules__end_date__gte=date,
     )

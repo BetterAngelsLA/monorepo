@@ -110,7 +110,12 @@ _SHELTER_M2M_FIELDS = _get_m2m_field_names(Shelter)
 
 
 def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) -> None:
-    """Bulk-create Schedule rows from a list of input dicts."""
+    """Bulk-create Schedule rows from a list of input dicts.
+
+    Each input dict may contain ``days`` (a list of day enums).
+    One Schedule row is created per day.  If ``days`` is empty or absent,
+    a single row with ``day=None`` (every day) is created.
+    """
     if not schedules_data:
         return
     objs = []
@@ -121,28 +126,28 @@ def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) ->
             ScheduleTypeChoices(getattr(raw_type, "value", raw_type)) if raw_type else ScheduleTypeChoices.OPERATING
         )
 
-        raw_day = entry.get("day")
-        day: DayOfWeekChoices | None = DayOfWeekChoices(getattr(raw_day, "value", raw_day)) if raw_day else None
-
         raw_condition = entry.get("condition")
         condition: ConditionChoices | None = (
             ConditionChoices(getattr(raw_condition, "value", raw_condition)) if raw_condition else None
         )
 
-        objs.append(
-            Schedule(
-                shelter=shelter,
-                schedule_type=schedule_type,
-                day=day,
-                open_time=entry.get("open_time"),
-                close_time=entry.get("close_time"),
-                is_closed=entry.get("is_closed", False),
-                start_date=entry.get("start_date"),
-                end_date=entry.get("end_date"),
-                condition=condition,
-                is_exception=entry.get("is_exception", False),
+        # Fan out: one row per day (or a single row with day=None)
+        raw_days = entry.get("days") or [None]
+        for raw_day in raw_days:
+            day: DayOfWeekChoices | None = DayOfWeekChoices(getattr(raw_day, "value", raw_day)) if raw_day else None
+            objs.append(
+                Schedule(
+                    shelter=shelter,
+                    schedule_type=schedule_type,
+                    day=day,
+                    open_time=entry.get("open_time"),
+                    close_time=entry.get("close_time"),
+                    start_date=entry.get("start_date"),
+                    end_date=entry.get("end_date"),
+                    condition=condition,
+                    is_exception=entry.get("is_exception", False),
+                )
             )
-        )
     Schedule.objects.bulk_create(objs)
 
 
