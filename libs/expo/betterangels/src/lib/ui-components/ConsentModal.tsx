@@ -18,9 +18,10 @@ import { DimensionValue, Dimensions, StyleSheet, View } from 'react-native';
 
 import { useMutation } from '@apollo/client/react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSignOut } from '../hooks';
+import { useSignOut, useUser } from '../hooks';
 import { UpdateCurrentUserDocument } from '../providers';
 import { TUser } from '../providers/user/UserContext';
+import { UserProfileEdit } from '../screens';
 
 interface IConsentModalProps {
   isModalVisible: boolean;
@@ -56,11 +57,14 @@ export default function ConsentModal({
   user,
   height = 'auto',
 }: IConsentModalProps) {
+  const { setUser } = useUser();
   const [updateCurrentUser] = useMutation(UpdateCurrentUserDocument);
   const [checkedItems, setCheckedItems] = useState<CheckedItems>({
     isTosChecked: false,
     isPrivacyPolicyChecked: false,
   });
+
+  const accepted = user.hasAcceptedPrivacyPolicy && user.hasAcceptedTos;
 
   const submitAgreements = async () => {
     const { data, error } = await updateCurrentUser({
@@ -72,11 +76,22 @@ export default function ConsentModal({
         },
       },
     });
+
     if (!data) {
       console.log('Error updating user', error);
       return;
     }
+
     closeModal();
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            hasAcceptedTos: checkedItems.isTosChecked,
+            hasAcceptedPrivacyPolicy: checkedItems.isPrivacyPolicyChecked,
+          }
+        : prev
+    );
   };
 
   const { signOut } = useSignOut();
@@ -130,6 +145,49 @@ export default function ConsentModal({
       />
     ));
 
+  const renderHeader = () => (
+    <>
+      <View
+        style={{
+          width: 18,
+          height: 5,
+          borderRadius: 50,
+          backgroundColor: '#3C3C434D',
+          transform: [{ scaleX: 2 }],
+          alignSelf: 'center',
+          marginVertical: 5,
+        }}
+      />
+      <TextRegular textAlign="center" size="lg" style={styles.consent}>
+        {accepted ? 'Complete Your Registration' : 'Consent'}
+      </TextRegular>
+
+      <View
+        style={{
+          height: 1,
+          width: '100%',
+          backgroundColor: '#3C3C434D',
+          marginBottom: Spacings.sm,
+        }}
+      />
+    </>
+  );
+
+  const renderUserForm = () => (
+    <View style={{ flex: 1 }}>
+      {renderHeader()}
+      <View
+        style={{ paddingHorizontal: Spacings.md, paddingBottom: Spacings.sm }}
+      >
+        <TextRegular textAlign="center" size="sm">
+          Add your full name so administrators can confirm your access and
+          maintain accurate user records.
+        </TextRegular>
+      </View>
+      <UserProfileEdit onSuccess={closeModal} onCancel={signOut} />
+    </View>
+  );
+
   return (
     <BaseModal
       title={null}
@@ -151,81 +209,76 @@ export default function ConsentModal({
         // Stretch inner content so header/body/footer spacing matches original
         flex: 1,
         paddingTop: 0, // handle sits at true top of the card
-        paddingHorizontal: Spacings.md,
         paddingBottom: bottomOffset + Spacings.xs,
       }}
     >
-      <View style={{ flex: 1, justifyContent: 'space-between' }}>
-        <View>
-          <View style={styles.header}>
-            {/* pull tab */}
-            <View
-              style={{
-                width: 18,
-                height: 5,
-                borderRadius: 50,
-                backgroundColor: '#3C3C434D',
-                transform: [{ scaleX: 2 }],
-                alignSelf: 'center',
-                marginVertical: 5,
-              }}
-            />
-            <TextRegular size="lg" style={styles.consent}>
-              Consent
-            </TextRegular>
-            <View
-              style={{
-                height: 1,
-                width: '100%',
-                backgroundColor: '#3C3C434D',
-                marginBottom: Spacings.sm,
-              }}
-            />
-            <Image
-              style={{ height: windowHeight * 0.325 }}
-              contentFit="contain"
-              source={require('../../../../shared/images/consent.png')}
-              accessibilityIgnoresInvertColors
-            />
+      {accepted ? (
+        renderUserForm()
+      ) : (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'space-between',
+          }}
+        >
+          <View>
+            <View style={styles.header}>
+              {/* pull tab */}
+              {renderHeader()}
+
+              <Image
+                style={{ height: windowHeight * 0.325 }}
+                contentFit="contain"
+                source={require('../../../../shared/images/consent.png')}
+                accessibilityIgnoresInvertColors
+              />
+            </View>
+            <View style={{ paddingHorizontal: Spacings.md }}>
+              <TextBold
+                size="sm"
+                mb="xs"
+                mt="sm"
+                color={Colors.PRIMARY_EXTRA_DARK}
+              >
+                Welcome to:
+              </TextBold>
+              <TextBold size="lg" mb="xs" color={Colors.PRIMARY_EXTRA_DARK}>
+                The Better Angels App
+              </TextBold>
+              <TextRegular size="sm" mb="md" color={Colors.PRIMARY_EXTRA_DARK}>
+                Please confirm the following:
+              </TextRegular>
+
+              {renderCheckboxes()}
+            </View>
           </View>
 
-          <TextBold size="sm" mb="xs" mt="sm" color={Colors.PRIMARY_EXTRA_DARK}>
-            Welcome to:
-          </TextBold>
-          <TextBold size="lg" mb="xs" color={Colors.PRIMARY_EXTRA_DARK}>
-            The Better Angels App
-          </TextBold>
-          <TextRegular size="sm" mb="md" color={Colors.PRIMARY_EXTRA_DARK}>
-            Please confirm the following:
-          </TextRegular>
-
-          {renderCheckboxes()}
+          <View style={{ paddingHorizontal: Spacings.md }}>
+            <Button
+              accessibilityHint="Submits agreement and goes to welcome screen"
+              onPress={submitAgreements}
+              disabled={
+                !checkedItems.isPrivacyPolicyChecked ||
+                !checkedItems.isTosChecked
+              }
+              mb="sm"
+              title="Get Started"
+              size="full"
+              variant="primary"
+              borderWidth={0}
+            />
+            <Button
+              accessibilityHint="Cancels agreement"
+              onPress={signOut}
+              title="Cancel"
+              size="full"
+              mb="sm"
+              borderWidth={0}
+              variant="secondary"
+            />
+          </View>
         </View>
-
-        <View>
-          <Button
-            accessibilityHint="Submits agreement and goes to welcome screen"
-            onPress={submitAgreements}
-            disabled={
-              !checkedItems.isPrivacyPolicyChecked || !checkedItems.isTosChecked
-            }
-            mb="sm"
-            title="Get Started"
-            size="full"
-            variant="primary"
-            borderWidth={0}
-          />
-          <Button
-            accessibilityHint="Cancels agreement"
-            onPress={signOut}
-            title="Cancel"
-            size="full"
-            mb="sm"
-            borderWidth={0}
-            variant="secondary"
-          />
-        </View>
-      </View>
+      )}
     </BaseModal>
   );
 }
