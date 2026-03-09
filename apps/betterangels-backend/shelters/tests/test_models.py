@@ -480,7 +480,9 @@ class CreateSchedulesServiceTestCase(TestCase):
             ],
         )
         self.assertEqual(self.shelter.schedules.count(), 1)
-        self.assertIsNone(self.shelter.schedules.first().day)
+        schedule = self.shelter.schedules.first()
+        assert schedule is not None
+        self.assertIsNone(schedule.day)
 
     def test_no_days_key_creates_every_day_row(self) -> None:
         """Omitting the 'days' key entirely creates a single row with day=None."""
@@ -497,4 +499,6 @@ class CreateSchedulesServiceTestCase(TestCase):
             ],
         )
         self.assertEqual(self.shelter.schedules.count(), 1)
-        self.assertIsNone(self.shelter.schedules.first().day)
+        schedule = self.shelter.schedules.first()
+        assert schedule is not None
+        self.assertIsNone(schedule.day)
