@@ -83,7 +83,7 @@ export function ShelterPage({ id }: { id: string }) {
   return (
     <div className="w-full">
       <Header shelter={shelter} />
-      <OperatingHours operatingHours={shelter.operatingHours} />
+      <OperatingHours schedules={shelter.schedules} />
       {hasPhotos && (
         <Button
           onClick={() => navigate(`/shelter/${id}/gallery`)}
