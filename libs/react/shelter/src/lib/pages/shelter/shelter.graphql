@@ -91,8 +91,8 @@ query ViewShelter($id: ID!) {
       id
       scheduleType
       day
-      openTime
-      closeTime
+        startTime
+        endTime
       startDate
       endDate
       condition
