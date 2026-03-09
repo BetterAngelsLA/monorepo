@@ -2,7 +2,7 @@ import { appZIndex, mergeCss } from '@monorepo/react/shared';
 import { MouseEvent, ReactNode, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
-type TModalSize = 'sm' | 'md' | 'lg' | 'xl';
+export type TModalSize = 'sm' | 'md' | 'lg' | 'xl';
 
 export interface IModalProps {
   isOpen: boolean;
@@ -85,6 +85,9 @@ export function Modal({
     'shadow-xl',
     'p-0',
     'w-full',
+    'max-h-[85vh]',
+    'flex',
+    'flex-col',
     sizeClasses[size],
   ];
 
