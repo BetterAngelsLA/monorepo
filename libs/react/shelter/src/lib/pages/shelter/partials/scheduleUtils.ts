@@ -80,8 +80,8 @@ function subtractWindows(
 }
 
 export interface EffectiveWindow {
-  openTime: string;
-  closeTime: string;
+  startTime: string;
+  endTime: string;
 }
 
 /**
@@ -99,19 +99,19 @@ export function getEffectiveWindows(
   const typed = schedules.filter((s) => s.scheduleType === scheduleType);
 
   // Base windows: non-exception entries matching this weekday (or day=null),
-  // within their optional date bounds, that have open/close times
+  // within their optional date bounds, that have start/end times
   const baseEntries = typed.filter(
     (s) =>
       !s.isException &&
       (s.day === dayEnum || !s.day) &&
-      s.openTime &&
-      s.closeTime &&
+      s.startTime &&
+      s.endTime &&
       dateInRange(dateStr, s.startDate, s.endDate)
   );
 
   const baseWindows: TimeWindow[] = baseEntries.map((s) => ({
-    open: timeToMinutes(s.openTime ?? '00:00:00'),
-    close: timeToMinutes(s.closeTime ?? '00:00:00'),
+    open: timeToMinutes(s.startTime ?? '00:00:00'),
+    close: timeToMinutes(s.endTime ?? '00:00:00'),
   }));
 
   // Active exceptions whose date range covers this date
@@ -120,21 +120,21 @@ export function getEffectiveWindows(
   );
 
   // If any exception is "closed all day" (no times), return empty
-  if (activeExceptions.some((e) => !e.openTime || !e.closeTime)) {
+  if (activeExceptions.some((e) => !e.startTime || !e.endTime)) {
     return [];
   }
 
   const excWindows: TimeWindow[] = activeExceptions.map((e) => ({
-    open: timeToMinutes(e.openTime ?? '00:00:00'),
-    close: timeToMinutes(e.closeTime ?? '00:00:00'),
+    open: timeToMinutes(e.startTime ?? '00:00:00'),
+    close: timeToMinutes(e.endTime ?? '00:00:00'),
   }));
 
   const effective = subtractWindows(baseWindows, excWindows);
   effective.sort((a, b) => a.open - b.open);
 
   return effective.map((w) => ({
-    openTime: minutesToTime(w.open),
-    closeTime: minutesToTime(w.close),
+    startTime: minutesToTime(w.open),
+    endTime: minutesToTime(w.close),
   }));
 }
 

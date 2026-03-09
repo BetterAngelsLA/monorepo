@@ -51,13 +51,13 @@ const buildScheduleInputs = (
   entries: ScheduleFormEntry[]
 ): ScheduleInput[] | undefined => {
   const mapped = entries
-    .filter((e) => e.openTime && e.closeTime)
+    .filter((e) => e.startTime && e.endTime)
     .map(
       (e): ScheduleInput => ({
         scheduleType: e.scheduleType || undefined,
         days: e.days.length ? e.days : undefined,
-        openTime: timeOrUndefined(e.openTime),
-        closeTime: timeOrUndefined(e.closeTime),
+        startTime: timeOrUndefined(e.startTime),
+        endTime: timeOrUndefined(e.endTime),
         startDate: e.startDate || undefined,
         endDate: e.endDate || undefined,
         condition: e.condition || undefined,

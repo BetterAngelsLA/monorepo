@@ -42,8 +42,8 @@ export interface TimeRange {
 export interface ScheduleFormEntry {
   scheduleType: ScheduleTypeChoices;
   days: DayOfWeekChoices[];
-  openTime: string; // "HH:MM" or "HH:MM:SS"
-  closeTime: string; // "HH:MM" or "HH:MM:SS"
+  startTime: string; // "HH:MM" or "HH:MM:SS"
+  endTime: string; // "HH:MM" or "HH:MM:SS"
   startDate: string; // "YYYY-MM-DD" or ""
   endDate: string; // "YYYY-MM-DD" or ""
   condition: ConditionChoices | '';
