@@ -1,6 +1,6 @@
 """Input types for shelter mutations."""
 
-from datetime import time
+from datetime import date, time
 from typing import List, Optional
 
 import strawberry
@@ -10,6 +10,8 @@ from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
     BedStatusChoices,
+    ConditionChoices,
+    DayOfWeekChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
@@ -22,6 +24,7 @@ from shelters.enums import (
     PetChoices,
     ReferralRequirementChoices,
     RoomStyleChoices,
+    ScheduleTypeChoices,
 )
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import (
@@ -45,6 +48,19 @@ class ShelterLocationInput:
 class TimeRangeInput:
     start: Optional[time] = None
     end: Optional[time] = None
+
+
+@strawberry.input
+class ScheduleInput:
+    schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING
+    day: Optional[DayOfWeekChoices] = None
+    open_time: Optional[time] = None
+    close_time: Optional[time] = None
+    is_closed: bool = False
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    condition: Optional[ConditionChoices] = None
+    is_exception: bool = False
 
 
 @strawberry_django.input(models.Shelter)
@@ -81,6 +97,7 @@ class CreateShelterInput:
     location: Optional[ShelterLocationInput] = None
     operating_hours: Optional[List[TimeRangeInput]] = None
     intake_hours: Optional[List[TimeRangeInput]] = None
+    schedules: Optional[List[ScheduleInput]] = None
 
     # Optional scalars — all model fields below have null=True, blank=True.
     # Using auto where strawberry-django can resolve the type; explicit types
