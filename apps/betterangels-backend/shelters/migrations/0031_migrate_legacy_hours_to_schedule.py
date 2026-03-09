@@ -5,28 +5,22 @@ Each time-range pair becomes a Schedule entry with day=NULL (every day) since
 the legacy fields had no per-day granularity.
 """
 
-import datetime
-
 from django.db import migrations
 
 
-def _parse_time_ranges(raw_value):
-    """Parse stored TimeRangeField text into (start_time, end_time) pairs.
-
-    Format: "HH:MM:SS-HH:MM:SS,HH:MM:SS-HH:MM:SS,..."
-    """
-    if not raw_value or not raw_value.strip():
+def _merge_overlapping(ranges):
+    """Merge overlapping or adjacent (start_time, end_time) pairs."""
+    if not ranges:
         return []
-    pairs = []
-    for chunk in raw_value.split(","):
-        chunk = chunk.strip()
-        if not chunk:
-            continue
-        start_str, end_str = chunk.split("-")
-        start_time = datetime.datetime.strptime(start_str.strip(), "%H:%M:%S").time()
-        end_time = datetime.datetime.strptime(end_str.strip(), "%H:%M:%S").time()
-        pairs.append((start_time, end_time))
-    return pairs
+    sorted_ranges = sorted(ranges, key=lambda r: r[0])
+    merged = [sorted_ranges[0]]
+    for start, end in sorted_ranges[1:]:
+        prev_start, prev_end = merged[-1]
+        if start <= prev_end:
+            merged[-1] = (prev_start, max(prev_end, end))
+        else:
+            merged.append((start, end))
+    return merged
 
 
 def forwards(apps, schema_editor):
@@ -41,8 +35,8 @@ def forwards(apps, schema_editor):
     rows_to_create = []
     for shelter in Shelter.objects.all().iterator():
         for field_name, schedule_type in mappings:
-            raw = getattr(shelter, field_name, None)
-            for start_time, end_time in _parse_time_ranges(raw):
+            ranges = getattr(shelter, field_name, None) or []
+            for start_time, end_time in _merge_overlapping(ranges):
                 rows_to_create.append(
                     Schedule(
                         shelter=shelter,
