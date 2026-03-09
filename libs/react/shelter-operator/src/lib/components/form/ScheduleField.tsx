@@ -26,9 +26,9 @@ function createEmptyEntry(): ScheduleFormEntry {
   return {
     scheduleType: ScheduleTypeChoices.Operating,
     days: [],
-    openTime: '',
-    closeTime: '',
-    startDate: '',
+    startTime: '',
+    endTime: '',
+    startDate: ',
     endDate: '',
     condition: '',
     isException: false,
@@ -201,8 +201,8 @@ const ScheduleRow = memo(function ScheduleRow({
           <input
             type="time"
             id={`${id}-open`}
-            value={entry.openTime}
-            onChange={(e) => onUpdate({ openTime: e.target.value })}
+            value={entry.startTime}
+            onChange={(e) => onUpdate({ startTime: e.target.value })}
             className={INPUT_CLASS}
           />
         </div>
@@ -216,8 +216,8 @@ const ScheduleRow = memo(function ScheduleRow({
           <input
             type="time"
             id={`${id}-close`}
-            value={entry.closeTime}
-            onChange={(e) => onUpdate({ closeTime: e.target.value })}
+            value={entry.endTime}
+            onChange={(e) => onUpdate({ endTime: e.target.value })}
             className={INPUT_CLASS}
           />
         </div>
