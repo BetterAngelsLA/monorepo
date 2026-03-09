@@ -28,7 +28,7 @@ function createEmptyEntry(): ScheduleFormEntry {
     days: [],
     startTime: '',
     endTime: '',
-    startDate: ',
+    startDate: '',
     endDate: '',
     condition: '',
     isException: false,

@@ -876,6 +876,52 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "Shelter with regular hours and no exceptions must appear in Open Now",
         )
 
+    def test_shelter_open_now_every_day_schedule(self) -> None:
+        """Schedules with day=NULL mean 'every day' and must be matched
+        by the Open Now filter regardless of the current weekday."""
+        shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
+
+        # Monday 12:00 noon PST
+        fixed_pst_noon = datetime.datetime(
+            2026, 1, 5, 12, 0,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=-8)),
+        )
+
+        # Schedule with day=None (applies every day)
+        Schedule.objects.create(
+            shelter=shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=None,
+            start_time=datetime.time(8, 0),
+            end_time=datetime.time(18, 0),
+            is_exception=False,
+        )
+
+        query = """
+            query ViewShelters($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        with patch(
+            "shelters.types.filters.get_current_shelter_schedule_datetime",
+            return_value=fixed_pst_noon,
+        ):
+            response = self.execute_graphql(
+                query,
+                variables={"filters": {"openNow": True}},
+            )
+
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertIn(
+            str(shelter.pk),
+            result_ids,
+            "Shelter with day=NULL (every-day) schedule must appear in Open Now",
+        )
+
 
 class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
     """Regression tests for the hero_image resolver.

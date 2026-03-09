@@ -46,10 +46,12 @@ def shelters_open_at(
     time = dt.time()
     date = dt.date()
 
-    # Step 1: shelters with a matching regular (non-exception) schedule row
+    # Step 1: shelters with a matching regular (non-exception) schedule row.
+    # day=NULL means "every day", so match both the specific weekday and NULL.
+    day_match = Q(schedules__day=day) | Q(schedules__day__isnull=True)
     open_filter = Q(
+        day_match,
         schedules__schedule_type=schedule_type,
-        schedules__day=day,
         schedules__is_exception=False,
         schedules__start_time__lte=time,
         schedules__end_time__gte=time,
@@ -71,10 +73,10 @@ def shelters_open_at(
         Schedule.objects.filter(
             shelter=OuterRef("pk"),
             schedule_type=schedule_type,
-            day=day,
             is_exception=True,
             start_time__isnull=True,
         ).filter(
+            Q(day=day) | Q(day__isnull=True),
             Q(start_date__isnull=True) | Q(start_date__lte=date),
             Q(end_date__isnull=True) | Q(end_date__gte=date),
         )
