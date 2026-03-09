@@ -1,3 +1,4 @@
+import { addDays, format, isSameDay, startOfWeek } from 'date-fns';
 import {
   DayOfWeekChoices,
   ScheduleTypeChoices,
@@ -10,6 +11,11 @@ type Schedule = ShelterType['schedules'][number];
 interface TimeWindow {
   open: number;
   close: number;
+}
+
+interface ConcreteWindow {
+  start: Date;
+  end: Date;
 }
 
 const JS_DAY_TO_ENUM: Record<number, DayOfWeekChoices> = {
@@ -30,9 +36,22 @@ function timeToMinutes(t: string): number {
 
 /** Format minutes since midnight to "HH:mm:ss" */
 function minutesToTime(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
+  const normalizedMinutes = ((minutes % 1440) + 1440) % 1440;
+  const h = Math.floor(normalizedMinutes / 60);
+  const m = normalizedMinutes % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
+}
+
+function normalizeWindow(startTime: string, endTime: string): TimeWindow {
+  const open = timeToMinutes(startTime);
+  let close = timeToMinutes(endTime);
+
+  // Overnight shifts stay attached to the start day.
+  if (close <= open) {
+    close += 1440;
+  }
+
+  return { open, close };
 }
 
 /** Format a Date as "YYYY-MM-DD" */
@@ -84,22 +103,30 @@ export interface EffectiveWindow {
   endTime: string;
 }
 
-/**
- * Compute effective open windows for a given date and schedule type
- * by subtracting active exceptions from base schedule entries.
- */
-export function getEffectiveWindows(
+export interface WeeklyScheduleDay {
+  date: Date;
+  day: DayOfWeekChoices;
+  label: string;
+  isToday: boolean;
+  windows: EffectiveWindow[];
+}
+
+export interface OperatingStatus {
+  tone: 'open' | 'closed';
+  statusText: 'Open now' | 'Closing soon' | 'Closed';
+  detailText: string;
+}
+
+function getEffectiveTimeWindows(
   schedules: Schedule[],
   date: Date,
   scheduleType: ScheduleTypeChoices
-): EffectiveWindow[] {
+): TimeWindow[] {
   const dateStr = formatDateISO(date);
   const dayEnum = JS_DAY_TO_ENUM[date.getDay()];
 
   const typed = schedules.filter((s) => s.scheduleType === scheduleType);
 
-  // Base windows: non-exception entries matching this weekday (or day=null),
-  // within their optional date bounds, that have start/end times
   const baseEntries = typed.filter(
     (s) =>
       !s.isException &&
@@ -109,41 +136,132 @@ export function getEffectiveWindows(
       dateInRange(dateStr, s.startDate, s.endDate)
   );
 
-  const baseWindows: TimeWindow[] = baseEntries.map((s) => ({
-    open: timeToMinutes(s.startTime ?? '00:00:00'),
-    close: timeToMinutes(s.endTime ?? '00:00:00'),
-  }));
-
-  // Active exceptions whose date range covers this date
-  const activeExceptions = typed.filter(
-    (s) => s.isException && dateInRange(dateStr, s.startDate, s.endDate)
+  const baseWindows = baseEntries.map((s) =>
+    normalizeWindow(s.startTime ?? '00:00:00', s.endTime ?? '00:00:00')
   );
 
-  // If any exception is "closed all day" (no times), return empty
+  const activeExceptions = typed.filter(
+    (s) =>
+      s.isException &&
+      (s.day === dayEnum || !s.day) &&
+      dateInRange(dateStr, s.startDate, s.endDate)
+  );
+
   if (activeExceptions.some((e) => !e.startTime || !e.endTime)) {
     return [];
   }
 
-  const excWindows: TimeWindow[] = activeExceptions.map((e) => ({
-    open: timeToMinutes(e.startTime ?? '00:00:00'),
-    close: timeToMinutes(e.endTime ?? '00:00:00'),
-  }));
+  const excWindows = activeExceptions.map((e) =>
+    normalizeWindow(e.startTime ?? '00:00:00', e.endTime ?? '00:00:00')
+  );
 
   const effective = subtractWindows(baseWindows, excWindows);
   effective.sort((a, b) => a.open - b.open);
+  return effective;
+}
 
-  return effective.map((w) => ({
+function getConcreteWindows(
+  schedules: Schedule[],
+  date: Date,
+  scheduleType: ScheduleTypeChoices
+): ConcreteWindow[] {
+  const dayStart = new Date(date);
+  dayStart.setHours(0, 0, 0, 0);
+
+  return getEffectiveTimeWindows(schedules, date, scheduleType).map((window) => ({
+    start: new Date(dayStart.getTime() + window.open * 60_000),
+    end: new Date(dayStart.getTime() + window.close * 60_000),
+  }));
+}
+
+function formatClock(date: Date): string {
+  return format(date, 'h:mm a');
+}
+
+/**
+ * Compute effective open windows for a given date and schedule type
+ * by subtracting active exceptions from base schedule entries.
+ */
+export function getEffectiveWindows(
+  schedules: Schedule[],
+  date: Date,
+  scheduleType: ScheduleTypeChoices
+): EffectiveWindow[] {
+  return getEffectiveTimeWindows(schedules, date, scheduleType).map((w) => ({
     startTime: minutesToTime(w.open),
     endTime: minutesToTime(w.close),
   }));
 }
 
-/** Get the next 7 days starting from today */
-export function getNext7Days(today?: Date): Date[] {
-  const start = today ?? new Date();
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(start);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
+export function getWeekDaysMondayFirst(today?: Date): Date[] {
+  const reference = today ?? new Date();
+  const monday = startOfWeek(reference, { weekStartsOn: 1 });
+  return Array.from({ length: 7 }, (_, index) => addDays(monday, index));
+}
+
+export function getWeeklySchedule(
+  schedules: Schedule[],
+  scheduleType: ScheduleTypeChoices,
+  today?: Date
+): WeeklyScheduleDay[] {
+  const reference = today ?? new Date();
+
+  return getWeekDaysMondayFirst(reference).map((date) => ({
+    date,
+    day: JS_DAY_TO_ENUM[date.getDay()],
+    label: format(date, 'EEEE'),
+    isToday: isSameDay(date, reference),
+    windows: getEffectiveWindows(schedules, date, scheduleType),
+  }));
+}
+
+export function getOperatingStatus(
+  schedules: Schedule[],
+  now: Date = new Date(),
+  scheduleType: ScheduleTypeChoices = ScheduleTypeChoices.Operating
+): OperatingStatus {
+  const concreteWindows = Array.from({ length: 9 }, (_, index) => index - 1)
+    .flatMap((offset) => getConcreteWindows(schedules, addDays(now, offset), scheduleType))
+    .sort((left, right) => left.start.getTime() - right.start.getTime());
+
+  const currentWindow = concreteWindows.find(
+    (window) => now >= window.start && now < window.end
+  );
+
+  if (currentWindow) {
+    const remainingMinutes = Math.floor(
+      (currentWindow.end.getTime() - now.getTime()) / 60_000
+    );
+
+    if (remainingMinutes <= 60) {
+      return {
+        tone: 'closed',
+        statusText: 'Closing soon',
+        detailText: formatClock(currentWindow.end),
+      };
+    }
+
+    return {
+      tone: 'open',
+      statusText: 'Open now',
+      detailText: `Closes ${formatClock(currentWindow.end)}`,
+    };
+  }
+
+  const nextWindow = concreteWindows.find((window) => window.start > now);
+  if (!nextWindow) {
+    return {
+      tone: 'closed',
+      statusText: 'Closed',
+      detailText: '',
+    };
+  }
+
+  return {
+    tone: 'closed',
+    statusText: 'Closed',
+    detailText: isSameDay(nextWindow.start, now)
+      ? `Opens ${formatClock(nextWindow.start)}`
+      : `Opens ${format(nextWindow.start, 'EEEE')} ${formatClock(nextWindow.start)}`,
+  };
 }
