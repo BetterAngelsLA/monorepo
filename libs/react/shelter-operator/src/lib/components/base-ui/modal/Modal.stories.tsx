@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import { ConfirmationModal } from './ConfirmationModal';
-import { Modal } from './Modal';
-import { TModalSize } from './Modal';
+import { Modal, TModalSize } from './Modal';
 import { ModalBody } from './ModalBody';
 import { ModalFooter } from './ModalFooter';
 import { ModalHeader } from './ModalHeader';
