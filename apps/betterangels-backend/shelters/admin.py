@@ -300,8 +300,8 @@ class ContactInfoInline(admin.TabularInline):
     model = ContactInfo
     extra = 1
     fields = ["contact_name", "contact_number"]
-    verbose_name = "Additional Contact"
-    verbose_name_plural = "Additional Contacts"
+    verbose_name = "Additional Contact - PRIVATE"
+    verbose_name_plural = "Additional Contacts - PRIVATE"
     inline_key = "contactinfo"
 
 
@@ -753,7 +753,7 @@ class ShelterAdmin(ImportExportModelAdmin):
             },
         ),
         (
-            "Better Angels Review",
+            "Better Angels Review - PRIVATE",
             {
                 "fields": (
                     "overall_rating",
