@@ -46,29 +46,27 @@ def shelters_open_at(
     time = dt.time()
     date = dt.date()
 
-    # Step 1: shelters with a matching regular (non-exception) schedule row.
-    # day=NULL means "every day", so match both the specific weekday and NULL.
-    day_match = Q(schedules__day=day) | Q(schedules__day__isnull=True)
-    open_filter = Q(
-        day_match,
-        schedules__schedule_type=schedule_type,
-        schedules__is_exception=False,
-        schedules__start_time__lte=time,
-        schedules__end_time__gte=time,
-    )
+    # Step 1+2: Use an Exists subquery so the join doesn't produce duplicate
+    # shelter rows (avoiding the need for .distinct()).  All conditions bind
+    # to a single Schedule row.
+    from shelters.models import Schedule
 
-    # Step 2: respect seasonal date bounds
-    date_filter = Q(
-        Q(schedules__start_date__isnull=True) | Q(schedules__start_date__lte=date),
-        Q(schedules__end_date__isnull=True) | Q(schedules__end_date__gte=date),
+    is_open = Exists(
+        Schedule.objects.filter(
+            shelter=OuterRef("pk"),
+            schedule_type=schedule_type,
+            is_exception=False,
+            start_time__lte=time,
+            end_time__gte=time,
+        ).filter(
+            Q(day=day) | Q(day__isnull=True),
+            Q(start_date__isnull=True) | Q(start_date__lte=date),
+            Q(end_date__isnull=True) | Q(end_date__gte=date),
+        )
     )
 
     # Step 3: shelters with a closed exception active on this date.
-    # Use an Exists subquery so all conditions bind to a *single* Schedule
-    # row.  A plain ``exclude(schedules__…)`` over a multi-valued reverse FK
-    # can cross-match fields from different rows and incorrectly drop shelters.
-    from shelters.models import Schedule
-
+    # A closed exception has start_time=NULL (meaning "closed all day").
     has_closed_exception = Exists(
         Schedule.objects.filter(
             shelter=OuterRef("pk"),
@@ -82,4 +80,4 @@ def shelters_open_at(
         )
     )
 
-    return queryset.filter(open_filter & date_filter).exclude(has_closed_exception).distinct()
+    return queryset.filter(is_open).exclude(has_closed_exception)
