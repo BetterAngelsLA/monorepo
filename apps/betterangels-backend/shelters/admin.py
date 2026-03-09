@@ -656,7 +656,6 @@ class ShelterAdmin(ImportExportModelAdmin):
                     "phone",
                     "website",
                     "instagram",
-                    "operating_hours",
                 ),
             },
         ),
@@ -701,7 +700,6 @@ class ShelterAdmin(ImportExportModelAdmin):
             {
                 "fields": (
                     "max_stay",
-                    "intake_hours",
                     "curfew",
                     "on_site_security",
                     "visitors_allowed",
