@@ -129,14 +129,14 @@ class ScheduleModelTestCase(TestCase):
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
             day=DayOfWeekChoices.MONDAY,
-            open_time=datetime.time(9, 0),
-            close_time=datetime.time(17, 0),
+            start_time=datetime.time(9, 0),
+            end_time=datetime.time(17, 0),
         )
         self.assertEqual(schedule.shelter, self.shelter)
         self.assertEqual(schedule.schedule_type, ScheduleTypeChoices.OPERATING)
         self.assertEqual(schedule.day, DayOfWeekChoices.MONDAY)
-        self.assertEqual(schedule.open_time, datetime.time(9, 0))
-        self.assertEqual(schedule.close_time, datetime.time(17, 0))
+        self.assertEqual(schedule.start_time, datetime.time(9, 0))
+        self.assertEqual(schedule.end_time, datetime.time(17, 0))
 
     def test_no_schedule_means_closed(self) -> None:
         """A shelter with no schedule rows for a day is considered closed."""
@@ -145,8 +145,8 @@ class ScheduleModelTestCase(TestCase):
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
             day=DayOfWeekChoices.MONDAY,
-            open_time=datetime.time(9, 0),
-            close_time=datetime.time(17, 0),
+            start_time=datetime.time(9, 0),
+            end_time=datetime.time(17, 0),
         )
         self.assertFalse(
             self.shelter.schedules.filter(
@@ -161,15 +161,15 @@ class ScheduleModelTestCase(TestCase):
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
             day=DayOfWeekChoices.MONDAY,
-            open_time=datetime.time(7, 0),
-            close_time=datetime.time(12, 0),
+            start_time=datetime.time(7, 0),
+            end_time=datetime.time(12, 0),
         )
         Schedule.objects.create(
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
             day=DayOfWeekChoices.MONDAY,
-            open_time=datetime.time(17, 0),
-            close_time=datetime.time(22, 0),
+            start_time=datetime.time(17, 0),
+            end_time=datetime.time(22, 0),
         )
         self.assertEqual(
             self.shelter.schedules.filter(
@@ -184,16 +184,16 @@ class ScheduleModelTestCase(TestCase):
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
             day=DayOfWeekChoices.MONDAY,
-            open_time=datetime.time(9, 0),
-            close_time=datetime.time(17, 0),
+            start_time=datetime.time(9, 0),
+            end_time=datetime.time(17, 0),
         )
         with self.assertRaises(IntegrityError):
             Schedule.objects.create(
                 shelter=self.shelter,
                 schedule_type=ScheduleTypeChoices.OPERATING,
                 day=DayOfWeekChoices.MONDAY,
-                open_time=datetime.time(9, 0),
-                close_time=datetime.time(18, 0),
+                start_time=datetime.time(9, 0),
+                end_time=datetime.time(18, 0),
             )
 
     def test_different_types_same_day_allowed(self) -> None:
@@ -201,15 +201,15 @@ class ScheduleModelTestCase(TestCase):
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
             day=DayOfWeekChoices.MONDAY,
-            open_time=datetime.time(0, 0),
-            close_time=datetime.time(23, 59),
+            start_time=datetime.time(0, 0),
+            end_time=datetime.time(23, 59),
         )
         intake = Schedule.objects.create(
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.INTAKE,
             day=DayOfWeekChoices.MONDAY,
-            open_time=datetime.time(9, 0),
-            close_time=datetime.time(12, 0),
+            start_time=datetime.time(9, 0),
+            end_time=datetime.time(12, 0),
         )
         self.assertEqual(self.shelter.schedules.filter(day=DayOfWeekChoices.MONDAY).count(), 2)
         self.assertEqual(intake.schedule_type, ScheduleTypeChoices.INTAKE)
@@ -221,8 +221,8 @@ class ScheduleModelTestCase(TestCase):
                 shelter=self.shelter,
                 schedule_type=ScheduleTypeChoices.OPERATING,
                 day=day,
-                open_time=datetime.time(8, 0),
-                close_time=datetime.time(20, 0),
+                start_time=datetime.time(8, 0),
+                end_time=datetime.time(20, 0),
             )
         self.assertEqual(
             self.shelter.schedules.filter(schedule_type=ScheduleTypeChoices.OPERATING).count(),
@@ -234,8 +234,8 @@ class ScheduleModelTestCase(TestCase):
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
             day=DayOfWeekChoices.MONDAY,
-            open_time=datetime.time(18, 0),
-            close_time=datetime.time(6, 0),
+            start_time=datetime.time(18, 0),
+            end_time=datetime.time(6, 0),
             start_date=datetime.date(2026, 11, 1),
             end_date=datetime.date(2027, 3, 1),
         )
@@ -247,8 +247,8 @@ class ScheduleModelTestCase(TestCase):
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
             day=DayOfWeekChoices.MONDAY,
-            open_time=datetime.time(0, 0),
-            close_time=datetime.time(23, 59),
+            start_time=datetime.time(0, 0),
+            end_time=datetime.time(23, 59),
             condition=ConditionChoices.HEAT,
         )
         self.assertEqual(schedule.condition, ConditionChoices.HEAT)
@@ -259,8 +259,8 @@ class ScheduleModelTestCase(TestCase):
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
             day=DayOfWeekChoices.WEDNESDAY,
-            open_time=datetime.time(10, 0),
-            close_time=datetime.time(14, 0),
+            start_time=datetime.time(10, 0),
+            end_time=datetime.time(14, 0),
             demographic=demographic,
         )
         self.assertEqual(schedule.demographic, demographic)
@@ -277,7 +277,7 @@ class ScheduleModelTestCase(TestCase):
         )
         self.assertTrue(schedule.is_exception)
         self.assertIsNone(schedule.day)
-        self.assertIsNone(schedule.open_time)
+        self.assertIsNone(schedule.start_time)
         self.assertEqual(schedule.start_date, datetime.date(2026, 12, 25))
         self.assertEqual(schedule.end_date, datetime.date(2026, 12, 25))
         self.assertIn("Exception", str(schedule))
@@ -288,8 +288,8 @@ class ScheduleModelTestCase(TestCase):
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
             day=DayOfWeekChoices.MONDAY,
-            open_time=datetime.time(9, 0),
-            close_time=datetime.time(17, 0),
+            start_time=datetime.time(9, 0),
+            end_time=datetime.time(17, 0),
         )
         self.assertEqual(Schedule.objects.count(), 1)
         self.shelter.delete()
@@ -300,13 +300,13 @@ class ScheduleModelTestCase(TestCase):
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
             day=DayOfWeekChoices.MONDAY,
-            open_time=datetime.time(9, 0),
-            close_time=datetime.time(17, 0),
+            start_time=datetime.time(9, 0),
+            end_time=datetime.time(17, 0),
         )
         add_events = Events.objects.filter(pgh_label="shelter.schedule.add")
         self.assertEqual(add_events.count(), 1)
 
-        schedule.open_time = datetime.time(10, 0)
+        schedule.start_time = datetime.time(10, 0)
         schedule.save()
         update_events = Events.objects.filter(pgh_label="shelter.schedule.update")
         self.assertEqual(update_events.count(), 1)
@@ -320,8 +320,8 @@ class ScheduleModelTestCase(TestCase):
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.INTAKE,
             day=DayOfWeekChoices.FRIDAY,
-            open_time=datetime.time(9, 0),
-            close_time=datetime.time(12, 0),
+            start_time=datetime.time(9, 0),
+            end_time=datetime.time(12, 0),
         )
         self.assertIn("Intake Hours", str(schedule))
         self.assertIn("Friday", str(schedule))
@@ -338,8 +338,8 @@ class ScheduleModelTestCase(TestCase):
         schedule = Schedule.objects.create(
             shelter=self.shelter,
             day=DayOfWeekChoices.MONDAY,
-            open_time=datetime.time(9, 0),
-            close_time=datetime.time(17, 0),
+            start_time=datetime.time(9, 0),
+            end_time=datetime.time(17, 0),
         )
         self.assertEqual(schedule.schedule_type, ScheduleTypeChoices.OPERATING)
 
@@ -358,8 +358,8 @@ class ScheduleModelTestCase(TestCase):
             shelter=open_shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
             day=DayOfWeekChoices.WEDNESDAY,
-            open_time=datetime.time(9, 0),
-            close_time=datetime.time(17, 0),
+            start_time=datetime.time(9, 0),
+            end_time=datetime.time(17, 0),
         )
         # Closed shelter: no schedule row with times for Wednesday
         # (absence of a row = closed)
@@ -380,8 +380,8 @@ class ScheduleModelTestCase(TestCase):
             shelter=future_shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
             day=DayOfWeekChoices.WEDNESDAY,
-            open_time=datetime.time(9, 0),
-            close_time=datetime.time(17, 0),
+            start_time=datetime.time(9, 0),
+            end_time=datetime.time(17, 0),
             start_date=datetime.date(2099, 1, 1),
         )
 
@@ -407,8 +407,8 @@ class ScheduleModelTestCase(TestCase):
             shelter=shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
             day=DayOfWeekChoices.WEDNESDAY,
-            open_time=datetime.time(9, 0),
-            close_time=datetime.time(17, 0),
+            start_time=datetime.time(9, 0),
+            end_time=datetime.time(17, 0),
         )
 
         # Exception: closed all day on Christmas (Dec 25, 2024 is a Wednesday)
@@ -452,8 +452,8 @@ class CreateSchedulesServiceTestCase(TestCase):
                         DayOfWeekChoices.TUESDAY,
                         DayOfWeekChoices.WEDNESDAY,
                     ],
-                    "open_time": datetime.time(9, 0),
-                    "close_time": datetime.time(17, 0),
+                    "start_time": datetime.time(9, 0),
+                    "end_time": datetime.time(17, 0),
                 }
             ],
         )
@@ -474,8 +474,8 @@ class CreateSchedulesServiceTestCase(TestCase):
                 {
                     "schedule_type": ScheduleTypeChoices.OPERATING,
                     "days": [],
-                    "open_time": datetime.time(9, 0),
-                    "close_time": datetime.time(17, 0),
+                    "start_time": datetime.time(9, 0),
+                    "end_time": datetime.time(17, 0),
                 }
             ],
         )
@@ -493,8 +493,8 @@ class CreateSchedulesServiceTestCase(TestCase):
             [
                 {
                     "schedule_type": ScheduleTypeChoices.OPERATING,
-                    "open_time": datetime.time(8, 0),
-                    "close_time": datetime.time(20, 0),
+                    "start_time": datetime.time(8, 0),
+                    "end_time": datetime.time(20, 0),
                 }
             ],
         )

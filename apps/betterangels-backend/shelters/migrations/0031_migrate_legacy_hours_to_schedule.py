@@ -11,7 +11,7 @@ from django.db import migrations
 
 
 def _parse_time_ranges(raw_value):
-    """Parse stored TimeRangeField text into (open_time, close_time) pairs.
+    """Parse stored TimeRangeField text into (start_time, end_time) pairs.
 
     Format: "HH:MM:SS-HH:MM:SS,HH:MM:SS-HH:MM:SS,..."
     """
@@ -23,9 +23,9 @@ def _parse_time_ranges(raw_value):
         if not chunk:
             continue
         start_str, end_str = chunk.split("-")
-        open_time = datetime.datetime.strptime(start_str.strip(), "%H:%M:%S").time()
-        close_time = datetime.datetime.strptime(end_str.strip(), "%H:%M:%S").time()
-        pairs.append((open_time, close_time))
+        start_time = datetime.datetime.strptime(start_str.strip(), "%H:%M:%S").time()
+        end_time = datetime.datetime.strptime(end_str.strip(), "%H:%M:%S").time()
+        pairs.append((start_time, end_time))
     return pairs
 
 
@@ -42,14 +42,14 @@ def forwards(apps, schema_editor):
     for shelter in Shelter.objects.all().iterator():
         for field_name, schedule_type in mappings:
             raw = getattr(shelter, field_name, None)
-            for open_time, close_time in _parse_time_ranges(raw):
+            for start_time, end_time in _parse_time_ranges(raw):
                 rows_to_create.append(
                     Schedule(
                         shelter=shelter,
                         schedule_type=schedule_type,
                         day=None,
-                        open_time=open_time,
-                        close_time=close_time,
+                        start_time=start_time,
+                        end_time=end_time,
                         is_exception=False,
                     )
                 )
