@@ -60,6 +60,12 @@ module.exports = {
         expandInOut: 'expandInOut 200ms ease-in-out 0ms',
         slideRightToLeft: 'slideInRightToLeft 0.3s ease-out forwards',
       },
+      zIndex: {
+        'flyout-mask': '999',
+        flyout: '1000',
+        'modal-mask': '2000',
+        modal: '2001',
+      },
     },
   },
   plugins: [],
