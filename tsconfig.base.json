@@ -48,7 +48,8 @@
       "@monorepo/shared/units": ["libs/shared/units/src/index.ts"],
       "@monorepo/signing-fingerprint": [
         "libs/expo/modules/signing-fingerprint/index.ts"
-      ]
+      ],
+      "@monorepo/tailwind": ["tailwind/tailwind.base.config.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

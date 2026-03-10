@@ -1,5 +1,5 @@
+import tailwindBase from '@monorepo/tailwind';
 import type { Config } from 'tailwindcss';
-import tailwindBase from '../../tailwind/tailwind.base.config';
 import { TAILWIND_CONTENT_GLOBS } from './config';
 
 const config: Config = {
