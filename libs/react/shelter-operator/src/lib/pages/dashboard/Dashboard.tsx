@@ -1,8 +1,8 @@
 import { useQuery } from '@apollo/client/react';
 import { useUser } from '@monorepo/react/shelter';
-import { Filter, Search, Settings2 } from 'lucide-react';
+import { BookCheck, Filter, Search, Settings2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons';
 import NavBar from '../../components/NavBar';
 import { Table, type TableColumn } from '../../components/Table';
@@ -16,6 +16,9 @@ const SEARCH_DEBOUNCE_MS = 300;
 const PAGE_SIZE = 8;
 
 export default function Dashboard() {
+  const { pathname } = useLocation();
+  const isOperatorRoot = pathname === '/operator';
+
   const { user } = useUser();
   const organizations = user?.organizations ?? [];
   const [selectedOrganizationId, setSelectedOrganizationId] = useState(
@@ -89,7 +92,6 @@ export default function Dashboard() {
         key: 'name',
         label: 'Shelter Name',
         width: '1fr',
-        align: 'left',
         cellClassName:
           'font-medium text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap',
         render: (shelter) => shelter.name ?? 'N/A',
@@ -98,7 +100,6 @@ export default function Dashboard() {
         key: 'address',
         label: 'Address',
         width: '1fr',
-        align: 'left',
         cellClassName:
           'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
         render: (shelter) => shelter.address ?? 'N/A',
@@ -107,7 +108,6 @@ export default function Dashboard() {
         key: 'capacity',
         label: 'Capacity',
         width: '1.2fr',
-        align: 'left',
         cellClassName: 'whitespace-nowrap text-gray-700',
         render: (shelter) => {
           const totalBeds = shelter.totalBeds ?? 0;
@@ -144,7 +144,6 @@ export default function Dashboard() {
         key: 'tags',
         label: 'Tags',
         width: '0.8fr',
-        align: 'right',
         cellClassName:
           'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
         render: (shelter) =>
@@ -160,6 +159,7 @@ export default function Dashboard() {
 
   return (
     <>
+      {/* NAV BAR */}
       <NavBar
         organizations={organizations}
         selectedOrganizationId={selectedOrganizationId}
@@ -186,6 +186,8 @@ export default function Dashboard() {
               className="h-full w-full rounded-full bg-transparent pr-3 text-base text-[#4A4F57] outline-none transition-colors placeholder:text-[#7A818A]"
             />
           </label>
+
+          {/* SEARCH BAR + FILTERING */}
 
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <Button
@@ -290,6 +292,18 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {isOperatorRoot && (
+        <div className="fixed bottom-6 right-6 z-20 ">
+          <Button
+            leftIcon={<BookCheck />}
+            rightIcon={null}
+            className="bg-[#008CEE] text-white text-[22px] py-3 px-6 rounded-full shadow-lg gap-2 w-fit justify-between"
+          >
+            Reserve
+          </Button>
+        </div>
+      )}
     </>
   );
 }

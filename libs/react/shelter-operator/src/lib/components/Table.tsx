@@ -1,13 +1,10 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { Row, type RowCell } from './Row';
 
-type CellAlign = 'left' | 'center' | 'right';
-
 export type TableColumn<TItem> = {
   key: string;
   label: ReactNode;
   width?: string;
-  align?: CellAlign;
   headerClassName?: string;
   cellClassName?: string;
   render: (item: TItem) => ReactNode;
@@ -28,12 +25,6 @@ type TableProps<TItem> = {
   rowStyle?: CSSProperties;
 };
 
-function getAlignmentClass(align: CellAlign = 'left'): string {
-  if (align === 'right') return 'text-right justify-self-end';
-  if (align === 'center') return 'text-center justify-self-center';
-  return 'text-left justify-self-start';
-}
-
 export function Table<TItem>({
   columns,
   rows,
@@ -48,9 +39,10 @@ export function Table<TItem>({
   headerStyle,
   rowStyle,
 }: TableProps<TItem>) {
-  const templateColumns = columns
+  const dataTemplateColumns = columns
     .map((column) => column.width ?? '1fr')
     .join(' ');
+  const templateColumns = `${dataTemplateColumns} 56px`;
 
   return (
     <div
@@ -64,7 +56,7 @@ export function Table<TItem>({
     >
       <div
         className={[
-          'grid items-center px-6 py-3 text-xs font-semibold tracking-wider text-gray-700',
+          'grid items-center border-b border-[#111827] px-6 py-4 text-base font-medium text-[#747A82]',
           headerClassName,
         ].join(' ')}
         style={{ gridTemplateColumns: templateColumns, ...headerStyle }}
@@ -73,7 +65,7 @@ export function Table<TItem>({
           <div
             key={column.key}
             className={[
-              getAlignmentClass(column.align),
+              'text-left justify-self-start',
               column.headerClassName ?? '',
             ]
               .join(' ')
@@ -82,6 +74,7 @@ export function Table<TItem>({
             {column.label}
           </div>
         ))}
+        <div aria-hidden="true" />
       </div>
 
       {loading && loadingState}
@@ -93,7 +86,6 @@ export function Table<TItem>({
           const cells: RowCell[] = columns.map((column) => ({
             key: column.key,
             content: column.render(item),
-            align: column.align,
             className: column.cellClassName,
           }));
 
