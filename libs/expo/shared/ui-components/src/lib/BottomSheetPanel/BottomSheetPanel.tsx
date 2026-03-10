@@ -1,5 +1,10 @@
 import BottomSheet, { BottomSheetProps } from '@gorhom/bottom-sheet';
-import { Colors, Radiuses, Spacings, ZIndex } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  Radiuses,
+  Spacings,
+  ZIndex,
+} from '@monorepo/expo/shared/static';
 import { ReactNode, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import BottomSheetPanelContent from './Content';
