@@ -132,7 +132,7 @@ export default function Client({
     throw new Error(`Something went wrong. Please try again. ${error}`);
   }
 
-  const showHeader = tab !== ClientViewTabEnum.Locations;
+  const showHeader = tab === ClientViewTabEnum.Profile;
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>

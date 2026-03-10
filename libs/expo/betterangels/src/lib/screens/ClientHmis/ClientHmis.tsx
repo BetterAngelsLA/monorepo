@@ -95,7 +95,7 @@ export function ClientHmis(props: TProps) {
     return null;
   }
 
-  const showHeader = currentTab !== ClientViewTabEnum.Locations;
+  const showHeader = currentTab === ClientViewTabEnum.Profile;
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
