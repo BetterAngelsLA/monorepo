@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import React from 'react';
 import {
   WizardProgressBar,
   type WizardProgressBarProps,
@@ -86,5 +87,85 @@ export const ManyStepsMiddle: Story = {
   args: {
     steps: manySteps,
     currentStep: 4,
+  },
+};
+
+export const WithNavigationButtons: Story = {
+  args: {
+    steps: defaultSteps,
+    currentStep: 1,
+    navigationButtons: {
+      showBack: true,
+      showNext: true,
+      onBack: () => alert('Going back!'),
+      onNext: () => alert('Going forward!'),
+    },
+  },
+};
+
+export const FirstStepWithNextOnly: Story = {
+  args: {
+    steps: defaultSteps,
+    currentStep: 0,
+    navigationButtons: {
+      showBack: false,
+      showNext: true,
+      onNext: () => alert('Proceeding to next step!'),
+    },
+  },
+};
+
+export const LastStepWithSubmit: Story = {
+  args: {
+    steps: defaultSteps,
+    currentStep: 3,
+    navigationButtons: {
+      showBack: true,
+      showNext: true,
+      nextLabel: 'Submit',
+      onBack: () => alert('Going back!'),
+      onNext: () => alert('Submitting form!'),
+    },
+  },
+};
+
+export const WithDisabledNext: Story = {
+  args: {
+    steps: defaultSteps,
+    currentStep: 1,
+    navigationButtons: {
+      showBack: true,
+      showNext: true,
+      nextDisabled: true,
+      onBack: () => alert('Going back!'),
+      onNext: () => alert('This should not fire'),
+    },
+  },
+};
+
+export const WithCustomLabels: Story = {
+  args: {
+    steps: defaultSteps,
+    currentStep: 2,
+    navigationButtons: {
+      showBack: true,
+      showNext: true,
+      backLabel: 'Previous',
+      nextLabel: 'Continue',
+      onBack: () => alert('Going to previous step!'),
+      onNext: () => alert('Continuing!'),
+    },
+  },
+};
+
+export const BackButtonOnly: Story = {
+  args: {
+    steps: defaultSteps,
+    currentStep: 2,
+    navigationButtons: {
+      showBack: true,
+      showNext: false,
+      onBack: () => alert('Going back!'),
+    },
   },
 };
