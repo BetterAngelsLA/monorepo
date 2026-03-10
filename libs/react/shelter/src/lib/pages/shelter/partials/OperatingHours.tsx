@@ -12,9 +12,20 @@ import {
 type Schedule = ShelterType['schedules'][number];
 
 const ClockIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <circle cx="10" cy="10" r="9" stroke="#6B7280" strokeWidth="2" />
-    <path d="M10 5v5l3 2" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" />
+    <path
+      d="M10 5v5l3 2"
+      stroke="#6B7280"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
   </svg>
 );
 
@@ -51,29 +62,25 @@ function formatWindowRange(window: EffectiveWindow): string {
   return `${startText} - ${endText}`;
 }
 
-function StatusLine({
-  status,
-}: {
-  status: OperatingStatus;
-}) {
+function StatusLine({ status }: { status: OperatingStatus }) {
   // Designer colors
   const toneColor = status.tone === 'open' ? '#23CE6B' : '#CB0808';
   const toneFontWeight = status.tone === 'open' ? 'font-bold' : 'font-semibold';
   return (
     <div
       className="flex flex-row items-center gap-2"
-      style={{ fontFamily: 'Poppins, sans-serif', fontSize: 14, lineHeight: '21px', height: 21 }}
+      style={{
+        fontFamily: 'Poppins, sans-serif',
+        fontSize: 14,
+        lineHeight: '21px',
+        height: 21,
+      }}
     >
-      <span
-        className={toneFontWeight}
-        style={{ color: toneColor }}
-      >
+      <span className={toneFontWeight} style={{ color: toneColor }}>
         {status.statusText}
       </span>
       {status.detailText ? (
-        <span className="font-normal text-neutral-20">
-          {status.detailText}
-        </span>
+        <span className="font-normal text-neutral-20">{status.detailText}</span>
       ) : null}
     </div>
   );
@@ -102,7 +109,9 @@ function OperatingHoursDialog({
       <div className="mb-6 pb-4">
         <div className="mb-3 flex items-center gap-2">
           <ClockIcon />
-          <h3 className="text-lg font-semibold text-neutral-20">Operating Hours</h3>
+          <h3 className="text-lg font-semibold text-neutral-20">
+            Operating Hours
+          </h3>
         </div>
         <StatusLine status={status} />
       </div>
@@ -133,7 +142,8 @@ function OperatingHoursDialog({
         <div className="flex flex-1 flex-col overflow-y-auto pr-0.5">
           {selectedWeek.map((day, index) => {
             const previousDay = selectedWeek[index - 1];
-            const showDivider = index > 0 && !day.isToday && !previousDay?.isToday;
+            const showDivider =
+              index > 0 && !day.isToday && !previousDay?.isToday;
 
             return (
               <div
@@ -148,7 +158,13 @@ function OperatingHoursDialog({
                   }
                 >
                   <div className="grid grid-cols-[9rem_minmax(0,1fr)] items-start gap-4 text-sm">
-                    <div className={day.isToday ? 'min-w-0 text-primary-60' : 'min-w-0 text-neutral-40'}>
+                    <div
+                      className={
+                        day.isToday
+                          ? 'min-w-0 text-primary-60'
+                          : 'min-w-0 text-neutral-40'
+                      }
+                    >
                       {day.isToday ? (
                         <div className="grid grid-cols-[max-content_minmax(0,1fr)] items-center">
                           <span className="font-semibold">{day.label}</span>
@@ -166,9 +182,9 @@ function OperatingHoursDialog({
                       {day.windows.length > 0 ? (
                         day.windows.map((window, index) => (
                           <div
-                            key={`${day.date.toISOString()}-${window.startTime}-${
-                              window.endTime
-                            }-${index}`}
+                            key={`${day.date.toISOString()}-${
+                              window.startTime
+                            }-${window.endTime}-${index}`}
                             className={
                               day.isToday
                                 ? 'font-semibold text-neutral-20'
@@ -255,7 +271,9 @@ export function OperatingHours({
       <div className="flex items-center justify-between gap-4 w-full">
         <div className="flex items-center gap-2">
           <ClockIcon />
-          <span className="text-lg font-semibold text-neutral-20">Operating Hours</span>
+          <span className="text-lg font-semibold text-neutral-20">
+            Operating Hours
+          </span>
         </div>
         <button
           type="button"
@@ -265,8 +283,19 @@ export function OperatingHours({
           style={{ fontFamily: 'Poppins, sans-serif' }}
         >
           More Hours
-          <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 6l4 4 4-4" stroke="#052B73" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M4 6l4 4 4-4"
+              stroke="#052B73"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
       </div>

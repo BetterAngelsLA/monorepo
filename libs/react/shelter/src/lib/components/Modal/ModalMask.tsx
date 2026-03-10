@@ -1,21 +1,16 @@
 import { MouseEvent, PropsWithChildren } from 'react';
+import { createPortal } from 'react-dom';
 
 import { mergeCss } from '@monorepo/react/shared';
-import { useAtom } from 'jotai';
-import { modalAtom } from './modalAtom';
 
 interface IProps extends PropsWithChildren {
   className?: string;
   closeOnMaskClick?: boolean;
+  onClose: () => void;
 }
 
 export function ModalMask(props: IProps) {
-  const { className, closeOnMaskClick = false, children } = props;
-
-  // Temporary suppression to allow incremental cleanup without regressions.
-  // ⚠️ If you're modifying this file, please remove this ignore and fix the issue.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_modal, setModal] = useAtom(modalAtom);
+  const { className, closeOnMaskClick = false, onClose, children } = props;
 
   const parentCss: string = [
     'top-0',
@@ -23,7 +18,7 @@ export function ModalMask(props: IProps) {
     'right-0',
     'bottom-0',
     'fixed',
-    'z-[2000]',
+    'z-modal-mask',
     'flex',
     'justify-center',
     'items-center',
@@ -32,20 +27,19 @@ export function ModalMask(props: IProps) {
   ].join(' ');
 
   function onMaskClick(e: MouseEvent<HTMLDivElement>) {
-    if (e) {
-      e.stopPropagation();
-    }
+    e.stopPropagation();
 
     if (!closeOnMaskClick) {
       return;
     }
 
-    setModal(null);
+    onClose();
   }
 
-  return (
+  return createPortal(
     <div className={mergeCss(parentCss)} onClick={onMaskClick}>
       {children}
-    </div>
+    </div>,
+    document.body
   );
 }

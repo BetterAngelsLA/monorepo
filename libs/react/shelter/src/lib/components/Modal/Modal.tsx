@@ -1,9 +1,14 @@
 import { CloseIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
-import { useAtom } from 'jotai';
-import { PropsWithChildren, ReactElement, ReactNode } from 'react';
+import {
+  PropsWithChildren,
+  ReactElement,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
 import { ModalMask } from './ModalMask';
-import { modalAtom } from './modalAtom';
 
 export enum ModalAnimationEnum {
   SLIDE_UP = 'animate-slideInUp',
@@ -20,7 +25,7 @@ export interface IModal extends PropsWithChildren {
   fullW?: boolean;
   closeOnMaskClick?: boolean;
   footer?: ReactNode;
-  onClose?: () => void;
+  onClose: () => void;
 }
 
 export function Modal(props: IModal): ReactElement | null {
@@ -35,21 +40,39 @@ export function Modal(props: IModal): ReactElement | null {
     onClose,
   } = props;
 
-  // Temporary suppression to allow incremental cleanup without regressions.
-  // ⚠️ If you're modifying this file, please remove this ignore and fix the issue.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_modal, setModal] = useAtom(modalAtom);
+  const modalRef = useRef<HTMLDivElement>(null);
 
-  function onModalClose(): void {
-    if (typeof onClose === 'function') {
-      onClose();
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  // Lock body scroll while the modal is mounted
+  useEffect(() => {
+    const original = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, []);
+
+  // Close on Escape key
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
     }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [handleClose]);
 
-    setModal(null);
-  }
+  // Auto-focus the modal container for keyboard accessibility
+  useEffect(() => {
+    modalRef.current?.focus();
+  }, []);
 
   const modalCss = [
-    'z-[2001]',
+    'z-modal',
     'transform-gpu',
     'overflow-x-hidden',
     'overflow-y-auto',
@@ -83,14 +106,22 @@ export function Modal(props: IModal): ReactElement | null {
   ];
 
   return (
-    <ModalMask closeOnMaskClick={closeOnMaskClick}>
+    <ModalMask closeOnMaskClick={closeOnMaskClick} onClose={handleClose}>
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
         className={mergeCss(modalCss)}
-        onClick={(e) => e && e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className={mergeCss(modalBodyCss)}>
           <div className={mergeCss(headerCss)}>
-            <button className={mergeCss(closeCss)} onClick={onModalClose}>
+            <button
+              className={mergeCss(closeCss)}
+              onClick={handleClose}
+              aria-label="Close dialog"
+            >
               <CloseIcon className="w-4" />
             </button>
           </div>
