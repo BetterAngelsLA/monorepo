@@ -15,6 +15,7 @@ import {
   roomStyleFilter,
   shelterTypeFilter,
   specialSituationFilter,
+  TFilterConfig,
 } from './config';
 
 type IProps = {
@@ -29,7 +30,7 @@ export function ShelterFilters(props: IProps) {
 
   const parentCss = ['pb-24', className];
 
-  function onFilterChange(filterName: string, selected: string[]) {
+  function onFilterChange(filterName: TFilterConfig['name'], selected: string[]) {
     setFilters((prev) => {
       return {
         ...prev,

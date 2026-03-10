@@ -87,12 +87,8 @@ def main() -> None:
                         "shelter": shelter,
                         "schedule_type": ScheduleTypeChoices.OPERATING,
                         "day": day,
-                        "start_time": datetime.time(9, 0)
-                        if is_weekend
-                        else datetime.time(8, 0),
-                        "end_time": datetime.time(16, 0)
-                        if is_weekend
-                        else datetime.time(18, 0),
+                        "start_time": datetime.time(9, 0) if is_weekend else datetime.time(8, 0),
+                        "end_time": datetime.time(16, 0) if is_weekend else datetime.time(18, 0),
                         "is_exception": False,
                     }
                 )

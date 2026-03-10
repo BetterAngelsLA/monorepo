@@ -28,7 +28,6 @@ from shelters.selectors import shelters_open_at
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
 
-
 SHELTER_SCHEDULE_TIME_ZONE = ZoneInfo("America/Los_Angeles")
 
 
@@ -99,17 +98,18 @@ class ShelterFilter:
         return queryset.filter(**filters).distinct(), Q()
 
     @strawberry_django.filter_field
-    def open_now(
-        self, queryset: QuerySet, value: Optional[bool], prefix: str
-    ) -> Tuple[QuerySet[models.Shelter], Q]:
+    def open_now(self, queryset: QuerySet, value: Optional[bool], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
         if not value:
             return queryset, Q()
 
-        return shelters_open_at(
-            queryset,
-            dt=get_current_shelter_schedule_datetime(),
-            schedule_type=ScheduleTypeChoices.OPERATING,
-        ), Q()
+        return (
+            shelters_open_at(
+                queryset,
+                dt=get_current_shelter_schedule_datetime(),
+                schedule_type=ScheduleTypeChoices.OPERATING,
+            ),
+            Q(),
+        )
 
     @strawberry_django.filter_field
     def map_bounds(

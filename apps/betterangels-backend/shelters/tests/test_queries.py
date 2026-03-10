@@ -736,9 +736,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
-            return_value=fixed_utc_now.astimezone(
-                datetime.timezone(datetime.timedelta(hours=-8))
-            ),
+            return_value=fixed_utc_now.astimezone(datetime.timezone(datetime.timedelta(hours=-8))),
         ):
             response = self.execute_graphql(
                 query,
@@ -759,7 +757,11 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         # Monday 12:00 noon PST
         fixed_pst_noon = datetime.datetime(
-            2026, 1, 5, 12, 0,
+            2026,
+            1,
+            5,
+            12,
+            0,
             tzinfo=datetime.timezone(datetime.timedelta(hours=-8)),
         )
 
@@ -824,7 +826,11 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         # Monday 12:00 noon PST — within 8am-6pm window
         fixed_pst_noon = datetime.datetime(
-            2026, 1, 5, 12, 0,
+            2026,
+            1,
+            5,
+            12,
+            0,
             tzinfo=datetime.timezone(datetime.timedelta(hours=-8)),
         )
 
@@ -883,7 +889,11 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         # Monday 12:00 noon PST
         fixed_pst_noon = datetime.datetime(
-            2026, 1, 5, 12, 0,
+            2026,
+            1,
+            5,
+            12,
+            0,
             tzinfo=datetime.timezone(datetime.timedelta(hours=-8)),
         )
 
@@ -931,7 +941,11 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         # Monday 1:00 PM PST — within partial exception window for shelter_during
         fixed_pst = datetime.datetime(
-            2026, 1, 5, 13, 0,
+            2026,
+            1,
+            5,
+            13,
+            0,
             tzinfo=datetime.timezone(datetime.timedelta(hours=-8)),
         )
 

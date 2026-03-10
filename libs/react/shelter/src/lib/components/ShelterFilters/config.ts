@@ -29,8 +29,10 @@ export type TShelterFilterOption = {
   value: TFilterOptionType;
 };
 
+type TSelectableFilterName = Exclude<keyof TShelterPropertyFilters, 'openNow'>;
+
 export type TFilterConfig = {
-  name: keyof TShelterPropertyFilters;
+  name: TSelectableFilterName;
   header: string;
   options: TShelterFilterOption[];
 };
