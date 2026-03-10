@@ -60,9 +60,9 @@ def shelters_open_at(
             start_time__lte=time,
             end_time__gte=time,
         ).filter(
-            Q(day=day) | Q(day__isnull=True),
-            Q(start_date__isnull=True) | Q(start_date__lte=date),
-            Q(end_date__isnull=True) | Q(end_date__gte=date),
+            Q(day=None) | Q(day=day),
+            Q(start_date=None) | Q(start_date__lte=date),
+            Q(end_date=None) | Q(end_date__gte=date),
         )
     )
 
