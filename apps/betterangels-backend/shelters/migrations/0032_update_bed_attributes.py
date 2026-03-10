@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("clients", "0031_remove_clientprofile_client_profile_add_insert_and_more"),
-        ("shelters", "0029_add_room"),
+        ("shelters", "0031_migrate_legacy_hours_to_schedule"),
     ]
 
     operations = [

@@ -22,7 +22,9 @@ from places.fields import PlacesField
 from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,
+    BedTypeChoices,
     BedStatusChoices,
+    MedicalNeedChoices,
     RoomStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
@@ -228,6 +230,25 @@ class Shelter(BaseModel):
 class Bed(BaseModel):
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="beds")
     status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
+    status_notes = models.TextField(blank=True, null=True)
+    occupant = models.ForeignKey(
+        "clients.ClientProfile",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="occupied_beds",
+    )
+    bed_type = TextChoicesField(choices_enum=BedTypeChoices, blank=True, null=True)
+    demographics = models.ManyToManyField(Demographic, blank=True)
+    accessibility = models.ManyToManyField(Accessibility, blank=True)
+    funders = models.ManyToManyField(Funder, blank=True)
+    pets = models.ManyToManyField(Pet, blank=True)
+    storage = models.ManyToManyField(Storage, blank=True)
+    maintenance_flag = models.BooleanField(default=False, blank=True)
+    last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
+    medical_needs = TextChoicesField(choices_enum=MedicalNeedChoices, blank=True, null=True)
+    b7 = models.BooleanField(default=False, blank=True)
+    fees = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         indexes = [
