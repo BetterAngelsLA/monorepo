@@ -1,6 +1,6 @@
 import datetime
 from typing import Any
-from unittest.mock import ANY
+from unittest.mock import ANY, patch
 
 from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
@@ -15,6 +15,7 @@ from places import Places
 from shelters.enums import (
     AccessibilityChoices,
     BedStatusChoices,
+    DayOfWeekChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -24,6 +25,7 @@ from shelters.enums import (
     ParkingChoices,
     PetChoices,
     RoomStyleChoices,
+    ScheduleTypeChoices,
     ShelterChoices,
     ShelterProgramChoices,
     SPAChoices,
@@ -55,6 +57,7 @@ from shelters.models import (
     Storage,
     TrainingService,
 )
+from shelters.models.schedule import Schedule
 from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase, parametrize
@@ -690,6 +693,322 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         results = response["data"]["shelters"]["results"]
 
         self.assertEqual(len(results), expected_result_count)
+
+    def test_shelter_open_now_filter(self) -> None:
+        open_shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
+        closed_shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
+        fixed_utc_now = datetime.datetime(
+            2026,
+            1,
+            5,
+            20,
+            0,
+            tzinfo=datetime.timezone.utc,
+        )
+
+        Schedule.objects.create(
+            shelter=open_shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(8, 0),
+            end_time=datetime.time(18, 0),
+            is_exception=False,
+        )
+        Schedule.objects.create(
+            shelter=closed_shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(8, 0),
+            end_time=datetime.time(10, 0),
+            is_exception=False,
+        )
+
+        query = """
+            query ViewShelters($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        with patch(
+            "shelters.types.filters.get_current_shelter_schedule_datetime",
+            return_value=fixed_utc_now.astimezone(datetime.timezone(datetime.timedelta(hours=-8))),
+        ):
+            response = self.execute_graphql(
+                query,
+                variables={"filters": {"openNow": True}},
+            )
+
+        results = response["data"]["shelters"]["results"]
+        result_ids = {result["id"] for result in results}
+
+        self.assertIn(str(open_shelter.pk), result_ids)
+        self.assertNotIn(str(closed_shelter.pk), result_ids)
+
+    def test_shelter_open_now_excludes_permanent_closed_exception(self) -> None:
+        """A shelter with a permanent closed exception (no date bounds)
+        for the current day should NOT appear in Open Now results."""
+        shelter_with_exception = shelter_recipe.make(status=StatusChoices.APPROVED)
+        shelter_without_exception = shelter_recipe.make(status=StatusChoices.APPROVED)
+
+        # Monday 12:00 noon PST
+        fixed_pst_noon = datetime.datetime(
+            2026,
+            1,
+            5,
+            12,
+            0,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=-8)),
+        )
+
+        # Both shelters have regular Monday operating hours 8am-6pm
+        for shelter in (shelter_with_exception, shelter_without_exception):
+            Schedule.objects.create(
+                shelter=shelter,
+                schedule_type=ScheduleTypeChoices.OPERATING,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=datetime.time(8, 0),
+                end_time=datetime.time(18, 0),
+                is_exception=False,
+            )
+
+        # Permanent closed exception on Monday (no start_date/end_date)
+        Schedule.objects.create(
+            shelter=shelter_with_exception,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=None,
+            end_time=None,
+            is_exception=True,
+            start_date=None,
+            end_date=None,
+        )
+
+        query = """
+            query ViewShelters($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        with patch(
+            "shelters.types.filters.get_current_shelter_schedule_datetime",
+            return_value=fixed_pst_noon,
+        ):
+            response = self.execute_graphql(
+                query,
+                variables={"filters": {"openNow": True}},
+            )
+
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertNotIn(
+            str(shelter_with_exception.pk),
+            result_ids,
+            "Shelter with a permanent closed exception should be excluded from Open Now",
+        )
+        self.assertIn(str(shelter_without_exception.pk), result_ids)
+
+    def test_shelter_open_now_no_exceptions(self) -> None:
+        """Regression: shelters open on Monday must not be excluded because of
+        a *different-day* permanent closed exception on the same shelter.
+
+        Django's ``exclude()`` over a multi-valued reverse FK can
+        cross-match fields from different schedule rows, incorrectly
+        excluding shelters that have no Monday exception at all.
+        """
+        shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
+
+        # Monday 12:00 noon PST — within 8am-6pm window
+        fixed_pst_noon = datetime.datetime(
+            2026,
+            1,
+            5,
+            12,
+            0,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=-8)),
+        )
+
+        # Regular operating hours for Monday
+        Schedule.objects.create(
+            shelter=shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(8, 0),
+            end_time=datetime.time(18, 0),
+            is_exception=False,
+        )
+
+        # Permanent closed exception for TUESDAY (different day, should NOT
+        # affect Monday).  This triggers the exclude() cross-match bug.
+        Schedule.objects.create(
+            shelter=shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.TUESDAY,
+            start_time=None,
+            end_time=None,
+            is_exception=True,
+            start_date=None,
+            end_date=None,
+        )
+
+        query = """
+            query ViewShelters($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        with patch(
+            "shelters.types.filters.get_current_shelter_schedule_datetime",
+            return_value=fixed_pst_noon,
+        ):
+            response = self.execute_graphql(
+                query,
+                variables={"filters": {"openNow": True}},
+            )
+
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertIn(
+            str(shelter.pk),
+            result_ids,
+            "Shelter with regular hours and no exceptions must appear in Open Now",
+        )
+
+    def test_shelter_open_now_every_day_schedule(self) -> None:
+        """Schedules with day=NULL mean 'every day' and must be matched
+        by the Open Now filter regardless of the current weekday."""
+        shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
+
+        # Monday 12:00 noon PST
+        fixed_pst_noon = datetime.datetime(
+            2026,
+            1,
+            5,
+            12,
+            0,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=-8)),
+        )
+
+        # Schedule with day=None (applies every day)
+        Schedule.objects.create(
+            shelter=shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=None,
+            start_time=datetime.time(8, 0),
+            end_time=datetime.time(18, 0),
+            is_exception=False,
+        )
+
+        query = """
+            query ViewShelters($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        with patch(
+            "shelters.types.filters.get_current_shelter_schedule_datetime",
+            return_value=fixed_pst_noon,
+        ):
+            response = self.execute_graphql(
+                query,
+                variables={"filters": {"openNow": True}},
+            )
+
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertIn(
+            str(shelter.pk),
+            result_ids,
+            "Shelter with day=NULL (every-day) schedule must appear in Open Now",
+        )
+
+    def test_shelter_open_now_excludes_partial_day_exception(self) -> None:
+        """A shelter with a partial-day exception covering the current time
+        should NOT appear in Open Now results, but a shelter whose partial
+        exception does NOT cover the current time should still appear."""
+        shelter_during = shelter_recipe.make(status=StatusChoices.APPROVED)
+        shelter_outside = shelter_recipe.make(status=StatusChoices.APPROVED)
+
+        # Monday 1:00 PM PST — within partial exception window for shelter_during
+        fixed_pst = datetime.datetime(
+            2026,
+            1,
+            5,
+            13,
+            0,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=-8)),
+        )
+
+        # Both shelters have regular Monday operating hours 8am-6pm
+        for shelter in (shelter_during, shelter_outside):
+            Schedule.objects.create(
+                shelter=shelter,
+                schedule_type=ScheduleTypeChoices.OPERATING,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=datetime.time(8, 0),
+                end_time=datetime.time(18, 0),
+                is_exception=False,
+            )
+
+        # shelter_during: partial exception 12pm-2pm on Monday (covers 1 PM)
+        Schedule.objects.create(
+            shelter=shelter_during,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(12, 0),
+            end_time=datetime.time(14, 0),
+            is_exception=True,
+        )
+
+        # shelter_outside: partial exception 3pm-4pm on Monday (does NOT cover 1 PM)
+        Schedule.objects.create(
+            shelter=shelter_outside,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(15, 0),
+            end_time=datetime.time(16, 0),
+            is_exception=True,
+        )
+
+        query = """
+            query ViewShelters($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        with patch(
+            "shelters.types.filters.get_current_shelter_schedule_datetime",
+            return_value=fixed_pst,
+        ):
+            response = self.execute_graphql(
+                query,
+                variables={"filters": {"openNow": True}},
+            )
+
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertNotIn(
+            str(shelter_during.pk),
+            result_ids,
+            "Shelter with partial exception covering current time must be excluded",
+        )
+        self.assertIn(
+            str(shelter_outside.pk),
+            result_ids,
+            "Shelter with partial exception NOT covering current time must appear",
+        )
 
 
 class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):

@@ -113,7 +113,8 @@
     "lodash": "*",
     "haversine-distance": "*",
     "expo-modules-core": "*",
-    "react-native-screens": "*"
+    "react-native-screens": "*",
+    "@expo/vector-icons": "*"
   },
   "expo": {
     "autolinking": {
