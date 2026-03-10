@@ -1971,6 +1971,7 @@ input ShelterFilter {
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
+  openNow: Boolean
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
 }

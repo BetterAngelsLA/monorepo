@@ -38,37 +38,49 @@ def shelters_open_at(
     """Return shelters whose *schedule_type* schedule says they are open at *dt*.
 
     The filter:
-    1. Finds a non-exception schedule row matching the weekday + time window.
-    2. Respects optional ``start_date`` / ``end_date`` bounds (seasonal schedules).
-    3. Excludes shelters that have an active *closed exception* covering ``dt.date()``.
+    1. Finds a non-exception schedule row matching the weekday + time window
+       (respecting optional seasonal date bounds).
+    2. Excludes shelters that have an active exception covering *dt*
+       (full-day or partial-day).
     """
     day = DayOfWeekChoices.from_date(dt.date())
     time = dt.time()
     date = dt.date()
 
-    # Step 1: shelters with a matching regular (non-exception) schedule row
-    open_filter = Q(
-        schedules__schedule_type=schedule_type,
-        schedules__day=day,
-        schedules__is_exception=False,
-        schedules__start_time__lte=time,
-        schedules__end_time__gte=time,
+    # Step 1: Use an Exists subquery so the join doesn't produce duplicate
+    # shelter rows (avoiding the need for .distinct()).  All conditions bind
+    # to a single Schedule row.
+    from shelters.models import Schedule
+
+    is_open = Exists(
+        Schedule.objects.filter(
+            shelter=OuterRef("pk"),
+            schedule_type=schedule_type,
+            is_exception=False,
+            start_time__lte=time,
+            end_time__gte=time,
+        ).filter(
+            Q(day=None) | Q(day=day),
+            Q(start_date=None) | Q(start_date__lte=date),
+            Q(end_date=None) | Q(end_date__gte=date),
+        )
     )
 
-    # Step 2: respect seasonal date bounds
-    date_filter = Q(
-        Q(schedules__start_date__isnull=True) | Q(schedules__start_date__lte=date),
-        Q(schedules__end_date__isnull=True) | Q(schedules__end_date__gte=date),
+    # Step 2: exclude shelters with an active exception covering *dt*.
+    #   - Full-day:  start_time IS NULL  → closed all day.
+    #   - Partial:   start_time <= time AND end_time >= time  → closed now.
+    covers_now = Q(start_time__isnull=True) | Q(start_time__lte=time, end_time__gte=time)
+    has_active_exception = Exists(
+        Schedule.objects.filter(
+            shelter=OuterRef("pk"),
+            schedule_type=schedule_type,
+            is_exception=True,
+        ).filter(
+            covers_now,
+            Q(day=None) | Q(day=day),
+            Q(start_date=None) | Q(start_date__lte=date),
+            Q(end_date=None) | Q(end_date__gte=date),
+        )
     )
 
-    # Step 3: shelters with a closed exception active on this date
-    # (an exception row with no start_time means "closed all day")
-    exception_closed = Q(
-        schedules__schedule_type=schedule_type,
-        schedules__is_exception=True,
-        schedules__start_time__isnull=True,
-        schedules__start_date__lte=date,
-        schedules__end_date__gte=date,
-    )
-
-    return queryset.filter(open_filter & date_filter).exclude(exception_closed).distinct()
+    return queryset.filter(is_open).exclude(has_active_exception)
