@@ -240,6 +240,16 @@ class RoomStatusChoices(models.TextChoices):
 
 
 @strawberry.enum
+class ReservationStatusChoices(models.TextChoices):
+    OPEN = "open", _("Open")
+    CONFIRMED = "confirmed", _("Confirmed")
+    CHECKED_IN = "checked_in", _("Checked In")
+    COMPLETED = "completed", _("Completed")
+    CANCELLED = "cancelled", _("Cancelled")
+    CHECK_IN_OVERDUE = "check_in_overdue", _("Check-in Overdue")
+
+
+@strawberry.enum
 class DayOfWeekChoices(models.TextChoices):
     MONDAY = "monday", _("Monday")
     TUESDAY = "tuesday", _("Tuesday")
