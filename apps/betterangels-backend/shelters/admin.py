@@ -296,10 +296,13 @@ class ContactInfoAdmin(admin.ModelAdmin):
     search_fields = ("contact_name", "contact_number")
 
 
-class ContactInfoInline(admin.TabularInline):
+class ContactInfoInline(admin.StackedInline):
     model = ContactInfo
     extra = 1
-    fields = ["contact_name", "contact_number"]
+    fields = [
+        ("contact_name", "contact_number"),
+        ("contact_title", "contact_email"),
+    ]
     verbose_name = "Additional Contact - PRIVATE"
     verbose_name_plural = "Additional Contacts - PRIVATE"
     inline_key = "contactinfo"
@@ -562,9 +565,16 @@ class ShelterResource(resources.ModelResource):
 
     def process_contact_info(self, row: Any, contact_info_row: str) -> None:
         try:
-            columnSeparateVals = [(v.strip()).split(":") for v in contact_info_row.split(",")]
+            columnSeparateVals = []
+            for v in contact_info_row.split(","):
+                vals = [p.strip() for p in v.strip().split(":")]
+                # pad missing optional fields to collect name, number, email and title
+                while len(vals) < 4:
+                    vals.append("")
+                columnSeparateVals.append(vals[:4])
         except ValueError:
             self.skip_or_raise(row, "additional_contacts")
+
         row["additional_contacts"] = columnSeparateVals
 
     def before_import_row(self, row: Any, **kwargs: Any) -> None:
@@ -628,9 +638,15 @@ class ShelterResource(resources.ModelResource):
         add_contact = row.get("additional_contacts")
         dry_run = kwargs.get("dry_run", False)
         if add_contact:
-            for name, number in add_contact:
+            for name, number, email, title in add_contact:
                 if not dry_run:
-                    ContactInfo.objects.get_or_create(shelter=instance, contact_name=name, contact_number=number)
+                    ContactInfo.objects.get_or_create(
+                        shelter=instance,
+                        contact_name=name,
+                        contact_number=number,
+                        email=email or None,
+                        title=title or None,
+                    )
 
     # Skips any row that has an error, based on whether or not "jumpthis" columns was set to True during
     # import, and also whether or not skip_row_not_val_error boolean is True or False

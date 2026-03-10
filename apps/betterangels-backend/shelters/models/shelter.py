@@ -270,6 +270,8 @@ class ContactInfo(models.Model):
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="additional_contacts")
     contact_name = models.CharField(max_length=255, verbose_name="Contact Name")
     contact_number = PhoneNumberField(verbose_name="Contact Number")
+    contact_email = models.EmailField(blank=True, null=True)
+    contact_title = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self) -> str:
         return f"{self.contact_name} - {self.contact_number}"
