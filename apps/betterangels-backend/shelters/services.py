@@ -45,13 +45,6 @@ def _set_m2m_from_enums(instance: models.Model, data: Dict[str, List[Any]]) -> N
         getattr(instance, field_name).set(instances)
 
 
-def _parse_time_ranges(data: Any) -> Any:
-    """Convert a list of ``TimeRangeInput`` dicts to tuple pairs for ``TimeRangeField``."""
-    if not data:
-        return None
-    return [(slot.get("start"), slot.get("end")) for slot in data if slot is not None]
-
-
 def _parse_location(data: Any) -> Any:
     """Convert a ``ShelterLocationInput`` dict to a ``Places`` object."""
     if not data:
@@ -73,7 +66,6 @@ def _prepare_shelter_data(
 
     Transforms:
     - ``location`` dict → ``Places`` instance
-    - ``operating_hours`` / ``intake_hours`` lists → tuple pairs
     - ``organization`` ID → ``organization_id`` FK column
     - ``status`` enum → raw string value
     - ``schedules`` list extracted for bulk creation after shelter save
@@ -85,10 +77,6 @@ def _prepare_shelter_data(
     # Extract schedules before model creation
     schedules_data: List[Dict[str, Any]] = data.pop("schedules", None) or []
 
-    if "operating_hours" in data:
-        data["operating_hours"] = _parse_time_ranges(data["operating_hours"])
-    if "intake_hours" in data:
-        data["intake_hours"] = _parse_time_ranges(data["intake_hours"])
     if "location" in data:
         data["location"] = _parse_location(data["location"])
 

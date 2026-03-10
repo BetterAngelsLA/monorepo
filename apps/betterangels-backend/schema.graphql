@@ -126,8 +126,6 @@ type AdminShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
-  operatingHours: [TimeRange]
-  intakeHours: [TimeRange]
 }
 
 type AdminShelterTypeOffsetPaginated {
@@ -641,8 +639,6 @@ input CreateShelterInput {
   funders: [FunderChoices!]!
   organization: ID!
   location: ShelterLocationInput = null
-  operatingHours: [TimeRangeInput!] = null
-  intakeHours: [TimeRangeInput!] = null
   schedules: [ScheduleInput!] = null
   email: String = null
   phone: PhoneNumber = null
@@ -1971,6 +1967,7 @@ input ShelterFilter {
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
+  openNow: Boolean
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
 }
@@ -2086,8 +2083,6 @@ type ShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
-  operatingHours: [TimeRange]
-  intakeHours: [TimeRange]
 }
 
 type ShelterTypeOffsetPaginated {
@@ -2238,16 +2233,6 @@ type TaskTypeOffsetPaginated {
 
 """Time (isoformat)"""
 scalar Time
-
-type TimeRange {
-  start: DateTime
-  end: DateTime
-}
-
-input TimeRangeInput {
-  start: Time = null
-  end: Time = null
-}
 
 enum TrainingServiceChoices {
   JOB_TRAINING
