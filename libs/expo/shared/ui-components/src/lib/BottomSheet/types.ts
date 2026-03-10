@@ -17,6 +17,17 @@ export type BottomSheetProviderConfig = {
    * Gorhom backdrops can race and render above sheets.
    */
   singleBackdrop?: boolean;
+
+  /**
+   * Enables the layout measurement system used to calculate
+   * container height for bottom sheets.
+   *
+   * Disable this when the app manages sheet layout externally
+   * or when container height should not be overridden.
+   *
+   * Default: true
+   */
+  enableLayoutProvider?: boolean;
 };
 
 /**

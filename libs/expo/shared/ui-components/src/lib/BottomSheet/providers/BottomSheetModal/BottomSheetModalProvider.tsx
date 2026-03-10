@@ -148,7 +148,14 @@ import {
   BottomSheetModal,
   BottomSheetModalProvider as GbsBottomSheetModalProvider,
 } from '@gorhom/bottom-sheet';
-import { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import {
+  Fragment,
+  ReactNode,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { BackdropOverlay } from '../../core/BackdropOverlay';
 import { BottomSheetBase } from '../../core/BottomSheetBase';
 import {
@@ -193,7 +200,12 @@ type BottomSheetProviderProps = BottomSheetProviderConfig & {
 };
 
 export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
-  const { children, defaultOptions, singleBackdrop = false } = props;
+  const {
+    children,
+    defaultOptions,
+    singleBackdrop = false,
+    enableLayoutProvider = true,
+  } = props;
 
   const providerDefaults = useMemo<BottomSheetOptions>(
     () => defaultOptions ?? EMPTY_SHEET_OPTIONS,
@@ -337,9 +349,13 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
   const backdropVisible =
     singleBackdrop && sheets.some((sheet) => !closingSheetIds.has(sheet.id));
 
+  const LayoutWrapper = enableLayoutProvider
+    ? BottomSheetLayoutProvider
+    : Fragment;
+
   return (
     <GbsBottomSheetModalProvider>
-      <BottomSheetLayoutProvider>
+      <LayoutWrapper>
         <BottomSheetContext.Provider value={contextValue}>
           {children}
 
@@ -388,7 +404,7 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
             </BottomSheetBase>
           ))}
         </BottomSheetContext.Provider>
-      </BottomSheetLayoutProvider>
+      </LayoutWrapper>
     </GbsBottomSheetModalProvider>
   );
 }
