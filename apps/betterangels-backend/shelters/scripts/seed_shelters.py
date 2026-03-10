@@ -4,6 +4,17 @@ import random
 import sys
 from pathlib import Path
 
+"""Seed shelters with representative demo data.
+
+Usage:
+    python seed_shelters.py <number_of_shelters> [--clear]
+
+This script creates approved shelters with placeholder exterior photos,
+random contacts, multiple schedule types, and a small set of operating
+exceptions so the shelter detail UI and Open Now filtering have predictable
+demo coverage.
+"""
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "betterangels_backend.settings")
 import django  # noqa: E402
 from django.core.files import File  # noqa: E402
@@ -65,7 +76,8 @@ def main() -> None:
             for _ in range(random.randint(0, 3)):
                 shelter_contact_recipe.make(shelter=shelter)
 
-        # add schedules
+        # Add a representative mix of schedule types so seeded shelters exercise
+        # the multi-pill hours UI in the detail modal.
         for shelter in shelters:
             # Operating hours: daily with a longer weekday window.
             for day in DayOfWeekChoices:
@@ -146,9 +158,10 @@ def main() -> None:
                     }
                 )
 
-            # Random operating exceptions: closed for 1–2 unique days.
-            # Guarantee the first shelter always has a Monday exception so the
-            # Open Now filter has at least one shelter to exclude during demos.
+            # Add full-day operating exceptions for 1–2 unique days.
+            # Keep the first shelter's exception on Monday so demo data always
+            # includes at least one predictable "closed by exception" shelter
+            # for the Open Now filter and operating-hours UI.
             if shelter is shelters[0]:
                 exception_days = [DayOfWeekChoices.MONDAY]
             else:
