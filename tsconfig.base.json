@@ -49,7 +49,7 @@
       "@monorepo/signing-fingerprint": [
         "libs/expo/modules/signing-fingerprint/index.ts"
       ],
-      "@monorepo/tailwind": ["tailwind/tailwind.base.config.ts"]
+      "@monorepo/tailwind": ["libs/tailwind/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

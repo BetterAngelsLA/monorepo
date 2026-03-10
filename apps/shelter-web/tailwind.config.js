@@ -3,7 +3,7 @@ const { join } = require('path');
 const { createJiti } = require('jiti');
 
 const jiti = createJiti(__filename);
-const tailwindBase = jiti('../../tailwind/tailwind.base.config.ts').default;
+const tailwindBase = jiti('../../libs/tailwind/src/index.ts').default;
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
