@@ -22,8 +22,8 @@ from places.fields import PlacesField
 from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,
-    BedTypeChoices,
     BedStatusChoices,
+    BedTypeChoices,
     MedicalNeedChoices,
     RoomStatusChoices,
     RoomStyleChoices,
