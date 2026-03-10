@@ -74,6 +74,7 @@ from .models import (
     Pet,
     Room,
     RoomStyle,
+    Schedule,
     Shelter,
     ShelterProgram,
     ShelterType,
@@ -339,6 +340,51 @@ class VideoInline(admin.TabularInline):
     max_num = 0
 
 
+class ScheduleForm(forms.ModelForm):
+    class Meta:
+        model = Schedule
+        fields = "__all__"
+        widgets = {
+            "start_time": forms.TimeInput(attrs={"type": "time"}),
+            "end_time": forms.TimeInput(attrs={"type": "time"}),
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
+        }
+        help_texts = {
+            "is_exception": (
+                "Check this to mark an override or closure. "
+                "Exceptions subtract from the regular schedule: "
+                "leave times blank for an all-day closure, or set times to close a specific window."
+            ),
+        }
+
+
+class ScheduleInline(admin.StackedInline):
+    model = Schedule
+    form = ScheduleForm
+    extra = 0
+    ordering = ["is_exception", "schedule_type", "day", "start_time"]
+    verbose_name = "Schedule Entry"
+    verbose_name_plural = "Schedule"
+    inline_key = "schedule"
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "is_exception",
+                    "schedule_type",
+                    "day",
+                    ("start_time", "end_time"),
+                    ("start_date", "end_date"),
+                    "condition",
+                    "demographic",
+                ),
+            },
+        ),
+    )
+
+
 class ShelterResource(resources.ModelResource):
 
     organization = Field(
@@ -597,7 +643,7 @@ class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
     list_select_related = ("organization",)
 
-    inlines = [ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
+    inlines = [ContactInfoInline, ScheduleInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
     fieldsets = (
         (
             "Basic Information",
@@ -610,7 +656,6 @@ class ShelterAdmin(ImportExportModelAdmin):
                     "phone",
                     "website",
                     "instagram",
-                    "operating_hours",
                 ),
             },
         ),
@@ -655,7 +700,6 @@ class ShelterAdmin(ImportExportModelAdmin):
             {
                 "fields": (
                     "max_stay",
-                    "intake_hours",
                     "curfew",
                     "on_site_security",
                     "visitors_allowed",
