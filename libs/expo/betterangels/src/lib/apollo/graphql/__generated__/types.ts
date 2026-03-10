@@ -2469,6 +2469,7 @@ export type ShelterFilter = {
   geolocation?: InputMaybe<GeolocationInput>;
   mapBounds?: InputMaybe<MapBoundsInput>;
   name?: InputMaybe<Scalars['String']['input']>;
+  openNow?: InputMaybe<Scalars['Boolean']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   properties?: InputMaybe<ShelterPropertyInput>;
 };
