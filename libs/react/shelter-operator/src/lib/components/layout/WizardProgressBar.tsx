@@ -22,6 +22,7 @@ export interface WizardProgressBarProps {
   steps: WizardStep[];
   currentStep: number;
   navigationButtons?: WizardNavigationButtons;
+  onStepClick?: (stepIndex: number) => void;
 }
 
 export function useWizardNavigation(stepPaths: string[]) {
@@ -58,7 +59,12 @@ export function useWizardNavigation(stepPaths: string[]) {
 }
 
 export const WizardProgressBar = memo(
-  ({ steps, currentStep, navigationButtons }: WizardProgressBarProps) => {
+  ({
+    steps,
+    currentStep,
+    navigationButtons,
+    onStepClick,
+  }: WizardProgressBarProps) => {
     const getStepState = (
       index: number
     ): 'completed' | 'active' | 'upcoming' => {
@@ -81,6 +87,13 @@ export const WizardProgressBar = memo(
       }
     };
 
+    const handleStepClick = (index: number) => {
+      const state = getStepState(index);
+      if (state === 'completed' && onStepClick) {
+        onStepClick(index);
+      }
+    };
+
     return (
       <div className="w-full flex flex-col gap-4">
         <div className="flex flex-col gap-1 py-2">
@@ -88,24 +101,33 @@ export const WizardProgressBar = memo(
             {steps.map((_, index) => {
               const state = getStepState(index);
               const isLast = index === steps.length - 1;
+              const isClickable = state === 'completed';
 
               return (
                 <div
                   key={index}
                   className={`flex items-center ${!isLast ? 'flex-1' : ''}`}
                 >
-                  <div
-                    className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all duration-300"
+                  <button
+                    type="button"
+                    onClick={() => handleStepClick(index)}
+                    disabled={!isClickable}
+                    className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all duration-300 ${
+                      isClickable
+                        ? 'cursor-pointer hover:scale-110'
+                        : 'cursor-default'
+                    }`}
                     style={{
                       backgroundColor:
                         state === 'completed' ? '#008CEE' : '#ffffff',
                       borderColor: state === 'upcoming' ? '#e5e7eb' : '#008CEE',
                     }}
+                    aria-label={`Go to step ${index + 1}`}
                   >
                     {state === 'completed' ? (
                       <Check size={10} strokeWidth={3} color="#ffffff" />
                     ) : null}
-                  </div>
+                  </button>
 
                   {!isLast && (
                     <div

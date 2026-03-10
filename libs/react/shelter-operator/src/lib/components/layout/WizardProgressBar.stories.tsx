@@ -33,6 +33,7 @@ const defaultSteps = [
 export const FirstStep: Story = {
   args: {
     steps: defaultSteps,
+    onStepClick: (index) => alert(`Navigating to step ${index + 1}`),
     currentStep: 0,
   },
 };
@@ -40,6 +41,7 @@ export const FirstStep: Story = {
 export const SecondStep: Story = {
   args: {
     steps: defaultSteps,
+    onStepClick: (index) => alert(`Navigating to step ${index + 1}`),
     currentStep: 1,
   },
 };
@@ -47,6 +49,7 @@ export const SecondStep: Story = {
 export const ThirdStep: Story = {
   args: {
     steps: defaultSteps,
+    onStepClick: (index) => alert(`Navigating to step ${index + 1}`),
     currentStep: 2,
   },
 };
@@ -54,6 +57,7 @@ export const ThirdStep: Story = {
 export const LastStep: Story = {
   args: {
     steps: defaultSteps,
+    onStepClick: (index) => alert(`Navigating to step ${index + 1}`),
     currentStep: 3,
   },
 };
@@ -61,6 +65,7 @@ export const LastStep: Story = {
 export const Completed: Story = {
   args: {
     steps: defaultSteps,
+    onStepClick: (index) => alert(`Navigating to step ${index + 1}`),
     currentStep: 4,
   },
 };
@@ -79,6 +84,7 @@ const manySteps = [
 export const ManySteps: Story = {
   args: {
     steps: manySteps,
+    onStepClick: (index) => alert(`Navigating to step ${index + 1}`),
     currentStep: 0,
   },
 };
@@ -86,6 +92,7 @@ export const ManySteps: Story = {
 export const ManyStepsMiddle: Story = {
   args: {
     steps: manySteps,
+    onStepClick: (index) => alert(`Navigating to step ${index + 1}`),
     currentStep: 4,
   },
 };
@@ -94,6 +101,7 @@ export const WithNavigationButtons: Story = {
   args: {
     steps: defaultSteps,
     currentStep: 1,
+    onStepClick: (index) => alert(`Navigating to step ${index + 1}`),
     navigationButtons: {
       showBack: true,
       showNext: true,
@@ -107,6 +115,7 @@ export const FirstStepWithNextOnly: Story = {
   args: {
     steps: defaultSteps,
     currentStep: 0,
+    onStepClick: (index) => alert(`Navigating to step ${index + 1}`),
     navigationButtons: {
       showBack: false,
       showNext: true,
@@ -119,6 +128,7 @@ export const LastStepWithSubmit: Story = {
   args: {
     steps: defaultSteps,
     currentStep: 3,
+    onStepClick: (index) => alert(`Navigating to step ${index + 1}`),
     navigationButtons: {
       showBack: true,
       showNext: true,
@@ -133,6 +143,7 @@ export const WithDisabledNext: Story = {
   args: {
     steps: defaultSteps,
     currentStep: 1,
+    onStepClick: (index) => alert(`Navigating to step ${index + 1}`),
     navigationButtons: {
       showBack: true,
       showNext: true,
@@ -147,6 +158,7 @@ export const WithCustomLabels: Story = {
   args: {
     steps: defaultSteps,
     currentStep: 2,
+    onStepClick: (index) => alert(`Navigating to step ${index + 1}`),
     navigationButtons: {
       showBack: true,
       showNext: true,
@@ -162,6 +174,7 @@ export const BackButtonOnly: Story = {
   args: {
     steps: defaultSteps,
     currentStep: 2,
+    onStepClick: (index) => alert(`Navigating to step ${index + 1}`),
     navigationButtons: {
       showBack: true,
       showNext: false,
