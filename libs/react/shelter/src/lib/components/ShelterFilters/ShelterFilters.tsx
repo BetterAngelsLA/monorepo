@@ -1,7 +1,4 @@
-import {
-  Checkbox,
-  ExpandableContainer,
-} from '@monorepo/react/components';
+import { Checkbox, ExpandableContainer } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
@@ -30,7 +27,10 @@ export function ShelterFilters(props: IProps) {
 
   const parentCss = ['pb-24', className];
 
-  function onFilterChange(filterName: TFilterConfig['name'], selected: string[]) {
+  function onFilterChange(
+    filterName: TFilterConfig['name'],
+    selected: string[]
+  ) {
     setFilters((prev) => {
       return {
         ...prev,

@@ -1,5 +1,9 @@
 import { CheckboxGroup, ExpandableContainer } from '@monorepo/react/components';
-import { TFilterConfig, TFilterOptionType, TShelterFilterOption } from './config';
+import {
+  TFilterConfig,
+  TFilterOptionType,
+  TShelterFilterOption,
+} from './config';
 
 type IProps = {
   className?: string;
