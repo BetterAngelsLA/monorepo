@@ -51,7 +51,7 @@ export function Row({
       onMouseDown={() => setIsPressed(true)}
       onMouseUp={() => setIsPressed(false)}
       className={[
-        'grid items-center px-2 mx-4 py-4 text-sm border-b border-gray-200',
+        'grid items-center px-2 mx-4 py-4 text-sm border-t border-gray-200',
         isHovered && 'bg-gray-50',
         onClick && 'cursor-pointer',
         className,
