@@ -297,8 +297,8 @@ export default function Dashboard() {
         <div className="fixed bottom-6 right-6 z-20 ">
           <Button
             leftIcon={<BookCheck />}
-            rightIcon={null}
-            className="bg-[#008CEE] text-white text-[22px] py-3 px-6 rounded-full shadow-lg gap-2 w-fit justify-between"
+            rightIcon={false}
+            variant="floating-light"
           >
             Reserve
           </Button>
