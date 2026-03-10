@@ -106,6 +106,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       jq \
       wget \
       zip \
+      graphviz \
     # Install Python Lib Requirements
     && apt-get install -y \
     libpq5 \
