@@ -48,11 +48,11 @@ const variantClasses: Record<ButtonVariant, string> = {
     'bg-[#F4F6FD] border border-[#D3D9E3] text-lg py-2 px-4 rounded-full gap-2 w-fit justify-between',
   'small-dark':
     'bg-[#D3D9E3] border border-[#D3D9E3] text-[#747A82] text-lg py-2 px-4 rounded-full gap-2 w-fit justify-between',
-  'edit-light': 'bg-white text-white size-10 p-0 rounded-lg justify-center',
+  'edit-light': 'text-white size-10 p-0 rounded-lg justify-center',
   'edit-medium':
     'bg-[#F4F6FD] text-white size-10 p-0 rounded-lg justify-center',
   'edit-dark': 'bg-[#D3D9E3] text-white size-10 p-0 rounded-lg justify-center',
-  'trash-light': 'bg-white text-white size-10 p-0 rounded-lg justify-center',
+  'trash-light': 'text-white size-10 p-0 rounded-lg justify-center',
   'trash-medium':
     'bg-[#FFECE8] text-white size-10 p-0 rounded-lg justify-center',
   'trash-dark': 'bg-[#FFC5BF] text-white size-10 p-0 rounded-lg justify-center',

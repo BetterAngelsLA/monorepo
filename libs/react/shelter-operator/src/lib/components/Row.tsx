@@ -24,14 +24,14 @@ export function Row({
   style,
   onClick,
 }: RowProps) {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
+  const [isDeleteHovered, setIsDeleteHovered] = useState(false);
+  const [isDeletePressed, setIsDeletePressed] = useState(false);
 
   let variant: ButtonVariant = 'trash-light';
 
-  if (isPressed) {
+  if (isDeletePressed) {
     variant = 'trash-dark';
-  } else if (isHovered) {
+  } else if (isDeleteHovered) {
     variant = 'trash-medium';
   }
 
@@ -43,16 +43,9 @@ export function Row({
   return (
     <div
       onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        setIsPressed(false);
-      }}
-      onMouseDown={() => setIsPressed(true)}
-      onMouseUp={() => setIsPressed(false)}
       className={[
-        'grid items-center px-2 mx-4 py-4 text-sm border-t border-gray-200',
-        isHovered && 'bg-gray-50',
+        'grid items-center px-4 mx-4 py-4 text-sm border-t border-gray-200',
+        'hover:bg-[#F4F6FD]',
         onClick && 'cursor-pointer',
         className,
       ]
@@ -92,11 +85,20 @@ export function Row({
         {c3?.content}
       </div>
 
-      <div className="justify-self-end">
+      <div
+        className="justify-self-end"
+        onMouseEnter={() => setIsDeleteHovered(true)}
+        onMouseLeave={() => {
+          setIsDeleteHovered(false);
+          setIsDeletePressed(false);
+        }}
+        onMouseDown={() => setIsDeletePressed(true)}
+        onMouseUp={() => setIsDeletePressed(false)}
+      >
         <Button
           variant={variant}
           leftIcon={<Trash2 size={20} stroke="#CB0808" />}
-          rightIcon={null}
+          rightIcon={false}
         />
       </div>
     </div>

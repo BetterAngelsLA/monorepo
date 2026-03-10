@@ -13,7 +13,7 @@ import {
 import type { Shelter } from '../../types/shelter';
 
 const SEARCH_DEBOUNCE_MS = 300;
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 16;
 
 export default function Dashboard() {
   const { pathname } = useLocation();
@@ -36,7 +36,6 @@ export default function Dashboard() {
 
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
   const [page, setPage] = useState(1);
   const debounceTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
@@ -205,32 +204,6 @@ export default function Dashboard() {
             >
               Sort
             </Button>
-
-            <div className="relative grid h-11 grid-cols-2 items-center rounded-full border border-[#D3D9E3] bg-[#F5F5F5] p-1">
-              <span
-                className={`pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                  viewMode === 'list' ? 'translate-x-0' : 'translate-x-full'
-                }`}
-              />
-              <button
-                type="button"
-                onClick={() => setViewMode('list')}
-                className={`relative z-10 h-9 rounded-full px-2 text-base transition-colors ${
-                  viewMode === 'list' ? 'text-[#1F2937]' : 'text-[#747A82]'
-                }`}
-              >
-                List View
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('card')}
-                className={`relative z-10 h-9 rounded-full px-2 text-base transition-colors ${
-                  viewMode === 'card' ? 'text-[#1F2937]' : 'text-[#747A82]'
-                }`}
-              >
-                Card View
-              </button>
-            </div>
           </div>
         </form>
 

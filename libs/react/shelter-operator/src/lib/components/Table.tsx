@@ -56,7 +56,7 @@ export function Table<TItem>({
     >
       <div
         className={[
-          'grid items-center px-6 py-4 text-base font-medium text-[#747A82]',
+          'grid items-center px-6 py-2 pt-6 text-base font-medium text-[22px] text-[#747A82]',
           headerClassName,
         ].join(' ')}
         style={{ gridTemplateColumns: templateColumns, ...headerStyle }}
