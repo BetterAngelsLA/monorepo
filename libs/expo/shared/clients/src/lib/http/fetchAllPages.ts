@@ -1,7 +1,7 @@
-import { HMIS_REST_API_MAX_PER_PAGE } from './hmisClient';
-import type { HmisHttpQueryParams } from './hmisTypes';
+import { HMIS_REST_API_MAX_PER_PAGE } from './clientHmis';
+import type { HttpQueryParamsHmis } from './typesHmis';
 
-export type HmisLinkPaginatedResponse<T> = {
+export type LinkPaginatedResponseHmis<T> = {
   items: T[];
   _links?: {
     next?: { href: string };
@@ -10,8 +10,8 @@ export type HmisLinkPaginatedResponse<T> = {
 
 export async function fetchAllPages<T>(
   fetchPage: (
-    params?: HmisHttpQueryParams
-  ) => Promise<HmisLinkPaginatedResponse<T>>
+    params?: HttpQueryParamsHmis
+  ) => Promise<LinkPaginatedResponseHmis<T>>
 ): Promise<T[]> {
   const allItems: T[] = [];
 

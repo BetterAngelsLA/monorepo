@@ -26,6 +26,7 @@ from shelters.types.lookups import (
     ParkingType,
     PetType,
     RoomStyleType,
+    ScheduleType,
     ShelterProgramType,
     ShelterTypeType,
     SPAType,
@@ -105,6 +106,7 @@ class ShelterTypeMixin:
     program_fees: Optional[str]
     room_styles: List[RoomStyleType]
     room_styles_other: auto
+    schedules: List[ScheduleType]
     shelter_programs: List[ShelterProgramType]
     shelter_programs_other: auto
     shelter_types: List[ShelterTypeType]

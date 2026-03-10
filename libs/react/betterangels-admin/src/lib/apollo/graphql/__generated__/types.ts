@@ -113,6 +113,7 @@ export type AdminShelterType = {
   programFees?: Maybe<Scalars['String']['output']>;
   roomStyles: Array<RoomStyleType>;
   roomStylesOther?: Maybe<Scalars['String']['output']>;
+  schedules: Array<ScheduleType>;
   shelterPrograms: Array<ShelterProgramType>;
   shelterProgramsOther?: Maybe<Scalars['String']['output']>;
   shelterTypes: Array<ShelterTypeType>;
@@ -414,6 +415,16 @@ export type ClientSearchInput = {
   middleName?: InputMaybe<Scalars['String']['input']>;
 };
 
+export enum ConditionChoices {
+  AirQualitySmoke = 'AIR_QUALITY_SMOKE',
+  EmergencyEvacuation = 'EMERGENCY_EVACUATION',
+  Fire = 'FIRE',
+  Heat = 'HEAT',
+  PublicHealthEmergency = 'PUBLIC_HEALTH_EMERGENCY',
+  RainSevereWeather = 'RAIN_SEVERE_WEATHER',
+  Wind = 'WIND'
+}
+
 export type ContactInfoType = {
   __typename?: 'ContactInfoType';
   contactName: Scalars['String']['output'];
@@ -649,6 +660,7 @@ export type CreateShelterInput = {
   referralRequirement: Array<ReferralRequirementChoices>;
   roomStyles: Array<RoomStyleChoices>;
   roomStylesOther?: InputMaybe<Scalars['String']['input']>;
+  schedules?: InputMaybe<Array<ScheduleInput>>;
   shelterPrograms: Array<ShelterProgramChoices>;
   shelterProgramsOther?: InputMaybe<Scalars['String']['input']>;
   shelterTypes: Array<ShelterChoices>;
@@ -716,6 +728,16 @@ export type DateCountType = {
   count: Scalars['Int']['output'];
   date: Scalars['String']['output'];
 };
+
+export enum DayOfWeekChoices {
+  Friday = 'FRIDAY',
+  Monday = 'MONDAY',
+  Saturday = 'SATURDAY',
+  Sunday = 'SUNDAY',
+  Thursday = 'THURSDAY',
+  Tuesday = 'TUESDAY',
+  Wednesday = 'WEDNESDAY'
+}
 
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
@@ -1830,7 +1852,16 @@ export type OrganizationFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type OrganizationMemberFilter = {
+  AND?: InputMaybe<OrganizationMemberFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<OrganizationMemberFilter>;
+  OR?: InputMaybe<OrganizationMemberFilter>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type OrganizationMemberOrdering = {
+  dateJoined?: InputMaybe<Ordering>;
   email?: InputMaybe<Ordering>;
   firstName?: InputMaybe<Ordering>;
   id?: InputMaybe<Ordering>;
@@ -1841,6 +1872,7 @@ export type OrganizationMemberOrdering = {
 
 export type OrganizationMemberType = {
   __typename?: 'OrganizationMemberType';
+  dateJoined: Scalars['DateTime']['output'];
   email?: Maybe<Scalars['NonBlankString']['output']>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
   id: Scalars['ID']['output'];
@@ -2170,6 +2202,7 @@ export type QueryOrganizationMemberArgs = {
 
 
 export type QueryOrganizationMembersArgs = {
+  filters?: InputMaybe<OrganizationMemberFilter>;
   ordering?: InputMaybe<Array<OrganizationMemberOrdering>>;
   organizationId: Scalars['String']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -2178,6 +2211,7 @@ export type QueryOrganizationMembersArgs = {
 
 export type QueryReportSummaryArgs = {
   endDate?: InputMaybe<Scalars['Date']['input']>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
   startDate?: InputMaybe<Scalars['Date']['input']>;
 };
 
@@ -2346,6 +2380,38 @@ export type SampleType = {
   name: Scalars['String']['output'];
 };
 
+export type ScheduleInput = {
+  condition?: InputMaybe<ConditionChoices>;
+  days?: InputMaybe<Array<DayOfWeekChoices>>;
+  endDate?: InputMaybe<Scalars['Date']['input']>;
+  endTime?: InputMaybe<Scalars['Time']['input']>;
+  isException?: Scalars['Boolean']['input'];
+  scheduleType?: ScheduleTypeChoices;
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+  startTime?: InputMaybe<Scalars['Time']['input']>;
+};
+
+export type ScheduleType = {
+  __typename?: 'ScheduleType';
+  condition?: Maybe<ConditionChoices>;
+  day?: Maybe<DayOfWeekChoices>;
+  demographic?: Maybe<DemographicType>;
+  endDate?: Maybe<Scalars['Date']['output']>;
+  endTime?: Maybe<Scalars['Time']['output']>;
+  id: Scalars['ID']['output'];
+  isException: Scalars['Boolean']['output'];
+  scheduleType: ScheduleTypeChoices;
+  startDate?: Maybe<Scalars['Date']['output']>;
+  startTime?: Maybe<Scalars['Time']['output']>;
+};
+
+export enum ScheduleTypeChoices {
+  Intake = 'INTAKE',
+  MealService = 'MEAL_SERVICE',
+  Operating = 'OPERATING',
+  StaffAvailability = 'STAFF_AVAILABILITY'
+}
+
 export enum SelahTeamEnum {
   BowtieRiversideOutreach = 'BOWTIE_RIVERSIDE_OUTREACH',
   EchoParkOnSite = 'ECHO_PARK_ON_SITE',
@@ -2510,6 +2576,7 @@ export type ShelterType = {
   programFees?: Maybe<Scalars['String']['output']>;
   roomStyles: Array<RoomStyleType>;
   roomStylesOther?: Maybe<Scalars['String']['output']>;
+  schedules: Array<ScheduleType>;
   shelterPrograms: Array<ShelterProgramType>;
   shelterProgramsOther?: Maybe<Scalars['String']['output']>;
   shelterTypes: Array<ShelterTypeType>;
@@ -2880,7 +2947,8 @@ export enum UserOrganizationPermissions {
   AddOrgMember = 'ADD_ORG_MEMBER',
   ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
   RemoveOrgMember = 'REMOVE_ORG_MEMBER',
-  ViewOrgMembers = 'VIEW_ORG_MEMBERS'
+  ViewOrgMembers = 'VIEW_ORG_MEMBERS',
+  ViewReports = 'VIEW_REPORTS'
 }
 
 export type UserType = {

@@ -13,7 +13,8 @@ from typing import Any, Dict, List
 
 from django.db import models, transaction
 from places import Places
-from shelters.models import Bed, Room, Shelter
+from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
+from shelters.models import Bed, Room, Schedule, Shelter
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -67,18 +68,22 @@ def _parse_location(data: Any) -> Any:
 def _prepare_shelter_data(
     data: Dict[str, Any],
     m2m_field_names: list[str],
-) -> tuple[Dict[str, Any], Dict[str, List[Any]]]:
-    """Separate M2M data from scalar fields and transform custom types.
+) -> tuple[Dict[str, Any], Dict[str, List[Any]], List[Dict[str, Any]]]:
+    """Separate M2M data and schedules from scalar fields and transform custom types.
 
     Transforms:
     - ``location`` dict → ``Places`` instance
     - ``operating_hours`` / ``intake_hours`` lists → tuple pairs
     - ``organization`` ID → ``organization_id`` FK column
     - ``status`` enum → raw string value
+    - ``schedules`` list extracted for bulk creation after shelter save
 
-    Returns ``(scalar_data, m2m_data)``.
+    Returns ``(scalar_data, m2m_data, schedules_data)``.
     """
     m2m_data: Dict[str, List[Any]] = {k: data.pop(k) for k in list(data) if k in m2m_field_names}
+
+    # Extract schedules before model creation
+    schedules_data: List[Dict[str, Any]] = data.pop("schedules", None) or []
 
     if "operating_hours" in data:
         data["operating_hours"] = _parse_time_ranges(data["operating_hours"])
@@ -97,11 +102,53 @@ def _prepare_shelter_data(
         else:
             del data["status"]
 
-    return data, m2m_data
+    return data, m2m_data, schedules_data
 
 
 # Pre-compute M2M field names once at module level.
 _SHELTER_M2M_FIELDS = _get_m2m_field_names(Shelter)
+
+
+def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) -> None:
+    """Bulk-create Schedule rows from a list of input dicts.
+
+    Each input dict may contain ``days`` (a list of day enums).
+    One Schedule row is created per day.  If ``days`` is empty or absent,
+    a single row with ``day=None`` (every day) is created.
+    """
+    if not schedules_data:
+        return
+    objs = []
+    for entry in schedules_data:
+        # Resolve enum values to their raw strings for TextChoicesField
+        raw_type = entry.get("schedule_type")
+        schedule_type = (
+            ScheduleTypeChoices(getattr(raw_type, "value", raw_type)) if raw_type else ScheduleTypeChoices.OPERATING
+        )
+
+        raw_condition = entry.get("condition")
+        condition: ConditionChoices | None = (
+            ConditionChoices(getattr(raw_condition, "value", raw_condition)) if raw_condition else None
+        )
+
+        # Fan out: one row per day (or a single row with day=None)
+        raw_days = entry.get("days") or [None]
+        for raw_day in raw_days:
+            day: DayOfWeekChoices | None = DayOfWeekChoices(getattr(raw_day, "value", raw_day)) if raw_day else None
+            objs.append(
+                Schedule(
+                    shelter=shelter,
+                    schedule_type=schedule_type,
+                    day=day,
+                    start_time=entry.get("start_time"),
+                    end_time=entry.get("end_time"),
+                    start_date=entry.get("start_date"),
+                    end_date=entry.get("end_date"),
+                    condition=condition,
+                    is_exception=entry.get("is_exception", False),
+                )
+            )
+    Schedule.objects.bulk_create(objs)
 
 
 # ---------------------------------------------------------------------------
@@ -111,28 +158,30 @@ _SHELTER_M2M_FIELDS = _get_m2m_field_names(Shelter)
 
 @transaction.atomic
 def shelter_create(*, data: Dict[str, Any]) -> Shelter:
-    """Create a new Shelter with all M2M relationships.
+    """Create a new Shelter with all M2M relationships and schedules.
 
     Accepts a plain dict (e.g. from ``strawberry.asdict(data)`` with
     ``UNSET`` keys already removed).
 
     Steps:
-        1. Separate M2M enum data from scalar fields.
+        1. Separate M2M enum data, schedules, from scalar fields.
         2. Transform custom field types (location, time ranges, FK, status).
         3. Create the ``Shelter`` row with ``full_clean`` validation.
         4. Set M2M relationships via ``get_or_create`` on enum-backed
            lookup tables.
+        5. Bulk-create ``Schedule`` rows.
 
     Raises:
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    scalar_data, m2m_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
+    scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
 
     shelter = Shelter(**scalar_data)
     shelter.full_clean()
     shelter.save()
 
     _set_m2m_from_enums(shelter, m2m_data)
+    _create_schedules(shelter, schedules_data)
 
     return shelter
 

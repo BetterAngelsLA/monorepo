@@ -1,5 +1,5 @@
 import { SelahTeamEnum } from '../../apollo';
-import { LocationDraft } from '../../screens/NotesHmis/HmisProgramNoteForm';
+import { LocationDraft } from '../../screens/NotesHmis/NoteFormHmis';
 
 export type TUserPreferencesState = {
   team: SelahTeamEnum | null;
