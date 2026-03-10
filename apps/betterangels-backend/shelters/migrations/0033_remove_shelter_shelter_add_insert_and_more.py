@@ -8,7 +8,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0031_migrate_legacy_hours_to_schedule"),
+        ("shelters", "0032_reservation_reservationclient_reservation_clients_and_more"),
     ]
 
     operations = [
