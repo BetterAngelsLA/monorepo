@@ -7,6 +7,8 @@ import {
 
 type Schedule = ShelterType['schedules'][number];
 
+const CLOSING_SOON_MINUTES = 60;
+
 /** A time window in minutes since midnight */
 interface TimeWindow {
   open: number;
@@ -195,7 +197,7 @@ export function getEffectiveWindows(
   }));
 }
 
-export function getWeekDaysMondayFirst(today?: Date): Date[] {
+function getWeekDaysMondayFirst(today?: Date): Date[] {
   const reference = today ?? new Date();
   const monday = startOfWeek(reference, { weekStartsOn: 1 });
   return Array.from({ length: 7 }, (_, index) => addDays(monday, index));
@@ -237,7 +239,7 @@ export function getOperatingStatus(
       (currentWindow.end.getTime() - now.getTime()) / 60_000
     );
 
-    if (remainingMinutes <= 60) {
+    if (remainingMinutes <= CLOSING_SOON_MINUTES) {
       return {
         tone: 'closed',
         statusText: 'Closing soon',

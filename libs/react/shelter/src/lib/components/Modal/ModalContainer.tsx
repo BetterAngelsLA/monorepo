@@ -22,8 +22,10 @@ export function ModalContainer(props: IProps): ReactElement | null {
     return null;
   }
 
+  const modalClassName = [className, modal.className].filter(Boolean).join(' ');
+
   return (
-    <Modal className={className} {...modal}>
+    <Modal className={modalClassName} {...modal}>
       {modal.content}
     </Modal>
   );

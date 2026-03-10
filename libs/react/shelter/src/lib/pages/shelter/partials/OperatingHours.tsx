@@ -1,5 +1,3 @@
-import { Card } from '@monorepo/react/components';
-import { ChevronUpIcon } from '@monorepo/react/icons';
 import { useAtom } from 'jotai';
 import { useMemo, useState } from 'react';
 import { ScheduleTypeChoices, ShelterType } from '../../../apollo';
@@ -13,12 +11,29 @@ import {
 
 type Schedule = ShelterType['schedules'][number];
 
+const ClockIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="10" cy="10" r="9" stroke="#6B7280" strokeWidth="2" />
+    <path d="M10 5v5l3 2" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
 const TYPE_LABELS: Record<ScheduleTypeChoices, string> = {
   [ScheduleTypeChoices.Operating]: 'Operating Hours',
   [ScheduleTypeChoices.Intake]: 'Intake Hours',
   [ScheduleTypeChoices.MealService]: 'Meal Service',
   [ScheduleTypeChoices.StaffAvailability]: 'Staff Availability',
 };
+
+function getInitialScheduleType(
+  scheduleTypes: ScheduleTypeChoices[]
+): ScheduleTypeChoices {
+  if (scheduleTypes.includes(ScheduleTypeChoices.Operating)) {
+    return ScheduleTypeChoices.Operating;
+  }
+
+  return scheduleTypes[0] ?? ScheduleTypeChoices.Operating;
+}
 
 function formatWindowRange(window: EffectiveWindow): string {
   const start = new Date(`1970-01-01T${window.startTime}`);
@@ -36,38 +51,31 @@ function formatWindowRange(window: EffectiveWindow): string {
   return `${startText} - ${endText}`;
 }
 
-function statusToneClass(tone: OperatingStatus['tone']): string {
-  return tone === 'open' ? 'text-[#15803d]' : 'text-[#b91c1c]';
-}
-
-function statusSurfaceClass(tone: OperatingStatus['tone']): string {
-  return tone === 'open'
-    ? 'bg-[#f0fdf4] border-[#bbf7d0]'
-    : 'bg-[#fef2f2] border-[#fecaca]';
-}
-
 function StatusLine({
   status,
-  className = '',
-  emphasized = false,
 }: {
   status: OperatingStatus;
-  className?: string;
-  emphasized?: boolean;
 }) {
+  // Designer colors
+  const toneColor = status.tone === 'open' ? '#23CE6B' : '#CB0808';
+  const toneFontWeight = status.tone === 'open' ? 'font-bold' : 'font-semibold';
   return (
-    <p
-      className={`${
-        emphasized ? 'rounded-full border px-3 py-1.5' : ''
-      } text-sm ${statusToneClass(status.tone)} ${
-        emphasized ? statusSurfaceClass(status.tone) : ''
-      } ${className}`.trim()}
+    <div
+      className="flex flex-row items-center gap-2"
+      style={{ fontFamily: 'Poppins, sans-serif', fontSize: 14, lineHeight: '21px', height: 21 }}
     >
-      <span className="font-semibold">{status.statusText}</span>
+      <span
+        className={toneFontWeight}
+        style={{ color: toneColor }}
+      >
+        {status.statusText}
+      </span>
       {status.detailText ? (
-        <span className="font-normal"> {status.detailText}</span>
+        <span className="font-normal text-neutral-20">
+          {status.detailText}
+        </span>
       ) : null}
-    </p>
+    </div>
   );
 }
 
@@ -81,7 +89,7 @@ function OperatingHoursDialog({
   scheduleTypes: ScheduleTypeChoices[];
 }) {
   const [selectedType, setSelectedType] = useState<ScheduleTypeChoices>(
-    scheduleTypes[0] ?? ScheduleTypeChoices.Operating
+    getInitialScheduleType(scheduleTypes)
   );
 
   const selectedWeek = useMemo(
@@ -91,13 +99,12 @@ function OperatingHoursDialog({
 
   return (
     <div className="w-full">
-      <div className="mb-6 border-b border-neutral-90 pb-4">
-        <div className="mb-3">
-          <h3 className="text-lg font-semibold text-neutral-20">
-            Operating Hours
-          </h3>
+      <div className="mb-6 pb-4">
+        <div className="mb-3 flex items-center gap-2">
+          <ClockIcon />
+          <h3 className="text-lg font-semibold text-neutral-20">Operating Hours</h3>
         </div>
-        <StatusLine status={status} emphasized />
+        <StatusLine status={status} />
       </div>
 
       {scheduleTypes.length > 1 ? (
@@ -122,53 +129,64 @@ function OperatingHoursDialog({
         </div>
       ) : null}
 
-      <section className="flex h-[420px] flex-col rounded-xl border border-neutral-90 bg-neutral-99/40 px-4 py-4">
-        <div className="flex flex-1 flex-col divide-y divide-neutral-90/80 overflow-y-auto pr-1">
-          {selectedWeek.map((day) => (
-            <div
-              key={`${selectedType}-${day.date.toISOString()}`}
-              className={
-                day.isToday ? 'rounded-lg bg-primary-95 px-3 py-3' : 'px-1 py-3'
-              }
-            >
-              <div className="flex items-start gap-4 text-sm">
+      <section className="flex h-[420px] flex-col rounded-xl px-0 py-3">
+        <div className="flex flex-1 flex-col overflow-y-auto pr-0.5">
+          {selectedWeek.map((day, index) => {
+            const previousDay = selectedWeek[index - 1];
+            const showDivider = index > 0 && !day.isToday && !previousDay?.isToday;
+
+            return (
+              <div
+                key={`${selectedType}-${day.date.toISOString()}`}
+                className={showDivider ? 'border-t border-neutral-90/80' : ''}
+              >
                 <div
                   className={
                     day.isToday
-                      ? 'w-32 shrink-0 font-semibold text-primary-60'
-                      : 'w-32 shrink-0 font-medium text-neutral-40'
+                      ? 'rounded-lg bg-primary-95 px-3 py-3'
+                      : 'px-3 py-3'
                   }
                 >
-                  {day.label}
-                  {day.isToday ? (
-                    <span className="ml-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-primary-60">
-                      Today
-                    </span>
-                  ) : null}
-                </div>
-                <div className="flex flex-1 flex-col gap-1">
-                  {day.windows.length > 0 ? (
-                    day.windows.map((window, index) => (
-                      <div
-                        key={`${day.date.toISOString()}-${window.startTime}-${
-                          window.endTime
-                        }-${index}`}
-                        className={
-                          day.isToday
-                            ? 'font-semibold text-neutral-20'
-                            : 'text-neutral-20'
-                        }
-                      >
-                        {formatWindowRange(window)}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="font-medium text-[#b91c1c]">Closed</div>
-                  )}
+                  <div className="grid grid-cols-[9rem_minmax(0,1fr)] items-start gap-4 text-sm">
+                    <div className={day.isToday ? 'min-w-0 text-primary-60' : 'min-w-0 text-neutral-40'}>
+                      {day.isToday ? (
+                        <div className="grid grid-cols-[max-content_minmax(0,1fr)] items-center">
+                          <span className="font-semibold">{day.label}</span>
+                          <div className="flex justify-center">
+                            <span className="inline-flex shrink-0 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-primary-60">
+                              Today
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="font-medium">{day.label}</span>
+                      )}
+                    </div>
+                    <div className="flex flex-1 flex-col gap-1">
+                      {day.windows.length > 0 ? (
+                        day.windows.map((window, index) => (
+                          <div
+                            key={`${day.date.toISOString()}-${window.startTime}-${
+                              window.endTime
+                            }-${index}`}
+                            className={
+                              day.isToday
+                                ? 'font-semibold text-neutral-20'
+                                : 'text-neutral-20'
+                            }
+                          >
+                            {formatWindowRange(window)}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="font-medium text-[#b91c1c]">Closed</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
     </div>
@@ -180,7 +198,7 @@ export function OperatingHours({
 }: {
   schedules?: ShelterType['schedules'];
 }) {
-  const entries = schedules ?? [];
+  const entries = useMemo(() => schedules ?? [], [schedules]);
   const scheduleTypes = useMemo(() => {
     const seen = new Set<ScheduleTypeChoices>();
     const types: ScheduleTypeChoices[] = [];
@@ -190,7 +208,17 @@ export function OperatingHours({
         types.push(entry.scheduleType);
       }
     }
-    return types;
+
+    if (!types.includes(ScheduleTypeChoices.Operating)) {
+      return types;
+    }
+
+    return [
+      ScheduleTypeChoices.Operating,
+      ...types.filter(
+        (scheduleType) => scheduleType !== ScheduleTypeChoices.Operating
+      ),
+    ];
   }, [entries]);
 
   const operatingSchedules = useMemo(
@@ -218,26 +246,33 @@ export function OperatingHours({
       ),
       animation: ModalAnimationEnum.SLIDE_UP,
       fullW: true,
+      className: 'mx-4 w-[calc(100%-2rem)] max-w-[calc(100%-2rem)]',
     });
   }
 
   return (
-    <div className="my-6">
-      <Card title="Operating Hours">
-        <div className="flex items-center justify-between gap-4">
-          <StatusLine status={status} emphasized />
-
-          <button
-            type="button"
-            onClick={openHoursDialog}
-            aria-haspopup="dialog"
-            className="flex items-center gap-2 rounded-full bg-primary-95 px-3 py-1.5 text-sm font-medium text-primary-60 transition-colors hover:bg-primary-90"
-          >
-            <span>More Hours</span>
-            <ChevronUpIcon className="h-3 w-3 rotate-180" />
-          </button>
+    <section className="my-6 w-full">
+      <div className="flex items-center justify-between gap-4 w-full">
+        <div className="flex items-center gap-2">
+          <ClockIcon />
+          <span className="text-lg font-semibold text-neutral-20">Operating Hours</span>
         </div>
-      </Card>
-    </div>
+        <button
+          type="button"
+          onClick={openHoursDialog}
+          aria-haspopup="dialog"
+          className="flex flex-row items-center gap-2 px-2 py-1 bg-[#F4F6FD] rounded text-[12px] font-normal leading-[21px] text-[#052B73] transition-colors hover:bg-blue-100"
+          style={{ fontFamily: 'Poppins, sans-serif' }}
+        >
+          More Hours
+          <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 6l4 4 4-4" stroke="#052B73" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
+      <div className="mt-2">
+        <StatusLine status={status} />
+      </div>
+    </section>
   );
 }
