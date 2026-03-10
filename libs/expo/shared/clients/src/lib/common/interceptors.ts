@@ -9,9 +9,9 @@ import {
   HMIS_AUTH_COOKIE_NAME,
   HMIS_TOKEN_HEADER_NAME,
 } from '@monorepo/expo/shared/utils';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import CookieManager from '@preeternal/react-native-cookie-manager';
-import { splitCookiesString, parse as parseCookies } from 'set-cookie-parser';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { parse as parseCookies, splitCookiesString } from 'set-cookie-parser';
 import {
   HEADER_NAMES,
   HEADER_VALUES,
@@ -31,6 +31,23 @@ export const HMIS_API_URL_STORAGE_KEY = 'hmis_api_url';
 export const HMIS_AUTH_DOMAIN_STORAGE_KEY = 'hmis_auth_domain';
 
 /**
+ * Detect FormData-like objects via `append` method.
+ * Avoids unreliable `instanceof FormData` checks in React Native.
+ */
+type FormDataLike = {
+  append: (...args: unknown[]) => unknown;
+};
+
+function isFormDataLike(value: unknown): value is FormDataLike {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'append' in value &&
+    typeof (value as FormDataLike).append === 'function'
+  );
+}
+
+/**
  * Helper to extract URL string from RequestInfo
  */
 const getUrl = (input: RequestInfo | URL): string =>
@@ -43,14 +60,14 @@ const getUrl = (input: RequestInfo | URL): string =>
 /**
  * Helper to get HMIS auth token from the stored HMIS domain
  */
-const getHmisAuthToken = async (): Promise<string | null> => {
+const getAuthTokenHmis = async (): Promise<string | null> => {
   try {
     const targetUrl = await AsyncStorage.getItem(HMIS_AUTH_DOMAIN_STORAGE_KEY);
 
     if (!targetUrl) return null;
 
-    const hmisCookies = await CookieManager.get(targetUrl);
-    return hmisCookies[HMIS_AUTH_COOKIE_NAME]?.value || null;
+    const cookiesHmis = await CookieManager.get(targetUrl);
+    return cookiesHmis[HMIS_AUTH_COOKIE_NAME]?.value || null;
   } catch (error) {
     return null;
   }
@@ -59,13 +76,13 @@ const getHmisAuthToken = async (): Promise<string | null> => {
 /**
  * Helper to get authentication and valid headers for HMIS requests (e.g. for Images)
  */
-export const getHmisAuthHeaders = async (): Promise<Record<string, string>> => {
+export const getAuthHeadersHmis = async (): Promise<Record<string, string>> => {
   const headers: Record<string, string> = {
     [HEADER_NAMES.ACCEPT]: HEADER_VALUES.ACCEPT_JSON_ALL,
     [HEADER_NAMES.X_REQUESTED_WITH]: HEADER_VALUES.X_REQUESTED_WITH_AJAX,
   };
 
-  const token = await getHmisAuthToken();
+  const token = await getAuthTokenHmis();
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -73,21 +90,21 @@ export const getHmisAuthHeaders = async (): Promise<Record<string, string>> => {
   return headers;
 };
 
-export interface HmisFileHeadersLoadResult {
+export interface FileHeadersLoadResultHmis {
   headers: Record<string, string> | null;
   baseUrl: string | null;
 }
 
 /**
  * Load HMIS file request config (base URL + auth headers) from storage.
- * Used by useHmisFileHeaders (React Query) to load and cache config.
+ * Used by useFileHeadersHmis (React Query) to load and cache config.
  */
-export const loadHmisFileHeaders =
-  async (): Promise<HmisFileHeadersLoadResult> => {
+export const loadFileHeadersHmis =
+  async (): Promise<FileHeadersLoadResultHmis> => {
     try {
       const url = await AsyncStorage.getItem(HMIS_API_URL_STORAGE_KEY);
       if (!url) return { headers: null, baseUrl: null };
-      const authHeaders = await getHmisAuthHeaders();
+      const authHeaders = await getAuthHeadersHmis();
       return { headers: authHeaders, baseUrl: url };
     } catch (error) {
       console.error('Failed to load HMIS headers', error);
@@ -151,13 +168,15 @@ export const bodyInterceptor: FetchInterceptor = async (input, init, next) => {
   const headers = new Headers(init.headers);
   let body = init.body;
 
-  // Serialize non-string, non-FormData bodies to JSON
-  if (body && !(body instanceof FormData) && typeof body !== 'string') {
+  const isFormData = isFormDataLike(body);
+
+  if (body && !isFormData && typeof body !== 'string') {
     body = JSON.stringify(body);
   }
 
-  // Set Content-Type header if there's a body and it's not already set
-  if (body && !headers.has(HEADER_NAMES.CONTENT_TYPE)) {
+  // Set Content-Type header if there's a body and it's not already set.
+  // For FormData, let fetch set the header (it adds the multipart boundary).
+  if (body && !isFormData && !headers.has(HEADER_NAMES.CONTENT_TYPE)) {
     headers.set(HEADER_NAMES.CONTENT_TYPE, HEADER_VALUES.CONTENT_TYPE_JSON);
   }
 
@@ -184,9 +203,9 @@ export const backendAuthInterceptor: FetchInterceptor = async (
   }
 
   // Add HMIS token header (retrieved from stored HMIS domain)
-  const hmisToken = await getHmisAuthToken();
-  if (hmisToken) {
-    headers.set(HMIS_TOKEN_HEADER_NAME, hmisToken);
+  const tokenHmis = await getAuthTokenHmis();
+  if (tokenHmis) {
+    headers.set(HMIS_TOKEN_HEADER_NAME, tokenHmis);
   }
 
   return next(input, { ...init, headers });
@@ -243,12 +262,12 @@ export const createCsrfInterceptor = (referer: string): FetchInterceptor => {
  * Request phase: Adds Bearer token auth and HMIS-required headers
  * Response phase: Extracts and stores api_url from Set-Cookie
  */
-export const hmisInterceptor: FetchInterceptor = async (input, init, next) => {
+export const interceptorHmis: FetchInterceptor = async (input, init, next) => {
   const headers = new Headers(init.headers);
   const url = getUrl(input);
 
   // 1. Authorization Header
-  const token = await getHmisAuthToken();
+  const token = await getAuthTokenHmis();
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
   // 2. Standard HMIS Headers
