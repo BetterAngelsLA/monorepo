@@ -47,7 +47,7 @@ def shelters_open_at(
     time = dt.time()
     date = dt.date()
 
-    # Step 1+2: Use an Exists subquery so the join doesn't produce duplicate
+    # Step 1: Use an Exists subquery so the join doesn't produce duplicate
     # shelter rows (avoiding the need for .distinct()).  All conditions bind
     # to a single Schedule row.
     from shelters.models import Schedule
