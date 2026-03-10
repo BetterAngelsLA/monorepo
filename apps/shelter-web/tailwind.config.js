@@ -1,8 +1,13 @@
 const { createGlobPatternsForDependencies } = require('@nx/react/tailwind');
 const { join } = require('path');
+const { createJiti } = require('jiti');
+
+const jiti = createJiti(__filename);
+const tailwindBase = jiti('../../tailwind/tailwind.base.config.ts').default;
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  presets: [tailwindBase],
   content: [
     join(
       __dirname,
@@ -59,12 +64,6 @@ module.exports = {
         slideInUp: 'slideInUp 250ms ease-in-out 0ms',
         expandInOut: 'expandInOut 200ms ease-in-out 0ms',
         slideRightToLeft: 'slideInRightToLeft 0.3s ease-out forwards',
-      },
-      zIndex: {
-        'flyout-mask': '999',
-        flyout: '1000',
-        'modal-mask': '2000',
-        modal: '2001',
       },
     },
   },

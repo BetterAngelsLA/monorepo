@@ -43,7 +43,7 @@ export function Dropdown<T extends string>({
         <ul
           className={`
             absolute mt-2 min-w-[12rem]
-            rounded-2xl bg-white shadow-sm p-2 z-50
+            rounded-2xl bg-white shadow-sm p-2 z-flyout
             ${position === 'dropdown-end' ? 'right-0' : ''}
             ${position === 'dropdown-start' ? 'left-0' : ''}
             ${position === 'dropdown-center' ? 'left-1/2 -translate-x-1/2' : ''}

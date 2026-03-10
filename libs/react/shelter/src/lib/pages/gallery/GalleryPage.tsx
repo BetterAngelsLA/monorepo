@@ -60,7 +60,7 @@ export function GalleryPage(props: TProps) {
       </div>
 
       {selectedImage && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col  h-full">
+        <div className="fixed inset-0 z-flyout bg-black flex flex-col  h-full">
           <div className="bg-steel-blue flex items-center gap-8 py-2">
             <div
               onClick={() => setSelectedImage(null)}
