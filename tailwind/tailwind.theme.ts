@@ -86,6 +86,9 @@ const theme = {
       flyout: '1000',
       'modal-mask': '2000',
       modal: '2001',
+      'drawer-mask': '3000',
+      drawer: '3001',
+      alert: '4000',
     },
   },
 };

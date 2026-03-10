@@ -1,7 +1,7 @@
 import { MouseEvent, PropsWithChildren } from 'react';
 
 import { mergeCss } from '@monorepo/react/shared';
-import { ANIMATION_FADE, zIndex } from './constants';
+import { ANIMATION_FADE } from './constants';
 
 interface IProps extends PropsWithChildren {
   visible: boolean;
@@ -13,7 +13,7 @@ export function AppDrawerMask(props: IProps) {
   const { visible, className, onClick, children } = props;
 
   const parentCss = [
-    `z-[${zIndex}]`,
+    'z-drawer-mask',
     'top-0',
     'left-0',
     'right-0',
