@@ -93,7 +93,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             maxStay
             name
             onSiteSecurity
-            operatingHours { start end}
             otherRules
             otherServices
             overallRating
@@ -158,12 +157,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             max_stay=7,
             name="name",
             on_site_security=True,
-            operating_hours=[
-                (
-                    datetime.datetime(2025, 7, 1, 6, 00, 00).time(),
-                    datetime.datetime(2025, 7, 1, 22, 00, 00).time(),
-                )
-            ],
             organization=shelter_organization,
             other_rules="other rules",
             other_services="other services",
@@ -264,7 +257,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "maxStay": 7,
             "name": "name",
             "onSiteSecurity": True,
-            "operatingHours": [{"start": "06:00:00", "end": "22:00:00"}],
             "otherRules": "other rules",
             "otherServices": "other services",
             "overallRating": 3,

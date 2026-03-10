@@ -12,7 +12,6 @@ from shelters.types.inputs import (
     CreateShelterInput,
     ScheduleInput,
     ShelterLocationInput,
-    TimeRangeInput,
 )
 from shelters.types.lookups import (
     AccessibilityType,
@@ -42,7 +41,6 @@ from shelters.types.outputs import (
     ShelterPhotoType,
     ShelterType,
     ShelterTypeMixin,
-    TimeRange,
 )
 
 __all__ = [
@@ -77,7 +75,6 @@ __all__ = [
     "CreateShelterInput",
     "ScheduleInput",
     "ShelterLocationInput",
-    "TimeRangeInput",
     # outputs
     "AdminShelterType",
     "BedType",
@@ -85,5 +82,4 @@ __all__ = [
     "ShelterPhotoType",
     "ShelterType",
     "ShelterTypeMixin",
-    "TimeRange",
 ]
