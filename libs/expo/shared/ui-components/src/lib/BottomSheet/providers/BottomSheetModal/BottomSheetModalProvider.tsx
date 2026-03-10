@@ -156,33 +156,22 @@ import {
   useRef,
   useState,
 } from 'react';
-import { BackdropOverlay } from '../../core/BackdropOverlay';
 import { BottomSheetBase } from '../../core/BottomSheetBase';
 import {
   BottomSheetContextValue,
   BottomSheetOptions,
   BottomSheetProviderConfig,
-  BottomSheetRenderApi,
   ShowBottomSheetParams,
 } from '../../types';
 import { resolveBottomSheetOptions } from '../../utils/resolveBottomSheetOptions';
 import { BottomSheetLayoutProvider } from '../BottomSheetLayout/BottomSheetLayoutProvider';
 import { BottomSheetContext } from './BottomSheetContext';
+import { resolveBackdropSheetOptions } from './resolveBackdropSheetOptions';
+import { TBottomSheetInstance } from './types.internal';
+import { useBottomSheetSharedBackdrop } from './useBottomSheetSharedBackdrop';
+import { useBottomSheetStack } from './useBottomSheetStack';
 
 const EMPTY_SHEET_OPTIONS: BottomSheetOptions = {};
-
-/**
- * Internal representation of an active sheet instance.
- *
- * - `id` uniquely identifies the sheet
- * - `render` is the caller-provided render function
- * - `options` is the fully resolved configuration object
- */
-type TBottomSheetInstance = {
-  id: string;
-  render: (api: BottomSheetRenderApi) => ReactNode;
-  options: BottomSheetOptions;
-};
 
 /**
  * Simple incremental id generator for sheets.
@@ -192,7 +181,8 @@ let sheetIdCounter = 0;
 
 function generateSheetId(): string {
   sheetIdCounter += 1;
-  return `sheet-${sheetIdCounter}`;
+
+  return `sheet-${Date.now()}-${sheetIdCounter}`;
 }
 
 type BottomSheetProviderProps = BottomSheetProviderConfig & {
@@ -203,7 +193,7 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
   const {
     children,
     defaultOptions,
-    singleBackdrop = false,
+    enableSharedBackdrop = false,
     enableLayoutProvider = true,
   } = props;
 
@@ -244,6 +234,11 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
     instance.dismiss();
   }, []);
 
+  const { addSheet } = useBottomSheetStack({
+    sheetRefs,
+    setSheets,
+  });
+
   /**
    * Public API: showBottomSheet
    *
@@ -260,10 +255,7 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
 
         const mergedOptions: BottomSheetOptions = {
           ...providerDefaults,
-          ...options,
-          ...(singleBackdrop && options?.disableBackdrop === undefined
-            ? { disableBackdrop: true }
-            : null),
+          ...resolveBackdropSheetOptions(enableSharedBackdrop, options),
         };
 
         const resolvedOptions = resolveBottomSheetOptions(mergedOptions);
@@ -277,39 +269,9 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
           options: instanceOptions,
         };
 
-        setSheets((previousSheets) => {
-          // Push: add stack on top
-          if (stackBehavior === 'push') {
-            return [...previousSheets, instance];
-          }
-
-          // Switch: replace the top sheet only
-          if (stackBehavior === 'switch') {
-            if (previousSheets.length > 0) {
-              const top = previousSheets[previousSheets.length - 1];
-              const topInstance = sheetRefs.current.get(top.id);
-
-              if (topInstance) {
-                topInstance.dismiss();
-              }
-            }
-
-            return [...previousSheets.slice(0, -1), instance];
-          }
-
-          // Replace: dismiss all existing sheets (default)
-          previousSheets.forEach((sheet) => {
-            const existing = sheetRefs.current.get(sheet.id);
-
-            if (existing) {
-              existing.dismiss();
-            }
-          });
-
-          return [instance];
-        });
+        addSheet(instance, stackBehavior);
       },
-      [providerDefaults, singleBackdrop]
+      [providerDefaults, enableSharedBackdrop, addSheet]
     );
 
   /**
@@ -345,9 +307,13 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
     [showBottomSheet, popTopSheet]
   );
 
-  const BackdropContainer = providerDefaults.containerComponent;
-  const backdropVisible =
-    singleBackdrop && sheets.some((sheet) => !closingSheetIds.has(sheet.id));
+  const sharedBackdrop = useBottomSheetSharedBackdrop({
+    enabled: enableSharedBackdrop,
+    Container: providerDefaults.containerComponent,
+    sheets,
+    closingSheetIds,
+    popTopSheet,
+  });
 
   const LayoutWrapper = enableLayoutProvider
     ? BottomSheetLayoutProvider
@@ -359,14 +325,7 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
         <BottomSheetContext.Provider value={contextValue}>
           {children}
 
-          {singleBackdrop && BackdropContainer && (
-            <BackdropContainer>
-              <BackdropOverlay
-                visible={backdropVisible}
-                onPress={popTopSheet}
-              />
-            </BackdropContainer>
-          )}
+          {sharedBackdrop.render()}
 
           {sheets.map(({ id, render, options }) => (
             <BottomSheetBase

@@ -2,6 +2,8 @@ import { BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import { ComponentType, ReactNode } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
 
+export type StackBehavior = BottomSheetModalProps['stackBehavior'];
+
 export type BottomSheetProviderConfig = {
   /**
    * App-level default options applied to every sheet.
@@ -16,7 +18,7 @@ export type BottomSheetProviderConfig = {
    * This is useful when using `FullWindowOverlay`, where multiple
    * Gorhom backdrops can race and render above sheets.
    */
-  singleBackdrop?: boolean;
+  enableSharedBackdrop?: boolean;
 
   /**
    * Enables the layout measurement system used to calculate
@@ -72,7 +74,7 @@ export type BottomSheetProviderOptions = {
    * - 'switch': replace only the top sheet
    * - 'replace': dismiss all existing sheets (default)
    */
-  stackBehavior?: BottomSheetModalProps['stackBehavior'];
+  stackBehavior?: StackBehavior;
 
   /**
    * Optional callback invoked after the sheet is fully dismissed.
