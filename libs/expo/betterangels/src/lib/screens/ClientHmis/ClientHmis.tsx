@@ -1,8 +1,12 @@
 import { useQuery } from '@apollo/client/react';
 import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
 import { Colors } from '@monorepo/expo/shared/static';
-import { LoadingView, Tabs } from '@monorepo/expo/shared/ui-components';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  LoadingView,
+  Tabs,
+  TextBold,
+} from '@monorepo/expo/shared/ui-components';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { hasGqlCombinedApiError } from '../../apollo';
 import { useSnackbar } from '../../hooks';
@@ -95,22 +99,42 @@ export function ClientHmis(props: TProps) {
     return null;
   }
 
-  const showHeader = currentTab !== ClientViewTabEnum.Locations;
+  const showHeader = currentTab === ClientViewTabEnum.Profile;
+  const screenTitle =
+    client.firstName || client.lastName
+      ? `${client.firstName ?? ''} ${client.lastName ?? ''}`.trim()
+      : 'Client';
 
   return (
-    <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      {showHeader && <ClientProfileHeaderHmis client={client} />}
-
-      <Tabs
-        tabs={tabsHmis}
-        selectedTab={currentTab}
-        onTabPress={setCurrentTab}
-        getLabel={(tab) => {
-          return tabLabelsHmis[tab];
+    <>
+      <Stack.Screen
+        options={{
+          headerTitle: () => (
+            <TextBold
+              color={Colors.WHITE}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={{ maxWidth: 200 }}
+            >
+              {screenTitle}
+            </TextBold>
+          ),
         }}
       />
+      <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
+        {showHeader && <ClientProfileHeaderHmis client={client} />}
 
-      {renderTabComponent(currentTab, { client, openCard })}
-    </MainContainer>
+        <Tabs
+          tabs={tabsHmis}
+          selectedTab={currentTab}
+          onTabPress={setCurrentTab}
+          getLabel={(tab) => {
+            return tabLabelsHmis[tab];
+          }}
+        />
+
+        {renderTabComponent(currentTab, { client, openCard })}
+      </MainContainer>
+    </>
   );
 }
