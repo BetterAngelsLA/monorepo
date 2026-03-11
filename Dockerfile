@@ -132,11 +132,6 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     && rm session-manager-plugin.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-# Ensure mounted .bash_aliases is loaded in interactive shells
-RUN touch /home/betterangels/.bashrc && \
-    grep -q '\.bash_aliases' /home/betterangels/.bashrc || \
-    echo '[ -f /home/betterangels/.bash_aliases ] && . /home/betterangels/.bash_aliases' >> /home/betterangels/.bashrc && \
-    chown betterangels:betterangels /home/betterangels/.bashrc
 USER betterangels
 RUN git config --global --add safe.directory "*"
 
