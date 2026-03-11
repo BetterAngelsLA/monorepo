@@ -45,11 +45,11 @@ def _build_imgproxy_path(source_url: str, processing: str = "") -> Optional[str]
 
     Returns e.g. ``<prefix>/<sig>/<processing>/<encoded_source>``
     or ``None`` when imgproxy HMAC keys are missing.
-    Caller must ensure IMGPROXY_PATH_PREFIX is set (e.g. via is_imgproxy_enabled()).
     """
     encoded = _encode_source_url(source_url)
     path = f"{processing}/{encoded}" if processing else encoded
     signature = _sign_imgproxy_path(path)
+
     if not signature:
         return None
 

@@ -1,7 +1,7 @@
 import base64
 from types import SimpleNamespace
 from typing import Callable, cast
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 from common.enums import ImagePresetEnum
 from common.graphql.types import BaImageType, resolve_image
@@ -37,6 +37,11 @@ class IsImgproxyEnabledTest(TestCase):
 
     @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX="")
     def test_disabled_when_path_prefix_missing(self) -> None:
+        self.assertFalse(is_imgproxy_enabled())
+
+    @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX=TEST_PREFIX)
+    @override_switch(IMGPROXY_SWITCH, active=False)
+    def test_disabled_when_switch_off(self) -> None:
         self.assertFalse(is_imgproxy_enabled())
 
     @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX=TEST_PREFIX)
@@ -297,7 +302,7 @@ class BaImageTypeUrlTest(TestCase):
     def test_url_returns_empty_string_when_file_url_raises(self) -> None:
         file = MagicMock()
         file.__bool__ = lambda self: True
-        type(file).url = property(lambda self: (_ for _ in ()).throw(Exception("broken")))
+        type(file).url = PropertyMock(side_effect=Exception("broken"))
         img = self._make_image_type(file)
 
         self.assertEqual(_image_url(img), "")
