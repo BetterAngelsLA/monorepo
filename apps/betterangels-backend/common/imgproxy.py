@@ -43,8 +43,9 @@ def _sign_imgproxy_path(path: str) -> Optional[str]:
 def _build_imgproxy_path(source_url: str, processing: str = "") -> Optional[str]:
     """Build the path portion of an imgproxy URL (no scheme/host).
 
-    Returns e.g. ``[<prefix>/]<sig>/<processing>/<encoded_source>``
+    Returns e.g. ``<prefix>/<sig>/<processing>/<encoded_source>``
     or ``None`` when imgproxy HMAC keys are missing.
+    Caller must ensure IMGPROXY_PATH_PREFIX is set (e.g. via is_imgproxy_enabled()).
     """
     encoded = _encode_source_url(source_url)
     path = f"{processing}/{encoded}" if processing else encoded
@@ -53,10 +54,8 @@ def _build_imgproxy_path(source_url: str, processing: str = "") -> Optional[str]
         return None
 
     prefix = getattr(settings, "IMGPROXY_PATH_PREFIX", "").strip("/")
-    if prefix:
-        return f"{prefix}/{signature}/{path}"
 
-    return f"{signature}/{path}"
+    return f"{prefix}/{signature}/{path}"
 
 
 def build_imgproxy_url(

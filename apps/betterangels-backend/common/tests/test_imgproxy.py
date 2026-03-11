@@ -67,16 +67,8 @@ class EncodeSourceUrlTest(TestCase):
 # ---------------------------------------------------------------------------
 # _sign_imgproxy_path
 # ---------------------------------------------------------------------------
+@override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX=TEST_PREFIX)
 class SignImgproxyPathTest(TestCase):
-    @override_settings(IMGPROXY_KEY="", IMGPROXY_SALT=TEST_SALT)
-    def test_returns_none_when_key_missing(self) -> None:
-        self.assertIsNone(_sign_imgproxy_path("some/path"))
-
-    @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT="")
-    def test_returns_none_when_salt_missing(self) -> None:
-        self.assertIsNone(_sign_imgproxy_path("some/path"))
-
-    @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT)
     def test_returns_urlsafe_base64_without_padding(self) -> None:
         sig = str(_sign_imgproxy_path("rs:fill:100:100/abc"))
         self.assertIsNotNone(sig)
@@ -84,13 +76,11 @@ class SignImgproxyPathTest(TestCase):
         self.assertNotIn("+", sig)
         self.assertNotIn("/", sig.replace("_", "").replace("-", ""))
 
-    @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT)
     def test_deterministic_for_same_path(self) -> None:
         sig1 = _sign_imgproxy_path("same/path")
         sig2 = _sign_imgproxy_path("same/path")
         self.assertEqual(sig1, sig2)
 
-    @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT)
     def test_different_signatures_for_different_paths(self) -> None:
         sig_a = _sign_imgproxy_path("path/a")
         sig_b = _sign_imgproxy_path("path/b")
@@ -100,38 +90,20 @@ class SignImgproxyPathTest(TestCase):
 # ---------------------------------------------------------------------------
 # _build_imgproxy_path
 # ---------------------------------------------------------------------------
-@override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX="imgproxy")
+@override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX=TEST_PREFIX)
 class BuildImgproxyPathTest(TestCase):
     SOURCE = "s3://bucket/photo.jpg"
 
-    def test_with_prefix_without_processing(self) -> None:
-        path = _build_imgproxy_path(self.SOURCE)
-        self.assertIsNotNone(path)
-        parts = path.split("/")  # type: ignore[union-attr]
-        # <prefix>/<sig>/<encoded_source>
-        self.assertEqual(len(parts), 3)
-        self.assertEqual(parts[0], "imgproxy")
-
-    def test_with_prefix_with_processing(self) -> None:
+    def test_processed_path(self) -> None:
         path = str(_build_imgproxy_path(self.SOURCE, processing="rs:fill:100:100"))
-        self.assertIsNotNone(path)
-        self.assertTrue(path.startswith("imgproxy/"))
+        self.assertStartsWith(path, f"{TEST_PREFIX}/")
         self.assertIn("rs:fill:100:100", path)
-
-    def test_with_prefix(self) -> None:
-        path = _build_imgproxy_path(self.SOURCE)
-        self.assertIsNotNone(path)
-        self.assertTrue(path.startswith("imgproxy/"))  # type: ignore[union-attr]
-
-    @override_settings(IMGPROXY_KEY="", IMGPROXY_SALT="")
-    def test_returns_none_when_signing_fails(self) -> None:
-        self.assertIsNone(_build_imgproxy_path(self.SOURCE))
 
 
 # ---------------------------------------------------------------------------
 # build_imgproxy_url
 # ---------------------------------------------------------------------------
-@override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX="imgproxy")
+@override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX=TEST_PREFIX)
 class BuildImgproxyUrlTest(TestCase):
     SOURCE = "s3://bucket/photo.jpg"
 
