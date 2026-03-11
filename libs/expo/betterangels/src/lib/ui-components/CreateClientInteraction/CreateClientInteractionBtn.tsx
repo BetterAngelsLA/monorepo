@@ -1,21 +1,15 @@
-import { useMutation } from '@apollo/client/react';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
-import { ReactNode, useCallback, useRef } from 'react';
+import { ReactNode, useCallback } from 'react';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
-import { useSnackbar } from '../../hooks';
-import { useBlockingScreen } from '../../providers';
 import { useUserTeamPreference } from '../../state';
-import { CreateNoteDocument } from './__generated__/CreateInteraction.generated';
 
 type TProps = {
   clientProfileId: string;
   children?: ReactNode;
   disabled?: boolean;
-  onCreated?: (newNoteId: string) => void;
-  onError?: () => void;
   style?: ViewStyle;
   accessibilityLabel?: string;
   accessibilityHint?: string;
@@ -26,85 +20,29 @@ export function CreateClientInteractionBtn(props: TProps) {
     clientProfileId,
     children,
     disabled,
-    onCreated,
-    onError,
     style,
     accessibilityLabel = 'create an interaction',
     accessibilityHint = 'create new interaction',
   } = props;
 
-  // store in a ref as it's synchronous and safest to prevent double click
-  const isProcessing = useRef(false);
-
   const router = useRouter();
-  const [createNote] = useMutation(CreateNoteDocument);
   const [teamPreference] = useUserTeamPreference();
-  const { showSnackbar } = useSnackbar();
-  const { blockScreenUntilNextNavigation, unblockScreen } = useBlockingScreen();
 
-  const handleCreateNote = useCallback(async () => {
-    if (isProcessing.current) {
-      return;
+  const handleNavigateToNewNote = useCallback(() => {
+    const params: Record<string, string> = {
+      clientProfileId,
+    };
+    if (teamPreference) {
+      params.team = teamPreference;
     }
 
-    isProcessing.current = true;
+    router.navigate({
+      pathname: '/note/create',
+      params,
+    });
+  }, [clientProfileId, teamPreference, router]);
 
-    blockScreenUntilNextNavigation();
-
-    try {
-      const { data } = await createNote({
-        variables: {
-          data: {
-            clientProfile: clientProfileId,
-            team: teamPreference ?? undefined,
-          },
-        },
-      });
-
-      if (!data?.createNote || !('id' in data.createNote)) {
-        throw new Error('invalid mutation result');
-      }
-
-      const createdNoteId = data.createNote.id;
-
-      // custom callback: invoke and return
-      if (onCreated) {
-        return onCreated(createdNoteId);
-      }
-
-      // default behavior
-      router.navigate(`/add-note/${createdNoteId}`);
-    } catch (err) {
-      console.error(
-        `error creating note for profileId [${clientProfileId}]: ${err}`
-      );
-
-      unblockScreen();
-
-      // custom callback: invoke and return
-      if (onError) {
-        return onError();
-      }
-
-      // default behavior
-      showSnackbar({
-        message: `Sorry, there was an error creating a new interaction.`,
-        type: 'error',
-      });
-    } finally {
-      isProcessing.current = false;
-    }
-  }, [clientProfileId, onCreated, onError, createNote]);
-
-  const handlePress = () => {
-    if (isProcessing.current) {
-      return;
-    }
-
-    handleCreateNote();
-  };
-
-  const isDisabled = disabled || isProcessing.current;
+  const isDisabled = !!disabled;
 
   if (children) {
     return (
@@ -114,7 +52,7 @@ export function CreateClientInteractionBtn(props: TProps) {
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={accessibilityHint}
-        onPress={handlePress}
+        onPress={handleNavigateToNewNote}
       >
         {children}
       </Pressable>
@@ -128,7 +66,7 @@ export function CreateClientInteractionBtn(props: TProps) {
       borderColor={Colors.WHITE}
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      onPress={handlePress}
+      onPress={handleNavigateToNewNote}
     >
       <PlusIcon />
     </IconButton>
