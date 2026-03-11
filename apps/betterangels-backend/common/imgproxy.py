@@ -1,7 +1,7 @@
 import base64
 import hashlib
 import hmac
-from typing import Optional
+from typing import Optional, cast
 
 import waffle
 from django.conf import settings
@@ -81,8 +81,7 @@ def build_imgproxy_url(
         return None
 
     # --- local dev shortcut: IMGPROXY_BASE_URL points directly at imgproxy ---
-    base = settings.IMGPROXY_BASE_URL.rstrip("/")
-    if base:
+    if base := settings.IMGPROXY_BASE_URL.rstrip("/"):
         return f"{base}/{imgproxy_path}"
 
     # --- production: CloudFront domain + signing via storage backend ---
@@ -100,13 +99,13 @@ def build_imgproxy_url(
 
     # Reuse the storage's CloudFront signer (populated by django-storages
     # from cloudfront_key / cloudfront_key_id settings).
-    signer = getattr(storage, "cloudfront_signer", None)
-    if signer:
-        from datetime import datetime, timedelta
+    if signer := getattr(storage, "cloudfront_signer", None):
+        import datetime
 
         expire_seconds: int = getattr(storage, "querystring_expire", 3600)
-        expiration = datetime.utcnow() + timedelta(seconds=expire_seconds)
-        return signer.generate_presigned_url(url, date_less_than=expiration)
+        expiration = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=expire_seconds)
+
+        return cast(str, signer.generate_presigned_url(url, date_less_than=expiration))
 
     return url
 
@@ -135,4 +134,5 @@ def get_imgproxy_source_url(file: Optional[object]) -> Optional[str]:
         return f"{settings.IMGPROXY_INTERNAL_BASE_URL}/media/{name}"
 
     url = getattr(file, "url", None)
+
     return url if isinstance(url, str) else None

@@ -313,7 +313,6 @@ class ClientProfileBaseType:
     place_of_birth: auto
     preferred_communication: Optional[List[PreferredCommunicationEnum]]
     preferred_language: auto
-    profile_photo: auto
     pronouns: auto
     pronouns_other: auto
     race: auto
@@ -341,7 +340,7 @@ class ClientProfileType(ClientProfileBaseType):
 
     @strawberry_django.field(only=["profile_photo"])
     def profile_photo(self) -> Optional[BaImageType]:
-        return resolve_image(self.profile_photo)  # type: ignore[attr-defined]
+        return resolve_image(self.profile_photo)
 
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:
@@ -357,6 +356,7 @@ class CreateClientProfileInput(ClientProfileBaseType):
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
     phone_numbers: Optional[List[PhoneNumberInput]]
+    profile_photo: auto
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
 
 
@@ -367,6 +367,7 @@ class UpdateClientProfileInput(ClientProfileBaseType):
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
     phone_numbers: Optional[List[PhoneNumberInput]]
+    profile_photo: auto
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
 
 

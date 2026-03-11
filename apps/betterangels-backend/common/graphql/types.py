@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Any, Mapping, NewType, Optional
+from typing import Any, Mapping, NewType, Optional, Union
 
 import strawberry
 import strawberry_django
@@ -13,6 +13,7 @@ from common.imgproxy import (
 )
 from common.models import Address, Attachment, Location, PhoneNumber
 from django.db.models import Q
+from django.db.models.fields.files import FieldFile, ImageFieldFile
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
 from phonenumber_field.phonenumber import PhoneNumber as DjangoPhoneNumberUtil
 from strawberry import ID, Info, auto
@@ -176,8 +177,8 @@ class BaImageType:
     width: int = 0
     height: int = 0
 
-    # Private: the underlying FieldFile, set in ``resolve_image``.
-    _file: strawberry.Private[Optional[object]] = None
+    # Private: the underlying FieldFile or ImageFieldFile, set in ``resolve_image``.
+    _file: strawberry.Private[Union[FieldFile, ImageFieldFile]]
 
     @strawberry.field
     def url(
@@ -194,27 +195,29 @@ class BaImageType:
                 ``"rs:fill:200:200"`` or ``"rs:fit:800:600/q:80"``.
                 Takes precedence over ``preset``.
         """
-        file = self._file
-        ops = processing or IMGPROXY_PRESETS.get(preset) if preset or processing else None
+        if file := self._file:
+            ops = processing or IMGPROXY_PRESETS.get(preset) if preset else None
 
-        if ops and is_imgproxy_enabled() and file:
-            source = get_imgproxy_source_url(file)
-            storage = getattr(file, "storage", None)
-            if source:
-                imgproxy_url = build_imgproxy_url(source, ops, storage=storage)
-                if imgproxy_url:
-                    return imgproxy_url
+            if ops and is_imgproxy_enabled():
+                source = get_imgproxy_source_url(file)
+                storage = getattr(file, "storage", None)
 
-        # Fallback: the storage's own URL (plain CloudFront-signed).
-        if file:
+                if source:
+                    imgproxy_url = build_imgproxy_url(source, ops, storage=storage)
+                    if imgproxy_url:
+                        return imgproxy_url
+
+            # Fallback: the storage's own URL (plain CloudFront-signed).
             try:
-                return file.url  # type: ignore[union-attr]
+                return file.url
+
             except Exception:
                 pass
+
         return ""
 
 
-def resolve_image(file: object) -> Optional[BaImageType]:
+def resolve_image(file: Union[FieldFile, ImageFieldFile]) -> Optional[BaImageType]:
     """Convert a Django ``FieldFile`` / ``ImageFieldFile`` to ``BaImageType``.
 
     Returns ``None`` when the field is empty (no file uploaded).
