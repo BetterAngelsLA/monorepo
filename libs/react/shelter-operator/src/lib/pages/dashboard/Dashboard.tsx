@@ -167,7 +167,7 @@ export default function Dashboard() {
           setPage(1);
         }}
       />
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col mx-4">
         {/* Search, filter, sort, and view controls */}
         <form
           className="my-1 flex w-full flex-wrap items-center gap-3 bg-white px-3"
@@ -235,7 +235,7 @@ export default function Dashboard() {
         />
 
         {/* PAGINATION */}
-        <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
+        <div className="flex items-center justify-between mt-8 mx-4 text-sm text-gray-600">
           <div>
             Page {page} of {totalPages}
           </div>
@@ -267,7 +267,7 @@ export default function Dashboard() {
       </div>
 
       {isOperatorRoot && (
-        <div className="fixed bottom-6 right-6 z-20 ">
+        <div className="fixed bottom-6 right-6 text-sm z-20 ">
           <Button
             leftIcon={<BookCheck />}
             rightIcon={false}

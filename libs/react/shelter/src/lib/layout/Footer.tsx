@@ -11,6 +11,15 @@ type IParams = {
 export function Footer(props: IParams): ReactElement {
   const { className = '' } = props;
 
+  const pathname =
+    typeof window !== 'undefined' ? window.location.pathname : '';
+  const isOperatorRoute =
+    pathname === '/operator' || pathname.startsWith('/operator/');
+
+  if (isOperatorRoute) {
+    return null;
+  }
+
   const parentCss = [
     className,
     'w-full',

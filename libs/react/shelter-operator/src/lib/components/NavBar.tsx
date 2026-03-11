@@ -68,16 +68,13 @@ function OperatorNavBar({
               Create Shelter
             </Button>
           </Link>
-
-          <Link to="/#">
-            <button
-              type="button"
-              aria-label="Account settings"
-              className="inline-flex size-11 items-center justify-center rounded-full border border-[#D3D9E3] bg-white text-[#3E4652] transition-colors hover:bg-[#F8FAFC] pl-1 pb-0.25"
-            >
-              <UserCog size={20} />
-            </button>
-          </Link>
+          <button
+            type="button"
+            aria-label="Account settings"
+            className="inline-flex size-11 items-center justify-center rounded-full border border-[#D3D9E3] bg-white text-[#3E4652] transition-colors hover:bg-[#F8FAFC] pl-1 pb-0.25"
+          >
+            <UserCog size={20} />
+          </button>
         </div>
       </div>
     </div>
