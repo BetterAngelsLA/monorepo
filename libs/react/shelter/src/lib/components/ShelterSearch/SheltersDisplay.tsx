@@ -62,7 +62,15 @@ export function SheltersDisplay(props: TProps) {
   }
 
   if (propertyFilters) {
-    const prunedFilters = pruneFilters(propertyFilters);
+    const { openNow, ...propertyOnlyFilters } = propertyFilters;
+
+    if (openNow) {
+      queryVariables = queryVariables || {};
+      queryVariables.filters = queryVariables.filters || {};
+      queryVariables.filters.openNow = true;
+    }
+
+    const prunedFilters = pruneFilters(propertyOnlyFilters);
 
     if (prunedFilters) {
       queryVariables = queryVariables || {};

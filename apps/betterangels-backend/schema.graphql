@@ -108,6 +108,7 @@ type AdminShelterType {
   programFees: String
   roomStyles: [RoomStyleType!]!
   roomStylesOther: String
+  schedules: [ScheduleType!]!
   shelterPrograms: [ShelterProgramType!]!
   shelterProgramsOther: String
   shelterTypes: [ShelterTypeType!]!
@@ -412,6 +413,16 @@ input ClientSearchInput {
   middleName: String = null
 }
 
+enum ConditionChoices {
+  HEAT
+  FIRE
+  RAIN_SEVERE_WEATHER
+  WIND
+  AIR_QUALITY_SMOKE
+  PUBLIC_HEALTH_EMERGENCY
+  EMERGENCY_EVACUATION
+}
+
 type ContactInfoType {
   id: ID!
   contactName: String!
@@ -632,6 +643,7 @@ input CreateShelterInput {
   location: ShelterLocationInput = null
   operatingHours: [TimeRangeInput!] = null
   intakeHours: [TimeRangeInput!] = null
+  schedules: [ScheduleInput!] = null
   email: String = null
   phone: PhoneNumber = null
   website: String = null
@@ -709,6 +721,16 @@ type DateCountType {
 
 """Date with time (isoformat)"""
 scalar DateTime
+
+enum DayOfWeekChoices {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
 
 union DeleteClientContactPayload = ClientContactType | OperationInfo
 
@@ -1862,6 +1884,37 @@ type SampleType {
   lastModified: DateTime
 }
 
+input ScheduleInput {
+  scheduleType: ScheduleTypeChoices! = OPERATING
+  days: [DayOfWeekChoices!] = null
+  startTime: Time = null
+  endTime: Time = null
+  startDate: Date = null
+  endDate: Date = null
+  condition: ConditionChoices = null
+  isException: Boolean! = false
+}
+
+type ScheduleType {
+  id: ID!
+  scheduleType: ScheduleTypeChoices!
+  day: DayOfWeekChoices
+  startTime: Time
+  endTime: Time
+  startDate: Date
+  endDate: Date
+  condition: ConditionChoices
+  demographic: DemographicType
+  isException: Boolean!
+}
+
+enum ScheduleTypeChoices {
+  OPERATING
+  INTAKE
+  MEAL_SERVICE
+  STAFF_AVAILABILITY
+}
+
 enum SelahTeamEnum {
   BOWTIE_RIVERSIDE_OUTREACH
   ECHO_PARK_ON_SITE
@@ -1918,6 +1971,7 @@ input ShelterFilter {
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
+  openNow: Boolean
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
 }
@@ -2015,6 +2069,7 @@ type ShelterType {
   programFees: String
   roomStyles: [RoomStyleType!]!
   roomStylesOther: String
+  schedules: [ScheduleType!]!
   shelterPrograms: [ShelterProgramType!]!
   shelterProgramsOther: String
   shelterTypes: [ShelterTypeType!]!

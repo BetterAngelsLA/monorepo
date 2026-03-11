@@ -8,15 +8,10 @@
  *
  * const { showBottomSheet } = useBottomSheet();
  *
- * showBottomSheet(
- *   ({ closeSheet }) => (
- *     <MyForm onDone={closeSheet} />
- *   ),
- *   {
- *     snapPoints: ['50%'],
- *     scrollable: true,
- *   }
- * );
+ *  showBottomSheet({
+ *   render: () => <SimpleContent />,
+ *   options: {...}
+ * });
  */
 
 import { useContext } from 'react';

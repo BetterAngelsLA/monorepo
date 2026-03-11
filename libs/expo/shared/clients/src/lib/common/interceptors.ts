@@ -31,6 +31,23 @@ export const HMIS_API_URL_STORAGE_KEY = 'hmis_api_url';
 export const HMIS_AUTH_DOMAIN_STORAGE_KEY = 'hmis_auth_domain';
 
 /**
+ * Detect FormData-like objects via `append` method.
+ * Avoids unreliable `instanceof FormData` checks in React Native.
+ */
+type FormDataLike = {
+  append: (...args: unknown[]) => unknown;
+};
+
+function isFormDataLike(value: unknown): value is FormDataLike {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'append' in value &&
+    typeof (value as FormDataLike).append === 'function'
+  );
+}
+
+/**
  * Helper to extract URL string from RequestInfo
  */
 const getUrl = (input: RequestInfo | URL): string =>
@@ -151,13 +168,15 @@ export const bodyInterceptor: FetchInterceptor = async (input, init, next) => {
   const headers = new Headers(init.headers);
   let body = init.body;
 
-  // Serialize non-string, non-FormData bodies to JSON
-  if (body && !(body instanceof FormData) && typeof body !== 'string') {
+  const isFormData = isFormDataLike(body);
+
+  if (body && !isFormData && typeof body !== 'string') {
     body = JSON.stringify(body);
   }
 
-  // Set Content-Type header if there's a body and it's not already set
-  if (body && !headers.has(HEADER_NAMES.CONTENT_TYPE)) {
+  // Set Content-Type header if there's a body and it's not already set.
+  // For FormData, let fetch set the header (it adds the multipart boundary).
+  if (body && !isFormData && !headers.has(HEADER_NAMES.CONTENT_TYPE)) {
     headers.set(HEADER_NAMES.CONTENT_TYPE, HEADER_VALUES.CONTENT_TYPE_JSON);
   }
 
