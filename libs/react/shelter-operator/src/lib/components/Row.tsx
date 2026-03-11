@@ -35,6 +35,9 @@ export function Row({
     variant = 'trash-medium';
   }
 
+  const deleteIconStroke =
+    isDeleteHovered || isDeletePressed ? '#CB0808' : '#747A82';
+
   const c0 = cells[0];
   const c1 = cells[1];
   const c2 = cells[2];
@@ -44,7 +47,7 @@ export function Row({
     <div
       onClick={onClick}
       className={[
-        'grid items-center px-4 mx-4 py-4 text-sm border-t border-gray-200',
+        'grid items-center px-4 mx-4 py-2 text-sm border-t border-gray-200',
         'hover:bg-[#F4F6FD]',
         onClick && 'cursor-pointer',
         className,
@@ -97,7 +100,7 @@ export function Row({
       >
         <Button
           variant={variant}
-          leftIcon={<Trash2 size={20} stroke="#CB0808" />}
+          leftIcon={<Trash2 size={20} stroke={deleteIconStroke} />}
           rightIcon={false}
         />
       </div>

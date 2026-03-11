@@ -48,16 +48,18 @@ const variantClasses: Record<ButtonVariant, string> = {
     'bg-[#F4F6FD] border border-[#D3D9E3] text-lg py-2 px-4 rounded-full gap-2 w-fit justify-between',
   'small-dark':
     'bg-[#D3D9E3] border border-[#D3D9E3] text-[#747A82] text-lg py-2 px-4 rounded-full gap-2 w-fit justify-between',
-  'edit-light': 'text-white size-10 p-0 rounded-lg justify-center',
+  'edit-light': 'text-white size-10 py-2 rounded-lg justify-center',
   'edit-medium':
-    'bg-[#F4F6FD] text-white size-10 p-0 rounded-lg justify-center',
-  'edit-dark': 'bg-[#D3D9E3] text-white size-10 p-0 rounded-lg justify-center',
-  'trash-light': 'text-white size-10 p-0 rounded-lg justify-center',
+    'bg-[#F4F6FD] text-white size-10 py-2 rounded-lg justify-center',
+  'edit-dark': 'bg-[#D3D9E3] text-white size-10 py-2 rounded-lg justify-center',
+  'trash-light': 'text-white py-2 size-10 rounded-lg justify-center',
   'trash-medium':
-    'bg-[#FFECE8] text-white size-10 p-0 rounded-lg justify-center',
-  'trash-dark': 'bg-[#FFC5BF] text-white size-10 p-0 rounded-lg justify-center',
+    'bg-[#FFECE8] text-black size-10 py-2 rounded-lg justify-center',
+  'trash-dark':
+    'bg-[#FFC5BF] text-white size-10 py-2 rounded-lg justify-center',
+  ghost: 'text-[#747A82] size-10 py-2 rounded-lg justify-center',
   'right-arrow':
-    'bg-[#FFF82E] text-white size-11 p-0 rounded-full justify-center',
+    'bg-[#FFF82E] text-white size-11 py-2 rounded-full justify-center',
 };
 
 export function Button(props: IButtonProps) {
