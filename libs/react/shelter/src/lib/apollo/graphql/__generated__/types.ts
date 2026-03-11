@@ -383,7 +383,6 @@ export type ClientProfileType = {
   otherDocuments?: Maybe<Array<ClientDocumentType>>;
   phoneNumber?: Maybe<Scalars['PhoneNumber']['output']>;
   phoneNumbers?: Maybe<Array<PhoneNumberType>>;
-  photo?: Maybe<ImageUrls>;
   physicalDescription?: Maybe<Scalars['String']['output']>;
   placeOfBirth?: Maybe<Scalars['String']['output']>;
   preferredCommunication?: Maybe<Array<PreferredCommunicationEnum>>;
@@ -796,6 +795,12 @@ export type DjangoImageType = {
   size: Scalars['Int']['output'];
   url: Scalars['String']['output'];
   width: Scalars['Int']['output'];
+};
+
+
+export type DjangoImageTypeUrlArgs = {
+  preset?: InputMaybe<ImagePresetEnum>;
+  processing?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type DjangoModelType = {
@@ -1218,12 +1223,12 @@ export type IdFilterLookup = {
   startsWith?: InputMaybe<Scalars['ID']['input']>;
 };
 
-export type ImageUrls = {
-  __typename?: 'ImageUrls';
-  lg?: Maybe<Scalars['String']['output']>;
-  md?: Maybe<Scalars['String']['output']>;
-  sm?: Maybe<Scalars['String']['output']>;
-};
+export enum ImagePresetEnum {
+  Lg = 'LG',
+  Md = 'MD',
+  Original = 'ORIGINAL',
+  Sm = 'SM'
+}
 
 export enum ImmediateNeedChoices {
   Clothing = 'CLOTHING',

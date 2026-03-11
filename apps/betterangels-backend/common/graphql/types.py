@@ -149,14 +149,15 @@ class AddressInput:
 
 # Imgproxy processing strings for each preset.
 IMGPROXY_PRESETS: dict[ImagePresetEnum, str] = {
+    ImagePresetEnum.ORIGINAL: "rs:force:0:0",
     ImagePresetEnum.SM: "rs:fill:100:100",
     ImagePresetEnum.MD: "rs:fill:400:400",
     ImagePresetEnum.LG: "rs:fill:800:800",
 }
 
 
-@strawberry.type
-class DjangoImageType:
+@strawberry.type(name="DjangoImageType")
+class BaImageType:
     """GraphQL type for Django ``ImageField`` values.
 
     Attributes exposed from the underlying ``FieldFile``:
@@ -213,15 +214,15 @@ class DjangoImageType:
         return ""
 
 
-def resolve_image(file: object) -> Optional[DjangoImageType]:
-    """Convert a Django ``FieldFile`` / ``ImageFieldFile`` to ``DjangoImageType``.
+def resolve_image(file: object) -> Optional[BaImageType]:
+    """Convert a Django ``FieldFile`` / ``ImageFieldFile`` to ``BaImageType``.
 
     Returns ``None`` when the field is empty (no file uploaded).
     """
     if not file:
         return None
 
-    return DjangoImageType(
+    return BaImageType(
         name=getattr(file, "name", "") or "",
         path=getattr(file, "path", "") if hasattr(file, "path") else "",
         size=getattr(file, "size", 0) or 0,
@@ -283,11 +284,6 @@ class FeatureControlData:
     flags: list[FlagType]
     switches: list[SwitchType]
     samples: list[SampleType]
-
-
-@strawberry.type
-class DeletedObjectType:
-    id: int
 
 
 @strawberry.type

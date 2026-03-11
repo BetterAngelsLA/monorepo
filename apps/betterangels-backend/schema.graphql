@@ -392,7 +392,6 @@ type ClientProfileType {
   docReadyDocuments: [ClientDocumentType!]
   consentFormDocuments: [ClientDocumentType!]
   otherDocuments: [ClientDocumentType!]
-  photo: ImageUrls
   displayCaseManager: String!
 }
 
@@ -782,9 +781,9 @@ type DjangoImageType {
   name: String!
   path: String!
   size: Int!
-  url: String!
   width: Int!
   height: Int!
+  url(preset: ImagePresetEnum = null, processing: String = null): String!
 }
 
 type DjangoModelType {
@@ -1200,10 +1199,11 @@ input IDFilterLookup {
   iRegex: ID
 }
 
-type ImageUrls {
-  sm: String
-  md: String
-  lg: String
+enum ImagePresetEnum {
+  ORIGINAL
+  SM
+  MD
+  LG
 }
 
 enum ImmediateNeedChoices {

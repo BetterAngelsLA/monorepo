@@ -15,7 +15,7 @@ from clients.enums import (
 )
 from common.graphql.types import (
     AttachmentInterface,
-    DjangoImageType,
+    BaImageType,
     NonBlankString,
     PhoneNumberInput,
     PhoneNumberScalar,
@@ -340,7 +340,7 @@ class ClientProfileType(ClientProfileBaseType):
     other_documents: Optional[List[ClientDocumentType]]
 
     @strawberry_django.field(only=["profile_photo"])
-    def profile_photo(self) -> Optional[DjangoImageType]:
+    def profile_photo(self) -> Optional[BaImageType]:
         return resolve_image(self.profile_photo)  # type: ignore[attr-defined]
 
     @strawberry.field

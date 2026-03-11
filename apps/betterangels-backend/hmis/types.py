@@ -13,7 +13,7 @@ from clients.enums import (
     PreferredCommunicationEnum,
 )
 from common.graphql.types import (
-    DjangoImageType,
+    BaImageType,
     LocationInput,
     LocationType,
     NonBlankString,
@@ -158,7 +158,7 @@ class HmisClientProfileType(HmisClientProfileBaseType):
     hmis_id: Optional[str]
 
     @strawberry_django.field(only=["profile_photo"])
-    def profile_photo(self) -> Optional[DjangoImageType]:
+    def profile_photo(self) -> Optional[BaImageType]:
         return resolve_image(self.profile_photo)  # type: ignore[attr-defined]
 
     personal_id: Optional[str]

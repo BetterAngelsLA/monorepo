@@ -39,8 +39,8 @@ class CommonConfig(AppConfig):
         """Override strawberry-django's default ``DjangoImageType`` so every
         ``ImageField`` output type uses our custom type with imgproxy support.
         """
-        from common.graphql.types import DjangoImageType
+        from common.graphql.types import BaImageType
         from django.db.models.fields import files
         from strawberry_django.fields.types import field_type_map
 
-        field_type_map[files.ImageField] = DjangoImageType
+        field_type_map[files.ImageField] = BaImageType
