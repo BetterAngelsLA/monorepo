@@ -15,10 +15,12 @@ from clients.enums import (
 )
 from common.graphql.types import (
     AttachmentInterface,
+    BaImageType,
     NonBlankString,
     PhoneNumberInput,
     PhoneNumberScalar,
     PhoneNumberType,
+    resolve_image,
 )
 from common.models import Attachment
 from django.db.models import Exists, Max, OuterRef, Q, QuerySet
@@ -311,7 +313,6 @@ class ClientProfileBaseType:
     place_of_birth: auto
     preferred_communication: Optional[List[PreferredCommunicationEnum]]
     preferred_language: auto
-    profile_photo: auto
     pronouns: auto
     pronouns_other: auto
     race: auto
@@ -337,6 +338,10 @@ class ClientProfileType(ClientProfileBaseType):
     consent_form_documents: Optional[List[ClientDocumentType]]
     other_documents: Optional[List[ClientDocumentType]]
 
+    @strawberry_django.field(only=["profile_photo"])
+    def profile_photo(self) -> Optional[BaImageType]:
+        return resolve_image(self.profile_photo)
+
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:
         if case_managers := getattr(self, "case_managers", None):
@@ -351,6 +356,7 @@ class CreateClientProfileInput(ClientProfileBaseType):
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
     phone_numbers: Optional[List[PhoneNumberInput]]
+    profile_photo: auto
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
 
 
@@ -361,6 +367,7 @@ class UpdateClientProfileInput(ClientProfileBaseType):
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
     phone_numbers: Optional[List[PhoneNumberInput]]
+    profile_photo: auto
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
 
 

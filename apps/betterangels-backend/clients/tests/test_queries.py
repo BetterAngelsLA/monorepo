@@ -3,6 +3,7 @@ from typing import Optional
 from unittest.mock import ANY
 
 import time_machine
+import waffle
 from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import (
     AdaAccommodationEnum,
@@ -34,11 +35,14 @@ from clients.types import (
     CLIENT_DOCUMENT_NAMESPACE_GROUPS,
     MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS,
 )
+from common.enums import ImagePresetEnum
+from common.imgproxy import IMGPROXY_SWITCH
 from django.contrib.contenttypes.models import ContentType
 from django.test import override_settings
 from model_bakery import baker
 from notes.models import Note
 from unittest_parametrize import parametrize
+from waffle import get_waffle_switch_model
 
 
 class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
@@ -150,6 +154,41 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         client_profile_count = ClientProfile.objects.count()
         self.assertEqual(client_profiles_data["totalCount"], client_profile_count)
         self.assertEqual(client_profiles_data["pageInfo"], {"limit": 10, "offset": 0})
+
+    @override_settings(IMGPROXY_KEY="736563726574", IMGPROXY_SALT="68656C6C6F", IMGPROXY_PATH_PREFIX="imgproxy")
+    def test_client_profiles_query_with_processed_photo(self) -> None:
+        get_waffle_switch_model().objects.create(name=IMGPROXY_SWITCH, active=True)
+        self._update_client_profile_photo_fixture(self.client_profile_2["id"])
+
+        query = f"""
+            query ($offset: Int, $limit: Int) {{
+                clientProfiles(pagination: {{offset: $offset, limit: $limit}}) {{
+                    totalCount
+                    pageInfo {{
+                        limit
+                        offset
+                    }}
+                    results {{
+                        id
+                        profilePhoto {{
+                            url (preset: {ImagePresetEnum.MD.name})
+                        }}
+                    }}
+                }}
+            }}
+        """
+
+        # Warm waffle cache so is_imgproxy_enabled() doesn't add a flaky extra query
+        # when resolving profilePhoto.url for each result.
+        waffle.switch_is_active(IMGPROXY_SWITCH)
+
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
+
+        client_profiles_data = response["data"]["clientProfiles"]
+        self.assertIn("localhost:8080", client_profiles_data["results"][0]["profilePhoto"]["url"])
+        self.assertIn("localhost:8080", client_profiles_data["results"][1]["profilePhoto"]["url"])
 
     @parametrize(
         ("sort_order, expected_first_name"),

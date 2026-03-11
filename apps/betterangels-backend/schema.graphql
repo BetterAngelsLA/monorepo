@@ -373,7 +373,6 @@ type ClientProfileType {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: DjangoImageType
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
@@ -392,6 +391,7 @@ type ClientProfileType {
   docReadyDocuments: [ClientDocumentType!]
   consentFormDocuments: [ClientDocumentType!]
   otherDocuments: [ClientDocumentType!]
+  profilePhoto: DjangoImageType
   displayCaseManager: String!
 }
 
@@ -475,7 +475,6 @@ input CreateClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
@@ -487,6 +486,7 @@ input CreateClientProfileInput {
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
   phoneNumbers: [PhoneNumberInput!]
+  profilePhoto: Upload
   socialMediaProfiles: [SocialMediaProfileInput!]
 }
 
@@ -781,9 +781,9 @@ type DjangoImageType {
   name: String!
   path: String!
   size: Int!
-  url: String!
   width: Int!
   height: Int!
+  url(preset: ImagePresetEnum = null, processing: String = null): String!
 }
 
 type DjangoModelType {
@@ -1197,6 +1197,13 @@ input IDFilterLookup {
   Case-insensitive regular expression match. Filter will be skipped on `null` value
   """
   iRegex: ID
+}
+
+enum ImagePresetEnum {
+  ORIGINAL
+  SM
+  MD
+  LG
 }
 
 enum ImmediateNeedChoices {
@@ -2278,7 +2285,6 @@ input UpdateClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
@@ -2291,6 +2297,7 @@ input UpdateClientProfileInput {
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
   phoneNumbers: [PhoneNumberInput!]
+  profilePhoto: Upload
   socialMediaProfiles: [SocialMediaProfileInput!]
 }
 
