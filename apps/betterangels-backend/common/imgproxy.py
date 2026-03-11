@@ -10,8 +10,9 @@ IMGPROXY_SWITCH = "imgproxy_enabled"
 
 
 def is_imgproxy_enabled() -> bool:
-    """Runtime check: imgproxy is usable only when keys are configured and the waffle switch is on."""
-    if not settings.IMGPROXY_KEY or not settings.IMGPROXY_SALT:
+    """Runtime check: imgproxy is usable only when keys, path prefix, and waffle switch are set."""
+    prefix = getattr(settings, "IMGPROXY_PATH_PREFIX", "").strip("/")
+    if not (settings.IMGPROXY_KEY and settings.IMGPROXY_SALT and prefix):
         return False
 
     return waffle.switch_is_active(IMGPROXY_SWITCH)
