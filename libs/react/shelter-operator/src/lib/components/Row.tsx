@@ -38,10 +38,35 @@ export function Row({
   const deleteIconStroke =
     isDeleteHovered || isDeletePressed ? '#CB0808' : '#747A82';
 
-  const c0 = cells[0];
-  const c1 = cells[1];
-  const c2 = cells[2];
-  const c3 = cells[3];
+  const name = cells[0];
+  const address = cells[1];
+  const capacity = cells[2];
+  const tags = cells[3];
+  const hardcodedTags = ['Women Only', 'Shared', 'Pets Allowed', 'No Parking'];
+  const MAX_VISIBLE_TAG_CHAR_COUNT = 15;
+  const tagContent = tags?.content;
+  const parsedTags = Array.isArray(tagContent)
+    ? tagContent
+        .map((tag) => String(tag).trim())
+        .filter((tag) => Boolean(tag) && tag.toUpperCase() !== 'N/A')
+    : typeof tagContent === 'string'
+    ? tagContent
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => Boolean(tag) && tag.toUpperCase() !== 'N/A')
+    : [];
+  const tagsToShow = parsedTags.length > 0 ? parsedTags : hardcodedTags;
+  let visibleCharCount = 0;
+  const visibleTags = tagsToShow.filter((tag) => {
+    const nextCount = visibleCharCount + tag.length;
+    if (nextCount >= MAX_VISIBLE_TAG_CHAR_COUNT) return false;
+    visibleCharCount = nextCount;
+    return true;
+  });
+  const remainingTagsCount = Math.max(
+    tagsToShow.length - visibleTags.length,
+    0
+  );
 
   return (
     <div
@@ -57,35 +82,49 @@ export function Row({
       style={{ gridTemplateColumns: templateColumns, ...style }}
     >
       <div
-        className={['text-left justify-self-start', c0?.className ?? '']
+        className={['text-left justify-self-start', name?.className ?? '']
           .join(' ')
           .trim()}
       >
-        {c0?.content}
+        {name?.content}
       </div>
 
       <div
-        className={['text-left justify-self-start', c1?.className ?? '']
+        className={['text-left justify-self-start', address?.className ?? '']
           .join(' ')
           .trim()}
       >
-        {c1?.content}
+        {address?.content}
       </div>
 
       <div
-        className={['text-left justify-self-start', c2?.className ?? '']
+        className={['text-left justify-self-start', capacity?.className ?? '']
           .join(' ')
           .trim()}
       >
-        {c2?.content}
+        {capacity?.content}
       </div>
 
       <div
-        className={['text-left justify-self-start', c3?.className ?? '']
+        className={['text-left justify-self-start', tags?.className ?? '']
           .join(' ')
           .trim()}
       >
-        {c3?.content}
+        <div className="flex flex-wrap items-center gap-2">
+          {visibleTags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full bg-[#EDEFF5] px-3 py-1 text-xs text-[#747A82]"
+            >
+              {tag}
+            </span>
+          ))}
+          {remainingTagsCount > 0 && (
+            <span className="rounded-full bg-[#EDEFF5] px-3 py-1 text-xs text-[#747A82]">
+              +{remainingTagsCount}
+            </span>
+          )}
+        </div>
       </div>
 
       <div

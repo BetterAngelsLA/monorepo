@@ -174,7 +174,7 @@ export default function Dashboard() {
           style={{ fontFamily: 'Poppins, sans-serif' }}
         >
           <label className="flex h-11 w-full max-w-[380px] items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FCF500] text-[#1E3342]">
+            <span className="flex h-8 w-9 items-center justify-center rounded-full bg-[#FCF500] text-[#1E3342]">
               <Search size={20} />
             </span>
             <input
