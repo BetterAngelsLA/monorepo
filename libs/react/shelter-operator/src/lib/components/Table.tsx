@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { Row, type RowCell } from './Row';
+import { Row, type RowCell, type RowClickHandler } from './Row';
 
 export type TableColumn<TItem> = {
   key: string;
@@ -10,10 +10,12 @@ export type TableColumn<TItem> = {
   render: (item: TItem) => ReactNode;
 };
 
-type TableProps<TItem> = {
+type TableProps<TItem, TRowObject = TItem> = {
   columns: TableColumn<TItem>[];
   rows: TItem[];
   getRowKey: (item: TItem, index: number) => string;
+  getRowObject?: (item: TItem, index: number) => TRowObject;
+  onRowClick?: RowClickHandler<TRowObject>;
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
@@ -25,10 +27,12 @@ type TableProps<TItem> = {
   rowStyle?: CSSProperties;
 };
 
-export function Table<TItem>({
+export function Table<TItem, TRowObject = TItem>({
   columns,
   rows,
   getRowKey,
+  getRowObject,
+  onRowClick,
   loading = false,
   loadingState,
   emptyState,
@@ -38,7 +42,7 @@ export function Table<TItem>({
   tableStyle,
   headerStyle,
   rowStyle,
-}: TableProps<TItem>) {
+}: TableProps<TItem, TRowObject>) {
   const dataTemplateColumns = columns
     .map((column) => column.width ?? '1fr')
     .join(' ');
@@ -83,6 +87,10 @@ export function Table<TItem>({
 
       {!loading &&
         rows.map((item, index) => {
+          const rowObject = getRowObject
+            ? getRowObject(item, index)
+            : (item as TRowObject);
+
           const cells: RowCell[] = columns.map((column) => ({
             key: column.key,
             content: column.render(item),
@@ -93,6 +101,9 @@ export function Table<TItem>({
             <Row
               key={getRowKey(item, index)}
               cells={cells}
+              rowObject={rowObject}
+              rowIndex={index}
+              onRowClick={onRowClick}
               templateColumns={templateColumns}
               className={rowClassName}
               style={rowStyle}

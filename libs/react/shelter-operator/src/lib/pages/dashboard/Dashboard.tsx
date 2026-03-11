@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons';
 import NavBar from '../../components/NavBar';
-import { Table, type TableColumn } from '../../components/Table';
+import { ShelterTable } from '../../components/ShelterTable';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
@@ -85,73 +85,6 @@ export default function Dashboard() {
   const totalCount = activeData?.adminShelters?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  const tableColumns: TableColumn<Shelter>[] = useMemo(
-    () => [
-      {
-        key: 'name',
-        label: 'Shelter Name',
-        width: '1fr',
-        cellClassName:
-          'font-medium text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap',
-        render: (shelter) => shelter.name ?? 'N/A',
-      },
-      {
-        key: 'address',
-        label: 'Address',
-        width: '1fr',
-        cellClassName:
-          'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
-        render: (shelter) => shelter.address ?? 'N/A',
-      },
-      {
-        key: 'capacity',
-        label: 'Capacity',
-        width: '1.2fr',
-        cellClassName: 'whitespace-nowrap text-gray-700',
-        render: (shelter) => {
-          const totalBeds = shelter.totalBeds ?? 0;
-          const hasCapacity = totalBeds > 0;
-          const usedBeds = hasCapacity
-            ? Math.min(
-                Math.max(shelter.occupiedBeds ?? totalBeds, 0),
-                totalBeds
-              )
-            : null;
-          const progressPct =
-            hasCapacity && usedBeds !== null ? (usedBeds / totalBeds) * 100 : 0;
-
-          if (!hasCapacity || usedBeds === null) {
-            return <div className="whitespace-nowrap">N/A</div>;
-          }
-
-          return (
-            <div className="flex items-center gap-3">
-              <div className="h-4 w-[150px] overflow-hidden rounded-full border border-slate-300 bg-slate-200">
-                <div
-                  className="h-full rounded-full bg-[#FFC5BF] transition-[width] duration-300"
-                  style={{ width: `${progressPct}%` }}
-                />
-              </div>
-              <span className="leading-5 text-slate-700">
-                {usedBeds} / {totalBeds} beds
-              </span>
-            </div>
-          );
-        },
-      },
-      {
-        key: 'tags',
-        label: 'Tags',
-        width: '0.8fr',
-        cellClassName:
-          'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
-        render: (shelter) =>
-          shelter.tags?.length ? shelter.tags.join(', ') : 'N/A',
-      },
-    ],
-    []
-  );
-
   useEffect(() => {
     if (error) console.error('[Dashboard GraphQL error]', error);
   }, [error]);
@@ -208,10 +141,12 @@ export default function Dashboard() {
         </form>
 
         {/* TABLE */}
-        <Table
-          columns={tableColumns}
+        <ShelterTable
           rows={shelters}
           getRowKey={(shelter) => shelter.id}
+          onRowClick={(rowObject) =>
+            console.log('[ShelterOperator][Table row click]', rowObject)
+          }
           loading={loading}
           loadingState={
             <div className="px-6 py-8 text-center text-sm text-gray-500">

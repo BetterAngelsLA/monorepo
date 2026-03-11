@@ -9,21 +9,32 @@ export type RowCell = {
   className?: string;
 };
 
-type RowProps = {
+export type RowClickHandler<TRowObject> = (
+  rowObject: TRowObject,
+  rowIndex: number
+) => void;
+
+type RowProps<TRowObject> = {
   cells: RowCell[];
+  rowObject: TRowObject;
+  rowIndex: number;
   templateColumns: string;
   className?: string;
   style?: CSSProperties;
+  onRowClick?: RowClickHandler<TRowObject>;
   onClick?: () => void;
 };
 
-export function Row({
+export function Row<TRowObject>({
   cells,
+  rowObject,
+  rowIndex,
   templateColumns,
   className = '',
   style,
+  onRowClick,
   onClick,
-}: RowProps) {
+}: RowProps<TRowObject>) {
   const [isDeleteHovered, setIsDeleteHovered] = useState(false);
   const [isDeletePressed, setIsDeletePressed] = useState(false);
 
@@ -38,97 +49,39 @@ export function Row({
   const deleteIconStroke =
     isDeleteHovered || isDeletePressed ? '#CB0808' : '#747A82';
 
-  const name = cells[0];
-  const address = cells[1];
-  const capacity = cells[2];
-  const tags = cells[3];
-  const hardcodedTags = ['Women Only', 'Shared', 'Pets Allowed', 'No Parking'];
-  const MAX_VISIBLE_TAG_CHAR_COUNT = 15;
-  const tagContent = tags?.content;
-  const parsedTags = Array.isArray(tagContent)
-    ? tagContent
-        .map((tag) => String(tag).trim())
-        .filter((tag) => Boolean(tag) && tag.toUpperCase() !== 'N/A')
-    : typeof tagContent === 'string'
-    ? tagContent
-        .split(',')
-        .map((tag) => tag.trim())
-        .filter((tag) => Boolean(tag) && tag.toUpperCase() !== 'N/A')
-    : [];
-  const tagsToShow = parsedTags.length > 0 ? parsedTags : hardcodedTags;
-  let visibleCharCount = 0;
-  const visibleTags = tagsToShow.filter((tag) => {
-    const nextCount = visibleCharCount + tag.length;
-    if (nextCount >= MAX_VISIBLE_TAG_CHAR_COUNT) return false;
-    visibleCharCount = nextCount;
-    return true;
-  });
-  const remainingTagsCount = Math.max(
-    tagsToShow.length - visibleTags.length,
-    0
-  );
+  const handleRowClick = () => {
+    console.log('[ShelterOperator][Row click]', rowObject);
+    onRowClick?.(rowObject, rowIndex);
+    onClick?.();
+  };
 
   return (
     <div
-      onClick={onClick}
+      onClick={handleRowClick}
       className={[
         'grid items-center px-4 mx-4 py-2 text-sm border-t border-gray-200',
         'hover:bg-[#F4F6FD]',
-        onClick && 'cursor-pointer',
+        (onRowClick || onClick) && 'cursor-pointer',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
       style={{ gridTemplateColumns: templateColumns, ...style }}
     >
-      <div
-        className={['text-left justify-self-start', name?.className ?? '']
-          .join(' ')
-          .trim()}
-      >
-        {name?.content}
-      </div>
-
-      <div
-        className={['text-left justify-self-start', address?.className ?? '']
-          .join(' ')
-          .trim()}
-      >
-        {address?.content}
-      </div>
-
-      <div
-        className={['text-left justify-self-start', capacity?.className ?? '']
-          .join(' ')
-          .trim()}
-      >
-        {capacity?.content}
-      </div>
-
-      <div
-        className={['text-left justify-self-start', tags?.className ?? '']
-          .join(' ')
-          .trim()}
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          {visibleTags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full bg-[#EDEFF5] px-3 py-1 text-xs text-[#747A82]"
-            >
-              {tag}
-            </span>
-          ))}
-          {remainingTagsCount > 0 && (
-            <span className="rounded-full bg-[#EDEFF5] px-3 py-1 text-xs text-[#747A82]">
-              +{remainingTagsCount}
-            </span>
-          )}
+      {cells.map((cell) => (
+        <div
+          key={cell.key}
+          className={['text-left justify-self-start', cell.className ?? '']
+            .join(' ')
+            .trim()}
+        >
+          {cell.content}
         </div>
-      </div>
+      ))}
 
       <div
         className="justify-self-end"
+        onClick={(event) => event.stopPropagation()}
         onMouseEnter={() => setIsDeleteHovered(true)}
         onMouseLeave={() => {
           setIsDeleteHovered(false);
