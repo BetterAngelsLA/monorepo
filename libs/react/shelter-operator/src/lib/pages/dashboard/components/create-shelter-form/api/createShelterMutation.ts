@@ -3,8 +3,9 @@ import {
   type CreateShelterInput,
   type CreateShelterMutation,
   type CreateShelterMutationVariables,
+  type ScheduleInput,
 } from '@monorepo/react/shelter';
-import type { ShelterFormData } from '../../../formTypes';
+import type { ScheduleFormEntry, ShelterFormData } from '../../../formTypes';
 import { sanitizeString } from '../utils/formUtils';
 
 export { CreateShelterDocument as CREATE_SHELTER_MUTATION };
@@ -43,6 +44,27 @@ const urlOrUndefined = (
   if (!trimmed) return undefined;
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   return `https://${trimmed}`;
+};
+
+/** Convert form schedule entries to the GraphQL input shape. */
+const buildScheduleInputs = (
+  entries: ScheduleFormEntry[]
+): ScheduleInput[] | undefined => {
+  const mapped = entries
+    .filter((e) => e.startTime && e.endTime)
+    .map(
+      (e): ScheduleInput => ({
+        scheduleType: e.scheduleType || undefined,
+        days: e.days.length ? e.days : undefined,
+        startTime: timeOrUndefined(e.startTime),
+        endTime: timeOrUndefined(e.endTime),
+        startDate: e.startDate || undefined,
+        endDate: e.endDate || undefined,
+        condition: e.condition || undefined,
+        isException: e.isException,
+      })
+    );
+  return mapped.length ? mapped : undefined;
 };
 
 // ---------------------------------------------------------------------------
@@ -119,9 +141,6 @@ export const buildCreateShelterInput = (
 
     // Structured types — passed directly, no parsing needed
     location: formData.location ?? undefined,
-    operatingHours: formData.operatingHours.length
-      ? formData.operatingHours
-      : undefined,
-    intakeHours: formData.intakeHours.length ? formData.intakeHours : undefined,
+    schedules: buildScheduleInputs(formData.schedules),
   };
 };
