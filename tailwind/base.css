@@ -1,8 +1,8 @@
-@import './variables.css';
+@import './variables.css' layer(base);
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@config '../apps/storybook-react/tailwind.config.ts';
 
 @layer base {
   * {

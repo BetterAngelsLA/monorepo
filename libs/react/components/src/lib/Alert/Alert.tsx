@@ -75,7 +75,7 @@ export function Alert(): ReactElement | null {
     'fixed',
     'top-6',
     'left-1/2',
-    'z-alert',
+    'z-600',
     'pointer-events-none',
   ];
 

@@ -13,7 +13,7 @@ export function AppDrawerMask(props: IProps) {
   const { visible, className, onClick, children } = props;
 
   const parentCss = [
-    'z-drawer-mask',
+    'z-500',
     'top-0',
     'left-0',
     'right-0',

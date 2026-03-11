@@ -38,9 +38,9 @@ export default function Contact() {
     <>
       <HorizontalLayout className="bg-brand-dark-blue">
         <div className="relative">
-          <div className="max-w-[62.5rem] mx-auto flex flex-col md:flex-row items-stretch min-h-[10vh] md:py-28">
+          <div className="max-w-250 mx-auto flex flex-col md:flex-row items-stretch min-h-[10vh] md:py-28">
             <div className="bg-brand-dark-blue w-full md:w-[60%] py-14 flex items-center md:py-0">
-              <h1 className="border-l-[10px] border-brand-yellow font-light font-primary pl-4 md:pl-8 text-5xl md:text-[58px] text-white md:leading-[1.2] text-left md:whitespace-nowrap">
+              <h1 className="border-l-10 border-brand-yellow font-light font-primary pl-4 md:pl-8 text-5xl md:text-[58px] text-white md:leading-[1.2] text-left md:whitespace-nowrap">
                 Contact Us
               </h1>
             </div>
@@ -49,7 +49,7 @@ export default function Contact() {
       </HorizontalLayout>
       <HorizontalLayout>
         <div className="py-6 md:py-16 w-full">
-          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
+          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-10 border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Please feel free to reach out with any questions
           </h2>
           <div className="flex flex-wrap items-center justify-center gap-4 w-full flex-1">

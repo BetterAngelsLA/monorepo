@@ -44,7 +44,7 @@ export function FilterPills(props: IProps) {
     'p-2',
     'text-xs',
     'bg-primary-95',
-    'rounded',
+    'rounded-sm',
     'mb-2',
   ];
 

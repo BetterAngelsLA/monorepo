@@ -64,7 +64,7 @@ export function Table<T>({
           <button
             onClick={() => onPageChange(Math.max(1, page - 1))}
             disabled={page === 1}
-            className="px-3 py-1 rounded border border-neutral-300 text-sm disabled:opacity-50"
+            className="px-3 py-1 rounded-sm border border-neutral-300 text-sm disabled:opacity-50"
           >
             ‹
           </button>
@@ -84,7 +84,7 @@ export function Table<T>({
           <button
             onClick={() => onPageChange(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
-            className="px-3 py-1 rounded border border-neutral-300 text-sm disabled:opacity-50"
+            className="px-3 py-1 rounded-sm border border-neutral-300 text-sm disabled:opacity-50"
           >
             ›
           </button>

@@ -10,7 +10,7 @@ type TProps = {
 export function SbkButton(props: TProps) {
   const { onClick, children, className } = props;
 
-  const parentCss = ['bg-gray-500', 'p-2', 'rounded', 'text-white', className];
+  const parentCss = ['bg-gray-500', 'p-2', 'rounded-sm', 'text-white', className];
 
   return (
     <button className={mergeCss(parentCss)} onClick={onClick}>
