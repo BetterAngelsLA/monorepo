@@ -1,9 +1,12 @@
-import tailwindBase from '@monorepo/tailwind';
-import { createGlobPatternsForDependencies } from '@nx/react/tailwind';
-import { join } from 'path';
-import type { Config } from 'tailwindcss';
+const { createGlobPatternsForDependencies } = require('@nx/react/tailwind');
+const { join } = require('path');
+const { createJiti } = require('jiti');
 
-const config: Config = {
+const jiti = createJiti(__filename);
+const tailwindBase = jiti('../../libs/tailwind/src/index.ts').default;
+
+/** @type {import('tailwindcss').Config} */
+module.exports = {
   presets: [tailwindBase],
   content: [
     join(
@@ -99,5 +102,3 @@ const config: Config = {
   },
   plugins: [],
 };
-
-export default config;
