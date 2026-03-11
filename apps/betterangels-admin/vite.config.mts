@@ -36,6 +36,7 @@ export default defineConfig(({ mode }) => {
         port: SERVER_PORT,
         host: true,
         proxy: devServerProxy,
+        fs: { allow: [path.resolve(__dirname, '../..')] },
       },
     }),
 
