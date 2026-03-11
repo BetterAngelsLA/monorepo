@@ -13,6 +13,7 @@ def is_imgproxy_enabled() -> bool:
     """Runtime check: imgproxy is usable only when keys are configured and the waffle switch is on."""
     if not settings.IMGPROXY_KEY or not settings.IMGPROXY_SALT:
         return False
+
     return waffle.switch_is_active(IMGPROXY_SWITCH)
 
 
@@ -53,6 +54,7 @@ def _build_imgproxy_path(source_url: str, processing: str = "") -> Optional[str]
     prefix = getattr(settings, "IMGPROXY_PATH_PREFIX", "").strip("/")
     if prefix:
         return f"{prefix}/{signature}/{path}"
+
     return f"{signature}/{path}"
 
 

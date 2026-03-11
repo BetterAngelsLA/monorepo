@@ -196,7 +196,7 @@ class BaImageType:
                 Takes precedence over ``preset``.
         """
         if file := self._file:
-            ops = processing or IMGPROXY_PRESETS.get(preset) if preset else None
+            ops = processing or (IMGPROXY_PRESETS.get(preset) if preset else None)
 
             if ops and is_imgproxy_enabled():
                 source = get_imgproxy_source_url(file)
