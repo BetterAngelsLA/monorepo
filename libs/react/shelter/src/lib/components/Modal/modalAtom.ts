@@ -4,6 +4,7 @@ import { ModalAnimationEnum, TModalType } from './Modal';
 
 type TProps = {
   content: ReactNode | null;
+  className?: string;
   type?: TModalType;
   animation?: ModalAnimationEnum | null;
   fullW?: boolean;

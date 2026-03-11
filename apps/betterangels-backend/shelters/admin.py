@@ -72,8 +72,11 @@ from .models import (
     InteriorPhoto,
     Parking,
     Pet,
+    Reservation,
+    ReservationClient,
     Room,
     RoomStyle,
+    Schedule,
     Shelter,
     ShelterProgram,
     ShelterType,
@@ -293,12 +296,15 @@ class ContactInfoAdmin(admin.ModelAdmin):
     search_fields = ("contact_name", "contact_number")
 
 
-class ContactInfoInline(admin.TabularInline):
+class ContactInfoInline(admin.StackedInline):
     model = ContactInfo
     extra = 1
-    fields = ["contact_name", "contact_number"]
-    verbose_name = "Additional Contact"
-    verbose_name_plural = "Additional Contacts"
+    fields = [
+        ("contact_name", "contact_number"),
+        ("contact_title", "contact_email"),
+    ]
+    verbose_name = "Additional Contact - PRIVATE"
+    verbose_name_plural = "Additional Contacts - PRIVATE"
     inline_key = "contactinfo"
 
 
@@ -337,6 +343,51 @@ class InterPhotoInline(admin.TabularInline):
 class VideoInline(admin.TabularInline):
     model = Video
     max_num = 0
+
+
+class ScheduleForm(forms.ModelForm):
+    class Meta:
+        model = Schedule
+        fields = "__all__"
+        widgets = {
+            "start_time": forms.TimeInput(attrs={"type": "time"}),
+            "end_time": forms.TimeInput(attrs={"type": "time"}),
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
+        }
+        help_texts = {
+            "is_exception": (
+                "Check this to mark an override or closure. "
+                "Exceptions subtract from the regular schedule: "
+                "leave times blank for an all-day closure, or set times to close a specific window."
+            ),
+        }
+
+
+class ScheduleInline(admin.StackedInline):
+    model = Schedule
+    form = ScheduleForm
+    extra = 0
+    ordering = ["is_exception", "schedule_type", "day", "start_time"]
+    verbose_name = "Schedule Entry"
+    verbose_name_plural = "Schedule"
+    inline_key = "schedule"
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "is_exception",
+                    "schedule_type",
+                    "day",
+                    ("start_time", "end_time"),
+                    ("start_date", "end_date"),
+                    "condition",
+                    "demographic",
+                ),
+            },
+        ),
+    )
 
 
 class ShelterResource(resources.ModelResource):
@@ -514,9 +565,16 @@ class ShelterResource(resources.ModelResource):
 
     def process_contact_info(self, row: Any, contact_info_row: str) -> None:
         try:
-            columnSeparateVals = [(v.strip()).split(":") for v in contact_info_row.split(",")]
+            columnSeparateVals = []
+            for v in contact_info_row.split(","):
+                vals = [p.strip() for p in v.strip().split(":")]
+                # pad missing optional fields to collect name, number, email and title
+                while len(vals) < 4:
+                    vals.append("")
+                columnSeparateVals.append(vals[:4])
         except ValueError:
             self.skip_or_raise(row, "additional_contacts")
+
         row["additional_contacts"] = columnSeparateVals
 
     def before_import_row(self, row: Any, **kwargs: Any) -> None:
@@ -580,9 +638,15 @@ class ShelterResource(resources.ModelResource):
         add_contact = row.get("additional_contacts")
         dry_run = kwargs.get("dry_run", False)
         if add_contact:
-            for name, number in add_contact:
+            for name, number, email, title in add_contact:
                 if not dry_run:
-                    ContactInfo.objects.get_or_create(shelter=instance, contact_name=name, contact_number=number)
+                    ContactInfo.objects.get_or_create(
+                        shelter=instance,
+                        contact_name=name,
+                        contact_number=number,
+                        email=email or None,
+                        title=title or None,
+                    )
 
     # Skips any row that has an error, based on whether or not "jumpthis" columns was set to True during
     # import, and also whether or not skip_row_not_val_error boolean is True or False
@@ -597,7 +661,7 @@ class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
     list_select_related = ("organization",)
 
-    inlines = [ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
+    inlines = [ContactInfoInline, ScheduleInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
     fieldsets = (
         (
             "Basic Information",
@@ -610,7 +674,6 @@ class ShelterAdmin(ImportExportModelAdmin):
                     "phone",
                     "website",
                     "instagram",
-                    "operating_hours",
                 ),
             },
         ),
@@ -655,7 +718,6 @@ class ShelterAdmin(ImportExportModelAdmin):
             {
                 "fields": (
                     "max_stay",
-                    "intake_hours",
                     "curfew",
                     "on_site_security",
                     "visitors_allowed",
@@ -707,7 +769,7 @@ class ShelterAdmin(ImportExportModelAdmin):
             },
         ),
         (
-            "Better Angels Review",
+            "Better Angels Review - PRIVATE",
             {
                 "fields": (
                     "overall_rating",
@@ -1048,3 +1110,47 @@ class CityAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     readonly_fields = ("created_at",)
     ordering = ("name",)
+
+
+class ReservationClientInline(admin.TabularInline):
+    model = ReservationClient
+    extra = 1
+    autocomplete_fields = ["client_profile"]
+
+
+@admin.register(Reservation)
+class ReservationAdmin(admin.ModelAdmin):
+    list_display = ("id", "shelter", "status", "start_date", "duration", "created_by", "created_at")
+    list_filter = ("status",)
+    search_fields = ("shelter__name",)
+    autocomplete_fields = ["shelter", "room", "bed", "created_by"]
+    inlines = [ReservationClientInline]
+    fieldsets = (
+        (
+            "Reservation Details",
+            {
+                "fields": (
+                    "shelter",
+                    "room",
+                    "bed",
+                    "status",
+                    "start_date",
+                    "duration",
+                    "created_by",
+                )
+            },
+        ),
+        (
+            "Check-in / Check-out",
+            {
+                "fields": (
+                    "checked_in_at",
+                    "checked_out_at",
+                )
+            },
+        ),
+        (
+            "Notes",
+            {"fields": ("notes",)},
+        ),
+    )
