@@ -21,7 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignOut, useUser } from '../hooks';
 import { UpdateCurrentUserDocument } from '../providers';
 import { TUser } from '../providers/user/UserContext';
-import { UserProfileEdit } from '../screens';
+import { UserProfileEdit } from '../screens/UserProfile/UserProfileEdit/UserProfileEdit';
 
 interface IConsentModalProps {
   isModalVisible: boolean;
