@@ -243,7 +243,7 @@ def _image_url(img: BaImageType, *args: object, **kwargs: object) -> str:
     IMGPROXY_KEY=TEST_KEY,
     IMGPROXY_SALT=TEST_SALT,
     IMGPROXY_BASE_URL="http://localhost:8080",
-    IMGPROXY_PATH_PREFIX="imgproxy",
+    IMGPROXY_PATH_PREFIX=TEST_PREFIX,
     IMGPROXY_INTERNAL_BASE_URL="http://backend:8000",
 )
 class BaImageTypeUrlTest(TestCase):
@@ -258,7 +258,7 @@ class BaImageTypeUrlTest(TestCase):
         return BaImageType(name="photo.jpg", _file=file)  # type: ignore[arg-type]
 
     @override_switch(IMGPROXY_SWITCH, active=True)
-    def test_url_with_preset_and_imgproxy_enabled(self) -> None:
+    def test_preset_url(self) -> None:
         img = self._make_image_type(self._make_file())
 
         url = _image_url(img, preset=ImagePresetEnum.MD)
@@ -266,7 +266,7 @@ class BaImageTypeUrlTest(TestCase):
         self.assertIn("rs:fill:400:400", url)
 
     @override_switch(IMGPROXY_SWITCH, active=True)
-    def test_url_with_raw_processing_and_imgproxy_enabled(self) -> None:
+    def test_raw_processing_url(self) -> None:
         img = self._make_image_type(self._make_file())
 
         url = _image_url(img, processing="rs:fit:800:600/q:80")
@@ -288,7 +288,7 @@ class BaImageTypeUrlTest(TestCase):
         self.assertEqual(url, "https://cdn/fallback.jpg")
 
     @override_switch(IMGPROXY_SWITCH, active=True)
-    def test_url_without_preset_returns_file_url(self) -> None:
+    def test_url_falls_back_when_no_processing(self) -> None:
         img = self._make_image_type(self._make_file(url="https://cdn/photo.jpg"))
 
         url = _image_url(img)
