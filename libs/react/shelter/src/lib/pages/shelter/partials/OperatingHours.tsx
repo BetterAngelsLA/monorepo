@@ -281,7 +281,7 @@ export function OperatingHours({
             type="button"
             onClick={openHoursDialog}
             aria-haspopup="dialog"
-            className="flex flex-row items-center gap-2 px-2 py-1 bg-[#F4F6FD] rounded-sm text-[12px] font-normal leading-[21px] text-[#052B73] transition-colors hover:bg-blue-100"
+            className="flex flex-row items-center gap-2 px-2 py-1 bg-[#F4F6FD] rounded text-[12px] font-normal leading-[21px] text-[#052B73] transition-colors hover:bg-blue-100"
             style={{ fontFamily: 'Poppins, sans-serif' }}
           >
             More Hours

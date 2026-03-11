@@ -39,7 +39,7 @@ export const SearchInput: Story = {
         <div className="mt-4 text-sm flex items-center">
           <div>Debounced:</div>
 
-          <div className="ml-2 p-2 bg-gray-100 rounded-sm min-h-[24px]">{val}</div>
+          <div className="ml-2 p-2 bg-gray-100 rounded min-h-[24px]">{val}</div>
         </div>
       </>
     );

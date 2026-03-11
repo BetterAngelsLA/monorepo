@@ -181,7 +181,7 @@ const ScheduleRow = memo(function ScheduleRow({
                 type="checkbox"
                 checked={entry.days.includes(d.value)}
                 onChange={() => toggleDay(d.value)}
-                className="rounded-sm border-gray-300 text-green-600 focus:ring-green-500"
+                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
               />
               {d.label.slice(0, 3)}
             </label>

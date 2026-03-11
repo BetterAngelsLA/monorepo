@@ -20,7 +20,7 @@ export function SbkGalleryCard(props: TProps) {
     'pb-2',
     'border',
     'border-gray-200',
-    'rounded-sm',
+    'rounded',
     className,
   ];
 

@@ -67,7 +67,7 @@ export const SearchList: Story = {
             })}
 
             {!results.length && (
-              <div className="px-4 py-2 bg-gray-100 rounded-sm">
+              <div className="px-4 py-2 bg-gray-100 rounded">
                 No results found
               </div>
             )}

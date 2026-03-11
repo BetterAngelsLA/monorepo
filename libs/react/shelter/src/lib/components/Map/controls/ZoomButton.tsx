@@ -64,5 +64,5 @@ function getIcon(zoomBy: number) {
     return <PlusIcon className="w-4 text-neutral-40" />;
   }
 
-  return <div className="w-4 h-[2.5px] bg-neutral-40 rounded-sm opacity-95"></div>;
+  return <div className="w-4 h-[2.5px] bg-neutral-40 rounded opacity-95"></div>;
 }
