@@ -2,8 +2,6 @@
 
 @import 'tailwindcss';
 
-@config '../apps/storybook-react/tailwind.config.ts';
-
 @layer base {
   * {
     box-sizing: border-box;

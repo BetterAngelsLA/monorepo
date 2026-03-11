@@ -1,9 +1,9 @@
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { PLATFORM_STORIES } from './storiesPlatform';
-import { RN_SHARED_LIB_STORIES } from './storiesReactNative';
-import { REACT_APP_LIB_STORIES } from './storiesWebApps';
-import { REACT_SHARED_LIB_STORIES } from './storiesWebShared';
+import { PLATFORM_STORIES } from './storiesPlatform.ts';
+import { RN_SHARED_LIB_STORIES } from './storiesReactNative.ts';
+import { REACT_APP_LIB_STORIES } from './storiesWebApps.ts';
+import { REACT_SHARED_LIB_STORIES } from './storiesWebShared.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
