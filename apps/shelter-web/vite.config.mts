@@ -1,5 +1,6 @@
 /// <reference types='vitest' />
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
@@ -43,6 +44,17 @@ export default defineConfig(({ mode }) => {
     },
 
     plugins: [react(), rawSvgPlugin(), nxViteTsPaths()],
+
+    css: {
+      postcss: {
+        plugins: [
+          tailwindcss({
+            base: path.resolve(__dirname, '../..'),
+            optimize: isDev ? { minify: false } : undefined,
+          }),
+        ],
+      },
+    },
 
     resolve: {},
 

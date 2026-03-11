@@ -1,6 +1,7 @@
 /// <reference types='vitest' />
 import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
@@ -49,6 +50,17 @@ export default defineConfig(({ mode }) => {
       nxViteTsPaths(),
       nxCopyAssetsPlugin(['*.md']),
     ],
+
+    css: {
+      postcss: {
+        plugins: [
+          tailwindcss({
+            base: path.resolve(__dirname, '../..'),
+            optimize: isDev ? { minify: false } : undefined,
+          }),
+        ],
+      },
+    },
 
     resolve: {},
 
