@@ -11,7 +11,6 @@ export { Radiuses, type TRadius, type TRadiusKey } from './radiuses';
 export { Regex } from './regex';
 export { Shadow } from './shadow';
 export { Spacings } from './spacings';
-export { ZIndex } from './zIndex';
 export {
   FileThumbnailSizeDefault,
   FullThumbenailSize,
