@@ -13,12 +13,14 @@ from clients.enums import (
     PreferredCommunicationEnum,
 )
 from common.graphql.types import (
+    DjangoImageType,
     LocationInput,
     LocationType,
     NonBlankString,
     PhoneNumberInput,
     PhoneNumberType,
     make_in_filter,
+    resolve_image,
 )
 from django.db.models import Q, QuerySet
 from hmis.enums import (
@@ -154,6 +156,11 @@ class HmisClientProfileType(HmisClientProfileBaseType):
     id: ID
     # HMIS Fields
     hmis_id: Optional[str]
+
+    @strawberry_django.field(only=["profile_photo"])
+    def profile_photo(self) -> Optional[DjangoImageType]:
+        return resolve_image(self.profile_photo)  # type: ignore[attr-defined]
+
     personal_id: Optional[str]
     unique_identifier: Optional[str]
     added_date: Optional[datetime.datetime]

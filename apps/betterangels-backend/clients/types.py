@@ -15,12 +15,12 @@ from clients.enums import (
 )
 from common.graphql.types import (
     AttachmentInterface,
-    ImageUrls,
-    image_urls_from_file,
+    DjangoImageType,
     NonBlankString,
     PhoneNumberInput,
     PhoneNumberScalar,
     PhoneNumberType,
+    resolve_image,
 )
 from common.models import Attachment
 from django.db.models import Exists, Max, OuterRef, Q, QuerySet
@@ -339,9 +339,9 @@ class ClientProfileType(ClientProfileBaseType):
     consent_form_documents: Optional[List[ClientDocumentType]]
     other_documents: Optional[List[ClientDocumentType]]
 
-    @strawberry_django.field
-    def photo(self, root: ClientProfile, info: Info) -> Optional[ImageUrls]:
-        return image_urls_from_file(root.profile_photo)
+    @strawberry_django.field(only=["profile_photo"])
+    def profile_photo(self) -> Optional[DjangoImageType]:
+        return resolve_image(self.profile_photo)  # type: ignore[attr-defined]
 
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:

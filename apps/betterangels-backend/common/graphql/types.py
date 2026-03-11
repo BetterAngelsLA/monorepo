@@ -5,7 +5,12 @@ from typing import Any, Mapping, NewType, Optional
 import strawberry
 import strawberry_django
 from common.constants import PHONE_NUMBER_REGEX
-from common.imgproxy import get_imgproxy_url, get_imgproxy_source_url_from_file
+from common.enums import ImagePresetEnum
+from common.imgproxy import (
+    build_imgproxy_url,
+    get_imgproxy_source_url,
+    is_imgproxy_enabled,
+)
 from common.models import Address, Attachment, Location, PhoneNumber
 from django.db.models import Q
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
@@ -13,7 +18,6 @@ from phonenumber_field.phonenumber import PhoneNumber as DjangoPhoneNumberUtil
 from strawberry import ID, Info, auto
 from strawberry.types.field import StrawberryField
 from strawberry.types.scalar import ScalarDefinition
-from common.enums import ImagePresetEnum
 
 
 def make_in_filter(field_name: str, value_type: Any) -> StrawberryField:
@@ -143,36 +147,88 @@ class AddressInput:
     formatted_address: Optional[str] = None
 
 
+# Imgproxy processing strings for each preset.
+IMGPROXY_PRESETS: dict[ImagePresetEnum, str] = {
+    ImagePresetEnum.SM: "rs:fill:100:100",
+    ImagePresetEnum.MD: "rs:fill:400:400",
+    ImagePresetEnum.LG: "rs:fill:800:800",
+}
+
+
 @strawberry.type
-class ImageUrls:
-    """URLs for the same image in predefined sizes (sm, md, lg, etc.)."""
+class DjangoImageType:
+    """GraphQL type for Django ``ImageField`` values.
 
-    url: strawberry.Private[str]
+    Attributes exposed from the underlying ``FieldFile``:
+        name, path, size, width, height
 
-    @strawberry.field
-    def sm(self) -> Optional[str]:
-        return get_imgproxy_url(self.url, ImagePresetEnum.SM)
-
-    @strawberry.field
-    def md(self) -> Optional[str]:
-        return get_imgproxy_url(self.url, ImagePresetEnum.MD)
-
-    @strawberry.field
-    def lg(self) -> Optional[str]:
-        return get_imgproxy_url(self.url, ImagePresetEnum.LG)
-
-
-def image_urls_from_file(file: Optional[object]) -> Optional[ImageUrls]:
-    """Build ImageUrls for any Django FileField/ImageField value.
-
-    Use this on any GraphQL type that exposes processed image URLs (sm/md/lg).
-    Returns None if the file is missing or the source URL cannot be determined.
+    The ``url`` field accepts an optional ``preset`` for named sizes
+    or a raw ``processing`` string for full imgproxy control.
+    When imgproxy is enabled and either is supplied, the returned URL
+    points to the imgproxy-processed variant.  Otherwise the normal
+    (CloudFront-signed) storage URL is returned.
     """
-    source = get_imgproxy_source_url_from_file(file)
-    if not source:
+
+    name: str
+    path: str = ""
+    size: int = 0
+    width: int = 0
+    height: int = 0
+
+    # Private: the underlying FieldFile, set in ``resolve_image``.
+    _file: strawberry.Private[Optional[object]] = None
+
+    @strawberry.field
+    def url(
+        self,
+        preset: Optional[ImagePresetEnum] = None,
+        processing: Optional[str] = None,
+    ) -> str:
+        """Return the image URL, optionally processed by imgproxy.
+
+        Args:
+            preset: A named size preset (SM, MD, LG).  Ignored when
+                ``processing`` is also provided.
+            processing: A raw imgproxy options string such as
+                ``"rs:fill:200:200"`` or ``"rs:fit:800:600/q:80"``.
+                Takes precedence over ``preset``.
+        """
+        file = self._file
+        ops = processing or IMGPROXY_PRESETS.get(preset) if preset or processing else None
+
+        if ops and is_imgproxy_enabled() and file:
+            source = get_imgproxy_source_url(file)
+            storage = getattr(file, "storage", None)
+            if source:
+                imgproxy_url = build_imgproxy_url(source, ops, storage=storage)
+                if imgproxy_url:
+                    return imgproxy_url
+
+        # Fallback: the storage's own URL (plain CloudFront-signed).
+        if file:
+            try:
+                return file.url  # type: ignore[union-attr]
+            except Exception:
+                pass
+        return ""
+
+
+def resolve_image(file: object) -> Optional[DjangoImageType]:
+    """Convert a Django ``FieldFile`` / ``ImageFieldFile`` to ``DjangoImageType``.
+
+    Returns ``None`` when the field is empty (no file uploaded).
+    """
+    if not file:
         return None
 
-    return ImageUrls(url=source)
+    return DjangoImageType(
+        name=getattr(file, "name", "") or "",
+        path=getattr(file, "path", "") if hasattr(file, "path") else "",
+        size=getattr(file, "size", 0) or 0,
+        width=getattr(file, "width", 0) or 0,
+        height=getattr(file, "height", 0) or 0,
+        _file=file,
+    )
 
 
 @strawberry_django.type(Location)
@@ -227,6 +283,11 @@ class FeatureControlData:
     flags: list[FlagType]
     switches: list[SwitchType]
     samples: list[SampleType]
+
+
+@strawberry.type
+class DeletedObjectType:
+    id: int
 
 
 @strawberry.type

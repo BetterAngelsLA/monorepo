@@ -15,6 +15,7 @@ class CommonConfig(AppConfig):
         the task metadata endpoint to fetch the task's IP addresses and
         add them to ALLOWED_HOSTS.
         """
+        self._register_imgproxy_image_type()
 
         def get_fargate_task_ips() -> Set:
             metadata_uri_env = "ECS_CONTAINER_METADATA_URI_V4"
@@ -32,3 +33,14 @@ class CommonConfig(AppConfig):
         task_ips = get_fargate_task_ips()
         if task_ips:
             settings.ALLOWED_HOSTS.extend(task_ips)
+
+    @staticmethod
+    def _register_imgproxy_image_type() -> None:
+        """Override strawberry-django's default ``DjangoImageType`` so every
+        ``ImageField`` output type uses our custom type with imgproxy support.
+        """
+        from common.graphql.types import DjangoImageType
+        from django.db.models.fields import files
+        from strawberry_django.fields.types import field_type_map
+
+        field_type_map[files.ImageField] = DjangoImageType
