@@ -37,7 +37,6 @@ interface ILocationProps {
     time: boolean;
   }) => void;
   setExpanded: (expanded: string | undefined | null) => void;
-  noteId: string;
   point?: number[] | null;
   address?:
     | {
@@ -65,7 +64,6 @@ export default function LocationComponent(props: ILocationProps) {
   const {
     expanded,
     setExpanded,
-    noteId,
     address,
     point,
     scrollRef,
@@ -201,7 +199,7 @@ export default function LocationComponent(props: ILocationProps) {
     };
 
     void autoSetInitialLocation();
-  }, [point, address, places, noteId, onLocationChange, location]);
+  }, [point, address, places, onLocationChange, location]);
 
   return (
     <FieldCard

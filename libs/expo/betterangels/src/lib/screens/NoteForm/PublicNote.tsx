@@ -17,10 +17,7 @@ import { generatePublicNote } from '../../helpers';
 interface IPublicNoteProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
-  isPublicNoteEdited: boolean;
-  setIsPublicNoteEdited: (isPublicNoteEdited: boolean) => void;
   note: string;
-  noteId: string;
   scrollRef: RefObject<ScrollView | null>;
   onPublicNoteChange: (text: string) => void;
   purpose?: string | null;

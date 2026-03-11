@@ -13,11 +13,11 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 
 import {
-  CreateNoteServiceInput,
   CreateNoteServiceRequestDocument,
   DeleteServiceRequestDocument,
   ServiceRequestTypeEnum,
 } from '../../apollo';
+import { NoteFormServiceItem } from '../../screens/NoteForm/schema';
 import { useSnackbar } from '../../hooks';
 
 import MainScrollContainer from '../MainScrollContainer';
@@ -54,9 +54,9 @@ interface IServicesModalProps {
     service?: { label?: string; id: string } | null;
     serviceOther?: string | null;
   }[];
-  initialLocalServices?: CreateNoteServiceInput[];
+  initialLocalServices?: NoteFormServiceItem[];
   refetch?: () => void;
-  onServicesChange?: (services: CreateNoteServiceInput[]) => void;
+  onServicesChange?: (services: NoteFormServiceItem[]) => void;
   close: () => void;
   type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
 }
@@ -161,13 +161,13 @@ export default function ServicesModal(props: IServicesModalProps) {
   );
 
   const computeInitial = useCallback(() => {
-    // Local mode: initialize from CreateNoteServiceInput[]
+    // Local mode: initialize from NoteFormServiceItem[]
     if (isLocalMode && initialLocalServices) {
       const existing: SelectedService[] = initialLocalServices
         .filter((s) => s.serviceId)
         .map((s) => ({
           serviceId: s.serviceId!,
-          label: '', // will be resolved from available categories
+          label: s.label || '',
           markedForDeletion: false,
         }));
 
@@ -257,13 +257,13 @@ export default function ServicesModal(props: IServicesModalProps) {
     setIsSubmitLoading(true);
     try {
       if (isLocalMode && onServicesChange) {
-        // Local mode: collect selected services into CreateNoteServiceInput[]
-        const selectedServices: CreateNoteServiceInput[] = [];
+        // Local mode: collect selected services into NoteFormServiceItem[]
+        const selectedServices: NoteFormServiceItem[] = [];
 
         // Standard services that are checked (not marked for deletion)
         for (const s of serviceRequests) {
           if (!s.markedForDeletion) {
-            selectedServices.push({ serviceId: s.serviceId });
+            selectedServices.push({ serviceId: s.serviceId, label: s.label });
           }
         }
 

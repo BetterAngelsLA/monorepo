@@ -2,7 +2,7 @@ import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
-import { ReactNode, useCallback, useRef } from 'react';
+import { ReactNode, useCallback } from 'react';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 import { useUserTeamPreference } from '../../state';
 
@@ -25,45 +25,24 @@ export function CreateClientInteractionBtn(props: TProps) {
     accessibilityHint = 'create new interaction',
   } = props;
 
-  // store in a ref as it's synchronous and safest to prevent double click
-  const isProcessing = useRef(false);
-
   const router = useRouter();
   const [teamPreference] = useUserTeamPreference();
 
   const handleNavigateToNewNote = useCallback(() => {
-    if (isProcessing.current) {
-      return;
+    const params: Record<string, string> = {
+      clientProfileId,
+    };
+    if (teamPreference) {
+      params.team = teamPreference;
     }
 
-    isProcessing.current = true;
-
-    try {
-      const params: Record<string, string> = {
-        clientProfileId,
-      };
-      if (teamPreference) {
-        params.team = teamPreference;
-      }
-
-      router.navigate({
-        pathname: '/add-note/new',
-        params,
-      });
-    } finally {
-      isProcessing.current = false;
-    }
+    router.navigate({
+      pathname: '/note/create',
+      params,
+    });
   }, [clientProfileId, teamPreference, router]);
 
-  const handlePress = () => {
-    if (isProcessing.current) {
-      return;
-    }
-
-    handleNavigateToNewNote();
-  };
-
-  const isDisabled = disabled || isProcessing.current;
+  const isDisabled = !!disabled;
 
   if (children) {
     return (
@@ -73,7 +52,7 @@ export function CreateClientInteractionBtn(props: TProps) {
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={accessibilityHint}
-        onPress={handlePress}
+        onPress={handleNavigateToNewNote}
       >
         {children}
       </Pressable>
@@ -87,7 +66,7 @@ export function CreateClientInteractionBtn(props: TProps) {
       borderColor={Colors.WHITE}
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      onPress={handlePress}
+      onPress={handleNavigateToNewNote}
     >
       <PlusIcon />
     </IconButton>

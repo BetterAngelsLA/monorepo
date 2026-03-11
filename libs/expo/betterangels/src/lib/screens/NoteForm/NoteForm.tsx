@@ -14,7 +14,7 @@ import {
   RequestedProvidedServices,
 } from '../../ui-components';
 import DateAndTime from './DateAndTime';
-import type { TNoteFormInputs } from './formSchema';
+import type { TNoteFormInputs } from './schema';
 import Location from './Location';
 import PublicNote from './PublicNote';
 import Purpose from './Purpose';
@@ -29,24 +29,14 @@ export interface NoteFormProps {
   setValue: UseFormSetValue<TNoteFormInputs>;
   /** Server query data (for location fallback + public note generation). */
   noteData?: ViewNoteQuery['note'] | null;
-  /** The note ID (or "new"). */
-  noteId: string;
-  /** Whether this is a brand-new note. */
-  isNewNote: boolean;
+  /** Whether the form is creating or editing an interaction. */
+  mode: 'create' | 'edit';
   /** Resolved client profile ID. */
   clientProfileId: string;
   /** Whether note is already submitted. */
   isSubmitted: boolean;
-  /** Whether we're in "edit" mode (vs "add"). */
-  isEditing: boolean;
-  /** Where the user came from (for cancel navigation). */
-  arrivedFrom?: string;
-  /** Called when user navigates back. */
-  onBack: () => void;
-  /** Called when user discards (cancel for non-editing). */
-  onDiscard: () => void;
-  /** Called to delete (cancel press in add mode for existing draft). */
-  onDelete: () => void;
+  /** Called when user cancels the form. */
+  onCancel: () => void;
   /** Called to save as draft. */
   onSaveDraft: () => void;
   /** Called to submit. */
@@ -58,17 +48,15 @@ export default function NoteForm(props: NoteFormProps) {
     form,
     setValue,
     noteData,
-    noteId,
-    isNewNote,
+    mode,
     clientProfileId,
     isSubmitted,
-    isEditing,
-    onBack,
-    onDiscard,
-    onDelete,
+    onCancel,
     onSaveDraft,
     onSubmit,
   } = props;
+
+  const isEditMode = mode === 'edit';
 
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [errors, setErrors] = useState({
@@ -77,7 +65,6 @@ export default function NoteForm(props: NoteFormProps) {
     date: false,
     time: false,
   });
-  const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
   const handleSubmit = () => {
@@ -119,7 +106,6 @@ export default function NoteForm(props: NoteFormProps) {
           onTeamChange={(v) => setValue('team', v, { shouldDirty: true })}
         />
         <Location
-          noteId={noteId}
           point={
             form.location?.point
               ? form.location.point
@@ -166,9 +152,6 @@ export default function NoteForm(props: NoteFormProps) {
           onPublicNoteChange={(v) =>
             setValue('publicNote', v, { shouldDirty: true })
           }
-          noteId={noteId}
-          isPublicNoteEdited={isPublicNoteEdited}
-          setIsPublicNoteEdited={setIsPublicNoteEdited}
           expanded={expanded}
           setExpanded={setExpanded}
           scrollRef={scrollRef}
@@ -179,11 +162,11 @@ export default function NoteForm(props: NoteFormProps) {
       </MainScrollContainer>
       <BottomActions
         cancel={
-          isEditing ? (
+          isEditMode ? (
             <DiscardModal
               title="Discard changes?"
               body="Any unsaved changes to this interaction will be lost."
-              onDiscard={onBack}
+              onDiscard={onCancel}
               button={
                 <TextButton
                   fontSize="sm"
@@ -196,7 +179,7 @@ export default function NoteForm(props: NoteFormProps) {
             <DiscardModal
               title="Discard interaction?"
               body="All data in this interaction will be lost."
-              onDiscard={isNewNote ? onDiscard : onDelete}
+              onDiscard={onCancel}
               button={
                 <TextButton
                   fontSize="sm"

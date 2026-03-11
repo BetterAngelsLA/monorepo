@@ -2,11 +2,8 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, Pill } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
-import {
-  CreateNoteServiceInput,
-  ServiceRequestTypeEnum,
-  ViewNoteQuery,
-} from '../../apollo';
+import { ServiceRequestTypeEnum, ViewNoteQuery } from '../../apollo';
+import { NoteFormServiceItem } from '../../screens/NoteForm/schema';
 import { normalizeService } from '../../helpers';
 import { useModalScreen } from '../../providers';
 import { enumDisplayServiceType } from '../../static';
@@ -16,11 +13,11 @@ interface IRequestedServicesProps {
   noteId?: string;
   scrollRef: RefObject<ScrollView | null>;
   services:
-    | CreateNoteServiceInput[]
+    | NoteFormServiceItem[]
     | ViewNoteQuery['note']['requestedServices']
     | ViewNoteQuery['note']['providedServices'];
   refetch?: () => void;
-  onServicesChange?: (services: CreateNoteServiceInput[]) => void;
+  onServicesChange?: (services: NoteFormServiceItem[]) => void;
   type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
 }
 
@@ -46,13 +43,13 @@ export default function RequestedProvidedServices(
   const isLocalMode = !!onServicesChange;
 
   if (isLocalMode) {
-    // Local mode: services are CreateNoteServiceInput[]
-    const localServices = initialServices as CreateNoteServiceInput[];
+    // Local mode: services are NoteFormServiceItem[] (with optional display label)
+    const localServices = initialServices as NoteFormServiceItem[];
     localServices.forEach((s) => {
-      if (s.serviceOther) {
-        displayLabels.push(s.serviceOther);
+      const display = s.label || s.serviceOther;
+      if (display) {
+        displayLabels.push(display);
       }
-      // For serviceId-only entries, we show the ID (label will be resolved by ServicesModal)
     });
   } else {
     // Server mode: services are ViewNoteQuery shape
@@ -130,7 +127,7 @@ export default function RequestedProvidedServices(
               initialServiceRequests={normalizedServiceRequests}
               initialLocalServices={
                 isLocalMode
-                  ? (initialServices as CreateNoteServiceInput[])
+                  ? (initialServices as NoteFormServiceItem[])
                   : undefined
               }
               refetch={refetch}
