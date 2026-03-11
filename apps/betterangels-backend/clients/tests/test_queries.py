@@ -3,6 +3,7 @@ from typing import Optional
 from unittest.mock import ANY
 
 import time_machine
+import waffle
 from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import (
     AdaAccommodationEnum,
@@ -154,6 +155,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(client_profiles_data["totalCount"], client_profile_count)
         self.assertEqual(client_profiles_data["pageInfo"], {"limit": 10, "offset": 0})
 
+    @override_settings(IMGPROXY_KEY="736563726574", IMGPROXY_SALT="68656C6C6F", IMGPROXY_PATH_PREFIX="imgproxy")
     def test_client_profiles_query_with_processed_photo(self) -> None:
         get_waffle_switch_model().objects.create(name=IMGPROXY_SWITCH, active=True)
         self._update_client_profile_photo_fixture(self.client_profile_2["id"])
@@ -175,6 +177,10 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }}
             }}
         """
+
+        # Warm waffle cache so is_imgproxy_enabled() doesn't add a flaky extra query
+        # when resolving profilePhoto.url for each result.
+        waffle.switch_is_active(IMGPROXY_SWITCH)
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
