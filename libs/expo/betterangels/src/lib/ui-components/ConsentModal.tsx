@@ -100,7 +100,6 @@ export default function ConsentModal({
 
   const insets = useSafeAreaInsets();
   const topOffset = insets.top;
-  const bottomOffset = insets.bottom;
 
   const windowHeight = Dimensions.get('window').height;
 
@@ -209,7 +208,6 @@ export default function ConsentModal({
         // Stretch inner content so header/body/footer spacing matches original
         flex: 1,
         paddingTop: 0, // handle sits at true top of the card
-        paddingBottom: bottomOffset + Spacings.xs,
       }}
     >
       {accepted ? (
