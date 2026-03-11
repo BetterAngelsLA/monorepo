@@ -3,13 +3,13 @@ from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
-from accounts.models import Organization, User
-from accounts.permissions import UserOrganizationPermissions
+from accounts.models import User
+from accounts.permissions import get_user_permitted_org
 from common.permissions.utils import IsAuthenticated
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
-from strawberry_django.utils.query import filter_for_user
 
+from .permissions import REPORT_PERMISSION
 from .selectors import report_default_date_range, report_summary
 
 
@@ -47,18 +47,19 @@ class Query:
     def report_summary(
         self,
         info: Info,
+        organization_id: Optional[strawberry.ID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
     ) -> ReportSummaryType:
         current_user = cast(User, get_current_user(info))
-        org = filter_for_user(
-            Organization.objects.filter(users=current_user),
+        org = get_user_permitted_org(
             current_user,
-            [UserOrganizationPermissions.ACCESS_ORG_PORTAL],
-        ).first()
+            [REPORT_PERMISSION],
+            org_id=str(organization_id) if organization_id else None,
+        )
 
         if org is None:
-            raise PermissionError("You do not have access to any organization portal.")
+            raise PermissionError("You do not have permission to view reports.")
 
         if start_date is None or end_date is None:
             default_start, default_end = report_default_date_range()

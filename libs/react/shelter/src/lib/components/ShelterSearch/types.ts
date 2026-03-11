@@ -8,6 +8,7 @@ import {
 } from '../../apollo';
 
 export type TShelterPropertyFilters = {
+  openNow?: boolean | null;
   demographics?: DemographicChoices[] | null;
   parking?: ParkingChoices[] | null;
   pets?: PetChoices[] | null;
