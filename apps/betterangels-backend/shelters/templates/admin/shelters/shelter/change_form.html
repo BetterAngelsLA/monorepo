@@ -29,9 +29,6 @@
     #schedules-group .inline-related.collapsed > .form-row { display: none; }
     #schedules-group .inline-related h3 b { display: none; }
     #schedules-group .inline-related h3 .inline_label { font-weight: 600; }
-    /* Schedule type group headers */
-    .schedule-group-header { background: #f0f4f8; padding: 6px 12px; margin: 12px 0 4px; border-radius: 4px; font-weight: 700; font-size: .85rem; color: #417690; text-transform: uppercase; letter-spacing: .04em; }
-    .schedule-group-header:first-child { margin-top: 0; }
     .schedule-type-label { font-size: .75rem; color: #fff; background: #417690; padding: 1px 6px; border-radius: 3px; margin-right: .5em; vertical-align: middle; }
     .schedule-type-label--intake { background: #6b7280; }
     .schedule-type-label--meal_service { background: #059669; }
@@ -39,7 +36,9 @@
     /* Expand / Collapse all toggle */
     .schedule-toggle-all { float: right; font-size: .75rem; font-weight: normal; cursor: pointer; color: #417690; text-decoration: underline; }
     .schedule-toggle-all:hover { color: #205067; }
-    /* Entry count in group headers */
+    /* Schedule group headers (saved entries only) */
+    .schedule-group-header { background: #f0f4f8; padding: 6px 12px; margin: 12px 0 4px; border-radius: 4px; font-weight: 700; font-size: .85rem; color: #417690; text-transform: uppercase; letter-spacing: .04em; }
+    .schedule-group-header:first-child { margin-top: 0; }
     .schedule-group-count { font-weight: 400; font-size: .75rem; color: #888; margin-left: .4em; }
     </style>
 {% endblock extrastyle %}
@@ -277,9 +276,9 @@
                     ? 'Closed ' + fmtTimeRange(openVal, closeVal)
                     : 'Closed all day';
 
-                // Exception type badge
+                // Exception type badge (only for unsaved entries — saved ones are grouped)
                 var exSchedType = typeEl ? typeEl.value : '';
-                if (exSchedType) {
+                if (exSchedType && !formDiv.classList.contains('has_original')) {
                     var exTypeLabel = TYPE_LABELS[exSchedType] || exSchedType;
                     var exTypeBadge = document.createElement('span');
                     exTypeBadge.className = 'schedule-type-label' + (exSchedType !== 'operating' ? ' schedule-type-label--' + exSchedType : '');
@@ -306,12 +305,14 @@
                 var closeVal = closeEl ? closeEl.value : '';
                 var hours = fmtTimeRange(openVal, closeVal);
 
-                // Schedule type badge
-                var typeLabel = TYPE_LABELS[schedType] || schedType;
-                var typeBadge = document.createElement('span');
-                typeBadge.className = 'schedule-type-label' + (schedType !== 'operating' ? ' schedule-type-label--' + schedType : '');
-                typeBadge.textContent = typeLabel;
-                container.appendChild(typeBadge);
+                // Schedule type badge (only for unsaved entries — saved ones are grouped)
+                if (!formDiv.classList.contains('has_original')) {
+                    var typeLabel = TYPE_LABELS[schedType] || schedType;
+                    var typeBadge = document.createElement('span');
+                    typeBadge.className = 'schedule-type-label' + (schedType !== 'operating' ? ' schedule-type-label--' + schedType : '');
+                    typeBadge.textContent = typeLabel;
+                    container.appendChild(typeBadge);
+                }
 
                 container.appendChild(document.createTextNode(dayLabel));
                 if (hours) container.appendChild(document.createTextNode(': ' + hours));
@@ -362,32 +363,33 @@
             }
         }
 
-        /* ── Visual group headers by schedule_type ──── */
+        /* ── Group headers for saved entries only ───── */
         function insertGroupHeaders() {
             if (!schedGroup) return;
-            // Remove existing headers
+            // Remove old headers
             var old = schedGroup.querySelectorAll('.schedule-group-header');
             for (var o = 0; o < old.length; o++) old[o].parentNode.removeChild(old[o]);
 
-            var forms = schedGroup.querySelectorAll('.inline-related:not(.empty-form)');
-            // First pass: count entries per group
+            // Only group saved (has_original) entries — new entries keep their position
+            var saved = schedGroup.querySelectorAll('.inline-related.has_original');
+            var unsaved = schedGroup.querySelectorAll('.inline-related:not(.has_original):not(.empty-form)');
+
+            // Count saved entries per group
             var groupCounts = {};
-            for (var i = 0; i < forms.length; i++) {
-                var formDiv = forms[i];
-                var pfx = 'schedules-' + (formDiv.id || '').replace('schedules-', '');
+            for (var i = 0; i < saved.length; i++) {
+                var pfx = 'schedules-' + (saved[i].id || '').replace('schedules-', '');
                 var delEl = document.getElementById('id_' + pfx + '-DELETE');
                 if (delEl && delEl.checked) continue;
                 var typeEl = document.getElementById('id_' + pfx + '-schedule_type');
                 var exEl = document.getElementById('id_' + pfx + '-is_exception');
-                var curType = typeEl ? typeEl.value : '';
-                var curException = exEl ? exEl.checked : false;
-                var groupKey = (curException ? 'exception-' : '') + curType;
+                var groupKey = (exEl && exEl.checked ? 'exception-' : '') + (typeEl ? typeEl.value : '');
                 groupCounts[groupKey] = (groupCounts[groupKey] || 0) + 1;
             }
-            // Second pass: insert headers
+
+            // Insert headers among saved entries
             var lastGroupKey = null;
-            for (var i = 0; i < forms.length; i++) {
-                var formDiv = forms[i];
+            for (var i = 0; i < saved.length; i++) {
+                var formDiv = saved[i];
                 var pfx = 'schedules-' + (formDiv.id || '').replace('schedules-', '');
                 var delEl = document.getElementById('id_' + pfx + '-DELETE');
                 if (delEl && delEl.checked) continue;
@@ -410,6 +412,18 @@
                     header.appendChild(countSpan);
                     formDiv.parentNode.insertBefore(header, formDiv);
                 }
+            }
+
+            // If there are unsaved entries, add a "New Entries" header before the first one
+            if (unsaved.length > 0) {
+                var newHeader = document.createElement('div');
+                newHeader.className = 'schedule-group-header';
+                newHeader.textContent = 'New Entries';
+                var newCount = document.createElement('span');
+                newCount.className = 'schedule-group-count';
+                newCount.textContent = '(' + unsaved.length + ')';
+                newHeader.appendChild(newCount);
+                unsaved[0].parentNode.insertBefore(newHeader, unsaved[0]);
             }
         }
 

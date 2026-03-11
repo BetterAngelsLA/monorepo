@@ -7,7 +7,7 @@ import {
 import {
   Form,
   LoadingView,
-  MediaPickerModal,
+  MediaPicker,
 } from '@monorepo/expo/shared/ui-components';
 import { readFileAsBase64 } from '@monorepo/expo/shared/utils';
 import { useQueryClient } from '@tanstack/react-query';
@@ -206,19 +206,12 @@ export default function UploadModalHmis(props: TProps) {
         />
       )}
 
-      <MediaPickerModal
-        onCapture={(file) => {
-          setDocument(file);
-        }}
+      <MediaPicker
         allowMultiple={false}
-        setModalVisible={setMediaPickerVisible}
-        isModalVisible={mediaPickerVisible}
-        setFiles={(files) => {
-          setDocument(files[0]);
-        }}
-        labels={{
-          file: 'From Files folder',
-        }}
+        isOpen={mediaPickerVisible}
+        onClose={() => setMediaPickerVisible(false)}
+        onCameraCapture={(file) => setDocument(file)}
+        onFilesSelected={(files) => setDocument(files[0])}
       />
     </Form.Page>
   );
