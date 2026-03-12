@@ -34,7 +34,7 @@ const variantClasses: Record<TextVariant, string> = {
   subheading: 'font-medium text-[1.25rem]',
   'subheading-regular': 'font-normal text-[1.25rem]',
   btn: 'font-medium text-[1.125rem]',
-  'body-lg': 'font-normal text-[1.125rem]',
+  'body-lg': 'font-normal text-[#1C1B1F] text-[1.125rem]',
   'body-bold': 'font-medium text-[1rem]',
   body: 'font-normal text-[1rem]',
   'body-light': 'font-light text-[1rem]',
