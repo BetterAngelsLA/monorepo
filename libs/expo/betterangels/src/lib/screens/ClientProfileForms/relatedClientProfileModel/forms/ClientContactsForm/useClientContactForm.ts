@@ -1,10 +1,14 @@
-import { ApolloClient } from '@apollo/client';
+import { ApolloClient, CombinedGraphQLErrors } from '@apollo/client';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
 import { Router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
-import { extractOperationFieldErrors } from '../../../../../apollo';
-import { applyOperationFieldErrors } from '../../../../../errors';
+import { UseFormSetError, useForm, useWatch } from 'react-hook-form';
+import {
+  OperationMessage,
+  extractOperationInfo,
+  extractResponseExtensions,
+} from '../../../../../apollo';
+import { applyManualFormErrors } from '../../../../../errors';
 import { TShowSnackbar } from '../../../../../providers/snackbar/SnackbarProvider';
 import {
   ClientProfileSectionEnum,
@@ -19,7 +23,7 @@ import {
   UpdateClientContactMutation,
 } from './__generated__/clientContact.generated';
 import { defaultFormState, toFormState } from './toFormState';
-import { TClientContactFormState } from './types';
+import { TClientContactFormState, TFormKey } from './types';
 
 type TProps = {
   clientProfile?: TClientProfile;
@@ -101,30 +105,13 @@ export function useClientContactForm(props: TProps) {
         throw new Error(`${mutationKey} response missing.`);
       }
 
-      const fieldErrors = relationId
-        ? extractOperationFieldErrors<
-            UpdateClientContactMutation,
-            'updateClientContact'
-          >({
-            data: response.data as
-              | UpdateClientContactMutation
-              | null
-              | undefined,
-            dataKey: 'updateClientContact',
-          })
-        : extractOperationFieldErrors<
-            CreateClientContactMutation,
-            'createClientContact'
-          >({
-            data: response.data as
-              | CreateClientContactMutation
-              | null
-              | undefined,
-            dataKey: 'createClientContact',
-          });
+      const errorsApplied = applyValidationErrors(
+        response,
+        mutationKey,
+        setError
+      );
 
-      if (fieldErrors.length) {
-        applyOperationFieldErrors(fieldErrors, setError);
+      if (errorsApplied) {
         return false;
       }
 
@@ -201,4 +188,51 @@ function isSuccessMutationResponse(
   }
 
   return false;
+}
+
+function applyValidationErrors(
+  response: ApolloClient.MutateResult<
+    CreateClientContactMutation | UpdateClientContactMutation
+  >,
+  key: 'updateClientContact' | 'createClientContact',
+  setError: UseFormSetError<TClientContactFormState>
+): boolean {
+  let hasErrors = false;
+
+  const operationInfo = extractOperationInfo(response, key);
+  const operationMessages: OperationMessage[] = operationInfo?.messages || [];
+
+  const formKeys: TFormKey[] = [
+    'name',
+    'email',
+    'phoneNumber',
+    'mailingAddress',
+    'relationshipToClient',
+  ];
+
+  operationMessages.forEach((m) => {
+    const err =
+      formKeys.includes(m.field as TFormKey) && m.kind === 'VALIDATION';
+
+    if (err) {
+      setError(m.field as TFormKey, {
+        type: 'manual',
+        message: m.message || 'Invalid field.',
+      });
+
+      hasErrors = true;
+    }
+  });
+
+  if (CombinedGraphQLErrors.is(response)) {
+    const responseExtensions = extractResponseExtensions(response);
+
+    if (responseExtensions) {
+      applyManualFormErrors(responseExtensions, setError);
+
+      hasErrors = true;
+    }
+  }
+
+  return hasErrors;
 }

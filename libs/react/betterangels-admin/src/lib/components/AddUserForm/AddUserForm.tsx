@@ -51,7 +51,6 @@ export function AddUserForm(props: TProps) {
             organizationId,
           },
         },
-        errorPolicy: 'all',
       });
 
       const errorMessage = extractOperationInfoMessage(
