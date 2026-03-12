@@ -45,7 +45,7 @@ export function AppSidebar(props: IProps) {
     <Sidebar className={mergeCss(className)} onOpenChange={setIsOpen}>
       <Sidebar.Header>
         <div className="flex items-center w-full relative" ref={dropdownRef}>
-          <BetterAngelsLogoBadge className="ml-1 mr-2 flex-shrink-0" />
+          <BetterAngelsLogoBadge className="ml-1 mr-2 shrink-0" />
 
           {activeOrg?.name && isOpen && (
             <div className="flex flex-col flex-1 min-w-0">
@@ -53,12 +53,12 @@ export function AppSidebar(props: IProps) {
                 <button
                   type="button"
                   onClick={() => setDropdownOpen((prev) => !prev)}
-                  className="flex items-center gap-1 text-primary-20 font-semibold text-lg leading-tight truncate bg-transparent border-none outline-none cursor-pointer p-0 hover:text-primary-60 transition-colors"
+                  className="flex items-center gap-1 text-primary-20 font-semibold text-lg leading-tight truncate bg-transparent border-none outline-hidden cursor-pointer p-0 hover:text-primary-60 transition-colors"
                 >
                   <span className="truncate">{activeOrg.name}</span>
                   <ChevronUpIcon
                     className={mergeCss([
-                      'w-3 h-3 flex-shrink-0 transition-transform duration-200',
+                      'w-3 h-3 shrink-0 transition-transform duration-200',
                       dropdownOpen ? '' : 'rotate-180',
                     ])}
                     fill="currentColor"

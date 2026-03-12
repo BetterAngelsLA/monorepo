@@ -70,7 +70,7 @@ export function LocationPicker({
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <div className="w-full h-[300px] rounded-md overflow-hidden border border-gray-300 shadow-sm">
+      <div className="w-full h-[300px] rounded-md overflow-hidden border border-gray-300 shadow-xs">
         <GoogleMap
           mapId={SHELTER_MAP_ID}
           className="w-full h-full"

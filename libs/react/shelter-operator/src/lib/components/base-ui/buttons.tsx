@@ -81,7 +81,7 @@ export function Button(props: IButtonProps) {
     (!isIconOnly && (isSmall ? <Plus size={24} /> : <BookCheck size={29} />));
 
   const buttonCss = [
-    'font-sans font-normal focus:outline-none transition-all inline-flex items-center h-fit whitespace-nowrap',
+    'font-sans font-normal focus:outline-hidden transition-all inline-flex items-center h-fit whitespace-nowrap',
     variantClasses[variant],
     className,
   ]

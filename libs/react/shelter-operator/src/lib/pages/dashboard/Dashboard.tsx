@@ -140,7 +140,7 @@ export default function Dashboard() {
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Search shelters"
-          className="px-6 py-2 rounded-3xl border outline-none shadow-sm my-4"
+          className="px-6 py-2 rounded-3xl border border-gray-300 outline-hidden shadow-xs my-4"
         />
       </form>
 
@@ -149,7 +149,7 @@ export default function Dashboard() {
       </div>
 
       {/* TABLE */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden w-full">
+      <div className="bg-white rounded-2xl shadow-xs overflow-hidden w-full">
         {/* HEADER */}
         <div className="grid grid-cols-[1fr_1.5fr_0.5fr] items-center px-6 py-3 text-xs font-semibold uppercase tracking-wider text-gray-700 bg-gray-50 border-b border-gray-200">
           <div>Shelter Name</div>

@@ -1,5 +1,6 @@
 /// <reference types='vitest' />
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
@@ -8,7 +9,7 @@ import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
 const SERVER_PORT = 8200;
 const SERVER_PORT_PREVIEW = 8201;
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   base: process.env.VITE_APP_BASE_PATH || '/',
   root: __dirname,
   cacheDir: '../../node_modules/.vite/apps/wildfires',
@@ -40,6 +41,17 @@ export default defineConfig({
 
   plugins: [react(), rawSvgPlugin(), nxViteTsPaths()],
 
+  css: {
+    postcss: {
+      plugins: [
+        tailwindcss({
+          base: path.resolve(__dirname, '../..'),
+          optimize: mode === 'development' ? { minify: false } : undefined,
+        }),
+      ],
+    },
+  },
+
   // Uncomment this if you are using workers.
   // worker: {
   //  plugins: [ nxViteTsPaths() ],
@@ -53,4 +65,4 @@ export default defineConfig({
       transformMixedEsModules: true,
     },
   },
-});
+}));
