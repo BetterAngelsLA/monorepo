@@ -15,12 +15,10 @@ from clients.enums import (
 )
 from common.graphql.types import (
     AttachmentInterface,
-    BaImageType,
     NonBlankString,
     PhoneNumberInput,
     PhoneNumberScalar,
     PhoneNumberType,
-    resolve_image,
 )
 from common.models import Attachment
 from django.db.models import Exists, Max, OuterRef, Q, QuerySet
@@ -337,10 +335,7 @@ class ClientProfileType(ClientProfileBaseType):
     doc_ready_documents: Optional[List[ClientDocumentType]]
     consent_form_documents: Optional[List[ClientDocumentType]]
     other_documents: Optional[List[ClientDocumentType]]
-
-    @strawberry_django.field(only=["profile_photo"])
-    def profile_photo(self) -> Optional[BaImageType]:
-        return resolve_image(self.profile_photo)
+    profile_photo: auto
 
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:

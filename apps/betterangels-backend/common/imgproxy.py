@@ -5,6 +5,7 @@ from typing import Optional, cast
 
 import waffle
 from django.conf import settings
+from django.core.files.storage import default_storage
 
 IMGPROXY_SWITCH = "imgproxy_enabled"
 
@@ -88,8 +89,6 @@ def build_imgproxy_url(
 
     # --- production: CloudFront domain + signing via storage backend ---
     if storage is None:
-        from django.core.files.storage import default_storage
-
         storage = default_storage
 
     domain = getattr(storage, "custom_domain", None)

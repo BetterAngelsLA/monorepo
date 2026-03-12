@@ -216,23 +216,35 @@ class BaImageType:
 
         return ""
 
+    @classmethod
+    def from_field_file(
+        cls, file: Union[FieldFile, ImageFieldFile, None]
+    ) -> Optional["BaImageType"]:
+        """Build ``BaImageType`` from a Django ``FieldFile`` / ``ImageFieldFile``.
+
+        Returns ``None`` when the field is empty (no file uploaded). Used by
+        strawberry_django when resolving ``ImageField`` auto fields so that
+        ``profile_photo: auto`` works without a custom resolver.
+        """
+        if not file:
+            return None
+
+        return cls(
+            name=getattr(file, "name", "") or "",
+            path=getattr(file, "path", "") if hasattr(file, "path") else "",
+            size=getattr(file, "size", 0) or 0,
+            width=getattr(file, "width", 0) or 0,
+            height=getattr(file, "height", 0) or 0,
+            _file=file,
+        )
+
 
 def resolve_image(file: Union[FieldFile, ImageFieldFile]) -> Optional[BaImageType]:
     """Convert a Django ``FieldFile`` / ``ImageFieldFile`` to ``BaImageType``.
 
     Returns ``None`` when the field is empty (no file uploaded).
     """
-    if not file:
-        return None
-
-    return BaImageType(
-        name=getattr(file, "name", "") or "",
-        path=getattr(file, "path", "") if hasattr(file, "path") else "",
-        size=getattr(file, "size", 0) or 0,
-        width=getattr(file, "width", 0) or 0,
-        height=getattr(file, "height", 0) or 0,
-        _file=file,
-    )
+    return BaImageType.from_field_file(file)
 
 
 @strawberry_django.type(Location)
