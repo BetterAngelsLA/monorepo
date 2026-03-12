@@ -16,7 +16,7 @@ export function ModalMask(props: IProps) {
 
   const parentCss: string = [
     // z-index should be above z-index of google skiptranslate bar, which is 10000001
-    'z-[90000001]',
+    'z-90000001',
     'top-0',
     'left-0',
     'right-0',
@@ -25,7 +25,7 @@ export function ModalMask(props: IProps) {
     'flex',
     'justify-center',
     'items-center',
-    'bg-gray-500/20 backdrop-blur',
+    'bg-gray-500/20 backdrop-blur-sm',
     className,
   ].join(' ');
 

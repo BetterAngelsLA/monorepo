@@ -26,6 +26,7 @@ from .lookups import (  # noqa: F401
     TrainingService,
 )
 from .media import ExteriorPhoto, InteriorPhoto, Video, upload_path  # noqa: F401
+from .reservation import Reservation, ReservationClient  # noqa: F401
 from .schedule import Schedule  # noqa: F401
 from .shelter import (  # noqa: F401
     Bed,

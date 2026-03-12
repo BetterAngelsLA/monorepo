@@ -643,15 +643,6 @@ input CreateProfileDataImportInput {
   notes: String
 }
 
-input CreateServiceRequestInput {
-  serviceId: ID
-  status: ServiceRequestStatusEnum!
-  serviceOther: String
-  clientProfile: ID
-}
-
-union CreateServiceRequestPayload = ServiceRequestType | OperationInfo
-
 input CreateShelterInput {
   name: String!
   description: String!
@@ -1442,10 +1433,7 @@ type Mutation {
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
-  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_servicerequest"}], any: true)
-  removeNoteServiceRequest(data: RemoveNoteServiceRequestInput!): RemoveNoteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "delete_servicerequest"}], any: true)
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
@@ -1855,14 +1843,6 @@ input RemoveHmisNoteServiceRequestInput {
 
 union RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo
 
-input RemoveNoteServiceRequestInput {
-  serviceRequestId: ID!
-  noteId: ID!
-  serviceRequestType: ServiceRequestTypeEnum!
-}
-
-union RemoveNoteServiceRequestPayload = NoteType | OperationInfo
-
 input RemoveOrganizationMemberInput {
   id: ID!
   organizationId: ID!
@@ -2014,6 +1994,7 @@ input ShelterFilter {
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
+  openNow: Boolean
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
 }
@@ -2434,6 +2415,10 @@ input UpdateNoteInput {
   privateDetails: String
   isSubmitted: Boolean
   interactedAt: DateTime
+  location: LocationInput
+  providedServices: [CreateNoteServiceInput!]
+  requestedServices: [CreateNoteServiceInput!]
+  tasks: [CreateNoteTaskInput!]
 }
 
 input UpdateNoteLocationInput {
@@ -2444,15 +2429,6 @@ input UpdateNoteLocationInput {
 union UpdateNoteLocationPayload = NoteType | OperationInfo
 
 union UpdateNotePayload = NoteType | OperationInfo
-
-input UpdateServiceRequestInput {
-  id: ID!
-  serviceOther: String
-  status: ServiceRequestStatusEnum
-  dueBy: DateTime
-}
-
-union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
 
 union UpdateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 

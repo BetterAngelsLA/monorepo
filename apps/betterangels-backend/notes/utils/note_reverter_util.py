@@ -28,7 +28,6 @@ class NoteReverter:
         "createNoteTask",
         "deleteServiceRequest",
         "deleteTask",
-        "removeNoteServiceRequest",
         "removeNoteTask",
         "updateNoteLocation",
         "updateServiceRequest",
