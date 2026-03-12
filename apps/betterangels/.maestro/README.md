@@ -117,10 +117,6 @@ The script:
 - converts variables into `-e KEY=value`
 - runs the Maestro CLI
 
----
-
-## Running on a specific platform
-
 **Examples:**
 
 - Run all tests on **iOS** (default)
@@ -180,6 +176,22 @@ MAESTRO_DEEPLINK=exp+betterangels://expo-development-client/?url=http://192.168.
 This deep link tells the Expo development client which local Metro server to connect to.
 
 You can find this value in the Expo CLI output when running the app.
+
+---
+
+## Running Maestro Directly (Optional)
+
+If you prefer to run the Maestro CLI directly instead of using the wrapper script, you can pass environment variables manually using `-e`.
+
+You must also specify the platform using `-p` or `--platform`.
+
+**Example:**
+
+```bash
+maestro --verbose -p android test apps/betterangels/.maestro/tests \
+  -e MAESTRO_DEEPLINK="exp+betterangels://expo-development-client/?url=http://192.168.1.198:8081" \
+  -e SOME_OTHER_VAR=value
+```
 
 ---
 
