@@ -229,7 +229,9 @@ class ReferralRequirementChoices(models.TextChoices):
 @strawberry.enum
 class BedStatusChoices(models.TextChoices):
     AVAILABLE = "available", _("Available")
+    OCCUPIED = "occupied", _("Occupied")
     RESERVED = "reserved", _("Reserved")
+    OUT_OF_SERVICE = "out_of_service", _("Out-of-Service")
 
 
 @strawberry.enum
@@ -251,6 +253,8 @@ class BedTypeChoices(models.TextChoices):
 class MedicalNeedChoices(models.TextChoices):
     ERC = "erc", _("ERC (Enrich Residential Care)")
     DMH = "dmh", _("DMH Beds (Dept of Mental Health)")
+    OXYGEN = "oxygen", _("Oxygen")
+    DIALYSIS = "dialysis", _("Dialysis")
 
 
 @strawberry.enum

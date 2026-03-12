@@ -229,6 +229,7 @@ class Shelter(BaseModel):
 
 class Bed(BaseModel):
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="beds")
+    bed_name = models.CharField(max_length=255, blank=True, null=True)
     status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
     status_notes = models.TextField(blank=True, null=True)
     occupant = models.ForeignKey(
@@ -243,12 +244,12 @@ class Bed(BaseModel):
     accessibility = models.ManyToManyField(Accessibility, blank=True)
     funders = models.ManyToManyField(Funder, blank=True)
     pets = models.ManyToManyField(Pet, blank=True)
-    storage = models.ManyToManyField(Storage, blank=True)
+    storage = models.BooleanField(default=False, blank=True)
     maintenance_flag = models.BooleanField(default=False, blank=True)
     last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
     medical_needs = TextChoicesField(choices_enum=MedicalNeedChoices, blank=True, null=True)
     b7 = models.BooleanField(default=False, blank=True)
-    fees = models.CharField(max_length=255, blank=True, null=True)
+    fees = models.PositiveIntegerField(blank=True, null=True)
 
     class Meta:
         indexes = [

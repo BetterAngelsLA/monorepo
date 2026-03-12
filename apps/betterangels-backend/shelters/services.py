@@ -186,18 +186,33 @@ def shelter_create(*, data: Dict[str, Any]) -> Shelter:
     return shelter
 
 
-@transaction.atomic
+_BED_M2M_FIELDS = _get_m2m_field_names(Bed)
+
+
 def bed_create(*, data: Dict[str, Any]) -> Bed:
     """Create a new Bed associated with an existing Shelter.
 
-    Accepts a plain dict with ``shelter_id`` and ``status``.
+    Accepts a plain dict matching ``CreateBedInput``.  M2M fields
+    (``demographics``, ``accessibility``, ``funders``, ``pets``) are
+    resolved via the enum-backed lookup-table pattern.
 
     Raises:
         ``Shelter.DoesNotExist`` when the referenced shelter is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    shelter = Shelter.objects.get(pk=data["shelter_id"])
-    bed = Bed(shelter=shelter, status=data["status"])
-    bed.full_clean()
-    bed.save()
+    data = dict(data)
+    shelter = Shelter.objects.get(pk=data.pop("shelter_id"))
+    m2m_data: Dict[str, List[Any]] = {
+        k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and data[k] is not None
+    }
+
+    # Drop None values so model defaults apply
+    scalar_data = {k: v for k, v in data.items() if v is not None}
+
+    with transaction.atomic():
+        bed = Bed(shelter=shelter, **scalar_data)
+        bed.full_clean()
+        bed.save()
+        _set_m2m_from_enums(bed, m2m_data)
+
     return bed

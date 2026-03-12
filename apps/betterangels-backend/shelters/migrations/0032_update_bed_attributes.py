@@ -16,6 +16,11 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="bed",
+            name="bed_name",
+            field=models.CharField(blank=True, max_length=255, null=True),
+        ),
+        migrations.AddField(
+            model_name="bed",
             name="status_notes",
             field=models.TextField(blank=True, null=True),
         ),
@@ -69,7 +74,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="bed",
             name="storage",
-            field=models.ManyToManyField(blank=True, to="shelters.storage"),
+            field=models.BooleanField(blank=True, default=False),
         ),
         migrations.AddField(
             model_name="bed",
@@ -89,9 +94,11 @@ class Migration(migrations.Migration):
                 choices=[
                     ("erc", "ERC (Enrich Residential Care)"),
                     ("dmh", "DMH Beds (Dept of Mental Health)"),
+                    ("oxygen", "Oxygen"),
+                    ("dialysis", "Dialysis"),
                 ],
                 choices_enum=shelters.enums.MedicalNeedChoices,
-                max_length=3,
+                max_length=8,
                 null=True,
             ),
         ),
@@ -103,6 +110,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="bed",
             name="fees",
-            field=models.CharField(blank=True, max_length=255, null=True),
+            field=models.PositiveIntegerField(blank=True, null=True),
         ),
     ]

@@ -10,6 +10,7 @@ from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
     BedStatusChoices,
+    BedTypeChoices,
     ConditionChoices,
     DayOfWeekChoices,
     DemographicChoices,
@@ -20,6 +21,7 @@ from shelters.enums import (
     HealthServiceChoices,
     ImmediateNeedChoices,
     MealServiceChoices,
+    MedicalNeedChoices,
     ParkingChoices,
     PetChoices,
     ReferralRequirementChoices,
@@ -134,4 +136,17 @@ class CreateShelterInput:
 @strawberry.input
 class CreateBedInput:
     shelter_id: ID
-    status: BedStatusChoices
+    status: Optional[BedStatusChoices] = None
+    bed_name: Optional[str] = None
+    status_notes: Optional[str] = None
+    bed_type: Optional[BedTypeChoices] = None
+    demographics: Optional[List[DemographicChoices]] = None
+    accessibility: Optional[List[AccessibilityChoices]] = None
+    funders: Optional[List[FunderChoices]] = None
+    pets: Optional[List[PetChoices]] = None
+    storage: Optional[bool] = None
+    maintenance_flag: Optional[bool] = None
+    last_cleaned_inspected: Optional[str] = None
+    medical_needs: Optional[MedicalNeedChoices] = None
+    b7: Optional[bool] = None
+    fees: Optional[int] = None
