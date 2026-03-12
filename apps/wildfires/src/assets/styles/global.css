@@ -12,24 +12,24 @@
 
   --font-primary: IBM Plex Sans, sans-serif;
 
-  --color-brand-orange: var(--color-brand-orange);
-  --color-brand-yellow: var(--color-brand-yellow);
-  --color-brand-yellow-light: var(--color-brand-yellow-light);
-  --color-brand-sky-blue: var(--color-brand-sky-blue);
-  --color-brand-angel-blue: var(--color-brand-angel-blue);
-  --color-brand-dark-blue: var(--color-brand-dark-blue);
-  --color-primary-20: var(--color-primary-20);
-  --color-primary-60: var(--color-primary-60);
-  --color-primary-95: var(--color-primary-95);
-  --color-steel-blue: var(--color-steel-blue);
-  --color-neutral-40: var(--color-neutral-40);
-  --color-neutral-55: var(--color-neutral-55);
-  --color-neutral-70: var(--color-neutral-70);
-  --color-neutral-90: var(--color-neutral-90);
-  --color-neutral-98: var(--color-neutral-98);
-  --color-neutral-99: var(--color-neutral-99);
-  --color-success-30: var(--color-success-30);
-  --color-success-90: var(--color-success-90);
+  --color-brand-orange: #ff902e;
+  --color-brand-yellow: #fff82e;
+  --color-brand-yellow-light: #fffed5;
+  --color-brand-sky-blue: #9cdced;
+  --color-brand-angel-blue: #f2fafc;
+  --color-brand-dark-blue: #1e3342;
+  --color-primary-20: #052b73;
+  --color-primary-60: #216af8;
+  --color-primary-95: #dae7ff;
+  --color-steel-blue: #375c76;
+  --color-neutral-40: #62676f;
+  --color-neutral-55: #7e8590;
+  --color-neutral-70: #a8aeb8;
+  --color-neutral-90: #d3d9e3;
+  --color-neutral-98: #e8ecf2;
+  --color-neutral-99: #f4f6fd;
+  --color-success-30: #007934;
+  --color-success-90: #ddf8e8;
 
   @keyframes slideInUp {
     0% {
