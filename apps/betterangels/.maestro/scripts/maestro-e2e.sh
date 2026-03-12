@@ -78,19 +78,28 @@ FLOW_ARGS=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
 
-    # Global Maestro flags (e.g. --verbose, -p ios)
-    --*|-p)
+    # Platform flags
+    -p|--platform)
 
-      GLOBAL_FLAGS+=("$1")
+      FLAG="$1"
+      GLOBAL_FLAGS+=("$FLAG")
       shift
 
       # Some flags require a value (e.g. -p ios)
       # Only consume a second argument if it exists
       # and does not start with "-"
-      if [[ "$1" != -* && -n "${1:-}" ]]; then
-        GLOBAL_FLAGS+=("$1")
+      if [[ $# -gt 0 && "$1" != -* ]]; then
+        VALUE="$1"
+        GLOBAL_FLAGS+=("$VALUE")
+
         shift
       fi
+      ;;
+
+    # Other global flags (e.g. --verbose)
+    --*)
+      GLOBAL_FLAGS+=("$1")
+      shift
       ;;
 
     # Anything else is treated as a flow file
@@ -105,6 +114,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+
+# Default to iOS if no platform flag was provided
+if [[ ! " ${GLOBAL_FLAGS[*]} " =~ "-p" && ! " ${GLOBAL_FLAGS[*]} " =~ "--platform" ]]; then
+  GLOBAL_FLAGS+=("-p" "ios")
+fi
 
 # -----------------------------
 # Build Maestro command safely

@@ -100,9 +100,10 @@ jobs:
     needs: [get_vars, get_android_build]
     type: maestro
     env:
-      MAESTRO_PLATFORM: android
-      MAESTRO_GROUP_ID: ${{ needs.get_vars.outputs.group_id }}
-      MAESTRO_PROJECT_ID: ${{ needs.get_vars.outputs.project_id }}
+      # MAESTRO_PLATFORM: android
+      # MAESTRO_GROUP_ID: ${{ needs.get_vars.outputs.group_id }}
+      # MAESTRO_PROJECT_ID: ${{ needs.get_vars.outputs.project_id }}
+      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/${{ needs.get_vars.outputs.project_id }}/group/${{ needs.get_vars.outputs.group_id }}?platform=android%26disableOnboarding%3D1
     params:
       build_id: ${{ needs.get_android_build.outputs.build_id }}
       flow_path: ['.maestro/landing.yml']
@@ -111,9 +112,10 @@ jobs:
     needs: [get_vars, get_ios_build]
     type: maestro
     env:
-      MAESTRO_PLATFORM: ios
-      MAESTRO_GROUP_ID: ${{ needs.get_vars.outputs.group_id }}
-      MAESTRO_PROJECT_ID: ${{ needs.get_vars.outputs.project_id }}
+      # MAESTRO_PLATFORM: ios
+      # MAESTRO_GROUP_ID: ${{ needs.get_vars.outputs.group_id }}
+      # MAESTRO_PROJECT_ID: ${{ needs.get_vars.outputs.project_id }}
+      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/${{ needs.get_vars.outputs.project_id }}/group/${{ needs.get_vars.outputs.group_id }}?platform=ios%26disableOnboarding%3D1
     params:
       build_id: ${{ needs.get_ios_build.outputs.build_id }}
       flow_path: ['.maestro/landing.yml']
