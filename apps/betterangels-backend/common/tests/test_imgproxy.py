@@ -1,10 +1,10 @@
 import base64
 from types import SimpleNamespace
-from typing import Callable, cast, Optional
+from typing import Callable, Optional, cast
 from unittest.mock import MagicMock, PropertyMock, patch
 
 from common.enums import ImagePresetEnum
-from common.graphql.types import BaImageType, resolve_image
+from common.graphql.types import BaImageType
 from common.imgproxy import (
     IMGPROXY_SWITCH,
     _build_imgproxy_path,

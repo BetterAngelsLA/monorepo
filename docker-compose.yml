@@ -2,6 +2,8 @@ services:
   better-angels:
     environment:
       - IS_LOCAL_DEV=True
+      - IMGPROXY_KEY=736563726574
+      - IMGPROXY_SALT=68656C6C6F
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - .:/workspace
