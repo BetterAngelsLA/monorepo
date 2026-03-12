@@ -6,6 +6,53 @@ Maestro is a cross-platform mobile UI testing framework that works with both **i
 
 ---
 
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [About Local Usage](#about-local-usage)
+- [Local Setup](#local-setup)
+- [Running Tests Locally (CLI)](#running-tests-locally-cli)
+- [Environment Variables](#environment-variables)
+- [Running Maestro Directly (Optional)](#running-maestro-directly-optional)
+- [Directory Structure](#directory-structure)
+- [Running Tests in CI](#running-tests-in-ci)
+- [Writing Tests](#writing-tests)
+- [Using Maestro Studio](#using-maestro-studio)
+- [Reference Links](#reference-links)
+
+---
+
+## Quick Start
+
+Assumes the local setup has already been completed (Java installed, Maestro CLI installed, and a simulator or emulator available).
+
+Start the app:
+
+    yarn ba
+
+Run the full E2E test suite (defaults to iOS):
+
+    yarn e2e:dev
+
+Run a single test:
+
+    yarn e2e:dev landing.yml
+
+---
+
+## About Local Usage
+
+There are two main ways to work with Maestro E2E tests locally, primarily via:
+
+- `Maestro CLI`
+  - requires local setup
+  - more flexible than Maestro Studio
+- `Maestro Studio`
+  - should not require any local setup
+  - more limited than using the CLI, but adequate (and has some nice UI features)
+
+---
+
 ## Local Setup
 
 ### 1. Install Java
@@ -66,7 +113,7 @@ maestro --version
 
 ---
 
-## Running Tests Locally
+## Running Tests Locally (CLI)
 
 ### 1. Start the development server
 
@@ -76,7 +123,7 @@ Start the Better Angels Expo dev server:
 yarn ba
 ```
 
-(or any command to run the app locally)
+(or any command that starts the app locally)
 
 ---
 
@@ -107,13 +154,11 @@ _**Note:** defaults to iOS_
 
 This command runs the wrapper script:
 
-```
-apps/betterangels/.maestro/scripts/maestro-e2e.sh
-```
+`apps/betterangels/.maestro/scripts/maestro-e2e.sh`
 
 The script:
 
-- reads `.env.local`
+- reads `.maestro/.env.local`
 - converts variables into `-e KEY=value`
 - runs the Maestro CLI
 
@@ -153,13 +198,15 @@ yarn e2e:dev --verbose -p android landing.yml
 
 ## Environment Variables
 
-Maestro does **not** read `.env` files automatically.
+Maestro supports environment variables for configuring the test runtime.
 
-The wrapper script loads variables from:
+### CLI
 
-```
-.maestro/.env.local
-```
+The Maestro CLI expects environment variables to already exist in the shell when the `maestro` command runs. It does **not automatically load `.env` files**. The CLI also supports a number of predefined configuration variables documented here:
+
+[CLI Environment variables docs](https://docs.maestro.dev/maestro-cli/environment-variables)
+
+To simplify local usage, this project uses a wrapper script that reads variables from `.maestro/.env.local`.
 
 Create this file by copying the sample:
 
@@ -245,7 +292,103 @@ TBD
 
 ## Writing Tests
 
-TBD
+### Test IDs
+
+Add a `testID` prop to React Native components so Maestro can reliably select them.
+
+Guidelines:
+
+- Use clear, stable names.
+- Avoid relying on screen coordinates whenever possible.
+- IDs should be:
+  - **specific enough** to be unique within the screen
+  - **generic enough** to make sense when used in reusable components
+
+Example:
+
+    <TextInput testID="email-input" />
+
+Naming convention examples:
+
+    email-input
+    password-input
+    login-button
+    submit-button
+
+Avoid coordinate-based selectors such as:
+
+    - tapOn:
+        point: "50%,62%"
+
+These are fragile and may break when layouts or screen sizes change.
+
+Prefer selectors like:
+
+    - tapOn:
+        id: email-input
+
+---
+
+## Using Maestro Studio
+
+### Setup
+
+1. Download and install [Maestro Studio](https://maestro.dev/)
+2. Open Maestro Studio.
+3. Select **Open Existing Maestro Workspace**.
+4. Choose the repository's `.maestro` directory:
+
+   `apps/betterangels/.maestro`
+
+Studio will use this folder as the workspace.
+
+### Open a Test
+
+1. Start the simulator and run the Metro server so the app is loaded.
+2. Connect the device inside Maestro Studio.
+
+Steps:
+
+- Click **"No device detected"** (or similar) in the toolbar.
+- Select the **booted simulator or emulator** you started.
+- Studio will open its own device view.
+
+### Configure Environment Variables
+
+Use the **Environment Manager** in Maestro Studio.
+
+1. Create a new Environment if none exists.
+2. Add required variables such as:
+
+   MAESTRO_DEEPLINK
+
+3. Ensure the environment is selected and visible in the top-right corner of Studio.
+
+### Run a Test
+
+1. Open the desired test file.
+2. Click **Run Locally**.
+
+Steps:
+
+- Select the test file in the sidebar.
+- Click **Run Locally** to execute it on the connected device.
+
+### Edit a Test
+
+1. Open the test file in the Studio editor.
+2. Make changes directly in the editor.
+
+Notes:
+
+- Changes should be visible using `git diff` in your terminal.
+- You may need to press:
+
+       Cmd + S
+
+  to save the file.
+
+- Saving may also trigger formatting and other configured tooling.
 
 ---
 
