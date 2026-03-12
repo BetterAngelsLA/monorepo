@@ -1,0 +1,1 @@
+export { ClientLocationsViewHmis } from './ClientLocationsViewHmis';

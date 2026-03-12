@@ -1,21 +1,14 @@
-import { TOrganization } from '@monorepo/react/shared';
 import { createContext, Dispatch, SetStateAction } from 'react';
-
-export type { TOrganization };
+import { TOrganizationWithPermissions } from '../activeOrg';
 
 export type TUser = {
   id: string;
-  organization?: TOrganization;
   username?: string;
   firstName?: string;
   lastName?: string;
   email?: string | null;
-  organizations: TOrganization[] | null;
-  canAccessOrgPortal?: boolean;
-  canAddOrgMember?: boolean;
-  canChangeOrgMemberRole?: boolean;
-  canRemoveOrgMember?: boolean;
-  canViewOrgMembers?: boolean;
+  /** All orgs the user belongs to, each carrying that org's permissions. */
+  organizations: TOrganizationWithPermissions[] | null;
 };
 
 export interface IUserProviderValue {

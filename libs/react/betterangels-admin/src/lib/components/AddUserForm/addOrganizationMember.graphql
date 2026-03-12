@@ -1,19 +1,20 @@
 mutation AddOrganizationMember($data: OrgInvitationInput!) {
-    addOrganizationMember(data: $data) {
-      ... on OperationInfo {
-        messages {
-          kind
-          field
-          message
-        }
-      }
-      ... on OrganizationMemberType {
-        id
-        email
-        firstName
-        lastName
-        memberRole
-        middleName
+  addOrganizationMember(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
       }
     }
+    ... on OrganizationMemberType {
+      id
+      email
+      firstName
+      lastName
+      memberRole
+      middleName
+      dateJoined
+    }
   }
+}
