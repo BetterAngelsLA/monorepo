@@ -7,13 +7,15 @@ export default function useCSVDownload(
   const [error, setError] = useState<string | null>(null);
 
   const download = useCallback(
-    async (startDate: string, endDate: string) => {
+    async (startDate: string, endDate: string, orgId?: string) => {
       setIsDownloading(true);
       setError(null);
       try {
-        const response = await fetchClient(
-          `/reports/export/?start_date=${startDate}&end_date=${endDate}`
-        );
+        let url = `/reports/export/?start_date=${startDate}&end_date=${endDate}`;
+        if (orgId) {
+          url += `&org_id=${orgId}`;
+        }
+        const response = await fetchClient(url);
         if (!response.ok) {
           const body = await response.json().catch(() => null);
           throw new Error(body?.error ?? `Export failed (${response.status})`);
@@ -24,12 +26,12 @@ export default function useCSVDownload(
             .get('Content-Disposition')
             ?.match(/filename="(.+)"/)?.[1] ??
           `interaction_data_${startDate}_${endDate}.csv`;
-        const url = window.URL.createObjectURL(blob);
+        const blobUrl = window.URL.createObjectURL(blob);
         Object.assign(document.createElement('a'), {
-          href: url,
+          href: blobUrl,
           download: filename,
         }).click();
-        window.URL.revokeObjectURL(url);
+        window.URL.revokeObjectURL(blobUrl);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {

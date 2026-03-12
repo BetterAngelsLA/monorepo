@@ -202,6 +202,8 @@ export function useInfiniteScrollQuery<
     });
   }, [data, queryFieldName, queryPolicyConfig]);
 
+  const stableItems = useMemo(() => items ?? [], [items]);
+
   // Reload on manual request
   const isManualReloadRef = useRef(false);
 
@@ -245,7 +247,7 @@ export function useInfiniteScrollQuery<
   // Any in-flight request we want to block loadMore during
   const isAnyLoading = isLoading || isManualReloading || isLoadingMore;
 
-  const currentItemCount = items?.length ?? 0;
+  const currentItemCount = stableItems.length;
   const hasMore = currentItemCount < total;
 
   // reset network states
@@ -293,7 +295,7 @@ export function useInfiniteScrollQuery<
   }, [hasMore, isAnyLoading, queryPolicyConfig, pageSize, fetchMore]);
 
   return {
-    items: items ?? [],
+    items: stableItems,
     total,
     loading: isLoading,
     loadingMore: isLoadingMore,

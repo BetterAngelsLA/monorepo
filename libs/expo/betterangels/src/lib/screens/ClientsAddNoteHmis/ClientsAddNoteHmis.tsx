@@ -5,15 +5,15 @@ import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { pagePaddingHorizontal } from '../../static';
 import {
-  ClientCardHMIS,
+  ClientCardHmis,
   Header,
-  HmisListClients,
   HorizontalContainer,
+  ListClientsHmis,
 } from '../../ui-components';
-import { HmisClientProfilesQuery } from '../../ui-components/ClientProfileList/__generated__/HmisListClients.generated';
+import { ClientProfilesHmisQuery } from '../../ui-components/ClientProfileList/__generated__/ListClientsHmis.generated';
 
-type THmisClientProfile =
-  HmisClientProfilesQuery['hmisClientProfiles']['results'][number];
+type TClientProfileHmis =
+  ClientProfilesHmisQuery['hmisClientProfiles']['results'][number];
 
 export function ClientsAddNoteHmis({ Logo }: { Logo: ElementType }) {
   const [search, setSearch] = useState('');
@@ -22,8 +22,8 @@ export function ClientsAddNoteHmis({ Logo }: { Logo: ElementType }) {
     router.navigate(`/notes-hmis/create?clientId=${id}`);
   }, []);
 
-  const renderHmisClientItem = useCallback(
-    (client: THmisClientProfile) => {
+  const renderClientItemHmis = useCallback(
+    (client: TClientProfileHmis) => {
       const { id } = client;
 
       if (!id) {
@@ -31,7 +31,7 @@ export function ClientsAddNoteHmis({ Logo }: { Logo: ElementType }) {
       }
 
       return (
-        <ClientCardHMIS client={client} onPress={() => handleClientPress(id)} />
+        <ClientCardHmis client={client} onPress={() => handleClientPress(id)} />
       );
     },
     [handleClientPress]
@@ -60,9 +60,9 @@ export function ClientsAddNoteHmis({ Logo }: { Logo: ElementType }) {
           />
         </HorizontalContainer>
 
-        <HmisListClients
+        <ListClientsHmis
           filters={{ search }}
-          renderItem={renderHmisClientItem}
+          renderItem={renderClientItemHmis}
           style={{ paddingHorizontal: pagePaddingHorizontal }}
         />
       </View>
