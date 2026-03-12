@@ -130,29 +130,33 @@ def build_imgproxy_url(
     return url
 
 
-def get_imgproxy_source_url(file: Optional[object]) -> Optional[str]:
+def get_image_source_url(file: object) -> Optional[str]:
     """Return the source URL imgproxy should fetch for a Django file field value.
 
-    Works with S3 storage (``s3://`` URI), local dev with
-    ``IMGPROXY_INTERNAL_BASE_URL``, or a plain ``file.url``.
+    Local dev: ``IMGPROXY_INTERNAL_BASE_URL`` + media path, or ``file.url`` when
+    ``IMGPROXY_BASE_URL`` is set. Production: only ``s3://bucket/key``; never
+    ``file.url`` (that would be a presigned CloudFront URL, unsuitable as source).
     """
-    if not file:
-        return None
-    storage = getattr(file, "storage", None)
     name = getattr(file, "name", None)
+    storage = getattr(file, "storage", None)
+
     if not storage or not name:
         return None
 
-    # S3 storage: build s3://bucket/key URI from standard attributes
-    bucket_name = getattr(storage, "bucket_name", None)
-    if bucket_name:
+    if bucket_name := getattr(storage, "bucket_name", None):
         location = getattr(storage, "location", "") or ""
         key = f"{location}/{name}" if location else name
         return f"s3://{bucket_name}/{key}"
 
-    if settings.IMGPROXY_INTERNAL_BASE_URL:
+    if settings.IS_LOCAL_DEV:
+        # TODO: this can be file.url
         return f"{settings.IMGPROXY_INTERNAL_BASE_URL}{settings.MEDIA_URL}{name}"
 
-    url = getattr(file, "url", None)
+    # Local dev only: file.url (e.g. FileSystemStorage). In production this would
+    # be a presigned CloudFront URL; using that as imgproxy source would mean
+    # imgproxy fetches via signed URL and we'd sign again for the client — avoid.
+    if settings.IMGPROXY_BASE_URL:
+        url = getattr(file, "url", None)
+        return url if isinstance(url, str) else None
 
-    return url if isinstance(url, str) else None
+    return None

@@ -8,13 +8,12 @@ from common.constants import PHONE_NUMBER_REGEX
 from common.enums import ImagePresetEnum
 from common.imgproxy import (
     build_imgproxy_url,
-    get_imgproxy_source_url,
+    get_image_source_url,
     is_imgproxy_enabled,
     resolve_imgproxy_ops,
 )
 from common.models import Address, Attachment, Location, PhoneNumber
 from django.db.models import Q
-from django.db.models.fields.files import FieldFile, ImageFieldFile
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
 from phonenumber_field.phonenumber import PhoneNumber as DjangoPhoneNumberUtil
 from strawberry import ID, Info, auto
@@ -187,7 +186,7 @@ class BaImageType:
         ops = resolve_imgproxy_ops(preset, processing)
 
         if ops and is_imgproxy_enabled():
-            source = get_imgproxy_source_url(self)
+            source = get_image_source_url(self)
             storage = getattr(self, "storage", None)
 
             if source:

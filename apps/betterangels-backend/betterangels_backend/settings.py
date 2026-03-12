@@ -71,10 +71,10 @@ env = environ.Env(
     ACCOUNT_LOGIN_BY_CODE_ENABLED=(bool, False),
     ACCOUNT_LOGIN_BY_CODE_TIMEOUT=(int, 300),
     USE_IAM_AUTH=(bool, False),
-    IMGPROXY_BASE_URL=(str, ""),
     IMGPROXY_KEY=(str, ""),
     IMGPROXY_SALT=(str, ""),
     IMGPROXY_PATH_PREFIX=(str, ""),
+    IMGPROXY_BASE_URL=(str, ""),
     IMGPROXY_INTERNAL_BASE_URL=(str, ""),
 )
 
