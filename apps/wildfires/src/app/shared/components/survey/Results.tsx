@@ -36,7 +36,7 @@ export function Results(props: IProps) {
         return (
           <div
             key={answer.questionId}
-            className="mb-8 border-b-2 last:border-b-0"
+            className="mb-8 border-b-2 border-gray-200 last:border-b-0"
           >
             <div>
               <div>Question Id: {answer.questionId}</div>

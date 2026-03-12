@@ -184,7 +184,7 @@ export default function CreateShelterForm() {
             <Button
               size="xl"
               type="submit"
-              className="!h-auto !bg-green-600 !text-black px-6 py-3 hover:!bg-green-700 transition-colors disabled:opacity-50"
+              className="h-auto! bg-green-600! text-black! px-6 py-3 hover:bg-green-700! transition-colors disabled:opacity-50"
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Submitting…' : 'Create Shelter'}

@@ -20,6 +20,7 @@ export function ResourceCard(props: IProps) {
     'flex',
     'flex-col',
     'border',
+    'border-gray-200',
     'p-6',
     'rounded-lg',
     'bg-white',

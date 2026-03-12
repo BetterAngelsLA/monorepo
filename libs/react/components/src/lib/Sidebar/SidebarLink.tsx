@@ -21,7 +21,7 @@ export function SidebarLink(props: TProps) {
   const parentCss = [
     'relative',
     'flex',
-    'flex-shrink-0',
+    'shrink-0',
     'text-sm/21',
     'h-[40px]',
     collapsed ? 'w-[40px]' : 'w-full',
@@ -44,7 +44,7 @@ export function SidebarLink(props: TProps) {
 
   const iconWrapperCss = [
     'w-[40px]',
-    'flex-shrink-0',
+    'shrink-0',
     'h-full',
     'flex',
     'items-center',

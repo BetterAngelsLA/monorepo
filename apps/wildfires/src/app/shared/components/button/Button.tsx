@@ -31,6 +31,7 @@ export function Button(props: IProps) {
     'items-center',
     'rounded-full',
     'border-2',
+    'border-current',
     'font-bold',
     sizes[size],
     className,

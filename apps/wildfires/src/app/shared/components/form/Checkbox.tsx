@@ -46,7 +46,7 @@ export function Checkbox(props: ICheckboxProps): ReactElement {
     'justify-center',
     'border',
     checked ? 'border-primary-20 bg-primary-20' : 'border-neutral-90 bg-white',
-    'rounded-sm',
+    'rounded-xs',
   ];
 
   return (
