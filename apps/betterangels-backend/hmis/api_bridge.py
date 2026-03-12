@@ -13,7 +13,13 @@ from common.errors import NotFoundGQLError, UnauthenticatedGQLError
 from common.utils import dict_keys_to_snake
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
-from graphql import FieldNode, FragmentSpreadNode, InlineFragmentNode, SelectionSetNode
+from graphql import (
+    FieldNode,
+    FragmentSpreadNode,
+    GraphQLError,
+    InlineFragmentNode,
+    SelectionSetNode,
+)
 from hmis.types import (
     CreateHmisClientProfileInput,
     CreateHmisNoteInput,
@@ -285,12 +291,17 @@ class HmisApiBridge:
             raise NotFoundGQLError()
 
         if resp.status_code == 422:
-            raise ValidationError(
+            errors = [
                 {
-                    k: ValidationError("; ".join(v) if isinstance(v, list) else str(v), code="422")
-                    for k, v in resp.json()["messages"].items()
+                    "field": f"{k}",
+                    "location": None,
+                    "errorCode": "422",
+                    "message": f"{v}",
                 }
-            )
+                for k, v in resp.json()["messages"].items()
+            ]
+
+            raise GraphQLError("Validation Errors", extensions={"errors": errors})
 
     def _forward_cookies_to_client(self, resp: requests.Response) -> None:
         django_response = self.info.context.get("response")
@@ -385,7 +396,7 @@ class HmisApiBridge:
         except (ValidationError, PermissionDenied):
             raise
         except Exception as e:
-            raise Exception(f"HMIS login error: {e}") from e
+            raise ValidationError(f"An error occurred: {e}")
 
     def get_client(self, hmis_id: str) -> dict[str, Any]:
         fields = self._get_field_dot_paths(
