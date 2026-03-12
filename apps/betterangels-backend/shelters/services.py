@@ -9,12 +9,17 @@ Raises ``django.core.exceptions.ValidationError`` on invalid data — callers
 (API / schema layer) are responsible for translating to their own error format.
 """
 
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from django.db import models, transaction
+from organizations.models import Organization
 from places import Places
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
 from shelters.models import Bed, Room, Schedule, Shelter
+from shelters.selectors import shelter_get
+
+if TYPE_CHECKING:
+    from accounts.models import User
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -157,23 +162,23 @@ def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) ->
 
 
 @transaction.atomic
-def shelter_create(*, data: Dict[str, Any]) -> Shelter:
+def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     """Create a new Shelter with all M2M relationships and schedules.
+
+    Validates that *user* belongs to the target organization before
+    creating anything.
 
     Accepts a plain dict (e.g. from ``strawberry.asdict(data)`` with
     ``UNSET`` keys already removed).
 
-    Steps:
-        1. Separate M2M enum data, schedules, from scalar fields.
-        2. Transform custom field types (location, time ranges, FK, status).
-        3. Create the ``Shelter`` row with ``full_clean`` validation.
-        4. Set M2M relationships via ``get_or_create`` on enum-backed
-           lookup tables.
-        5. Bulk-create ``Schedule`` rows.
-
     Raises:
+        ``PermissionError`` when the user is not a member of the org.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
+    org_id = data.get("organization")
+    if not Organization.objects.filter(pk=org_id, users=user).exists():
+        raise PermissionError("You do not have permission to create a shelter for this organization.")
+
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
 
     shelter = Shelter(**scalar_data)
@@ -187,16 +192,18 @@ def shelter_create(*, data: Dict[str, Any]) -> Shelter:
 
 
 @transaction.atomic
-def bed_create(*, data: Dict[str, Any]) -> Bed:
+def bed_create(*, user: "User", data: Dict[str, Any]) -> Bed:
     """Create a new Bed associated with an existing Shelter.
 
-    Accepts a plain dict with ``shelter_id`` and ``status``.
+    Validates that *user* belongs to the shelter's organization via
+    ``shelter_get`` before creating the bed.
 
     Raises:
         ``Shelter.DoesNotExist`` when the referenced shelter is not found.
+        ``PermissionError`` when the user is not a member of the shelter's org.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    shelter = Shelter.objects.get(pk=data["shelter_id"])
+    shelter = shelter_get(user=user, shelter_id=data["shelter_id"])
     bed = Bed(shelter=shelter, status=data["status"])
     bed.full_clean()
     bed.save()
@@ -204,17 +211,19 @@ def bed_create(*, data: Dict[str, Any]) -> Bed:
 
 
 @transaction.atomic
-def room_create(*, data: Dict[str, Any]) -> Room:
+def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
     """Create a new Room associated with an existing Shelter.
 
-    Accepts a plain dict with ``shelter_id`` and Room field values.
+    Validates that *user* belongs to the shelter's organization via
+    ``shelter_get`` before creating the room.
 
     Raises:
         ``Shelter.DoesNotExist`` when the referenced shelter is not found.
+        ``PermissionError`` when the user is not a member of the shelter's org.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = {**data}
-    shelter = Shelter.objects.get(pk=data.pop("shelter_id"))
+    shelter = shelter_get(user=user, shelter_id=data.pop("shelter_id"))
     room = Room(shelter=shelter, **data)
     room.full_clean()
     room.save()
