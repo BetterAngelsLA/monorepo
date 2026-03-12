@@ -1,6 +1,6 @@
 import base64
 from types import SimpleNamespace
-from typing import Callable, cast
+from typing import Callable, cast, Optional
 from unittest.mock import MagicMock, PropertyMock, patch
 
 from common.enums import ImagePresetEnum
@@ -15,7 +15,7 @@ from common.imgproxy import (
     is_imgproxy_enabled,
 )
 from django.test import TestCase, override_settings
-from unittest_parametrize import ParametrizedTestCase
+from unittest_parametrize import ParametrizedTestCase, parametrize
 from waffle.testutils import override_switch
 
 TEST_KEY = "736563726574"
@@ -26,28 +26,31 @@ TEST_PREFIX = "imgproxy"
 # ---------------------------------------------------------------------------
 # is_imgproxy_enabled
 # ---------------------------------------------------------------------------
-class IsImgproxyEnabledTest(TestCase):
-    @override_settings(IMGPROXY_KEY="", IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX=TEST_PREFIX)
-    def test_disabled_when_key_missing(self) -> None:
-        self.assertFalse(is_imgproxy_enabled())
-
-    @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT="", IMGPROXY_PATH_PREFIX=TEST_PREFIX)
-    def test_disabled_when_salt_missing(self) -> None:
-        self.assertFalse(is_imgproxy_enabled())
-
-    @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX="")
-    def test_disabled_when_path_prefix_missing(self) -> None:
-        self.assertFalse(is_imgproxy_enabled())
-
-    @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX=TEST_PREFIX)
-    @override_switch(IMGPROXY_SWITCH, active=False)
-    def test_disabled_when_switch_off(self) -> None:
-        self.assertFalse(is_imgproxy_enabled())
-
-    @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX=TEST_PREFIX)
-    @override_switch(IMGPROXY_SWITCH, active=True)
-    def test_enabled_when_env_vars_set_and_switch_on(self) -> None:
-        self.assertTrue(is_imgproxy_enabled())
+class IsImgproxyEnabledTest(ParametrizedTestCase, TestCase):
+    @parametrize(
+        "key, salt, path_prefix, switch_active, expected",
+        [
+            ("", TEST_SALT, TEST_PREFIX, True, False),
+            (TEST_KEY, "", TEST_PREFIX, True, False),
+            (TEST_KEY, TEST_SALT, "", True, False),
+            (TEST_KEY, TEST_SALT, TEST_PREFIX, None, False),
+            (TEST_KEY, TEST_SALT, TEST_PREFIX, False, False),
+            (TEST_KEY, TEST_SALT, TEST_PREFIX, True, True),
+        ],
+    )
+    def test_is_imgproxy_enabled(
+        self, key: str, salt: str, path_prefix: str, switch_active: Optional[bool], expected: bool
+    ) -> None:
+        with override_settings(
+            IMGPROXY_KEY=key,
+            IMGPROXY_SALT=salt,
+            IMGPROXY_PATH_PREFIX=path_prefix,
+        ):
+            if switch_active is not None:
+                with override_switch(IMGPROXY_SWITCH, active=switch_active):
+                    self.assertEqual(is_imgproxy_enabled(), expected)
+            else:
+                self.assertEqual(is_imgproxy_enabled(), expected)
 
 
 # ---------------------------------------------------------------------------
@@ -286,6 +289,7 @@ class BaImageTypeUrlTest(TestCase):
         self.assertIn("rs:fit:999:999", url)
         self.assertNotIn("rs:fill:100:100", url)
 
+    @override_switch(IMGPROXY_SWITCH, active=False)
     def test_url_falls_back_when_imgproxy_disabled(self) -> None:
         img = self._make_image_type(self._make_file(url="https://cdn/fallback.jpg"))
 
