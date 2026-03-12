@@ -15,6 +15,7 @@ const theme = {
       'primary-60': 'var(--color-primary-60)',
       'primary-95': 'var(--color-primary-95)',
       'steel-blue': 'var(--color-steel-blue)',
+      'neutral-20': 'var(--color-neutral-20)',
       'neutral-30': 'var(--color-neutral-30)',
       'neutral-40': 'var(--color-neutral-40)',
       'neutral-55': 'var(--color-neutral-55)',
@@ -79,12 +80,6 @@ const theme = {
       'slide-out-to-top':
         'slideOutToTop var(--animation-duration) ease-in-out forwards',
       'fade-collapse': 'fadeOutScaleOut 200ms ease-in-out forwards',
-    },
-    zIndex: {
-      'flyout-mask': '999',
-      flyout: '1000',
-      'modal-mask': '2000',
-      modal: '2001',
     },
   },
 };

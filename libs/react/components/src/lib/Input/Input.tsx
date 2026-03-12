@@ -39,7 +39,7 @@ export function Input(props: IInputProps) {
 
   const inputCss = [
     'bg-transparent',
-    'focus:outline-none',
+    'focus:outline-hidden',
     'px-2',
     'py-4',
     'w-full',

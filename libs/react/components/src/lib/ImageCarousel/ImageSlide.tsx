@@ -21,7 +21,7 @@ export function ImageSlide(props: TProps) {
     'block',
     'w-full',
     'object-cover',
-    'aspect-[4/3]',
+    'aspect-4/3',
     imgClassName,
   ];
 

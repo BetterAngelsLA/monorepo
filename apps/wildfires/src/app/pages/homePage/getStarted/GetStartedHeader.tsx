@@ -8,7 +8,7 @@ export function GetStartedHeader(props: IProps) {
   const { className } = props;
 
   const parentCss = [
-    'border-l-[10px]',
+    'border-l-10',
     'border-brand-sky-blue',
     'pl-4',
     'lg:pl-8',

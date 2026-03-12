@@ -120,7 +120,7 @@ export function AddressAutocomplete(props: TProps) {
               tabIndex={0}
               onClick={() => handleSelect(placeId)}
               onKeyDown={(e) => e.key === 'Enter' && handleSelect(placeId)}
-              className="flex flex-col py-3 px-4 border-b border-neutral-90 cursor-pointer hover:bg-neutral-95 focus:bg-neutral-95 focus:outline-none"
+              className="flex flex-col py-3 px-4 border-b border-neutral-90 cursor-pointer hover:bg-neutral-95 focus:bg-neutral-95 focus:outline-hidden"
             >
               <span className="text-sm font-medium">{mainText}</span>
               <span className="text-xs text-neutral-60">

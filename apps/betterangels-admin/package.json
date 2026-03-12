@@ -1,0 +1,5 @@
+{
+  "name": "@monorepo/betterangels-admin",
+  "type": "module",
+  "private": true
+}

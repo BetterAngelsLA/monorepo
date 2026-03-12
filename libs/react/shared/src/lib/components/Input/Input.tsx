@@ -30,7 +30,7 @@ export function Input(props: InputProps) {
   const inputCss = [
     'bg-neutral-99',
     'rounded-lg',
-    'focus:outline-none',
+    'focus:outline-hidden',
     'px-4',
     'py-4',
     inputClassname,

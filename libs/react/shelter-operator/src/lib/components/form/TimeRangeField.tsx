@@ -155,7 +155,7 @@ export function TimeRangeField({ id, label, value, onChange, helperText, error, 
         <div className="flex flex-col gap-2">
           <div className="relative">
             <div
-              className="grid gap-[1px] bg-gray-300 rounded-sm overflow-hidden select-none w-full max-w-3xl mx-auto ring-1 ring-gray-300"
+              className="grid gap-px bg-gray-300 rounded-xs overflow-hidden select-none w-full max-w-3xl mx-auto ring-1 ring-gray-300"
               style={{ gridTemplateColumns: 'repeat(48, minmax(0, 1fr))' }}
             >
               {Array.from({ length: SLICES }, (_, index) => {
