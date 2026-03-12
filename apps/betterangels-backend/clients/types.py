@@ -311,6 +311,7 @@ class ClientProfileBaseType:
     place_of_birth: auto
     preferred_communication: Optional[List[PreferredCommunicationEnum]]
     preferred_language: auto
+    profile_photo: auto
     pronouns: auto
     pronouns_other: auto
     race: auto
@@ -335,7 +336,6 @@ class ClientProfileType(ClientProfileBaseType):
     doc_ready_documents: Optional[List[ClientDocumentType]]
     consent_form_documents: Optional[List[ClientDocumentType]]
     other_documents: Optional[List[ClientDocumentType]]
-    profile_photo: auto
 
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:
@@ -351,7 +351,6 @@ class CreateClientProfileInput(ClientProfileBaseType):
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
     phone_numbers: Optional[List[PhoneNumberInput]]
-    profile_photo: auto
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
 
 
@@ -362,7 +361,6 @@ class UpdateClientProfileInput(ClientProfileBaseType):
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
     phone_numbers: Optional[List[PhoneNumberInput]]
-    profile_photo: auto
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
 
 
