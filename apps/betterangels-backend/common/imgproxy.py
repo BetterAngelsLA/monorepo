@@ -4,10 +4,28 @@ import hmac
 from typing import Optional, cast
 
 import waffle
+from common.enums import ImagePresetEnum
 from django.conf import settings
 from django.core.files.storage import default_storage
 
 IMGPROXY_SWITCH = "imgproxy_enabled"
+IMGPROXY_PRESETS: dict[ImagePresetEnum, str] = {
+    ImagePresetEnum.ORIGINAL: "rs:force:0:0",
+    ImagePresetEnum.SM: "rs:fill:100:100",
+    ImagePresetEnum.MD: "rs:fill:400:400",
+    ImagePresetEnum.LG: "rs:fill:800:800",
+}
+
+
+def resolve_imgproxy_ops(
+    preset: Optional[ImagePresetEnum],
+    processing: Optional[str],
+) -> Optional[str]:
+    if processing:
+        return processing
+    if preset:
+        return IMGPROXY_PRESETS.get(preset)
+    return None
 
 
 def is_imgproxy_enabled() -> bool:

@@ -7,9 +7,11 @@ import strawberry_django
 from common.constants import PHONE_NUMBER_REGEX
 from common.enums import ImagePresetEnum
 from common.imgproxy import (
+    IMGPROXY_PRESETS,
     build_imgproxy_url,
     get_imgproxy_source_url,
     is_imgproxy_enabled,
+    resolve_imgproxy_ops,
 )
 from common.models import Address, Attachment, Location, PhoneNumber
 from django.db.models import Q
@@ -149,12 +151,6 @@ class AddressInput:
 
 
 # Imgproxy processing strings for each preset.
-IMGPROXY_PRESETS: dict[ImagePresetEnum, str] = {
-    ImagePresetEnum.ORIGINAL: "rs:force:0:0",
-    ImagePresetEnum.SM: "rs:fill:100:100",
-    ImagePresetEnum.MD: "rs:fill:400:400",
-    ImagePresetEnum.LG: "rs:fill:800:800",
-}
 
 
 @strawberry.type(name="DjangoImageType")
@@ -192,7 +188,7 @@ class BaImageType:
                 ``"rs:fill:200:200"`` or ``"rs:fit:800:600/q:80"``.
                 Takes precedence over ``preset``.
         """
-        ops = processing or (IMGPROXY_PRESETS.get(preset) if preset else None)
+        ops = resolve_imgproxy_ops(preset, processing)
 
         if ops and is_imgproxy_enabled():
             source = get_imgproxy_source_url(self)
@@ -204,34 +200,6 @@ class BaImageType:
                     return imgproxy_url
 
         return cast(str, self.url)
-
-    @classmethod
-    def from_field_file(cls, file: Union[FieldFile, ImageFieldFile, None]) -> Optional["BaImageType"]:
-        """Build ``BaImageType`` from a Django ``FieldFile`` / ``ImageFieldFile``.
-
-        Returns ``None`` when the field is empty (no file uploaded). Used by
-        strawberry_django when resolving ``ImageField`` auto fields so that
-        ``profile_photo: auto`` works without a custom resolver.
-        """
-        if not file:
-            return None
-
-        return cls(
-            name=getattr(file, "name", "") or "",
-            path=getattr(file, "path", "") if hasattr(file, "path") else "",
-            size=getattr(file, "size", 0) or 0,
-            width=getattr(file, "width", 0) or 0,
-            height=getattr(file, "height", 0) or 0,
-            _file=file,
-        )
-
-
-def resolve_image(file: Union[FieldFile, ImageFieldFile]) -> Optional[BaImageType]:
-    """Convert a Django ``FieldFile`` / ``ImageFieldFile`` to ``BaImageType``.
-
-    Returns ``None`` when the field is empty (no file uploaded).
-    """
-    return BaImageType.from_field_file(file)
 
 
 @strawberry_django.type(Location)
