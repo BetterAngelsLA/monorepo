@@ -1,4 +1,4 @@
-import { appZIndex, mergeCss } from '@monorepo/react/shared';
+import { mergeCss } from '@monorepo/react/shared';
 import { MouseEvent, ReactNode, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -68,6 +68,7 @@ export function Modal({
   const dialogCss = [
     'fixed',
     'inset-0',
+    'z-400',
     'bg-transparent',
     'p-0',
     'm-0',
@@ -95,7 +96,6 @@ export function Modal({
     <dialog
       ref={dialogRef}
       className={mergeCss(dialogCss)}
-      style={{ zIndex: appZIndex.p2 }}
       onClick={handleBackdropClick}
     >
       <div className={mergeCss(boxCss)}>{children}</div>

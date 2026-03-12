@@ -1,4 +1,3 @@
-import { appZIndex } from '@monorepo/react/shared';
 import { useAtomValue } from 'jotai';
 import { Toast } from './Toast';
 import { toastAtom } from './state/toastAtom';
@@ -12,8 +11,7 @@ export function ToastContainer() {
 
   return (
     <div
-      className="fixed top-6 right-6 flex flex-col gap-3"
-      style={{ zIndex: appZIndex.p1 }}
+      className="fixed top-6 right-6 flex flex-col gap-3 z-500"
     >
       {toasts.map((toast) => (
         <div
