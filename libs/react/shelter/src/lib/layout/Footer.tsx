@@ -8,7 +8,7 @@ type IParams = {
   className?: string;
 };
 
-export function Footer(props: IParams): ReactElement {
+export function Footer(props: IParams): ReactElement | null {
   const { className = '' } = props;
 
   const pathname =

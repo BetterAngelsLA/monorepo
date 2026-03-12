@@ -57,7 +57,6 @@ const variantClasses: Record<ButtonVariant, string> = {
     'bg-[#FFECE8] text-black size-10 py-2 rounded-lg justify-center',
   'trash-dark':
     'bg-[#FFC5BF] text-white size-10 py-2 rounded-lg justify-center',
-  ghost: 'text-[#747A82] size-10 py-2 rounded-lg justify-center',
   'right-arrow':
     'bg-[#FFF82E] text-white size-11 py-2 rounded-full justify-center',
 };

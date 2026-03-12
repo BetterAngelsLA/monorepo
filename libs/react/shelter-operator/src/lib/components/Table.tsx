@@ -89,7 +89,7 @@ export function Table<TItem, TRowObject = TItem>({
         rows.map((item, index) => {
           const rowObject = getRowObject
             ? getRowObject(item, index)
-            : (item as TRowObject);
+            : (item as unknown as TRowObject);
 
           const cells: RowCell[] = columns.map((column) => ({
             key: column.key,
