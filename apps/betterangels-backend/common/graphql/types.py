@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Any, Mapping, NewType, Optional, Union
+from typing import Any, Mapping, NewType, Optional, Union, cast
 
 import strawberry
 import strawberry_django
@@ -177,9 +177,6 @@ class BaImageType:
     width: int = 0
     height: int = 0
 
-    # Private: the underlying FieldFile or ImageFieldFile, set in ``resolve_image``.
-    _file: strawberry.Private[Union[FieldFile, ImageFieldFile]]
-
     @strawberry.field
     def url(
         self,
@@ -195,31 +192,21 @@ class BaImageType:
                 ``"rs:fill:200:200"`` or ``"rs:fit:800:600/q:80"``.
                 Takes precedence over ``preset``.
         """
-        if file := self._file:
-            ops = processing or (IMGPROXY_PRESETS.get(preset) if preset else None)
+        ops = processing or (IMGPROXY_PRESETS.get(preset) if preset else None)
 
-            if ops and is_imgproxy_enabled():
-                source = get_imgproxy_source_url(file)
-                storage = getattr(file, "storage", None)
+        if ops and is_imgproxy_enabled():
+            source = get_imgproxy_source_url(self)
+            storage = getattr(self, "storage", None)
 
-                if source:
-                    imgproxy_url = build_imgproxy_url(source, ops, storage=storage)
-                    if imgproxy_url:
-                        return imgproxy_url
+            if source:
+                imgproxy_url = build_imgproxy_url(source, ops, storage=storage)
+                if imgproxy_url:
+                    return imgproxy_url
 
-            # Fallback: the storage's own URL (plain CloudFront-signed).
-            try:
-                return file.url
-
-            except Exception:
-                pass
-
-        return ""
+        return cast(str, self.url)
 
     @classmethod
-    def from_field_file(
-        cls, file: Union[FieldFile, ImageFieldFile, None]
-    ) -> Optional["BaImageType"]:
+    def from_field_file(cls, file: Union[FieldFile, ImageFieldFile, None]) -> Optional["BaImageType"]:
         """Build ``BaImageType`` from a Django ``FieldFile`` / ``ImageFieldFile``.
 
         Returns ``None`` when the field is empty (no file uploaded). Used by
