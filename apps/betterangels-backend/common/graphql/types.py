@@ -1,13 +1,12 @@
 import re
 from datetime import datetime
-from typing import Any, Mapping, NewType, Optional, Union, cast
+from typing import Any, Mapping, NewType, Optional, cast
 
 import strawberry
 import strawberry_django
 from common.constants import PHONE_NUMBER_REGEX
 from common.enums import ImagePresetEnum
 from common.imgproxy import (
-    IMGPROXY_PRESETS,
     build_imgproxy_url,
     get_imgproxy_source_url,
     is_imgproxy_enabled,
@@ -148,9 +147,6 @@ class AddressType:
 class AddressInput:
     address_components: Optional[strawberry.scalars.JSON] = None
     formatted_address: Optional[str] = None
-
-
-# Imgproxy processing strings for each preset.
 
 
 @strawberry.type(name="DjangoImageType")

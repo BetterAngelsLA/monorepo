@@ -11,9 +11,9 @@ from django.core.files.storage import default_storage
 IMGPROXY_SWITCH = "imgproxy_enabled"
 IMGPROXY_PRESETS: dict[ImagePresetEnum, str] = {
     ImagePresetEnum.ORIGINAL: "rs:force:0:0",
-    ImagePresetEnum.SM: "rs:fill:100:100",
-    ImagePresetEnum.MD: "rs:fill:400:400",
-    ImagePresetEnum.LG: "rs:fill:800:800",
+    ImagePresetEnum.SM: "rs:fill:100:100/f:jpg",
+    ImagePresetEnum.MD: "rs:fill:400:400/f:jpg",
+    ImagePresetEnum.LG: "rs:fill:800:800/f:jpg",
 }
 
 
@@ -151,7 +151,7 @@ def get_imgproxy_source_url(file: Optional[object]) -> Optional[str]:
         return f"s3://{bucket_name}/{key}"
 
     if settings.IMGPROXY_INTERNAL_BASE_URL:
-        return f"{settings.IMGPROXY_INTERNAL_BASE_URL}/media/{name}"
+        return f"{settings.IMGPROXY_INTERNAL_BASE_URL}{settings.MEDIA_URL}{name}"
 
     url = getattr(file, "url", None)
 
