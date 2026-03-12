@@ -8,7 +8,7 @@ export interface IModalFooterProps {
 
 export function ModalFooter({ children, className }: IModalFooterProps) {
   return (
-    <div className="relative">
+    <div className="relative shrink-0">
       <div className="absolute -top-12 left-0 right-0 h-12 bg-gradient-to-t from-white via-white/70 to-transparent pointer-events-none" />
       <div
         className={mergeCss([
