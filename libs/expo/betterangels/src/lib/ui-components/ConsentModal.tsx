@@ -100,6 +100,7 @@ export default function ConsentModal({
 
   const insets = useSafeAreaInsets();
   const topOffset = insets.top;
+  const bottomOffset = insets.bottom;
 
   const windowHeight = Dimensions.get('window').height;
 
@@ -203,6 +204,7 @@ export default function ConsentModal({
         borderTopLeftRadius: Radiuses.xs,
         borderTopRightRadius: Radiuses.xs,
         backgroundColor: Colors.WHITE,
+        marginBottom: vertical ? -bottomOffset : 0, // offset safe area on bottom when vertical
       }}
       contentStyle={{
         // Stretch inner content so header/body/footer spacing matches original
