@@ -18,7 +18,7 @@ def modify_shelter_group_permissions(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0032_reservation_reservationclient_reservation_clients_and_more"),
+        ("shelters", "0033_remove_contactinfo_shelter_contact_info_add_insert_and_more"),
     ]
 
     operations = [
