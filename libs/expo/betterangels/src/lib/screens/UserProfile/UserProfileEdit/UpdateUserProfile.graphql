@@ -5,5 +5,12 @@ mutation UpdateUserProfile($data: UpdateUserProfileInput!) {
       firstName
       lastName
     }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
   }
 }

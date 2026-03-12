@@ -1,8 +1,8 @@
 import { ApolloLink } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 import type { UseFormSetError } from 'react-hook-form';
-import { extractResponseExtensions } from '../../../../../apollo';
-import { applyManualFormErrors } from '../../../../../errors';
+import { extractOperationFieldErrors } from '../../../../../apollo';
+import { applyOperationFieldErrors } from '../../../../../errors';
 import {
   CreateClientHouseholdMemberMutation,
   CreateClientHouseholdMemberMutationVariables,
@@ -75,11 +75,17 @@ export async function processHouseholdMemberForm(
   }
 
   // same error handling as before
-  const responseExtensions = extractResponseExtensions(response);
+  const dataKey = relationId
+    ? 'updateClientHouseholdMember'
+    : 'createClientHouseholdMember';
 
-  if (responseExtensions) {
-    applyManualFormErrors(responseExtensions, setError);
+  const fieldErrors = extractOperationFieldErrors({
+    data: response.data,
+    dataKey,
+  });
 
+  if (fieldErrors.length) {
+    applyOperationFieldErrors(fieldErrors, setError);
     return false;
   }
 

@@ -38,5 +38,12 @@ mutation CreateShelter($data: CreateShelterInput!) {
       name
       status
     }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
   }
 }

@@ -1,4 +1,3 @@
-import { CombinedGraphQLErrors } from '@apollo/client';
 import { useMutation, useQuery } from '@apollo/client/react';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
@@ -6,9 +5,9 @@ import { useEffect, useLayoutEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import {
   UpdateClientProfileInput,
-  extractResponseExtensions,
+  extractOperationFieldErrors,
 } from '../../../apollo';
-import { applyManualFormErrors } from '../../../errors';
+import { applyOperationFieldErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
 import { isValidClientProfileSectionEnum } from '../../../screenRouting';
 import {
@@ -84,7 +83,7 @@ export default function ClientProfileForm(props: IClientProfileForms) {
           values.phoneNumbers?.filter((item) => item.number) || [];
       }
 
-      const { error } = await updateClientProfile({
+      const { data, error } = await updateClientProfile({
         variables: {
           data: inputs,
         },
@@ -92,15 +91,14 @@ export default function ClientProfileForm(props: IClientProfileForms) {
       });
 
       // handle fieldErrors and return if present
-      if (CombinedGraphQLErrors.is(error)) {
-        // TODO: convert to use extractExtensionFieldErrors
-        const fieldErrors = extractResponseExtensions(error);
+      const fieldErrors = extractOperationFieldErrors({
+        data,
+        dataKey: 'updateClientProfile',
+      });
 
-        if (fieldErrors?.length) {
-          applyManualFormErrors(fieldErrors, methods.setError);
-
-          return;
-        }
+      if (fieldErrors.length) {
+        applyOperationFieldErrors(fieldErrors, methods.setError);
+        return;
       }
 
       // throw unhandled errors

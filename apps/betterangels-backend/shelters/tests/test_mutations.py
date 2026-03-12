@@ -389,6 +389,63 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         self.assertEqual(shelter["overallRating"], 4)
         self.assertEqual(shelter["subjectiveReview"], "Clean facilities with helpful staff")
 
+    def test_create_shelter_invalid_email_returns_operation_info(self) -> None:
+        mutation = """
+            mutation ($data: CreateShelterInput!) {
+                createShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                            code
+                        }
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "data": {
+                "name": "Invalid Email Shelter",
+                "description": "Should fail model validation",
+                "organization": str(self.org_1.pk),
+                "email": "not-an-email",
+                "accessibility": [],
+                "demographics": [],
+                "specialSituationRestrictions": [],
+                "shelterTypes": [],
+                "roomStyles": [],
+                "storage": [],
+                "pets": [],
+                "parking": [],
+                "immediateNeeds": [],
+                "generalServices": [],
+                "healthServices": [],
+                "trainingServices": [],
+                "mealServices": [],
+                "entryRequirements": [],
+                "referralRequirement": [],
+                "exitPolicy": [],
+                "cities": [],
+                "spa": [],
+                "shelterPrograms": [],
+                "funders": [],
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createShelter"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["field"], "email")
+        self.assertIn("valid email address", messages[0]["message"])
+
     def test_create_shelter_persists_to_database(self) -> None:
         """Test that created shelter is actually saved in the database"""
         mutation = """

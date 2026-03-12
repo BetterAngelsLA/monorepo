@@ -1,10 +1,6 @@
-export { extractErrorsHmis } from './extractErrorsHmis';
-export { extractExtensionFieldErrors } from './extractExtensionFieldErrors';
-export { extractOperationErrors } from './extractOperationErrors';
 export { extractOperationFieldErrors } from './extractOperationFieldErrors';
 export { extractOperationInfo } from './extractOperationInfo';
 export { extractOperationInfoMessage } from './extractOperationInfoMessage';
 export { extractOperationInfoMessages } from './extractOperationInfoMessages';
-export { extractResponseExtensions } from './extractResponseExtensions';
 export { hasGqlCombinedApiError } from './hasGqlCombinedApiError';
 export * from './utils';

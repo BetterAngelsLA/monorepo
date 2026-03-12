@@ -6,6 +6,7 @@ from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from django.apps.registry import Apps
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
@@ -60,7 +61,7 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
     )
 
     if not (permission_group and permission_group.group):
-        raise PermissionError("User lacks proper organization or permissions")
+        raise PermissionDenied("User lacks proper organization or permissions")
 
     return permission_group
 

@@ -1,4 +1,3 @@
-import { CombinedGraphQLErrors } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ControlledInput, Form } from '@monorepo/expo/shared/ui-components';
@@ -6,8 +5,8 @@ import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import type { UpdateUserProfileInput } from '../../../apollo';
-import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/extractExtensionFieldErrors';
-import { applyManualFormErrors } from '../../../errors';
+import { extractOperationFieldErrors } from '../../../apollo/graphql/response/extractOperationFieldErrors';
+import { applyOperationFieldErrors } from '../../../errors';
 import { useSnackbar, useUser } from '../../../hooks';
 import { UpdateUserProfileDocument } from './__generated__/UpdateUserProfile.generated';
 import { formFieldNames, FormSchema, type TFormSchema } from './formSchema';
@@ -55,12 +54,15 @@ export function UserProfileEdit() {
         errorPolicy: 'all',
       });
 
-      if (CombinedGraphQLErrors.is(error)) {
-        const fieldErrors = extractExtensionFieldErrors(error, formFieldNames);
-        if (fieldErrors.length) {
-          applyManualFormErrors(fieldErrors, setError);
-          return;
-        }
+      const fieldErrors = extractOperationFieldErrors({
+        data: result,
+        dataKey: 'updateUserProfile',
+        fieldNames: [...formFieldNames],
+      });
+
+      if (fieldErrors.length) {
+        applyOperationFieldErrors(fieldErrors, setError);
+        return;
       }
 
       if (error) {

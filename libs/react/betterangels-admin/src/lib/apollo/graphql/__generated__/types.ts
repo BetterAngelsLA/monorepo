@@ -610,6 +610,20 @@ export type CreateProfileDataImportInput = {
   sourceFile: Scalars['String']['input'];
 };
 
+export type CreateRoomInput = {
+  amenities?: InputMaybe<Scalars['String']['input']>;
+  lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
+  medicalRespite?: InputMaybe<Scalars['Boolean']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  roomIdentifier: Scalars['String']['input'];
+  roomType?: InputMaybe<RoomStyleChoices>;
+  roomTypeOther?: InputMaybe<Scalars['String']['input']>;
+  shelterId: Scalars['ID']['input'];
+  status?: InputMaybe<RoomStatusChoices>;
+};
+
+export type CreateRoomPayload = OperationInfo | RoomType;
+
 export type CreateShelterInput = {
   accessibility: Array<AccessibilityChoices>;
   addNotesShelterDetails?: InputMaybe<Scalars['String']['input']>;
@@ -1374,6 +1388,7 @@ export type Mutation = {
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
+  createRoom: CreateRoomPayload;
   createShelter: CreateShelterPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
   createTask: CreateTaskPayload;
@@ -1487,6 +1502,11 @@ export type MutationCreateNoteDataImportArgs = {
 
 export type MutationCreateNoteServiceRequestArgs = {
   data: CreateNoteServiceRequestInput;
+};
+
+
+export type MutationCreateRoomArgs = {
+  data: CreateRoomInput;
 };
 
 
@@ -2305,6 +2325,12 @@ export type RevertNoteInput = {
 
 export type RevertNotePayload = NoteType | OperationInfo;
 
+export enum RoomStatusChoices {
+  Available = 'AVAILABLE',
+  NeedsMaintenance = 'NEEDS_MAINTENANCE',
+  Reserved = 'RESERVED'
+}
+
 export enum RoomStyleChoices {
   Congregate = 'CONGREGATE',
   CubicleHighWalls = 'CUBICLE_HIGH_WALLS',
@@ -2320,6 +2346,20 @@ export enum RoomStyleChoices {
 export type RoomStyleType = {
   __typename?: 'RoomStyleType';
   name?: Maybe<RoomStyleChoices>;
+};
+
+export type RoomType = {
+  __typename?: 'RoomType';
+  amenities?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  lastCleanedInspected?: Maybe<Scalars['DateTime']['output']>;
+  medicalRespite: Scalars['Boolean']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  roomIdentifier: Scalars['String']['output'];
+  roomType?: Maybe<RoomStyleChoices>;
+  roomTypeOther?: Maybe<Scalars['String']['output']>;
+  shelter: ShelterType;
+  status?: Maybe<RoomStatusChoices>;
 };
 
 export enum SpaChoices {

@@ -96,13 +96,9 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             if user_label is None:
                 self.assertGraphQLUnauthenticated(response)
             else:
-                self.assertEqual(len(response["errors"]), 1)
-                self.assertIn(
-                    response["errors"][0]["message"],
-                    {
-                        "You do not have permission to modify this client.",
-                        "Cannot filter against a non-conditional expression.",
-                    },
+                self.assertEqual(
+                    response["data"]["updateClientProfile"]["messages"][0]["message"],
+                    "You do not have permission to modify this client.",
                 )
 
     @parametrize(
@@ -174,7 +170,13 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
         if should_succeed:
             self.assertIsNotNone(response["data"])
         else:
-            self.assertIsNotNone(response["errors"])
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
+            else:
+                self.assertEqual(
+                    response["data"]["deleteClientProfile"]["messages"][0]["message"],
+                    "No profile deleted; profile may not exist or lacks proper permissions",
+                )
 
     @parametrize(
         "user_label, expected_client_count",

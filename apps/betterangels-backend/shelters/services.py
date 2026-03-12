@@ -14,7 +14,7 @@ from typing import Any, Dict, List
 from django.db import models, transaction
 from places import Places
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
-from shelters.models import Bed, Schedule, Shelter
+from shelters.models import Bed, Room, Schedule, Shelter
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -201,3 +201,21 @@ def bed_create(*, data: Dict[str, Any]) -> Bed:
     bed.full_clean()
     bed.save()
     return bed
+
+
+@transaction.atomic
+def room_create(*, data: Dict[str, Any]) -> Room:
+    """Create a new Room associated with an existing Shelter.
+
+    Accepts a plain dict with ``shelter_id`` and Room field values.
+
+    Raises:
+        ``Shelter.DoesNotExist`` when the referenced shelter is not found.
+        ``django.core.exceptions.ValidationError`` on invalid data.
+    """
+    data = {**data}
+    shelter = Shelter.objects.get(pk=data.pop("shelter_id"))
+    room = Room(shelter=shelter, **data)
+    room.full_clean()
+    room.save()
+    return room

@@ -1,4 +1,3 @@
-import { CombinedGraphQLErrors } from '@apollo/client';
 import { useMutation, useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -11,9 +10,11 @@ import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { ServiceRequestTypeEnum } from '../../../apollo';
-import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/extractExtensionFieldErrors';
-import { applyManualFormErrors } from '../../../errors';
+import {
+  extractOperationFieldErrors,
+  ServiceRequestTypeEnum,
+} from '../../../apollo';
+import { applyOperationFieldErrors } from '../../../errors';
 import { normalizeService } from '../../../helpers';
 import { useSnackbar } from '../../../hooks';
 import { InteractionListHmisDocument } from '../../../ui-components/InteractionListHmis/__generated__/interactionListHmis.generated';
@@ -29,13 +30,13 @@ import {
 } from '../NoteCreateHmis/__generated__/ServiceRequestHmis.generated';
 import { UpdateNoteLocationHmisDocument } from '../NoteCreateHmis/__generated__/updateNoteLocationHmis.generated';
 import {
+  noteFormEmptyStateHmis,
   NoteFormFieldNamesHmis,
   NoteFormHmis,
   NoteFormSchemaHmis,
   NoteFormSchemaOutputHmis,
   TNoteFormInputsHmis,
   TNoteFormOutputsHmis,
-  noteFormEmptyStateHmis,
 } from '../NoteFormHmis';
 import splitBucket from '../utils/splitBucket';
 import { useApplyTasks } from '../utils/useApplyTasks';
@@ -242,16 +243,15 @@ export function NoteEditHmis(props: TProps) {
 
       const { data, error } = updateResponse;
 
-      if (CombinedGraphQLErrors.is(error)) {
-        const fieldErrors = extractExtensionFieldErrors(
-          error,
-          NoteFormFieldNamesHmis
-        );
+      const fieldErrors = extractOperationFieldErrors({
+        data,
+        dataKey: 'updateHmisNote',
+        fieldNames: [...NoteFormFieldNamesHmis],
+      });
 
-        if (fieldErrors.length) {
-          applyManualFormErrors(fieldErrors, methods.setError);
-          return;
-        }
+      if (fieldErrors.length) {
+        applyOperationFieldErrors(fieldErrors, methods.setError);
+        return;
       }
 
       if (error) {
