@@ -393,8 +393,6 @@ class HmisApiBridge:
             else:
                 raise ValidationError(f"Status Code: {post_response.status_code}")
 
-        except (ValidationError, PermissionDenied):
-            raise
         except Exception as e:
             raise ValidationError(f"An error occurred: {e}")
 
