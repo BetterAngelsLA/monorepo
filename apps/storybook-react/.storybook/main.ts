@@ -1,5 +1,6 @@
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import type { StorybookConfig } from '@storybook/react-native-web-vite';
+import tailwindcss from '@tailwindcss/postcss';
 import 'dotenv/config';
 import { resolve } from 'path';
 import { mergeConfig, searchForWorkspaceRoot } from 'vite';
@@ -44,6 +45,16 @@ const config: StorybookConfig = {
       base: basePath,
       define: {
         'import.meta.env.VITE_APP_BASE_PATH': JSON.stringify(basePath),
+      },
+      css: {
+        postcss: {
+          plugins: [
+            tailwindcss({
+              base: workspaceRoot,
+              optimize: isDev ? { minify: false } : undefined,
+            }),
+          ],
+        },
       },
       plugins: [
         // we handle SVGs differently across libs, hence the separate plugins

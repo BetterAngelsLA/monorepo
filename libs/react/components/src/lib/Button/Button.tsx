@@ -36,7 +36,7 @@ export function Button(props: IButtonProps) {
   };
 
   const buttonCss = [
-    'font-semibold text-sm focus:outline-none rounded-lg',
+    'font-semibold text-sm focus:outline-hidden rounded-lg',
     sizeClasses[size],
     variantClasses[variant], // should come after sizeClasses
     className,

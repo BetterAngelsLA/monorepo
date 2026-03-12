@@ -1,6 +1,7 @@
 {
   "name": "wildfires",
   "version": "1.0.0",
+  "type": "module",
   "description": "resource finder app for LA wildfires",
   "main": "src/index.tsx",
   "scripts": {

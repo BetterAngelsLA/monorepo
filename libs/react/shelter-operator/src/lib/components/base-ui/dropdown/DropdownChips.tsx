@@ -19,13 +19,13 @@ export function DropdownChips<T extends string | number>({
         {selectedValues.slice(0, MAX_VISIBLE_CHIPS).map((v) => (
           <span
             key={v.value}
-            className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-200 text-xs text-gray-700 whitespace-nowrap flex-shrink-0"
+            className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-200 text-xs text-gray-700 whitespace-nowrap shrink-0"
           >
             {v.label}
             <button
               type="button"
               aria-label={`Remove ${v.label}`}
-              className="w-4 leading-none text-gray-400 hover:text-red-500 outline-none focus:outline-none flex-shrink-0"
+              className="w-4 leading-none text-gray-400 hover:text-red-500 outline-hidden focus:outline-hidden shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -38,7 +38,7 @@ export function DropdownChips<T extends string | number>({
         ))}
       </div>
       {selectedValues.length > MAX_VISIBLE_CHIPS && (
-        <span className="px-2 py-1 rounded-full bg-gray-200 text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
+        <span className="px-2 py-1 rounded-full bg-gray-200 text-xs text-gray-500 whitespace-nowrap shrink-0">
           +{selectedValues.length - MAX_VISIBLE_CHIPS}
         </span>
       )}
