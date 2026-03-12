@@ -3,8 +3,7 @@ from typing import cast
 import strawberry
 import strawberry_django
 from common.permissions.utils import IsAuthenticated
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from graphql import GraphQLError
+from django.core.exceptions import ObjectDoesNotExist
 from shelters.models import Shelter
 from shelters.permissions import BedPermissions, RoomPermissions, ShelterPermissions
 from shelters.services import bed_create, room_create, shelter_create
@@ -40,14 +39,7 @@ class Mutation:
     def create_shelter(self, info: Info, data: CreateShelterInput) -> ShelterType:
         clean = {k: v for k, v in strawberry.asdict(data).items() if v is not UNSET}
 
-        try:
-            shelter = shelter_create(data=clean)
-        except ValidationError as exc:
-            if hasattr(exc, "message_dict"):
-                errors = [{"field": f, "messages": msgs} for f, msgs in exc.message_dict.items()]
-            else:
-                errors = [{"field": "__all__", "messages": exc.messages}]
-            raise GraphQLError("Validation Errors", extensions={"errors": errors}) from exc
+        shelter = shelter_create(data=clean)
 
         return cast(ShelterType, shelter)
 
@@ -66,11 +58,5 @@ class Mutation:
             room = room_create(data=strawberry.asdict(data))
         except Shelter.DoesNotExist:
             raise ObjectDoesNotExist(f"Shelter matching ID {data.shelter_id} could not be found.")
-        except ValidationError as exc:
-            if hasattr(exc, "message_dict"):
-                errors = [{"field": f, "messages": msgs} for f, msgs in exc.message_dict.items()]
-            else:
-                errors = [{"field": "__all__", "messages": exc.messages}]
-            raise GraphQLError("Validation Errors", extensions={"errors": errors}) from exc
 
         return cast(RoomType, room)

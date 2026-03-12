@@ -1,9 +1,9 @@
 import { useMutation } from '@apollo/client/react';
 import { Button } from '@monorepo/react/components';
+import { useUser } from '@monorepo/react/shelter';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import { FormEvent, useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useUser } from '@monorepo/react/shelter';
 import type { ShelterFormData } from '../../formTypes';
 import {
   CREATE_SHELTER_MUTATION,
@@ -76,18 +76,26 @@ export default function CreateShelterForm() {
       return;
     }
 
-    try {
-      await createShelter({
-        variables: {
-          data: buildCreateShelterInput(formData, selectedOrganizationId),
-        },
-      });
-      resetForm();
-      setErrors({});
-      navigate('/operator');
-    } catch (error) {
-      setSubmissionError(extractApolloError(error));
+    const { data } = await createShelter({
+      variables: {
+        data: buildCreateShelterInput(formData, selectedOrganizationId),
+      },
+      errorPolicy: 'all',
+    });
+
+    const result = data?.createShelter;
+
+    if (result?.__typename === 'OperationInfo') {
+      const firstMessage = result.messages?.[0]?.message;
+      setSubmissionError(
+        firstMessage || 'Unable to submit shelter. Please try again.'
+      );
+      return;
     }
+
+    resetForm();
+    setErrors({});
+    navigate('/operator');
   };
 
   return (
@@ -194,38 +202,4 @@ export default function CreateShelterForm() {
       </div>
     </APIProvider>
   );
-}
-
-function extractApolloError(error: unknown): string {
-  if (error && typeof error === 'object' && 'graphQLErrors' in error) {
-    const apolloError = error as {
-      graphQLErrors?: Array<{
-        message: string;
-        extensions?: { errors?: Array<{ messages?: string[] }> };
-      }>;
-      networkError?: { message?: string } | null;
-    };
-    const graphQLErrorMessages = apolloError.graphQLErrors
-      ?.map((graphQLError) => {
-        const formattedErrors = graphQLError.extensions?.['errors'];
-        if (Array.isArray(formattedErrors) && formattedErrors.length) {
-          const first = formattedErrors[0];
-          if (first?.messages?.length) {
-            return first.messages.join(', ');
-          }
-        }
-        return graphQLError.message;
-      })
-      .filter(Boolean);
-
-    if (graphQLErrorMessages?.length) {
-      return graphQLErrorMessages[0] as string;
-    }
-
-    if (apolloError.networkError) {
-      return 'Network error while submitting shelter. Please try again.';
-    }
-  }
-
-  return 'Unable to submit shelter. Please try again.';
 }

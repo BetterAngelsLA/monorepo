@@ -1369,7 +1369,7 @@ class RoomMutationTestCase(GraphQLTestCaseMixin, TestCase):
                 "notes": "Corner room",
                 "amenities": "WiFi, AC",
                 "medicalRespite": True,
-                "lastCleanedInspected": "2025-01-15T10:30:00",
+                "lastCleanedInspected": "2025-01-15T10:30:00Z",
             }
         }
 
@@ -1383,9 +1383,42 @@ class RoomMutationTestCase(GraphQLTestCaseMixin, TestCase):
         self.assertEqual(data["notes"], "Corner room")
         self.assertEqual(data["amenities"], "WiFi, AC")
         self.assertTrue(data["medicalRespite"])
-        self.assertIn("2025-01-15", data["lastCleanedInspected"])
+        self.assertEqual(data["lastCleanedInspected"], "2025-01-15T10:30:00+00:00")
         self.assertEqual(data["shelter"]["id"], str(shelter.pk))
         self.assertTrue(Room.objects.filter(pk=data["id"]).exists())
+
+    def test_create_room_duplicate_identifier(self) -> None:
+        shelter = shelter_recipe.make()
+        Room.objects.create(shelter=shelter, room_identifier="Room-101")
+
+        mutation = """
+            mutation CreateRoom($data: CreateRoomInput!) {
+                createRoom(data: $data) {
+                    ... on RoomType {
+                        id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                }
+            }
+        """
+        variables = {
+            "data": {
+                "shelterId": shelter.pk,
+                "roomIdentifier": "Room-101",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        messages = response["data"]["createRoom"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
 
     def test_create_room_shelter_not_found(self) -> None:
         mutation = """

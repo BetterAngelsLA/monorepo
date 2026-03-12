@@ -1,6 +1,4 @@
-export { extractErrorsHmis } from './extractErrorsHmis';
 export { extractExtensionFieldErrors } from './extractExtensionFieldErrors';
-export { extractOperationErrors } from './extractOperationErrors';
 export { extractOperationFieldErrors } from './extractOperationFieldErrors';
 export { extractOperationInfo } from './extractOperationInfo';
 export { extractOperationInfoMessage } from './extractOperationInfoMessage';
