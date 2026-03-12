@@ -1,4 +1,3 @@
-import { CombinedGraphQLErrors } from '@apollo/client';
 import { useMutation, useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
@@ -9,10 +8,9 @@ import { z } from 'zod';
 import {
   HmisClientProfileType,
   UpdateHmisClientProfileInput,
-  extractExtensionFieldErrors,
   extractOperationFieldErrors,
 } from '../../apollo';
-import { applyManualFormErrors, applyOperationFieldErrors } from '../../errors';
+import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import { ClientProfileHmisDocument } from '../ClientHmis/__generated__/getClientHmis.generated';
 import { UpdateClientProfileHmisDocument } from './__generated__/updateClientHmis.generated';
@@ -125,14 +123,6 @@ export function ClientEditHmis(props: TProps) {
       if (opsValidationErrors.length) {
         applyOperationFieldErrors(opsValidationErrors, methods.setError);
         return;
-      }
-
-      if (CombinedGraphQLErrors.is(error)) {
-        const fieldErrors = extractExtensionFieldErrors(error, sectionFormKeys);
-        if (fieldErrors?.length) {
-          applyManualFormErrors(fieldErrors, methods.setError);
-          return;
-        }
       }
 
       if (error) {

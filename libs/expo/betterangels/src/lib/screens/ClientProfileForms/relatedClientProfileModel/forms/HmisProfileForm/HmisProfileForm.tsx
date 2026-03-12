@@ -1,4 +1,4 @@
-import { ApolloLink, CombinedGraphQLErrors } from '@apollo/client';
+import { ApolloLink } from '@apollo/client';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
 import {
   ControlledInput,
@@ -10,10 +10,10 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import {
+  extractOperationFieldErrors,
   extractOperationInfo,
-  extractResponseExtensions,
 } from '../../../../../apollo';
-import { applyManualFormErrors } from '../../../../../errors';
+import { applyOperationFieldErrors } from '../../../../../errors';
 import { useSnackbar } from '../../../../../hooks';
 import {
   ClientProfileSectionEnum,
@@ -115,16 +115,19 @@ export function HmisProfileForm(props: TProps) {
 
       const { data: responseData, error } = response;
 
+      const mutationKey = isEditMode
+        ? 'updateHmisProfile'
+        : 'createHmisProfile';
+
       // handle fieldErrors and return if present
-      if (CombinedGraphQLErrors.is(error)) {
-        // TODO: convert to use extractExtensionFieldErrors
-        const fieldErrors = extractResponseExtensions(error);
+      const fieldErrors = extractOperationFieldErrors({
+        data: responseData,
+        dataKey: mutationKey,
+      });
 
-        if (fieldErrors?.length) {
-          applyManualFormErrors(fieldErrors, setError);
-
-          return;
-        }
+      if (fieldErrors.length) {
+        applyOperationFieldErrors(fieldErrors, setError);
+        return;
       }
 
       // throw unhandled errors
@@ -135,10 +138,6 @@ export function HmisProfileForm(props: TProps) {
       if (!responseData) {
         throw new Error('Missing HMIS mutation response data');
       }
-
-      const mutationKey = isEditMode
-        ? 'updateHmisProfile'
-        : 'createHmisProfile';
 
       const uniquenessError = hasUniquenessError(response, mutationKey);
 

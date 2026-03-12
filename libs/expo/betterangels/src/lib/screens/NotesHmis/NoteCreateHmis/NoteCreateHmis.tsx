@@ -1,17 +1,16 @@
-import { CombinedGraphQLErrors } from '@apollo/client';
 import { useApolloClient, useMutation } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import {
-  extractExtensionFieldErrors,
+  extractOperationFieldErrors,
   ServiceRequestTypeEnum,
 } from '../../../apollo';
-import { applyManualFormErrors } from '../../../errors';
+import { applyOperationFieldErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
-import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import { InteractionListHmisDocument } from '../../../ui-components/InteractionListHmis/__generated__/interactionListHmis.generated';
+import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import {
   NoteFormHmis,
   NoteFormSchemaHmis,
@@ -140,15 +139,15 @@ export function NoteCreateHmis(props: TProps) {
       const { data, error } = createResponse;
 
       // Handle Validation Errors
-      if (CombinedGraphQLErrors.is(error)) {
-        const fieldErrors = extractExtensionFieldErrors(
-          error,
-          NoteFormFieldNamesHmis
-        );
-        if (fieldErrors.length) {
-          applyManualFormErrors(fieldErrors, methods.setError);
-          return;
-        }
+      const fieldErrors = extractOperationFieldErrors({
+        data,
+        dataKey: 'createHmisNote',
+        fieldNames: [...NoteFormFieldNamesHmis],
+      });
+
+      if (fieldErrors.length) {
+        applyOperationFieldErrors(fieldErrors, methods.setError);
+        return;
       }
 
       // Handle Generic Errors

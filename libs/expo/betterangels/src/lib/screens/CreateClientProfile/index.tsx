@@ -1,4 +1,3 @@
-import { CombinedGraphQLErrors } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -13,9 +12,9 @@ import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 import {
   CreateClientProfileInput,
-  extractResponseExtensions,
+  extractOperationFieldErrors,
 } from '../../apollo';
-import { applyManualFormErrors } from '../../errors';
+import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import {
   CreateClientProfileDocument,
@@ -79,15 +78,14 @@ export default function CreateClientProfile() {
       });
 
       // handle fieldErrors and return if present
-      if (CombinedGraphQLErrors.is(error)) {
-        // TODO: handle `client_name` field returned by server + use zod schema
-        const fieldErrors = extractResponseExtensions(error);
+      const fieldErrors = extractOperationFieldErrors({
+        data,
+        dataKey: 'createClientProfile',
+      });
 
-        if (fieldErrors?.length) {
-          applyManualFormErrors(fieldErrors, setError);
-
-          return;
-        }
+      if (fieldErrors.length) {
+        applyOperationFieldErrors(fieldErrors, setError);
+        return;
       }
 
       const result = data?.createClientProfile;

@@ -96,13 +96,13 @@ class Query:
             org_id=organization_id,
         )
         if organization is None:
-            raise PermissionError("You do not have permission to view this organization's members.")
+            raise PermissionDenied("You do not have permission to view this organization's members.")
 
         user: User = (
             organization.users.filter(id=user_id).annotate(_member_role=annotate_member_role(organization_id)).first()
         )
         if not user:
-            raise PermissionError("You do not have permission to view this member.")
+            raise PermissionDenied("You do not have permission to view this member.")
 
         return cast(OrganizationMemberType, user)
 
@@ -125,7 +125,7 @@ class Query:
             org_id=organization_id,
         )
         if organization is None:
-            raise PermissionError("You do not have permission to view this organization's members.")
+            raise PermissionDenied("You do not have permission to view this organization's members.")
 
         queryset: QuerySet[User] = organization.users.all()
 
@@ -157,7 +157,7 @@ class Mutation:
     def update_current_user(self, info: Info, data: UpdateUserInput) -> Union[UserType, CurrentUserType]:
         user = cast(User, get_current_user(info))
         if str(user.pk) != str(data.id):
-            raise PermissionError("You do not have permission to modify this user.")
+            raise PermissionDenied("You do not have permission to modify this user.")
 
         user_data: dict = strawberry.asdict(data)
 

@@ -4,10 +4,9 @@ import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useSnackbar } from '../../hooks';
 
-import { CombinedGraphQLErrors } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
-import { extractExtensionFieldErrors } from '../../apollo/graphql/response/extractExtensionFieldErrors';
-import { applyManualFormErrors } from '../../errors';
+import { extractOperationFieldErrors } from '../../apollo/graphql/response/extractOperationFieldErrors';
+import { applyOperationFieldErrors } from '../../errors';
 import {
   FullNameFormFieldNames,
   FullNameFormHmis,
@@ -67,17 +66,15 @@ export function CreateClientProfileHmis() {
       const { data, error } = createResponse;
 
       // if form field errors: handle and exit
-      if (CombinedGraphQLErrors.is(error)) {
-        const fieldErrors = extractExtensionFieldErrors(
-          error,
-          FullNameFormFieldNames
-        );
+      const fieldErrors = extractOperationFieldErrors({
+        data,
+        dataKey: 'createHmisClientProfile',
+        fieldNames: [...FullNameFormFieldNames],
+      });
 
-        if (fieldErrors.length) {
-          applyManualFormErrors(fieldErrors, setError);
-
-          return;
-        }
+      if (fieldErrors.length) {
+        applyOperationFieldErrors(fieldErrors, setError);
+        return;
       }
 
       // non-validation error: throw

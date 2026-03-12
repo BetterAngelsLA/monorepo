@@ -6,6 +6,7 @@ import strawberry_django
 from accounts.models import User
 from accounts.permissions import get_user_permitted_org
 from common.permissions.utils import IsAuthenticated
+from django.core.exceptions import PermissionDenied
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 
@@ -59,7 +60,7 @@ class Query:
         )
 
         if org is None:
-            raise PermissionError("You do not have permission to view reports.")
+            raise PermissionDenied("You do not have permission to view reports.")
 
         if start_date is None or end_date is None:
             default_start, default_end = report_default_date_range()

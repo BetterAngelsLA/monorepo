@@ -69,7 +69,8 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
         errors = validate_name(data)
         if should_return_error:
             self.assertEqual(len(errors), 1)
-            self.assertEqual(errors[0]["errorCode"], ErrorCodeEnum.NAME_NOT_PROVIDED.name)
+            self.assertIn("client_name", errors)
+            self.assertEqual(errors["client_name"].code, ErrorCodeEnum.NAME_NOT_PROVIDED.name)
         else:
             self.assertEqual(len(errors), 0)
 
@@ -92,7 +93,8 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
 
         if expected_error_code:
             self.assertEqual(len(errors), 1)
-            self.assertEqual(errors[0]["errorCode"], expected_error_code)
+            error = next(iter(errors.values()))
+            self.assertEqual(error.code, expected_error_code)
         else:
             self.assertEqual(len(errors), 0)
 
@@ -123,7 +125,8 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
 
         if expected_error_code:
             self.assertEqual(len(errors), 1)
-            self.assertEqual(errors[0]["errorCode"], expected_error_code)
+            error = next(iter(errors.values()))
+            self.assertEqual(error.code, expected_error_code)
 
     def test_validate_california_id_update_existing(self) -> None:
         errors = validate_california_id(
@@ -137,22 +140,22 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             strawberry.UNSET,
         )
         self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0]["field"], "californiaId")
-        self.assertEqual(errors[0]["errorCode"], ErrorCodeEnum.CA_ID_IN_USE.name)
+        self.assertIn("california_id", errors)
+        self.assertEqual(errors["california_id"].code, ErrorCodeEnum.CA_ID_IN_USE.name)
 
     @parametrize(
-        "phone_numbers, expected_locations, expected_error_count",
+        "phone_numbers, expected_keys, expected_error_count",
         [
-            ([strawberry.UNSET, None, "", " "], ["3__number"], 1),
+            ([strawberry.UNSET, None, "", " "], ["phone_numbers.3.number"], 1),
             (["2125551212", "2125551213", "2125551214"], None, 0),
-            (["2005551212", "2125551212", "212555121"], ["0__number", "2__number"], 2),
+            (["2005551212", "2125551212", "212555121"], ["phone_numbers.0.number", "phone_numbers.2.number"], 2),
             (["2125551212"], None, 0),
         ],
     )
     def test_validate_phone_numbers(
         self,
         phone_numbers: list[str],
-        expected_locations: Optional[list[str]],
+        expected_keys: Optional[list[str]],
         expected_error_count: int,
     ) -> None:
         phone_number_dicts = [{"number": phone_number} for phone_number in phone_numbers]
@@ -160,14 +163,13 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
         errors = validate_phone_numbers(phone_number_dicts)
         self.assertEqual(len(errors), expected_error_count)
         if expected_error_count:
-            assert expected_locations
-            for error, location in zip(errors, expected_locations):
-                self.assertEqual(error["field"], "phoneNumbers")
-                self.assertEqual(error["location"], location)
-                self.assertEqual(error["errorCode"], ErrorCodeEnum.PHONE_NUMBER_INVALID.name)
+            assert expected_keys
+            for expected_key in expected_keys:
+                self.assertIn(expected_key, errors)
+                self.assertEqual(errors[expected_key].code, ErrorCodeEnum.PHONE_NUMBER_INVALID.name)
 
     @parametrize(
-        "hmis_profiles, expected_locations, expected_error_count, expected_error_codes",
+        "hmis_profiles, expected_keys, expected_error_count, expected_error_codes",
         [
             ([{"agency": HmisAgencyEnum.PASADENA, "hmis_id": "4lign24"}], None, 0, []),
             (
@@ -178,7 +180,12 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
                     {"agency": HmisAgencyEnum.PASADENA, "hmis_id": strawberry.UNSET},
                     {"agency": HmisAgencyEnum.PASADENA, "hmis_id": " "},
                 ],
-                ["0__hmisId", "1__hmisId", "3__hmisId", "4__hmisId"],
+                [
+                    "hmis_profiles.0.hmis_id",
+                    "hmis_profiles.1.hmis_id",
+                    "hmis_profiles.3.hmis_id",
+                    "hmis_profiles.4.hmis_id",
+                ],
                 4,
                 [
                     ErrorCodeEnum.HMIS_ID_NOT_PROVIDED.name,
@@ -192,20 +199,20 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
     def test_validate_hmis_profiles(
         self,
         hmis_profiles: list[dict[str, Any]],
-        expected_locations: list[str],
+        expected_keys: Optional[list[str]],
         expected_error_count: int,
         expected_error_codes: list[str],
     ) -> None:
         errors = validate_hmis_profiles(hmis_profiles)
         self.assertEqual(len(errors), expected_error_count)
         if expected_error_count:
-            for error, location, expected_error_code in zip(errors, expected_locations, expected_error_codes):
-                self.assertEqual(error["field"], "hmisProfiles")
-                self.assertEqual(error["location"], location)
-                self.assertEqual(error["errorCode"], expected_error_code)
+            assert expected_keys
+            for expected_key, expected_error_code in zip(expected_keys, expected_error_codes):
+                self.assertIn(expected_key, errors)
+                self.assertEqual(errors[expected_key].code, expected_error_code)
 
     @parametrize(
-        "contacts, expected_locations, expected_error_count",
+        "contacts, expected_keys, expected_error_count",
         [
             (
                 [
@@ -214,7 +221,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
                     {"phone_number": ""},
                     {"phone_number": " "},
                 ],
-                ["3__phoneNumber"],
+                ["contacts.3.phone_number"],
                 1,
             ),
             (
@@ -224,7 +231,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             ),
             (
                 [{"phone_number": "2005551212"}, {"phone_number": "2125551212"}, {"phone_number": "212555121"}],
-                ["0__phoneNumber", "2__phoneNumber"],
+                ["contacts.0.phone_number", "contacts.2.phone_number"],
                 2,
             ),
             (
@@ -237,7 +244,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
     def test_validate_contacts(
         self,
         contacts: list[dict[str, str]],
-        expected_locations: Optional[list[str]],
+        expected_keys: Optional[list[str]],
         expected_error_count: int,
     ) -> None:
         contact_dicts = [{"phone_number": c["phone_number"]} for c in contacts]
@@ -245,11 +252,10 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
         errors = validate_contacts(contact_dicts)
         self.assertEqual(len(errors), expected_error_count)
         if expected_error_count:
-            assert expected_locations
-            for error, location in zip(errors, expected_locations):
-                self.assertEqual(error["field"], "contacts")
-                self.assertEqual(error["location"], location)
-                self.assertEqual(error["errorCode"], ErrorCodeEnum.PHONE_NUMBER_INVALID.name)
+            assert expected_keys
+            for expected_key in expected_keys:
+                self.assertIn(expected_key, errors)
+                self.assertEqual(errors[expected_key].code, ErrorCodeEnum.PHONE_NUMBER_INVALID.name)
 
 
 class ClientDocumentNamespaceGroupTestCase(TestCase):

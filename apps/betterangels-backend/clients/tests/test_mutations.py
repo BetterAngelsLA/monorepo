@@ -3,7 +3,6 @@ from unittest.mock import ANY
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
-    ErrorCodeEnum,
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
@@ -285,22 +284,30 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         }
 
         update_response = self._update_client_profile_fixture(variables)
-        self.assertEqual(len(update_response["errors"]), 1)
+        update_messages = update_response["data"]["updateClientProfile"]["messages"]
 
-        expected_update_error_messages = [
-            {"field": "client_name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name},
-            {"field": "email", "location": None, "errorCode": ErrorCodeEnum.EMAIL_INVALID.name},
-            {"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_INVALID.name},
+        expected_update_messages = [
+            {"kind": "VALIDATION", "field": "clientName", "message": "Filling out one of the fields is required"},
+            {"kind": "VALIDATION", "field": "email", "message": "Enter a valid email address"},
             {
-                "field": "contacts",
-                "location": "0__phoneNumber",
-                "errorCode": ErrorCodeEnum.PHONE_NUMBER_INVALID.name,
+                "kind": "VALIDATION",
+                "field": "californiaId",
+                "message": "California ID must be 1 letter followed by 7 numbers",
             },
-            {"field": "hmisProfiles", "location": "0__hmisId", "errorCode": ErrorCodeEnum.HMIS_ID_NOT_PROVIDED.name},
-            {"field": "phoneNumbers", "location": "0__number", "errorCode": ErrorCodeEnum.PHONE_NUMBER_INVALID.name},
+            {
+                "kind": "VALIDATION",
+                "field": "contacts.0.phoneNumber",
+                "message": "Please enter a valid 10-digit phone number",
+            },
+            {"kind": "VALIDATION", "field": "hmisProfiles.0.hmisId", "message": "Enter HMIS ID or remove this entry"},
+            {
+                "kind": "VALIDATION",
+                "field": "phoneNumbers.0.number",
+                "message": "Please enter a valid 10-digit phone number",
+            },
         ]
 
-        self.assertCountEqual(update_response["errors"][0]["extensions"]["errors"], expected_update_error_messages)
+        self.assertCountEqual(update_messages, expected_update_messages)
 
         variables.pop("id")
 
@@ -309,22 +316,26 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         variables["hmisProfiles"][0]["hmisId"] = self.client_profile_1["hmisProfiles"][0]["hmisId"].upper()
 
         create_response = self._create_client_profile_fixture(variables)
-        self.assertEqual(len(create_response["errors"]), 1)
+        create_messages = create_response["data"]["createClientProfile"]["messages"]
 
-        expected_create_error_messages = [
-            {"field": "client_name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name},
-            {"field": "email", "location": None, "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name},
-            {"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_IN_USE.name},
+        expected_create_messages = [
+            {"kind": "VALIDATION", "field": "clientName", "message": "Filling out one of the fields is required"},
+            {"kind": "VALIDATION", "field": "email", "message": "User with this Email already exists"},
+            {"kind": "VALIDATION", "field": "californiaId", "message": "California ID in use by another client"},
             {
-                "field": "contacts",
-                "location": "0__phoneNumber",
-                "errorCode": ErrorCodeEnum.PHONE_NUMBER_INVALID.name,
+                "kind": "VALIDATION",
+                "field": "contacts.0.phoneNumber",
+                "message": "Please enter a valid 10-digit phone number",
             },
-            {"field": "hmisProfiles", "location": "0__hmisId", "errorCode": ErrorCodeEnum.HMIS_ID_IN_USE.name},
-            {"field": "phoneNumbers", "location": "0__number", "errorCode": ErrorCodeEnum.PHONE_NUMBER_INVALID.name},
+            {"kind": "VALIDATION", "field": "hmisProfiles.0.hmisId", "message": "HMIS ID in use by another client"},
+            {
+                "kind": "VALIDATION",
+                "field": "phoneNumbers.0.number",
+                "message": "Please enter a valid 10-digit phone number",
+            },
         ]
 
-        self.assertCountEqual(create_response["errors"][0]["extensions"]["errors"], expected_create_error_messages)
+        self.assertCountEqual(create_messages, expected_create_messages)
 
     def test_client_profile_mutation_client_name_validation(self) -> None:
         variables = {"nickname": "Mikey"}
@@ -406,14 +417,12 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "email": dupe_email_lower,
         }
         response = self._update_client_profile_fixture(variables)
-        validation_errors = response["errors"][0]
-        error_messages = validation_errors["extensions"]["errors"]
+        messages = response["data"]["updateClientProfile"]["messages"]
 
-        self.assertEqual(validation_errors["message"], "Validation Errors")
-        self.assertEqual(len(error_messages), 1)
-        self.assertEqual(error_messages[0]["field"], "email")
-        self.assertEqual(error_messages[0]["location"], None)
-        self.assertEqual(error_messages[0]["errorCode"], ErrorCodeEnum.EMAIL_IN_USE.name)
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["field"], "email")
+        self.assertEqual(messages[0]["message"], "User with this Email already exists")
 
     def test_update_client_profile_duplicate_email_upper_mutation(self) -> None:
         dupe_email_upper = self.client_profile_2["email"].upper()
@@ -422,14 +431,12 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "email": dupe_email_upper,
         }
         response = self._update_client_profile_fixture(variables)
-        validation_errors = response["errors"][0]
-        error_messages = validation_errors["extensions"]["errors"]
+        messages = response["data"]["updateClientProfile"]["messages"]
 
-        self.assertEqual(validation_errors["message"], "Validation Errors")
-        self.assertEqual(len(error_messages), 1)
-        self.assertEqual(error_messages[0]["field"], "email")
-        self.assertEqual(error_messages[0]["location"], None)
-        self.assertEqual(error_messages[0]["errorCode"], ErrorCodeEnum.EMAIL_IN_USE.name)
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["field"], "email")
+        self.assertEqual(messages[0]["message"], "User with this Email already exists")
 
     def test_delete_client_profile_mutation(self) -> None:
         client_profile = self._create_client_profile_fixture({"firstName": "to delete"})["data"]["createClientProfile"]
@@ -843,7 +850,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client_document_id = self.client_profile_1_document_1["id"]
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
 
-        expected_query_count = 16
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self._delete_client_document_fixture(client_document_id)
 
