@@ -7,16 +7,9 @@
 set -euo pipefail
 
 
-# Directory of this script (portable way that works with symlinks and relative execution)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# .maestro root (one directory above /scripts)
-MAESTRO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-
-# Directory containing Maestro flow files
+# .maestro root: level above this script
+MAESTRO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TEST_DIR="$MAESTRO_ROOT/tests"
-
-# Local env variables for Maestro runs
 ENV_FILE="$MAESTRO_ROOT/.env.local"
 
 
@@ -37,11 +30,11 @@ fi
 # -----------------------------
 # Load env vars from .env.local
 # -----------------------------
-#
+
 # Maestro accepts env vars as:
 #   -e KEY=value
 #
-# We convert each non-empty, non-comment line of the file
+# Convert each non-empty, non-comment line of the file
 # into a "-e KEY=value" pair and store it safely in an array.
 #
 ENV_ARGS=()
@@ -56,22 +49,21 @@ done < "$ENV_FILE"
 
 
 # -----------------------------
-# CLI argument parsing
+# Parse CLI arguments
 # -----------------------------
 
 # Flags passed directly to the Maestro CLI
 # Examples
 #   -p ios
-#   --platform ios
 #   --verbose
-#   --verbose -p ios (--verbose come first)
+#   --verbose -p android
 GLOBAL_FLAGS=()
 
-# Optional flow file to run (landing.yml etc)
-FLOW=""
+# Optional test file to run (landing.yml etc)
+TEST_FILE=""
 
-# Additional arguments passed after the flow
-FLOW_ARGS=()
+# Additional arguments passed through to the Maestro CLI
+TEST_ARGS=()
 
 
 # Parse arguments provided to this wrapper
@@ -102,12 +94,12 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
 
-    # Anything else is treated as a flow file
+    # Anything else is treated as a test file
     *)
-      if [[ -z "$FLOW" ]]; then
-        FLOW="$1"
+      if [[ -z "$TEST_FILE" ]]; then
+        TEST_FILE="$1"
       else
-        FLOW_ARGS+=("$1")
+        TEST_ARGS+=("$1")
       fi
       shift
       ;;
@@ -115,48 +107,65 @@ while [[ $# -gt 0 ]]; do
 done
 
 
-# Default to iOS if no platform flag was provided
-if [[ ! " ${GLOBAL_FLAGS[*]} " =~ "-p" && ! " ${GLOBAL_FLAGS[*]} " =~ "--platform" ]]; then
+# Default to iOS if neither -p nor --platform was provided
+HAS_PLATFORM_FLAG=false
+
+for flag in "${GLOBAL_FLAGS[@]-}"; do
+  if [[ "$flag" == "-p" || "$flag" == "--platform" ]]; then
+    HAS_PLATFORM_FLAG=true
+    break
+  fi
+done
+
+if [[ "$HAS_PLATFORM_FLAG" == false ]]; then
   GLOBAL_FLAGS+=("-p" "ios")
 fi
 
 # -----------------------------
-# Build Maestro command safely
+# Build Maestro command
 # -----------------------------
+
+# Construct the Maestro command.
 #
-# We construct the command as an array to avoid shell
-# word-splitting bugs and quoting problems.
+# Final command produced:
+#   maestro [GLOBAL_FLAGS] test [TEST_PATH] [ENV_ARGS] [TEST_ARGS]
 #
+# Which corresponds to the Maestro CLI pattern:
+#   maestro [options] [subcommand] [subcommand options]
+#
+# Example:
+#   maestro -p ios test tests/landing.yml \
+#     -e MAESTRO_DEEPLINK=... \
+#     --debug-output
+#
+# Build the command as an array to avoid shell quoting issues.
 CMD=(maestro)
 
-
 # Add global flags (if any)
-[[ ${#GLOBAL_FLAGS[@]} -gt 0 ]] && CMD+=("${GLOBAL_FLAGS[@]}")
-
+CMD+=("${GLOBAL_FLAGS[@]}")
 
 # Add `test` subcommand
 CMD+=(test)
 
 
-# Determine which flow(s) to run
-if [[ -z "$FLOW" ]]; then
+# Determine which test(s) to run
+if [[ -z "$TEST_FILE" ]]; then
   # run entire directory
   CMD+=("$TEST_DIR")
-
 else
-  # allow "landing" instead of "landing.yml"
-  [[ "$FLOW" != *.yml ]] && FLOW="$FLOW.yml"
+  # accept both "landing.yml" and "landing" (all test files are .yml)
+  [[ "$TEST_FILE" != *.yml ]] && TEST_FILE="$TEST_FILE.yml"
 
-  CMD+=("$TEST_DIR/$FLOW")
+  CMD+=("$TEST_DIR/$TEST_FILE")
 fi
 
 
-# Inject environment variables
+# Add environment variables (-e KEY=value)
 [[ ${#ENV_ARGS[@]} -gt 0 ]] && CMD+=("${ENV_ARGS[@]}")
 
 
-# Forward additional flow arguments
-[[ ${#FLOW_ARGS[@]} -gt 0 ]] && CMD+=("${FLOW_ARGS[@]}")
+# Forward additional CLI arguments
+[[ ${#TEST_ARGS[@]} -gt 0 ]] && CMD+=("${TEST_ARGS[@]}")
 
 
 # Print command for debugging

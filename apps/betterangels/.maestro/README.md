@@ -4,8 +4,6 @@ This directory contains the **Maestro E2E test suite** for the Better Angels mob
 
 Maestro is a cross-platform mobile UI testing framework that works with both **iOS simulators** and **Android emulators**.
 
-[Maestro CLI overview](https://docs.maestro.dev/maestro-cli)
-
 ---
 
 ## Local Setup
@@ -192,8 +190,8 @@ You can find this value in the Expo CLI output when running the app.
   tests/
     landing.yml
 
-  flows/
-    (reusable flows)
+  steps/
+    (reusable steps)
 
   scripts/
     maestro-e2e.sh
@@ -214,15 +212,15 @@ Each file represents a test flow.
 tests/landing.yml
 ```
 
-### `flows/`
+### `steps/`
 
-Reusable helper flows used by tests.
+Reusable steps used by tests.
 
 **Example:**
 
 ```
-flows/login.yml
-flows/open_app.yml
+steps/login.yml
+steps/open_app.yml
 ```
 
 ---
@@ -241,7 +239,7 @@ TBD
 
 ## Reference Links
 
-[Maestro Environment variables](https://docs.maestro.dev/maestro-cli/environment-variables)
+[Maestro CLI overview](https://docs.maestro.dev/maestro-cli)
 
 [Maestro CLI commands and options](https://docs.maestro.dev/maestro-cli/maestro-cli-commands-and-options)
 
