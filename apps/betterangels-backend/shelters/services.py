@@ -11,6 +11,7 @@ Raises ``django.core.exceptions.ValidationError`` on invalid data — callers
 
 from typing import TYPE_CHECKING, Any, Dict, List
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from organizations.models import Organization
 from places import Places
@@ -199,11 +200,14 @@ def bed_create(*, user: "User", data: Dict[str, Any]) -> Bed:
     ``shelter_get`` before creating the bed.
 
     Raises:
-        ``Shelter.DoesNotExist`` when the referenced shelter is not found.
-        ``PermissionError`` when the user is not a member of the shelter's org.
+        ``ObjectDoesNotExist`` when the shelter is not found or the user
+        does not belong to its organization.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    shelter = shelter_get(user=user, shelter_id=data["shelter_id"])
+    try:
+        shelter = shelter_get(user=user, shelter_id=data["shelter_id"])
+    except Shelter.DoesNotExist:
+        raise ObjectDoesNotExist(f"Shelter matching ID {data['shelter_id']} could not be found.")
     bed = Bed(shelter=shelter, status=data["status"])
     bed.full_clean()
     bed.save()
@@ -218,12 +222,16 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
     ``shelter_get`` before creating the room.
 
     Raises:
-        ``Shelter.DoesNotExist`` when the referenced shelter is not found.
-        ``PermissionError`` when the user is not a member of the shelter's org.
+        ``ObjectDoesNotExist`` when the shelter is not found or the user
+        does not belong to its organization.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = {**data}
-    shelter = shelter_get(user=user, shelter_id=data.pop("shelter_id"))
+    shelter_id = data.pop("shelter_id")
+    try:
+        shelter = shelter_get(user=user, shelter_id=shelter_id)
+    except Shelter.DoesNotExist:
+        raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
     room = Room(shelter=shelter, **data)
     room.full_clean()
     room.save()

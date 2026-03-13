@@ -32,16 +32,16 @@ def admin_shelter_list(queryset: "QuerySet[Shelter]", *, user: "User") -> "Query
 def shelter_get(*, user: "User", shelter_id: int | str) -> "Shelter":
     """Return the shelter if it exists and the user belongs to its organization.
 
+    Uses ``admin_shelter_list`` as the base queryset so the org-membership
+    check is defined in one place.
+
     Raises:
-        ``Shelter.DoesNotExist`` when the shelter is not found.
-        ``PermissionError`` when the user is not a member of the shelter's org.
+        ``Shelter.DoesNotExist`` when the shelter is not found or the user
+        does not belong to its organization.
     """
     from shelters.models import Shelter
 
-    shelter = Shelter.objects.select_related("organization").get(pk=shelter_id)
-    if not Organization.objects.filter(pk=shelter.organization_id, users=user).exists():
-        raise PermissionError("You do not have permission to modify this shelter.")
-    return shelter
+    return admin_shelter_list(Shelter.objects.all(), user=user).select_related("organization").get(pk=shelter_id)
 
 
 def shelters_open_at(

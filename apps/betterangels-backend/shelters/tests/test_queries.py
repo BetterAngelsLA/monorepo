@@ -2,14 +2,14 @@ import datetime
 from typing import Any
 from unittest.mock import ANY, patch
 
-from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
+from common.tests.utils import GraphQLBaseTestCase
+from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
-from model_bakery import baker
 from model_bakery.recipe import seq
 from places import Places
 from shelters.enums import (
@@ -1237,14 +1237,16 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
         self.assertEqual(results[0]["heroImage"], fallback.file.url)
 
 
-class BedMutationTestCase(GraphQLTestCaseMixin, TestCase):
+class BedMutationTestCase(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.user = baker.make(User, is_superuser=True)
-        self.graphql_client.force_login(self.user)
+        bed_content_type = ContentType.objects.get_for_model(Bed)
+        add_bed_perm = Permission.objects.get(content_type=bed_content_type, codename="add_bed")
+        self.org_1_case_manager_1.user_permissions.add(add_bed_perm)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_create_bed(self) -> None:
-        shelter = shelter_recipe.make()
+        shelter = shelter_recipe.make(organization=self.org_1)
         mutation = """
             mutation CreateBed($data: CreateBedInput!) {
                 createBed(data: $data) {
@@ -1305,7 +1307,7 @@ class BedMutationTestCase(GraphQLTestCaseMixin, TestCase):
         self.assertIn("Shelter matching ID 999999 could not be found.", messages[0]["message"])
 
     def test_create_bed_invalid_status(self) -> None:
-        shelter = shelter_recipe.make()
+        shelter = shelter_recipe.make(organization=self.org_1)
         mutation = """
             mutation CreateBed($data: CreateBedInput!) {
                 createBed(data: $data) {
@@ -1331,14 +1333,16 @@ class BedMutationTestCase(GraphQLTestCaseMixin, TestCase):
         )
 
 
-class RoomMutationTestCase(GraphQLTestCaseMixin, TestCase):
+class RoomMutationTestCase(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.user = baker.make(User, is_superuser=True)
-        self.graphql_client.force_login(self.user)
+        room_content_type = ContentType.objects.get_for_model(Room)
+        add_room_perm = Permission.objects.get(content_type=room_content_type, codename="add_room")
+        self.org_1_case_manager_1.user_permissions.add(add_room_perm)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_create_room(self) -> None:
-        shelter = shelter_recipe.make()
+        shelter = shelter_recipe.make(organization=self.org_1)
         mutation = """
             mutation CreateRoom($data: CreateRoomInput!) {
                 createRoom(data: $data) {
@@ -1388,7 +1392,7 @@ class RoomMutationTestCase(GraphQLTestCaseMixin, TestCase):
         self.assertTrue(Room.objects.filter(pk=data["id"]).exists())
 
     def test_create_room_duplicate_identifier(self) -> None:
-        shelter = shelter_recipe.make()
+        shelter = shelter_recipe.make(organization=self.org_1)
         Room.objects.create(shelter=shelter, room_identifier="Room-101")
 
         mutation = """
@@ -1451,7 +1455,7 @@ class RoomMutationTestCase(GraphQLTestCaseMixin, TestCase):
         self.assertIn("Shelter matching ID 999999 could not be found.", messages[0]["message"])
 
     def test_create_room_invalid_status(self) -> None:
-        shelter = shelter_recipe.make()
+        shelter = shelter_recipe.make(organization=self.org_1)
         mutation = """
             mutation CreateRoom($data: CreateRoomInput!) {
                 createRoom(data: $data) {

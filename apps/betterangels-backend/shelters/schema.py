@@ -15,7 +15,7 @@ from shelters.types import (
     RoomType,
     ShelterType,
 )
-from strawberry import UNSET
+from common.graphql.utils import strip_unset
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
@@ -38,15 +38,17 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(ShelterPermissions.ADD)])
     def create_shelter(self, info: Info, data: CreateShelterInput) -> ShelterType:
         user = cast(User, get_current_user(info))
-        clean = {k: v for k, v in strawberry.asdict(data).items() if v is not UNSET}
+        clean = strip_unset(strawberry.asdict(data))
         return cast(ShelterType, shelter_create(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(BedPermissions.ADD)])
     def create_bed(self, info: Info, data: CreateBedInput) -> BedType:
         user = cast(User, get_current_user(info))
-        return cast(BedType, bed_create(user=user, data=strawberry.asdict(data)))
+        clean = strip_unset(strawberry.asdict(data))
+        return cast(BedType, bed_create(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(RoomPermissions.ADD)])
     def create_room(self, info: Info, data: CreateRoomInput) -> RoomType:
         user = cast(User, get_current_user(info))
-        return cast(RoomType, room_create(user=user, data=strawberry.asdict(data)))
+        clean = strip_unset(strawberry.asdict(data))
+        return cast(RoomType, room_create(user=user, data=clean))

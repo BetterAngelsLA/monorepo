@@ -1,9 +1,9 @@
 import { useMutation } from '@apollo/client/react';
 import { Button } from '@monorepo/react/components';
-import { useUser } from '@monorepo/react/shelter';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import { FormEvent, useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useActiveOrg } from '../../../../providers/activeOrg';
 import type { ShelterFormData } from '../../formTypes';
 import {
   CREATE_SHELTER_MUTATION,
@@ -30,11 +30,8 @@ import { SummaryInformationSection } from './sections/SummaryInformationSection'
 
 export default function CreateShelterForm() {
   const navigate = useNavigate();
-  const { user } = useUser();
-  const organizations = user?.organizations ?? [];
-  const [selectedOrganizationId, setSelectedOrganizationId] = useState(
-    () => user?.organization?.id ?? ''
-  );
+  const { activeOrg } = useActiveOrg();
+  const selectedOrganizationId = activeOrg?.id ?? '';
   const { formData, updateField, resetForm } = useCreateShelterForm();
   const [errors, setErrors] = useState<FormErrors>({});
   const [submissionError, setSubmissionError] = useState<string | null>(null);
@@ -138,9 +135,6 @@ export default function CreateShelterForm() {
             data={formData}
             onChange={handleFieldChange}
             errors={errors}
-            organizations={organizations}
-            selectedOrganizationId={selectedOrganizationId}
-            onOrganizationChange={setSelectedOrganizationId}
           />
           <SummaryInformationSection
             data={formData}
