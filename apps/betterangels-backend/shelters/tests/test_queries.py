@@ -3,7 +3,7 @@ from typing import Any
 from unittest.mock import ANY, patch
 
 from accounts.tests.baker_recipes import organization_recipe
-from common.tests.utils import GraphQLBaseTestCase
+from common.tests.utils import GraphQLBaseTestCase, NumQueriesWithoutCacheMixin
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -65,13 +65,9 @@ from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 
-class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
+class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        # Warm the ContentType cache so with_hero_image_file() never
-        # adds extra queries inside assertNumQueries / CaptureQueriesContext.
-        ContentType.objects.get_for_model(ExteriorPhoto)
-        ContentType.objects.get_for_model(InteriorPhoto)
 
         file_content = (
             b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04\x01\x0a\x00"
@@ -246,7 +242,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         variables = {"id": shelter.pk}
         expected_query_count = 21
 
-        with self.assertNumQueries(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         response_shelter = response["data"]["shelter"]
@@ -361,7 +357,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         variables = {"ordering": {"name": "ASC"}}
 
-        with self.assertNumQueries(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         shelters = response["data"]["shelters"]["results"]
@@ -491,7 +487,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         }
 
         expected_query_count = 2
-        with self.assertNumQueries(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         result_ids = {s["id"] for s in response["data"]["shelters"]["results"]}
@@ -689,7 +685,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         filters["properties"] = property_filters
 
         expected_query_count = 2
-        with self.assertNumQueries(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         results = response["data"]["shelters"]["results"]

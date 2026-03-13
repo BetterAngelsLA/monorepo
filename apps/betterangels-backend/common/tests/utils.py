@@ -102,7 +102,27 @@ def build_address_inputs(
     return json_address_input, address_input
 
 
-class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, ParametrizedTestCase, TestCase):
+class NumQueriesWithoutCacheMixin:
+    """Mixin providing assertNumQueriesWithoutCache for any TestCase."""
+
+    def assertNumQueriesWithoutCache(self, query_count: int) -> Any:
+        """
+        Resets all caches that may prevent query execution.
+        Needed to ensure deterministic behavior of ``assertNumQueries`` (or
+        after external changes to some Django database records).
+
+        https://stackoverflow.com/a/55287613
+        """
+        ContentType.objects.clear_cache()
+        Site.objects.clear_cache()
+        # Pre-warm the ContentType cache for every installed model so that
+        # get_for_model / get_for_id lookups inside the measured block are
+        # always served from cache, regardless of prior test execution order.
+        ContentType.objects.get_for_models(*apps.get_models())
+        return self.assertNumQueries(query_count)
+
+
+class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, NumQueriesWithoutCacheMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
         self._setup_users()
@@ -215,18 +235,4 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, Parametr
         else:
             self.graphql_client.logout()
 
-    def assertNumQueriesWithoutCache(self, query_count: int) -> Any:
-        """
-        Resets all caches that may prevent query execution.
-        Needed to ensure deterministic behavior of ``assertNumQueries`` (or
-        after external changes to some Django database records).
 
-        https://stackoverflow.com/a/55287613
-        """
-        ContentType.objects.clear_cache()
-        Site.objects.clear_cache()
-        # Pre-warm the ContentType cache for every installed model so that
-        # get_for_model / get_for_id lookups inside the measured block are
-        # always served from cache, regardless of prior test execution order.
-        ContentType.objects.get_for_models(*apps.get_models())
-        return self.assertNumQueries(query_count)
