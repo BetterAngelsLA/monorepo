@@ -324,7 +324,7 @@ IMGPROXY_PATH_PREFIX = env("IMGPROXY_PATH_PREFIX")
 # Base URL at which imgproxy (or other internal services) can reach this backend.
 # When set, used as the source base for imgproxy when serving local media, so both
 # direct media URLs (MEDIA_URL) and imgproxy URLs work for external clients.
-IMGPROXY_LOCAL_SOURCE_BASE_URL = env("IMGPROXY_LOCAL_SOURCE_BASE_URL").rstrip("/") or None
+IMGPROXY_LOCAL_SOURCE_BASE_URL = env("IMGPROXY_LOCAL_SOURCE_BASE_URL")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

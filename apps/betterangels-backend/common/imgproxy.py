@@ -47,7 +47,9 @@ def _get_image_source_url(file: object) -> Optional[str]:
         return None
 
     try:
-        return f"s3://{storage.bucket_name}/{storage.location}/{name}"
+        key = f"{storage.location}/{name}" if storage.location else name
+        return f"s3://{storage.bucket_name}/{key}"
+
     except AttributeError:
         return None
 
