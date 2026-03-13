@@ -4,7 +4,7 @@ export type TLoadingSpinnerSize = 'small' | 'medium' | 'large';
 
 const SIZE_VARIANTS: Record<TLoadingSpinnerSize, string> = {
   small: 'h-4 w-4 border-2',
-  medium: 'h-6 w-6 border-[4px]',
+  medium: 'h-6 w-6 border-4',
   large: 'h-8 w-8 border-[5px]',
 };
 

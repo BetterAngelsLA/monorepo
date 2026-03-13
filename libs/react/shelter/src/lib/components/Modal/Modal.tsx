@@ -72,7 +72,7 @@ export function Modal(props: IModal): ReactElement | null {
   }, []);
 
   const modalCss = [
-    'z-modal',
+    'z-400',
     'transform-gpu',
     'overflow-x-hidden',
     'overflow-y-auto',

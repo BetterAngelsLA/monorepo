@@ -76,7 +76,7 @@ export function Button(props: IButtonProps) {
     (color && colorSchemes[color]?.[variant]) ?? variantColorDefaults[variant];
 
   const buttonCss = [
-    'font-sans font-normal focus:outline-none transition-all inline-flex items-center whitespace-nowrap',
+    'font-sans font-normal focus:outline-hidden transition-all inline-flex items-center whitespace-nowrap',
     isIconOnly ? '' : 'h-fit',
     variantBaseClasses[variant],
     colorClass,

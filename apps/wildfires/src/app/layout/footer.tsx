@@ -57,7 +57,7 @@ export function Footer(props: IParams): ReactElement {
           </div>
         </div>
       </div>
-      <div className="bg-steel-blue w-full h-[1px] my-4" />
+      <div className="bg-steel-blue w-full h-px my-4" />
       <div className="text-end md:text-auto">
         © 2025 Better Angels Inc. All rights reserved.
       </div>

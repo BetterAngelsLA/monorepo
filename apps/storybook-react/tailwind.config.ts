@@ -1,13 +1,9 @@
-import type { Config } from 'tailwindcss';
-import tailwindBase from '../../tailwind/tailwind.base.config';
-import { TAILWIND_CONTENT_GLOBS } from './config';
+import tailwindBase from '../../libs/tailwind/src/index';
+import { TAILWIND_CONTENT_GLOBS } from './config/index';
 
-const config: Config = {
+const config = {
   presets: [tailwindBase],
   content: [...TAILWIND_CONTENT_GLOBS],
-  // SB-only tweaks are safe here:
-  // corePlugins: { preflight: false },
-  // daisyui: { themes: [] }, // if you want Daisy but no themes in SB
 };
 
 export default config;

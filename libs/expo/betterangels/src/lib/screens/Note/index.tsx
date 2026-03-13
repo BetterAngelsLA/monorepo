@@ -43,9 +43,8 @@ export default function Note({
           accessibilityHint="goes to the edit interaction screen"
           onPress={() =>
             router.navigate({
-              pathname: `/add-note/${id}`,
+              pathname: `/note/${id}/edit`,
               params: {
-                revertBeforeTimestamp: new Date().toISOString(),
                 arrivedFrom,
               },
             })
@@ -53,7 +52,7 @@ export default function Note({
         />
       ),
     });
-  }, [note?.userCanEdit, id, arrivedFrom]);
+  }, [note?.userCanEdit, id, arrivedFrom, navigation, router]);
 
   if (loading) {
     return (
