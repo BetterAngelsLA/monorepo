@@ -1,6 +1,6 @@
 import json
 import uuid
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Protocol, Tuple, Union
 
 from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
@@ -102,10 +102,14 @@ def build_address_inputs(
     return json_address_input, address_input
 
 
+class SupportsAssertNumQueries(Protocol):
+    def assertNumQueries(self, num: int, func: Any = None, *args: Any, **kwargs: Any) -> Any: ...
+
+
 class NumQueriesWithoutCacheMixin:
     """Mixin providing assertNumQueriesWithoutCache for any TestCase."""
 
-    def assertNumQueriesWithoutCache(self, query_count: int) -> Any:
+    def assertNumQueriesWithoutCache(self: "SupportsAssertNumQueries", query_count: int) -> Any:
         """
         Resets all caches that may prevent query execution.
         Needed to ensure deterministic behavior of ``assertNumQueries`` (or
