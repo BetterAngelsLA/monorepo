@@ -39,13 +39,17 @@ export const WizardProgressBar = memo(
             const dotClasses = [
               'w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all duration-300',
               isClickable ? 'cursor-pointer hover:scale-110' : 'cursor-default',
-              state === 'completed' ? 'bg-[#008CEE] border-[#008CEE]' : 'bg-white',
+              state === 'completed'
+                ? 'bg-[#008CEE] border-[#008CEE]'
+                : 'bg-white',
               state === 'active' ? 'border-[#008CEE]' : '',
               state === 'upcoming' ? 'border-[#e5e7eb]' : '',
-            ].filter(Boolean).join(' ');
+            ]
+              .filter(Boolean)
+              .join(' ');
 
             const progressBarClasses = [
-              'absolute inset-y-0 left-0 rounded-full transition-all duration-500 bg-[#008CEE]',
+              'absolute top-0 bottom-0 left-0 rounded-full transition-all duration-500 bg-[#008CEE]',
               index < currentStep ? 'w-full' : 'w-0',
             ].join(' ');
 
@@ -68,7 +72,7 @@ export const WizardProgressBar = memo(
 
                 {!isLast && (
                   <div className="flex-1 h-[2px] relative min-w-0">
-                    <div className="absolute inset-0 rounded-full bg-[#e5e7eb]" />
+                    <div className="absolute top-0 right-0 bottom-0 left-0 rounded-full bg-[#e5e7eb]" />
                     <div className={progressBarClasses} />
                   </div>
                 )}
@@ -85,7 +89,9 @@ export const WizardProgressBar = memo(
             const labelClasses = [
               'text-xs transition-colors duration-300',
               !isLast ? 'flex-1' : '',
-              state === 'completed' || state === 'active' ? 'text-[#008CEE]' : 'text-gray-400',
+              state === 'completed' || state === 'active'
+                ? 'text-[#008CEE]'
+                : 'text-gray-400',
             ].join(' ');
 
             return (

@@ -6066,6 +6066,7 @@ __metadata:
     "@swc/core": "npm:1.5.29"
     "@swc/helpers": "npm:0.5.12"
     "@tailwindcss/postcss": "npm:^4.2.1"
+    "@tailwindcss/vite": "npm:^4.2.1"
     "@tanstack/react-query": "npm:^5.64.2"
     "@teovilla/react-native-web-maps": "npm:^0.9.5"
     "@testing-library/dom": "npm:^10.4.0"
@@ -10234,6 +10235,19 @@ __metadata:
     postcss: "npm:^8.5.6"
     tailwindcss: "npm:4.2.1"
   checksum: 10/ae8bb5dff0912f7fb47a3e87e4ce504f85bb71f791fd18a5c4f5f86ef2de8bdd5564acc9cae336ff0cdf9219ea5f6e86adef193f67b4911a540edd8370f5bf90
+  languageName: node
+  linkType: hard
+
+"@tailwindcss/vite@npm:^4.2.1":
+  version: 4.2.1
+  resolution: "@tailwindcss/vite@npm:4.2.1"
+  dependencies:
+    "@tailwindcss/node": "npm:4.2.1"
+    "@tailwindcss/oxide": "npm:4.2.1"
+    tailwindcss: "npm:4.2.1"
+  peerDependencies:
+    vite: ^5.2.0 || ^6 || ^7
+  checksum: 10/c733bacd6d481acd6ed4ff995c09124da769548c48544b40901cce9fc55a95d72af4355501520bb24b138a0b5aa99aad155753a645aa20c0049e3a8606ef7a9f
   languageName: node
   linkType: hard
 
