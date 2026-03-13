@@ -73,26 +73,30 @@ export default function CreateShelterForm() {
       return;
     }
 
-    const { data } = await createShelter({
-      variables: {
-        data: buildCreateShelterInput(formData, selectedOrganizationId),
-      },
-      errorPolicy: 'all',
-    });
+    try {
+      const { data } = await createShelter({
+        variables: {
+          data: buildCreateShelterInput(formData, selectedOrganizationId),
+        },
+        errorPolicy: 'all',
+      });
 
-    const result = data?.createShelter;
+      const result = data?.createShelter;
 
-    if (result?.__typename === 'OperationInfo') {
-      const firstMessage = result.messages?.[0]?.message;
-      setSubmissionError(
-        firstMessage || 'Unable to submit shelter. Please try again.'
-      );
-      return;
+      if (result?.__typename === 'OperationInfo') {
+        const firstMessage = result.messages?.[0]?.message;
+        setSubmissionError(
+          firstMessage || 'Unable to submit shelter. Please try again.'
+        );
+        return;
+      }
+
+      resetForm();
+      setErrors({});
+      navigate('/operator');
+    } catch {
+      setSubmissionError('A network error occurred. Please try again.');
     }
-
-    resetForm();
-    setErrors({});
-    navigate('/operator');
   };
 
   return (

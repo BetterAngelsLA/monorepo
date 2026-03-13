@@ -1047,8 +1047,6 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
     def test_hero_image_returns_gfk_url_when_set(self) -> None:
         """hero_image should return the GFK photo URL when ``hero_image``
         points to a valid ExteriorPhoto or InteriorPhoto."""
-        from django.contrib.contenttypes.models import ContentType
-
         for photo_model in (ExteriorPhoto, InteriorPhoto):
             with self.subTest(photo_model=photo_model.__name__):
                 shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
@@ -1100,8 +1098,6 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
     def test_hero_image_with_orphaned_gfk_object_id(self) -> None:
         """Regression: when hero_image_content_type/object_id point to a
         deleted object, the resolver must not crash."""
-        from django.contrib.contenttypes.models import ContentType
-
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
         photo = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
 
@@ -1130,8 +1126,6 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
         """Regression: when hero_image_content_type points to a valid
         ContentType but the object_id does not exist for that model,
         the resolver must not crash."""
-        from django.contrib.contenttypes.models import ContentType
-
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
         exterior = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
 
@@ -1171,8 +1165,6 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
     def test_hero_image_multiple_shelters_mixed_states(self) -> None:
         """Multiple shelters with different hero_image states should all
         resolve without errors and return the correct heroImage per shelter."""
-        from django.contrib.contenttypes.models import ContentType
-
         ct = ContentType.objects.get_for_model(ExteriorPhoto)
 
         # Shelter 1: Valid GFK → explicit hero image
@@ -1217,8 +1209,6 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
         whose model_class() returns None (e.g. the model was removed), the
         resolver must not crash with "'NoneType' object has no attribute
         '_base_manager'"."""
-        from django.contrib.contenttypes.models import ContentType
-
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
         fallback = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
 

@@ -43,6 +43,9 @@ export function ActiveOrgProvider({
       // localStorage may be unavailable
     }
     setActiveOrgIdState(organizations[0]?.id);
+    // Intentionally omitting activeOrgId from deps to avoid a re-validation
+    // loop: this effect only needs to run when the organizations list changes
+    // (e.g. after the user query loads), not on every activeOrgId update.
   }, [organizations]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeOrg = useMemo(
