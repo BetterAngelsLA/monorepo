@@ -18,11 +18,11 @@ export function ModalMask(props: IProps) {
     'right-0',
     'bottom-0',
     'fixed',
-    'z-modal-mask',
+    'z-300',
     'flex',
     'justify-center',
     'items-center',
-    'bg-gray-500/20 backdrop-blur',
+    'bg-gray-500/20 backdrop-blur-sm',
     className,
   ].join(' ');
 

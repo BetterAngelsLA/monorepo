@@ -60,9 +60,7 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
         '.'
       : '';
 
-  const updatedI =
-    'I -' +
-    (serviceIText ? ' ' + serviceIText : '');
+  const updatedI = 'I -' + (serviceIText ? ' ' + serviceIText : '');
 
   const updatedR =
     'R -' +

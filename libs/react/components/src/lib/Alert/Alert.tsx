@@ -17,12 +17,7 @@ import { CloseIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { ReactElement, useEffect, useState } from 'react';
-import {
-  ANIMATION,
-  CLOSE_ANIMATION_TIMING,
-  alertConfig,
-  zIndex,
-} from './constants';
+import { ANIMATION, CLOSE_ANIMATION_TIMING, alertConfig } from './constants';
 import { alertAtom } from './state/alertAtom';
 
 export function Alert(): ReactElement | null {
@@ -80,7 +75,7 @@ export function Alert(): ReactElement | null {
     'fixed',
     'top-6',
     'left-1/2',
-    `z-[${zIndex}]`,
+    'z-600',
     'pointer-events-none',
   ];
 

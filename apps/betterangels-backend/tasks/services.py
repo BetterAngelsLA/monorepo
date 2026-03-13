@@ -32,8 +32,8 @@ def task_create(
         try:
             task = Task.objects.create(
                 summary=item.get("summary", ""),
-                description=item.get("description", ""),
-                status=item.get("status", Task.Status.TO_DO),
+                description=item.get("description") or "",
+                status=item.get("status") or Task.Status.TO_DO,
                 team=item.get("team"),
                 note=note,
                 hmis_note=hmis_note,

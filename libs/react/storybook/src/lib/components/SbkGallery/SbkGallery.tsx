@@ -41,7 +41,7 @@ function SbkGallery<T>(props: TGalleryProps) {
     listClassname,
   ];
 
-  const listItemCss = ['border', listItemClassname];
+  const listItemCss = ['border', 'border-gray-200', listItemClassname];
 
   return (
     <SbkPanel variant="basic" className={mergeCss(parentCss)}>

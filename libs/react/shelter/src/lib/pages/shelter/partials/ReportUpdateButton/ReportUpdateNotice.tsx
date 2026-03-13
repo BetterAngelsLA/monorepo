@@ -20,7 +20,7 @@ export function ReportUpdateNotice(props: TProps) {
     'leading-[18px]',
     'bg-primary-60',
     'text-white',
-    'focus:outline-none',
+    'focus:outline-hidden',
     'focus-visible:ring-2',
     'focus-visible:ring-offset-2',
     'focus-visible:ring-primary-70',

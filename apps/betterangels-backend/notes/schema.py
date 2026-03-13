@@ -121,11 +121,19 @@ class Mutation:
         extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
+        user = cast(User, get_current_user(info))
+        permission_group = get_user_permission_group(user)
+
         qs: QuerySet[Note] = info.context.qs
         clean = strip_unset(asdict(data))
 
         note = get_object_or_permission_error(qs, data.id)
-        note = note_update(note=note, data=clean)
+        note = note_update(
+            note=note,
+            data=clean,
+            user=user,
+            permission_group=permission_group,
+        )
         note._private_details = note.private_details
 
         return cast(NoteType, note)
