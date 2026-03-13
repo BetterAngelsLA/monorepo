@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { WizardLayout, type WizardLayoutProps } from './WizardLayout';
 
@@ -94,5 +95,77 @@ export const LastStep: Story = {
   args: {
     steps: defaultSteps,
     stepPaths: defaultStepPaths,
+  },
+};
+
+export const WithNavigation: Story = {
+  ...withRouter('/reservation/shelter'),
+  args: {
+    steps: defaultSteps,
+    stepPaths: defaultStepPaths,
+    navigationConfig: {
+      showNavigation: true,
+    },
+  },
+};
+
+export const WithNavigationFirstStep: Story = {
+  ...withRouter('/reservation/profile'),
+  args: {
+    steps: defaultSteps,
+    stepPaths: defaultStepPaths,
+    navigationConfig: {
+      showNavigation: true,
+    },
+  },
+};
+
+export const WithNavigationLastStep: Story = {
+  ...withRouter('/reservation/confirmation'),
+  args: {
+    steps: defaultSteps,
+    stepPaths: defaultStepPaths,
+    navigationConfig: {
+      showNavigation: true,
+      nextLabel: 'Submit',
+    },
+  },
+};
+
+export const WithCustomHandlers: Story = {
+  ...withRouter('/reservation/shelter'),
+  args: {
+    steps: defaultSteps,
+    stepPaths: defaultStepPaths,
+    navigationConfig: {
+      showNavigation: true,
+      onBack: () => alert('Custom back handler!'),
+      onNext: () => alert('Custom next handler!'),
+    },
+  },
+};
+
+export const WithDisabledNext: Story = {
+  ...withRouter('/reservation/room'),
+  args: {
+    steps: defaultSteps,
+    stepPaths: defaultStepPaths,
+    navigationConfig: {
+      showNavigation: true,
+      nextDisabled: true,
+    },
+  },
+};
+
+export const WithCustomLabels: Story = {
+  ...withRouter('/reservation/shelter'),
+  args: {
+    steps: defaultSteps,
+    stepPaths: defaultStepPaths,
+    navigationConfig: {
+      showNavigation: true,
+      backLabel: 'Previous',
+      nextLabel: 'Continue',
+    },
   },
 };
