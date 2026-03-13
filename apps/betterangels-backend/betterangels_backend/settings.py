@@ -74,8 +74,8 @@ env = environ.Env(
     IMGPROXY_KEY=(str, ""),
     IMGPROXY_SALT=(str, ""),
     IMGPROXY_PATH_PREFIX=(str, ""),
-    IMGPROXY_BASE_URL=(str, ""),
-    IMGPROXY_INTERNAL_BASE_URL=(str, ""),
+    IMGPROXY_LOCAL_URL=(str, ""),
+    IMGPROXY_LOCAL_SOURCE_BASE_URL=(str, ""),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -313,7 +313,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = env("MEDIA_URL")
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-IMGPROXY_BASE_URL = env("IMGPROXY_BASE_URL")
+IMGPROXY_LOCAL_URL = env("IMGPROXY_LOCAL_URL")
 IMGPROXY_KEY = env("IMGPROXY_KEY")
 IMGPROXY_SALT = env("IMGPROXY_SALT")
 # Optional path prefix for imgproxy URLs on the CloudFront distribution.
@@ -324,7 +324,7 @@ IMGPROXY_PATH_PREFIX = env("IMGPROXY_PATH_PREFIX")
 # Base URL at which imgproxy (or other internal services) can reach this backend.
 # When set, used as the source base for imgproxy when serving local media, so both
 # direct media URLs (MEDIA_URL) and imgproxy URLs work for external clients.
-IMGPROXY_INTERNAL_BASE_URL = env("IMGPROXY_INTERNAL_BASE_URL").rstrip("/") or None
+IMGPROXY_LOCAL_SOURCE_BASE_URL = env("IMGPROXY_LOCAL_SOURCE_BASE_URL").rstrip("/") or None
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

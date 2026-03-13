@@ -99,7 +99,7 @@ def build_imgproxy_url(file: object, preset: Optional[ImagePresetEnum], processi
 
     if settings.IS_LOCAL_DEV:
         # TODO: fix
-        return f"{settings.IMGPROXY_INTERNAL_BASE_URL}/{imgproxy_path}"
+        return f"{settings.IMGPROXY_LOCAL_URL}/{imgproxy_path}"
 
     storage = getattr(file, "storage", None)
     if not storage or not storage.cloudfront_signer:
@@ -179,7 +179,7 @@ def _get_image_source_url(file: object) -> Optional[str]:
         return None
 
     if settings.IS_LOCAL_DEV:
-        return f"{settings.IMGPROXY_INTERNAL_BASE_URL}{settings.MEDIA_URL}{name}"
+        return f"{settings.IMGPROXY_LOCAL_SOURCE_BASE_URL}{settings.MEDIA_URL}{name}"
 
     try:
         return f"s3://{storage.bucket_name}/{storage.location}/{name}"
