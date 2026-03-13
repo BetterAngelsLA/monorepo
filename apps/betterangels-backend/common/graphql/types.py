@@ -6,12 +6,7 @@ import strawberry
 import strawberry_django
 from common.constants import PHONE_NUMBER_REGEX
 from common.enums import ImagePresetEnum
-from common.imgproxy import (
-    build_imgproxy_url,
-    get_image_source_url,
-    is_imgproxy_enabled,
-    resolve_imgproxy_ops,
-)
+from common.imgproxy import build_imgproxy_url, is_imgproxy_enabled
 from common.models import Address, Attachment, Location, PhoneNumber
 from django.db.models import Q
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
@@ -183,16 +178,18 @@ class BaImageType:
                 ``"rs:fill:200:200"`` or ``"rs:fit:800:600/q:80"``.
                 Takes precedence over ``preset``.
         """
-        ops = resolve_imgproxy_ops(preset, processing)
+        if is_imgproxy_enabled():
+            if imgproxy_url := build_imgproxy_url(self, preset, processing):
+                return imgproxy_url
 
-        if ops and is_imgproxy_enabled():
-            source = get_image_source_url(self)
-            storage = getattr(self, "storage", None)
+            # if ops and is_imgproxy_enabled():
+            #     source = get_image_source_url(self)
+            #     storage = getattr(self, "storage", None)
 
-            if source:
-                imgproxy_url = build_imgproxy_url(source, ops, storage=storage)
-                if imgproxy_url:
-                    return imgproxy_url
+            #     if source:
+            #         imgproxy_url = build_imgproxy_url(source, ops, storage=storage)
+            #         if imgproxy_url:
+            #             return imgproxy_url
 
         return cast(str, self.url)
 
