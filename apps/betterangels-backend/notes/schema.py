@@ -4,14 +4,13 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.utils import get_user_permission_group
-from clients.models import ClientProfile, ClientProfileImportRecord
+from clients.models import ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.graphql.utils import get_object_or_permission_error, strip_unset
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
 from django.db.models import QuerySet
-from notes.enums import ServiceRequestStatusEnum
 from notes.models import Note, NoteDataImport, NoteImportRecord, ServiceRequest
 from notes.permissions import (
     NoteImportRecordPermissions,
@@ -21,12 +20,9 @@ from notes.permissions import (
 from notes.services import (
     note_create,
     note_service_request_create,
-    note_service_request_remove,
     note_update,
     note_update_location,
-    service_request_create,
     service_request_delete,
-    service_request_update,
 )
 from notes.utils import NoteReverter
 from strawberry import asdict
@@ -40,7 +36,6 @@ from .types import (
     CreateNoteDataImportInput,
     CreateNoteInput,
     CreateNoteServiceRequestInput,
-    CreateServiceRequestInput,
     ImportNoteInput,
     InteractionAuthorType,
     NoteDataImportType,
@@ -49,12 +44,10 @@ from .types import (
     NoteType,
     OrganizationServiceCategoryType,
     OrganizationServiceType,
-    RemoveNoteServiceRequestInput,
     RevertNoteInput,
     ServiceRequestType,
     UpdateNoteInput,
     UpdateNoteLocationInput,
-    UpdateServiceRequestInput,
 )
 
 
@@ -128,11 +121,19 @@ class Mutation:
         extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
+        user = cast(User, get_current_user(info))
+        permission_group = get_user_permission_group(user)
+
         qs: QuerySet[Note] = info.context.qs
         clean = strip_unset(asdict(data))
 
         note = get_object_or_permission_error(qs, data.id)
-        note = note_update(note=note, data=clean)
+        note = note_update(
+            note=note,
+            data=clean,
+            user=user,
+            permission_group=permission_group,
+        )
         note._private_details = note.private_details
 
         return cast(NoteType, note)
@@ -174,27 +175,11 @@ class Mutation:
     )
 
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(ServiceRequestPermissions.ADD)]
-    )
-    def create_service_request(self, info: Info, data: CreateServiceRequestInput) -> ServiceRequestType:
-        user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(user)
-
-        client_profile = ClientProfile.objects.get(pk=data.client_profile) if data.client_profile else None
-
-        service_requests = service_request_create(
-            user=user,
-            permission_group=permission_group,
-            data=[asdict(data)],
-            status=ServiceRequestStatusEnum(str(data.status)),
-            client_profile=client_profile,
-        )
-
-        return cast(ServiceRequestType, service_requests[0])
-
-    @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
+        extensions=[
+            HasPerm(ServiceRequestPermissions.ADD),
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
+        ],
     )
     def create_note_service_request(self, info: Info, data: CreateNoteServiceRequestInput) -> ServiceRequestType:
         user = cast(User, get_current_user(info))
@@ -219,36 +204,6 @@ class Mutation:
         )
 
         return cast(ServiceRequestType, service_requests[0])
-
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=ServiceRequest, perms=[ServiceRequestPermissions.CHANGE])],
-    )
-    def update_service_request(self, info: Info, data: UpdateServiceRequestInput) -> ServiceRequestType:
-        qs: QuerySet[ServiceRequest] = info.context.qs
-        clean = strip_unset(asdict(data))
-
-        sr = get_object_or_permission_error(qs, data.id)
-        sr = service_request_update(service_request=sr, data=clean)
-
-        return cast(ServiceRequestType, sr)
-
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
-    )
-    def remove_note_service_request(self, info: Info, data: RemoveNoteServiceRequestInput) -> NoteType:
-        qs: QuerySet[Note] = info.context.qs
-        note = get_object_or_permission_error(qs, data.note_id)
-
-        service_request = ServiceRequest.objects.get(id=data.service_request_id)
-        note_service_request_remove(
-            note=note,
-            service_request=service_request,
-            sr_type=data.service_request_type,
-        )
-
-        return cast(NoteType, note)
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],

@@ -67,7 +67,7 @@ export function DropdownMenu<T extends string | number>({
             <input
               autoFocus
               type="text"
-              className="flex-1 text-sm bg-transparent text-gray-900 placeholder:text-gray-400 border-none outline-none focus:outline-none focus:ring-0 focus:border-none"
+              className="flex-1 text-sm bg-transparent text-gray-900 placeholder:text-gray-400 border-none outline-hidden focus:outline-hidden focus:ring-0 focus:border-none"
               placeholder="Type to search..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
@@ -103,7 +103,7 @@ export function DropdownMenu<T extends string | number>({
                   onMouseEnter={() => onFocusIndex(index)}
                 >
                   {option.label}
-                  {active && <Check size={16} className="flex-shrink-0" />}
+                  {active && <Check size={16} className="shrink-0" />}
                 </div>
               );
             })

@@ -29,6 +29,7 @@ const parseUser = (
     [UserOrganizationPermissions.ChangeOrgMemberRole]: 'canChangeOrgMemberRole',
     [UserOrganizationPermissions.RemoveOrgMember]: 'canRemoveOrgMember',
     [UserOrganizationPermissions.ViewOrgMembers]: 'canViewOrgMembers',
+    [UserOrganizationPermissions.ViewReports]: 'canViewReports',
   };
 
   const permFlags = Object.fromEntries(

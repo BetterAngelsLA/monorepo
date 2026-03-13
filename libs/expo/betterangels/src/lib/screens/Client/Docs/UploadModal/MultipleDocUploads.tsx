@@ -2,10 +2,7 @@ import { useMutation } from '@apollo/client/react';
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { UploadIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import {
-  MediaPickerModal,
-  TextBold,
-} from '@monorepo/expo/shared/ui-components';
+import { MediaPicker, TextBold } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
@@ -159,16 +156,18 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
           />
         )}
       </UploadSection>
-      <MediaPickerModal
-        onCapture={(file) => {
+
+      <MediaPicker
+        allowMultiple={true}
+        isOpen={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        onCameraCapture={(file) => {
           setDocs({
             ...docs,
             [docType]: [...(docs[docType] ?? []), file],
           });
         }}
-        setModalVisible={setIsModalVisible}
-        isModalVisible={isModalVisible}
-        setFiles={(files) => {
+        onFilesSelected={(files) => {
           setDocs({
             ...docs,
             [docType]: [...(docs[docType] ?? []), ...files],

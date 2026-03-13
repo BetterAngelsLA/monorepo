@@ -15,7 +15,7 @@ export function SidebarHeader(props: TProps) {
     'h-16',
     'items-center',
     'mb-4',
-    'flex-shrink-0',
+    'shrink-0',
     className,
   ];
 

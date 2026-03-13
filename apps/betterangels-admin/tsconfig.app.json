@@ -20,5 +20,5 @@
     "src/**/*.test.jsx",
     "jest.config.ts"
   ],
-  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"]
+  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx", "tailwind.config.ts"]
 }

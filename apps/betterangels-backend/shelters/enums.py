@@ -1,3 +1,5 @@
+import datetime
+
 import strawberry
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -235,3 +237,48 @@ class RoomStatusChoices(models.TextChoices):
     AVAILABLE = "available", _("Available")
     RESERVED = "reserved", _("Reserved")
     NEEDS_MAINTENANCE = "needs_maintenance", _("Needs Maintenance")
+
+
+@strawberry.enum
+class ReservationStatusChoices(models.TextChoices):
+    OPEN = "open", _("Open")
+    CONFIRMED = "confirmed", _("Confirmed")
+    CHECKED_IN = "checked_in", _("Checked In")
+    COMPLETED = "completed", _("Completed")
+    CANCELLED = "cancelled", _("Cancelled")
+    CHECK_IN_OVERDUE = "check_in_overdue", _("Check-in Overdue")
+
+
+@strawberry.enum
+class DayOfWeekChoices(models.TextChoices):
+    MONDAY = "monday", _("Monday")
+    TUESDAY = "tuesday", _("Tuesday")
+    WEDNESDAY = "wednesday", _("Wednesday")
+    THURSDAY = "thursday", _("Thursday")
+    FRIDAY = "friday", _("Friday")
+    SATURDAY = "saturday", _("Saturday")
+    SUNDAY = "sunday", _("Sunday")
+
+    @classmethod
+    def from_date(cls, d: "datetime.date") -> "DayOfWeekChoices":
+        """Return the enum member for the weekday of *d*."""
+        return list(cls)[d.weekday()]
+
+
+@strawberry.enum
+class ScheduleTypeChoices(models.TextChoices):
+    OPERATING = "operating", _("Operating Hours")
+    INTAKE = "intake", _("Intake Hours")
+    MEAL_SERVICE = "meal_service", _("Meal Service Hours")
+    STAFF_AVAILABILITY = "staff_availability", _("Staff Availability")
+
+
+@strawberry.enum
+class ConditionChoices(models.TextChoices):
+    HEAT = "heat", _("Heat")
+    FIRE = "fire", _("Fire")
+    RAIN_SEVERE_WEATHER = "rain_severe_weather", _("Rain / Severe Weather")
+    WIND = "wind", _("Wind")
+    AIR_QUALITY_SMOKE = "air_quality_smoke", _("Air Quality / Smoke")
+    PUBLIC_HEALTH_EMERGENCY = "public_health_emergency", _("Public Health Emergency")
+    EMERGENCY_EVACUATION = "emergency_evacuation", _("Emergency Evacuation")

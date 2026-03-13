@@ -1,5 +1,5 @@
 import { useAtom } from 'jotai';
-import { ReactElement, useEffect } from 'react';
+import { ReactElement, useCallback, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Modal } from './Modal';
 import { modalAtom } from './modalAtom';
@@ -18,12 +18,21 @@ export function ModalContainer(props: IProps): ReactElement | null {
     setModal(null);
   }, [location.pathname, setModal]);
 
+  const handleClose = useCallback(() => {
+    if (modal?.onClose) {
+      modal.onClose();
+    }
+    setModal(null);
+  }, [modal, setModal]);
+
   if (!modal?.content) {
     return null;
   }
 
+  const modalClassName = [className, modal.className].filter(Boolean).join(' ');
+
   return (
-    <Modal className={className} {...modal}>
+    <Modal className={modalClassName} {...modal} onClose={handleClose}>
       {modal.content}
     </Modal>
   );

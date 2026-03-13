@@ -1,4 +1,4 @@
 export { createPersistentSynchronousStorage } from '@monorepo/expo/shared/utils';
 export * from './clientInteractionsMapState';
-export * from './hmisClientInteractionsMapState';
+export * from './clientInteractionsMapStateHmis';
 export * from './userPreferencesState';
