@@ -1,7 +1,8 @@
 import base64
+import datetime
 import hashlib
 import hmac
-from typing import Optional
+from typing import Optional, cast
 
 import waffle
 from common.enums import ImagePresetEnum
@@ -57,15 +58,12 @@ def _get_imgproxy_signature(path: str) -> str:
 def _build_signed_imgproxy_path(source_url: str, ops: str = "") -> str:
     """Build the path portion of an imgproxy URL (no scheme/host).
 
-    Returns e.g. ``<prefix>/<sig>/<processing>/<encoded_source>``
+    Returns e.g. ``<signature>/<processing>/<encoded_source>``
     or ``None`` when imgproxy HMAC keys are missing.
     """
     encoded = _encode_source_url(source_url)
     path = f"{ops}/{encoded}" if ops else encoded
     signature = _get_imgproxy_signature(path)
-
-    # if prefix := getattr(settings, "IMGPROXY_PATH_PREFIX", "").strip("/"):
-    #     return f"{prefix}/{signature}/{path}"
 
     return f"{signature}/{path}"
 
@@ -100,40 +98,19 @@ def build_imgproxy_url(file: object, preset: Optional[ImagePresetEnum], processi
     imgproxy_path = _build_signed_imgproxy_path(source_url, ops)
 
     if settings.IS_LOCAL_DEV:
+        # TODO: fix
         return f"{settings.IMGPROXY_INTERNAL_BASE_URL}/{imgproxy_path}"
 
-    storage = file.storage
+    storage = getattr(file, "storage", None)
+    if not storage or not storage.cloudfront_signer:
+        return None
 
-    domain = storage.custom_domain
-    protocol = storage.url_protocol
-    url = f"{protocol}//{domain}/{imgproxy_path}"
+    url = f"{storage.url_protocol}//{storage.custom_domain}/{settings.IMGPROXY_PATH_PREFIX}/{imgproxy_path}"
 
-    # --- local dev shortcut: IMGPROXY_BASE_URL points directly at imgproxy ---
-    # if settings.IS_LOCAL_DEV:
-    #     return f"{settings.IMGPROXY_INTERNAL_BASE_URL}/{imgproxy_path}"
-    # if base := settings.IMGPROXY_BASE_URL.rstrip("/"):
-    #     return f"{base}/{imgproxy_path}"
+    expire_seconds: int = getattr(storage, "querystring_expire", 3600)
+    expiration = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=expire_seconds)
 
-    # # --- production: CloudFront domain + signing via storage backend ---
-
-    # domain = storage.custom_domain
-
-    # protocol: str = getattr(storage, "url_protocol", "https:")
-    # url = f"{protocol}//{domain}/{imgproxy_path}"
-
-    # # Reuse the storage's CloudFront signer (populated by django-storages
-    # # from cloudfront_key / cloudfront_key_id settings).
-    # if signer := storage.cloudfront_signer:
-    #     import datetime
-
-    #     expire_seconds: int = getattr(storage, "querystring_expire", 3600)
-    #     expiration = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=expire_seconds)
-
-    #     return cast(str, signer.generate_presigned_url(url, date_less_than=expiration))
-
-    # return url
-
-    return "TODO"
+    return cast(str, storage.cloudfront_signer.generate_presigned_url(url, date_less_than=expiration))
 
 
 # def build_imgproxy_url(
