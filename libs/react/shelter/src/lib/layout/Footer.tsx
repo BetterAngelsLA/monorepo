@@ -1,15 +1,22 @@
 import { BaShelterLogoIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { ReactElement } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { aboutUsPath, privacyPolicyPath, shelterHomePath } from '../constants';
 
 type IParams = {
   className?: string;
 };
 
-export function Footer(props: IParams): ReactElement {
+export function Footer(props: IParams): ReactElement | null {
   const { className = '' } = props;
+  const { pathname } = useLocation();
+  const isOperatorRoute =
+    pathname === '/operator' || pathname.startsWith('/operator/');
+
+  if (isOperatorRoute) {
+    return null;
+  }
 
   const parentCss = [
     className,

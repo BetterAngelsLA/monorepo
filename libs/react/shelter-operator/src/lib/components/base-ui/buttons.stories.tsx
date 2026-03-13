@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { ArrowRight, Pencil, Plus, Trash2 } from 'lucide-react';
-import { ReactNode } from 'react';
-import { Button, ButtonVariant } from './buttons';
+import { Plus } from 'lucide-react';
+import { Button } from './buttons';
 
 const meta: Meta<typeof Button> = {
   component: Button,
@@ -11,108 +10,70 @@ export default meta;
 
 type Story = StoryObj<typeof Button>;
 
-const iconStory = (variant: ButtonVariant, icon: ReactNode): Story => ({
-  render: () => <Button variant={variant} leftIcon={icon} rightIcon={null} />,
-});
-
 // ARROW
 
-export const RightArrow = iconStory(
-  'right-arrow',
-  <ArrowRight size={24} stroke="black" />
-);
+export const RightArrow: Story = {
+  render: () => <Button variant="right-arrow" />,
+};
 
-// EDIT ICONS
+// EDIT BUTTONS
 
-export const EditLight = iconStory(
-  'edit-light',
-  <Pencil size={22} stroke="black" />
-);
-
-export const EditGhost = iconStory(
-  'edit-light',
-  <Pencil size={22} stroke="#747A82" />
-);
-
-export const EditMedium = iconStory(
-  'edit-medium',
-  <Pencil size={22} stroke="black" />
-);
-
-export const EditDark = iconStory(
-  'edit-dark',
-  <Pencil size={22} stroke="black" />
-);
+export const Edit: Story = {
+  render: () => <Button variant="edit" />,
+};
 
 // TRASH BUTTONS
 
-export const TrashLight = iconStory(
-  'trash-light',
-  <Trash2 size={22} stroke="#CB0808" />
-);
-
-export const TrashGhost = iconStory(
-  'trash-light',
-  <Trash2 size={22} stroke="#747A82" />
-);
-
-export const TrashMedium = iconStory(
-  'trash-medium',
-  <Trash2 size={22} stroke="#CB0808" />
-);
-
-export const TrashDark = iconStory(
-  'trash-dark',
-  <Trash2 size={22} stroke="#CB0808" />
-);
+export const Trash: Story = {
+  render: () => <Button variant="trash" />,
+};
 
 // SMALL BUTTONS
 
-export const SmallLight: Story = {
+export const Primary: Story = {
   parameters: {
     customLayout: {
       canvasClassName: 'flex flex-col items-center justify-center w-fit h-fit',
     },
   },
-  render: () => <Button variant="small-light">Button</Button>,
+  render: () => <Button variant="primary">Button</Button>,
 };
 
-export const SmallMedium: Story = {
+export const PrimaryBlue: Story = {
   parameters: {
     customLayout: {
       canvasClassName: 'flex flex-col items-center justify-center w-fit h-fit',
     },
   },
-  render: () => <Button variant="small-medium">Button</Button>,
+  render: () => (
+    <Button variant="primary" color="blue">
+      Button
+    </Button>
+  ),
 };
 
-export const SmallDark: Story = {
+export const PrimaryDisabled: Story = {
   parameters: {
     customLayout: {
       canvasClassName: 'flex flex-col items-center justify-center w-fit h-fit',
     },
   },
-  render: () => <Button variant="small-dark">Button</Button>,
+  render: () => (
+    <Button variant="primary" disabled>
+      Button
+    </Button>
+  ),
 };
 
 // FLOATING BUTTONS
 
-export const FloatingLight: Story = {
+export const Floating: Story = {
   parameters: {
     customLayout: {
       canvasClassName: 'flex flex-col items-center w-fit h-fit',
     },
   },
-  render: () => <Button variant="floating-light">Button</Button>,
-};
-
-export const FloatingDark: Story = {
-  parameters: {
-    customLayout: {
-      canvasClassName: 'flex flex-col items-center w-fit h-fit',
-    },
-  },
-  render: () => <Button variant="floating-dark">Button</Button>,
+  render: () => <Button variant="floating">Button</Button>,
 };
 
 // PLAYGROUND
@@ -126,7 +87,7 @@ export const Playground: Story = {
     />
   ),
   args: {
-    variant: 'floating-light',
+    variant: 'primary',
     children: 'Button',
     leftIcon: false,
     rightIcon: false,
