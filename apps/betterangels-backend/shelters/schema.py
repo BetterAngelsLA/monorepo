@@ -3,6 +3,7 @@ from typing import cast
 import strawberry
 import strawberry_django
 from accounts.models import User
+from common.graphql.utils import strip_unset
 from common.permissions.utils import IsAuthenticated
 from shelters.permissions import BedPermissions, RoomPermissions, ShelterPermissions
 from shelters.services import bed_create, room_create, shelter_create
@@ -15,7 +16,6 @@ from shelters.types import (
     RoomType,
     ShelterType,
 )
-from common.graphql.utils import strip_unset
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
