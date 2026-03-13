@@ -182,15 +182,6 @@ class BaImageType:
             if imgproxy_url := build_imgproxy_url(self, preset, processing):
                 return imgproxy_url
 
-            # if ops and is_imgproxy_enabled():
-            #     source = get_image_source_url(self)
-            #     storage = getattr(self, "storage", None)
-
-            #     if source:
-            #         imgproxy_url = build_imgproxy_url(source, ops, storage=storage)
-            #         if imgproxy_url:
-            #             return imgproxy_url
-
         return cast(str, self.url)
 
 

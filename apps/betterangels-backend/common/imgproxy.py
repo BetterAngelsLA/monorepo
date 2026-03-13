@@ -68,13 +68,35 @@ def _build_signed_imgproxy_path(source_url: str, ops: str = "") -> str:
     return f"{signature}/{path}"
 
 
+def _get_image_source_url(file: object) -> Optional[str]:
+    """Return the source URL imgproxy should fetch for a Django file field value.
+
+    Local dev: ``IMGPROXY_LOCAL_SOURCE_BASE_URL`` + media path, or ``file.url`` when
+    ``IMGPROXY_LOCAL_URL`` is set. Production: only ``s3://bucket/key``; never
+    ``file.url`` (that would be a presigned CloudFront URL, unsuitable as source).
+    """
+    name = getattr(file, "name", None)
+    storage = getattr(file, "storage", None)
+
+    if not storage or not name:
+        return None
+
+    if settings.IS_LOCAL_DEV:
+        return f"{settings.IMGPROXY_LOCAL_SOURCE_BASE_URL}{settings.MEDIA_URL}{name}"
+
+    try:
+        return f"s3://{storage.bucket_name}/{storage.location}/{name}"
+    except AttributeError:
+        return None
+
+
 def build_imgproxy_url(file: object, preset: Optional[ImagePresetEnum], processing: Optional[str]) -> Optional[str]:
     """Return a complete imgproxy URL, CloudFront-signed in production.
 
     URL construction strategy:
-    * **Local dev** (``IMGPROXY_BASE_URL`` is set): returns a plain URL on that
+    * **Local dev** (``IMGPROXY_LOCAL_URL`` is set): returns a plain URL on that
       host — no CloudFront signing (there is no CloudFront locally).
-    * **Production** (``IMGPROXY_BASE_URL`` is empty): builds the URL on the
+    * **Production** (``IMGPROXY_LOCAL_URL`` is empty): builds the URL on the
       CloudFront ``custom_domain`` from the default storage and CF-signs it
       using the storage backend's existing signer.
 
@@ -98,7 +120,6 @@ def build_imgproxy_url(file: object, preset: Optional[ImagePresetEnum], processi
     imgproxy_path = _build_signed_imgproxy_path(source_url, ops)
 
     if settings.IS_LOCAL_DEV:
-        # TODO: fix
         return f"{settings.IMGPROXY_LOCAL_URL}/{imgproxy_path}"
 
     storage = getattr(file, "storage", None)
@@ -111,77 +132,3 @@ def build_imgproxy_url(file: object, preset: Optional[ImagePresetEnum], processi
     expiration = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=expire_seconds)
 
     return cast(str, storage.cloudfront_signer.generate_presigned_url(url, date_less_than=expiration))
-
-
-# def build_imgproxy_url(
-#     source_url: str,
-#     processing: str = "",
-#     storage: Optional[object] = None,
-# ) -> Optional[str]:
-#     """Return a complete imgproxy URL, CloudFront-signed in production.
-
-#     URL construction strategy:
-#     * **Local dev** (``IMGPROXY_BASE_URL`` is set): returns a plain URL on that
-#       host — no CloudFront signing (there is no CloudFront locally).
-#     * **Production** (``IMGPROXY_BASE_URL`` is empty): builds the URL on the
-#       CloudFront ``custom_domain`` from the default storage and CF-signs it
-#       using the storage backend's existing signer.
-
-#     Args:
-#         source_url: What imgproxy should fetch (e.g. ``s3://bucket/key``).
-#         processing: imgproxy processing options (e.g. ``rs:fill:100:100``).
-#         storage: Storage instance whose CloudFront signer will be reused.
-#                  Falls back to ``default_storage`` when *None*.
-#     """
-#     imgproxy_path = _build_signed_imgproxy_path(source_url, processing)
-#     if not imgproxy_path:
-#         return None
-
-#     # --- local dev shortcut: IMGPROXY_BASE_URL points directly at imgproxy ---
-#     if base := settings.IMGPROXY_BASE_URL.rstrip("/"):
-#         return f"{base}/{imgproxy_path}"
-
-#     # --- production: CloudFront domain + signing via storage backend ---
-#     if storage is None:
-#         storage = default_storage
-
-#     domain = getattr(storage, "custom_domain", None)
-#     if not domain:
-#         return None
-
-#     protocol: str = getattr(storage, "url_protocol", "https:")
-#     url = f"{protocol}//{domain}/{imgproxy_path}"
-
-#     # Reuse the storage's CloudFront signer (populated by django-storages
-#     # from cloudfront_key / cloudfront_key_id settings).
-#     if signer := getattr(storage, "cloudfront_signer", None):
-#         import datetime
-
-#         expire_seconds: int = getattr(storage, "querystring_expire", 3600)
-#         expiration = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=expire_seconds)
-
-#         return cast(str, signer.generate_presigned_url(url, date_less_than=expirati
-
-#     return url
-
-
-def _get_image_source_url(file: object) -> Optional[str]:
-    """Return the source URL imgproxy should fetch for a Django file field value.
-
-    Local dev: ``IMGPROXY_INTERNAL_BASE_URL`` + media path, or ``file.url`` when
-    ``IMGPROXY_BASE_URL`` is set. Production: only ``s3://bucket/key``; never
-    ``file.url`` (that would be a presigned CloudFront URL, unsuitable as source).
-    """
-    name = getattr(file, "name", None)
-    storage = getattr(file, "storage", None)
-
-    if not storage or not name:
-        return None
-
-    if settings.IS_LOCAL_DEV:
-        return f"{settings.IMGPROXY_LOCAL_SOURCE_BASE_URL}{settings.MEDIA_URL}{name}"
-
-    try:
-        return f"s3://{storage.bucket_name}/{storage.location}/{name}"
-    except AttributeError:
-        return None
