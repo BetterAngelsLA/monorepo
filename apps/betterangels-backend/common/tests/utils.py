@@ -10,6 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.contrib.sites.models import Site
 from django.test import TestCase
+from guardian.shortcuts import _get_ct_cached
 from model_bakery import baker
 from test_utils.assert_mixins import GraphQLAssertionsMixin
 from test_utils.mixins import GraphQLTestCaseMixin
@@ -224,4 +225,5 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, Parametr
         """
         ContentType.objects.clear_cache()
         Site.objects.clear_cache()
+        _get_ct_cached.cache_clear()
         return self.assertNumQueries(query_count)
