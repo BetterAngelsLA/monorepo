@@ -107,22 +107,25 @@ class SupportsAssertNumQueries(Protocol):
 
 
 class NumQueriesWithoutCacheMixin:
-    """Mixin providing assertNumQueriesWithoutCache for any TestCase."""
+    """Mixin providing deterministic query assertions for TestCase subclasses."""
 
-    def assertNumQueriesWithoutCache(self: "SupportsAssertNumQueries", query_count: int) -> Any:
+    def assertNumQueriesWithWarmedCaches(self: "SupportsAssertNumQueries", query_count: int) -> Any:
         """
-        Resets all caches that may prevent query execution.
-        Needed to ensure deterministic behavior of ``assertNumQueries`` (or
-        after external changes to some Django database records).
+        Pre-warm deterministic lookups before counting queries.
+
+        This keeps ``assertNumQueries`` stable across test execution order by ensuring
+        common framework-level cache lookups are consistently served from cache inside
+        the measured block.
 
         https://stackoverflow.com/a/55287613
         """
-        ContentType.objects.clear_cache()
-        Site.objects.clear_cache()
         # Pre-warm the ContentType cache for every installed model so that
         # get_for_model / get_for_id lookups inside the measured block are
         # always served from cache, regardless of prior test execution order.
         ContentType.objects.get_for_models(*apps.get_models())
+        # Warm the current Site cache too so code paths using get_current() do not
+        # introduce order-dependent query count variance.
+        Site.objects.get_current()
         return self.assertNumQueries(query_count)
 
 

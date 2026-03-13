@@ -453,7 +453,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         variables = {"id": client_profile["id"]}
 
         expected_query_count = 16
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
         self.assertIsNotNone(response["data"]["deleteClientProfile"])
@@ -469,7 +469,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         photo_name = "profile_photo.jpg"
 
         expected_query_count = 7
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self._update_client_profile_photo_fixture(
                 client_profile_id,
                 photo_content,
@@ -507,7 +507,7 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
         }
 
         expected_query_count = 11
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             client_contact = self._create_client_contact_fixture(variables)["data"]["createClientContact"]
 
         expected_client_contact = {"id": ANY, "updatedAt": ANY, **variables}
@@ -532,7 +532,7 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
         }
 
         expected_query_count = 11
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             client_contact = self._update_client_contact_fixture(variables)["data"]["updateClientContact"]
 
         expected_client_contact = {"updatedAt": ANY, **variables}
@@ -543,7 +543,7 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
         variables = {"object": "ClientContact", "object_id": self.client_contact_1["id"]}
 
         expected_query_count = 9
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self._delete_fixture(**variables)
 
         self.assertNotIn("messages", response["data"]["deleteClientContact"])
@@ -608,7 +608,7 @@ class ClientHouseholdMemberMutationTestCase(ClientHouseholdMemberBaseTestCase):
         }
 
         expected_query_count = 11
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             client_household_member = self._create_client_household_member_fixture(variables)["data"][
                 "createClientHouseholdMember"
             ]
@@ -635,7 +635,7 @@ class ClientHouseholdMemberMutationTestCase(ClientHouseholdMemberBaseTestCase):
         }
 
         expected_query_count = 11
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             client_household_member = self._update_client_household_member_fixture(variables)["data"][
                 "updateClientHouseholdMember"
             ]
@@ -648,7 +648,7 @@ class ClientHouseholdMemberMutationTestCase(ClientHouseholdMemberBaseTestCase):
         variables = {"object": "ClientHouseholdMember", "object_id": self.client_household_member_1["id"]}
 
         expected_query_count = 9
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self._delete_fixture(**variables)
 
         self.assertNotIn("messages", response["data"]["deleteClientHouseholdMember"])
@@ -667,7 +667,7 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
         }
 
         expected_query_count = 12
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             hmis_profile = self._create_hmis_profile_fixture(variables)["data"]["createHmisProfile"]
 
         expected_hmis_profile = {**variables, "id": ANY}
@@ -687,7 +687,7 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
         }
 
         expected_query_count = 12
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             hmis_profile = self._update_hmis_profile_fixture(variables)["data"]["updateHmisProfile"]
 
         self.assertEqual(variables, hmis_profile)
@@ -696,7 +696,7 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
         variables = {"object": "HmisProfile", "object_id": self.hmis_profile_1["id"]}
 
         expected_query_count = 9
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self._delete_fixture(**variables)
 
         self.assertNotIn("messages", response["data"]["deleteHmisProfile"])
@@ -720,7 +720,7 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
             "hmisId": hmis_id,
             "agency": HmisAgencyEnum.LAHSA.name,
         }
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self._update_hmis_profile_fixture(variables)["data"]["updateHmisProfile"]
 
         if expected_error_message:
@@ -742,7 +742,7 @@ class SocialMediaProfileMutationTestCase(SocialMediaProfileBaseTestCase):
         }
 
         expected_query_count = 11
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             social_media_profile = self._create_social_media_profile_fixture(variables)["data"][
                 "createSocialMediaProfile"
             ]
@@ -764,7 +764,7 @@ class SocialMediaProfileMutationTestCase(SocialMediaProfileBaseTestCase):
         }
 
         expected_query_count = 11
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             social_media_profile = self._update_social_media_profile_fixture(variables)["data"][
                 "updateSocialMediaProfile"
             ]
@@ -775,7 +775,7 @@ class SocialMediaProfileMutationTestCase(SocialMediaProfileBaseTestCase):
         variables = {"object": "SocialMediaProfile", "object_id": self.social_media_profile_1["id"]}
 
         expected_query_count = 9
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self._delete_fixture(**variables)
 
         self.assertNotIn("messages", response["data"]["deleteSocialMediaProfile"])
@@ -798,7 +798,7 @@ class SocialMediaProfileMutationTestCase(SocialMediaProfileBaseTestCase):
         }
 
         expected_query_count = 11
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self._update_social_media_profile_fixture(variables)["data"]["updateSocialMediaProfile"]
 
         if expected_error_message:
@@ -820,7 +820,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         file_name = "test file name.txt"
 
         expected_query_count = 20
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self._create_client_document_fixture(
                 self.client_profile_1["id"],
                 ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
@@ -844,7 +844,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
 
         expected_query_count = 15
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             self._delete_client_document_fixture(client_document_id)
 
         self.assertFalse(

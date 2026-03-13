@@ -28,7 +28,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         assert self.org
 
         expected_query_count = 20
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             variables = {
                 "clientProfile": str(client_profile.pk),
                 "description": "task description",
@@ -81,7 +81,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         }
 
         expected_query_count = 5
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.update_task_fixture(variables)
 
         updated_task = response["data"]["updateTask"]
@@ -109,7 +109,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
 
         expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.delete_task_fixture(task_id)
 
         self.assertIsNotNone(response["data"]["deleteTask"])

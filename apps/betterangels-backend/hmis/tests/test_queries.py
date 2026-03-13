@@ -178,7 +178,7 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
             }
         """
         expected_query_count = 6
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         self.assertEqual(response["data"]["hmisNotes"]["totalCount"], 1)

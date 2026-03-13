@@ -73,7 +73,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         variables = {"id": client_profile_id}
         expected_query_count = 14
 
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         client_profile = response["data"]["clientProfile"]
@@ -143,7 +143,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         expected_query_count = 8
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         client_profiles_data = response["data"]["clientProfiles"]
@@ -168,7 +168,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             }
         """
         expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables={"ordering": [{"firstName": sort_order}]})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], ClientProfile.objects.count())
@@ -215,7 +215,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             baker.make(Note, organization=organization, client_profile_id=self.client_profile_2["id"])
 
             expected_query_count = 3
-            with self.assertNumQueriesWithoutCache(expected_query_count):
+            with self.assertNumQueriesWithWarmedCaches(expected_query_count):
                 response = self.execute_graphql(query, variables={"isActive": is_active})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
@@ -245,7 +245,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables={"search": search_value})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
@@ -293,7 +293,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             baker.make(Note, organization=organization, client_profile=client_profile_2)
             baker.make(Note, organization=organization, client_profile=client_profile_2)
             expected_query_count = 3
-            with self.assertNumQueriesWithoutCache(expected_query_count):
+            with self.assertNumQueriesWithWarmedCaches(expected_query_count):
                 response = self.execute_graphql(query, variables={"search": search_value, "isActive": is_active})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
@@ -403,7 +403,7 @@ class ClientContactQueryTestCase(ClientContactBaseTestCase):
         variables = {"id": self.client_contact_1["id"]}
 
         expected_query_count = 2
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         expected_client_contact = {
@@ -434,7 +434,7 @@ class ClientContactQueryTestCase(ClientContactBaseTestCase):
 
         expected_query_count = 3
 
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         results = response["data"]["clientContacts"]["results"]
@@ -460,7 +460,7 @@ class ClientHouseholdMemberQueryTestCase(ClientHouseholdMemberBaseTestCase):
         variables = {"id": self.client_household_member_1["id"]}
 
         expected_query_count = 2
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         expected_client_household_member = {
@@ -491,7 +491,7 @@ class ClientHouseholdMemberQueryTestCase(ClientHouseholdMemberBaseTestCase):
 
         expected_query_count = 3
 
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         results = response["data"]["clientHouseholdMembers"]["results"]
@@ -517,7 +517,7 @@ class HmisProfileQueryTestCase(HmisProfileBaseTestCase):
         variables = {"id": self.hmis_profile_1["id"]}
 
         expected_query_count = 2
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         expected_hmis_profile = {
@@ -543,7 +543,7 @@ class HmisProfileQueryTestCase(HmisProfileBaseTestCase):
 
         expected_query_count = 3
 
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         results = response["data"]["hmisProfiles"]["results"]
@@ -569,7 +569,7 @@ class SocialMediaProfileQueryTestCase(SocialMediaProfileBaseTestCase):
         variables = {"id": self.social_media_profile_1["id"]}
 
         expected_query_count = 2
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         expected_social_media_profile = {
@@ -595,7 +595,7 @@ class SocialMediaProfileQueryTestCase(SocialMediaProfileBaseTestCase):
 
         expected_query_count = 3
 
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         results = response["data"]["socialMediaProfiles"]["results"]
@@ -642,7 +642,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         variables = {"id": client_doc["id"]}
 
         expected_query_count = 2
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         self.assertEqual(response["data"]["clientDocument"], client_doc)
@@ -671,7 +671,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         variables = {"clientId": str(self.client_profile.pk)}
 
         expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         actual_doc_ids = [d["id"] for d in response["data"]["clientDocuments"]["results"]]
@@ -733,7 +733,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         variables = {"clientId": str(self.client_profile.pk), "filters": filters}
 
         expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         expected_doc_ids = [doc["id"] for doc in client_docs if doc["namespace"] in expected_namespaces]
@@ -761,7 +761,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         variables = {"clientId": "999999"}
 
         expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         actual_doc_ids = [d["id"] for d in response["data"]["clientDocuments"]["results"]]

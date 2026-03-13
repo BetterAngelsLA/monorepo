@@ -43,7 +43,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         variables = {"id": task_id}
 
         expected_query_count = 2
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         task = response["data"]["task"]
@@ -87,7 +87,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         )["data"]["createTask"]
 
         expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query())
 
         expected_task = {
@@ -132,7 +132,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         variables = {"filters": filters}
 
         expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
@@ -153,7 +153,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(task_count, 3)
 
         expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
         expected_task_ids = [self.task["id"], task_2["id"]]
@@ -173,7 +173,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         variables = {"filters": filters}
 
         expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
@@ -190,7 +190,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         variables = {"filters": filters}
 
         expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
@@ -209,7 +209,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         variables = {"filters": filters}
 
         expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
@@ -228,7 +228,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         variables = {"filters": filters}
 
         expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
