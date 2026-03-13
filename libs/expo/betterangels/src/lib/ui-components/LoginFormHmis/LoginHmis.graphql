@@ -1,0 +1,13 @@
+mutation LoginHmis($email: String!, $password: String!) {
+  hmisLogin(email: $email, password: $password) {
+    ... on HmisLoginSuccess {
+      user {
+        id
+      }
+    }
+    ... on HmisLoginError {
+      field
+      message
+    }
+  }
+}

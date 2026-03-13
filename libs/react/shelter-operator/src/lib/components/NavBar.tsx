@@ -61,7 +61,7 @@ function OperatorNavBar({
         <div className="flex items-center gap-3">
           <Link to="/operator/dashboard/create">
             <Button
-              variant="small-light"
+              variant="primary"
               leftIcon={<Plus size={20} />}
               rightIcon={false}
             >

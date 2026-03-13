@@ -7,7 +7,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { ModalScopeProvider } from '../modalScope';
 import { ModalScreenContext } from './ModalScreenContext';
 import type {
   IModalScreenState,
@@ -108,14 +107,12 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      return (
-        <ModalScopeProvider>{modal.renderContent(api)}</ModalScopeProvider>
-      );
+      return modal.renderContent(api);
     } catch (e) {
       console.error('[ModalScreenProvider] renderContent error:', e);
       return null;
     }
-  }, [modal.renderContent, api]);
+  }, [modal, api]);
 
   return (
     <ModalScreenContext.Provider

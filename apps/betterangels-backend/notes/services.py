@@ -56,7 +56,7 @@ def note_update(
 
     For location and nested relations, use dedicated service functions:
     - note_update_location
-    - note_service_request_create / note_service_request_remove
+    - note_service_request_create
     - task_create (from tasks.services)
 
     Caller is responsible for permission checks.
@@ -127,21 +127,6 @@ def service_request_create(
     return created
 
 
-def service_request_update(
-    *,
-    service_request: ServiceRequest,
-    data: Dict[str, Any],
-) -> ServiceRequest:
-    """Update a ServiceRequest. Caller is responsible for permission checks."""
-    note_id = service_request.get_note_id()
-    with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label="service_request_update"):
-        for field, value in data.items():
-            if field != "id":
-                setattr(service_request, field, value)
-        service_request.save()
-    return service_request
-
-
 def service_request_delete(*, service_request: ServiceRequest) -> int:
     """Delete a ServiceRequest. Caller is responsible for permission checks."""
     sr_id = service_request.id
@@ -182,22 +167,6 @@ def note_service_request_create(
             note.requested_services.add(*service_requests)
 
     return service_requests
-
-
-def note_service_request_remove(
-    *,
-    note: Note,
-    service_request: ServiceRequest,
-    sr_type: ServiceRequestTypeEnum,
-) -> None:
-    """Remove a ServiceRequest from a Note's M2M. Caller is responsible for permission checks."""
-    with pghistory.context(note_id=str(note.id), timestamp=timezone.now(), label="note_service_request_remove"):
-        if sr_type == ServiceRequestTypeEnum.REQUESTED:
-            note.requested_services.remove(service_request)
-        elif sr_type == ServiceRequestTypeEnum.PROVIDED:
-            note.provided_services.remove(service_request)
-        else:
-            raise NotImplementedError(f"Unsupported service request type: {sr_type}")
 
 
 @transaction.atomic

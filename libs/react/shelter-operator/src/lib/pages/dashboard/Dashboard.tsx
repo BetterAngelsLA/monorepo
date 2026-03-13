@@ -123,7 +123,7 @@ export default function Dashboard() {
 
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <Button
-              variant="small-light"
+              variant="primary"
               leftIcon={<Filter size={20} />}
               rightIcon={false}
             >
@@ -131,7 +131,7 @@ export default function Dashboard() {
             </Button>
 
             <Button
-              variant="small-light"
+              variant="primary"
               leftIcon={<Settings2 size={20} />}
               rightIcon={false}
             >
@@ -203,11 +203,7 @@ export default function Dashboard() {
 
       {isOperatorRoot && (
         <div className="fixed bottom-6 right-6 text-sm z-20 ">
-          <Button
-            leftIcon={<BookCheck />}
-            rightIcon={false}
-            variant="floating-light"
-          >
+          <Button leftIcon={<BookCheck />} rightIcon={false} variant="floating">
             Reserve
           </Button>
         </div>

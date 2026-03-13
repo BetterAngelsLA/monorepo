@@ -16,8 +16,6 @@ import TextBold from '../../TextBold';
 import TextRegular from '../../TextRegular';
 import { BottomSheetBasicInput } from './BottomSheetBasicInput';
 
-const DEFAULT_PADDING_H = Spacings.md;
-
 export interface TBottomSheetInputFormProps {
   value: string;
   onChangeText: (text: string) => void;
@@ -100,16 +98,15 @@ export function BottomSheetInputForm(props: TBottomSheetInputFormProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: Spacings.sm,
   },
   content: {
-    paddingHorizontal: DEFAULT_PADDING_H,
+    paddingHorizontal: Spacings.md,
   },
   footer: {
     marginTop: Spacings.xl,
-    paddingHorizontal: DEFAULT_PADDING_H,
     paddingTop: Spacings.sm,
     paddingBottom: Spacings.md,
+    paddingHorizontal: Spacings.md,
     width: '100%',
     backgroundColor: 'white',
 

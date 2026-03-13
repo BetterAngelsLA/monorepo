@@ -1,5 +1,6 @@
 import { BaShelterLogoIcon } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Navigation } from '../components';
 
 type IParams = {
@@ -8,8 +9,7 @@ type IParams = {
 
 export function Header(props: IParams): ReactElement | null {
   const { className = '' } = props;
-  const pathname =
-    typeof window !== 'undefined' ? window.location.pathname : '';
+  const { pathname } = useLocation();
   const isOperatorRoute =
     pathname === '/operator' || pathname.startsWith('/operator/');
 

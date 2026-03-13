@@ -14,7 +14,9 @@ export const createEmptyShelterFormData = (): ShelterFormData => ({
   phone: '',
   website: '',
   instagram: '',
-  operatingHours: [],
+
+  // Schedules
+  schedules: [],
 
   // Summary Information
   demographics: [],
@@ -39,7 +41,6 @@ export const createEmptyShelterFormData = (): ShelterFormData => ({
 
   // Policies
   maxStay: null,
-  intakeHours: [],
   curfew: '',
   onSiteSecurity: null,
   visitorsAllowed: null,

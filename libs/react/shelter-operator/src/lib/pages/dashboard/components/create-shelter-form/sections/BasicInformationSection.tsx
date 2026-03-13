@@ -2,6 +2,7 @@ import type { TOrganization } from '@monorepo/react/shared';
 import { memo } from 'react';
 import { Dropdown } from '../../../../../components/base-ui/dropdown';
 import { FormSection } from '../../../../../components/form/FormSection';
+import { ScheduleField } from '../../../../../components/form/ScheduleField';
 import { TextField } from '../../../../../components/form/TextField';
 import { LocationPicker } from '../components/LocationPicker';
 import type { SectionProps } from '../types';
@@ -102,6 +103,13 @@ export const BasicInformationSection = memo(function BasicInformationSection({
         label="Instagram"
         value={data.instagram}
         onChange={(value) => onChange('instagram', value)}
+      />
+      <ScheduleField
+        id="shelter-schedules"
+        label="Schedules"
+        value={data.schedules}
+        onChange={(value) => onChange('schedules', value)}
+        helperText="Add operating hours, intake hours, and other schedules for each day."
       />
     </FormSection>
   );

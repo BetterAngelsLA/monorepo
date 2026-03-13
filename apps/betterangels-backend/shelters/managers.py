@@ -1,10 +1,12 @@
+import datetime
 from typing import TYPE_CHECKING
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Case, OuterRef, QuerySet, Subquery, When
 from django.db.models.functions import Coalesce
-from shelters.selectors import admin_shelter_list, shelter_list
+from shelters.enums import ScheduleTypeChoices
+from shelters.selectors import admin_shelter_list, shelter_list, shelters_open_at
 
 if TYPE_CHECKING:
     from accounts.models import User
@@ -14,6 +16,14 @@ if TYPE_CHECKING:
 class ShelterQuerySet(QuerySet["Shelter"]):
     def approved(self) -> "ShelterQuerySet":
         return shelter_list(self)  # type: ignore[return-value]
+
+    def open_at(
+        self,
+        dt: datetime.datetime,
+        schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING,
+    ) -> "ShelterQuerySet":
+        """Shelters whose *schedule_type* schedule says they are open at *dt*."""
+        return shelters_open_at(self, dt=dt, schedule_type=schedule_type)  # type: ignore[return-value]
 
     def with_hero_image_file(self) -> "ShelterQuerySet":
         """Annotate each shelter with ``_hero_image_file`` — the file path
@@ -83,6 +93,13 @@ class ShelterManager(models.Manager["Shelter"]):
 
     def approved(self) -> ShelterQuerySet:
         return self.get_queryset().approved()
+
+    def open_at(
+        self,
+        dt: datetime.datetime,
+        schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING,
+    ) -> ShelterQuerySet:
+        return self.get_queryset().open_at(dt, schedule_type)
 
 
 class AdminShelterQuerySet(ShelterQuerySet):

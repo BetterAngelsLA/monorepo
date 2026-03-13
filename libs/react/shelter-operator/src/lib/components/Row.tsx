@@ -1,7 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { useState } from 'react';
-import { Trash2 } from 'lucide-react';
-import { Button, ButtonVariant } from './base-ui/buttons';
+import { Button } from './base-ui/buttons';
 
 export type RowCell = {
   key: string;
@@ -35,20 +33,6 @@ export function Row<TRowObject>({
   onRowClick,
   onClick,
 }: RowProps<TRowObject>) {
-  const [isDeleteHovered, setIsDeleteHovered] = useState(false);
-  const [isDeletePressed, setIsDeletePressed] = useState(false);
-
-  let variant: ButtonVariant = 'trash-light';
-
-  if (isDeletePressed) {
-    variant = 'trash-dark';
-  } else if (isDeleteHovered) {
-    variant = 'trash-medium';
-  }
-
-  const deleteIconStroke =
-    isDeleteHovered || isDeletePressed ? '#CB0808' : '#747A82';
-
   const handleRowClick = () => {
     console.log('[ShelterOperator][Row click]', rowObject);
     onRowClick?.(rowObject, rowIndex);
@@ -79,22 +63,8 @@ export function Row<TRowObject>({
         </div>
       ))}
 
-      <div
-        className="justify-self-end"
-        onClick={(event) => event.stopPropagation()}
-        onMouseEnter={() => setIsDeleteHovered(true)}
-        onMouseLeave={() => {
-          setIsDeleteHovered(false);
-          setIsDeletePressed(false);
-        }}
-        onMouseDown={() => setIsDeletePressed(true)}
-        onMouseUp={() => setIsDeletePressed(false)}
-      >
-        <Button
-          variant={variant}
-          leftIcon={<Trash2 size={20} stroke={deleteIconStroke} />}
-          rightIcon={false}
-        />
+      <div className="justify-self-end">
+        <Button variant="trash" />
       </div>
     </div>
   );
