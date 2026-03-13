@@ -28,12 +28,28 @@ def _resolve_imgproxy_ops(
     return None
 
 
-def is_imgproxy_enabled() -> bool:
-    """Runtime check: imgproxy is usable only when keys and waffle switch are set."""
-    if not (settings.IMGPROXY_KEY and settings.IMGPROXY_SALT):
-        return False
+def _get_image_source_url(file: object) -> Optional[str]:
+    """Return the source URL imgproxy should fetch for a Django file field value.
 
-    return waffle.switch_is_active(IMGPROXY_SWITCH)
+    Local dev: ``IMGPROXY_LOCAL_SOURCE_BASE_URL`` + ``file.url``.
+    Production: ``s3://bucket/key``.
+    """
+    name = getattr(file, "name", None)
+    storage = getattr(file, "storage", None)
+
+    if not storage or not name:
+        return None
+
+    if settings.IS_LOCAL_DEV:
+        if url := getattr(file, "url", None):
+            return f"{settings.IMGPROXY_LOCAL_SOURCE_BASE_URL}{url}"
+
+        return None
+
+    try:
+        return f"s3://{storage.bucket_name}/{storage.location}/{name}"
+    except AttributeError:
+        return None
 
 
 def _encode_source_url(url: str) -> str:
@@ -58,8 +74,7 @@ def _get_imgproxy_signature(path: str) -> str:
 def _build_signed_imgproxy_path(source_url: str, ops: str = "") -> str:
     """Build the path portion of an imgproxy URL (no scheme/host).
 
-    Returns e.g. ``<signature>/<processing>/<encoded_source>``
-    or ``None`` when imgproxy HMAC keys are missing.
+    Returns ``<signature>/<processing>/<encoded_source>``.
     """
     encoded = _encode_source_url(source_url)
     path = f"{ops}/{encoded}" if ops else encoded
@@ -68,37 +83,8 @@ def _build_signed_imgproxy_path(source_url: str, ops: str = "") -> str:
     return f"{signature}/{path}"
 
 
-def _get_image_source_url(file: object) -> Optional[str]:
-    """Return the source URL imgproxy should fetch for a Django file field value.
-
-    Local dev: ``IMGPROXY_LOCAL_SOURCE_BASE_URL`` + media path, or ``file.url`` when
-    ``IMGPROXY_LOCAL_URL`` is set. Production: only ``s3://bucket/key``; never
-    ``file.url`` (that would be a presigned CloudFront URL, unsuitable as source).
-    """
-    name = getattr(file, "name", None)
-    storage = getattr(file, "storage", None)
-
-    if not storage or not name:
-        return None
-
-    if settings.IS_LOCAL_DEV:
-        return f"{settings.IMGPROXY_LOCAL_SOURCE_BASE_URL}{settings.MEDIA_URL}{name}"
-
-    try:
-        return f"s3://{storage.bucket_name}/{storage.location}/{name}"
-    except AttributeError:
-        return None
-
-
 def build_imgproxy_url(file: object, preset: Optional[ImagePresetEnum], processing: Optional[str]) -> Optional[str]:
-    """Return a complete imgproxy URL, CloudFront-signed in production.
-
-    URL construction strategy:
-    * **Local dev** (``IMGPROXY_LOCAL_URL`` is set): returns a plain URL on that
-      host — no CloudFront signing (there is no CloudFront locally).
-    * **Production** (``IMGPROXY_LOCAL_URL`` is empty): builds the URL on the
-      CloudFront ``custom_domain`` from the default storage and CF-signs it
-      using the storage backend's existing signer.
+    """Return a signed imgproxy URL, CloudFront-signed in production.
 
     Args:
         file: The Django file field value to build the URL for.
@@ -132,3 +118,11 @@ def build_imgproxy_url(file: object, preset: Optional[ImagePresetEnum], processi
     expiration = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=expire_seconds)
 
     return cast(str, storage.cloudfront_signer.generate_presigned_url(url, date_less_than=expiration))
+
+
+def is_imgproxy_enabled() -> bool:
+    """Runtime check: imgproxy is usable only when keys and waffle switch are set."""
+    if not (settings.IMGPROXY_KEY and settings.IMGPROXY_SALT):
+        return False
+
+    return waffle.switch_is_active(IMGPROXY_SWITCH)
