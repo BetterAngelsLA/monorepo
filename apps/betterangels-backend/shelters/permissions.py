@@ -209,6 +209,13 @@ class MealServicePermissions(models.TextChoices):
     VIEW = "shelters.view_mealservice", _("Can view meal service")
 
 
+class SchedulePermissions(models.TextChoices):
+    ADD = "shelters.add_schedule", _("Can add schedule")
+    CHANGE = "shelters.change_schedule", _("Can change schedule")
+    DELETE = "shelters.delete_schedule", _("Can delete schedule")
+    VIEW = "shelters.view_schedule", _("Can view schedule")
+
+
 class ReferralRequirementPermissions(models.TextChoices):
     ADD = "shelters.add_referralrequirement", _("Can add referral requirement")
     CHANGE = "shelters.change_referralrequirement", _("Can change referral requirement")
