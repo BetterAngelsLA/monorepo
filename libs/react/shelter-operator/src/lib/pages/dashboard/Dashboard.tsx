@@ -2,7 +2,7 @@ import { useQuery } from '@apollo/client/react';
 import { useUser } from '@monorepo/react/shelter';
 import { BookCheck, Filter, Search, Settings2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons';
 import NavBar from '../../components/NavBar';
 import { ShelterTable } from '../../components/ShelterTable';
@@ -18,6 +18,7 @@ const PAGE_SIZE = 16;
 export default function Dashboard() {
   const { pathname } = useLocation();
   const isOperatorRoot = pathname === '/operator';
+  const navigate = useNavigate();
 
   const { user } = useUser();
   const organizations = user?.organizations ?? [];
@@ -144,9 +145,9 @@ export default function Dashboard() {
         <ShelterTable
           rows={shelters}
           getRowKey={(shelter) => shelter.id}
-          onRowClick={(rowObject) =>
-            console.log('[ShelterOperator][Table row click]', rowObject)
-          }
+          onRowClick={(rowObject) => {
+            navigate(`/operator/shelter/${rowObject.id}`);
+          }}
           loading={loading}
           loadingState={
             <div className="px-6 py-8 text-center text-sm text-gray-500">

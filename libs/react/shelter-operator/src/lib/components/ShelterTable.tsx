@@ -1,9 +1,10 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
-import { Table, type TableColumn } from './Table';
 import type { Shelter } from '../types/shelter';
+import { Table, type TableColumn } from './Table';
 
 export type ShelterRowObject = {
+  id: string;
   name: string;
   address: string;
   totalBeds: number;
@@ -159,6 +160,7 @@ export function ShelterTable({
         );
 
         return {
+          id: shelter.id,
           name: shelter.name ?? 'N/A',
           address: shelter.address ?? 'N/A',
           totalBeds,
