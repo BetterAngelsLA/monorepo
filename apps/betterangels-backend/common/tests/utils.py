@@ -122,7 +122,9 @@ class NumQueriesWithoutCacheMixin:
         return self.assertNumQueries(query_count)
 
 
-class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, NumQueriesWithoutCacheMixin, ParametrizedTestCase, TestCase):
+class GraphQLBaseTestCase(
+    GraphQLTestCaseMixin, GraphQLAssertionsMixin, NumQueriesWithoutCacheMixin, ParametrizedTestCase, TestCase
+):
     def setUp(self) -> None:
         super().setUp()
         self._setup_users()
@@ -234,5 +236,3 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, NumQueri
             self.graphql_client.force_login(self.user_map[user_label])
         else:
             self.graphql_client.logout()
-
-
