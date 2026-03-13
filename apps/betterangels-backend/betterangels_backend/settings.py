@@ -12,20 +12,14 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
-from typing import Any, List
+from typing import List
 
+import django_stubs_ext
 import environ
 import structlog
 from corsheaders.defaults import default_headers
 
-django_stubs_ext: Any = None
-try:
-    import django_stubs_ext  # type: ignore[no-redef]
-except ImportError:
-    pass
-
-if django_stubs_ext is not None:
-    django_stubs_ext.monkeypatch()
+django_stubs_ext.monkeypatch()
 
 
 env = environ.Env(

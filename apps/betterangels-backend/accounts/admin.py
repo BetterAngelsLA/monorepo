@@ -51,12 +51,12 @@ class CustomOrganizationAdmin(admin.ModelAdmin):
 
 
 @admin.register(OrganizationUser)
-class CustomOrganizationUserAdmin(AdminRequestMixin, ModelAdmin):
+class CustomOrganizationUserAdmin(AdminRequestMixin, ModelAdmin[User]):
     form = OrganizationUserForm
 
 
 @admin.register(ExtendedOrganizationInvitation)
-class ExtendedOrganizationInvitationAdmin(ModelAdmin):
+class ExtendedOrganizationInvitationAdmin(ModelAdmin[ExtendedOrganizationInvitation]):
     list_display = ("invited_by", "invitee", "organization", "accepted")
     search_fields = ("invited_by__username", "invitee__username", "organization__name")
     list_filter = ("organization", "accepted")
