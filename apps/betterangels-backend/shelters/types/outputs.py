@@ -11,7 +11,7 @@ from accounts.types import OrganizationType
 from common.graphql.types import PhoneNumberScalar
 from django.db.models import Prefetch, QuerySet
 from shelters import models
-from shelters.enums import BedStatusChoices
+from shelters.enums import BedStatusChoices, RoomStatusChoices, RoomStyleChoices
 from shelters.selectors import admin_shelter_list, shelter_list
 from shelters.types.lookups import (
     AccessibilityType,
@@ -191,3 +191,17 @@ class BedType:
     id: ID
     shelter: "ShelterType"
     status: Optional[BedStatusChoices]
+
+
+@strawberry_django.type(models.Room)
+class RoomType:
+    id: ID
+    shelter: "ShelterType"
+    room_identifier: auto
+    room_type: Optional[RoomStyleChoices]
+    room_type_other: auto
+    status: Optional[RoomStatusChoices]
+    notes: auto
+    amenities: auto
+    medical_respite: auto
+    last_cleaned_inspected: auto
