@@ -42,6 +42,7 @@ export default function Dashboard() {
         limit: PAGE_SIZE,
       },
       skip: !selectedOrganizationId,
+      fetchPolicy: 'cache-and-network',
     }
   );
 
