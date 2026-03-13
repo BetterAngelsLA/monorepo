@@ -1,10 +1,10 @@
 import base64
+import datetime
 from types import SimpleNamespace
 from typing import Optional, cast
 from unittest.mock import MagicMock
 
 from common.enums import ImagePresetEnum
-from common.graphql.types import BaImageType
 from common.imgproxy import (
     IMGPROXY_SWITCH,
     _build_signed_imgproxy_path,
@@ -56,7 +56,7 @@ class ResolveImgproxyOpsTest(TestCase):
     def test_returns_processing_when_provided(self) -> None:
         self.assertIsNone(_resolve_imgproxy_ops(None, None))
         self.assertEqual(_resolve_imgproxy_ops(None, "rs:fill:100:100/f:jpg"), "rs:fill:100:100/f:jpg")
-        self.assertEqual(_resolve_imgproxy_ops(ImagePresetEnum.SM, None), "rs:fill:100:100/f:jpg")
+        self.assertEqual(_resolve_imgproxy_ops(ImagePresetEnum.ORIGINAL, None), "rs:force:0:0")
 
 
 # ---------------------------------------------------------------------------
@@ -177,6 +177,14 @@ class GetImageSourceUrlTest(ParametrizedTestCase, TestCase):
         )
         self.assertIsNone(_get_image_source_url(file))
 
+    @override_settings(IS_LOCAL_DEV=False)
+    def test_returns_none_when_storage_raises_attribute_error(self) -> None:
+        class StorageMissingBucket:
+            location = "media"
+
+        file = SimpleNamespace(name="photo.jpg", storage=StorageMissingBucket())
+        self.assertIsNone(_get_image_source_url(file))
+
 
 # ---------------------------------------------------------------------------
 # build_imgproxy_url
@@ -217,6 +225,16 @@ class BuildImgproxyUrlTest(TestCase):
         url = build_imgproxy_url(file, ImagePresetEnum.SM, None)
         self.assertIsNone(url)
 
+    @override_settings(IS_LOCAL_DEV=False, IMGPROXY_PATH_PREFIX="")
+    def test_production_returns_none_when_imgproxy_path_prefix_empty(self) -> None:
+        signer = MagicMock()
+        signer.generate_presigned_url.return_value = "https://cdn.example.com/signed-url"
+        file = _make_file()
+        file.storage.cloudfront_signer = signer
+        url = build_imgproxy_url(file, ImagePresetEnum.SM, None)
+        self.assertIsNone(url)
+        signer.generate_presigned_url.assert_not_called()
+
     @override_settings(IS_LOCAL_DEV=False)
     def test_production_with_cloudfront_signer(self) -> None:
         signer = MagicMock()
@@ -226,6 +244,16 @@ class BuildImgproxyUrlTest(TestCase):
         url = build_imgproxy_url(file, ImagePresetEnum.SM, "rs:fill:100:100")
         self.assertEqual(url, "https://cdn.example.com/signed-url")
         signer.generate_presigned_url.assert_called_once()
+        call_url = signer.generate_presigned_url.call_args[0][0]
+        self.assertIn(TEST_PREFIX, call_url)
+        self.assertIn("rs:fill:100:100", call_url)
+        call_kw = signer.generate_presigned_url.call_args[1]
+        self.assertIn("date_less_than", call_kw)
+        self.assertGreater(
+            call_kw["date_less_than"],
+            datetime.datetime.now(datetime.timezone.utc),
+            "date_less_than should be in the future",
+        )
 
     def test_returns_none_when_no_preset_or_processing(self) -> None:
         file = _make_file()
@@ -266,8 +294,12 @@ class BuildImgproxyUrlTest(TestCase):
 def _image_url_resolver(
     root: object, preset: Optional[ImagePresetEnum] = None, processing: Optional[str] = None
 ) -> str:
-    """Call BaImageType.url with root (file-like object) as self."""
-    return cast(str, BaImageType.url(root, preset=preset, processing=processing))
+    """Exercise the same logic as BaImageType.url (cannot call the Strawberry field directly)."""
+    if is_imgproxy_enabled():
+        if imgproxy_url := build_imgproxy_url(root, preset, processing):
+            return imgproxy_url
+
+    return cast(str, getattr(root, "url", ""))
 
 
 @override_settings(
@@ -321,3 +353,11 @@ class BaImageTypeUrlTest(TestCase):
         url = _image_url_resolver(file)
         assert url
         self.assertEqual(url, "https://cdn/photo.jpg")
+
+    @override_settings(IS_LOCAL_DEV=True)
+    @override_switch(IMGPROXY_SWITCH, active=True)
+    def test_url_falls_back_when_imgproxy_enabled_but_no_source_url(self) -> None:
+        """When imgproxy is on but build_imgproxy_url returns None (e.g. no storage), return self.url."""
+        file = SimpleNamespace(name="x", storage=None, url="https://cdn/fallback.jpg")
+        url = _image_url_resolver(file, preset=ImagePresetEnum.MD)
+        self.assertEqual(url, "https://cdn/fallback.jpg")

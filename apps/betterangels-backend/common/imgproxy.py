@@ -73,13 +73,13 @@ def _get_imgproxy_signature(path: str) -> str:
     return base64.urlsafe_b64encode(digest).rstrip(b"=").decode()
 
 
-def _build_signed_imgproxy_path(source_url: str, ops: str = "") -> str:
+def _build_signed_imgproxy_path(source_url: str, ops: str) -> str:
     """Build the path portion of an imgproxy URL (no scheme/host).
 
     Returns ``<signature>/<processing>/<encoded_source>``.
     """
     encoded = _encode_source_url(source_url)
-    path = f"{ops}/{encoded}" if ops else encoded
+    path = f"{ops}/{encoded}"
     signature = _get_imgproxy_signature(path)
 
     return f"{signature}/{path}"
