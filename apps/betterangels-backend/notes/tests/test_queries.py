@@ -69,9 +69,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         """
 
         variables = {"id": note_id}
-        expected_query_count = 5
+        expected_query_count = 6
 
-        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         note = response["data"]["note"]
@@ -137,8 +137,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 }}
             }}
         """
-        expected_query_count = 6
-        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
+        expected_query_count = 7
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         self.assertEqual(response["data"]["notes"]["totalCount"], 1)
@@ -189,7 +189,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         """
 
-        with self.assertNumQueriesWithWarmedCaches(3):
+        with self.assertNumQueriesWithoutCache(4):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
@@ -238,7 +238,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         """
 
-        with self.assertNumQueriesWithWarmedCaches(3):
+        with self.assertNumQueriesWithoutCache(4):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
@@ -291,7 +291,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         """
 
-        with self.assertNumQueriesWithWarmedCaches(3):
+        with self.assertNumQueriesWithoutCache(4):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
@@ -344,8 +344,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         filters: dict[str, Any] = {"search": search_terms}
 
-        expected_query_count = 3
-        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
@@ -387,8 +387,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         """
 
         # Test descending order
-        expected_query_count = 2
-        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
+        expected_query_count = 3
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"ordering": [{"interactedAt": "DESC"}]})
 
         self.assertEqual(
@@ -397,7 +397,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         )
 
         # Test ascending order
-        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"ordering": [{"interactedAt": "ASC"}]})
 
         self.assertEqual(
@@ -440,7 +440,7 @@ class OrganizationServiceQueryTestCase(GraphQLBaseTestCase):
 
         expected_query_count = 6
 
-        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         results = response["data"]["serviceCategories"]["results"]
@@ -481,7 +481,7 @@ class OrganizationServiceCategoryQueryTestCase(GraphQLBaseTestCase):
 
         expected_query_count = 5
 
-        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         results = response["data"]["services"]["results"]

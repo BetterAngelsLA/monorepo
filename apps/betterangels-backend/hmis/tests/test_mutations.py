@@ -238,7 +238,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         }
 
         expected_query_count = 19
-        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_hmis_note_location_fixture(variables)
 
         assert isinstance(address_input["addressComponents"], list)

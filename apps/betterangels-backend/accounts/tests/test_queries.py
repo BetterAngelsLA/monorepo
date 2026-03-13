@@ -97,7 +97,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             }
         """
 
-        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
         self.assertIsNone(response.get("errors"), "Expected no errors in the response")
@@ -234,7 +234,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
 
         omb.set_role(user, user_role)
 
-        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
         user_perms = {o["name"]: o["userPermissions"] for o in response["data"]["currentUser"]["organizations"]}
@@ -363,7 +363,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
             "userId": str(self.org_admin.pk),
         }
 
-        with self.assertNumQueriesWithWarmedCaches(5):
+        with self.assertNumQueriesWithoutCache(6):
             response = self.execute_graphql(query, variables)
 
         expected_member = {
@@ -397,7 +397,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
 
         variables = {"organizationId": str(self.org.pk)}
 
-        with self.assertNumQueriesWithWarmedCaches(6):
+        with self.assertNumQueriesWithoutCache(7):
             response = self.execute_graphql(query, variables)
 
         expected_members = zip(

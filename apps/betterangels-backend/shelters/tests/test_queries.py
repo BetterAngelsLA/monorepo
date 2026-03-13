@@ -242,7 +242,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
         variables = {"id": shelter.pk}
         expected_query_count = 21
 
-        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         response_shelter = response["data"]["shelter"]
@@ -357,7 +357,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
 
         variables = {"ordering": {"name": "ASC"}}
 
-        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         shelters = response["data"]["shelters"]["results"]
@@ -487,7 +487,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
         }
 
         expected_query_count = 2
-        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         result_ids = {s["id"] for s in response["data"]["shelters"]["results"]}
@@ -685,7 +685,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
         filters["properties"] = property_filters
 
         expected_query_count = 2
-        with self.assertNumQueriesWithWarmedCaches(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         results = response["data"]["shelters"]["results"]
