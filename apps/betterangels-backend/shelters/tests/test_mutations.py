@@ -568,6 +568,13 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                     ... on BedType {
                         id
                     }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
                 }
             }
         """
@@ -581,10 +588,12 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
 
         response = self.execute_graphql(mutation, variables)
 
-        self.assertEqual(len(response["errors"]), 1)
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createBed"]["messages"]
+        self.assertEqual(len(messages), 1)
         self.assertIn(
-            "You do not have permission to modify this shelter.",
-            response["errors"][0]["message"],
+            f"Shelter matching ID {other_org_shelter.pk} could not be found.",
+            messages[0]["message"],
         )
 
     def test_create_room_wrong_org_rejected(self) -> None:
@@ -601,6 +610,13 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                     ... on RoomType {
                         id
                     }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
                 }
             }
         """
@@ -614,8 +630,10 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
 
         response = self.execute_graphql(mutation, variables)
 
-        self.assertEqual(len(response["errors"]), 1)
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createRoom"]["messages"]
+        self.assertEqual(len(messages), 1)
         self.assertIn(
-            "You do not have permission to modify this shelter.",
-            response["errors"][0]["message"],
+            f"Shelter matching ID {other_org_shelter.pk} could not be found.",
+            messages[0]["message"],
         )
