@@ -71,7 +71,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 15
+        expected_query_count = 14
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -142,7 +142,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             }}
         """
 
-        expected_query_count = 9
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
@@ -167,7 +167,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"ordering": [{"firstName": sort_order}]})
 
@@ -214,7 +214,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             baker.make(Note, organization=organization, client_profile_id=self.client_profile_2["id"])
             baker.make(Note, organization=organization, client_profile_id=self.client_profile_2["id"])
 
-            expected_query_count = 4
+            expected_query_count = 3
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self.execute_graphql(query, variables={"isActive": is_active})
 
@@ -244,7 +244,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             }
         """
 
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"search": search_value})
 
@@ -292,7 +292,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             # Make two notes for Client 2 (active)
             baker.make(Note, organization=organization, client_profile=client_profile_2)
             baker.make(Note, organization=organization, client_profile=client_profile_2)
-            expected_query_count = 4
+            expected_query_count = 3
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self.execute_graphql(query, variables={"search": search_value, "isActive": is_active})
 
@@ -402,7 +402,7 @@ class ClientContactQueryTestCase(ClientContactBaseTestCase):
         """
         variables = {"id": self.client_contact_1["id"]}
 
-        expected_query_count = 3
+        expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -432,7 +432,7 @@ class ClientContactQueryTestCase(ClientContactBaseTestCase):
             }}
         """
 
-        expected_query_count = 4
+        expected_query_count = 3
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
@@ -459,7 +459,7 @@ class ClientHouseholdMemberQueryTestCase(ClientHouseholdMemberBaseTestCase):
         """
         variables = {"id": self.client_household_member_1["id"]}
 
-        expected_query_count = 3
+        expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -489,7 +489,7 @@ class ClientHouseholdMemberQueryTestCase(ClientHouseholdMemberBaseTestCase):
             }}
         """
 
-        expected_query_count = 4
+        expected_query_count = 3
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
@@ -516,7 +516,7 @@ class HmisProfileQueryTestCase(HmisProfileBaseTestCase):
         """
         variables = {"id": self.hmis_profile_1["id"]}
 
-        expected_query_count = 3
+        expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -541,7 +541,7 @@ class HmisProfileQueryTestCase(HmisProfileBaseTestCase):
             }}
         """
 
-        expected_query_count = 4
+        expected_query_count = 3
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
@@ -568,7 +568,7 @@ class SocialMediaProfileQueryTestCase(SocialMediaProfileBaseTestCase):
         """
         variables = {"id": self.social_media_profile_1["id"]}
 
-        expected_query_count = 3
+        expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -593,7 +593,7 @@ class SocialMediaProfileQueryTestCase(SocialMediaProfileBaseTestCase):
             }}
         """
 
-        expected_query_count = 4
+        expected_query_count = 3
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
@@ -641,7 +641,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_doc["id"]}
 
-        expected_query_count = 3
+        expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -670,7 +670,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"clientId": str(self.client_profile.pk)}
 
-        expected_query_count = 5
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -732,7 +732,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         filters = {"documentGroups": doc_groups}
         variables = {"clientId": str(self.client_profile.pk), "filters": filters}
 
-        expected_query_count = 5
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -760,7 +760,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"clientId": "999999"}
 
-        expected_query_count = 5
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 

@@ -42,7 +42,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         """
         variables = {"id": task_id}
 
-        expected_query_count = 3
+        expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -86,7 +86,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         )["data"]["createTask"]
 
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query())
 
@@ -131,7 +131,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         filters = {"authors": [str(self.org_1_case_manager_2.pk)]}
         variables = {"filters": filters}
 
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
@@ -152,7 +152,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         task_count = Task.objects.count()
         self.assertEqual(task_count, 3)
 
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
@@ -172,7 +172,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         filters = {"organizations": [str(self.org_2.pk)]}
         variables = {"filters": filters}
 
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
@@ -189,7 +189,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         filters = {"search": "2 sum"}
         variables = {"filters": filters}
 
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
@@ -208,7 +208,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         filters = {"status": TaskStatusEnum.COMPLETED.name}
         variables = {"filters": filters}
 
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
@@ -227,7 +227,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         filters = {"teams": [SelahTeamEnum.SLCC_ON_SITE.name]}
         variables = {"filters": filters}
 
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query("id"), variables)
 

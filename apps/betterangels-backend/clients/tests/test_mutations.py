@@ -452,7 +452,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile["id"]}
 
-        expected_query_count = 17
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -468,7 +468,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         )
         photo_name = "profile_photo.jpg"
 
-        expected_query_count = 8
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_client_profile_photo_fixture(
                 client_profile_id,
@@ -819,7 +819,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         file_content = b"Test file content"
         file_name = "test file name.txt"
 
-        expected_query_count = 22
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_client_document_fixture(
                 self.client_profile_1["id"],
@@ -843,7 +843,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client_document_id = self.client_profile_1_document_1["id"]
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
 
-        expected_query_count = 17
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self._delete_client_document_fixture(client_document_id)
 

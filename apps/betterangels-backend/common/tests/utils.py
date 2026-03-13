@@ -6,11 +6,11 @@ from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.models import Address, Location
+from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.contrib.sites.models import Site
 from django.test import TestCase
-from guardian.shortcuts import _get_ct_cached
 from model_bakery import baker
 from test_utils.assert_mixins import GraphQLAssertionsMixin
 from test_utils.mixins import GraphQLTestCaseMixin
@@ -225,5 +225,8 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, Parametr
         """
         ContentType.objects.clear_cache()
         Site.objects.clear_cache()
-        _get_ct_cached.cache_clear()
+        # Pre-warm the ContentType cache for every installed model so that
+        # get_for_model / get_for_id lookups inside the measured block are
+        # always served from cache, regardless of prior test execution order.
+        ContentType.objects.get_for_models(*apps.get_models())
         return self.assertNumQueries(query_count)
