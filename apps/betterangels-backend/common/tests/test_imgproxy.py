@@ -1,26 +1,25 @@
-# import base64
-# from types import SimpleNamespace
-# from typing import Callable, Optional, cast
-# from unittest.mock import MagicMock, PropertyMock, patch
+import base64
+from types import SimpleNamespace
+from typing import Callable, Optional, cast
+from unittest.mock import MagicMock, PropertyMock, patch
 
-# from common.enums import ImagePresetEnum
-# from common.graphql.types import BaImageType
-# from common.imgproxy import (
-#     IMGPROXY_SWITCH,
-#     _build_imgproxy_path,
-#     _encode_source_url,
-#     _sign_imgproxy_path,
-#     build_imgproxy_url,
-#     get_image_source_url,
-#     is_imgproxy_enabled,
-# )
-# from django.test import TestCase, override_settings
-# from unittest_parametrize import ParametrizedTestCase, parametrize
-# from waffle.testutils import override_switch
+from common.enums import ImagePresetEnum
+from common.graphql.types import BaImageType
+from common.imgproxy import (  # get_image_source_url,
+    IMGPROXY_SWITCH,
+    _build_signed_imgproxy_path,
+    _encode_source_url,
+    _get_imgproxy_signature,
+    build_imgproxy_url,
+    is_imgproxy_enabled,
+)
+from django.test import TestCase, override_settings
+from unittest_parametrize import ParametrizedTestCase, parametrize
+from waffle.testutils import override_switch
 
-# TEST_KEY = "736563726574"
-# TEST_SALT = "68656C6C6F"
-# TEST_PREFIX = "imgproxy"
+TEST_KEY = "736563726574"
+TEST_SALT = "68656C6C6F"
+TEST_PREFIX = "imgproxy"
 
 
 # ---------------------------------------------------------------------------
@@ -73,37 +72,37 @@ class EncodeSourceUrlTest(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# _sign_imgproxy_path
+# _get_imgproxy_signature
 # ---------------------------------------------------------------------------
 @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX=TEST_PREFIX)
 class SignImgproxyPathTest(TestCase):
     def test_returns_urlsafe_base64_without_padding(self) -> None:
-        sig = str(_sign_imgproxy_path("rs:fill:100:100/abc"))
+        sig = str(_get_imgproxy_signature("rs:fill:100:100/abc"))
         self.assertIsNotNone(sig)
         self.assertNotIn("=", sig)
         self.assertNotIn("+", sig)
         self.assertNotIn("/", sig.replace("_", "").replace("-", ""))
 
     def test_deterministic_for_same_path(self) -> None:
-        sig1 = _sign_imgproxy_path("same/path")
-        sig2 = _sign_imgproxy_path("same/path")
+        sig1 = _get_imgproxy_signature("same/path")
+        sig2 = _get_imgproxy_signature("same/path")
         self.assertEqual(sig1, sig2)
 
     def test_different_signatures_for_different_paths(self) -> None:
-        sig_a = _sign_imgproxy_path("path/a")
-        sig_b = _sign_imgproxy_path("path/b")
+        sig_a = _get_imgproxy_signature("path/a")
+        sig_b = _get_imgproxy_signature("path/b")
         self.assertNotEqual(sig_a, sig_b)
 
 
 # ---------------------------------------------------------------------------
-# _build_imgproxy_path
+# _build_signed_imgproxy_path
 # ---------------------------------------------------------------------------
 @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX=TEST_PREFIX)
 class BuildImgproxyPathTest(TestCase):
     SOURCE = "s3://bucket/photo.jpg"
 
     def test_processed_path(self) -> None:
-        path = str(_build_imgproxy_path(self.SOURCE, processing="rs:fill:100:100"))
+        path = str(_build_signed_imgproxy_path(self.SOURCE, ops="rs:fill:100:100"))
         self.assertStartsWith(path, f"{TEST_PREFIX}/")
         self.assertIn("rs:fill:100:100", path)
 

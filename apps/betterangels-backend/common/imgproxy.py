@@ -123,7 +123,7 @@ def build_imgproxy_url(file: object, preset: Optional[ImagePresetEnum], processi
         return f"{settings.IMGPROXY_LOCAL_URL}/{imgproxy_path}"
 
     storage = getattr(file, "storage", None)
-    if not storage or not storage.cloudfront_signer:
+    if not storage or not storage.cloudfront_signer or not settings.IMGPROXY_PATH_PREFIX:
         return None
 
     url = f"{storage.url_protocol}//{storage.custom_domain}/{settings.IMGPROXY_PATH_PREFIX}/{imgproxy_path}"
