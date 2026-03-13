@@ -103,8 +103,7 @@ def build_address_inputs(
 
 
 class SupportsAssertNumQueries(Protocol):
-    def assertNumQueries(self, num: int, func: Any = None, *args: Any, **kwargs: Any) -> Any:
-        ...
+    def assertNumQueries(self, num: int, func: Any = None, *args: Any, **kwargs: Any) -> Any: ...
 
 
 class NumQueriesWithoutCacheMixin:
