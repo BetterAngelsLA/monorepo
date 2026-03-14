@@ -1,0 +1,48 @@
+import django_choices_field.fields
+from django.db import migrations
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("shelters", "0035_update_bed_attributes"),
+    ]
+
+    operations = [
+        migrations.AlterField(
+            model_name="bed",
+            name="status",
+            field=django_choices_field.fields.TextChoicesField(
+                blank=True,
+                choices=[
+                    ("available", "Available"),
+                    ("occupied", "Occupied"),
+                    ("reserved", "Reserved"),
+                    ("out_of_service", "Out-of-Service"),
+                ],
+                max_length=14,
+                null=True,
+            ),
+        ),
+        migrations.AlterField(
+            model_name="pet",
+            name="name",
+            field=django_choices_field.fields.TextChoicesField(
+                blank=True,
+                choices=[
+                    ("pets", "Pets"),
+                    ("emotional_support_animal", "Emotional Support Animal"),
+                    ("cats", "Cats"),
+                    ("dogs_under_25_lbs", "Dogs (< 25 lbs)"),
+                    ("dogs_over_25_lbs", "Dogs (> 25 lbs)"),
+                    ("exotics", "Exotics"),
+                    ("service_animals", "Service Animals"),
+                    ("pet_area", "Pet Area"),
+                    ("no_pets_allowed", "No Pets Allowed"),
+                ],
+                max_length=24,
+                null=True,
+                unique=True,
+            ),
+        ),
+    ]
