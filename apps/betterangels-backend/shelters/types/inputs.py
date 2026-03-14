@@ -147,7 +147,7 @@ class CreateBedInput:
     pets: Optional[List[PetChoices]] = None
     storage: Optional[bool] = None
     maintenance_flag: Optional[bool] = None
-    last_cleaned_inspected: Optional[str] = None
+    last_cleaned_inspected: Optional[datetime] = None
     medical_needs: Optional[MedicalNeedChoices] = None
     b7: Optional[bool] = None
     fees: Optional[int] = None
