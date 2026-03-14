@@ -10,6 +10,7 @@ type SliderTabsProps = {
   activePathSuffix: string;
   basePath: string;
   items: SliderTabItem[];
+  linkState?: unknown;
 };
 
 function buildTabPath(basePath: string, pathSuffix: string) {
@@ -20,6 +21,7 @@ export default function SliderTabs({
   activePathSuffix,
   basePath,
   items,
+  linkState,
 }: SliderTabsProps) {
   const tabRefs = useRef<Array<HTMLAnchorElement | null>>([]);
   const [sliderStyle, setSliderStyle] = useState({ left: 0, width: 0 });
@@ -71,6 +73,7 @@ export default function SliderTabs({
                     tabRefs.current[index] = element;
                   }}
                   to={buildTabPath(basePath, item.pathSuffix)}
+                  state={linkState}
                   aria-current={isActive ? 'page' : undefined}
                   className={[
                     'relative z-10 px-4 py-4 text-center text-[18px] font-medium leading-none transition-colors',

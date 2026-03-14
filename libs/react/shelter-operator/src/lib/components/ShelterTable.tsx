@@ -5,6 +5,7 @@ import { Table, type TableColumn } from './Table';
 
 export type ShelterRowObject = {
   id: string;
+  shelter: Shelter;
   name: string;
   address: string;
   totalBeds: number;
@@ -161,6 +162,7 @@ export function ShelterTable({
 
         return {
           id: shelter.id,
+          shelter,
           name: shelter.name ?? 'N/A',
           address: shelter.address ?? 'N/A',
           totalBeds,

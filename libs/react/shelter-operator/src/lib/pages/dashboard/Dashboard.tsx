@@ -132,7 +132,9 @@ export default function Dashboard() {
           rows={shelters}
           getRowKey={(shelter) => shelter.id}
           onRowClick={(rowObject) => {
-            navigate(`/operator/shelter/${rowObject.id}`);
+            navigate(`/operator/shelter/${rowObject.id}`, {
+              state: { shelter: rowObject.shelter },
+            });
           }}
           loading={loading}
           loadingState={

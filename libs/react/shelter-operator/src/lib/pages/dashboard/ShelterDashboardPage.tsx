@@ -1,5 +1,7 @@
-import { ShelterPage } from '@monorepo/react/shelter';
-import { useParams } from 'react-router-dom';
+import { BookCheck, Settings } from 'lucide-react';
+import { useLocation, useParams } from 'react-router-dom';
+import { Button } from '../../components/base-ui/buttons';
+import type { Shelter } from '../../types/shelter';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
 
 type ShelterTab = 'overview' | 'rooms' | 'beds' | 'occupancy' | 'label';
@@ -21,18 +23,56 @@ const TAB_ITEMS: SliderTabItem[] = [
 ];
 
 export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
+  const location = useLocation();
   const { id } = useParams();
+  const shelterId = id ?? '';
+  const routeState = (location.state as { shelter?: Shelter } | null) ?? null;
 
   if (!id) return null;
 
   return (
-    <div className="w-full bg-[#F8FAFC]">
+    <div className="w-full">
+      <div className="flex items-start justify-between gap-3 px-6 py-4">
+        <div>
+          {/* Hard Coded For Now*/}
+          <h1 className="text-[36px] font-semibold leading-none text-[#111827]">
+            Shelter Name
+          </h1>
+          <p className="mt-4 text-[20px] text-[#6B7280]">
+            123 Thisisastreetname Street
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            variant="primary"
+            leftIcon={<Settings size={20} color="black" />}
+            rightIcon={false}
+            className="text-black"
+          >
+            Settings
+          </Button>
+          {/* CHANGE TO FLOATING COLORS */}
+          <Button
+            variant="primary"
+            leftIcon={<BookCheck size={20} color="black" />}
+            rightIcon={false}
+            className="text-black"
+          >
+            Reserve
+          </Button>
+        </div>
+      </div>
+
       <SliderTabs
         activePathSuffix={TAB_CONFIG[tab].pathSuffix}
-        basePath={`/operator/shelter/${id}`}
+        basePath={`/operator/shelter/${shelterId}`}
         items={TAB_ITEMS}
+        linkState={routeState ?? undefined}
       />
-      <ShelterPage id={id} />
+
+      {/* Tab Items*/}
+      {/* <ShelterPage id={id} /> */}
     </div>
   );
 }
