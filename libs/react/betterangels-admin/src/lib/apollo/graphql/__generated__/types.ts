@@ -463,7 +463,7 @@ export type CreateBedInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
   fees?: InputMaybe<Scalars['Int']['input']>;
   funders?: InputMaybe<Array<FunderChoices>>;
-  lastCleanedInspected?: InputMaybe<Scalars['String']['input']>;
+  lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
   medicalNeeds?: InputMaybe<MedicalNeedChoices>;
   pets?: InputMaybe<Array<PetChoices>>;

@@ -464,7 +464,7 @@ input CreateBedInput {
   pets: [PetChoices!] = null
   storage: Boolean = null
   maintenanceFlag: Boolean = null
-  lastCleanedInspected: String = null
+  lastCleanedInspected: DateTime = null
   medicalNeeds: MedicalNeedChoices = null
   b7: Boolean = null
   fees: Int = null
