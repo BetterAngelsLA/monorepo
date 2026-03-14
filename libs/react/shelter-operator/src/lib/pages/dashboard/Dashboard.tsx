@@ -3,32 +3,22 @@ import { useSignOut } from '@monorepo/react/shared';
 import { useUser } from '@monorepo/react/shelter';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Dropdown } from '../../components/base-ui/dropdown';
 import { ShelterRow } from '../../components/ShelterRow';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
+import { useActiveOrg } from '../../providers/activeOrg';
 import type { Shelter } from '../../types/shelter';
 
 const PAGE_SIZE = 8;
 const SEARCH_DEBOUNCE_MS = 300;
 
 export default function Dashboard() {
-  const { user, setUser } = useUser();
+  const { setUser } = useUser();
   const { signOut, loading: signingOut } = useSignOut(setUser);
-  const organizations = user?.organizations ?? [];
-  const [selectedOrganizationId, setSelectedOrganizationId] = useState(
-    () => user?.organization?.id ?? ''
-  );
-
-  // Sync selectedOrganizationId when user data loads asynchronously
-  const orgId = user?.organization?.id;
-  useEffect(() => {
-    if (orgId && !selectedOrganizationId) {
-      setSelectedOrganizationId(orgId);
-    }
-  }, [orgId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { activeOrg } = useActiveOrg();
+  const selectedOrganizationId = activeOrg?.id ?? '';
 
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -56,6 +46,7 @@ export default function Dashboard() {
         limit: PAGE_SIZE,
       },
       skip: !selectedOrganizationId,
+      fetchPolicy: 'cache-and-network',
     }
   );
 
@@ -96,27 +87,6 @@ export default function Dashboard() {
         </Link>
 
         <div className="flex items-center gap-3">
-          {organizations.length > 1 && (
-            <Dropdown
-              label="Organization"
-              placeholder="Select organization"
-              options={organizations.map((org) => ({
-                label: org.name,
-                value: org.id,
-              }))}
-              value={
-                organizations
-                  .filter((org) => org.id === selectedOrganizationId)
-                  .map((org) => ({ label: org.name, value: org.id }))[0] ?? null
-              }
-              onChange={(option) => {
-                if (option) {
-                  setSelectedOrganizationId(option.value);
-                  setPage(1);
-                }
-              }}
-            />
-          )}
           <Link
             to="/operator/dashboard/create"
             className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm cursor-pointer hover:bg-blue-700"

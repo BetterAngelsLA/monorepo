@@ -1,16 +1,21 @@
 import { TOrganization } from '@monorepo/react/shared';
 import { createContext, Dispatch, SetStateAction } from 'react';
+import { UserOrganizationPermissions } from '../../apollo/graphql/__generated__/types';
 
 export type { TOrganization };
 
+export type TOrganizationWithPermissions = TOrganization & {
+  userPermissions?: UserOrganizationPermissions[] | null;
+};
+
 export type TUser = {
   id: string;
-  organization?: TOrganization;
+  organization?: TOrganizationWithPermissions;
   username?: string;
   firstName?: string;
   lastName?: string;
   email?: string | null;
-  organizations: TOrganization[] | null;
+  organizations: TOrganizationWithPermissions[] | null;
   canAccessOrgPortal?: boolean;
   canAddOrgMember?: boolean;
   canChangeOrgMemberRole?: boolean;

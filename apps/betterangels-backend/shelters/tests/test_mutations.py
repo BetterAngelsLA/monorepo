@@ -2,7 +2,7 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, ignore_warnings
-from shelters.models import Shelter
+from shelters.models import Bed, Room, Shelter
 from unittest_parametrize import ParametrizedTestCase
 
 
@@ -14,6 +14,15 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         shelter_content_type = ContentType.objects.get_for_model(Shelter)
         add_shelter_perm = Permission.objects.get(content_type=shelter_content_type, codename="add_shelter")
         self.org_1_case_manager_1.user_permissions.add(add_shelter_perm)
+
+        bed_content_type = ContentType.objects.get_for_model(Bed)
+        add_bed_perm = Permission.objects.get(content_type=bed_content_type, codename="add_bed")
+        self.org_1_case_manager_1.user_permissions.add(add_bed_perm)
+
+        room_content_type = ContentType.objects.get_for_model(Room)
+        add_room_perm = Permission.objects.get(content_type=room_content_type, codename="add_room")
+        self.org_1_case_manager_1.user_permissions.add(add_room_perm)
+
         # Use a pre-configured user from GraphQLBaseTestCase that has appropriate permissions
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
@@ -389,6 +398,63 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         self.assertEqual(shelter["overallRating"], 4)
         self.assertEqual(shelter["subjectiveReview"], "Clean facilities with helpful staff")
 
+    def test_create_shelter_invalid_email_returns_operation_info(self) -> None:
+        mutation = """
+            mutation ($data: CreateShelterInput!) {
+                createShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                            code
+                        }
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "data": {
+                "name": "Invalid Email Shelter",
+                "description": "Should fail model validation",
+                "organization": str(self.org_1.pk),
+                "email": "not-an-email",
+                "accessibility": [],
+                "demographics": [],
+                "specialSituationRestrictions": [],
+                "shelterTypes": [],
+                "roomStyles": [],
+                "storage": [],
+                "pets": [],
+                "parking": [],
+                "immediateNeeds": [],
+                "generalServices": [],
+                "healthServices": [],
+                "trainingServices": [],
+                "mealServices": [],
+                "entryRequirements": [],
+                "referralRequirement": [],
+                "exitPolicy": [],
+                "cities": [],
+                "spa": [],
+                "shelterPrograms": [],
+                "funders": [],
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createShelter"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["field"], "email")
+        self.assertIn("valid email address", messages[0]["message"])
+
     def test_create_shelter_persists_to_database(self) -> None:
         """Test that created shelter is actually saved in the database"""
         mutation = """
@@ -439,3 +505,135 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         db_shelter = Shelter.objects.get(pk=shelter_id)
         self.assertEqual(db_shelter.name, "Persistent Shelter")
         self.assertEqual(db_shelter.description, "This should be in the database")
+
+    def test_create_shelter_wrong_org_rejected(self) -> None:
+        """Creating a shelter for an organization the user doesn't belong to is rejected."""
+        mutation = """
+            mutation ($data: CreateShelterInput!) {
+                createShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "data": {
+                "name": "Wrong Org Shelter",
+                "description": "Should be rejected",
+                "organization": str(self.org_2.pk),
+                "accessibility": [],
+                "demographics": [],
+                "specialSituationRestrictions": [],
+                "shelterTypes": [],
+                "roomStyles": [],
+                "storage": [],
+                "pets": [],
+                "parking": [],
+                "immediateNeeds": [],
+                "generalServices": [],
+                "healthServices": [],
+                "trainingServices": [],
+                "mealServices": [],
+                "entryRequirements": [],
+                "referralRequirement": [],
+                "exitPolicy": [],
+                "cities": [],
+                "spa": [],
+                "shelterPrograms": [],
+                "funders": [],
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertIn(
+            "You do not have permission to create a shelter for this organization.",
+            response["errors"][0]["message"],
+        )
+
+    def test_create_bed_wrong_org_rejected(self) -> None:
+        """Creating a bed for a shelter the user's org doesn't own is rejected."""
+        other_org_shelter = Shelter.objects.create(
+            name="Other Org Shelter",
+            description="Belongs to org 2",
+            organization=self.org_2,
+        )
+
+        mutation = """
+            mutation ($data: CreateBedInput!) {
+                createBed(data: $data) {
+                    ... on BedType {
+                        id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "data": {
+                "shelterId": str(other_org_shelter.pk),
+                "status": "AVAILABLE",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createBed"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn(
+            f"Shelter matching ID {other_org_shelter.pk} could not be found.",
+            messages[0]["message"],
+        )
+
+    def test_create_room_wrong_org_rejected(self) -> None:
+        """Creating a room for a shelter the user's org doesn't own is rejected."""
+        other_org_shelter = Shelter.objects.create(
+            name="Other Org Shelter",
+            description="Belongs to org 2",
+            organization=self.org_2,
+        )
+
+        mutation = """
+            mutation ($data: CreateRoomInput!) {
+                createRoom(data: $data) {
+                    ... on RoomType {
+                        id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "data": {
+                "shelterId": str(other_org_shelter.pk),
+                "roomIdentifier": "Room 101",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createRoom"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn(
+            f"Shelter matching ID {other_org_shelter.pk} could not be found.",
+            messages[0]["message"],
+        )
