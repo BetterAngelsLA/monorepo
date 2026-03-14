@@ -1,6 +1,8 @@
+import { Filter, Search, Settings2 } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Shelter } from '../types/shelter';
+import { Button } from './base-ui/buttons';
 import { Table, type TableColumn } from './Table';
 
 export type ShelterRowObject = {
@@ -26,6 +28,8 @@ type ShelterTableProps = {
   tableStyle?: CSSProperties;
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
+  onSearchChange?: (value: string) => void;
+  searchPlaceholder?: string;
 };
 
 const MAX_VISIBLE_TAG_CHAR_COUNT = 15;
@@ -80,7 +84,15 @@ export function ShelterTable({
   tableStyle,
   headerStyle,
   rowStyle,
+  onSearchChange,
+  searchPlaceholder = 'Search shelters',
 }: ShelterTableProps) {
+  const [searchInput, setSearchInput] = useState('');
+
+  useEffect(() => {
+    onSearchChange?.(searchInput);
+  }, [onSearchChange, searchInput]);
+
   const columns: TableColumn<Shelter>[] = useMemo(
     () => [
       {
@@ -149,37 +161,76 @@ export function ShelterTable({
   );
 
   return (
-    <Table<Shelter, ShelterRowObject>
-      columns={columns}
-      rows={rows}
-      getRowKey={getRowKey ?? ((shelter) => shelter.id)}
-      getRowObject={(shelter) => {
-        const totalBeds = shelter.totalBeds ?? 0;
-        const reservedBeds = Math.min(
-          Math.max(shelter.occupiedBeds ?? totalBeds, 0),
-          totalBeds
-        );
+    <div className="flex flex-col">
+      <form
+        className="my-1 flex w-full flex-wrap items-center gap-3 bg-white px-3"
+        style={{ fontFamily: 'Poppins, sans-serif' }}
+        onSubmit={(event) => event.preventDefault()}
+      >
+        <label className="flex h-11 w-full max-w-[380px] items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2">
+          <span className="flex h-8 w-9 items-center justify-center rounded-full bg-[#FCF500] text-[#1E3342]">
+            <Search size={20} />
+          </span>
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder={searchPlaceholder}
+            className="h-full w-full rounded-full bg-transparent pr-3 text-base text-[#4A4F57] outline-none transition-colors placeholder:text-[#7A818A]"
+          />
+        </label>
 
-        return {
-          id: shelter.id,
-          shelter,
-          name: shelter.name ?? 'N/A',
-          address: shelter.address ?? 'N/A',
-          totalBeds,
-          reservedBeds,
-          tags: shelter.tags ?? [],
-        };
-      }}
-      onRowClick={onRowClick}
-      loading={loading}
-      loadingState={loadingState}
-      emptyState={emptyState}
-      wrapperClassName={wrapperClassName}
-      headerClassName={headerClassName}
-      rowClassName={rowClassName}
-      tableStyle={tableStyle}
-      headerStyle={headerStyle}
-      rowStyle={rowStyle}
-    />
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <Button
+            variant="primary"
+            leftIcon={<Filter size={20} />}
+            rightIcon={false}
+          >
+            Filter
+          </Button>
+
+          <Button
+            variant="primary"
+            leftIcon={<Settings2 size={20} />}
+            rightIcon={false}
+          >
+            Sort
+          </Button>
+        </div>
+      </form>
+
+      <Table<Shelter, ShelterRowObject>
+        columns={columns}
+        rows={rows}
+        getRowKey={getRowKey ?? ((shelter) => shelter.id)}
+        getRowObject={(shelter) => {
+          const totalBeds = shelter.totalBeds ?? 0;
+          const reservedBeds = Math.min(
+            Math.max(shelter.occupiedBeds ?? totalBeds, 0),
+            totalBeds
+          );
+
+          return {
+            id: shelter.id,
+            shelter,
+            name: shelter.name ?? 'N/A',
+            address: shelter.address ?? 'N/A',
+            totalBeds,
+            reservedBeds,
+            tags: shelter.tags ?? [],
+          };
+        }}
+        onRowClick={onRowClick}
+        loading={loading}
+        loadingState={loadingState}
+        emptyState={emptyState}
+        wrapperClassName={wrapperClassName}
+        headerClassName={headerClassName}
+        rowClassName={rowClassName}
+        tableStyle={tableStyle}
+        headerStyle={headerStyle}
+        rowStyle={rowStyle}
+      />
+    </div>
   );
 }

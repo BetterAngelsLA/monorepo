@@ -1,5 +1,5 @@
 import { useQuery } from '@apollo/client/react';
-import { BookCheck, Filter, Search, Settings2 } from 'lucide-react';
+import { BookCheck } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Link,
@@ -26,7 +26,7 @@ export default function Dashboard() {
   const { selectedOrganizationId } =
     useOutletContext<OperatorDashboardLayoutContext>();
 
-  const [searchInput, setSearchInput] = useState('');
+  const [tableSearchInput, setTableSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const debounceTimer = useRef<ReturnType<typeof setTimeout>>(null);
@@ -34,13 +34,13 @@ export default function Dashboard() {
   // Debounce: only update the query variable after the user stops typing
   useEffect(() => {
     debounceTimer.current = setTimeout(() => {
-      setDebouncedSearch(searchInput);
+      setDebouncedSearch(tableSearchInput);
       setPage(1);
     }, SEARCH_DEBOUNCE_MS);
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
-  }, [searchInput]);
+  }, [tableSearchInput]);
 
   const { data, loading, error, previousData } = useQuery(
     ViewSheltersByOrganizationDocument,
@@ -88,48 +88,10 @@ export default function Dashboard() {
   return (
     <>
       <div className="flex flex-col mx-4">
-        {/* Search, filter, sort, and view controls */}
-        <form
-          className="my-1 flex w-full flex-wrap items-center gap-3 bg-white px-3"
-          style={{ fontFamily: 'Poppins, sans-serif' }}
-        >
-          <label className="flex h-11 w-full max-w-[380px] items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2">
-            <span className="flex h-8 w-9 items-center justify-center rounded-full bg-[#FCF500] text-[#1E3342]">
-              <Search size={20} />
-            </span>
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search shelters"
-              className="h-full w-full rounded-full bg-transparent pr-3 text-base text-[#4A4F57] outline-none transition-colors placeholder:text-[#7A818A]"
-            />
-          </label>
-
-          {/* SEARCH BAR + FILTERING */}
-
-          <div className="ml-auto flex flex-wrap items-center gap-2">
-            <Button
-              variant="primary"
-              leftIcon={<Filter size={20} />}
-              rightIcon={false}
-            >
-              Filter
-            </Button>
-
-            <Button
-              variant="primary"
-              leftIcon={<Settings2 size={20} />}
-              rightIcon={false}
-            >
-              Sort
-            </Button>
-          </div>
-        </form>
-
         {/* TABLE */}
         <ShelterTable
           rows={shelters}
+          onSearchChange={setTableSearchInput}
           getRowKey={(shelter) => shelter.id}
           onRowClick={(rowObject) => {
             navigate(`/operator/shelter/${rowObject.id}`, {

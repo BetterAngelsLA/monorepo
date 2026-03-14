@@ -17,6 +17,7 @@ type RowProps<TRowObject> = {
   rowObject: TRowObject;
   rowIndex: number;
   templateColumns: string;
+  trailingContent?: ReactNode;
   className?: string;
   style?: CSSProperties;
   onRowClick?: RowClickHandler<TRowObject>;
@@ -28,6 +29,7 @@ export function Row<TRowObject>({
   rowObject,
   rowIndex,
   templateColumns,
+  trailingContent,
   className = '',
   style,
   onRowClick,
@@ -64,7 +66,7 @@ export function Row<TRowObject>({
       ))}
 
       <div className="justify-self-end">
-        <Button variant="trash" />
+        {trailingContent ?? <Button variant="trash" />}
       </div>
     </div>
   );

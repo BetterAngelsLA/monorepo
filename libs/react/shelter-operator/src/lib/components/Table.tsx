@@ -15,6 +15,15 @@ type TableProps<TItem, TRowObject = TItem> = {
   rows: TItem[];
   getRowKey: (item: TItem, index: number) => string;
   getRowObject?: (item: TItem, index: number) => TRowObject;
+  trailingColumnWidth?: string;
+  trailingHeader?: ReactNode;
+  getTrailingContent?: (
+    rowObject: TRowObject,
+    item: TItem,
+    index: number
+  ) => ReactNode;
+  headerInsetClassName?: string;
+  rowInsetClassName?: string;
   onRowClick?: RowClickHandler<TRowObject>;
   loading?: boolean;
   loadingState?: ReactNode;
@@ -32,6 +41,11 @@ export function Table<TItem, TRowObject = TItem>({
   rows,
   getRowKey,
   getRowObject,
+  trailingColumnWidth = '56px',
+  trailingHeader,
+  getTrailingContent,
+  headerInsetClassName = 'px-6 py-2 pt-6',
+  rowInsetClassName,
   onRowClick,
   loading = false,
   loadingState,
@@ -46,7 +60,7 @@ export function Table<TItem, TRowObject = TItem>({
   const dataTemplateColumns = columns
     .map((column) => column.width ?? '1fr')
     .join(' ');
-  const templateColumns = `${dataTemplateColumns} 56px`;
+  const templateColumns = `${dataTemplateColumns} ${trailingColumnWidth}`;
 
   return (
     <div
@@ -60,7 +74,8 @@ export function Table<TItem, TRowObject = TItem>({
     >
       <div
         className={[
-          'grid items-center px-6 py-2 pt-6 text-base font-medium text-[22px] text-[#747A82]',
+          'grid items-center text-base font-medium text-[22px] text-[#747A82]',
+          headerInsetClassName,
           headerClassName,
         ].join(' ')}
         style={{ gridTemplateColumns: templateColumns, ...headerStyle }}
@@ -78,7 +93,7 @@ export function Table<TItem, TRowObject = TItem>({
             {column.label}
           </div>
         ))}
-        <div aria-hidden="true" />
+        <div aria-hidden="true">{trailingHeader}</div>
       </div>
 
       {loading && loadingState}
@@ -103,6 +118,8 @@ export function Table<TItem, TRowObject = TItem>({
               cells={cells}
               rowObject={rowObject}
               rowIndex={index}
+              trailingContent={getTrailingContent?.(rowObject, item, index)}
+              insetClassName={rowInsetClassName}
               onRowClick={onRowClick}
               templateColumns={templateColumns}
               className={rowClassName}

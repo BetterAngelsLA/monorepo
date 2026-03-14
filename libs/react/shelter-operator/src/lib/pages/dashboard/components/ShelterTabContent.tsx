@@ -1,4 +1,7 @@
+import { Plus } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
+import { Button } from '../../../components/base-ui/buttons';
+import { RoomTable, type Room } from '../../../components/RoomTable';
 import type { Shelter } from '../../../types/shelter';
 import type { OperatorDashboardLayoutContext } from '../OperatorDashboardLayout';
 
@@ -6,29 +9,75 @@ import type { OperatorDashboardLayoutContext } from '../OperatorDashboardLayout'
 
 type ShelterTab = 'overview' | 'rooms' | 'beds' | 'occupancy' | 'label';
 
-type TabContentProps = {
-  shelter?: Shelter;
-  selectedOrganizationId: string;
-};
-
 export function OverviewTabContent() {
-  return;
+  return null;
 }
 
 export function RoomsTabContent() {
-  return <p>Rooms</p>;
+  // HARD CODED FOR NOW
+  const rows: Room[] = [
+    {
+      id: 'room-1',
+      name: 'Room Name',
+      status: 'available',
+      tags: ['Women Only', 'Shared', 'Overflow'],
+    },
+    {
+      id: 'room-2',
+      name: 'Room Name',
+      status: 'occupied',
+      tags: ['Women Only', 'Shared', 'Medical'],
+    },
+    {
+      id: 'room-3',
+      name: 'Room Name',
+      status: 'out-of-service',
+      tags: ['Women Only', 'Shared', 'Repair'],
+    },
+    {
+      id: 'room-4',
+      name: 'Room Name',
+      status: 'reserved',
+      tags: ['Women Only', 'Shared', 'Hold'],
+    },
+    {
+      id: 'room-5',
+      name: 'Room Name',
+      status: 'available',
+      tags: ['Women Only', 'Shared', 'Quiet'],
+    },
+    {
+      id: 'room-6',
+      name: 'Room Name',
+      status: 'available',
+      tags: ['Women Only', 'Shared', 'Near Exit'],
+    },
+  ];
+
+  return (
+    <>
+      <div className="">
+        <RoomTable rows={rows} />
+      </div>
+      <div className="fixed bottom-6 right-6 text-sm z-20 ">
+        <Button leftIcon={<Plus />} rightIcon={false} variant="floating">
+          Create Room
+        </Button>
+      </div>
+    </>
+  );
 }
 
 export function BedsTabContent() {
-  return;
+  return null;
 }
 
 export function OccupancyTabContent() {
-  return;
+  return null;
 }
 
 export function LabelTabContent() {
-  return;
+  return null;
 }
 
 export function ShelterTabContent({
@@ -40,6 +89,8 @@ export function ShelterTabContent({
 }) {
   const { selectedOrganizationId } =
     useOutletContext<OperatorDashboardLayoutContext>();
+  void shelter;
+  void selectedOrganizationId;
 
   switch (tab) {
     case 'overview':
