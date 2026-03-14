@@ -1,6 +1,6 @@
 """Input types for shelter mutations."""
 
-from datetime import date, time
+from datetime import date, datetime, time
 from typing import List, Optional
 
 import strawberry
@@ -25,6 +25,7 @@ from shelters.enums import (
     ParkingChoices,
     PetChoices,
     ReferralRequirementChoices,
+    RoomStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
 )
@@ -150,3 +151,16 @@ class CreateBedInput:
     medical_needs: Optional[MedicalNeedChoices] = None
     b7: Optional[bool] = None
     fees: Optional[int] = None
+
+
+@strawberry.input
+class CreateRoomInput:
+    shelter_id: ID
+    room_identifier: str
+    room_type: Optional[RoomStyleChoices] = None
+    room_type_other: Optional[str] = None
+    status: Optional[RoomStatusChoices] = None
+    notes: Optional[str] = None
+    amenities: Optional[str] = None
+    medical_respite: Optional[bool] = False
+    last_cleaned_inspected: Optional[datetime] = None

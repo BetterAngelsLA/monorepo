@@ -29,6 +29,21 @@ def admin_shelter_list(queryset: "QuerySet[Shelter]", *, user: "User") -> "Query
     return queryset.filter(Exists(user_orgs))
 
 
+def shelter_get(*, user: "User", shelter_id: int | str) -> "Shelter":
+    """Return the shelter if it exists and the user belongs to its organization.
+
+    Uses ``admin_shelter_list`` as the base queryset so the org-membership
+    check is defined in one place.
+
+    Raises:
+        ``Shelter.DoesNotExist`` when the shelter is not found or the user
+        does not belong to its organization.
+    """
+    from shelters.models import Shelter
+
+    return admin_shelter_list(Shelter.objects.all(), user=user).select_related("organization").get(pk=shelter_id)
+
+
 def shelters_open_at(
     queryset: "QuerySet[Shelter]",
     *,
