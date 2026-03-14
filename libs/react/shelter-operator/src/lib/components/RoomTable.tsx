@@ -143,6 +143,24 @@ export function RoomTable({
     []
   );
 
+  // local filtering that allows for filtering by name or status on hard coded data
+  const filteredRows = useMemo(() => {
+    const query = searchInput.trim().toLowerCase();
+
+    if (!query) return rows;
+
+    return rows.filter((room) => {
+      const normalizedStatus = STATUS_LABEL[room.status].toLowerCase();
+      const matchesName = room.name.toLowerCase().includes(query);
+      const matchesStatus = normalizedStatus.includes(query);
+      const matchesTags = room.tags.some((tag) =>
+        tag.toLowerCase().includes(query)
+      );
+
+      return matchesName || matchesStatus || matchesTags;
+    });
+  }, [rows, searchInput]);
+
   return (
     <div className="relative flex flex-col">
       <form
@@ -184,7 +202,7 @@ export function RoomTable({
 
       <Table<Room, RoomRowObject>
         columns={columns}
-        rows={rows}
+        rows={filteredRows}
         getRowKey={getRowKey ?? ((room) => room.id)}
         getRowObject={(room) => ({ id: room.id, room })}
         getTrailingContent={() => (
