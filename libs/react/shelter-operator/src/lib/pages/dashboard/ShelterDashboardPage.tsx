@@ -2,6 +2,7 @@ import { BookCheck, Settings } from 'lucide-react';
 import { useLocation, useParams } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons';
 import type { Shelter } from '../../types/shelter';
+import { ShelterTabContent } from './components/ShelterTabContent';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
 
 type ShelterTab = 'overview' | 'rooms' | 'beds' | 'occupancy' | 'label';
@@ -36,10 +37,12 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
         <div>
           {/* Hard Coded For Now*/}
           <h1 className="text-[36px] font-semibold leading-none text-[#111827]">
-            Shelter Name
+            {routeState !== null ? routeState?.shelter.name : 'Shelter Name'}
           </h1>
           <p className="mt-4 text-[20px] text-[#6B7280]">
-            123 Thisisastreetname Street
+            {routeState !== null
+              ? routeState?.shelter.address
+              : '123 Thisisastreetname Street'}
           </p>
         </div>
 
@@ -71,8 +74,7 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
         linkState={routeState ?? undefined}
       />
 
-      {/* Tab Items*/}
-      {/* <ShelterPage id={id} /> */}
+      <ShelterTabContent tab={tab} shelter={routeState?.shelter} />
     </div>
   );
 }

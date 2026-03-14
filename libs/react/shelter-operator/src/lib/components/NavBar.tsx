@@ -35,9 +35,11 @@ function OperatorNavBar({
             <BetterAngelsLogoIcon fill="#1E3342" className="h-9 w-auto" />
           </Link>
 
-          <p className="truncate text-xl font-medium text-[#5A616B] md:text-2xl">
-            {title}
-          </p>
+          <Link to="/operator">
+            <p className="truncate text-xl font-medium text-[#5A616B] md:text-2xl">
+              {title}
+            </p>
+          </Link>
           {isCreateShelterRoute && (
             <p className="truncate text-xl font-medium text-black md:text-2xl">
               / Shelter Creation
