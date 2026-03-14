@@ -1,4 +1,11 @@
-import { CopyPlus, Filter, Search, Settings2 } from 'lucide-react';
+import {
+  CopyPlus,
+  Filter,
+  Minus,
+  Search,
+  Settings2,
+  Trash2,
+} from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from './base-ui/buttons';
@@ -39,6 +46,8 @@ type RoomTableProps = {
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
   onCreateRoom?: () => void;
+  onDeleteRoom?: (roomId: string) => void;
+  onDeleteRooms?: (roomIds: string[]) => void;
 };
 
 // TODO: Create Tag Components in Base UI -----------------
@@ -72,12 +81,43 @@ export function RoomTable({
   tableStyle,
   headerStyle,
   rowStyle,
+  onDeleteRoom,
+  onDeleteRooms,
 }: RoomTableProps) {
   const [searchInput, setSearchInput] = useState('');
+  const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>([]);
 
   useEffect(() => {
     onSearchChange?.(searchInput);
   }, [onSearchChange, searchInput]);
+
+  useEffect(() => {
+    const validIds = new Set(rows.map((room) => room.id));
+    setSelectedRoomIds((prev) => prev.filter((id) => validIds.has(id)));
+  }, [rows]);
+
+  const toggleRowSelection = (roomId: string) => {
+    setSelectedRoomIds((prev) =>
+      prev.includes(roomId)
+        ? prev.filter((id) => id !== roomId)
+        : [...prev, roomId]
+    );
+  };
+
+  const selectedCount = selectedRoomIds.length;
+
+  const handleDeleteSelected = () => {
+    if (selectedCount === 1) {
+      const [id] = selectedRoomIds;
+      if (id) onDeleteRoom?.(id);
+    }
+
+    if (selectedCount > 1) {
+      onDeleteRooms?.(selectedRoomIds);
+    }
+
+    setSelectedRoomIds([]);
+  };
 
   const columns: TableColumn<Room>[] = useMemo(
     () => [
@@ -85,15 +125,30 @@ export function RoomTable({
         key: 'selected',
         label: '',
         width: '2rem',
-        render: () => (
-          // EDIT Checkbox to be - instead of check
-          <input
-            type="checkbox"
-            aria-label="Select room"
-            onClick={(event) => event.stopPropagation()}
-            className="size-4 accent-[#008CEE]"
-          />
-        ),
+        render: (room) => {
+          const isSelected = selectedRoomIds.includes(room.id);
+
+          return (
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={isSelected}
+              aria-label={isSelected ? 'Deselect room' : 'Select room'}
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleRowSelection(room.id);
+              }}
+              className={[
+                'inline-flex size-5 items-center justify-center rounded border transition-colors',
+                isSelected
+                  ? 'border-[#4A90E2] bg-[#4A90E2] text-white'
+                  : 'border-[#808080] bg-white text-transparent hover:border-[#4A90E2]',
+              ].join(' ')}
+            >
+              <Minus size={14} strokeWidth={3} />
+            </button>
+          );
+        },
       },
       {
         key: 'name',
@@ -140,7 +195,7 @@ export function RoomTable({
         ),
       },
     ],
-    []
+    [selectedRoomIds]
   );
 
   // local filtering that allows for filtering by name or status on hard coded data
@@ -172,7 +227,6 @@ export function RoomTable({
           <span className="flex h-8 w-9 items-center justify-center rounded-full bg-[#FCF500] text-[#1E3342]">
             <Search size={20} />
           </span>
-          {/* Search Bar should filter out values on change */}
           <input
             type="text"
             value={searchInput}
@@ -183,6 +237,17 @@ export function RoomTable({
         </label>
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
+          {selectedCount > 0 && (
+            <Button
+              variant="primary"
+              leftIcon={<Trash2 size={20} />}
+              rightIcon={false}
+              onClick={handleDeleteSelected}
+              className="border-[#FFD9D2] bg-[#FFECE8] text-[#EF3D26] hover:bg-[#FFE0D9]"
+            >
+              {selectedCount > 1 ? 'Delete All' : 'Delete'}
+            </Button>
+          )}
           <Button
             variant="primary"
             leftIcon={<Filter size={20} />}
