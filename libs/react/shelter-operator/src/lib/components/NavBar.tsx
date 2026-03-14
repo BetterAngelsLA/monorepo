@@ -20,6 +20,10 @@ function OperatorNavBar({
   selectedOrganizationId,
   onOrganizationChange,
 }: NavBarProps) {
+  const { pathname } = useLocation();
+  const isOperatorRoute = pathname === '/operator';
+  const isCreateShelterRoute = pathname == '/operator/dashboard/create';
+
   const title =
     organizations.length === 1 ? organizations[0].name : 'Admin Dashboard';
 
@@ -34,6 +38,11 @@ function OperatorNavBar({
           <p className="truncate text-xl font-medium text-[#5A616B] md:text-2xl">
             {title}
           </p>
+          {isCreateShelterRoute && (
+            <p className="truncate text-xl font-medium text-black md:text-2xl">
+              / Shelter Creation
+            </p>
+          )}
 
           {organizations.length > 1 && (
             <div className="ml-1 min-w-52">
@@ -59,15 +68,18 @@ function OperatorNavBar({
         </div>
 
         <div className="flex items-center gap-3">
-          <Link to="/operator/dashboard/create">
-            <Button
-              variant="primary"
-              leftIcon={<Plus size={20} />}
-              rightIcon={false}
-            >
-              Create Shelter
-            </Button>
-          </Link>
+          {isOperatorRoute && (
+            <Link to="/operator/dashboard/create">
+              <Button
+                variant="primary"
+                leftIcon={<Plus size={20} />}
+                rightIcon={false}
+              >
+                Create Shelter
+              </Button>
+            </Link>
+          )}
+
           <button
             type="button"
             aria-label="Account settings"

@@ -1,16 +1,20 @@
 import { useQuery } from '@apollo/client/react';
-import { useUser } from '@monorepo/react/shelter';
 import { BookCheck, Filter, Search, Settings2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useOutletContext,
+} from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons';
-import NavBar from '../../components/NavBar';
 import { ShelterTable } from '../../components/ShelterTable';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
 import type { Shelter } from '../../types/shelter';
+import type { OperatorDashboardLayoutContext } from './OperatorDashboardLayout';
 
 const SEARCH_DEBOUNCE_MS = 300;
 const PAGE_SIZE = 16;
@@ -19,21 +23,8 @@ export default function Dashboard() {
   const { pathname } = useLocation();
   const isOperatorRoot = pathname === '/operator';
   const navigate = useNavigate();
-
-  const { user } = useUser();
-  const organizations = user?.organizations ?? [];
-  const [selectedOrganizationId, setSelectedOrganizationId] = useState(
-    () => user?.organization?.id ?? ''
-  );
-
-  // Sync selectedOrganizationId when user data loads asynchronously
-  const orgId = user?.organization?.id;
-
-  useEffect(() => {
-    if (orgId && !selectedOrganizationId) {
-      setSelectedOrganizationId(orgId);
-    }
-  }, [orgId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { selectedOrganizationId } =
+    useOutletContext<OperatorDashboardLayoutContext>();
 
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -90,17 +81,12 @@ export default function Dashboard() {
     if (error) console.error('[Dashboard GraphQL error]', error);
   }, [error]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [selectedOrganizationId]);
+
   return (
     <>
-      {/* NAV BAR */}
-      <NavBar
-        organizations={organizations}
-        selectedOrganizationId={selectedOrganizationId}
-        onOrganizationChange={(organizationId) => {
-          setSelectedOrganizationId(organizationId);
-          setPage(1);
-        }}
-      />
       <div className="flex flex-col mx-4">
         {/* Search, filter, sort, and view controls */}
         <form
