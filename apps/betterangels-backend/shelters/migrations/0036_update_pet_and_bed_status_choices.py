@@ -1,5 +1,6 @@
 import django_choices_field.fields
 from django.db import migrations
+import shelters.enums
 
 
 class Migration(migrations.Migration):
@@ -20,6 +21,7 @@ class Migration(migrations.Migration):
                     ("reserved", "Reserved"),
                     ("out_of_service", "Out-of-Service"),
                 ],
+                choices_enum=shelters.enums.BedStatusChoices,
                 max_length=14,
                 null=True,
             ),
@@ -30,8 +32,6 @@ class Migration(migrations.Migration):
             field=django_choices_field.fields.TextChoicesField(
                 blank=True,
                 choices=[
-                    ("pets", "Pets"),
-                    ("emotional_support_animal", "Emotional Support Animal"),
                     ("cats", "Cats"),
                     ("dogs_under_25_lbs", "Dogs (< 25 lbs)"),
                     ("dogs_over_25_lbs", "Dogs (> 25 lbs)"),
@@ -40,7 +40,8 @@ class Migration(migrations.Migration):
                     ("pet_area", "Pet Area"),
                     ("no_pets_allowed", "No Pets Allowed"),
                 ],
-                max_length=24,
+                choices_enum=shelters.enums.PetChoices,
+                max_length=17,
                 null=True,
                 unique=True,
             ),
