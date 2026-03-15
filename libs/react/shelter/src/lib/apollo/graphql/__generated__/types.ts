@@ -833,8 +833,8 @@ export type FunderType = {
 };
 
 export enum GenderEnum {
-  Female = 'FEMALE',
-  Male = 'MALE',
+  CisFemale = 'CIS_FEMALE',
+  CisMale = 'CIS_MALE',
   NonBinary = 'NON_BINARY',
   Other = 'OTHER',
   PreferNotToSay = 'PREFER_NOT_TO_SAY',

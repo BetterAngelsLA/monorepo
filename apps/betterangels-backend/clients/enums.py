@@ -36,7 +36,9 @@ class ClientDocumentNamespaceEnum(models.TextChoices):
     INCOME_FORM = "income_form", "Income Form"
     OTHER_FORM = "other_form", "Other Form"
 
+    INCOME_DOCUMENTS = "income_documents", "Income Documents"
     OTHER_CLIENT_DOCUMENT = "other_client_document", "Other Client Document"
+    CLIENT_UPLOAD = "client_upload", "Client Upload"
 
 
 @strawberry.enum
@@ -56,8 +58,8 @@ class EyeColorEnum(models.TextChoices):
 
 
 class GenderEnum(models.TextChoices):
-    MALE = "male", _("Male")
-    FEMALE = "female", _("Female")
+    CIS_MALE = "cis_male", _("Cis Male")
+    CIS_FEMALE = "cis_female", _("Cis Female")
     TRANS_MALE = "trans_male", _("Transgender Male")
     TRANS_FEMALE = "trans_female", _("Transgender Female")
     NON_BINARY = "non_binary", _("Non-binary")
@@ -78,10 +80,11 @@ class HairColorEnum(models.TextChoices):
 
 class HmisAgencyEnum(models.TextChoices):
     LAHSA = "lahsa", _("LAHSA")
-    LONG_BEACH = "long_beach", ("Long Beach")
+    LONG_BEACH = "long_beach", _("Long Beach")
     PASADENA = "pasadena", _("Pasadena")
     CHAMP = "champ", _("CHAMP")
     VASH = "vash", _("VASH")
+    OTHER = "other", _("Other")
 
 
 @strawberry.enum
@@ -89,6 +92,7 @@ class LanguageEnum(models.TextChoices):
     ASL = "asl", _("American Sign Language")
     ARABIC = "arabic", _("Arabic")
     ARMENIAN = "armenian", _("Armenian")
+    CANTONESE = "cantonese", _("Cantonese")
     ENGLISH = "english", _("English")
     FARSI = "farsi", _("Farsi")
     FRENCH = "french", _("French")
@@ -96,22 +100,33 @@ class LanguageEnum(models.TextChoices):
     JAPANESE = "japanese", _("Japanese")
     KHMER = "khmer", _("Khmer")
     KOREAN = "korean", _("Korean")
+    MANDARIN = "mandarin", _("Mandarin")
     RUSSIAN = "russian", _("Russian")
     SIMPLIFIED_CHINESE = "simplified_chinese", _("Simplified Chinese")
     SPANISH = "spanish", _("Spanish")
     TAGALOG = "tagalog", _("Tagalog")
     TRADITIONAL_CHINESE = "traditional_chinese", _("Traditional Chinese")
     VIETNAMESE = "vietnamese", _("Vietnamese")
+    OTHER = "other", _("Other")
 
 
 @strawberry.enum
 class LivingSituationEnum(models.TextChoices):
-    HOUSING = "housing", _("Housing")
-    OPEN_AIR = "open_air", _("Open Air")
-    SHELTER = "shelter", _("Shelter")
+    """Prior living situation options."""
+
+    RENTAL_OR_OWNED_HOME = "rental_or_owned_home", _("Rental or Owned Home")
+    INFORMALLY_HOUSED = "informally_housed", _("Informally Housed")
+    ANOTHER_SHELTER = "another_shelter", _("Another Shelter")
+    MEDICAL_FACILITY = "medical_facility", _("Medical Facility")
     TENT = "tent", _("Tent")
     VEHICLE = "vehicle", _("Vehicle")
+    OPEN_AIR = "open_air", _("Open air")
+    JUSTICE_INVOLVED = "justice_involved", _("Justice Involved")
+    UNKNOWN = "unknown", _("Unknown")
     OTHER = "other", _("Other")
+    # Legacy values for backward compatibility
+    HOUSING = "housing", _("Housing")
+    SHELTER = "shelter", _("Shelter")
 
 
 class MaritalStatusEnum(models.TextChoices):
@@ -120,6 +135,19 @@ class MaritalStatusEnum(models.TextChoices):
     SEPARATED = "separated", _("Separated")
     SINGLE = "single", _("Single")
     WIDOWED = "widowed", _("Widowed")
+
+
+@strawberry.enum
+class SexualOrientationEnum(models.TextChoices):
+    ASEXUAL = "asexual", _("Asexual")
+    BISEXUAL = "bisexual", _("Bisexual")
+    GAY = "gay", _("Gay")
+    STRAIGHT = "straight", _("Straight (heterosexual)")
+    LESBIAN = "lesbian", _("Lesbian")
+    PANSEXUAL = "pansexual", _("Pansexual")
+    QUEER = "queer", _("Queer")
+    OTHER = "other", _("Other")
+    PREFER_NOT_TO_SAY = "prefer_not_to_say", _("Prefer Not to Say")
 
 
 @strawberry.enum
@@ -148,6 +176,7 @@ class RaceEnum(models.TextChoices):
     NATIVE_HAWAIIAN_PACIFIC_ISLANDER = "native_hawaiian_pacific_islander", _("Native Hawaiian/Pacific Islander")
     WHITE_CAUCASIAN = "white_caucasian", _("White/Caucasian")
     OTHER = "other", _("Other")
+    PREFER_NOT_TO_SAY = "prefer_not_to_say", _("Prefer not to say")
 
 
 class RelationshipTypeEnum(models.TextChoices):
@@ -175,6 +204,7 @@ class SocialMediaEnum(models.TextChoices):
     TIKTOK = "tiktok", _("TikTok")
     TWITTER = "twitter", _("Twitter")
     WHATSAPP = "whatsapp", _("WhatsApp")
+    OTHER = "other", _("Other")
 
 
 class VeteranStatusEnum(models.TextChoices):
@@ -182,3 +212,71 @@ class VeteranStatusEnum(models.TextChoices):
     NO = "no", _("No")
     PREFER_NOT_TO_SAY = "prefer_not_to_say", _("Prefer not to say")
     OTHER_THAN_HONORABLE = "other_than_honorable", _("Other than Honorable Discharge")
+
+
+@strawberry.enum
+class ClientStatusEnum(models.TextChoices):
+    RESERVED = "reserved", _("Reserved")
+    CHECKED_IN = "checked_in", _("Checked in")
+    CHECKED_OUT = "checked_out", _("Checked out")
+
+
+@strawberry.enum
+class AdlCapacityEnum(models.TextChoices):
+    LOW_CAPACITY = "low_capacity", _("Low-capacity")
+    HIGH_CAPACITY = "high_capacity", _("High-capacity")
+
+
+@strawberry.enum
+class MedicalNeedsEnum(models.TextChoices):
+    MEDICAL = "medical", _("Medical")
+    MENTAL_HEALTH = "mental_health", _("Mental Health")
+    SUBSTANCE_USE = "substance_use", _("Recent Substance or Substance Use")
+    COGNITIVE_IMPAIRMENTS = "cognitive_impairments", _("Cognitive Impairments")
+    NONE = "none", _("The participant does not have any of the above issues")
+
+
+@strawberry.enum
+class ClientPetsEnum(models.TextChoices):
+    CATS = "cats", _("Cats")
+    DOG = "dog", _("Dog")
+    SERVICE_ANIMAL = "service_animal", _("Service Animal")
+    OTHER = "other", _("Other")
+
+
+@strawberry.enum
+class ClientFundingSourceEnum(models.TextChoices):
+    CITY_OF_LOS_ANGELES = "city_of_los_angeles", _("City of Los Angeles")
+    CLIENT_FEES = "client_fees", _("Client Fees")
+    DHS = "dhs", _("DHS")
+    DMH = "dmh", _("DMH")
+    FEDERAL_FUNDING = "federal_funding", _("Federal Funding")
+    HOPWA = "hopwa", _("HOPWA")
+    LAHSA = "lahsa", _("LAHSA")
+    PRIVATE = "private", _("Private")
+    VETERANS_AFFAIRS = "veterans_affairs", _("Veterans Affairs")
+    OTHER = "other", _("Other")
+
+
+@strawberry.enum
+class ClientSpaEnum(models.IntegerChoices):
+    ONE = 1, _("1 - Antelope Valley")
+    TWO = 2, _("2 - San Fernando")
+    THREE = 3, _("3 - San Gabriel")
+    FOUR = 4, _("4 - Metro")
+    FIVE = 5, _("5 - West")
+    SIX = 6, _("6 - South")
+    SEVEN = 7, _("7 - East")
+    EIGHT = 8, _("8 - South Bay/Harbor")
+
+
+@strawberry.enum
+class DestinationEnum(models.TextChoices):
+    OWN_HOME = "own_home", _("Own home")
+    SHARED_HOME = "shared_home", _("Shared home")
+    ANOTHER_SHELTER = "another_shelter", _("Another Shelter")
+    MEDICAL_FACILITY = "medical_facility", _("Medical Facility")
+    DECEASED = "deceased", _("Deceased")
+    JUSTICE_INVOLVED = "justice_involved", _("Justice Involved")
+    UNKNOWN = "unknown", _("Unknown")
+    OTHER = "other", _("Other")

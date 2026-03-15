@@ -47,7 +47,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             "middleName": "Middly",
             "email": "firsty_lasty@example.com",
             "dateOfBirth": self.date_of_birth,
-            "gender": GenderEnum.FEMALE.name,
+            "gender": GenderEnum.CIS_FEMALE.name,
             "preferredLanguage": LanguageEnum.ENGLISH.name,
         }
         response = self._create_client_profile_fixture(variables)

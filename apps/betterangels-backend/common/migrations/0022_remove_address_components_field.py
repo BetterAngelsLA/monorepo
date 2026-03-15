@@ -3,6 +3,17 @@
 from django.db import migrations
 
 
+def remove_address_components_if_exists(apps, schema_editor):
+    """Remove address_components column only if it exists (idempotent)."""
+    schema_editor.execute(
+        "ALTER TABLE common_address DROP COLUMN IF EXISTS address_components"
+    )
+
+
+def noop(apps, schema_editor):
+    pass
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,8 +21,15 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name="address",
-            name="address_components",
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.RemoveField(
+                    model_name="address",
+                    name="address_components",
+                ),
+            ],
+            database_operations=[
+                migrations.RunPython(remove_address_components_if_exists, reverse_code=noop),
+            ],
         ),
     ]

@@ -6,7 +6,13 @@ import pghistory
 from betterangels_backend import settings
 from clients.enums import (
     AdaAccommodationEnum,
+    AdlCapacityEnum,
     ClientDocumentNamespaceEnum,
+    ClientFundingSourceEnum,
+    ClientPetsEnum,
+    ClientSpaEnum,
+    ClientStatusEnum,
+    DestinationEnum,
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
@@ -14,6 +20,7 @@ from clients.enums import (
     LanguageEnum,
     LivingSituationEnum,
     MaritalStatusEnum,
+    MedicalNeedsEnum,
     PreferredCommunicationEnum,
     PronounEnum,
     RaceEnum,
@@ -21,7 +28,7 @@ from clients.enums import (
     SocialMediaEnum,
     VeteranStatusEnum,
 )
-from common.constants import CALIFORNIA_ID_REGEX
+from common.constants import CALIFORNIA_ID_REGEX, SSN_REGEX
 from common.models import Attachment, BaseModel, PhoneNumber
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
@@ -33,7 +40,7 @@ from django.db.models import Model
 from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.encoding import force_str
-from django_choices_field import TextChoicesField
+from django_choices_field import IntegerChoicesField, TextChoicesField
 from phonenumber_field.modelfields import PhoneNumberField
 from strawberry_django.descriptors import model_property
 
@@ -131,6 +138,45 @@ class AbstractClientProfile(BaseModel):
     residence_address = models.TextField(blank=True, null=True)
     residence_geolocation = PointField(srid=4326, geography=True, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
+    social_security_number = models.CharField(
+        max_length=11,
+        blank=True,
+        null=True,
+        validators=[
+            RegexValidator(regex=SSN_REGEX, message="SSN must be in format XXX-XX-XXXX")
+        ],
+    )
+    status = TextChoicesField(
+        choices_enum=ClientStatusEnum,
+        default=ClientStatusEnum.RESERVED,
+    )
+    criminal_history = models.BooleanField(blank=True, null=True)
+    homelessness_notes = models.TextField(blank=True, null=True)
+    harm_reduction = models.BooleanField(blank=True, null=True)
+    justice_involvement_details = models.TextField(blank=True, null=True)
+    destination = TextChoicesField(choices_enum=DestinationEnum, blank=True, null=True)
+    destination_other = models.CharField(max_length=255, blank=True, null=True)
+    income_annual = models.CharField(max_length=50, blank=True, null=True)
+    income_source = models.CharField(max_length=255, blank=True, null=True)
+    adl_capacity = TextChoicesField(choices_enum=AdlCapacityEnum, blank=True, null=True)
+    medical_needs = ArrayField(
+        base_field=TextChoicesField(choices_enum=MedicalNeedsEnum), blank=True, null=True
+    )
+    medical_notes = models.TextField(blank=True, null=True)
+    pets = ArrayField(
+        base_field=TextChoicesField(choices_enum=ClientPetsEnum), blank=True, null=True
+    )
+    pets_other = models.CharField(max_length=100, blank=True, null=True)
+    requires_transportation = models.BooleanField(blank=True, null=True)
+    funding_source = ArrayField(
+        base_field=TextChoicesField(choices_enum=ClientFundingSourceEnum), blank=True, null=True
+    )
+    funding_source_other = models.CharField(max_length=255, blank=True, null=True)
+    spa = ArrayField(
+        base_field=IntegerChoicesField(choices_enum=ClientSpaEnum), blank=True, null=True
+    )
+    sexual_orientation = models.CharField(max_length=100, blank=True, null=True)
+    sexual_orientation_other = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
         abstract = True
@@ -235,6 +281,7 @@ class SocialMediaProfile(BaseModel):
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="social_media_profiles")
     platform = TextChoicesField(choices_enum=SocialMediaEnum)
     platform_user_id = models.CharField(max_length=100)
+    platform_user_id_other = models.CharField(max_length=100, blank=True, null=True)
 
 
 @pghistory.track(

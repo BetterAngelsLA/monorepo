@@ -33,38 +33,65 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
             id
             adaAccommodation
             address
+            adlCapacity
             age
             californiaId
+            criminalHistory
             dateOfBirth
+            destination
+            destinationOther
             email
             eyeColor
             firstName
+            fundingSource
+            fundingSourceOther
             gender
             genderOther
             hairColor
+            harmReduction
             heightInInches
+            homelessnessNotes
             importantNotes
+            incomeAnnual
+            incomeSource
+            justiceInvolvementDetails
             lastName
             livingSituation
             mailingAddress
             maritalStatus
+            medicalNeeds
+            medicalNotes
             middleName
             nickname
+            pets
+            petsOther
             phoneNumber
             physicalDescription
             placeOfBirth
             preferredCommunication
             preferredLanguage
+            profilePhoto {
+                name
+            }
             pronouns
             pronounsOther
             race
+            requiresTransportation
             residenceAddress
             residenceGeolocation
+            sexualOrientation
+            sexualOrientationOther
+            socialSecurityNumber
+            spa
             spokenLanguages
+            status
             veteranStatus
             displayCaseManager
             displayGender
             displayPronouns
+            docReadyDocuments
+            consentFormDocuments
+            otherDocuments
             contacts {
                 id
                 name
@@ -251,7 +278,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "email": "todd@pblivin.com",
                 "eyeColor": EyeColorEnum.BROWN.name,
                 "firstName": "Todd",
-                "gender": GenderEnum.MALE.name,
+                "gender": GenderEnum.CIS_MALE.name,
                 "genderOther": None,
                 "hairColor": HairColorEnum.BROWN.name,
                 "heightInInches": 71.75,
@@ -276,6 +303,8 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "residenceGeolocation": self.residence_geolocation,
                 "socialMediaProfiles": self.client_1_social_media_profiles,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+                "status": "reserved",
+                "socialSecurityNumber": "123-45-6789",
                 "veteranStatus": VeteranStatusEnum.NO.name,
             }
         )["data"]["createClientProfile"]
@@ -577,7 +606,7 @@ class ClientHouseholdMemberBaseTestCase(ClientsBaseTestCase):
                 "clientProfile": self.client_profile_id,
                 "name": "Jane Smith",
                 "dateOfBirth": "2001-01-01",
-                "gender": GenderEnum.FEMALE.name,
+                "gender": GenderEnum.CIS_FEMALE.name,
                 "genderOther": None,
                 "relationshipToClient": RelationshipTypeEnum.AUNT.name,
                 "relationshipToClientOther": None,

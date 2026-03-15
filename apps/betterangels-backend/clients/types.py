@@ -7,10 +7,17 @@ import strawberry
 import strawberry_django
 from clients.enums import (
     AdaAccommodationEnum,
+    AdlCapacityEnum,
     ClientDocumentGroupEnum,
     ClientDocumentNamespaceEnum,
+    ClientFundingSourceEnum,
+    ClientPetsEnum,
+    ClientSpaEnum,
+    ClientStatusEnum,
+    DestinationEnum,
     LanguageEnum,
     LivingSituationEnum,
+    MedicalNeedsEnum,
     PreferredCommunicationEnum,
 )
 from common.graphql.types import (
@@ -50,10 +57,12 @@ CLIENT_DOCUMENT_NAMESPACE_GROUPS = {
         ClientDocumentNamespaceEnum.CONSENT_FORM,
         ClientDocumentNamespaceEnum.HMIS_FORM,
         ClientDocumentNamespaceEnum.INCOME_FORM,
+        ClientDocumentNamespaceEnum.INCOME_DOCUMENTS,
         ClientDocumentNamespaceEnum.OTHER_FORM,
     ],
     ClientDocumentGroupEnum.OTHER: [
         ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT,
+        ClientDocumentNamespaceEnum.CLIENT_UPLOAD,
     ],
 }
 
@@ -225,12 +234,14 @@ class SocialMediaProfileBaseType:
 @strawberry_django.type(SocialMediaProfile)
 class SocialMediaProfileType(SocialMediaProfileBaseType):
     platform_user_id: NonBlankString
+    platform_user_id_other: Optional[str] = None
 
 
 @strawberry_django.input(SocialMediaProfile, partial=True)
 class SocialMediaProfileInput(SocialMediaProfileBaseType):
     client_profile: ID | None
     platform_user_id: NonBlankString | None
+    platform_user_id_other: Optional[str] = None
 
 
 @strawberry.input
@@ -289,23 +300,38 @@ class ClientHouseholdMemberInput(ClientHouseholdMemberBaseType):
 class ClientProfileBaseType:
     ada_accommodation: Optional[List[AdaAccommodationEnum]]
     address: auto
+    adl_capacity: Optional[AdlCapacityEnum]
     age: auto
     california_id: auto
+    criminal_history: auto
     date_of_birth: auto
+    destination: Optional[DestinationEnum]
+    destination_other: auto
     email: Optional[NonBlankString]
     eye_color: auto
     first_name: Optional[NonBlankString]
+    funding_source: Optional[List[ClientFundingSourceEnum]]
+    funding_source_other: auto
     gender: auto
     gender_other: auto
     hair_color: auto
+    harm_reduction: auto
     height_in_inches: auto
+    homelessness_notes: auto
     important_notes: auto
+    income_annual: auto
+    income_source: auto
+    justice_involvement_details: auto
     last_name: Optional[NonBlankString]
     living_situation: Optional[LivingSituationEnum]
     mailing_address: auto
     marital_status: auto
+    medical_needs: Optional[List[MedicalNeedsEnum]]
+    medical_notes: auto
     middle_name: Optional[NonBlankString]
     nickname: Optional[NonBlankString]
+    pets: Optional[List[ClientPetsEnum]]
+    pets_other: auto
     phone_number: Optional[PhoneNumberScalar]  # type: ignore
     physical_description: auto
     place_of_birth: auto
@@ -315,9 +341,15 @@ class ClientProfileBaseType:
     pronouns: auto
     pronouns_other: auto
     race: auto
+    requires_transportation: auto
     residence_address: auto
     residence_geolocation: auto
+    sexual_orientation: auto
+    sexual_orientation_other: auto
+    spa: Optional[List[ClientSpaEnum]]
+    social_security_number: auto
     spoken_languages: Optional[List[LanguageEnum]]
+    status: ClientStatusEnum
     veteran_status: auto
 
 

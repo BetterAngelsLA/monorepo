@@ -1,4 +1,5 @@
 CALIFORNIA_ID_REGEX = r"^[a-zA-Z]\d{7}$"
+SSN_REGEX = r"^\d{3}-\d{2}-\d{4}$"
 EMAIL_REGEX = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 PHONE_NUMBER_REGEX = r"^[2-9]\d{2}[2-9]\d{6}(x\d+)?$"
 HMIS_SESSION_KEY_NAME = "is_hmis_session"
