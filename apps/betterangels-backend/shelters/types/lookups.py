@@ -107,6 +107,21 @@ class FunderType:
     name: auto
 
 
+@strawberry_django.type(models.ExitPolicy)
+class ExitPolicyType:
+    name: auto
+
+
+@strawberry_django.type(models.MealService)
+class MealServiceType:
+    name: auto
+
+
+@strawberry_django.type(models.ReferralRequirement)
+class ReferralRequirementType:
+    name: auto
+
+
 @strawberry_django.type(models.Schedule)
 class ScheduleType:
     id: ID

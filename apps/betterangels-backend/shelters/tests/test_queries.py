@@ -88,7 +88,9 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             description
             distanceInMiles
             email
+            emergencySurge
             entryInfo
+            exitPolicyOther
             fundersOther
             maxStay
             name
@@ -106,17 +108,21 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             subjectiveReview
             supervisorialDistrict
             totalBeds
+            visitorsAllowed
             website
             accessibility {name}
             cities {name}
             demographics {name}
             entryRequirements {name}
+            exitPolicy {name}
             funders {name}
             generalServices {name}
             healthServices {name}
             immediateNeeds {name}
+            mealServices {name}
             parking {name}
             pets {name}
+            referralRequirement {name}
             roomStyles {name}
             shelterPrograms {name}
             shelterTypes {name}
@@ -150,11 +156,11 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             bed_fees="bed fees",
             city_council_district=1,
             curfew=datetime.time(22, 00),
-            demographics_other="demographics other",
+            demographics_other=["demographics other"],
             description="description",
             email="shelter@example.com",
             entry_info="entry info",
-            funders_other="funders other",
+            funders_other=["funders other"],
             max_stay=7,
             name="name",
             on_site_security=True,
@@ -170,9 +176,9 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             overall_rating=3,
             phone="2125551212",
             program_fees="program fees",
-            room_styles_other="room styles other",
-            shelter_programs_other="shelter programs other",
-            shelter_types_other="shelter types other",
+            room_styles_other=["room styles other"],
+            shelter_programs_other=["shelter programs other"],
+            shelter_types_other=["shelter types other"],
             status=StatusChoices.APPROVED,
             subjective_review="subjective review",
             supervisorial_district=1,
@@ -242,7 +248,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
         variables = {"id": shelter.pk}
-        expected_query_count = 21
+        expected_query_count = 24
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -255,12 +261,14 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "bedFees": "bed fees",
             "cityCouncilDistrict": 1,
             "curfew": "22:00:00",
-            "demographicsOther": "demographics other",
+            "demographicsOther": ["demographics other"],
             "description": "description",
             "distanceInMiles": None,
             "email": "shelter@example.com",
+            "emergencySurge": None,
             "entryInfo": "entry info",
-            "fundersOther": "funders other",
+            "exitPolicyOther": [],
+            "fundersOther": ["funders other"],
             "maxStay": 7,
             "name": "name",
             "onSiteSecurity": True,
@@ -270,24 +278,28 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "overallRating": 3,
             "phone": "2125551212",
             "programFees": "program fees",
-            "roomStylesOther": "room styles other",
-            "shelterProgramsOther": "shelter programs other",
-            "shelterTypesOther": "shelter types other",
+            "roomStylesOther": ["room styles other"],
+            "shelterProgramsOther": ["shelter programs other"],
+            "shelterTypesOther": ["shelter types other"],
             "status": StatusChoices.APPROVED.name,
             "subjectiveReview": "subjective review",
             "supervisorialDistrict": 1,
             "totalBeds": 1,
+            "visitorsAllowed": None,
             "website": "shelter.com",
             "accessibility": [{"name": AccessibilityChoices.WHEELCHAIR_ACCESSIBLE.name}],
             "cities": [{"name": "Agoura Hills"}],
             "demographics": [{"name": DemographicChoices.ALL.name}],
             "entryRequirements": [{"name": EntryRequirementChoices.PHOTO_ID.name}],
+            "exitPolicy": [],
             "funders": [{"name": FunderChoices.CITY_OF_LOS_ANGELES.name}],
             "generalServices": [{"name": GeneralServiceChoices.CASE_MANAGEMENT.name}],
             "healthServices": [{"name": HealthServiceChoices.DENTAL.name}],
             "immediateNeeds": [{"name": ImmediateNeedChoices.CLOTHING.name}],
+            "mealServices": [],
             "parking": [{"name": ParkingChoices.BICYCLE.name}],
             "pets": [{"name": PetChoices.CATS.name}],
+            "referralRequirement": [],
             "roomStyles": [{"name": RoomStyleChoices.CONGREGATE.name}],
             "shelterPrograms": [{"name": ShelterProgramChoices.BRIDGE_HOME.name}],
             "shelterTypes": [{"name": ShelterChoices.BUILDING.name}],
@@ -355,7 +367,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
 
-        expected_query_count = 22
+        expected_query_count = 25
 
         variables = {"ordering": {"name": "ASC"}}
 

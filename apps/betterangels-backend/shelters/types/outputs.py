@@ -19,12 +19,15 @@ from shelters.types.lookups import (
     ContactInfoType,
     DemographicType,
     EntryRequirementType,
+    ExitPolicyType,
     FunderType,
     GeneralServiceType,
     HealthServiceType,
     ImmediateNeedType,
+    MealServiceType,
     ParkingType,
     PetType,
+    ReferralRequirementType,
     RoomStyleType,
     ScheduleType,
     ShelterProgramType,
@@ -79,14 +82,17 @@ class ShelterTypeMixin:
     city_council_district: auto
     curfew: auto
     demographics: List[DemographicType]
-    demographics_other: auto
+    demographics_other: List[str]
     description: str
     email: auto
+    emergency_surge: auto
     entry_info: Optional[str]
     entry_requirements: List[EntryRequirementType]
+    exit_policy: List[ExitPolicyType]
+    exit_policy_other: List[str]
     exterior_photos: List[ShelterPhotoType]
     funders: List[FunderType]
-    funders_other: auto
+    funders_other: List[str]
     general_services: List[GeneralServiceType]
     health_services: List[HealthServiceType]
     immediate_needs: List[ImmediateNeedType]
@@ -94,6 +100,7 @@ class ShelterTypeMixin:
     interior_photos: List[ShelterPhotoType]
     location: Optional[ShelterLocationType]
     max_stay: auto
+    meal_services: List[MealServiceType]
     name: auto
     on_site_security: auto
     organization: Optional[OrganizationType]
@@ -104,13 +111,14 @@ class ShelterTypeMixin:
     pets: List[PetType]
     phone: Optional[PhoneNumberScalar]  # type: ignore
     program_fees: Optional[str]
+    referral_requirement: List[ReferralRequirementType]
     room_styles: List[RoomStyleType]
-    room_styles_other: auto
+    room_styles_other: List[str]
     schedules: List[ScheduleType]
     shelter_programs: List[ShelterProgramType]
-    shelter_programs_other: auto
+    shelter_programs_other: List[str]
     shelter_types: List[ShelterTypeType]
-    shelter_types_other: auto
+    shelter_types_other: List[str]
     spa: List[SPAType]
     special_situation_restrictions: List[SpecialSituationRestrictionType]
     status: auto
@@ -119,6 +127,7 @@ class ShelterTypeMixin:
     supervisorial_district: auto
     total_beds: auto
     training_services: List[TrainingServiceType]
+    visitors_allowed: auto
     website: auto
 
     _exterior_photos: Optional[List[ShelterPhotoType]] = None

@@ -106,25 +106,25 @@ class CreateShelterInput:
     website: auto = None
     instagram: auto = None
     status: auto = None
-    demographics_other: auto = None
-    shelter_types_other: auto = None
+    demographics_other: Optional[List[str]] = strawberry.field(default_factory=list)
+    shelter_types_other: Optional[List[str]] = strawberry.field(default_factory=list)
     total_beds: auto = None
-    room_styles_other: auto = None
+    room_styles_other: Optional[List[str]] = strawberry.field(default_factory=list)
     add_notes_sleeping_details: Optional[str] = None  # CKEditor5Field
     add_notes_shelter_details: Optional[str] = None  # CKEditor5Field
     max_stay: auto = None
     curfew: auto = None
     on_site_security: auto = None
     visitors_allowed: auto = None
-    exit_policy_other: auto = None
+    exit_policy_other: Optional[List[str]] = strawberry.field(default_factory=list)
     emergency_surge: auto = None
     other_rules: Optional[str] = None  # CKEditor5Field
     other_services: Optional[str] = None  # CKEditor5Field
     entry_info: Optional[str] = None  # CKEditor5Field
     bed_fees: auto = None
     program_fees: auto = None
-    shelter_programs_other: auto = None
-    funders_other: auto = None
+    shelter_programs_other: Optional[List[str]] = strawberry.field(default_factory=list)
+    funders_other: Optional[List[str]] = strawberry.field(default_factory=list)
     subjective_review: Optional[str] = None  # CKEditor5Field
     city_council_district: auto = None
     supervisorial_district: auto = None

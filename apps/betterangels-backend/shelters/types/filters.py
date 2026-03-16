@@ -147,6 +147,12 @@ class ShelterFilter:
 
         return queryset, Q()
 
+    @strawberry_django.filter_field
+    def has_curfew(self, queryset: QuerySet, value: Optional[bool], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
+        if value is None:
+            return queryset, Q()
+        return queryset, Q(**{f"{prefix}curfew__isnull": not value})
+
 
 @strawberry_django.order_type(models.Shelter, one_of=False)
 class ShelterOrder:

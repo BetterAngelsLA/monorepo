@@ -11,6 +11,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
@@ -87,15 +88,15 @@ class Shelter(BaseModel):
     # Summary Information
     description = CKEditor5Field()
     demographics = models.ManyToManyField(Demographic)
-    demographics_other = models.CharField(max_length=255, blank=True, null=True)
+    demographics_other = ArrayField(models.CharField(max_length=255), default=list, blank=True)
     special_situation_restrictions = models.ManyToManyField(SpecialSituationRestriction)
     shelter_types = models.ManyToManyField(ShelterType)
-    shelter_types_other = models.CharField(max_length=255, blank=True, null=True)
+    shelter_types_other = ArrayField(models.CharField(max_length=255), default=list, blank=True)
 
     # Sleeping Details
     total_beds = models.PositiveIntegerField(blank=True, null=True)
     room_styles = models.ManyToManyField(RoomStyle)
-    room_styles_other = models.CharField(max_length=255, blank=True, null=True)
+    room_styles_other = ArrayField(models.CharField(max_length=255), default=list, blank=True)
     add_notes_sleeping_details = CKEditor5Field(verbose_name="Additional Notes", null=True, blank=True)
 
     # Shelter Details
@@ -114,7 +115,7 @@ class Shelter(BaseModel):
     on_site_security = models.BooleanField(null=True, blank=True)
     visitors_allowed = models.BooleanField(null=True, blank=True)
     exit_policy = models.ManyToManyField(ExitPolicy)
-    exit_policy_other = models.CharField(max_length=255, blank=True, null=True)
+    exit_policy_other = ArrayField(models.CharField(max_length=255), default=list, blank=True)
     emergency_surge = models.BooleanField(verbose_name="Emergency Capacity Surge Options", null=True, blank=True)
     other_rules = CKEditor5Field(null=True, blank=True)
 
@@ -152,9 +153,9 @@ class Shelter(BaseModel):
         db_index=True,
     )
     shelter_programs = models.ManyToManyField(ShelterProgram)
-    shelter_programs_other = models.CharField(max_length=255, blank=True, null=True)
+    shelter_programs_other = ArrayField(models.CharField(max_length=255), default=list, blank=True)
     funders = models.ManyToManyField(Funder)
-    funders_other = models.CharField(max_length=255, blank=True, null=True)
+    funders_other = ArrayField(models.CharField(max_length=255), default=list, blank=True)
 
     # Better Angels Review
     overall_rating = models.PositiveSmallIntegerField(choices=[(i, str(i)) for i in range(1, 6)], null=True, blank=True)
@@ -197,18 +198,18 @@ class Shelter(BaseModel):
 
         for field_name in get_fields_with_other_option():
             other_field_name = f"{field_name}_other"
-            other_value = getattr(self, other_field_name, None)
+            other_values = getattr(self, other_field_name, None) or []
 
             # For new instances, we can't check M2M until after save
             if self.pk:
                 m2m_field = getattr(self, field_name)
                 has_other = m2m_field.filter(name="other").exists()
 
-                if has_other and not other_value:
+                if has_other and not other_values:
                     errors[other_field_name] = f"This field is required when 'Other' is selected in {field_name}."
-                elif not has_other and other_value:
+                elif not has_other and other_values:
                     # Automatically clear orphaned other text to maintain data consistency
-                    setattr(self, other_field_name, None)
+                    setattr(self, other_field_name, [])
 
         if errors:
             raise ValidationError(errors)
