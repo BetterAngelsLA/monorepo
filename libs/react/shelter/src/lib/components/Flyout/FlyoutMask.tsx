@@ -7,10 +7,7 @@ interface Props {
 
 export function FlyoutMask({ children, onClickOutside }: Props) {
   return (
-    <div
-      className="fixed inset-0 z-flyout-mask bg-black bg-opacity-50"
-      onClick={onClickOutside}
-    >
+    <div className="fixed inset-0 z-100 bg-black/50" onClick={onClickOutside}>
       {children}
     </div>
   );

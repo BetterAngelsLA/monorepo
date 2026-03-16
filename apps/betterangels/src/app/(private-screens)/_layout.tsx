@@ -34,7 +34,7 @@ export default function PrivateLayout() {
     >
       <Stack.Screen name="welcome" options={{ headerShown: false }} />
       <Stack.Screen
-        name="add-note/[noteId]"
+        name="note/create"
         options={{
           headerStyle: {
             backgroundColor: Colors.BRAND_DARK_BLUE,
@@ -43,9 +43,19 @@ export default function PrivateLayout() {
           headerTitleAlign: 'center',
         }}
       />
+      <Stack.Screen
+        name="note/[id]/edit"
+        options={{
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          title: 'Edit interaction',
+          headerTitleAlign: 'center',
+        }}
+      />
 
       <Stack.Screen
-        name="note/[id]"
+        name="note/[id]/index"
         options={{
           title: 'Interaction',
           headerTitleAlign: 'center',

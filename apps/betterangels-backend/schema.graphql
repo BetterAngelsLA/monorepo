@@ -607,6 +607,20 @@ input CreateProfileDataImportInput {
   notes: String
 }
 
+input CreateRoomInput {
+  shelterId: ID!
+  roomIdentifier: String!
+  roomType: RoomStyleChoices = null
+  roomTypeOther: String = null
+  status: RoomStatusChoices = null
+  notes: String = null
+  amenities: String = null
+  medicalRespite: Boolean = false
+  lastCleanedInspected: DateTime = null
+}
+
+union CreateRoomPayload = RoomType | OperationInfo
+
 input CreateShelterInput {
   name: String!
   description: String!
@@ -1406,6 +1420,7 @@ type Mutation {
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
+  createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
 }
 
 type NameCountType {
@@ -1834,6 +1849,12 @@ input RevertNoteInput {
 
 union RevertNotePayload = NoteType | OperationInfo
 
+enum RoomStatusChoices {
+  AVAILABLE
+  RESERVED
+  NEEDS_MAINTENANCE
+}
+
 enum RoomStyleChoices {
   CONGREGATE
   CUBICLE_LOW_WALLS
@@ -1848,6 +1869,19 @@ enum RoomStyleChoices {
 
 type RoomStyleType {
   name: RoomStyleChoices
+}
+
+type RoomType {
+  id: ID!
+  shelter: ShelterType!
+  roomIdentifier: String!
+  roomType: RoomStyleChoices
+  roomTypeOther: String
+  status: RoomStatusChoices
+  notes: String
+  amenities: String
+  medicalRespite: Boolean!
+  lastCleanedInspected: DateTime
 }
 
 enum SPAChoices {
@@ -2379,6 +2413,10 @@ input UpdateNoteInput {
   privateDetails: String
   isSubmitted: Boolean
   interactedAt: DateTime
+  location: LocationInput
+  providedServices: [CreateNoteServiceInput!]
+  requestedServices: [CreateNoteServiceInput!]
+  tasks: [CreateNoteTaskInput!]
 }
 
 input UpdateNoteLocationInput {

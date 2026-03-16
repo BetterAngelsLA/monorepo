@@ -46,27 +46,76 @@ def _resolve_service(
 # ---------------------------------------------------------------------------
 
 
+@transaction.atomic
 def note_update(
     *,
     note: Note,
     data: Dict[str, Any],
+    user: Optional[User] = None,
+    permission_group: Optional[PermissionGroup] = None,
 ) -> Note:
     """
-    Update a Note's core scalar fields only.
+    Update a Note, including nested relations.
 
-    For location and nested relations, use dedicated service functions:
-    - note_update_location
-    - note_service_request_create
-    - task_create (from tasks.services)
-
+    Core fields are updated in-place. Nested relation fields use
+    replace-all semantics: existing items are removed and new ones created.
     Caller is responsible for permission checks.
     """
+    # Extract nested relation data (handle separately)
+    location_data = data.pop("location", None)
+    provided_services_data = data.pop("provided_services", None)
+    requested_services_data = data.pop("requested_services", None)
+    tasks_data = data.pop("tasks", None)
+
     with pghistory.context(note_id=str(note.id), timestamp=timezone.now(), label="note_update"):
         for field, value in data.items():
             if field == "id":
                 continue
             setattr(note, field, value)
+
+        # --- Location (replace) ---
+        if location_data is not None:
+            location = Location.get_or_create_location(location_data)
+            note.location = location
+
+        # Single save for core fields + location to produce one pghistory event.
         note.save()
+
+        # --- Provided services (replace-all) ---
+        if provided_services_data is not None and user and permission_group:
+            note.provided_services.all().delete()
+            if provided_services_data:
+                note_service_request_create(
+                    user=user,
+                    permission_group=permission_group,
+                    note=note,
+                    data=provided_services_data,
+                    sr_type=ServiceRequestTypeEnum.PROVIDED,
+                )
+
+        # --- Requested services (replace-all) ---
+        if requested_services_data is not None and user and permission_group:
+            note.requested_services.all().delete()
+            if requested_services_data:
+                note_service_request_create(
+                    user=user,
+                    permission_group=permission_group,
+                    note=note,
+                    data=requested_services_data,
+                    sr_type=ServiceRequestTypeEnum.REQUESTED,
+                )
+
+        # --- Tasks (replace-all) ---
+        if tasks_data is not None and user and permission_group:
+            note.tasks.all().delete()
+            if tasks_data:
+                task_create(
+                    user=user,
+                    permission_group=permission_group,
+                    data=tasks_data,
+                    note=note,
+                    client_profile=note.client_profile,
+                )
 
     return note
 

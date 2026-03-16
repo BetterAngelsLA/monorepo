@@ -1,0 +1,5 @@
+{
+  "name": "@monorepo/shelter-web",
+  "type": "module",
+  "private": true
+}

@@ -1,0 +1,5 @@
+{
+  "name": "@monorepo/storybook-react",
+  "type": "module",
+  "private": true
+}
