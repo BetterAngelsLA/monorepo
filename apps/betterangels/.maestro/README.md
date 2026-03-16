@@ -9,9 +9,8 @@ Maestro is a cross-platform mobile UI testing framework that works with both **i
 ## Table of Contents
 
 - [Quick Start](#quick-start)
-- [About Local Usage](#about-local-usage)
 - [Local Setup](#local-setup)
-- [Running Tests Locally (CLI)](#running-tests-locally-cli)
+- [Running Tests](#running-tests)
 - [Environment Variables](#environment-variables)
 - [Running Maestro Directly (Optional)](#running-maestro-directly-optional)
 - [Directory Structure](#directory-structure)
@@ -32,24 +31,11 @@ Start the app:
 
 Run the full E2E test suite (defaults to iOS):
 
-    yarn e2e:dev
+    yarn ba:e2e
 
-Run a single test:
+Run on Android:
 
-    yarn e2e:dev landing.yml
-
----
-
-## About Local Usage
-
-There are two main ways to work with Maestro E2E tests locally, primarily via:
-
-- `Maestro CLI`
-  - requires local setup
-  - more flexible than Maestro Studio
-- `Maestro Studio`
-  - should not require any local setup
-  - more limited than using the CLI, but adequate (and has some nice UI features)
+    yarn ba:e2e:android
 
 ---
 
@@ -113,7 +99,7 @@ maestro --version
 
 ---
 
-## Running Tests Locally (CLI)
+## Running Tests
 
 ### 1. Start the development server
 
@@ -122,8 +108,6 @@ Start the Better Angels Expo dev server:
 ```bash
 yarn ba
 ```
-
-(or any command that starts the app locally)
 
 ---
 
@@ -134,110 +118,94 @@ Start at least one device:
 - **iOS:** Xcode Simulator
 - **Android:** Android Emulator
 
-Maestro will automatically select a running device for the chosen platform.
-
-**_Note:_**
-Maestro tests run against the **Expo development client** build of the Better Angels app.
 Ensure that a dev build is installed in the simulator or emulator (e.g. "BetterAngels (Dev)") before running the tests.
+
+**_Note:_** There are two ways to work with Maestro E2E tests locally:
+
+- **Maestro CLI** — requires local setup, more flexible
+- **Maestro Studio** — UI-based, no local setup needed (see [Using Maestro Studio](#using-maestro-studio))
 
 ---
 
 ### 3. Run tests
 
-Run the full test suite:
+The tests run via nx targets defined in `apps/betterangels/project.json`. The `resolve-deeplink.sh` script auto-detects the device and Expo dev server URL.
+
+**iOS (default):**
 
 ```bash
-yarn e2e:dev
+yarn ba:e2e
 ```
 
-_**Note:** defaults to iOS_
-
-This command runs the wrapper script:
-
-`apps/betterangels/.maestro/scripts/maestro-e2e.sh`
-
-The script:
-
-- reads `.maestro/.env.local`
-- converts variables into `-e KEY=value`
-- runs the Maestro CLI
-
-**Examples:**
-
-- Run all tests on **iOS** (default)
+**Android:**
 
 ```bash
-yarn e2e:dev
+yarn ba:e2e:android
 ```
 
-- Specify a platform (ios/android)
+**Equivalent nx commands:**
 
 ```bash
-yarn e2e:dev -p android
+yarn nx e2e betterangels -c ios
+yarn nx e2e betterangels -c android
+
+# or using the colon syntax:
+yarn nx run betterangels:e2e:ios
+yarn nx run betterangels:e2e:android
 ```
 
-- Run a single test file
+**Pass flags through to Maestro:**
 
 ```bash
-yarn e2e:dev landing.yml
-```
-
-_**Note:** the `.yml` extension is optional, and paths are relative to the `.maestro/tests/` directory._
-
-- Run with verbose output
-
-```bash
-yarn e2e:dev --verbose
-```
-
-```bash
-yarn e2e:dev --verbose -p android landing.yml
+yarn ba:e2e -- --verbose
+yarn ba:e2e:android -- --debug-output
 ```
 
 ---
 
 ## Environment Variables
 
-Maestro supports environment variables for configuring the test runtime.
+The script `resolve-deeplink.sh` auto-detects two key values:
 
-### CLI
+- **`MAESTRO_DEEPLINK`** — the Expo dev client deep link URL (with `disableOnboarding=1`)
+- **`MAESTRO_DEVICE`** — the device ID of the first booted simulator/emulator for the chosen platform
 
-The Maestro CLI expects environment variables to already exist in the shell when the `maestro` command runs. It does **not automatically load `.env` files**. The CLI also supports a number of predefined configuration variables documented here:
+Maestro also auto-reads all `MAESTRO_*` prefixed vars from the shell environment.
 
-[CLI Environment variables docs](https://docs.maestro.dev/maestro-cli/environment-variables)
+Nx automatically loads `.env` files before running targets, so you can set overrides in `apps/betterangels/.env.local`.
 
-To simplify local usage, this project uses a wrapper script that reads variables from `.maestro/.env.local`.
+### Overrides
 
-Create this file by copying the sample:
+No configuration is needed for standard simulator/emulator testing. To override, set any of:
 
-```bash
-cp .env.local.sample .env.local
-```
+| Variable            | Description                                   | Default              |
+| ------------------- | --------------------------------------------- | -------------------- |
+| `MAESTRO_DEEPLINK`  | Full deep link URL (highest priority)         | Auto-detected        |
+| `MAESTRO_EXPO_HOST` | Dev server host                               | Auto-detected LAN IP |
+| `MAESTRO_EXPO_PORT` | Dev server port                               | `8081`               |
+| `MAESTRO_DEVICE`    | Device ID (simulator UDID or emulator serial) | First booted device  |
 
-**Example:**
+See `apps/betterangels/.env.local.sample` for examples.
 
-```bash
-MAESTRO_DEEPLINK=exp+betterangels://expo-development-client/?url=http://192.168.1.198:8081
-```
-
-This deep link tells the Expo development client which local Metro server to connect to.
-
-You can find this value in the Expo CLI output when running the app.
+For a full list of Maestro CLI environment variables, see the [Maestro CLI Environment Variables docs](https://docs.maestro.dev/maestro-cli/environment-variables).
 
 ---
 
 ## Running Maestro Directly (Optional)
 
-If you prefer to run the Maestro CLI directly instead of using the wrapper script, you can pass environment variables manually using `-e`.
-
-You must also specify the platform using `-p` or `--platform`.
-
-**Example:**
+If you prefer to run the Maestro CLI directly, source the resolve script first:
 
 ```bash
-maestro --verbose -p android test apps/betterangels/.maestro/tests \
-  -e MAESTRO_DEEPLINK="exp+betterangels://expo-development-client/?url=http://192.168.1.198:8081" \
-  -e SOME_OTHER_VAR=value
+cd apps/betterangels
+source .maestro/scripts/resolve-deeplink.sh ios
+maestro --device $MAESTRO_DEVICE -p ios test .maestro/tests
+```
+
+Or pass everything manually:
+
+```bash
+maestro --device <DEVICE_ID> -p ios test apps/betterangels/.maestro/tests \
+  -e MAESTRO_DEEPLINK="exp+betterangels://expo-development-client/?url=http://192.168.1.198:8081&disableOnboarding=1"
 ```
 
 ---
@@ -247,46 +215,20 @@ maestro --verbose -p android test apps/betterangels/.maestro/tests \
 ```
 .maestro/
   tests/
-    landing.yml
+    landing.yml          # Test flows
 
   steps/
     (reusable steps)
 
   scripts/
-    maestro-e2e.sh
-
-  .env.local
-  .env.local.sample
-```
-
-### `tests/`
-
-Entry points for E2E tests.
-
-Each file represents a test flow.
-
-**Example:**
-
-```
-tests/landing.yml
-```
-
-### `steps/`
-
-Reusable steps used by tests.
-
-**Example:**
-
-```
-steps/login.yml
-steps/open_app.yml
+    resolve-deeplink.sh  # Auto-detects device & deep link
 ```
 
 ---
 
 ## Running Tests in CI
 
-TBD
+CI tests run via EAS Workflows. See `.eas/workflows/e2e-test.yml` for the pipeline configuration.
 
 ---
 

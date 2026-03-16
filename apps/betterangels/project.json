@@ -102,6 +102,21 @@
           }
         ]
       }
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/betterangels"
+      },
+      "configurations": {
+        "ios": {
+          "command": "source .maestro/scripts/resolve-deeplink.sh ios && maestro --device $MAESTRO_DEVICE -p ios test .maestro/tests"
+        },
+        "android": {
+          "command": "source .maestro/scripts/resolve-deeplink.sh android && maestro --device $MAESTRO_DEVICE -p android test .maestro/tests"
+        }
+      },
+      "defaultConfiguration": "ios"
     }
   }
 }

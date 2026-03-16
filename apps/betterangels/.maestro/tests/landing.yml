@@ -2,9 +2,6 @@ appId: la.betterangels.dev.app
 ---
 - openLink: ${MAESTRO_DEEPLINK}
 
-# TODO: Handle Expo Dev Launcher if it appears
-# need to click the small `x` button to close
-
 # Loop until Better Angels appears or max 10 attempts; kill/relaunch if Reload is seen
 - evalScript: ${output.counter = 0}
 - repeat:
@@ -22,7 +19,7 @@ appId: la.betterangels.dev.app
           commands:
             - takeScreenshot: error-restart-kill
             - killApp
-            - openLink: ${output.deepLink}
+            - openLink: ${MAESTRO_DEEPLINK}
       - runFlow:
           when:
             platform: ios

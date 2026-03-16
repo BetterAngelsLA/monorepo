@@ -9,10 +9,11 @@
     "server": "nx start betterangels-backend",
     "ba": "nx start betterangels",
     "ba:build-dev": "nx build betterangels --profile development",
+    "ba:e2e": "nx e2e betterangels -c ios",
+    "ba:e2e:android": "nx e2e betterangels -c android",
     "shelter": "nx serve shelter-web --port 8083",
     "fires": "nx serve wildfires --port 8200",
-    "admin": "nx serve betterangels-admin --port 8084",
-    "e2e:dev": "apps/betterangels/.maestro/scripts/maestro-e2e.sh"
+    "admin": "nx serve betterangels-admin --port 8084"
   },
   "dependencies": {
     "@ant-design/charts": "^2.6.7",

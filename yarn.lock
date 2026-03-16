@@ -6103,7 +6103,6 @@ __metadata:
     clsx: "npm:^2.1.1"
     core-js: "npm:3.36.1"
     date-fns: "npm:^3.6.0"
-    dotenv-cli: "npm:^11.0.0"
     embla-carousel-react: "npm:^8.6.0"
     eslint: "npm:8.57.0"
     eslint-config-prettier: "npm:10.1.1"
@@ -14769,7 +14768,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cross-spawn@npm:^7.0.2, cross-spawn@npm:^7.0.3, cross-spawn@npm:^7.0.6":
+"cross-spawn@npm:^7.0.2, cross-spawn@npm:^7.0.3":
   version: 7.0.6
   resolution: "cross-spawn@npm:7.0.6"
   dependencies:
@@ -15934,29 +15933,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv-cli@npm:^11.0.0":
-  version: 11.0.0
-  resolution: "dotenv-cli@npm:11.0.0"
-  dependencies:
-    cross-spawn: "npm:^7.0.6"
-    dotenv: "npm:^17.1.0"
-    dotenv-expand: "npm:^12.0.0"
-    minimist: "npm:^1.2.6"
-  bin:
-    dotenv: cli.js
-  checksum: 10/0dab973aa8d94163f9b17f7452f9c9b567baf67e6551c3d883f3ea1df9edbd69a9ea55cbc8e020026c9e8d8f01056087526d011c1829924483c8c72f9c17c79a
-  languageName: node
-  linkType: hard
-
-"dotenv-expand@npm:^12.0.0":
-  version: 12.0.3
-  resolution: "dotenv-expand@npm:12.0.3"
-  dependencies:
-    dotenv: "npm:^16.4.5"
-  checksum: 10/d9aaf051805c8fa64e7e3620936ecb38229a93f5603883e53856d6f57cd4ae93fb74baefdf0b03b1c0608bc3eefbbcb23912972d7303b6191a5c0e1688a8652f
-  languageName: node
-  linkType: hard
-
 "dotenv-expand@npm:~11.0.6":
   version: 11.0.7
   resolution: "dotenv-expand@npm:11.0.7"
@@ -15970,13 +15946,6 @@ __metadata:
   version: 16.6.1
   resolution: "dotenv@npm:16.6.1"
   checksum: 10/1d1897144344447ffe62aa1a6d664f4cd2e0784e0aff787eeeec1940ded32f8e4b5b506d665134fc87157baa086fce07ec6383970a2b6d2e7985beaed6a4cc14
-  languageName: node
-  linkType: hard
-
-"dotenv@npm:^17.1.0":
-  version: 17.3.1
-  resolution: "dotenv@npm:17.3.1"
-  checksum: 10/4dde6571dff22c2323a3e33ac25e1e7d51c4b6d60dc884f59e3efe85c8fd3cc8800d6b3925d05c46b19dca08cba821a0a24e22f75a1b9b768c859b98bb927b04
   languageName: node
   linkType: hard
 
