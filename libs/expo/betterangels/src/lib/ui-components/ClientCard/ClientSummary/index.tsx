@@ -3,10 +3,14 @@ import { Button } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { ScrollView, View } from 'react-native';
+import { useUserTeamPreference } from '../../../state';
 import { ClientProfilesQuery } from '../../ClientProfileList/__generated__/ClientProfiles.generated';
 import MainScrollContainer from '../../MainScrollContainer';
+import ClientSummaryContact from './ClientSummaryContact';
 import ClientSummaryGeneral from './ClientSummaryGeneral';
 import ClientSummaryHeader from './ClientSummaryHeader';
+import ClientSummaryIdentity from './ClientSummaryIdentity';
+import ClientSummaryLastSeen from './ClientSummaryLastSeen';
 
 interface IClientSummaryProps {
   client: ClientProfilesQuery['clientProfiles']['results'][number];
@@ -15,13 +19,35 @@ interface IClientSummaryProps {
 
 export function ClientSummary(props: IClientSummaryProps) {
   const { client, arrivedFrom } = props;
+  const [teamPreference] = useUserTeamPreference();
 
-  const handleClientPress = useCallback((id: string) => {
-    router.navigate({
-      pathname: `/client/${id}`,
-      params: { arrivedFrom },
+  const handleClientPress = useCallback(
+    (id: string) => {
+      router.replace({
+        pathname: `/client/${id}`,
+        params: { arrivedFrom },
+      });
+    },
+    [arrivedFrom]
+  );
+
+  const handleNavigateToNewNote = useCallback(() => {
+    const params: Record<string, string> = {
+      clientProfileId: client.id,
+    };
+    if (teamPreference) {
+      params.team = teamPreference;
+    }
+
+    if (arrivedFrom) {
+      params.arrivedFrom = arrivedFrom;
+    }
+
+    router.replace({
+      pathname: '/note/create',
+      params,
     });
-  }, []);
+  }, [client.id, teamPreference, arrivedFrom]);
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.WHITE }}>
@@ -35,6 +61,9 @@ export function ClientSummary(props: IClientSummaryProps) {
         >
           <ClientSummaryHeader client={client} />
           <ClientSummaryGeneral arrivedFrom={arrivedFrom} client={client} />
+          <ClientSummaryLastSeen client={client} />
+          <ClientSummaryContact client={client} />
+          <ClientSummaryIdentity client={client} />
         </ScrollView>
       </MainScrollContainer>
 
@@ -56,7 +85,7 @@ export function ClientSummary(props: IClientSummaryProps) {
       >
         <View style={{ flex: 1 }}>
           <Button
-            onPress={() => console.log('add')}
+            onPress={handleNavigateToNewNote}
             size="full"
             variant="secondary"
             title="Add Interaction"

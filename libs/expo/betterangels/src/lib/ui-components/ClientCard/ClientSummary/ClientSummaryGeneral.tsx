@@ -5,9 +5,14 @@ import {
   ExternalLinkOutlinedIcon,
   GlobeIcon,
   ListIcon,
+  WarningIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Panel, TextBold } from '@monorepo/expo/shared/ui-components';
+import {
+  Panel,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { router } from 'expo-router';
 import { Linking, Pressable, View } from 'react-native';
@@ -184,6 +189,37 @@ export default function ClientSummaryGeneral(
           }
         />
       </View>
+      <Panel style={{ marginTop: Spacings.sm }} variant="error">
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: Spacings.xs,
+            marginBottom: Spacings.xxs,
+          }}
+        >
+          <View
+            style={{
+              height: 30,
+              width: 30,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: Colors.WHITE,
+              borderRadius: 100,
+            }}
+          >
+            <WarningIcon color={Colors.ERROR} />
+          </View>
+          <TextBold size="sm" color={Colors.ERROR_DARK}>
+            Important Note
+          </TextBold>
+        </View>
+        {client.importantNotes && (
+          <TextRegular color={Colors.ERROR_DARK}>
+            {client.importantNotes}
+          </TextRegular>
+        )}
+      </Panel>
     </View>
   );
 }

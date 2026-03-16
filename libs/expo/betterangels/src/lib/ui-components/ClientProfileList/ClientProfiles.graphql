@@ -28,6 +28,8 @@ query ClientProfiles(
       nickname
       residenceAddress
       displayPronouns
+      importantNotes
+      physicalDescription
       hmisProfiles {
         id
         agency
@@ -36,6 +38,12 @@ query ClientProfiles(
       profilePhoto {
         name
         url
+      }
+      contacts {
+        id
+        name
+        relationshipToClient
+        phoneNumber
       }
     }
   }
