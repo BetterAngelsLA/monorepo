@@ -1,13 +1,11 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import {
-  ComponentType,
-  ReactElement,
-  useEffect,
-  useLayoutEffect,
-  useState,
-} from 'react';
+  Loading,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { ComponentType, ReactElement, useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
@@ -80,7 +78,6 @@ export default function Client({
 
   const [tab, setTab] = useState<ClientViewTabEnum>(ClientViewTabEnum.Profile);
 
-  const navigation = useNavigation();
   const router = useRouter();
   const { newTab } = useLocalSearchParams<{ newTab?: ClientViewTabEnum }>();
 
@@ -89,29 +86,6 @@ export default function Client({
       setTab(newTab);
     }
   }, [newTab]);
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerLeft: () => (
-        <Pressable
-          accessibilityRole="button"
-          accessible
-          accessibilityHint="goes to previous screen"
-          onPress={() => router.dismissTo(arrivedFrom || '/')}
-        >
-          <TextRegular color={Colors.WHITE}>Back</TextRegular>
-        </Pressable>
-      ),
-      headerRight: () => (
-        <ClientNavMenu
-          clientProfileId={clientProfileId}
-          onDeleted={() => {
-            router.dismissTo(arrivedFrom || '/');
-          }}
-        />
-      ),
-    });
-  }, [clientProfileId, arrivedFrom, navigation, router]);
 
   if (loading) {
     return (
@@ -132,13 +106,53 @@ export default function Client({
     throw new Error(`Something went wrong. Please try again. ${error}`);
   }
 
-  const showHeader = tab !== ClientViewTabEnum.Locations;
+  const showHeader = tab === ClientViewTabEnum.Profile;
+  const screenTitle =
+    data?.clientProfile.firstName || data?.clientProfile.lastName
+      ? `${data?.clientProfile.firstName ?? ''} ${
+          data?.clientProfile.lastName ?? ''
+        }`.trim()
+      : 'Client';
 
   return (
-    <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      {showHeader && <ClientHeader client={data?.clientProfile} />}
-      <ClientTabs selectedTab={tab} setTab={setTab} />
-      {getTabComponent(tab, data, openCard)}
-    </MainContainer>
+    <>
+      <Stack.Screen
+        options={{
+          headerTitle: () => (
+            <TextBold
+              color={Colors.WHITE}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={{ maxWidth: 200 }}
+            >
+              {screenTitle}
+            </TextBold>
+          ),
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessible
+              accessibilityHint="goes to previous screen"
+              onPress={() => router.dismissTo(arrivedFrom || '/')}
+            >
+              <TextRegular color={Colors.WHITE}>Back</TextRegular>
+            </Pressable>
+          ),
+          headerRight: () => (
+            <ClientNavMenu
+              clientProfileId={clientProfileId}
+              onDeleted={() => {
+                router.dismissTo(arrivedFrom || '/');
+              }}
+            />
+          ),
+        }}
+      />
+      <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
+        {showHeader && <ClientHeader client={data?.clientProfile} />}
+        <ClientTabs selectedTab={tab} setTab={setTab} />
+        {getTabComponent(tab, data, openCard)}
+      </MainContainer>
+    </>
   );
 }

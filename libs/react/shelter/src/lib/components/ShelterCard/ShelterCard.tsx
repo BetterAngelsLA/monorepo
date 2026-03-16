@@ -87,7 +87,7 @@ export function ShelterCard(props: TShelterCard) {
         </div>
 
         <div className={mergeCss(contentCss)}>
-          <div className="font-semibold md:text-lg leading-[1.125rem] tracking-[.03125rem]">
+          <div className="font-semibold md:text-lg leading-4.5 tracking-[.03125rem]">
             {name}
           </div>
 

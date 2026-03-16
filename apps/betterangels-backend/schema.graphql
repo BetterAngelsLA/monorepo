@@ -164,13 +164,36 @@ type AuthResponse {
 
 enum BedStatusChoices {
   AVAILABLE
+  OCCUPIED
   RESERVED
+  OUT_OF_SERVICE
 }
 
 type BedType {
   id: ID!
   shelter: ShelterType!
+  bedName: String
   status: BedStatusChoices
+  statusNotes: String
+  occupantId: ID
+  bedType: BedTypeChoices
+  demographics: [DemographicType!]!
+  accessibility: [AccessibilityType!]!
+  funders: [FunderType!]!
+  pets: [PetType!]!
+  storage: Boolean!
+  maintenanceFlag: Boolean!
+  lastCleanedInspected: DateTime
+  medicalNeeds: MedicalNeedChoices
+  b7: Boolean!
+  fees: Int
+}
+
+enum BedTypeChoices {
+  TWIN
+  BUNK
+  ROLLAWAY
+  OTHER
 }
 
 type CityType {
@@ -431,7 +454,20 @@ type ContactInfoType {
 
 input CreateBedInput {
   shelterId: ID!
-  status: BedStatusChoices!
+  status: BedStatusChoices = null
+  bedName: String = null
+  statusNotes: String = null
+  bedType: BedTypeChoices = null
+  demographics: [DemographicChoices!] = null
+  accessibility: [AccessibilityChoices!] = null
+  funders: [FunderChoices!] = null
+  pets: [PetChoices!] = null
+  storage: Boolean = null
+  maintenanceFlag: Boolean = null
+  lastCleanedInspected: DateTime = null
+  medicalNeeds: MedicalNeedChoices = null
+  b7: Boolean = null
+  fees: Int = null
 }
 
 union CreateBedPayload = BedType | OperationInfo
@@ -607,14 +643,19 @@ input CreateProfileDataImportInput {
   notes: String
 }
 
-input CreateServiceRequestInput {
-  serviceId: ID
-  status: ServiceRequestStatusEnum!
-  serviceOther: String
-  clientProfile: ID
+input CreateRoomInput {
+  shelterId: ID!
+  roomIdentifier: String!
+  roomType: RoomStyleChoices = null
+  roomTypeOther: String = null
+  status: RoomStatusChoices = null
+  notes: String = null
+  amenities: String = null
+  medicalRespite: Boolean = false
+  lastCleanedInspected: DateTime = null
 }
 
-union CreateServiceRequestPayload = ServiceRequestType | OperationInfo
+union CreateRoomPayload = RoomType | OperationInfo
 
 input CreateShelterInput {
   name: String!
@@ -1355,6 +1396,13 @@ enum MealServiceChoices {
   DINNER
 }
 
+enum MedicalNeedChoices {
+  ERC
+  DMH
+  OXYGEN
+  DIALYSIS
+}
+
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
@@ -1399,10 +1447,7 @@ type Mutation {
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
-  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_servicerequest"}], any: true)
-  removeNoteServiceRequest(data: RemoveNoteServiceRequestInput!): RemoveNoteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "delete_servicerequest"}], any: true)
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
@@ -1411,6 +1456,7 @@ type Mutation {
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
+  createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
 }
 
 type NameCountType {
@@ -1812,14 +1858,6 @@ input RemoveHmisNoteServiceRequestInput {
 
 union RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo
 
-input RemoveNoteServiceRequestInput {
-  serviceRequestId: ID!
-  noteId: ID!
-  serviceRequestType: ServiceRequestTypeEnum!
-}
-
-union RemoveNoteServiceRequestPayload = NoteType | OperationInfo
-
 input RemoveOrganizationMemberInput {
   id: ID!
   organizationId: ID!
@@ -1847,6 +1885,12 @@ input RevertNoteInput {
 
 union RevertNotePayload = NoteType | OperationInfo
 
+enum RoomStatusChoices {
+  AVAILABLE
+  RESERVED
+  NEEDS_MAINTENANCE
+}
+
 enum RoomStyleChoices {
   CONGREGATE
   CUBICLE_LOW_WALLS
@@ -1861,6 +1905,19 @@ enum RoomStyleChoices {
 
 type RoomStyleType {
   name: RoomStyleChoices
+}
+
+type RoomType {
+  id: ID!
+  shelter: ShelterType!
+  roomIdentifier: String!
+  roomType: RoomStyleChoices
+  roomTypeOther: String
+  status: RoomStatusChoices
+  notes: String
+  amenities: String
+  medicalRespite: Boolean!
+  lastCleanedInspected: DateTime
 }
 
 enum SPAChoices {
@@ -2392,6 +2449,10 @@ input UpdateNoteInput {
   privateDetails: String
   isSubmitted: Boolean
   interactedAt: DateTime
+  location: LocationInput
+  providedServices: [CreateNoteServiceInput!]
+  requestedServices: [CreateNoteServiceInput!]
+  tasks: [CreateNoteTaskInput!]
 }
 
 input UpdateNoteLocationInput {
@@ -2402,15 +2463,6 @@ input UpdateNoteLocationInput {
 union UpdateNoteLocationPayload = NoteType | OperationInfo
 
 union UpdateNotePayload = NoteType | OperationInfo
-
-input UpdateServiceRequestInput {
-  id: ID!
-  serviceOther: String
-  status: ServiceRequestStatusEnum
-  dueBy: DateTime
-}
-
-union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
 
 union UpdateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 

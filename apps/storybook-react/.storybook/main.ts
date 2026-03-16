@@ -1,5 +1,6 @@
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import type { StorybookConfig } from '@storybook/react-native-web-vite';
+import tailwindcss from '@tailwindcss/postcss';
 import 'dotenv/config';
 import { resolve } from 'path';
 import { mergeConfig, searchForWorkspaceRoot } from 'vite';
@@ -13,6 +14,16 @@ import {
 import { appendReactQueryForRnSvg } from './plugins/appendReactQueryForRnSvg.ts';
 import { rawSvgPlugin } from './plugins/rawSvgPlugin.ts';
 
+function getBasePath(): string {
+  const isDev = process.env.NODE_ENV === 'development';
+  return isDev ? '/' : process.env.VITE_APP_BASE_PATH || '/';
+}
+
+function getBaseHref(): string {
+  const p = getBasePath();
+  return p.endsWith('/') ? p : p + '/';
+}
+
 const config: StorybookConfig = {
   stories: [
     ...PLATFORM_STORIES,
@@ -21,6 +32,8 @@ const config: StorybookConfig = {
     ...REACT_APP_LIB_STORIES,
   ],
   addons: [],
+  managerHead: (head) => `${head}<base href="${getBaseHref()}" />`,
+  previewHead: (head) => `${head}<base href="${getBaseHref()}" />`,
   framework: {
     name: '@storybook/react-native-web-vite',
     options: {},
@@ -36,14 +49,24 @@ const config: StorybookConfig = {
   },
 
   viteFinal: async (base) => {
-    const isDev = process.env.NODE_ENV === 'development';
-    const basePath = isDev ? '/' : process.env.VITE_APP_BASE_PATH || '/';
+    const basePath = getBasePath();
     const workspaceRoot = searchForWorkspaceRoot(process.cwd());
+    const isDev = process.env.NODE_ENV === 'development';
 
     return mergeConfig(base, {
       base: basePath,
       define: {
         'import.meta.env.VITE_APP_BASE_PATH': JSON.stringify(basePath),
+      },
+      css: {
+        postcss: {
+          plugins: [
+            tailwindcss({
+              base: workspaceRoot,
+              optimize: isDev ? { minify: false } : undefined,
+            }),
+          ],
+        },
       },
       plugins: [
         // we handle SVGs differently across libs, hence the separate plugins
