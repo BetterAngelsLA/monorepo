@@ -48,10 +48,18 @@ export default function TabLayout() {
   const { user, isLoading, isHmisUser } = useUser();
 
   useEffect(() => {
-    if (
-      user?.hasAcceptedTos === false ||
-      user?.hasAcceptedPrivacyPolicy === false
-    ) {
+    if (!user) return;
+
+    const needsAgreements =
+      user.hasAcceptedTos === false || user.hasAcceptedPrivacyPolicy === false;
+
+    const shouldOpenTosModal =
+      needsAgreements ||
+      (user.hasAcceptedTos === true &&
+        user.hasAcceptedPrivacyPolicy === true &&
+        (!user.firstName || !user.lastName));
+
+    if (shouldOpenTosModal) {
       setTosModalIsOpen(true);
     }
   }, [user]);
