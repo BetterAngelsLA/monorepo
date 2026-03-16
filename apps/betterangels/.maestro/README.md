@@ -129,7 +129,7 @@ Ensure that a dev build is installed in the simulator or emulator (e.g. "BetterA
 
 ### 3. Run tests
 
-The tests run via nx targets defined in `apps/betterangels/project.json`. The `resolve-deeplink.sh` script auto-detects the device and Expo dev server URL.
+The tests run via nx targets defined in `apps/betterangels/project.json`. The `setup-maestro.sh` script auto-detects the device and Expo dev server URL.
 
 **iOS (default):**
 
@@ -165,7 +165,7 @@ yarn ba:e2e:android -- --debug-output
 
 ## Environment Variables
 
-The script `resolve-deeplink.sh` auto-detects two key values:
+The script `setup-maestro.sh` auto-detects two key values:
 
 - **`MAESTRO_DEEPLINK`** — the Expo dev client deep link URL (with `disableOnboarding=1`)
 - **`MAESTRO_DEVICE`** — the device ID of the first booted simulator/emulator for the chosen platform
@@ -197,7 +197,7 @@ If you prefer to run the Maestro CLI directly, source the resolve script first:
 
 ```bash
 cd apps/betterangels
-source .maestro/scripts/resolve-deeplink.sh ios
+source .maestro/scripts/setup-maestro.sh ios
 maestro --device $MAESTRO_DEVICE -p ios test .maestro/tests
 ```
 
@@ -221,7 +221,7 @@ maestro --device <DEVICE_ID> -p ios test apps/betterangels/.maestro/tests \
     (reusable steps)
 
   scripts/
-    resolve-deeplink.sh  # Auto-detects device & deep link
+    setup-maestro.sh     # Auto-detects device & deep link
 ```
 
 ---

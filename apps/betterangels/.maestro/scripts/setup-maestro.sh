@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # -----------------------------
-# resolve-deeplink.sh
+# setup-maestro.sh
 # -----------------------------
 #
 # Auto-detects and exports:
@@ -9,10 +9,10 @@
 #   MAESTRO_DEVICE    — device ID for Maestro --device flag
 #
 # Usage:
-#   source .maestro/scripts/resolve-deeplink.sh <platform>
+#   source .maestro/scripts/setup-maestro.sh <platform>
 #   maestro --device $MAESTRO_DEVICE -p <platform> test .maestro/tests
 #
-# Or used via the nx maestro-test target which sources this automatically.
+# Or used via the nx e2e target which sources this automatically.
 #
 # Arguments:
 #   $1  — platform: "ios" or "android" (required)

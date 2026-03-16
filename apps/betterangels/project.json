@@ -110,10 +110,10 @@
       },
       "configurations": {
         "ios": {
-          "command": "source .maestro/scripts/resolve-deeplink.sh ios && maestro --device $MAESTRO_DEVICE -p ios test .maestro/tests"
+          "command": "source .maestro/scripts/setup-maestro.sh ios && maestro --device $MAESTRO_DEVICE -p ios test .maestro/tests"
         },
         "android": {
-          "command": "source .maestro/scripts/resolve-deeplink.sh android && maestro --device $MAESTRO_DEVICE -p android test .maestro/tests"
+          "command": "source .maestro/scripts/setup-maestro.sh android && maestro --device $MAESTRO_DEVICE -p android test .maestro/tests"
         }
       },
       "defaultConfiguration": "ios"
