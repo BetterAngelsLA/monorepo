@@ -44,24 +44,22 @@ export const WizardNavigation = memo(
       <div className="flex items-center gap-3">
         {showBack && (
           <Button
-            variant="small-light"
+            variant="primary"
             onClick={handleBack}
             disabled={backDisabled}
             leftIcon={<ChevronLeft size={16} />}
-            rightIcon={false}
-            className="text-sm! py-1.5! px-3! gap-1.5! disabled:opacity-50 disabled:cursor-not-allowed"
+            className="!text-sm !py-1.5 !px-3 !gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {backLabel || 'Back'}
           </Button>
         )}
         {showNext && (
           <Button
-            variant="floating-light"
+            variant="floating"
             onClick={handleNext}
             disabled={nextDisabled}
-            leftIcon={false}
             rightIcon={<ChevronRight size={16} />}
-            className="text-sm! py-1.5! px-4! gap-1.5! disabled:opacity-50 disabled:cursor-not-allowed"
+            className="!text-sm !py-1.5 !px-4 !gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {nextLabel || defaultNextLabel}
           </Button>

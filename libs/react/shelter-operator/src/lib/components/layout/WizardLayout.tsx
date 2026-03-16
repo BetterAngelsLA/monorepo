@@ -5,8 +5,8 @@ import {
   useForm,
 } from 'react-hook-form';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { WizardProgressBar, type WizardStep } from './WizardProgressBar';
 import { WizardNavigation } from './WizardNavigation';
+import { WizardProgressBar, type WizardStep } from './WizardProgressBar';
 
 export interface WizardNavigationConfig {
   showNavigation?: boolean;

@@ -49,7 +49,7 @@ export const WizardProgressBar = memo(
               .join(' ');
 
             const progressBarClasses = [
-              'absolute top-0 bottom-0 left-0 rounded-full transition-all duration-500 bg-[#008CEE]',
+              'absolute top-0 bottom-0 left-0 rounded-full bg-[#008CEE]',
               index < currentStep ? 'w-full' : 'w-0',
             ].join(' ');
 

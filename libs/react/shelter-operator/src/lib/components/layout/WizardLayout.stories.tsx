@@ -11,7 +11,7 @@ const meta: Meta<WizardLayoutProps> = {
   },
   decorators: [
     (Story) => (
-      <div className="p-8 w-[800px]">
+      <div className="w-full max-w-4xl">
         <Story />
       </div>
     ),
