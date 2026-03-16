@@ -1,5 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { SearchBar } from '@monorepo/expo/shared/ui-components';
+import { router } from 'expo-router';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useUser } from '../../hooks';
@@ -38,6 +39,13 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     [setCurrentClient]
   );
 
+  const handleClientPress = useCallback((id: string) => {
+    router.navigate({
+      pathname: `/client/${id}`,
+      params: { arrivedFrom: '/' },
+    });
+  }, []);
+
   const renderClientItemHmis = useCallback((client: TClientProfileHmis) => {
     const { id } = client;
 
@@ -45,7 +53,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       return null;
     }
 
-    return <ClientCardHmis client={client} />;
+    return (
+      <ClientCardHmis onPress={() => handleClientPress(id)} client={client} />
+    );
   }, []);
 
   return (
