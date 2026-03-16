@@ -42,7 +42,7 @@ export function ClientsAddInteraction({ Logo }: { Logo: ElementType }) {
           }}
           renderItem={(client) => (
             <CreateClientInteractionBtn clientProfileId={client.id}>
-              <ClientCard client={client} />
+              <ClientCard type="card" client={client} />
             </CreateClientInteractionBtn>
           )}
         />

@@ -7,19 +7,24 @@ import {
 } from '@monorepo/expo/shared/static';
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { ClientProfilesQuery } from '../../screens/Clients/__generated__/Clients.generated';
+import { useModalScreen } from '../../providers';
+import { ClientProfilesQuery } from '../ClientProfileList/__generated__/ClientProfiles.generated';
 import { ClientCardBase } from './ClientCardBase';
+import { ClientSummary } from './ClientSummary';
 
 type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
 
 export interface IClientCardProps extends TMarginProps {
   client: TClientProfile | undefined;
-  onPress?: (client: TClientProfile) => void;
+  arrivedFrom?: string;
+  type?: 'modal' | 'card';
   onMenuPress?: (client: TClientProfile) => void;
 }
 
 function ClientCardRaw(props: IClientCardProps) {
-  const { client, onPress } = props;
+  const { client, arrivedFrom, type = 'modal' } = props;
+
+  const { showModalScreen } = useModalScreen();
 
   if (!client) {
     return null;
@@ -27,34 +32,42 @@ function ClientCardRaw(props: IClientCardProps) {
 
   const wrapperStyle = [styles.container, getMarginStyles(props)];
 
-  if (!onPress) {
+  if (type === 'modal') {
     return (
-      <View style={wrapperStyle}>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() =>
+          showModalScreen({
+            presentation: 'modal',
+            title: 'Profile Summary',
+            renderContent: () => (
+              <ClientSummary arrivedFrom={arrivedFrom} client={client} />
+            ),
+          })
+        }
+        style={({ pressed }) => [
+          wrapperStyle,
+          {
+            backgroundColor: pressed ? Colors.GRAY_PRESSED : Colors.WHITE,
+          },
+        ]}
+      >
         <ClientCardBase {...props} />
-      </View>
+      </Pressable>
     );
   }
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={() => onPress(client)}
-      style={({ pressed }) => [
-        wrapperStyle,
-        {
-          backgroundColor: pressed ? Colors.GRAY_PRESSED : Colors.WHITE,
-        },
-      ]}
-    >
+    <View style={wrapperStyle}>
       <ClientCardBase {...props} />
-    </Pressable>
+    </View>
   );
 }
 
 export const ClientCard = memo(ClientCardRaw, (prev, next) => {
   return (
     prev.client?.id === next.client?.id &&
-    prev.onPress === next.onPress &&
+    prev.type === next.type &&
     prev.onMenuPress === next.onMenuPress
   );
 });

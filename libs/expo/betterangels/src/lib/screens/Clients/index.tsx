@@ -1,6 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { SearchBar } from '@monorepo/expo/shared/ui-components';
-import { router } from 'expo-router';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useUser } from '../../hooks';
@@ -14,8 +13,8 @@ import {
   HorizontalContainer,
   ListClientsHmis,
 } from '../../ui-components';
+import { ClientProfilesQuery } from '../../ui-components/ClientProfileList/__generated__/ClientProfiles.generated';
 import { ClientProfilesHmisQuery } from '../../ui-components/ClientProfileList/__generated__/ListClientsHmis.generated';
-import { ClientProfilesQuery } from './__generated__/Clients.generated';
 
 type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
 type TClientProfileHmis =
@@ -28,38 +27,26 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   const [search, setSearch] = useState('');
   const { isHmisUser } = useUser();
 
-  const handleClientPress = useCallback((id: string) => {
-    router.navigate({
-      pathname: `/client/${id}`,
-      params: { arrivedFrom: '/' },
-    });
-  }, []);
-
   const renderClientItem = useCallback(
     (client: TClientProfile) => (
       <ClientCard
+        arrivedFrom="/"
         client={client}
         onMenuPress={setCurrentClient}
-        onPress={() => handleClientPress(client.id)}
       />
     ),
-    [setCurrentClient, handleClientPress]
+    [setCurrentClient]
   );
 
-  const renderClientItemHmis = useCallback(
-    (client: TClientProfileHmis) => {
-      const { id } = client;
+  const renderClientItemHmis = useCallback((client: TClientProfileHmis) => {
+    const { id } = client;
 
-      if (!id) {
-        return null;
-      }
+    if (!id) {
+      return null;
+    }
 
-      return (
-        <ClientCardHmis client={client} onPress={() => handleClientPress(id)} />
-      );
-    },
-    [handleClientPress]
-  );
+    return <ClientCardHmis client={client} />;
+  }, []);
 
   return (
     <View style={styles.container}>

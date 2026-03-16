@@ -22,9 +22,12 @@ query ClientProfiles(
       heightInInches
       lastName
       mailingAddress
+      preferredLanguage
       middleName
+      phoneNumber
       nickname
       residenceAddress
+      displayPronouns
       hmisProfiles {
         id
         agency
