@@ -5,6 +5,8 @@
  * with the appropriate <base href="..."> tag, based on the VITE_APP_BASE_PATH set in `.env.local`.
  * The manager/preview-head.html files are used by Storybook to inject <base href=VITE_APP_BASE_PATH />
  * into the main html document.
+ * If VITE_APP_BASE_PATH is already set in the shell, that value takes precedence so local dev can override
+ * a preview-oriented `.env.local` without rewriting it.
  *
  * It is intended to be run as an Nx target using the environment variable `NX_TASK_TARGET_PROJECT`,
  * which is automatically set by Nx when you run the script as a target for a specific project.

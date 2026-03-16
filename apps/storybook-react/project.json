@@ -22,8 +22,15 @@
       },
       "dependsOn": ["set-env"]
     },
+    "generate-storybook-head-local": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "VITE_APP_BASE_PATH=/ node tools/scripts/generate-storybook-head.js"
+      }
+    },
     "storybook": {
       "executor": "@nx/storybook:storybook",
+      "dependsOn": ["generate-storybook-head-local"],
       "options": {
         "configDir": "apps/storybook-react/.storybook",
         "port": 4400
