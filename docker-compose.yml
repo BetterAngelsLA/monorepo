@@ -1,5 +1,7 @@
 services:
   better-angels:
+    ports:
+      - '8000:8000'
     env_file:
       - .compose/local.shared.env
     volumes:
