@@ -1,9 +1,7 @@
 services:
   better-angels:
-    environment:
-      - IS_LOCAL_DEV=True
-      - IMGPROXY_KEY=736563726574
-      - IMGPROXY_SALT=68656C6C6F
+    env_file:
+      - .compose/local.shared.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - .:/workspace
@@ -29,11 +27,11 @@ services:
     image: ghcr.io/imgproxy/imgproxy:v3.30.1-arm64
     ports:
       - '127.0.0.1:8080:8080' # Bind host port to IPv4 only so curl localhost hits imgproxy
+    env_file:
+      - .compose/local.shared.env
     environment:
       # Listen on all interfaces so the host can reach the container (default can be 127.0.0.1)
       - IMGPROXY_BIND=0.0.0.0:8080
-      - IMGPROXY_KEY=736563726574
-      - IMGPROXY_SALT=68656C6C6F
       - IMGPROXY_ENABLE_DEBUG_HEADERS=true
 
 volumes:
