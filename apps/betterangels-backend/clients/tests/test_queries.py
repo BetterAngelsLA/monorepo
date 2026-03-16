@@ -43,6 +43,7 @@ from model_bakery import baker
 from notes.models import Note
 from unittest_parametrize import parametrize
 from waffle import get_waffle_switch_model
+from waffle.testutils import override_switch
 
 
 class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
@@ -117,7 +118,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "placeOfBirth": self.client_profile_1["placeOfBirth"],
             "preferredCommunication": [PreferredCommunicationEnum.CALL.name],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
-            "profilePhoto": {"name": self.client_profile_1_photo_name},
+            "profilePhoto": {"url": self.client_profile_1_photo_url},
             "pronouns": PronounEnum.HE_HIM_HIS.name,
             "pronounsOther": None,
             "race": RaceEnum.WHITE_CAUCASIAN.name,
@@ -155,9 +156,13 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(client_profiles_data["totalCount"], client_profile_count)
         self.assertEqual(client_profiles_data["pageInfo"], {"limit": 10, "offset": 0})
 
-    @override_settings(IMGPROXY_KEY="736563726574", IMGPROXY_SALT="68656C6C6F", IMGPROXY_PATH_PREFIX="imgproxy")
+    @override_settings(
+        IMGPROXY_KEY="736563726574",
+        IMGPROXY_SALT="68656C6C6F",
+        IMGPROXY_LOCAL_URL="http://localhost:8080",
+    )
+    @override_switch(IMGPROXY_SWITCH, active=True)
     def test_client_profiles_query_with_processed_photo(self) -> None:
-        get_waffle_switch_model().objects.create(name=IMGPROXY_SWITCH, active=True)
         self._update_client_profile_photo_fixture(self.client_profile_2["id"])
 
         query = f"""
