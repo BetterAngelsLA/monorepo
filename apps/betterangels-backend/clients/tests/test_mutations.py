@@ -246,7 +246,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "displayCaseManager": "Not Assigned",
             "displayGender": "Female",
             "displayPronouns": "she/her/theirs",
-            "profilePhoto": {"name": self.client_profile_1_photo_name},
+            "profilePhoto": {"url": self.client_profile_1_photo_url},
             "veteranStatus": VeteranStatusEnum.YES.name,
         }
         client_differences = DeepDiff(
@@ -371,7 +371,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
     def test_partial_update_client_profile_mutation(self) -> None:
         # Manually update profile photo because it's created after the client profile fixture.
-        self.client_profile_1["profilePhoto"] = {"name": self.client_profile_1_photo_name}
+        self.client_profile_1["profilePhoto"] = {"url": self.client_profile_1_photo_url}
 
         variables = {"id": self.client_profile_1["id"]}
         response = self._update_client_profile_fixture(variables)
