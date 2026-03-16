@@ -42,7 +42,6 @@ from django.test import override_settings
 from model_bakery import baker
 from notes.models import Note
 from unittest_parametrize import parametrize
-from waffle import get_waffle_switch_model
 from waffle.testutils import override_switch
 
 
