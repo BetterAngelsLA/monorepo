@@ -12,7 +12,13 @@ import { useSnackbar, useUser } from '../../../hooks';
 import { UpdateUserProfileDocument } from './__generated__/UpdateUserProfile.generated';
 import { formFieldNames, FormSchema, type TFormSchema } from './formSchema';
 
-export function UserProfileEdit() {
+type TUserProfileEditProps = {
+  onCancel?: () => void;
+  onSuccess?: () => void;
+};
+
+export function UserProfileEdit(props: TUserProfileEditProps) {
+  const { onCancel, onSuccess } = props;
   const { user } = useUser();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -72,7 +78,11 @@ export function UserProfileEdit() {
       )?.updateUserProfile;
       if (payload?.__typename === 'CurrentUserType') {
         showSnackbar({ message: 'Profile updated.', type: 'success' });
-        router.back();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.back();
+        }
       } else {
         showSnackbar({
           message: 'Something went wrong. Please try again.',
@@ -97,7 +107,7 @@ export function UserProfileEdit() {
       <Form.Page
         actionProps={{
           onSubmit: handleSubmit(onSubmit),
-          onLeftBtnClick: router.back,
+          onLeftBtnClick: onCancel ?? router.back,
           disabled: isSubmitting,
         }}
       >
