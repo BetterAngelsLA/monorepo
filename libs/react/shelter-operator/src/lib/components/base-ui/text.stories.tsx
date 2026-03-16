@@ -7,6 +7,10 @@ const meta: Meta<typeof Text> = {
   args: {
     children: 'Sample Text',
     variant: 'body',
+    fontClass: '',
+    textColor: '',
+    textSize: '',
+    fontWeight: '',
   },
   argTypes: {
     variant: {
@@ -29,6 +33,18 @@ const meta: Meta<typeof Text> = {
         'caption-sm',
       ],
     },
+    fontClass: {
+      control: 'text',
+    },
+    textColor: {
+      control: 'text',
+    },
+    textSize: {
+      control: 'text',
+    },
+    fontWeight: {
+      control: 'text',
+    },
   },
 };
 
@@ -42,9 +58,19 @@ const textStory = (variant: TextVariant): Story => ({
 
 export const HeaderLarge = textStory('header-lg');
 export const HeaderMedium = textStory('header-md');
+export const HeaderNavbar = textStory('header-navbar');
 export const Subheading = textStory('subheading');
+export const SubheadingRegular = textStory('subheading-regular');
+export const Button = textStory('btn');
+export const BodyLarge = textStory('body-lg');
+export const BodyBold = textStory('body-bold');
 export const Body = textStory('body');
+export const BodyLight = textStory('body-light');
+export const Tag = textStory('tag');
+export const TagSmall = textStory('tag-sm');
+export const InputField = textStory('input-field');
 export const Caption = textStory('caption');
+export const CaptionSmall = textStory('caption-sm');
 
 // PLAYGROUND
 
