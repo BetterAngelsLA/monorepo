@@ -1,4 +1,4 @@
-appId: la.betterangels.dev.app
+appId: ${MAESTRO_APP_ID}
 ---
 - openLink: ${MAESTRO_DEEPLINK}
 
@@ -30,6 +30,3 @@ appId: la.betterangels.dev.app
 
 - assertVisible: 'Better Angels'
 - assertVisible: 'HMIS'
-- tapOn:
-    id: 'better-angels-login'
-- assertVisible: 'Welcome!'

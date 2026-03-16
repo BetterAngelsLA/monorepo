@@ -1,0 +1,23 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Reuse the landing flow as setup (launches app, asserts landing screen)
+- runFlow: landing.yml
+
+# Navigate to the login screen
+- tapOn:
+    id: 'better-angels-login'
+- assertVisible: 'Welcome!'
+
+# Enter email – password field is hidden until email is provided
+- tapOn:
+    id: 'ba-email-input'
+- inputText: ${MAESTRO_EMAIL}
+
+# Password field becomes visible after email is entered
+- tapOn:
+    id: 'ba-password-input'
+- inputText: ${MAESTRO_PASSWORD}
+
+- tapOn:
+    id: 'ba-login-submit'
+- assertVisible: 'Clients'

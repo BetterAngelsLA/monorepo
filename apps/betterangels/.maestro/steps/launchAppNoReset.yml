@@ -1,0 +1,15 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Launch the Better Angels app and apply the test deep link.
+#   - set clearState=false
+#
+# This flow intentionally contains NO test assertions or retry logic.
+# Tests are responsible for verifying UI state and handling reload/restart cases.
+
+- launchApp:
+    appId: ${MAESTRO_APP_ID}
+    clearState: false
+
+- waitForAnimationToEnd
+
+- openLink: ${MAESTRO_DEEPLINK}
