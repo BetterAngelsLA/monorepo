@@ -445,7 +445,7 @@ type ClientProfileType {
   requiresTransportation: Boolean
   residenceAddress: String
   residenceGeolocation: Point
-  sexualOrientation: String
+  sexualOrientation: [SexualOrientationEnum!]
   sexualOrientationOther: String
   spa: [ClientSpaEnum!]
   socialSecurityNumber: String
@@ -598,7 +598,7 @@ input CreateClientProfileInput {
   requiresTransportation: Boolean
   residenceAddress: String
   residenceGeolocation: Point
-  sexualOrientation: String
+  sexualOrientation: [SexualOrientationEnum!]
   sexualOrientationOther: String
   spa: [ClientSpaEnum!]
   socialSecurityNumber: String
@@ -2126,6 +2126,18 @@ enum ServiceRequestTypeEnum {
   REQUESTED
 }
 
+enum SexualOrientationEnum {
+  ASEXUAL
+  BISEXUAL
+  GAY
+  STRAIGHT
+  LESBIAN
+  PANSEXUAL
+  QUEER
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
 enum ShelterChoices {
   BUILDING
   CHURCH
@@ -2496,7 +2508,7 @@ input UpdateClientProfileInput {
   requiresTransportation: Boolean
   residenceAddress: String
   residenceGeolocation: Point
-  sexualOrientation: String
+  sexualOrientation: [SexualOrientationEnum!]
   sexualOrientationOther: String
   spa: [ClientSpaEnum!]
   socialSecurityNumber: String

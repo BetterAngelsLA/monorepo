@@ -19,6 +19,7 @@ from clients.enums import (
     LivingSituationEnum,
     MedicalNeedsEnum,
     PreferredCommunicationEnum,
+    SexualOrientationEnum,
 )
 from common.graphql.types import (
     AttachmentInterface,
@@ -344,7 +345,7 @@ class ClientProfileBaseType:
     requires_transportation: auto
     residence_address: auto
     residence_geolocation: auto
-    sexual_orientation: auto
+    sexual_orientation: Optional[List[SexualOrientationEnum]]
     sexual_orientation_other: auto
     spa: Optional[List[ClientSpaEnum]]
     social_security_number: auto

@@ -25,6 +25,7 @@ from clients.enums import (
     PronounEnum,
     RaceEnum,
     RelationshipTypeEnum,
+    SexualOrientationEnum,
     SocialMediaEnum,
     VeteranStatusEnum,
 )
@@ -167,7 +168,7 @@ class AbstractClientProfile(BaseModel):
     )
     funding_source_other = models.CharField(max_length=255, blank=True, null=True)
     spa = ArrayField(base_field=IntegerChoicesField(choices_enum=ClientSpaEnum), blank=True, null=True)
-    sexual_orientation = models.CharField(max_length=100, blank=True, null=True)
+    sexual_orientation = ArrayField(base_field=TextChoicesField(choices_enum=SexualOrientationEnum), blank=True, null=True)
     sexual_orientation_other = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
