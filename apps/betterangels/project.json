@@ -110,10 +110,12 @@
       },
       "configurations": {
         "ios": {
-          "command": "source .maestro/scripts/setup-maestro.sh ios && maestro --device $MAESTRO_DEVICE -p ios test .maestro/tests"
+          "command": ".maestro/scripts/setup-maestro.sh",
+          "env": { "MAESTRO_PLATFORM": "ios" }
         },
         "android": {
-          "command": "source .maestro/scripts/setup-maestro.sh android && maestro --device $MAESTRO_DEVICE -p android test .maestro/tests"
+          "command": ".maestro/scripts/setup-maestro.sh",
+          "env": { "MAESTRO_PLATFORM": "android" }
         }
       },
       "defaultConfiguration": "ios"

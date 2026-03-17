@@ -154,12 +154,44 @@ yarn nx run betterangels:e2e:ios
 yarn nx run betterangels:e2e:android
 ```
 
-**Pass flags through to Maestro:**
+**Run a specific test by name:**
+
+Short names are resolved against `.maestro/tests/` — no need to type the full path:
 
 ```bash
-yarn ba:e2e -- --verbose
-yarn ba:e2e:android -- --debug-output
+# Run just the landing test
+yarn ba:e2e -- landing
+
+# Android
+yarn ba:e2e:android -- landing
 ```
+
+**Pass extra flags to Maestro:**
+
+Everything after `--` is forwarded to the script. However, nx reserves some
+flag names (like `--verbose`) and will consume them before they reach the script.
+Use `--args` to bypass this:
+
+```bash
+# Verbose output
+yarn ba:e2e --args="--verbose"
+
+# Verbose + specific test (put everything in --args)
+yarn ba:e2e --args="--verbose landing"
+
+# Android with flags
+yarn ba:e2e:android --args="--verbose landing"
+```
+
+Flags that don't collide with nx work with either `--` or `--args`:
+
+```bash
+yarn ba:e2e -- --include-tags=smoke
+yarn ba:e2e --args="--include-tags=smoke landing"
+```
+
+> **Note:** `--` and `--args` cannot be combined in the same command.
+> If you need both flags and a test name, put everything in `--args`.
 
 ---
 
@@ -193,18 +225,18 @@ For a full list of Maestro CLI environment variables, see the [Maestro CLI Envir
 
 ## Running Maestro Directly (Optional)
 
-If you prefer to run the Maestro CLI directly, source the resolve script first:
+If you prefer to run the Maestro CLI directly, you can execute the script standalone:
 
 ```bash
 cd apps/betterangels
-source .maestro/scripts/setup-maestro.sh ios
-maestro --device $MAESTRO_DEVICE -p ios test .maestro/tests
+MAESTRO_PLATFORM=ios .maestro/scripts/setup-maestro.sh
+MAESTRO_PLATFORM=ios .maestro/scripts/setup-maestro.sh --verbose landing
 ```
 
 Or pass everything manually:
 
 ```bash
-maestro --device <DEVICE_ID> -p ios test apps/betterangels/.maestro/tests \
+maestro --device <DEVICE_ID> test apps/betterangels/.maestro/tests \
   -e MAESTRO_DEEPLINK="exp+betterangels://expo-development-client/?url=http://192.168.1.198:8081&disableOnboarding=1"
 ```
 
@@ -221,7 +253,7 @@ maestro --device <DEVICE_ID> -p ios test apps/betterangels/.maestro/tests \
     (reusable steps)
 
   scripts/
-    setup-maestro.sh     # Auto-detects device & deep link
+    setup-maestro.sh     # Auto-detects device & deep link, runs maestro
 ```
 
 ---
