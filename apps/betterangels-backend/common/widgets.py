@@ -30,6 +30,8 @@ def _get_imgproxy_resumable_admin_widget_class() -> Any:
         thumbnail so only the processed image is shown, not the original.
         """
 
+        is_required = True
+
         def render(
             self,
             name: str,
@@ -41,18 +43,20 @@ def _get_imgproxy_resumable_admin_widget_class() -> Any:
             from django.db.models.fields.files import FieldFile
             from django.utils.safestring import mark_safe
 
-            html = super().render(name, value, attrs, **kwargs)
+
+            html: str = super().render(name, value, attrs, **kwargs)
             if not value:
                 return html
-            thumb_url = ImgproxyAdminImageWidget._get_thumb_url(
-                value, preset=ImagePresetEnum.MD
-            )
+
+            thumb_url = ImgproxyAdminImageWidget._get_thumb_url(value)
             if not thumb_url:
                 return html
+
             if isinstance(value, FieldFile):
                 original_url = (value.storage or default_storage).url(value.name)
             else:
                 original_url = default_storage.url(value)
+
             return mark_safe(html.replace(original_url, thumb_url))
 
     return ImgproxyResumableAdminWidget
@@ -95,11 +99,11 @@ class ImgproxyAdminImageWidget(AdminFileWidget):
     @staticmethod
     def _get_thumb_url(
         field_file: object,
-        preset: Optional[ImagePresetEnum] = ImagePresetEnum.MD,
+        preset: Optional[ImagePresetEnum] = None,
     ) -> Optional[str]:
         """Return an imgproxy-processed URL or fall back to the plain URL."""
         if is_imgproxy_enabled():
-            url = build_imgproxy_url(field_file, preset=preset, processing=None)
+            url = build_imgproxy_url(field_file, preset=preset, processing="f:jpg")
             if url:
                 return url
         return getattr(field_file, "url", None)

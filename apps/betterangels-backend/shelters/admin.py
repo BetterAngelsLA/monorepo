@@ -6,7 +6,6 @@ from urllib.parse import quote
 import places
 import requests
 from betterangels_backend import settings
-from common.enums import ImagePresetEnum
 from common.imgproxy import build_imgproxy_url, is_imgproxy_enabled
 from common.models import Location
 from common.widgets import ImgproxyResumableAdminWidget
@@ -962,8 +961,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         if obj.hero_image and obj.hero_image.file:
             if is_imgproxy_enabled():
                 url = (
-                    build_imgproxy_url(obj.hero_image.file, preset=None, processing="f:jpg")
-                    or obj.hero_image.file.url
+                    build_imgproxy_url(obj.hero_image.file, preset=None, processing="f:jpg") or obj.hero_image.file.url
                 )
             else:
                 url = obj.hero_image.file.url
