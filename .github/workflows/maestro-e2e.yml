@@ -1,0 +1,166 @@
+name: 🧪 Maestro E2E Tests (PR Comment)
+
+on:
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: maestro-e2e-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-test:
+    # Only run on PR comments matching /run-e2e, from trusted collaborators
+    if: >-
+      github.event.issue.pull_request
+      && startsWith(github.event.comment.body, '/run-e2e')
+      && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: preview
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: write
+    steps:
+      - name: 🚀 React to comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
+
+      - name: 🔍 Get PR details
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            core.setOutput('sha', pr.data.head.sha);
+            core.setOutput('branch', pr.data.head.ref);
+
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.sha }}
+          fetch-depth: 1
+
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.21.1
+      - run: |
+          corepack enable
+          npm install --global eas-cli
+
+      - name: 🧶 Setup Yarn in Node
+        uses: actions/setup-node@v4
+        with:
+          cache: 'yarn'
+
+      - name: 🔧 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install dependencies
+        run: yarn install
+
+      - name: 🔑 Set up Secrets
+        id: setup-secrets
+        uses: ./.github/actions/expo-setup-secrets
+        with:
+          profile: preview
+          project: betterangels
+          secrets: ${{ toJson(secrets) }}
+
+      - name: 🔍 Preview Build
+        id: preview-build
+        uses: ./.github/actions/expo-build
+        with:
+          profile: preview
+          project: betterangels
+          runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
+
+      - name: 🚀 Perform EAS Update
+        id: expo-update
+        uses: ./.github/actions/expo-update
+        with:
+          project: betterangels
+          branch: ${{ steps.pr.outputs.branch }}
+          slug: ${{ steps.preview-build.outputs.slug }}
+          project-id: ${{ steps.preview-build.outputs.project-id }}
+
+      - name: 🧷 Write commit status metadata for EAS
+        working-directory: apps/betterangels
+        env:
+          GITHUB_STATUS_CONTEXT: Betterangels E2E Tests
+          GITHUB_STATUS_SHA: ${{ steps.pr.outputs.sha }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          EAS_ACCOUNT: better-angels
+          EAS_PROJECT_SLUG: ${{ steps.preview-build.outputs.slug }}
+        run: |
+          set -euo pipefail
+          {
+            echo "GITHUB_REPOSITORY=${GITHUB_REPOSITORY}"
+            echo "GITHUB_STATUS_SHA=${GITHUB_STATUS_SHA}"
+            echo "GITHUB_STATUS_CONTEXT=${GITHUB_STATUS_CONTEXT}"
+            echo "EAS_ACCOUNT=${EAS_ACCOUNT}"
+            echo "EAS_PROJECT_SLUG=${EAS_PROJECT_SLUG}"
+          } >> .env
+
+      - name: 🧪 Run E2E Tests
+        working-directory: apps/betterangels
+        run: |
+          eas workflow:run .eas/workflows/e2e-test.yml --non-interactive
+
+      - name: 💬 Comment on PR with result
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          JOB_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            const status = process.env.JOB_STATUS;
+            const icon = status === 'success' ? '✅' : status === 'cancelled' ? '⚠️' : '❌';
+            const verb = status === 'success' ? 'triggered' : status === 'cancelled' ? 'cancelled' : 'failed to trigger';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `${icon} Maestro E2E tests ${verb}. [View workflow run](${process.env.RUN_URL})`
+            });
+
+# 1. If someone comments /run-e2e multiple times, parallel runs will fire and waste resources. Add a concurrency group:
+# concurrency:
+#   group: maestro-e2e-${{ github.event.issue.number }}
+#   cancel-in-progress: true
+
+# 2. No timeout-minutes (medium)
+# e2e-test:
+#   timeout-minutes: 60  # adjust as needed
+
+# 3. statuses: write is unused (low)
+# This workflow never posts commit statuses directly — the EAS workflow does that using its own GITHUB_STATUS_TOKEN. Per least-privilege, remove it:
+# permissions:
+#   contents: read
+#   pull-requests: write
+#   actions: write
+
+# 4. Cancelled runs show as failures (low)
+# Line 113: job.status can be 'cancelled' in addition to 'success'/'failure', but the comment logic treats everything non-success as ❌ "failed to trigger". Consider handling cancellation:
+# const status = process.env.JOB_STATUS;
+# const icon = status === 'success' ? '✅' : status === 'cancelled' ? '⚠️' : '❌';
+# const verb = status === 'success' ? 'triggered' : status === 'cancelled' ? 'cancelled' : 'failed to trigger';
+
+# No issues with: the .env flow (all variables needed by the EAS workflow — GROUP_ID, PROJECT_ID, RUNTIME_VERSION, plus status metadata — are correctly written by the composite actions and the metadata step), the checkout using PR head SHA, or the composite action invocations.
