@@ -1,6 +1,6 @@
 import { ArrowRight, Pencil, Trash2 } from 'lucide-react';
 import { ButtonHTMLAttributes, ReactNode } from 'react';
-import { Text } from './text';
+import { Text } from '../text/text';
 
 export type ButtonVariant =
   | 'floating'
@@ -9,7 +9,7 @@ export type ButtonVariant =
   | 'edit'
   | 'right-arrow';
 
-export type ButtonColor = 'blue';
+export type ButtonColor = 'blue' | 'red' | 'green' | 'yellow';
 
 interface IButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -50,6 +50,15 @@ const colorSchemes: Record<
   blue: {
     primary: 'bg-[#008CEE] hover:bg-[#0071C0] border-[#008CEE] text-white',
     floating: 'bg-[#008CEE] hover:bg-[#0071C0] text-white',
+  },
+  red: {
+    primary: 'bg-[#CB0808] hover:bg-[#a00606] text-white',
+  },
+  green: {
+    primary: 'bg-[#23CE6B] hover:bg-[#1db35d] text-white',
+  },
+  yellow: {
+    primary: 'bg-[#FFC700] hover:bg-[#e6b300] text-white',
   },
 };
 

@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { Text } from '../text';
+import { Text } from '../text/text';
 import type { DropdownOption } from './types';
 
 /** Maximum number of chip pills shown before the "+N" badge. */

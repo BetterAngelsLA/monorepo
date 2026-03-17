@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { Text } from '../text';
+import { Text } from '../text/text';
 import { cn } from './constants';
 import { DropdownChips } from './DropdownChips';
 import { DropdownMenu } from './DropdownMenu';

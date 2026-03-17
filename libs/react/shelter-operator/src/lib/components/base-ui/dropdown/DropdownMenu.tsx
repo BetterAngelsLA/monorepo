@@ -1,6 +1,6 @@
 import { Check, Search } from 'lucide-react';
 import type { RefObject } from 'react';
-import { Text } from '../text';
+import { Text } from '../text/text';
 import { cn, Z_BACKDROP, Z_MENU } from './constants';
 import type { DropdownOption } from './types';
 
