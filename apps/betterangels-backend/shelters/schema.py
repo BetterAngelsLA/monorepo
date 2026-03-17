@@ -32,6 +32,9 @@ class Query:
     shelter: ShelterType = strawberry_django.field()
     shelters: OffsetPaginated[ShelterType] = strawberry_django.offset_paginated()
 
+    beds: OffsetPaginated[BedType] = strawberry_django.offset_paginated()
+    rooms: OffsetPaginated[RoomType] = strawberry_django.offset_paginated()
+
 
 @strawberry.type
 class Mutation:

@@ -14,9 +14,15 @@ from django.contrib.gis.measure import D
 from django.db.models import Q, QuerySet
 from shelters import models
 from shelters.enums import (
+    AccessibilityChoices,
+    BedStatusChoices,
+    BedTypeChoices,
     DemographicChoices,
+    FunderChoices,
+    MedicalNeedChoices,
     ParkingChoices,
     PetChoices,
+    RoomStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
 )
@@ -152,3 +158,89 @@ class ShelterFilter:
 class ShelterOrder:
     name: auto
     created_at: auto
+
+
+@strawberry_django.filter_type(models.Bed)
+class BedFilter:
+    @strawberry_django.filter_field
+    def shelter_id(self, info: Info, value: Optional[ID], prefix: str) -> Q:
+        if value is None:
+            return Q()
+        return Q(**{f"{prefix}shelter_id": value})
+
+    @strawberry_django.filter_field
+    def status(self, info: Info, value: Optional[List[BedStatusChoices]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}status__in": value})
+
+    @strawberry_django.filter_field
+    def demographics(
+        self, queryset: QuerySet, value: Optional[List[DemographicChoices]], prefix: str
+    ) -> Tuple[QuerySet, Q]:
+        if not value:
+            return queryset, Q()
+        return queryset.filter(**{f"{prefix}demographics__name__in": value}).distinct(), Q()
+
+    @strawberry_django.filter_field
+    def accessibility(
+        self, queryset: QuerySet, value: Optional[List[AccessibilityChoices]], prefix: str
+    ) -> Tuple[QuerySet, Q]:
+        if not value:
+            return queryset, Q()
+        return queryset.filter(**{f"{prefix}accessibility__name__in": value}).distinct(), Q()
+
+    @strawberry_django.filter_field
+    def bed_type(self, info: Info, value: Optional[List[BedTypeChoices]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}bed_type__in": value})
+
+    @strawberry_django.filter_field
+    def funders(
+        self, queryset: QuerySet, value: Optional[List[FunderChoices]], prefix: str
+    ) -> Tuple[QuerySet, Q]:
+        if not value:
+            return queryset, Q()
+        return queryset.filter(**{f"{prefix}funders__name__in": value}).distinct(), Q()
+
+    @strawberry_django.filter_field
+    def maintenance_flag(self, info: Info, value: Optional[bool], prefix: str) -> Q:
+        if value is None:
+            return Q()
+        return Q(**{f"{prefix}maintenance_flag": value})
+
+    @strawberry_django.filter_field
+    def medical_needs(self, info: Info, value: Optional[List[MedicalNeedChoices]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}medical_needs__in": value})
+
+    @strawberry_django.filter_field
+    def pets(
+        self, queryset: QuerySet, value: Optional[List[PetChoices]], prefix: str
+    ) -> Tuple[QuerySet, Q]:
+        if not value:
+            return queryset, Q()
+        return queryset.filter(**{f"{prefix}pets__name__in": value}).distinct(), Q()
+
+
+@strawberry_django.filter_type(models.Room)
+class RoomFilter:
+    @strawberry_django.filter_field
+    def shelter_id(self, info: Info, value: Optional[ID], prefix: str) -> Q:
+        if value is None:
+            return Q()
+        return Q(**{f"{prefix}shelter_id": value})
+
+    @strawberry_django.filter_field
+    def status(self, info: Info, value: Optional[List[RoomStatusChoices]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}status__in": value})
+
+    @strawberry_django.filter_field
+    def room_type(self, info: Info, value: Optional[List[RoomStyleChoices]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}room_type__in": value})

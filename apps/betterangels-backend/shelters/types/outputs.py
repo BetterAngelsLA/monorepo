@@ -43,7 +43,7 @@ from shelters.types.lookups import (
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
-from .filters import ShelterFilter, ShelterOrder
+from .filters import BedFilter, RoomFilter, ShelterFilter, ShelterOrder
 
 
 def _resolve_time_ranges(values: Any) -> Optional[List[Optional["TimeRange"]]]:
@@ -192,7 +192,7 @@ class AdminShelterType(ShelterTypeMixin):
         return admin_shelter_list(queryset, user=user)
 
 
-@strawberry_django.type(models.Bed)
+@strawberry_django.type(models.Bed, filters=BedFilter)
 class BedType:
     id: ID
     shelter: "ShelterType"
@@ -213,7 +213,7 @@ class BedType:
     fees: Optional[int]
 
 
-@strawberry_django.type(models.Room)
+@strawberry_django.type(models.Room, filters=RoomFilter)
 class RoomType:
     id: ID
     shelter: "ShelterType"
