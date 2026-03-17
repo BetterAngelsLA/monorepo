@@ -1,11 +1,12 @@
 import { AlertTriangle, CheckCircle, Info, XCircle } from 'lucide-react';
+import type { ButtonColor } from '../buttons/buttons';
 import { TToastStatus } from './types';
 
 interface IToastVariantConfig {
   Icon: typeof XCircle;
   iconBgClass: string;
   iconColorClass: string;
-  actionButtonClass: string;
+  actionButtonClass: ButtonColor;
 }
 
 export const AUTO_DISMISS_MS = 5000;

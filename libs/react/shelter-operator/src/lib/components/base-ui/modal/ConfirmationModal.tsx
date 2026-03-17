@@ -1,7 +1,7 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { CheckCircle, Info, Trash2 } from 'lucide-react';
 import { ReactNode } from 'react';
-import { Button } from '../buttons/buttons';
+import { Button, ButtonColor } from '../buttons/buttons';
 import { Text } from '../text/text';
 import { Modal } from './Modal';
 import { ModalBody } from './ModalBody';
@@ -32,7 +32,7 @@ const variantConfig: Record<
     Icon: typeof Trash2;
     iconBgClass: string;
     iconColorClass: string;
-    buttonClass: string;
+    buttonClass: ButtonColor;
   }
 > = {
   danger: {
