@@ -126,6 +126,7 @@ export type AdminShelterType = {
   supervisorialDistrict?: Maybe<Scalars['Int']['output']>;
   totalBeds?: Maybe<Scalars['Int']['output']>;
   trainingServices: Array<TrainingServiceType>;
+  updatedAt: Scalars['DateTime']['output'];
   website?: Maybe<Scalars['String']['output']>;
 };
 
@@ -2638,6 +2639,7 @@ export type ShelterType = {
   supervisorialDistrict?: Maybe<Scalars['Int']['output']>;
   totalBeds?: Maybe<Scalars['Int']['output']>;
   trainingServices: Array<TrainingServiceType>;
+  updatedAt: Scalars['DateTime']['output'];
   website?: Maybe<Scalars['String']['output']>;
 };
 

@@ -121,6 +121,7 @@ type AdminShelterType {
   supervisorialDistrict: Int
   totalBeds: Int
   trainingServices: [TrainingServiceType!]!
+  updatedAt: DateTime!
   website: String
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
@@ -2139,6 +2140,7 @@ type ShelterType {
   supervisorialDistrict: Int
   totalBeds: Int
   trainingServices: [TrainingServiceType!]!
+  updatedAt: DateTime!
   website: String
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]

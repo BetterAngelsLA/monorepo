@@ -116,7 +116,6 @@ export function ShelterPage({ id }: { id: string }) {
         {hasRestrictions && <Restrictions shelter={shelter} />}
         {hasOtherServices && <OtherServices shelter={shelter} />}
         {hasEcosystemInfo && <EcosystemInfo shelter={shelter} />}
-
         <div className="my-4 flex justify-center">
           <ReportUpdateButton />
         </div>
