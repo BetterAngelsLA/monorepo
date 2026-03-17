@@ -5,6 +5,7 @@ from urllib.parse import unquote
 import magic
 from common.enums import AttachmentType
 from common.utils import canonicalise_filename, get_unique_file_path
+from common.widgets import patch_async_admin_widget
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
@@ -15,6 +16,8 @@ from django.db.models.functions import Lower
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from phonenumber_field.modelfields import PhoneNumberField
+
+patch_async_admin_widget()
 
 
 class BaseModel(models.Model):

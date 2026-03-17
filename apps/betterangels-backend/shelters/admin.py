@@ -6,9 +6,9 @@ from urllib.parse import quote
 import places
 import requests
 from betterangels_backend import settings
+from common.enums import ImagePresetEnum
 from common.imgproxy import build_imgproxy_url, is_imgproxy_enabled
 from common.models import Location
-from common.widgets import ImgproxyResumableAdminWidget
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
@@ -319,13 +319,6 @@ class PhotoForm(forms.ModelForm):
     class Meta:
         fields = "__all__"
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        if "file" in self.fields and ImgproxyResumableAdminWidget is not None:
-            self.fields["file"].widget = ImgproxyResumableAdminWidget(
-                attrs={"model": self.Meta.model, "field_name": "file"}
-            )
-
 
 class ExteriorPhotoForm(PhotoForm):
     class Meta(PhotoForm.Meta):
@@ -341,14 +334,12 @@ class ExteriorPhotoInline(admin.TabularInline):
     model = ExteriorPhoto
     form = ExteriorPhotoForm
     max_num = 0
-    fields = ("file", "make_hero_image")
 
 
 class InterPhotoInline(admin.TabularInline):
     model = InteriorPhoto
     form = InteriorPhotoForm
     max_num = 0
-    fields = ("file", "make_hero_image")
 
 
 class VideoInline(admin.TabularInline):
@@ -961,7 +952,8 @@ class ShelterAdmin(ImportExportModelAdmin):
         if obj.hero_image and obj.hero_image.file:
             if is_imgproxy_enabled():
                 url = (
-                    build_imgproxy_url(obj.hero_image.file, preset=None, processing="f:jpg") or obj.hero_image.file.url
+                    build_imgproxy_url(obj.hero_image.file, preset=ImagePresetEnum.MD, processing=None)
+                    or obj.hero_image.file.url
                 )
             else:
                 url = obj.hero_image.file.url
