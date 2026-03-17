@@ -1,6 +1,5 @@
 import { useQuery } from '@apollo/client/react';
 import { Button, Card } from '@monorepo/react/components';
-import { format } from 'date-fns';
 import parsePhoneNumber from 'libphonenumber-js';
 import { useNavigate } from 'react-router-dom';
 import { ViewShelterDocument } from './__generated__/shelter.generated';
@@ -20,6 +19,7 @@ import {
   ShelterTypes,
   SpecialSituationRestrictions,
 } from './partials';
+
 export function ShelterPage({ id }: { id: string }) {
   const { loading, data } = useQuery(ViewShelterDocument, {
     variables: {
@@ -100,9 +100,6 @@ export function ShelterPage({ id }: { id: string }) {
         shelterName={shelter.name}
       />
       <div className="bg-neutral-99 py-2 px-4 -mx-4 -mb-6 flex flex-col gap-2">
-        <div className="text-sm text-gray-400 text-right">
-          Last Updated Date: {format(shelter.updatedAt, 'M/d/yy')}
-        </div>
         {hasGeneralInfo && <GeneralInfo shelter={shelter} />}
         {hasDescription && (
           <Card title="Description">
@@ -119,6 +116,7 @@ export function ShelterPage({ id }: { id: string }) {
         {hasRestrictions && <Restrictions shelter={shelter} />}
         {hasOtherServices && <OtherServices shelter={shelter} />}
         {hasEcosystemInfo && <EcosystemInfo shelter={shelter} />}
+
         <div className="my-4 flex justify-center">
           <ReportUpdateButton />
         </div>

@@ -136,6 +136,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
                 id
                 name
             }
+            updatedAt
         """
 
     def test_shelter_query(self) -> None:
@@ -201,7 +202,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
                 )[0]
             ],
             storage=[Storage.objects.get_or_create(name=StorageChoices.AMNESTY_LOCKERS)[0]],
-            training_services=[TrainingService.objects.get_or_create(name=TrainingServiceChoices.JOB_TRAINING)[0]],
+            training_services=[TrainingService.objects.get_or_create(name=TrainingServiceChoices.JOB_TRAINING)[0]]
         )
 
         shelter = Shelter.objects.get(pk=new_shelter.pk)
@@ -323,6 +324,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
                 "place": "123 Main Street",
             },
             "organization": {"id": ANY, "name": shelter_organization.name},
+            "updatedAt": ANY,
         }
         self.assertEqual(response_shelter, expected_shelter)
 
