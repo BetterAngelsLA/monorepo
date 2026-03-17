@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { Button } from './base-ui/buttons';
+import { Button } from './base-ui/buttons/buttons';
 
 export type RowCell = {
   key: string;

@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Button } from '../../../components/base-ui/buttons';
+import { Button } from '../../../components/base-ui/buttons/buttons';
 import { EditRoomModal } from '../../../components/rooms/EditRoomModal';
 import {
   RoomTable,

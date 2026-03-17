@@ -7,7 +7,7 @@ import {
   useNavigate,
   useOutletContext,
 } from 'react-router-dom';
-import { Button } from '../../components/base-ui/buttons';
+import { Button } from '../../components/base-ui/buttons/buttons';
 import { ShelterTable } from '../../components/ShelterTable';
 import {
   ViewSheltersByOrganizationDocument,

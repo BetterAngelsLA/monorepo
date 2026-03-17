@@ -1,7 +1,7 @@
 import { useUser } from '@monorepo/react/shelter';
 import { Route, Routes } from 'react-router-dom';
+import { OperatorLayout } from './components/layout/OperatorLayout';
 import Dashboard from './pages/dashboard/Dashboard';
-import OperatorDashboardLayout from './pages/dashboard/OperatorDashboardLayout';
 import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
 import CreateShelterForm from './pages/dashboard/components/create-shelter-form';
 import SignIn from './pages/signIn';
@@ -14,7 +14,7 @@ export function OperatorApp() {
     <ActiveOrgProvider organizations={user?.organizations ?? []}>
       <OperatorAuthProvider>
         <Routes>
-          <Route element={<OperatorDashboardLayout />}>
+          <Route element={<OperatorLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard/create" element={<CreateShelterForm />} />
             <Route

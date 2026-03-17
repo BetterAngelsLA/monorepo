@@ -1,5 +1,7 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { X } from 'lucide-react';
+import { Button } from '../buttons/buttons';
+import { Text } from '../text/text';
 import { toastVariantConfig } from './constants';
 import { IToastProps } from './types';
 
@@ -43,9 +45,13 @@ export function Toast({
         </div>
 
         <div className="flex-1 min-w-0 pt-0.5">
-          <p className="text-base font-semibold text-[#383B40]">{title}</p>
+          <Text variant="subheading" className="font-semibold text-[#383B40]">
+            {title}
+          </Text>
           {description && (
-            <p className="text-sm text-[#747A82] mt-0.5">{description}</p>
+            <Text variant="body" className="block text-[#747A82] mt-0.5">
+              {description}
+            </Text>
           )}
         </div>
 
@@ -59,38 +65,16 @@ export function Toast({
 
       {action && (
         <div className="flex items-center justify-end gap-3 mt-4">
-          <button
-            onClick={onClose}
-            className={mergeCss([
-              'px-5',
-              'py-2',
-              'rounded-full',
-              'text-sm',
-              'font-medium',
-              'border',
-              'border-[#D3D9E3]',
-              'text-[#383B40]',
-              'hover:bg-[#F4F6FD]',
-              'transition-colors',
-            ])}
-          >
+          <Button variant="primary-sm" onClick={onClose}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={action.onClick}
-            className={mergeCss([
-              'px-5',
-              'py-2',
-              'rounded-full',
-              'text-sm',
-              'font-medium',
-              'text-white',
-              'transition-colors',
-              actionButtonClass,
-            ])}
+            variant="primary-sm"
+            color={actionButtonClass}
           >
             {action.label}
-          </button>
+          </Button>
         </div>
       )}
     </div>

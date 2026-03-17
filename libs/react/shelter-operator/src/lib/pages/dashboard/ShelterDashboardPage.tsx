@@ -1,6 +1,6 @@
 import { BookCheck, Settings } from 'lucide-react';
 import { useLocation, useParams } from 'react-router-dom';
-import { Button } from '../../components/base-ui/buttons';
+import { Button } from '../../components/base-ui/buttons/buttons';
 import type { Shelter } from '../../types/shelter';
 import { ShelterTabContent } from './components/ShelterTabContent';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';

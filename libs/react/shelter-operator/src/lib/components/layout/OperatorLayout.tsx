@@ -1,90 +1,95 @@
-import { ChevronDown } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
+import { Plus, UserCog } from 'lucide-react';
+import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Button } from '../base-ui/buttons/buttons';
+import { Dropdown } from '../base-ui/dropdown';
 import { useActiveOrg } from '../../providers/activeOrg';
 
 export function OperatorLayout() {
+  const { pathname } = useLocation();
   const { activeOrg, organizations, setActiveOrgId } = useActiveOrg();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const isOperatorRoute = pathname === '/operator';
+  const isCreateShelterRoute = pathname === '/operator/dashboard/create';
+  const selectedOrganizationId = activeOrg?.id ?? organizations[0]?.id ?? '';
+  const title =
+    organizations.length === 1 ? organizations[0].name : 'Admin Dashboard';
 
-  const hasMultipleOrgs = organizations.length > 1;
+  const selectedOption =
+    organizations
+      .filter((org) => org.id === selectedOrganizationId)
+      .map((org) => ({ label: org.name, value: org.id }))[0] ?? null;
 
-  useEffect(() => {
-    if (!dropdownOpen) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setDropdownOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [dropdownOpen]);
+  const orgOptions = organizations.map((org) => ({
+    label: org.name,
+    value: org.id,
+  }));
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
-        <Link
-          to="/operator"
-          className="text-lg font-semibold text-gray-900 no-underline"
-        >
-          Shelter Operator
-        </Link>
+      <header className="mb-6 bg-[#FAFAFA] px-5 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3 md:gap-4">
+            <Link to="/" className="shrink-0">
+              <BetterAngelsLogoIcon fill="#1E3342" className="h-9 w-auto" />
+            </Link>
 
-        {activeOrg && hasMultipleOrgs && (
-          <div className="relative" ref={dropdownRef}>
-            <button
-              type="button"
-              onClick={() => setDropdownOpen((prev) => !prev)}
-              className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-xs hover:bg-gray-50 transition-colors cursor-pointer"
-            >
-              <span className="max-w-[200px] truncate">{activeOrg.name}</span>
-              <ChevronDown
-                className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
-                  dropdownOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
+            <Link to="/operator">
+              <p className="truncate text-xl font-medium text-[#5A616B] md:text-2xl">
+                {title}
+              </p>
+            </Link>
+            {isCreateShelterRoute && (
+              <p className="truncate text-xl font-medium text-black md:text-2xl">
+                / Shelter Creation
+              </p>
+            )}
 
-            {dropdownOpen && (
-              <ul className="absolute right-0 mt-1 w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-lg z-50 list-none m-0 p-0">
-                {organizations.map((org) => {
-                  const isSelected = org.id === activeOrg.id;
-                  return (
-                    <li key={org.id}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveOrgId(org.id);
-                          setDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 text-sm border-none bg-transparent cursor-pointer transition-colors truncate ${
-                          isSelected
-                            ? 'text-blue-600 font-semibold bg-blue-50'
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        {org.name}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+            {organizations.length > 1 && (
+              <div className="ml-1 min-w-52">
+                <Dropdown
+                  label="Organization"
+                  placeholder="Select organization"
+                  options={orgOptions}
+                  value={selectedOption}
+                  onChange={(option) => {
+                    if (option) setActiveOrgId(option.value);
+                  }}
+                />
+              </div>
             )}
           </div>
-        )}
 
-        {activeOrg && !hasMultipleOrgs && (
-          <span className="text-sm font-medium text-gray-500">
-            {activeOrg.name}
-          </span>
-        )}
+          <div className="flex items-center gap-3">
+            {isOperatorRoute && (
+              <Link to="/operator/dashboard/create">
+                <Button
+                  variant="primary"
+                  leftIcon={<Plus size={20} />}
+                  rightIcon={false}
+                >
+                  Create Shelter
+                </Button>
+              </Link>
+            )}
+
+            <button
+              type="button"
+              aria-label="Account settings"
+              className="inline-flex size-11 items-center justify-center rounded-full border border-[#D3D9E3] bg-white text-[#3E4652] transition-colors hover:bg-[#F8FAFC] pl-1 pb-0.25"
+            >
+              <UserCog size={20} />
+            </button>
+          </div>
+        </div>
       </header>
       <main className="flex-1">
-        <Outlet />
+        <Outlet
+          context={{
+            organizations: organizations.map((org) => ({ id: org.id, name: org.name })),
+            selectedOrganizationId,
+            setSelectedOrganizationId: setActiveOrgId,
+          }}
+        />
       </main>
     </div>
   );

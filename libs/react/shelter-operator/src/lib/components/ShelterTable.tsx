@@ -2,7 +2,7 @@ import { Filter, Search, Settings2 } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import type { Shelter } from '../types/shelter';
-import { Button } from './base-ui/buttons';
+import { Button } from './base-ui/buttons/buttons';
 import { ConfirmationModal } from './base-ui/modal/ConfirmationModal';
 import { Table, type TableColumn } from './Table';
 
