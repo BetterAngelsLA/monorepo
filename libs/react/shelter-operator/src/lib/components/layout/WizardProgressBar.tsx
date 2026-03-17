@@ -30,9 +30,9 @@ export const WizardProgressBar = memo(
     };
 
     return (
-      <div className="w-full flex flex-col gap-1 py-2">
-        <div className="flex items-center w-full">
-          {steps.map((_, index) => {
+      <div className="w-full py-2">
+        <div className="flex items-start w-full px-4">
+          {steps.map((step, index) => {
             const state = getStepState(index);
             const isLast = index === steps.length - 1;
             const isClickable = state === 'completed';
@@ -54,51 +54,49 @@ export const WizardProgressBar = memo(
               index < currentStep ? 'w-full' : 'w-0',
             ].join(' ');
 
-            return (
-              <div
-                key={index}
-                className={`flex items-center ${!isLast ? 'flex-1' : ''}`}
-              >
-                <Button
-                  variant="right-arrow"
-                  onClick={() => handleStepClick(index)}
-                  disabled={!isClickable}
-                  className={dotClasses}
-                  aria-label={`Go to step ${index + 1}`}
-                  leftIcon={
-                    state === 'completed' ? (
-                      <Check size={10} strokeWidth={3} className="text-white" />
-                    ) : false
-                  }
-                />
-
-                {!isLast && (
-                  <div className="flex-1 h-[2px] relative min-w-0">
-                    <div className="absolute top-0 right-0 bottom-0 left-0 rounded-full bg-[#e5e7eb]" />
-                    <div className={progressBarClasses} />
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="flex w-full">
-          {steps.map((step, index) => {
-            const state = getStepState(index);
-            const isLast = index === steps.length - 1;
-
             const labelClasses = [
-              'text-xs transition-colors duration-300',
-              !isLast ? 'flex-1' : '',
+              'text-xs transition-colors duration-300 leading-tight text-center w-max max-w-36',
               state === 'completed' || state === 'active'
                 ? 'text-[#008CEE]'
                 : 'text-gray-400',
             ].join(' ');
 
             return (
-              <div key={index} className={labelClasses}>
-                {step.label}
+              <div
+                key={index}
+                className={`relative min-w-0 pb-8 ${!isLast ? 'flex-1' : ''}`}
+              >
+                <div className="flex items-center">
+                  <Button
+                    variant="right-arrow"
+                    onClick={() => handleStepClick(index)}
+                    disabled={!isClickable}
+                    className={dotClasses}
+                    aria-label={`Go to step ${index + 1}`}
+                    leftIcon={
+                      state === 'completed' ? (
+                        <Check
+                          size={10}
+                          strokeWidth={3}
+                          className="text-white"
+                        />
+                      ) : (
+                        false
+                      )
+                    }
+                  />
+
+                  {!isLast && (
+                    <div className="flex-1 h-[2px] relative min-w-0">
+                      <div className="absolute top-0 right-0 bottom-0 left-0 rounded-full bg-[#e5e7eb]" />
+                      <div className={progressBarClasses} />
+                    </div>
+                  )}
+                </div>
+
+                <div className="absolute top-7 left-2.5 -translate-x-1/2">
+                  <div className={labelClasses}>{step.label}</div>
+                </div>
               </div>
             );
           })}

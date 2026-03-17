@@ -7,15 +7,11 @@ const meta: Meta<WizardLayoutProps> = {
   component: WizardLayout,
   title: 'Wizard/WizardLayout',
   parameters: {
-    layout: 'fullscreen',
+    customLayout: {
+      variant: 'basic',
+      className: 'w-full px-8',
+    },
   },
-  decorators: [
-    (Story) => (
-      <div className="w-full max-w-4xl">
-        <Story />
-      </div>
-    ),
-  ],
 };
 export default meta;
 

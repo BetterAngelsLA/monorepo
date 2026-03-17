@@ -70,7 +70,7 @@ export function WizardLayout<T extends FieldValues = FieldValues>({
 
   return (
     <FormProvider {...methods}>
-      <div className="w-full  flex flex-col items-center min-h-screen bg-white">
+      <div className="w-full flex flex-col items-center min-h-screen bg-white">
         <div className="w-full max-w-2xl">
           <WizardProgressBar
             steps={steps}
