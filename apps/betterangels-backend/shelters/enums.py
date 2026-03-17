@@ -66,6 +66,7 @@ class AccessibilityChoices(models.TextChoices):
 
 @strawberry.enum
 class StorageChoices(models.TextChoices):
+    UNIT_STORAGE = "unit_storage", _("Unit-level Storage")
     AMNESTY_LOCKERS = "amnesty_lockers", _("Amnesty Lockers")
     STANDARD_LOCKERS = "standard_lockers", _("Standard Lockers")
     SHARED_STORAGE = "shared_storage", _("Shared Storage")
