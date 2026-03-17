@@ -332,9 +332,7 @@ class InteriorPhotoForm(PhotoForm):
 class PhotoInlineImgproxyMixin:
     """Mixin for photo inlines: adds a readonly thumbnail column via imgproxy when enabled."""
 
-    def get_readonly_fields(
-        self, request: HttpRequest, obj: Optional[models.Model] = None
-    ) -> tuple[str, ...]:
+    def get_readonly_fields(self, request: HttpRequest, obj: Optional[models.Model] = None) -> tuple[str, ...]:
         return ("photo_preview",)
 
     def get_fields(self, request: HttpRequest, obj: Optional[models.Model] = None) -> tuple[str, ...]:
@@ -345,10 +343,7 @@ class PhotoInlineImgproxyMixin:
         if not obj or not obj.file or not obj.file.name:
             return "—"
         if is_imgproxy_enabled():
-            url = (
-                build_imgproxy_url(obj.file, preset=None, processing="f:jpg")
-                or getattr(obj.file, "url", None)
-            )
+            url = build_imgproxy_url(obj.file, preset=None, processing="f:jpg") or getattr(obj.file, "url", None)
         else:
             url = getattr(obj.file, "url", None)
         if not url:
@@ -978,8 +973,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         if obj.hero_image and obj.hero_image.file:
             if is_imgproxy_enabled():
                 url = (
-                    build_imgproxy_url(obj.hero_image.file, preset=None, processing="f:jpg")
-                    or obj.hero_image.file.url
+                    build_imgproxy_url(obj.hero_image.file, preset=None, processing="f:jpg") or obj.hero_image.file.url
                 )
             else:
                 url = obj.hero_image.file.url

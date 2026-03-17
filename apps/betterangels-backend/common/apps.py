@@ -1,4 +1,3 @@
-
 from common.utils import get_fargate_task_ips
 from django.apps import AppConfig
 from django.conf import settings
@@ -28,4 +27,3 @@ class CommonConfig(AppConfig):
         from common.graphql.types import TransformableImageType
 
         field_type_map[files.ImageField] = TransformableImageType
-
