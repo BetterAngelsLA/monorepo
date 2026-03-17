@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react';
 import { memo } from 'react';
+import { Button } from '../base-ui/buttons';
 
 export interface WizardStep {
   label: string;
@@ -37,13 +38,13 @@ export const WizardProgressBar = memo(
             const isClickable = state === 'completed';
 
             const dotClasses = [
-              'w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all duration-300',
+              '!size-5 !p-0 border-2 transition-all duration-300',
               isClickable ? 'cursor-pointer hover:scale-110' : 'cursor-default',
               state === 'completed'
-                ? 'bg-[#008CEE] border-[#008CEE]'
-                : 'bg-white',
-              state === 'active' ? 'border-[#008CEE]' : '',
-              state === 'upcoming' ? 'border-[#e5e7eb]' : '',
+                ? '!bg-[#008CEE] !border-[#008CEE]'
+                : '!bg-white',
+              state === 'active' ? '!border-[#008CEE]' : '',
+              state === 'upcoming' ? '!border-[#e5e7eb]' : '',
             ]
               .filter(Boolean)
               .join(' ');
@@ -58,17 +59,18 @@ export const WizardProgressBar = memo(
                 key={index}
                 className={`flex items-center ${!isLast ? 'flex-1' : ''}`}
               >
-                <button
-                  type="button"
+                <Button
+                  variant="right-arrow"
                   onClick={() => handleStepClick(index)}
                   disabled={!isClickable}
                   className={dotClasses}
                   aria-label={`Go to step ${index + 1}`}
-                >
-                  {state === 'completed' ? (
-                    <Check size={10} strokeWidth={3} className="text-white" />
-                  ) : null}
-                </button>
+                  leftIcon={
+                    state === 'completed' ? (
+                      <Check size={10} strokeWidth={3} className="text-white" />
+                    ) : null
+                  }
+                />
 
                 {!isLast && (
                   <div className="flex-1 h-[2px] relative min-w-0">
