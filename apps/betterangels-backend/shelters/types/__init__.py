@@ -29,6 +29,8 @@ from shelters.types.lookups import (
     PetType,
     RoomStyleType,
     ScheduleType,
+    ServiceCategoryType,
+    ServiceType,
     ShelterProgramType,
     ShelterTypeType,
     SPAType,
@@ -66,6 +68,8 @@ __all__ = [
     "ShelterTypeType",
     "SPAType",
     "SpecialSituationRestrictionType",
+    "ServiceCategoryType",
+    "ServiceType",
     "StorageType",
     "TrainingServiceType",
     # filters

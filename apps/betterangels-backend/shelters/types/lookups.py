@@ -81,6 +81,23 @@ class TrainingServiceType:
     name: auto
 
 
+@strawberry_django.type(models.ServiceCategory)
+class ServiceCategoryType:
+    id: ID
+    name: auto
+    display_name: auto
+    sort_order: auto
+
+
+@strawberry_django.type(models.Service)
+class ServiceType:
+    id: ID
+    category: ServiceCategoryType
+    name: auto
+    display_name: auto
+    sort_order: auto
+
+
 @strawberry_django.type(models.EntryRequirement)
 class EntryRequirementType:
     name: auto

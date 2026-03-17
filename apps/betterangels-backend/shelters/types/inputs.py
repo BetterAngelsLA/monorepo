@@ -100,6 +100,7 @@ class CreateShelterInput:
     operating_hours: Optional[List[TimeRangeInput]] = None
     intake_hours: Optional[List[TimeRangeInput]] = None
     schedules: Optional[List[ScheduleInput]] = None
+    services: Optional[List[ID]] = None
 
     # Optional scalars — all model fields below have null=True, blank=True.
     # Using auto where strawberry-django can resolve the type; explicit types

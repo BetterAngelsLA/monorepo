@@ -57,6 +57,7 @@ from .lookups import (
     Storage,
     TrainingService,
 )
+from .service import Service
 
 
 @pghistory.track(
@@ -126,6 +127,7 @@ class Shelter(BaseModel):
     health_services = models.ManyToManyField(HealthService)
     training_services = models.ManyToManyField(TrainingService)
     meal_services = models.ManyToManyField(MealService)
+    services = models.ManyToManyField(Service, blank=True)
     other_services = CKEditor5Field(verbose_name="Additional Notes", null=True, blank=True)
 
     # Entry Requirements
