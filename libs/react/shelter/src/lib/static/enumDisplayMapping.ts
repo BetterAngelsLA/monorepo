@@ -111,6 +111,7 @@ export const enumDisplayStorageChoices: { [key in StorageChoices]: string } = {
   [StorageChoices.NoStorage]: 'No Storage',
   [StorageChoices.SharedStorage]: 'Shared Storage',
   [StorageChoices.StandardLockers]: 'Standard Lockers',
+  [StorageChoices.UnitStorage]: 'Unit-level Storage',
 };
 
 export const enumDisplayPetChoices: { [key in PetChoices]: string } = {
