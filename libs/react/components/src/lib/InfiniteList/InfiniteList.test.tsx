@@ -1,6 +1,3 @@
-/**
- * @jest-environment jsdom
- */
 import { render, screen } from '@testing-library/react';
 import { InfiniteList } from './InfiniteList';
 
@@ -23,20 +20,18 @@ const defaultProps = {
 };
 
 describe('InfiniteList – variable-change reload', () => {
-  it('hides stale items when loading=true (search refresh with old data)', () => {
-    render(<InfiniteList<TItem> {...defaultProps} loading={true} />);
+  it('hides stale items and scroll trigger when loading=true', () => {
+    const { container } = render(
+      <InfiniteList<TItem> {...defaultProps} loading={true} />
+    );
 
     // Stale items should NOT be visible during a full reload
     expect(screen.queryByTestId('item-0')).toBeNull();
     expect(screen.queryByTestId('item-74')).toBeNull();
-  });
 
-  it('hides the InfiniteScrollTrigger when loading=true', () => {
-    render(<InfiniteList<TItem> {...defaultProps} loading={true} />);
-
-    // The scroll trigger sentinel should not be in the DOM during reload
-    // (it would fire loadMore immediately at old scroll position)
-    expect(screen.queryByRole('progressbar')).toBeNull();
+    // The scroll trigger should not render during reload either
+    // (InfiniteScrollTrigger renders a div with min-h-px mt-4)
+    expect(container.querySelector('[class*="min-h-px"]')).toBeNull();
   });
 
   it('shows items normally when loading=false', () => {
