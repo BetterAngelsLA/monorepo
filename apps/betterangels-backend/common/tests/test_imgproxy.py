@@ -162,11 +162,11 @@ class GetImageSourceUrlTest(ParametrizedTestCase, TestCase):
         file = SimpleNamespace(
             name="photo.jpg",
             storage=SimpleNamespace(),
-            url=f"http://localhost:8000/media/photos/photo.jpg",
+            url="http://localhost:8000/media/photos/photo.jpg",
         )
         self.assertEqual(
             _get_image_source_url(file),
-            f"http://better-angels:8000/media/photos/photo.jpg",
+            "http://better-angels:8000/media/photos/photo.jpg",
         )
 
     @override_settings(IS_LOCAL_DEV=True)
