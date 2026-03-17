@@ -192,6 +192,9 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     return shelter
 
 
+_BED_M2M_FIELDS = _get_m2m_field_names(Bed)
+
+
 @transaction.atomic
 def bed_create(*, user: "User", data: Dict[str, Any]) -> Bed:
     """Create a new Bed associated with an existing Shelter.
@@ -204,13 +207,25 @@ def bed_create(*, user: "User", data: Dict[str, Any]) -> Bed:
         does not belong to its organization.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
+    data = dict(data)
+    shelter_id = data.pop("shelter_id")
     try:
-        shelter = shelter_get(user=user, shelter_id=data["shelter_id"])
+        shelter = shelter_get(user=user, shelter_id=shelter_id)
     except Shelter.DoesNotExist:
-        raise ObjectDoesNotExist(f"Shelter matching ID {data['shelter_id']} could not be found.")
-    bed = Bed(shelter=shelter, status=data["status"])
+        raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
+
+    m2m_data: Dict[str, List[Any]] = {
+        k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and data[k] is not None
+    }
+
+    # Drop None values so model defaults apply
+    scalar_data = {k: v for k, v in data.items() if v is not None}
+
+    bed = Bed(shelter=shelter, **scalar_data)
     bed.full_clean()
     bed.save()
+    _set_m2m_from_enums(bed, m2m_data)
+
     return bed
 
 

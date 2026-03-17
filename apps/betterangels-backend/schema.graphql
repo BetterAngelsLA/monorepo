@@ -164,13 +164,36 @@ type AuthResponse {
 
 enum BedStatusChoices {
   AVAILABLE
+  OCCUPIED
   RESERVED
+  OUT_OF_SERVICE
 }
 
 type BedType {
   id: ID!
   shelter: ShelterType!
+  bedName: String
   status: BedStatusChoices
+  statusNotes: String
+  occupantId: ID
+  bedType: BedTypeChoices
+  demographics: [DemographicType!]!
+  accessibility: [AccessibilityType!]!
+  funders: [FunderType!]!
+  pets: [PetType!]!
+  storage: Boolean!
+  maintenanceFlag: Boolean!
+  lastCleanedInspected: DateTime
+  medicalNeeds: MedicalNeedChoices
+  b7: Boolean!
+  fees: Int
+}
+
+enum BedTypeChoices {
+  TWIN
+  BUNK
+  ROLLAWAY
+  OTHER
 }
 
 type CityType {
@@ -431,7 +454,20 @@ type ContactInfoType {
 
 input CreateBedInput {
   shelterId: ID!
-  status: BedStatusChoices!
+  status: BedStatusChoices = null
+  bedName: String = null
+  statusNotes: String = null
+  bedType: BedTypeChoices = null
+  demographics: [DemographicChoices!] = null
+  accessibility: [AccessibilityChoices!] = null
+  funders: [FunderChoices!] = null
+  pets: [PetChoices!] = null
+  storage: Boolean = null
+  maintenanceFlag: Boolean = null
+  lastCleanedInspected: DateTime = null
+  medicalNeeds: MedicalNeedChoices = null
+  b7: Boolean = null
+  fees: Int = null
 }
 
 union CreateBedPayload = BedType | OperationInfo
@@ -1365,6 +1401,13 @@ enum MealServiceChoices {
   BREAKFAST
   LUNCH
   DINNER
+}
+
+enum MedicalNeedChoices {
+  ERC
+  DMH
+  OXYGEN
+  DIALYSIS
 }
 
 type Mutation {

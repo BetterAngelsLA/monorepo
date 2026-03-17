@@ -163,15 +163,38 @@ export type AuthResponse = {
 
 export enum BedStatusChoices {
   Available = 'AVAILABLE',
+  Occupied = 'OCCUPIED',
+  OutOfService = 'OUT_OF_SERVICE',
   Reserved = 'RESERVED'
 }
 
 export type BedType = {
   __typename?: 'BedType';
+  accessibility: Array<AccessibilityType>;
+  b7: Scalars['Boolean']['output'];
+  bedName?: Maybe<Scalars['String']['output']>;
+  bedType?: Maybe<BedTypeChoices>;
+  demographics: Array<DemographicType>;
+  fees?: Maybe<Scalars['Int']['output']>;
+  funders: Array<FunderType>;
   id: Scalars['ID']['output'];
+  lastCleanedInspected?: Maybe<Scalars['DateTime']['output']>;
+  maintenanceFlag: Scalars['Boolean']['output'];
+  medicalNeeds?: Maybe<MedicalNeedChoices>;
+  occupantId?: Maybe<Scalars['ID']['output']>;
+  pets: Array<PetType>;
   shelter: ShelterType;
   status?: Maybe<BedStatusChoices>;
+  statusNotes?: Maybe<Scalars['String']['output']>;
+  storage: Scalars['Boolean']['output'];
 };
+
+export enum BedTypeChoices {
+  Bunk = 'BUNK',
+  Other = 'OTHER',
+  Rollaway = 'ROLLAWAY',
+  Twin = 'TWIN'
+}
 
 export type CityType = {
   __typename?: 'CityType';
@@ -433,8 +456,21 @@ export type ContactInfoType = {
 };
 
 export type CreateBedInput = {
+  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
+  b7?: InputMaybe<Scalars['Boolean']['input']>;
+  bedName?: InputMaybe<Scalars['String']['input']>;
+  bedType?: InputMaybe<BedTypeChoices>;
+  demographics?: InputMaybe<Array<DemographicChoices>>;
+  fees?: InputMaybe<Scalars['Int']['input']>;
+  funders?: InputMaybe<Array<FunderChoices>>;
+  lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
+  maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
+  medicalNeeds?: InputMaybe<MedicalNeedChoices>;
+  pets?: InputMaybe<Array<PetChoices>>;
   shelterId: Scalars['ID']['input'];
-  status: BedStatusChoices;
+  status?: InputMaybe<BedStatusChoices>;
+  statusNotes?: InputMaybe<Scalars['String']['input']>;
+  storage?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type CreateBedPayload = BedType | OperationInfo;
@@ -1382,6 +1418,13 @@ export enum MealServiceChoices {
   Breakfast = 'BREAKFAST',
   Dinner = 'DINNER',
   Lunch = 'LUNCH'
+}
+
+export enum MedicalNeedChoices {
+  Dialysis = 'DIALYSIS',
+  Dmh = 'DMH',
+  Erc = 'ERC',
+  Oxygen = 'OXYGEN'
 }
 
 export type Mutation = {
