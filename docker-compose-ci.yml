@@ -17,7 +17,6 @@ services:
       - SHORT_SHA
       - IMAGE_TAG_PREFIX
       - DOCKER_TAG
-      - IMGPROXY_DOCKER_TAG
       - GITHUB_ACTIONS
       - GITHUB_EVENT_PATH
       - GITHUB_REPOSITORY
