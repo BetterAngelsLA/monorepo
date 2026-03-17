@@ -8,7 +8,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0033_remove_contactinfo_shelter_contact_info_add_insert_and_more"),
+        ("shelters", "0036_update_pet_and_bed_status_choices"),
     ]
 
     operations = [

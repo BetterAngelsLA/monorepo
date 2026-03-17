@@ -6,7 +6,7 @@ import shelters.enums
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0036_update_bed_attributes"),
+        ("shelters", "0035_update_bed_attributes"),
     ]
 
     operations = [
