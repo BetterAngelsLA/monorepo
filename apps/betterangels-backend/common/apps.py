@@ -16,7 +16,7 @@ class CommonConfig(AppConfig):
 
     def ready(self) -> None:
         self._register_imgproxy_image_type()
-        self._register_imgproxy_admin_widget()
+        # self._register_imgproxy_admin_widget()
         self._configure_allowed_hosts()
 
     @staticmethod
@@ -34,12 +34,3 @@ class CommonConfig(AppConfig):
         from common.graphql.types import TransformableImageType
 
         field_type_map[files.ImageField] = TransformableImageType
-
-    @staticmethod
-    def _register_imgproxy_admin_widget() -> None:
-        """Override the default admin widget for ``ImageField`` so every
-        image in the Django admin renders an imgproxy-processed thumbnail.
-        """
-        overrides: Dict[Type[Field[Any, Any]], Dict[str, Any]] = admin.ModelAdmin.formfield_overrides  # type: ignore[assignment]
-        overrides.setdefault(models.ImageField, {})
-        overrides[models.ImageField]["widget"] = ImgproxyAdminImageWidget
