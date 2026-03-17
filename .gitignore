@@ -68,8 +68,6 @@ cache/
 !.yarn/sdks
 !.yarn/versions
 
-apps/betterangels-e2e/artifacts
-
 # iOS build files
 apps/betterangels/ios/
 
