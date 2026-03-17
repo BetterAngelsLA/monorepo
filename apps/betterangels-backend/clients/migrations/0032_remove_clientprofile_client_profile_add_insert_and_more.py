@@ -192,7 +192,13 @@ class Migration(migrations.Migration):
             name="pets",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=django_choices_field.fields.TextChoicesField(
-                    choices=[("cats", "Cats"), ("dog", "Dog"), ("service_animal", "Service Animal"), ("other", "Other")], max_length=14
+                    choices=[
+                        ("cats", "Cats"),
+                        ("dog", "Dog"),
+                        ("service_animal", "Service Animal"),
+                        ("other", "Other"),
+                    ],
+                    max_length=14,
                 ),
                 blank=True,
                 null=True,
@@ -404,7 +410,13 @@ class Migration(migrations.Migration):
             name="pets",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=django_choices_field.fields.TextChoicesField(
-                    choices=[("cats", "Cats"), ("dog", "Dog"), ("service_animal", "Service Animal"), ("other", "Other")], max_length=14
+                    choices=[
+                        ("cats", "Cats"),
+                        ("dog", "Dog"),
+                        ("service_animal", "Service Animal"),
+                        ("other", "Other"),
+                    ],
+                    max_length=14,
                 ),
                 blank=True,
                 null=True,

@@ -142,9 +142,7 @@ class AbstractClientProfile(BaseModel):
         max_length=11,
         blank=True,
         null=True,
-        validators=[
-            RegexValidator(regex=SSN_REGEX, message="SSN must be in format XXX-XX-XXXX")
-        ],
+        validators=[RegexValidator(regex=SSN_REGEX, message="SSN must be in format XXX-XX-XXXX")],
     )
     status = TextChoicesField(
         choices_enum=ClientStatusEnum,
@@ -159,22 +157,16 @@ class AbstractClientProfile(BaseModel):
     income_annual = models.CharField(max_length=50, blank=True, null=True)
     income_source = models.CharField(max_length=255, blank=True, null=True)
     adl_capacity = TextChoicesField(choices_enum=AdlCapacityEnum, blank=True, null=True)
-    medical_needs = ArrayField(
-        base_field=TextChoicesField(choices_enum=MedicalNeedsEnum), blank=True, null=True
-    )
+    medical_needs = ArrayField(base_field=TextChoicesField(choices_enum=MedicalNeedsEnum), blank=True, null=True)
     medical_notes = models.TextField(blank=True, null=True)
-    pets = ArrayField(
-        base_field=TextChoicesField(choices_enum=ClientPetsEnum), blank=True, null=True
-    )
+    pets = ArrayField(base_field=TextChoicesField(choices_enum=ClientPetsEnum), blank=True, null=True)
     pets_other = models.CharField(max_length=100, blank=True, null=True)
     requires_transportation = models.BooleanField(blank=True, null=True)
     funding_source = ArrayField(
         base_field=TextChoicesField(choices_enum=ClientFundingSourceEnum), blank=True, null=True
     )
     funding_source_other = models.CharField(max_length=255, blank=True, null=True)
-    spa = ArrayField(
-        base_field=IntegerChoicesField(choices_enum=ClientSpaEnum), blank=True, null=True
-    )
+    spa = ArrayField(base_field=IntegerChoicesField(choices_enum=ClientSpaEnum), blank=True, null=True)
     sexual_orientation = models.CharField(max_length=100, blank=True, null=True)
     sexual_orientation_other = models.CharField(max_length=100, blank=True, null=True)
 

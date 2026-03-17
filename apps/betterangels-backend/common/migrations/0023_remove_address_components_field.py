@@ -5,9 +5,7 @@ from django.db import migrations
 
 def remove_address_components_if_exists(apps, schema_editor):
     """Remove address_components column only if it exists (idempotent)."""
-    schema_editor.execute(
-        "ALTER TABLE common_address DROP COLUMN IF EXISTS address_components"
-    )
+    schema_editor.execute("ALTER TABLE common_address DROP COLUMN IF EXISTS address_components")
 
 
 def noop(apps, schema_editor):
