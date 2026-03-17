@@ -88,7 +88,9 @@ def _build_signed_imgproxy_path(source_url: str, ops: str) -> str:
     return f"{signature}/{path}"
 
 
-def build_imgproxy_url(file: object, preset: Optional[ImagePresetEnum], processing_options: Optional[str]) -> Optional[str]:
+def build_imgproxy_url(
+    file: object, preset: Optional[ImagePresetEnum], processing_options: Optional[str]
+) -> Optional[str]:
     """Return a signed imgproxy URL, CloudFront-signed in production.
 
     Args:

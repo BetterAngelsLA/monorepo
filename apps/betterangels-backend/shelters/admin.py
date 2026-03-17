@@ -343,7 +343,9 @@ class PhotoInlineImgproxyMixin:
         if not obj or not obj.file or not obj.file.name:
             return "—"
         if is_imgproxy_enabled():
-            url = build_imgproxy_url(obj.file, preset=None, processing_options="f:jpg") or getattr(obj.file, "url", None)
+            url = build_imgproxy_url(obj.file, preset=None, processing_options="f:jpg") or getattr(
+                obj.file, "url", None
+            )
         else:
             url = getattr(obj.file, "url", None)
         if not url:
@@ -973,7 +975,8 @@ class ShelterAdmin(ImportExportModelAdmin):
         if obj.hero_image and obj.hero_image.file:
             if is_imgproxy_enabled():
                 url = (
-                    build_imgproxy_url(obj.hero_image.file, preset=None, processing_options="f:jpg") or obj.hero_image.file.url
+                    build_imgproxy_url(obj.hero_image.file, preset=None, processing_options="f:jpg")
+                    or obj.hero_image.file.url
                 )
             else:
                 url = obj.hero_image.file.url
