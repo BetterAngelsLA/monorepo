@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
+import { Text } from './base-ui/text/text';
 import { Row, type RowCell, type RowClickHandler } from './Row';
 
 export type TableColumn<TItem> = {
@@ -45,7 +46,6 @@ export function Table<TItem, TRowObject = TItem>({
   trailingHeader,
   getTrailingContent,
   headerInsetClassName = 'px-6 py-2 pt-6',
-  rowInsetClassName,
   onRowClick,
   loading = false,
   loadingState,
@@ -74,7 +74,7 @@ export function Table<TItem, TRowObject = TItem>({
     >
       <div
         className={[
-          'grid items-center text-base font-medium text-[22px] text-[#747A82]',
+          'grid items-center',
           headerInsetClassName,
           headerClassName,
         ].join(' ')}
@@ -90,7 +90,14 @@ export function Table<TItem, TRowObject = TItem>({
               .join(' ')
               .trim()}
           >
-            {column.label}
+            {typeof column.label === 'string' ||
+            typeof column.label === 'number' ? (
+              <Text variant="body" className="text-[#767676]">
+                {column.label}
+              </Text>
+            ) : (
+              column.label
+            )}
           </div>
         ))}
         <div aria-hidden="true">{trailingHeader}</div>
@@ -119,7 +126,6 @@ export function Table<TItem, TRowObject = TItem>({
               rowObject={rowObject}
               rowIndex={index}
               trailingContent={getTrailingContent?.(rowObject, item, index)}
-              insetClassName={rowInsetClassName}
               onRowClick={onRowClick}
               templateColumns={templateColumns}
               className={rowClassName}

@@ -71,7 +71,7 @@ const colorSchemes: Record<
 };
 
 const defaultIcons: Partial<Record<ButtonVariant, ReactNode>> = {
-  edit: <Pencil size={22} stroke="black" />,
+  edit: <Pencil size={22} stroke="#747A82" />,
   trash: <Trash2 size={22} color="currentColor" />,
   'right-arrow': <ArrowRight size={24} stroke="black" />,
 };

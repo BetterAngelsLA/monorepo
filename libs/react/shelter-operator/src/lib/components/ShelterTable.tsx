@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Shelter } from '../types/shelter';
 import { Button } from './base-ui/buttons/buttons';
 import { ConfirmationModal } from './base-ui/modal/ConfirmationModal';
+import { Text } from './base-ui/text/text';
 import { Table, type TableColumn } from './Table';
 
 export type ShelterRowObject = {
@@ -57,17 +58,18 @@ function renderTags(tags: string[] | null) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       {visibleTags.map((tag) => (
-        <span
-          key={tag}
-          className="rounded-full bg-[#EDEFF5] px-3 py-1 text-xs text-[#747A82]"
-        >
-          {tag}
-        </span>
+        <div key={tag} className="rounded-full bg-[#EDEFF5] px-3 py-1">
+          <Text variant="tag-sm" className="text-[#747A82]">
+            {tag}
+          </Text>
+        </div>
       ))}
       {remainingTagsCount > 0 && (
-        <span className="rounded-full bg-[#EDEFF5] px-3 py-1 text-xs text-[#747A82]">
-          +{remainingTagsCount}
-        </span>
+        <div className="rounded-full bg-[#EDEFF5] px-3 py-1">
+          <Text variant="tag-sm" className="text-[#747A82]">
+            +{remainingTagsCount}
+          </Text>
+        </div>
       )}
     </div>
   );
@@ -107,23 +109,29 @@ export function ShelterTable({
         key: 'name',
         label: 'Shelter Name',
         width: '1fr',
-        cellClassName:
-          'font-medium text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap',
-        render: (shelter) => shelter.name ?? 'N/A',
+        cellClassName: 'overflow-hidden text-ellipsis whitespace-nowrap',
+        render: (shelter) => (
+          <Text variant="body" className="text-black">
+            {shelter.name ?? 'N/A'}
+          </Text>
+        ),
       },
       {
         key: 'address',
         label: 'Address',
         width: '1fr',
-        cellClassName:
-          'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
-        render: (shelter) => shelter.address ?? 'N/A',
+        cellClassName: 'overflow-hidden text-ellipsis whitespace-nowrap',
+        render: (shelter) => (
+          <Text variant="body" className="text-black">
+            {shelter.address ?? 'N/A'}
+          </Text>
+        ),
       },
       {
         key: 'capacity',
         label: 'Capacity',
         width: '1.2fr',
-        cellClassName: 'whitespace-nowrap text-gray-700',
+        cellClassName: 'whitespace-nowrap',
         render: (shelter) => {
           const totalBeds = shelter.totalBeds ?? 0;
           const hasCapacity = totalBeds > 0;
@@ -139,7 +147,11 @@ export function ShelterTable({
               : 0;
 
           if (!hasCapacity || reservedBeds === null) {
-            return <div className="whitespace-nowrap">N/A</div>;
+            return (
+              <Text variant="body" className="text-black whitespace-nowrap">
+                N/A
+              </Text>
+            );
           }
 
           return (
@@ -150,9 +162,9 @@ export function ShelterTable({
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
-              <span className="leading-5 text-slate-700">
+              <Text variant="body" className="leading-5 text-black">
                 {reservedBeds} / {totalBeds} beds
-              </span>
+              </Text>
             </div>
           );
         },
@@ -161,7 +173,6 @@ export function ShelterTable({
         key: 'tags',
         label: 'Tags',
         width: '0.8fr',
-        cellClassName: 'text-gray-600',
         render: (shelter) => renderTags(shelter.tags),
       },
     ],
@@ -172,7 +183,6 @@ export function ShelterTable({
     <div className="flex flex-col">
       <form
         className="my-1 flex w-full flex-wrap items-center gap-3 bg-white px-3"
-        style={{ fontFamily: 'Poppins, sans-serif' }}
         onSubmit={(event) => event.preventDefault()}
       >
         <label className="flex h-11 w-full max-w-[380px] items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2">

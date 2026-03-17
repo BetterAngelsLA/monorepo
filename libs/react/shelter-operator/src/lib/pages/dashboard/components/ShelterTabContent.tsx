@@ -9,9 +9,6 @@ import {
   type RoomRowObject,
 } from '../../../components/RoomTable';
 import type { Shelter } from '../../../types/shelter';
-import type { OperatorDashboardLayoutContext } from '../OperatorDashboardLayout';
-
-// the operator context is so we can query shelter information by shelterID + orgID later on
 
 type ShelterTab = 'overview' | 'rooms' | 'beds' | 'occupancy' | 'label';
 
@@ -76,7 +73,7 @@ export function RoomsTabContent() {
 
   return (
     <>
-      <div className="">
+      <div>
         <RoomTable rows={rows} onRowClick={handleRowClick} />
       </div>
       <div className="fixed bottom-6 right-6 text-sm z-20 ">
@@ -113,8 +110,7 @@ export function ShelterTabContent({
   tab: ShelterTab;
   shelter?: Shelter;
 }) {
-  const { selectedOrganizationId } =
-    useOutletContext<OperatorDashboardLayoutContext>();
+  const { selectedOrganizationId } = useOutletContext() as any;
   void shelter;
   void selectedOrganizationId;
 

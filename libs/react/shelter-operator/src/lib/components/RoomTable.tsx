@@ -10,6 +10,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from './base-ui/buttons/buttons';
 import { ConfirmationModal } from './base-ui/modal/ConfirmationModal';
+import { Text } from './base-ui/text/text';
 import { Table, type TableColumn } from './Table';
 
 // REPLACE WITH ACTUAL QUERIED DATA
@@ -53,10 +54,17 @@ type RoomTableProps = {
 
 // TODO: Create Tag Components in Base UI -----------------
 const STATUS_STYLE: Record<RoomStatus, string> = {
-  available: 'bg-[#D7F5DF] text-[#13A538]',
-  occupied: 'bg-[#DCEEFF] text-[#2583E8]',
-  'out-of-service': 'bg-[#FFE5E0] text-[#EF3D26]',
-  reserved: 'bg-[#FFEBCB] text-[#F08C00]',
+  available: 'bg-[#D7F5DF]',
+  occupied: 'bg-[#DCEEFF]',
+  'out-of-service': 'bg-[#FFE5E0]',
+  reserved: 'bg-[#FFEBCB]',
+};
+
+const STATUS_TEXT_STYLE: Record<RoomStatus, string> = {
+  available: 'text-[#0F8F2F] font-medium',
+  occupied: 'text-[#1F6FC7] font-medium',
+  'out-of-service': 'text-[#D7332A] font-medium',
+  reserved: 'text-[#CC6F00] font-medium',
 };
 
 const STATUS_LABEL: Record<RoomStatus, string> = {
@@ -179,8 +187,11 @@ export function RoomTable({
         key: 'name',
         label: 'Room Name',
         width: '1.5fr',
-        cellClassName: 'text-[#111827] font-medium',
-        render: (room) => room.name,
+        render: (room) => (
+          <Text variant="body" className="text-black">
+            {room.name}
+          </Text>
+        ),
       },
       {
         key: 'status',
@@ -189,11 +200,13 @@ export function RoomTable({
         render: (room) => (
           <span
             className={[
-              'inline-flex rounded-full px-3 py-1 text-sm leading-none',
+              'inline-flex rounded-full px-3 py-1 leading-none',
               STATUS_STYLE[room.status],
             ].join(' ')}
           >
-            {STATUS_LABEL[room.status]}
+            <Text variant="tag-sm" className={STATUS_TEXT_STYLE[room.status]}>
+              {STATUS_LABEL[room.status]}
+            </Text>
           </span>
         ),
       },
@@ -204,17 +217,18 @@ export function RoomTable({
         render: (room) => (
           <div className="flex flex-wrap items-center gap-2">
             {room.tags.slice(0, 2).map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full bg-[#EDEFF5] px-3 py-1 text-xs text-[#747A82]"
-              >
-                {tag}
-              </span>
+              <div key={tag} className="rounded-full bg-[#EDEFF5] px-3 py-1">
+                <Text variant="tag-sm" className="text-[#747A82]">
+                  {tag}
+                </Text>
+              </div>
             ))}
             {room.tags.length > 2 && (
-              <span className="rounded-full bg-[#EDEFF5] px-3 py-1 text-xs text-[#747A82]">
-                +{room.tags.length - 2}
-              </span>
+              <div className="rounded-full bg-[#EDEFF5] px-3 py-1">
+                <Text variant="tag-sm" className="text-[#747A82]">
+                  +{room.tags.length - 2}
+                </Text>
+              </div>
             )}
           </div>
         ),
@@ -245,7 +259,6 @@ export function RoomTable({
     <div className="relative flex flex-col">
       <form
         className="mt-8 flex w-full px-4 flex-wrap items-center bg-white"
-        style={{ fontFamily: 'Poppins, sans-serif' }}
         onSubmit={(event) => event.preventDefault()}
       >
         <label className="flex h-11 w-full max-w-[380px] items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2">
@@ -268,7 +281,7 @@ export function RoomTable({
               leftIcon={<Trash2 size={20} />}
               rightIcon={false}
               onClick={handleDeleteSelected}
-              className="border-[#FFD9D2] bg-[#FFECE8] text-[#EF3D26] hover:bg-[#FFE0D9]"
+              color="red"
             >
               {selectedCount > 1 ? 'Delete All' : 'Delete'}
             </Button>
@@ -299,12 +312,17 @@ export function RoomTable({
           <div className="flex items-center gap-1">
             <Button
               variant="edit"
+              className="text-[#747A82]"
               onClick={(e) => {
                 e.stopPropagation();
                 onRowClick?.(rowObject, 0);
               }}
             />
-            <Button variant="edit" leftIcon={<CopyPlus />} />
+            <Button
+              variant="edit"
+              className="text-[#747A82]"
+              leftIcon={<CopyPlus />}
+            />
             <Button
               variant="trash"
               onClick={(e) => {

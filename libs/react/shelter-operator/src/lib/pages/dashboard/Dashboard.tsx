@@ -8,13 +8,13 @@ import {
   useOutletContext,
 } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons/buttons';
+import { Text } from '../../components/base-ui/text/text';
 import { ShelterTable } from '../../components/ShelterTable';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
 import type { Shelter } from '../../types/shelter';
-import type { OperatorDashboardLayoutContext } from './OperatorDashboardLayout';
 
 const SEARCH_DEBOUNCE_MS = 300;
 const PAGE_SIZE = 16;
@@ -23,8 +23,7 @@ export default function Dashboard() {
   const { pathname } = useLocation();
   const isOperatorRoot = pathname === '/operator';
   const navigate = useNavigate();
-  const { selectedOrganizationId } =
-    useOutletContext<OperatorDashboardLayoutContext>();
+  const { selectedOrganizationId } = useOutletContext() as any;
 
   const [tableSearchInput, setTableSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -101,55 +100,54 @@ export default function Dashboard() {
           }}
           loading={loading}
           loadingState={
-            <div className="px-6 py-8 text-center text-sm text-gray-500">
+            <Text variant="body" className="text-center text-gray-500">
               Loading shelters…
-            </div>
+            </Text>
           }
           emptyState={
-            <div className="px-6 py-8 text-center text-sm text-gray-500">
-              No shelters yet.{' '}
-              <Link
-                to="/operator/dashboard/create"
-                className="text-blue-600 hover:underline"
-              >
-                Create your first shelter
+            <div className="px-6 py-8">
+              <Text variant="body" className="text-center text-gray-500">
+                No shelters yet.{' '}
+              </Text>
+              <Link to="/operator/dashboard/create">
+                <Text variant="body" className="text-blue-600 hover:underline">
+                  Create your first shelter
+                </Text>
               </Link>
               .
             </div>
           }
-          headerStyle={{ fontFamily: 'Poppins, sans-serif' }}
-          rowStyle={{ fontFamily: 'Poppins, sans-serif' }}
         />
 
         {/* PAGINATION */}
-        <div className="flex items-center justify-between mt-8 mx-4 text-sm text-gray-600">
-          <div>
+        <div className="flex items-center justify-between mt-8 mx-4">
+          <Text variant="body" className="text-gray-600">
             Page {page} of {totalPages}
-          </div>
+          </Text>
 
           <div className="flex items-center gap-2">
-            <button
-              className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+            <Button
+              variant="primary-sm"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
             >
               Prev
-            </button>
+            </Button>
 
-            <button
-              className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+            <Button
+              variant="primary-sm"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
 
         {error && (
-          <div className="mt-2 text-xs text-red-500">
+          <Text variant="body" className="mt-2 text-red-500">
             Failed to load shelters.
-          </div>
+          </Text>
         )}
       </div>
 

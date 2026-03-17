@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Text } from '../../../components/base-ui/text/text';
 
 export type SliderTabItem = {
   label: string;
@@ -76,14 +77,15 @@ export default function SliderTabs({
                   state={linkState}
                   aria-current={isActive ? 'page' : undefined}
                   className={[
-                    'relative z-10 px-4 py-4 text-center text-[18px] font-medium leading-none transition-colors',
+                    'relative z-10 px-4 py-4 text-center leading-none transition-colors',
                     isActive
                       ? 'text-[#008CEE]'
                       : 'text-[#6B7280] hover:text-[#4B5563]',
                   ].join(' ')}
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
                 >
-                  {item.label}
+                  <Text variant="subheading-regular" textColor="text-inherit">
+                    {item.label}
+                  </Text>
                 </Link>
               );
             })}

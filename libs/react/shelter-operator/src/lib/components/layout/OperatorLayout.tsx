@@ -4,6 +4,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useActiveOrg } from '../../providers/activeOrg';
 import { Button } from '../base-ui/buttons/buttons';
 import { Dropdown } from '../base-ui/dropdown';
+import { Text } from '../base-ui/text/text';
 
 export function OperatorLayout() {
   const { pathname } = useLocation();
@@ -34,14 +35,17 @@ export function OperatorLayout() {
             </Link>
 
             <Link to="/operator">
-              <p className="truncate text-xl font-medium text-[#5A616B] md:text-2xl">
+              <Text
+                variant="header-navbar"
+                className="font-medium text-[#5A616B]"
+              >
                 {title}
-              </p>
+              </Text>
             </Link>
             {isCreateShelterRoute && (
-              <p className="truncate text-xl font-medium text-black md:text-2xl">
+              <Text variant="header-navbar" className="font-medium text-black">
                 / Shelter Creation
-              </p>
+              </Text>
             )}
 
             {organizations.length > 1 && (

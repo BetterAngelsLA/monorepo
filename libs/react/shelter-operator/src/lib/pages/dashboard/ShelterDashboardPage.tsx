@@ -1,6 +1,7 @@
 import { BookCheck, Settings } from 'lucide-react';
 import { useLocation, useParams } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons/buttons';
+import { Text } from '../../components/base-ui/text/text';
 import type { Shelter } from '../../types/shelter';
 import { ShelterTabContent } from './components/ShelterTabContent';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
@@ -27,23 +28,30 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
   const location = useLocation();
   const { id } = useParams();
   const shelterId = id ?? '';
+
   const routeState = (location.state as { shelter?: Shelter } | null) ?? null;
+  const shelterFromState = routeState?.shelter;
 
   if (!id) return null;
 
+  const shelterName = shelterFromState?.name ?? 'Shelter Name';
+  const shelterAddress =
+    shelterFromState?.address ?? '123 Thisisastreetname Street';
+
   return (
     <div className="w-full">
-      <div className="flex items-start justify-between gap-3 px-6 py-4">
+      <div className="flex items-start justify-between gap-3 px-6">
         <div>
-          {/* Hard Coded For Now*/}
-          <h1 className="text-[36px] font-semibold leading-none text-[#111827]">
-            {routeState !== null ? routeState?.shelter.name : 'Shelter Name'}
-          </h1>
-          <p className="mt-4 text-[20px] text-[#6B7280]">
-            {routeState !== null
-              ? routeState?.shelter.address
-              : '123 Thisisastreetname Street'}
-          </p>
+          {/* Hard Coded For Now */}
+          <Text
+            variant="header-md"
+            className="leading-none font-medium text-[#111827]"
+          >
+            {shelterName}
+          </Text>
+          <Text variant="body" className="mt-4 block text-[#6B7280]">
+            {shelterAddress}
+          </Text>
         </div>
 
         <div className="flex items-center gap-3">
@@ -55,12 +63,13 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
           >
             Settings
           </Button>
-          {/* CHANGE TO FLOATING COLORS */}
+
           <Button
             variant="primary"
-            leftIcon={<BookCheck size={20} color="black" />}
+            color="blue"
+            leftIcon={<BookCheck size={20} color="white" />}
             rightIcon={false}
-            className="text-black"
+            className="text-white"
           >
             Reserve
           </Button>
@@ -74,7 +83,7 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
         linkState={routeState ?? undefined}
       />
 
-      <ShelterTabContent tab={tab} shelter={routeState?.shelter} />
+      <ShelterTabContent tab={tab} shelter={shelterFromState} />
     </div>
   );
 }
