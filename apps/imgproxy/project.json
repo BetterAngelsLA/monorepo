@@ -33,7 +33,7 @@
       }
     },
     "deploy": {
-      "command": "tools/deploy/ecs_deploy.sh",
+      "command": "tools/deploy/lambda_deploy.sh",
       "configurations": {
         "production": {},
         "preview": {
