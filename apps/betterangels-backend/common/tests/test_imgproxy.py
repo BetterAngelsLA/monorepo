@@ -15,7 +15,6 @@ from common.imgproxy import (
     build_imgproxy_url,
     is_imgproxy_enabled,
 )
-from django.conf import settings
 from django.test import TestCase, override_settings
 from unittest_parametrize import ParametrizedTestCase, parametrize
 from waffle.testutils import override_switch
@@ -163,11 +162,11 @@ class GetImageSourceUrlTest(ParametrizedTestCase, TestCase):
         file = SimpleNamespace(
             name="photo.jpg",
             storage=SimpleNamespace(),
-            url=f"{settings.MEDIA_URL}photos/photo.jpg",
+            url=f"http://localhost:8000/media/photos/photo.jpg",
         )
         self.assertEqual(
             _get_image_source_url(file),
-            f"{settings.IMGPROXY_LOCAL_MEDIA_URL}photos/photo.jpg",
+            f"http://better-angels:8000/media/photos/photo.jpg",
         )
 
     @override_settings(IS_LOCAL_DEV=True)
@@ -214,7 +213,7 @@ class BuildImgproxyUrlTest(TestCase):
         file = _make_file()
         url = build_imgproxy_url(file, ImagePresetEnum.SM, None)
         assert url
-        self.assertTrue(url.startswith(settings.IMGPROXY_LOCAL_URL))
+        self.assertTrue(url.startswith("http://localhost:8080"))
 
     @override_settings(IS_LOCAL_DEV=False)
     def test_production_returns_none_without_cloudfront_signer(self) -> None:
