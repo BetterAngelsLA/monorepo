@@ -379,6 +379,7 @@ class ClientProfileType(ClientProfileBaseType):
 
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput(ClientProfileBaseType):
+    status: Optional[ClientStatusEnum] = None  # type: ignore[assignment]
     contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
@@ -388,6 +389,7 @@ class CreateClientProfileInput(ClientProfileBaseType):
 
 @strawberry_django.input(ClientProfile, partial=True)
 class UpdateClientProfileInput(ClientProfileBaseType):
+    status: Optional[ClientStatusEnum] = None  # type: ignore[assignment]
     id: ID
     contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]

@@ -3,6 +3,7 @@ from typing import Any, Dict
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
+    ClientStatusEnum,
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
@@ -89,9 +90,15 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
             displayCaseManager
             displayGender
             displayPronouns
-            docReadyDocuments
-            consentFormDocuments
-            otherDocuments
+            docReadyDocuments {
+                id
+            }
+            consentFormDocuments {
+                id
+            }
+            otherDocuments {
+                id
+            }
             contacts {
                 id
                 name
@@ -303,7 +310,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "residenceGeolocation": self.residence_geolocation,
                 "socialMediaProfiles": self.client_1_social_media_profiles,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
-                "status": "reserved",
+                "status": ClientStatusEnum.RESERVED.name,
                 "socialSecurityNumber": "123-45-6789",
                 "veteranStatus": VeteranStatusEnum.NO.name,
             }

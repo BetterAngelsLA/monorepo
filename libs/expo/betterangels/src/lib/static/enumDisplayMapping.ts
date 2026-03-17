@@ -23,8 +23,7 @@ export const enumDisplayLanguage: { [key in LanguageEnum]: string } = {
   [LanguageEnum.Arabic]: 'Arabic',
   [LanguageEnum.Armenian]: 'Armenian',
   [LanguageEnum.Asl]: 'American Sign Language',
-  [LanguageEnum.SimplifiedChinese]: 'Chinese, Simplified',
-  [LanguageEnum.TraditionalChinese]: 'Chinese, Traditional',
+  [LanguageEnum.Cantonese]: 'Cantonese',
   [LanguageEnum.English]: 'English',
   [LanguageEnum.Farsi]: 'Farsi',
   [LanguageEnum.French]: 'French',
@@ -32,41 +31,52 @@ export const enumDisplayLanguage: { [key in LanguageEnum]: string } = {
   [LanguageEnum.Japanese]: 'Japanese',
   [LanguageEnum.Khmer]: 'Khmer',
   [LanguageEnum.Korean]: 'Korean',
+  [LanguageEnum.Mandarin]: 'Mandarin',
+  [LanguageEnum.Other]: 'Other',
   [LanguageEnum.Russian]: 'Russian',
+  [LanguageEnum.SimplifiedChinese]: 'Chinese, Simplified',
   [LanguageEnum.Spanish]: 'Spanish',
   [LanguageEnum.Tagalog]: 'Tagalog',
+  [LanguageEnum.TraditionalChinese]: 'Chinese, Traditional',
   [LanguageEnum.Vietnamese]: 'Vietnamese',
 };
 
 export const enumDisplayLivingSituation: {
   [key in LivingSituationEnum]: string;
 } = {
+  [LivingSituationEnum.AnotherShelter]: 'Another Shelter',
   [LivingSituationEnum.Housing]: 'Housing',
-  [LivingSituationEnum.Shelter]: 'Shelter',
-  [LivingSituationEnum.Vehicle]: 'Vehicle',
-  [LivingSituationEnum.Tent]: 'Tent',
+  [LivingSituationEnum.InformallyHoused]: 'Informally Housed',
+  [LivingSituationEnum.JusticeInvolved]: 'Justice Involved',
+  [LivingSituationEnum.MedicalFacility]: 'Medical Facility',
   [LivingSituationEnum.OpenAir]: 'Open Air',
   [LivingSituationEnum.Other]: 'Other',
+  [LivingSituationEnum.RentalOrOwnedHome]: 'Rental or Owned Home',
+  [LivingSituationEnum.Shelter]: 'Shelter',
+  [LivingSituationEnum.Tent]: 'Tent',
+  [LivingSituationEnum.Unknown]: 'Unknown',
+  [LivingSituationEnum.Vehicle]: 'Vehicle',
 };
 
 export const enumDisplayHmisAgency: {
   [key in HmisAgencyEnum]: string;
 } = {
+  [HmisAgencyEnum.Champ]: 'CHAMP',
   [HmisAgencyEnum.Lahsa]: 'LAHSA',
   [HmisAgencyEnum.LongBeach]: 'Long Beach',
+  [HmisAgencyEnum.Other]: 'Other',
   [HmisAgencyEnum.Pasadena]: 'Pasadena',
-  [HmisAgencyEnum.Champ]: 'CHAMP',
   [HmisAgencyEnum.Vash]: 'VASH',
 };
 
 export const enumDisplayGender: { [key in GenderEnum]: string } = {
-  [GenderEnum.Female]: 'Female',
-  [GenderEnum.Male]: 'Male',
+  [GenderEnum.CisFemale]: 'Cis Female',
+  [GenderEnum.CisMale]: 'Cis Male',
   [GenderEnum.NonBinary]: 'Non-Binary',
-  [GenderEnum.PreferNotToSay]: 'Prefer not to say',
   [GenderEnum.Other]: 'Other',
-  [GenderEnum.TransMale]: 'Transgender Male',
+  [GenderEnum.PreferNotToSay]: 'Prefer not to say',
   [GenderEnum.TransFemale]: 'Transgender Female',
+  [GenderEnum.TransMale]: 'Transgender Male',
 };
 
 export const enumDisplayPronoun: { [key in PronounEnum]: string } = {
@@ -77,13 +87,14 @@ export const enumDisplayPronoun: { [key in PronounEnum]: string } = {
 };
 
 export const enumDisplayRace: { [key in RaceEnum]: string } = {
-  [RaceEnum.WhiteCaucasian]: 'White/Caucasian',
-  [RaceEnum.BlackAfricanAmerican]: 'African American',
   [RaceEnum.AmericanIndianAlaskaNative]: 'American Indian/Alaska Native',
   [RaceEnum.Asian]: 'Asian',
+  [RaceEnum.BlackAfricanAmerican]: 'African American',
   [RaceEnum.HispanicLatino]: 'Hispanic/Latino',
   [RaceEnum.NativeHawaiianPacificIslander]: 'Native Hawaiian/Pacific Islander',
   [RaceEnum.Other]: 'Other',
+  [RaceEnum.PreferNotToSay]: 'Prefer not to say',
+  [RaceEnum.WhiteCaucasian]: 'White/Caucasian',
 };
 
 export const enumDisplayEyeColor: { [key in EyeColorEnum]: string } = {
@@ -119,10 +130,12 @@ export const enumDisplayDocumentType: {
   [key in ClientDocumentNamespaceEnum]: string;
 } = {
   [ClientDocumentNamespaceEnum.BirthCertificate]: 'Birth Certificate',
+  [ClientDocumentNamespaceEnum.ClientUpload]: 'Client Upload',
   [ClientDocumentNamespaceEnum.ConsentForm]: 'Consent Form',
   [ClientDocumentNamespaceEnum.DriversLicenseBack]: `Driver's License Back`,
   [ClientDocumentNamespaceEnum.DriversLicenseFront]: `Driver's License Front`,
   [ClientDocumentNamespaceEnum.HmisForm]: 'HMIS Form',
+  [ClientDocumentNamespaceEnum.IncomeDocuments]: 'Income Documents',
   [ClientDocumentNamespaceEnum.IncomeForm]: 'Income Form',
   [ClientDocumentNamespaceEnum.OtherClientDocument]: 'Other',
   [ClientDocumentNamespaceEnum.OtherDocReady]: 'Other',
@@ -174,6 +187,7 @@ export const enumDisplaySocialMedia: { [key in SocialMediaEnum]: string } = {
   [SocialMediaEnum.Facebook]: 'Facebook',
   [SocialMediaEnum.Instagram]: 'Instagram',
   [SocialMediaEnum.Linkedin]: 'Linkedin',
+  [SocialMediaEnum.Other]: 'Other',
   [SocialMediaEnum.Snapchat]: 'Snapchat',
   [SocialMediaEnum.Tiktok]: 'Tiktok',
   [SocialMediaEnum.Twitter]: 'Twitter',

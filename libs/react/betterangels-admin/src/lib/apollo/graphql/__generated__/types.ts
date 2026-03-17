@@ -611,7 +611,7 @@ export type CreateClientProfileInput = {
   socialSecurityNumber?: InputMaybe<Scalars['String']['input']>;
   spa?: InputMaybe<Array<ClientSpaEnum>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
-  status: ClientStatusEnum;
+  status?: InputMaybe<ClientStatusEnum>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 
@@ -3000,7 +3000,7 @@ export type UpdateClientProfileInput = {
   socialSecurityNumber?: InputMaybe<Scalars['String']['input']>;
   spa?: InputMaybe<Array<ClientSpaEnum>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
-  status: ClientStatusEnum;
+  status?: InputMaybe<ClientStatusEnum>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 

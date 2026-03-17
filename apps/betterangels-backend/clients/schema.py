@@ -425,6 +425,8 @@ class Mutation:
             client_profile_data: dict = strawberry.asdict(data)
             validate_client_profile_data(client_profile_data)
 
+            if client_profile_data.get("status") is None:
+                client_profile_data.pop("status", None)
             phone_numbers = client_profile_data.pop("phone_numbers", []) or []
 
             client_profile = resolvers.create(
@@ -471,6 +473,8 @@ class Mutation:
                 and (isinstance(field.remote_field, ForeignKey) or isinstance(field.remote_field, GenericRel))
             ]
 
+            if client_profile_data.get("status") is None:
+                client_profile_data.pop("status", None)  # don't overwrite with None
             for related_cls in related_classes:
                 related_name = related_cls.name
                 if (

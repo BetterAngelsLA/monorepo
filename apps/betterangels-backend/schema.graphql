@@ -603,7 +603,7 @@ input CreateClientProfileInput {
   spa: [ClientSpaEnum!]
   socialSecurityNumber: String
   spokenLanguages: [LanguageEnum!]
-  status: ClientStatusEnum!
+  status: ClientStatusEnum = null
   veteranStatus: VeteranStatusEnum
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
@@ -2501,7 +2501,7 @@ input UpdateClientProfileInput {
   spa: [ClientSpaEnum!]
   socialSecurityNumber: String
   spokenLanguages: [LanguageEnum!]
-  status: ClientStatusEnum!
+  status: ClientStatusEnum = null
   veteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactInput!]
