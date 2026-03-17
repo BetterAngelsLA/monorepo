@@ -186,7 +186,7 @@ export function useInfiniteScrollQuery<
   // Validate structure in DEV env
   if (data) {
     assertValueAtPath({
-      source: (data as any)[queryFieldName],
+      source: (data as Record<string, unknown>)[queryFieldName],
       path: queryPolicyConfig.itemsPath,
       shouldThrow: isDevEnv,
     });
