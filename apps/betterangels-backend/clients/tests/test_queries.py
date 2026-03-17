@@ -191,8 +191,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         client_profiles_data = response["data"]["clientProfiles"]
-        self.assertIn("localhost:8080", client_profiles_data["results"][0]["profilePhoto"]["url"])
-        self.assertIn("localhost:8080", client_profiles_data["results"][1]["profilePhoto"]["url"])
+        self.assertIn("localhost:8080/", client_profiles_data["results"][0]["profilePhoto"]["url"])
+        self.assertIn("localhost:8080/", client_profiles_data["results"][1]["profilePhoto"]["url"])
 
     @parametrize(
         ("sort_order, expected_first_name"),

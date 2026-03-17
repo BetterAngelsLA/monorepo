@@ -3,7 +3,7 @@ import datetime
 from types import SimpleNamespace
 from typing import Optional, cast
 from unittest.mock import MagicMock
-
+from django.conf import settings
 from common.enums import ImagePresetEnum
 from common.imgproxy import (
     IMGPROXY_SWITCH,
@@ -18,6 +18,7 @@ from common.imgproxy import (
 from django.test import TestCase, override_settings
 from unittest_parametrize import ParametrizedTestCase, parametrize
 from waffle.testutils import override_switch
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 TEST_KEY = "736563726574"
 TEST_SALT = "68656C6C6F"
@@ -157,19 +158,19 @@ class GetImageSourceUrlTest(ParametrizedTestCase, TestCase):
         )
         self.assertEqual(_get_image_source_url(file), "s3://my-bucket/photo.jpg")
 
-    @override_settings(IS_LOCAL_DEV=True, IMGPROXY_LOCAL_SOURCE_BASE_URL="http://backend:8000")
+    @override_settings(IS_LOCAL_DEV=True)
     def test_local_dev_with_source_base_url(self) -> None:
         file = SimpleNamespace(
             name="photo.jpg",
             storage=SimpleNamespace(),
-            url="/media/photos/photo.jpg",
+            url=f"{settings.MEDIA_URL}photos/photo.jpg",
         )
         self.assertEqual(
             _get_image_source_url(file),
-            "http://backend:8000/media/photos/photo.jpg",
+            f"{settings.IMGPROXY_LOCAL_MEDIA_URL}photos/photo.jpg",
         )
 
-    @override_settings(IS_LOCAL_DEV=True, IMGPROXY_LOCAL_SOURCE_BASE_URL="http://backend:8000")
+    @override_settings(IS_LOCAL_DEV=True)
     def test_local_dev_returns_none_when_no_file_url(self) -> None:
         file = SimpleNamespace(
             name="photo.jpg",
@@ -209,15 +210,13 @@ def _make_file(
 @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX=TEST_PREFIX)
 class BuildImgproxyUrlTest(TestCase):
     @override_settings(
-        IS_LOCAL_DEV=True,
-        IMGPROXY_LOCAL_URL="http://localhost:8080",
-        IMGPROXY_LOCAL_SOURCE_BASE_URL="http://backend:8000",
+        IS_LOCAL_DEV=True
     )
     def test_local_dev_returns_local_url(self) -> None:
         file = _make_file()
         url = build_imgproxy_url(file, ImagePresetEnum.SM, None)
         assert url
-        self.assertTrue(url.startswith("http://localhost:8080/"))
+        self.assertTrue(url.startswith(settings.IMGPROXY_LOCAL_URL))
 
     @override_settings(IS_LOCAL_DEV=False)
     def test_production_returns_none_without_cloudfront_signer(self) -> None:
@@ -260,7 +259,6 @@ class BuildImgproxyUrlTest(TestCase):
         with override_settings(
             IS_LOCAL_DEV=True,
             IMGPROXY_LOCAL_URL="http://localhost:8080",
-            IMGPROXY_LOCAL_SOURCE_BASE_URL="http://backend:8000",
         ):
             url = build_imgproxy_url(file, None, None)
         self.assertIsNone(url)
@@ -270,7 +268,6 @@ class BuildImgproxyUrlTest(TestCase):
         with override_settings(
             IS_LOCAL_DEV=True,
             IMGPROXY_LOCAL_URL="http://localhost:8080",
-            IMGPROXY_LOCAL_SOURCE_BASE_URL="http://backend:8000",
         ):
             url = build_imgproxy_url(file, ImagePresetEnum.SM, None)
         self.assertIsNone(url)
@@ -280,7 +277,6 @@ class BuildImgproxyUrlTest(TestCase):
         with override_settings(
             IS_LOCAL_DEV=True,
             IMGPROXY_LOCAL_URL="http://localhost:8080",
-            IMGPROXY_LOCAL_SOURCE_BASE_URL="http://backend:8000",
         ):
             url = build_imgproxy_url(file, ImagePresetEnum.SM, "rs:fit:999:999")
         assert url
@@ -305,8 +301,6 @@ def _image_url_resolver(
 @override_settings(
     IMGPROXY_KEY=TEST_KEY,
     IMGPROXY_SALT=TEST_SALT,
-    IMGPROXY_LOCAL_URL="http://localhost:8080",
-    IMGPROXY_LOCAL_SOURCE_BASE_URL="http://backend:8000",
 )
 class BaImageTypeUrlTest(TestCase):
     def _make_file(self, name: str = "photo.jpg", url: str = "https://cdn/photo.jpg") -> SimpleNamespace:

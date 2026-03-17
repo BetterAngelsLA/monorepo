@@ -31,7 +31,7 @@ def _resolve_imgproxy_ops(
 def _get_image_source_url(file: object) -> Optional[str]:
     """Return the source URL imgproxy should fetch for a Django file field value.
 
-    Local dev: ``IMGPROXY_LOCAL_SOURCE_BASE_URL`` + ``file.url``.
+    Local dev: ``file.url``.
     Production: ``s3://bucket/key``.
     """
     name = getattr(file, "name", None)
@@ -42,7 +42,10 @@ def _get_image_source_url(file: object) -> Optional[str]:
 
     if settings.IS_LOCAL_DEV:
         if url := getattr(file, "url", None):
-            return f"{settings.IMGPROXY_LOCAL_SOURCE_BASE_URL}{url}"
+            # file.url builds an absolute URL using MEDIA_URL. Locally, this points at localhost:8000.
+            # imgproxy runs in a separate Docker Compose service and can't reach the backend at
+            # localhost, so we swap the internal service hostname (e.g. "better-angels:8000").
+            return cast(str, url.replace(settings.MEDIA_URL, settings.IMGPROXY_LOCAL_MEDIA_URL))
 
         return None
 

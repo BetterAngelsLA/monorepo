@@ -74,8 +74,8 @@ env = environ.Env(
     IMGPROXY_KEY=(str, ""),
     IMGPROXY_SALT=(str, ""),
     IMGPROXY_PATH_PREFIX=(str, ""),
-    IMGPROXY_LOCAL_URL=(str, ""),
-    IMGPROXY_LOCAL_SOURCE_BASE_URL=(str, ""),
+    IMGPROXY_LOCAL_URL=(str, "http://localhost:8080"),
+    IMGPROXY_LOCAL_MEDIA_URL=(str, "better-angels:8000/"),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -324,7 +324,7 @@ IMGPROXY_PATH_PREFIX = env("IMGPROXY_PATH_PREFIX")
 # Base URL at which imgproxy (or other internal services) can reach this backend.
 # When set, used as the source base for imgproxy when serving local media, so both
 # direct media URLs (MEDIA_URL) and imgproxy URLs work for external clients.
-IMGPROXY_LOCAL_SOURCE_BASE_URL = env("IMGPROXY_LOCAL_SOURCE_BASE_URL")
+IMGPROXY_LOCAL_MEDIA_URL = env("IMGPROXY_LOCAL_MEDIA_URL")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
