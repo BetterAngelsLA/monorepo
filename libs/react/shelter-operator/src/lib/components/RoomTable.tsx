@@ -270,9 +270,15 @@ export function RoomTable({
         rows={filteredRows}
         getRowKey={getRowKey ?? ((room) => room.id)}
         getRowObject={(room) => ({ id: room.id, room })}
-        getTrailingContent={() => (
+        getTrailingContent={(rowObject) => (
           <div className="flex items-center gap-1">
-            <Button variant="edit" />
+            <Button
+              variant="edit"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRowClick?.(rowObject, 0);
+              }}
+            />
             <Button variant="edit" leftIcon={<CopyPlus />} />
             <Button variant="trash" />
           </div>

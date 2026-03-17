@@ -1,7 +1,13 @@
 import { Plus } from 'lucide-react';
+import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Button } from '../../../components/base-ui/buttons';
-import { RoomTable, type Room } from '../../../components/RoomTable';
+import { EditRoomModal } from '../../../components/rooms/EditRoomModal';
+import {
+  RoomTable,
+  type Room,
+  type RoomRowObject,
+} from '../../../components/RoomTable';
 import type { Shelter } from '../../../types/shelter';
 import type { OperatorDashboardLayoutContext } from '../OperatorDashboardLayout';
 
@@ -54,16 +60,36 @@ export function RoomsTabContent() {
     },
   ];
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<Room | undefined>();
+
+  const handleRowClick = (rowObject: RoomRowObject) => {
+    setSelectedRoom(rowObject.room);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveRoom = (updatedRoom: Room) => {
+    // TODO: Handle room update logic
+    console.log('Saving room:', updatedRoom);
+    setIsEditModalOpen(false);
+  };
+
   return (
     <>
       <div className="">
-        <RoomTable rows={rows} />
+        <RoomTable rows={rows} onRowClick={handleRowClick} />
       </div>
       <div className="fixed bottom-6 right-6 text-sm z-20 ">
         <Button leftIcon={<Plus />} rightIcon={false} variant="floating">
           Create Room
         </Button>
       </div>
+      <EditRoomModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        room={selectedRoom}
+        onSave={handleSaveRoom}
+      />
     </>
   );
 }
