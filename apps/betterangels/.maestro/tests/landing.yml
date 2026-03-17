@@ -1,0 +1,35 @@
+appId: la.betterangels.dev.app
+---
+- openLink: ${MAESTRO_DEEPLINK}
+
+# Loop until Better Angels appears or max 10 attempts; kill/relaunch if Reload is seen
+- evalScript: ${output.counter = 0}
+- repeat:
+    while:
+      true: ${output.counter < 10}
+      notVisible: 'Better Angels'
+    commands:
+      - extendedWaitUntil:
+          visible: 'Reload'
+          timeout: 1000
+          optional: true
+      - runFlow:
+          when:
+            visible: 'Reload'
+          commands:
+            - takeScreenshot: error-restart-kill
+            - killApp
+            - openLink: ${MAESTRO_DEEPLINK}
+      - runFlow:
+          when:
+            platform: ios
+            visible: 'Open'
+          commands:
+            - tapOn: 'Open'
+      - evalScript: ${output.counter = output.counter + 1}
+
+- assertVisible: 'Better Angels'
+- assertVisible: 'HMIS'
+- tapOn:
+    id: 'better-angels-login'
+- assertVisible: 'Welcome!'

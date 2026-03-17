@@ -2,14 +2,14 @@ import datetime
 from typing import Any
 from unittest.mock import ANY, patch
 
-from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
+from common.tests.utils import GraphQLBaseTestCase, NumQueriesWithoutCacheMixin
+from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
-from model_bakery import baker
 from model_bakery.recipe import seq
 from places import Places
 from shelters.enums import (
@@ -24,6 +24,7 @@ from shelters.enums import (
     ImmediateNeedChoices,
     ParkingChoices,
     PetChoices,
+    RoomStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
     ShelterChoices,
@@ -49,6 +50,7 @@ from shelters.models import (
     InteriorPhoto,
     Parking,
     Pet,
+    Room,
     RoomStyle,
     Shelter,
     ShelterProgram,
@@ -63,13 +65,9 @@ from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 
-class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
+class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        # Warm the ContentType cache so with_hero_image_file() never
-        # adds extra queries inside assertNumQueries / CaptureQueriesContext.
-        ContentType.objects.get_for_model(ExteriorPhoto)
-        ContentType.objects.get_for_model(InteriorPhoto)
 
         file_content = (
             b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04\x01\x0a\x00"
@@ -237,7 +235,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         variables = {"id": shelter.pk}
         expected_query_count = 21
 
-        with self.assertNumQueries(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         response_shelter = response["data"]["shelter"]
@@ -351,7 +349,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         variables = {"ordering": {"name": "ASC"}}
 
-        with self.assertNumQueries(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         shelters = response["data"]["shelters"]["results"]
@@ -481,7 +479,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         }
 
         expected_query_count = 2
-        with self.assertNumQueries(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         result_ids = {s["id"] for s in response["data"]["shelters"]["results"]}
@@ -679,7 +677,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         filters["properties"] = property_filters
 
         expected_query_count = 2
-        with self.assertNumQueries(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         results = response["data"]["shelters"]["results"]
@@ -1037,8 +1035,6 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
     def test_hero_image_returns_gfk_url_when_set(self) -> None:
         """hero_image should return the GFK photo URL when ``hero_image``
         points to a valid ExteriorPhoto or InteriorPhoto."""
-        from django.contrib.contenttypes.models import ContentType
-
         for photo_model in (ExteriorPhoto, InteriorPhoto):
             with self.subTest(photo_model=photo_model.__name__):
                 shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
@@ -1090,8 +1086,6 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
     def test_hero_image_with_orphaned_gfk_object_id(self) -> None:
         """Regression: when hero_image_content_type/object_id point to a
         deleted object, the resolver must not crash."""
-        from django.contrib.contenttypes.models import ContentType
-
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
         photo = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
 
@@ -1120,8 +1114,6 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
         """Regression: when hero_image_content_type points to a valid
         ContentType but the object_id does not exist for that model,
         the resolver must not crash."""
-        from django.contrib.contenttypes.models import ContentType
-
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
         exterior = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
 
@@ -1161,8 +1153,6 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
     def test_hero_image_multiple_shelters_mixed_states(self) -> None:
         """Multiple shelters with different hero_image states should all
         resolve without errors and return the correct heroImage per shelter."""
-        from django.contrib.contenttypes.models import ContentType
-
         ct = ContentType.objects.get_for_model(ExteriorPhoto)
 
         # Shelter 1: Valid GFK → explicit hero image
@@ -1207,8 +1197,6 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
         whose model_class() returns None (e.g. the model was removed), the
         resolver must not crash with "'NoneType' object has no attribute
         '_base_manager'"."""
-        from django.contrib.contenttypes.models import ContentType
-
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
         fallback = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
 
@@ -1227,14 +1215,16 @@ class ShelterHeroImageRegressionTestCase(GraphQLTestCaseMixin, TestCase):
         self.assertEqual(results[0]["heroImage"], fallback.file.url)
 
 
-class BedMutationTestCase(GraphQLTestCaseMixin, TestCase):
+class BedMutationTestCase(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.user = baker.make(User, is_superuser=True)
-        self.graphql_client.force_login(self.user)
+        bed_content_type = ContentType.objects.get_for_model(Bed)
+        add_bed_perm = Permission.objects.get(content_type=bed_content_type, codename="add_bed")
+        self.org_1_case_manager_1.user_permissions.add(add_bed_perm)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_create_bed(self) -> None:
-        shelter = shelter_recipe.make()
+        shelter = shelter_recipe.make(organization=self.org_1)
         mutation = """
             mutation CreateBed($data: CreateBedInput!) {
                 createBed(data: $data) {
@@ -1295,7 +1285,7 @@ class BedMutationTestCase(GraphQLTestCaseMixin, TestCase):
         self.assertIn("Shelter matching ID 999999 could not be found.", messages[0]["message"])
 
     def test_create_bed_invalid_status(self) -> None:
-        shelter = shelter_recipe.make()
+        shelter = shelter_recipe.make(organization=self.org_1)
         mutation = """
             mutation CreateBed($data: CreateBedInput!) {
                 createBed(data: $data) {
@@ -1318,4 +1308,153 @@ class BedMutationTestCase(GraphQLTestCaseMixin, TestCase):
         self.assertEqual(len(response["errors"]), 1)
         self.assertIn(
             "Value 'INVALID_STATUS' does not exist in 'BedStatusChoices' enum.", response["errors"][0]["message"]
+        )
+
+
+class RoomMutationTestCase(GraphQLBaseTestCase, TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        room_content_type = ContentType.objects.get_for_model(Room)
+        add_room_perm = Permission.objects.get(content_type=room_content_type, codename="add_room")
+        self.org_1_case_manager_1.user_permissions.add(add_room_perm)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_create_room(self) -> None:
+        shelter = shelter_recipe.make(organization=self.org_1)
+        mutation = """
+            mutation CreateRoom($data: CreateRoomInput!) {
+                createRoom(data: $data) {
+                    ... on RoomType {
+                        id
+                        roomIdentifier
+                        roomType
+                        roomTypeOther
+                        status
+                        notes
+                        amenities
+                        medicalRespite
+                        lastCleanedInspected
+                        shelter {
+                            id
+                        }
+                    }
+                }
+            }
+        """
+        variables = {
+            "data": {
+                "shelterId": shelter.pk,
+                "roomIdentifier": "Room-101",
+                "roomType": RoomStyleChoices.SINGLE_ROOM.name,
+                "roomTypeOther": None,
+                "status": RoomStatusChoices.AVAILABLE.name,
+                "notes": "Corner room",
+                "amenities": "WiFi, AC",
+                "medicalRespite": True,
+                "lastCleanedInspected": "2025-01-15T10:30:00Z",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        data = response["data"]["createRoom"]
+        self.assertEqual(data["roomIdentifier"], "Room-101")
+        self.assertEqual(data["roomType"], RoomStyleChoices.SINGLE_ROOM.name)
+        self.assertEqual(data["status"], RoomStatusChoices.AVAILABLE.name)
+        self.assertEqual(data["notes"], "Corner room")
+        self.assertEqual(data["amenities"], "WiFi, AC")
+        self.assertTrue(data["medicalRespite"])
+        self.assertEqual(data["lastCleanedInspected"], "2025-01-15T10:30:00+00:00")
+        self.assertEqual(data["shelter"]["id"], str(shelter.pk))
+        self.assertTrue(Room.objects.filter(pk=data["id"]).exists())
+
+    def test_create_room_duplicate_identifier(self) -> None:
+        shelter = shelter_recipe.make(organization=self.org_1)
+        Room.objects.create(shelter=shelter, room_identifier="Room-101")
+
+        mutation = """
+            mutation CreateRoom($data: CreateRoomInput!) {
+                createRoom(data: $data) {
+                    ... on RoomType {
+                        id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                }
+            }
+        """
+        variables = {
+            "data": {
+                "shelterId": shelter.pk,
+                "roomIdentifier": "Room-101",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        messages = response["data"]["createRoom"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+
+    def test_create_room_shelter_not_found(self) -> None:
+        mutation = """
+            mutation CreateRoom($data: CreateRoomInput!) {
+                createRoom(data: $data) {
+                    ... on RoomType {
+                        id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                }
+            }
+        """
+        variables = {
+            "data": {
+                "shelterId": 999999,
+                "roomIdentifier": "Room-101",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        messages = response["data"]["createRoom"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("Shelter matching ID 999999 could not be found.", messages[0]["message"])
+
+    def test_create_room_invalid_status(self) -> None:
+        shelter = shelter_recipe.make(organization=self.org_1)
+        mutation = """
+            mutation CreateRoom($data: CreateRoomInput!) {
+                createRoom(data: $data) {
+                    ... on RoomType {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {
+            "data": {
+                "shelterId": shelter.pk,
+                "roomIdentifier": "Room-101",
+                "status": "INVALID_STATUS",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertIn(
+            "Value 'INVALID_STATUS' does not exist in 'RoomStatusChoices' enum.", response["errors"][0]["message"]
         )

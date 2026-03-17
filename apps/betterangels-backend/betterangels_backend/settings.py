@@ -71,6 +71,11 @@ env = environ.Env(
     ACCOUNT_LOGIN_BY_CODE_ENABLED=(bool, False),
     ACCOUNT_LOGIN_BY_CODE_TIMEOUT=(int, 300),
     USE_IAM_AUTH=(bool, False),
+    IMGPROXY_KEY=(str, ""),
+    IMGPROXY_SALT=(str, ""),
+    IMGPROXY_PATH_PREFIX=(str, ""),
+    IMGPROXY_LOCAL_URL=(str, "http://localhost:8080"),
+    IMGPROXY_LOCAL_MEDIA_URL=(str, "http://better-angels:8000/media/"),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -295,7 +300,7 @@ if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
 
 
 ADMIN_RESUMABLE_CHUNKSIZE = 10 * 1024 * 1024
-ADMIN_RESUMABLE_SHOW_THUMB = True
+ADMIN_RESUMABLE_SHOW_THUMB = False
 ADMIN_SIMULTANEOUS_UPLOADS = 5
 
 # Static files (CSS, JavaScript, Images)
@@ -307,6 +312,19 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # Media settings
 MEDIA_URL = env("MEDIA_URL")
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+IMGPROXY_LOCAL_URL = env("IMGPROXY_LOCAL_URL")
+IMGPROXY_KEY = env("IMGPROXY_KEY")
+IMGPROXY_SALT = env("IMGPROXY_SALT")
+# Optional path prefix for imgproxy URLs on the CloudFront distribution.
+# In production, set to e.g. "imgproxy" so URLs become
+# https://cdn.example.com/imgproxy/<sig>/<processing_options>/<source>
+# and a CloudFront behavior routes /imgproxy/* to the imgproxy origin.
+IMGPROXY_PATH_PREFIX = env("IMGPROXY_PATH_PREFIX")
+# Base URL at which imgproxy (or other internal services) can reach this backend.
+# When set, used as the source base for imgproxy when serving local media, so both
+# direct media URLs (MEDIA_URL) and imgproxy URLs work for external clients.
+IMGPROXY_LOCAL_MEDIA_URL = env("IMGPROXY_LOCAL_MEDIA_URL")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

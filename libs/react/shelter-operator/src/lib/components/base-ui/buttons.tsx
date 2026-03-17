@@ -1,88 +1,86 @@
-import { BookCheck, Plus } from 'lucide-react';
+import { ArrowRight, Pencil, Trash2 } from 'lucide-react';
 import { ButtonHTMLAttributes, ReactNode } from 'react';
 
 export type ButtonVariant =
-  | 'floating-light'
-  | 'floating-dark'
-  | 'small-light'
-  | 'small-medium'
-  | 'small-dark'
-  | 'trash-light'
-  | 'trash-medium'
-  | 'trash-dark'
-  | 'edit-light'
-  | 'edit-medium'
-  | 'edit-dark'
+  | 'floating'
+  | 'primary'
+  | 'trash'
+  | 'edit'
   | 'right-arrow';
+
+export type ButtonColor = 'blue';
 
 interface IButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
+  color?: ButtonColor;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
 }
 
 const ICON_ONLY_VARIANTS = new Set<ButtonVariant>([
-  'edit-light',
-  'edit-medium',
-  'edit-dark',
-  'trash-light',
-  'trash-medium',
-  'trash-dark',
+  'edit',
+  'trash',
   'right-arrow',
 ]);
 
-const SMALL_VARIANTS = new Set<ButtonVariant>([
-  'small-light',
-  'small-medium',
-  'small-dark',
-]);
+const variantBaseClasses: Record<ButtonVariant, string> = {
+  floating:
+    'text-[22px] py-3 px-6 rounded-full shadow-lg gap-2 w-fit justify-between',
+  primary: 'border text-lg py-2 px-4 rounded-full gap-2 w-fit justify-between',
+  edit: 'size-10 p-0 rounded-lg justify-center',
+  trash: 'size-10 p-0 rounded-lg justify-center',
+  'right-arrow': 'size-11 p-0 rounded-full justify-center',
+};
 
-const variantClasses: Record<ButtonVariant, string> = {
-  'floating-light':
-    'bg-[#008CEE] text-white text-[22px] py-3 px-6 rounded-full shadow-lg gap-2 w-fit justify-between',
-  'floating-dark':
-    'bg-[#0071C0] text-white text-[22px] py-3 px-6 rounded-full shadow-lg gap-2 w-fit justify-between',
-  'small-light':
-    'bg-white border border-[#D3D9E3] text-[#747A82] text-lg py-2 px-4 rounded-full gap-2 w-fit justify-between',
-  'small-medium':
-    'bg-[#F4F6FD] border border-[#D3D9E3] text-lg py-2 px-4 rounded-full gap-2 w-fit justify-between',
-  'small-dark':
-    'bg-[#D3D9E3] border border-[#D3D9E3] text-[#747A82] text-lg py-2 px-4 rounded-full gap-2 w-fit justify-between',
-  'edit-light': 'bg-white text-white size-10 p-0 rounded-lg justify-center',
-  'edit-medium':
-    'bg-[#F4F6FD] text-white size-10 p-0 rounded-lg justify-center',
-  'edit-dark': 'bg-[#D3D9E3] text-white size-10 p-0 rounded-lg justify-center',
-  'trash-light': 'bg-white text-white size-10 p-0 rounded-lg justify-center',
-  'trash-medium':
-    'bg-[#FFECE8] text-white size-10 p-0 rounded-lg justify-center',
-  'trash-dark': 'bg-[#FFC5BF] text-white size-10 p-0 rounded-lg justify-center',
-  'right-arrow':
-    'bg-[#FFF82E] text-white size-11 p-0 rounded-full justify-center',
+const variantColorDefaults: Record<ButtonVariant, string> = {
+  floating: 'bg-[#008CEE] hover:bg-[#0071C0] text-white',
+  primary:
+    'bg-white hover:bg-[#F4F6FD] disabled:bg-[#D3D9E3] border-[#D3D9E3] text-[#747A82]',
+  edit: 'bg-white hover:bg-[#F4F6FD] active:bg-[#D3D9E3]',
+  trash:
+    'bg-white hover:bg-[#FFECE8] active:bg-[#FFC5BF] text-black hover:text-[#CB0808]',
+  'right-arrow': 'bg-[#FFF82E]',
+};
+
+const colorSchemes: Record<
+  ButtonColor,
+  Partial<Record<ButtonVariant, string>>
+> = {
+  blue: {
+    primary: 'bg-[#008CEE] hover:bg-[#0071C0] border-[#008CEE] text-white',
+    floating: 'bg-[#008CEE] hover:bg-[#0071C0] text-white',
+  },
+};
+
+const defaultIcons: Partial<Record<ButtonVariant, ReactNode>> = {
+  edit: <Pencil size={22} stroke="black" />,
+  trash: <Trash2 size={22} color="currentColor" />,
+  'right-arrow': <ArrowRight size={24} stroke="black" />,
 };
 
 export function Button(props: IButtonProps) {
   const {
-    variant = 'floating-light',
+    variant = 'primary',
+    color,
     type = 'button',
     className,
     style,
     children,
+    leftIcon: leftIconProp,
+    rightIcon,
     ...rest
   } = props;
 
   const isIconOnly = ICON_ONLY_VARIANTS.has(variant);
-  const isSmall = SMALL_VARIANTS.has(variant);
-
-  const leftIcon =
-    props.leftIcon ??
-    (!isIconOnly && (isSmall ? <Plus size={24} /> : <BookCheck size={29} />));
-  const rightIcon =
-    props.rightIcon ??
-    (!isIconOnly && (isSmall ? <Plus size={24} /> : <BookCheck size={29} />));
+  const leftIcon = leftIconProp ?? defaultIcons[variant];
+  const colorClass =
+    (color && colorSchemes[color]?.[variant]) ?? variantColorDefaults[variant];
 
   const buttonCss = [
-    'font-sans font-normal focus:outline-none transition-all inline-flex items-center h-fit whitespace-nowrap',
-    variantClasses[variant],
+    'font-sans font-normal focus:outline-hidden transition-all inline-flex items-center whitespace-nowrap',
+    isIconOnly ? '' : 'h-fit',
+    variantBaseClasses[variant],
+    colorClass,
     className,
   ]
     .filter(Boolean)

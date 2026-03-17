@@ -29,6 +29,21 @@ def admin_shelter_list(queryset: "QuerySet[Shelter]", *, user: "User") -> "Query
     return queryset.filter(Exists(user_orgs))
 
 
+def shelter_get(*, user: "User", shelter_id: int | str) -> "Shelter":
+    """Return the shelter if it exists and the user belongs to its organization.
+
+    Uses ``admin_shelter_list`` as the base queryset so the org-membership
+    check is defined in one place.
+
+    Raises:
+        ``Shelter.DoesNotExist`` when the shelter is not found or the user
+        does not belong to its organization.
+    """
+    from shelters.models import Shelter
+
+    return admin_shelter_list(Shelter.objects.all(), user=user).select_related("organization").get(pk=shelter_id)
+
+
 def shelters_open_at(
     queryset: "QuerySet[Shelter]",
     *,
@@ -47,7 +62,7 @@ def shelters_open_at(
     time = dt.time()
     date = dt.date()
 
-    # Step 1+2: Use an Exists subquery so the join doesn't produce duplicate
+    # Step 1: Use an Exists subquery so the join doesn't produce duplicate
     # shelter rows (avoiding the need for .distinct()).  All conditions bind
     # to a single Schedule row.
     from shelters.models import Schedule
@@ -60,9 +75,9 @@ def shelters_open_at(
             start_time__lte=time,
             end_time__gte=time,
         ).filter(
-            Q(day=day) | Q(day__isnull=True),
-            Q(start_date__isnull=True) | Q(start_date__lte=date),
-            Q(end_date__isnull=True) | Q(end_date__gte=date),
+            Q(day=None) | Q(day=day),
+            Q(start_date=None) | Q(start_date__lte=date),
+            Q(end_date=None) | Q(end_date__gte=date),
         )
     )
 
@@ -77,9 +92,9 @@ def shelters_open_at(
             is_exception=True,
         ).filter(
             covers_now,
-            Q(day=day) | Q(day__isnull=True),
-            Q(start_date__isnull=True) | Q(start_date__lte=date),
-            Q(end_date__isnull=True) | Q(end_date__gte=date),
+            Q(day=None) | Q(day=day),
+            Q(start_date=None) | Q(start_date__lte=date),
+            Q(end_date=None) | Q(end_date__gte=date),
         )
     )
 

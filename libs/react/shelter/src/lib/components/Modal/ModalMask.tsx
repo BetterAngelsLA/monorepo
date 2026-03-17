@@ -22,7 +22,7 @@ export function ModalMask(props: IProps) {
     'flex',
     'justify-center',
     'items-center',
-    'bg-gray-500/20 backdrop-blur',
+    'bg-gray-500/20 backdrop-blur-sm',
     className,
   ].join(' ');
 

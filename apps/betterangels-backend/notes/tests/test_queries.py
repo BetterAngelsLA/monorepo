@@ -1,5 +1,4 @@
 from typing import Any, Optional
-from unittest import skip
 from unittest.mock import ANY
 
 import time_machine
@@ -17,7 +16,7 @@ from notes.models import (
     OrganizationServiceCategory,
     ServiceRequest,
 )
-from notes.tests.utils import NoteGraphQLBaseTestCase, ServiceRequestGraphQLBaseTestCase
+from notes.tests.utils import NoteGraphQLBaseTestCase
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 from unittest_parametrize import parametrize
 
@@ -405,92 +404,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             [n["id"] for n in response["data"]["notes"]["results"]],
             [oldest_note["id"], older_note["id"], self.note["id"]],
         )
-
-
-@skip("Service Requests are not currently implemented")
-@ignore_warnings(category=UserWarning)
-@time_machine.travel("2024-03-11T10:11:12+00:00", tick=False)
-class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-
-    def test_service_request_query(self) -> None:
-        service_request_id = self.service_request["id"]
-        self._update_service_request_fixture(
-            {
-                "id": service_request_id,
-                "status": "COMPLETED",
-            }
-        )
-
-        query = """
-            query ($id: ID!) {
-                serviceRequest (pk: $id) {
-                    id
-                    service
-                    serviceOther
-                    status
-                    dueBy
-                    completedOn
-                    clientProfile {
-                        id
-                    }
-                    createdBy {
-                        id
-                    }
-                    createdAt
-                }
-            }
-        """
-        variables = {"id": service_request_id}
-
-        expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query, variables)
-
-        service_request = response["data"]["serviceRequest"]
-        expected_service_request = {
-            "id": service_request_id,
-            "service": self.service_request["service"],
-            "serviceOther": None,
-            "status": "COMPLETED",
-            "dueBy": None,
-            "completedOn": "2024-03-11T10:11:12+00:00",
-            "clientProfile": None,
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "createdAt": "2024-03-11T10:11:12+00:00",
-        }
-
-        self.assertEqual(service_request, expected_service_request)
-
-    def test_service_requests_query(self) -> None:
-        query = """
-            {
-                serviceRequests {
-                    id
-                    service
-                    serviceOther
-                    status
-                    dueBy
-                    completedOn
-                    clientProfile {
-                        id
-                    }
-                    createdBy {
-                        id
-                    }
-                    createdAt
-                }
-            }
-        """
-        expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query)
-
-        service_requests = response["data"]["serviceRequests"]
-        self.assertEqual(len(service_requests), 1)
-        self.assertEqual(service_requests[0], self.service_request)
 
 
 class OrganizationServiceQueryTestCase(GraphQLBaseTestCase):

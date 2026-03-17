@@ -19,7 +19,7 @@ function SidebarStoryWrapper() {
     <div className="border-4 border-gray-300 flex flex-row max-h-[800px] w-full">
       <Sidebar className="h-[600px]" onOpenChange={setIsOpen}>
         <Sidebar.Header>
-          <BetterAngelsLogoBadge className="ml-1 mr-2 flex-shrink-0" />
+          <BetterAngelsLogoBadge className="ml-1 mr-2 shrink-0" />
           {userOrganization?.name && isOpen && (
             <h2 className="text-2xl truncate">{userOrganization.name}</h2>
           )}
