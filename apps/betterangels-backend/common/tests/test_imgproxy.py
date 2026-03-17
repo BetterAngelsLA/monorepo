@@ -3,7 +3,7 @@ import datetime
 from types import SimpleNamespace
 from typing import Optional, cast
 from unittest.mock import MagicMock
-from django.conf import settings
+
 from common.enums import ImagePresetEnum
 from common.imgproxy import (
     IMGPROXY_SWITCH,
@@ -15,10 +15,10 @@ from common.imgproxy import (
     build_imgproxy_url,
     is_imgproxy_enabled,
 )
+from django.conf import settings
 from django.test import TestCase, override_settings
 from unittest_parametrize import ParametrizedTestCase, parametrize
 from waffle.testutils import override_switch
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 TEST_KEY = "736563726574"
 TEST_SALT = "68656C6C6F"
@@ -209,9 +209,7 @@ def _make_file(
 
 @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX=TEST_PREFIX)
 class BuildImgproxyUrlTest(TestCase):
-    @override_settings(
-        IS_LOCAL_DEV=True
-    )
+    @override_settings(IS_LOCAL_DEV=True)
     def test_local_dev_returns_local_url(self) -> None:
         file = _make_file()
         url = build_imgproxy_url(file, ImagePresetEnum.SM, None)
