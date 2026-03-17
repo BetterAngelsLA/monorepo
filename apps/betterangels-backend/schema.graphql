@@ -831,9 +831,9 @@ type DjangoImageType {
   name: String!
   path: String!
   size: Int!
-  url: String!
   width: Int!
   height: Int!
+  url(preset: ImagePresetEnum = null, processingOptions: String = null): String!
 }
 
 type DjangoModelType {
@@ -1247,6 +1247,13 @@ input IDFilterLookup {
   Case-insensitive regular expression match. Filter will be skipped on `null` value
   """
   iRegex: ID
+}
+
+enum ImagePresetEnum {
+  ORIGINAL
+  SM
+  MD
+  LG
 }
 
 enum ImmediateNeedChoices {

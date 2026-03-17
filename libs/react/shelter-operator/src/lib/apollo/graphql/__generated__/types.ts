@@ -847,6 +847,12 @@ export type DjangoImageType = {
   width: Scalars['Int']['output'];
 };
 
+
+export type DjangoImageTypeUrlArgs = {
+  preset?: InputMaybe<ImagePresetEnum>;
+  processingOptions?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type DjangoModelType = {
   __typename?: 'DjangoModelType';
   pk: Scalars['ID']['output'];
@@ -1266,6 +1272,13 @@ export type IdFilterLookup = {
   /** Case-sensitive starts-with. Filter will be skipped on `null` value */
   startsWith?: InputMaybe<Scalars['ID']['input']>;
 };
+
+export enum ImagePresetEnum {
+  Lg = 'LG',
+  Md = 'MD',
+  Original = 'ORIGINAL',
+  Sm = 'SM'
+}
 
 export enum ImmediateNeedChoices {
   Clothing = 'CLOTHING',
