@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { Text } from '../text';
 import { cn } from './constants';
 import { DropdownChips } from './DropdownChips';
 import { DropdownMenu } from './DropdownMenu';
@@ -178,8 +179,15 @@ export function Dropdown<T extends string | number = string | number>(
     <div className={cn('relative flex flex-col gap-1 w-full', className)}>
       {label && (
         <label id={labelId} className="text-sm text-gray-900">
-          {label}
-          {required && <span className="text-red-500"> *</span>}
+          <Text variant="body" className="text-gray-900">
+            {label}
+          </Text>
+          {required && (
+            <Text variant="body" className="text-red-500">
+              {' '}
+              *
+            </Text>
+          )}
         </label>
       )}
 
@@ -207,13 +215,16 @@ export function Dropdown<T extends string | number = string | number>(
             onRemove={handleRemoveChip}
           />
         ) : (
-          <span
-            className={cn(
-              'text-sm flex-1 truncate',
-              hasSelection ? 'text-gray-900' : 'text-gray-400'
-            )}
-          >
-            {hasSelection ? selectedValues[0].label : placeholder}
+          <span className="text-sm flex-1 truncate">
+            <Text
+              variant="body"
+              className={cn(
+                'text-sm flex-1 truncate',
+                hasSelection ? 'text-gray-900' : 'text-gray-400'
+              )}
+            >
+              {hasSelection ? selectedValues[0].label : placeholder}
+            </Text>
           </span>
         )}
         <ChevronDown

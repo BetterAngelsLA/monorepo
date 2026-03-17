@@ -1,5 +1,6 @@
 import { Check, Search } from 'lucide-react';
 import type { RefObject } from 'react';
+import { Text } from '../text';
 import { cn, Z_BACKDROP, Z_MENU } from './constants';
 import type { DropdownOption } from './types';
 
@@ -92,24 +93,32 @@ export function DropdownMenu<T extends string | number>({
                   role="option"
                   aria-selected={active}
                   className={cn(
-                    'flex items-center justify-between px-4 py-3 text-sm cursor-pointer transition-colors',
-                    active
-                      ? 'bg-blue-50 text-blue-600 font-medium'
-                      : 'text-gray-900',
+                    ' px-4 py-3 cursor-pointer transition-colors',
+                    active ? 'bg-blue-50' : '',
                     focused && !active && 'bg-gray-100',
                     !focused && !active && 'hover:bg-gray-50'
                   )}
                   onClick={() => onOptionClick(option)}
                   onMouseEnter={() => onFocusIndex(index)}
                 >
-                  {option.label}
-                  {active && <Check size={16} className="shrink-0" />}
+                  <Text
+                    variant="body"
+                    className={cn(
+                      'flex items-center justify-between',
+                      active ? 'text-blue-600 font-medium' : 'text-gray-900'
+                    )}
+                  >
+                    {option.label}
+                    {active && <Check size={16} className="shrink-0" />}
+                  </Text>
                 </div>
               );
             })
           ) : (
-            <div className="px-4 py-3 text-sm text-gray-400 text-center">
-              No results found
+            <div className="px-4 py-3">
+              <Text variant="body" className="text-gray-400 text-center">
+                No results found
+              </Text>
             </div>
           )}
         </div>
@@ -119,22 +128,35 @@ export function DropdownMenu<T extends string | number>({
             <button
               type="button"
               className={cn(
-                'text-sm transition-colors cursor-pointer',
-                hasSelection
-                  ? 'text-red-500 hover:text-red-600'
-                  : 'text-gray-300 cursor-default'
+                'transition-colors cursor-pointer',
+                hasSelection ? '' : 'cursor-default'
               )}
               disabled={!hasSelection}
               onClick={onClearAll}
             >
-              Clear all
+              <Text
+                variant="body"
+                className={cn(
+                  '',
+                  hasSelection
+                    ? 'text-red-500 hover:text-red-600'
+                    : 'text-gray-300'
+                )}
+              >
+                Clear all
+              </Text>
             </button>
             <button
               type="button"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 cursor-pointer transition-colors"
+              className="cursor-pointer transition-colors"
               onClick={onClose}
             >
-              Done
+              <Text
+                variant="body"
+                className="font-medium text-blue-600 hover:text-blue-700"
+              >
+                Done
+              </Text>
             </button>
           </div>
         )}
