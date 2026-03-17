@@ -2,6 +2,7 @@ import base64
 import datetime
 from types import SimpleNamespace
 from typing import Optional, cast
+from urllib.parse import urlsplit
 from unittest.mock import MagicMock
 
 from common.enums import ImagePresetEnum
@@ -250,6 +251,26 @@ class BuildImgproxyUrlTest(TestCase):
             datetime.datetime.now(datetime.timezone.utc),
             "date_less_than should be in the future",
         )
+
+    @override_settings(IS_LOCAL_DEV=False, IMGPROXY_PATH_PREFIX="/imgproxy")
+    def test_production_with_leading_slash_path_prefix(self) -> None:
+        signer = MagicMock()
+        signer.generate_presigned_url.return_value = "https://cdn.example.com/signed-url"
+        file = _make_file()
+        file.storage.cloudfront_signer = signer
+
+        url = build_imgproxy_url(file, ImagePresetEnum.SM, "rs:fill:100:100")
+
+        self.assertEqual(url, "https://cdn.example.com/signed-url")
+        signer.generate_presigned_url.assert_called_once()
+        call_url = signer.generate_presigned_url.call_args[0][0]
+        parsed_url = urlsplit(call_url)
+
+        self.assertEqual(parsed_url.scheme, "https")
+        self.assertEqual(parsed_url.netloc, "cdn.example.com")
+        self.assertTrue(parsed_url.path.startswith("/imgproxy/"))
+        self.assertFalse(parsed_url.path.startswith("//imgproxy/"))
+        self.assertIn("rs:fill:100:100", parsed_url.path)
 
     def test_returns_none_when_no_preset_or_processing(self) -> None:
         file = _make_file()
