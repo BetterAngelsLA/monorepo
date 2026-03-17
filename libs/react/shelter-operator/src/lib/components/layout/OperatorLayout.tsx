@@ -1,9 +1,9 @@
 import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
 import { Plus, UserCog } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useActiveOrg } from '../../providers/activeOrg';
 import { Button } from '../base-ui/buttons/buttons';
 import { Dropdown } from '../base-ui/dropdown';
-import { useActiveOrg } from '../../providers/activeOrg';
 
 export function OperatorLayout() {
   const { pathname } = useLocation();
@@ -85,7 +85,10 @@ export function OperatorLayout() {
       <main className="flex-1">
         <Outlet
           context={{
-            organizations: organizations.map((org) => ({ id: org.id, name: org.name })),
+            organizations: organizations.map((org) => ({
+              id: org.id,
+              name: org.name,
+            })),
             selectedOrganizationId,
             setSelectedOrganizationId: setActiveOrgId,
           }}

@@ -265,7 +265,9 @@ export function ShelterTable({
           })
         }
         variant="danger"
-        title={`Are you sure you want to delete ${deleteConfirmation.shelterName || 'this shelter'}?`}
+        title={`Are you sure you want to delete ${
+          deleteConfirmation.shelterName || 'this shelter'
+        }?`}
         description="This action cannot be undone."
         primaryAction={{
           label: 'Delete',
