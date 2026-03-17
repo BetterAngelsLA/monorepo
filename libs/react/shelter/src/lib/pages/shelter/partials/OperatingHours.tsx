@@ -109,9 +109,7 @@ function OperatingHoursDialog({
       <div className="mb-6 pb-4">
         <div className="mb-3 flex items-center gap-2">
           <ClockIcon />
-          <h3 className="text-lg font-semibold text-neutral-20">
-            Operating Hours
-          </h3>
+          <h3 className="text-lg font-semibold text-neutral-20">Schedule</h3>
         </div>
         <StatusLine status={status} />
       </div>
@@ -273,7 +271,7 @@ export function OperatingHours({
         <div className="flex items-center gap-2">
           <ClockIcon />
           <span className="text-lg font-semibold text-neutral-20">
-            Operating Hours
+            Schedule
           </span>
         </div>
         {hasOperatingSchedules ? (
