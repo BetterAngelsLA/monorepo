@@ -9,11 +9,10 @@ from shelters.enums import (
     ConditionChoices,
     DayOfWeekChoices,
     DemographicChoices,
-    GeneralServiceChoices,
     ScheduleTypeChoices,
     ShelterChoices,
 )
-from shelters.models import Demographic, GeneralService, Schedule, Shelter, ShelterType
+from shelters.models import Demographic, Schedule, Service, ServiceCategory, Shelter, ShelterType
 
 
 class ShelterModelTestCase(TestCase):
@@ -65,7 +64,7 @@ class ShelterModelTestCase(TestCase):
             pgh_label__in=[
                 "shelter.shelter_type.add",
                 "shelter.demographic.add",
-                "shelter.general_service.add",
+                "shelter.service.add",
             ]
         )
         self.assertEqual(shelter_associated_events.count(), 4)
@@ -73,7 +72,7 @@ class ShelterModelTestCase(TestCase):
         event_labels = [event.pgh_label for event in shelter_associated_events]
         self.assertEqual(1, event_labels.count("shelter.shelter_type.add"))
         self.assertEqual(1, event_labels.count("shelter.demographic.add"))
-        self.assertEqual(2, event_labels.count("shelter.general_service.add"))
+        self.assertEqual(2, event_labels.count("shelter.service.add"))
 
     def test_delete_shelter_events(self) -> None:
         # Delete shelter and verify events
@@ -87,7 +86,7 @@ class ShelterModelTestCase(TestCase):
             pgh_label__in=[
                 "shelter.shelter_type.remove",
                 "shelter.demographic.remove",
-                "shelter.general_service.remove",
+                "shelter.service.remove",
             ]
         )
         self.assertEqual(shelter_associated_events.count(), 4)
@@ -95,20 +94,35 @@ class ShelterModelTestCase(TestCase):
         event_labels = [event.pgh_label for event in shelter_associated_events]
         self.assertEqual(1, event_labels.count("shelter.shelter_type.remove"))
         self.assertEqual(1, event_labels.count("shelter.demographic.remove"))
-        self.assertEqual(2, event_labels.count("shelter.general_service.remove"))
+        self.assertEqual(2, event_labels.count("shelter.service.remove"))
 
     def _create_shelter(self, shelter_name: str) -> Shelter:
         # Create related models for ManyToMany fields
         shelter_type = ShelterType.objects.create(name=ShelterChoices.BUILDING)
         population = Demographic.objects.create(name=DemographicChoices.SINGLE_MEN)
-        general_service_1 = GeneralService.objects.create(name=GeneralServiceChoices.CASE_MANAGEMENT)
-        general_service_2 = GeneralService.objects.create(name=GeneralServiceChoices.CHILDCARE)
+        service_category = ServiceCategory.objects.create(
+            name="general",
+            display_name="General Services",
+            priority=0,
+        )
+        service_1 = Service.objects.create(
+            category=service_category,
+            name="case_management",
+            display_name="Case Management",
+            priority=0,
+        )
+        service_2 = Service.objects.create(
+            category=service_category,
+            name="childcare",
+            display_name="Childcare",
+            priority=1,
+        )
 
         # Create shelter and add ManyToMany relationships
         shelter = Shelter.objects.create(name=shelter_name)
         shelter.shelter_types.add(shelter_type)
         shelter.demographics.add(population)
-        shelter.general_services.add(general_service_1, general_service_2)
+        shelter.services.add(service_1, service_2)
         return shelter
 
 

@@ -3,7 +3,6 @@ import {
   DemographicChoices,
   EntryRequirementChoices,
   FunderChoices,
-  GeneralServiceChoices,
   ParkingChoices,
   PetChoices,
   RoomStyleChoices,
@@ -27,24 +26,6 @@ export const enumDisplayDemographics: { [key in DemographicChoices]: string } =
     [DemographicChoices.SingleWomen]: 'Single Women',
     [DemographicChoices.TayTeen]: 'TAY/Teen',
   };
-
-export const enumDisplayGeneralServiceChoices: {
-  [key in GeneralServiceChoices]: string;
-} = {
-  [GeneralServiceChoices.CaseManagement]: 'Case Management',
-  [GeneralServiceChoices.Childcare]: 'Childcare',
-  [GeneralServiceChoices.ComputerAccess]: 'Computer Access',
-  [GeneralServiceChoices.EmploymentServices]: 'Employment Services',
-  [GeneralServiceChoices.FinancialLiteracyAssistance]:
-    'Financial Literacy Assistance',
-  [GeneralServiceChoices.HousingNavigation]: 'Housing Navigation',
-  [GeneralServiceChoices.LegalAssistance]: 'Legal Assistance',
-  [GeneralServiceChoices.Laundry]: 'Laundry Services',
-  [GeneralServiceChoices.Mail]: 'Mail',
-  [GeneralServiceChoices.Phone]: 'Phone',
-  [GeneralServiceChoices.Tls]: 'TLS (Time Limited Subsidies)',
-  [GeneralServiceChoices.Transportation]: 'Transportation',
-};
 
 export const enumDisplayEntryRequirementChoices: {
   [key in EntryRequirementChoices]: string;

@@ -26,20 +26,18 @@ export function GeneralServices({
     grouped[grouped.length - 1].items.push(svc.displayName);
   }
 
-  const FULL_WIDTH_THRESHOLD = 5;
-
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="space-y-3">
       {grouped.map(({ category, items }) => (
-        <div
+        <section
           key={category.id}
-          className={items.length > FULL_WIDTH_THRESHOLD ? 'col-span-3' : ''}
+          className="rounded-2xl border border-neutral-90 bg-neutral-99 px-4 py-3"
         >
-          <p className="text-xs font-medium text-neutral-40 uppercase tracking-wide mb-1.5">
+          <p className="mb-3 text-sm font-semibold text-primary-20">
             {category.displayName}
           </p>
           <PillContainer data={items} />
-        </div>
+        </section>
       ))}
     </div>
   );

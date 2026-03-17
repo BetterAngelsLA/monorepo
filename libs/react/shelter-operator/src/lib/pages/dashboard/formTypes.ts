@@ -6,10 +6,6 @@ import type {
   EntryRequirementChoices,
   ExitPolicyChoices,
   FunderChoices,
-  GeneralServiceChoices,
-  HealthServiceChoices,
-  ImmediateNeedChoices,
-  MealServiceChoices,
   ParkingChoices,
   PetChoices,
   ReferralRequirementChoices,
@@ -21,7 +17,6 @@ import type {
   SpecialSituationRestrictionChoices,
   StatusChoices,
   StorageChoices,
-  TrainingServiceChoices,
 } from '@monorepo/react/shelter';
 
 // ---------------------------------------------------------------------------
@@ -99,11 +94,7 @@ export interface ShelterFormData {
   otherRules: string;
 
   // Services Offered
-  immediateNeeds: ImmediateNeedChoices[];
-  generalServices: GeneralServiceChoices[];
-  healthServices: HealthServiceChoices[];
-  trainingServices: TrainingServiceChoices[];
-  mealServices: MealServiceChoices[];
+  services: string[];
   otherServices: string;
 
   // Entry Requirements

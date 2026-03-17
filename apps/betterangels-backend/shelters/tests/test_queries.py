@@ -19,9 +19,6 @@ from shelters.enums import (
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
-    GeneralServiceChoices,
-    HealthServiceChoices,
-    ImmediateNeedChoices,
     ParkingChoices,
     PetChoices,
     RoomStatusChoices,
@@ -33,7 +30,6 @@ from shelters.enums import (
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
-    TrainingServiceChoices,
 )
 from shelters.models import (
     SPA,
@@ -44,20 +40,18 @@ from shelters.models import (
     EntryRequirement,
     ExteriorPhoto,
     Funder,
-    GeneralService,
-    HealthService,
-    ImmediateNeed,
     InteriorPhoto,
     Parking,
     Pet,
     Room,
     RoomStyle,
+    Service,
+    ServiceCategory,
     Shelter,
     ShelterProgram,
     ShelterType,
     SpecialSituationRestriction,
     Storage,
-    TrainingService,
 )
 from shelters.models.schedule import Schedule
 from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
@@ -110,18 +104,22 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
             demographics {name}
             entryRequirements {name}
             funders {name}
-            generalServices {name}
-            healthServices {name}
-            immediateNeeds {name}
             parking {name}
             pets {name}
             roomStyles {name}
+            services {
+                name
+                displayName
+                category {
+                    name
+                    displayName
+                }
+            }
             shelterPrograms {name}
             shelterTypes {name}
             spa {name}
             specialSituationRestrictions {name}
             storage {name}
-            trainingServices {name}
             additionalContacts {
                 id
                 contactName
@@ -141,6 +139,17 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
     def test_shelter_query(self) -> None:
         shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
         shelter_organization = organization_recipe.make()
+        service_category = ServiceCategory.objects.create(
+            name="general",
+            display_name="General Services",
+            priority=0,
+        )
+        case_management = Service.objects.create(
+            category=service_category,
+            name="case_management",
+            display_name="Case Management",
+            priority=0,
+        )
 
         new_shelter = shelter_recipe.make(
             add_notes_sleeping_details="sleeping details notes",
@@ -186,9 +195,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
             demographics=[Demographic.objects.get_or_create(name=DemographicChoices.ALL)[0]],
             entry_requirements=[EntryRequirement.objects.get_or_create(name=EntryRequirementChoices.PHOTO_ID)[0]],
             funders=[Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)[0]],
-            general_services=[GeneralService.objects.get_or_create(name=GeneralServiceChoices.CASE_MANAGEMENT)[0]],
-            health_services=[HealthService.objects.get_or_create(name=HealthServiceChoices.DENTAL)[0]],
-            immediate_needs=[ImmediateNeed.objects.get_or_create(name=ImmediateNeedChoices.CLOTHING)[0]],
+            services=[case_management],
             parking=[Parking.objects.get_or_create(name=ParkingChoices.BICYCLE)[0]],
             pets=[Pet.objects.get_or_create(name=PetChoices.CATS)[0]],
             room_styles=[RoomStyle.objects.get_or_create(name=RoomStyleChoices.CONGREGATE)[0]],
@@ -201,7 +208,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
                 )[0]
             ],
             storage=[Storage.objects.get_or_create(name=StorageChoices.AMNESTY_LOCKERS)[0]],
-            training_services=[TrainingService.objects.get_or_create(name=TrainingServiceChoices.JOB_TRAINING)[0]],
         )
 
         shelter = Shelter.objects.get(pk=new_shelter.pk)
@@ -281,18 +287,24 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
             "demographics": [{"name": DemographicChoices.ALL.name}],
             "entryRequirements": [{"name": EntryRequirementChoices.PHOTO_ID.name}],
             "funders": [{"name": FunderChoices.CITY_OF_LOS_ANGELES.name}],
-            "generalServices": [{"name": GeneralServiceChoices.CASE_MANAGEMENT.name}],
-            "healthServices": [{"name": HealthServiceChoices.DENTAL.name}],
-            "immediateNeeds": [{"name": ImmediateNeedChoices.CLOTHING.name}],
             "parking": [{"name": ParkingChoices.BICYCLE.name}],
             "pets": [{"name": PetChoices.CATS.name}],
             "roomStyles": [{"name": RoomStyleChoices.CONGREGATE.name}],
+            "services": [
+                {
+                    "name": "case_management",
+                    "displayName": "Case Management",
+                    "category": {
+                        "name": "general",
+                        "displayName": "General Services",
+                    },
+                }
+            ],
             "shelterPrograms": [{"name": ShelterProgramChoices.BRIDGE_HOME.name}],
             "shelterTypes": [{"name": ShelterChoices.BUILDING.name}],
             "spa": [{"name": SPAChoices.ONE.name}],
             "specialSituationRestrictions": [{"name": SpecialSituationRestrictionChoices.NONE.name}],
             "storage": [{"name": StorageChoices.AMNESTY_LOCKERS.name}],
-            "trainingServices": [{"name": TrainingServiceChoices.JOB_TRAINING.name}],
             "additionalContacts": [
                 {"id": ANY, "contactName": "shelter contact 1", "contactNumber": "2125551211"},
                 {"id": ANY, "contactName": "shelter contact 2", "contactNumber": "2125551212"},

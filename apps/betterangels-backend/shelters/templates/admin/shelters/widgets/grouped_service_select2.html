@@ -6,6 +6,7 @@
   }
 
   .grouped-service-fieldset {
+    background: #fff;
     border: 1px solid #ddd;
     border-radius: 6px;
     margin: 0;
@@ -14,10 +15,11 @@
 
   .grouped-service-legend {
     color: #555;
+    display: block;
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.04em;
-    padding: 0 6px;
+    margin: 0 0 8px;
     text-transform: uppercase;
   }
 
@@ -80,8 +82,8 @@
 </style>
 <div class="grouped-service-widget">
   {% for group in grouped_services %}
-    <fieldset class="grouped-service-fieldset">
-      <legend class="grouped-service-legend">{{ group.category.display_name }}</legend>
+    <div class="grouped-service-fieldset">
+      <div class="grouped-service-legend">{{ group.category.display_name }}</div>
       <div class="grouped-service-stack">
         <div>
           <label class="grouped-service-label">Official services</label>
@@ -123,7 +125,7 @@
              data-category-id="{{ group.category.id }}"
              aria-live="polite"></div>
       </div>
-    </fieldset>
+    </div>
   {% empty %}
     <p>No service categories defined yet.</p>
   {% endfor %}

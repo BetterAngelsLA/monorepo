@@ -50,11 +50,7 @@ export const createEmptyShelterFormData = (): ShelterFormData => ({
   otherRules: '',
 
   // Services Offered
-  immediateNeeds: [],
-  generalServices: [],
-  healthServices: [],
-  trainingServices: [],
-  mealServices: [],
+  services: [],
   otherServices: '',
 
   // Entry Requirements

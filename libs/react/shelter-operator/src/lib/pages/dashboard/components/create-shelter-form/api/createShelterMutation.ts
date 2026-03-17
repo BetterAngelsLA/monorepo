@@ -21,6 +21,9 @@ export type {
 const compactEnumValues = <T extends string>(values: readonly T[]): T[] =>
   Array.from(new Set(values.filter(Boolean)));
 
+const compactIdValues = (values: readonly string[]): string[] =>
+  Array.from(new Set(values.filter(Boolean)));
+
 const numberOrUndefined = (value: number | null | undefined) =>
   typeof value === 'number' && !Number.isNaN(value) ? value : undefined;
 
@@ -94,11 +97,7 @@ export const buildCreateShelterInput = (
     storage: compactEnumValues(formData.storage),
     pets: compactEnumValues(formData.pets),
     parking: compactEnumValues(formData.parking),
-    immediateNeeds: compactEnumValues(formData.immediateNeeds),
-    generalServices: compactEnumValues(formData.generalServices),
-    healthServices: compactEnumValues(formData.healthServices),
-    trainingServices: compactEnumValues(formData.trainingServices),
-    mealServices: compactEnumValues(formData.mealServices),
+    services: compactIdValues(formData.services),
     entryRequirements: compactEnumValues(formData.entryRequirements),
     referralRequirement: compactEnumValues(formData.referralRequirement),
     exitPolicy: compactEnumValues(formData.exitPolicy),
