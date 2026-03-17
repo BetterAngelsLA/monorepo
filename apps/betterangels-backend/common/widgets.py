@@ -1,3 +1,4 @@
+import functools
 from pathlib import Path
 from typing import Any, Optional
 from common.enums import ImagePresetEnum
@@ -49,6 +50,25 @@ def _get_thumb_url(
     return getattr(field_file, "url", None)
 
 
+def _get_original_url(field_file: object) -> Optional[str]:
+    if not field_file:
+        return None
+
+    if isinstance(field_file, FieldFile):
+        return getattr(field_file, "url", None)
+
+    return None
+
+
+def _replace_file_url(html: SafeString | str, field_file: object) -> SafeString:
+    original_url = _get_original_url(field_file)
+    thumb_url = _get_thumb_url(field_file)
+    if not original_url or not thumb_url:
+        return mark_safe(html)
+
+    return mark_safe(str(html).replace(original_url, thumb_url))
+
+
 class ImgproxyAdminImageWidget(AdminFileWidget):
     """Drop-in ``AdminFileWidget`` replacement that renders an imgproxy thumbnail
     above the file input for ``ImageField`` values.
@@ -71,12 +91,14 @@ class ImgproxyAdminImageWidget(AdminFileWidget):
         return preview + output if preview else output
 
 
-def build_imgproxy_resumable_widget(base_widget_cls: type[Any]) -> type[Any]:
-    """Create a resumable widget subclass once Django apps are ready."""
+@functools.lru_cache(maxsize=1)
+def build_imgproxy_resumable_widget() -> type[Any]:
+    """Create the imgproxy-aware async widget once and reuse it."""
 
-    class ImgproxyResumableAdminWidget(base_widget_cls):
+    from admin_async_upload.widgets import ResumableAdminWidget
+
+    class ImgproxyResumableAdminWidget(ResumableAdminWidget):
         is_imgproxy_resumable_widget = True
-        preview_preset: ImagePresetEnum = ImagePresetEnum.MD
 
         def render(
             self,
@@ -85,64 +107,8 @@ def build_imgproxy_resumable_widget(base_widget_cls: type[Any]) -> type[Any]:
             attrs: Optional[dict[str, Any]] = None,
             **kwargs: Any,
         ) -> SafeString:
-            from django.conf import settings
-            from django.contrib.contenttypes.models import ContentType
-            from django.core.files.storage import default_storage
-            from django.forms import CheckboxInput
-            from django.template import loader
-
-            if value:
-                if isinstance(value, FieldFile):
-                    field_storage = value.storage or default_storage
-                    value_name = value.name
-                else:
-                    field_storage = default_storage
-                    value_name = value
-                file_name = value
-                file_url = mark_safe(field_storage.url(value_name))
-            else:
-                file_name = ""
-                file_url = ""
-
-            chunk_size = getattr(settings, "ADMIN_RESUMABLE_CHUNKSIZE", "1*1024*1024")
-            simultaneous_uploads = getattr(settings, "ADMIN_SIMULTANEOUS_UPLOADS", 3)
-            content_type_id = ContentType.objects.get_for_model(self.attrs["model"]).id
-
-            context = {
-                "name": name,
-                "value": value,
-                "id": attrs["id"] if attrs else "",
-                "chunk_size": chunk_size,
-                "show_thumb": False,
-                "field_name": self.attrs["field_name"],
-                "content_type_id": content_type_id,
-                "file_url": file_url,
-                "file_name": file_name,
-                "simultaneous_uploads": simultaneous_uploads,
-            }
-
-            if not self.is_required and attrs:
-                template_with_clear = (
-                    '<span class="clearable-file-input">%(clear)s '
-                    '<label for="%(clear_checkbox_id)s">%(clear_checkbox_label)s</label></span>'
-                )
-                substitutions = {
-                    "clear_checkbox_id": attrs["id"] + "-clear-id",
-                    "clear_checkbox_name": attrs["id"] + "-clear",
-                    "clear_checkbox_label": self.clear_checkbox_label,
-                }
-                substitutions["clear"] = CheckboxInput().render(
-                    substitutions["clear_checkbox_name"],
-                    False,
-                    attrs={"id": substitutions["clear_checkbox_id"]},
-                )
-                context["clear_checkbox"] = mark_safe(template_with_clear % substitutions)
-
-            output = loader.render_to_string(self.template_name, context)
-            preview = _render_preview_html(value, preset=self.preview_preset)
-            safe_output = SafeString(preview + output if preview else output)
-
-            return safe_output
+            output = super().render(name, value, attrs, **kwargs)
+            return _replace_file_url(output, value)
 
     return ImgproxyResumableAdminWidget
 
@@ -153,10 +119,7 @@ def patch_async_admin_widget() -> None:
     from admin_async_upload import fields as async_fields
     from admin_async_upload import models as async_models
 
-    widget_cls = async_models.ResumableAdminWidget
-    if not getattr(widget_cls, "is_imgproxy_resumable_widget", False):
-        widget_cls = build_imgproxy_resumable_widget(widget_cls)
-
+    widget_cls = build_imgproxy_resumable_widget()
     async_models.ResumableAdminWidget = widget_cls
     async_fields.ResumableAdminWidget = widget_cls
     async_fields.FormResumableFileField.widget = widget_cls
