@@ -75,7 +75,7 @@ env = environ.Env(
     IMGPROXY_SALT=(str, ""),
     IMGPROXY_PATH_PREFIX=(str, ""),
     IMGPROXY_LOCAL_URL=(str, "http://localhost:8080"),
-    IMGPROXY_LOCAL_MEDIA_URL=(str, "better-angels:8000/"),
+    IMGPROXY_LOCAL_MEDIA_URL=(str, "better-angels:8000/media/"),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
