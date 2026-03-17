@@ -6,6 +6,8 @@ from urllib.parse import quote
 import places
 import requests
 from betterangels_backend import settings
+from common.enums import ImagePresetEnum
+from common.imgproxy import build_imgproxy_url, is_imgproxy_enabled
 from common.models import Location
 from django import forms
 from django.contrib import admin, messages
@@ -948,7 +950,14 @@ class ShelterAdmin(ImportExportModelAdmin):
     @admin.display(description="Current Hero Image")
     def display_hero_image(self, obj: Shelter) -> str:
         if obj.hero_image and obj.hero_image.file:
-            return mark_safe(f'<img src="{obj.hero_image.file.url}" style="max-height: 200px;" />')
+            if is_imgproxy_enabled():
+                url = (
+                    build_imgproxy_url(obj.hero_image.file, preset=ImagePresetEnum.MD, processing=None)
+                    or obj.hero_image.file.url
+                )
+            else:
+                url = obj.hero_image.file.url
+            return mark_safe(f'<img src="{url}" style="max-height: 200px;" />')
 
         return "No hero image selected"
 

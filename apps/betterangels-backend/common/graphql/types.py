@@ -144,7 +144,7 @@ class AddressInput:
 
 
 @strawberry.type(name="DjangoImageType")
-class BaImageType:
+class TransformableImageType:
     """GraphQL type for Django ``ImageField`` values.
 
     Attributes exposed from the underlying ``FieldFile``:

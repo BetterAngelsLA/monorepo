@@ -282,12 +282,12 @@ class BuildImgproxyUrlTest(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# BaImageType.url()
+# TransformableImageType.url()
 # ---------------------------------------------------------------------------
 def _image_url_resolver(
     root: object, preset: Optional[ImagePresetEnum] = None, processing: Optional[str] = None
 ) -> str:
-    """Exercise the same logic as BaImageType.url (cannot call the Strawberry field directly)."""
+    """Exercise the same logic as TransformableImageType.url (cannot call the Strawberry field directly)."""
     if is_imgproxy_enabled():
         if imgproxy_url := build_imgproxy_url(root, preset, processing):
             return imgproxy_url
@@ -299,7 +299,7 @@ def _image_url_resolver(
     IMGPROXY_KEY=TEST_KEY,
     IMGPROXY_SALT=TEST_SALT,
 )
-class BaImageTypeUrlTest(TestCase):
+class TransformableImageTypeUrlTest(TestCase):
     def _make_file(self, name: str = "photo.jpg", url: str = "https://cdn/photo.jpg") -> SimpleNamespace:
         return SimpleNamespace(
             name=name,
