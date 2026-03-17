@@ -137,6 +137,10 @@ class GroupedServiceWidget(forms.Widget):
 
     template_name = "admin/shelters/widgets/grouped_service_select2.html"
 
+    class Media:
+        css = {"all": ("shelters/admin/grouped_service_widget.css",)}
+        js = ("shelters/admin/grouped_service_widget.js",)
+
     def get_context(self, name: str, value: Any, attrs: Any) -> dict:
         context = super().get_context(name, value, attrs)
         categories = ServiceCategory.objects.prefetch_related("services").all()
@@ -147,8 +151,8 @@ class GroupedServiceWidget(forms.Widget):
         grouped: list[dict] = []
         for cat in categories:
             services = list(cat.services.all())
-            official_services = [svc for svc in services if not getattr(svc, "is_other", False)]
-            other_services = [svc for svc in services if getattr(svc, "is_other", False)]
+            official_services = [svc for svc in services if not svc.is_other]
+            other_services = [svc for svc in services if svc.is_other]
             grouped.append(
                 {
                     "category": cat,
@@ -182,7 +186,7 @@ class GroupedServiceWidget(forms.Widget):
             if isinstance(values, str):
                 values = [values]
 
-        return [value for value in values if value]
+        return [value for value in values if value and not str(value).startswith("__new__:")]
 
 
 class ShelterForm(forms.ModelForm):
@@ -270,6 +274,7 @@ class ShelterForm(forms.ModelForm):
         services = self.cleaned_data.get("services")
         raw_entries = self.data.getlist("services__new") if hasattr(self.data, "getlist") else []
         pending_entries: list[tuple[int, str]] = []
+        seen_entries: set[tuple[int, str]] = set()
 
         for raw_entry in raw_entries:
             if not raw_entry:
@@ -285,6 +290,11 @@ class ShelterForm(forms.ModelForm):
             if category is None:
                 raise ValidationError(f"Unknown service category: {category_id}.")
 
+            dedupe_key = (category.id, display_name.casefold())
+            if dedupe_key in seen_entries:
+                continue
+
+            seen_entries.add(dedupe_key)
             pending_entries.append((category.id, display_name))
 
         self._pending_service_entries = pending_entries
@@ -369,45 +379,63 @@ class ShelterForm(forms.ModelForm):
         if not self._pending_service_entries:
             return
 
+        category_ids = {category_id for category_id, _display_name in self._pending_service_entries}
+        categories = {
+            category.id: category
+            for category in ServiceCategory.objects.filter(pk__in=category_ids).prefetch_related("services")
+        }
+        existing_other_services_by_category = {
+            category_id: {
+                service.display_name.casefold(): service for service in category.services.all() if service.is_other
+            }
+            for category_id, category in categories.items()
+        }
+        existing_names_by_category = {
+            category_id: {service.name.casefold() for service in category.services.all()}
+            for category_id, category in categories.items()
+        }
+        next_priority_by_category = {
+            category_id: max((service.priority for service in category.services.all()), default=-1) + 1
+            for category_id, category in categories.items()
+        }
+
         services_to_add: list[Service] = []
+        seen_service_ids: set[int] = set()
         for category_id, display_name in self._pending_service_entries:
-            category = ServiceCategory.objects.filter(pk=category_id).first()
+            category = categories.get(category_id)
             if category is None:
                 continue
 
-            existing_service = next(
-                (
-                    service
-                    for service in category.services.all()
-                    if getattr(service, "is_other", False)
-                    and service.display_name.casefold() == display_name.casefold()
-                ),
-                None,
-            )
+            normalized_display_name = display_name.casefold()
+            existing_service = existing_other_services_by_category.get(category_id, {}).get(normalized_display_name)
             if existing_service is not None:
-                services_to_add.append(existing_service)
+                if existing_service.pk not in seen_service_ids:
+                    services_to_add.append(existing_service)
+                    seen_service_ids.add(existing_service.pk)
                 continue
 
             base_name = slugify(display_name).replace("-", "_") or f"service_{category.id}"
             base_name = f"other_{base_name}"
             service_name = base_name
             suffix = 2
-            while category.services.filter(name__iexact=service_name).exists():
+            while service_name.casefold() in existing_names_by_category[category_id]:
                 service_name = f"{base_name}_{suffix}"
                 suffix += 1
 
-            last_priority = category.services.order_by("-priority").values_list("priority", flat=True).first()
-            services_to_add.append(
-                Service.objects.create(
-                    **{
-                        "category": category,
-                        "name": service_name,
-                        "display_name": display_name,
-                        "is_other": True,
-                        "priority": 0 if last_priority is None else last_priority + 1,
-                    }
-                )
+            created_service = Service.objects.create(
+                category=category,
+                name=service_name,
+                display_name=display_name,
+                is_other=True,
+                priority=next_priority_by_category[category_id],
             )
+            next_priority_by_category[category_id] += 1
+            existing_names_by_category[category_id].add(service_name.casefold())
+            existing_other_services_by_category.setdefault(category_id, {})[normalized_display_name] = created_service
+
+            if created_service.pk not in seen_service_ids:
+                services_to_add.append(created_service)
+                seen_service_ids.add(created_service.pk)
 
         if services_to_add:
             self.instance.services.add(*services_to_add)
@@ -520,6 +548,28 @@ class ServiceInline(SortableStackedInline):
     fields = ("display_name", "name", "is_other", "priority")
 
 
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = (
+        "display_name",
+        "category",
+        "name",
+        "is_other",
+        "priority",
+        "created_at",
+    )
+    list_filter = ("category", "is_other", "created_at")
+    list_select_related = ("category",)
+    ordering = ("category__priority", "category__display_name", "is_other", "priority", "display_name")
+    search_fields = (
+        "display_name",
+        "name",
+        "category__display_name",
+        "category__name",
+    )
+    autocomplete_fields = ("category",)
+
+
 @admin.register(ServiceCategory)
 class ServiceCategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
     inlines = [ServiceInline]
@@ -537,10 +587,6 @@ class ServiceCategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
         "services__display_name",
         "services__name",
     )
-
-    class Meta:
-        model = ServiceCategory
-        fields = "__all__"
 
 
 class ShelterResource(resources.ModelResource):

@@ -12,7 +12,14 @@ from shelters.enums import (
     ScheduleTypeChoices,
     ShelterChoices,
 )
-from shelters.models import Demographic, Schedule, Service, ServiceCategory, Shelter, ShelterType
+from shelters.models import (
+    Demographic,
+    Schedule,
+    Service,
+    ServiceCategory,
+    Shelter,
+    ShelterType,
+)
 
 
 class ShelterModelTestCase(TestCase):
