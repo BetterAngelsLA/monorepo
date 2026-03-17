@@ -17,10 +17,6 @@ from shelters.enums import (
     EntryRequirementChoices,
     ExitPolicyChoices,
     FunderChoices,
-    GeneralServiceChoices,
-    HealthServiceChoices,
-    ImmediateNeedChoices,
-    MealServiceChoices,
     MedicalNeedChoices,
     ParkingChoices,
     PetChoices,
@@ -35,7 +31,6 @@ from shelters.enums import (
     SPAChoices,
     SpecialSituationRestrictionChoices,
     StorageChoices,
-    TrainingServiceChoices,
 )
 from strawberry import ID, auto
 
@@ -81,11 +76,6 @@ class CreateShelterInput:
     storage: List[StorageChoices]
     pets: List[PetChoices]
     parking: List[ParkingChoices]
-    immediate_needs: List[ImmediateNeedChoices]
-    general_services: List[GeneralServiceChoices]
-    health_services: List[HealthServiceChoices]
-    training_services: List[TrainingServiceChoices]
-    meal_services: List[MealServiceChoices]
     entry_requirements: List[EntryRequirementChoices]
     referral_requirement: List[ReferralRequirementChoices]
     exit_policy: List[ExitPolicyChoices]

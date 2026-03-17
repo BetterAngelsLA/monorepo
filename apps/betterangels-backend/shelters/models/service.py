@@ -15,10 +15,10 @@ class ServiceCategory(BaseModel):
 
     name = models.CharField(max_length=255, unique=True)
     display_name = models.CharField(max_length=255)
-    sort_order = models.PositiveIntegerField(default=0, db_index=True)
+    priority = models.PositiveIntegerField(default=0, db_index=True)
 
     class Meta:
-        ordering = ["sort_order", "display_name"]
+        ordering = ["priority", "display_name"]
         verbose_name_plural = "Service categories"
 
     def __str__(self) -> str:
@@ -35,10 +35,11 @@ class Service(BaseModel):
     )
     name = models.CharField(max_length=255)
     display_name = models.CharField(max_length=255)
-    sort_order = models.PositiveIntegerField(default=0, db_index=True)
+    is_other = models.BooleanField(default=False, db_index=True)
+    priority = models.PositiveIntegerField(default=0, db_index=True)
 
     class Meta:
-        ordering = ["category__sort_order", "sort_order", "display_name"]
+        ordering = ["category__priority", "is_other", "priority", "display_name"]
         constraints = [
             UniqueConstraint(
                 Lower("name"),

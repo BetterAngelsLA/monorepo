@@ -22,9 +22,6 @@ from shelters.types.lookups import (
     DemographicType,
     EntryRequirementType,
     FunderType,
-    GeneralServiceType,
-    HealthServiceType,
-    ImmediateNeedType,
     ParkingType,
     PetType,
     RoomStyleType,
@@ -36,7 +33,6 @@ from shelters.types.lookups import (
     SPAType,
     SpecialSituationRestrictionType,
     StorageType,
-    TrainingServiceType,
 )
 from shelters.types.outputs import (
     AdminShelterType,
@@ -57,9 +53,6 @@ __all__ = [
     "DemographicType",
     "EntryRequirementType",
     "FunderType",
-    "GeneralServiceType",
-    "HealthServiceType",
-    "ImmediateNeedType",
     "ParkingType",
     "PetType",
     "RoomStyleType",
@@ -71,7 +64,6 @@ __all__ = [
     "ServiceCategoryType",
     "ServiceType",
     "StorageType",
-    "TrainingServiceType",
     # filters
     "GeolocationInput",
     "MapBoundsInput",

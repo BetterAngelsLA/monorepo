@@ -3,8 +3,8 @@
 from django.db import migrations
 
 
-# (category_name, category_display_name, sort_order, services)
-# services: list of (name, display_name, sort_order)
+# (category_name, category_display_name, priority, services)
+# services: list of (name, display_name, priority)
 SEED_DATA = [
     (
         "immediate_need",
@@ -75,13 +75,13 @@ def seed(apps, schema_editor):
     for cat_name, cat_display, cat_order, services in SEED_DATA:
         category, _ = ServiceCategory.objects.get_or_create(
             name=cat_name,
-            defaults={"display_name": cat_display, "sort_order": cat_order},
+            defaults={"display_name": cat_display, "priority": cat_order},
         )
         for svc_name, svc_display, svc_order in services:
             Service.objects.get_or_create(
                 category=category,
                 name=svc_name,
-                defaults={"display_name": svc_display, "sort_order": svc_order},
+                defaults={"display_name": svc_display, "priority": svc_order},
             )
 
 

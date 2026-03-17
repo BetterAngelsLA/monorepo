@@ -16,7 +16,7 @@ from django.db import models, transaction
 from organizations.models import Organization
 from places import Places
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
-from shelters.models import Bed, Room, Schedule, Shelter
+from shelters.models import Bed, Room, Schedule, Service, Shelter
 from shelters.selectors import shelter_get
 
 if TYPE_CHECKING:
@@ -182,11 +182,16 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
 
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
 
+    # ``services`` is ID-based (not enum-backed), handle separately.
+    service_pks = m2m_data.pop("services", None)
+
     shelter = Shelter(**scalar_data)
     shelter.full_clean()
     shelter.save()
 
     _set_m2m_from_enums(shelter, m2m_data)
+    if service_pks is not None:
+        shelter.services.set(Service.objects.filter(pk__in=service_pks))
     _create_schedules(shelter, schedules_data)
 
     return shelter

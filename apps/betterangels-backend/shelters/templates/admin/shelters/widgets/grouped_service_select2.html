@@ -1,0 +1,261 @@
+<style>
+  .grouped-service-widget {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .grouped-service-fieldset {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin: 0;
+    padding: 10px 12px 12px;
+  }
+
+  .grouped-service-legend {
+    color: #555;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 0 6px;
+    text-transform: uppercase;
+  }
+
+  .grouped-service-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .grouped-service-select {
+    width: 100%;
+  }
+
+  .grouped-service-label {
+    color: #666;
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .grouped-service-add-row {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+  }
+
+  .grouped-service-add-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .grouped-service-pending-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .grouped-service-pending-item {
+    align-items: center;
+    background: #f3f3f3;
+    border: 1px solid #ddd;
+    border-radius: 999px;
+    display: inline-flex;
+    gap: 6px;
+    padding: 4px 10px;
+  }
+
+  .grouped-service-pending-remove {
+    background: transparent;
+    border: 0;
+    color: #666;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+  }
+</style>
+<div class="grouped-service-widget">
+  {% for group in grouped_services %}
+    <fieldset class="grouped-service-fieldset">
+      <legend class="grouped-service-legend">{{ group.category.display_name }}</legend>
+      <div class="grouped-service-stack">
+        <div>
+          <label class="grouped-service-label">Official services</label>
+          <select multiple
+                  name="{{ widget_name }}"
+                  class="grouped-service-select"
+                  data-category-id="{{ group.category.id }}"
+                  data-role="official"
+                  data-placeholder="Select official services...">
+            {% for svc in group.official_services %}
+              <option value="{{ svc.id }}" {% if svc.selected %}selected{% endif %}>{{ svc.display_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="grouped-service-label">Other services</label>
+          <select multiple
+                  name="{{ widget_name }}"
+                  class="grouped-service-select"
+                  data-category-id="{{ group.category.id }}"
+                  data-role="other"
+                  data-placeholder="Select other services...">
+            {% for svc in group.other_services %}
+              <option value="{{ svc.id }}" {% if svc.selected %}selected{% endif %}>{{ svc.display_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="grouped-service-add-row">
+          <input type="text"
+                 class="grouped-service-add-input"
+                 data-category-id="{{ group.category.id }}"
+                 data-category-label="{{ group.category.display_name }}"
+                 placeholder="Add new other service in {{ group.category.display_name|lower }}">
+          <button type="button"
+                  class="button grouped-service-add-button"
+                  data-category-id="{{ group.category.id }}">Add Other Service</button>
+        </div>
+        <div class="grouped-service-pending-list"
+             data-category-id="{{ group.category.id }}"
+             aria-live="polite"></div>
+      </div>
+    </fieldset>
+  {% empty %}
+    <p>No service categories defined yet.</p>
+  {% endfor %}
+</div>
+<script>
+(function() {
+  function getJQuery() {
+    return (typeof django !== 'undefined' && django.jQuery) || window.jQuery || window.$;
+  }
+
+  function initializeSelects(jq) {
+    jq('.grouped-service-select').each(function() {
+      var $el = jq(this);
+      if ($el.data('select2')) {
+        return;
+      }
+
+      $el.select2({
+        placeholder: $el.data('placeholder'),
+        allowClear: true,
+        width: '100%'
+      });
+    });
+  }
+
+  function createPendingService(jq, categoryId, value) {
+    var trimmedValue = (value || '').trim();
+    if (!trimmedValue) {
+      return false;
+    }
+
+    var $list = jq('.grouped-service-pending-list[data-category-id="' + categoryId + '"]');
+    if (!$list.length) {
+      return false;
+    }
+
+    var duplicate = false;
+    var $otherSelect = jq('.grouped-service-select[data-category-id="' + categoryId + '"][data-role="other"]');
+    if ($otherSelect.length) {
+      $otherSelect.find('option').each(function() {
+        if (String(jq(this).text() || '').trim().toLowerCase() === trimmedValue.toLowerCase()) {
+          duplicate = true;
+          return false;
+        }
+        return undefined;
+      });
+    }
+
+    $list.find('.grouped-service-hidden-input').each(function() {
+      var existingValue = String(jq(this).val() || '');
+      var existingParts = existingValue.split('::');
+      var existingDisplay = existingParts.slice(1).join('::');
+      if (existingDisplay.trim().toLowerCase() === trimmedValue.toLowerCase()) {
+        duplicate = true;
+        return false;
+      }
+      return undefined;
+    });
+
+    if (duplicate) {
+      return false;
+    }
+
+    var $item = jq('<div class="grouped-service-pending-item"></div>');
+    var $label = jq('<span></span>').text(trimmedValue);
+    var $remove = jq(
+      '<button type="button" class="grouped-service-pending-remove" aria-label="Remove service">&times;</button>'
+    );
+    var $hidden = jq('<input type="hidden" class="grouped-service-hidden-input" name="{{ widget_name }}__new">');
+    $hidden.val(categoryId + '::' + trimmedValue);
+
+    $item.append($label, $remove, $hidden);
+    $list.append($item);
+    return true;
+  }
+
+  function bindAddOther(jq) {
+    jq(document)
+      .off('click.groupedServiceAdd', '.grouped-service-add-button')
+      .on('click.groupedServiceAdd', '.grouped-service-add-button', function() {
+        var $button = jq(this);
+        var catId = $button.data('category-id');
+        var $input = jq('.grouped-service-add-input[data-category-id="' + catId + '"]');
+        var value = ($input.val() || '').trim();
+        var categoryLabel = $input.data('category-label');
+
+        if (!value) {
+          $input.trigger('focus');
+          return;
+        }
+
+        if (createPendingService(jq, catId, value)) {
+          $input.val('');
+        }
+      });
+
+    jq(document)
+      .off('keydown.groupedServiceAdd', '.grouped-service-add-input')
+      .on('keydown.groupedServiceAdd', '.grouped-service-add-input', function(event) {
+        if (event.key !== 'Enter') {
+          return;
+        }
+
+        event.preventDefault();
+        jq(this)
+          .closest('fieldset')
+          .find('.grouped-service-add-button')
+          .trigger('click');
+      });
+
+    jq(document)
+      .off('click.groupedServiceRemove', '.grouped-service-pending-remove')
+      .on('click.groupedServiceRemove', '.grouped-service-pending-remove', function() {
+        jq(this).closest('.grouped-service-pending-item').remove();
+      });
+  }
+
+  function initGroupedServiceSelect2() {
+    var jq = getJQuery();
+    if (!jq || !jq.fn.select2) {
+      setTimeout(initGroupedServiceSelect2, 200);
+      return;
+    }
+
+    initializeSelects(jq);
+    bindAddOther(jq);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGroupedServiceSelect2);
+  } else {
+    setTimeout(initGroupedServiceSelect2, 100);
+  }
+})();
+</script>

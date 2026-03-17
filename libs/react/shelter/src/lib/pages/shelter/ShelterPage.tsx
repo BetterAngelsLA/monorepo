@@ -11,10 +11,10 @@ import {
   GeneralInfo,
   Header,
   OperatingHours,
-  OtherServices,
   ReportUpdateButton,
   Restrictions,
   RoomStyles,
+  Services,
   ShelterDetail,
   ShelterTypes,
   SpecialSituationRestrictions,
@@ -44,11 +44,13 @@ export function ShelterPage({ id }: { id: string }) {
   }
 
   const hasGeneralInfo =
-    !!shelter.totalBeds ||
     !!shelter.website ||
     !!shelter.phone ||
     !!shelter.email ||
     !!shelter.location?.place;
+  const hasServices =
+    !!shelter.services?.length ||
+    containsNonWhitespaceValue(shelter.otherServices);
   const hasDescription = containsNonWhitespaceValue(shelter.description);
   const hasEntryRequirements =
     !!shelter.entryRequirements?.length ||
@@ -69,7 +71,7 @@ export function ShelterPage({ id }: { id: string }) {
     !!shelter.curfew ||
     !!shelter.onSiteSecurity ||
     containsNonWhitespaceValue(shelter.otherRules);
-  const hasOtherServices = containsNonWhitespaceValue(shelter.otherServices);
+
   const hasEcosystemInfo =
     !!shelter.cities?.length ||
     !!shelter.spa?.length ||
@@ -100,6 +102,7 @@ export function ShelterPage({ id }: { id: string }) {
         shelterName={shelter.name}
       />
       <div className="bg-neutral-99 py-2 px-4 -mx-4 -mb-6 flex flex-col gap-2">
+        {hasServices && <Services shelter={shelter} />}
         {hasGeneralInfo && <GeneralInfo shelter={shelter} />}
         {hasDescription && (
           <Card title="Description">
@@ -114,7 +117,6 @@ export function ShelterPage({ id }: { id: string }) {
         {hasRoomStyles && <RoomStyles shelter={shelter} />}
         {hasDetail && <ShelterDetail shelter={shelter} />}
         {hasRestrictions && <Restrictions shelter={shelter} />}
-        {hasOtherServices && <OtherServices shelter={shelter} />}
         {hasEcosystemInfo && <EcosystemInfo shelter={shelter} />}
 
         <div className="my-4 flex justify-center">

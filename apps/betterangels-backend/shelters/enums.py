@@ -92,45 +92,6 @@ class ParkingChoices(models.TextChoices):
     NO_PARKING = "no_parking", _("No Parking")
 
 
-# Services Offered
-@strawberry.enum
-class ImmediateNeedChoices(models.TextChoices):
-    CLOTHING = "clothing", _("Clothing")
-    FOOD = "food", _("Food")
-    SHOWERS = "showers", _("Showers")
-
-
-@strawberry.enum
-class GeneralServiceChoices(models.TextChoices):
-    CASE_MANAGEMENT = "case_management", _("Case Management")
-    CHILDCARE = "childcare", _("Childcare")
-    COMPUTER_ACCESS = "computer_access", _("Computer Access")
-    EMPLOYMENT_SERVICES = "employment_services", _("Employment Services")
-    FINANCIAL_LITERACY_ASSISTANCE = "financial_literacy_assistance", _("Financial Literacy/Assistance")
-    HOUSING_NAVIGATION = "housing_navigation", _("Housing Navigation")
-    LEGAL_ASSISTANCE = "legal_assistance", _("Legal Assistance")
-    MAIL = "mail", _("Mail")
-    PHONE = "phone", _("Phone")
-    TRANSPORTATION = "transportation", _("Transportation")
-    LAUNDRY = "laundry", _("Laundry Services")
-    TLS = "tls", _("TLS (Time Limited Subsidies)")
-
-
-@strawberry.enum
-class HealthServiceChoices(models.TextChoices):
-    DENTAL = "dental", _("Dental")
-    MEDICAL = "medical", _("Medical")
-    MENTAL_HEALTH = "mental_health", _("Mental Health")
-    SUBSTANCE_USE_TREATMENT = "substance_use_treatment", _("Substance Use Treatment")
-
-
-@strawberry.enum
-class TrainingServiceChoices(models.TextChoices):
-    JOB_TRAINING = "job_training", _("Job Training")
-    LIFE_SKILLS_TRAINING = "life_skills_training", _("Life Skills Training")
-    TUTORING = "tutoring", _("Tutoring")
-
-
 # Entry Requirements
 @strawberry.enum
 class EntryRequirementChoices(models.TextChoices):
@@ -208,13 +169,6 @@ class ExitPolicyChoices(models.TextChoices):
     VIOLENCE = "violence", _("Exit due to violence to self or others")
     MITIGATION = "mitigation", _("30 Days Mitigation plan prior to exits")
     OTHER = "other", _("Other")
-
-
-@strawberry.enum
-class MealServiceChoices(models.TextChoices):
-    BREAKFAST = "breakfast", _("Breakfast")
-    LUNCH = "lunch", _("Lunch")
-    DINNER = "dinner", _("Dinner")
 
 
 @strawberry.enum

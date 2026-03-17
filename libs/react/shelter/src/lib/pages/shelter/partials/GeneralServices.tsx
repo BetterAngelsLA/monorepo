@@ -1,5 +1,5 @@
 import { PillContainer } from '@monorepo/react/components';
-import { ViewShelterQuery } from '../../__generated__/shelter.generated';
+import { ViewShelterQuery } from '../__generated__/shelter.generated';
 
 type ServiceEntry = NonNullable<
   ViewShelterQuery['shelter']['services']
@@ -26,16 +26,21 @@ export function GeneralServices({
     grouped[grouped.length - 1].items.push(svc.displayName);
   }
 
+  const FULL_WIDTH_THRESHOLD = 5;
+
   return (
-    <>
+    <div className="grid grid-cols-3 gap-4">
       {grouped.map(({ category, items }) => (
-        <div key={category.id}>
-          <p className="text-base font-semibold">{category.displayName}</p>
-          <div className="pb-6">
-            <PillContainer maxVisible={5} data={items} />
-          </div>
+        <div
+          key={category.id}
+          className={items.length > FULL_WIDTH_THRESHOLD ? 'col-span-3' : ''}
+        >
+          <p className="text-xs font-medium text-neutral-40 uppercase tracking-wide mb-1.5">
+            {category.displayName}
+          </p>
+          <PillContainer data={items} />
         </div>
       ))}
-    </>
+    </div>
   );
 }

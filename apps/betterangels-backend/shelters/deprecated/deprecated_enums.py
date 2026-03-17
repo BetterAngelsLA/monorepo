@@ -135,3 +135,43 @@ class CityChoices(models.TextChoices):
     WEST_LOS_ANGELES = "west_los_angeles", _("West Los Angeles")
     WHITTIER = "whittier", _("Whittier")
     WILMINGTON = "wilmington", _("Wilmington")
+
+
+class ImmediateNeedChoices(models.TextChoices):
+    CLOTHING = "clothing", _("Clothing")
+    FOOD = "food", _("Food")
+    SHOWERS = "showers", _("Showers")
+
+
+class GeneralServiceChoices(models.TextChoices):
+    CASE_MANAGEMENT = "case_management", _("Case Management")
+    CHILDCARE = "childcare", _("Childcare")
+    COMPUTER_ACCESS = "computer_access", _("Computer Access")
+    EMPLOYMENT_SERVICES = "employment_services", _("Employment Services")
+    FINANCIAL_LITERACY_ASSISTANCE = "financial_literacy_assistance", _("Financial Literacy/Assistance")
+    HOUSING_NAVIGATION = "housing_navigation", _("Housing Navigation")
+    LEGAL_ASSISTANCE = "legal_assistance", _("Legal Assistance")
+    MAIL = "mail", _("Mail")
+    PHONE = "phone", _("Phone")
+    TRANSPORTATION = "transportation", _("Transportation")
+    LAUNDRY = "laundry", _("Laundry Services")
+    TLS = "tls", _("TLS (Time Limited Subsidies)")
+
+
+class HealthServiceChoices(models.TextChoices):
+    DENTAL = "dental", _("Dental")
+    MEDICAL = "medical", _("Medical")
+    MENTAL_HEALTH = "mental_health", _("Mental Health")
+    SUBSTANCE_USE_TREATMENT = "substance_use_treatment", _("Substance Use Treatment")
+
+
+class TrainingServiceChoices(models.TextChoices):
+    JOB_TRAINING = "job_training", _("Job Training")
+    LIFE_SKILLS_TRAINING = "life_skills_training", _("Life Skills Training")
+    TUTORING = "tutoring", _("Tutoring")
+
+
+class MealServiceChoices(models.TextChoices):
+    BREAKFAST = "breakfast", _("Breakfast")
+    LUNCH = "lunch", _("Lunch")
+    DINNER = "dinner", _("Dinner")

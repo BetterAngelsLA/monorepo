@@ -54,15 +54,6 @@ query ViewShelter($id: ID!) {
     funders {
       name
     }
-    generalServices {
-      name
-    }
-    healthServices {
-      name
-    }
-    immediateNeeds {
-      name
-    }
     interiorPhotos {
       file {
         name
@@ -104,11 +95,11 @@ query ViewShelter($id: ID!) {
     services {
       id
       displayName
-      sortOrder
+      priority
       category {
         id
         displayName
-        sortOrder
+        priority
       }
     }
     shelterPrograms {
@@ -124,9 +115,6 @@ query ViewShelter($id: ID!) {
       name
     }
     storage {
-      name
-    }
-    trainingServices {
       name
     }
   }
