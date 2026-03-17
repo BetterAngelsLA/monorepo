@@ -62,7 +62,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="clients-screen">
       <Header title="Clients" Logo={Logo} />
 
       <View style={styles.content}>

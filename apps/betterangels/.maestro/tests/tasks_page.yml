@@ -1,0 +1,13 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: ../steps/start_test.yml
+
+- tapOn:
+    id: 'nav-menu-btn'
+
+- assertVisible: 'Tasks'
+
+- tapOn: 'Tasks'
+
+- assertVisible:
+    id: tasks-screen

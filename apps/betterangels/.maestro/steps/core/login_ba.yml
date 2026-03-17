@@ -1,0 +1,29 @@
+appId: ${MAESTRO_APP_ID}
+---
+# If we landed on the landing page, open the login screen
+- runFlow:
+    when:
+      visible:
+        id: landing-screen
+    commands:
+      - tapOn:
+          id: better-angels-login
+
+# Ensure the login form is visible
+- assertVisible:
+    id: sign-in-screen
+
+- tapOn:
+    id: 'ba-email-input'
+- inputText: ${MAESTRO_EMAIL}
+
+# Password field becomes visible after email is entered
+- tapOn:
+    id: 'ba-password-input'
+- inputText: ${MAESTRO_PASSWORD}
+
+- tapOn:
+    id: 'ba-login-submit'
+
+- assertVisible:
+    id: clients-screen

@@ -1,0 +1,52 @@
+appId: ${MAESTRO_APP_ID}
+---
+- openLink: ${MAESTRO_DEEPLINK}
+
+# Skip the loop entirely if already authorized (e.g. subsequent tests)
+- runFlow:
+    when:
+      visible:
+        id: authorized-root
+    commands:
+      - evalScript: ${output.counter = 999}
+
+# Loop until landing-screen is visible with no Reload overlay, or max 10 attempts
+# Reload is checked first each iteration so it is always handled before the break condition
+- evalScript: ${output.counter = output.counter || 0}
+- repeat:
+    while:
+      true: ${output.counter < 10}
+    commands:
+      - extendedWaitUntil:
+          visible: 'Reload'
+          timeout: 1000
+          optional: true
+      - runFlow:
+          when:
+            visible: 'Reload'
+          commands:
+            - takeScreenshot: error-restart-kill
+            - killApp
+            - openLink: ${MAESTRO_DEEPLINK}
+      - runFlow:
+          when:
+            platform: ios
+            visible: 'Open'
+          commands:
+            - tapOn: 'Open'
+
+      # if see `landing-screen: break out of loop
+      - runFlow:
+          when:
+            visible:
+              id: landing-screen
+          commands:
+            - evalScript: ${output.counter = 999}
+
+      # otherwise increment counter
+      - runFlow:
+          when:
+            notVisible:
+              id: landing-screen
+          commands:
+            - evalScript: ${output.counter = output.counter + 1}
