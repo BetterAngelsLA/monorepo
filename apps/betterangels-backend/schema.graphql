@@ -70,6 +70,11 @@ type AddressType {
   zipCode: String
 }
 
+enum AdlCapacityEnum {
+  LOW_CAPACITY
+  HIGH_CAPACITY
+}
+
 type AdminShelterType {
   id: ID!
   accessibility: [AccessibilityType!]!
@@ -264,67 +269,6 @@ enum ClientDocumentNamespaceEnum {
   CLIENT_UPLOAD
 }
 
-enum AdlCapacityEnum {
-  LOW_CAPACITY
-  HIGH_CAPACITY
-}
-
-enum ClientFundingSourceEnum {
-  CITY_OF_LOS_ANGELES
-  CLIENT_FEES
-  DHS
-  DMH
-  FEDERAL_FUNDING
-  HOPWA
-  LAHSA
-  PRIVATE
-  VETERANS_AFFAIRS
-  OTHER
-}
-
-enum ClientPetsEnum {
-  CATS
-  DOG
-  SERVICE_ANIMAL
-  OTHER
-}
-
-enum ClientSpaEnum {
-  ONE
-  TWO
-  THREE
-  FOUR
-  FIVE
-  SIX
-  SEVEN
-  EIGHT
-}
-
-enum ClientStatusEnum {
-  RESERVED
-  CHECKED_IN
-  CHECKED_OUT
-}
-
-enum DestinationEnum {
-  OWN_HOME
-  SHARED_HOME
-  ANOTHER_SHELTER
-  MEDICAL_FACILITY
-  DECEASED
-  JUSTICE_INVOLVED
-  UNKNOWN
-  OTHER
-}
-
-enum MedicalNeedsEnum {
-  MEDICAL
-  MENTAL_HEALTH
-  SUBSTANCE_USE
-  COGNITIVE_IMPAIRMENTS
-  NONE
-}
-
 type ClientDocumentType implements AttachmentInterface {
   id: ID!
   file: DjangoFileType!
@@ -344,6 +288,19 @@ type ClientDocumentTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [ClientDocumentType!]!
+}
+
+enum ClientFundingSourceEnum {
+  CITY_OF_LOS_ANGELES
+  CLIENT_FEES
+  DHS
+  DMH
+  FEDERAL_FUNDING
+  HOPWA
+  LAHSA
+  PRIVATE
+  VETERANS_AFFAIRS
+  OTHER
 }
 
 input ClientHouseholdMemberInput {
@@ -377,6 +334,13 @@ type ClientHouseholdMemberTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [ClientHouseholdMemberType!]!
+}
+
+enum ClientPetsEnum {
+  CATS
+  DOG
+  SERVICE_ANIMAL
+  OTHER
 }
 
 type ClientProfileDataImportType {
@@ -483,8 +447,8 @@ type ClientProfileType {
   residenceGeolocation: Point
   sexualOrientation: String
   sexualOrientationOther: String
-  socialSecurityNumber: String
   spa: [ClientSpaEnum!]
+  socialSecurityNumber: String
   spokenLanguages: [LanguageEnum!]
   status: ClientStatusEnum!
   veteranStatus: VeteranStatusEnum
@@ -518,6 +482,23 @@ input ClientSearchInput {
   firstName: String = null
   lastName: String = null
   middleName: String = null
+}
+
+enum ClientSpaEnum {
+  ONE
+  TWO
+  THREE
+  FOUR
+  FIVE
+  SIX
+  SEVEN
+  EIGHT
+}
+
+enum ClientStatusEnum {
+  RESERVED
+  CHECKED_IN
+  CHECKED_OUT
 }
 
 enum ConditionChoices {
@@ -619,10 +600,10 @@ input CreateClientProfileInput {
   residenceGeolocation: Point
   sexualOrientation: String
   sexualOrientationOther: String
-  socialSecurityNumber: String
   spa: [ClientSpaEnum!]
+  socialSecurityNumber: String
   spokenLanguages: [LanguageEnum!]
-  status: ClientStatusEnum
+  status: ClientStatusEnum!
   veteranStatus: VeteranStatusEnum
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
@@ -925,6 +906,17 @@ type DemographicType {
   name: DemographicChoices
 }
 
+enum DestinationEnum {
+  OWN_HOME
+  SHARED_HOME
+  ANOTHER_SHELTER
+  MEDICAL_FACILITY
+  DECEASED
+  JUSTICE_INVOLVED
+  UNKNOWN
+  OTHER
+}
+
 type DjangoFileType {
   name: String!
   path: String!
@@ -1004,8 +996,8 @@ type FunderType {
 }
 
 enum GenderEnum {
-  MALE
-  FEMALE
+  CIS_MALE
+  CIS_FEMALE
   TRANS_MALE
   TRANS_FEMALE
   NON_BINARY
@@ -1518,6 +1510,14 @@ enum MedicalNeedChoices {
   DIALYSIS
 }
 
+enum MedicalNeedsEnum {
+  MEDICAL
+  MENTAL_HEALTH
+  SUBSTANCE_USE
+  COGNITIVE_IMPAIRMENTS
+  NONE
+}
+
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
@@ -1938,6 +1938,7 @@ enum RaceEnum {
   NATIVE_HAWAIIAN_PACIFIC_ISLANDER
   WHITE_CAUCASIAN
   OTHER
+  PREFER_NOT_TO_SAY
 }
 
 enum ReferralRequirementChoices {
@@ -2285,6 +2286,7 @@ enum SocialMediaEnum {
   TIKTOK
   TWITTER
   WHATSAPP
+  OTHER
 }
 
 input SocialMediaProfileInput {
@@ -2292,6 +2294,7 @@ input SocialMediaProfileInput {
   clientProfile: ID
   platform: SocialMediaEnum
   platformUserId: NonBlankString
+  platformUserIdOther: String = null
 }
 
 type SocialMediaProfileType {
@@ -2299,6 +2302,7 @@ type SocialMediaProfileType {
   clientProfile: DjangoModelType!
   platform: SocialMediaEnum!
   platformUserId: NonBlankString!
+  platformUserIdOther: String
 }
 
 type SocialMediaProfileTypeOffsetPaginated {
@@ -2494,10 +2498,10 @@ input UpdateClientProfileInput {
   residenceGeolocation: Point
   sexualOrientation: String
   sexualOrientationOther: String
-  socialSecurityNumber: String
   spa: [ClientSpaEnum!]
+  socialSecurityNumber: String
   spokenLanguages: [LanguageEnum!]
-  status: ClientStatusEnum
+  status: ClientStatusEnum!
   veteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactInput!]
