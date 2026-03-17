@@ -2,7 +2,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { ElementType } from 'react';
 import { StyleSheet, View } from 'react-native';
-import NavModal from './NavModal';
+import { NavModal } from './NavModal';
 
 export default function Header({
   Logo,

@@ -1,4 +1,4 @@
-from typing import Any, Iterable, cast
+from typing import Any, Dict, Iterable, cast
 
 import strawberry
 import strawberry_django
@@ -363,8 +363,8 @@ class Mutation:
         with transaction.atomic():
             hmis_note = HmisNote.objects.get(id=data.id)
 
-            location_data: dict = strawberry.asdict(data)
-            location = Location.get_or_create_location(location_data["location"])
+            location_data: Dict[str, Any] = strawberry.asdict(data)["location"]  # type: ignore[assignment]
+            location = Location.get_or_create_location(location_data)
             hmis_note = resolvers.update(
                 info,
                 hmis_note,

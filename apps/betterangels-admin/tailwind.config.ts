@@ -1,9 +1,9 @@
 import { createGlobPatternsForDependencies } from '@nx/react/tailwind';
-import daisyui from 'daisyui';
 import { join } from 'path';
-import type { Config } from 'tailwindcss';
+import tailwindBase from '../../libs/tailwind/src/index';
 
-const config: Config = {
+const config = {
+  presets: [tailwindBase],
   content: [
     join(
       __dirname,
@@ -96,10 +96,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [daisyui],
-  daisyui: {
-    themes: false, // disable DaisyUI default themes
-  },
+  plugins: [],
 };
 
 export default config;

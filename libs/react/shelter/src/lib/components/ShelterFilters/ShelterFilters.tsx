@@ -1,3 +1,4 @@
+import { Checkbox, ExpandableContainer } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
@@ -11,6 +12,7 @@ import {
   roomStyleFilter,
   shelterTypeFilter,
   specialSituationFilter,
+  TFilterConfig,
 } from './config';
 
 type IProps = {
@@ -25,13 +27,23 @@ export function ShelterFilters(props: IProps) {
 
   const parentCss = ['pb-24', className];
 
-  function onFilterChange(filterName: string, selected: string[]) {
+  function onFilterChange(
+    filterName: TFilterConfig['name'],
+    selected: string[]
+  ) {
     setFilters((prev) => {
       return {
         ...prev,
         [filterName]: selected,
       };
     });
+  }
+
+  function onOpenNowChange(checked: boolean) {
+    setFilters((prev) => ({
+      ...prev,
+      openNow: checked,
+    }));
   }
 
   useEffect(() => {
@@ -47,6 +59,16 @@ export function ShelterFilters(props: IProps) {
         </div>
       </div>
       <div>
+        <div className="mt-8">
+          <ExpandableContainer header="Availability">
+            <Checkbox
+              label="Open now"
+              checked={!!filters.openNow}
+              onChange={onOpenNowChange}
+            />
+          </ExpandableContainer>
+        </div>
+
         <FilterSelector
           className="mt-8"
           onChange={onFilterChange}

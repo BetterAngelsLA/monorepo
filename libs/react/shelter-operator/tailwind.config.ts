@@ -1,8 +1,6 @@
-import daisyui from 'daisyui';
-import type { Config } from 'tailwindcss';
 import defaultTheme from 'tailwindcss/defaultTheme';
 
-const config: Config = {
+const config = {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
@@ -63,10 +61,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [daisyui],
-  daisyui: {
-    themes: false, // disable DaisyUI default themes
-  },
+  plugins: [],
 };
 
 export default config;

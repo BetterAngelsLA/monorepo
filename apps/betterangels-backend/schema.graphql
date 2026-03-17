@@ -108,6 +108,7 @@ type AdminShelterType {
   programFees: String
   roomStyles: [RoomStyleType!]!
   roomStylesOther: String
+  schedules: [ScheduleType!]!
   shelterPrograms: [ShelterProgramType!]!
   shelterProgramsOther: String
   shelterTypes: [ShelterTypeType!]!
@@ -159,6 +160,40 @@ enum AttachmentType {
 
 type AuthResponse {
   status_code: String!
+}
+
+enum BedStatusChoices {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  OUT_OF_SERVICE
+}
+
+type BedType {
+  id: ID!
+  shelter: ShelterType!
+  bedName: String
+  status: BedStatusChoices
+  statusNotes: String
+  occupantId: ID
+  bedType: BedTypeChoices
+  demographics: [DemographicType!]!
+  accessibility: [AccessibilityType!]!
+  funders: [FunderType!]!
+  pets: [PetType!]!
+  storage: Boolean!
+  maintenanceFlag: Boolean!
+  lastCleanedInspected: DateTime
+  medicalNeeds: MedicalNeedChoices
+  b7: Boolean!
+  fees: Int
+}
+
+enum BedTypeChoices {
+  TWIN
+  BUNK
+  ROLLAWAY
+  OTHER
 }
 
 type CityType {
@@ -485,11 +520,41 @@ input ClientSearchInput {
   middleName: String = null
 }
 
+enum ConditionChoices {
+  HEAT
+  FIRE
+  RAIN_SEVERE_WEATHER
+  WIND
+  AIR_QUALITY_SMOKE
+  PUBLIC_HEALTH_EMERGENCY
+  EMERGENCY_EVACUATION
+}
+
 type ContactInfoType {
   id: ID!
   contactName: String!
   contactNumber: PhoneNumber!
 }
+
+input CreateBedInput {
+  shelterId: ID!
+  status: BedStatusChoices = null
+  bedName: String = null
+  statusNotes: String = null
+  bedType: BedTypeChoices = null
+  demographics: [DemographicChoices!] = null
+  accessibility: [AccessibilityChoices!] = null
+  funders: [FunderChoices!] = null
+  pets: [PetChoices!] = null
+  storage: Boolean = null
+  maintenanceFlag: Boolean = null
+  lastCleanedInspected: DateTime = null
+  medicalNeeds: MedicalNeedChoices = null
+  b7: Boolean = null
+  fees: Int = null
+}
+
+union CreateBedPayload = BedType | OperationInfo
 
 union CreateClientContactPayload = ClientContactType | OperationInfo
 
@@ -683,14 +748,19 @@ input CreateProfileDataImportInput {
   notes: String
 }
 
-input CreateServiceRequestInput {
-  serviceId: ID
-  status: ServiceRequestStatusEnum!
-  serviceOther: String
-  clientProfile: ID
+input CreateRoomInput {
+  shelterId: ID!
+  roomIdentifier: String!
+  roomType: RoomStyleChoices = null
+  roomTypeOther: String = null
+  status: RoomStatusChoices = null
+  notes: String = null
+  amenities: String = null
+  medicalRespite: Boolean = false
+  lastCleanedInspected: DateTime = null
 }
 
-union CreateServiceRequestPayload = ServiceRequestType | OperationInfo
+union CreateRoomPayload = RoomType | OperationInfo
 
 input CreateShelterInput {
   name: String!
@@ -719,6 +789,7 @@ input CreateShelterInput {
   location: ShelterLocationInput = null
   operatingHours: [TimeRangeInput!] = null
   intakeHours: [TimeRangeInput!] = null
+  schedules: [ScheduleInput!] = null
   email: String = null
   phone: PhoneNumber = null
   website: String = null
@@ -796,6 +867,16 @@ type DateCountType {
 
 """Date with time (isoformat)"""
 scalar DateTime
+
+enum DayOfWeekChoices {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
 
 union DeleteClientContactPayload = ClientContactType | OperationInfo
 
@@ -1430,6 +1511,13 @@ enum MealServiceChoices {
   DINNER
 }
 
+enum MedicalNeedChoices {
+  ERC
+  DMH
+  OXYGEN
+  DIALYSIS
+}
+
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
@@ -1474,17 +1562,16 @@ type Mutation {
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
-  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_servicerequest"}], any: true)
-  removeNoteServiceRequest(data: RemoveNoteServiceRequestInput!): RemoveNoteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "delete_servicerequest"}], any: true)
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
-  createShelter(input: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
+  createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
+  createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
+  createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
 }
 
 type NameCountType {
@@ -1637,12 +1724,21 @@ input OrganizationFilter {
   search: String
 }
 
+input OrganizationMemberFilter {
+  AND: OrganizationMemberFilter
+  OR: OrganizationMemberFilter
+  NOT: OrganizationMemberFilter
+  DISTINCT: Boolean
+  search: String
+}
+
 input OrganizationMemberOrdering {
   id: Ordering
   email: Ordering
   firstName: Ordering
   lastLogin: Ordering
   lastName: Ordering
+  dateJoined: Ordering
   memberRole: Ordering
 }
 
@@ -1653,6 +1749,7 @@ type OrganizationMemberType {
   email: NonBlankString
   id: ID!
   lastLogin: DateTime
+  dateJoined: DateTime!
   memberRole: OrgRoleEnum!
 }
 
@@ -1800,7 +1897,7 @@ type Query {
   currentUser: CurrentUserType!
   caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
-  organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
+  organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
@@ -1825,7 +1922,7 @@ type Query {
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  reportSummary(startDate: Date = null, endDate: Date = null): ReportSummaryType!
+  reportSummary(organizationId: ID = null, startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
@@ -1876,14 +1973,6 @@ input RemoveHmisNoteServiceRequestInput {
 
 union RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo
 
-input RemoveNoteServiceRequestInput {
-  serviceRequestId: ID!
-  noteId: ID!
-  serviceRequestType: ServiceRequestTypeEnum!
-}
-
-union RemoveNoteServiceRequestPayload = NoteType | OperationInfo
-
 input RemoveOrganizationMemberInput {
   id: ID!
   organizationId: ID!
@@ -1911,6 +2000,12 @@ input RevertNoteInput {
 
 union RevertNotePayload = NoteType | OperationInfo
 
+enum RoomStatusChoices {
+  AVAILABLE
+  RESERVED
+  NEEDS_MAINTENANCE
+}
+
 enum RoomStyleChoices {
   CONGREGATE
   CUBICLE_LOW_WALLS
@@ -1925,6 +2020,19 @@ enum RoomStyleChoices {
 
 type RoomStyleType {
   name: RoomStyleChoices
+}
+
+type RoomType {
+  id: ID!
+  shelter: ShelterType!
+  roomIdentifier: String!
+  roomType: RoomStyleChoices
+  roomTypeOther: String
+  status: RoomStatusChoices
+  notes: String
+  amenities: String
+  medicalRespite: Boolean!
+  lastCleanedInspected: DateTime
 }
 
 enum SPAChoices {
@@ -1946,6 +2054,37 @@ type SampleType {
   name: String!
   isActive: Boolean!
   lastModified: DateTime
+}
+
+input ScheduleInput {
+  scheduleType: ScheduleTypeChoices! = OPERATING
+  days: [DayOfWeekChoices!] = null
+  startTime: Time = null
+  endTime: Time = null
+  startDate: Date = null
+  endDate: Date = null
+  condition: ConditionChoices = null
+  isException: Boolean! = false
+}
+
+type ScheduleType {
+  id: ID!
+  scheduleType: ScheduleTypeChoices!
+  day: DayOfWeekChoices
+  startTime: Time
+  endTime: Time
+  startDate: Date
+  endDate: Date
+  condition: ConditionChoices
+  demographic: DemographicType
+  isException: Boolean!
+}
+
+enum ScheduleTypeChoices {
+  OPERATING
+  INTAKE
+  MEAL_SERVICE
+  STAFF_AVAILABILITY
 }
 
 enum SelahTeamEnum {
@@ -2004,6 +2143,7 @@ input ShelterFilter {
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
+  openNow: Boolean
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
 }
@@ -2101,6 +2241,7 @@ type ShelterType {
   programFees: String
   roomStyles: [RoomStyleType!]!
   roomStylesOther: String
+  schedules: [ScheduleType!]!
   shelterPrograms: [ShelterProgramType!]!
   shelterProgramsOther: String
   shelterTypes: [ShelterTypeType!]!
@@ -2444,6 +2585,10 @@ input UpdateNoteInput {
   privateDetails: String
   isSubmitted: Boolean
   interactedAt: DateTime
+  location: LocationInput
+  providedServices: [CreateNoteServiceInput!]
+  requestedServices: [CreateNoteServiceInput!]
+  tasks: [CreateNoteTaskInput!]
 }
 
 input UpdateNoteLocationInput {
@@ -2454,15 +2599,6 @@ input UpdateNoteLocationInput {
 union UpdateNoteLocationPayload = NoteType | OperationInfo
 
 union UpdateNotePayload = NoteType | OperationInfo
-
-input UpdateServiceRequestInput {
-  id: ID!
-  serviceOther: String
-  status: ServiceRequestStatusEnum
-  dueBy: DateTime
-}
-
-union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
 
 union UpdateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
@@ -2502,6 +2638,7 @@ enum UserOrganizationPermissions {
   CHANGE_ORG_MEMBER_ROLE
   REMOVE_ORG_MEMBER
   VIEW_ORG_MEMBERS
+  VIEW_REPORTS
 }
 
 type UserType {

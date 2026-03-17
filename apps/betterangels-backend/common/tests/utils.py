@@ -1,6 +1,6 @@
 import json
 import uuid
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Protocol, Tuple, Union
 
 from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
@@ -15,8 +15,114 @@ from test_utils.assert_mixins import GraphQLAssertionsMixin
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
+# ---------------------------------------------------------------------------
+# Shared address fixture builder
+# ---------------------------------------------------------------------------
 
-class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, ParametrizedTestCase, TestCase):
+# Canonical components — identical in both GraphQL (camelCase) and model
+# (snake_case) tests.  Only the outer keys differ.
+_ADDRESS_COMPONENTS: List[Dict[str, Any]] = [
+    {"long_name": "106", "short_name": "106", "types": ["street_number"]},
+    {"long_name": "West 1st Street", "short_name": "W 1st St", "types": ["route"]},
+    {
+        "long_name": "Downtown Los Angeles",
+        "short_name": "Downtown Los Angeles",
+        "types": ["neighborhood", "political"],
+    },
+    {"long_name": "Los Angeles", "short_name": "Los Angeles", "types": ["locality", "political"]},
+    {
+        "long_name": "Los Angeles County",
+        "short_name": "Los Angeles County",
+        "types": ["administrative_area_level_2", "political"],
+    },
+    {"long_name": "California", "short_name": "CA", "types": ["administrative_area_level_1", "political"]},
+    {"long_name": "United States", "short_name": "US", "types": ["country", "political"]},
+    {"long_name": "90012", "short_name": "90012", "types": ["postal_code"]},
+]
+
+_FORMATTED_ADDRESS_TEMPLATE = "{street_number} West 1st Street, Los Angeles, CA 90012, USA"
+_DEFAULT_STREET_NUMBER = "106"
+_FORMATTED_ADDRESS = _FORMATTED_ADDRESS_TEMPLATE.format(street_number=_DEFAULT_STREET_NUMBER)
+
+_POI_COMPONENT: Dict[str, Any] = {
+    "long_name": "An Interesting Point (Component)",
+    "short_name": "An Interesting Point (Component)",
+    "types": ["point_of_interest"],
+}
+
+
+def build_address_inputs(
+    *,
+    camel_case: bool = True,
+    street_number_override: Optional[str] = None,
+    delete_street_number: bool = False,
+    include_point_of_interest: bool = False,
+    delete_components: bool = False,
+) -> Tuple[Dict[str, str], Dict[str, Union[str, List[Dict[str, Any]]]]]:
+    """Build address test fixture data.
+
+    Returns ``(json_address_input, address_input)`` — the first has
+    JSON-serialised components (suitable for mutation variables), the second has
+    the raw list (suitable for assertions).
+
+    *camel_case* controls the outer key names:
+    ``True``  → ``addressComponents`` / ``formattedAddress``  (GraphQL tests)
+    ``False`` → ``address_components`` / ``formatted_address`` (model tests)
+    """
+    comp_key = "addressComponents" if camel_case else "address_components"
+    fmt_key = "formattedAddress" if camel_case else "formatted_address"
+
+    components = [dict(c) for c in _ADDRESS_COMPONENTS]  # shallow copy each
+    formatted = _FORMATTED_ADDRESS
+
+    if street_number_override:
+        components[0] = {**components[0], "long_name": street_number_override}
+        formatted = _FORMATTED_ADDRESS_TEMPLATE.format(street_number=street_number_override)
+
+    if delete_street_number:
+        components.pop(0)
+
+    if include_point_of_interest:
+        components.append(dict(_POI_COMPONENT))
+
+    if delete_components:
+        components = []
+
+    address_input: Dict[str, Union[str, List[Dict[str, Any]]]] = {
+        comp_key: components,
+        fmt_key: formatted,
+    }
+
+    json_address_input: Dict[str, str] = {
+        fmt_key: formatted,
+        comp_key: json.dumps(components),
+    }
+
+    return json_address_input, address_input
+
+
+class SupportsAssertNumQueries(Protocol):
+    def assertNumQueries(self, num: int, func: Any = None, *args: Any, **kwargs: Any) -> Any: ...
+
+
+class NumQueriesWithoutCacheMixin:
+
+    def assertNumQueriesWithoutCache(self: Any, query_count: int) -> Any:
+        """
+        Resets all caches that may prevent query execution.
+        Needed to ensure deterministic behavior of ``assertNumQueries`` (or
+        after external changes to some Django database records).
+
+        https://stackoverflow.com/a/55287613
+        """
+        ContentType.objects.clear_cache()
+        Site.objects.clear_cache()
+        return self.assertNumQueries(query_count)
+
+
+class GraphQLBaseTestCase(
+    GraphQLTestCaseMixin, GraphQLAssertionsMixin, NumQueriesWithoutCacheMixin, ParametrizedTestCase, TestCase
+):
     def setUp(self) -> None:
         super().setUp()
         self._setup_users()
@@ -77,71 +183,13 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, Parametr
         delete_components: bool = False,
     ) -> Tuple[Dict[str, str], Dict[str, Union[str, List[Dict[str, Any]]]]]:
         """Returns address input in two formats. JSON, for use in the mutation, and a dictionary for test assertions."""
-        address_input: Dict[str, Union[str, List[Dict[str, Any]]]] = {
-            "addressComponents": [
-                {
-                    "long_name": "106",
-                    "short_name": "106",
-                    "types": ["street_number"],
-                },
-                {
-                    "long_name": "West 1st Street",
-                    "short_name": "W 1st St",
-                    "types": ["route"],
-                },
-                {
-                    "long_name": "Downtown Los Angeles",
-                    "short_name": "Downtown Los Angeles",
-                    "types": ["neighborhood", "political"],
-                },
-                {
-                    "long_name": "Los Angeles",
-                    "short_name": "Los Angeles",
-                    "types": ["locality", "political"],
-                },
-                {
-                    "long_name": "Los Angeles County",
-                    "short_name": "Los Angeles County",
-                    "types": ["administrative_area_level_2", "political"],
-                },
-                {
-                    "long_name": "California",
-                    "short_name": "CA",
-                    "types": ["administrative_area_level_1", "political"],
-                },
-                {
-                    "long_name": "United States",
-                    "short_name": "US",
-                    "types": ["country", "political"],
-                },
-                {"long_name": "90012", "short_name": "90012", "types": ["postal_code"]},
-            ],
-            "formattedAddress": "106 West 1st Street, Los Angeles, CA 90012, USA",
-        }
-
-        if isinstance(address_input["addressComponents"], list):
-            if street_number_override:
-                address_input["addressComponents"][0]["long_name"] = street_number_override
-
-            if delete_street_number:
-                address_input["addressComponents"].pop(0)
-
-            if include_point_of_interest:
-                address_input["addressComponents"].append(
-                    {
-                        "long_name": "An Interesting Point (Component)",
-                        "short_name": "An Interesting Point (Component)",
-                        "types": ["point_of_interest"],
-                    },
-                )
-
-            if delete_components:
-                address_input["addressComponents"] = []
-
-        json_address_input: Dict[str, str] = {"formattedAddress": str(address_input["formattedAddress"])}
-        json_address_input["addressComponents"] = json.dumps(address_input["addressComponents"])
-
-        return json_address_input, address_input
+        return build_address_inputs(
+            camel_case=True,
+            street_number_override=street_number_override,
+            delete_street_number=delete_street_number,
+            include_point_of_interest=include_point_of_interest,
+            delete_components=delete_components,
+        )
 
     def _setup_location(self) -> None:
         self.address = baker.make(
@@ -151,7 +199,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, Parametr
             state=self.state,
             zip_code=self.zip_code,
         )
-        self.point = [-118.2437207, 34.0521723]
+        self.point = [-118.24372, 34.05217]
         self.point_of_interest = "An Interesting Point"
         self.location = baker.make(
             Location,
@@ -186,15 +234,3 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, Parametr
             self.graphql_client.force_login(self.user_map[user_label])
         else:
             self.graphql_client.logout()
-
-    def assertNumQueriesWithoutCache(self, query_count: int) -> Any:
-        """
-        Resets all caches that may prevent query execution.
-        Needed to ensure deterministic behavior of ``assertNumQueries`` (or
-        after external changes to some Django database records).
-
-        https://stackoverflow.com/a/55287613
-        """
-        ContentType.objects.clear_cache()
-        Site.objects.clear_cache()
-        return self.assertNumQueries(query_count)

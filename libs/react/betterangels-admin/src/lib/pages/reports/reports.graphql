@@ -1,5 +1,9 @@
-query ReportSummary($startDate: Date, $endDate: Date) {
-  reportSummary(startDate: $startDate, endDate: $endDate) {
+query ReportSummary($organizationId: ID, $startDate: Date, $endDate: Date) {
+  reportSummary(
+    organizationId: $organizationId
+    startDate: $startDate
+    endDate: $endDate
+  ) {
     totalNotes
     uniqueClients
     startDate

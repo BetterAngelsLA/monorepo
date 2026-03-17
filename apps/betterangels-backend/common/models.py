@@ -124,6 +124,13 @@ class Address(BaseModel):
                 name="address_lookup_idx",
             )
         ]
+        constraints = [
+            models.UniqueConstraint(
+                Lower("formatted_address"),
+                condition=models.Q(formatted_address__isnull=False),
+                name="unique_formatted_address",
+            )
+        ]
 
     ADDRESS_DEFAULT = "No Address"
 
@@ -144,11 +151,6 @@ class Location(BaseModel):
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
     point = PointField(geography=True)
     point_of_interest = models.CharField(max_length=255, blank=True, null=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["point"], name="unique_location_point"),
-        ]
 
     objects = models.Manager()
 
@@ -220,60 +222,56 @@ class Location(BaseModel):
 
     @classmethod
     def get_or_create_address(cls, address_data: Dict[str, Any]) -> Optional["Address"]:
-        """Gets or creates an address and returns it.
+        """Get or create an Address, deduplicating by formatted_address.
 
-        Uses case-insensitive lookups so that 'Los Angeles' and 'los angeles'
-        resolve to the same row.  The functional Lower() index on Address
-        makes these queries fast.
+        ``formatted_address`` is the canonical unique key (case-insensitive).
+        Address components (street, city, state, zip) are parsed from
+        ``address_components`` when present and stored on the row as metadata
+        during initial creation; they are never used as lookup keys.
 
-        When ``address_components`` is absent (e.g. during an update where the
-        client only sends ``formattedAddress``), falls back to a
-        ``formatted_address`` lookup so that we re-use the existing Address row
-        instead of creating a new one with all-null fields.
+        When neither ``formatted_address`` nor ``address_components`` is
+        provided, returns ``None``.
         """
         raw_components = address_data.get("address_components")
         formatted = address_data.get("formatted_address") or address_data.get("formattedAddress")
 
-        # Fast path: no address_components → look up by formatted_address
-        if not raw_components:
-            if formatted:
-                address = Address.objects.filter(formatted_address__iexact=formatted).first()
-                if address:
-                    return address
-                # Create a minimal record keyed by formatted_address
-                address, _ = Address.objects.get_or_create(
-                    formatted_address=formatted,
-                    street=None,
-                    city=None,
-                    state=None,
-                    zip_code=None,
-                )
-                return address
-            # No components and no formatted address — nothing useful to store
+        if not raw_components and not formatted:
             return None
 
-        parsed_address = cls.parse_address_components(raw_components)
+        # Parse component fields when available (used as defaults on creation)
+        street = city = state = zip_code = None
+        if raw_components:
+            parsed = cls.parse_address_components(raw_components)
+            street_number = parsed.get("street_number")
+            route = parsed.get("route")
+            street = cls._clean(f"{street_number} {route}".strip() if street_number and route else route)
+            city = cls._clean(parsed.get("locality"))
+            state = cls._clean(parsed.get("administrative_area_level_1"))
+            zip_code = cls._clean(parsed.get("postal_code"))
 
-        street_number = parsed_address.get("street_number")
-        route = parsed_address.get("route")
-        street = cls._clean(f"{street_number} {route}".strip() if street_number and route else route)
-        city = cls._clean(parsed_address.get("locality"))
-        state = cls._clean(parsed_address.get("administrative_area_level_1"))
-        zip_code = cls._clean(parsed_address.get("postal_code"))
+        # Primary dedup path: formatted_address (unique constraint)
+        if formatted:
+            address, _ = Address.objects.get_or_create(
+                formatted_address__iexact=formatted,
+                defaults={
+                    "formatted_address": formatted,
+                    "street": street,
+                    "city": city,
+                    "state": state,
+                    "zip_code": zip_code,
+                },
+            )
+            return address
 
+        # Fallback: components present but no formatted_address
         fields = {"street": street, "city": city, "state": state, "zip_code": zip_code}
         lookup = {
             (f"{f}__isnull" if v is None else f"{f}__iexact"): (True if v is None else v) for f, v in fields.items()
         }
-
         address, _ = Address.objects.get_or_create(
             **lookup,
-            defaults={
-                **fields,
-                "formatted_address": formatted,
-            },
+            defaults=fields,
         )
-
         return address
 
     @classmethod
@@ -281,48 +279,30 @@ class Location(BaseModel):
         raw = address_data.get("address_components")
         if not raw:
             return None
-        components: list[Dict[str, str]] = json.loads(raw)
-
-        return next(
-            (
-                Location._get_component_value(component, "long_name")
-                for component in components
-                if "point_of_interest" in component.get("types", [])
-            ),
-            None,
-        )
+        return cls.parse_address_components(raw).get("point_of_interest")
 
     @classmethod
     def get_or_create_location(cls, location_data: Dict[str, Any]) -> "Location":
-        """Gets or creates a location, updating address/POI if provided.
+        """Return an existing Location or create a new one.
 
-        Location is keyed by rounded GPS point (unique constraint).
-        Address and point_of_interest are updated when non-null to keep
-        geocode metadata fresh without overwriting existing good data.
+        Deduplication is based on the triple (point, address, point_of_interest).
+        If all three match an existing row, that row is reused — no data is
+        overwritten.  Otherwise a new Location is created.
         """
         point = cls._round_point(location_data["point"])
 
         address_data = location_data.get("address")
         address = Location.get_or_create_address(address_data) if address_data else None
-        point_of_interest = location_data.get("point_of_interest") or (
-            cls.get_point_of_interest(address_data) if address_data else None
-        )
 
-        # Build defaults with only non-null values to avoid overwriting good data
-        defaults = {
-            k: v
-            for k, v in {
-                "address": address,
-                "point_of_interest": point_of_interest,
-            }.items()
-            if v is not None
-        }
+        poi = location_data.get("point_of_interest")
+        if poi is None and address_data:
+            poi = cls.get_point_of_interest(address_data)
 
-        location, _ = Location.objects.update_or_create(
+        location, _ = Location.objects.get_or_create(
             point=point,
-            defaults=defaults,
+            address=address,
+            point_of_interest=poi,
         )
-
         return location
 
 

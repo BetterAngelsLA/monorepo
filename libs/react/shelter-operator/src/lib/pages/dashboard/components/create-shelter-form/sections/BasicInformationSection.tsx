@@ -1,24 +1,18 @@
-import type { TOrganization } from '@monorepo/react/shared';
 import { memo } from 'react';
 import { FormSection } from '../../../../../components/form/FormSection';
+import { ScheduleField } from '../../../../../components/form/ScheduleField';
 import { TextField } from '../../../../../components/form/TextField';
+import { useActiveOrg } from '../../../../../providers/activeOrg';
 import { LocationPicker } from '../components/LocationPicker';
 import type { SectionProps } from '../types';
-
-interface BasicInformationSectionProps extends SectionProps {
-  organizations: TOrganization[];
-  selectedOrganizationId: string;
-  onOrganizationChange: (id: string) => void;
-}
 
 export const BasicInformationSection = memo(function BasicInformationSection({
   data,
   onChange,
   errors,
-  organizations,
-  selectedOrganizationId,
-  onOrganizationChange,
-}: BasicInformationSectionProps) {
+}: SectionProps) {
+  const { activeOrg } = useActiveOrg();
+
   return (
     <FormSection title="Basic Information">
       <TextField
@@ -31,31 +25,14 @@ export const BasicInformationSection = memo(function BasicInformationSection({
         error={errors.name}
       />
       <div>
-        <label
-          htmlFor="shelter-organization"
-          className="block text-sm font-medium text-gray-700 mb-1"
-        >
+        <label className="block text-sm font-medium text-gray-700 mb-1">
           Organization
         </label>
-        {organizations.length > 0 ? (
-          <select
-            id="shelter-organization"
-            value={selectedOrganizationId}
-            onChange={(e) => onOrganizationChange(e.target.value)}
-            className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="" disabled>
-              Select an organization
-            </option>
-            {organizations.map((org) => (
-              <option key={org.id} value={org.id}>
-                {org.name}
-              </option>
-            ))}
-          </select>
+        {activeOrg ? (
+          <p className="text-sm text-gray-900">{activeOrg.name}</p>
         ) : (
           <p className="text-sm text-red-600">
-            You don't belong to any organizations.
+            No organization selected. Please select one from the header.
           </p>
         )}
         {errors.organization && (
@@ -101,6 +78,13 @@ export const BasicInformationSection = memo(function BasicInformationSection({
         label="Instagram"
         value={data.instagram}
         onChange={(value) => onChange('instagram', value)}
+      />
+      <ScheduleField
+        id="shelter-schedules"
+        label="Schedules"
+        value={data.schedules}
+        onChange={(value) => onChange('schedules', value)}
+        helperText="Add operating hours, intake hours, and other schedules for each day."
       />
     </FormSection>
   );

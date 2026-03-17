@@ -3,7 +3,7 @@ import { Button } from '@monorepo/react/components';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import { FormEvent, useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useUser } from '@monorepo/react/shelter';
+import { useActiveOrg } from '../../../../providers/activeOrg';
 import type { ShelterFormData } from '../../formTypes';
 import {
   CREATE_SHELTER_MUTATION,
@@ -30,11 +30,8 @@ import { SummaryInformationSection } from './sections/SummaryInformationSection'
 
 export default function CreateShelterForm() {
   const navigate = useNavigate();
-  const { user } = useUser();
-  const organizations = user?.organizations ?? [];
-  const [selectedOrganizationId, setSelectedOrganizationId] = useState(
-    () => user?.organization?.id ?? ''
-  );
+  const { activeOrg } = useActiveOrg();
+  const selectedOrganizationId = activeOrg?.id ?? '';
   const { formData, updateField, resetForm } = useCreateShelterForm();
   const [errors, setErrors] = useState<FormErrors>({});
   const [submissionError, setSubmissionError] = useState<string | null>(null);
@@ -77,16 +74,28 @@ export default function CreateShelterForm() {
     }
 
     try {
-      await createShelter({
+      const { data } = await createShelter({
         variables: {
-          input: buildCreateShelterInput(formData, selectedOrganizationId),
+          data: buildCreateShelterInput(formData, selectedOrganizationId),
         },
+        errorPolicy: 'all',
       });
+
+      const result = data?.createShelter;
+
+      if (result?.__typename === 'OperationInfo') {
+        const firstMessage = result.messages?.[0]?.message;
+        setSubmissionError(
+          firstMessage || 'Unable to submit shelter. Please try again.'
+        );
+        return;
+      }
+
       resetForm();
       setErrors({});
       navigate('/operator');
-    } catch (error) {
-      setSubmissionError(extractApolloError(error));
+    } catch {
+      setSubmissionError('A network error occurred. Please try again.');
     }
   };
 
@@ -130,9 +139,6 @@ export default function CreateShelterForm() {
             data={formData}
             onChange={handleFieldChange}
             errors={errors}
-            organizations={organizations}
-            selectedOrganizationId={selectedOrganizationId}
-            onOrganizationChange={setSelectedOrganizationId}
           />
           <SummaryInformationSection
             data={formData}
@@ -184,7 +190,7 @@ export default function CreateShelterForm() {
             <Button
               size="xl"
               type="submit"
-              className="!h-auto !bg-green-600 !text-black px-6 py-3 hover:!bg-green-700 transition-colors disabled:opacity-50"
+              className="h-auto! bg-green-600! text-black! px-6 py-3 hover:bg-green-700! transition-colors disabled:opacity-50"
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Submitting…' : 'Create Shelter'}
@@ -194,38 +200,4 @@ export default function CreateShelterForm() {
       </div>
     </APIProvider>
   );
-}
-
-function extractApolloError(error: unknown): string {
-  if (error && typeof error === 'object' && 'graphQLErrors' in error) {
-    const apolloError = error as {
-      graphQLErrors?: Array<{
-        message: string;
-        extensions?: { errors?: Array<{ messages?: string[] }> };
-      }>;
-      networkError?: { message?: string } | null;
-    };
-    const graphQLErrorMessages = apolloError.graphQLErrors
-      ?.map((graphQLError) => {
-        const formattedErrors = graphQLError.extensions?.['errors'];
-        if (Array.isArray(formattedErrors) && formattedErrors.length) {
-          const first = formattedErrors[0];
-          if (first?.messages?.length) {
-            return first.messages.join(', ');
-          }
-        }
-        return graphQLError.message;
-      })
-      .filter(Boolean);
-
-    if (graphQLErrorMessages?.length) {
-      return graphQLErrorMessages[0] as string;
-    }
-
-    if (apolloError.networkError) {
-      return 'Network error while submitting shelter. Please try again.';
-    }
-  }
-
-  return 'Unable to submit shelter. Please try again.';
 }
