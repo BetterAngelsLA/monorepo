@@ -1,4 +1,5 @@
 import { mergeCss } from '@monorepo/react/shared';
+import { sanitizeWysiwygHtml } from './sanitizeWysiwygHtml';
 import styles from './wysiwyg.module.css';
 
 type TProps = {
@@ -9,7 +10,9 @@ type TProps = {
 export function WysiwygContainer(props: TProps) {
   const { content, className } = props;
 
-  if (!content?.length) {
+  const sanitizedContent = sanitizeWysiwygHtml(content);
+
+  if (!sanitizedContent.length) {
     return null;
   }
 
@@ -19,7 +22,7 @@ export function WysiwygContainer(props: TProps) {
     <div
       className={mergeCss(parentCss)}
       dangerouslySetInnerHTML={{
-        __html: content,
+        __html: sanitizedContent,
       }}
     />
   );
