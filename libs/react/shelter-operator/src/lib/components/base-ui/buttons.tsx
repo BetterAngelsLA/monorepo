@@ -1,5 +1,6 @@
 import { ArrowRight, Pencil, Trash2 } from 'lucide-react';
 import { ButtonHTMLAttributes, ReactNode } from 'react';
+import { Text } from './text';
 
 export type ButtonVariant =
   | 'floating'
@@ -77,7 +78,7 @@ export function Button(props: IButtonProps) {
     (color && colorSchemes[color]?.[variant]) ?? variantColorDefaults[variant];
 
   const buttonCss = [
-    'font-sans font-normal focus:outline-hidden transition-all inline-flex items-center whitespace-nowrap',
+    'focus:outline-hidden transition-all inline-flex items-center whitespace-nowrap',
     isIconOnly ? '' : 'h-fit',
     variantBaseClasses[variant],
     colorClass,
@@ -93,7 +94,11 @@ export function Button(props: IButtonProps) {
           {leftIcon}
         </span>
       )}
-      {children && <span>{children}</span>}
+      {children && (
+        <Text variant="btn" textColor="text-inherit">
+          {children}
+        </Text>
+      )}
       {rightIcon && (
         <span className={isIconOnly ? 'flex items-center justify-center' : ''}>
           {rightIcon}
