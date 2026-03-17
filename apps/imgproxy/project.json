@@ -21,7 +21,7 @@
         ],
         "metadata": {
           "images": ["${ECR_REGISTRY}/${APP_NAME}"],
-          "tags": ["${DOCKER_TAG}"]
+          "tags": ["${IMGPROXY_DOCKER_TAG}"]
         }
       },
       "configurations": {
@@ -33,7 +33,7 @@
       }
     },
     "deploy": {
-      "command": "tools/deploy/ecs_deploy.sh",
+      "command": "DOCKER_TAG=${IMGPROXY_DOCKER_TAG} tools/deploy/ecs_deploy.sh",
       "configurations": {
         "production": {},
         "preview": {
