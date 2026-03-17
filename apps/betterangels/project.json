@@ -102,6 +102,23 @@
           }
         ]
       }
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/betterangels"
+      },
+      "configurations": {
+        "ios": {
+          "command": ".maestro/scripts/setup-maestro.sh",
+          "env": { "MAESTRO_PLATFORM": "ios" }
+        },
+        "android": {
+          "command": ".maestro/scripts/setup-maestro.sh",
+          "env": { "MAESTRO_PLATFORM": "android" }
+        }
+      },
+      "defaultConfiguration": "ios"
     }
   }
 }
