@@ -89,6 +89,7 @@ export function RoomTable({
   const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>([]);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
+    roomIds?: string[];
     roomId?: string;
     roomName?: string;
   }>({ isOpen: false });
@@ -113,17 +114,35 @@ export function RoomTable({
   const selectedCount = selectedRoomIds.length;
 
   const handleDeleteSelected = () => {
-    if (selectedCount === 1) {
-      const [id] = selectedRoomIds;
-      if (id) onDeleteRoom?.(id);
-    }
+    if (selectedCount === 0) return;
 
-    if (selectedCount > 1) {
-      onDeleteRooms?.(selectedRoomIds);
-    }
-
-    setSelectedRoomIds([]);
+    setDeleteConfirmation({
+      isOpen: true,
+      roomIds: selectedRoomIds,
+      roomId: undefined,
+      roomName: undefined,
+    });
   };
+
+  const closeDeleteConfirmation = () => {
+    setDeleteConfirmation({
+      isOpen: false,
+      roomIds: undefined,
+      roomId: undefined,
+      roomName: undefined,
+    });
+  };
+
+  const deleteConfirmationCount =
+    deleteConfirmation.roomIds?.length ?? (deleteConfirmation.roomId ? 1 : 0);
+
+  const deleteConfirmationTitle = deleteConfirmation.roomIds
+    ? deleteConfirmationCount === 1
+      ? 'Are you sure you want to delete the selected room?'
+      : `Are you sure you want to delete the ${deleteConfirmationCount} selected rooms?`
+    : `Are you sure you want to delete ${
+        deleteConfirmation.roomName || 'this room'
+      }?`;
 
   const columns: TableColumn<Room>[] = useMemo(
     () => [
@@ -292,6 +311,7 @@ export function RoomTable({
                 e.stopPropagation();
                 setDeleteConfirmation({
                   isOpen: true,
+                  roomIds: undefined,
                   roomId: rowObject.id,
                   roomName: rowObject.room.name,
                 });
@@ -314,39 +334,30 @@ export function RoomTable({
       />
       <ConfirmationModal
         isOpen={deleteConfirmation.isOpen}
-        onClose={() =>
-          setDeleteConfirmation({
-            isOpen: false,
-            roomId: undefined,
-            roomName: undefined,
-          })
-        }
+        onClose={closeDeleteConfirmation}
         variant="danger"
-        title={`Are you sure you want to delete ${
-          deleteConfirmation.roomName || 'this room'
-        }?`}
+        title={deleteConfirmationTitle}
         description="This action cannot be undone."
         primaryAction={{
           label: 'Delete',
           onClick: () => {
-            if (deleteConfirmation.roomId) {
+            if (deleteConfirmation.roomIds) {
+              if (deleteConfirmation.roomIds.length === 1) {
+                const [roomId] = deleteConfirmation.roomIds;
+                if (roomId) onDeleteRoom?.(roomId);
+              } else {
+                onDeleteRooms?.(deleteConfirmation.roomIds);
+              }
+              setSelectedRoomIds([]);
+            } else if (deleteConfirmation.roomId) {
               onDeleteRoom?.(deleteConfirmation.roomId);
             }
-            setDeleteConfirmation({
-              isOpen: false,
-              roomId: undefined,
-              roomName: undefined,
-            });
+            closeDeleteConfirmation();
           },
         }}
         secondaryAction={{
           label: 'Cancel',
-          onClick: () =>
-            setDeleteConfirmation({
-              isOpen: false,
-              roomId: undefined,
-              roomName: undefined,
-            }),
+          onClick: closeDeleteConfirmation,
         }}
       />
     </div>
