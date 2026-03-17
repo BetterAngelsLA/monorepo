@@ -151,7 +151,7 @@ class TransformableImageType:
         name, path, size, width, height
 
     The ``url`` field accepts an optional ``preset`` for named sizes
-    or a raw ``processing`` string for full imgproxy control.
+    or a raw ``processing_options`` string for full imgproxy control.
     When imgproxy is enabled and either is supplied, the returned URL
     points to the imgproxy-processed variant.  Otherwise the normal
     (CloudFront-signed) storage URL is returned.
@@ -167,19 +167,19 @@ class TransformableImageType:
     def url(
         self,
         preset: Optional[ImagePresetEnum] = None,
-        processing: Optional[str] = None,
+        processing_options: Optional[str] = None,
     ) -> str:
         """Return the image URL, optionally processed by imgproxy.
 
         Args:
             preset: A named size preset (SM, MD, LG).  Ignored when
-                ``processing`` is also provided.
-            processing: A raw imgproxy options string such as
+                ``processing_options`` is also provided.
+            processing_options: A raw imgproxy options string such as
                 ``"rs:fill:200:200"`` or ``"rs:fit:800:600/q:80"``.
                 Takes precedence over ``preset``.
         """
         if is_imgproxy_enabled():
-            if imgproxy_url := build_imgproxy_url(self, preset, processing):
+            if imgproxy_url := build_imgproxy_url(self, preset, processing_options):
                 return imgproxy_url
 
         return cast(str, self.url)

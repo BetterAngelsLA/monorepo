@@ -19,10 +19,10 @@ IMGPROXY_PRESETS: dict[ImagePresetEnum, str] = {
 
 def _resolve_imgproxy_ops(
     preset: Optional[ImagePresetEnum],
-    processing: Optional[str],
+    processing_options: Optional[str],
 ) -> Optional[str]:
-    if processing:
-        return processing
+    if processing_options:
+        return processing_options
     if preset:
         return IMGPROXY_PRESETS.get(preset)
     return None
@@ -79,7 +79,7 @@ def _get_imgproxy_signature(path: str) -> str:
 def _build_signed_imgproxy_path(source_url: str, ops: str) -> str:
     """Build the path portion of an imgproxy URL (no scheme/host).
 
-    Returns ``<signature>/<processing>/<encoded_source>``.
+    Returns ``<signature>/<processing_options>/<encoded_source>``.
     """
     encoded = _encode_source_url(source_url)
     path = f"{ops}/{encoded}"
@@ -88,19 +88,19 @@ def _build_signed_imgproxy_path(source_url: str, ops: str) -> str:
     return f"{signature}/{path}"
 
 
-def build_imgproxy_url(file: object, preset: Optional[ImagePresetEnum], processing: Optional[str]) -> Optional[str]:
+def build_imgproxy_url(file: object, preset: Optional[ImagePresetEnum], processing_options: Optional[str]) -> Optional[str]:
     """Return a signed imgproxy URL, CloudFront-signed in production.
 
     Args:
         file: The Django file field value to build the URL for.
         preset: The image preset to use.
-        processing: The image processing options to use.
+        processing_options: The image processing_options options to use.
 
     Returns:
         The complete imgproxy URL, or None if the URL cannot be built.
     """
 
-    ops = _resolve_imgproxy_ops(preset, processing)
+    ops = _resolve_imgproxy_ops(preset, processing_options)
     if not ops:
         return None
 

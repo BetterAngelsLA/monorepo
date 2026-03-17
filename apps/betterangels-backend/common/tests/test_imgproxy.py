@@ -285,11 +285,11 @@ class BuildImgproxyUrlTest(TestCase):
 # TransformableImageType.url()
 # ---------------------------------------------------------------------------
 def _image_url_resolver(
-    root: object, preset: Optional[ImagePresetEnum] = None, processing: Optional[str] = None
+    root: object, preset: Optional[ImagePresetEnum] = None, processing_options: Optional[str] = None
 ) -> str:
     """Exercise the same logic as TransformableImageType.url (cannot call the Strawberry field directly)."""
     if is_imgproxy_enabled():
-        if imgproxy_url := build_imgproxy_url(root, preset, processing):
+        if imgproxy_url := build_imgproxy_url(root, preset, processing_options):
             return imgproxy_url
 
     return cast(str, getattr(root, "url", ""))
@@ -319,7 +319,7 @@ class TransformableImageTypeUrlTest(TestCase):
     @override_switch(IMGPROXY_SWITCH, active=True)
     def test_raw_processing_url(self) -> None:
         file = self._make_file()
-        url = _image_url_resolver(file, processing="rs:fit:800:600/q:80")
+        url = _image_url_resolver(file, processing_options="rs:fit:800:600/q:80")
         self.assertIn("localhost:8080", url)
         self.assertIn("rs:fit:800:600", url)
 
@@ -327,7 +327,7 @@ class TransformableImageTypeUrlTest(TestCase):
     @override_switch(IMGPROXY_SWITCH, active=True)
     def test_processing_takes_precedence_over_preset(self) -> None:
         file = self._make_file()
-        url = _image_url_resolver(file, preset=ImagePresetEnum.SM, processing="rs:fit:999:999")
+        url = _image_url_resolver(file, preset=ImagePresetEnum.SM, processing_options="rs:fit:999:999")
         self.assertIn("rs:fit:999:999", url)
         self.assertNotIn("rs:fill:100:100", url)
 

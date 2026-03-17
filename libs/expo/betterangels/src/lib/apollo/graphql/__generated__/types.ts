@@ -850,7 +850,7 @@ export type DjangoImageType = {
 
 export type DjangoImageTypeUrlArgs = {
   preset?: InputMaybe<ImagePresetEnum>;
-  processing?: InputMaybe<Scalars['String']['input']>;
+  processingOptions?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type DjangoModelType = {

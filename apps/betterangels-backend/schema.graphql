@@ -833,7 +833,7 @@ type DjangoImageType {
   size: Int!
   width: Int!
   height: Int!
-  url(preset: ImagePresetEnum = null, processing: String = null): String!
+  url(preset: ImagePresetEnum = null, processingOptions: String = null): String!
 }
 
 type DjangoModelType {

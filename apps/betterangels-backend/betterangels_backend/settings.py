@@ -318,7 +318,7 @@ IMGPROXY_KEY = env("IMGPROXY_KEY")
 IMGPROXY_SALT = env("IMGPROXY_SALT")
 # Optional path prefix for imgproxy URLs on the CloudFront distribution.
 # In production, set to e.g. "imgproxy" so URLs become
-# https://cdn.example.com/imgproxy/<sig>/<processing>/<source>
+# https://cdn.example.com/imgproxy/<sig>/<processing_options>/<source>
 # and a CloudFront behavior routes /imgproxy/* to the imgproxy origin.
 IMGPROXY_PATH_PREFIX = env("IMGPROXY_PATH_PREFIX")
 # Base URL at which imgproxy (or other internal services) can reach this backend.
