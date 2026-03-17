@@ -293,7 +293,10 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "spa": None,
             "status": "RESERVED",
             "veteranStatus": VeteranStatusEnum.YES.name,
-            "docReadyDocuments": [{"id": self.client_profile_1_document_1["id"]}, {"id": self.client_profile_1_document_2["id"]}],
+            "docReadyDocuments": [
+                {"id": self.client_profile_1_document_1["id"]},
+                {"id": self.client_profile_1_document_2["id"]},
+            ],
             "consentFormDocuments": [{"id": self.client_profile_1_document_3["id"]}],
             "otherDocuments": [{"id": self.client_profile_1_document_4["id"]}],
         }
