@@ -459,7 +459,7 @@ export type ClientProfileType = {
   requiresTransportation?: Maybe<Scalars['Boolean']['output']>;
   residenceAddress?: Maybe<Scalars['String']['output']>;
   residenceGeolocation?: Maybe<Scalars['Point']['output']>;
-  sexualOrientation?: Maybe<Scalars['String']['output']>;
+  sexualOrientation?: Maybe<Array<SexualOrientationEnum>>;
   sexualOrientationOther?: Maybe<Scalars['String']['output']>;
   socialMediaProfiles?: Maybe<Array<SocialMediaProfileType>>;
   socialSecurityNumber?: Maybe<Scalars['String']['output']>;
@@ -605,7 +605,7 @@ export type CreateClientProfileInput = {
   requiresTransportation?: InputMaybe<Scalars['Boolean']['input']>;
   residenceAddress?: InputMaybe<Scalars['String']['input']>;
   residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
-  sexualOrientation?: InputMaybe<Scalars['String']['input']>;
+  sexualOrientation?: InputMaybe<Array<SexualOrientationEnum>>;
   sexualOrientationOther?: InputMaybe<Scalars['String']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   socialSecurityNumber?: InputMaybe<Scalars['String']['input']>;
@@ -2615,6 +2615,18 @@ export enum ServiceRequestTypeEnum {
   Requested = 'REQUESTED'
 }
 
+export enum SexualOrientationEnum {
+  Asexual = 'ASEXUAL',
+  Bisexual = 'BISEXUAL',
+  Gay = 'GAY',
+  Lesbian = 'LESBIAN',
+  Other = 'OTHER',
+  Pansexual = 'PANSEXUAL',
+  PreferNotToSay = 'PREFER_NOT_TO_SAY',
+  Queer = 'QUEER',
+  Straight = 'STRAIGHT'
+}
+
 export enum ShelterChoices {
   Building = 'BUILDING',
   Church = 'CHURCH',
@@ -2994,7 +3006,7 @@ export type UpdateClientProfileInput = {
   requiresTransportation?: InputMaybe<Scalars['Boolean']['input']>;
   residenceAddress?: InputMaybe<Scalars['String']['input']>;
   residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
-  sexualOrientation?: InputMaybe<Scalars['String']['input']>;
+  sexualOrientation?: InputMaybe<Array<SexualOrientationEnum>>;
   sexualOrientationOther?: InputMaybe<Scalars['String']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   socialSecurityNumber?: InputMaybe<Scalars['String']['input']>;
