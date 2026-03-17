@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import posixpath
 from typing import Optional, cast
+from urllib.parse import urlunsplit
 
 import waffle
 from common.enums import ImagePresetEnum
@@ -121,7 +122,15 @@ def build_imgproxy_url(
         return None
 
     prefixed_path = posixpath.join("/", settings.IMGPROXY_PATH_PREFIX, signed_imgproxy_path)
-    url = f"{storage.url_protocol}//{storage.custom_domain}{prefixed_path}"
+    url = urlunsplit(
+        (
+            storage.url_protocol.removesuffix(":"),
+            storage.custom_domain,
+            prefixed_path,
+            "",
+            "",
+        )
+    )
 
     expire_seconds: int = getattr(storage, "querystring_expire", 3600)
     expiration = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=expire_seconds)
