@@ -9,6 +9,7 @@ from betterangels_backend import settings
 from common.enums import ImagePresetEnum
 from common.imgproxy import build_imgproxy_url, is_imgproxy_enabled
 from common.models import Location
+from common.widgets import ImgproxyResumableAdminWidget
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
@@ -319,6 +320,13 @@ class PhotoForm(forms.ModelForm):
     class Meta:
         fields = "__all__"
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        if "file" in self.fields and ImgproxyResumableAdminWidget is not None:
+            self.fields["file"].widget = ImgproxyResumableAdminWidget(
+                attrs={"model": self.Meta.model, "field_name": "file"}
+            )
+
 
 class ExteriorPhotoForm(PhotoForm):
     class Meta(PhotoForm.Meta):
@@ -330,38 +338,18 @@ class InteriorPhotoForm(PhotoForm):
         model = InteriorPhoto
 
 
-class PhotoInlineImgproxyMixin:
-    """Mixin for photo inlines: adds a readonly thumbnail column via imgproxy when enabled."""
-
-    readonly_fields = ("photo_preview",)
-    fields = ("photo_preview", "file", "make_hero_image")
-
-    @admin.display(description="Preview")
-    def photo_preview(self, obj: Union[ExteriorPhoto, InteriorPhoto]) -> str:
-        if not obj or not obj.file or not obj.file.name:
-            return "—"
-        if is_imgproxy_enabled():
-            url = (
-                build_imgproxy_url(obj.file, preset=None, processing="f:jpg")
-                or getattr(obj.file, "url", None)
-            )
-        else:
-            url = getattr(obj.file, "url", None)
-        if not url:
-            return "—"
-        return format_html('<img src="{}" alt="" style="max-height: 200px;" />', url)
-
-
-class ExteriorPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
+class ExteriorPhotoInline(admin.TabularInline):
     model = ExteriorPhoto
     form = ExteriorPhotoForm
     max_num = 0
+    fields = ("file", "make_hero_image")
 
 
-class InterPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
+class InterPhotoInline(admin.TabularInline):
     model = InteriorPhoto
     form = InteriorPhotoForm
     max_num = 0
+    fields = ("file", "make_hero_image")
 
 
 class VideoInline(admin.TabularInline):

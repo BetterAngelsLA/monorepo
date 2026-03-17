@@ -1,3 +1,4 @@
+import functools
 from typing import Any, Optional
 
 from common.enums import ImagePresetEnum
@@ -6,6 +7,55 @@ from django.contrib.admin.widgets import AdminFileWidget
 from django.forms.renderers import BaseRenderer
 from django.utils.html import format_html
 from django.utils.safestring import SafeString
+
+
+def __getattr__(name: str) -> Any:
+    """Lazy-load ImgproxyResumableAdminWidget to avoid importing admin_async_upload
+    at module load time (Django app registry is not ready yet).
+    """
+    if name == "ImgproxyResumableAdminWidget":
+        return _get_imgproxy_resumable_admin_widget_class()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+@functools.lru_cache(maxsize=1)
+def _get_imgproxy_resumable_admin_widget_class() -> Any:
+    try:
+        from admin_async_upload.widgets import ResumableAdminWidget
+    except ImportError:
+        return None
+
+    class ImgproxyResumableAdminWidget(ResumableAdminWidget):
+        """Resumable admin file widget that uses imgproxy for the "Currently" link and
+        thumbnail so only the processed image is shown, not the original.
+        """
+
+        def render(
+            self,
+            name: str,
+            value: Any,
+            attrs: Optional[dict[str, Any]] = None,
+            **kwargs: Any,
+        ) -> str:
+            from django.core.files.storage import default_storage
+            from django.db.models.fields.files import FieldFile
+            from django.utils.safestring import mark_safe
+
+            html = super().render(name, value, attrs, **kwargs)
+            if not value:
+                return html
+            thumb_url = ImgproxyAdminImageWidget._get_thumb_url(
+                value, preset=ImagePresetEnum.MD
+            )
+            if not thumb_url:
+                return html
+            if isinstance(value, FieldFile):
+                original_url = (value.storage or default_storage).url(value.name)
+            else:
+                original_url = default_storage.url(value)
+            return mark_safe(html.replace(original_url, thumb_url))
+
+    return ImgproxyResumableAdminWidget
 
 
 class ImgproxyAdminImageWidget(AdminFileWidget):
