@@ -2,8 +2,8 @@ import base64
 import datetime
 from types import SimpleNamespace
 from typing import Optional, cast
-from urllib.parse import urlsplit
 from unittest.mock import MagicMock
+from urllib.parse import urlsplit
 
 from common.enums import ImagePresetEnum
 from common.imgproxy import (
