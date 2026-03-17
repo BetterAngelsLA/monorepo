@@ -9,6 +9,7 @@ import {
 import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from './base-ui/buttons';
+import { ConfirmationModal } from './base-ui/modal/ConfirmationModal';
 import { Table, type TableColumn } from './Table';
 
 // REPLACE WITH ACTUAL QUERIED DATA
@@ -86,6 +87,11 @@ export function RoomTable({
 }: RoomTableProps) {
   const [searchInput, setSearchInput] = useState('');
   const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>([]);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    roomId?: string;
+    roomName?: string;
+  }>({ isOpen: false });
 
   useEffect(() => {
     onSearchChange?.(searchInput);
@@ -280,13 +286,22 @@ export function RoomTable({
               }}
             />
             <Button variant="edit" leftIcon={<CopyPlus />} />
-            <Button variant="trash" />
+            <Button
+              variant="trash"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteConfirmation({
+                  isOpen: true,
+                  roomId: rowObject.id,
+                  roomName: rowObject.room.name,
+                });
+              }}
+            />
           </div>
         )}
         trailingColumnWidth="128px"
         headerInsetClassName="px-0 py-2 pt-6"
         rowInsetClassName="px-0 mx-0 py-2"
-        onRowClick={onRowClick}
         loading={loading}
         loadingState={loadingState}
         emptyState={emptyState}
@@ -296,6 +311,43 @@ export function RoomTable({
         tableStyle={tableStyle}
         headerStyle={headerStyle}
         rowStyle={rowStyle}
+      />
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={() =>
+          setDeleteConfirmation({
+            isOpen: false,
+            roomId: undefined,
+            roomName: undefined,
+          })
+        }
+        variant="danger"
+        title={`Are you sure you want to delete ${
+          deleteConfirmation.roomName || 'this room'
+        }?`}
+        description="This action cannot be undone."
+        primaryAction={{
+          label: 'Delete',
+          onClick: () => {
+            if (deleteConfirmation.roomId) {
+              onDeleteRoom?.(deleteConfirmation.roomId);
+            }
+            setDeleteConfirmation({
+              isOpen: false,
+              roomId: undefined,
+              roomName: undefined,
+            });
+          },
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () =>
+            setDeleteConfirmation({
+              isOpen: false,
+              roomId: undefined,
+              roomName: undefined,
+            }),
+        }}
       />
     </div>
   );

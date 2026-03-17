@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import type { Shelter } from '../types/shelter';
 import { Button } from './base-ui/buttons';
+import { ConfirmationModal } from './base-ui/modal/ConfirmationModal';
 import { Table, type TableColumn } from './Table';
 
 export type ShelterRowObject = {
@@ -30,6 +31,7 @@ type ShelterTableProps = {
   rowStyle?: CSSProperties;
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
+  onDeleteShelter?: (shelterId: string) => void;
 };
 
 const MAX_VISIBLE_TAG_CHAR_COUNT = 15;
@@ -86,8 +88,14 @@ export function ShelterTable({
   rowStyle,
   onSearchChange,
   searchPlaceholder = 'Search shelters',
+  onDeleteShelter,
 }: ShelterTableProps) {
   const [searchInput, setSearchInput] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    shelterId?: string;
+    shelterName?: string;
+  }>({ isOpen: false });
 
   useEffect(() => {
     onSearchChange?.(searchInput);
@@ -220,6 +228,22 @@ export function ShelterTable({
             tags: shelter.tags ?? [],
           };
         }}
+        getTrailingContent={(rowObject) => (
+          <div className="flex items-center gap-1">
+            <Button
+              variant="trash"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteConfirmation({
+                  isOpen: true,
+                  shelterId: rowObject.id,
+                  shelterName: rowObject.name,
+                });
+              }}
+            />
+          </div>
+        )}
+        trailingColumnWidth="60px"
         onRowClick={onRowClick}
         loading={loading}
         loadingState={loadingState}
@@ -230,6 +254,41 @@ export function ShelterTable({
         tableStyle={tableStyle}
         headerStyle={headerStyle}
         rowStyle={rowStyle}
+      />
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={() =>
+          setDeleteConfirmation({
+            isOpen: false,
+            shelterId: undefined,
+            shelterName: undefined,
+          })
+        }
+        variant="danger"
+        title={`Are you sure you want to delete ${deleteConfirmation.shelterName || 'this shelter'}?`}
+        description="This action cannot be undone."
+        primaryAction={{
+          label: 'Delete',
+          onClick: () => {
+            if (deleteConfirmation.shelterId) {
+              onDeleteShelter?.(deleteConfirmation.shelterId);
+            }
+            setDeleteConfirmation({
+              isOpen: false,
+              shelterId: undefined,
+              shelterName: undefined,
+            });
+          },
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () =>
+            setDeleteConfirmation({
+              isOpen: false,
+              shelterId: undefined,
+              shelterName: undefined,
+            }),
+        }}
       />
     </div>
   );
