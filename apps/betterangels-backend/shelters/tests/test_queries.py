@@ -202,7 +202,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
                 )[0]
             ],
             storage=[Storage.objects.get_or_create(name=StorageChoices.AMNESTY_LOCKERS)[0]],
-            training_services=[TrainingService.objects.get_or_create(name=TrainingServiceChoices.JOB_TRAINING)[0]]
+            training_services=[TrainingService.objects.get_or_create(name=TrainingServiceChoices.JOB_TRAINING)[0]],
         )
 
         shelter = Shelter.objects.get(pk=new_shelter.pk)
