@@ -103,7 +103,7 @@ jobs:
       MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/${{ needs.get_vars.outputs.project_id }}/group/${{ needs.get_vars.outputs.group_id }}?platform=android%26disableOnboarding%3D1
     params:
       build_id: ${{ needs.get_android_build.outputs.build_id }}
-      flow_path: ['.maestro/tests/landing.yml']
+      flow_path: ['.maestro/tests/']
 
   maestro_ios_test:
     needs: [get_vars, get_ios_build]
@@ -112,7 +112,7 @@ jobs:
       MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/${{ needs.get_vars.outputs.project_id }}/group/${{ needs.get_vars.outputs.group_id }}?platform=ios%26disableOnboarding%3D1
     params:
       build_id: ${{ needs.get_ios_build.outputs.build_id }}
-      flow_path: ['.maestro/tests/landing.yml']
+      flow_path: ['.maestro/tests/']
 
   set_final_github_status:
     after: [maestro_android_test, maestro_ios_test]
