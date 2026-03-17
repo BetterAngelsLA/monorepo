@@ -197,9 +197,7 @@ class BedFilter:
         return Q(**{f"{prefix}bed_type__in": value})
 
     @strawberry_django.filter_field
-    def funders(
-        self, queryset: QuerySet, value: Optional[List[FunderChoices]], prefix: str
-    ) -> Tuple[QuerySet, Q]:
+    def funders(self, queryset: QuerySet, value: Optional[List[FunderChoices]], prefix: str) -> Tuple[QuerySet, Q]:
         if not value:
             return queryset, Q()
         return queryset.filter(**{f"{prefix}funders__name__in": value}).distinct(), Q()
@@ -217,9 +215,7 @@ class BedFilter:
         return Q(**{f"{prefix}medical_needs__in": value})
 
     @strawberry_django.filter_field
-    def pets(
-        self, queryset: QuerySet, value: Optional[List[PetChoices]], prefix: str
-    ) -> Tuple[QuerySet, Q]:
+    def pets(self, queryset: QuerySet, value: Optional[List[PetChoices]], prefix: str) -> Tuple[QuerySet, Q]:
         if not value:
             return queryset, Q()
         return queryset.filter(**{f"{prefix}pets__name__in": value}).distinct(), Q()
