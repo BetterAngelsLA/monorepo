@@ -33,9 +33,7 @@ class ImgproxyAdminImageWidget(AdminFileWidget):
         thumb_url = self._get_thumb_url(value)
         if thumb_url:
             preview = format_html(
-                '<div style="margin-bottom:8px">'
-                '<img src="{}" style="max-height:200px;" />'
-                "</div>",
+                '<div style="margin-bottom:8px">' '<img src="{}" style="max-height:200px;" />' "</div>",
                 thumb_url,
             )
             return preview + output
