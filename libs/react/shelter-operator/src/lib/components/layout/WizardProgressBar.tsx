@@ -68,7 +68,7 @@ export const WizardProgressBar = memo(
                   leftIcon={
                     state === 'completed' ? (
                       <Check size={10} strokeWidth={3} className="text-white" />
-                    ) : null
+                    ) : false
                   }
                 />
 

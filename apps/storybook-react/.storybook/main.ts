@@ -69,7 +69,6 @@ const config: StorybookConfig = {
         },
       },
       plugins: [
-        nxViteTsPaths(),
         // we handle SVGs differently across libs, hence the separate plugins
         appendReactQueryForRnSvg(
           resolve(workspaceRoot, 'libs/expo') // adjust per RN libs root
