@@ -8,7 +8,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { Linking, Pressable, View } from 'react-native';
+import { Linking, View } from 'react-native';
 import { RelationshipTypeEnum } from '../../../apollo';
 import { ClientProfilesQuery } from '../../ClientProfileList/__generated__/ClientProfiles.generated';
 
@@ -44,7 +44,13 @@ export default function ClientSummaryContact(
           CONTACT INFO
         </TextBold>
       </View>
-      <Panel style={{ padding: Spacings.sm }}>
+      <Panel
+        onPress={() =>
+          primaryCCM?.phoneNumber &&
+          Linking.openURL(`tel:${primaryCCM.phoneNumber}`)
+        }
+        style={{ padding: Spacings.sm }}
+      >
         <View
           style={{
             flexDirection: 'row',
@@ -55,9 +61,7 @@ export default function ClientSummaryContact(
         >
           <View
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: Spacings.xs,
+              gap: Spacings.xxs,
             }}
           >
             <TextRegular size="xs">
@@ -70,12 +74,7 @@ export default function ClientSummaryContact(
             )}
           </View>
           {primaryCCM?.phoneNumber && (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => Linking.openURL(`tel:${primaryCCM.phoneNumber}`)}
-            >
-              <ExternalLinkOutlinedIcon color={Colors.PRIMARY} />
-            </Pressable>
+            <ExternalLinkOutlinedIcon color={Colors.PRIMARY} />
           )}
         </View>
       </Panel>

@@ -24,7 +24,6 @@ query ClientProfiles(
       mailingAddress
       preferredLanguage
       middleName
-      phoneNumber
       nickname
       residenceAddress
       displayPronouns
@@ -44,6 +43,11 @@ query ClientProfiles(
         name
         relationshipToClient
         phoneNumber
+      }
+      phoneNumbers {
+        id
+        isPrimary
+        number
       }
     }
   }

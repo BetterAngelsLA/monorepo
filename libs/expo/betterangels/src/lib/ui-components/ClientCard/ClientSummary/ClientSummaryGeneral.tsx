@@ -15,7 +15,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { router } from 'expo-router';
-import { Linking, Pressable, View } from 'react-native';
+import { Linking, View } from 'react-native';
 import { TaskStatusEnum, TaskType } from '../../../apollo';
 import { ClientViewTabEnum } from '../../../screens/Client/ClientTabs';
 import { enumLanguageCode } from '../../../static';
@@ -35,21 +35,24 @@ type TPanelContainerProps = {
   title: string | number;
   subtitle: string;
   icon: React.ReactNode;
-  action?: React.ReactNode;
+  actionIcon?: React.ReactNode;
   variant?: 'default' | 'warning' | 'error' | 'primary';
   flex?: number;
+  onPress?: () => void;
 };
 
 function PanelContainer({
+  onPress,
   title,
   subtitle,
   icon,
-  action,
+  actionIcon,
   variant = 'primary',
   flex = 1,
 }: TPanelContainerProps) {
   return (
     <Panel
+      onPress={onPress}
       variant={variant}
       style={{
         flexDirection: 'row',
@@ -93,7 +96,7 @@ function PanelContainer({
           </TextBold>
         </View>
       </View>
-      {action}
+      {actionIcon}
     </Panel>
   );
 }
@@ -118,6 +121,9 @@ export default function ClientSummaryGeneral(
     },
     pageSize: 0,
   });
+  const primaryPhoneNumber = client.phoneNumbers?.find(
+    (item) => item.isPrimary
+  )?.number;
 
   return (
     <View style={{ gap: Spacings.xs }}>
@@ -151,75 +157,70 @@ export default function ClientSummaryGeneral(
       </View>
       <View style={{ flexDirection: 'row', gap: Spacings.xs }}>
         <PanelContainer
+          onPress={() =>
+            primaryPhoneNumber && Linking.openURL(`tel:${primaryPhoneNumber}`)
+          }
           flex={3}
-          title={client.phoneNumber || 'N/A'}
+          title={primaryPhoneNumber || 'N/A'}
           subtitle="CONTACT"
           icon={<CallOutlinedIcon color={Colors.PRIMARY} />}
-          action={
-            client.phoneNumber && (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => Linking.openURL(`tel:${client.phoneNumber}`)}
-              >
-                <ExternalLinkOutlinedIcon color={Colors.PRIMARY} />
-              </Pressable>
+          actionIcon={
+            primaryPhoneNumber && (
+              <ExternalLinkOutlinedIcon color={Colors.PRIMARY} />
             )
           }
         />
         <PanelContainer
+          onPress={() =>
+            total > 0 &&
+            router.navigate({
+              pathname: `/client/${client.id}`,
+              params: { newTab: ClientViewTabEnum.Tasks, arrivedFrom },
+            })
+          }
           flex={2}
           title={loading ? '' : total.toString() || '0'}
           subtitle="TASKS"
           icon={<ListIcon color={Colors.WARNING_DARK} />}
           variant="warning"
-          action={
+          actionIcon={
             total > 0 && (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() =>
-                  router.navigate({
-                    pathname: `/client/${client.id}`,
-                    params: { newTab: ClientViewTabEnum.Tasks, arrivedFrom },
-                  })
-                }
-              >
-                <ExternalLinkOutlinedIcon color={Colors.WARNING_DARK} />
-              </Pressable>
+              <ExternalLinkOutlinedIcon color={Colors.WARNING_DARK} />
             )
           }
         />
       </View>
-      <Panel style={{ marginTop: Spacings.sm }} variant="error">
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: Spacings.xs,
-            marginBottom: Spacings.xxs,
-          }}
-        >
+      {client.importantNotes && (
+        <Panel style={{ marginTop: Spacings.sm }} variant="error">
           <View
             style={{
-              height: 30,
-              width: 30,
+              flexDirection: 'row',
               alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: Colors.WHITE,
-              borderRadius: 100,
+              gap: Spacings.xs,
+              marginBottom: Spacings.xxs,
             }}
           >
-            <WarningIcon color={Colors.ERROR} />
+            <View
+              style={{
+                height: 30,
+                width: 30,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: Colors.WHITE,
+                borderRadius: 100,
+              }}
+            >
+              <WarningIcon color={Colors.ERROR} />
+            </View>
+            <TextBold size="sm" color={Colors.ERROR_DARK}>
+              Important Note
+            </TextBold>
           </View>
-          <TextBold size="sm" color={Colors.ERROR_DARK}>
-            Important Note
-          </TextBold>
-        </View>
-        {client.importantNotes && (
           <TextRegular color={Colors.ERROR_DARK}>
             {client.importantNotes}
           </TextRegular>
-        )}
-      </Panel>
+        </Panel>
+      )}
     </View>
   );
 }
