@@ -11,7 +11,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hmis", "0005_hmisnote_location"),
+        ("hmis", "0006_alter_hmisnote_location"),
     ]
 
     operations = [

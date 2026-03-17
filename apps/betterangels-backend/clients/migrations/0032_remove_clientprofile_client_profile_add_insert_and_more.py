@@ -5,40 +5,74 @@ import django.contrib.postgres.fields
 
 def migrate_gender_male_female_to_cis(apps, schema_editor):
     """Data-migrate existing 'male' -> 'cis_male' and 'female' -> 'cis_female'."""
-    tables = [
-        "clients_clientprofile",
-        "clients_clientprofileevent",
-        "clients_clienthouseholdmember",
-        "clients_clienthouseholdmemberevent",
-    ]
-    for table in tables:
-        schema_editor.execute(
-            f'UPDATE "{table}" SET gender = %s WHERE gender = %s',
-            ["cis_male", "male"],
-        )
-        schema_editor.execute(
-            f'UPDATE "{table}" SET gender = %s WHERE gender = %s',
-            ["cis_female", "female"],
-        )
+    schema_editor.execute(
+        'UPDATE "clients_clientprofile" SET gender = %s WHERE gender = %s',
+        ["cis_male", "male"],
+    )
+    schema_editor.execute(
+        'UPDATE "clients_clientprofile" SET gender = %s WHERE gender = %s',
+        ["cis_female", "female"],
+    )
+    schema_editor.execute(
+        'UPDATE "clients_clientprofileevent" SET gender = %s WHERE gender = %s',
+        ["cis_male", "male"],
+    )
+    schema_editor.execute(
+        'UPDATE "clients_clientprofileevent" SET gender = %s WHERE gender = %s',
+        ["cis_female", "female"],
+    )
+    schema_editor.execute(
+        'UPDATE "clients_clienthouseholdmember" SET gender = %s WHERE gender = %s',
+        ["cis_male", "male"],
+    )
+    schema_editor.execute(
+        'UPDATE "clients_clienthouseholdmember" SET gender = %s WHERE gender = %s',
+        ["cis_female", "female"],
+    )
+    schema_editor.execute(
+        'UPDATE "clients_clienthouseholdmemberevent" SET gender = %s WHERE gender = %s',
+        ["cis_male", "male"],
+    )
+    schema_editor.execute(
+        'UPDATE "clients_clienthouseholdmemberevent" SET gender = %s WHERE gender = %s',
+        ["cis_female", "female"],
+    )
 
 
 def reverse_gender_migrate(apps, schema_editor):
     """Reverse: 'cis_male' -> 'male', 'cis_female' -> 'female'."""
-    tables = [
-        "clients_clientprofile",
-        "clients_clientprofileevent",
-        "clients_clienthouseholdmember",
-        "clients_clienthouseholdmemberevent",
-    ]
-    for table in tables:
-        schema_editor.execute(
-            f'UPDATE "{table}" SET gender = %s WHERE gender = %s',
-            ["male", "cis_male"],
-        )
-        schema_editor.execute(
-            f'UPDATE "{table}" SET gender = %s WHERE gender = %s',
-            ["female", "cis_female"],
-        )
+    schema_editor.execute(
+        'UPDATE "clients_clientprofile" SET gender = %s WHERE gender = %s',
+        ["male", "cis_male"],
+    )
+    schema_editor.execute(
+        'UPDATE "clients_clientprofile" SET gender = %s WHERE gender = %s',
+        ["female", "cis_female"],
+    )
+    schema_editor.execute(
+        'UPDATE "clients_clientprofileevent" SET gender = %s WHERE gender = %s',
+        ["male", "cis_male"],
+    )
+    schema_editor.execute(
+        'UPDATE "clients_clientprofileevent" SET gender = %s WHERE gender = %s',
+        ["female", "cis_female"],
+    )
+    schema_editor.execute(
+        'UPDATE "clients_clienthouseholdmember" SET gender = %s WHERE gender = %s',
+        ["male", "cis_male"],
+    )
+    schema_editor.execute(
+        'UPDATE "clients_clienthouseholdmember" SET gender = %s WHERE gender = %s',
+        ["female", "cis_female"],
+    )
+    schema_editor.execute(
+        'UPDATE "clients_clienthouseholdmemberevent" SET gender = %s WHERE gender = %s',
+        ["male", "cis_male"],
+    )
+    schema_editor.execute(
+        'UPDATE "clients_clienthouseholdmemberevent" SET gender = %s WHERE gender = %s',
+        ["female", "cis_female"],
+    )
 
 
 import django.core.validators
