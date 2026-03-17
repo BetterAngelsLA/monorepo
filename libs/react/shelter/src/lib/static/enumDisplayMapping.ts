@@ -130,6 +130,7 @@ export const enumDisplayParkingChoices: { [key in ParkingChoices]: string } = {
   [ParkingChoices.Motorcycle]: 'Motorcycle',
   [ParkingChoices.NoParking]: 'No Parking',
   [ParkingChoices.Rv]: 'RV',
+  [ParkingChoices.Street]: 'Street Parking',
 };
 
 export const enumDisplaySpaChoices: { [key in SpaChoices]: string } = {

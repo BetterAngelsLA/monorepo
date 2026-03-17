@@ -2003,7 +2003,8 @@ export enum ParkingChoices {
   Bicycle = 'BICYCLE',
   Motorcycle = 'MOTORCYCLE',
   NoParking = 'NO_PARKING',
-  Rv = 'RV'
+  Rv = 'RV',
+  Street = 'STREET'
 }
 
 export type ParkingType = {

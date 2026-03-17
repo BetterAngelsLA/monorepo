@@ -90,6 +90,7 @@ class ParkingChoices(models.TextChoices):
     MOTORCYCLE = "motorcycle", _("Motorcycle")
     AUTOMOBILE = "automobile", _("Automobile")
     RV = "rv", _("RV")
+    STREET = "street", _("Street Parking")
     NO_PARKING = "no_parking", _("No Parking")
 
 

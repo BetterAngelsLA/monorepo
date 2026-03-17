@@ -1718,6 +1718,7 @@ enum ParkingChoices {
   MOTORCYCLE
   AUTOMOBILE
   RV
+  STREET
   NO_PARKING
 }
 
