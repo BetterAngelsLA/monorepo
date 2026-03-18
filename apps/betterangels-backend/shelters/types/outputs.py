@@ -112,6 +112,7 @@ class ShelterTypeMixin:
     supervisorial_district: auto
     total_beds: auto
     training_services: List[TrainingServiceType]
+    updated_at: auto
     website: auto
 
     _exterior_photos: Optional[List[ShelterPhotoType]] = None
