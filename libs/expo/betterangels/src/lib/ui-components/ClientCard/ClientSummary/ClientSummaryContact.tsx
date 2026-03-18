@@ -8,6 +8,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
 import { Linking, View } from 'react-native';
 import { RelationshipTypeEnum } from '../../../apollo';
 import { ClientProfilesQuery } from '../../ClientProfileList/__generated__/ClientProfiles.generated';
@@ -28,6 +29,9 @@ export default function ClientSummaryContact(
     ) || [];
 
   const primaryCCM = caseManagers[0];
+
+  const formattedNumber =
+    primaryCCM?.phoneNumber && formatPhoneNumber(primaryCCM?.phoneNumber);
 
   return (
     <View>
@@ -67,13 +71,13 @@ export default function ClientSummaryContact(
             <TextRegular size="xs">
               Case Manager: {primaryCCM?.name || 'N/A'}
             </TextRegular>
-            {primaryCCM?.phoneNumber && (
+            {formattedNumber && (
               <TextBold textDecorationLine="underline" size="sm">
-                {primaryCCM?.phoneNumber}
+                {formattedNumber}
               </TextBold>
             )}
           </View>
-          {primaryCCM?.phoneNumber && (
+          {formattedNumber && (
             <ExternalLinkOutlinedIcon color={Colors.PRIMARY} />
           )}
         </View>

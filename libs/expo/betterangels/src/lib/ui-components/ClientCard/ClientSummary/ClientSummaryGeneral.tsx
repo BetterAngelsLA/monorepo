@@ -13,6 +13,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
 import { format } from 'date-fns';
 import { router } from 'expo-router';
 import { Linking, View } from 'react-native';
@@ -125,6 +126,9 @@ export default function ClientSummaryGeneral(
     (item) => item.isPrimary
   )?.number;
 
+  const formattedNumber =
+    primaryPhoneNumber && formatPhoneNumber(primaryPhoneNumber);
+
   return (
     <View style={{ gap: Spacings.xs }}>
       <View
@@ -158,14 +162,14 @@ export default function ClientSummaryGeneral(
       <View style={{ flexDirection: 'row', gap: Spacings.xs }}>
         <PanelContainer
           onPress={() =>
-            primaryPhoneNumber && Linking.openURL(`tel:${primaryPhoneNumber}`)
+            formattedNumber && Linking.openURL(`tel:${formattedNumber}`)
           }
           flex={3}
-          title={primaryPhoneNumber || 'N/A'}
+          title={formattedNumber || 'N/A'}
           subtitle="CONTACT"
           icon={<CallOutlinedIcon color={Colors.PRIMARY} />}
           actionIcon={
-            primaryPhoneNumber && (
+            formattedNumber && (
               <ExternalLinkOutlinedIcon color={Colors.PRIMARY} />
             )
           }
