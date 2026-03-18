@@ -1,9 +1,7 @@
 from typing import Any, Dict
 
 import boto3
-from django.contrib.gis.db.backends.postgis.base import (
-    DatabaseWrapper as PostGISDatabaseWrapper,
-)
+from django.contrib.gis.db.backends.postgis.base import DatabaseWrapper as PostGISDatabaseWrapper
 
 
 class DatabaseWrapper(PostGISDatabaseWrapper):
@@ -30,5 +28,7 @@ class DatabaseWrapper(PostGISDatabaseWrapper):
 
             # Update connection parameters with the generated token as the password
             conn_params["password"] = token
+
+        return conn_params
 
         return conn_params

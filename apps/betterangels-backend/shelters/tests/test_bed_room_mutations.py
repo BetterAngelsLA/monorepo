@@ -2,7 +2,6 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
-
 from shelters.enums import BedStatusChoices, RoomStatusChoices, RoomStyleChoices
 from shelters.models import Bed, Room
 from shelters.tests.baker_recipes import shelter_recipe

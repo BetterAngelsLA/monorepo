@@ -1,6 +1,5 @@
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
-
 from shelters.enums import StatusChoices
 from shelters.models import ExteriorPhoto, InteriorPhoto, Shelter
 from shelters.tests.baker_recipes import shelter_recipe
