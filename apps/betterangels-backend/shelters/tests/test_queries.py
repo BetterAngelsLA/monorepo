@@ -3,7 +3,7 @@ from typing import Any
 from unittest.mock import ANY, patch
 
 from accounts.tests.baker_recipes import organization_recipe
-from common.tests.utils import GraphQLBaseTestCase, NumQueriesWithoutCacheMixin
+from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -56,10 +56,10 @@ from shelters.models import (
 from shelters.models.schedule import Schedule
 from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
 from test_utils.mixins import GraphQLTestCaseMixin
-from unittest_parametrize import ParametrizedTestCase, parametrize
+from unittest_parametrize import parametrize
 
 
-class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, ParametrizedTestCase, TestCase):
+class ShelterQueryTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
@@ -138,16 +138,14 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
     def test_shelter_query(self) -> None:
         shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
         shelter_organization = organization_recipe.make()
-        service_category = ServiceCategory.objects.create(
+        service_category, _ = ServiceCategory.objects.get_or_create(
             name="general",
-            display_name="General Services",
-            priority=0,
+            defaults={"display_name": "General Services", "priority": 0},
         )
-        case_management = Service.objects.create(
+        case_management, _ = Service.objects.get_or_create(
             category=service_category,
             name="case_management",
-            display_name="Case Management",
-            priority=0,
+            defaults={"display_name": "Case Management", "priority": 0},
         )
 
         new_shelter = shelter_recipe.make(
@@ -239,7 +237,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
             }}
         """
         variables = {"id": shelter.pk}
-        expected_query_count = 21
+        expected_query_count = 18
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -330,6 +328,66 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
         }
         self.assertEqual(response_shelter, expected_shelter)
 
+    def test_shelter_service_categories_query(self) -> None:
+        # Use a unique test category to avoid collisions with seeded data.
+        category = ServiceCategory.objects.create(
+            name="test_query_category",
+            display_name="Test Query Category",
+            priority=999,
+        )
+        Service.objects.create(
+            category=category,
+            name="case_management_test",
+            display_name="Case Management",
+            is_other=False,
+            priority=0,
+        )
+        Service.objects.create(
+            category=category,
+            name="other_showers_test",
+            display_name="Showers",
+            is_other=True,
+            priority=1,
+        )
+
+        service_content_type = ContentType.objects.get_for_model(Service)
+        service_category_content_type = ContentType.objects.get_for_model(ServiceCategory)
+        view_service_perm = Permission.objects.get(content_type=service_content_type, codename="view_service")
+        view_service_category_perm = Permission.objects.get(
+            content_type=service_category_content_type,
+            codename="view_servicecategory",
+        )
+        self.org_1_case_manager_1.user_permissions.add(view_service_perm, view_service_category_perm)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        query = """
+            query {
+                shelterServiceCategories {
+                    id
+                    displayName
+                    services {
+                        id
+                        displayName
+                        isOther
+                    }
+                }
+            }
+        """
+
+        response = self.execute_graphql(query)
+
+        self.assertIsNone(response.get("errors"))
+        categories = response["data"]["shelterServiceCategories"]
+        self.assertGreaterEqual(len(categories), 1)
+        test_category = next(c for c in categories if c["displayName"] == "Test Query Category")
+        self.assertEqual(
+            test_category["services"],
+            [
+                {"id": ANY, "displayName": "Case Management", "isOther": False},
+                {"id": ANY, "displayName": "Showers", "isOther": True},
+            ],
+        )
+
     def test_shelters_query(self) -> None:
         shelter_count = 2
         shelters = shelter_recipe.make(_quantity=shelter_count, status=StatusChoices.APPROVED)
@@ -357,7 +415,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
             }}
         """
 
-        expected_query_count = 22
+        expected_query_count = 19
 
         variables = {"ordering": {"name": "ASC"}}
 

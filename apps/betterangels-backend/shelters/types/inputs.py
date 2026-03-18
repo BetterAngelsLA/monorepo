@@ -54,6 +54,12 @@ class ScheduleInput:
     is_exception: bool = False
 
 
+@strawberry.input
+class PendingServiceInput:
+    category_id: ID
+    display_name: str
+
+
 @strawberry_django.input(models.Shelter)
 class CreateShelterInput:
     # Required scalars — derived from model via auto
@@ -83,6 +89,7 @@ class CreateShelterInput:
     location: Optional[ShelterLocationInput] = None
     schedules: Optional[List[ScheduleInput]] = None
     services: Optional[List[ID]] = None
+    pending_services: Optional[List[PendingServiceInput]] = None
 
     # Optional scalars — all model fields below have null=True, blank=True.
     # Using auto where strawberry-django can resolve the type; explicit types

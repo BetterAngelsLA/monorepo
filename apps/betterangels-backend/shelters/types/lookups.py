@@ -67,6 +67,7 @@ class ServiceCategoryType:
     name: auto
     display_name: auto
     priority: auto
+    services: list["ServiceType"]
 
 
 @strawberry_django.type(models.Service)
@@ -75,6 +76,7 @@ class ServiceType:
     category: ServiceCategoryType
     name: auto
     display_name: auto
+    is_other: auto
     priority: auto
 
 

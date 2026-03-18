@@ -3,6 +3,7 @@ import {
   type CreateShelterInput,
   type CreateShelterMutation,
   type CreateShelterMutationVariables,
+  type PendingServiceInput,
   type ScheduleInput,
 } from '@monorepo/react/shelter';
 import type { ScheduleFormEntry, ShelterFormData } from '../../../formTypes';
@@ -23,6 +24,29 @@ const compactEnumValues = <T extends string>(values: readonly T[]): T[] =>
 
 const compactIdValues = (values: readonly string[]): string[] =>
   Array.from(new Set(values.filter(Boolean)));
+
+const buildPendingServices = (
+  values: Readonly<Record<string, string[]>>
+): PendingServiceInput[] | undefined => {
+  const entries: PendingServiceInput[] = [];
+  const seen = new Set<string>();
+
+  for (const [categoryId, displayNames] of Object.entries(values)) {
+    if (!categoryId) continue;
+
+    for (const displayName of displayNames) {
+      const trimmed = displayName.trim();
+      if (!trimmed) continue;
+
+      const dedupeKey = `${categoryId}::${trimmed.toLowerCase()}`;
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+      entries.push({ categoryId, displayName: trimmed });
+    }
+  }
+
+  return entries.length ? entries : undefined;
+};
 
 const numberOrUndefined = (value: number | null | undefined) =>
   typeof value === 'number' && !Number.isNaN(value) ? value : undefined;
@@ -98,6 +122,7 @@ export const buildCreateShelterInput = (
     pets: compactEnumValues(formData.pets),
     parking: compactEnumValues(formData.parking),
     services: compactIdValues(formData.services),
+    pendingServices: buildPendingServices(formData.pendingServicesByCategory),
     entryRequirements: compactEnumValues(formData.entryRequirements),
     referralRequirement: compactEnumValues(formData.referralRequirement),
     exitPolicy: compactEnumValues(formData.exitPolicy),

@@ -2,7 +2,7 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, ignore_warnings
-from shelters.models import Bed, Room, Shelter
+from shelters.models import Bed, Room, Service, ServiceCategory, Shelter
 from unittest_parametrize import ParametrizedTestCase
 
 
@@ -273,6 +273,100 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         self.assertEqual(shelter["location"]["place"], "123 Main St, Los Angeles, CA 90012")
         self.assertEqual(shelter["location"]["latitude"], 34.0522)
         self.assertEqual(shelter["location"]["longitude"], -118.2437)
+
+    def test_create_shelter_with_pending_services(self) -> None:
+        mutation = """
+            mutation ($data: CreateShelterInput!) {
+                createShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                        name
+                        services {
+                            id
+                            displayName
+                            isOther
+                            category {
+                                id
+                            }
+                        }
+                    }
+                }
+            }
+        """
+
+        category, _ = ServiceCategory.objects.get_or_create(
+            name="general",
+            defaults={"display_name": "General Services", "priority": 0},
+        )
+        # Remove any pre-seeded services that would conflict with the test assertions.
+        Service.objects.filter(category=category).delete()
+
+        existing_other = Service.objects.create(
+            category=category,
+            name="other_laundry",
+            display_name="Laundry",
+            is_other=True,
+            priority=0,
+        )
+        official = Service.objects.create(
+            category=category,
+            name="case_management",
+            display_name="Case Management",
+            is_other=False,
+            priority=1,
+        )
+
+        variables = {
+            "data": {
+                "name": "Shelter With Custom Services",
+                "description": "A shelter with official and custom services",
+                "organization": str(self.org_1.pk),
+                "accessibility": [],
+                "demographics": [],
+                "specialSituationRestrictions": [],
+                "shelterTypes": [],
+                "roomStyles": [],
+                "storage": [],
+                "pets": [],
+                "parking": [],
+                "services": [str(official.pk)],
+                "pendingServices": [
+                    {"categoryId": str(category.pk), "displayName": "Laundry"},
+                    {"categoryId": str(category.pk), "displayName": "Showers"},
+                    {"categoryId": str(category.pk), "displayName": "showers"},
+                ],
+                "entryRequirements": [],
+                "referralRequirement": [],
+                "exitPolicy": [],
+                "cities": [],
+                "spa": [],
+                "shelterPrograms": [],
+                "funders": [],
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        shelter = response["data"]["createShelter"]
+        self.assertEqual(shelter["name"], "Shelter With Custom Services")
+        self.assertEqual(len(shelter["services"]), 3)
+
+        custom_services = [service for service in shelter["services"] if service["isOther"]]
+        self.assertEqual(
+            {service["displayName"] for service in custom_services},
+            {"Laundry", "Showers"},
+        )
+        self.assertTrue(any(service["displayName"] == "Case Management" for service in shelter["services"]))
+
+        created_showers = Service.objects.get(category=category, display_name="Showers")
+        self.assertTrue(created_showers.is_other)
+        self.assertEqual(created_showers.name, "other_showers")
+        self.assertEqual(Service.objects.filter(category=category, display_name__iexact="Showers").count(), 1)
+        self.assertEqual(
+            existing_other.pk,
+            Service.objects.get(display_name="Laundry", category=category).pk,
+        )
 
     def test_create_shelter_missing_required_field(self) -> None:
         """Test that creating a shelter without required fields fails"""

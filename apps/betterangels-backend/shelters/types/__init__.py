@@ -11,6 +11,7 @@ from shelters.types.inputs import (
     CreateBedInput,
     CreateRoomInput,
     CreateShelterInput,
+    PendingServiceInput,
     ScheduleInput,
     ShelterLocationInput,
 )
@@ -72,6 +73,7 @@ __all__ = [
     "CreateBedInput",
     "CreateRoomInput",
     "CreateShelterInput",
+    "PendingServiceInput",
     "ScheduleInput",
     "ShelterLocationInput",
     # outputs

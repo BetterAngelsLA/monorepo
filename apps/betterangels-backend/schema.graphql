@@ -674,6 +674,7 @@ input CreateShelterInput {
   location: ShelterLocationInput = null
   schedules: [ScheduleInput!] = null
   services: [ID!] = null
+  pendingServices: [PendingServiceInput!] = null
   email: String = null
   phone: PhoneNumber = null
   website: String = null
@@ -1674,6 +1675,11 @@ type ParkingType {
   name: ParkingChoices
 }
 
+input PendingServiceInput {
+  categoryId: ID!
+  displayName: String!
+}
+
 enum PetChoices {
   CATS
   DOGS_UNDER_25_LBS
@@ -1763,6 +1769,7 @@ type Query {
   adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
+  shelterServiceCategories: [ServiceCategoryType!]! @hasPerm(permissions: [{app: "shelters", permission: "view_servicecategory"}], any: true) @hasPerm(permissions: [{app: "shelters", permission: "view_service"}], any: true)
 }
 
 enum RaceEnum {
@@ -1944,6 +1951,7 @@ type ServiceCategoryType {
   name: String!
   displayName: String!
   priority: Int!
+  services: [ServiceType!]!
 }
 
 enum ServiceRequestStatusEnum {
@@ -1972,6 +1980,7 @@ type ServiceType {
   category: ServiceCategoryType!
   name: String!
   displayName: String!
+  isOther: Boolean!
   priority: Int!
 }
 

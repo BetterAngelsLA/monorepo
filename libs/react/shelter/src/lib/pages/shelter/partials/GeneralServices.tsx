@@ -37,7 +37,10 @@ export function GeneralServices({
     items: string[];
   }) {
     return (
-      <section key={category.id} className="border-t border-neutral-90 pt-4 first:border-t-0 first:pt-0">
+      <section
+        key={category.id}
+        className="border-t border-neutral-90 pt-4 first:border-t-0 first:pt-0"
+      >
         <div className="mb-3 flex items-center justify-between gap-3">
           <h4 className="text-sm font-semibold text-primary-20">
             {category.displayName}
@@ -54,9 +57,7 @@ export function GeneralServices({
 
   return (
     <>
-      <div className="space-y-5 md:hidden">
-        {grouped.map(renderSection)}
-      </div>
+      <div className="space-y-5 md:hidden">{grouped.map(renderSection)}</div>
 
       <div className="hidden md:grid md:grid-cols-2 md:gap-x-8">
         {columns.map((column, columnIndex) => (

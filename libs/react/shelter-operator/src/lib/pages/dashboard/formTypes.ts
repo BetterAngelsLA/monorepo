@@ -95,6 +95,7 @@ export interface ShelterFormData {
 
   // Services Offered
   services: string[];
+  pendingServicesByCategory: Record<string, string[]>;
   otherServices: string;
 
   // Entry Requirements

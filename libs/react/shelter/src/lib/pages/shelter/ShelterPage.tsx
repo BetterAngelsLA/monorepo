@@ -4,7 +4,6 @@ import parsePhoneNumber from 'libphonenumber-js';
 import { useNavigate } from 'react-router-dom';
 import { ViewShelterDocument } from './__generated__/shelter.generated';
 import { WysiwygSection } from './common';
-import { hasWysiwygContent } from './utils';
 import {
   Actions,
   EcosystemInfo,
@@ -20,6 +19,7 @@ import {
   ShelterTypes,
   SpecialSituationRestrictions,
 } from './partials';
+import { hasWysiwygContent } from './utils';
 
 export function ShelterPage({ id }: { id: string }) {
   const { loading, data } = useQuery(ViewShelterDocument, {

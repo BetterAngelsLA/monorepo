@@ -11,12 +11,13 @@ Raises ``django.core.exceptions.ValidationError`` on invalid data — callers
 
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models, transaction
+from django.utils.text import slugify
 from organizations.models import Organization
 from places import Places
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
-from shelters.models import Bed, Room, Schedule, Service, Shelter
+from shelters.models import Bed, Room, Schedule, Service, ServiceCategory, Shelter
 from shelters.selectors import shelter_get
 
 if TYPE_CHECKING:
@@ -145,6 +146,94 @@ def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) ->
     Schedule.objects.bulk_create(objs)
 
 
+def _resolve_pending_services(pending_services: List[Dict[str, Any]]) -> List[Service]:
+    """Reuse or create category-scoped custom services from pending input entries."""
+    if not pending_services:
+        return []
+
+    pending_entries: list[tuple[int, str]] = []
+    seen_entries: set[tuple[int, str]] = set()
+
+    for entry in pending_services:
+        category_id = entry.get("category_id")
+        display_name = str(entry.get("display_name") or "").strip()
+
+        if not category_id or not display_name:
+            raise ValidationError("Invalid new service entry.")
+
+        try:
+            normalized_category_id = int(category_id)
+        except (TypeError, ValueError) as exc:
+            raise ValidationError("Invalid new service entry.") from exc
+
+        dedupe_key = (normalized_category_id, display_name.casefold())
+        if dedupe_key in seen_entries:
+            continue
+
+        seen_entries.add(dedupe_key)
+        pending_entries.append((normalized_category_id, display_name))
+
+    category_ids = {category_id for category_id, _display_name in pending_entries}
+    categories = {
+        category.id: category
+        for category in ServiceCategory.objects.filter(pk__in=category_ids).prefetch_related("services")
+    }
+
+    unknown_category_ids = category_ids.difference(categories)
+    if unknown_category_ids:
+        unknown_category_id = next(iter(unknown_category_ids))
+        raise ValidationError(f"Unknown service category: {unknown_category_id}.")
+
+    existing_other_services_by_category: dict[int, dict[str, Service]] = {}
+    existing_names_by_category: dict[int, set[str]] = {}
+    next_priority_by_category: dict[int, int] = {}
+
+    for category_id, category in categories.items():
+        other_services: dict[str, Service] = {}
+        names: set[str] = set()
+        max_priority = -1
+        for service in category.services.all():
+            names.add(service.name.casefold())
+            if service.priority > max_priority:
+                max_priority = service.priority
+            if service.is_other:
+                other_services[service.display_name.casefold()] = service
+        existing_other_services_by_category[category_id] = other_services
+        existing_names_by_category[category_id] = names
+        next_priority_by_category[category_id] = max_priority + 1
+
+    resolved_services: list[Service] = []
+    for category_id, display_name in pending_entries:
+        category = categories[category_id]
+        normalized_display_name = display_name.casefold()
+        existing_service = existing_other_services_by_category.get(category_id, {}).get(normalized_display_name)
+        if existing_service is not None:
+            resolved_services.append(existing_service)
+            continue
+
+        base_name = slugify(display_name).replace("-", "_") or f"service_{category.id}"
+        base_name = f"other_{base_name}"
+        service_name = base_name
+        suffix = 2
+        while service_name.casefold() in existing_names_by_category[category_id]:
+            service_name = f"{base_name}_{suffix}"
+            suffix += 1
+
+        created_service = Service.objects.create(
+            category=category,
+            name=service_name,
+            display_name=display_name,
+            is_other=True,
+            priority=next_priority_by_category[category_id],
+        )
+        next_priority_by_category[category_id] += 1
+        existing_names_by_category[category_id].add(service_name.casefold())
+        existing_other_services_by_category.setdefault(category_id, {})[normalized_display_name] = created_service
+        resolved_services.append(created_service)
+
+    return resolved_services
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -172,6 +261,7 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
 
     # ``services`` is ID-based (not enum-backed), handle separately.
     service_pks = m2m_data.pop("services", None)
+    pending_services = data.pop("pending_services", None) or []
 
     shelter = Shelter(**scalar_data)
     shelter.full_clean()
@@ -180,6 +270,9 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     _set_m2m_from_enums(shelter, m2m_data)
     if service_pks is not None:
         shelter.services.set(Service.objects.filter(pk__in=service_pks))
+    pending_service_objects = _resolve_pending_services(pending_services)
+    if pending_service_objects:
+        shelter.services.add(*pending_service_objects)
     _create_schedules(shelter, schedules_data)
 
     return shelter

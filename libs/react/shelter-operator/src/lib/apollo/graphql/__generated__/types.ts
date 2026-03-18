@@ -684,6 +684,7 @@ export type CreateShelterInput = {
   otherServices?: InputMaybe<Scalars['String']['input']>;
   overallRating?: InputMaybe<Scalars['Int']['input']>;
   parking: Array<ParkingChoices>;
+  pendingServices?: InputMaybe<Array<PendingServiceInput>>;
   pets: Array<PetChoices>;
   phone?: InputMaybe<Scalars['PhoneNumber']['input']>;
   programFees?: InputMaybe<Scalars['String']['input']>;
@@ -1963,6 +1964,11 @@ export type ParkingType = {
   name?: Maybe<ParkingChoices>;
 };
 
+export type PendingServiceInput = {
+  categoryId: Scalars['ID']['input'];
+  displayName: Scalars['String']['input'];
+};
+
 /** Permission definition for schema directives. */
 export type PermDefinition = {
   /** The app to which we are requiring permission. If this is empty that means that we are checking the permission directly. */
@@ -2054,6 +2060,7 @@ export type Query = {
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
+  shelterServiceCategories: Array<ServiceCategoryType>;
   shelters: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
@@ -2436,6 +2443,7 @@ export type ServiceCategoryType = {
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   priority: Scalars['Int']['output'];
+  services: Array<ServiceType>;
 };
 
 export enum ServiceRequestStatusEnum {
@@ -2465,6 +2473,7 @@ export type ServiceType = {
   category: ServiceCategoryType;
   displayName: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  isOther: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   priority: Scalars['Int']['output'];
 };
