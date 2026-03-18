@@ -12,8 +12,6 @@
         "file": "apps/imgproxy/Dockerfile",
         "push": true,
         "platforms": ["linux/arm64"],
-        "provenance": false,
-        "sbom": false,
         "cache-from": [
           "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-${BRANCH_NAME}",
           "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-main"
