@@ -18,7 +18,7 @@ export function ModalMask(props: IProps) {
     'right-0',
     'bottom-0',
     'fixed',
-    'z-300',
+    'z-modal-mask',
     'flex',
     'justify-center',
     'items-center',

@@ -1,10 +1,12 @@
 import re
 from datetime import datetime
-from typing import Any, Mapping, NewType, Optional
+from typing import Any, Mapping, NewType, Optional, cast
 
 import strawberry
 import strawberry_django
 from common.constants import PHONE_NUMBER_REGEX
+from common.enums import ImagePresetEnum
+from common.imgproxy import build_imgproxy_url, is_imgproxy_enabled
 from common.models import Address, Attachment, Location, PhoneNumber
 from django.db.models import Q
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
@@ -139,6 +141,48 @@ class AddressType:
 class AddressInput:
     address_components: Optional[strawberry.scalars.JSON] = None
     formatted_address: Optional[str] = None
+
+
+@strawberry.type(name="DjangoImageType")
+class TransformableImageType:
+    """GraphQL type for Django ``ImageField`` values.
+
+    Attributes exposed from the underlying ``FieldFile``:
+        name, path, size, width, height
+
+    The ``url`` field accepts an optional ``preset`` for named sizes
+    or a raw ``processing_options`` string for full imgproxy control.
+    When imgproxy is enabled and either is supplied, the returned URL
+    points to the imgproxy-processed variant.  Otherwise the normal
+    (CloudFront-signed) storage URL is returned.
+    """
+
+    name: str
+    path: str = ""
+    size: int = 0
+    width: int = 0
+    height: int = 0
+
+    @strawberry.field
+    def url(
+        self,
+        preset: Optional[ImagePresetEnum] = None,
+        processing_options: Optional[str] = None,
+    ) -> str:
+        """Return the image URL, optionally processed by imgproxy.
+
+        Args:
+            preset: A named size preset (SM, MD, LG).  Ignored when
+                ``processing_options`` is also provided.
+            processing_options: A raw imgproxy options string such as
+                ``"rs:fill:200:200"`` or ``"rs:fit:800:600/q:80"``.
+                Takes precedence over ``preset``.
+        """
+        if is_imgproxy_enabled():
+            if imgproxy_url := build_imgproxy_url(self, preset, processing_options):
+                return imgproxy_url
+
+        return cast(str, self.url)
 
 
 @strawberry_django.type(Location)

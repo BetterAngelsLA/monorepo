@@ -96,13 +96,11 @@ export type AdminShelterType = {
   id: Scalars['ID']['output'];
   immediateNeeds: Array<ImmediateNeedType>;
   instagram?: Maybe<Scalars['String']['output']>;
-  intakeHours?: Maybe<Array<Maybe<TimeRange>>>;
   interiorPhotos: Array<ShelterPhotoType>;
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
   onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
-  operatingHours?: Maybe<Array<Maybe<TimeRange>>>;
   organization?: Maybe<OrganizationType>;
   otherRules?: Maybe<Scalars['String']['output']>;
   otherServices?: Maybe<Scalars['String']['output']>;
@@ -684,13 +682,11 @@ export type CreateShelterInput = {
   healthServices: Array<HealthServiceChoices>;
   immediateNeeds: Array<ImmediateNeedChoices>;
   instagram?: InputMaybe<Scalars['String']['input']>;
-  intakeHours?: InputMaybe<Array<TimeRangeInput>>;
   location?: InputMaybe<ShelterLocationInput>;
   maxStay?: InputMaybe<Scalars['Int']['input']>;
   mealServices: Array<MealServiceChoices>;
   name: Scalars['String']['input'];
   onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
-  operatingHours?: InputMaybe<Array<TimeRangeInput>>;
   organization: Scalars['ID']['input'];
   otherRules?: InputMaybe<Scalars['String']['input']>;
   otherServices?: InputMaybe<Scalars['String']['input']>;
@@ -846,6 +842,12 @@ export type DjangoImageType = {
   size: Scalars['Int']['output'];
   url: Scalars['String']['output'];
   width: Scalars['Int']['output'];
+};
+
+
+export type DjangoImageTypeUrlArgs = {
+  preset?: InputMaybe<ImagePresetEnum>;
+  processingOptions?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type DjangoModelType = {
@@ -1267,6 +1269,13 @@ export type IdFilterLookup = {
   /** Case-sensitive starts-with. Filter will be skipped on `null` value */
   startsWith?: InputMaybe<Scalars['ID']['input']>;
 };
+
+export enum ImagePresetEnum {
+  Lg = 'LG',
+  Md = 'MD',
+  Original = 'ORIGINAL',
+  Sm = 'SM'
+}
 
 export enum ImmediateNeedChoices {
   Clothing = 'CLOTHING',
@@ -2609,13 +2618,11 @@ export type ShelterType = {
   id: Scalars['ID']['output'];
   immediateNeeds: Array<ImmediateNeedType>;
   instagram?: Maybe<Scalars['String']['output']>;
-  intakeHours?: Maybe<Array<Maybe<TimeRange>>>;
   interiorPhotos: Array<ShelterPhotoType>;
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
   onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
-  operatingHours?: Maybe<Array<Maybe<TimeRange>>>;
   organization?: Maybe<OrganizationType>;
   otherRules?: Maybe<Scalars['String']['output']>;
   otherServices?: Maybe<Scalars['String']['output']>;
@@ -2790,17 +2797,6 @@ export type TaskTypeOffsetPaginated = {
   results: Array<TaskType>;
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
-};
-
-export type TimeRange = {
-  __typename?: 'TimeRange';
-  end?: Maybe<Scalars['DateTime']['output']>;
-  start?: Maybe<Scalars['DateTime']['output']>;
-};
-
-export type TimeRangeInput = {
-  end?: InputMaybe<Scalars['Time']['input']>;
-  start?: InputMaybe<Scalars['Time']['input']>;
 };
 
 export enum TrainingServiceChoices {
