@@ -126,7 +126,7 @@
     "@graphql-eslint/eslint-plugin": "^3.20.1",
     "@iarna/toml": "^2.2.5",
     "@nx-tools/container-metadata": "^6.8.2",
-    "@nx-tools/nx-container": "6.8.2",
+    "@nx-tools/nx-container": "6.8.4",
     "@nx/devkit": "22.3.3",
     "@nx/eslint": "22.3.3",
     "@nx/eslint-plugin": "22.3.3",
