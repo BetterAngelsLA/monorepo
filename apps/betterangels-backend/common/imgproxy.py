@@ -2,7 +2,9 @@ import base64
 import datetime
 import hashlib
 import hmac
+import posixpath
 from typing import Optional, cast
+from urllib.parse import urlunsplit
 
 import waffle
 from common.enums import ImagePresetEnum
@@ -110,16 +112,25 @@ def build_imgproxy_url(
     if not source_url:
         return None
 
-    imgproxy_path = _build_signed_imgproxy_path(source_url, ops)
+    signed_imgproxy_path = _build_signed_imgproxy_path(source_url, ops)
 
     if settings.IS_LOCAL_DEV:
-        return f"{settings.IMGPROXY_LOCAL_URL}/{imgproxy_path}"
+        return f"{settings.IMGPROXY_LOCAL_URL}/{signed_imgproxy_path}"
 
     storage = getattr(file, "storage", None)
     if not storage or not storage.cloudfront_signer or not settings.IMGPROXY_PATH_PREFIX:
         return None
 
-    url = f"{storage.url_protocol}//{storage.custom_domain}/{settings.IMGPROXY_PATH_PREFIX}/{imgproxy_path}"
+    prefixed_path = posixpath.join("/", settings.IMGPROXY_PATH_PREFIX, signed_imgproxy_path)
+    url = urlunsplit(
+        (
+            storage.url_protocol.removesuffix(":"),
+            storage.custom_domain,
+            prefixed_path,
+            "",
+            "",
+        )
+    )
 
     expire_seconds: int = getattr(storage, "querystring_expire", 3600)
     expiration = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=expire_seconds)
