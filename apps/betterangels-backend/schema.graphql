@@ -118,6 +118,7 @@ type AdminShelterType {
   subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
+  updatedAt: DateTime!
   website: String
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
@@ -2110,6 +2111,7 @@ type ShelterType {
   subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
+  updatedAt: DateTime!
   website: String
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]

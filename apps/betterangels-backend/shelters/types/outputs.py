@@ -106,6 +106,7 @@ class ShelterTypeMixin:
     subjective_review: Optional[str]
     supervisorial_district: auto
     total_beds: auto
+    updated_at: auto
     website: auto
 
     _exterior_photos: Optional[List[ShelterPhotoType]] = None

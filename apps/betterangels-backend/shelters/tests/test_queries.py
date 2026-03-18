@@ -133,6 +133,7 @@ class ShelterQueryTestCase(GraphQLBaseTestCase):
                 id
                 name
             }
+            updatedAt
         """
 
     def test_shelter_query(self) -> None:
@@ -325,6 +326,7 @@ class ShelterQueryTestCase(GraphQLBaseTestCase):
                 "place": "123 Main Street",
             },
             "organization": {"id": ANY, "name": shelter_organization.name},
+            "updatedAt": ANY,
         }
         self.assertEqual(response_shelter, expected_shelter)
 
