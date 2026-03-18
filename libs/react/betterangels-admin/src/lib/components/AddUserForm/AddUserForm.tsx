@@ -95,27 +95,23 @@ export function AddUserForm(props: TProps) {
         <Input
           {...register('firstName')}
           disabled={disabled}
-          required
           type="text"
           className="mb-4"
           inputClassname="input-md w-96"
           label="First Name"
           placeholder="Enter first name"
           autoCapitalize="none"
-          error={errors?.firstName?.message}
         />
 
         <Input
           {...register('lastName')}
           disabled={disabled}
-          required
           type="text"
           className="mb-4"
           inputClassname="input-md w-96"
           label="Last Name"
           placeholder="Enter last name"
           autoCapitalize="none"
-          error={errors?.lastName?.message}
         />
 
         <Input
