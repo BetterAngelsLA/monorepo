@@ -52,7 +52,7 @@ def update_group_permissions(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0039_remove_old_service_models"),
+        ("shelters", "0040_remove_old_service_models"),
     ]
 
     operations = [

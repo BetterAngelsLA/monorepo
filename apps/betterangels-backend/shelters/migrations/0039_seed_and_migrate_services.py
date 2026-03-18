@@ -129,7 +129,7 @@ def migrate_old_services(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0037_add_service_catalog"),
+        ("shelters", "0038_add_service_catalog"),
     ]
 
     operations = [
