@@ -162,7 +162,7 @@ export default function ClientSummaryGeneral(
       <View style={{ flexDirection: 'row', gap: Spacings.xs }}>
         <PanelContainer
           onPress={() =>
-            formattedNumber && Linking.openURL(`tel:${formattedNumber}`)
+            primaryPhoneNumber && Linking.openURL(`tel:${primaryPhoneNumber}`)
           }
           flex={3}
           title={formattedNumber || 'N/A'}
