@@ -1,1 +1,1 @@
-export { sanitizeWysiwygHtml } from './sanitizeWysiwygHtml';
+export { sanitizeHtml } from './sanitizeHtml';
