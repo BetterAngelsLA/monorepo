@@ -15,12 +15,12 @@ appId: ${MAESTRO_APP_ID}
 
 - tapOn:
     id: 'ba-email-input'
-- inputText: ${MAESTRO_EMAIL}
+- inputText: ${MAESTRO_BA_USER_EMAIL}
 
 # Password field becomes visible after email is entered
 - tapOn:
     id: 'ba-password-input'
-- inputText: ${MAESTRO_PASSWORD}
+- inputText: ${MAESTRO_BA_USER_PASSWORD}
 
 - tapOn:
     id: 'ba-login-submit'
