@@ -4,6 +4,7 @@ import parsePhoneNumber from 'libphonenumber-js';
 import { useNavigate } from 'react-router-dom';
 import { ViewShelterDocument } from './__generated__/shelter.generated';
 import { WysiwygSection } from './common';
+import { hasWysiwygContent } from './utils';
 import {
   Actions,
   EcosystemInfo,
@@ -37,26 +38,19 @@ export function ShelterPage({ id }: { id: string }) {
     return null;
   }
 
-  function containsNonWhitespaceValue(value?: string | null | undefined) {
-    // Rich text (CKEditor5) fields aren't empty when empty.
-    // By default, they contain a non-breaking space char.
-    return !!value && value !== '<p>&nbsp;</p>';
-  }
-
   const hasGeneralInfo =
     !!shelter.website ||
     !!shelter.phone ||
     !!shelter.email ||
     !!shelter.location?.place;
   const hasServices =
-    !!shelter.services?.length ||
-    containsNonWhitespaceValue(shelter.otherServices);
-  const hasDescription = containsNonWhitespaceValue(shelter.description);
+    !!shelter.services?.length || hasWysiwygContent(shelter.otherServices);
+  const hasDescription = hasWysiwygContent(shelter.description);
   const hasEntryRequirements =
     !!shelter.entryRequirements?.length ||
-    containsNonWhitespaceValue(shelter.entryInfo) ||
-    containsNonWhitespaceValue(shelter.bedFees) ||
-    containsNonWhitespaceValue(shelter.programFees);
+    hasWysiwygContent(shelter.entryInfo) ||
+    hasWysiwygContent(shelter.bedFees) ||
+    hasWysiwygContent(shelter.programFees);
   const hasSpecialRestrictions = !!shelter.specialSituationRestrictions?.length;
   const hasShelterTypes =
     !!shelter.shelterTypes?.length || !!shelter.shelterTypesOther;
@@ -70,7 +64,7 @@ export function ShelterPage({ id }: { id: string }) {
     !!shelter.maxStay ||
     !!shelter.curfew ||
     !!shelter.onSiteSecurity ||
-    containsNonWhitespaceValue(shelter.otherRules);
+    hasWysiwygContent(shelter.otherRules);
 
   const hasEcosystemInfo =
     !!shelter.cities?.length ||
@@ -102,8 +96,8 @@ export function ShelterPage({ id }: { id: string }) {
         shelterName={shelter.name}
       />
       <div className="bg-neutral-99 py-2 px-4 -mx-4 -mb-6 flex flex-col gap-2">
-        {hasServices && <Services shelter={shelter} />}
         {hasGeneralInfo && <GeneralInfo shelter={shelter} />}
+        {hasServices && <Services shelter={shelter} />}
         {hasDescription && (
           <Card title="Description">
             <WysiwygSection content={shelter.description} />

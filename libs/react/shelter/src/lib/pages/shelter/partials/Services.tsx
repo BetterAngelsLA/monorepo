@@ -21,9 +21,9 @@ export function Services({
       {hasFreeform && (
         <ExpandableContainer
           header="Other Services"
-          className="w-full mt-4"
+          className="mt-5 border-t border-neutral-90 pt-4"
           iconClassName="w-[8px]"
-          headerClassName="min-h-6 font-semibold"
+          headerClassName="min-h-6 font-semibold text-primary-20"
         >
           <WysiwygContainer content={shelter.otherServices} />
         </ExpandableContainer>
