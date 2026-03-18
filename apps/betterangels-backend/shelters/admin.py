@@ -7,6 +7,7 @@ import places
 import requests
 from adminsortable2.admin import SortableAdminMixin, SortableStackedInline
 from betterangels_backend import settings
+from common.imgproxy import build_imgproxy_url, is_imgproxy_enabled
 from common.models import Location
 from django import forms
 from django.contrib import admin, messages
@@ -479,13 +480,37 @@ class InteriorPhotoForm(PhotoForm):
         model = InteriorPhoto
 
 
-class ExteriorPhotoInline(admin.TabularInline):
+class PhotoInlineImgproxyMixin:
+    """Mixin for photo inlines: adds a readonly thumbnail column via imgproxy when enabled."""
+
+    def get_readonly_fields(self, request: HttpRequest, obj: Optional[models.Model] = None) -> tuple[str, ...]:
+        return ("photo_preview",)
+
+    def get_fields(self, request: HttpRequest, obj: Optional[models.Model] = None) -> tuple[str, ...]:
+        return ("photo_preview", "file", "make_hero_image")
+
+    @admin.display(description="Preview")
+    def photo_preview(self, obj: Union[ExteriorPhoto, InteriorPhoto]) -> str:
+        if not obj or not obj.file or not obj.file.name:
+            return "—"
+        if is_imgproxy_enabled():
+            url = build_imgproxy_url(obj.file, preset=None, processing_options="f:jpg") or getattr(
+                obj.file, "url", None
+            )
+        else:
+            url = getattr(obj.file, "url", None)
+        if not url:
+            return "—"
+        return format_html('<img src="{}" alt="" style="max-height: 200px;" />', url)
+
+
+class ExteriorPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
     model = ExteriorPhoto
     form = ExteriorPhotoForm
     max_num = 0
 
 
-class InterPhotoInline(admin.TabularInline):
+class InterPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
     model = InteriorPhoto
     form = InteriorPhotoForm
     max_num = 0
@@ -1117,7 +1142,14 @@ class ShelterAdmin(ImportExportModelAdmin):
     @admin.display(description="Current Hero Image")
     def display_hero_image(self, obj: Shelter) -> str:
         if obj.hero_image and obj.hero_image.file:
-            return mark_safe(f'<img src="{obj.hero_image.file.url}" style="max-height: 200px;" />')
+            if is_imgproxy_enabled():
+                url = (
+                    build_imgproxy_url(obj.hero_image.file, preset=None, processing_options="f:jpg")
+                    or obj.hero_image.file.url
+                )
+            else:
+                url = obj.hero_image.file.url
+            return mark_safe(f'<img src="{url}" style="max-height: 200px;" />')
 
         return "No hero image selected"
 

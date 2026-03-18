@@ -27,3 +27,11 @@ class SelahTeamEnum(models.TextChoices):
     SUNDAY_SOCIAL_ATWATER_OUTREACH = "sunday_social_atwater_outreach", _("Sunday Social / Atwater Outreach")
     WDI_ON_SITE = "wdi_on_site", _("WDI On-site")
     WDI_OUTREACH = "wdi_outreach", _("WDI Outreach")
+
+
+@strawberry.enum
+class ImagePresetEnum(models.TextChoices):
+    ORIGINAL = "original", _("Original")
+    SM = "sm", _("Small")
+    MD = "md", _("Medium")
+    LG = "lg", _("Large")

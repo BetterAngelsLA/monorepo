@@ -63,28 +63,6 @@ def get_random_phone_number() -> str:
     return f"212555{random.randint(1000, 9999)}"
 
 
-def _generate_range(after: datetime.datetime) -> tuple[datetime.datetime, datetime.datetime]:
-    start_time = after + datetime.timedelta(minutes=30 * random.randint(1, 20))
-    end_time = start_time + datetime.timedelta(minutes=30 * random.randint(1, 20))
-
-    return start_time, end_time
-
-
-def get_random_hour_ranges() -> list[tuple[Any, Any]]:
-    midnight = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-
-    ranges: list[tuple[datetime.datetime, datetime.datetime]] = []
-    current_range = _generate_range(midnight)
-    ranges.append(current_range)
-
-    additional_shifts = random.randint(0, 2)
-    for _ in range(additional_shifts):
-        current_range = _generate_range(ranges[-1][1])
-        ranges.append(current_range)
-
-    return [(start.time(), end.time()) for start, end in ranges]
-
-
 class related_m2m_unique(related):
     def __init__(self, related_model: Any, choices_enum: Any) -> None:
         self.related_model = related_model
@@ -151,13 +129,11 @@ shelter_recipe = Recipe(
     email=seq("shelter", suffix="@example.com"),  # type: ignore
     entry_info=seq("entry info "),  # type: ignore
     funders_other=seq("funders other "),  # type: ignore
-    intake_hours=get_random_hour_ranges,
     location=get_random_shelter_location,
     max_stay=lambda: random.randint(7, 21),
     name=seq("shelter "),  # type: ignore
     organization=foreign_key(organization_recipe),
     on_site_security=random.choice([True, False, None]),
-    operating_hours=get_random_hour_ranges,
     other_rules=seq("other rules "),  # type: ignore
     other_services=seq("other services "),  # type: ignore
     overall_rating=lambda: random.randint(1, 5),

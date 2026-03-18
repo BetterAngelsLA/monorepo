@@ -123,8 +123,6 @@ type AdminShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
-  operatingHours: [TimeRange]
-  intakeHours: [TimeRange]
 }
 
 type AdminShelterTypeOffsetPaginated {
@@ -674,8 +672,6 @@ input CreateShelterInput {
   funders: [FunderChoices!]!
   organization: ID!
   location: ShelterLocationInput = null
-  operatingHours: [TimeRangeInput!] = null
-  intakeHours: [TimeRangeInput!] = null
   schedules: [ScheduleInput!] = null
   services: [ID!] = null
   email: String = null
@@ -824,9 +820,9 @@ type DjangoImageType {
   name: String!
   path: String!
   size: Int!
-  url: String!
   width: Int!
   height: Int!
+  url(preset: ImagePresetEnum = null, processingOptions: String = null): String!
 }
 
 type DjangoModelType {
@@ -1210,6 +1206,13 @@ input IDFilterLookup {
   Case-insensitive regular expression match. Filter will be skipped on `null` value
   """
   iRegex: ID
+}
+
+enum ImagePresetEnum {
+  ORIGINAL
+  SM
+  MD
+  LG
 }
 
 input ImportClientProfileInput {
@@ -2103,8 +2106,6 @@ type ShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
-  operatingHours: [TimeRange]
-  intakeHours: [TimeRange]
 }
 
 type ShelterTypeOffsetPaginated {
@@ -2255,16 +2256,6 @@ type TaskTypeOffsetPaginated {
 
 """Time (isoformat)"""
 scalar Time
-
-type TimeRange {
-  start: DateTime
-  end: DateTime
-}
-
-input TimeRangeInput {
-  start: Time = null
-  end: Time = null
-}
 
 scalar UUID
 
