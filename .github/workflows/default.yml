@@ -182,6 +182,8 @@ jobs:
         run: |
           docker compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
+          echo "nx-container version: $(cat /workspace/node_modules/@nx-tools/nx-container/package.json | grep '"version"')"
+          echo "provenance setting: $(node -e "const p=require('./apps/imgproxy/project.json'); console.log(p.targets.build.options.provenance)")"
           yarn nx affected -t build --exclude=^betterangels$,^shelter$ --configuration ${{ matrix.environment }}
           EOF
         env:
