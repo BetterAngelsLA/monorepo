@@ -329,8 +329,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "storage": [],
                 "pets": [],
                 "parking": [],
-                "services": [str(official.pk)],
-                "pendingServices": [
+                "services": [
+                    {"id": str(official.pk)},
                     {"categoryId": str(category.pk), "displayName": "Laundry"},
                     {"categoryId": str(category.pk), "displayName": "Showers"},
                     {"categoryId": str(category.pk), "displayName": "showers"},

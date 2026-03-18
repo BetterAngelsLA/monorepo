@@ -5,13 +5,7 @@ import strawberry_django
 from accounts.models import User
 from common.graphql.utils import strip_unset
 from common.permissions.utils import IsAuthenticated
-from shelters.permissions import (
-    BedPermissions,
-    RoomPermissions,
-    ServiceCategoryPermissions,
-    ServicePermissions,
-    ShelterPermissions,
-)
+from shelters.permissions import BedPermissions, RoomPermissions, ShelterPermissions
 from shelters.services import bed_create, room_create, shelter_create
 from shelters.types import (
     AdminShelterType,
@@ -39,12 +33,8 @@ class Query:
     shelter: ShelterType = strawberry_django.field()
     shelters: OffsetPaginated[ShelterType] = strawberry_django.offset_paginated()
 
-    shelter_service_categories: list[ServiceCategoryType] = strawberry_django.field(
+    shelter_service_categories: OffsetPaginated[ServiceCategoryType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[
-            HasPerm(ServiceCategoryPermissions.VIEW),
-            HasPerm(ServicePermissions.VIEW),
-        ],
     )
 
 

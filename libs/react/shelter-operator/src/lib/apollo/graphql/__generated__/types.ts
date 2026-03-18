@@ -685,7 +685,6 @@ export type CreateShelterInput = {
   otherServices?: InputMaybe<Scalars['String']['input']>;
   overallRating?: InputMaybe<Scalars['Int']['input']>;
   parking: Array<ParkingChoices>;
-  pendingServices?: InputMaybe<Array<PendingServiceInput>>;
   pets: Array<PetChoices>;
   phone?: InputMaybe<Scalars['PhoneNumber']['input']>;
   programFees?: InputMaybe<Scalars['String']['input']>;
@@ -693,7 +692,7 @@ export type CreateShelterInput = {
   roomStyles: Array<RoomStyleChoices>;
   roomStylesOther?: InputMaybe<Scalars['String']['input']>;
   schedules?: InputMaybe<Array<ScheduleInput>>;
-  services?: InputMaybe<Array<Scalars['ID']['input']>>;
+  services?: InputMaybe<Array<ServiceInput>>;
   shelterPrograms: Array<ShelterProgramChoices>;
   shelterProgramsOther?: InputMaybe<Scalars['String']['input']>;
   shelterTypes: Array<ShelterChoices>;
@@ -1965,11 +1964,6 @@ export type ParkingType = {
   name?: Maybe<ParkingChoices>;
 };
 
-export type PendingServiceInput = {
-  categoryId: Scalars['ID']['input'];
-  displayName: Scalars['String']['input'];
-};
-
 /** Permission definition for schema directives. */
 export type PermDefinition = {
   /** The app to which we are requiring permission. If this is empty that means that we are checking the permission directly. */
@@ -2061,7 +2055,7 @@ export type Query = {
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
-  shelterServiceCategories: Array<ServiceCategoryType>;
+  shelterServiceCategories: ServiceCategoryTypeOffsetPaginated;
   shelters: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
@@ -2227,6 +2221,11 @@ export type QueryServicesArgs = {
 
 export type QueryShelterArgs = {
   pk: Scalars['ID']['input'];
+};
+
+
+export type QueryShelterServiceCategoriesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -2445,6 +2444,21 @@ export type ServiceCategoryType = {
   name: Scalars['String']['output'];
   priority: Scalars['Int']['output'];
   services: Array<ServiceType>;
+};
+
+export type ServiceCategoryTypeOffsetPaginated = {
+  __typename?: 'ServiceCategoryTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<ServiceCategoryType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ServiceInput = {
+  categoryId?: InputMaybe<Scalars['ID']['input']>;
+  displayName?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export enum ServiceRequestStatusEnum {

@@ -69,7 +69,7 @@ def _prepare_shelter_data(
     data: Dict[str, Any],
     m2m_field_names: list[str],
 ) -> tuple[Dict[str, Any], Dict[str, List[Any]], List[Dict[str, Any]]]:
-    """Separate M2M data and schedules from scalar fields and transform custom types.
+    """Separate M2M data and schedules from scalar fields.
 
     Transforms:
     - ``location`` dict → ``Places`` instance
@@ -146,92 +146,81 @@ def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) ->
     Schedule.objects.bulk_create(objs)
 
 
-def _resolve_pending_services(pending_services: List[Dict[str, Any]]) -> List[Service]:
-    """Reuse or create category-scoped custom services from pending input entries."""
-    if not pending_services:
+def resolve_pending_service_entries(entries: list[tuple[int, str]]) -> list[Service]:
+    """Resolve validated ``(category_id, display_name)`` pairs into Service objects.
+
+    For each entry, reuses an existing ``is_other`` service with a matching
+    display name (case-insensitive) or creates a new one.
+
+    Shared by the GraphQL mutation layer and the Django admin form.
+
+    Raises ``ValidationError`` if any *category_id* is unknown.
+    """
+    if not entries:
         return []
 
-    pending_entries: list[tuple[int, str]] = []
-    seen_entries: set[tuple[int, str]] = set()
-
-    for entry in pending_services:
-        category_id = entry.get("category_id")
-        display_name = str(entry.get("display_name") or "").strip()
-
-        if not category_id or not display_name:
-            raise ValidationError("Invalid new service entry.")
-
-        try:
-            normalized_category_id = int(category_id)
-        except (TypeError, ValueError) as exc:
-            raise ValidationError("Invalid new service entry.") from exc
-
-        dedupe_key = (normalized_category_id, display_name.casefold())
-        if dedupe_key in seen_entries:
-            continue
-
-        seen_entries.add(dedupe_key)
-        pending_entries.append((normalized_category_id, display_name))
-
-    category_ids = {category_id for category_id, _display_name in pending_entries}
+    category_ids = {cid for cid, _ in entries}
     categories = {
-        category.id: category
-        for category in ServiceCategory.objects.filter(pk__in=category_ids).prefetch_related("services")
+        cat.id: cat for cat in ServiceCategory.objects.filter(pk__in=category_ids).prefetch_related("services")
     }
 
-    unknown_category_ids = category_ids.difference(categories)
-    if unknown_category_ids:
-        unknown_category_id = next(iter(unknown_category_ids))
-        raise ValidationError(f"Unknown service category: {unknown_category_id}.")
+    unknown = category_ids - set(categories)
+    if unknown:
+        raise ValidationError(f"Unknown service category: {next(iter(unknown))}.")
 
-    existing_other_services_by_category: dict[int, dict[str, Service]] = {}
-    existing_names_by_category: dict[int, set[str]] = {}
-    next_priority_by_category: dict[int, int] = {}
+    other_by_category: dict[int, dict[str, Service]] = {}
+    names_by_category: dict[int, set[str]] = {}
+    next_priority: dict[int, int] = {}
 
-    for category_id, category in categories.items():
-        other_services: dict[str, Service] = {}
+    for cid, cat in categories.items():
+        others: dict[str, Service] = {}
         names: set[str] = set()
-        max_priority = -1
-        for service in category.services.all():
-            names.add(service.name.casefold())
-            if service.priority > max_priority:
-                max_priority = service.priority
-            if service.is_other:
-                other_services[service.display_name.casefold()] = service
-        existing_other_services_by_category[category_id] = other_services
-        existing_names_by_category[category_id] = names
-        next_priority_by_category[category_id] = max_priority + 1
+        max_pri = -1
+        for svc in cat.services.all():
+            names.add(svc.name.casefold())
+            if svc.priority > max_pri:
+                max_pri = svc.priority
+            if svc.is_other:
+                others[svc.display_name.casefold()] = svc
+        other_by_category[cid] = others
+        names_by_category[cid] = names
+        next_priority[cid] = max_pri + 1
 
-    resolved_services: list[Service] = []
-    for category_id, display_name in pending_entries:
-        category = categories[category_id]
-        normalized_display_name = display_name.casefold()
-        existing_service = existing_other_services_by_category.get(category_id, {}).get(normalized_display_name)
-        if existing_service is not None:
-            resolved_services.append(existing_service)
+    resolved: list[Service] = []
+    seen_ids: set[int] = set()
+    for cid, display_name in entries:
+        normalized = display_name.casefold()
+        existing = other_by_category.get(cid, {}).get(normalized)
+        if existing is not None:
+            if existing.pk not in seen_ids:
+                resolved.append(existing)
+                seen_ids.add(existing.pk)
             continue
 
-        base_name = slugify(display_name).replace("-", "_") or f"service_{category.id}"
+        category = categories[cid]
+        base_name = slugify(display_name).replace("-", "_") or f"service_{cid}"
         base_name = f"other_{base_name}"
         service_name = base_name
         suffix = 2
-        while service_name.casefold() in existing_names_by_category[category_id]:
+        while service_name.casefold() in names_by_category[cid]:
             service_name = f"{base_name}_{suffix}"
             suffix += 1
 
-        created_service = Service.objects.create(
+        created = Service.objects.create(
             category=category,
             name=service_name,
             display_name=display_name,
             is_other=True,
-            priority=next_priority_by_category[category_id],
+            priority=next_priority[cid],
         )
-        next_priority_by_category[category_id] += 1
-        existing_names_by_category[category_id].add(service_name.casefold())
-        existing_other_services_by_category.setdefault(category_id, {})[normalized_display_name] = created_service
-        resolved_services.append(created_service)
+        next_priority[cid] += 1
+        names_by_category[cid].add(service_name.casefold())
+        other_by_category.setdefault(cid, {})[normalized] = created
+        if created.pk not in seen_ids:
+            resolved.append(created)
+            seen_ids.add(created.pk)
 
-    return resolved_services
+    return resolved
 
 
 # ---------------------------------------------------------------------------
@@ -259,18 +248,41 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
 
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
 
-    # ``services`` is ID-based (not enum-backed), handle separately.
-    service_pks = m2m_data.pop("services", None)
-    pending_services = data.pop("pending_services", None) or []
+    # ``services`` is a unified list — split into existing PKs and pending entries.
+    raw_services: List[Dict[str, Any]] = m2m_data.pop("services", None) or []
+    service_pks: list[Any] = []
+    pending_entries: list[tuple[int, str]] = []
+    seen_pending: set[tuple[int, str]] = set()
+
+    for entry in raw_services:
+        if isinstance(entry, dict):
+            svc_id = entry.get("id")
+            cat_id = entry.get("category_id")
+            display = str(entry.get("display_name") or "").strip()
+            if svc_id:
+                service_pks.append(svc_id)
+            elif cat_id and display:
+                try:
+                    norm_cat = int(cat_id)
+                except (TypeError, ValueError) as exc:
+                    raise ValidationError("Invalid new service entry.") from exc
+                key = (norm_cat, display.casefold())
+                if key not in seen_pending:
+                    seen_pending.add(key)
+                    pending_entries.append((norm_cat, display))
+            else:
+                raise ValidationError("Each service must have either 'id' or 'categoryId' + 'displayName'.")
+        else:
+            service_pks.append(entry)
 
     shelter = Shelter(**scalar_data)
     shelter.full_clean()
     shelter.save()
 
     _set_m2m_from_enums(shelter, m2m_data)
-    if service_pks is not None:
+    if service_pks:
         shelter.services.set(Service.objects.filter(pk__in=service_pks))
-    pending_service_objects = _resolve_pending_services(pending_services)
+    pending_service_objects = resolve_pending_service_entries(pending_entries)
     if pending_service_objects:
         shelter.services.add(*pending_service_objects)
     _create_schedules(shelter, schedules_data)
@@ -327,13 +339,17 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
         does not belong to its organization.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    data = {**data}
+    data = dict(data)
     shelter_id = data.pop("shelter_id")
     try:
         shelter = shelter_get(user=user, shelter_id=shelter_id)
     except Shelter.DoesNotExist:
         raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
-    room = Room(shelter=shelter, **data)
+
+    # Drop None values so model defaults apply
+    scalar_data = {k: v for k, v in data.items() if v is not None}
+
+    room = Room(shelter=shelter, **scalar_data)
     room.full_clean()
     room.save()
     return room

@@ -3,8 +3,6 @@ from unittest.mock import ANY
 
 from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
 from model_bakery.recipe import seq
 from places import Places
 from shelters.enums import (
@@ -267,25 +265,20 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             priority=1,
         )
 
-        service_content_type = ContentType.objects.get_for_model(Service)
-        service_category_content_type = ContentType.objects.get_for_model(ServiceCategory)
-        view_service_perm = Permission.objects.get(content_type=service_content_type, codename="view_service")
-        view_service_category_perm = Permission.objects.get(
-            content_type=service_category_content_type,
-            codename="view_servicecategory",
-        )
-        self.org_1_case_manager_1.user_permissions.add(view_service_perm, view_service_category_perm)
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
         query = """
             query {
                 shelterServiceCategories {
-                    id
-                    displayName
-                    services {
+                    totalCount
+                    results {
                         id
                         displayName
-                        isOther
+                        services {
+                            id
+                            displayName
+                            isOther
+                        }
                     }
                 }
             }
@@ -294,7 +287,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         response = self.execute_graphql(query)
 
         self.assertIsNone(response.get("errors"))
-        categories = response["data"]["shelterServiceCategories"]
+        categories = response["data"]["shelterServiceCategories"]["results"]
         self.assertGreaterEqual(len(categories), 1)
         test_category = next(c for c in categories if c["displayName"] == "Test Query Category")
         self.assertEqual(

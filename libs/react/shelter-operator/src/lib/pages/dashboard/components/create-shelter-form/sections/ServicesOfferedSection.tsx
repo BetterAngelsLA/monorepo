@@ -10,7 +10,7 @@ import { ServiceAutocomplete } from '../components/ServiceAutocomplete';
 import type { SectionProps } from '../types';
 
 type ServiceCategory =
-  ShelterServiceCategoriesQuery['shelterServiceCategories'][number];
+  ShelterServiceCategoriesQuery['shelterServiceCategories']['results'][number];
 
 const replaceCategoryServiceSelection = (
   selectedServiceIds: string[],
@@ -50,7 +50,7 @@ export const ServicesOfferedSection = memo(function ServicesOfferedSection({
     loading,
     error,
   } = useQuery(ShelterServiceCategoriesDocument);
-  const categories = queryData?.shelterServiceCategories ?? [];
+  const categories = queryData?.shelterServiceCategories?.results ?? [];
 
   const renderCategory = (category: ServiceCategory) => {
     const officialServices = category.services.filter(

@@ -55,9 +55,12 @@ class ScheduleInput:
 
 
 @strawberry.input
-class PendingServiceInput:
-    category_id: ID
-    display_name: str
+class ServiceInput:
+    """Either pick an existing service by ID, or create a new one by category + name."""
+
+    id: Optional[ID] = None
+    category_id: Optional[ID] = None
+    display_name: Optional[str] = None
 
 
 @strawberry_django.input(models.Shelter)
@@ -88,8 +91,7 @@ class CreateShelterInput:
     organization: ID
     location: Optional[ShelterLocationInput] = None
     schedules: Optional[List[ScheduleInput]] = None
-    services: Optional[List[ID]] = None
-    pending_services: Optional[List[PendingServiceInput]] = None
+    services: Optional[List[ServiceInput]] = None
 
     # Optional scalars — all model fields below have null=True, blank=True.
     # Using auto where strawberry-django can resolve the type; explicit types

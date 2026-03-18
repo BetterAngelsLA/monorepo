@@ -33,16 +33,19 @@ query ViewShelters(
 
 query ShelterServiceCategories {
   shelterServiceCategories {
-    id
-    name
-    displayName
-    priority
-    services {
+    totalCount
+    results {
       id
       name
       displayName
-      isOther
       priority
+      services {
+        id
+        name
+        displayName
+        isOther
+        priority
+      }
     }
   }
 }

@@ -20,8 +20,6 @@ from unittest_parametrize import parametrize
 
 
 class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
-    pass
-
     def test_shelter_location_filter(self) -> None:
         reference_point = {
             "latitude": 34,

@@ -25,7 +25,6 @@ from django.shortcuts import redirect
 from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django_select2.forms import Select2MultipleWidget
 from import_export import resources
@@ -380,66 +379,11 @@ class ShelterForm(forms.ModelForm):
         if not self._pending_service_entries:
             return
 
-        category_ids = {category_id for category_id, _display_name in self._pending_service_entries}
-        categories = {
-            category.id: category
-            for category in ServiceCategory.objects.filter(pk__in=category_ids).prefetch_related("services")
-        }
-        existing_other_services_by_category = {
-            category_id: {
-                service.display_name.casefold(): service for service in category.services.all() if service.is_other
-            }
-            for category_id, category in categories.items()
-        }
-        existing_names_by_category = {
-            category_id: {service.name.casefold() for service in category.services.all()}
-            for category_id, category in categories.items()
-        }
-        next_priority_by_category = {
-            category_id: max((service.priority for service in category.services.all()), default=-1) + 1
-            for category_id, category in categories.items()
-        }
+        from shelters.services import resolve_pending_service_entries
 
-        services_to_add: list[Service] = []
-        seen_service_ids: set[int] = set()
-        for category_id, display_name in self._pending_service_entries:
-            category = categories.get(category_id)
-            if category is None:
-                continue
-
-            normalized_display_name = display_name.casefold()
-            existing_service = existing_other_services_by_category.get(category_id, {}).get(normalized_display_name)
-            if existing_service is not None:
-                if existing_service.pk not in seen_service_ids:
-                    services_to_add.append(existing_service)
-                    seen_service_ids.add(existing_service.pk)
-                continue
-
-            base_name = slugify(display_name).replace("-", "_") or f"service_{category.id}"
-            base_name = f"other_{base_name}"
-            service_name = base_name
-            suffix = 2
-            while service_name.casefold() in existing_names_by_category[category_id]:
-                service_name = f"{base_name}_{suffix}"
-                suffix += 1
-
-            created_service = Service.objects.create(
-                category=category,
-                name=service_name,
-                display_name=display_name,
-                is_other=True,
-                priority=next_priority_by_category[category_id],
-            )
-            next_priority_by_category[category_id] += 1
-            existing_names_by_category[category_id].add(service_name.casefold())
-            existing_other_services_by_category.setdefault(category_id, {})[normalized_display_name] = created_service
-
-            if created_service.pk not in seen_service_ids:
-                services_to_add.append(created_service)
-                seen_service_ids.add(created_service.pk)
-
-        if services_to_add:
-            self.instance.services.add(*services_to_add)
+        resolved = resolve_pending_service_entries(self._pending_service_entries)
+        if resolved:
+            self.instance.services.add(*resolved)
 
 
 @admin.register(ContactInfo)

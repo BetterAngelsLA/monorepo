@@ -3,8 +3,8 @@ import {
   type CreateShelterInput,
   type CreateShelterMutation,
   type CreateShelterMutationVariables,
-  type PendingServiceInput,
   type ScheduleInput,
+  type ServiceInput,
 } from '@monorepo/react/shelter';
 import type { ScheduleFormEntry, ShelterFormData } from '../../../formTypes';
 import { sanitizeString } from '../utils/formUtils';
@@ -22,25 +22,29 @@ export type {
 const compactEnumValues = <T extends string>(values: readonly T[]): T[] =>
   Array.from(new Set(values.filter(Boolean)));
 
-const compactIdValues = (values: readonly string[]): string[] =>
-  Array.from(new Set(values.filter(Boolean)));
+const buildServices = (
+  selectedIds: readonly string[],
+  pendingByCategory: Readonly<Record<string, string[]>>
+): ServiceInput[] | undefined => {
+  const entries: ServiceInput[] = [];
+  const seenIds = new Set<string>();
+  const seenPending = new Set<string>();
 
-const buildPendingServices = (
-  values: Readonly<Record<string, string[]>>
-): PendingServiceInput[] | undefined => {
-  const entries: PendingServiceInput[] = [];
-  const seen = new Set<string>();
+  for (const id of selectedIds) {
+    if (id && !seenIds.has(id)) {
+      seenIds.add(id);
+      entries.push({ id });
+    }
+  }
 
-  for (const [categoryId, displayNames] of Object.entries(values)) {
+  for (const [categoryId, displayNames] of Object.entries(pendingByCategory)) {
     if (!categoryId) continue;
-
     for (const displayName of displayNames) {
       const trimmed = displayName.trim();
       if (!trimmed) continue;
-
       const dedupeKey = `${categoryId}::${trimmed.toLowerCase()}`;
-      if (seen.has(dedupeKey)) continue;
-      seen.add(dedupeKey);
+      if (seenPending.has(dedupeKey)) continue;
+      seenPending.add(dedupeKey);
       entries.push({ categoryId, displayName: trimmed });
     }
   }
@@ -121,8 +125,10 @@ export const buildCreateShelterInput = (
     storage: compactEnumValues(formData.storage),
     pets: compactEnumValues(formData.pets),
     parking: compactEnumValues(formData.parking),
-    services: compactIdValues(formData.services),
-    pendingServices: buildPendingServices(formData.pendingServicesByCategory),
+    services: buildServices(
+      formData.services,
+      formData.pendingServicesByCategory
+    ),
     entryRequirements: compactEnumValues(formData.entryRequirements),
     referralRequirement: compactEnumValues(formData.referralRequirement),
     exitPolicy: compactEnumValues(formData.exitPolicy),
