@@ -81,6 +81,12 @@ const theme = {
         'slideOutToTop var(--animation-duration) ease-in-out forwards',
       'fade-collapse': 'fadeOutScaleOut 200ms ease-in-out forwards',
     },
+    zIndex: {
+      'flyout-mask': '999',
+      flyout: '1000',
+      'modal-mask': '2000',
+      modal: '2001',
+    },
   },
 };
 
