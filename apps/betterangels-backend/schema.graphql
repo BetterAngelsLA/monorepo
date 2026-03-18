@@ -126,8 +126,6 @@ type AdminShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
-  operatingHours: [TimeRange]
-  intakeHours: [TimeRange]
 }
 
 type AdminShelterTypeOffsetPaginated {
@@ -164,13 +162,36 @@ type AuthResponse {
 
 enum BedStatusChoices {
   AVAILABLE
+  OCCUPIED
   RESERVED
+  OUT_OF_SERVICE
 }
 
 type BedType {
   id: ID!
   shelter: ShelterType!
+  bedName: String
   status: BedStatusChoices
+  statusNotes: String
+  occupantId: ID
+  bedType: BedTypeChoices
+  demographics: [DemographicType!]!
+  accessibility: [AccessibilityType!]!
+  funders: [FunderType!]!
+  pets: [PetType!]!
+  storage: Boolean!
+  maintenanceFlag: Boolean!
+  lastCleanedInspected: DateTime
+  medicalNeeds: MedicalNeedChoices
+  b7: Boolean!
+  fees: Int
+}
+
+enum BedTypeChoices {
+  TWIN
+  BUNK
+  ROLLAWAY
+  OTHER
 }
 
 type CityType {
@@ -431,7 +452,20 @@ type ContactInfoType {
 
 input CreateBedInput {
   shelterId: ID!
-  status: BedStatusChoices!
+  status: BedStatusChoices = null
+  bedName: String = null
+  statusNotes: String = null
+  bedType: BedTypeChoices = null
+  demographics: [DemographicChoices!] = null
+  accessibility: [AccessibilityChoices!] = null
+  funders: [FunderChoices!] = null
+  pets: [PetChoices!] = null
+  storage: Boolean = null
+  maintenanceFlag: Boolean = null
+  lastCleanedInspected: DateTime = null
+  medicalNeeds: MedicalNeedChoices = null
+  b7: Boolean = null
+  fees: Int = null
 }
 
 union CreateBedPayload = BedType | OperationInfo
@@ -607,6 +641,20 @@ input CreateProfileDataImportInput {
   notes: String
 }
 
+input CreateRoomInput {
+  shelterId: ID!
+  roomIdentifier: String!
+  roomType: RoomStyleChoices = null
+  roomTypeOther: String = null
+  status: RoomStatusChoices = null
+  notes: String = null
+  amenities: String = null
+  medicalRespite: Boolean = false
+  lastCleanedInspected: DateTime = null
+}
+
+union CreateRoomPayload = RoomType | OperationInfo
+
 input CreateShelterInput {
   name: String!
   description: String!
@@ -632,8 +680,6 @@ input CreateShelterInput {
   funders: [FunderChoices!]!
   organization: ID!
   location: ShelterLocationInput = null
-  operatingHours: [TimeRangeInput!] = null
-  intakeHours: [TimeRangeInput!] = null
   schedules: [ScheduleInput!] = null
   email: String = null
   phone: PhoneNumber = null
@@ -781,9 +827,9 @@ type DjangoImageType {
   name: String!
   path: String!
   size: Int!
-  url: String!
   width: Int!
   height: Int!
+  url(preset: ImagePresetEnum = null, processingOptions: String = null): String!
 }
 
 type DjangoModelType {
@@ -1199,6 +1245,13 @@ input IDFilterLookup {
   iRegex: ID
 }
 
+enum ImagePresetEnum {
+  ORIGINAL
+  SM
+  MD
+  LG
+}
+
 enum ImmediateNeedChoices {
   CLOTHING
   FOOD
@@ -1346,6 +1399,13 @@ enum MealServiceChoices {
   DINNER
 }
 
+enum MedicalNeedChoices {
+  ERC
+  DMH
+  OXYGEN
+  DIALYSIS
+}
+
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
@@ -1399,6 +1459,7 @@ type Mutation {
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
+  createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
 }
 
 type NameCountType {
@@ -1827,6 +1888,12 @@ input RevertNoteInput {
 
 union RevertNotePayload = NoteType | OperationInfo
 
+enum RoomStatusChoices {
+  AVAILABLE
+  RESERVED
+  NEEDS_MAINTENANCE
+}
+
 enum RoomStyleChoices {
   CONGREGATE
   CUBICLE_LOW_WALLS
@@ -1841,6 +1908,19 @@ enum RoomStyleChoices {
 
 type RoomStyleType {
   name: RoomStyleChoices
+}
+
+type RoomType {
+  id: ID!
+  shelter: ShelterType!
+  roomIdentifier: String!
+  roomType: RoomStyleChoices
+  roomTypeOther: String
+  status: RoomStatusChoices
+  notes: String
+  amenities: String
+  medicalRespite: Boolean!
+  lastCleanedInspected: DateTime
 }
 
 enum SPAChoices {
@@ -2067,8 +2147,6 @@ type ShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
-  operatingHours: [TimeRange]
-  intakeHours: [TimeRange]
 }
 
 type ShelterTypeOffsetPaginated {
@@ -2219,16 +2297,6 @@ type TaskTypeOffsetPaginated {
 
 """Time (isoformat)"""
 scalar Time
-
-type TimeRange {
-  start: DateTime
-  end: DateTime
-}
-
-input TimeRangeInput {
-  start: Time = null
-  end: Time = null
-}
 
 enum TrainingServiceChoices {
   JOB_TRAINING

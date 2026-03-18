@@ -34,7 +34,7 @@ export function Flyout(props: IFlyout): ReactElement | null {
     'w-[96vw]',
     'bg-[#1E3342]',
     'shadow-lg',
-    'z-200',
+    'z-flyout',
     'rounded-l-2xl',
     animation,
     className,

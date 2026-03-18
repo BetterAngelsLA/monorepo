@@ -1,0 +1,10 @@
+export { Modal } from './Modal';
+export type { IModalProps } from './Modal';
+export { ModalHeader } from './ModalHeader';
+export type { IModalHeaderProps } from './ModalHeader';
+export { ModalBody } from './ModalBody';
+export type { IModalBodyProps } from './ModalBody';
+export { ModalFooter } from './ModalFooter';
+export type { IModalFooterProps } from './ModalFooter';
+export { ConfirmationModal } from './ConfirmationModal';
+export type { IConfirmationModalProps } from './ConfirmationModal';

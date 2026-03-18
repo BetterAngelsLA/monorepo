@@ -1,26 +1,18 @@
-import type { TOrganization } from '@monorepo/react/shared';
 import { memo } from 'react';
-import { Dropdown } from '../../../../../components/base-ui/dropdown';
 import { FormSection } from '../../../../../components/form/FormSection';
 import { ScheduleField } from '../../../../../components/form/ScheduleField';
 import { TextField } from '../../../../../components/form/TextField';
+import { useActiveOrg } from '../../../../../providers/activeOrg';
 import { LocationPicker } from '../components/LocationPicker';
 import type { SectionProps } from '../types';
-
-interface BasicInformationSectionProps extends SectionProps {
-  organizations: TOrganization[];
-  selectedOrganizationId: string;
-  onOrganizationChange: (id: string) => void;
-}
 
 export const BasicInformationSection = memo(function BasicInformationSection({
   data,
   onChange,
   errors,
-  organizations,
-  selectedOrganizationId,
-  onOrganizationChange,
-}: BasicInformationSectionProps) {
+}: SectionProps) {
+  const { activeOrg } = useActiveOrg();
+
   return (
     <FormSection title="Basic Information">
       <TextField
@@ -33,31 +25,14 @@ export const BasicInformationSection = memo(function BasicInformationSection({
         error={errors.name}
       />
       <div>
-        <label
-          htmlFor="shelter-organization"
-          className="block text-sm font-medium text-gray-700 mb-1"
-        >
+        <label className="block text-sm font-medium text-gray-700 mb-1">
           Organization
         </label>
-        {organizations.length > 0 ? (
-          <Dropdown
-            placeholder="Select an organization"
-            options={organizations.map((org) => ({
-              label: org.name,
-              value: org.id,
-            }))}
-            value={
-              organizations
-                .filter((org) => org.id === selectedOrganizationId)
-                .map((org) => ({ label: org.name, value: org.id }))[0] ?? null
-            }
-            onChange={(option) => {
-              if (option) onOrganizationChange(option.value);
-            }}
-          />
+        {activeOrg ? (
+          <p className="text-sm text-gray-900">{activeOrg.name}</p>
         ) : (
           <p className="text-sm text-red-600">
-            You don't belong to any organizations.
+            No organization selected. Please select one from the header.
           </p>
         )}
         {errors.organization && (
