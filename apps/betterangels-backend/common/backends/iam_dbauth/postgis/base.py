@@ -30,5 +30,3 @@ class DatabaseWrapper(PostGISDatabaseWrapper):
             conn_params["password"] = token
 
         return conn_params
-
-        return conn_params
