@@ -1,6 +1,5 @@
 from django.db import migrations
 
-
 # (category_name, category_display_name, priority, services)
 # services: list of (name, display_name, priority)
 SEED_DATA = [
