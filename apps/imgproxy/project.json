@@ -11,7 +11,9 @@
         "context": "apps/imgproxy",
         "file": "apps/imgproxy/Dockerfile",
         "push": true,
-        "platforms": ["arm64"],
+        "platforms": ["linux/arm64"],
+        "provenance": false,
+        "sbom": false,
         "cache-from": [
           "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-${BRANCH_NAME}",
           "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-main"
@@ -33,7 +35,7 @@
       }
     },
     "deploy": {
-      "command": "tools/deploy/lambda_deploy.sh",
+      "command": "tools/deploy/imgproxy_lambda_deploy.sh",
       "configurations": {
         "production": {},
         "preview": {
