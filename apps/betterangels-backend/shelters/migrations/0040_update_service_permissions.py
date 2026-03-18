@@ -1,6 +1,4 @@
 from django.db import migrations
-from shelters.utils import assign_permissions_to_group_in_migration
-
 
 OLD_SERVICE_CODENAMES = [
     "add_generalservice",
@@ -26,15 +24,15 @@ OLD_SERVICE_CODENAMES = [
 ]
 
 
-def update_shelter_group_permissions(apps, schema_editor):
+def update_group_permissions(apps, schema_editor):
     from shelters.permissions import ServiceCategoryPermissions, ServicePermissions
+    from shelters.utils import assign_permissions_to_group_in_migration
 
     Group = apps.get_model("auth", "Group")
     Permission = apps.get_model("auth", "Permission")
     Service = apps.get_model("shelters", "Service")
     ServiceCategory = apps.get_model("shelters", "ServiceCategory")
 
-    # Remove old service permissions from both groups
     old_perms = Permission.objects.filter(codename__in=OLD_SERVICE_CODENAMES)
     for group_name in ("Shelter Data Entry", "Shelter Administration"):
         try:
@@ -43,7 +41,6 @@ def update_shelter_group_permissions(apps, schema_editor):
         except Group.DoesNotExist:
             pass
 
-    # Add new Service and ServiceCategory permissions to both groups
     permission_map = {
         Service: [ServicePermissions],
         ServiceCategory: [ServiceCategoryPermissions],
@@ -55,9 +52,9 @@ def update_shelter_group_permissions(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0040_remove_old_service_fields"),
+        ("shelters", "0039_remove_old_service_models"),
     ]
 
     operations = [
-        migrations.RunPython(update_shelter_group_permissions, migrations.RunPython.noop),
+        migrations.RunPython(update_group_permissions, migrations.RunPython.noop),
     ]
