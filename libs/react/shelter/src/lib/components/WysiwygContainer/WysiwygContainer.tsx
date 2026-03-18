@@ -1,5 +1,4 @@
-import { mergeCss } from '@monorepo/react/shared';
-import { sanitizeWysiwygHtml } from './sanitizeWysiwygHtml';
+import { mergeCss, sanitizeWysiwygHtml } from '@monorepo/react/shared';
 import styles from './wysiwyg.module.css';
 
 type TProps = {
