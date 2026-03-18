@@ -77,6 +77,7 @@ export default function Dashboard() {
         name: s.name ?? null,
         address: s.location?.place ?? null,
         totalBeds: s.totalBeds ?? null,
+        // TODO: need to add available/reserved/occupied beds and tags to the GraphQL query
         occupiedBeds: null,
         tags: null,
       })) ?? []
