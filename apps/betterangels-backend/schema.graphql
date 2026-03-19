@@ -70,6 +70,11 @@ type AddressType {
   zipCode: String
 }
 
+enum AdlCapacityEnum {
+  LOW_CAPACITY
+  HIGH_CAPACITY
+}
+
 type AdminShelterType {
   id: ID!
   accessibility: [AccessibilityType!]!
@@ -258,7 +263,9 @@ enum ClientDocumentNamespaceEnum {
   HMIS_FORM
   INCOME_FORM
   OTHER_FORM
+  INCOME_DOCUMENTS
   OTHER_CLIENT_DOCUMENT
+  CLIENT_UPLOAD
 }
 
 type ClientDocumentType implements AttachmentInterface {
@@ -280,6 +287,19 @@ type ClientDocumentTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [ClientDocumentType!]!
+}
+
+enum ClientFundingSourceEnum {
+  CITY_OF_LOS_ANGELES
+  CLIENT_FEES
+  DHS
+  DMH
+  FEDERAL_FUNDING
+  HOPWA
+  LAHSA
+  PRIVATE
+  VETERANS_AFFAIRS
+  OTHER
 }
 
 input ClientHouseholdMemberInput {
@@ -313,6 +333,13 @@ type ClientHouseholdMemberTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [ClientHouseholdMemberType!]!
+}
+
+enum ClientPetsEnum {
+  CATS
+  DOG
+  SERVICE_ANIMAL
+  OTHER
 }
 
 type ClientProfileDataImportType {
@@ -373,23 +400,38 @@ input ClientProfilePhotoInput {
 type ClientProfileType {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
+  adlCapacity: AdlCapacityEnum
   age: Int
   californiaId: String
+  criminalHistory: Boolean
   dateOfBirth: Date
+  destination: DestinationEnum
+  destinationOther: String
   email: NonBlankString
   eyeColor: EyeColorEnum
   firstName: NonBlankString
+  fundingSource: [ClientFundingSourceEnum!]
+  fundingSourceOther: String
   gender: GenderEnum
   genderOther: String
   hairColor: HairColorEnum
+  harmReduction: Boolean
   heightInInches: Float
+  homelessnessNotes: String
   importantNotes: String
+  incomeAnnual: String
+  incomeSource: String
+  justiceInvolvementDetails: String
   lastName: NonBlankString
   livingSituation: LivingSituationEnum
   mailingAddress: String
   maritalStatus: MaritalStatusEnum
+  medicalNeeds: [MedicalNeedsEnum!]
+  medicalNotes: String
   middleName: NonBlankString
   nickname: NonBlankString
+  pets: [ClientPetsEnum!]
+  petsOther: String
   phoneNumber: PhoneNumber
   physicalDescription: String
   placeOfBirth: String
@@ -399,9 +441,15 @@ type ClientProfileType {
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
+  requiresTransportation: Boolean
   residenceAddress: String
   residenceGeolocation: Point
+  sexualOrientation: [SexualOrientationEnum!]
+  sexualOrientationOther: String
+  spa: [ClientSpaEnum!]
+  socialSecurityNumber: String
   spokenLanguages: [LanguageEnum!]
+  status: ClientStatusEnum!
   veteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactType!]
@@ -433,6 +481,23 @@ input ClientSearchInput {
   firstName: String = null
   lastName: String = null
   middleName: String = null
+}
+
+enum ClientSpaEnum {
+  ONE
+  TWO
+  THREE
+  FOUR
+  FIVE
+  SIX
+  SEVEN
+  EIGHT
+}
+
+enum ClientStatusEnum {
+  RESERVED
+  CHECKED_IN
+  CHECKED_OUT
 }
 
 enum ConditionChoices {
@@ -488,23 +553,38 @@ union CreateClientProfileDataImportPayload = ClientProfileDataImportType | Opera
 input CreateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
+  adlCapacity: AdlCapacityEnum
   age: Int
   californiaId: String
+  criminalHistory: Boolean
   dateOfBirth: Date
+  destination: DestinationEnum
+  destinationOther: String
   email: NonBlankString
   eyeColor: EyeColorEnum
   firstName: NonBlankString
+  fundingSource: [ClientFundingSourceEnum!]
+  fundingSourceOther: String
   gender: GenderEnum
   genderOther: String
   hairColor: HairColorEnum
+  harmReduction: Boolean
   heightInInches: Float
+  homelessnessNotes: String
   importantNotes: String
+  incomeAnnual: String
+  incomeSource: String
+  justiceInvolvementDetails: String
   lastName: NonBlankString
   livingSituation: LivingSituationEnum
   mailingAddress: String
   maritalStatus: MaritalStatusEnum
+  medicalNeeds: [MedicalNeedsEnum!]
+  medicalNotes: String
   middleName: NonBlankString
   nickname: NonBlankString
+  pets: [ClientPetsEnum!]
+  petsOther: String
   phoneNumber: PhoneNumber
   physicalDescription: String
   placeOfBirth: String
@@ -514,9 +594,15 @@ input CreateClientProfileInput {
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
+  requiresTransportation: Boolean
   residenceAddress: String
   residenceGeolocation: Point
+  sexualOrientation: [SexualOrientationEnum!]
+  sexualOrientationOther: String
+  spa: [ClientSpaEnum!]
+  socialSecurityNumber: String
   spokenLanguages: [LanguageEnum!]
+  status: ClientStatusEnum = null
   veteranStatus: VeteranStatusEnum
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
@@ -817,6 +903,17 @@ type DemographicType {
   name: DemographicChoices
 }
 
+enum DestinationEnum {
+  OWN_HOME
+  SHARED_HOME
+  ANOTHER_SHELTER
+  MEDICAL_FACILITY
+  DECEASED
+  JUSTICE_INVOLVED
+  UNKNOWN
+  OTHER
+}
+
 type DjangoFileType {
   name: String!
   path: String!
@@ -896,8 +993,8 @@ type FunderType {
 }
 
 enum GenderEnum {
-  MALE
-  FEMALE
+  CIS_MALE
+  CIS_FEMALE
   TRANS_MALE
   TRANS_FEMALE
   NON_BINARY
@@ -958,6 +1055,7 @@ enum HmisAgencyEnum {
   PASADENA
   CHAMP
   VASH
+  OTHER
 }
 
 input HmisClientProfileFilter {
@@ -1333,6 +1431,7 @@ enum LanguageEnum {
   ASL
   ARABIC
   ARMENIAN
+  CANTONESE
   ENGLISH
   FARSI
   FRENCH
@@ -1340,23 +1439,31 @@ enum LanguageEnum {
   JAPANESE
   KHMER
   KOREAN
+  MANDARIN
   RUSSIAN
   SIMPLIFIED_CHINESE
   SPANISH
   TAGALOG
   TRADITIONAL_CHINESE
   VIETNAMESE
+  OTHER
 }
 
 scalar LatitudeScalar
 
 enum LivingSituationEnum {
-  HOUSING
-  OPEN_AIR
-  SHELTER
+  RENTAL_OR_OWNED_HOME
+  INFORMALLY_HOUSED
+  ANOTHER_SHELTER
+  MEDICAL_FACILITY
   TENT
   VEHICLE
+  OPEN_AIR
+  JUSTICE_INVOLVED
+  UNKNOWN
   OTHER
+  HOUSING
+  SHELTER
 }
 
 input LocationInput {
@@ -1405,6 +1512,14 @@ enum MedicalNeedChoices {
   DMH
   OXYGEN
   DIALYSIS
+}
+
+enum MedicalNeedsEnum {
+  MEDICAL
+  MENTAL_HEALTH
+  SUBSTANCE_USE
+  COGNITIVE_IMPAIRMENTS
+  NONE
 }
 
 type Mutation {
@@ -1828,6 +1943,7 @@ enum RaceEnum {
   NATIVE_HAWAIIAN_PACIFIC_ISLANDER
   WHITE_CAUCASIAN
   OTHER
+  PREFER_NOT_TO_SAY
 }
 
 enum ReferralRequirementChoices {
@@ -2015,6 +2131,18 @@ enum ServiceRequestTypeEnum {
   REQUESTED
 }
 
+enum SexualOrientationEnum {
+  ASEXUAL
+  BISEXUAL
+  GAY
+  STRAIGHT
+  LESBIAN
+  PANSEXUAL
+  QUEER
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
 enum ShelterChoices {
   BUILDING
   CHURCH
@@ -2174,6 +2302,7 @@ enum SocialMediaEnum {
   TIKTOK
   TWITTER
   WHATSAPP
+  OTHER
 }
 
 input SocialMediaProfileInput {
@@ -2181,6 +2310,7 @@ input SocialMediaProfileInput {
   clientProfile: ID
   platform: SocialMediaEnum
   platformUserId: NonBlankString
+  platformUserIdOther: String = null
 }
 
 type SocialMediaProfileType {
@@ -2188,6 +2318,7 @@ type SocialMediaProfileType {
   clientProfile: DjangoModelType!
   platform: SocialMediaEnum!
   platformUserId: NonBlankString!
+  platformUserIdOther: String
 }
 
 type SocialMediaProfileTypeOffsetPaginated {
@@ -2328,23 +2459,38 @@ union UpdateClientHouseholdMemberPayload = ClientHouseholdMemberType | Operation
 input UpdateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
+  adlCapacity: AdlCapacityEnum
   age: Int
   californiaId: String
+  criminalHistory: Boolean
   dateOfBirth: Date
+  destination: DestinationEnum
+  destinationOther: String
   email: NonBlankString
   eyeColor: EyeColorEnum
   firstName: NonBlankString
+  fundingSource: [ClientFundingSourceEnum!]
+  fundingSourceOther: String
   gender: GenderEnum
   genderOther: String
   hairColor: HairColorEnum
+  harmReduction: Boolean
   heightInInches: Float
+  homelessnessNotes: String
   importantNotes: String
+  incomeAnnual: String
+  incomeSource: String
+  justiceInvolvementDetails: String
   lastName: NonBlankString
   livingSituation: LivingSituationEnum
   mailingAddress: String
   maritalStatus: MaritalStatusEnum
+  medicalNeeds: [MedicalNeedsEnum!]
+  medicalNotes: String
   middleName: NonBlankString
   nickname: NonBlankString
+  pets: [ClientPetsEnum!]
+  petsOther: String
   phoneNumber: PhoneNumber
   physicalDescription: String
   placeOfBirth: String
@@ -2354,9 +2500,15 @@ input UpdateClientProfileInput {
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
+  requiresTransportation: Boolean
   residenceAddress: String
   residenceGeolocation: Point
+  sexualOrientation: [SexualOrientationEnum!]
+  sexualOrientationOther: String
+  spa: [ClientSpaEnum!]
+  socialSecurityNumber: String
   spokenLanguages: [LanguageEnum!]
+  status: ClientStatusEnum = null
   veteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactInput!]

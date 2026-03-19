@@ -68,6 +68,11 @@ export type AddressType = {
   zipCode?: Maybe<Scalars['String']['output']>;
 };
 
+export enum AdlCapacityEnum {
+  HighCapacity = 'HIGH_CAPACITY',
+  LowCapacity = 'LOW_CAPACITY'
+}
+
 export type AdminShelterType = {
   __typename?: 'AdminShelterType';
   ExteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
@@ -250,10 +255,12 @@ export enum ClientDocumentGroupEnum {
 
 export enum ClientDocumentNamespaceEnum {
   BirthCertificate = 'BIRTH_CERTIFICATE',
+  ClientUpload = 'CLIENT_UPLOAD',
   ConsentForm = 'CONSENT_FORM',
   DriversLicenseBack = 'DRIVERS_LICENSE_BACK',
   DriversLicenseFront = 'DRIVERS_LICENSE_FRONT',
   HmisForm = 'HMIS_FORM',
+  IncomeDocuments = 'INCOME_DOCUMENTS',
   IncomeForm = 'INCOME_FORM',
   OtherClientDocument = 'OTHER_CLIENT_DOCUMENT',
   OtherDocReady = 'OTHER_DOC_READY',
@@ -282,6 +289,19 @@ export type ClientDocumentTypeOffsetPaginated = {
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
 };
+
+export enum ClientFundingSourceEnum {
+  CityOfLosAngeles = 'CITY_OF_LOS_ANGELES',
+  ClientFees = 'CLIENT_FEES',
+  Dhs = 'DHS',
+  Dmh = 'DMH',
+  FederalFunding = 'FEDERAL_FUNDING',
+  Hopwa = 'HOPWA',
+  Lahsa = 'LAHSA',
+  Other = 'OTHER',
+  Private = 'PRIVATE',
+  VeteransAffairs = 'VETERANS_AFFAIRS'
+}
 
 export type ClientHouseholdMemberInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
@@ -315,6 +335,13 @@ export type ClientHouseholdMemberTypeOffsetPaginated = {
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
 };
+
+export enum ClientPetsEnum {
+  Cats = 'CATS',
+  Dog = 'DOG',
+  Other = 'OTHER',
+  ServiceAnimal = 'SERVICE_ANIMAL'
+}
 
 export type ClientProfileDataImportType = {
   __typename?: 'ClientProfileDataImportType';
@@ -376,11 +403,15 @@ export type ClientProfileType = {
   __typename?: 'ClientProfileType';
   adaAccommodation?: Maybe<Array<AdaAccommodationEnum>>;
   address?: Maybe<Scalars['String']['output']>;
+  adlCapacity?: Maybe<AdlCapacityEnum>;
   age?: Maybe<Scalars['Int']['output']>;
   californiaId?: Maybe<Scalars['String']['output']>;
   consentFormDocuments?: Maybe<Array<ClientDocumentType>>;
   contacts?: Maybe<Array<ClientContactType>>;
+  criminalHistory?: Maybe<Scalars['Boolean']['output']>;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
+  destination?: Maybe<DestinationEnum>;
+  destinationOther?: Maybe<Scalars['String']['output']>;
   displayCaseManager: Scalars['String']['output'];
   displayGender?: Maybe<Scalars['String']['output']>;
   displayPronouns?: Maybe<Scalars['String']['output']>;
@@ -388,21 +419,32 @@ export type ClientProfileType = {
   email?: Maybe<Scalars['NonBlankString']['output']>;
   eyeColor?: Maybe<EyeColorEnum>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
+  fundingSource?: Maybe<Array<ClientFundingSourceEnum>>;
+  fundingSourceOther?: Maybe<Scalars['String']['output']>;
   gender?: Maybe<GenderEnum>;
   genderOther?: Maybe<Scalars['String']['output']>;
   hairColor?: Maybe<HairColorEnum>;
+  harmReduction?: Maybe<Scalars['Boolean']['output']>;
   heightInInches?: Maybe<Scalars['Float']['output']>;
   hmisProfiles?: Maybe<Array<HmisProfileType>>;
+  homelessnessNotes?: Maybe<Scalars['String']['output']>;
   householdMembers?: Maybe<Array<ClientHouseholdMemberType>>;
   id: Scalars['ID']['output'];
   importantNotes?: Maybe<Scalars['String']['output']>;
+  incomeAnnual?: Maybe<Scalars['String']['output']>;
+  incomeSource?: Maybe<Scalars['String']['output']>;
+  justiceInvolvementDetails?: Maybe<Scalars['String']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   livingSituation?: Maybe<LivingSituationEnum>;
   mailingAddress?: Maybe<Scalars['String']['output']>;
   maritalStatus?: Maybe<MaritalStatusEnum>;
+  medicalNeeds?: Maybe<Array<MedicalNeedsEnum>>;
+  medicalNotes?: Maybe<Scalars['String']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
   nickname?: Maybe<Scalars['NonBlankString']['output']>;
   otherDocuments?: Maybe<Array<ClientDocumentType>>;
+  pets?: Maybe<Array<ClientPetsEnum>>;
+  petsOther?: Maybe<Scalars['String']['output']>;
   phoneNumber?: Maybe<Scalars['PhoneNumber']['output']>;
   phoneNumbers?: Maybe<Array<PhoneNumberType>>;
   physicalDescription?: Maybe<Scalars['String']['output']>;
@@ -413,10 +455,16 @@ export type ClientProfileType = {
   pronouns?: Maybe<PronounEnum>;
   pronounsOther?: Maybe<Scalars['String']['output']>;
   race?: Maybe<RaceEnum>;
+  requiresTransportation?: Maybe<Scalars['Boolean']['output']>;
   residenceAddress?: Maybe<Scalars['String']['output']>;
   residenceGeolocation?: Maybe<Scalars['Point']['output']>;
+  sexualOrientation?: Maybe<Array<SexualOrientationEnum>>;
+  sexualOrientationOther?: Maybe<Scalars['String']['output']>;
   socialMediaProfiles?: Maybe<Array<SocialMediaProfileType>>;
+  socialSecurityNumber?: Maybe<Scalars['String']['output']>;
+  spa?: Maybe<Array<ClientSpaEnum>>;
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
+  status: ClientStatusEnum;
   veteranStatus?: Maybe<VeteranStatusEnum>;
 };
 
@@ -436,6 +484,23 @@ export type ClientSearchInput = {
   lastName?: InputMaybe<Scalars['String']['input']>;
   middleName?: InputMaybe<Scalars['String']['input']>;
 };
+
+export enum ClientSpaEnum {
+  Eight = 'EIGHT',
+  Five = 'FIVE',
+  Four = 'FOUR',
+  One = 'ONE',
+  Seven = 'SEVEN',
+  Six = 'SIX',
+  Three = 'THREE',
+  Two = 'TWO'
+}
+
+export enum ClientStatusEnum {
+  CheckedIn = 'CHECKED_IN',
+  CheckedOut = 'CHECKED_OUT',
+  Reserved = 'RESERVED'
+}
 
 export enum ConditionChoices {
   AirQualitySmoke = 'AIR_QUALITY_SMOKE',
@@ -491,26 +556,41 @@ export type CreateClientProfileDataImportPayload = ClientProfileDataImportType |
 export type CreateClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
+  adlCapacity?: InputMaybe<AdlCapacityEnum>;
   age?: InputMaybe<Scalars['Int']['input']>;
   californiaId?: InputMaybe<Scalars['String']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
+  criminalHistory?: InputMaybe<Scalars['Boolean']['input']>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
+  destination?: InputMaybe<DestinationEnum>;
+  destinationOther?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['NonBlankString']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
   firstName?: InputMaybe<Scalars['NonBlankString']['input']>;
+  fundingSource?: InputMaybe<Array<ClientFundingSourceEnum>>;
+  fundingSourceOther?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderEnum>;
   genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
+  harmReduction?: InputMaybe<Scalars['Boolean']['input']>;
   heightInInches?: InputMaybe<Scalars['Float']['input']>;
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
+  homelessnessNotes?: InputMaybe<Scalars['String']['input']>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   importantNotes?: InputMaybe<Scalars['String']['input']>;
+  incomeAnnual?: InputMaybe<Scalars['String']['input']>;
+  incomeSource?: InputMaybe<Scalars['String']['input']>;
+  justiceInvolvementDetails?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['NonBlankString']['input']>;
   livingSituation?: InputMaybe<LivingSituationEnum>;
   mailingAddress?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
+  medicalNeeds?: InputMaybe<Array<MedicalNeedsEnum>>;
+  medicalNotes?: InputMaybe<Scalars['String']['input']>;
   middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
   nickname?: InputMaybe<Scalars['NonBlankString']['input']>;
+  pets?: InputMaybe<Array<ClientPetsEnum>>;
+  petsOther?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
   phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
@@ -521,10 +601,16 @@ export type CreateClientProfileInput = {
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
+  requiresTransportation?: InputMaybe<Scalars['Boolean']['input']>;
   residenceAddress?: InputMaybe<Scalars['String']['input']>;
   residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
+  sexualOrientation?: InputMaybe<Array<SexualOrientationEnum>>;
+  sexualOrientationOther?: InputMaybe<Scalars['String']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
+  socialSecurityNumber?: InputMaybe<Scalars['String']['input']>;
+  spa?: InputMaybe<Array<ClientSpaEnum>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
+  status?: InputMaybe<ClientStatusEnum>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 
@@ -826,6 +912,17 @@ export type DemographicType = {
   name?: Maybe<DemographicChoices>;
 };
 
+export enum DestinationEnum {
+  AnotherShelter = 'ANOTHER_SHELTER',
+  Deceased = 'DECEASED',
+  JusticeInvolved = 'JUSTICE_INVOLVED',
+  MedicalFacility = 'MEDICAL_FACILITY',
+  Other = 'OTHER',
+  OwnHome = 'OWN_HOME',
+  SharedHome = 'SHARED_HOME',
+  Unknown = 'UNKNOWN'
+}
+
 export type DjangoFileType = {
   __typename?: 'DjangoFileType';
   name: Scalars['String']['output'];
@@ -918,8 +1015,8 @@ export type FunderType = {
 };
 
 export enum GenderEnum {
-  Female = 'FEMALE',
-  Male = 'MALE',
+  CisFemale = 'CIS_FEMALE',
+  CisMale = 'CIS_MALE',
   NonBinary = 'NON_BINARY',
   Other = 'OTHER',
   PreferNotToSay = 'PREFER_NOT_TO_SAY',
@@ -980,6 +1077,7 @@ export enum HmisAgencyEnum {
   Champ = 'CHAMP',
   Lahsa = 'LAHSA',
   LongBeach = 'LONG_BEACH',
+  Other = 'OTHER',
   Pasadena = 'PASADENA',
   Vash = 'VASH'
 }
@@ -1353,6 +1451,7 @@ export enum LanguageEnum {
   Arabic = 'ARABIC',
   Armenian = 'ARMENIAN',
   Asl = 'ASL',
+  Cantonese = 'CANTONESE',
   English = 'ENGLISH',
   Farsi = 'FARSI',
   French = 'FRENCH',
@@ -1360,6 +1459,8 @@ export enum LanguageEnum {
   Japanese = 'JAPANESE',
   Khmer = 'KHMER',
   Korean = 'KOREAN',
+  Mandarin = 'MANDARIN',
+  Other = 'OTHER',
   Russian = 'RUSSIAN',
   SimplifiedChinese = 'SIMPLIFIED_CHINESE',
   Spanish = 'SPANISH',
@@ -1369,11 +1470,17 @@ export enum LanguageEnum {
 }
 
 export enum LivingSituationEnum {
+  AnotherShelter = 'ANOTHER_SHELTER',
   Housing = 'HOUSING',
+  InformallyHoused = 'INFORMALLY_HOUSED',
+  JusticeInvolved = 'JUSTICE_INVOLVED',
+  MedicalFacility = 'MEDICAL_FACILITY',
   OpenAir = 'OPEN_AIR',
   Other = 'OTHER',
+  RentalOrOwnedHome = 'RENTAL_OR_OWNED_HOME',
   Shelter = 'SHELTER',
   Tent = 'TENT',
+  Unknown = 'UNKNOWN',
   Vehicle = 'VEHICLE'
 }
 
@@ -1422,6 +1529,14 @@ export enum MedicalNeedChoices {
   Dmh = 'DMH',
   Erc = 'ERC',
   Oxygen = 'OXYGEN'
+}
+
+export enum MedicalNeedsEnum {
+  CognitiveImpairments = 'COGNITIVE_IMPAIRMENTS',
+  Medical = 'MEDICAL',
+  MentalHealth = 'MENTAL_HEALTH',
+  None = 'NONE',
+  SubstanceUse = 'SUBSTANCE_USE'
 }
 
 export type Mutation = {
@@ -2315,6 +2430,7 @@ export enum RaceEnum {
   HispanicLatino = 'HISPANIC_LATINO',
   NativeHawaiianPacificIslander = 'NATIVE_HAWAIIAN_PACIFIC_ISLANDER',
   Other = 'OTHER',
+  PreferNotToSay = 'PREFER_NOT_TO_SAY',
   WhiteCaucasian = 'WHITE_CAUCASIAN'
 }
 
@@ -2510,6 +2626,18 @@ export enum ServiceRequestTypeEnum {
   Requested = 'REQUESTED'
 }
 
+export enum SexualOrientationEnum {
+  Asexual = 'ASEXUAL',
+  Bisexual = 'BISEXUAL',
+  Gay = 'GAY',
+  Lesbian = 'LESBIAN',
+  Other = 'OTHER',
+  Pansexual = 'PANSEXUAL',
+  PreferNotToSay = 'PREFER_NOT_TO_SAY',
+  Queer = 'QUEER',
+  Straight = 'STRAIGHT'
+}
+
 export enum ShelterChoices {
   Building = 'BUILDING',
   Church = 'CHURCH',
@@ -2669,6 +2797,7 @@ export enum SocialMediaEnum {
   Facebook = 'FACEBOOK',
   Instagram = 'INSTAGRAM',
   Linkedin = 'LINKEDIN',
+  Other = 'OTHER',
   Snapchat = 'SNAPCHAT',
   Tiktok = 'TIKTOK',
   Twitter = 'TWITTER',
@@ -2680,6 +2809,7 @@ export type SocialMediaProfileInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
   platform?: InputMaybe<SocialMediaEnum>;
   platformUserId?: InputMaybe<Scalars['NonBlankString']['input']>;
+  platformUserIdOther?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type SocialMediaProfileType = {
@@ -2688,6 +2818,7 @@ export type SocialMediaProfileType = {
   id?: Maybe<Scalars['ID']['output']>;
   platform: SocialMediaEnum;
   platformUserId: Scalars['NonBlankString']['output'];
+  platformUserIdOther?: Maybe<Scalars['String']['output']>;
 };
 
 export type SocialMediaProfileTypeOffsetPaginated = {
@@ -2826,27 +2957,42 @@ export type UpdateClientHouseholdMemberPayload = ClientHouseholdMemberType | Ope
 export type UpdateClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
+  adlCapacity?: InputMaybe<AdlCapacityEnum>;
   age?: InputMaybe<Scalars['Int']['input']>;
   californiaId?: InputMaybe<Scalars['String']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
+  criminalHistory?: InputMaybe<Scalars['Boolean']['input']>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
+  destination?: InputMaybe<DestinationEnum>;
+  destinationOther?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['NonBlankString']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
   firstName?: InputMaybe<Scalars['NonBlankString']['input']>;
+  fundingSource?: InputMaybe<Array<ClientFundingSourceEnum>>;
+  fundingSourceOther?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderEnum>;
   genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
+  harmReduction?: InputMaybe<Scalars['Boolean']['input']>;
   heightInInches?: InputMaybe<Scalars['Float']['input']>;
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
+  homelessnessNotes?: InputMaybe<Scalars['String']['input']>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   id: Scalars['ID']['input'];
   importantNotes?: InputMaybe<Scalars['String']['input']>;
+  incomeAnnual?: InputMaybe<Scalars['String']['input']>;
+  incomeSource?: InputMaybe<Scalars['String']['input']>;
+  justiceInvolvementDetails?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['NonBlankString']['input']>;
   livingSituation?: InputMaybe<LivingSituationEnum>;
   mailingAddress?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
+  medicalNeeds?: InputMaybe<Array<MedicalNeedsEnum>>;
+  medicalNotes?: InputMaybe<Scalars['String']['input']>;
   middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
   nickname?: InputMaybe<Scalars['NonBlankString']['input']>;
+  pets?: InputMaybe<Array<ClientPetsEnum>>;
+  petsOther?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
   phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
@@ -2857,10 +3003,16 @@ export type UpdateClientProfileInput = {
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
+  requiresTransportation?: InputMaybe<Scalars['Boolean']['input']>;
   residenceAddress?: InputMaybe<Scalars['String']['input']>;
   residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
+  sexualOrientation?: InputMaybe<Array<SexualOrientationEnum>>;
+  sexualOrientationOther?: InputMaybe<Scalars['String']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
+  socialSecurityNumber?: InputMaybe<Scalars['String']['input']>;
+  spa?: InputMaybe<Array<ClientSpaEnum>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
+  status?: InputMaybe<ClientStatusEnum>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 
