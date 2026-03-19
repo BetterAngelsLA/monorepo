@@ -1,8 +1,13 @@
+from clients.enums import ClientStatusEnum
+from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, ignore_warnings
-from shelters.models import Bed, Room, Shelter
+from model_bakery import baker
+from shelters.enums import BedStatusChoices, RoomStatusChoices
+from shelters.models import Bed, Reservation, ReservationClient, Room, Shelter
+from shelters.tests.baker_recipes import shelter_recipe
 from unittest_parametrize import ParametrizedTestCase
 
 
@@ -637,3 +642,366 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             f"Shelter matching ID {other_org_shelter.pk} could not be found.",
             messages[0]["message"],
         )
+
+
+@ignore_warnings(category=UserWarning)
+class ReservationMutationTestCase(GraphQLBaseTestCase, TestCase):
+    CREATE_RESERVATION_MUTATION = """
+        mutation CreateReservation($data: CreateReservationInput!) {
+            createReservation(data: $data) {
+                ... on ReservationType {
+                    id
+                    status
+                    startDate
+                    duration
+                    notes
+                    shelter { id }
+                    bed { id }
+                    room { id }
+                    reservationClients {
+                        id
+                        clientProfileId
+                        isPrimary
+                    }
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        field
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        reservation_content_type = ContentType.objects.get_for_model(Reservation)
+        add_reservation_perm = Permission.objects.get(
+            content_type=reservation_content_type, codename="add_reservation"
+        )
+        self.org_1_case_manager_1.user_permissions.add(add_reservation_perm)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        self.shelter = shelter_recipe.make(organization=self.org_1)
+        self.bed = Bed.objects.create(shelter=self.shelter, status=BedStatusChoices.AVAILABLE)
+        self.room = Room.objects.create(
+            shelter=self.shelter, room_identifier="Room-101", status=RoomStatusChoices.AVAILABLE
+        )
+        self.client_profile_1 = baker.make(ClientProfile)
+        self.client_profile_2 = baker.make(ClientProfile)
+
+    def test_create_reservation_with_bed(self) -> None:
+        variables = {
+            "data": {
+                "shelterId": str(self.shelter.pk),
+                "clients": [
+                    {"clientProfileId": str(self.client_profile_1.pk), "isPrimary": True},
+                ],
+                "bedId": str(self.bed.pk),
+                "startDate": "2026-04-01",
+                "duration": 7,
+                "notes": "Test reservation",
+            }
+        }
+
+        response = self.execute_graphql(self.CREATE_RESERVATION_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        data = response["data"]["createReservation"]
+        self.assertIsNotNone(data["id"])
+        self.assertEqual(data["status"], "CONFIRMED")
+        self.assertEqual(data["startDate"], "2026-04-01")
+        self.assertEqual(data["duration"], 7)
+        self.assertEqual(data["notes"], "Test reservation")
+        self.assertEqual(data["shelter"]["id"], str(self.shelter.pk))
+        self.assertEqual(data["bed"]["id"], str(self.bed.pk))
+        self.assertIsNone(data["room"])
+        self.assertEqual(len(data["reservationClients"]), 1)
+        self.assertEqual(data["reservationClients"][0]["clientProfileId"], str(self.client_profile_1.pk))
+        self.assertTrue(data["reservationClients"][0]["isPrimary"])
+
+        # Verify bed status updated to RESERVED
+        self.bed.refresh_from_db()
+        self.assertEqual(self.bed.status, BedStatusChoices.RESERVED)
+
+        # Verify client status updated to RESERVED
+        self.client_profile_1.refresh_from_db()
+        self.assertEqual(self.client_profile_1.status, ClientStatusEnum.RESERVED)
+
+    def test_create_reservation_with_room(self) -> None:
+        variables = {
+            "data": {
+                "shelterId": str(self.shelter.pk),
+                "clients": [
+                    {"clientProfileId": str(self.client_profile_1.pk), "isPrimary": True},
+                ],
+                "roomId": str(self.room.pk),
+            }
+        }
+
+        response = self.execute_graphql(self.CREATE_RESERVATION_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        data = response["data"]["createReservation"]
+        self.assertEqual(data["room"]["id"], str(self.room.pk))
+        self.assertIsNone(data["bed"])
+
+        # Verify room status updated to RESERVED
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.status, RoomStatusChoices.RESERVED)
+
+    def test_create_reservation_with_bed_and_room(self) -> None:
+        variables = {
+            "data": {
+                "shelterId": str(self.shelter.pk),
+                "clients": [
+                    {"clientProfileId": str(self.client_profile_1.pk), "isPrimary": True},
+                ],
+                "bedId": str(self.bed.pk),
+                "roomId": str(self.room.pk),
+            }
+        }
+
+        response = self.execute_graphql(self.CREATE_RESERVATION_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        data = response["data"]["createReservation"]
+        self.assertEqual(data["bed"]["id"], str(self.bed.pk))
+        self.assertEqual(data["room"]["id"], str(self.room.pk))
+
+        self.bed.refresh_from_db()
+        self.room.refresh_from_db()
+        self.assertEqual(self.bed.status, BedStatusChoices.RESERVED)
+        self.assertEqual(self.room.status, RoomStatusChoices.RESERVED)
+
+    def test_create_reservation_multiple_clients(self) -> None:
+        variables = {
+            "data": {
+                "shelterId": str(self.shelter.pk),
+                "clients": [
+                    {"clientProfileId": str(self.client_profile_1.pk), "isPrimary": True},
+                    {"clientProfileId": str(self.client_profile_2.pk), "isPrimary": False},
+                ],
+                "bedId": str(self.bed.pk),
+            }
+        }
+
+        response = self.execute_graphql(self.CREATE_RESERVATION_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        data = response["data"]["createReservation"]
+        self.assertEqual(len(data["reservationClients"]), 2)
+
+        # Verify both clients updated to RESERVED
+        self.client_profile_1.refresh_from_db()
+        self.client_profile_2.refresh_from_db()
+        self.assertEqual(self.client_profile_1.status, ClientStatusEnum.RESERVED)
+        self.assertEqual(self.client_profile_2.status, ClientStatusEnum.RESERVED)
+
+    def test_create_reservation_no_bed_or_room_fails(self) -> None:
+        variables = {
+            "data": {
+                "shelterId": str(self.shelter.pk),
+                "clients": [
+                    {"clientProfileId": str(self.client_profile_1.pk), "isPrimary": True},
+                ],
+            }
+        }
+
+        response = self.execute_graphql(self.CREATE_RESERVATION_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createReservation"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("At least one of bed or room must be provided", messages[0]["message"])
+
+    def test_create_reservation_bed_not_in_shelter_fails(self) -> None:
+        other_shelter = shelter_recipe.make(organization=self.org_1)
+        other_bed = Bed.objects.create(shelter=other_shelter, status=BedStatusChoices.AVAILABLE)
+
+        variables = {
+            "data": {
+                "shelterId": str(self.shelter.pk),
+                "clients": [
+                    {"clientProfileId": str(self.client_profile_1.pk), "isPrimary": True},
+                ],
+                "bedId": str(other_bed.pk),
+            }
+        }
+
+        response = self.execute_graphql(self.CREATE_RESERVATION_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createReservation"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("could not be found in this shelter", messages[0]["message"])
+
+    def test_create_reservation_wrong_org_rejected(self) -> None:
+        other_org_shelter = Shelter.objects.create(
+            name="Other Org Shelter",
+            description="Belongs to org 2",
+            organization=self.org_2,
+        )
+        other_bed = Bed.objects.create(shelter=other_org_shelter, status=BedStatusChoices.AVAILABLE)
+
+        variables = {
+            "data": {
+                "shelterId": str(other_org_shelter.pk),
+                "clients": [
+                    {"clientProfileId": str(self.client_profile_1.pk), "isPrimary": True},
+                ],
+                "bedId": str(other_bed.pk),
+            }
+        }
+
+        response = self.execute_graphql(self.CREATE_RESERVATION_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createReservation"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn(
+            f"Shelter matching ID {other_org_shelter.pk} could not be found.",
+            messages[0]["message"],
+        )
+
+    def test_create_reservation_duplicate_clients_fails(self) -> None:
+        variables = {
+            "data": {
+                "shelterId": str(self.shelter.pk),
+                "clients": [
+                    {"clientProfileId": str(self.client_profile_1.pk), "isPrimary": True},
+                    {"clientProfileId": str(self.client_profile_1.pk), "isPrimary": False},
+                ],
+                "bedId": str(self.bed.pk),
+            }
+        }
+
+        response = self.execute_graphql(self.CREATE_RESERVATION_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createReservation"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("Duplicate client profiles", messages[0]["message"])
+
+    def test_create_reservation_multiple_primary_clients_fails(self) -> None:
+        variables = {
+            "data": {
+                "shelterId": str(self.shelter.pk),
+                "clients": [
+                    {"clientProfileId": str(self.client_profile_1.pk), "isPrimary": True},
+                    {"clientProfileId": str(self.client_profile_2.pk), "isPrimary": True},
+                ],
+                "bedId": str(self.bed.pk),
+            }
+        }
+
+        response = self.execute_graphql(self.CREATE_RESERVATION_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createReservation"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("Only one client can be marked as primary", messages[0]["message"])
+
+    def test_create_reservation_nonexistent_client_fails(self) -> None:
+        variables = {
+            "data": {
+                "shelterId": str(self.shelter.pk),
+                "clients": [
+                    {"clientProfileId": "999999", "isPrimary": True},
+                ],
+                "bedId": str(self.bed.pk),
+            }
+        }
+
+        response = self.execute_graphql(self.CREATE_RESERVATION_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createReservation"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("One or more client profiles could not be found", messages[0]["message"])
+
+    def test_create_reservation_empty_clients_fails(self) -> None:
+        variables = {
+            "data": {
+                "shelterId": str(self.shelter.pk),
+                "clients": [],
+                "bedId": str(self.bed.pk),
+            }
+        }
+
+        response = self.execute_graphql(self.CREATE_RESERVATION_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createReservation"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("At least one client must be provided", messages[0]["message"])
+
+    def test_create_reservation_bed_already_reserved_fails(self) -> None:
+        self.bed.status = BedStatusChoices.RESERVED
+        self.bed.save(update_fields=["status"])
+
+        variables = {
+            "data": {
+                "shelterId": str(self.shelter.pk),
+                "clients": [
+                    {"clientProfileId": str(self.client_profile_1.pk), "isPrimary": True},
+                ],
+                "bedId": str(self.bed.pk),
+            }
+        }
+
+        response = self.execute_graphql(self.CREATE_RESERVATION_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createReservation"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("already reserved", messages[0]["message"])
+
+    def test_create_reservation_room_already_reserved_fails(self) -> None:
+        self.room.status = RoomStatusChoices.RESERVED
+        self.room.save(update_fields=["status"])
+
+        variables = {
+            "data": {
+                "shelterId": str(self.shelter.pk),
+                "clients": [
+                    {"clientProfileId": str(self.client_profile_1.pk), "isPrimary": True},
+                ],
+                "roomId": str(self.room.pk),
+            }
+        }
+
+        response = self.execute_graphql(self.CREATE_RESERVATION_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createReservation"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("already reserved", messages[0]["message"])
+
+    def test_create_reservation_persists_to_database(self) -> None:
+        variables = {
+            "data": {
+                "shelterId": str(self.shelter.pk),
+                "clients": [
+                    {"clientProfileId": str(self.client_profile_1.pk), "isPrimary": True},
+                ],
+                "bedId": str(self.bed.pk),
+                "startDate": "2026-04-01",
+                "duration": 14,
+            }
+        }
+
+        response = self.execute_graphql(self.CREATE_RESERVATION_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        reservation_id = response["data"]["createReservation"]["id"]
+
+        db_reservation = Reservation.objects.get(pk=reservation_id)
+        self.assertEqual(db_reservation.shelter, self.shelter)
+        self.assertEqual(db_reservation.bed, self.bed)
+        self.assertEqual(db_reservation.duration, 14)
+        self.assertEqual(db_reservation.created_by, self.org_1_case_manager_1)
+
+        self.assertEqual(ReservationClient.objects.filter(reservation=db_reservation).count(), 1)
