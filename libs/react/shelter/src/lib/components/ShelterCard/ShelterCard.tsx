@@ -56,6 +56,8 @@ export function ShelterCard(props: TShelterCard) {
 
   const bodyCss = ['flex', 'flex-col', 'md:flex-row', 'overflow-hidden'];
 
+  const contentCss = ['mt-4', 'min-w-0', 'flex-1', 'overflow-hidden'];
+
   const footerCss = ['mt-4', 'md:mt-10', footerClassName];
 
   const onNavigate = () => {
@@ -84,7 +86,7 @@ export function ShelterCard(props: TShelterCard) {
           />
         </div>
 
-        <div className="mt-4 min-w-0 flex-1 overflow-hidden">
+        <div className={mergeCss(contentCss)}>
           <div className="font-semibold md:text-lg leading-4.5 tracking-[.03125rem] break-all">
             {name}
           </div>
