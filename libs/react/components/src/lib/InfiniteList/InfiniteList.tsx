@@ -101,7 +101,7 @@ export function InfiniteList<T>(props: InfiniteListProps<T>) {
     }
   }, [isAnyLoading, hasMore, loadMore]);
 
-  const isInitialLoading = loading || (isAnyLoading && data.length === 0);
+  const isInitialLoading = isAnyLoading && data.length === 0;
   const isEmpty = !isAnyLoading && !error && data.length === 0;
   const isError = !isAnyLoading && !!error;
 
@@ -128,24 +128,23 @@ export function InfiniteList<T>(props: InfiniteListProps<T>) {
           gap: itemGap,
         }}
       >
-        {!loading &&
-          data.map((item, index) => {
-            const isLast = index === data.length - 1;
+        {data.map((item, index) => {
+          const isLast = index === data.length - 1;
 
-            return (
-              <div key={keyExtractor(item, index)}>
-                {renderItem(item)}
+          return (
+            <div key={keyExtractor(item, index)}>
+              {renderItem(item)}
 
-                {!isLast && renderDivider?.(index)}
-              </div>
-            );
-          })}
+              {!isLast && renderDivider?.(index)}
+            </div>
+          );
+        })}
 
         {isEmpty && EmptyView}
 
         {isError && ErrorView}
 
-        {hasMore && !error && !loading && (
+        {hasMore && !error && (
           <InfiniteScrollTrigger onLoadMore={onLoadMore} enabled={hasMore} />
         )}
       </div>
