@@ -23,6 +23,8 @@ from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,
     BedStatusChoices,
+    BedTypeChoices,
+    MedicalNeedChoices,
     RoomStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
@@ -31,7 +33,6 @@ from shelters.enums import (
 from shelters.managers import AdminShelterManager, ShelterManager
 from shelters.permissions import ShelterFieldPermissions
 from shelters.selectors import shelters_open_at
-from shelters.widgets import TimeRangeField
 
 from .lookups import (
     SPA,
@@ -75,9 +76,6 @@ class Shelter(BaseModel):
     phone = PhoneNumberField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
     instagram = models.URLField(blank=True, null=True)
-    # TODO: Remove after 0031_migrate_legacy_hours_to_schedule has run in all environments.
-    # Data has been migrated to the Schedule model.
-    operating_hours = TimeRangeField(null=True, blank=True)
 
     # Hero Image
     hero_image_content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True)
@@ -107,9 +105,6 @@ class Shelter(BaseModel):
 
     # Policies
     max_stay = models.PositiveIntegerField(blank=True, null=True, verbose_name="Max Stay (days)")
-    # TODO: Remove after 0031_migrate_legacy_hours_to_schedule has run in all environments.
-    # Data has been migrated to the Schedule model.
-    intake_hours = TimeRangeField(null=True, blank=True)
     curfew = models.TimeField(null=True, blank=True)
     on_site_security = models.BooleanField(null=True, blank=True)
     visitors_allowed = models.BooleanField(null=True, blank=True)
@@ -227,7 +222,27 @@ class Shelter(BaseModel):
 
 class Bed(BaseModel):
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="beds")
+    bed_name = models.CharField(max_length=255, blank=True, null=True)
     status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
+    status_notes = models.TextField(blank=True, null=True)
+    occupant = models.ForeignKey(
+        "clients.ClientProfile",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="occupied_beds",
+    )
+    bed_type = TextChoicesField(choices_enum=BedTypeChoices, blank=True, null=True)
+    demographics = models.ManyToManyField(Demographic, blank=True)
+    accessibility = models.ManyToManyField(Accessibility, blank=True)
+    funders = models.ManyToManyField(Funder, blank=True)
+    pets = models.ManyToManyField(Pet, blank=True)
+    storage = models.BooleanField(default=False, blank=True)
+    maintenance_flag = models.BooleanField(default=False, blank=True)
+    last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
+    medical_needs = TextChoicesField(choices_enum=MedicalNeedChoices, blank=True, null=True)
+    b7 = models.BooleanField(default=False, blank=True)
+    fees = models.PositiveIntegerField(blank=True, null=True)
 
     class Meta:
         indexes = [

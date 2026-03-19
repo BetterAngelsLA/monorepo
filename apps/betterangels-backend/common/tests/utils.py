@@ -1,6 +1,6 @@
 import json
 import uuid
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Protocol, Tuple, Union
 
 from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
@@ -101,7 +101,28 @@ def build_address_inputs(
     return json_address_input, address_input
 
 
-class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, ParametrizedTestCase, TestCase):
+class SupportsAssertNumQueries(Protocol):
+    def assertNumQueries(self, num: int, func: Any = None, *args: Any, **kwargs: Any) -> Any: ...
+
+
+class NumQueriesWithoutCacheMixin:
+
+    def assertNumQueriesWithoutCache(self: Any, query_count: int) -> Any:
+        """
+        Resets all caches that may prevent query execution.
+        Needed to ensure deterministic behavior of ``assertNumQueries`` (or
+        after external changes to some Django database records).
+
+        https://stackoverflow.com/a/55287613
+        """
+        ContentType.objects.clear_cache()
+        Site.objects.clear_cache()
+        return self.assertNumQueries(query_count)
+
+
+class GraphQLBaseTestCase(
+    GraphQLTestCaseMixin, GraphQLAssertionsMixin, NumQueriesWithoutCacheMixin, ParametrizedTestCase, TestCase
+):
     def setUp(self) -> None:
         super().setUp()
         self._setup_users()
@@ -213,15 +234,3 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, Parametr
             self.graphql_client.force_login(self.user_map[user_label])
         else:
             self.graphql_client.logout()
-
-    def assertNumQueriesWithoutCache(self, query_count: int) -> Any:
-        """
-        Resets all caches that may prevent query execution.
-        Needed to ensure deterministic behavior of ``assertNumQueries`` (or
-        after external changes to some Django database records).
-
-        https://stackoverflow.com/a/55287613
-        """
-        ContentType.objects.clear_cache()
-        Site.objects.clear_cache()
-        return self.assertNumQueries(query_count)

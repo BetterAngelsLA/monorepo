@@ -9,10 +9,10 @@ from shelters.types.filters import (
 )
 from shelters.types.inputs import (
     CreateBedInput,
+    CreateRoomInput,
     CreateShelterInput,
     ScheduleInput,
     ShelterLocationInput,
-    TimeRangeInput,
 )
 from shelters.types.lookups import (
     AccessibilityType,
@@ -38,11 +38,11 @@ from shelters.types.lookups import (
 from shelters.types.outputs import (
     AdminShelterType,
     BedType,
+    RoomType,
     ShelterLocationType,
     ShelterPhotoType,
     ShelterType,
     ShelterTypeMixin,
-    TimeRange,
 )
 
 __all__ = [
@@ -74,16 +74,16 @@ __all__ = [
     "ShelterPropertyInput",
     # inputs
     "CreateBedInput",
+    "CreateRoomInput",
     "CreateShelterInput",
     "ScheduleInput",
     "ShelterLocationInput",
-    "TimeRangeInput",
     # outputs
     "AdminShelterType",
     "BedType",
+    "RoomType",
     "ShelterLocationType",
     "ShelterPhotoType",
     "ShelterType",
     "ShelterTypeMixin",
-    "TimeRange",
 ]

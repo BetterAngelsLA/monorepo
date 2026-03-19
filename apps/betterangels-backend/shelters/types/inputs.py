@@ -1,6 +1,6 @@
 """Input types for shelter mutations."""
 
-from datetime import date, time
+from datetime import date, datetime, time
 from typing import List, Optional
 
 import strawberry
@@ -10,6 +10,7 @@ from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
     BedStatusChoices,
+    BedTypeChoices,
     ConditionChoices,
     DayOfWeekChoices,
     DemographicChoices,
@@ -20,9 +21,11 @@ from shelters.enums import (
     HealthServiceChoices,
     ImmediateNeedChoices,
     MealServiceChoices,
+    MedicalNeedChoices,
     ParkingChoices,
     PetChoices,
     ReferralRequirementChoices,
+    RoomStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
 )
@@ -42,12 +45,6 @@ class ShelterLocationInput:
     place: str
     latitude: Optional[float] = None
     longitude: Optional[float] = None
-
-
-@strawberry.input
-class TimeRangeInput:
-    start: Optional[time] = None
-    end: Optional[time] = None
 
 
 @strawberry.input
@@ -94,8 +91,6 @@ class CreateShelterInput:
     # Custom field types — can't be auto-derived from Django model fields
     organization: ID
     location: Optional[ShelterLocationInput] = None
-    operating_hours: Optional[List[TimeRangeInput]] = None
-    intake_hours: Optional[List[TimeRangeInput]] = None
     schedules: Optional[List[ScheduleInput]] = None
 
     # Optional scalars — all model fields below have null=True, blank=True.
@@ -134,4 +129,30 @@ class CreateShelterInput:
 @strawberry.input
 class CreateBedInput:
     shelter_id: ID
-    status: BedStatusChoices
+    status: Optional[BedStatusChoices] = None
+    bed_name: Optional[str] = None
+    status_notes: Optional[str] = None
+    bed_type: Optional[BedTypeChoices] = None
+    demographics: Optional[List[DemographicChoices]] = None
+    accessibility: Optional[List[AccessibilityChoices]] = None
+    funders: Optional[List[FunderChoices]] = None
+    pets: Optional[List[PetChoices]] = None
+    storage: Optional[bool] = None
+    maintenance_flag: Optional[bool] = None
+    last_cleaned_inspected: Optional[datetime] = None
+    medical_needs: Optional[MedicalNeedChoices] = None
+    b7: Optional[bool] = None
+    fees: Optional[int] = None
+
+
+@strawberry.input
+class CreateRoomInput:
+    shelter_id: ID
+    room_identifier: str
+    room_type: Optional[RoomStyleChoices] = None
+    room_type_other: Optional[str] = None
+    status: Optional[RoomStatusChoices] = None
+    notes: Optional[str] = None
+    amenities: Optional[str] = None
+    medical_respite: Optional[bool] = False
+    last_cleaned_inspected: Optional[datetime] = None

@@ -3,10 +3,6 @@
 # env files (we currently track the standard .env file)
 .env.local
 
-# generated storybook head files (created by generate-storybook-head.js)
-apps/storybook-react/.storybook/manager-head.html
-apps/storybook-react/.storybook/preview-head.html
-
 # compiled output
 dist
 tmp
@@ -71,8 +67,6 @@ cache/
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
-
-apps/betterangels-e2e/artifacts
 
 # iOS build files
 apps/betterangels/ios/
