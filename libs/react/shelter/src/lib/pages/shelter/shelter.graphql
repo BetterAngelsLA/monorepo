@@ -117,5 +117,6 @@ query ViewShelter($id: ID!) {
     storage {
       name
     }
+    updatedAt
   }
 }

@@ -66,6 +66,7 @@ class AccessibilityChoices(models.TextChoices):
 
 @strawberry.enum
 class StorageChoices(models.TextChoices):
+    UNIT_STORAGE = "unit_storage", _("Unit-level Storage")
     AMNESTY_LOCKERS = "amnesty_lockers", _("Amnesty Lockers")
     STANDARD_LOCKERS = "standard_lockers", _("Standard Lockers")
     SHARED_STORAGE = "shared_storage", _("Shared Storage")
@@ -89,6 +90,7 @@ class ParkingChoices(models.TextChoices):
     MOTORCYCLE = "motorcycle", _("Motorcycle")
     AUTOMOBILE = "automobile", _("Automobile")
     RV = "rv", _("RV")
+    STREET = "street", _("Street Parking")
     NO_PARKING = "no_parking", _("No Parking")
 
 

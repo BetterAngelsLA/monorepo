@@ -92,6 +92,7 @@ export const enumDisplayStorageChoices: { [key in StorageChoices]: string } = {
   [StorageChoices.NoStorage]: 'No Storage',
   [StorageChoices.SharedStorage]: 'Shared Storage',
   [StorageChoices.StandardLockers]: 'Standard Lockers',
+  [StorageChoices.UnitStorage]: 'Unit-level Storage',
 };
 
 export const enumDisplayPetChoices: { [key in PetChoices]: string } = {
@@ -110,6 +111,7 @@ export const enumDisplayParkingChoices: { [key in ParkingChoices]: string } = {
   [ParkingChoices.Motorcycle]: 'Motorcycle',
   [ParkingChoices.NoParking]: 'No Parking',
   [ParkingChoices.Rv]: 'RV',
+  [ParkingChoices.Street]: 'Street Parking',
 };
 
 export const enumDisplaySpaChoices: { [key in SpaChoices]: string } = {
