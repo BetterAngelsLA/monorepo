@@ -156,3 +156,20 @@ class CreateRoomInput:
     amenities: Optional[str] = None
     medical_respite: Optional[bool] = False
     last_cleaned_inspected: Optional[datetime] = None
+
+
+@strawberry.input
+class ReservationClientInput:
+    client_profile_id: ID
+    is_primary: bool = False
+
+
+@strawberry.input
+class CreateReservationInput:
+    shelter_id: ID
+    clients: List[ReservationClientInput]
+    bed_id: Optional[ID] = None
+    room_id: Optional[ID] = None
+    start_date: Optional[date] = None
+    duration: Optional[int] = None
+    notes: Optional[str] = None

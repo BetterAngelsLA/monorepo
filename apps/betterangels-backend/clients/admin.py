@@ -168,6 +168,7 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
         "id",
         "email",
         "dob",
+        "status",
         "display_gender",
         "display_pronouns",
         "race",
@@ -314,6 +315,7 @@ class SocialMediaProfileAdmin(admin.ModelAdmin):
         "client_name",
         "platform",
         "platform_user_id",
+        "platform_user_id_other",
     )
     search_fields = (
         "client_profile__first_name",

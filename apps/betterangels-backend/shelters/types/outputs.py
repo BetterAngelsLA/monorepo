@@ -15,6 +15,7 @@ from shelters.enums import (
     BedStatusChoices,
     BedTypeChoices,
     MedicalNeedChoices,
+    ReservationStatusChoices,
     RoomStatusChoices,
     RoomStyleChoices,
 )
@@ -205,3 +206,26 @@ class RoomType:
     amenities: auto
     medical_respite: auto
     last_cleaned_inspected: auto
+
+
+@strawberry_django.type(models.ReservationClient)
+class ReservationClientType:
+    id: ID
+    client_profile_id: ID
+    is_primary: bool
+
+
+@strawberry_django.type(models.Reservation)
+class ReservationType:
+    id: ID
+    shelter: "ShelterType"
+    room: Optional[RoomType]
+    bed: Optional[BedType]
+    status: Optional[ReservationStatusChoices]
+    start_date: auto
+    duration: auto
+    notes: auto
+    created_by_id: Optional[ID]
+    checked_in_at: auto
+    checked_out_at: auto
+    reservation_clients: List[ReservationClientType]

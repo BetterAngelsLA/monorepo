@@ -23,8 +23,8 @@ class Migration(migrations.Migration):
             field=django_choices_field.fields.TextChoicesField(
                 choices=[("male", "Male"), ("female", "Female"), ("nonbinary", "Non-binary")],
                 choices_enum=clients.enums.GenderEnum,
-                default="female",
-                max_length=9,
+                default="cis_female",
+                max_length=17,
             ),
             preserve_default=False,
         ),

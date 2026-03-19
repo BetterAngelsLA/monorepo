@@ -59,7 +59,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         household_member = {
             "name": "Daffodil",
             "dateOfBirth": "1900-01-01",
-            "gender": GenderEnum.FEMALE.name,
+            "gender": GenderEnum.CIS_FEMALE.name,
             "genderOther": None,
             "relationshipToClient": RelationshipTypeEnum.OTHER.name,
             "relationshipToClientOther": "cartoon friend",
@@ -115,24 +115,48 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         expected_contacts = [{"id": ANY, "updatedAt": ANY, **contact}]
         expected_hmis_profiles = [{"id": ANY, **hmis_profile}]
-        expected_household_members = [{"id": ANY, "displayGender": "Female", **household_member}]
+        expected_household_members = [{"id": ANY, "displayGender": "Cis Female", **household_member}]
         expected_phone_numbers = [{"id": ANY, **phone_number}]
         expected_social_media_profiles = [{"id": ANY, **social_media_profile}]
         expected_client_profile = {
             **variables,
             "id": ANY,
+            "adlCapacity": None,
             "age": self.EXPECTED_CLIENT_AGE,
             "contacts": expected_contacts,
+            "criminalHistory": None,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
+            "destination": None,
+            "destinationOther": None,
             "displayCaseManager": "Not Assigned",
             "displayGender": "genderqueer",
             "displayPronouns": "She/Her",
+            "fundingSource": None,
+            "fundingSourceOther": None,
+            "harmReduction": None,
             "hmisProfiles": expected_hmis_profiles,
+            "homelessnessNotes": None,
             "householdMembers": expected_household_members,
+            "incomeAnnual": None,
+            "incomeSource": None,
+            "justiceInvolvementDetails": None,
+            "medicalNeeds": None,
+            "medicalNotes": None,
+            "pets": None,
+            "petsOther": None,
             "phoneNumbers": expected_phone_numbers,
             "profilePhoto": None,
+            "requiresTransportation": None,
+            "sexualOrientation": None,
+            "sexualOrientationOther": None,
             "socialMediaProfiles": expected_social_media_profiles,
+            "socialSecurityNumber": None,
+            "spa": None,
+            "status": "RESERVED",
             "veteranStatus": VeteranStatusEnum.YES.name,
+            "docReadyDocuments": [],
+            "consentFormDocuments": [],
+            "otherDocuments": [],
         }
         client_differences = DeepDiff(
             expected_client_profile,
@@ -202,7 +226,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "email": "firstey_lastey@example.com",
             "eyeColor": EyeColorEnum.GRAY.name,
             "firstName": "Firstey",
-            "gender": GenderEnum.FEMALE.name,
+            "gender": GenderEnum.CIS_FEMALE.name,
             "genderOther": None,
             "hairColor": HairColorEnum.GRAY.name,
             "heightInInches": 71.75,
@@ -241,13 +265,40 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         expected_client_profile = {
             **variables,
+            "adlCapacity": None,
             "age": self.EXPECTED_CLIENT_AGE,
+            "criminalHistory": None,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
+            "destination": None,
+            "destinationOther": None,
             "displayCaseManager": "Not Assigned",
-            "displayGender": "Female",
+            "displayGender": "Cis Female",
             "displayPronouns": "she/her/theirs",
+            "fundingSource": None,
+            "fundingSourceOther": None,
+            "harmReduction": None,
+            "homelessnessNotes": None,
+            "incomeAnnual": None,
+            "incomeSource": None,
+            "justiceInvolvementDetails": None,
+            "medicalNeeds": None,
+            "medicalNotes": None,
+            "pets": None,
+            "petsOther": None,
             "profilePhoto": {"url": self.client_profile_1_photo_url},
+            "requiresTransportation": None,
+            "sexualOrientation": None,
+            "sexualOrientationOther": None,
+            "socialSecurityNumber": "123-45-6789",
+            "spa": None,
+            "status": "RESERVED",
             "veteranStatus": VeteranStatusEnum.YES.name,
+            "docReadyDocuments": [
+                {"id": self.client_profile_1_document_1["id"]},
+                {"id": self.client_profile_1_document_2["id"]},
+            ],
+            "consentFormDocuments": [{"id": self.client_profile_1_document_3["id"]}],
+            "otherDocuments": [{"id": self.client_profile_1_document_4["id"]}],
         }
         client_differences = DeepDiff(
             expected_client_profile,
@@ -370,8 +421,14 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(client_profile_2.phone_numbers.count(), 1)
 
     def test_partial_update_client_profile_mutation(self) -> None:
-        # Manually update profile photo because it's created after the client profile fixture.
+        # Manually update fields created after the client profile fixture.
         self.client_profile_1["profilePhoto"] = {"url": self.client_profile_1_photo_url}
+        self.client_profile_1["docReadyDocuments"] = [
+            {"id": self.client_profile_1_document_1["id"]},
+            {"id": self.client_profile_1_document_2["id"]},
+        ]
+        self.client_profile_1["consentFormDocuments"] = [{"id": self.client_profile_1_document_3["id"]}]
+        self.client_profile_1["otherDocuments"] = [{"id": self.client_profile_1_document_4["id"]}]
 
         variables = {"id": self.client_profile_1["id"]}
         response = self._update_client_profile_fixture(variables)
@@ -601,7 +658,7 @@ class ClientHouseholdMemberMutationTestCase(ClientHouseholdMemberBaseTestCase):
             "clientProfile": self.client_profile_id,
             "name": "Sam Smith",
             "dateOfBirth": "2003-03-03",
-            "gender": GenderEnum.FEMALE.name,
+            "gender": GenderEnum.CIS_FEMALE.name,
             "genderOther": None,
             "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
             "relationshipToClientOther": None,
@@ -613,7 +670,7 @@ class ClientHouseholdMemberMutationTestCase(ClientHouseholdMemberBaseTestCase):
                 "createClientHouseholdMember"
             ]
 
-        expected_client_household_member = {"id": ANY, "displayGender": "Female", **variables}
+        expected_client_household_member = {"id": ANY, "displayGender": "Cis Female", **variables}
         expected_client_household_member.pop("clientProfile")
 
         self.assertEqual(client_household_member, expected_client_household_member)

@@ -11,12 +11,19 @@ Raises ``django.core.exceptions.ValidationError`` on invalid data — callers
 
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from django.core.exceptions import ObjectDoesNotExist
+from clients.enums import ClientStatusEnum
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models, transaction
 from organizations.models import Organization
 from places import Places
-from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
-from shelters.models import Bed, Room, Schedule, Shelter
+from shelters.enums import (
+    BedStatusChoices,
+    ConditionChoices,
+    DayOfWeekChoices,
+    RoomStatusChoices,
+    ScheduleTypeChoices,
+)
+from shelters.models import Bed, Reservation, ReservationClient, Room, Schedule, Shelter
 from shelters.selectors import shelter_get
 
 if TYPE_CHECKING:
@@ -239,3 +246,108 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
     room.full_clean()
     room.save()
     return room
+
+
+@transaction.atomic
+def reservation_create(*, user: "User", data: Dict[str, Any]) -> Reservation:
+    """Create a Reservation with client associations and status updates.
+
+    Atomically:
+    1. Creates the Reservation record
+    2. Creates ReservationClient junction records
+    3. Updates bed status to RESERVED (if bed provided)
+    4. Updates room status to RESERVED (if room provided)
+    5. Updates each client's status to RESERVED
+
+    Raises:
+        ``ObjectDoesNotExist`` when the shelter, bed, room, or clients
+        are not found, or user lacks org access.
+        ``django.core.exceptions.ValidationError`` on invalid data.
+    """
+    from clients.models import ClientProfile
+
+    data = dict(data)
+    shelter_id = data.pop("shelter_id")
+    client_entries: List[Dict[str, Any]] = data.pop("clients")
+    if not client_entries:
+        raise ValidationError("At least one client must be provided.")
+    bed_id = data.pop("bed_id", None)
+    room_id = data.pop("room_id", None)
+
+    try:
+        shelter = shelter_get(user=user, shelter_id=shelter_id)
+    except Shelter.DoesNotExist:
+        raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
+
+    if not bed_id and not room_id:
+        raise ValidationError("At least one of bed or room must be provided.")
+
+    bed = None
+    if bed_id:
+        try:
+            bed = Bed.objects.select_for_update().get(pk=bed_id, shelter=shelter)
+        except Bed.DoesNotExist:
+            raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found in this shelter.")
+        if bed.status == BedStatusChoices.RESERVED:
+            raise ValidationError(f"Bed matching ID {bed_id} is already reserved.")
+
+    room = None
+    if room_id:
+        try:
+            room = Room.objects.select_for_update().get(pk=room_id, shelter=shelter)
+        except Room.DoesNotExist:
+            raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found in this shelter.")
+        if room.status == RoomStatusChoices.RESERVED:
+            raise ValidationError(f"Room matching ID {room_id} is already reserved.")
+
+    # Validate client entries before any writes
+    client_profile_ids = [entry["client_profile_id"] for entry in client_entries]
+    if len(client_profile_ids) != len(set(client_profile_ids)):
+        raise ValidationError("Duplicate client profiles are not allowed in a single reservation.")
+
+    primary_count = sum(1 for entry in client_entries if entry.get("is_primary", False))
+    if primary_count > 1:
+        raise ValidationError("Only one client can be marked as primary per reservation.")
+
+    client_profiles = ClientProfile.objects.filter(pk__in=client_profile_ids)
+    if client_profiles.count() != len(client_profile_ids):
+        raise ObjectDoesNotExist("One or more client profiles could not be found.")
+
+    # Drop None values so model defaults apply
+    scalar_data = {k: v for k, v in data.items() if v is not None}
+
+    reservation = Reservation(
+        shelter=shelter,
+        bed=bed,
+        room=room,
+        created_by=user,
+        **scalar_data,
+    )
+    reservation.full_clean()
+    reservation.save()
+
+    ReservationClient.objects.bulk_create(
+        [
+            ReservationClient(
+                reservation=reservation,
+                client_profile_id=entry["client_profile_id"],
+                is_primary=entry.get("is_primary", False),
+            )
+            for entry in client_entries
+        ]
+    )
+
+    # Update bed status to RESERVED
+    if bed:
+        bed.status = BedStatusChoices.RESERVED
+        bed.save(update_fields=["status"])
+
+    # Update room status to RESERVED
+    if room:
+        room.status = RoomStatusChoices.RESERVED
+        room.save(update_fields=["status"])
+
+    # Update each client's status to RESERVED
+    client_profiles.update(status=ClientStatusEnum.RESERVED)
+
+    return reservation

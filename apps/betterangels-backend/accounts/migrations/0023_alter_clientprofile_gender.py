@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 choices=[("male", "Male"), ("female", "Female"), ("other", "Other")],
                 choices_enum=clients.enums.GenderEnum,
-                max_length=6,
+                max_length=17,
                 null=True,
             ),
         ),
