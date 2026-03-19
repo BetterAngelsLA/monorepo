@@ -65,6 +65,14 @@ def main() -> None:
             hero_image_object_id=None,
         )
 
+        # Give ~15% of shelters a long unbroken name to exercise the
+        # break-all CSS safeguard in ShelterCard.
+        long_name = "VeryLongShelterName" * 25  # ~475 chars, no spaces
+        for shelter in shelters:
+            if random.random() < 0.15:
+                shelter.name = long_name
+                shelter.save(update_fields=["name"])
+
         image_path = Path(__file__).with_name("shelter_seed_image.png")
         with image_path.open("rb") as image_file:
             django_file = File(image_file)
