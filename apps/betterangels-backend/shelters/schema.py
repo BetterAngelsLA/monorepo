@@ -5,14 +5,26 @@ import strawberry_django
 from accounts.models import User
 from common.graphql.utils import strip_unset
 from common.permissions.utils import IsAuthenticated
-from shelters.permissions import BedPermissions, RoomPermissions, ShelterPermissions
-from shelters.services import bed_create, room_create, shelter_create
+from shelters.permissions import (
+    BedPermissions,
+    ReservationPermissions,
+    RoomPermissions,
+    ShelterPermissions,
+)
+from shelters.services import (
+    bed_create,
+    reservation_create,
+    room_create,
+    shelter_create,
+)
 from shelters.types import (
     AdminShelterType,
     BedType,
     CreateBedInput,
+    CreateReservationInput,
     CreateRoomInput,
     CreateShelterInput,
+    ReservationType,
     RoomType,
     ShelterType,
 )
@@ -31,6 +43,10 @@ class Query:
 
     shelter: ShelterType = strawberry_django.field()
     shelters: OffsetPaginated[ShelterType] = strawberry_django.offset_paginated()
+    reservations: OffsetPaginated[ReservationType] = strawberry_django.offset_paginated(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(ReservationPermissions.VIEW)],
+    )
 
 
 @strawberry.type
@@ -52,3 +68,9 @@ class Mutation:
         user = cast(User, get_current_user(info))
         clean = strip_unset(strawberry.asdict(data))
         return cast(RoomType, room_create(user=user, data=clean))
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(ReservationPermissions.ADD)])
+    def create_reservation(self, info: Info, data: CreateReservationInput) -> ReservationType:
+        user = cast(User, get_current_user(info))
+        clean = strip_unset(strawberry.asdict(data))
+        return cast(ReservationType, reservation_create(user=user, data=clean))

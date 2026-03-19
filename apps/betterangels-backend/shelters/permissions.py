@@ -16,6 +16,13 @@ class BedPermissions(models.TextChoices):
     VIEW = "shelters.view_bed", _("Can view bed")
 
 
+class ReservationPermissions(models.TextChoices):
+    ADD = "shelters.add_reservation", _("Can add reservation")
+    CHANGE = "shelters.change_reservation", _("Can change reservation")
+    DELETE = "shelters.delete_reservation", _("Can delete reservation")
+    VIEW = "shelters.view_reservation", _("Can view reservation")
+
+
 class RoomPermissions(models.TextChoices):
     ADD = "shelters.add_room", _("Can add room")
     CHANGE = "shelters.change_room", _("Can change room")
