@@ -678,9 +678,7 @@ class ReservationMutationTestCase(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
         reservation_content_type = ContentType.objects.get_for_model(Reservation)
-        add_reservation_perm = Permission.objects.get(
-            content_type=reservation_content_type, codename="add_reservation"
-        )
+        add_reservation_perm = Permission.objects.get(content_type=reservation_content_type, codename="add_reservation")
         self.org_1_case_manager_1.user_permissions.add(add_reservation_perm)
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
