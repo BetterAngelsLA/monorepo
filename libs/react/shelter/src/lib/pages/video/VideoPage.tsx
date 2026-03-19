@@ -15,6 +15,8 @@ export function VideoPage() {
             className="absolute inset-0 w-full h-full rounded-lg"
             src={SHELTER_VIDEO_EMBED_URL}
             title="Shelter Directory Video Overview"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
             allow="autoplay"
             allowFullScreen
           />
