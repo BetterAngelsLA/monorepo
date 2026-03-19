@@ -1,12 +1,12 @@
 import { UserOutlineIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  Panel,
+  PressablePanel,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { ClientProfilesQuery } from '../../ClientProfileList/__generated__/ClientProfiles.generated';
+import { ClientProfilesQuery } from '../ClientProfileList/__generated__/ClientProfiles.generated';
 
 interface IClientSummaryIdentityProps {
   client: ClientProfilesQuery['clientProfiles']['results'][number];
@@ -36,10 +36,10 @@ export default function ClientSummaryIdentity(
           IDENTITY
         </TextBold>
       </View>
-      <Panel style={{ padding: Spacings.sm }}>
+      <PressablePanel style={{ padding: Spacings.sm }}>
         <TextRegular size="xs">Physical Description</TextRegular>
         <TextBold size="sm">{client.physicalDescription}</TextBold>
-      </Panel>
+      </PressablePanel>
     </View>
   );
 }

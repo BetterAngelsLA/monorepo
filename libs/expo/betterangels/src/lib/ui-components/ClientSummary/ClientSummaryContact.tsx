@@ -4,14 +4,14 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  Panel,
+  PressablePanel,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
 import { Linking, View } from 'react-native';
-import { RelationshipTypeEnum } from '../../../apollo';
-import { ClientProfilesQuery } from '../../ClientProfileList/__generated__/ClientProfiles.generated';
+import { RelationshipTypeEnum } from '../../apollo';
+import { ClientProfilesQuery } from '../ClientProfileList/__generated__/ClientProfiles.generated';
 
 interface IClientSummaryContactProps {
   client: ClientProfilesQuery['clientProfiles']['results'][number];
@@ -33,6 +33,12 @@ export default function ClientSummaryContact(
   const formattedNumber =
     primaryCCM?.phoneNumber && formatPhoneNumber(primaryCCM?.phoneNumber);
 
+  const [phoneNumber, extension] = formattedNumber || [];
+
+  const phoneNumberUrl = extension
+    ? `${phoneNumber},${extension}`
+    : phoneNumber;
+
   return (
     <View>
       <View
@@ -48,11 +54,9 @@ export default function ClientSummaryContact(
           CONTACT INFO
         </TextBold>
       </View>
-      <Panel
-        onPress={() =>
-          primaryCCM?.phoneNumber &&
-          Linking.openURL(`tel:${primaryCCM.phoneNumber}`)
-        }
+      <PressablePanel
+        onPress={() => Linking.openURL(`tel:${phoneNumberUrl}`)}
+        disabled={!phoneNumber}
         style={{ padding: Spacings.sm }}
       >
         <View
@@ -71,17 +75,15 @@ export default function ClientSummaryContact(
             <TextRegular size="xs">
               Case Manager: {primaryCCM?.name || 'N/A'}
             </TextRegular>
-            {formattedNumber && (
+            {phoneNumber && (
               <TextBold textDecorationLine="underline" size="sm">
-                {formattedNumber}
+                {phoneNumber}
               </TextBold>
             )}
           </View>
-          {formattedNumber && (
-            <ExternalLinkOutlinedIcon color={Colors.PRIMARY} />
-          )}
+          {phoneNumber && <ExternalLinkOutlinedIcon color={Colors.PRIMARY} />}
         </View>
-      </Panel>
+      </PressablePanel>
     </View>
   );
 }

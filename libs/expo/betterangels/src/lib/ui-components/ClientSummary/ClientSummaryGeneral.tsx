@@ -1,4 +1,4 @@
-import { useInfiniteScrollQuery } from '@monorepo/apollo';
+import { useQuery } from '@apollo/client/react';
 import {
   CakeIcon,
   CallOutlinedIcon,
@@ -9,7 +9,8 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  Panel,
+  PressablePanel,
+  PressablePanelContainer,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -17,89 +18,15 @@ import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
 import { format } from 'date-fns';
 import { router } from 'expo-router';
 import { Linking, View } from 'react-native';
-import { TaskStatusEnum, TaskType } from '../../../apollo';
-import { ClientViewTabEnum } from '../../../screens/Client/ClientTabs';
-import { enumLanguageCode } from '../../../static';
-import { ClientProfilesQuery } from '../../ClientProfileList/__generated__/ClientProfiles.generated';
-import {
-  TasksDocument,
-  TasksQuery,
-  TasksQueryVariables,
-} from '../../TaskList/__generated__/Tasks.generated';
+import { TaskStatusEnum } from '../../apollo';
+import { ClientViewTabEnum } from '../../screens/Client/ClientTabs';
+import { enumLanguageCode } from '../../static';
+import { ClientProfilesQuery } from '../ClientProfileList/__generated__/ClientProfiles.generated';
+import { TasksDocument } from '../TaskList/__generated__/Tasks.generated';
 
 interface IClientSummaryGeneralProps {
   client: ClientProfilesQuery['clientProfiles']['results'][number];
   arrivedFrom?: string;
-}
-
-type TPanelContainerProps = {
-  title: string | number;
-  subtitle: string;
-  icon: React.ReactNode;
-  actionIcon?: React.ReactNode;
-  variant?: 'default' | 'warning' | 'error' | 'primary';
-  flex?: number;
-  onPress?: () => void;
-};
-
-function PanelContainer({
-  onPress,
-  title,
-  subtitle,
-  icon,
-  actionIcon,
-  variant = 'primary',
-  flex = 1,
-}: TPanelContainerProps) {
-  return (
-    <Panel
-      onPress={onPress}
-      variant={variant}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: Spacings.xs,
-        flex,
-      }}
-    >
-      <View
-        style={{ flexDirection: 'row', alignItems: 'center', gap: Spacings.xs }}
-      >
-        <View
-          style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor:
-              variant === 'primary'
-                ? Colors.PRIMARY_EXTRA_LIGHT
-                : variant === 'warning'
-                ? Colors.WARNING_LIGHT
-                : Colors.ERROR_EXTRA_LIGHT,
-            height: 30,
-            width: 30,
-            borderRadius: 100,
-          }}
-        >
-          {icon}
-        </View>
-        <View>
-          <TextBold
-            color={
-              variant === 'primary' ? Colors.PRIMARY_DARK : Colors.WARNING_DARK
-            }
-            size="xs"
-          >
-            {subtitle}
-          </TextBold>
-          <TextBold color={Colors.NEUTRAL_EXTRA_DARK} size="sm">
-            {title}
-          </TextBold>
-        </View>
-      </View>
-      {actionIcon}
-    </Panel>
-  );
 }
 
 export default function ClientSummaryGeneral(
@@ -107,20 +34,18 @@ export default function ClientSummaryGeneral(
 ) {
   const { client, arrivedFrom } = props;
 
-  const { total, loading } = useInfiniteScrollQuery<
-    TaskType,
-    TasksQuery,
-    TasksQueryVariables
-  >({
-    document: TasksDocument,
-    queryFieldName: 'tasks',
+  const { data, loading } = useQuery(TasksDocument, {
     variables: {
       filters: {
         clientProfile: client.id,
         status: [TaskStatusEnum.InProgress, TaskStatusEnum.ToDo],
       },
+      pagination: {
+        offset: 0,
+        limit: 0,
+      },
     },
-    pageSize: 0,
+    notifyOnNetworkStatusChange: true,
   });
   const primaryPhoneNumber = client.phoneNumbers?.find(
     (item) => item.isPrimary
@@ -128,6 +53,14 @@ export default function ClientSummaryGeneral(
 
   const formattedNumber =
     primaryPhoneNumber && formatPhoneNumber(primaryPhoneNumber);
+
+  const [phoneNumber, extension] = primaryPhoneNumber || [];
+
+  const phoneNumberUrl = extension
+    ? `${phoneNumber},${extension}`
+    : phoneNumber;
+
+  const total = data?.tasks.totalCount || 0;
 
   return (
     <View style={{ gap: Spacings.xs }}>
@@ -138,7 +71,7 @@ export default function ClientSummaryGeneral(
           flex: 1,
         }}
       >
-        <PanelContainer
+        <PressablePanelContainer
           flex={3}
           title={
             client.dateOfBirth
@@ -148,7 +81,7 @@ export default function ClientSummaryGeneral(
           subtitle="DOB"
           icon={<CakeIcon color={Colors.PRIMARY} />}
         />
-        <PanelContainer
+        <PressablePanelContainer
           flex={2}
           title={
             client.preferredLanguage
@@ -160,10 +93,9 @@ export default function ClientSummaryGeneral(
         />
       </View>
       <View style={{ flexDirection: 'row', gap: Spacings.xs }}>
-        <PanelContainer
-          onPress={() =>
-            primaryPhoneNumber && Linking.openURL(`tel:${primaryPhoneNumber}`)
-          }
+        <PressablePanelContainer
+          onPress={() => Linking.openURL(`tel:${phoneNumberUrl}`)}
+          disabled={!phoneNumberUrl}
           flex={3}
           title={formattedNumber || 'N/A'}
           subtitle="CONTACT"
@@ -174,14 +106,14 @@ export default function ClientSummaryGeneral(
             )
           }
         />
-        <PanelContainer
+        <PressablePanelContainer
           onPress={() =>
-            total > 0 &&
             router.navigate({
               pathname: `/client/${client.id}`,
               params: { newTab: ClientViewTabEnum.Tasks, arrivedFrom },
             })
           }
+          disabled={!total}
           flex={2}
           title={loading ? '' : total.toString() || '0'}
           subtitle="TASKS"
@@ -195,7 +127,7 @@ export default function ClientSummaryGeneral(
         />
       </View>
       {client.importantNotes && (
-        <Panel style={{ marginTop: Spacings.sm }} variant="error">
+        <PressablePanel style={{ marginTop: Spacings.sm }} variant="error">
           <View
             style={{
               flexDirection: 'row',
@@ -223,7 +155,7 @@ export default function ClientSummaryGeneral(
           <TextRegular color={Colors.ERROR_DARK}>
             {client.importantNotes}
           </TextRegular>
-        </Panel>
+        </PressablePanel>
       )}
     </View>
   );

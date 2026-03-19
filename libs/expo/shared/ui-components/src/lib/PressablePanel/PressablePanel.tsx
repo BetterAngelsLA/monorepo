@@ -9,15 +9,19 @@ import {
   ViewStyle,
 } from 'react-native';
 
-export type TPanelVariant = 'default' | 'warning' | 'error' | 'primary';
+export type TPressablePanelVariant =
+  | 'default'
+  | 'warning'
+  | 'error'
+  | 'primary';
 
-interface IPanelProps extends PressableProps {
+interface IPressablePanelProps extends PressableProps {
   children?: ReactNode;
-  variant?: TPanelVariant;
+  variant?: TPressablePanelVariant;
 }
 
 const VARIANTS: Record<
-  TPanelVariant,
+  TPressablePanelVariant,
   { backgroundColor: string; borderColor: string }
 > = {
   default: {
@@ -39,12 +43,13 @@ const VARIANTS: Record<
   },
 };
 
-export function Panel({
+export function PressablePanel({
   children,
   variant = 'default',
+  accessibilityRole = 'button',
   style,
   ...rest
-}: IPanelProps) {
+}: IPressablePanelProps) {
   const panelStyle = (
     state: PressableStateCallbackType
   ): StyleProp<ViewStyle> => [
@@ -54,7 +59,11 @@ export function Panel({
   ];
 
   return (
-    <Pressable accessibilityRole="button" style={panelStyle} {...rest}>
+    <Pressable
+      accessibilityRole={accessibilityRole}
+      style={panelStyle}
+      {...rest}
+    >
       {children}
     </Pressable>
   );

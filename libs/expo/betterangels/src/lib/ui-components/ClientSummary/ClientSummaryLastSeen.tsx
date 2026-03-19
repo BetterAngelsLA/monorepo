@@ -1,4 +1,4 @@
-import { useInfiniteScrollQuery } from '@monorepo/apollo';
+import { useQuery } from '@apollo/client/react';
 import {
   ClockIcon,
   LocationDotIcon,
@@ -8,14 +8,10 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format, formatDistanceToNow, isToday } from 'date-fns';
 import { StyleSheet, View } from 'react-native';
-import { NoteType, Ordering } from '../../../apollo';
-import { MapView, Marker, PROVIDER_GOOGLE } from '../../../maps';
-import { ClientProfilesQuery } from '../../ClientProfileList/__generated__/ClientProfiles.generated';
-import {
-  InteractionsDocument,
-  InteractionsQuery,
-  InteractionsQueryVariables,
-} from '../../InteractionList/__generated__/Interactions.generated';
+import { Ordering } from '../../apollo';
+import { MapView, Marker, PROVIDER_GOOGLE } from '../../maps';
+import { ClientProfilesQuery } from '../ClientProfileList/__generated__/ClientProfiles.generated';
+import { InteractionsDocument } from '../InteractionList';
 
 interface IClientSummaryLastSeenProps {
   client: ClientProfilesQuery['clientProfiles']['results'][number];
@@ -37,24 +33,23 @@ export default function ClientSummaryLastSeen(
   props: IClientSummaryLastSeenProps
 ) {
   const { client } = props;
-  const { items, loading } = useInfiniteScrollQuery<
-    NoteType,
-    InteractionsQuery,
-    InteractionsQueryVariables
-  >({
-    document: InteractionsDocument,
-    queryFieldName: 'notes',
+
+  const { data, loading } = useQuery(InteractionsDocument, {
     variables: {
       filters: { clientProfile: client.id },
       ordering: [{ interactedAt: Ordering.Desc }, { id: Ordering.Desc }],
+      pagination: {
+        offset: 0,
+        limit: 1,
+      },
     },
-    pageSize: 1,
+    fetchPolicy: 'cache-first',
   });
 
   if (loading) {
     return null;
   }
-  const note = items?.[0];
+  const note = data?.notes.results[0];
   const lastSeenLocation = note?.location;
 
   if (!lastSeenLocation) {

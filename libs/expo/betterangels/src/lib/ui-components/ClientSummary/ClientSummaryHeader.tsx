@@ -5,7 +5,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { ClientProfilesQuery } from '../../ClientProfileList/__generated__/ClientProfiles.generated';
+import { ClientProfilesQuery } from '../ClientProfileList/__generated__/ClientProfiles.generated';
 
 interface IClientSummaryHeaderProps {
   client: ClientProfilesQuery['clientProfiles']['results'][number];
@@ -39,7 +39,7 @@ export default function ClientSummaryHeader(props: IClientSummaryHeaderProps) {
       )}
 
       <TextRegular size="sm" mb="xs" color={Colors.NEUTRAL_DARK}>
-        HMIS ID: {client.hmisProfiles?.[0]?.id || 'N/A'}
+        HMIS ID: {client.hmisProfiles?.[0]?.hmisId || 'N/A'}
       </TextRegular>
     </View>
   );

@@ -9,8 +9,8 @@ import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useModalScreen } from '../../providers';
 import { ClientProfilesQuery } from '../ClientProfileList/__generated__/ClientProfiles.generated';
+import { ClientSummary } from '../ClientSummary';
 import { ClientCardBase } from './ClientCardBase';
-import { ClientSummary } from './ClientSummary';
 
 type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
 
@@ -64,13 +64,7 @@ function ClientCardRaw(props: IClientCardProps) {
   );
 }
 
-export const ClientCard = memo(ClientCardRaw, (prev, next) => {
-  return (
-    prev.client?.id === next.client?.id &&
-    prev.type === next.type &&
-    prev.onMenuPress === next.onMenuPress
-  );
-});
+export const ClientCard = memo(ClientCardRaw);
 
 const styles = StyleSheet.create({
   container: {

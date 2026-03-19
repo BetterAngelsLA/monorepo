@@ -64,7 +64,6 @@ export { default as MapClusterMarker } from './MapClusterMarker';
 export * from './MediaPicker';
 export { BaseModal } from './Modal';
 export { default as MultiSelect, MultiSelect_V2 } from './MultiSelect';
-export { default as Panel } from './Panel';
 export { default as PdfViewer } from './PdfViewer';
 export { default as PhoneNumberBtn } from './PhoneNumberBtn';
 export * from './PhoneNumberInput';
@@ -75,6 +74,8 @@ export {
   PreferrredCommunicationIcon,
   TPreferredCommunication,
 } from './PreferrredCommunicationIcon';
+export { default as PressablePanel } from './PressablePanel';
+export { default as PressablePanelContainer } from './PressablePanelContainer';
 export {
   GooglePlacesProvider,
   useGooglePlaces,
