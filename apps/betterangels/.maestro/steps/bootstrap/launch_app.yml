@@ -1,5 +1,9 @@
 appId: ${MAESTRO_APP_ID}
 ---
+# Launches the app via Expo deep link.
+# Handles the "Reload" overlay that can appear on first launch
+# by killing and re-opening the app (up to 10 attempts).
+
 - openLink: ${MAESTRO_DEEPLINK}
 
 # Skip the loop entirely if already authorized (e.g. subsequent tests)

@@ -1,5 +1,11 @@
 appId: ${MAESTRO_APP_ID}
 ---
+# for a succesfull `login` flow, the following are required:
+#   1. user exists in the database
+#   2. user has first and last name
+#   3. user has accepted terms of service (hasAcceptedTos) and privacy policy (hasAcceptedPrivacyPolicy)
+#       - otherwise the flow will prompt other screens after login
+
 # If we landed on the landing page, open the login screen
 - runFlow:
     when:
