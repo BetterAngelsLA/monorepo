@@ -71,9 +71,6 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
             placeOfBirth
             preferredCommunication
             preferredLanguage
-            profilePhoto {
-                name
-            }
             pronouns
             pronounsOther
             race
