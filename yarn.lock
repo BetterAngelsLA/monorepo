@@ -6031,7 +6031,7 @@ __metadata:
     "@iarna/toml": "npm:^2.2.5"
     "@likashefqet/react-native-image-zoom": "npm:^4.2.1"
     "@nx-tools/container-metadata": "npm:^6.8.2"
-    "@nx-tools/nx-container": "npm:6.8.2"
+    "@nx-tools/nx-container": "npm:6.8.4"
     "@nx/devkit": "npm:22.3.3"
     "@nx/eslint": "npm:22.3.3"
     "@nx/eslint-plugin": "npm:22.3.3"
@@ -6066,6 +6066,7 @@ __metadata:
     "@swc/core": "npm:1.5.29"
     "@swc/helpers": "npm:0.5.12"
     "@tailwindcss/postcss": "npm:^4.2.1"
+    "@tailwindcss/vite": "npm:^4.2.1"
     "@tanstack/react-query": "npm:^5.64.2"
     "@teovilla/react-native-web-maps": "npm:^0.9.5"
     "@testing-library/dom": "npm:^10.4.0"
@@ -6108,6 +6109,7 @@ __metadata:
     embla-carousel-react: "npm:^8.6.0"
     eslint: "npm:8.57.0"
     eslint-config-prettier: "npm:10.1.1"
+    eslint-import-resolver-typescript: "npm:^4.4.4"
     eslint-plugin-import: "npm:2.31.0"
     eslint-plugin-jsx-a11y: "npm:6.10.1"
     eslint-plugin-playwright: "npm:^1.6.2"
@@ -6514,18 +6516,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nx-tools/ci-context@npm:6.8.2":
-  version: 6.8.2
-  resolution: "@nx-tools/ci-context@npm:6.8.2"
+"@nx-tools/ci-context@npm:6.8.4":
+  version: 6.8.4
+  resolution: "@nx-tools/ci-context@npm:6.8.4"
   dependencies:
     "@actions/github": "npm:^6.0.0"
-    "@nx-tools/core": "npm:6.8.2"
+    "@nx-tools/core": "npm:6.8.4"
     "@octokit/openapi-types": "npm:^22.0.0"
     ci-info: "npm:^4.0.0"
     properties-file: "npm:^3.5.4"
   peerDependencies:
     tslib: ^2.5.0
-  checksum: 10/1711ee8e1db383cf4ebd07ed2ba8c1ce512f399f955fdb2f72b7dc34d0430c81ae9d3fe2c9196ad4221ab29c401ae820ea1de04c9dbeb0ae775fe0a42fa7f118
+  checksum: 10/d0d9304cda011c4c62d7869f71ac9c5b32463e12e296674c4a74b3b0f947f38b2ca42cb081b621ae091d63c540c8e528cb65e50d5d624c9003234c96fee46d4e
   languageName: node
   linkType: hard
 
@@ -6544,12 +6546,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nx-tools/container-metadata@npm:6.8.2":
-  version: 6.8.2
-  resolution: "@nx-tools/container-metadata@npm:6.8.2"
+"@nx-tools/container-metadata@npm:6.8.4":
+  version: 6.8.4
+  resolution: "@nx-tools/container-metadata@npm:6.8.4"
   dependencies:
-    "@nx-tools/ci-context": "npm:6.8.2"
-    "@nx-tools/core": "npm:6.8.2"
+    "@nx-tools/ci-context": "npm:6.8.4"
+    "@nx-tools/core": "npm:6.8.4"
     "@renovate/pep440": "npm:1.0.0"
     csv-parse: "npm:^5.5.5"
     handlebars: "npm:^4.7.8"
@@ -6558,7 +6560,7 @@ __metadata:
   peerDependencies:
     "@nx/devkit": ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
     tslib: ^2.5.0
-  checksum: 10/4beb6702895be132c94747ecf8aec5abc55b647bd485a913efc9dc7f377fb3569a7f35b4d20e569fb5c9bc01c6c59e88f05655af4e967b1b274a0b2c2ed545fb
+  checksum: 10/10129424d2390876f3103fcaface15b4cbfd0794f2a5fc575c114ff00926a9723ee53558eecc0ecf81900296c921ae09afb776f78705b47f7bcae50203518f61
   languageName: node
   linkType: hard
 
@@ -6580,9 +6582,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nx-tools/core@npm:6.8.2":
-  version: 6.8.2
-  resolution: "@nx-tools/core@npm:6.8.2"
+"@nx-tools/core@npm:6.8.4":
+  version: 6.8.4
+  resolution: "@nx-tools/core@npm:6.8.4"
   dependencies:
     "@actions/exec": "npm:^1.1.1"
     "@actions/io": "npm:^1.1.3"
@@ -6592,7 +6594,7 @@ __metadata:
   peerDependencies:
     "@nx/devkit": ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
     tslib: ^2.5.0
-  checksum: 10/aed86517885366786974edf33d4de245fcb47b5f16054179a1b2d69852fabe5c87bcc562e89117e81d4f3d275e7e9023c742a3a2264904cd9065f2167876f31e
+  checksum: 10/9a60634aff9858ffc2d198f628c66841a014b5e40450dfa39a649a2a94f014312b77eb832258f1b691262317863e58824da7ac2369dcc5d3b9cd99d4f11c56ed
   languageName: node
   linkType: hard
 
@@ -6612,12 +6614,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nx-tools/nx-container@npm:6.8.2":
-  version: 6.8.2
-  resolution: "@nx-tools/nx-container@npm:6.8.2"
+"@nx-tools/nx-container@npm:6.8.4":
+  version: 6.8.4
+  resolution: "@nx-tools/nx-container@npm:6.8.4"
   dependencies:
-    "@nx-tools/container-metadata": "npm:6.8.2"
-    "@nx-tools/core": "npm:6.8.2"
+    "@nx-tools/container-metadata": "npm:6.8.4"
+    "@nx-tools/core": "npm:6.8.4"
     csv-parse: "npm:^5.5.5"
     handlebars: "npm:^4.7.8"
     semver: "npm:^7.6.0"
@@ -6628,7 +6630,7 @@ __metadata:
     dotenv: ">=16.0.0"
     nx: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
     tslib: ^2.5.0
-  checksum: 10/13b5654e3aa093d77967b88fd46ba6c7765434c2d5c5316d9d548b8c34bbf67bef54375bb05b390a9ab7483017750ab2299d753d24dc76411aa9e852b7e9e826
+  checksum: 10/8b6f3adc963c41b19c5006991eb2242aaa306cf50b74166992ae7b54a981848dab894f6f414e3df082d03e08c6b3f3130bfc7781753de94c1238e2e08c49f18a
   languageName: node
   linkType: hard
 
@@ -10235,6 +10237,19 @@ __metadata:
     postcss: "npm:^8.5.6"
     tailwindcss: "npm:4.2.1"
   checksum: 10/ae8bb5dff0912f7fb47a3e87e4ce504f85bb71f791fd18a5c4f5f86ef2de8bdd5564acc9cae336ff0cdf9219ea5f6e86adef193f67b4911a540edd8370f5bf90
+  languageName: node
+  linkType: hard
+
+"@tailwindcss/vite@npm:^4.2.1":
+  version: 4.2.1
+  resolution: "@tailwindcss/vite@npm:4.2.1"
+  dependencies:
+    "@tailwindcss/node": "npm:4.2.1"
+    "@tailwindcss/oxide": "npm:4.2.1"
+    tailwindcss: "npm:4.2.1"
+  peerDependencies:
+    vite: ^5.2.0 || ^6 || ^7
+  checksum: 10/c733bacd6d481acd6ed4ff995c09124da769548c48544b40901cce9fc55a95d72af4355501520bb24b138a0b5aa99aad155753a645aa20c0049e3a8606ef7a9f
   languageName: node
   linkType: hard
 
@@ -16626,6 +16641,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-import-context@npm:^0.1.8":
+  version: 0.1.9
+  resolution: "eslint-import-context@npm:0.1.9"
+  dependencies:
+    get-tsconfig: "npm:^4.10.1"
+    stable-hash-x: "npm:^0.2.0"
+  peerDependencies:
+    unrs-resolver: ^1.0.0
+  peerDependenciesMeta:
+    unrs-resolver:
+      optional: true
+  checksum: 10/f0778126bb3aae57c8c68946c71c4418927e9d39f72099b799d9c47a3b5712d6c9166b63ee8be58a020961dcc9216df09c856b825336af375ccbbdeedfc82a99
+  languageName: node
+  linkType: hard
+
 "eslint-import-resolver-node@npm:^0.3.9":
   version: 0.3.9
   resolution: "eslint-import-resolver-node@npm:0.3.9"
@@ -16634,6 +16664,30 @@ __metadata:
     is-core-module: "npm:^2.13.0"
     resolve: "npm:^1.22.4"
   checksum: 10/d52e08e1d96cf630957272e4f2644dcfb531e49dcfd1edd2e07e43369eb2ec7a7d4423d417beee613201206ff2efa4eb9a582b5825ee28802fc7c71fcd53ca83
+  languageName: node
+  linkType: hard
+
+"eslint-import-resolver-typescript@npm:^4.4.4":
+  version: 4.4.4
+  resolution: "eslint-import-resolver-typescript@npm:4.4.4"
+  dependencies:
+    debug: "npm:^4.4.1"
+    eslint-import-context: "npm:^0.1.8"
+    get-tsconfig: "npm:^4.10.1"
+    is-bun-module: "npm:^2.0.0"
+    stable-hash-x: "npm:^0.2.0"
+    tinyglobby: "npm:^0.2.14"
+    unrs-resolver: "npm:^1.7.11"
+  peerDependencies:
+    eslint: "*"
+    eslint-plugin-import: "*"
+    eslint-plugin-import-x: "*"
+  peerDependenciesMeta:
+    eslint-plugin-import:
+      optional: true
+    eslint-plugin-import-x:
+      optional: true
+  checksum: 10/4f871f6d1a04c55c2087c5ff1030f783a29abb59901b354d7ef58a0fc687d379dcbd08cf377cddeb7e19f26dd380d32d85ee4760e9410a059639d2b3df7d1ff3
   languageName: node
   linkType: hard
 
@@ -18476,6 +18530,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"get-tsconfig@npm:^4.10.1":
+  version: 4.13.6
+  resolution: "get-tsconfig@npm:4.13.6"
+  dependencies:
+    resolve-pkg-maps: "npm:^1.0.0"
+  checksum: 10/5cd1c1f273e9f1cd9f1ebeaaea281a3b7b71562fc9614ee0cf0575463b0435de68831354434a5a1a564e1049062d597d0dae8ef33f489a6d12afccee032f6784
+  languageName: node
+  linkType: hard
+
 "getenv@npm:^2.0.0":
   version: 2.0.0
   resolution: "getenv@npm:2.0.0"
@@ -19575,6 +19638,15 @@ __metadata:
     call-bound: "npm:^1.0.3"
     has-tostringtag: "npm:^1.0.2"
   checksum: 10/051fa95fdb99d7fbf653165a7e6b2cba5d2eb62f7ffa81e793a790f3fb5366c91c1b7b6af6820aa2937dd86c73aa3ca9d9ca98f500988457b1c59692c52ba911
+  languageName: node
+  linkType: hard
+
+"is-bun-module@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "is-bun-module@npm:2.0.0"
+  dependencies:
+    semver: "npm:^7.7.1"
+  checksum: 10/cded5a1a58368b847872d08617975d620ad94426d76a932f3e08d55b4574d199e0a62a4fb024fa2dc444200b71719eb0bffc5d3d1e1cc82e29b293bb8d66a990
   languageName: node
   linkType: hard
 
@@ -25901,6 +25973,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"resolve-pkg-maps@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "resolve-pkg-maps@npm:1.0.0"
+  checksum: 10/0763150adf303040c304009231314d1e84c6e5ebfa2d82b7d94e96a6e82bacd1dcc0b58ae257315f3c8adb89a91d8d0f12928241cba2df1680fbe6f60bf99b0e
+  languageName: node
+  linkType: hard
+
 "resolve-workspace-root@npm:^2.0.0":
   version: 2.0.1
   resolution: "resolve-workspace-root@npm:2.0.1"
@@ -26484,6 +26563,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"semver@npm:^7.7.1":
+  version: 7.7.4
+  resolution: "semver@npm:7.7.4"
+  bin:
+    semver: bin/semver.js
+  checksum: 10/26bdc6d58b29528f4142d29afb8526bc335f4fc04c4a10f2b98b217f277a031c66736bf82d3d3bb354a2f6a3ae50f18fd62b053c4ac3f294a3d10a61f5075b75
+  languageName: node
+  linkType: hard
+
 "send@npm:^0.19.0, send@npm:~0.19.0, send@npm:~0.19.1":
   version: 0.19.2
   resolution: "send@npm:0.19.2"
@@ -26975,6 +27063,13 @@ __metadata:
   dependencies:
     minipass: "npm:^7.0.3"
   checksum: 10/fd59bfedf0659c1b83f6e15459162da021f08ec0f5834dd9163296f8b77ee82f9656aa1d415c3d3848484293e0e6aefdd482e863e52ddb53d520bb73da1eeec1
+  languageName: node
+  linkType: hard
+
+"stable-hash-x@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "stable-hash-x@npm:0.2.0"
+  checksum: 10/136f05d0e4d441876012b423541476ff5b695c93b56d1959560be858b9e324ea6de6c16ecbd735a040ee8396427dd867bed0bf90b2cdb1fc422566747b91a0e5
   languageName: node
   linkType: hard
 
@@ -27937,7 +28032,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tinyglobby@npm:^0.2.11, tinyglobby@npm:^0.2.12, tinyglobby@npm:^0.2.15":
+"tinyglobby@npm:^0.2.11, tinyglobby@npm:^0.2.12, tinyglobby@npm:^0.2.14, tinyglobby@npm:^0.2.15":
   version: 0.2.15
   resolution: "tinyglobby@npm:0.2.15"
   dependencies:

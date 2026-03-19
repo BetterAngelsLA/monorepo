@@ -121,6 +121,7 @@ type AdminShelterType {
   supervisorialDistrict: Int
   totalBeds: Int
   trainingServices: [TrainingServiceType!]!
+  updatedAt: DateTime!
   website: String
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
@@ -1720,6 +1721,7 @@ enum ParkingChoices {
   MOTORCYCLE
   AUTOMOBILE
   RV
+  STREET
   NO_PARKING
 }
 
@@ -2142,6 +2144,7 @@ type ShelterType {
   supervisorialDistrict: Int
   totalBeds: Int
   trainingServices: [TrainingServiceType!]!
+  updatedAt: DateTime!
   website: String
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
@@ -2219,6 +2222,7 @@ enum StatusChoices {
 }
 
 enum StorageChoices {
+  UNIT_STORAGE
   AMNESTY_LOCKERS
   STANDARD_LOCKERS
   SHARED_STORAGE
