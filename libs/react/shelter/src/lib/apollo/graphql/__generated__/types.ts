@@ -731,6 +731,18 @@ export type CreateProfileDataImportInput = {
   sourceFile: Scalars['String']['input'];
 };
 
+export type CreateReservationInput = {
+  bedId?: InputMaybe<Scalars['ID']['input']>;
+  clients: Array<ReservationClientInput>;
+  duration?: InputMaybe<Scalars['Int']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  roomId?: InputMaybe<Scalars['ID']['input']>;
+  shelterId: Scalars['ID']['input'];
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+};
+
+export type CreateReservationPayload = OperationInfo | ReservationType;
+
 export type CreateRoomInput = {
   amenities?: InputMaybe<Scalars['String']['input']>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
@@ -1556,6 +1568,7 @@ export type Mutation = {
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
+  createReservation: CreateReservationPayload;
   createRoom: CreateRoomPayload;
   createShelter: CreateShelterPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
@@ -1670,6 +1683,11 @@ export type MutationCreateNoteDataImportArgs = {
 
 export type MutationCreateNoteServiceRequestArgs = {
   data: CreateNoteServiceRequestInput;
+};
+
+
+export type MutationCreateReservationArgs = {
+  data: CreateReservationInput;
 };
 
 
@@ -2223,6 +2241,7 @@ export type Query = {
   organizationMember: OrganizationMemberType;
   organizationMembers: OrganizationMemberTypeOffsetPaginated;
   reportSummary: ReportSummaryType;
+  reservations: ReservationTypeOffsetPaginated;
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
@@ -2377,6 +2396,11 @@ export type QueryReportSummaryArgs = {
 };
 
 
+export type QueryReservationsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryServiceCategoriesArgs = {
   ordering?: Array<OrganizationServiceCategoryOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -2485,6 +2509,52 @@ export type ReportSummaryType = {
   totalNotes: Scalars['Int']['output'];
   uniqueClients: Scalars['Int']['output'];
   uniqueClientsByDate: Array<DateCountType>;
+};
+
+export type ReservationClientInput = {
+  clientProfileId: Scalars['ID']['input'];
+  isPrimary?: Scalars['Boolean']['input'];
+};
+
+export type ReservationClientType = {
+  __typename?: 'ReservationClientType';
+  clientProfileId: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
+  isPrimary: Scalars['Boolean']['output'];
+};
+
+export enum ReservationStatusChoices {
+  Cancelled = 'CANCELLED',
+  CheckedIn = 'CHECKED_IN',
+  CheckInOverdue = 'CHECK_IN_OVERDUE',
+  Completed = 'COMPLETED',
+  Confirmed = 'CONFIRMED',
+  Open = 'OPEN'
+}
+
+export type ReservationType = {
+  __typename?: 'ReservationType';
+  bed?: Maybe<BedType>;
+  checkedInAt?: Maybe<Scalars['DateTime']['output']>;
+  checkedOutAt?: Maybe<Scalars['DateTime']['output']>;
+  createdById?: Maybe<Scalars['ID']['output']>;
+  duration?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['ID']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  reservationClients: Array<ReservationClientType>;
+  room?: Maybe<RoomType>;
+  shelter: ShelterType;
+  startDate?: Maybe<Scalars['Date']['output']>;
+  status?: Maybe<ReservationStatusChoices>;
+};
+
+export type ReservationTypeOffsetPaginated = {
+  __typename?: 'ReservationTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<ReservationType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export type RevertNoteInput = {
