@@ -9,7 +9,7 @@ export const defaultValues: TFormSchema = {
 };
 
 export const FormSchema = z.object({
-  firstName: z.string().min(1, 'First name is required.'),
-  lastName: z.string().min(1, 'Last name is required.'),
+  firstName: z.string(),
+  lastName: z.string(),
   email: z.email('Invalid email address.'),
 });

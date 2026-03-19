@@ -109,9 +109,7 @@ function OperatingHoursDialog({
       <div className="mb-6 pb-4">
         <div className="mb-3 flex items-center gap-2">
           <ClockIcon />
-          <h3 className="text-lg font-semibold text-neutral-20">
-            Operating Hours
-          </h3>
+          <h3 className="text-lg font-semibold text-neutral-20">Schedule</h3>
         </div>
         <StatusLine status={status} />
       </div>
@@ -248,7 +246,6 @@ export function OperatingHours({
     () => getOperatingStatus(operatingSchedules),
     [operatingSchedules]
   );
-  const hasOperatingSchedules = operatingSchedules.length > 0;
 
   const [_modal, setModal] = useAtom(modalAtom);
 
@@ -273,43 +270,35 @@ export function OperatingHours({
         <div className="flex items-center gap-2">
           <ClockIcon />
           <span className="text-lg font-semibold text-neutral-20">
-            Operating Hours
+            Schedule
           </span>
         </div>
-        {hasOperatingSchedules ? (
-          <button
-            type="button"
-            onClick={openHoursDialog}
-            aria-haspopup="dialog"
-            className="flex flex-row items-center gap-2 px-2 py-1 bg-[#F4F6FD] rounded text-[12px] font-normal leading-[21px] text-[#052B73] transition-colors hover:bg-blue-100"
-            style={{ fontFamily: 'Poppins, sans-serif' }}
+        <button
+          type="button"
+          onClick={openHoursDialog}
+          aria-haspopup="dialog"
+          className="flex flex-row items-center gap-2 px-2 py-1 bg-[#F4F6FD] rounded text-[12px] font-normal leading-[21px] text-[#052B73] transition-colors hover:bg-blue-100"
+          style={{ fontFamily: 'Poppins, sans-serif' }}
+        >
+          More Hours
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            More Hours
-            <svg
-              className="w-4 h-4"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M4 6l4 4 4-4"
-                stroke="#052B73"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        ) : null}
+            <path
+              d="M4 6l4 4 4-4"
+              stroke="#052B73"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       </div>
       <div className="mt-2">
-        {hasOperatingSchedules ? (
-          <StatusLine status={status} />
-        ) : (
-          <p className="text-neutral-20">
-            Not Available. Contact the institution.
-          </p>
-        )}
+        <StatusLine status={status} />
       </div>
     </section>
   );

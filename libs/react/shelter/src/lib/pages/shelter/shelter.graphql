@@ -119,5 +119,6 @@ query ViewShelter($id: ID!) {
     trainingServices {
       name
     }
+    updatedAt
   }
 }

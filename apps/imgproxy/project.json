@@ -1,0 +1,46 @@
+{
+  "name": "imgproxy",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/imgproxy",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx-tools/nx-container:build",
+      "options": {
+        "context": "apps/imgproxy",
+        "file": "apps/imgproxy/Dockerfile",
+        "push": true,
+        "platforms": ["linux/arm64"],
+        "provenance": "false",
+        "cache-from": [
+          "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-${BRANCH_NAME}",
+          "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-main"
+        ],
+        "cache-to": [
+          "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-${BRANCH_NAME},image-manifest=true,mode=max"
+        ],
+        "metadata": {
+          "images": ["${ECR_REGISTRY}/${APP_NAME}"],
+          "tags": ["${DOCKER_TAG}"]
+        }
+      },
+      "configurations": {
+        "preview": {
+          "options": {
+            "push": false
+          }
+        }
+      }
+    },
+    "deploy": {
+      "command": "tools/deploy/imgproxy_lambda_deploy.sh",
+      "configurations": {
+        "production": {},
+        "preview": {
+          "command": "echo 'Skipping deploy'"
+        }
+      }
+    }
+  }
+}
