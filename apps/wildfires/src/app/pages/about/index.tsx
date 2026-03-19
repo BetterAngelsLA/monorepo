@@ -6,9 +6,9 @@ export default function About() {
     <>
       <HorizontalLayout className="bg-brand-dark-blue">
         <div className="relative">
-          <div className="max-w-[62.5rem] mx-auto flex flex-col md:flex-row items-stretch min-h-[10vh] md:py-28">
+          <div className="max-w-250 mx-auto flex flex-col md:flex-row items-stretch min-h-[10vh] md:py-28">
             <div className="bg-brand-dark-blue w-full md:w-[60%] py-14 flex items-center md:py-0">
-              <h1 className="border-l-[10px] border-brand-yellow font-light font-primary pl-4 md:pl-8 text-5xl md:text-[58px] text-white md:leading-[1.2] text-left md:whitespace-nowrap">
+              <h1 className="border-l-10 border-brand-yellow font-light font-primary pl-4 md:pl-8 text-5xl md:text-[58px] text-white md:leading-[1.2] text-left md:whitespace-nowrap">
                 <span className="block md:inline">About</span>{' '}
                 <span className="block md:inline">LA Disaster</span>{' '}
                 <span className="block md:inline">Relief Navigator</span>
@@ -19,7 +19,7 @@ export default function About() {
       </HorizontalLayout>
       <HorizontalLayout>
         <div className="py-7 md:py-32 max-w-[62.5.rem] mx-auto">
-          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
+          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-10 border-brand-sky-blue pl-4 md:pl-8 font-bold">
             About
           </h2>
           <p className="mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">
@@ -36,7 +36,7 @@ export default function About() {
             making the recovery process immediately actionable and helping our
             community to rebuild even stronger.
           </p>
-          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
+          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-10 border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Who We Are
           </h2>
           <p className="mb-4 md:mb-4 sm:mb-4 text-xl leading-normal">
@@ -95,7 +95,7 @@ export default function About() {
               those impacted by the wildfires.
             </li>
           </ul>
-          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
+          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-10 border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Our Sponsors
           </h2>
           <p className="mb-4 md:mb-4 sm:mb-4 text-xl leading-normal">
@@ -119,7 +119,7 @@ export default function About() {
               well-being.
             </li>
           </ul>
-          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
+          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-10 border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Why We Care
           </h2>
           <p className="mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">

@@ -83,7 +83,7 @@ export function ShelterPage({ id }: { id: string }) {
   return (
     <div className="w-full">
       <Header shelter={shelter} />
-      <OperatingHours operatingHours={shelter.operatingHours} />
+      <OperatingHours schedules={shelter.schedules} />
       {hasPhotos && (
         <Button
           onClick={() => navigate(`/shelter/${id}/gallery`)}
@@ -99,7 +99,7 @@ export function ShelterPage({ id }: { id: string }) {
         phone={parsePhoneNumber(shelter.phone ?? '', 'US')?.formatNational()}
         shelterName={shelter.name}
       />
-      <div className="bg-neutral-99 py-2 px-4 -mx-4 flex flex-col gap-2">
+      <div className="bg-neutral-99 py-2 px-4 -mx-4 -mb-6 flex flex-col gap-2">
         {hasGeneralInfo && <GeneralInfo shelter={shelter} />}
         {hasDescription && (
           <Card title="Description">

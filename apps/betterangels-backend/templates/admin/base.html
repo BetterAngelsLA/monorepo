@@ -1,0 +1,14 @@
+{% extends "admin/base_site.html" %}
+{% block extrahead %}
+    {{ block.super }}
+    <script>
+(function() {
+    var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz && document.cookie.indexOf("django_timezone=" + tz) === -1) {
+        document.cookie = "django_timezone=" + tz + ";path=/;max-age=31536000;SameSite=Lax";
+        // Reload so the middleware picks up the new timezone on this request
+        location.reload();
+    }
+})();
+    </script>
+{% endblock extrahead %}

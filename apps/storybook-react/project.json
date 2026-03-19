@@ -15,13 +15,6 @@
         "preview": {}
       }
     },
-    "generate-storybook-head": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node tools/scripts/generate-storybook-head.js"
-      },
-      "dependsOn": ["set-env"]
-    },
     "storybook": {
       "executor": "@nx/storybook:storybook",
       "options": {
@@ -31,7 +24,7 @@
     },
     "build": {
       "executor": "@nx/storybook:build",
-      "dependsOn": ["set-env", "generate-storybook-head"],
+      "dependsOn": ["set-env"],
       "outputs": ["{workspaceRoot}/dist/apps/storybook-react"],
       "options": {
         "configDir": "apps/storybook-react/.storybook",

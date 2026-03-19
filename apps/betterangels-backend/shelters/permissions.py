@@ -16,6 +16,13 @@ class BedPermissions(models.TextChoices):
     VIEW = "shelters.view_bed", _("Can view bed")
 
 
+class RoomPermissions(models.TextChoices):
+    ADD = "shelters.add_room", _("Can add room")
+    CHANGE = "shelters.change_room", _("Can change room")
+    DELETE = "shelters.delete_room", _("Can delete room")
+    VIEW = "shelters.view_room", _("Can view room")
+
+
 class CareerServicePermissions(models.TextChoices):
     ADD = "shelters.add_careerservice", _("Can add career service")
     CHANGE = "shelters.change_careerservice", _("Can change career service")
@@ -200,6 +207,13 @@ class MealServicePermissions(models.TextChoices):
     CHANGE = "shelters.change_mealservice", _("Can change meal service")
     DELETE = "shelters.delete_mealservice", _("Can delete meal service")
     VIEW = "shelters.view_mealservice", _("Can view meal service")
+
+
+class SchedulePermissions(models.TextChoices):
+    ADD = "shelters.add_schedule", _("Can add schedule")
+    CHANGE = "shelters.change_schedule", _("Can change schedule")
+    DELETE = "shelters.delete_schedule", _("Can delete schedule")
+    VIEW = "shelters.view_schedule", _("Can view schedule")
 
 
 class ReferralRequirementPermissions(models.TextChoices):

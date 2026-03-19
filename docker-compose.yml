@@ -1,16 +1,15 @@
 services:
   better-angels:
-    environment:
-      - IS_LOCAL_DEV=True
+    ports:
+      - '8000:8000'
+    env_file:
+      - .compose/local.shared.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - .:/workspace
       - node_modules:/workspace/node_modules
       - venv:/workspace/.venv
       - .bash_aliases:/home/betterangels/.bash_aliases
-
-    ports:
-      - '8000:8000'
   db:
     image: nickblah/postgis:17.5-bullseye-postgis-3.5
     ports:
@@ -25,6 +24,17 @@ services:
 
   valkey:
     image: valkey/valkey:8.0.2
+
+  imgproxy:
+    image: ghcr.io/imgproxy/imgproxy:v3.30.1-arm64
+    ports:
+      - '127.0.0.1:8080:8080' # Bind host port to IPv4 only so curl localhost hits imgproxy
+    env_file:
+      - .compose/local.shared.env
+    environment:
+      # Listen on all interfaces so the host can reach the container (default can be 127.0.0.1)
+      - IMGPROXY_BIND=0.0.0.0:8080
+      - IMGPROXY_ENABLE_DEBUG_HEADERS=true
 
 volumes:
   node_modules:

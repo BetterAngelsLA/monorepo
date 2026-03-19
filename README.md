@@ -52,6 +52,7 @@ Setting up SSH on GitHub allows you to securely connect to your repositories wit
 The frontend is built with [React Native](https://reactnative.dev/) and uses [Expo](https://docs.expo.dev/) for development across multiple platforms.
 
 - **[Frontend Development Guide](docs/frontend_readme.md)**: This guide covers setting up the development environment, running the application, and testing.
+- **[Better Angels App E2E Tests](apps/betterangels/.maestro/README.md)**: End-to-end testing guide for the Better Angels react-native app using Maestro.
 
 ## Backend Development
 

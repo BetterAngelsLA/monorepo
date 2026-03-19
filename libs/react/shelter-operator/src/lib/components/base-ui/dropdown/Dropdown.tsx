@@ -218,7 +218,7 @@ export function Dropdown<T extends string | number = string | number>(
         )}
         <ChevronDown
           className={cn(
-            'w-4 h-4 flex-shrink-0 transition-transform duration-200 text-gray-400 z-10',
+            'w-4 h-4 shrink-0 transition-transform duration-200 text-gray-400 z-10',
             isOpen && 'rotate-180',
             isMulti && hasSelection && 'ml-auto'
           )}
