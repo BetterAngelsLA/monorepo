@@ -3,13 +3,12 @@
  * on production — the flex body expanded unbounded, the image wrapper
  * shrank, and all text disappeared.
  *
- * The fix requires three things working together:
+ * The fix requires two things working together:
  *  1. `overflow-hidden` on the flex body so it can't expand past its parent.
- *  2. `break-all` on the name so unbreakable strings wrap.
- *  3. `overflow-hidden` + `min-w-0` on the text wrapper so flex doesn't
- *     let the text child push past the container.
+ *  2. `wrap-anywhere` on the name so the browser factors mid-word breaks
+ *     into intrinsic sizing (prevents flex blowout without needing min-w-0).
  *
- * If any one of these is removed, the card blows out again.
+ * If either is removed, the card blows out again.
  */
 import { ShelterCard, TShelter } from '@monorepo/react/shelter';
 import '@testing-library/jest-dom';
@@ -47,19 +46,18 @@ const shelter: TShelter = {
 };
 
 describe('ShelterCard – long-name overflow regression', () => {
-  it('contains the three CSS safeguards that prevent layout blowout', () => {
+  it('contains the CSS safeguards that prevent layout blowout', () => {
     const { container } = render(<ShelterCard shelter={shelter} />);
 
     // 1. The flex body must clip overflow so long text can't expand it.
     const flexBody = container.querySelector('.overflow-hidden');
     expect(flexBody).toBeInTheDocument();
 
-    // 2. The shelter name must force-break unbreakable strings.
+    // 2. The shelter name must use wrap-anywhere for intrinsic size constraint.
     const nameEl = screen.getByText(LONG_NAME);
-    expect(nameEl.className).toContain('break-all');
+    expect(nameEl.className).toContain('wrap-anywhere');
 
-    // 3. The text content wrapper must constrain its min intrinsic width.
-    expect(nameEl.parentElement?.className).toContain('min-w-0');
+    // 3. The text content wrapper must clip overflow.
     expect(nameEl.parentElement?.className).toContain('overflow-hidden');
   });
 });
