@@ -121,13 +121,12 @@ type AdminShelterType {
   supervisorialDistrict: Int
   totalBeds: Int
   trainingServices: [TrainingServiceType!]!
+  updatedAt: DateTime!
   website: String
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
-  operatingHours: [TimeRange]
-  intakeHours: [TimeRange]
 }
 
 type AdminShelterTypeOffsetPaginated {
@@ -682,8 +681,6 @@ input CreateShelterInput {
   funders: [FunderChoices!]!
   organization: ID!
   location: ShelterLocationInput = null
-  operatingHours: [TimeRangeInput!] = null
-  intakeHours: [TimeRangeInput!] = null
   schedules: [ScheduleInput!] = null
   email: String = null
   phone: PhoneNumber = null
@@ -1724,6 +1721,7 @@ enum ParkingChoices {
   MOTORCYCLE
   AUTOMOBILE
   RV
+  STREET
   NO_PARKING
 }
 
@@ -2146,13 +2144,12 @@ type ShelterType {
   supervisorialDistrict: Int
   totalBeds: Int
   trainingServices: [TrainingServiceType!]!
+  updatedAt: DateTime!
   website: String
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
-  operatingHours: [TimeRange]
-  intakeHours: [TimeRange]
 }
 
 type ShelterTypeOffsetPaginated {
@@ -2225,6 +2222,7 @@ enum StatusChoices {
 }
 
 enum StorageChoices {
+  UNIT_STORAGE
   AMNESTY_LOCKERS
   STANDARD_LOCKERS
   SHARED_STORAGE
@@ -2303,16 +2301,6 @@ type TaskTypeOffsetPaginated {
 
 """Time (isoformat)"""
 scalar Time
-
-type TimeRange {
-  start: DateTime
-  end: DateTime
-}
-
-input TimeRangeInput {
-  start: Time = null
-  end: Time = null
-}
 
 enum TrainingServiceChoices {
   JOB_TRAINING
