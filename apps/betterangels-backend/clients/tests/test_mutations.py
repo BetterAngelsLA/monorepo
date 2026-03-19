@@ -533,9 +533,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
                 photo_name,
             )
 
-        photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["name"]
+        photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["url"]
         client_profile = ClientProfile.objects.get(id=client_profile_id)
-        self.assertEqual(client_profile.profile_photo.name, photo_name)
+        self.assertIn(photo_name, client_profile.profile_photo.url)
 
         response = self._update_client_profile_photo_fixture(
             client_profile_id,
@@ -543,9 +543,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             photo_name,
         )
 
-        updated_photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["name"]
+        updated_photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["url"]
         client_profile.refresh_from_db()
-        self.assertEqual(client_profile.profile_photo.name, updated_photo_name)
+        self.assertIn(updated_photo_name, client_profile.profile_photo.url)
 
 
 class ClientContactMutationTestCase(ClientContactBaseTestCase):

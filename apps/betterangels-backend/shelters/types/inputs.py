@@ -48,12 +48,6 @@ class ShelterLocationInput:
 
 
 @strawberry.input
-class TimeRangeInput:
-    start: Optional[time] = None
-    end: Optional[time] = None
-
-
-@strawberry.input
 class ScheduleInput:
     schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING
     days: Optional[List[DayOfWeekChoices]] = None
@@ -97,8 +91,6 @@ class CreateShelterInput:
     # Custom field types — can't be auto-derived from Django model fields
     organization: ID
     location: Optional[ShelterLocationInput] = None
-    operating_hours: Optional[List[TimeRangeInput]] = None
-    intake_hours: Optional[List[TimeRangeInput]] = None
     schedules: Optional[List[ScheduleInput]] = None
 
     # Optional scalars — all model fields below have null=True, blank=True.
