@@ -54,11 +54,9 @@ export function ShelterCard(props: TShelterCard) {
 
   const parentCss = ['flex', 'flex-col', 'cursor-pointer', className];
 
-  const bodyCss = ['flex', 'flex-col', 'md:flex-row', 'cursor-pointer'];
+  const bodyCss = ['flex', 'flex-col', 'md:flex-row', 'overflow-hidden'];
 
   const footerCss = ['mt-4', 'md:mt-10', footerClassName];
-
-  const contentCss = ['mt-4'];
 
   const onNavigate = () => {
     sessionStorage.setItem(
@@ -77,7 +75,7 @@ export function ShelterCard(props: TShelterCard) {
   return (
     <div className={mergeCss(parentCss)} onClick={onNavigate}>
       <div className={mergeCss(bodyCss)}>
-        <div className="w-full md:w-96 md:mr-4 min-w-0">
+        <div className="w-full md:w-96 md:mr-4 md:shrink-0">
           <ShelterCardHero
             className="w-full"
             imageUrl={heroImage}
@@ -86,8 +84,8 @@ export function ShelterCard(props: TShelterCard) {
           />
         </div>
 
-        <div className={mergeCss(contentCss)}>
-          <div className="font-semibold md:text-lg leading-4.5 tracking-[.03125rem]">
+        <div className="mt-4 min-w-0 flex-1 overflow-hidden">
+          <div className="font-semibold md:text-lg leading-4.5 tracking-[.03125rem] break-all">
             {name}
           </div>
 

@@ -69,7 +69,16 @@ def main() -> None:
         with image_path.open("rb") as image_file:
             django_file = File(image_file)
             for shelter in shelters:
-                ExteriorPhoto.objects.create(file=django_file, shelter=shelter)
+                rand = random.random()
+                if rand < 0.3:
+                    num_photos = 0
+                elif rand < 0.8:
+                    num_photos = random.randint(1, 2)
+                else:
+                    num_photos = random.randint(3, 5)
+
+                for _ in range(num_photos):
+                    ExteriorPhoto.objects.create(file=django_file, shelter=shelter)
 
         # add contacts
         for shelter in shelters:
