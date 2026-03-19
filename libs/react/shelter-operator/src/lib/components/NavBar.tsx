@@ -1,25 +1,14 @@
 import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
 import { Plus, UserCog } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useActiveOrg } from '../providers/activeOrg';
 import { Button } from './base-ui/buttons';
 import { Dropdown } from './base-ui/dropdown';
 
-type Organization = {
-  id: string;
-  name: string;
-};
+export default function NavBar() {
+  const { activeOrg, organizations, setActiveOrgId } = useActiveOrg();
+  const selectedOrganizationId = activeOrg?.id ?? '';
 
-type NavBarProps = {
-  organizations: Organization[];
-  selectedOrganizationId: string;
-  onOrganizationChange: (organizationId: string) => void;
-};
-
-function OperatorNavBar({
-  organizations,
-  selectedOrganizationId,
-  onOrganizationChange,
-}: NavBarProps) {
   const title =
     organizations.length === 1 ? organizations[0].name : 'Admin Dashboard';
 
@@ -51,7 +40,7 @@ function OperatorNavBar({
                   null
                 }
                 onChange={(option) => {
-                  if (option) onOrganizationChange(option.value);
+                  if (option) setActiveOrgId(option.value);
                 }}
               />
             </div>
@@ -71,7 +60,7 @@ function OperatorNavBar({
           <button
             type="button"
             aria-label="Account settings"
-            className="inline-flex size-11 items-center justify-center rounded-full border border-[#D3D9E3] bg-white text-[#3E4652] transition-colors hover:bg-[#F8FAFC] pl-1 pb-0.25"
+            className="inline-flex size-11 items-center justify-center rounded-full border border-[#D3D9E3] bg-white text-[#3E4652] transition-colors hover:bg-[#F8FAFC] pl-1"
           >
             <UserCog size={20} />
           </button>
@@ -79,16 +68,4 @@ function OperatorNavBar({
       </div>
     </div>
   );
-}
-
-export default function NavBar(props: NavBarProps) {
-  const { pathname } = useLocation();
-  const isOperatorRoute =
-    pathname === '/operator' || pathname.startsWith('/operator/');
-
-  if (!isOperatorRoute) {
-    return null;
-  }
-
-  return <OperatorNavBar {...props} />;
 }

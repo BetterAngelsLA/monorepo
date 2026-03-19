@@ -16,6 +16,7 @@ type TableProps<TItem, TRowObject = TItem> = {
   getRowKey: (item: TItem, index: number) => string;
   getRowObject?: (item: TItem, index: number) => TRowObject;
   onRowClick?: RowClickHandler<TRowObject>;
+  onDelete?: (rowObject: TRowObject, rowIndex: number) => void;
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
@@ -33,6 +34,7 @@ export function Table<TItem, TRowObject = TItem>({
   getRowKey,
   getRowObject,
   onRowClick,
+  onDelete,
   loading = false,
   loadingState,
   emptyState,
@@ -46,7 +48,9 @@ export function Table<TItem, TRowObject = TItem>({
   const dataTemplateColumns = columns
     .map((column) => column.width ?? '1fr')
     .join(' ');
-  const templateColumns = `${dataTemplateColumns} 56px`;
+  const templateColumns = onDelete
+    ? `${dataTemplateColumns} 56px`
+    : dataTemplateColumns;
 
   return (
     <div
@@ -78,7 +82,7 @@ export function Table<TItem, TRowObject = TItem>({
             {column.label}
           </div>
         ))}
-        <div aria-hidden="true" />
+        {onDelete && <div aria-hidden="true" />}
       </div>
 
       {loading && loadingState}
@@ -104,6 +108,7 @@ export function Table<TItem, TRowObject = TItem>({
               rowObject={rowObject}
               rowIndex={index}
               onRowClick={onRowClick}
+              onDelete={onDelete}
               templateColumns={templateColumns}
               className={rowClassName}
               style={rowStyle}

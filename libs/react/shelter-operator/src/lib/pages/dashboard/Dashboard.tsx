@@ -1,15 +1,14 @@
 import { useQuery } from '@apollo/client/react';
-import { useUser } from '@monorepo/react/shelter';
 import { BookCheck, Filter, Search, Settings2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons';
-import NavBar from '../../components/NavBar';
 import { ShelterTable } from '../../components/ShelterTable';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
+import { useActiveOrg } from '../../providers/activeOrg';
 import type { Shelter } from '../../types/shelter';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -19,20 +18,8 @@ export default function Dashboard() {
   const { pathname } = useLocation();
   const isOperatorRoot = pathname === '/operator';
 
-  const { user } = useUser();
-  const organizations = user?.organizations ?? [];
-  const [selectedOrganizationId, setSelectedOrganizationId] = useState(
-    () => user?.organization?.id ?? ''
-  );
-
-  // Sync selectedOrganizationId when user data loads asynchronously
-  const orgId = user?.organization?.id;
-
-  useEffect(() => {
-    if (orgId && !selectedOrganizationId) {
-      setSelectedOrganizationId(orgId);
-    }
-  }, [orgId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { activeOrg } = useActiveOrg();
+  const selectedOrganizationId = activeOrg?.id ?? '';
 
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -77,8 +64,8 @@ export default function Dashboard() {
         name: s.name ?? null,
         address: s.location?.place ?? null,
         totalBeds: s.totalBeds ?? null,
-        // TODO: need to add available/reserved/occupied beds and tags to the GraphQL query
-        occupiedBeds: null,
+        // TODO: need to add available beds and tags to the GraphQL query
+        availableBeds: null,
         tags: null,
       })) ?? []
     );
@@ -93,15 +80,6 @@ export default function Dashboard() {
 
   return (
     <>
-      {/* NAV BAR */}
-      <NavBar
-        organizations={organizations}
-        selectedOrganizationId={selectedOrganizationId}
-        onOrganizationChange={(organizationId) => {
-          setSelectedOrganizationId(organizationId);
-          setPage(1);
-        }}
-      />
       <div className="flex flex-col mx-4">
         {/* Search, filter, sort, and view controls */}
         <form
@@ -146,9 +124,9 @@ export default function Dashboard() {
         <ShelterTable
           rows={shelters}
           getRowKey={(shelter) => shelter.id}
-          onRowClick={(rowObject) =>
-            console.log('[ShelterOperator][Table row click]', rowObject)
-          }
+          onRowClick={() => {
+            // TODO: navigate to shelter detail page
+          }}
           loading={loading}
           loadingState={
             <div className="px-6 py-8 text-center text-sm text-gray-500">

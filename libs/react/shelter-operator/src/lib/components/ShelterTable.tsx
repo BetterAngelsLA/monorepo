@@ -107,7 +107,7 @@ export function ShelterTable({
           const hasCapacity = totalBeds > 0;
           const reservedBeds = hasCapacity
             ? Math.min(
-                Math.max(shelter.occupiedBeds ?? totalBeds, 0),
+                Math.max(totalBeds - (shelter.availableBeds ?? 0), 0),
                 totalBeds
               )
             : null;
@@ -153,10 +153,13 @@ export function ShelterTable({
       getRowKey={getRowKey ?? ((shelter) => shelter.id)}
       getRowObject={(shelter) => {
         const totalBeds = shelter.totalBeds ?? 0;
-        const reservedBeds = Math.min(
-          Math.max(shelter.occupiedBeds ?? totalBeds, 0),
-          totalBeds
-        );
+        const reservedBeds =
+          totalBeds === 0
+            ? 0
+            : Math.min(
+                Math.max(totalBeds - (shelter.availableBeds ?? 0), 0),
+                totalBeds
+              );
 
         return {
           name: shelter.name ?? 'N/A',
