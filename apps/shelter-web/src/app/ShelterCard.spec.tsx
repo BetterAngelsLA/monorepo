@@ -11,22 +11,27 @@
  *
  * If any one of these is removed, the card blows out again.
  */
+import { ShelterCard, TShelter } from '@monorepo/react/shelter';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import { ShelterCard, TShelter } from '@monorepo/react/shelter';
 
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
   useNavigate: () => jest.fn(),
 }));
 jest.mock('@vis.gl/react-google-maps', () => ({ useMap: () => null }));
-jest.mock('@monorepo/react/icons', () =>
-  new Proxy({}, {
-    get: (_t, p) =>
-      p === '__esModule'
-        ? true
-        : (props: Record<string, unknown>) => <span {...props} />,
-  })
+jest.mock(
+  '@monorepo/react/icons',
+  () =>
+    new Proxy(
+      {},
+      {
+        get: (_t, p) =>
+          p === '__esModule'
+            ? true
+            : (props: Record<string, unknown>) => <span {...props} />,
+      }
+    )
 );
 
 const LONG_NAME = 'AbcdefghijNoSpacesHere'.repeat(20); // ~440 chars, no breaks
