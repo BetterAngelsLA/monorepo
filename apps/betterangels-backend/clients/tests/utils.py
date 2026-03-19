@@ -71,9 +71,6 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
             placeOfBirth
             preferredCommunication
             preferredLanguage
-            profilePhoto {
-                name
-            }
             pronouns
             pronounsOther
             race
@@ -130,7 +127,7 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
                 isPrimary
             }
             profilePhoto {
-                name
+                url
             }
             socialMediaProfiles {
                 id
@@ -315,9 +312,9 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "veteranStatus": VeteranStatusEnum.NO.name,
             }
         )["data"]["createClientProfile"]
-        self.client_profile_1_photo_name = self._update_client_profile_photo_fixture(self.client_profile_1["id"])[
+        self.client_profile_1_photo_url = self._update_client_profile_photo_fixture(self.client_profile_1["id"])[
             "data"
-        ]["updateClientProfilePhoto"]["profilePhoto"]["name"]
+        ]["updateClientProfilePhoto"]["profilePhoto"]["url"]
         self.client_profile_2 = self._create_client_profile_fixture(
             {
                 "adaAccommodation": [],
@@ -491,7 +488,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                     ... on ClientProfileType {
                         id
                         profilePhoto {
-                            name
+                            url
                         }
                     }
                 }
