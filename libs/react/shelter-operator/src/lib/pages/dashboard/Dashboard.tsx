@@ -1,7 +1,10 @@
 import { useQuery } from '@apollo/client/react';
+import { BookCheck } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ShelterRow } from '../../components/ShelterRow';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Button } from '../../components/base-ui/buttons';
+import { Text } from '../../components/base-ui/text/text';
+import { ShelterTable } from '../../components/ShelterTable';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
@@ -9,28 +12,31 @@ import {
 import { useActiveOrg } from '../../providers/activeOrg';
 import type { Shelter } from '../../types/shelter';
 
-const PAGE_SIZE = 8;
 const SEARCH_DEBOUNCE_MS = 300;
+const PAGE_SIZE = 16;
 
 export default function Dashboard() {
+  const { pathname } = useLocation();
+  const isOperatorRoot = pathname === '/operator';
+  const navigate = useNavigate();
   const { activeOrg } = useActiveOrg();
   const selectedOrganizationId = activeOrg?.id ?? '';
 
-  const [searchInput, setSearchInput] = useState('');
+  const [tableSearchInput, setTableSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const debounceTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
-  // Debounce: only update the query variable after the user stops typing
   useEffect(() => {
     debounceTimer.current = setTimeout(() => {
-      setDebouncedSearch(searchInput);
+      setDebouncedSearch(tableSearchInput);
       setPage(1);
     }, SEARCH_DEBOUNCE_MS);
+
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
-  }, [searchInput]);
+  }, [tableSearchInput]);
 
   const { data, loading, error, previousData } = useQuery(
     ViewSheltersByOrganizationDocument,
@@ -46,19 +52,20 @@ export default function Dashboard() {
     }
   );
 
-  // Use previous results while loading to prevent flicker
   const activeData = data ?? previousData;
 
   const shelters: Shelter[] = useMemo(() => {
     type ShelterResult = NonNullable<
       ViewSheltersByOrganizationQuery['adminShelters']['results'][number]
     >;
+
     return (
       activeData?.adminShelters?.results?.map((s: ShelterResult) => ({
         id: String(s.id),
         name: s.name ?? null,
         address: s.location?.place ?? null,
         totalBeds: s.totalBeds ?? null,
+        availableBeds: null,
         tags: null,
       })) ?? []
     );
@@ -71,104 +78,81 @@ export default function Dashboard() {
     if (error) console.error('[Dashboard GraphQL error]', error);
   }, [error]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [selectedOrganizationId]);
+
   return (
-    <div className="flex flex-col p-8 w-full">
-      {/* Header with Back and Add Shelter buttons */}
-      <div className="mb-6 flex items-center justify-between">
-        <Link
-          to="/"
-          className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm cursor-pointer hover:bg-gray-50"
-        >
-          Back
-        </Link>
-
-        <div className="flex items-center gap-3">
-          <Link
-            to="/operator/dashboard/create"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm cursor-pointer hover:bg-blue-700"
-          >
-            Add Shelter
-          </Link>
-        </div>
-      </div>
-
-      {/* Search bar */}
-      <form className="w-full flex items-center gap-2">
-        <input
-          type="text"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search shelters"
-          className="px-6 py-2 rounded-3xl border border-gray-300 outline-hidden shadow-xs my-4"
+    <>
+      <div className="flex flex-col mx-4">
+        <ShelterTable
+          rows={shelters}
+          onSearchChange={setTableSearchInput}
+          getRowKey={(shelter) => shelter.id}
+          onRowClick={(rowObject) => {
+            navigate(`/operator/shelter/${rowObject.id}`, {
+              state: { shelter: rowObject.shelter },
+            });
+          }}
+          loading={loading}
+          loadingState={
+            <Text variant="body" className="text-center text-gray-500">
+              Loading shelters...
+            </Text>
+          }
+          emptyState={
+            <div className="px-6 py-8">
+              <Text variant="body" className="text-center text-gray-500">
+                No shelters yet.{' '}
+              </Text>
+              <Link to="/operator/dashboard/create">
+                <Text variant="body" className="text-blue-600 hover:underline">
+                  Create your first shelter
+                </Text>
+              </Link>
+              .
+            </div>
+          }
         />
-      </form>
 
-      <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
-        {totalCount} Results
-      </div>
+        <div className="flex items-center justify-between mt-8 mx-4">
+          <Text variant="body" className="text-gray-600">
+            Page {page} of {totalPages}
+          </Text>
 
-      {/* TABLE */}
-      <div className="bg-white rounded-2xl shadow-xs overflow-hidden w-full">
-        {/* HEADER */}
-        <div className="grid grid-cols-[1fr_1.5fr_0.5fr] items-center px-6 py-3 text-xs font-semibold uppercase tracking-wider text-gray-700 bg-gray-50 border-b border-gray-200">
-          <div>Shelter Name</div>
-          <div>Address</div>
-          <div className="text-right">Capacity (beds)</div>
-        </div>
-
-        {/* ROWS */}
-        {loading && (
-          <div className="px-6 py-8 text-center text-sm text-gray-500">
-            Loading shelters…
-          </div>
-        )}
-        {!loading && shelters.length === 0 && (
-          <div className="px-6 py-8 text-center text-sm text-gray-500">
-            No shelters yet.{' '}
-            <Link
-              to="/operator/dashboard/create"
-              className="text-blue-600 hover:underline"
+          <div className="flex items-center gap-2">
+            <Button
+              variant="primary-sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
             >
-              Create your first shelter
-            </Link>
-            .
+              Prev
+            </Button>
+
+            <Button
+              variant="primary-sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              Next
+            </Button>
           </div>
+        </div>
+
+        {error && (
+          <Text variant="body" className="mt-2 text-red-500">
+            Failed to load shelters.
+          </Text>
         )}
-        {shelters.map((shelter) => (
-          <ShelterRow key={shelter.id} shelter={shelter} />
-        ))}
       </div>
 
-      {/* PAGINATION */}
-      <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
-        <div>
-          Page {page} of {totalPages}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-          >
-            Prev
-          </button>
-
-          <button
-            className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-          >
-            Next
-          </button>
-        </div>
-      </div>
-
-      {error && (
-        <div className="mt-2 text-xs text-red-500">
-          Failed to load shelters.
+      {isOperatorRoot && (
+        <div className="fixed bottom-6 right-6 text-sm z-20 ">
+          <Button leftIcon={<BookCheck />} rightIcon={false} variant="floating">
+            Reserve
+          </Button>
         </div>
       )}
-    </div>
+    </>
   );
 }

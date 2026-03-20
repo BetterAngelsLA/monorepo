@@ -65,6 +65,15 @@ export const PrimaryDisabled: Story = {
   ),
 };
 
+export const PrimarySmall: Story = {
+  parameters: {
+    customLayout: {
+      canvasClassName: 'flex flex-col items-center justify-center w-fit h-fit',
+    },
+  },
+  render: () => <Button variant="primary-sm">Button</Button>,
+};
+
 // FLOATING BUTTONS
 
 export const Floating: Story = {

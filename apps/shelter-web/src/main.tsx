@@ -9,7 +9,6 @@ import {
 } from '@monorepo/react/shelter';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
 import { App } from './app';
 
 const isDevEnv = import.meta.env.DEV;
@@ -33,9 +32,6 @@ const apolloClient = createApolloClient({
 
 const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
 
-// to allow preview by branch
-const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
-
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
@@ -45,11 +41,9 @@ root.render(
     <ApiConfigProvider apiUrl={apiUrl}>
       <ApolloProvider client={apolloClient}>
         <ShelterFeatureControlProvider>
-          <BrowserRouter basename={basename}>
-            <UserProvider>
-              <App />
-            </UserProvider>
-          </BrowserRouter>
+          <UserProvider>
+            <App />
+          </UserProvider>
         </ShelterFeatureControlProvider>
       </ApolloProvider>
     </ApiConfigProvider>
