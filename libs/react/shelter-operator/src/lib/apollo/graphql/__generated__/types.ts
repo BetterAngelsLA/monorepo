@@ -76,6 +76,7 @@ export type AdminShelterType = {
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
+  bedCapacity: BedCapacityType;
   bedFees?: Maybe<Scalars['String']['output']>;
   cities: Array<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
@@ -158,6 +159,14 @@ export enum AttachmentType {
 export type AuthResponse = {
   __typename?: 'AuthResponse';
   status_code: Scalars['String']['output'];
+};
+
+export type BedCapacityType = {
+  __typename?: 'BedCapacityType';
+  available: Scalars['Int']['output'];
+  occupied: Scalars['Int']['output'];
+  outOfService: Scalars['Int']['output'];
+  reserved: Scalars['Int']['output'];
 };
 
 export enum BedStatusChoices {
@@ -2599,6 +2608,7 @@ export type ShelterType = {
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
+  bedCapacity: BedCapacityType;
   bedFees?: Maybe<Scalars['String']['output']>;
   cities: Array<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
