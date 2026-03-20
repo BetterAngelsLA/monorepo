@@ -642,6 +642,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
             ({"pets": [PetChoices.CATS.name], "parking": [ParkingChoices.BICYCLE.name]}, 1),
             ({"pets": [PetChoices.CATS.name], "parking": [ParkingChoices.RV.name]}, 0),
             ({"pets": [PetChoices.DOGS_UNDER_25_LBS.name], "parking": [ParkingChoices.RV.name]}, 1),
+            ({"spa": [SPAChoices.ONE.name]}, 1),
         ],
     )
     def test_shelter_property_filter(self, property_filters: dict[str, str], expected_result_count: int) -> None:
@@ -651,16 +652,19 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, NumQueriesWithoutCacheMixin, Pa
                 Pet.objects.get_or_create(name=PetChoices.CATS)[0],
                 Pet.objects.get_or_create(name=PetChoices.SERVICE_ANIMALS)[0],
             ],
+            spa=[],
             status=StatusChoices.APPROVED,
         )
         shelter_recipe.make(
             parking=[Parking.objects.get_or_create(name=ParkingChoices.BICYCLE)[0]],
             pets=[Pet.objects.get_or_create(name=PetChoices.CATS)[0]],
+            spa=[SPA.objects.get_or_create(name=SPAChoices.ONE)[0]],
             status=StatusChoices.APPROVED,
         )
         shelter_recipe.make(
             parking=[Parking.objects.get_or_create(name=ParkingChoices.RV)[0]],
             pets=[Pet.objects.get_or_create(name=PetChoices.DOGS_UNDER_25_LBS)[0]],
+            spa=[],
             status=StatusChoices.APPROVED,
         )
 

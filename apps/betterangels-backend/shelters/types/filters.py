@@ -22,6 +22,7 @@ from shelters.enums import (
 )
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import (
+    SPAChoices,
     SpecialSituationRestrictionChoices,
 )
 from shelters.selectors import shelters_open_at
@@ -58,6 +59,7 @@ class ShelterPropertyInput:
     shelter_types: Optional[List[ShelterTypeChoices]] = None
     room_styles: Optional[List[RoomStyleChoices]] = None
     parking: Optional[List[ParkingChoices]] = None
+    spa: Optional[List[SPAChoices]] = None
 
 
 @strawberry_django.filter_type(models.Shelter)

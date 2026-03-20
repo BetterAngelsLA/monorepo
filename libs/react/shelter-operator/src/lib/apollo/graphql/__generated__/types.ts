@@ -2587,6 +2587,7 @@ export type ShelterPropertyInput = {
   pets?: InputMaybe<Array<PetChoices>>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
+  spa?: InputMaybe<Array<SpaChoices>>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
 };
 
