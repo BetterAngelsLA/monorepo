@@ -18,6 +18,14 @@
   --color-success-90: #ddf8e8;
   --color-primary-dark: #1650C1;
   --color-dark-blue: #1E3342;
+  --color-neutral-warm-50: #767676;
+  --color-neutral-warm-70: #676767;
+  --color-neutral-warm-95: #F8F7F9;
+  --color-tags-main: #C3F4FF;
+  --color-tags-yellow: #FFF7AE;
+  --color-tags-purple: #E2C6FF;
+  --color-tags-pink: #FFD7E7;
+  --color-tags-blue: #DCF1FF;
 }
 
 * {
@@ -39,4 +47,30 @@ select:focus,
 input:focus,
 textarea:focus {
   outline: none;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scrollbar-thin:hover {
+  scrollbar-color: #d3d9e3 transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.scrollbar-thin:hover::-webkit-scrollbar-thumb {
+  background: #d3d9e3;
 }

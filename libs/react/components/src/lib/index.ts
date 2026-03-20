@@ -11,6 +11,7 @@ export { useLocationPermission } from './CurrentLocation/useLocationPermission';
 export { default as CurrentLocationDot } from './CurrentLocationDot';
 export * from './Dropdown';
 export { default as ExpandableContainer } from './ExpandableContainer';
+export * from './FilterDropdown';
 export * from './ImageCarousel';
 export * from './InfiniteList';
 export * from './InfiniteScrollTrigger';

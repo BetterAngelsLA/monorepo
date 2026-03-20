@@ -1,7 +1,10 @@
 import { useQuery } from '@apollo/client/react';
 import { useUser } from '@monorepo/react/shelter';
+import { useAtomValue } from 'jotai';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
+import { ShelterFilterPanel } from '../../components/ShelterFilterPanel';
 import { ShelterRow } from '../../components/ShelterRow';
 import {
   ViewSheltersByOrganizationDocument,
@@ -27,10 +30,17 @@ export default function Dashboard() {
     }
   }, [orgId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const selectedFilters = useAtomValue(operatorShelterFiltersAtom);
+
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const debounceTimer = useRef<ReturnType<typeof setTimeout>>(null);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [selectedFilters]);
 
   // Debounce: only update the query variable after the user stops typing
   useEffect(() => {
@@ -43,6 +53,23 @@ export default function Dashboard() {
     };
   }, [searchInput]);
 
+  const propertyFilters = useMemo(() => {
+    const demographics = selectedFilters.demographics?.length
+      ? selectedFilters.demographics
+      : undefined;
+    const specialSituationRestrictions =
+      selectedFilters.specialSituationRestrictions?.length
+        ? selectedFilters.specialSituationRestrictions
+        : undefined;
+    const shelterTypes = selectedFilters.shelterTypes?.length
+      ? selectedFilters.shelterTypes
+      : undefined;
+    if (!demographics && !specialSituationRestrictions && !shelterTypes) {
+      return undefined;
+    }
+    return { demographics, specialSituationRestrictions, shelterTypes };
+  }, [selectedFilters]);
+
   const { data, loading, error, previousData } = useQuery(
     ViewSheltersByOrganizationDocument,
     {
@@ -51,6 +78,7 @@ export default function Dashboard() {
         name: debouncedSearch || undefined,
         offset: (page - 1) * PAGE_SIZE,
         limit: PAGE_SIZE,
+        properties: propertyFilters,
       },
       skip: !selectedOrganizationId,
     }
@@ -118,15 +146,16 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Search bar */}
-      <form className="w-full flex items-center gap-2">
+      {/* Search bar + Filter */}
+      <form className="w-full flex items-center gap-2 my-4">
         <input
           type="text"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Search shelters"
-          className="px-6 py-2 rounded-3xl border outline-none shadow-sm my-4"
+          className="px-6 py-2 rounded-3xl border outline-none shadow-sm"
         />
+        <ShelterFilterPanel />
       </form>
 
       <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
