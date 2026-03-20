@@ -22,15 +22,15 @@ export function ReservationPage() {
   }, [isShelterLevel]);
 
   const paths = useMemo(() => {
-    const basePath = isShelterLevel 
+    const base = isShelterLevel
       ? `/operator/shelter/${shelterId}/reservation`
       : '/operator/reservation';
-    
-    const relativePaths = isShelterLevel
+
+    const segments = isShelterLevel
       ? ['add-profile', 'select-room', 'confirmation']
       : ['add-profile', 'select-shelter', 'select-room', 'confirmation'];
-    
-    return relativePaths.map(path => `${basePath}/${path}`);
+
+    return segments.map(seg => `${base}/${seg}`);
   }, [isShelterLevel, shelterId]);
 
   return (
