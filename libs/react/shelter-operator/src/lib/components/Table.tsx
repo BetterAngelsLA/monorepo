@@ -26,6 +26,7 @@ type TableProps<TItem, TRowObject = TItem> = {
   headerInsetClassName?: string;
   rowInsetClassName?: string;
   onRowClick?: RowClickHandler<TRowObject>;
+  onDelete?: (rowObject: TRowObject, rowIndex: number) => void;
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
@@ -47,6 +48,7 @@ export function Table<TItem, TRowObject = TItem>({
   getTrailingContent,
   headerInsetClassName = 'px-6 py-2 pt-6',
   onRowClick,
+  onDelete,
   loading = false,
   loadingState,
   emptyState,
@@ -60,7 +62,11 @@ export function Table<TItem, TRowObject = TItem>({
   const dataTemplateColumns = columns
     .map((column) => column.width ?? '1fr')
     .join(' ');
-  const templateColumns = `${dataTemplateColumns} ${trailingColumnWidth}`;
+
+  const hasTrailingColumn = Boolean(trailingHeader || getTrailingContent || onDelete);
+  const templateColumns = hasTrailingColumn
+    ? `${dataTemplateColumns} ${trailingColumnWidth}`
+    : dataTemplateColumns;
 
   return (
     <div
@@ -100,7 +106,7 @@ export function Table<TItem, TRowObject = TItem>({
             )}
           </div>
         ))}
-        <div aria-hidden="true">{trailingHeader}</div>
+        {hasTrailingColumn && <div aria-hidden="true">{trailingHeader}</div>}
       </div>
 
       {loading && loadingState}
@@ -127,6 +133,7 @@ export function Table<TItem, TRowObject = TItem>({
               rowIndex={index}
               trailingContent={getTrailingContent?.(rowObject, item, index)}
               onRowClick={onRowClick}
+              onDelete={onDelete}
               templateColumns={templateColumns}
               className={rowClassName}
               style={rowStyle}

@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { Button } from './base-ui/buttons/buttons';
+import { Button } from './base-ui/buttons';
 
 export type RowCell = {
   key: string;
@@ -21,7 +21,7 @@ type RowProps<TRowObject> = {
   className?: string;
   style?: CSSProperties;
   onRowClick?: RowClickHandler<TRowObject>;
-  onClick?: () => void;
+  onDelete?: (rowObject: TRowObject, rowIndex: number) => void;
 };
 
 export function Row<TRowObject>({
@@ -33,12 +33,10 @@ export function Row<TRowObject>({
   className = '',
   style,
   onRowClick,
-  onClick,
+  onDelete,
 }: RowProps<TRowObject>) {
   const handleRowClick = () => {
-    console.log('[ShelterOperator][Row click]', rowObject);
     onRowClick?.(rowObject, rowIndex);
-    onClick?.();
   };
 
   return (
@@ -47,7 +45,7 @@ export function Row<TRowObject>({
       className={[
         'grid items-center px-4 mx-4 py-2 text-sm border-t border-gray-200',
         'hover:bg-[#F4F6FD]',
-        (onRowClick || onClick) && 'cursor-pointer',
+        onRowClick && 'cursor-pointer',
         className,
       ]
         .filter(Boolean)
@@ -65,9 +63,19 @@ export function Row<TRowObject>({
         </div>
       ))}
 
-      <div className="justify-self-end">
-        {trailingContent ?? <Button variant="trash" />}
-      </div>
+      {trailingContent ? (
+        <div className="justify-self-end">{trailingContent}</div>
+      ) : onDelete ? (
+        <div
+          className="justify-self-end"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(rowObject, rowIndex);
+          }}
+        >
+          <Button variant="trash" />
+        </div>
+      ) : null}
     </div>
   );
 }

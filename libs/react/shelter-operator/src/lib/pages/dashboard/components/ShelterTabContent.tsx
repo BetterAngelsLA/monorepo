@@ -1,7 +1,6 @@
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
-import { Button } from '../../../components/base-ui/buttons/buttons';
+import { Button } from '../../../components/base-ui/buttons';
 import { EditRoomModal } from '../../../components/rooms/EditRoomModal';
 import {
   RoomTable,
@@ -17,7 +16,6 @@ export function OverviewTabContent() {
 }
 
 export function RoomsTabContent() {
-  // HARD CODED FOR NOW
   const rows: Room[] = [
     {
       id: 'room-1',
@@ -66,7 +64,6 @@ export function RoomsTabContent() {
   };
 
   const handleSaveRoom = (updatedRoom: Room) => {
-    // TODO: Handle room update logic
     console.log('Saving room:', updatedRoom);
     setIsEditModalOpen(false);
   };
@@ -110,9 +107,7 @@ export function ShelterTabContent({
   tab: ShelterTab;
   shelter?: Shelter;
 }) {
-  const { selectedOrganizationId } = useOutletContext() as any;
   void shelter;
-  void selectedOrganizationId;
 
   switch (tab) {
     case 'overview':
