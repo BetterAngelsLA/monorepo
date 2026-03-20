@@ -10,13 +10,6 @@ const ALL_STEPS: WizardStep[] = [
   { label: 'Confirmation' },
 ];
 
-const ALL_PATHS = [
-  'add-profile',
-  'select-shelter',
-  'select-room',
-  'confirmation',
-];
-
 export function ReservationPage() {
   const { shelterId } = useParams();
   const isShelterLevel = !!shelterId;
@@ -29,11 +22,24 @@ export function ReservationPage() {
   }, [isShelterLevel]);
 
   const paths = useMemo(() => {
-    if (isShelterLevel) {
-      return ALL_PATHS.filter((path) => path !== 'select-shelter');
-    }
-    return ALL_PATHS;
-  }, [isShelterLevel]);
+    const basePath = isShelterLevel 
+      ? `/operator/shelter/${shelterId}/reservation`
+      : '/operator/reservation';
+    
+    const relativePaths = isShelterLevel
+      ? ['add-profile', 'select-room', 'confirmation']
+      : ['add-profile', 'select-shelter', 'select-room', 'confirmation'];
+    
+    return relativePaths.map(path => `${basePath}/${path}`);
+  }, [isShelterLevel, shelterId]);
 
-  return <WizardLayout steps={steps} stepPaths={paths} />;
+  return (
+    <WizardLayout
+      steps={steps}
+      stepPaths={paths}
+      navigationConfig={{
+        showNavigation: true,
+      }}
+    />
+  );
 }
