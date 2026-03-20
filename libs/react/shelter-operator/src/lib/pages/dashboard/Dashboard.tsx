@@ -1,35 +1,23 @@
 import { useQuery } from '@apollo/client/react';
-import { useUser } from '@monorepo/react/shelter';
 import { useAtomValue } from 'jotai';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
-import { Dropdown } from '../../components/base-ui/dropdown';
 import { ShelterFilterPanel } from '../../components/ShelterFilterPanel';
 import { ShelterRow } from '../../components/ShelterRow';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
+import { useActiveOrg } from '../../providers/activeOrg';
 import type { Shelter } from '../../types/shelter';
 
 const PAGE_SIZE = 8;
 const SEARCH_DEBOUNCE_MS = 300;
 
 export default function Dashboard() {
-  const { user } = useUser();
-  const organizations = user?.organizations ?? [];
-  const [selectedOrganizationId, setSelectedOrganizationId] = useState(
-    () => user?.organization?.id ?? ''
-  );
-
-  // Sync selectedOrganizationId when user data loads asynchronously
-  const orgId = user?.organization?.id;
-  useEffect(() => {
-    if (orgId && !selectedOrganizationId) {
-      setSelectedOrganizationId(orgId);
-    }
-  }, [orgId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { activeOrg } = useActiveOrg();
+  const selectedOrganizationId = activeOrg?.id ?? '';
 
   const selectedFilters = useAtomValue(operatorShelterFiltersAtom);
 
@@ -82,6 +70,7 @@ export default function Dashboard() {
         properties: propertyFilters,
       },
       skip: !selectedOrganizationId,
+      fetchPolicy: 'cache-and-network',
     }
   );
 
@@ -122,27 +111,6 @@ export default function Dashboard() {
         </Link>
 
         <div className="flex items-center gap-3">
-          {organizations.length > 1 && (
-            <Dropdown
-              label="Organization"
-              placeholder="Select organization"
-              options={organizations.map((org) => ({
-                label: org.name,
-                value: org.id,
-              }))}
-              value={
-                organizations
-                  .filter((org) => org.id === selectedOrganizationId)
-                  .map((org) => ({ label: org.name, value: org.id }))[0] ?? null
-              }
-              onChange={(option) => {
-                if (option) {
-                  setSelectedOrganizationId(option.value);
-                  setPage(1);
-                }
-              }}
-            />
-          )}
           <Link
             to="/operator/dashboard/create"
             className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm cursor-pointer hover:bg-blue-700"
@@ -159,7 +127,7 @@ export default function Dashboard() {
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Search shelters"
-          className="px-6 py-2 rounded-3xl border outline-none shadow-sm"
+          className="px-6 py-2 rounded-3xl border border-gray-300 outline-hidden shadow-xs my-4"
         />
         <ShelterFilterPanel />
       </form>
@@ -169,7 +137,7 @@ export default function Dashboard() {
       </div>
 
       {/* TABLE */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden w-full">
+      <div className="bg-white rounded-2xl shadow-xs overflow-hidden w-full">
         {/* HEADER */}
         <div className="grid grid-cols-[1fr_1.5fr_0.5fr] items-center px-6 py-3 text-xs font-semibold uppercase tracking-wider text-gray-700 bg-gray-50 border-b border-gray-200">
           <div>Shelter Name</div>

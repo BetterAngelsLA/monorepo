@@ -1,52 +1,55 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-:root {
-  --font-primary: 'Poppins', 'sans-serif';
-  --color-brand-yellow: #fff82e;
-  --color-primary-20: #052b73;
-  --color-primary-60: #216af8;
-  --color-primary-95: #dae7ff;
-  --color-steel-blue: #375c76;
-  --color-neutral-40: #62676f;
-  --color-neutral-70: #a8aeb8;
-  --color-neutral-90: #d3d9e3;
-  --color-neutral-98: #e8ecf2;
-  --color-neutral-99: #f4f6fd;
-  --color-success-30: #007934;
-  --color-success-90: #ddf8e8;
-  --color-primary-dark: #1650C1;
-  --color-dark-blue: #1E3342;
-  --color-neutral-warm-50: #767676;
-  --color-neutral-warm-70: #676767;
-  --color-neutral-warm-95: #F8F7F9;
-  --color-tags-main: #C3F4FF;
-  --color-tags-yellow: #FFF7AE;
-  --color-tags-purple: #E2C6FF;
-  --color-tags-pink: #FFD7E7;
-  --color-tags-blue: #DCF1FF;
-}
+@config '../../../tailwind.config.ts';
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-  -webkit-tap-highlight-color: transparent;
-}
+@layer base {
+  :root {
+    --font-primary: 'Poppins', 'sans-serif';
+    --color-brand-yellow: #fff82e;
+    --color-primary-20: #052b73;
+    --color-primary-60: #216af8;
+    --color-primary-95: #dae7ff;
+    --color-steel-blue: #375c76;
+    --color-neutral-20: #383b40;
+    --color-neutral-40: #62676f;
+    --color-neutral-70: #a8aeb8;
+    --color-neutral-90: #d3d9e3;
+    --color-neutral-98: #e8ecf2;
+    --color-neutral-99: #f4f6fd;
+    --color-success-30: #007934;
+    --color-success-90: #ddf8e8;
+    --color-primary-dark: #1650c1;
+    --color-dark-blue: #1e3342;
+    --color-neutral-warm-50: #767676;
+    --color-neutral-warm-70: #676767;
+    --color-neutral-warm-95: #f8f7f9;
+    --color-tags-main: #c3f4ff;
+    --color-tags-yellow: #fff7ae;
+    --color-tags-purple: #e2c6ff;
+    --color-tags-pink: #ffd7e7;
+    --color-tags-blue: #dcf1ff;
+  }
 
-html,
-body {
-  font-family: var(--font-primary);
-  color: var(--color-primary-20);
-  font-weight: 400;
-  letter-spacing: 0.3px;
-}
+  * {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-select:focus,
-input:focus,
-textarea:focus {
-  outline: none;
+  html,
+  body {
+    font-family: var(--font-primary);
+    color: var(--color-primary-20);
+    font-weight: 400;
+    letter-spacing: 0.3px;
+  }
+
+  select:focus,
+  input:focus,
+  textarea:focus {
+    outline: none;
+  }
 }
 
 .scrollbar-thin {

@@ -93,20 +93,33 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
             items={categoryGroup.types}
             onChange={(value) => {
               if (value === CUSTOM_FILE_NAME_VALUE) {
-                showBottomSheet(({ closeSheet }) => (
-                  <CustomFileNamePrompt
-                    onSubmit={(customName) => {
-                      onSelect({
-                        type: 'custom',
-                        categoryId: categoryGroup.categoryId,
-                        categoryName: categoryGroup.categoryName,
-                        fileName: customName,
-                      });
+                showBottomSheet({
+                  render: ({ closeSheet }) => (
+                    <CustomFileNamePrompt
+                      onSubmit={(customName) => {
+                        onSelect({
+                          type: 'custom',
+                          categoryId: categoryGroup.categoryId,
+                          categoryName: categoryGroup.categoryName,
+                          fileName: customName,
+                        });
 
-                      closeSheet();
-                    }}
-                  />
-                ));
+                        closeSheet();
+                      }}
+                    />
+                  ),
+                  options: {
+                    showCloseButton: true,
+                    contentStyle: {
+                      paddingBottom: 0,
+                      paddingLeft: 0,
+                      paddingRight: 0,
+                    },
+                    headerStyle: {
+                      paddingHorizontal: Spacings.md,
+                    },
+                  },
+                });
 
                 return;
               }
