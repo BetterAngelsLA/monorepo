@@ -1,4 +1,5 @@
 import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
+import { operatorPath } from '@monorepo/react/shelter';
 import { Plus, UserCog } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -49,7 +50,7 @@ export default function NavBar({
     <div className="mb-6 bg-[#FAFAFA] px-5 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3 md:gap-4">
-          <Link to="/" className="shrink-0">
+          <Link to={operatorPath} className="shrink-0">
             <BetterAngelsLogoIcon fill="#1E3342" className="h-9 w-auto" />
           </Link>
 
@@ -95,7 +96,7 @@ export default function NavBar({
 
         <div className="flex items-center gap-3">
           {showCreateButton && (
-            <Link to="/operator/dashboard/create">
+            <Link to={`${operatorPath}/dashboard/create`}>
               <Button
                 variant="primary"
                 leftIcon={<Plus size={20} />}

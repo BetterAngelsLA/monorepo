@@ -1,3 +1,4 @@
+import { operatorPath } from '@monorepo/react/shelter';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { WizardLayout } from '../../components/layout/WizardLayout';
@@ -23,8 +24,8 @@ export function ReservationPage() {
 
   const paths = useMemo(() => {
     const base = isShelterLevel
-      ? `/operator/shelter/${shelterId}/reservation`
-      : '/operator/reservation';
+      ? `${operatorPath}/shelter/${shelterId}/reservation`
+      : `${operatorPath}/reservation`;
 
     const segments = isShelterLevel
       ? ['add-profile', 'select-room', 'confirmation']

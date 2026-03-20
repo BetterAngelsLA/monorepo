@@ -1,4 +1,5 @@
 import { useQuery } from '@apollo/client/react';
+import { operatorPath } from '@monorepo/react/shelter';
 import { Outlet, useLocation, useParams } from 'react-router-dom';
 import { useUser } from '@monorepo/react/shelter';
 import NavBar from '../NavBar';
@@ -9,7 +10,7 @@ export function OperatorLayout() {
   const params = useParams<{ id?: string; shelterId?: string }>();
   const { user } = useUser();
   const isDashboardPage =
-    location.pathname === '/operator' || location.pathname === '/operator/';
+    location.pathname === operatorPath || location.pathname === `${operatorPath}/`;
 
   const shelterId = params.shelterId || params.id;
   const isShelterPage =
