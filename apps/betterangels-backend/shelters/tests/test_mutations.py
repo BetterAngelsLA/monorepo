@@ -361,7 +361,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
 
         created_showers = Service.objects.get(category=category, display_name="Showers")
         self.assertTrue(created_showers.is_other)
-        self.assertEqual(created_showers.name, "other_showers")
+        self.assertEqual(created_showers.name, "showers")
+        self.assertTrue(created_showers.is_other)
         self.assertEqual(Service.objects.filter(category=category, display_name__iexact="Showers").count(), 1)
         self.assertEqual(
             existing_other.pk,

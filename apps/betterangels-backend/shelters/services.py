@@ -199,7 +199,6 @@ def resolve_pending_service_entries(entries: list[tuple[int, str]]) -> list[Serv
 
         category = categories[cid]
         base_name = slugify(display_name).replace("-", "_") or f"service_{cid}"
-        base_name = f"other_{base_name}"
         service_name = base_name
         suffix = 2
         while service_name.casefold() in names_by_category[cid]:

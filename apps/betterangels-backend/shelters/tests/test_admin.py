@@ -23,7 +23,7 @@ class ShelterFormPendingServicesTestCase(TestCase):
         )
         self.existing_other_service = Service.objects.create(
             category=self.category,
-            name="other_laundry",
+            name="laundry",
             display_name="Laundry",
             is_other=True,
             priority=0,
@@ -80,9 +80,9 @@ class ShelterFormPendingServicesTestCase(TestCase):
         created_service = self.shelter.services.get(display_name="Showers")
         self.assertTrue(created_service.is_other)
         self.assertEqual(created_service.category, self.category)
-        self.assertEqual(created_service.name, "other_showers")
+        self.assertEqual(created_service.name, "showers")
         self.assertEqual(created_service.priority, 2)
 
         self.assertEqual(Service.objects.filter(category=self.category, display_name__iexact="Showers").count(), 1)
-        self.assertEqual(Service.objects.filter(category=self.category, name="other_showers").count(), 1)
+        self.assertEqual(Service.objects.filter(category=self.category, name="showers", is_other=True).count(), 1)
         self.assertEqual(self.shelter.services.count(), 2)

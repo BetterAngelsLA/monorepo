@@ -259,7 +259,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         )
         Service.objects.create(
             category=category,
-            name="other_showers_test",
+            name="showers_test",
             display_name="Showers",
             is_other=True,
             priority=1,
