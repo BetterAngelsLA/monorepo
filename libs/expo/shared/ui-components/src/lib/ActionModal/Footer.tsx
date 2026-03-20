@@ -35,7 +35,11 @@ export default function ActionModalFooter({
     >
       {secondaryButtonTitle && (
         <View
-          style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+          style={{
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: Spacings.sm,
+          }}
         >
           <TextButton
             fontSize="sm"

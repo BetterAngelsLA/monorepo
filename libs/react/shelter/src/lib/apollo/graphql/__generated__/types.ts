@@ -160,6 +160,18 @@ export type AuthResponse = {
   status_code: Scalars['String']['output'];
 };
 
+export enum BedStatusChoices {
+  Available = 'AVAILABLE',
+  Reserved = 'RESERVED'
+}
+
+export type BedType = {
+  __typename?: 'BedType';
+  id: Scalars['ID']['output'];
+  shelter: ShelterType;
+  status?: Maybe<BedStatusChoices>;
+};
+
 export type CityType = {
   __typename?: 'CityType';
   id: Scalars['ID']['output'];
@@ -408,6 +420,13 @@ export type ContactInfoType = {
   contactNumber: Scalars['PhoneNumber']['output'];
   id: Scalars['ID']['output'];
 };
+
+export type CreateBedInput = {
+  shelterId: Scalars['ID']['input'];
+  status: BedStatusChoices;
+};
+
+export type CreateBedPayload = BedType | OperationInfo;
 
 export type CreateClientContactPayload = ClientContactType | OperationInfo;
 
@@ -1328,6 +1347,7 @@ export enum MealServiceChoices {
 export type Mutation = {
   __typename?: 'Mutation';
   addOrganizationMember: AddOrganizationMemberPayload;
+  createBed: CreateBedPayload;
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
@@ -1386,6 +1406,11 @@ export type Mutation = {
 
 export type MutationAddOrganizationMemberArgs = {
   data: OrgInvitationInput;
+};
+
+
+export type MutationCreateBedArgs = {
+  data: CreateBedInput;
 };
 
 
@@ -1461,7 +1486,7 @@ export type MutationCreateServiceRequestArgs = {
 
 
 export type MutationCreateShelterArgs = {
-  input: CreateShelterInput;
+  data: CreateShelterInput;
 };
 
 
@@ -1805,7 +1830,16 @@ export type OrganizationFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type OrganizationMemberFilter = {
+  AND?: InputMaybe<OrganizationMemberFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<OrganizationMemberFilter>;
+  OR?: InputMaybe<OrganizationMemberFilter>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type OrganizationMemberOrdering = {
+  dateJoined?: InputMaybe<Ordering>;
   email?: InputMaybe<Ordering>;
   firstName?: InputMaybe<Ordering>;
   id?: InputMaybe<Ordering>;
@@ -1816,6 +1850,7 @@ export type OrganizationMemberOrdering = {
 
 export type OrganizationMemberType = {
   __typename?: 'OrganizationMemberType';
+  dateJoined: Scalars['DateTime']['output'];
   email?: Maybe<Scalars['NonBlankString']['output']>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
   id: Scalars['ID']['output'];
@@ -2145,6 +2180,7 @@ export type QueryOrganizationMemberArgs = {
 
 
 export type QueryOrganizationMembersArgs = {
+  filters?: InputMaybe<OrganizationMemberFilter>;
   ordering?: InputMaybe<Array<OrganizationMemberOrdering>>;
   organizationId: Scalars['String']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -2153,6 +2189,7 @@ export type QueryOrganizationMembersArgs = {
 
 export type QueryReportSummaryArgs = {
   endDate?: InputMaybe<Scalars['Date']['input']>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
   startDate?: InputMaybe<Scalars['Date']['input']>;
 };
 
@@ -2855,7 +2892,8 @@ export enum UserOrganizationPermissions {
   AddOrgMember = 'ADD_ORG_MEMBER',
   ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
   RemoveOrgMember = 'REMOVE_ORG_MEMBER',
-  ViewOrgMembers = 'VIEW_ORG_MEMBERS'
+  ViewOrgMembers = 'VIEW_ORG_MEMBERS',
+  ViewReports = 'VIEW_REPORTS'
 }
 
 export type UserType = {

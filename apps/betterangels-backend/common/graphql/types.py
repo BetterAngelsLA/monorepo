@@ -166,13 +166,6 @@ class AttachmentInterface:
     created_at: auto
     updated_at: auto
 
-    # @strawberry.field
-    # def thumbnail(
-    #     self, params: ThumbNailTransformEnum
-    # ) -> Optional[ThumbnailType]:
-    #     # Example for future dynamic thumbnail transformation
-    #     pass
-
 
 @strawberry.type
 class FlagType:

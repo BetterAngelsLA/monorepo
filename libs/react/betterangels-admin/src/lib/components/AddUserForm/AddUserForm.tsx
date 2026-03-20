@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
-import { useUser } from '../../providers';
+import { useActiveOrg } from '../../providers';
 import { AddOrganizationMemberDocument } from './__generated__/addOrganizationMember.generated';
 import { FormSchema, TFormSchema, defaultValues } from './formSchema';
 
@@ -19,7 +19,7 @@ type TProps = {
 export function AddUserForm(props: TProps) {
   const { className, onComplete, onCancel } = props;
 
-  const { user } = useUser();
+  const { activeOrg } = useActiveOrg();
   const { showAlert } = useAlert();
   const [disabled, setDisabled] = useState(false);
 
@@ -32,7 +32,7 @@ export function AddUserForm(props: TProps) {
     defaultValues,
   });
 
-  const organizationId = user?.organization?.id;
+  const organizationId = activeOrg?.id;
 
   const [addOrganizationMember] = useMutation(AddOrganizationMemberDocument);
 

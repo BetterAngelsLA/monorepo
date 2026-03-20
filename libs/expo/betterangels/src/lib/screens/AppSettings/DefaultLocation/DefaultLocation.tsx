@@ -14,7 +14,7 @@ import { MapView, Marker } from '../../../maps';
 import { useModalScreen } from '../../../providers';
 import { useUserDefaultNoteLocation } from '../../../state';
 import { MainScrollContainer } from '../../../ui-components';
-import { LocationDraft } from '../../NotesHmis/HmisProgramNoteForm';
+import { LocationDraft } from '../../NotesHmis/NoteFormHmis';
 
 export function DefaultLocation() {
   const [defaultLocation, setDefaultLocation] = useUserDefaultNoteLocation();

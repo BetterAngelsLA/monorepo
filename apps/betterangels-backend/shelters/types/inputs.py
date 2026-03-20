@@ -9,6 +9,7 @@ from common.graphql.types import PhoneNumberScalar
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
+    BedStatusChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
@@ -112,3 +113,9 @@ class CreateShelterInput:
     city_council_district: auto = None
     supervisorial_district: auto = None
     overall_rating: auto = None
+
+
+@strawberry.input
+class CreateBedInput:
+    shelter_id: ID
+    status: BedStatusChoices

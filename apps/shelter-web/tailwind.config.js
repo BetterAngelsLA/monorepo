@@ -1,5 +1,4 @@
 const { createGlobPatternsForDependencies } = require('@nx/react/tailwind');
-const daisyui = require('daisyui');
 const { join } = require('path');
 
 /** @type {import('tailwindcss').Config} */
@@ -71,8 +70,5 @@ module.exports = {
       },
     },
   },
-  plugins: [daisyui],
-  daisyui: {
-    themes: false,
-  },
+  plugins: [],
 };
