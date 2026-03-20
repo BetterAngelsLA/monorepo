@@ -10,6 +10,11 @@ import {
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
 import { useActiveOrg } from '../../providers/activeOrg';
+import type {
+  DemographicChoices,
+  ShelterChoices,
+  SpecialSituationRestrictionChoices,
+} from '../../apollo/graphql/__generated__/types';
 import type { Shelter } from '../../types/shelter';
 
 const PAGE_SIZE = 8;
@@ -44,14 +49,14 @@ export default function Dashboard() {
 
   const propertyFilters = useMemo(() => {
     const demographics = selectedFilters.demographics?.length
-      ? selectedFilters.demographics
+      ? (selectedFilters.demographics as DemographicChoices[])
       : undefined;
     const specialSituationRestrictions =
       selectedFilters.specialSituationRestrictions?.length
-        ? selectedFilters.specialSituationRestrictions
+        ? (selectedFilters.specialSituationRestrictions as SpecialSituationRestrictionChoices[])
         : undefined;
     const shelterTypes = selectedFilters.shelterTypes?.length
-      ? selectedFilters.shelterTypes
+      ? (selectedFilters.shelterTypes as ShelterChoices[])
       : undefined;
     if (!demographics && !specialSituationRestrictions && !shelterTypes) {
       return undefined;
@@ -82,13 +87,15 @@ export default function Dashboard() {
       ViewSheltersByOrganizationQuery['adminShelters']['results'][number]
     >;
     return (
-      activeData?.adminShelters?.results?.map((s: ShelterResult) => ({
-        id: String(s.id),
-        name: s.name ?? null,
-        address: s.location?.place ?? null,
-        totalBeds: s.totalBeds ?? null,
-        tags: null,
-      })) ?? []
+      activeData?.adminShelters?.results
+        ?.filter((s): s is ShelterResult => s != null)
+        .map((s) => ({
+          id: String(s.id),
+          name: s.name ?? null,
+          address: s.location?.place ?? null,
+          totalBeds: s.totalBeds ?? null,
+          tags: null,
+        })) ?? []
     );
   }, [activeData?.adminShelters?.results]);
 
