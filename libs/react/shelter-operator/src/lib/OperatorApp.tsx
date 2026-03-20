@@ -24,20 +24,20 @@ export function OperatorApp() {
             <Route index element={<Dashboard />} />
             <Route path="dashboard/create" element={<CreateShelterForm />} />
             <Route path="shelter/:id" element={<ShelterDashboardPage />} />
-          </Route>
-          <Route path="reservation/*" element={<ReservationPage />}>
-            <Route path="add-profile" element={<AddProfilePage />} />
-            <Route path="select-shelter" element={<SelectShelterPage />} />
-            <Route path="select-room" element={<SelectRoomPage />} />
-            <Route path="confirmation" element={<ConfirmationPage />} />
-          </Route>
-          <Route
-            path="shelter/:shelterId/reservation/*"
-            element={<ReservationPage />}
-          >
-            <Route path="add-profile" element={<AddProfilePage />} />
-            <Route path="select-room" element={<SelectRoomPage />} />
-            <Route path="confirmation" element={<ConfirmationPage />} />
+            <Route path="reservation/*" element={<ReservationPage />}>
+              <Route path="add-profile" element={<AddProfilePage />} />
+              <Route path="select-shelter" element={<SelectShelterPage />} />
+              <Route path="select-room" element={<SelectRoomPage />} />
+              <Route path="confirmation" element={<ConfirmationPage />} />
+            </Route>
+            <Route
+              path="shelter/:shelterId/reservation/*"
+              element={<ReservationPage />}
+            >
+              <Route path="add-profile" element={<AddProfilePage />} />
+              <Route path="select-room" element={<SelectRoomPage />} />
+              <Route path="confirmation" element={<ConfirmationPage />} />
+            </Route>
           </Route>
         </Routes>
       </OperatorAuthProvider>

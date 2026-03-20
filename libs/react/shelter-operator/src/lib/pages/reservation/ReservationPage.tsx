@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { WizardLayout } from '../../components/layouts/WizardLayout';
-import type { WizardStep } from '../../components/layouts/WizardProgressBar';
+import { WizardLayout } from '../../components/layout/WizardLayout';
+import type { WizardStep } from '../../components/layout/WizardProgressBar';
 
 const ALL_STEPS: WizardStep[] = [
-  { id: 'add-profile', label: 'Add Profile' },
-  { id: 'select-shelter', label: 'Select Shelter' },
-  { id: 'select-room', label: 'Select Room / Bed' },
-  { id: 'confirmation', label: 'Confirmation' },
+  { label: 'Add Profile' },
+  { label: 'Select Shelter' },
+  { label: 'Select Room / Bed' },
+  { label: 'Confirmation' },
 ];
 
 const ALL_PATHS = [
@@ -23,7 +23,7 @@ export function ReservationPage() {
 
   const steps = useMemo(() => {
     if (isShelterLevel) {
-      return ALL_STEPS.filter((step) => step.id !== 'select-shelter');
+      return ALL_STEPS.filter((_, index) => index !== 1);
     }
     return ALL_STEPS;
   }, [isShelterLevel]);
@@ -35,11 +35,5 @@ export function ReservationPage() {
     return ALL_PATHS;
   }, [isShelterLevel]);
 
-  return (
-    <WizardLayout
-      steps={steps}
-      stepPaths={paths}
-      pageTitle="Shelter Reservation"
-    />
-  );
+  return <WizardLayout steps={steps} stepPaths={paths} />;
 }
