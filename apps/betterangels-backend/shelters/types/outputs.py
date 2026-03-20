@@ -61,6 +61,14 @@ class ShelterPhotoType:
 
 
 @strawberry.type
+class BedCapacityType:
+    available: int = 0
+    occupied: int = 0
+    reserved: int = 0
+    out_of_service: int = 0
+
+
+@strawberry.type
 class ShelterTypeMixin:
     id: ID
     accessibility: List[AccessibilityType]
@@ -155,6 +163,32 @@ class ShelterTypeMixin:
             return float(distance.mi)
 
         return None
+
+    @strawberry_django.field(
+        prefetch_related=[
+            lambda x: Prefetch(
+                "beds",
+                queryset=models.Bed.objects.only("id", "shelter_id", "status"),
+                to_attr="_prefetched_beds",
+            ),
+        ],
+    )
+    def bed_capacity(self, root: models.Shelter) -> BedCapacityType:
+        beds = getattr(root, "_prefetched_beds", None)
+        if beds is None:
+            beds = list(root.beds.all())
+        capacity = BedCapacityType()
+        for bed in beds:
+            if bed.status == BedStatusChoices.AVAILABLE:
+                capacity.available += 1
+            elif bed.status == BedStatusChoices.OCCUPIED:
+                capacity.occupied += 1
+            elif bed.status == BedStatusChoices.RESERVED:
+                capacity.reserved += 1
+            elif bed.status == BedStatusChoices.OUT_OF_SERVICE:
+                capacity.out_of_service += 1
+            # beds with status=None are intentionally uncounted
+        return capacity
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)

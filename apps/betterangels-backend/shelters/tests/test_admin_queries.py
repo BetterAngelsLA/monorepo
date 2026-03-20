@@ -3,6 +3,8 @@ from datetime import timedelta
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.utils import timezone
+from shelters.enums import BedStatusChoices
+from shelters.models import Bed
 from shelters.permissions import ShelterPermissions
 from shelters.tests.baker_recipes import shelter_recipe
 
@@ -138,3 +140,64 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         payload = response["data"]["adminShelters"]
         self.assertEqual(payload["totalCount"], 0)
         self.assertEqual(payload["results"], [])
+
+    def test_admin_shelters_bed_capacity(self) -> None:
+        """Bed capacity counts are returned grouped by status."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        shelter = self.org_1_shelter_newer
+
+        Bed.objects.create(shelter=shelter, status=BedStatusChoices.AVAILABLE)
+        Bed.objects.create(shelter=shelter, status=BedStatusChoices.AVAILABLE)
+        Bed.objects.create(shelter=shelter, status=BedStatusChoices.OCCUPIED)
+        Bed.objects.create(shelter=shelter, status=BedStatusChoices.RESERVED)
+        Bed.objects.create(shelter=shelter, status=BedStatusChoices.OUT_OF_SERVICE)
+
+        query = """
+            query AdminShelters($orgIds: [ID!]) {
+                adminShelters(filters: { organizations: $orgIds }) {
+                    results {
+                        id
+                        bedCapacity {
+                            available
+                            occupied
+                            reserved
+                            outOfService
+                        }
+                    }
+                }
+            }
+        """
+        response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
+        results = response["data"]["adminShelters"]["results"]
+        shelter_data = next(r for r in results if r["id"] == str(shelter.id))
+        self.assertEqual(
+            shelter_data["bedCapacity"],
+            {"available": 2, "occupied": 1, "reserved": 1, "outOfService": 1},
+        )
+
+    def test_admin_shelters_bed_capacity_no_beds(self) -> None:
+        """Shelter with no beds returns all zeros for bed capacity."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        query = """
+            query AdminShelters($orgIds: [ID!]) {
+                adminShelters(filters: { organizations: $orgIds }) {
+                    results {
+                        id
+                        bedCapacity {
+                            available
+                            occupied
+                            reserved
+                            outOfService
+                        }
+                    }
+                }
+            }
+        """
+        response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
+        results = response["data"]["adminShelters"]["results"]
+        for result in results:
+            self.assertEqual(
+                result["bedCapacity"],
+                {"available": 0, "occupied": 0, "reserved": 0, "outOfService": 0},
+            )
