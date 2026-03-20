@@ -1,8 +1,11 @@
-import { Route } from 'react-router-dom';
-import { buildShelterRoutes } from './buildShelterRoutes';
+import { useFeatureFlagActive } from '@monorepo/react/shared';
+import { FeatureFlags } from '@monorepo/react/shelter';
+import { operatorRoute } from './buildShelterRoutes';
 
-export const useShelterRoutes = () => {
-  return buildShelterRoutes().map((route) => (
-    <Route key={route.path} path={route.path} element={route.element} />
-  ));
+export const useOperatorRoute = () => {
+  const operatorEnabled = useFeatureFlagActive(
+    FeatureFlags.SHELTER_OPERATOR_APP
+  );
+
+  return operatorEnabled ? operatorRoute : null;
 };
