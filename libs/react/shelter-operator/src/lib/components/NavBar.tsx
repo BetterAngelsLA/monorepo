@@ -9,22 +9,22 @@ interface NavBarProps {
   organizationName?: string;
   shelterName?: string;
   pageTitle?: string;
+  showCreateButton?: boolean;
 }
 
 export default function NavBar({
   organizationName,
   shelterName,
   pageTitle,
+  showCreateButton = true,
 }: NavBarProps = {}) {
   const { activeOrg, organizations, setActiveOrgId } = useActiveOrg();
   const selectedOrganizationId = activeOrg?.id ?? '';
 
-  // Build breadcrumbs array
   const breadcrumbs = [organizationName, shelterName, pageTitle].filter(
     Boolean
   );
 
-  // Determine title/breadcrumb display
   const displayTitle =
     breadcrumbs.length > 0
       ? null
@@ -89,15 +89,17 @@ export default function NavBar({
         </div>
 
         <div className="flex items-center gap-3">
-          <Link to="/operator/dashboard/create">
-            <Button
-              variant="primary"
-              leftIcon={<Plus size={20} />}
-              rightIcon={false}
-            >
-              Create Shelter
-            </Button>
-          </Link>
+          {showCreateButton && (
+            <Link to="/operator/dashboard/create">
+              <Button
+                variant="primary"
+                leftIcon={<Plus size={20} />}
+                rightIcon={false}
+              >
+                Create Shelter
+              </Button>
+            </Link>
+          )}
           <button
             type="button"
             aria-label="Account settings"
