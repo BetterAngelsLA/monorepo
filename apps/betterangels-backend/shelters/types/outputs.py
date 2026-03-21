@@ -176,7 +176,7 @@ class ShelterTypeMixin:
     def bed_capacity(self, root: models.Shelter) -> BedCapacityType:
         beds = getattr(root, "_prefetched_beds", None)
         if beds is None:
-            beds = list(root.beds.all())
+            beds = list(root.beds.only("id", "shelter_id", "status"))
         capacity = BedCapacityType()
         for bed in beds:
             if bed.status == BedStatusChoices.AVAILABLE:
