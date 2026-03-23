@@ -46,7 +46,7 @@ jobs:
       - name: ️ Delete EAS Branches for Affected Projects
         run: |
           BRANCH_NAME='${{ github.head_ref || github.ref_name }}'
-          affected=$(yarn nx show projects --affected --exclude='^shelter$' --withTarget eas-update)
+          affected=$(yarn nx show projects --affected --withTarget eas-update)
           if [ -z "$affected" ]; then
             echo "No affected projects with eas-update target"
             exit 0
