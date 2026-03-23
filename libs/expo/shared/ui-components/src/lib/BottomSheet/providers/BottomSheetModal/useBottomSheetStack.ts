@@ -1,3 +1,24 @@
+/**
+ * useBottomSheetStack
+ *
+ * Internal hook that manages sheet stacking behavior.
+ *
+ * Applies `stackBehavior` when adding a new sheet:
+ *
+ * - 'push'    → append to stack
+ * - 'switch'  → dismiss top sheet, replace it
+ * - 'replace' → dismiss all sheets, keep only new one
+ *
+ * Dismissals are performed imperatively via Gorhom refs.
+ *
+ * This hook does not render anything — it only mutates
+ * the sheet list state.
+ *
+ * Upstream:
+ * - Invoked by `BottomSheetModalProvider`
+ * - Behavior configured via `BottomSheetOptions.stackBehavior`
+ */
+
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Dispatch, RefObject, useCallback } from 'react';
 import { StackBehavior } from '../../types';

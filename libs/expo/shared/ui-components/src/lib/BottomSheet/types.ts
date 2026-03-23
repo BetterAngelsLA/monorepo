@@ -1,3 +1,22 @@
+/**
+ * BottomSheetOptions
+ *
+ * Unified configuration object passed to `showBottomSheet()`.
+ *
+ * This combines:
+ * - Gorhom options (behavior)
+ * - Provider options (stacking, lifecycle)
+ * - Wrapper options (layout, backdrop, structure)
+ * - Header options (UI)
+ *
+ * Resolution order:
+ *   provider defaults
+ *     → showBottomSheet options
+ *       → internal resolution
+ *
+ * See `useBottomSheet` for usage examples and mental model.
+ */
+
 import { BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import { ComponentType, ReactNode } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
@@ -219,14 +238,11 @@ export type BottomSheetRenderApi = {
  */
 export type ShowBottomSheetParams = {
   /**
-   * Render function invoked inside the sheet.
-   * Receives `{ closeSheet }` helper.
+   * Parameters for `showBottomSheet()`.
+   *
+   * See `useBottomSheet` for full usage documentation.
    */
   render: (api: BottomSheetRenderApi) => ReactNode;
-
-  /**
-   * Optional configuration object.
-   */
   options?: BottomSheetOptions;
 };
 
@@ -235,12 +251,10 @@ export type ShowBottomSheetParams = {
  */
 export type BottomSheetContextValue = {
   /**
-   * Opens a new bottom sheet.
+   * Context API exposed via `useBottomSheet()`.
+   *
+   * Do not consume directly — use the hook instead.
    */
   showBottomSheet: (params: ShowBottomSheetParams) => void;
-
-  /**
-   * Dismisses only the top-most sheet.
-   */
   popTopSheet: () => void;
 };
