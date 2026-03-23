@@ -133,28 +133,30 @@ function run(cmd: string, opts?: { cwd?: string; silent?: boolean }): string {
 
 /**
  * Run a command and parse its stdout as JSON.
- * Handles nx/eas CLI output that may contain non-JSON text around the payload.
+ * Handles nx/eas CLI output that may contain ANSI codes and non-JSON text.
  */
 function runJson<T>(cmd: string, opts?: { cwd?: string }): T {
   const raw = run(cmd, { silent: true, ...opts });
-  // Find the first [ or { and try parsing from there
-  const match = raw.match(/[\[{]/);
-  if (!match || match.index === undefined) {
-    throw new Error(`No JSON found in output:\n${raw.slice(0, 500)}`);
-  }
-  const jsonStart = raw.substring(match.index);
-  // Try parsing progressively larger substrings ending at ] or }
-  const endChar = jsonStart[0] === '[' ? ']' : '}';
-  for (let i = 0; i < jsonStart.length; i++) {
-    if (jsonStart[i] === endChar) {
-      try {
-        return JSON.parse(jsonStart.substring(0, i + 1)) as T;
-      } catch {
-        // Not complete yet
+  // Strip ANSI escape codes so they don't interfere with JSON detection
+  // eslint-disable-next-line no-control-regex
+  const cleaned = raw.replace(/\x1B\[[0-9;]*[A-Za-z]/g, '');
+  // Try parsing from every [ or { — earlier ones may be non-JSON text
+  const re = /[\[{]/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(cleaned)) !== null) {
+    const sub = cleaned.substring(match.index);
+    const endChar = sub[0] === '[' ? ']' : '}';
+    for (let i = 0; i < sub.length; i++) {
+      if (sub[i] === endChar) {
+        try {
+          return JSON.parse(sub.substring(0, i + 1)) as T;
+        } catch {
+          // Not valid JSON yet, keep scanning
+        }
       }
     }
   }
-  throw new Error(`Could not parse JSON from output:\n${raw.slice(0, 500)}`);
+  throw new Error(`Could not parse JSON from output:\n${cleaned.slice(0, 500)}`);
 }
 
 /**
