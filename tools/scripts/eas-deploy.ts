@@ -133,10 +133,28 @@ function run(cmd: string, opts?: { cwd?: string; silent?: boolean }): string {
 
 /**
  * Run a command and parse its stdout as JSON.
+ * Handles nx/eas CLI output that may contain non-JSON text around the payload.
  */
 function runJson<T>(cmd: string, opts?: { cwd?: string }): T {
   const raw = run(cmd, { silent: true, ...opts });
-  return JSON.parse(raw) as T;
+  // Find the first [ or { and try parsing from there
+  const match = raw.match(/[\[{]/);
+  if (!match || match.index === undefined) {
+    throw new Error(`No JSON found in output:\n${raw.slice(0, 500)}`);
+  }
+  const jsonStart = raw.substring(match.index);
+  // Try parsing progressively larger substrings ending at ] or }
+  const endChar = jsonStart[0] === '[' ? ']' : '}';
+  for (let i = 0; i < jsonStart.length; i++) {
+    if (jsonStart[i] === endChar) {
+      try {
+        return JSON.parse(jsonStart.substring(0, i + 1)) as T;
+      } catch {
+        // Not complete yet
+      }
+    }
+  }
+  throw new Error(`Could not parse JSON from output:\n${raw.slice(0, 500)}`);
 }
 
 /**
@@ -213,7 +231,7 @@ function setupSecrets(projectDir: string, profile: string): string {
 // ---------------------------------------------------------------------------
 
 function checkOrTriggerBuild(
-  projectDir: string,
+  project: string,
   profile: string,
   runtimeVersion: string,
   platforms: string[]
@@ -238,8 +256,7 @@ function checkOrTriggerBuild(
     let buildData: BuildInfo[];
     try {
       buildData = runJson<BuildInfo[]>(
-        `eas build:list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${runtimeVersion} --limit 1 --json --non-interactive`,
-        { cwd: projectDir }
+        `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${runtimeVersion} --limit 1 --json --interactive false`
       );
     } catch {
       buildData = [];
@@ -254,8 +271,7 @@ function checkOrTriggerBuild(
         `No existing ${platform} build for runtime ${runtimeVersion}. Starting new build.`
       );
       buildData = runJson<BuildInfo[]>(
-        `eas build --profile ${profile} --platform ${platform} --freeze-credentials --non-interactive --no-wait --json`,
-        { cwd: projectDir }
+        `yarn nx run ${project}:build --profile ${profile} --platform ${platform} --freeze-credentials --interactive false --wait false --json`
       );
     }
 
@@ -285,7 +301,7 @@ function toBuildResult(info: BuildInfo, slug: string): PlatformBuildResult {
 // ---------------------------------------------------------------------------
 
 function performEasUpdate(
-  projectDir: string,
+  project: string,
   branch: string,
   slug: string,
   projectId: string
@@ -296,8 +312,7 @@ function performEasUpdate(
   console.log(`\n=== Performing EAS Update on branch: ${branch} ===`);
 
   const updateData = runJson<UpdateResult[]>(
-    `eas update --branch "${branch}" --auto --json --non-interactive`,
-    { cwd: projectDir }
+    `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --interactive false`
   );
   const updates: DeployResults['updates'] = {};
   let groupId = '';
@@ -585,7 +600,7 @@ async function main(): Promise<void> {
   const isPreview = profile === 'preview';
   const buildPlatforms = ['android', 'ios'];
   const { slug, projectId, builds } = checkOrTriggerBuild(
-    projectDir,
+    project,
     profile,
     runtimeVersion,
     buildPlatforms
@@ -595,7 +610,7 @@ async function main(): Promise<void> {
   let simulatorBuilds: Record<string, PlatformBuildResult> = {};
   if (isPreview) {
     const simResult = checkOrTriggerBuild(
-      projectDir,
+      project,
       'development-simulator',
       runtimeVersion,
       ['ios']
@@ -605,7 +620,7 @@ async function main(): Promise<void> {
 
   // 4. EAS Update
   const { updates, groupId } = performEasUpdate(
-    projectDir,
+    project,
     branchName,
     slug,
     projectId
