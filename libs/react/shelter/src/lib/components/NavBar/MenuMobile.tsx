@@ -2,7 +2,12 @@ import { CloseIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { Link } from 'react-router-dom';
-import { aboutUsPath, operatorPath, shelterHomePath, shelterVideoPath } from '../../constants';
+import {
+  aboutUsPath,
+  operatorPath,
+  shelterHomePath,
+  shelterVideoPath,
+} from '../../constants';
 import { flyoutAtom } from '../Flyout';
 
 type MenuMobileProps = {
@@ -77,6 +82,15 @@ export function MenuMobile({ showOperator }: MenuMobileProps) {
             Watch Video
           </Link>
         </div>
+        <div className={mergeCss(borderCss)}>
+          <Link
+            to="https://www.lahsa.org/documents?id=2760-ces-access-center-directory.pdf"
+            className={mergeCss(hoverBtnCss)}
+          >
+            Access Center Directory
+          </Link>
+        </div>
+
         {showOperator ? (
           <div>
             <Link
