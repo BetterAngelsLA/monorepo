@@ -5,7 +5,7 @@ from django.db import migrations, models
 import django.db.models.deletion
 import django_choices_field.fields
 
-from ..deprecated import deprecated_enums
+import shelters.deprecated.deprecated_enums
 import shelters.enums
 
 
@@ -165,7 +165,7 @@ class Migration(migrations.Migration):
                             ("Legal Assistance", "Legal Assistance"),
                             ("Transportation", "Transportation"),
                         ],
-                        choices_enum=shelters.enums.GeneralServiceChoices,
+                        choices_enum=shelters.deprecated.deprecated_enums.GeneralServiceChoices,
                         max_length=20,
                     ),
                 ),
@@ -242,7 +242,7 @@ class Migration(migrations.Migration):
                             ("Veterans", "Veterans"),
                             ("LGBTQ", "LGBTQ"),
                         ],
-                        choices_enum=deprecated_enums.PopulationChoices,
+                        choices_enum=shelters.deprecated.deprecated_enums.PopulationChoices,
                         max_length=8,
                     ),
                 ),

@@ -17,10 +17,6 @@ from shelters.enums import (
     EntryRequirementChoices,
     ExitPolicyChoices,
     FunderChoices,
-    GeneralServiceChoices,
-    HealthServiceChoices,
-    ImmediateNeedChoices,
-    MealServiceChoices,
     MedicalNeedChoices,
     ParkingChoices,
     PetChoices,
@@ -35,7 +31,6 @@ from shelters.enums import (
     SPAChoices,
     SpecialSituationRestrictionChoices,
     StorageChoices,
-    TrainingServiceChoices,
 )
 from strawberry import ID, auto
 
@@ -48,12 +43,6 @@ class ShelterLocationInput:
 
 
 @strawberry.input
-class TimeRangeInput:
-    start: Optional[time] = None
-    end: Optional[time] = None
-
-
-@strawberry.input
 class ScheduleInput:
     schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING
     days: Optional[List[DayOfWeekChoices]] = None
@@ -63,6 +52,15 @@ class ScheduleInput:
     end_date: Optional[date] = None
     condition: Optional[ConditionChoices] = None
     is_exception: bool = False
+
+
+@strawberry.input
+class ServiceInput:
+    """Either pick an existing service by ID, or create a new one by category + name."""
+
+    id: Optional[ID] = None
+    category_id: Optional[ID] = None
+    display_name: Optional[str] = None
 
 
 @strawberry_django.input(models.Shelter)
@@ -81,11 +79,6 @@ class CreateShelterInput:
     storage: List[StorageChoices]
     pets: List[PetChoices]
     parking: List[ParkingChoices]
-    immediate_needs: List[ImmediateNeedChoices]
-    general_services: List[GeneralServiceChoices]
-    health_services: List[HealthServiceChoices]
-    training_services: List[TrainingServiceChoices]
-    meal_services: List[MealServiceChoices]
     entry_requirements: List[EntryRequirementChoices]
     referral_requirement: List[ReferralRequirementChoices]
     exit_policy: List[ExitPolicyChoices]
@@ -97,9 +90,8 @@ class CreateShelterInput:
     # Custom field types — can't be auto-derived from Django model fields
     organization: ID
     location: Optional[ShelterLocationInput] = None
-    operating_hours: Optional[List[TimeRangeInput]] = None
-    intake_hours: Optional[List[TimeRangeInput]] = None
     schedules: Optional[List[ScheduleInput]] = None
+    services: Optional[List[ServiceInput]] = None
 
     # Optional scalars — all model fields below have null=True, blank=True.
     # Using auto where strawberry-django can resolve the type; explicit types

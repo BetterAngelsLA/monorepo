@@ -1,5 +1,6 @@
 import { useQuery } from '@apollo/client/react';
 import { Button, Card } from '@monorepo/react/components';
+import { format } from 'date-fns';
 import parsePhoneNumber from 'libphonenumber-js';
 import { useNavigate } from 'react-router-dom';
 import { ViewShelterDocument } from './__generated__/shelter.generated';
@@ -11,14 +12,15 @@ import {
   GeneralInfo,
   Header,
   OperatingHours,
-  OtherServices,
   ReportUpdateButton,
   Restrictions,
   RoomStyles,
+  Services,
   ShelterDetail,
   ShelterTypes,
   SpecialSituationRestrictions,
 } from './partials';
+import { hasWysiwygContent } from './utils';
 
 export function ShelterPage({ id }: { id: string }) {
   const { loading, data } = useQuery(ViewShelterDocument, {
@@ -37,24 +39,19 @@ export function ShelterPage({ id }: { id: string }) {
     return null;
   }
 
-  function containsNonWhitespaceValue(value?: string | null | undefined) {
-    // Rich text (CKEditor5) fields aren't empty when empty.
-    // By default, they contain a non-breaking space char.
-    return !!value && value !== '<p>&nbsp;</p>';
-  }
-
   const hasGeneralInfo =
-    !!shelter.totalBeds ||
     !!shelter.website ||
     !!shelter.phone ||
     !!shelter.email ||
     !!shelter.location?.place;
-  const hasDescription = containsNonWhitespaceValue(shelter.description);
+  const hasServices =
+    !!shelter.services?.length || hasWysiwygContent(shelter.otherServices);
+  const hasDescription = hasWysiwygContent(shelter.description);
   const hasEntryRequirements =
     !!shelter.entryRequirements?.length ||
-    containsNonWhitespaceValue(shelter.entryInfo) ||
-    containsNonWhitespaceValue(shelter.bedFees) ||
-    containsNonWhitespaceValue(shelter.programFees);
+    hasWysiwygContent(shelter.entryInfo) ||
+    hasWysiwygContent(shelter.bedFees) ||
+    hasWysiwygContent(shelter.programFees);
   const hasSpecialRestrictions = !!shelter.specialSituationRestrictions?.length;
   const hasShelterTypes =
     !!shelter.shelterTypes?.length || !!shelter.shelterTypesOther;
@@ -68,8 +65,8 @@ export function ShelterPage({ id }: { id: string }) {
     !!shelter.maxStay ||
     !!shelter.curfew ||
     !!shelter.onSiteSecurity ||
-    containsNonWhitespaceValue(shelter.otherRules);
-  const hasOtherServices = containsNonWhitespaceValue(shelter.otherServices);
+    hasWysiwygContent(shelter.otherRules);
+
   const hasEcosystemInfo =
     !!shelter.cities?.length ||
     !!shelter.spa?.length ||
@@ -100,7 +97,11 @@ export function ShelterPage({ id }: { id: string }) {
         shelterName={shelter.name}
       />
       <div className="bg-neutral-99 py-2 px-4 -mx-4 -mb-6 flex flex-col gap-2">
+        <div className="text-sm text-gray-400 text-right">
+          Last Updated Date: {format(shelter.updatedAt, 'M/d/yy')}
+        </div>
         {hasGeneralInfo && <GeneralInfo shelter={shelter} />}
+        {hasServices && <Services shelter={shelter} />}
         {hasDescription && (
           <Card title="Description">
             <WysiwygSection content={shelter.description} />
@@ -114,9 +115,7 @@ export function ShelterPage({ id }: { id: string }) {
         {hasRoomStyles && <RoomStyles shelter={shelter} />}
         {hasDetail && <ShelterDetail shelter={shelter} />}
         {hasRestrictions && <Restrictions shelter={shelter} />}
-        {hasOtherServices && <OtherServices shelter={shelter} />}
         {hasEcosystemInfo && <EcosystemInfo shelter={shelter} />}
-
         <div className="my-4 flex justify-center">
           <ReportUpdateButton />
         </div>

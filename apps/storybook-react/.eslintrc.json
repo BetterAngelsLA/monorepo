@@ -5,6 +5,13 @@
     "**/vite.config.*.timestamp*",
     "**/vitest.config.*.timestamp*"
   ],
+  "settings": {
+    "import/resolver": {
+      "typescript": {
+        "project": "apps/storybook-react/tsconfig.json"
+      }
+    }
+  },
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],

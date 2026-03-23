@@ -1,0 +1,136 @@
+.grouped-service-widget,
+.grouped-service-widget * {
+  box-sizing: border-box;
+}
+
+.grouped-service-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.grouped-service-fieldset {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin: 0;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  padding: 10px 12px 12px;
+}
+
+.grouped-service-legend {
+  color: #555;
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.grouped-service-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.grouped-service-select {
+  width: 100%;
+}
+
+.grouped-service-stack > div {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.grouped-service-label {
+  color: #666;
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.grouped-service-help {
+  color: #666;
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.grouped-service-pending-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.grouped-service-pending-item {
+  align-items: center;
+  background: #f3f3f3;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  display: inline-flex;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 10px;
+}
+
+.grouped-service-pending-item span {
+  overflow-wrap: anywhere;
+}
+
+.grouped-service-pending-remove {
+  background: transparent;
+  border: 0;
+  color: #666;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+
+.grouped-service-widget .select2,
+.grouped-service-widget .select2-container,
+.grouped-service-widget .selection,
+.grouped-service-widget .select2-selection {
+  max-width: 100% !important;
+  min-width: 0;
+}
+
+.grouped-service-widget .select2-selection--multiple {
+  overflow: hidden;
+}
+
+.grouped-service-widget .select2-selection__rendered {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 100%;
+  min-width: 0;
+  padding-right: 20px;
+}
+
+.grouped-service-widget .select2-selection__choice {
+  margin: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+@media (max-width: 767px) {
+  .grouped-service-fieldset {
+    padding: 10px;
+  }
+
+  .grouped-service-pending-item {
+    border-radius: 14px;
+  }
+}

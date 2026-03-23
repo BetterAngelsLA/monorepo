@@ -3,7 +3,6 @@ import {
   DemographicChoices,
   EntryRequirementChoices,
   FunderChoices,
-  GeneralServiceChoices,
   ParkingChoices,
   PetChoices,
   RoomStyleChoices,
@@ -27,24 +26,6 @@ export const enumDisplayDemographics: { [key in DemographicChoices]: string } =
     [DemographicChoices.SingleWomen]: 'Single Women',
     [DemographicChoices.TayTeen]: 'TAY/Teen',
   };
-
-export const enumDisplayGeneralServiceChoices: {
-  [key in GeneralServiceChoices]: string;
-} = {
-  [GeneralServiceChoices.CaseManagement]: 'Case Management',
-  [GeneralServiceChoices.Childcare]: 'Childcare',
-  [GeneralServiceChoices.ComputerAccess]: 'Computer Access',
-  [GeneralServiceChoices.EmploymentServices]: 'Employment Services',
-  [GeneralServiceChoices.FinancialLiteracyAssistance]:
-    'Financial Literacy Assistance',
-  [GeneralServiceChoices.HousingNavigation]: 'Housing Navigation',
-  [GeneralServiceChoices.LegalAssistance]: 'Legal Assistance',
-  [GeneralServiceChoices.Laundry]: 'Laundry Services',
-  [GeneralServiceChoices.Mail]: 'Mail',
-  [GeneralServiceChoices.Phone]: 'Phone',
-  [GeneralServiceChoices.Tls]: 'TLS (Time Limited Subsidies)',
-  [GeneralServiceChoices.Transportation]: 'Transportation',
-};
 
 export const enumDisplayEntryRequirementChoices: {
   [key in EntryRequirementChoices]: string;
@@ -111,6 +92,7 @@ export const enumDisplayStorageChoices: { [key in StorageChoices]: string } = {
   [StorageChoices.NoStorage]: 'No Storage',
   [StorageChoices.SharedStorage]: 'Shared Storage',
   [StorageChoices.StandardLockers]: 'Standard Lockers',
+  [StorageChoices.UnitStorage]: 'Unit-level Storage',
 };
 
 export const enumDisplayPetChoices: { [key in PetChoices]: string } = {
@@ -129,6 +111,7 @@ export const enumDisplayParkingChoices: { [key in ParkingChoices]: string } = {
   [ParkingChoices.Motorcycle]: 'Motorcycle',
   [ParkingChoices.NoParking]: 'No Parking',
   [ParkingChoices.Rv]: 'RV',
+  [ParkingChoices.Street]: 'Street Parking',
 };
 
 export const enumDisplaySpaChoices: { [key in SpaChoices]: string } = {
