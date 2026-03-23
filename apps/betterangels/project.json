@@ -71,9 +71,6 @@
     },
     "eas-deploy": {
       "executor": "nx:run-commands",
-      "options": {
-        "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-deploy.ts --project betterangels --profile preview"
-      },
       "configurations": {
         "preview": {
           "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-deploy.ts --project betterangels --profile preview"
@@ -81,7 +78,8 @@
         "production": {
           "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-deploy.ts --project betterangels --profile production"
         }
-      }
+      },
+      "defaultConfiguration": "preview"
     },
     "export": {
       "executor": "@nx/expo:export",

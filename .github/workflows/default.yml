@@ -204,17 +204,6 @@ jobs:
           EAS_ACCOUNT: better-angels
           GH_SECRETS: ${{ toJson(secrets) }}
 
-      - name: 🏗️ Push Monorepo Docker image
-        if: matrix.environment == 'production'
-        run: |
-          docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
-
-      - name: 🚀 Deploy Changes
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t deploy --exclude=^betterangels$,^shelter$ --configuration ${{ matrix.environment }}
-          EOF
-
       - name: 💬 Post preview link to PR
         if: github.event_name == 'pull_request'
         run: |
@@ -225,6 +214,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_PATH: ${{ github.event_path }}
+
+      - name: 🏗️ Push Monorepo Docker image
+        if: matrix.environment == 'production'
+        run: |
+          docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+
+      - name: 🚀 Deploy Changes
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t deploy --exclude=^betterangels$,^shelter$ --configuration ${{ matrix.environment }}
+          EOF
 
       - name: ⏹️ Spin down monorepo environment
         if: always()

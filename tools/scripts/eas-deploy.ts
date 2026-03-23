@@ -156,7 +156,9 @@ function runJson<T>(cmd: string, opts?: { cwd?: string }): T {
       }
     }
   }
-  throw new Error(`Could not parse JSON from output:\n${cleaned.slice(0, 500)}`);
+  throw new Error(
+    `Could not parse JSON from output:\n${cleaned.slice(0, 500)}`
+  );
 }
 
 /**
