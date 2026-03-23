@@ -1,6 +1,8 @@
-// dotenv is needed so that app.config.js can read RUNTIME_VERSION and
-// EXPO_PUBLIC_* values from the .env file written by the CI deploy script.
-// Without this, EAS Build/Update child processes won't resolve runtimeVersion.
+// ⚠️ WARNING: DIRTY HACK IN PLACE ⚠️
+// This hack circumvents the CI breaking change where runtime versions don't match.
+// We're using dotenv to load environment variables, effectively bypassing the runtime version mismatch issue.
+// NOTE: We are trusting the continuous deploy fingerprint for now, which is "probably good enough" in this context.
+// This should be revisited in the future to implement a proper solution to handle runtime version mismatches.
 const dotenv = require('dotenv');
 dotenv.config();
 
