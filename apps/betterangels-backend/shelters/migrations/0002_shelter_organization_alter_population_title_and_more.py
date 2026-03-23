@@ -3,6 +3,7 @@
 from django.db import migrations, models
 import django.db.models.deletion
 import django_choices_field.fields
+import shelters.deprecated.deprecated_enums
 import shelters.enums
 
 from ..deprecated import deprecated_enums
@@ -42,7 +43,7 @@ class Migration(migrations.Migration):
                     ("LGBTQ", "LGBTQ"),
                     ("HIV/AIDS", "HIV/AIDS"),
                 ],
-                choices_enum=deprecated_enums.PopulationChoices,
+                choices_enum=shelters.deprecated.deprecated_enums.PopulationChoices,
                 max_length=13,
             ),
         ),
