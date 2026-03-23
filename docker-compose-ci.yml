@@ -34,8 +34,6 @@ services:
       - GITHUB_SHA
       - PR_NUMBER
       - EAS_ACCOUNT
-      # EXPO_PUBLIC secrets (passed from GitHub secrets for EAS builds)
-      - EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY
-      - EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY
+      - GH_SECRETS
       # App Secrets
       - VITE_SHELTER_GOOGLE_MAPS_API_KEY

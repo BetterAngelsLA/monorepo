@@ -92,16 +92,13 @@ interface DeployResults {
 
 function parseArgs(): { project: string; profile: string } {
   const args = process.argv.slice(2);
-  let project = '';
-  let profile = '';
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--project' && args[i + 1]) project = args[++i];
-    else if (args[i] === '--profile' && args[i + 1]) profile = args[++i];
-    else if (args[i].startsWith('--project='))
-      project = args[i].split('=')[1];
-    else if (args[i].startsWith('--profile='))
-      profile = args[i].split('=')[1];
-  }
+  const get = (flag: string): string => {
+    const i = args.findIndex((a) => a === flag || a.startsWith(`${flag}=`));
+    if (i === -1) return '';
+    return args[i].includes('=') ? args[i].split('=')[1] : args[i + 1] ?? '';
+  };
+  const project = get('--project');
+  const profile = get('--profile');
   if (!project || !profile) {
     console.error('Usage: eas-deploy.ts --project <name> --profile <profile>');
     process.exit(1);
@@ -127,12 +124,16 @@ function getOptionalEnv(name: string): string | undefined {
 function run(cmd: string, opts?: { cwd?: string; silent?: boolean }): string {
   const cwd = opts?.cwd ?? process.cwd();
   if (!opts?.silent) console.log(`> ${cmd}`);
-  return execSync(cmd, {
-    cwd,
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'pipe'],
-    env: { ...process.env },
-  }).trim();
+  return execSync(cmd, { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+}
+
+/**
+ * Run a command that produces JSON output, extract and parse the first JSON
+ * array or object (nx/eas CLI often emit non-JSON text around the payload).
+ */
+function runJson<T>(cmd: string, opts?: { cwd?: string; silent?: boolean }): T {
+  const raw = run(cmd, { silent: true, ...opts });
+  return extractFirstJson(raw) as T;
 }
 
 /**
@@ -140,35 +141,16 @@ function run(cmd: string, opts?: { cwd?: string; silent?: boolean }): string {
  * contain non-JSON text before/after (common with nx/eas CLI output).
  */
 function extractFirstJson(raw: string): unknown {
-  // Find the first [ or {
-  let startIdx = -1;
-  let startChar = '';
-  for (let i = 0; i < raw.length; i++) {
-    if (raw[i] === '[' || raw[i] === '{') {
-      startIdx = i;
-      startChar = raw[i];
-      break;
-    }
-  }
-  if (startIdx === -1) {
-    throw new Error('No JSON found in output');
-  }
-  const endChar = startChar === '[' ? ']' : '}';
-  let depth = 0;
-  for (let i = startIdx; i < raw.length; i++) {
-    if (raw[i] === startChar || raw[i] === (startChar === '[' ? '{' : '['))
-      depth++;
-    if (raw[i] === endChar || raw[i] === (endChar === ']' ? '}' : ']'))
-      depth--;
-    // More precise: track both [] and {} independently
-    // Simpler approach: try parsing at each potential end
+  const start = raw.search(/[\[{]/);
+  if (start === -1) throw new Error('No JSON found in output');
+
+  const endChar = raw[start] === '[' ? ']' : '}';
+  for (let i = start; i < raw.length; i++) {
     if (raw[i] === endChar) {
       try {
-        const candidate = raw.substring(startIdx, i + 1);
-        const parsed = JSON.parse(candidate);
-        return parsed;
+        return JSON.parse(raw.substring(start, i + 1));
       } catch {
-        // Not complete yet, keep going
+        // Not complete yet
       }
     }
   }
@@ -218,13 +200,17 @@ function setupSecrets(projectDir: string, profile: string): string {
 
   const envPath = path.join(projectDir, '.env');
 
-  // Write EXPO_PUBLIC_* secrets from the CI environment (e.g. Google Maps keys)
-  // that are not already defined in eas.json's env block.
-  // eas.json env vars are injected automatically by EAS Build servers.
+  // Extract EXPO_PUBLIC_* secrets from GH_SECRETS (passed as JSON from GitHub
+  // Actions via ${{ toJson(secrets) }}). This avoids having to register each
+  // secret individually in the workflow and docker-compose files.
   const envLines: string[] = [];
-  for (const [key, value] of Object.entries(process.env)) {
-    if (key.startsWith('EXPO_PUBLIC') && value !== undefined) {
-      envLines.push(`${key}=${value}`);
+  const ghSecrets = getOptionalEnv('GH_SECRETS');
+  if (ghSecrets) {
+    const secrets: Record<string, string> = JSON.parse(ghSecrets);
+    for (const [key, value] of Object.entries(secrets)) {
+      if (key.startsWith('EXPO_PUBLIC')) {
+        envLines.push(`${key}=${value}`);
+      }
     }
   }
 
@@ -266,68 +252,43 @@ function checkOrTriggerBuild(
   for (const platform of platforms) {
     console.log(`--- ${platform} ---`);
 
-    // Check for existing builds
-    let rawOutput: string;
-    try {
-      rawOutput = run(
-        `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${runtimeVersion} --limit 1 --json --interactive false`,
-        { silent: true }
-      );
-    } catch {
-      rawOutput = '[]';
-    }
-
     let buildData: BuildInfo[];
     try {
-      buildData = extractFirstJson(rawOutput) as BuildInfo[];
+      buildData = runJson<BuildInfo[]>(
+        `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${runtimeVersion} --limit 1 --json --interactive false`
+      );
     } catch {
       buildData = [];
     }
 
-    if (!Array.isArray(buildData) || buildData.length === 0) {
-      console.log(
-        `No existing ${platform} build for runtime ${runtimeVersion}. Starting new build.`
-      );
-      try {
-        rawOutput = run(
-          `yarn nx run ${project}:build --profile ${profile} --platform ${platform} --freeze-credentials --interactive false --wait false --json`,
-          { silent: true }
-        );
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        console.error(`Build command failed for ${platform}: ${msg}`);
-        throw e;
-      }
-
-      try {
-        buildData = extractFirstJson(rawOutput) as BuildInfo[];
-      } catch (e) {
-        console.error(`Could not parse build output for ${platform}`);
-        console.error(`Raw output: ${rawOutput.slice(0, 500)}`);
-        throw e;
-      }
+    if (buildData.length > 0) {
+      console.log(`Found existing ${platform} build for runtime ${runtimeVersion}.`);
     } else {
-      console.log(
-        `Found existing ${platform} build for runtime ${runtimeVersion}.`
+      console.log(`No existing ${platform} build for runtime ${runtimeVersion}. Starting new build.`);
+      buildData = runJson<BuildInfo[]>(
+        `yarn nx run ${project}:build --profile ${profile} --platform ${platform} --freeze-credentials --interactive false --wait false --json`
       );
     }
 
     const info = buildData[0];
     slug = info.project.slug;
     projectId = info.project.id;
-
-    builds[platform] = {
-      buildId: info.id,
-      buildLink: `https://expo.dev/accounts/better-angels/projects/${slug}/builds/${info.id}`,
-      distribution: info.distribution,
-      buildProfile: info.buildProfile,
-      runtimeVersion: info.runtimeVersion,
-      appVersion: info.appVersion,
-      gitCommit: info.gitCommitHash,
-    };
+    builds[platform] = toBuildResult(info, slug);
   }
 
   return { slug, projectId, builds };
+}
+
+function toBuildResult(info: BuildInfo, slug: string): PlatformBuildResult {
+  return {
+    buildId: info.id,
+    buildLink: `https://expo.dev/accounts/better-angels/projects/${slug}/builds/${info.id}`,
+    distribution: info.distribution,
+    buildProfile: info.buildProfile,
+    runtimeVersion: info.runtimeVersion,
+    appVersion: info.appVersion,
+    gitCommit: info.gitCommitHash,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -345,18 +306,9 @@ function performEasUpdate(
 } {
   console.log(`\n=== Performing EAS Update on branch: ${branch} ===`);
 
-  let rawOutput: string;
-  try {
-    rawOutput = run(
-      `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --interactive false`
-    );
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.error(`EAS update failed: ${msg}`);
-    throw e;
-  }
-
-  const updateData = extractFirstJson(rawOutput) as UpdateResult[];
+  const updateData = runJson<UpdateResult[]>(
+    `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --interactive false`
+  );
   const updates: DeployResults['updates'] = {};
   let groupId = '';
 
@@ -650,14 +602,6 @@ async function main(): Promise<void> {
   if (eventName === 'push') {
     await postSlackNotification(results);
   }
-
-  // Restore original .env (remove CI-injected secrets)
-  const envPath = path.join(projectDir, '.env');
-  fs.writeFileSync(
-    envPath,
-    'EXPO_PUBLIC_API_URL=https://api.dev.betterangels.la\nEXPO_PUBLIC_DEMO_API_URL=http://localhost:8000\n'
-  );
-  console.log('Restored original .env');
 
   console.log('\n✅ EAS deploy complete');
 }
