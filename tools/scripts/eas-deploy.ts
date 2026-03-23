@@ -29,9 +29,9 @@
 
 import { execSync } from 'child_process';
 import * as fs from 'fs';
-import * as path from 'path';
-import * as https from 'https';
 import * as http from 'http';
+import * as https from 'https';
+import * as path from 'path';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -119,42 +119,24 @@ function getOptionalEnv(name: string): string | undefined {
 }
 
 /**
- * Run a command and return stdout. Strips non-JSON noise from nx/eas CLI output.
+ * Run a command and return stdout.
  */
 function run(cmd: string, opts?: { cwd?: string; silent?: boolean }): string {
   const cwd = opts?.cwd ?? process.cwd();
   if (!opts?.silent) console.log(`> ${cmd}`);
-  return execSync(cmd, { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+  return execSync(cmd, {
+    cwd,
+    encoding: 'utf-8',
+    stdio: ['pipe', 'pipe', 'pipe'],
+  }).trim();
 }
 
 /**
- * Run a command that produces JSON output, extract and parse the first JSON
- * array or object (nx/eas CLI often emit non-JSON text around the payload).
+ * Run a command and parse its stdout as JSON.
  */
-function runJson<T>(cmd: string, opts?: { cwd?: string; silent?: boolean }): T {
+function runJson<T>(cmd: string, opts?: { cwd?: string }): T {
   const raw = run(cmd, { silent: true, ...opts });
-  return extractFirstJson(raw) as T;
-}
-
-/**
- * Extract the first complete JSON array or object from a string that may
- * contain non-JSON text before/after (common with nx/eas CLI output).
- */
-function extractFirstJson(raw: string): unknown {
-  const start = raw.search(/[\[{]/);
-  if (start === -1) throw new Error('No JSON found in output');
-
-  const endChar = raw[start] === '[' ? ']' : '}';
-  for (let i = start; i < raw.length; i++) {
-    if (raw[i] === endChar) {
-      try {
-        return JSON.parse(raw.substring(start, i + 1));
-      } catch {
-        // Not complete yet
-      }
-    }
-  }
-  throw new Error(`Could not extract valid JSON from output:\n${raw.slice(0, 500)}`);
+  return JSON.parse(raw) as T;
 }
 
 /**
@@ -236,13 +218,19 @@ function setupSecrets(projectDir: string, profile: string): string {
 // ---------------------------------------------------------------------------
 
 function checkOrTriggerBuild(
-  project: string,
+  projectDir: string,
   profile: string,
   runtimeVersion: string,
   platforms: string[]
-): { slug: string; projectId: string; builds: Record<string, PlatformBuildResult> } {
+): {
+  slug: string;
+  projectId: string;
+  builds: Record<string, PlatformBuildResult>;
+} {
   console.log(
-    `\n=== Checking/triggering ${profile} builds for platforms: ${platforms.join(', ')} ===`
+    `\n=== Checking/triggering ${profile} builds for platforms: ${platforms.join(
+      ', '
+    )} ===`
   );
 
   const builds: Record<string, PlatformBuildResult> = {};
@@ -255,18 +243,24 @@ function checkOrTriggerBuild(
     let buildData: BuildInfo[];
     try {
       buildData = runJson<BuildInfo[]>(
-        `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${runtimeVersion} --limit 1 --json --interactive false`
+        `eas build:list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${runtimeVersion} --limit 1 --json --non-interactive`,
+        { cwd: projectDir }
       );
     } catch {
       buildData = [];
     }
 
     if (buildData.length > 0) {
-      console.log(`Found existing ${platform} build for runtime ${runtimeVersion}.`);
+      console.log(
+        `Found existing ${platform} build for runtime ${runtimeVersion}.`
+      );
     } else {
-      console.log(`No existing ${platform} build for runtime ${runtimeVersion}. Starting new build.`);
+      console.log(
+        `No existing ${platform} build for runtime ${runtimeVersion}. Starting new build.`
+      );
       buildData = runJson<BuildInfo[]>(
-        `yarn nx run ${project}:build --profile ${profile} --platform ${platform} --freeze-credentials --interactive false --wait false --json`
+        `eas build --profile ${profile} --platform ${platform} --freeze-credentials --non-interactive --no-wait --json`,
+        { cwd: projectDir }
       );
     }
 
@@ -296,7 +290,7 @@ function toBuildResult(info: BuildInfo, slug: string): PlatformBuildResult {
 // ---------------------------------------------------------------------------
 
 function performEasUpdate(
-  project: string,
+  projectDir: string,
   branch: string,
   slug: string,
   projectId: string
@@ -307,7 +301,8 @@ function performEasUpdate(
   console.log(`\n=== Performing EAS Update on branch: ${branch} ===`);
 
   const updateData = runJson<UpdateResult[]>(
-    `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --interactive false`
+    `eas update --branch "${branch}" --auto --json --non-interactive`,
+    { cwd: projectDir }
   );
   const updates: DeployResults['updates'] = {};
   let groupId = '';
@@ -361,9 +356,12 @@ function writeE2eMetadata(
 
 function triggerE2e(projectDir: string): void {
   console.log('\n=== Triggering E2E workflow ===');
-  run('npx eas-cli workflow:run .eas/workflows/e2e-test.yml --non-interactive', {
-    cwd: projectDir,
-  });
+  run(
+    'npx eas-cli workflow:run .eas/workflows/e2e-test.yml --non-interactive',
+    {
+      cwd: projectDir,
+    }
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -376,7 +374,9 @@ async function postPrComment(results: DeployResults): Promise<void> {
   const prNumber = getOptionalEnv('PR_NUMBER');
 
   if (!token || !repo || !prNumber) {
-    console.log('Skipping PR comment (missing GITHUB_TOKEN, GITHUB_REPOSITORY, or PR_NUMBER)');
+    console.log(
+      'Skipping PR comment (missing GITHUB_TOKEN, GITHUB_REPOSITORY, or PR_NUMBER)'
+    );
     return;
   }
 
@@ -401,10 +401,50 @@ async function postPrComment(results: DeployResults): Promise<void> {
 
 &nbsp; | 🤖 Android | 🍎 iOS
 --- | --- | ---
-Runtime Version | \`${android?.runtimeVersion ?? 'N/A'}\` | \`${ios?.runtimeVersion ?? 'N/A'}\`
-Build Details | [Build Permalink](${android?.buildLink ?? ''})<br /><details><summary>Details</summary>Distribution: \`${android?.distribution ?? ''}\`<br />Build profile: \`${android?.buildProfile ?? ''}\`<br />Runtime version: \`${android?.runtimeVersion ?? ''}\`<br />App version: \`${android?.appVersion ?? ''}\`<br />Git commit: \`${android?.gitCommit ?? ''}\`</details> | [Build Permalink](${ios?.buildLink ?? ''})<br /><details><summary>Details</summary>Distribution: \`${ios?.distribution ?? ''}\`<br />Build profile: \`${ios?.buildProfile ?? ''}\`<br />Runtime version: \`${ios?.runtimeVersion ?? ''}\`<br />App version: \`${ios?.appVersion ?? ''}\`<br />Git commit: \`${ios?.gitCommit ?? ''}\`</details>
-Update Details | [Update Permalink](${androidUpdate?.permalink ?? ''})<br /><details><summary>Details</summary>Branch: \`${androidUpdate?.branch ?? ''}\`<br />Runtime version: \`${androidUpdate?.runtimeVersion ?? ''}\`<br />Git commit: \`${androidUpdate?.commit ?? ''}\`</details> | [Update Permalink](${iosUpdate?.permalink ?? ''})<br /><details><summary>Details</summary>Branch: \`${iosUpdate?.branch ?? ''}\`<br />Runtime version: \`${iosUpdate?.runtimeVersion ?? ''}\`<br />Git commit: \`${iosUpdate?.commit ?? ''}\`</details>
-Update QR   | <a href="${androidUpdate?.qrUrl ?? ''}"><img src="${androidUpdate?.qrUrl ?? ''}" width="250px" height="250px" /></a> | <a href="${iosUpdate?.qrUrl ?? ''}"><img src="${iosUpdate?.qrUrl ?? ''}" width="250px" height="250px" /></a>
+Runtime Version | \`${android?.runtimeVersion ?? 'N/A'}\` | \`${
+    ios?.runtimeVersion ?? 'N/A'
+  }\`
+Build Details | [Build Permalink](${
+    android?.buildLink ?? ''
+  })<br /><details><summary>Details</summary>Distribution: \`${
+    android?.distribution ?? ''
+  }\`<br />Build profile: \`${
+    android?.buildProfile ?? ''
+  }\`<br />Runtime version: \`${
+    android?.runtimeVersion ?? ''
+  }\`<br />App version: \`${android?.appVersion ?? ''}\`<br />Git commit: \`${
+    android?.gitCommit ?? ''
+  }\`</details> | [Build Permalink](${
+    ios?.buildLink ?? ''
+  })<br /><details><summary>Details</summary>Distribution: \`${
+    ios?.distribution ?? ''
+  }\`<br />Build profile: \`${
+    ios?.buildProfile ?? ''
+  }\`<br />Runtime version: \`${
+    ios?.runtimeVersion ?? ''
+  }\`<br />App version: \`${ios?.appVersion ?? ''}\`<br />Git commit: \`${
+    ios?.gitCommit ?? ''
+  }\`</details>
+Update Details | [Update Permalink](${
+    androidUpdate?.permalink ?? ''
+  })<br /><details><summary>Details</summary>Branch: \`${
+    androidUpdate?.branch ?? ''
+  }\`<br />Runtime version: \`${
+    androidUpdate?.runtimeVersion ?? ''
+  }\`<br />Git commit: \`${
+    androidUpdate?.commit ?? ''
+  }\`</details> | [Update Permalink](${
+    iosUpdate?.permalink ?? ''
+  })<br /><details><summary>Details</summary>Branch: \`${
+    iosUpdate?.branch ?? ''
+  }\`<br />Runtime version: \`${
+    iosUpdate?.runtimeVersion ?? ''
+  }\`<br />Git commit: \`${iosUpdate?.commit ?? ''}\`</details>
+Update QR   | <a href="${androidUpdate?.qrUrl ?? ''}"><img src="${
+    androidUpdate?.qrUrl ?? ''
+  }" width="250px" height="250px" /></a> | <a href="${
+    iosUpdate?.qrUrl ?? ''
+  }"><img src="${iosUpdate?.qrUrl ?? ''}" width="250px" height="250px" /></a>
 
 **iOS Simulator Build:** [Simulator Build Link](${simIos?.buildLink ?? ''})`;
 
@@ -498,7 +538,9 @@ async function postSlackNotification(results: DeployResults): Promise<void> {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `*📱 iOS*\n\n<${iosUpdate?.qrUrl ?? ''}|Update>\n<${iosBuild?.buildLink ?? ''}|Build>\n<${simBuild?.buildLink ?? ''}|Simulator Build>`,
+          text: `*📱 iOS*\n\n<${iosUpdate?.qrUrl ?? ''}|Update>\n<${
+            iosBuild?.buildLink ?? ''
+          }|Build>\n<${simBuild?.buildLink ?? ''}|Simulator Build>`,
         },
       },
       { type: 'divider' },
@@ -506,7 +548,9 @@ async function postSlackNotification(results: DeployResults): Promise<void> {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `*🤖 Android*\n\n<${androidUpdate?.qrUrl ?? ''}|Update>\n<${androidBuild?.buildLink ?? ''}|Build>`,
+          text: `*🤖 Android*\n\n<${androidUpdate?.qrUrl ?? ''}|Update>\n<${
+            androidBuild?.buildLink ?? ''
+          }|Build>`,
         },
       },
     ],
@@ -546,7 +590,7 @@ async function main(): Promise<void> {
   const isPreview = profile === 'preview';
   const buildPlatforms = ['android', 'ios'];
   const { slug, projectId, builds } = checkOrTriggerBuild(
-    project,
+    projectDir,
     profile,
     runtimeVersion,
     buildPlatforms
@@ -556,7 +600,7 @@ async function main(): Promise<void> {
   let simulatorBuilds: Record<string, PlatformBuildResult> = {};
   if (isPreview) {
     const simResult = checkOrTriggerBuild(
-      project,
+      projectDir,
       'development-simulator',
       runtimeVersion,
       ['ios']
@@ -566,7 +610,7 @@ async function main(): Promise<void> {
 
   // 4. EAS Update
   const { updates, groupId } = performEasUpdate(
-    project,
+    projectDir,
     branchName,
     slug,
     projectId
