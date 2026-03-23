@@ -152,21 +152,16 @@ function httpRequest(
 ): Promise<{ status: number; body: string }> {
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(url);
-    const mod = parsedUrl.protocol === 'https:' ? https : http;
-    const req = mod.request(
-      parsedUrl,
-      {
-        method: options.method,
-        headers: options.headers,
-      },
-      (res) => {
-        let data = '';
-        res.on('data', (chunk: Buffer) => (data += chunk.toString()));
-        res.on('end', () =>
-          resolve({ status: res.statusCode ?? 0, body: data })
-        );
-      }
-    );
+    const opts = { method: options.method, headers: options.headers };
+    const callback = (res: http.IncomingMessage) => {
+      let data = '';
+      res.on('data', (chunk: Buffer) => (data += chunk.toString()));
+      res.on('end', () => resolve({ status: res.statusCode ?? 0, body: data }));
+    };
+    const req =
+      parsedUrl.protocol === 'https:'
+        ? https.request(parsedUrl, opts, callback)
+        : http.request(parsedUrl, opts, callback);
     req.on('error', reject);
     if (options.body) req.write(options.body);
     req.end();
