@@ -213,10 +213,10 @@ function setupSecrets(projectDir: string, profile: string): string {
 
   fs.writeFileSync(envPath, envLines.join('\n') + '\n');
 
-  // Compute fingerprint (used to check for existing builds via build-list).
-  // The runtimeVersion in app.config.js uses { policy: 'fingerprint' } so
-  // EAS Build and EAS Update both compute it natively — we only need the
-  // hash here for querying existing builds.
+  // Compute fingerprint locally — this hash becomes the runtimeVersion.
+  // app.config.js reads RUNTIME_VERSION from .env via dotenv, so we must
+  // write it to the .env file. For EAS Build, we also pass it via
+  // --build-env so it's available on the remote build server.
   console.log('Computing fingerprint...');
   const fingerprintJson = run(
     `node -e "const fp = require('@expo/fingerprint'); fp.createFingerprintAsync('.').then(r => console.log(JSON.stringify(r)));"`,
@@ -224,6 +224,10 @@ function setupSecrets(projectDir: string, profile: string): string {
   );
   const hash = JSON.parse(fingerprintJson).hash as string;
   console.log(`Runtime version (fingerprint): ${hash}`);
+
+  // Write to .env so dotenv.config() in app.config.js picks it up
+  fs.appendFileSync(envPath, `RUNTIME_VERSION=${hash}\n`);
+  process.env.RUNTIME_VERSION = hash;
 
   return hash;
 }

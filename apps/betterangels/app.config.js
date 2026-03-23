@@ -1,3 +1,9 @@
+// dotenv is needed so that app.config.js can read RUNTIME_VERSION and
+// EXPO_PUBLIC_* values from the .env file written by the CI deploy script.
+// Without this, EAS Build/Update child processes won't resolve runtimeVersion.
+const dotenv = require('dotenv');
+dotenv.config();
+
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
 
 const HOSTNAME = IS_PRODUCTION
@@ -154,6 +160,6 @@ export default {
     },
     newArchEnabled: true,
     owner: 'better-angels',
-    runtimeVersion: { policy: 'fingerprint' },
+    runtimeVersion: process.env.RUNTIME_VERSION,
   },
 };
