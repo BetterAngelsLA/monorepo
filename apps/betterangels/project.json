@@ -69,7 +69,7 @@
         "auto": true
       }
     },
-    "eas-deploy": {
+    "deploy": {
       "executor": "nx:run-commands",
       "configurations": {
         "preview": {
