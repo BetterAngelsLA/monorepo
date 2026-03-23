@@ -2,7 +2,7 @@
  * EAS Deploy Script
  *
  * Orchestrates the full EAS deployment pipeline for a project:
- *   1. Setup secrets (.env from eas.json + EXPO_PUBLIC env vars + fingerprint)
+ *   1. Setup secrets (EXPO_PUBLIC env vars for EAS Build + compute fingerprint)
  *   2. Check/trigger EAS builds (preview or production)
  *   3. Optionally trigger simulator build (preview only)
  *   4. Perform EAS update
@@ -218,23 +218,10 @@ function setupSecrets(projectDir: string, profile: string): string {
 
   const envPath = path.join(projectDir, '.env');
 
-  // Clear existing .env files
-  const envFiles = fs.readdirSync(projectDir).filter((f) => f.includes('.env'));
-  for (const f of envFiles) {
-    fs.unlinkSync(path.join(projectDir, f));
-  }
-
-  // Load env vars from eas.json for the given profile
-  const easJsonPath = path.join(projectDir, 'eas.json');
-  const easJson = JSON.parse(fs.readFileSync(easJsonPath, 'utf-8'));
-  const profileEnv: Record<string, string> =
-    easJson?.build?.[profile]?.env ?? {};
+  // Write EXPO_PUBLIC_* secrets from the CI environment (e.g. Google Maps keys)
+  // that are not already defined in eas.json's env block.
+  // eas.json env vars are injected automatically by EAS Build servers.
   const envLines: string[] = [];
-  for (const [key, value] of Object.entries(profileEnv)) {
-    envLines.push(`${key}=${value}`);
-  }
-
-  // Add EXPO_PUBLIC_* from environment (these come from GitHub secrets)
   for (const [key, value] of Object.entries(process.env)) {
     if (key.startsWith('EXPO_PUBLIC') && value !== undefined) {
       envLines.push(`${key}=${value}`);
@@ -243,7 +230,10 @@ function setupSecrets(projectDir: string, profile: string): string {
 
   fs.writeFileSync(envPath, envLines.join('\n') + '\n');
 
-  // Compute fingerprint
+  // Compute fingerprint (used to check for existing builds via build-list).
+  // The runtimeVersion in app.config.js uses { policy: 'fingerprint' } so
+  // EAS Build and EAS Update both compute it natively — we only need the
+  // hash here for querying existing builds.
   console.log('Computing fingerprint...');
   const fingerprintJson = run(
     `node -e "const fp = require('@expo/fingerprint'); fp.createFingerprintAsync('.').then(r => console.log(JSON.stringify(r)));"`,
@@ -251,9 +241,6 @@ function setupSecrets(projectDir: string, profile: string): string {
   );
   const hash = JSON.parse(fingerprintJson).hash as string;
   console.log(`Runtime version (fingerprint): ${hash}`);
-
-  // Append runtime version to .env
-  fs.appendFileSync(envPath, `RUNTIME_VERSION=${hash}\n`);
 
   return hash;
 }
@@ -398,7 +385,8 @@ function writeE2eMetadata(
   projectDir: string,
   slug: string,
   projectId: string,
-  groupId: string
+  groupId: string,
+  runtimeVersion: string
 ): void {
   const envPath = path.join(projectDir, '.env');
   const repository = getOptionalEnv('GITHUB_REPOSITORY') ?? '';
@@ -413,6 +401,7 @@ function writeE2eMetadata(
     `EAS_PROJECT_SLUG=${slug}`,
     `PROJECT_ID=${projectId}`,
     `GROUP_ID=${groupId}`,
+    `RUNTIME_VERSION=${runtimeVersion}`,
   ];
 
   fs.appendFileSync(envPath, lines.join('\n') + '\n');
@@ -648,7 +637,7 @@ async function main(): Promise<void> {
 
   // 5. E2E (merge_group only)
   if (eventName === 'merge_group' && isPreview) {
-    writeE2eMetadata(projectDir, slug, projectId, groupId);
+    writeE2eMetadata(projectDir, slug, projectId, groupId, runtimeVersion);
     triggerE2e(projectDir);
   }
 
@@ -662,12 +651,13 @@ async function main(): Promise<void> {
     await postSlackNotification(results);
   }
 
-  // Cleanup .env
+  // Restore original .env (remove CI-injected secrets)
   const envPath = path.join(projectDir, '.env');
-  if (fs.existsSync(envPath)) {
-    fs.unlinkSync(envPath);
-    console.log('Cleaned up .env file');
-  }
+  fs.writeFileSync(
+    envPath,
+    'EXPO_PUBLIC_API_URL=https://api.dev.betterangels.la\nEXPO_PUBLIC_DEMO_API_URL=http://localhost:8000\n'
+  );
+  console.log('Restored original .env');
 
   console.log('\n✅ EAS deploy complete');
 }

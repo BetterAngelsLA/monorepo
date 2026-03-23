@@ -1,11 +1,3 @@
-// ⚠️ WARNING: DIRTY HACK IN PLACE ⚠️
-// This hack circumvents the CI breaking change where runtime versions don't match.
-// We're using dotenv to load environment variables, effectively bypassing the runtime version mismatch issue.
-// NOTE: We are trusting the continuous deploy fingerprint for now, which is "probably good enough" in this context.
-// This should be revisited in the future to implement a proper solution to handle runtime version mismatches.
-const dotenv = require('dotenv');
-dotenv.config();
-
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
 
 const HOSTNAME = IS_PRODUCTION
@@ -162,6 +154,6 @@ export default {
     },
     newArchEnabled: true,
     owner: 'better-angels',
-    runtimeVersion: process.env.RUNTIME_VERSION,
+    runtimeVersion: { policy: 'fingerprint' },
   },
 };

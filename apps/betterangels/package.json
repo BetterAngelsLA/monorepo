@@ -4,7 +4,6 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "dotenv": "*",
     "expo-router": "*",
     "@nx/devkit": "*",
     "@nx/eslint": "*",

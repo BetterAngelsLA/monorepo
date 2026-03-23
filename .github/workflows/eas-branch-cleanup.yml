@@ -4,9 +4,6 @@ on:
   pull_request:
     types: [closed]
 
-env:
-  COMPOSE_FILE: docker-compose.yml:docker-compose-ci.yml
-
 jobs:
   cleanup:
     runs-on: ubuntu-latest
@@ -26,44 +23,40 @@ jobs:
       - name: 🔧 Configure NX SHAs
         uses: nrwl/nx-set-shas@v4
 
-      - name: 🔧 Set Environment Variables
-        run: |
-          RAW_BRANCH_NAME=${{ github.head_ref || github.ref_name }}
-          SHORT_SHA=$(echo $GITHUB_SHA | cut -c 1-7)
-          BRANCH_NAME=$(echo $RAW_BRANCH_NAME | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
-          DOCKER_TAG="cleanup-$SHORT_SHA"
-          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
-          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
-          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
-          echo "MONOREPO_IMAGE=monorepo" >> $GITHUB_ENV
-
-      - name: 🐳 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: 🏗️ Build Monorepo Docker image
-        uses: docker/build-push-action@v6
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v4
         with:
-          file: Dockerfile
-          load: true
-          tags: |
-            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          node-version: '22.21.1'
 
-      - name: 🔑 Prep Container Permissions
-        run: |
-          sudo chown -R 1000:1000 $GITHUB_WORKSPACE
+      - name: 🧶 Setup Yarn
+        run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          cache: 'yarn'
+
+      - name: 📦 Install dependencies
+        run: yarn install
+
+      - name: 🔧 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install EAS CLI
+        run: npm install --global eas-cli
 
       - name: 🗑️ Delete EAS Branches for Affected Projects
         run: |
-          docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t eas-branch-cleanup --exclude=^shelter$
-          EOF
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-      - name: ⏹️ Spin down environment
-        if: always()
-        run: |
-          docker compose down
-          sudo chown -R 1001:1001 $GITHUB_WORKSPACE
+          BRANCH_NAME='${{ github.head_ref || github.ref_name }}'
+          affected=$(yarn nx show projects --affected --exclude='^shelter$' --withTarget eas-update)
+          if [ -z "$affected" ]; then
+            echo "No affected projects with eas-update target"
+            exit 0
+          fi
+          for project in $affected; do
+            echo "Deleting EAS branch for project: $project"
+            cd apps/$project
+            eas branch:delete --non-interactive "$BRANCH_NAME"
+            cd -
+          done
