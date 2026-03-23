@@ -43,10 +43,7 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: 📦 Install EAS CLI
-        run: npm install --global eas-cli
-
-      - name: 🗑️ Delete EAS Branches for Affected Projects
+      - name: ️ Delete EAS Branches for Affected Projects
         run: |
           BRANCH_NAME='${{ github.head_ref || github.ref_name }}'
           affected=$(yarn nx show projects --affected --exclude='^shelter$' --withTarget eas-update)

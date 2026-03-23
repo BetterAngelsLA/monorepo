@@ -25,6 +25,12 @@
  *   PR_NUMBER           - Pull request number
  *   SLACK_WEBHOOK_URL   - Slack incoming webhook URL
  *   EAS_ACCOUNT         - EAS account name (default: better-angels)
+ *
+ * EXPO_PUBLIC_* secrets (passed individually from GitHub Secrets):
+ *   EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY
+ *   EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY
+ *   EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS
+ *   EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID
  */
 
 import { execSync } from 'child_process';
@@ -198,18 +204,24 @@ function setupSecrets(projectDir: string, profile: string): string {
   console.log(`\n=== Setting up secrets for profile: ${profile} ===`);
 
   const envPath = path.join(projectDir, '.env');
-
-  // Extract EXPO_PUBLIC_* secrets from GH_SECRETS (passed as JSON from GitHub
-  // Actions via ${{ toJson(secrets) }}). This avoids having to register each
-  // secret individually in the workflow and docker-compose files.
   const envLines: string[] = [];
-  const ghSecrets = getOptionalEnv('GH_SECRETS');
-  if (ghSecrets) {
-    const secrets: Record<string, string> = JSON.parse(ghSecrets);
-    for (const [key, value] of Object.entries(secrets)) {
-      if (key.startsWith('EXPO_PUBLIC')) {
+
+  // 1. Load non-secret env vars from eas.json build profile
+  const easJsonPath = path.join(projectDir, 'eas.json');
+  if (fs.existsSync(easJsonPath)) {
+    const easConfig = JSON.parse(fs.readFileSync(easJsonPath, 'utf-8'));
+    const profileEnv = easConfig?.build?.[profile]?.env;
+    if (profileEnv && typeof profileEnv === 'object') {
+      for (const [key, value] of Object.entries(profileEnv)) {
         envLines.push(`${key}=${value}`);
       }
+    }
+  }
+
+  // 2. Collect EXPO_PUBLIC_* secrets from env (passed individually from CI)
+  for (const [key, value] of Object.entries(process.env)) {
+    if (key.startsWith('EXPO_PUBLIC') && value) {
+      envLines.push(`${key}=${value}`);
     }
   }
 
