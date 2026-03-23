@@ -37,9 +37,7 @@
       "command": "tools/deploy/imgproxy_lambda_deploy.sh",
       "configurations": {
         "production": {},
-        "preview": {
-          "command": "echo 'Skipping deploy'"
-        }
+        "preview": {}
       }
     }
   }
