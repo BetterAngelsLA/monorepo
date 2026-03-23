@@ -194,6 +194,21 @@ jobs:
         run: |
           docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
+      - name: 📱 EAS Deploy
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t eas-deploy --exclude=^shelter$ --configuration ${{ matrix.environment }}
+          EOF
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EAS_ACCOUNT: better-angels
+          EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
+
       - name: 🚀 Deploy Changes
         run: |
           docker compose run better-angels bash <<'EOF'
