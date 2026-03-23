@@ -10,7 +10,6 @@ import {
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   PressablePanel,
-  PressablePanelContainer,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -23,6 +22,7 @@ import { ClientViewTabEnum } from '../../screens/Client/ClientTabs';
 import { enumLanguageCode } from '../../static';
 import { ClientProfilesQuery } from '../ClientProfileList/__generated__/ClientProfiles.generated';
 import { TasksDocument } from '../TaskList/__generated__/Tasks.generated';
+import { PressablePanelContainer } from './PressablePanelContainer';
 
 interface IClientSummaryGeneralProps {
   client: ClientProfilesQuery['clientProfiles']['results'][number];
@@ -98,6 +98,7 @@ export default function ClientSummaryGeneral(
           disabled={!phoneNumberUrl}
           flex={3}
           title={formattedNumber || 'N/A'}
+          extension={extension}
           subtitle="CONTACT"
           icon={<CallOutlinedIcon color={Colors.PRIMARY} />}
           actionIcon={

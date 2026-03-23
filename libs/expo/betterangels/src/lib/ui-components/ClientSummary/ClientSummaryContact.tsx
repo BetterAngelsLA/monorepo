@@ -80,6 +80,12 @@ export default function ClientSummaryContact(
                 {phoneNumber}
               </TextBold>
             )}
+            {extension && (
+              <TextBold size="sm">
+                {' ext.'}
+                {extension}
+              </TextBold>
+            )}
           </View>
           {phoneNumber && <ExternalLinkOutlinedIcon color={Colors.PRIMARY} />}
         </View>

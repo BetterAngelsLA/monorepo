@@ -1,7 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { PressablePanel, TextBold } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import PressablePanel from '../PressablePanel';
-import TextBold from '../TextBold';
 
 type TPressablePanelContainerProps = {
   title: string | number;
@@ -12,6 +11,7 @@ type TPressablePanelContainerProps = {
   flex?: number;
   onPress?: () => void;
   disabled?: boolean;
+  extension?: string;
 };
 
 export function PressablePanelContainer({
@@ -23,6 +23,7 @@ export function PressablePanelContainer({
   variant = 'primary',
   flex = 1,
   disabled = false,
+  extension,
 }: TPressablePanelContainerProps) {
   return (
     <PressablePanel
@@ -69,6 +70,11 @@ export function PressablePanelContainer({
           <TextBold color={Colors.NEUTRAL_EXTRA_DARK} size="sm">
             {title}
           </TextBold>
+          {extension && (
+            <TextBold color={Colors.NEUTRAL_EXTRA_DARK} size="sm">
+              {extension}
+            </TextBold>
+          )}
         </View>
       </View>
       {actionIcon}

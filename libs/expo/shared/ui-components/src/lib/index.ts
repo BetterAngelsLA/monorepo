@@ -75,7 +75,6 @@ export {
   TPreferredCommunication,
 } from './PreferrredCommunicationIcon';
 export { default as PressablePanel } from './PressablePanel';
-export { default as PressablePanelContainer } from './PressablePanelContainer';
 export {
   GooglePlacesProvider,
   useGooglePlaces,
