@@ -68,6 +68,14 @@ export function MenuMobile({ showOperator }: MenuMobileProps) {
             About Us
           </Link>
         </div>
+        <div className={mergeCss(borderCss)}>
+          <Link
+            to="https://www.lahsa.org/documents?id=2760-ces-access-center-directory.pdf"
+            className={mergeCss(hoverBtnCss)}
+          >
+            Access Center Directory
+          </Link>
+        </div>
         {showOperator ? (
           <div>
             <Link
