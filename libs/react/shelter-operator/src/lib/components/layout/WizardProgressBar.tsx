@@ -1,6 +1,6 @@
 import { Check } from 'lucide-react';
 import { memo } from 'react';
-import { Button } from '../base-ui/buttons';
+import { Button } from '../base-ui/buttons/buttons';
 
 export interface WizardStep {
   label: string;
