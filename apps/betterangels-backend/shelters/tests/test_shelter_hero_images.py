@@ -55,7 +55,6 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
                 response = self.execute_graphql(self.HERO_IMAGE_QUERY)
                 results = response["data"]["shelters"]["results"]
                 hero_images = {r["id"]: r["heroImage"] for r in results}
-
                 self.assertEqual(self._get_imgproxy_url(photo.file), hero_images[str(shelter.pk)])
 
     def test_hero_image_falls_back_to_exterior_photo(self) -> None:
@@ -67,7 +66,6 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         response = self.execute_graphql(self.HERO_IMAGE_QUERY)
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
-
         self.assertEqual(self._get_imgproxy_url(exterior.file), results[0]["heroImage"])
 
     def test_hero_image_falls_back_to_interior_photo(self) -> None:
@@ -79,7 +77,6 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         response = self.execute_graphql(self.HERO_IMAGE_QUERY)
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
-
         self.assertEqual(self._get_imgproxy_url(interior.file), results[0]["heroImage"])
 
     def test_hero_image_returns_none_when_no_photos(self) -> None:
