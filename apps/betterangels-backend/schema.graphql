@@ -1866,12 +1866,6 @@ input RevertNoteInput {
 
 union RevertNotePayload = NoteType | OperationInfo
 
-enum RoomStatusChoices {
-  AVAILABLE
-  RESERVED
-  NEEDS_MAINTENANCE
-}
-
 input RoomFilter {
   AND: RoomFilter
   OR: RoomFilter
@@ -1880,6 +1874,12 @@ input RoomFilter {
   shelterId: ID
   status: [RoomStatusChoices!]
   roomType: [RoomStyleChoices!]
+}
+
+enum RoomStatusChoices {
+  AVAILABLE
+  RESERVED
+  NEEDS_MAINTENANCE
 }
 
 enum RoomStyleChoices {
