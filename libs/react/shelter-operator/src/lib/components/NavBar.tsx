@@ -1,11 +1,12 @@
 import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
-import { operatorPath } from '@monorepo/react/shelter';
+import type { ReactNode } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Plus, UserCog } from 'lucide-react';
-import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useActiveOrg } from '../providers/activeOrg';
 import { Button } from './base-ui/buttons';
 import { Dropdown } from './base-ui/dropdown';
+import { operatorPath } from '@monorepo/react/shelter';
 
 interface NavBarProps {
   organizationName?: string;
@@ -14,13 +15,29 @@ interface NavBarProps {
   showCreateButton?: boolean;
 }
 
-export default function NavBar({
+function NavBarActions({ children }: { children?: ReactNode }) {
+  return (
+    <div className="flex items-center gap-3">
+      {children}
+      <button
+        type="button"
+        aria-label="Account settings"
+        className="inline-flex size-11 items-center justify-center rounded-full border border-[#D3D9E3] bg-white text-[#3E4652] transition-colors hover:bg-[#F8FAFC] pl-1"
+      >
+        <UserCog size={20} />
+      </button>
+    </div>
+  );
+}
+
+export function NavBar({
   organizationName,
   shelterName,
   pageTitle,
   showCreateButton = true,
 }: NavBarProps = {}) {
   const { activeOrg, organizations, setActiveOrgId } = useActiveOrg();
+  const selectedOrganizationId = activeOrg?.id ?? '';
 
   const breadcrumbs = [organizationName, shelterName, pageTitle].filter(
     Boolean
@@ -33,17 +50,21 @@ export default function NavBar({
         ? organizations[0].name
         : 'Admin Dashboard';
 
+  const selectedOption = useMemo(() => {
+    const org = organizations.find((o) => o.id === selectedOrganizationId);
+    return org ? { label: org.name, value: org.id } : null;
+  }, [organizations, selectedOrganizationId]);
+
   const dropdownOptions = useMemo(
     () => organizations.map((org) => ({ label: org.name, value: org.id })),
     [organizations]
   );
 
-  const dropdownValue = useMemo(
-    () =>
-      activeOrg
-        ? { label: activeOrg.name, value: activeOrg.id }
-        : null,
-    [activeOrg]
+  const handleOrgChange = useCallback(
+    (option: { value: string } | null) => {
+      if (option) setActiveOrgId(option.value);
+    },
+    [setActiveOrgId]
   );
 
   return (
@@ -85,16 +106,14 @@ export default function NavBar({
                 label="Organization"
                 placeholder="Select organization"
                 options={dropdownOptions}
-                value={dropdownValue}
-                onChange={(option) => {
-                  if (option) setActiveOrgId(option.value);
-                }}
+                value={selectedOption}
+                onChange={handleOrgChange}
               />
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <NavBarActions>
           {showCreateButton && (
             <Link to={`${operatorPath}/dashboard/create`}>
               <Button
@@ -106,15 +125,10 @@ export default function NavBar({
               </Button>
             </Link>
           )}
-          <button
-            type="button"
-            aria-label="Account settings"
-            className="inline-flex size-11 items-center justify-center rounded-full border border-[#D3D9E3] bg-white text-[#3E4652] transition-colors hover:bg-[#F8FAFC] pl-1"
-          >
-            <UserCog size={20} />
-          </button>
-        </div>
+        </NavBarActions>
       </div>
     </div>
   );
 }
+
+export { NavBarActions };

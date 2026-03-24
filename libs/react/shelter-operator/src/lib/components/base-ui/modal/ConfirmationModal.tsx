@@ -1,6 +1,8 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { CheckCircle, Info, Trash2 } from 'lucide-react';
 import { ReactNode } from 'react';
+import { Button, ButtonColor } from '../buttons/buttons';
+import { Text } from '../text/text';
 import { Modal } from './Modal';
 import { ModalBody } from './ModalBody';
 import { ModalFooter } from './ModalFooter';
@@ -30,26 +32,26 @@ const variantConfig: Record<
     Icon: typeof Trash2;
     iconBgClass: string;
     iconColorClass: string;
-    buttonClass: string;
+    buttonClass: ButtonColor;
   }
 > = {
   danger: {
     Icon: Trash2,
     iconBgClass: 'bg-[#FFECE8]',
     iconColorClass: 'text-[#CB0808]',
-    buttonClass: 'bg-[#CB0808] hover:bg-[#a00606]',
+    buttonClass: 'red',
   },
   success: {
     Icon: CheckCircle,
     iconBgClass: 'bg-[#DDF8E8]',
     iconColorClass: 'text-[#23CE6B]',
-    buttonClass: 'bg-[#23CE6B] hover:bg-[#1db35d]',
+    buttonClass: 'green',
   },
   info: {
     Icon: Info,
     iconBgClass: 'bg-[#DCF1FF]',
     iconColorClass: 'text-[#008CEE]',
-    buttonClass: 'bg-[#008CEE] hover:bg-[#0374c4]',
+    buttonClass: 'blue',
   },
 };
 
@@ -84,49 +86,43 @@ export function ConfirmationModal({
       </ModalHeader>
 
       <ModalBody>
-        <h3 className="text-lg font-semibold text-[#383B40]">{title}</h3>
+        <Text
+          variant="header-md"
+          className="block font-semibold text-[#383B40]"
+        >
+          {title}
+        </Text>
+
         {description && (
-          <p className="mt-1 text-sm text-[#747A82]">{description}</p>
+          <Text variant="body-lg" className="mt-1 block text-[#747A82]">
+            {description}
+          </Text>
         )}
       </ModalBody>
 
       <ModalFooter>
         {secondaryAction && (
-          <button
+          <Button
+            variant="primary"
             onClick={secondaryAction.onClick}
-            className={mergeCss([
-              'px-5',
-              'py-2',
-              'rounded-lg',
-              'text-sm',
-              'font-medium',
-              'border',
-              'border-[#D3D9E3]',
-              'text-[#383B40]',
-              'hover:bg-[#F4F6FD]',
-              'transition-colors',
-            ])}
+            className={mergeCss(['font-medium', 'transition-colors'])}
           >
             {secondaryAction.label}
-          </button>
+          </Button>
         )}
-        <button
+        <Button
+          variant="primary"
           onClick={primaryAction.onClick}
           disabled={primaryAction.isLoading}
+          color={buttonClass}
           className={mergeCss([
-            'px-5',
-            'py-2',
-            'rounded-lg',
-            'text-sm',
             'font-medium',
-            'text-white',
             'transition-colors',
             'disabled:opacity-50',
-            buttonClass,
           ])}
         >
           {primaryAction.isLoading ? 'Loading...' : primaryAction.label}
-        </button>
+        </Button>
       </ModalFooter>
     </Modal>
   );

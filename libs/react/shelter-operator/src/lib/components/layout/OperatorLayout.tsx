@@ -2,7 +2,7 @@ import { useQuery } from '@apollo/client/react';
 import { operatorPath } from '@monorepo/react/shelter';
 import { Outlet, useLocation, useParams } from 'react-router-dom';
 import { useUser } from '@monorepo/react/shelter';
-import NavBar from '../NavBar';
+import { NavBar } from '../NavBar';
 import { GetShelterNameDocument } from '../../graphql/__generated__/shelters.generated';
 
 export function OperatorLayout() {
