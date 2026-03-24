@@ -1,0 +1,6 @@
+{
+  "extends": ["../.eslintrc.json", "plugin:@nx/typescript"],
+  "plugins": ["import"],
+  "ignorePatterns": ["!**/*"],
+  "rules": {}
+}

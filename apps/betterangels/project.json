@@ -32,7 +32,7 @@
         "platform": "android"
       }
     },
-    "build": {
+    "eas-build": {
       "executor": "@nx/expo:build",
       "options": {}
     },
@@ -68,6 +68,18 @@
       "options": {
         "auto": true
       }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "configurations": {
+        "preview": {
+          "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-deploy.ts --project betterangels --profile preview"
+        },
+        "production": {
+          "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-deploy.ts --project betterangels --profile production"
+        }
+      },
+      "defaultConfiguration": "preview"
     },
     "export": {
       "executor": "@nx/expo:export",

@@ -181,24 +181,22 @@ jobs:
       - name: 🛠️ Build and Push Artifacts
         run: |
           docker compose run better-angels bash <<'EOF'
-          # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t build --exclude=^betterangels$,^shelter$ --configuration ${{ matrix.environment }}
+          yarn nx affected -t build --configuration ${{ matrix.environment }}
           EOF
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
-
-      - name: 🏗️ Push Monorepo Docker image
-        if: matrix.environment == 'production'
-        run: |
-          docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
-
-      - name: 🚀 Deploy Changes
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t deploy --exclude=^betterangels$,^shelter$ --configuration ${{ matrix.environment }}
-          EOF
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
 
       - name: 💬 Post preview link to PR
         if: github.event_name == 'pull_request'
@@ -210,6 +208,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_PATH: ${{ github.event_path }}
+
+      - name: 🏗️ Push Monorepo Docker image
+        if: matrix.environment == 'production'
+        run: |
+          docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+
+      - name: 🚀 Deploy Changes
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t deploy --configuration ${{ matrix.environment }}
+          EOF
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: ⏹️ Spin down monorepo environment
         if: always()
