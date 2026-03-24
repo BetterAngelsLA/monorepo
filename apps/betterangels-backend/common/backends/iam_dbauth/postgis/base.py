@@ -1,9 +1,7 @@
 from typing import Any, Dict
 
 import boto3
-from django.contrib.gis.db.backends.postgis.base import (
-    DatabaseWrapper as PostGISDatabaseWrapper,
-)
+from django.contrib.gis.db.backends.postgis.base import DatabaseWrapper as PostGISDatabaseWrapper
 
 
 class DatabaseWrapper(PostGISDatabaseWrapper):

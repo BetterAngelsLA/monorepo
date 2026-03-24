@@ -26,19 +26,16 @@ from shelters.types.lookups import (
     DemographicType,
     EntryRequirementType,
     FunderType,
-    GeneralServiceType,
-    HealthServiceType,
-    ImmediateNeedType,
     ParkingType,
     PetType,
     RoomStyleType,
     ScheduleType,
+    ServiceType,
     ShelterProgramType,
     ShelterTypeType,
     SPAType,
     SpecialSituationRestrictionType,
     StorageType,
-    TrainingServiceType,
 )
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
@@ -88,9 +85,6 @@ class ShelterTypeMixin:
     exterior_photos: List[ShelterPhotoType]
     funders: List[FunderType]
     funders_other: auto
-    general_services: List[GeneralServiceType]
-    health_services: List[HealthServiceType]
-    immediate_needs: List[ImmediateNeedType]
     instagram: auto
     interior_photos: List[ShelterPhotoType]
     location: Optional[ShelterLocationType]
@@ -108,6 +102,7 @@ class ShelterTypeMixin:
     room_styles: List[RoomStyleType]
     room_styles_other: auto
     schedules: List[ScheduleType]
+    services: List[ServiceType]
     shelter_programs: List[ShelterProgramType]
     shelter_programs_other: auto
     shelter_types: List[ShelterTypeType]
@@ -119,7 +114,6 @@ class ShelterTypeMixin:
     subjective_review: Optional[str]
     supervisorial_district: auto
     total_beds: auto
-    training_services: List[TrainingServiceType]
     updated_at: auto
     website: auto
 

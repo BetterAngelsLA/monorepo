@@ -42,10 +42,6 @@ from .lookups import (
     EntryRequirement,
     ExitPolicy,
     Funder,
-    GeneralService,
-    HealthService,
-    ImmediateNeed,
-    MealService,
     Parking,
     Pet,
     ReferralRequirement,
@@ -54,8 +50,8 @@ from .lookups import (
     ShelterType,
     SpecialSituationRestriction,
     Storage,
-    TrainingService,
 )
+from .service import Service
 
 
 @pghistory.track(
@@ -114,11 +110,7 @@ class Shelter(BaseModel):
     other_rules = CKEditor5Field(null=True, blank=True)
 
     # Services Offered
-    immediate_needs = models.ManyToManyField(ImmediateNeed)
-    general_services = models.ManyToManyField(GeneralService)
-    health_services = models.ManyToManyField(HealthService)
-    training_services = models.ManyToManyField(TrainingService)
-    meal_services = models.ManyToManyField(MealService)
+    services = models.ManyToManyField(Service, blank=True)
     other_services = CKEditor5Field(verbose_name="Additional Notes", null=True, blank=True)
 
     # Entry Requirements

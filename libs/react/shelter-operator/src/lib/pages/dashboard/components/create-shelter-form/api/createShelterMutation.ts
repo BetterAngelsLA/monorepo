@@ -4,6 +4,7 @@ import {
   type CreateShelterMutation,
   type CreateShelterMutationVariables,
   type ScheduleInput,
+  type ServiceInput,
 } from '@monorepo/react/shelter';
 import type { ScheduleFormEntry, ShelterFormData } from '../../../formTypes';
 import { sanitizeString } from '../utils/formUtils';
@@ -20,6 +21,36 @@ export type {
 
 const compactEnumValues = <T extends string>(values: readonly T[]): T[] =>
   Array.from(new Set(values.filter(Boolean)));
+
+const buildServices = (
+  selectedIds: readonly string[],
+  pendingByCategory: Readonly<Record<string, string[]>>
+): ServiceInput[] | undefined => {
+  const entries: ServiceInput[] = [];
+  const seenIds = new Set<string>();
+  const seenPending = new Set<string>();
+
+  for (const id of selectedIds) {
+    if (id && !seenIds.has(id)) {
+      seenIds.add(id);
+      entries.push({ id });
+    }
+  }
+
+  for (const [categoryId, displayNames] of Object.entries(pendingByCategory)) {
+    if (!categoryId) continue;
+    for (const displayName of displayNames) {
+      const trimmed = displayName.trim();
+      if (!trimmed) continue;
+      const dedupeKey = `${categoryId}::${trimmed.toLowerCase()}`;
+      if (seenPending.has(dedupeKey)) continue;
+      seenPending.add(dedupeKey);
+      entries.push({ categoryId, displayName: trimmed });
+    }
+  }
+
+  return entries.length ? entries : undefined;
+};
 
 const numberOrUndefined = (value: number | null | undefined) =>
   typeof value === 'number' && !Number.isNaN(value) ? value : undefined;
@@ -94,11 +125,10 @@ export const buildCreateShelterInput = (
     storage: compactEnumValues(formData.storage),
     pets: compactEnumValues(formData.pets),
     parking: compactEnumValues(formData.parking),
-    immediateNeeds: compactEnumValues(formData.immediateNeeds),
-    generalServices: compactEnumValues(formData.generalServices),
-    healthServices: compactEnumValues(formData.healthServices),
-    trainingServices: compactEnumValues(formData.trainingServices),
-    mealServices: compactEnumValues(formData.mealServices),
+    services: buildServices(
+      formData.services,
+      formData.pendingServicesByCategory
+    ),
     entryRequirements: compactEnumValues(formData.entryRequirements),
     referralRequirement: compactEnumValues(formData.referralRequirement),
     exitPolicy: compactEnumValues(formData.exitPolicy),

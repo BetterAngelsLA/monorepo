@@ -2,9 +2,6 @@ import {
   DemographicChoices,
   ExitPolicyChoices,
   FunderChoices,
-  HealthServiceChoices,
-  ImmediateNeedChoices,
-  MealServiceChoices,
   ReferralRequirementChoices,
   RoomStyleChoices,
   ShelterChoices,
@@ -12,12 +9,10 @@ import {
   SpaChoices,
   SpecialSituationRestrictionChoices,
   StatusChoices,
-  TrainingServiceChoices,
   enumDisplayAccessibilityChoices,
   enumDisplayDemographics,
   enumDisplayEntryRequirementChoices,
   enumDisplayFunderChoices,
-  enumDisplayGeneralServiceChoices,
   enumDisplayParkingChoices,
   enumDisplayPetChoices,
   enumDisplayShelterChoices,
@@ -90,31 +85,6 @@ const EXIT_POLICY_LABELS: Record<ExitPolicyChoices, string> = {
   [ExitPolicyChoices.Other]: 'Other',
 };
 
-const IMMEDIATE_NEEDS_LABELS: Record<ImmediateNeedChoices, string> = {
-  [ImmediateNeedChoices.Clothing]: 'Clothing',
-  [ImmediateNeedChoices.Food]: 'Food',
-  [ImmediateNeedChoices.Showers]: 'Showers',
-};
-
-const HEALTH_SERVICES_LABELS: Record<HealthServiceChoices, string> = {
-  [HealthServiceChoices.Dental]: 'Dental',
-  [HealthServiceChoices.Medical]: 'Medical',
-  [HealthServiceChoices.MentalHealth]: 'Mental Health',
-  [HealthServiceChoices.SubstanceUseTreatment]: 'Substance Use Treatment',
-};
-
-const TRAINING_SERVICES_LABELS: Record<TrainingServiceChoices, string> = {
-  [TrainingServiceChoices.JobTraining]: 'Job Training',
-  [TrainingServiceChoices.LifeSkillsTraining]: 'Life Skills Training',
-  [TrainingServiceChoices.Tutoring]: 'Tutoring',
-};
-
-const MEAL_SERVICES_LABELS: Record<MealServiceChoices, string> = {
-  [MealServiceChoices.Breakfast]: 'Breakfast',
-  [MealServiceChoices.Lunch]: 'Lunch',
-  [MealServiceChoices.Dinner]: 'Dinner',
-};
-
 const REFERRAL_REQUIREMENT_LABELS: Record<ReferralRequirementChoices, string> =
   {
     [ReferralRequirementChoices.ReferralMatched]: 'Matched Referral',
@@ -164,13 +134,6 @@ export const PARKING_OPTIONS = toOptions(enumDisplayParkingChoices);
 export const EXIT_POLICY_OPTIONS = toOptions(EXIT_POLICY_LABELS, [
   ExitPolicyChoices.Other,
 ]);
-export const IMMEDIATE_NEEDS_OPTIONS = toOptions(IMMEDIATE_NEEDS_LABELS);
-export const GENERAL_SERVICES_OPTIONS = toOptions(
-  enumDisplayGeneralServiceChoices
-);
-export const HEALTH_SERVICES_OPTIONS = toOptions(HEALTH_SERVICES_LABELS);
-export const TRAINING_SERVICES_OPTIONS = toOptions(TRAINING_SERVICES_LABELS);
-export const MEAL_SERVICES_OPTIONS = toOptions(MEAL_SERVICES_LABELS);
 export const ENTRY_REQUIREMENTS_OPTIONS = toOptions(
   enumDisplayEntryRequirementChoices
 );

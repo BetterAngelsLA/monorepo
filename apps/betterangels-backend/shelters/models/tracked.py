@@ -86,46 +86,6 @@ class TrackedParking(Shelter.parking.through):  # type: ignore[name-defined]
 
 
 @pghistory.track(
-    pghistory.InsertEvent("shelter.immediate_need.add"),
-    pghistory.DeleteEvent("shelter.immediate_need.remove"),
-    obj_field=None,
-)
-class TrackedImmediateNeed(Shelter.immediate_needs.through):  # type: ignore[name-defined]
-    class Meta:
-        proxy = True
-
-
-@pghistory.track(
-    pghistory.InsertEvent("shelter.general_service.add"),
-    pghistory.DeleteEvent("shelter.general_service.remove"),
-    obj_field=None,
-)
-class TrackedGeneralService(Shelter.general_services.through):  # type: ignore[name-defined]
-    class Meta:
-        proxy = True
-
-
-@pghistory.track(
-    pghistory.InsertEvent("shelter.health_service.add"),
-    pghistory.DeleteEvent("shelter.health_service.remove"),
-    obj_field=None,
-)
-class TrackedHealthService(Shelter.health_services.through):  # type: ignore[name-defined]
-    class Meta:
-        proxy = True
-
-
-@pghistory.track(
-    pghistory.InsertEvent("shelter.training_service.add"),
-    pghistory.DeleteEvent("shelter.training_service.remove"),
-    obj_field=None,
-)
-class TrackedTrainingService(Shelter.training_services.through):  # type: ignore[name-defined]
-    class Meta:
-        proxy = True
-
-
-@pghistory.track(
     pghistory.InsertEvent("shelter.entry_requirement.add"),
     pghistory.DeleteEvent("shelter.entry_requirement.remove"),
     obj_field=None,
