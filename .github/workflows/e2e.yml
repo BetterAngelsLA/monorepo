@@ -1,0 +1,181 @@
+# Trigger Maestro E2E tests:
+#   - Comment "/run-e2e <project>" on a PR (runs only that project)
+#   - Comment "/run-e2e" on a PR (runs all affected projects)
+#   - Manually via Actions tab with workflow_dispatch
+# Tests run on EAS via apps/<project>/.eas/workflows/e2e-test.yml.
+# Each project with an `eas-e2e` NX target is eligible.
+name: 🧪 Maestro E2E Tests
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to test'
+        required: true
+        type: number
+      project:
+        description: 'Project to test (e.g. betterangels). Leave empty for all affected.'
+        required: false
+        type: string
+
+concurrency:
+  group: e2e-${{ github.event.issue.number || github.event.inputs.pr_number }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-test:
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || (
+        github.event.issue.pull_request
+        && startsWith(github.event.comment.body, '/run-e2e')
+        && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: preview
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: write
+    steps:
+      # --- 1. React to /run-e2e comment ---
+      - name: 🚀 React to comment
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
+
+      # --- 2. Resolve PR details ---
+      - name: 🔍 Get PR details & parse project
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.issue?.number || ${{ github.event.inputs.pr_number || 0 }};
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            core.setOutput('sha', pr.data.head.sha);
+            core.setOutput('branch', pr.data.head.ref);
+            core.setOutput('number', prNumber);
+
+            const dispatchProject = '${{ github.event.inputs.project || '' }}';
+            const commentBody = process.env.COMMENT_BODY || '';
+            const project = dispatchProject || commentBody.trim().split(/\s+/)[1] || '';
+            core.setOutput('project', project);
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body || '' }}
+
+      # --- 3. Checkout & setup ---
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.sha }}
+          fetch-depth: 0
+
+      - name: 🔀 Track main
+        run: git branch --track main origin/main 2>/dev/null || true
+
+      - name: 🔧 Configure NX SHAs
+        uses: nrwl/nx-set-shas@v4
+
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.21.1
+      - run: corepack enable
+
+      - name: 🧶 Setup Yarn cache
+        uses: actions/setup-node@v4
+        with:
+          cache: 'yarn'
+
+      - name: 🔧 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install dependencies
+        run: |
+          npm install --global eas-cli
+          yarn install
+
+      # --- 4. Trigger E2E via NX ---
+      - name: 🧪 Trigger E2E tests
+        id: e2e
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_ACCOUNT: better-angels
+          EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
+        run: |
+          PROJECT="${{ steps.pr.outputs.project }}"
+          BRANCH="${{ steps.pr.outputs.branch }}"
+          SHA="${{ steps.pr.outputs.sha }}"
+
+          if [ -n "$PROJECT" ]; then
+            echo "Running eas-e2e for specific project: $PROJECT"
+            CMD="yarn nx run ${PROJECT}:eas-e2e --args=\"--branch=${BRANCH} --sha=${SHA}\""
+          else
+            echo "Running eas-e2e for all affected projects"
+            CMD="yarn nx affected -t eas-e2e --args=\"--branch=${BRANCH} --sha=${SHA}\""
+          fi
+
+          echo "$CMD"
+          OUTPUT=$(eval "$CMD" 2>&1) || true
+          echo "$OUTPUT"
+
+          # Extract E2E_RESULT JSON lines from NX output
+          RESULTS=$(echo "$OUTPUT" | grep '^E2E_RESULT:' | sed 's/^E2E_RESULT://')
+          echo "results<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$RESULTS" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      # --- 5. Post PR comment ---
+      - name: 💬 Post PR comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+            if (!prNumber) return;
+
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const rawResults = `${{ steps.e2e.outputs.results }}`.trim();
+            const results = rawResults
+              ? rawResults.split('\n').map(line => JSON.parse(line))
+              : [];
+
+            let body;
+            if (results.length === 0) {
+              body = `⚠️ Maestro E2E tests — no affected projects found.\n\n[View GitHub Actions run](${runUrl})`;
+            } else {
+              const lines = results.map(r => {
+                const link = r.workflowUrl
+                  ? `[EAS workflow](${r.workflowUrl})`
+                  : '_no EAS link captured_';
+                return `- **${r.project}**: ${link}`;
+              });
+              body = `✅ Maestro E2E tests triggered.\n\n${lines.join('\n')}\n\n[View GitHub Actions run](${runUrl})`;
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body,
+            });
