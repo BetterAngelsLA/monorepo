@@ -61,24 +61,23 @@ class ParkingType:
     name: auto
 
 
-@strawberry_django.type(models.ImmediateNeed)
-class ImmediateNeedType:
+@strawberry_django.type(models.ServiceCategory)
+class ServiceCategoryType:
+    id: ID
     name: auto
+    display_name: auto
+    priority: auto
+    services: list["ServiceType"]
 
 
-@strawberry_django.type(models.GeneralService)
-class GeneralServiceType:
+@strawberry_django.type(models.Service)
+class ServiceType:
+    id: ID
+    category: ServiceCategoryType
     name: auto
-
-
-@strawberry_django.type(models.HealthService)
-class HealthServiceType:
-    name: auto
-
-
-@strawberry_django.type(models.TrainingService)
-class TrainingServiceType:
-    name: auto
+    display_name: auto
+    is_other: auto
+    priority: auto
 
 
 @strawberry_django.type(models.EntryRequirement)
