@@ -8,16 +8,11 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.types import OrganizationType
-from common.graphql.types import PhoneNumberScalar
+from common.graphql.types import PhoneNumberScalar, TransformableImageType
+from common.imgproxy import build_imgproxy_url
 from django.db.models import Prefetch, QuerySet
 from shelters import models
-from shelters.enums import (
-    BedStatusChoices,
-    BedTypeChoices,
-    MedicalNeedChoices,
-    RoomStatusChoices,
-    RoomStyleChoices,
-)
+from shelters.enums import BedStatusChoices, BedTypeChoices, MedicalNeedChoices, RoomStatusChoices, RoomStyleChoices
 from shelters.selectors import admin_shelter_list, shelter_list
 from shelters.types.lookups import (
     AccessibilityType,
@@ -54,7 +49,7 @@ class ShelterLocationType:
 class ShelterPhotoType:
     id: ID
     created_at: datetime
-    file: strawberry_django.DjangoFileType
+    file: TransformableImageType
 
 
 @strawberry.type
@@ -141,7 +136,7 @@ class ShelterTypeMixin:
             ),
             None,
         )
-        return str(photo.file.url) if photo else None
+        return build_imgproxy_url(photo.file, preset=None, processing_options="f:jpg") if photo else None
 
     @strawberry_django.field
     def distance_in_miles(self, root: models.Shelter) -> Optional[float]:

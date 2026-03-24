@@ -11,13 +11,13 @@ query ViewShelters(
       heroImage
       exteriorPhotos {
         file {
-          url
+          url(processingOptions: "f:jpg")
           name
         }
       }
       interiorPhotos {
         file {
-          url
+          url(processingOptions: "f:jpg")
           name
         }
       }

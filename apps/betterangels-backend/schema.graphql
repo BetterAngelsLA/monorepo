@@ -2039,7 +2039,7 @@ input ShelterOrder {
 type ShelterPhotoType {
   id: ID!
   createdAt: DateTime!
-  file: DjangoFileType!
+  file: DjangoImageType!
 }
 
 enum ShelterProgramChoices {

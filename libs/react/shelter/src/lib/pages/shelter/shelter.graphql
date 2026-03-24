@@ -48,7 +48,7 @@ query ViewShelter($id: ID!) {
     exteriorPhotos {
       file {
         name
-        url
+        url(processingOptions: "f:jpg")
       }
     }
     funders {
@@ -57,7 +57,7 @@ query ViewShelter($id: ID!) {
     interiorPhotos {
       file {
         name
-        url
+        url(processingOptions: "f:jpg")
       }
     }
     location {
