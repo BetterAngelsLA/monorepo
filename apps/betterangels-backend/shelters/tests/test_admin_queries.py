@@ -3,8 +3,8 @@ from datetime import timedelta
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.utils import timezone
-from shelters.enums import BedStatusChoices
-from shelters.models import Bed
+from shelters.enums import BedStatusChoices, PetChoices
+from shelters.models import Bed, Pet
 from shelters.permissions import ShelterPermissions
 from shelters.tests.baker_recipes import shelter_recipe
 
@@ -140,6 +140,62 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         payload = response["data"]["adminShelters"]
         self.assertEqual(payload["totalCount"], 0)
         self.assertEqual(payload["results"], [])
+
+    def test_admin_shelters_filter_by_name(self) -> None:
+        """Name filter returns only shelters whose name matches (case-insensitive)."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.org_1_shelter_newer.name = "Safe Haven"
+        self.org_1_shelter_newer.save()
+
+        query = """
+            query AdminShelters($orgIds: [ID!], $name: String) {
+                adminShelters(
+                    filters: { organizations: $orgIds, name: $name }
+                ) {
+                    totalCount
+                    results { id name }
+                }
+            }
+        """
+        response = self.execute_graphql(
+            query,
+            variables={"orgIds": [str(self.org_1.id)], "name": "safe haven"},
+        )
+
+        payload = response["data"]["adminShelters"]
+        self.assertEqual(payload["totalCount"], 1)
+        self.assertEqual(payload["results"][0]["id"], str(self.org_1_shelter_newer.id))
+        self.assertEqual(payload["results"][0]["name"], "Safe Haven")
+
+    def test_admin_shelters_filter_by_properties(self) -> None:
+        """Property filters narrow results through the admin endpoint."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        pet_cats, _ = Pet.objects.get_or_create(name=PetChoices.CATS)
+        self.org_1_shelter_newer.pets.set([pet_cats])
+        self.org_1_shelter_older.pets.clear()
+
+        query = """
+            query AdminShelters($orgIds: [ID!], $properties: ShelterPropertyInput) {
+                adminShelters(
+                    filters: { organizations: $orgIds, properties: $properties }
+                ) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+        response = self.execute_graphql(
+            query,
+            variables={
+                "orgIds": [str(self.org_1.id)],
+                "properties": {"pets": [PetChoices.CATS.name]},
+            },
+        )
+
+        payload = response["data"]["adminShelters"]
+        self.assertEqual(payload["totalCount"], 1)
+        self.assertEqual(payload["results"][0]["id"], str(self.org_1_shelter_newer.id))
 
     def test_admin_shelters_bed_capacity(self) -> None:
         """Bed capacity counts are returned grouped by status."""
