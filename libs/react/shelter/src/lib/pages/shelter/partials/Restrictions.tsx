@@ -4,7 +4,7 @@ import { ViewShelterQuery } from '../__generated__/shelter.generated';
 import { WysiwygSection } from '../common';
 
 function formatCurfewTime(curfew: string): string {
-  const parsedTime = parse(curfew, 'HH:mm:ss', new Date());
+  const parsedTime = parse(curfew.trim(), 'HH:mm:ss', new Date());
 
   if (!isValid(parsedTime)) {
     return curfew;
