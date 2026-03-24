@@ -1,5 +1,6 @@
 import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
 import type { ReactNode } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Plus, UserCog } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useActiveOrg } from '../providers/activeOrg';
@@ -21,17 +22,29 @@ function NavBarActions({ children }: { children?: ReactNode }) {
   );
 }
 
-export default function NavBar() {
+export function NavBar() {
   const { activeOrg, organizations, setActiveOrgId } = useActiveOrg();
   const selectedOrganizationId = activeOrg?.id ?? '';
 
   const title =
     organizations.length === 1 ? organizations[0].name : 'Admin Dashboard';
 
-  const selectedOption = (() => {
+  const selectedOption = useMemo(() => {
     const org = organizations.find((o) => o.id === selectedOrganizationId);
     return org ? { label: org.name, value: org.id } : null;
-  })();
+  }, [organizations, selectedOrganizationId]);
+
+  const dropdownOptions = useMemo(
+    () => organizations.map((org) => ({ label: org.name, value: org.id })),
+    [organizations]
+  );
+
+  const handleOrgChange = useCallback(
+    (option: { value: string } | null) => {
+      if (option) setActiveOrgId(option.value);
+    },
+    [setActiveOrgId]
+  );
 
   return (
     <div className="mb-6 bg-[#FAFAFA] px-5 py-3">
@@ -50,14 +63,9 @@ export default function NavBar() {
               <Dropdown
                 label="Organization"
                 placeholder="Select organization"
-                options={organizations.map((org) => ({
-                  label: org.name,
-                  value: org.id,
-                }))}
+                options={dropdownOptions}
                 value={selectedOption}
-                onChange={(option) => {
-                  if (option) setActiveOrgId(option.value);
-                }}
+                onChange={handleOrgChange}
               />
             </div>
           )}

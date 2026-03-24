@@ -14,7 +14,28 @@ import type { Shelter } from '../../types/shelter';
 const SEARCH_DEBOUNCE_MS = 300;
 const PAGE_SIZE = 16;
 
-export default function Dashboard() {
+const poppinsStyle = { fontFamily: 'Poppins, sans-serif' } as const;
+
+const loadingState = (
+  <div className="px-6 py-8 text-center text-sm text-gray-500">
+    Loading shelters…
+  </div>
+);
+
+const emptyState = (
+  <div className="px-6 py-8 text-center text-sm text-gray-500">
+    No shelters yet.{' '}
+    <Link
+      to="/operator/dashboard/create"
+      className="text-blue-600 hover:underline"
+    >
+      Create your first shelter
+    </Link>
+    .
+  </div>
+);
+
+export function Dashboard() {
   const { pathname } = useLocation();
   const isOperatorRoot =
     pathname === '/operator' || pathname === '/operator/';
@@ -133,25 +154,10 @@ export default function Dashboard() {
           getRowKey={(shelter) => shelter.id}
           onRowClick={handleRowClick}
           loading={loading}
-          loadingState={
-            <div className="px-6 py-8 text-center text-sm text-gray-500">
-              Loading shelters…
-            </div>
-          }
-          emptyState={
-            <div className="px-6 py-8 text-center text-sm text-gray-500">
-              No shelters yet.{' '}
-              <Link
-                to="/operator/dashboard/create"
-                className="text-blue-600 hover:underline"
-              >
-                Create your first shelter
-              </Link>
-              .
-            </div>
-          }
-          headerStyle={{ fontFamily: 'Poppins, sans-serif' }}
-          rowStyle={{ fontFamily: 'Poppins, sans-serif' }}
+          loadingState={loadingState}
+          emptyState={emptyState}
+          headerStyle={poppinsStyle}
+          rowStyle={poppinsStyle}
         />
 
         {/* PAGINATION */}
