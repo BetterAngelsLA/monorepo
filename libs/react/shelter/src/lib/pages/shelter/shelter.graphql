@@ -54,15 +54,6 @@ query ViewShelter($id: ID!) {
     funders {
       name
     }
-    generalServices {
-      name
-    }
-    healthServices {
-      name
-    }
-    immediateNeeds {
-      name
-    }
     interiorPhotos {
       file {
         name
@@ -101,6 +92,16 @@ query ViewShelter($id: ID!) {
       }
       isException
     }
+    services {
+      id
+      displayName
+      priority
+      category {
+        id
+        displayName
+        priority
+      }
+    }
     shelterPrograms {
       name
     }
@@ -114,9 +115,6 @@ query ViewShelter($id: ID!) {
       name
     }
     storage {
-      name
-    }
-    trainingServices {
       name
     }
     updatedAt

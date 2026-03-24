@@ -1,10 +1,10 @@
 import { useUser } from '@monorepo/react/shelter';
 import { Route, Routes } from 'react-router-dom';
 import { OperatorLayout } from './components/layout/OperatorLayout';
-import ShelterDashboardPage from './ShelterDashboardPage';
-import Dashboard from './pages/dashboard/Dashboard';
-import CreateShelterForm from './pages/dashboard/components/create-shelter-form';
-import SignIn from './pages/signIn';
+import { ShelterDashboardPage } from './ShelterDashboardPage';
+import { Dashboard } from './pages/dashboard/Dashboard';
+import { CreateShelterForm } from './pages/dashboard/components/create-shelter-form';
+import { SignIn } from './pages/signIn';
 import { ActiveOrgProvider, OperatorAuthProvider } from './providers';
 
 export function OperatorApp() {

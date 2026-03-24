@@ -4,7 +4,7 @@ import django_choices_field.fields
 import shelters.enums
 from django.db import migrations, models
 
-from ..deprecated import deprecated_enums
+import shelters.deprecated.deprecated_enums
 
 
 def update_enum_values_forward(apps, schema_editor):
@@ -76,7 +76,7 @@ class Migration(migrations.Migration):
                     ("Phone", "Phone"),
                     ("Transportation", "Transportation"),
                 ],
-                choices_enum=shelters.enums.GeneralServiceChoices,
+                choices_enum=shelters.deprecated.deprecated_enums.GeneralServiceChoices,
                 max_length=29,
                 null=True,
                 unique=True,
@@ -102,7 +102,7 @@ class Migration(migrations.Migration):
                     ("Women", "Women"),
                     ("Youth (TAY)", "Youth (TAY)"),
                 ],
-                choices_enum=deprecated_enums.PopulationChoices,
+                choices_enum=shelters.deprecated.deprecated_enums.PopulationChoices,
                 max_length=26,
                 null=True,
                 unique=True,

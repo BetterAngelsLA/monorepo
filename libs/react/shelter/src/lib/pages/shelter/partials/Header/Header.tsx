@@ -1,4 +1,4 @@
-import { ArrowLeftIcon, UsersIcon } from '@monorepo/react/icons';
+import { ArrowLeftIcon, BedIcon, UsersIcon } from '@monorepo/react/icons';
 import { Link } from 'react-router-dom';
 import { enumDisplayDemographics } from '../../../../static';
 import { ViewShelterQuery } from '../../__generated__/shelter.generated';
@@ -30,6 +30,15 @@ export function Header({ shelter }: { shelter: ViewShelterQuery['shelter'] }) {
             .join(', ')
             .replace(/,([^,]*)$/, ' and$1')}
         </p>
+        {!!shelter.totalBeds && (
+          <>
+            <span className="text-neutral-60">·</span>
+            <BedIcon className="w-5 h-5" />
+            <span className="text-sm font-semibold">
+              {shelter.totalBeds} Beds
+            </span>
+          </>
+        )}
       </div>
     </>
   );

@@ -1,6 +1,5 @@
 import {
   Card,
-  ExpandableContainer,
   isEmail,
   isValidURL,
   toValidWebURL,
@@ -13,10 +12,7 @@ import {
   LocationIcon,
 } from '@monorepo/react/icons';
 import parsePhoneNumber from 'libphonenumber-js';
-import { WysiwygContainer } from '../../../../components';
 import { ViewShelterQuery } from '../../__generated__/shelter.generated';
-import { hasWysiwygContent } from '../../utils';
-import { GeneralServices } from './GeneralServices';
 
 function renderLabel(
   label?: string | null,
@@ -90,47 +86,19 @@ export function GeneralInfo({
     },
   ];
 
-  const hasNotesContent = hasWysiwygContent(shelter.otherServices);
-
   return (
-    <Card px="px-0" pb="pb-0">
-      <div className="gap-2 flex flex-col px-6">
-        {shelter.totalBeds && (
-          <>
-            <h3 className="text-base font-semibold">Capacity</h3>
-            <div>
-              <p>{shelter.totalBeds} beds</p>
-            </div>
-          </>
-        )}
-
-        <GeneralServices shelter={shelter} />
-      </div>
-      {contactInfo.map(
-        (info) =>
-          (info.key !== 'instagram' || info.label) && (
-            <div
-              key={info.key}
-              className="border-t border-neutral-90 flex items-center justify-between px-6 py-4 gap-1"
-            >
-              {renderLabel(info.label, info.key)}
-              {info.icon}
-            </div>
-          )
-      )}
-
-      {hasNotesContent && (
-        <div className="border-t border-neutral-90 flex items-center justify-between px-6 py-4">
-          <ExpandableContainer
-            header="Additional Notes"
-            className="w-full"
-            iconClassName="w-[8px]"
-            headerClassName="min-h-6"
+    <Card px="px-0" pb="pb-0" className="!pt-0">
+      {contactInfo
+        .filter((info) => !!info.label)
+        .map((info) => (
+          <div
+            key={info.key}
+            className="border-b border-neutral-90 last:border-b-0 flex items-center justify-between px-6 py-4 gap-1"
           >
-            <WysiwygContainer content={shelter.otherServices} className="" />
-          </ExpandableContainer>
-        </div>
-      )}
+            {renderLabel(info.label, info.key)}
+            {info.icon}
+          </div>
+        ))}
     </Card>
   );
 }

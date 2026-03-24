@@ -216,7 +216,7 @@ function performEasUpdate(
 }
 
 // ---------------------------------------------------------------------------
-// Step 3: PR Comment
+// Step 2: PR Comment
 // ---------------------------------------------------------------------------
 
 async function postPrComment(results: DeployResults): Promise<void> {
