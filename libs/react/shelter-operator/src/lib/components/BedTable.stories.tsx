@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import { BedStatusChoices } from '../apollo/graphql/__generated__/types';
 import type { BedRoomForList } from '../types/bed';
-import { BedListView } from './BedListView';
+import { BedTable } from './BedTable';
 
 const mockRooms: BedRoomForList[] = [
   {
@@ -44,9 +44,9 @@ const mockRooms: BedRoomForList[] = [
   },
 ];
 
-const meta: Meta<typeof BedListView> = {
-  component: BedListView,
-  title: 'BedListView',
+const meta: Meta<typeof BedTable> = {
+  component: BedTable,
+  title: 'BedTable',
   parameters: {
     layout: 'fullscreen',
     customLayout: {
@@ -58,13 +58,13 @@ const meta: Meta<typeof BedListView> = {
 
 export default meta;
 
-type Story = StoryObj<typeof BedListView>;
+type Story = StoryObj<typeof BedTable>;
 
 export const Default: Story = {
-  render: function BedListViewStory() {
+  render: function BedTableStory() {
     const [selected, setSelected] = useState<string[]>([]);
     return (
-      <BedListView
+      <BedTable
         rooms={mockRooms}
         selectedBedIds={selected}
         onSelectedBedIdsChange={setSelected}
@@ -72,9 +72,24 @@ export const Default: Story = {
         onDuplicate={() => undefined}
         onEdit={() => undefined}
         onDelete={() => undefined}
-        onDeleteSelected={() => undefined}
-        onCreateBed={() => undefined}
+        headerStyle={{ fontFamily: 'Poppins, sans-serif' }}
+        rowStyle={{ fontFamily: 'Poppins, sans-serif' }}
       />
     );
   },
+};
+
+/** No selection column — omit `onSelectedBedIdsChange`. */
+export const WithoutRowSelection: Story = {
+  render: () => (
+    <BedTable
+      rooms={mockRooms}
+      onRowClick={() => undefined}
+      onDuplicate={() => undefined}
+      onEdit={() => undefined}
+      onDelete={() => undefined}
+      headerStyle={{ fontFamily: 'Poppins, sans-serif' }}
+      rowStyle={{ fontFamily: 'Poppins, sans-serif' }}
+    />
+  ),
 };

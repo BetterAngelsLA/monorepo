@@ -1,12 +1,8 @@
+import { CopyPlus, Minus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
-import { CopyPlus, Minus } from 'lucide-react';
 import { BedStatusChoices } from '../apollo/graphql/__generated__/types';
-import type {
-  BedListItem,
-  BedRoomForList,
-  BedRowObject,
-} from '../types/bed';
+import type { BedListItem, BedRoomForList, BedRowObject } from '../types/bed';
 import { Button } from './base-ui/buttons';
 import { Table, type TableColumn } from './Table';
 
@@ -99,10 +95,7 @@ function BedStatusBadge({
 }) {
   const label = statusLabel(status, maintenanceFlag);
 
-  const palette: Record<
-    string,
-    { bg: string; text: string }
-  > = {
+  const palette: Record<string, { bg: string; text: string }> = {
     Available: { bg: 'bg-emerald-100', text: 'text-emerald-800' },
     Occupied: { bg: 'bg-sky-100', text: 'text-sky-800' },
     Reserved: { bg: 'bg-amber-100', text: 'text-amber-800' },
@@ -149,10 +142,7 @@ type BedTableProps = {
   rowStyle?: CSSProperties;
 };
 
-function toRowObject(
-  bed: BedListItem,
-  roomAssignment: string
-): BedRowObject {
+function toRowObject(bed: BedListItem, roomAssignment: string): BedRowObject {
   return {
     bedId: bed.id,
     bedName: bed.bedName,
@@ -281,7 +271,7 @@ export function BedTable({
       },
       {
         key: 'actions',
-        label: 'Actions',
+        label: '',
         width: '140px',
         headerClassName: 'justify-self-end',
         cellClassName: 'justify-self-end',

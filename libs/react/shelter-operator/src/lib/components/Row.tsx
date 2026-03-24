@@ -41,7 +41,7 @@ export function Row<TRowObject>({
     <div
       onClick={handleRowClick}
       className={[
-        'grid items-center px-4 mx-4 py-2 text-sm border-t border-gray-200',
+        'grid items-center gap-x-6 px-4 mx-4 py-2 text-sm border-t border-gray-200',
         'hover:bg-[#F4F6FD]',
         onRowClick && 'cursor-pointer',
         className,
