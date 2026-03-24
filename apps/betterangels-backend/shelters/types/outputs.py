@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from itertools import chain
-from typing import Any, List, Optional, cast
+from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
@@ -26,31 +26,21 @@ from shelters.types.lookups import (
     DemographicType,
     EntryRequirementType,
     FunderType,
-    GeneralServiceType,
-    HealthServiceType,
-    ImmediateNeedType,
     ParkingType,
     PetType,
     RoomStyleType,
     ScheduleType,
+    ServiceType,
     ShelterProgramType,
     ShelterTypeType,
     SPAType,
     SpecialSituationRestrictionType,
     StorageType,
-    TrainingServiceType,
 )
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
 from .filters import BedFilter, RoomFilter, ShelterFilter, ShelterOrder
-
-
-def _resolve_time_ranges(values: Any) -> Optional[List[Optional["TimeRange"]]]:
-    """Convert model TimeRangeField values to a list of TimeRange output types."""
-    if not values:
-        return None
-    return [TimeRange(start=start, end=end) if start is not None or end is not None else None for start, end in values]
 
 
 @strawberry.type
@@ -65,12 +55,6 @@ class ShelterPhotoType:
     id: ID
     created_at: datetime
     file: strawberry_django.DjangoFileType
-
-
-@strawberry.type
-class TimeRange:
-    start: Optional[datetime]
-    end: Optional[datetime]
 
 
 @strawberry.type
@@ -93,9 +77,6 @@ class ShelterTypeMixin:
     exterior_photos: List[ShelterPhotoType]
     funders: List[FunderType]
     funders_other: auto
-    general_services: List[GeneralServiceType]
-    health_services: List[HealthServiceType]
-    immediate_needs: List[ImmediateNeedType]
     instagram: auto
     interior_photos: List[ShelterPhotoType]
     location: Optional[ShelterLocationType]
@@ -113,6 +94,7 @@ class ShelterTypeMixin:
     room_styles: List[RoomStyleType]
     room_styles_other: auto
     schedules: List[ScheduleType]
+    services: List[ServiceType]
     shelter_programs: List[ShelterProgramType]
     shelter_programs_other: auto
     shelter_types: List[ShelterTypeType]
@@ -124,7 +106,7 @@ class ShelterTypeMixin:
     subjective_review: Optional[str]
     supervisorial_district: auto
     total_beds: auto
-    training_services: List[TrainingServiceType]
+    updated_at: auto
     website: auto
 
     _exterior_photos: Optional[List[ShelterPhotoType]] = None
@@ -167,14 +149,6 @@ class ShelterTypeMixin:
             return float(distance.mi)
 
         return None
-
-    @strawberry_django.field(only=["operating_hours"])
-    def operating_hours(self, root: models.Shelter) -> Optional[List[Optional[TimeRange]]]:
-        return _resolve_time_ranges(root.operating_hours)
-
-    @strawberry_django.field(only=["intake_hours"])
-    def intake_hours(self, root: models.Shelter) -> Optional[List[Optional[TimeRange]]]:
-        return _resolve_time_ranges(root.intake_hours)
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)

@@ -246,7 +246,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "displayCaseManager": "Not Assigned",
             "displayGender": "Female",
             "displayPronouns": "she/her/theirs",
-            "profilePhoto": {"name": self.client_profile_1_photo_name},
+            "profilePhoto": {"url": self.client_profile_1_photo_url},
             "veteranStatus": VeteranStatusEnum.YES.name,
         }
         client_differences = DeepDiff(
@@ -371,7 +371,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
     def test_partial_update_client_profile_mutation(self) -> None:
         # Manually update profile photo because it's created after the client profile fixture.
-        self.client_profile_1["profilePhoto"] = {"name": self.client_profile_1_photo_name}
+        self.client_profile_1["profilePhoto"] = {"url": self.client_profile_1_photo_url}
 
         variables = {"id": self.client_profile_1["id"]}
         response = self._update_client_profile_fixture(variables)
@@ -476,9 +476,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
                 photo_name,
             )
 
-        photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["name"]
+        photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["url"]
         client_profile = ClientProfile.objects.get(id=client_profile_id)
-        self.assertEqual(client_profile.profile_photo.name, photo_name)
+        self.assertIn(photo_name, client_profile.profile_photo.url)
 
         response = self._update_client_profile_photo_fixture(
             client_profile_id,
@@ -486,9 +486,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             photo_name,
         )
 
-        updated_photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["name"]
+        updated_photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["url"]
         client_profile.refresh_from_db()
-        self.assertEqual(client_profile.profile_photo.name, updated_photo_name)
+        self.assertIn(updated_photo_name, client_profile.profile_photo.url)
 
 
 class ClientContactMutationTestCase(ClientContactBaseTestCase):

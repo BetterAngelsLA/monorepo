@@ -12,9 +12,6 @@ from shelters.enums import (
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
-    GeneralServiceChoices,
-    HealthServiceChoices,
-    ImmediateNeedChoices,
     ParkingChoices,
     PetChoices,
     RoomStyleChoices,
@@ -26,7 +23,6 @@ from shelters.enums import (
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
-    TrainingServiceChoices,
 )
 from shelters.models import (
     SPA,
@@ -35,18 +31,15 @@ from shelters.models import (
     Demographic,
     EntryRequirement,
     Funder,
-    GeneralService,
-    HealthService,
-    ImmediateNeed,
     Parking,
     Pet,
     RoomStyle,
+    Service,
     Shelter,
     ShelterProgram,
     ShelterType,
     SpecialSituationRestriction,
     Storage,
-    TrainingService,
 )
 
 
@@ -68,28 +61,6 @@ def get_random_shelter_location() -> Places:
 
 def get_random_phone_number() -> str:
     return f"212555{random.randint(1000, 9999)}"
-
-
-def _generate_range(after: datetime.datetime) -> tuple[datetime.datetime, datetime.datetime]:
-    start_time = after + datetime.timedelta(minutes=30 * random.randint(1, 20))
-    end_time = start_time + datetime.timedelta(minutes=30 * random.randint(1, 20))
-
-    return start_time, end_time
-
-
-def get_random_hour_ranges() -> list[tuple[Any, Any]]:
-    midnight = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-
-    ranges: list[tuple[datetime.datetime, datetime.datetime]] = []
-    current_range = _generate_range(midnight)
-    ranges.append(current_range)
-
-    additional_shifts = random.randint(0, 2)
-    for _ in range(additional_shifts):
-        current_range = _generate_range(ranges[-1][1])
-        ranges.append(current_range)
-
-    return [(start.time(), end.time()) for start, end in ranges]
 
 
 class related_m2m_unique(related):
@@ -131,6 +102,15 @@ def make_cities() -> list[City]:
     return cities
 
 
+def make_services() -> list[Service]:
+    """Pick a random subset of Service rows seeded by the data migration."""
+    all_services = list(Service.objects.all())
+    if not all_services:
+        return []
+    quantity = random.randint(1, min(len(all_services), 8))
+    return random.sample(all_services, quantity)
+
+
 shelter_contact_recipe = Recipe(
     "ContactInfo",
     contact_name=seq("shelter contact "),  # type: ignore
@@ -149,13 +129,11 @@ shelter_recipe = Recipe(
     email=seq("shelter", suffix="@example.com"),  # type: ignore
     entry_info=seq("entry info "),  # type: ignore
     funders_other=seq("funders other "),  # type: ignore
-    intake_hours=get_random_hour_ranges,
     location=get_random_shelter_location,
     max_stay=lambda: random.randint(7, 21),
     name=seq("shelter "),  # type: ignore
     organization=foreign_key(organization_recipe),
     on_site_security=random.choice([True, False, None]),
-    operating_hours=get_random_hour_ranges,
     other_rules=seq("other rules "),  # type: ignore
     other_services=seq("other services "),  # type: ignore
     overall_rating=lambda: random.randint(1, 5),
@@ -174,16 +152,13 @@ shelter_recipe = Recipe(
     demographics=related_m2m_unique(Demographic, DemographicChoices),
     entry_requirements=related_m2m_unique(EntryRequirement, EntryRequirementChoices),
     funders=related_m2m_unique(Funder, FunderChoices),
-    general_services=related_m2m_unique(GeneralService, GeneralServiceChoices),
-    health_services=related_m2m_unique(HealthService, HealthServiceChoices),
-    immediate_needs=related_m2m_unique(ImmediateNeed, ImmediateNeedChoices),
     parking=related_m2m_unique(Parking, ParkingChoices),
     pets=related_m2m_unique(Pet, PetChoices),
     room_styles=related_m2m_unique(RoomStyle, RoomStyleChoices),
+    services=make_services,
     shelter_programs=related_m2m_unique(ShelterProgram, ShelterProgramChoices),
     shelter_types=related_m2m_unique(ShelterType, ShelterTypeChoices),
     spa=related_m2m_unique(SPA, SPAChoices),
     special_situation_restrictions=related_m2m_unique(SpecialSituationRestriction, SpecialSituationRestrictionChoices),
     storage=related_m2m_unique(Storage, StorageChoices),
-    training_services=related_m2m_unique(TrainingService, TrainingServiceChoices),
 )
