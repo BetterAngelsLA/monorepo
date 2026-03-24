@@ -1,12 +1,16 @@
+from common.imgproxy import IMGPROXY_SWITCH
 from django.contrib.contenttypes.models import ContentType
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from shelters.enums import StatusChoices
 from shelters.models import ExteriorPhoto, InteriorPhoto, Shelter
 from shelters.tests.baker_recipes import shelter_recipe
 from shelters.tests.graphql_helpers import ShelterGraphQLFixtureMixin
 from test_utils.mixins import GraphQLTestCaseMixin
+from waffle.testutils import override_switch
 
 
+@override_settings(IS_LOCAL_DEV=True)
+@override_switch(IMGPROXY_SWITCH, active=True)
 class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTestCaseMixin, TestCase):
     """Regression tests for the hero_image resolver.
 
@@ -51,7 +55,8 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
                 response = self.execute_graphql(self.HERO_IMAGE_QUERY)
                 results = response["data"]["shelters"]["results"]
                 hero_images = {r["id"]: r["heroImage"] for r in results}
-                self.assertIn(photo.file.name, hero_images[str(shelter.pk)])
+
+                self.assertEqual(self._get_imgproxy_url(photo.file), hero_images[str(shelter.pk)])
 
     def test_hero_image_falls_back_to_exterior_photo(self) -> None:
         """When no GFK hero_image is set, fall back to the first exterior
@@ -62,7 +67,8 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         response = self.execute_graphql(self.HERO_IMAGE_QUERY)
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["heroImage"], exterior.file.url)
+
+        self.assertEqual(self._get_imgproxy_url(exterior.file), results[0]["heroImage"])
 
     def test_hero_image_falls_back_to_interior_photo(self) -> None:
         """When no GFK hero_image or exterior photo exists, fall back to an
@@ -73,7 +79,8 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         response = self.execute_graphql(self.HERO_IMAGE_QUERY)
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["heroImage"], interior.file.url)
+
+        self.assertEqual(self._get_imgproxy_url(interior.file), results[0]["heroImage"])
 
     def test_hero_image_returns_none_when_no_photos(self) -> None:
         """heroImage should be None when neither GFK nor fallback photos
@@ -110,7 +117,7 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
         # Should fall back to the interior photo
-        self.assertEqual(results[0]["heroImage"], fallback.file.url)
+        self.assertEqual(self._get_imgproxy_url(fallback.file), results[0]["heroImage"])
 
     def test_hero_image_with_mismatched_content_type(self) -> None:
         """Regression: when hero_image_content_type points to a valid
@@ -132,7 +139,7 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
         # GFK returns None (object doesn't exist), should fall back
-        self.assertEqual(results[0]["heroImage"], exterior.file.url)
+        self.assertEqual(self._get_imgproxy_url(exterior.file), results[0]["heroImage"])
 
     def test_hero_image_with_null_gfk_fields(self) -> None:
         """When hero_image_content_type and hero_image_object_id are both
@@ -150,7 +157,7 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         self.assertNotIn("errors", response)
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["heroImage"], exterior.file.url)
+        self.assertEqual(self._get_imgproxy_url(exterior.file), results[0]["heroImage"])
 
     def test_hero_image_multiple_shelters_mixed_states(self) -> None:
         """Multiple shelters with different hero_image states should all
@@ -190,9 +197,9 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         self.assertEqual(len(results), 3)
 
         hero_images = {int(r["id"]): r["heroImage"] for r in results}
-        self.assertIn(p1.file.name, hero_images[s1.pk])
+        self.assertEqual(self._get_imgproxy_url(p1.file), hero_images[s1.pk])
         self.assertIsNone(hero_images[s2.pk])
-        self.assertEqual(hero_images[s3.pk], fallback.file.url)
+        self.assertEqual(self._get_imgproxy_url(fallback.file), hero_images[s3.pk])
 
     def test_hero_image_with_stale_content_type(self) -> None:
         """Regression: when hero_image_content_type points to a ContentType
@@ -214,4 +221,4 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
         # Should fall back to the exterior photo
-        self.assertEqual(results[0]["heroImage"], fallback.file.url)
+        self.assertEqual(self._get_imgproxy_url(fallback.file), results[0]["heroImage"])
