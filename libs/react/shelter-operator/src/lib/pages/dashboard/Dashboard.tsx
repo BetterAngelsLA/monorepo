@@ -1,12 +1,20 @@
 import { useQuery } from '@apollo/client/react';
+import { useAtomValue } from 'jotai';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
+import { ShelterFilterPanel } from '../../components/ShelterFilterPanel';
 import { ShelterRow } from '../../components/ShelterRow';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
 import { useActiveOrg } from '../../providers/activeOrg';
+import type {
+  DemographicChoices,
+  ShelterChoices,
+  SpecialSituationRestrictionChoices,
+} from '../../apollo/graphql/__generated__/types';
 import type { Shelter } from '../../types/shelter';
 
 const PAGE_SIZE = 8;
@@ -16,10 +24,17 @@ export default function Dashboard() {
   const { activeOrg } = useActiveOrg();
   const selectedOrganizationId = activeOrg?.id ?? '';
 
+  const selectedFilters = useAtomValue(operatorShelterFiltersAtom);
+
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const debounceTimer = useRef<ReturnType<typeof setTimeout>>(null);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [selectedFilters]);
 
   // Debounce: only update the query variable after the user stops typing
   useEffect(() => {
@@ -32,6 +47,23 @@ export default function Dashboard() {
     };
   }, [searchInput]);
 
+  const propertyFilters = useMemo(() => {
+    const demographics = selectedFilters.demographics?.length
+      ? (selectedFilters.demographics as DemographicChoices[])
+      : undefined;
+    const specialSituationRestrictions =
+      selectedFilters.specialSituationRestrictions?.length
+        ? (selectedFilters.specialSituationRestrictions as SpecialSituationRestrictionChoices[])
+        : undefined;
+    const shelterTypes = selectedFilters.shelterTypes?.length
+      ? (selectedFilters.shelterTypes as ShelterChoices[])
+      : undefined;
+    if (!demographics && !specialSituationRestrictions && !shelterTypes) {
+      return undefined;
+    }
+    return { demographics, specialSituationRestrictions, shelterTypes };
+  }, [selectedFilters]);
+
   const { data, loading, error, previousData } = useQuery(
     ViewSheltersByOrganizationDocument,
     {
@@ -40,6 +72,7 @@ export default function Dashboard() {
         name: debouncedSearch || undefined,
         offset: (page - 1) * PAGE_SIZE,
         limit: PAGE_SIZE,
+        properties: propertyFilters,
       },
       skip: !selectedOrganizationId,
       fetchPolicy: 'cache-and-network',
@@ -54,13 +87,15 @@ export default function Dashboard() {
       ViewSheltersByOrganizationQuery['adminShelters']['results'][number]
     >;
     return (
-      activeData?.adminShelters?.results?.map((s: ShelterResult) => ({
-        id: String(s.id),
-        name: s.name ?? null,
-        address: s.location?.place ?? null,
-        totalBeds: s.totalBeds ?? null,
-        tags: null,
-      })) ?? []
+      activeData?.adminShelters?.results
+        ?.filter((s): s is ShelterResult => s != null)
+        .map((s) => ({
+          id: String(s.id),
+          name: s.name ?? null,
+          address: s.location?.place ?? null,
+          totalBeds: s.totalBeds ?? null,
+          tags: null,
+        })) ?? []
     );
   }, [activeData?.adminShelters?.results]);
 
@@ -92,8 +127,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Search bar */}
-      <form className="w-full flex items-center gap-2">
+      {/* Search bar + Filter */}
+      <form className="w-full flex items-center gap-2 my-4">
         <input
           type="text"
           value={searchInput}
@@ -101,6 +136,7 @@ export default function Dashboard() {
           placeholder="Search shelters"
           className="px-6 py-2 rounded-3xl border border-gray-300 outline-hidden shadow-xs my-4"
         />
+        <ShelterFilterPanel />
       </form>
 
       <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
