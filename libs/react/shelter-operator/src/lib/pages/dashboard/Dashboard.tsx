@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client/react';
 import { BookCheck, Filter, Search, Settings2 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons';
 import { ShelterTable } from '../../components/ShelterTable';
@@ -16,7 +16,8 @@ const PAGE_SIZE = 16;
 
 export default function Dashboard() {
   const { pathname } = useLocation();
-  const isOperatorRoot = pathname === '/operator';
+  const isOperatorRoot =
+    pathname === '/operator' || pathname === '/operator/';
 
   const { activeOrg } = useActiveOrg();
   const selectedOrganizationId = activeOrg?.id ?? '';
@@ -24,7 +25,7 @@ export default function Dashboard() {
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
-  const debounceTimer = useRef<ReturnType<typeof setTimeout>>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce: only update the query variable after the user stops typing
   useEffect(() => {
@@ -36,6 +37,11 @@ export default function Dashboard() {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
   }, [searchInput]);
+
+  // Reset page when organization changes
+  useEffect(() => {
+    setPage(1);
+  }, [selectedOrganizationId]);
 
   const { data, loading, error, previousData } = useQuery(
     ViewSheltersByOrganizationDocument,
@@ -74,15 +80,16 @@ export default function Dashboard() {
   const totalCount = activeData?.adminShelters?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  useEffect(() => {
-    if (error) console.error('[Dashboard GraphQL error]', error);
-  }, [error]);
+  const handleRowClick = useCallback(() => {
+    // TODO: navigate to shelter detail page
+  }, []);
 
   return (
     <>
       <div className="flex flex-col mx-4">
         {/* Search, filter, sort, and view controls */}
         <form
+          onSubmit={(e) => e.preventDefault()}
           className="my-1 flex w-full flex-wrap items-center gap-3 bg-white px-3"
           style={{ fontFamily: 'Poppins, sans-serif' }}
         >
@@ -124,9 +131,7 @@ export default function Dashboard() {
         <ShelterTable
           rows={shelters}
           getRowKey={(shelter) => shelter.id}
-          onRowClick={() => {
-            // TODO: navigate to shelter detail page
-          }}
+          onRowClick={handleRowClick}
           loading={loading}
           loadingState={
             <div className="px-6 py-8 text-center text-sm text-gray-500">
@@ -183,7 +188,7 @@ export default function Dashboard() {
 
       {isOperatorRoot && (
         <div className="fixed bottom-6 right-6 text-sm z-20 ">
-          <Button leftIcon={<BookCheck />} rightIcon={false} variant="floating">
+          <Button leftIcon={<BookCheck size={24} />} rightIcon={false} variant="floating">
             Reserve
           </Button>
         </div>
