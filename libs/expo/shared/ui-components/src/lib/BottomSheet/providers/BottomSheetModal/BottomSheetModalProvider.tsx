@@ -1,147 +1,65 @@
 /**
  * BottomSheetModalProvider
  *
- * Centralized BottomSheet manager responsible for coordinating
- * the lifecycle, stacking behavior, and configuration of all
- * BottomSheet modals within the application.
+ * Internal manager for the BottomSheet system.
  *
  * Responsibilities:
- * - Exposes context API (`showBottomSheet`, `popTopSheet`)
- * - Applies provider-level default options
- * - Resolves sheet configuration via `resolveBottomSheetOptions`
- * - Manages sheet stacking strategy (push | switch | replace)
- * - Controls sheet lifecycle (present / dismiss)
- * - Cleans up internal references when sheets are dismissed
+ * - Owns sheet state and stack
+ * - Controls lifecycle (present / dismiss)
+ * - Applies provider-level defaults
+ * - Resolves options before rendering
+ * - Coordinates shared backdrop + layout system
  *
- * This provider implements a **stack-based sheet system**:
+ * This provider should be mounted once at the app root.
  *
- * - Multiple sheets may exist simultaneously
- * - The last sheet in the stack is the visible/top sheet
- * - `stackBehavior` determines how new sheets interact with existing ones
+ * --------------------------------------------------------------------------
+ * USAGE
+ * --------------------------------------------------------------------------
+ *
+ * Do NOT interact with this provider directly.
+ *
+ * Use `useBottomSheet()` instead:
+ *
+ *   const { showBottomSheet } = useBottomSheet();
+ *
+ * See `useBottomSheet` for full API documentation and examples.
  *
  *
  * --------------------------------------------------------------------------
- * DEFAULT OPTIONS
+ * STACK SYSTEM
  * --------------------------------------------------------------------------
  *
- * The provider may define `defaultOptions` that apply to every sheet
- * opened via `showBottomSheet()`.
+ * Sheets are managed as a stack. The behavior is controlled via
+ * `stackBehavior`:
  *
- * These defaults are merged with options passed directly to
- * `showBottomSheet()`.
- *
- * Resolution order:
- *
- *   provider defaultOptions
- *     → showBottomSheet options
- *       → resolveBottomSheetOptions()
+ * - 'push'    → add on top
+ * - 'switch'  → replace top sheet
+ * - 'replace' → clear stack (default)
  *
  *
  * --------------------------------------------------------------------------
- * PRESENTATION LAYER
+ * CONTAINER NOTES
  * --------------------------------------------------------------------------
  *
- * All rendering responsibilities are delegated to `BottomSheetBase`.
- *
- *
- * --------------------------------------------------------------------------
- * CONTAINER OVERRIDES
- * --------------------------------------------------------------------------
- *
- * In certain navigation setups (for example React Navigation modal screens),
- * BottomSheet may render behind the current screen due to how native
- * screens manage view hierarchies.
- *
- * This can be resolved by providing a custom `containerComponent`,
- * such as `BottomSheetFullScreenContainer`, which renders the sheet
- * inside `FullWindowOverlay`.
- *
- * This option can be configured globally via `defaultOptions`
- * or overridden per sheet via `showBottomSheet()`.
+ * Use `containerComponent` (globally or per-sheet) to control where the
+ * sheet renders (e.g. FullWindowOverlay for navigation stacks).
  *
  *
  * --------------------------------------------------------------------------
- * USAGE EXAMPLES
+ * INTERNAL ARCHITECTURE
  * --------------------------------------------------------------------------
  *
- * *******************
- * *** Basic sheet ***
- * *******************
+ * Rendering:
+ *   BottomSheetBase
  *
- * showBottomSheet({
- *   render: () => <SimpleContent />,
- * });
+ * Option resolution:
+ *   resolveBottomSheetOptions
  *
+ * Stack management:
+ *   useBottomSheetStack
  *
- * *****************************************************
- * *** Sheet with snap points (handle auto-resolved) ***
- * *****************************************************
- *
- * showBottomSheet({
- *   options: {
- *     snapPoints: ['50%', '90%'],
- *   },
- *   render: () => <ScrollableContent />,
- * });
- *
- *
- * ******************************************
- * *** Menu-style sheet with close button ***
- * ******************************************
- *
- * showBottomSheet({
- *   options: {
- *     showCloseButton: true,
- *     headerContent: <Text variant="h4">Menu</Text>,
- *   },
- *   render: ({ closeSheet }) => (
- *     <Menu onSelect={() => closeSheet()} />
- *   ),
- * });
- *
- *
- * *******************************************
- * *** Form-style sheet with custom layout ***
- * *******************************************
- *
- * showBottomSheet({
- *   options: {
- *     showCloseButton: true,
- *     contentStyle: { padding: 0 },
- *     headerStyle: { paddingHorizontal: 16 },
- *   },
- *   render: ({ closeSheet }) => (
- *     <CustomFileNamePrompt
- *       onSubmit={(value) => {
- *         console.log(value);
- *         closeSheet();
- *       }}
- *     />
- *   ),
- * });
- *
- *
- * *******************************
- * *** Stack behavior examples ***
- * *******************************
- *
- * // Push on top
- * showBottomSheet({
- *   options: { stackBehavior: 'push' },
- *   render: () => <AnotherSheet />,
- * });
- *
- * // Replace all existing sheets (default)
- * showBottomSheet({
- *   options: { stackBehavior: 'replace' },
- *   render: () => <SingleSheet />,
- * });
- *
- * // Replace only the top sheet
- * showBottomSheet({
- *   options: { stackBehavior: 'switch' },
- *   render: () => <ReplacementSheet />,
- * });
+ * Shared backdrop:
+ *   useBottomSheetSharedBackdrop
  */
 
 import {
