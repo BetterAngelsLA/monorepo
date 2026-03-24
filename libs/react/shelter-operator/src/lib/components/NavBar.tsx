@@ -1,10 +1,11 @@
 import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
 import { Plus, UserCog } from 'lucide-react';
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useActiveOrg } from '../providers/activeOrg';
 import { Button } from './base-ui/buttons';
 import { Dropdown } from './base-ui/dropdown';
+import { Text } from './base-ui/text/text';
 
 interface NavBarProps {
   organizationName?: string;
@@ -20,10 +21,16 @@ export default function NavBar({
   showCreateButton = true,
 }: NavBarProps = {}) {
   const { activeOrg, organizations, setActiveOrgId } = useActiveOrg();
+  const { pathname } = useLocation();
 
-  const breadcrumbs = [organizationName, shelterName, pageTitle].filter(
-    Boolean
-  ) as string[];
+  const isShelterRoute = /^\/operator\/shelter\/[^/]+(?:\/.*)?$/.test(pathname);
+  const breadcrumbShelterName = isShelterRoute ? undefined : shelterName;
+
+  const breadcrumbs = [
+    organizationName,
+    breadcrumbShelterName,
+    pageTitle,
+  ].filter(Boolean) as string[];
 
   const displayTitle =
     breadcrumbs.length > 0
@@ -60,22 +67,16 @@ export default function NavBar({
                   {index > 0 && (
                     <span className="text-gray-400 font-normal">/</span>
                   )}
-                  <span
-                    className={
-                      index === breadcrumbs.length - 1
-                        ? 'font-medium text-[#5A616B]'
-                        : 'font-normal text-[#5A616B]'
-                    }
-                  >
+                  <Text variant="header-md" className="text-[#5A616B]">
                     {item}
-                  </span>
+                  </Text>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="truncate text-xl font-medium text-[#5A616B] md:text-2xl">
+            <Text variant="header-md" className=" text-[#5A616B]">
               {displayTitle}
-            </p>
+            </Text>
           )}
 
           {organizations.length > 1 && breadcrumbs.length === 0 && (
