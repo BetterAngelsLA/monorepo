@@ -162,6 +162,22 @@ type AuthResponse {
   status_code: String!
 }
 
+input BedFilter {
+  AND: BedFilter
+  OR: BedFilter
+  NOT: BedFilter
+  DISTINCT: Boolean
+  shelterId: ID
+  status: [BedStatusChoices!]
+  demographics: [DemographicChoices!]
+  accessibility: [AccessibilityChoices!]
+  bedType: [BedTypeChoices!]
+  funders: [FunderChoices!]
+  maintenanceFlag: Boolean
+  medicalNeeds: [MedicalNeedChoices!]
+  pets: [PetChoices!]
+}
+
 enum BedStatusChoices {
   AVAILABLE
   OCCUPIED
@@ -194,6 +210,16 @@ enum BedTypeChoices {
   BUNK
   ROLLAWAY
   OTHER
+}
+
+type BedTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [BedType!]!
 }
 
 type CityType {
@@ -1813,6 +1839,8 @@ type Query {
   adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
+  beds(pagination: OffsetPaginationInput, filters: BedFilter): BedTypeOffsetPaginated!
+  rooms(pagination: OffsetPaginationInput, filters: RoomFilter): RoomTypeOffsetPaginated!
 }
 
 enum RaceEnum {
@@ -1891,6 +1919,16 @@ enum RoomStatusChoices {
   NEEDS_MAINTENANCE
 }
 
+input RoomFilter {
+  AND: RoomFilter
+  OR: RoomFilter
+  NOT: RoomFilter
+  DISTINCT: Boolean
+  shelterId: ID
+  status: [RoomStatusChoices!]
+  roomType: [RoomStyleChoices!]
+}
+
 enum RoomStyleChoices {
   CONGREGATE
   CUBICLE_LOW_WALLS
@@ -1918,6 +1956,16 @@ type RoomType {
   amenities: String
   medicalRespite: Boolean!
   lastCleanedInspected: DateTime
+}
+
+type RoomTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [RoomType!]!
 }
 
 enum SPAChoices {
