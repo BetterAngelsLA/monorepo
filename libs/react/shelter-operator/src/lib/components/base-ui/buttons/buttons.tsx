@@ -90,7 +90,8 @@ export function Button(props: IButtonProps) {
   } = props;
 
   const isIconOnly = ICON_ONLY_VARIANTS.has(variant);
-  const leftIcon = leftIconProp ?? defaultIcons[variant];
+  const leftIcon =
+    leftIconProp === undefined ? defaultIcons[variant] : leftIconProp || null;
   const colorClass =
     (color && colorSchemes[color]?.[variant]) ?? variantColorDefaults[variant];
   const textVariant = variant === 'primary-sm' ? 'body' : 'btn';

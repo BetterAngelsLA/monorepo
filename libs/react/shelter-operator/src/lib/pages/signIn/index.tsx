@@ -1,6 +1,6 @@
 import { SignIn as SharedSignIn, SignInProps } from '@monorepo/react/shelter';
 
-export default function SignIn() {
+export function SignIn() {
   const sharedProps: SignInProps = {
     onSuccessRedirect: '/operator',
     description:
