@@ -6,13 +6,10 @@ from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
-from django.db.models import Prefetch, QuerySet
-from strawberry import ID, Info, auto
-from strawberry_django.auth.utils import get_current_user
-
 from accounts.models import User
 from accounts.types import OrganizationType
 from common.graphql.types import PhoneNumberScalar
+from django.db.models import Prefetch, QuerySet
 from shelters import models
 from shelters.enums import (
     BedStatusChoices,
@@ -40,6 +37,8 @@ from shelters.types.lookups import (
     SpecialSituationRestrictionType,
     StorageType,
 )
+from strawberry import ID, Info, auto
+from strawberry_django.auth.utils import get_current_user
 
 from .filters import BedFilter, RoomFilter, ShelterFilter, ShelterOrder
 

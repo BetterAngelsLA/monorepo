@@ -2,11 +2,6 @@ from typing import cast
 
 import strawberry
 import strawberry_django
-from strawberry.types import Info
-from strawberry_django.auth.utils import get_current_user
-from strawberry_django.pagination import OffsetPaginated
-from strawberry_django.permissions import HasPerm
-
 from accounts.models import User
 from common.graphql.utils import strip_unset
 from common.permissions.utils import IsAuthenticated
@@ -22,6 +17,10 @@ from shelters.types import (
     ServiceCategoryType,
     ShelterType,
 )
+from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
+from strawberry_django.pagination import OffsetPaginated
+from strawberry_django.permissions import HasPerm
 
 
 @strawberry.type

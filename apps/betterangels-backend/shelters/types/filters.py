@@ -6,15 +6,12 @@ from zoneinfo import ZoneInfo
 
 import strawberry
 import strawberry_django
+from accounts.models import User
+from common.graphql.types import LatitudeScalar, LongitudeScalar
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
 from django.db.models import Q, QuerySet
-from strawberry import ID, Info, asdict, auto
-from strawberry_django.auth.utils import get_current_user
-
-from accounts.models import User
-from common.graphql.types import LatitudeScalar, LongitudeScalar
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
@@ -30,8 +27,12 @@ from shelters.enums import (
     ScheduleTypeChoices,
 )
 from shelters.enums import ShelterChoices as ShelterTypeChoices
-from shelters.enums import SpecialSituationRestrictionChoices
+from shelters.enums import (
+    SpecialSituationRestrictionChoices,
+)
 from shelters.selectors import shelters_open_at
+from strawberry import ID, Info, asdict, auto
+from strawberry_django.auth.utils import get_current_user
 
 SHELTER_SCHEDULE_TIME_ZONE = ZoneInfo("America/Los_Angeles")
 
