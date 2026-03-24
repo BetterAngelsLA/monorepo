@@ -41,9 +41,9 @@ const variantColorDefaults: Record<ButtonVariant, string> = {
     'bg-white hover:bg-[#F4F6FD] disabled:bg-[#D3D9E3] border-[#D3D9E3] text-[#747A82]',
   'primary-sm':
     'bg-white hover:bg-[#F4F6FD] disabled:bg-[#D3D9E3] border-[#D3D9E3] text-[#747A82]',
-  edit: 'bg-white hover:bg-[#F4F6FD] active:bg-[#D3D9E3]',
+  edit: 'hover:bg-[#F4F6FD] active:bg-[#D3D9E3]',
   trash:
-    'bg-white hover:bg-[#FFECE8] active:bg-[#FFC5BF] text-black hover:text-[#CB0808]',
+    'hover:bg-[#FFECE8] active:bg-[#FFC5BF] text-[#747A82] hover:text-[#CB0808]',
   'right-arrow': 'bg-[#FFF82E]',
 };
 
