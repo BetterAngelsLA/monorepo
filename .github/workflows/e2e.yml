@@ -94,7 +94,7 @@ jobs:
           cache: yarn
 
       - name: 📦 Install dependencies
-        run: yarn install --immutable
+        run: yarn install
 
       - name: 🧪 Run E2E orchestration
         env:
