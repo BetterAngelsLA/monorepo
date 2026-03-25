@@ -2495,6 +2495,7 @@ export type ServiceType = {
 };
 
 export enum ShelterChoices {
+  AccessCenter = 'ACCESS_CENTER',
   Building = 'BUILDING',
   Church = 'CHURCH',
   HotelMotel = 'HOTEL_MOTEL',
