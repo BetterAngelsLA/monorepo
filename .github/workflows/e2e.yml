@@ -37,6 +37,7 @@ jobs:
         && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
       )
     runs-on: ubuntu-latest
+    environment: preview
     permissions:
       pull-requests: write
       contents: read
