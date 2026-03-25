@@ -1,5 +1,6 @@
 import { Check, Search } from 'lucide-react';
 import type { RefObject } from 'react';
+import { Button } from '../buttons/buttons';
 import { Text } from '../text/text';
 import { cn, Z_BACKDROP, Z_MENU } from './constants';
 import type { DropdownOption } from './types';
@@ -124,40 +125,17 @@ export function DropdownMenu<T extends string | number>({
         </div>
 
         {isMulti && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-            <button
-              type="button"
-              className={cn(
-                'transition-colors cursor-pointer',
-                hasSelection ? '' : 'cursor-default'
-              )}
+          <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-gray-200">
+            <Button
+              variant="primary-sm"
               disabled={!hasSelection}
               onClick={onClearAll}
             >
-              <Text
-                variant="body"
-                className={cn(
-                  '',
-                  hasSelection
-                    ? 'text-red-500 hover:text-red-600'
-                    : 'text-gray-300'
-                )}
-              >
-                Clear all
-              </Text>
-            </button>
-            <button
-              type="button"
-              className="cursor-pointer transition-colors"
-              onClick={onClose}
-            >
-              <Text
-                variant="body"
-                className="font-medium text-blue-600 hover:text-blue-700"
-              >
-                Done
-              </Text>
-            </button>
+              Unselect All
+            </Button>
+            <Button variant="primary-sm" color="blue" onClick={onClose}>
+              Apply
+            </Button>
           </div>
         )}
       </div>

@@ -8,11 +8,15 @@ interface MenuPosition {
 }
 
 /**
- * Measures the screen position of a trigger element once when the menu opens
- * so a portal-rendered menu can be placed directly below it.
+ * Keeps a portal-rendered menu aligned below the trigger using
+ * `getBoundingClientRect()`.
  *
- * Closes the menu if the user scrolls (outside the menu itself) or resizes,
- * since repositioning on every scroll frame causes visible jitter.
+ * While the menu is open, a `ResizeObserver` on the trigger reapplies
+ * the measurement when the trigger grows or shrinks (e.g. stacked multi-select
+ * chips), so the menu stays under the bottom edge.
+ *
+ * Closes the menu if the user scrolls (outside the menu itself) or resizes
+ * the window, since repositioning on every scroll frame causes visible jitter.
  */
 export function usePortalPosition(
   triggerRef: RefObject<HTMLElement | null>,
@@ -22,15 +26,27 @@ export function usePortalPosition(
 ): MenuPosition {
   const [pos, setPos] = useState<MenuPosition>({ top: 0, left: 0, width: 0 });
 
-  // Measure once when the menu opens.
   useLayoutEffect(() => {
     if (!isOpen || !triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    setPos({
-      top: rect.bottom + MENU_GAP,
-      left: rect.left,
-      width: rect.width,
+    const el = triggerRef.current;
+
+    const measure = () => {
+      const rect = el.getBoundingClientRect();
+      setPos({
+        top: rect.bottom + MENU_GAP,
+        left: rect.left,
+        width: rect.width,
+      });
+    };
+
+    measure();
+
+    const observer = new ResizeObserver(() => {
+      measure();
     });
+    observer.observe(el);
+
+    return () => observer.disconnect();
   }, [isOpen, triggerRef]);
 
   // Close on external scroll or window resize.

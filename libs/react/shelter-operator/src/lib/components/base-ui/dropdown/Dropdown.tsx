@@ -80,6 +80,10 @@ export function Dropdown<T extends string | number = string | number>(
 
   const hasSelection = selectedValues.length > 0;
 
+  // Multi-select trigger grows and uses rounded rectangle styling
+  const isStackedMultiSelect =
+    isMulti && hasSelection && selectedValues.length > 1;
+
   const selectedSet = useMemo(
     () => new Set(selectedValues.map((v) => v.value)),
     [selectedValues]
@@ -200,7 +204,10 @@ export function Dropdown<T extends string | number = string | number>(
         aria-disabled={disabled}
         tabIndex={disabled ? -1 : 0}
         className={cn(
-          'relative flex items-center justify-between gap-2 w-full px-4 rounded-full border bg-white cursor-pointer select-none transition-colors h-12',
+          'relative flex justify-between gap-2 w-full border bg-white cursor-pointer select-none transition-colors duration-200',
+          isStackedMultiSelect
+            ? 'min-h-12 items-start rounded-2xl px-4 py-3'
+            : 'h-12 items-center rounded-full px-4 overflow-hidden',
           isOpen ? 'border-[#008CEE]' : 'border-gray-200',
           disabled && 'opacity-50 cursor-not-allowed'
         )}
@@ -213,6 +220,7 @@ export function Dropdown<T extends string | number = string | number>(
           <DropdownChips
             selectedValues={selectedValues}
             onRemove={handleRemoveChip}
+            stacked={isStackedMultiSelect}
           />
         ) : (
           <span className="text-sm flex-1 truncate">
@@ -231,7 +239,7 @@ export function Dropdown<T extends string | number = string | number>(
           className={cn(
             'w-4 h-4 shrink-0 transition-transform duration-200 text-gray-400 z-10',
             isOpen && 'rotate-180',
-            isMulti && hasSelection && 'ml-auto'
+            isStackedMultiSelect && 'self-start mt-1.5'
           )}
         />
       </div>
