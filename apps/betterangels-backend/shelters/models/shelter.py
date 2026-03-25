@@ -172,34 +172,6 @@ class Shelter(BaseModel):
             schedule_type=schedule_type,
         ).exists()
 
-    def clean(self) -> None:
-        """
-        Validate and clean _other fields based on whether 'other' is selected in corresponding M2M fields.
-
-        This provides model-level validation as a second layer of defense.
-        Also automatically cleans orphaned _other values.
-        """
-        super().clean()
-        errors = {}
-
-        for field_name in get_fields_with_other_option():
-            other_field_name = f"{field_name}_other"
-            other_value = getattr(self, other_field_name, None)
-
-            # For new instances, we can't check M2M until after save
-            if self.pk:
-                m2m_field = getattr(self, field_name)
-                has_other = m2m_field.filter(name="other").exists()
-
-                if has_other and not other_value:
-                    errors[other_field_name] = f"This field is required when 'Other' is selected in {field_name}."
-                elif not has_other and other_value:
-                    # Automatically clear orphaned other text to maintain data consistency
-                    setattr(self, other_field_name, None)
-
-        if errors:
-            raise ValidationError(errors)
-
     def save(self, *args: Any, **kwargs: Any) -> None:
         latitude = self.location.latitude if self.location else None
         longitude = self.location.longitude if self.location else None
