@@ -2,18 +2,15 @@ import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
 import type { ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
 import { Plus, UserCog } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { useActiveOrg } from '../providers/activeOrg';
 import { Button } from './base-ui/buttons';
 import { Dropdown } from './base-ui/dropdown';
-import { operatorPath } from '@monorepo/react/shelter';
+import { useQuery } from '@apollo/client/react';
+import { operatorPath, reservationPathSegment, useUser } from '@monorepo/react/shelter';
+import { GetShelterNameDocument } from '../graphql/__generated__/shelters.generated';
 
-interface NavBarProps {
-  organizationName?: string;
-  shelterName?: string;
-  pageTitle?: string;
-  showCreateButton?: boolean;
-}
+
 
 function NavBarActions({ children }: { children?: ReactNode }) {
   return (
@@ -30,14 +27,30 @@ function NavBarActions({ children }: { children?: ReactNode }) {
   );
 }
 
-export function NavBar({
-  organizationName,
-  shelterName,
-  pageTitle,
-  showCreateButton = true,
-}: NavBarProps = {}) {
+export function NavBar() {
   const { activeOrg, organizations, setActiveOrgId } = useActiveOrg();
+  const location = useLocation();
+  const params = useParams<{ id?: string; shelterId?: string }>();
+  const { user } = useUser();
   const selectedOrganizationId = activeOrg?.id ?? '';
+
+  const isDashboardPage =
+    location.pathname === operatorPath || location.pathname === `${operatorPath}/`;
+
+  const shelterId = params.shelterId || params.id;
+  const isShelterPage =
+    !!shelterId && location.pathname.includes(`/shelter/${shelterId}`);
+
+  const { data: shelterData } = useQuery(GetShelterNameDocument, {
+    variables: { id: shelterId || '' },
+    skip: !isShelterPage || !shelterId,
+  });
+
+  const isReservationPage = location.pathname.includes(`/${reservationPathSegment}`);
+  const organizationName = user?.organization?.name;
+  const shelterName = shelterData?.shelter?.name;
+  const pageTitle = isReservationPage ? 'Shelter Reservation' : undefined;
+  const showCreateButton = isDashboardPage;
 
   const breadcrumbs = [organizationName, shelterName, pageTitle].filter(
     Boolean
