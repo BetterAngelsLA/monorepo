@@ -44,38 +44,49 @@ const projectDir = resolveProjectDir(project);
 // 1. Setup env and compute fingerprint
 const fingerprint = setupEnvAndFingerprint(projectDir, profile);
 
-// 2. Find or trigger builds for this fingerprint
-function findOrTriggerBuild(platform: string): string {
-  console.log(
-    `\nChecking for ${platform} build with runtime version: ${fingerprint}`
-  );
+// 2. Find or trigger builds for both platforms
+console.log(`\nChecking for builds with runtime version: ${fingerprint}`);
 
-  let builds: Array<{ id: string; status: string }> = [];
+function findBuildId(platform: string): string | undefined {
   try {
-    builds = runJson<Array<{ id: string; status: string }>>(
+    const builds = runJson<Array<{ id: string; status: string }>>(
       `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${fingerprint} --limit 1 --json --interactive false`
     );
+    if (builds.length > 0) {
+      console.log(`Found existing ${platform} build: ${builds[0].id} (${builds[0].status})`);
+      return builds[0].id;
+    }
   } catch {
     // no builds found
   }
-
-  if (builds.length > 0) {
-    console.log(`Found existing ${platform} build: ${builds[0].id} (${builds[0].status})`);
-    return builds[0].id;
-  }
-
-  console.log(
-    `No ${platform} build for runtime ${fingerprint}. Triggering build (--wait false)...`
-  );
-  const newBuilds = runJson<Array<{ id: string }>>(
-    `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --interactive false --wait false --json`
-  );
-  console.log(`Triggered ${platform} build: ${newBuilds[0].id}`);
-  return newBuilds[0].id;
+  return undefined;
 }
 
-const androidBuildId = findOrTriggerBuild('android');
-const iosBuildId = findOrTriggerBuild('ios');
+let androidBuildId = findBuildId('android');
+let iosBuildId = findBuildId('ios');
+
+// Trigger missing builds — use --platform all if both missing, otherwise single
+const missingPlatforms = [
+  ...(!androidBuildId ? ['android'] : []),
+  ...(!iosBuildId ? ['ios'] : []),
+];
+
+if (missingPlatforms.length > 0) {
+  const platformArg = missingPlatforms.length === 2 ? 'all' : missingPlatforms[0];
+  console.log(`\nTriggering ${platformArg} build(s) (--wait false)...`);
+  const newBuilds = runJson<Array<{ id: string; platform: string }>>(
+    `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platformArg} --freeze-credentials --interactive false --wait false --json`
+  );
+  for (const b of newBuilds) {
+    console.log(`Triggered ${b.platform} build: ${b.id}`);
+    if (b.platform.toLowerCase() === 'android') androidBuildId = b.id;
+    if (b.platform.toLowerCase() === 'ios') iosBuildId = b.id;
+  }
+}
+
+if (!androidBuildId || !iosBuildId) {
+  throw new Error('Failed to resolve build IDs for both platforms');
+}
 
 // 3. Publish update
 console.log(`\nPublishing update on branch: ${branch}`);
@@ -98,7 +109,5 @@ run(
     `--non-interactive`,
   { cwd: projectDir }
 );
-
-console.log('\nE2E tests triggered on EAS');
 
 console.log('\nE2E tests triggered on EAS');
