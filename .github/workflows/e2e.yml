@@ -1,14 +1,17 @@
-# Trigger Maestro E2E tests on EAS Workflows.
+# Maestro E2E tests — orchestrated from GitHub Actions.
 #
-# The actual tests run on EAS via apps/betterangels/.eas/workflows/e2e-test.yml,
-# triggered by the "run-e2e" label (through the Expo GitHub App).
+# Handles all setup that needs GitHub Secrets and NX monorepo tooling:
+#   1. Compute fingerprint (needs EXPO_PUBLIC_* secrets)
+#   2. Find existing preview builds (via NX build-list target)
+#   3. Publish EAS Update (via NX eas-update target)
+#   4. Trigger the EAS Maestro workflow (eas workflow:run)
 #
-# This GitHub Actions workflow just provides two convenience triggers:
+# The EAS workflow (.eas/workflows/e2e-test.yml) only runs Maestro tests.
+#
+# Triggers:
 #   - Comment "/run-e2e" on a PR
 #   - Manually via the Actions tab (workflow_dispatch)
-#
-# Both simply toggle the "run-e2e" label, which the Expo GitHub App picks up
-# and triggers the EAS workflow with full github.* context + GITHUB_TOKEN.
+#   - Merge queue (automatic gating)
 name: 🧪 Maestro E2E Tests
 
 on:
@@ -20,11 +23,14 @@ on:
         description: 'PR number to test'
         required: true
         type: number
+  merge_group:
+    types: [checks_requested]
 
 jobs:
-  trigger-e2e:
+  e2e:
     if: >-
-      github.event_name == 'workflow_dispatch'
+      github.event_name == 'merge_group'
+      || github.event_name == 'workflow_dispatch'
       || (
         github.event.issue.pull_request
         && startsWith(github.event.comment.body, '/run-e2e')
@@ -33,6 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+      contents: read
     steps:
       - name: 🚀 React to comment
         if: github.event_name == 'issue_comment'
@@ -46,20 +53,56 @@ jobs:
               content: 'rocket'
             });
 
-      - name: 🏷️ Toggle run-e2e label
+      - name: 🔍 Resolve PR ref
+        id: pr
         uses: actions/github-script@v7
         with:
           script: |
-            const { owner, repo } = context.repo;
-            const issue_number = context.issue?.number || ${{ github.event.inputs.pr_number || 0 }};
+            if (context.eventName === 'issue_comment') {
+              const { data: pr } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+              });
+              core.setOutput('ref', pr.head.ref);
+              core.setOutput('sha', pr.head.sha);
+            } else if (context.eventName === 'workflow_dispatch') {
+              const prNumber = ${{ github.event.inputs.pr_number || 0 }};
+              const { data: pr } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+              });
+              core.setOutput('ref', pr.head.ref);
+              core.setOutput('sha', pr.head.sha);
+            } else {
+              // merge_group — ref and sha come from the event directly
+              core.setOutput('ref', process.env.GITHUB_REF_NAME);
+              core.setOutput('sha', process.env.GITHUB_SHA);
+            }
 
-            // Remove first (in case it already exists — re-adding is a no-op)
-            try {
-              await github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'run-e2e' });
-            } catch {}
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.sha }}
+          fetch-depth: 0
 
-            // Brief pause so GitHub processes the removal before we re-add
-            await new Promise(r => setTimeout(r, 2000));
+      - name: ⎔ Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
 
-            // Add label — this triggers the EAS workflow via the Expo GitHub App
-            await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['run-e2e'] });
+      - name: 📦 Install dependencies
+        run: yarn install --immutable
+
+      - name: 🧪 Run E2E orchestration
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          BRANCH_NAME: ${{ steps.pr.outputs.ref }}
+          EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
+        run: |
+          npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-e2e.ts --project betterangels

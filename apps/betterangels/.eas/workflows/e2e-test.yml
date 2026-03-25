@@ -1,74 +1,42 @@
 # Maestro E2E tests for betterangels.
 #
-# Triggers:
-#   - Label "run-e2e" added to a PR (via GitHub App → full github.* context)
-#   - Push to merge queue branches (automatic gating)
+# This workflow ONLY runs device-based Maestro tests.
+# All orchestration (fingerprint, build lookup, update publishing) is handled
+# by GitHub Actions (.github/workflows/e2e.yml) where GitHub Secrets and
+# NX monorepo tooling are available.
 #
-# The GitHub App auto-provisions GITHUB_TOKEN and fills github.* context
-# for all GitHub-event triggers, so no manual token configuration is needed.
+# Triggered via: eas workflow:run (from GitHub Actions)
 name: e2e-test
 
 on:
-  push:
-    branches: ['gh-readonly-queue/**']
-  pull_request_labeled:
-    - run-e2e
+  workflow_dispatch:
+    inputs:
+      android_build_id:
+        type: string
+        required: true
+        description: 'EAS Build ID for Android'
+      ios_build_id:
+        type: string
+        required: true
+        description: 'EAS Build ID for iOS'
+      update_group_id:
+        type: string
+        required: true
+        description: 'EAS Update group ID'
 
 jobs:
-  # Remove the label immediately so it can be re-added to trigger again
-  remove_label:
-    if: ${{ github.event_name != 'push' }}
-    steps:
-      - name: Remove run-e2e label
-        run: |
-          curl -sS -X DELETE \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/labels/run-e2e" \
-            || true
-
-  fingerprint:
-    type: fingerprint
-    environment: preview
-
-  update:
-    type: update
-    environment: preview
-    params:
-      branch: ${{ github.ref_name }}
-
-  get_android_build:
-    needs: [fingerprint]
-    type: get-build
-    params:
-      fingerprint_hash: ${{ needs.fingerprint.outputs.android_fingerprint_hash }}
-      platform: android
-
-  get_ios_build:
-    needs: [fingerprint]
-    type: get-build
-    params:
-      fingerprint_hash: ${{ needs.fingerprint.outputs.ios_fingerprint_hash }}
-      platform: ios
-
   maestro_android_test:
-    needs: [update, get_android_build]
     type: maestro
     env:
-      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ needs.update.outputs.first_update_group_id }}?platform=android%26disableOnboarding%3D1
+      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=android%26disableOnboarding%3D1
     params:
-      build_id: ${{ needs.get_android_build.outputs.build_id }}
+      build_id: ${{ inputs.android_build_id }}
       flow_path: ['.maestro/tests/landing.yml']
 
   maestro_ios_test:
-    needs: [update, get_ios_build]
     type: maestro
     env:
-      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ needs.update.outputs.first_update_group_id }}?platform=ios%26disableOnboarding%3D1
+      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=ios%26disableOnboarding%3D1
     params:
-      build_id: ${{ needs.get_ios_build.outputs.build_id }}
+      build_id: ${{ inputs.ios_build_id }}
       flow_path: ['.maestro/tests/landing.yml']
-
-  comment:
-    after: [maestro_android_test, maestro_ios_test]
-    type: github-comment
