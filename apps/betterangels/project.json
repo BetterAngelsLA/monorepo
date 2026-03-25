@@ -131,12 +131,6 @@
         }
       },
       "defaultConfiguration": "ios"
-    },
-    "eas-e2e": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-e2e-trigger.ts --project betterangels --branch {args.branch} --sha {args.sha}"
-      }
     }
   }
 }

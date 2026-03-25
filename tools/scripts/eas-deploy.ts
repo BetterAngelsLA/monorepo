@@ -46,8 +46,6 @@ import {
   run,
   runJson,
   setupEnvAndFingerprint,
-  triggerEasWorkflow,
-  writeE2eMetadata,
 } from './eas-utils';
 
 // ---------------------------------------------------------------------------
@@ -487,26 +485,12 @@ async function main(): Promise<void> {
   fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2));
   console.log(`\nResults written to ${resultsPath}`);
 
-  // 5. E2E (merge_group only)
-  if (eventName === 'merge_group' && isPreview) {
-    writeE2eMetadata(projectDir, {
-      runtimeVersion,
-      projectId,
-      groupId,
-      slug,
-      sha: getOptionalEnv('GITHUB_SHA') ?? '',
-      statusContext: 'Betterangels E2E Tests',
-      account: EAS_ACCOUNT,
-    });
-    triggerEasWorkflow(projectDir, EAS_ACCOUNT, slug);
-  }
-
-  // 6. PR comment (pull_request only, preview only)
+  // 5. PR comment (pull_request only, preview only)
   if (eventName === 'pull_request' && isPreview) {
     await postPrComment(results);
   }
 
-  // 7. Slack (push to main, both preview and production)
+  // 6. Slack (push to main, both preview and production)
   if (eventName === 'push') {
     await postSlackNotification(results);
   }
