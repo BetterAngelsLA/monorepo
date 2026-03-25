@@ -220,7 +220,6 @@ export function Dropdown<T extends string | number = string | number>(
           <DropdownChips
             selectedValues={selectedValues}
             onRemove={handleRemoveChip}
-            stacked={isStackedMultiSelect}
           />
         ) : (
           <span className="text-sm flex-1 truncate">

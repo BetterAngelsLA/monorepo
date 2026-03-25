@@ -5,24 +5,18 @@ import type { DropdownOption } from './types';
 interface DropdownChipsProps<T extends string | number> {
   selectedValues: DropdownOption<T>[];
   onRemove: (option: DropdownOption<T>) => void;
-  stacked: boolean;
 }
 
 export function DropdownChips<T extends string | number>({
   selectedValues,
   onRemove,
-  stacked,
 }: DropdownChipsProps<T>) {
   return (
-    <div
-      className={`flex gap-2 flex-1 min-w-0 ${
-        stacked ? 'flex-col' : 'flex-row items-center min-h-0'
-      }`}
-    >
+    <div className="flex flex-1 min-w-0 flex-row flex-wrap items-center content-start gap-1">
       {selectedValues.map((v) => (
         <span
           key={v.value}
-          className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-200 min-w-0 max-w-full self-start"
+          className="group inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-2xl bg-gray-200 px-3 py-1"
         >
           <Text variant="tag" className="text-gray-700 truncate">
             {v.label}
