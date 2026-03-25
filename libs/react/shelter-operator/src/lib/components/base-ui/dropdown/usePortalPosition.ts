@@ -8,12 +8,12 @@ interface MenuPosition {
 }
 
 /**
- * Keeps a portal-rendered menu aligned below the trigger using
- * `getBoundingClientRect()`.
+ * Keeps a portal-rendered menu aligned below an anchor element using
+ * `getBoundingClientRect()` (typically the trigger row plus any fields below it,
+ * e.g. the “Other” detail input).
  *
- * While the menu is open, a `ResizeObserver` on the trigger reapplies
- * the measurement when the trigger grows or shrinks (e.g. stacked multi-select
- * chips), so the menu stays under the bottom edge.
+ * While the menu is open, a `ResizeObserver` on that element reapplies the
+ * measurement when its height changes, so the menu stays under the bottom edge.
  *
  * Closes the menu if the user scrolls (outside the menu itself) or resizes
  * the window, since repositioning on every scroll frame causes visible jitter.

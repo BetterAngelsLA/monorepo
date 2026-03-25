@@ -33,11 +33,13 @@ export function Dropdown<T extends string | number = string | number>(
     required = false,
     disabled = false,
     className,
+    onOtherTextChange,
   } = props as DropdownInternalProps<T>;
 
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [otherDetailText, setOtherDetailText] = useState('');
 
   const close = useCallback(() => {
     setIsOpen(false);
@@ -45,12 +47,13 @@ export function Dropdown<T extends string | number = string | number>(
     setFocusedIndex(-1);
   }, []);
   const menuId = useId();
+  const menuAnchorRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const labelId = `${menuId}-label`;
 
   const menuRef = useRef<HTMLDivElement>(null);
-  const menuPos = usePortalPosition(triggerRef, isOpen, close, menuRef);
+  const menuPos = usePortalPosition(menuAnchorRef, isOpen, close, menuRef);
 
   // Scroll focused option into view
   useEffect(() => {
@@ -80,6 +83,18 @@ export function Dropdown<T extends string | number = string | number>(
 
   const hasSelection = selectedValues.length > 0;
 
+  const otherSelected = useMemo(
+    () =>
+      selectedValues.some((v) => String(v.value) === '__dropdown_other__'),
+    [selectedValues]
+  );
+
+  useEffect(() => {
+    if (!otherSelected) {
+      setOtherDetailText('');
+    }
+  }, [otherSelected]);
+
   // Multi-select trigger grows and uses rounded rectangle styling
   const isStackedMultiSelect =
     isMulti && hasSelection && selectedValues.length > 1;
@@ -89,10 +104,23 @@ export function Dropdown<T extends string | number = string | number>(
     [selectedValues]
   );
 
+  const menuOptionsWithoutOther = useMemo(
+    () =>
+      options.filter((o) => String(o.value) !== '__dropdown_other__'),
+    [options]
+  );
+
   const filteredOptions = useMemo(() => {
     const query = searchQuery.toLowerCase();
-    return options.filter((o) => o.label.toLowerCase().includes(query));
-  }, [options, searchQuery]);
+    const main = menuOptionsWithoutOther.filter((o) =>
+      o.label.toLowerCase().includes(query)
+    );
+    const otherOption: DropdownOption<T> = {
+      label: 'Other',
+      value: '__dropdown_other__' as T,
+    };
+    return [...main, otherOption];
+  }, [menuOptionsWithoutOther, searchQuery]);
 
   // ── Callbacks ──────────────────────────────────────────────────────────
 
@@ -196,51 +224,77 @@ export function Dropdown<T extends string | number = string | number>(
       )}
 
       <div
-        ref={triggerRef}
-        role="combobox"
-        aria-expanded={isOpen}
-        aria-controls={menuId}
-        aria-labelledby={label ? labelId : undefined}
-        aria-disabled={disabled}
-        tabIndex={disabled ? -1 : 0}
-        className={cn(
-          'relative flex justify-between gap-2 w-full border bg-white cursor-pointer select-none transition-colors duration-200',
-          isStackedMultiSelect
-            ? 'min-h-12 items-start rounded-2xl px-4 py-3'
-            : 'h-12 items-center rounded-full px-4 overflow-hidden',
-          isOpen ? 'border-[#008CEE]' : 'border-gray-200',
-          disabled && 'opacity-50 cursor-not-allowed'
-        )}
-        onClick={() => {
-          if (!disabled) setIsOpen((o) => !o);
-        }}
-        onKeyDown={handleKeyDown}
+        ref={menuAnchorRef}
+        className="flex w-full flex-col gap-1"
       >
-        {isMulti && hasSelection ? (
-          <DropdownChips
-            selectedValues={selectedValues}
-            onRemove={handleRemoveChip}
-          />
-        ) : (
-          <span className="text-sm flex-1 truncate">
-            <Text
-              variant="body"
-              className={cn(
-                'text-sm flex-1 truncate',
-                hasSelection ? 'text-gray-900' : 'text-gray-400'
-              )}
-            >
-              {hasSelection ? selectedValues[0].label : placeholder}
-            </Text>
-          </span>
-        )}
-        <ChevronDown
+        <div
+          ref={triggerRef}
+          role="combobox"
+          aria-expanded={isOpen}
+          aria-controls={menuId}
+          aria-labelledby={label ? labelId : undefined}
+          aria-disabled={disabled}
+          tabIndex={disabled ? -1 : 0}
           className={cn(
-            'w-4 h-4 shrink-0 transition-transform duration-200 text-gray-400 z-10',
-            isOpen && 'rotate-180',
-            isStackedMultiSelect && 'self-start mt-1.5'
+            'relative flex justify-between gap-2 w-full border bg-white cursor-pointer select-none transition-colors duration-200',
+            isStackedMultiSelect
+              ? 'min-h-12 items-start rounded-2xl px-4 py-3'
+              : 'h-12 items-center rounded-full px-4 overflow-hidden',
+            isOpen ? 'border-[#008CEE]' : 'border-gray-200',
+            disabled && 'opacity-50 cursor-not-allowed'
           )}
-        />
+          onClick={() => {
+            if (!disabled) setIsOpen((o) => !o);
+          }}
+          onKeyDown={handleKeyDown}
+        >
+          {isMulti && hasSelection ? (
+            <DropdownChips
+              selectedValues={selectedValues}
+              onRemove={handleRemoveChip}
+            />
+          ) : (
+            <span className="text-sm flex-1 truncate">
+              <Text
+                variant="body"
+                className={cn(
+                  'text-sm flex-1 truncate',
+                  hasSelection ? 'text-gray-900' : 'text-gray-400'
+                )}
+              >
+                {hasSelection ? selectedValues[0].label : placeholder}
+              </Text>
+            </span>
+          )}
+          <ChevronDown
+            className={cn(
+              'w-4 h-4 shrink-0 transition-transform duration-200 text-gray-400 z-10',
+              isOpen && 'rotate-180',
+              isStackedMultiSelect && 'self-start mt-1.5'
+            )}
+          />
+        </div>
+
+        {otherSelected && (
+          <input
+            type="text"
+            aria-label="Specify other"
+            disabled={disabled}
+            value={otherDetailText}
+            placeholder="Please specify..."
+            className={cn(
+              'w-full h-12 rounded-full border bg-white px-4 text-sm transition-colors duration-200',
+              'text-gray-900 placeholder:text-gray-400',
+              'border-gray-200 outline-none focus:border-[#008CEE]',
+              disabled && 'cursor-not-allowed opacity-50'
+            )}
+            onChange={(e) => {
+              const next = e.target.value;
+              setOtherDetailText(next);
+              onOtherTextChange?.(next);
+            }}
+          />
+        )}
       </div>
 
       {isOpen &&
