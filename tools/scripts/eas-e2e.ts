@@ -55,7 +55,9 @@ function findBuildId(platform: string, profile: string): string | undefined {
       `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${fingerprint} --limit 1 --json --interactive false`
     );
     if (builds.length > 0) {
-      console.log(`Found existing ${platform} build: ${builds[0].id} (${builds[0].status})`);
+      console.log(
+        `Found existing ${platform} build: ${builds[0].id} (${builds[0].status})`
+      );
       return builds[0].id;
     }
   } catch {
@@ -69,7 +71,9 @@ let iosBuildId = findBuildId('ios', iosProfile);
 
 // Trigger missing builds separately (different profiles per platform)
 if (!androidBuildId) {
-  console.log(`\nTriggering android build (profile: ${androidProfile}, --wait false)...`);
+  console.log(
+    `\nTriggering android build (profile: ${androidProfile}, --wait false)...`
+  );
   const newBuilds = runJson<Array<{ id: string; platform: string }>>(
     `yarn nx run ${project}:eas-build --profile ${androidProfile} --platform android --freeze-credentials --interactive false --wait false --json`
   );
@@ -77,7 +81,9 @@ if (!androidBuildId) {
   console.log(`Triggered android build: ${androidBuildId}`);
 }
 if (!iosBuildId) {
-  console.log(`\nTriggering ios build (profile: ${iosProfile}, --wait false)...`);
+  console.log(
+    `\nTriggering ios build (profile: ${iosProfile}, --wait false)...`
+  );
   const newBuilds = runJson<Array<{ id: string; platform: string }>>(
     `yarn nx run ${project}:eas-build --profile ${iosProfile} --platform ios --freeze-credentials --interactive false --wait false --json`
   );
