@@ -30,6 +30,15 @@ export function EcosystemInfo({
     FunderChoices.Other
   );
 
+  const shelterPrograms = displayListWithOther(
+    shelter?.shelterPrograms as readonly {
+      name?: ShelterProgramChoices.Other | null;
+    }[],
+    shelter?.shelterProgramsOther,
+    enumDisplayShelterProgramChoices,
+    ShelterProgramChoices.Other
+  );
+
   return (
     <Card title="Ecosystem Information">
       <div className="flex flex-col gap-2">
@@ -54,13 +63,7 @@ export function EcosystemInfo({
           </div>
         )}
 
-        <InlineList
-          title="Program:"
-          items={shelter?.shelterPrograms.map(
-            (i) =>
-              enumDisplayShelterProgramChoices[i.name as ShelterProgramChoices]
-          )}
-        />
+        <InlineList title="Program:" items={shelterPrograms} />
 
         <InlineList title="Funders:" items={funderItems} />
       </div>
