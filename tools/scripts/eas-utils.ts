@@ -76,13 +76,26 @@ export function runJson<T>(cmd: string, opts?: { cwd?: string }): T {
   const raw = run(cmd, { silent: true, ...opts });
   const cleaned = stripAnsi(raw);
 
-  // Find the first valid JSON object or array in the output
+  // Find the first valid JSON object or array in the output.
+  // NX may append trailing text (e.g. "NX   Successfully ran target ..."),
+  // so also try trimming at the last matching bracket.
   for (let i = 0; i < cleaned.length; i++) {
-    if (cleaned[i] === '[' || cleaned[i] === '{') {
+    const ch = cleaned[i];
+    if (ch === '[' || ch === '{') {
+      // Fast path: parse from here to end of string
       try {
         return JSON.parse(cleaned.substring(i)) as T;
       } catch {
-        // Not valid JSON from this position, keep scanning
+        // Trailing content — find the last matching close bracket
+        const close = ch === '[' ? ']' : '}';
+        const lastClose = cleaned.lastIndexOf(close);
+        if (lastClose > i) {
+          try {
+            return JSON.parse(cleaned.substring(i, lastClose + 1)) as T;
+          } catch {
+            // keep scanning
+          }
+        }
       }
     }
   }
