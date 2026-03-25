@@ -54,10 +54,20 @@ class IsImgproxyEnabledTest(ParametrizedTestCase, TestCase):
 # _resolve_imgproxy_ops
 # ---------------------------------------------------------------------------
 class ResolveImgproxyOpsTest(TestCase):
-    def test_returns_processing_when_provided(self) -> None:
-        self.assertIsNone(_resolve_imgproxy_ops(None, None))
-        self.assertEqual(_resolve_imgproxy_ops(None, "rs:fill:100:100/f:jpg"), "rs:fill:100:100/f:jpg")
-        self.assertEqual(_resolve_imgproxy_ops(ImagePresetEnum.ORIGINAL, None), "rs:force:0:0")
+    def test_resolve_imgproxy_ops(self) -> None:
+        self.assertIsNone(_resolve_imgproxy_ops(None, None, "s3://bucket/photo.jpg"))
+        self.assertEqual(
+            _resolve_imgproxy_ops(None, "rs:fill:100:100", "s3://bucket/photo.jpg"),
+            "rs:fill:100:100",
+        )
+        self.assertEqual(
+            _resolve_imgproxy_ops(ImagePresetEnum.ORIGINAL, None, "s3://bucket/photo.jpg"),
+            "rs:force:0:0",
+        )
+        self.assertEqual(
+            _resolve_imgproxy_ops(ImagePresetEnum.ORIGINAL, None, "s3://bucket/photo.HEIC"),
+            "rs:force:0:0/f:jpg",
+        )
 
 
 # ---------------------------------------------------------------------------
