@@ -37,17 +37,19 @@ if (!project) {
   process.exit(1);
 }
 
-const profile = 'development-simulator';
+// Android APKs work on emulators directly; only iOS needs a simulator build
+const androidProfile = 'preview';
+const iosProfile = 'development-simulator';
 const branch = getEnv('BRANCH_NAME');
 const projectDir = resolveProjectDir(project);
 
-// 1. Setup env and compute fingerprint
-const fingerprint = setupEnvAndFingerprint(projectDir, profile);
+// 1. Setup env and compute fingerprint (env vars are identical across profiles)
+const fingerprint = setupEnvAndFingerprint(projectDir, androidProfile);
 
 // 2. Find or trigger builds for both platforms
 console.log(`\nChecking for builds with runtime version: ${fingerprint}`);
 
-function findBuildId(platform: string): string | undefined {
+function findBuildId(platform: string, profile: string): string | undefined {
   try {
     const builds = runJson<Array<{ id: string; status: string }>>(
       `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${fingerprint} --limit 1 --json --interactive false`
@@ -62,26 +64,25 @@ function findBuildId(platform: string): string | undefined {
   return undefined;
 }
 
-let androidBuildId = findBuildId('android');
-let iosBuildId = findBuildId('ios');
+let androidBuildId = findBuildId('android', androidProfile);
+let iosBuildId = findBuildId('ios', iosProfile);
 
-// Trigger missing builds — use --platform all if both missing, otherwise single
-const missingPlatforms = [
-  ...(!androidBuildId ? ['android'] : []),
-  ...(!iosBuildId ? ['ios'] : []),
-];
-
-if (missingPlatforms.length > 0) {
-  const platformArg = missingPlatforms.length === 2 ? 'all' : missingPlatforms[0];
-  console.log(`\nTriggering ${platformArg} build(s) (--wait false)...`);
+// Trigger missing builds separately (different profiles per platform)
+if (!androidBuildId) {
+  console.log(`\nTriggering android build (profile: ${androidProfile}, --wait false)...`);
   const newBuilds = runJson<Array<{ id: string; platform: string }>>(
-    `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platformArg} --freeze-credentials --interactive false --wait false --json`
+    `yarn nx run ${project}:eas-build --profile ${androidProfile} --platform android --freeze-credentials --interactive false --wait false --json`
   );
-  for (const b of newBuilds) {
-    console.log(`Triggered ${b.platform} build: ${b.id}`);
-    if (b.platform.toLowerCase() === 'android') androidBuildId = b.id;
-    if (b.platform.toLowerCase() === 'ios') iosBuildId = b.id;
-  }
+  androidBuildId = newBuilds[0]?.id;
+  console.log(`Triggered android build: ${androidBuildId}`);
+}
+if (!iosBuildId) {
+  console.log(`\nTriggering ios build (profile: ${iosProfile}, --wait false)...`);
+  const newBuilds = runJson<Array<{ id: string; platform: string }>>(
+    `yarn nx run ${project}:eas-build --profile ${iosProfile} --platform ios --freeze-credentials --interactive false --wait false --json`
+  );
+  iosBuildId = newBuilds[0]?.id;
+  console.log(`Triggered ios build: ${iosBuildId}`);
 }
 
 if (!androidBuildId || !iosBuildId) {
