@@ -11,7 +11,13 @@ from accounts.types import OrganizationType
 from common.graphql.types import PhoneNumberScalar
 from django.db.models import Prefetch, QuerySet
 from shelters import models
-from shelters.enums import BedStatusChoices, BedTypeChoices, MedicalNeedChoices, RoomStatusChoices, RoomStyleChoices
+from shelters.enums import (
+    BedStatusChoices,
+    BedTypeChoices,
+    MedicalNeedChoices,
+    RoomStatusChoices,
+    RoomStyleChoices,
+)
 from shelters.selectors import admin_shelter_list, shelter_list
 from shelters.types.lookups import (
     AccessibilityType,

@@ -86,6 +86,9 @@ type AdminShelterType {
   email: String
   entryInfo: String
   entryRequirements: [EntryRequirementType!]!
+  exitPolicy: [ExitPolicyType!]!
+  exitPolicyOther: String
+  emergencySurge: Boolean
   exteriorPhotos: [ShelterPhotoType!]!
   funders: [FunderType!]!
   fundersOther: String
@@ -103,6 +106,7 @@ type AdminShelterType {
   pets: [PetType!]!
   phone: PhoneNumber
   programFees: String
+  referralRequirement: [ReferralRequirementType!]!
   roomStyles: [RoomStyleType!]!
   roomStylesOther: String
   schedules: [ScheduleType!]!
@@ -119,6 +123,7 @@ type AdminShelterType {
   supervisorialDistrict: Int
   totalBeds: Int
   updatedAt: DateTime!
+  visitorsAllowed: Boolean
   website: String
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
@@ -850,6 +855,10 @@ enum ExitPolicyChoices {
   VIOLENCE
   MITIGATION
   OTHER
+}
+
+type ExitPolicyType {
+  name: ExitPolicyChoices
 }
 
 enum EyeColorEnum {
@@ -1786,6 +1795,10 @@ enum ReferralRequirementChoices {
   SAME_DAY_INTAKE
 }
 
+type ReferralRequirementType {
+  name: ReferralRequirementChoices
+}
+
 enum RelationshipTypeEnum {
   CURRENT_CASE_MANAGER
   PAST_CASE_MANAGER
@@ -2090,6 +2103,9 @@ type ShelterType {
   email: String
   entryInfo: String
   entryRequirements: [EntryRequirementType!]!
+  exitPolicy: [ExitPolicyType!]!
+  exitPolicyOther: String
+  emergencySurge: Boolean
   exteriorPhotos: [ShelterPhotoType!]!
   funders: [FunderType!]!
   fundersOther: String
@@ -2107,6 +2123,7 @@ type ShelterType {
   pets: [PetType!]!
   phone: PhoneNumber
   programFees: String
+  referralRequirement: [ReferralRequirementType!]!
   roomStyles: [RoomStyleType!]!
   roomStylesOther: String
   schedules: [ScheduleType!]!
@@ -2123,6 +2140,7 @@ type ShelterType {
   supervisorialDistrict: Int
   totalBeds: Int
   updatedAt: DateTime!
+  visitorsAllowed: Boolean
   website: String
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
