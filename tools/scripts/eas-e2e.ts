@@ -3,9 +3,10 @@
  *
  * Orchestrates E2E test execution:
  *   1. Setup env and compute fingerprint (same as deploy pipeline)
- *   2. Find existing preview builds matching the fingerprint
+ *   2. Ensure preview builds exist for this fingerprint (trigger if missing)
  *   3. Publish an EAS Update for the branch
- *   4. Trigger the EAS Maestro workflow with build IDs + update group
+ *   4. Trigger the EAS workflow with fingerprint + update group
+ *      (EAS workflow uses get-build with wait_for_in_progress to wait for builds)
  *
  * Usage:
  *   npx ts-node tools/scripts/eas-e2e.ts --project betterangels
@@ -43,15 +44,15 @@ const projectDir = resolveProjectDir(project);
 // 1. Setup env and compute fingerprint
 const fingerprint = setupEnvAndFingerprint(projectDir, profile);
 
-// 2. Find or trigger builds for this fingerprint
-function findOrTriggerBuild(platform: string): string {
+// 2. Ensure builds exist for this fingerprint (trigger if missing, don't wait)
+function ensureBuildExists(platform: string): void {
   console.log(
-    `\nLooking for ${platform} build with runtime version: ${fingerprint}`
+    `\nChecking for ${platform} build with runtime version: ${fingerprint}`
   );
 
-  let builds: Array<{ id: string }> = [];
+  let builds: Array<{ id: string; status: string }> = [];
   try {
-    builds = runJson<Array<{ id: string }>>(
+    builds = runJson<Array<{ id: string; status: string }>>(
       `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${fingerprint} --limit 1 --json --interactive false`
     );
   } catch {
@@ -59,22 +60,21 @@ function findOrTriggerBuild(platform: string): string {
   }
 
   if (builds.length > 0) {
-    console.log(`Found existing ${platform} build: ${builds[0].id}`);
-    return builds[0].id;
+    console.log(`Found existing ${platform} build: ${builds[0].id} (${builds[0].status})`);
+    return;
   }
 
   console.log(
-    `No existing ${platform} build for runtime ${fingerprint}. Starting new build...`
+    `No ${platform} build for runtime ${fingerprint}. Triggering build...`
   );
   const newBuilds = runJson<Array<{ id: string }>>(
     `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --interactive false --wait false --json`
   );
-  console.log(`Started ${platform} build: ${newBuilds[0].id}`);
-  return newBuilds[0].id;
+  console.log(`Triggered ${platform} build: ${newBuilds[0].id} (EAS workflow will wait for it)`);
 }
 
-const androidBuildId = findOrTriggerBuild('android');
-const iosBuildId = findOrTriggerBuild('ios');
+ensureBuildExists('android');
+ensureBuildExists('ios');
 
 // 3. Publish update
 console.log(`\nPublishing update on branch: ${branch}`);
@@ -87,15 +87,16 @@ if (!groupId) {
 }
 console.log(`Update group: ${groupId}`);
 
-// 4. Trigger EAS Maestro workflow
+// 4. Trigger EAS workflow — it uses get-build with wait_for_in_progress
 console.log('\nTriggering EAS Maestro workflow...');
 run(
   `npx eas-cli workflow:run .eas/workflows/e2e-test.yml ` +
-    `-F android_build_id=${androidBuildId} ` +
-    `-F ios_build_id=${iosBuildId} ` +
+    `-F fingerprint_hash=${fingerprint} ` +
     `-F update_group_id=${groupId} ` +
     `--non-interactive`,
   { cwd: projectDir }
 );
+
+console.log('\nE2E tests triggered on EAS (builds will be awaited there)');
 
 console.log('\nE2E tests triggered on EAS');
