@@ -9,7 +9,8 @@
 # The EAS workflow (.eas/workflows/e2e-test.yml) only runs Maestro tests.
 #
 # Triggers:
-#   - Comment "/run-e2e" on a PR
+#   - Comment "/run-e2e" on a PR          (affected projects)
+#   - Comment "/run-e2e <project>" on a PR (specific project)
 #   - Manually via the Actions tab (workflow_dispatch)
 #   - Merge queue (automatic gating)
 name: 🧪 Maestro E2E Tests
@@ -23,6 +24,10 @@ on:
         description: 'PR number to test'
         required: true
         type: number
+      project:
+        description: 'Specific project to test (blank = affected)'
+        required: false
+        type: string
   merge_group:
     types: [checks_requested]
 
@@ -54,11 +59,12 @@ jobs:
               content: 'rocket'
             });
 
-      - name: 🔍 Resolve PR ref
+      - name: 🔍 Resolve PR ref and project
         id: pr
         uses: actions/github-script@v7
         with:
           script: |
+            let project = '';
             if (context.eventName === 'issue_comment') {
               const { data: pr } = await github.rest.pulls.get({
                 owner: context.repo.owner,
@@ -67,6 +73,10 @@ jobs:
               });
               core.setOutput('ref', pr.head.ref);
               core.setOutput('sha', pr.head.sha);
+              // Parse optional project: "/run-e2e betterangels"
+              const body = context.payload.comment.body.trim();
+              const parts = body.split(/\s+/);
+              if (parts.length > 1) project = parts[1];
             } else if (context.eventName === 'workflow_dispatch') {
               const prNumber = ${{ github.event.inputs.pr_number || 0 }};
               const { data: pr } = await github.rest.pulls.get({
@@ -76,17 +86,25 @@ jobs:
               });
               core.setOutput('ref', pr.head.ref);
               core.setOutput('sha', pr.head.sha);
+              project = '${{ github.event.inputs.project || '' }}';
             } else {
               // merge_group — ref and sha come from the event directly
               core.setOutput('ref', process.env.GITHUB_REF_NAME);
               core.setOutput('sha', process.env.GITHUB_SHA);
             }
+            core.setOutput('project', project.trim());
 
       - name: 🏗 Check out repo
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.pr.outputs.sha }}
           fetch-depth: 0
+
+      - name: 🔀 Track main for NX affected
+        run: git branch --track main origin/main || true
+
+      - name: 🔧 Configure NX SHAs
+        uses: nrwl/nx-set-shas@v4
 
       - name: ⎔ Setup Node
         uses: actions/setup-node@v4
@@ -106,4 +124,9 @@ jobs:
           EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
           EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
         run: |
-          npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-e2e.ts --project betterangels
+          PROJECT="${{ steps.pr.outputs.project }}"
+          if [ -n "$PROJECT" ]; then
+            yarn nx run "$PROJECT:eas-e2e"
+          else
+            yarn nx affected -t eas-e2e
+          fi

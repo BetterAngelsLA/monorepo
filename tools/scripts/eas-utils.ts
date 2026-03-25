@@ -135,7 +135,7 @@ export function setupEnvAndFingerprint(
   console.log(`\n=== Setting up env for profile: ${profile} ===`);
 
   const envPath = path.join(projectDir, '.env');
-  const envLines: string[] = [];
+  const envMap = new Map<string, string>();
 
   // Load non-secret env vars from eas.json build profile
   const easJsonPath = path.join(projectDir, 'eas.json');
@@ -144,18 +144,19 @@ export function setupEnvAndFingerprint(
     const profileEnv = easConfig?.build?.[profile]?.env;
     if (profileEnv && typeof profileEnv === 'object') {
       for (const [key, value] of Object.entries(profileEnv)) {
-        envLines.push(`${key}=${value}`);
+        envMap.set(key, String(value));
       }
     }
   }
 
-  // Collect EXPO_PUBLIC_* secrets from env (passed individually from CI)
+  // Collect EXPO_PUBLIC_* secrets from env (CI values override profile defaults)
   for (const [key, value] of Object.entries(process.env)) {
     if (key.startsWith('EXPO_PUBLIC') && value) {
-      envLines.push(`${key}=${value}`);
+      envMap.set(key, value);
     }
   }
 
+  const envLines = Array.from(envMap, ([k, v]) => `${k}=${v}`);
   fs.writeFileSync(envPath, envLines.join('\n') + '\n');
 
   // Compute fingerprint — this hash becomes the runtimeVersion.
