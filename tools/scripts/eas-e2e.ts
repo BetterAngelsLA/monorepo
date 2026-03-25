@@ -22,9 +22,6 @@
  *   EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-
 import {
   argv,
   getEnv,
@@ -48,19 +45,6 @@ const projectDir = resolveProjectDir(project);
 
 // 1. Setup env and compute fingerprint (env vars are identical across profiles)
 const fingerprint = setupEnvAndFingerprint(projectDir, androidProfile);
-
-// Debug: verify .env has secrets before build/update
-const envContents = fs.readFileSync(
-  path.join(projectDir, '.env'),
-  'utf-8'
-);
-console.log('\n.env file written for EAS Build/Update:');
-for (const line of envContents.split('\n')) {
-  if (line.startsWith('EXPO_PUBLIC')) {
-    const [key] = line.split('=');
-    console.log(`  ${key}=(set)`);
-  }
-}
 
 // 2. Find or trigger builds for both platforms
 console.log(`\nChecking for builds with runtime version: ${fingerprint}`);
