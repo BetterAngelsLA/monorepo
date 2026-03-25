@@ -1,6 +1,10 @@
 import { Card } from '@monorepo/react/components';
 import { format, isValid, parse } from 'date-fns';
-import { enumDisplayExitPolicyChoices } from '../../../static';
+import { ExitPolicyChoices } from '../../../apollo';
+import {
+  displayListWithOther,
+  enumDisplayExitPolicyChoices,
+} from '../../../static';
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
 
 function formatCurfewTime(curfew: string): string {
@@ -19,25 +23,12 @@ export function Restrictions({
   shelter: ViewShelterQuery['shelter'];
 }) {
   const hasCurfew = Boolean(shelter.curfew);
-  const exitPolicyDisplay = (() => {
-    const policies = shelter.exitPolicy ?? [];
-    const hasOther = policies.some((policy) => policy.name === 'OTHER');
-
-    const displayLabels = policies
-      .map((policy) => {
-        if (!policy.name || policy.name === 'OTHER') return null;
-        return enumDisplayExitPolicyChoices[
-          policy.name as keyof typeof enumDisplayExitPolicyChoices
-        ];
-      })
-      .filter((label): label is string => Boolean(label));
-
-    if (hasOther && shelter.exitPolicyOther != null) {
-      displayLabels.push(shelter.exitPolicyOther);
-    }
-
-    return displayLabels;
-  })();
+  const exitPolicyDisplay = displayListWithOther(
+    shelter.exitPolicy as readonly { name?: ExitPolicyChoices.Other | null }[],
+    shelter.exitPolicyOther,
+    enumDisplayExitPolicyChoices,
+    ExitPolicyChoices.Other
+  );
 
   return (
     <Card title="Restrictions">

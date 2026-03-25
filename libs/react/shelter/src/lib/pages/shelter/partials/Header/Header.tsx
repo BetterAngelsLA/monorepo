@@ -1,30 +1,22 @@
 import { ArrowLeftIcon, BedIcon, UsersIcon } from '@monorepo/react/icons';
 import { Link } from 'react-router-dom';
 import { DemographicChoices } from '../../../../apollo';
-import { enumDisplayDemographics } from '../../../../static';
+import {
+  displayListWithOther,
+  enumDisplayDemographics,
+} from '../../../../static';
 import { ViewShelterQuery } from '../../__generated__/shelter.generated';
 import { HeroCarousel } from './HeroCarousel';
 
 export function Header({ shelter }: { shelter: ViewShelterQuery['shelter'] }) {
-  const demographics = (() => {
-    const items = shelter.demographics ?? [];
-    const hasOther = items.some((d) => d.name === DemographicChoices.Other);
-
-    const labels = items
-      .map((d) => {
-        if (!d.name || d.name === DemographicChoices.Other) return null;
-        return enumDisplayDemographics[
-          d.name as keyof typeof enumDisplayDemographics
-        ];
-      })
-      .filter((label): label is string => Boolean(label));
-
-    if (hasOther && shelter.demographicsOther != null) {
-      labels.push(shelter.demographicsOther);
-    }
-
-    return labels;
-  })();
+  const demographics = displayListWithOther(
+    shelter?.demographics as readonly {
+      name?: DemographicChoices.Other | null;
+    }[],
+    shelter?.demographicsOther,
+    enumDisplayDemographics,
+    DemographicChoices.Other
+  );
 
   const demographicsDisplay = demographics
     .join(', ')
