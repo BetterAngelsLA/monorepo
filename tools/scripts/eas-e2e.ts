@@ -37,7 +37,7 @@ if (!project) {
   process.exit(1);
 }
 
-const profile = 'preview';
+const profile = 'development-simulator';
 const branch = getEnv('BRANCH_NAME');
 const projectDir = resolveProjectDir(project);
 
