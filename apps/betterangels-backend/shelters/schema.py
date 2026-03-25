@@ -33,6 +33,9 @@ class Query:
     shelter: ShelterType = strawberry_django.field()
     shelters: OffsetPaginated[ShelterType] = strawberry_django.offset_paginated()
 
+    beds: OffsetPaginated[BedType] = strawberry_django.offset_paginated()
+    rooms: OffsetPaginated[RoomType] = strawberry_django.offset_paginated()
+
     shelter_service_categories: OffsetPaginated[ServiceCategoryType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
     )

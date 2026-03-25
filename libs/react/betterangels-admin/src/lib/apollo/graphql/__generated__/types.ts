@@ -157,6 +157,22 @@ export type AuthResponse = {
   status_code: Scalars['String']['output'];
 };
 
+export type BedFilter = {
+  AND?: InputMaybe<BedFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<BedFilter>;
+  OR?: InputMaybe<BedFilter>;
+  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
+  bedType?: InputMaybe<Array<BedTypeChoices>>;
+  demographics?: InputMaybe<Array<DemographicChoices>>;
+  funders?: InputMaybe<Array<FunderChoices>>;
+  maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
+  medicalNeeds?: InputMaybe<Array<MedicalNeedChoices>>;
+  pets?: InputMaybe<Array<PetChoices>>;
+  shelterId?: InputMaybe<Scalars['ID']['input']>;
+  status?: InputMaybe<Array<BedStatusChoices>>;
+};
+
 export enum BedStatusChoices {
   Available = 'AVAILABLE',
   Occupied = 'OCCUPIED',
@@ -191,6 +207,15 @@ export enum BedTypeChoices {
   Rollaway = 'ROLLAWAY',
   Twin = 'TWIN'
 }
+
+export type BedTypeOffsetPaginated = {
+  __typename?: 'BedTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<BedType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
 
 export type CityType = {
   __typename?: 'CityType';
@@ -2028,6 +2053,7 @@ export enum PronounEnum {
 export type Query = {
   __typename?: 'Query';
   adminShelters: AdminShelterTypeOffsetPaginated;
+  beds: BedTypeOffsetPaginated;
   bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
   caseworkerOrganizations: OrganizationTypeOffsetPaginated;
   clientContact: ClientContactType;
@@ -2053,6 +2079,7 @@ export type Query = {
   organizationMember: OrganizationMemberType;
   organizationMembers: OrganizationMemberTypeOffsetPaginated;
   reportSummary: ReportSummaryType;
+  rooms: RoomTypeOffsetPaginated;
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
@@ -2068,6 +2095,12 @@ export type Query = {
 export type QueryAdminSheltersArgs = {
   filters?: InputMaybe<ShelterFilter>;
   ordering?: Array<ShelterOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryBedsArgs = {
+  filters?: InputMaybe<BedFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2208,6 +2241,12 @@ export type QueryReportSummaryArgs = {
 };
 
 
+export type QueryRoomsArgs = {
+  filters?: InputMaybe<RoomFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryServiceCategoriesArgs = {
   ordering?: Array<OrganizationServiceCategoryOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -2329,6 +2368,16 @@ export type RevertNoteInput = {
 
 export type RevertNotePayload = NoteType | OperationInfo;
 
+export type RoomFilter = {
+  AND?: InputMaybe<RoomFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<RoomFilter>;
+  OR?: InputMaybe<RoomFilter>;
+  roomType?: InputMaybe<Array<RoomStyleChoices>>;
+  shelterId?: InputMaybe<Scalars['ID']['input']>;
+  status?: InputMaybe<Array<RoomStatusChoices>>;
+};
+
 export enum RoomStatusChoices {
   Available = 'AVAILABLE',
   NeedsMaintenance = 'NEEDS_MAINTENANCE',
@@ -2364,6 +2413,15 @@ export type RoomType = {
   roomTypeOther?: Maybe<Scalars['String']['output']>;
   shelter: ShelterType;
   status?: Maybe<RoomStatusChoices>;
+};
+
+export type RoomTypeOffsetPaginated = {
+  __typename?: 'RoomTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<RoomType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export enum SpaChoices {

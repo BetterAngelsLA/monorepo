@@ -1,8 +1,10 @@
 """Shelter GraphQL types, inputs, filters, and ordering definitions."""
 
 from shelters.types.filters import (
+    BedFilter,
     GeolocationInput,
     MapBoundsInput,
+    RoomFilter,
     ShelterFilter,
     ShelterOrder,
     ShelterPropertyInput,
@@ -64,8 +66,10 @@ __all__ = [
     "ServiceType",
     "StorageType",
     # filters
+    "BedFilter",
     "GeolocationInput",
     "MapBoundsInput",
+    "RoomFilter",
     "ShelterFilter",
     "ShelterOrder",
     "ShelterPropertyInput",
