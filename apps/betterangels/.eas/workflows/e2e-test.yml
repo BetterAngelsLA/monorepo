@@ -9,7 +9,8 @@
 #
 # GitHub commit status is posted at the start (pending) and end (success/failure)
 # using metadata from .env written by eas-e2e.ts.
-# Requires GITHUB_STATUS_TOKEN as an EAS secret (PAT with repo:status scope).
+# If GITHUB_STATUS_TOKEN (EAS secret, PAT with repo:status scope) is not set,
+# status posting is skipped — tests still run.
 #
 # Triggered via: eas workflow:run (from GitHub Actions)
 name: e2e-test
@@ -37,7 +38,7 @@ jobs:
     steps:
       - id: set_pending_status
         run: |
-          set -euo pipefail
+          set -uo pipefail
 
           WORK_DIR="/home/expo/workingdir/temporary-custom-build/apps/betterangels"
           GITHUB_REPOSITORY="$(grep '^GITHUB_REPOSITORY=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
@@ -49,12 +50,12 @@ jobs:
           GITHUB_STATUS_TOKEN="${GITHUB_STATUS_TOKEN:-$(grep '^GITHUB_STATUS_TOKEN=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)}"
 
           if [ -z "${GITHUB_REPOSITORY:-}" ] || [ -z "${GITHUB_STATUS_SHA:-}" ] || [ -z "${GITHUB_STATUS_CONTEXT:-}" ]; then
-            echo "Missing GITHUB_REPOSITORY / GITHUB_STATUS_SHA / GITHUB_STATUS_CONTEXT; cannot post commit status."
-            exit 1
+            echo "⚠️  Missing GITHUB_REPOSITORY / GITHUB_STATUS_SHA / GITHUB_STATUS_CONTEXT; skipping commit status."
+            exit 0
           fi
           if [ -z "${GITHUB_STATUS_TOKEN:-}" ]; then
-            echo "Missing GITHUB_STATUS_TOKEN; cannot post commit status."
-            exit 1
+            echo "⚠️  Missing GITHUB_STATUS_TOKEN; skipping commit status."
+            exit 0
           fi
 
           TARGET_URL=""
@@ -85,7 +86,8 @@ jobs:
             -H "Authorization: Bearer ${GITHUB_STATUS_TOKEN}" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_STATUS_SHA}" \
             -d "${BODY}" \
-            >/dev/null
+            >/dev/null \
+            || { echo "⚠️  Failed to post pending status (curl error); continuing."; exit 0; }
 
           echo "Posted pending status ${GITHUB_STATUS_CONTEXT} for ${GITHUB_REPOSITORY}@${GITHUB_STATUS_SHA}"
 
@@ -116,7 +118,7 @@ jobs:
     steps:
       - id: set_final_status
         run: |
-          set -euo pipefail
+          set -uo pipefail
 
           WORK_DIR="/home/expo/workingdir/temporary-custom-build/apps/betterangels"
           GITHUB_REPOSITORY="$(grep '^GITHUB_REPOSITORY=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
@@ -135,12 +137,12 @@ jobs:
           echo "IOS_STATUS=${IOS_STATUS:-}"
 
           if [ -z "${GITHUB_REPOSITORY:-}" ] || [ -z "${GITHUB_STATUS_SHA:-}" ] || [ -z "${GITHUB_STATUS_CONTEXT:-}" ]; then
-            echo "Missing GITHUB_REPOSITORY / GITHUB_STATUS_SHA / GITHUB_STATUS_CONTEXT; cannot post commit status."
-            exit 1
+            echo "⚠️  Missing GITHUB_REPOSITORY / GITHUB_STATUS_SHA / GITHUB_STATUS_CONTEXT; skipping commit status."
+            exit 0
           fi
           if [ -z "${GITHUB_STATUS_TOKEN:-}" ]; then
-            echo "Missing GITHUB_STATUS_TOKEN; cannot post commit status."
-            exit 1
+            echo "⚠️  Missing GITHUB_STATUS_TOKEN; skipping commit status."
+            exit 0
           fi
 
           if [ "${ANDROID_STATUS}" = "success" ] && [ "${IOS_STATUS}" = "success" ]; then
@@ -178,6 +180,7 @@ jobs:
             -H "Authorization: Bearer ${GITHUB_STATUS_TOKEN}" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_STATUS_SHA}" \
             -d "${BODY}" \
-            >/dev/null
+            >/dev/null \
+            || { echo "⚠️  Failed to post final status (curl error); continuing."; exit 0; }
 
           echo "Posted ${STATE} status ${GITHUB_STATUS_CONTEXT} for ${GITHUB_REPOSITORY}@${GITHUB_STATUS_SHA}"
