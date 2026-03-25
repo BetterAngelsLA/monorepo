@@ -149,9 +149,9 @@ export function setupEnvAndFingerprint(
     }
   }
 
-  // Collect EXPO_PUBLIC_* secrets from env (CI values override profile defaults)
+  // Collect EXPO_PUBLIC_* and MAESTRO_* secrets from env (CI values override profile defaults)
   for (const [key, value] of Object.entries(process.env)) {
-    if (key.startsWith('EXPO_PUBLIC') && value) {
+    if ((key.startsWith('EXPO_PUBLIC') || key.startsWith('MAESTRO_')) && value) {
       envMap.set(key, value);
     }
   }
