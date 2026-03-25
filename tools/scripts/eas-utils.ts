@@ -2,18 +2,21 @@
  * Shared utilities for EAS scripts (eas-deploy.ts, eas-e2e-trigger.ts, etc.)
  *
  * Provides common helpers for:
- *   - CLI arg parsing
+ *   - CLI arg parsing (minimist)
  *   - Environment variable access
  *   - Command execution with JSON parsing
- *   - HTTP requests (no external deps)
  *   - .env / fingerprint setup
  */
 
 import { execSync } from 'child_process';
 import * as fs from 'fs';
-import * as http from 'http';
-import * as https from 'https';
+import minimist from 'minimist';
 import * as path from 'path';
+import stripAnsi from 'strip-ansi';
+
+export const argv = minimist(process.argv.slice(2));
+
+export const EAS_ACCOUNT = process.env.EAS_ACCOUNT || 'better-angels';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -26,21 +29,6 @@ export interface UpdateResult {
   branch: string;
   gitCommitHash: string;
   runtimeVersion: string;
-}
-
-// ---------------------------------------------------------------------------
-// CLI helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Parse a --flag value from process.argv.
- * Supports both `--flag value` and `--flag=value`.
- */
-export function getArg(flag: string): string {
-  const args = process.argv.slice(2);
-  const i = args.findIndex((a) => a === flag || a.startsWith(`${flag}=`));
-  if (i === -1) return '';
-  return args[i].includes('=') ? args[i].split('=')[1] : args[i + 1] ?? '';
 }
 
 // ---------------------------------------------------------------------------
@@ -81,65 +69,42 @@ export function run(
 
 /**
  * Run a command and parse its stdout as JSON.
- * Handles nx/eas CLI output that may contain ANSI codes and non-JSON text.
+ * Handles nx/eas CLI output that may contain ANSI codes and non-JSON text
+ * by finding the first valid JSON array or object in the output.
  */
 export function runJson<T>(cmd: string, opts?: { cwd?: string }): T {
   const raw = run(cmd, { silent: true, ...opts });
-  // Strip ANSI escape codes
-  // eslint-disable-next-line no-control-regex
-  const cleaned = raw.replace(/\x1B\[[0-9;]*[A-Za-z]/g, '');
-  // Try parsing from every [ or { — earlier ones may be non-JSON text
-  const re = /[\[{]/g;
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(cleaned)) !== null) {
-    const sub = cleaned.substring(match.index);
-    const endChar = sub[0] === '[' ? ']' : '}';
-    for (let i = 0; i < sub.length; i++) {
-      if (sub[i] === endChar) {
-        try {
-          return JSON.parse(sub.substring(0, i + 1)) as T;
-        } catch {
-          // Not valid JSON yet, keep scanning
-        }
+  const cleaned = stripAnsi(raw);
+
+  // Find the first valid JSON object or array in the output
+  for (let i = 0; i < cleaned.length; i++) {
+    if (cleaned[i] === '[' || cleaned[i] === '{') {
+      try {
+        return JSON.parse(cleaned.substring(i)) as T;
+      } catch {
+        // Not valid JSON from this position, keep scanning
       }
     }
   }
+
   throw new Error(
     `Could not parse JSON from output:\n${cleaned.slice(0, 500)}`
   );
 }
 
 // ---------------------------------------------------------------------------
-// HTTP
+// Project helpers
 // ---------------------------------------------------------------------------
 
 /**
- * Simple HTTPS/HTTP request helper (no external deps).
+ * Resolve and validate a project directory under apps/.
  */
-export function httpRequest(
-  url: string,
-  options: {
-    method: string;
-    headers?: Record<string, string>;
-    body?: string;
+export function resolveProjectDir(project: string): string {
+  const projectDir = path.resolve(process.cwd(), 'apps', project);
+  if (!fs.existsSync(projectDir)) {
+    throw new Error(`Project directory not found: ${projectDir}`);
   }
-): Promise<{ status: number; body: string }> {
-  return new Promise((resolve, reject) => {
-    const parsedUrl = new URL(url);
-    const opts = { method: options.method, headers: options.headers };
-    const callback = (res: http.IncomingMessage) => {
-      let data = '';
-      res.on('data', (chunk: Buffer) => (data += chunk.toString()));
-      res.on('end', () => resolve({ status: res.statusCode ?? 0, body: data }));
-    };
-    const req =
-      parsedUrl.protocol === 'https:'
-        ? https.request(parsedUrl, opts, callback)
-        : http.request(parsedUrl, opts, callback);
-    req.on('error', reject);
-    if (options.body) req.write(options.body);
-    req.end();
-  });
+  return projectDir;
 }
 
 // ---------------------------------------------------------------------------
@@ -236,12 +201,14 @@ export function triggerEasWorkflow(
   slug: string
 ): string {
   console.log('Triggering EAS workflow...');
-  const output = run(
+  const rawOutput = run(
     'npx eas-cli workflow:run .eas/workflows/e2e-test.yml --non-interactive',
     { cwd: projectDir }
   );
 
-  const urlMatch = output.match(/https:\/\/expo\.dev\S+/);
+  const output = stripAnsi(rawOutput);
+
+  const urlMatch = output.match(/https:\/\/expo\.dev\/[^\s]+/);
   if (urlMatch) return urlMatch[0];
 
   const uuidMatch = output.match(

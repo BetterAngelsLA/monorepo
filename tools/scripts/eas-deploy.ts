@@ -37,11 +37,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import {
+  EAS_ACCOUNT,
   UpdateResult,
-  getArg,
+  argv,
   getEnv,
   getOptionalEnv,
-  httpRequest,
+  resolveProjectDir,
   run,
   runJson,
   setupEnvAndFingerprint,
@@ -98,8 +99,7 @@ interface DeployResults {
 // ---------------------------------------------------------------------------
 
 function parseArgs(): { project: string; profile: string } {
-  const project = getArg('--project');
-  const profile = getArg('--profile');
+  const { project, profile } = argv;
   if (!project || !profile) {
     console.error('Usage: eas-deploy.ts --project <name> --profile <profile>');
     process.exit(1);
@@ -168,7 +168,7 @@ function checkOrTriggerBuild(
 function toBuildResult(info: BuildInfo, slug: string): PlatformBuildResult {
   return {
     buildId: info.id,
-    buildLink: `https://expo.dev/accounts/better-angels/projects/${slug}/builds/${info.id}`,
+    buildLink: `https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${slug}/builds/${info.id}`,
     distribution: info.distribution,
     buildProfile: info.buildProfile,
     runtimeVersion: info.runtimeVersion,
@@ -308,13 +308,15 @@ Update QR   | <a href="${androidUpdate?.qrUrl ?? ''}"><img src="${
     'User-Agent': 'eas-deploy-script',
   };
 
-  const listRes = await httpRequest(listUrl, { method: 'GET', headers });
+  const listRes = await fetch(listUrl, { method: 'GET', headers });
   if (listRes.status !== 200) {
-    console.error(`Failed to list comments: ${listRes.status} ${listRes.body}`);
+    console.error(
+      `Failed to list comments: ${listRes.status} ${await listRes.text()}`
+    );
     return;
   }
 
-  const comments = JSON.parse(listRes.body) as Array<{
+  const comments = (await listRes.json()) as Array<{
     id: number;
     body: string;
   }>;
@@ -322,28 +324,32 @@ Update QR   | <a href="${androidUpdate?.qrUrl ?? ''}"><img src="${
 
   if (existing) {
     const updateUrl = `https://api.github.com/repos/${owner}/${repoName}/issues/comments/${existing.id}`;
-    const updateRes = await httpRequest(updateUrl, {
+    const updateRes = await fetch(updateUrl, {
       method: 'PATCH',
       headers,
       body: JSON.stringify({ body }),
     });
     if (updateRes.status !== 200) {
       console.error(
-        `Failed to update comment: ${updateRes.status} ${updateRes.body}`
+        `Failed to update comment: ${
+          updateRes.status
+        } ${await updateRes.text()}`
       );
     } else {
       console.log('Updated existing PR comment');
     }
   } else {
     const createUrl = `https://api.github.com/repos/${owner}/${repoName}/issues/${prNumber}/comments`;
-    const createRes = await httpRequest(createUrl, {
+    const createRes = await fetch(createUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify({ body }),
     });
     if (createRes.status !== 201) {
       console.error(
-        `Failed to create comment: ${createRes.status} ${createRes.body}`
+        `Failed to create comment: ${
+          createRes.status
+        } ${await createRes.text()}`
       );
     } else {
       console.log('Created new PR comment');
@@ -407,14 +413,16 @@ async function postSlackNotification(results: DeployResults): Promise<void> {
     ],
   };
 
-  const res = await httpRequest(webhookUrl, {
+  const res = await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
   if (res.status !== 200) {
-    console.error(`Slack notification failed: ${res.status} ${res.body}`);
+    console.error(
+      `Slack notification failed: ${res.status} ${await res.text()}`
+    );
   } else {
     console.log('Slack notification sent');
   }
@@ -429,10 +437,7 @@ async function main(): Promise<void> {
   const branchName = getEnv('BRANCH_NAME');
   const eventName = getOptionalEnv('GITHUB_EVENT_NAME') ?? '';
 
-  const projectDir = path.resolve(process.cwd(), 'apps', project);
-  if (!fs.existsSync(projectDir)) {
-    throw new Error(`Project directory not found: ${projectDir}`);
-  }
+  const projectDir = resolveProjectDir(project);
 
   // 1. Setup secrets and get runtime version
   const runtimeVersion = setupEnvAndFingerprint(projectDir, profile);
@@ -484,7 +489,6 @@ async function main(): Promise<void> {
 
   // 5. E2E (merge_group only)
   if (eventName === 'merge_group' && isPreview) {
-    const account = getOptionalEnv('EAS_ACCOUNT') ?? 'better-angels';
     writeE2eMetadata(projectDir, {
       runtimeVersion,
       projectId,
@@ -492,9 +496,9 @@ async function main(): Promise<void> {
       slug,
       sha: getOptionalEnv('GITHUB_SHA') ?? '',
       statusContext: 'Betterangels E2E Tests',
-      account,
+      account: EAS_ACCOUNT,
     });
-    triggerEasWorkflow(projectDir, account, slug);
+    triggerEasWorkflow(projectDir, EAS_ACCOUNT, slug);
   }
 
   // 6. PR comment (pull_request only, preview only)

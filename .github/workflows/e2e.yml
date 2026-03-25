@@ -108,9 +108,7 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: 📦 Install dependencies
-        run: |
-          npm install --global eas-cli
-          yarn install
+        run: yarn install
 
       # --- 4. Trigger E2E via NX ---
       - name: 🧪 Trigger E2E tests

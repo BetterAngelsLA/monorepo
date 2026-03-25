@@ -27,15 +27,13 @@
  *   Same as eas-deploy.ts — needed when creating a new update.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-
 import {
+  EAS_ACCOUNT,
   UpdateResult,
+  argv,
   cleanupEnv,
-  getArg,
-  getOptionalEnv,
   readProjectConfig,
+  resolveProjectDir,
   runJson,
   setupEnvAndFingerprint,
   triggerEasWorkflow,
@@ -60,9 +58,7 @@ interface UpdateListResponse {
 // ---------------------------------------------------------------------------
 
 function parseArgs(): { project: string; branch: string; sha: string } {
-  const project = getArg('--project');
-  const branch = getArg('--branch');
-  const sha = getArg('--sha');
+  const { project, branch, sha } = argv;
   if (!project || !branch || !sha) {
     console.error(
       'Usage: eas-e2e-trigger.ts --project <name> --branch <ref> --sha <commit>'
@@ -130,12 +126,8 @@ function createUpdate(
 
 function main(): void {
   const { project, branch, sha } = parseArgs();
-  const account = getOptionalEnv('EAS_ACCOUNT') ?? 'better-angels';
 
-  const projectDir = path.resolve(process.cwd(), 'apps', project);
-  if (!fs.existsSync(projectDir)) {
-    throw new Error(`Project directory not found: ${projectDir}`);
-  }
+  const projectDir = resolveProjectDir(project);
 
   // 1. Read project config (slug, projectId)
   const { slug, projectId } = readProjectConfig(projectDir);
@@ -167,10 +159,10 @@ function main(): void {
     slug,
     sha,
     statusContext: `${project} E2E Tests`,
-    account,
+    account: EAS_ACCOUNT,
   });
 
-  const workflowUrl = triggerEasWorkflow(projectDir, account, slug);
+  const workflowUrl = triggerEasWorkflow(projectDir, EAS_ACCOUNT, slug);
 
   // 5. Clean up
   cleanupEnv(projectDir);
