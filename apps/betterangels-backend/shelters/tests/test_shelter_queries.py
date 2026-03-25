@@ -9,9 +9,11 @@ from shelters.enums import (
     AccessibilityChoices,
     DemographicChoices,
     EntryRequirementChoices,
+    ExitPolicyChoices,
     FunderChoices,
     ParkingChoices,
     PetChoices,
+    ReferralRequirementChoices,
     RoomStyleChoices,
     ShelterChoices,
     ShelterProgramChoices,
@@ -26,11 +28,13 @@ from shelters.models import (
     City,
     Demographic,
     EntryRequirement,
+    ExitPolicy,
     ExteriorPhoto,
     Funder,
     InteriorPhoto,
     Parking,
     Pet,
+    ReferralRequirement,
     RoomStyle,
     Service,
     ServiceCategory,
@@ -71,7 +75,10 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             demographics_other="demographics other",
             description="description",
             email="shelter@example.com",
+            emergency_surge=True,
             entry_info="entry info",
+            exit_policy=[ExitPolicy.objects.get_or_create(name=ExitPolicyChoices.OTHER)[0]],
+            exit_policy_other="exit policy other",
             funders_other="funders other",
             max_stay=7,
             name="name",
@@ -99,6 +106,10 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             ],
             demographics=[Demographic.objects.get_or_create(name=DemographicChoices.ALL)[0]],
             entry_requirements=[EntryRequirement.objects.get_or_create(name=EntryRequirementChoices.PHOTO_ID)[0]],
+            referral_requirement=[
+                ReferralRequirement.objects.get_or_create(name=ReferralRequirementChoices.REFERRAL_MATCHED)[0]
+            ],
+            visitors_allowed=True,
             funders=[Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)[0]],
             services=[case_management],
             parking=[Parking.objects.get_or_create(name=ParkingChoices.BICYCLE)[0]],
@@ -151,7 +162,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             }}
         """
         variables = {"id": shelter.pk}
-        expected_query_count = 18
+        expected_query_count = 20
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -168,7 +179,10 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             "description": "description",
             "distanceInMiles": None,
             "email": "shelter@example.com",
+            "emergencySurge": True,
             "entryInfo": "entry info",
+            "exitPolicy": [{"name": ExitPolicyChoices.OTHER.name}],
+            "exitPolicyOther": "exit policy other",
             "fundersOther": "funders other",
             "maxStay": 7,
             "name": "name",
@@ -193,6 +207,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             "funders": [{"name": FunderChoices.CITY_OF_LOS_ANGELES.name}],
             "parking": [{"name": ParkingChoices.BICYCLE.name}],
             "pets": [{"name": PetChoices.CATS.name}],
+            "referralRequirement": [{"name": ReferralRequirementChoices.REFERRAL_MATCHED.name}],
             "roomStyles": [{"name": RoomStyleChoices.CONGREGATE.name}],
             "services": [
                 {
@@ -209,6 +224,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             "spa": [{"name": SPAChoices.ONE.name}],
             "specialSituationRestrictions": [{"name": SpecialSituationRestrictionChoices.NONE.name}],
             "storage": [{"name": StorageChoices.AMNESTY_LOCKERS.name}],
+            "visitorsAllowed": True,
             "additionalContacts": [
                 {"id": ANY, "contactName": "shelter contact 1", "contactNumber": "2125551211"},
                 {"id": ANY, "contactName": "shelter contact 2", "contactNumber": "2125551212"},
@@ -325,7 +341,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             }}
         """
 
-        expected_query_count = 19
+        expected_query_count = 21
 
         variables = {"ordering": {"name": "ASC"}}
 
