@@ -1,16 +1,18 @@
+import { useQuery } from '@apollo/client/react';
 import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
+import {
+  operatorPath,
+  reservationPathSegment,
+  useUser,
+} from '@monorepo/react/shelter';
+import { Plus, UserCog } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
-import { Plus, UserCog } from 'lucide-react';
 import { Link, useLocation, useParams } from 'react-router-dom';
+import { GetShelterNameDocument } from '../graphql/__generated__/shelters.generated';
 import { useActiveOrg } from '../providers/activeOrg';
 import { Button } from './base-ui/buttons';
 import { Dropdown } from './base-ui/dropdown';
-import { useQuery } from '@apollo/client/react';
-import { operatorPath, reservationPathSegment, useUser } from '@monorepo/react/shelter';
-import { GetShelterNameDocument } from '../graphql/__generated__/shelters.generated';
-
-
 
 function NavBarActions({ children }: { children?: ReactNode }) {
   return (
@@ -35,7 +37,8 @@ export function NavBar() {
   const selectedOrganizationId = activeOrg?.id ?? '';
 
   const isDashboardPage =
-    location.pathname === operatorPath || location.pathname === `${operatorPath}/`;
+    location.pathname === operatorPath ||
+    location.pathname === `${operatorPath}/`;
 
   const shelterId = params.shelterId || params.id;
   const isShelterPage =
@@ -46,7 +49,9 @@ export function NavBar() {
     skip: !isShelterPage || !shelterId,
   });
 
-  const isReservationPage = location.pathname.includes(`/${reservationPathSegment}`);
+  const isReservationPage = location.pathname.includes(
+    `/${reservationPathSegment}`
+  );
   const organizationName = user?.organization?.name;
   const shelterName = shelterData?.shelter?.name;
   const pageTitle = isReservationPage ? 'Shelter Reservation' : undefined;
@@ -60,8 +65,8 @@ export function NavBar() {
     breadcrumbs.length > 0
       ? null
       : organizations.length === 1
-        ? organizations[0].name
-        : 'Admin Dashboard';
+      ? organizations[0].name
+      : 'Admin Dashboard';
 
   const selectedOption = useMemo(() => {
     const org = organizations.find((o) => o.id === selectedOrganizationId);
