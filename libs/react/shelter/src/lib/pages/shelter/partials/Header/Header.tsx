@@ -1,10 +1,35 @@
 import { ArrowLeftIcon, BedIcon, UsersIcon } from '@monorepo/react/icons';
 import { Link } from 'react-router-dom';
+import { DemographicChoices } from '../../../../apollo';
 import { enumDisplayDemographics } from '../../../../static';
 import { ViewShelterQuery } from '../../__generated__/shelter.generated';
 import { HeroCarousel } from './HeroCarousel';
 
 export function Header({ shelter }: { shelter: ViewShelterQuery['shelter'] }) {
+  const demographics = (() => {
+    const items = shelter.demographics ?? [];
+    const hasOther = items.some((d) => d.name === DemographicChoices.Other);
+
+    const labels = items
+      .map((d) => {
+        if (!d.name || d.name === DemographicChoices.Other) return null;
+        return enumDisplayDemographics[
+          d.name as keyof typeof enumDisplayDemographics
+        ];
+      })
+      .filter((label): label is string => Boolean(label));
+
+    if (hasOther && shelter.demographicsOther != null) {
+      labels.push(shelter.demographicsOther);
+    }
+
+    return labels;
+  })();
+
+  const demographicsDisplay = demographics
+    .join(', ')
+    .replace(/,([^,]*)$/, ', and$1');
+
   return (
     <>
       <div className="bg-steel-blue -mx-4 flex items-center gap-8 py-2">
@@ -22,14 +47,7 @@ export function Header({ shelter }: { shelter: ViewShelterQuery['shelter'] }) {
       </div>
       <div className="flex gap-2 items-center mb-6">
         <UsersIcon className="w-6 h-6 fill-primary-20" />
-        <p className="text-sm">
-          {shelter.demographics
-            ?.map((demographic) =>
-              demographic.name ? enumDisplayDemographics[demographic.name] : ''
-            )
-            .join(', ')
-            .replace(/,([^,]*)$/, ' and$1')}
-        </p>
+        <p className="text-sm">{demographicsDisplay}</p>
         {!!shelter.totalBeds && (
           <>
             <span className="text-neutral-60">·</span>
