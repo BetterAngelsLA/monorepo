@@ -11,7 +11,6 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
 from django_choices_field import TextChoicesField
