@@ -1,7 +1,6 @@
 import { useQuery } from '@apollo/client/react';
-import { operatorPath } from '@monorepo/react/shelter';
+import { operatorPath, reservationPathSegment, useUser } from '@monorepo/react/shelter';
 import { Outlet, useLocation, useParams } from 'react-router-dom';
-import { useUser } from '@monorepo/react/shelter';
 import { NavBar } from '../NavBar';
 import { GetShelterNameDocument } from '../../graphql/__generated__/shelters.generated';
 
@@ -21,7 +20,7 @@ export function OperatorLayout() {
     skip: !isShelterPage || !shelterId,
   });
 
-  const isReservationPage = location.pathname.includes('/reservation');
+  const isReservationPage = location.pathname.includes(`/${reservationPathSegment}`);
   const organizationName = user?.organization?.name;
   const shelterName = shelterData?.shelter?.name;
   const pageTitle = isReservationPage ? 'Shelter Reservation' : undefined;

@@ -1,2 +1,1 @@
-export { publicRoutes } from './buildShelterRoutes';
-export { useOperatorRoute } from './useShelterRoutes';
+export { useShelterRoutes } from './useShelterRoutes';

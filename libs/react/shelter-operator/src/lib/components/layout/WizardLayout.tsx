@@ -89,7 +89,16 @@ export function WizardLayout<T extends FieldValues = FieldValues>({
               showBack={!navigation.isFirstStep}
               showNext={!navigation.isLastStep}
               onBack={navigationConfig.onBack || navigation.goToPrev}
-              onNext={navigationConfig.onNext || navigation.goToNext}
+              onNext={async () => {
+                const isValid = await methods.trigger();
+                if (isValid) {
+                  if (navigationConfig.onNext) {
+                    await navigationConfig.onNext();
+                  } else {
+                    navigation.goToNext();
+                  }
+                }
+              }}
               nextLabel={navigationConfig.nextLabel}
               backLabel={navigationConfig.backLabel}
               nextDisabled={navigationConfig.nextDisabled}

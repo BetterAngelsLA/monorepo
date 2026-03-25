@@ -4,6 +4,7 @@ import { Button } from '../base-ui/buttons/buttons';
 
 export interface WizardStep {
   label: string;
+  pathSegment?: string;
 }
 
 export interface WizardProgressBarProps {

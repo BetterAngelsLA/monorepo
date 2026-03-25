@@ -1,4 +1,11 @@
-import { useUser } from '@monorepo/react/shelter';
+import {
+  reservationAddProfileSegment,
+  reservationConfirmationSegment,
+  reservationPathSegment,
+  reservationSelectRoomSegment,
+  reservationSelectShelterSegment,
+  useUser,
+} from '@monorepo/react/shelter';
 import { Route, Routes } from 'react-router-dom';
 import { OperatorLayout } from './components/layout/OperatorLayout';
 import { ShelterDashboardPage } from './ShelterDashboardPage';
@@ -24,19 +31,19 @@ export function OperatorApp() {
             <Route index element={<Dashboard />} />
             <Route path="dashboard/create" element={<CreateShelterForm />} />
             <Route path="shelter/:id" element={<ShelterDashboardPage />} />
-            <Route path="reservation/*" element={<ReservationPage />}>
-              <Route path="add-profile" element={<AddProfilePage />} />
-              <Route path="select-shelter" element={<SelectShelterPage />} />
-              <Route path="select-room" element={<SelectRoomPage />} />
-              <Route path="confirmation" element={<ConfirmationPage />} />
+            <Route path={`${reservationPathSegment}/*`} element={<ReservationPage />}>
+              <Route path={reservationAddProfileSegment} element={<AddProfilePage />} />
+              <Route path={reservationSelectShelterSegment} element={<SelectShelterPage />} />
+              <Route path={reservationSelectRoomSegment} element={<SelectRoomPage />} />
+              <Route path={reservationConfirmationSegment} element={<ConfirmationPage />} />
             </Route>
             <Route
-              path="shelter/:shelterId/reservation/*"
+              path={`shelter/:shelterId/${reservationPathSegment}/*`}
               element={<ReservationPage />}
             >
-              <Route path="add-profile" element={<AddProfilePage />} />
-              <Route path="select-room" element={<SelectRoomPage />} />
-              <Route path="confirmation" element={<ConfirmationPage />} />
+              <Route path={reservationAddProfileSegment} element={<AddProfilePage />} />
+              <Route path={reservationSelectRoomSegment} element={<SelectRoomPage />} />
+              <Route path={reservationConfirmationSegment} element={<ConfirmationPage />} />
             </Route>
           </Route>
         </Routes>

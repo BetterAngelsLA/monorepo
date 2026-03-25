@@ -1,14 +1,21 @@
-import { operatorPath } from '@monorepo/react/shelter';
+import {
+  operatorPath,
+  reservationAddProfileSegment,
+  reservationConfirmationSegment,
+  reservationPathSegment,
+  reservationSelectRoomSegment,
+  reservationSelectShelterSegment,
+} from '@monorepo/react/shelter';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { WizardLayout } from '../../components/layout/WizardLayout';
 import type { WizardStep } from '../../components/layout/WizardProgressBar';
 
 const ALL_STEPS: WizardStep[] = [
-  { label: 'Add Profile' },
-  { label: 'Select Shelter' },
-  { label: 'Select Room / Bed' },
-  { label: 'Confirmation' },
+  { label: 'Add Profile', pathSegment: reservationAddProfileSegment },
+  { label: 'Select Shelter', pathSegment: reservationSelectShelterSegment },
+  { label: 'Select Room / Bed', pathSegment: reservationSelectRoomSegment },
+  { label: 'Confirmation', pathSegment: reservationConfirmationSegment },
 ];
 
 export function ReservationPage() {
@@ -24,15 +31,11 @@ export function ReservationPage() {
 
   const paths = useMemo(() => {
     const base = isShelterLevel
-      ? `${operatorPath}/shelter/${shelterId}/reservation`
-      : `${operatorPath}/reservation`;
+      ? `${operatorPath}/shelter/${shelterId}/${reservationPathSegment}`
+      : `${operatorPath}/${reservationPathSegment}`;
 
-    const segments = isShelterLevel
-      ? ['add-profile', 'select-room', 'confirmation']
-      : ['add-profile', 'select-shelter', 'select-room', 'confirmation'];
-
-    return segments.map(seg => `${base}/${seg}`);
-  }, [isShelterLevel, shelterId]);
+    return steps.map(step => `${base}/${step.pathSegment}`);
+  }, [isShelterLevel, shelterId, steps]);
 
   return (
     <WizardLayout
