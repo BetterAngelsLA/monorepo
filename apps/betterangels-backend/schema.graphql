@@ -2022,6 +2022,7 @@ type ServiceType {
 }
 
 enum ShelterChoices {
+  ACCESS_CENTER
   BUILDING
   CHURCH
   HOTEL_MOTEL

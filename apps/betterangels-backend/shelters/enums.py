@@ -33,6 +33,7 @@ class SpecialSituationRestrictionChoices(models.TextChoices):
 
 @strawberry.enum
 class ShelterChoices(models.TextChoices):
+    ACCESS_CENTER = "access_center", _("Access Center / Day Center")
     BUILDING = "building", _("Building")
     CHURCH = "church", _("Church")
     HOTEL_MOTEL = "hotel_motel", _("Hotel/Motel")
