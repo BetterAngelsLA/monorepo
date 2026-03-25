@@ -30,9 +30,7 @@ jobs:
   maestro_android_test:
     type: maestro
     env:
-      # Inner update URL must be percent-encoded so the dev client parses it correctly.
-      # disableOnboarding is an outer param for the dev client, not the EAS server.
-      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https%3A%2F%2Fu.expo.dev%2F53171ba4-60ca-40cb-b3e6-b0c2393677b8%2Fgroup%2F${{ inputs.update_group_id }}%3Fplatform%3Dandroid&disableOnboarding=1
+      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=android%26disableOnboarding%3D1
     params:
       build_id: ${{ inputs.android_build_id }}
       flow_path: ['.maestro/tests/landing.yml']
@@ -40,7 +38,7 @@ jobs:
   maestro_ios_test:
     type: maestro
     env:
-      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https%3A%2F%2Fu.expo.dev%2F53171ba4-60ca-40cb-b3e6-b0c2393677b8%2Fgroup%2F${{ inputs.update_group_id }}%3Fplatform%3Dios&disableOnboarding=1
+      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=ios%26disableOnboarding%3D1
     params:
       build_id: ${{ inputs.ios_build_id }}
       flow_path: ['.maestro/tests/landing.yml']
