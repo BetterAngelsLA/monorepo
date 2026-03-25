@@ -22,9 +22,14 @@
  *   EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 import {
+  EAS_ACCOUNT,
   argv,
   getEnv,
+  getOptionalEnv,
   resolveProjectDir,
   run,
   runJson,
@@ -107,7 +112,29 @@ if (!groupId) {
 }
 console.log(`Update group: ${groupId}`);
 
-// 4. Trigger EAS workflow with build IDs + update group
+// 4. Write GitHub status metadata to .env so the EAS workflow can post commit statuses
+const githubRepository = getOptionalEnv('GITHUB_REPOSITORY');
+const githubStatusSha = getOptionalEnv('GITHUB_STATUS_SHA');
+const githubStatusContext = `eas/e2e/${project}`;
+const envPath = path.join(projectDir, '.env');
+
+if (githubRepository && githubStatusSha) {
+  const statusVars = [
+    `GITHUB_REPOSITORY=${githubRepository}`,
+    `GITHUB_STATUS_SHA=${githubStatusSha}`,
+    `GITHUB_STATUS_CONTEXT=${githubStatusContext}`,
+    `EAS_ACCOUNT=${EAS_ACCOUNT}`,
+    `EAS_PROJECT_SLUG=${project}`,
+  ];
+  fs.appendFileSync(envPath, statusVars.join('\n') + '\n');
+  console.log(`\nWrote GitHub status metadata to .env`);
+} else {
+  console.log(
+    '\nSkipping GitHub status metadata (GITHUB_REPOSITORY or GITHUB_STATUS_SHA not set)'
+  );
+}
+
+// 5. Trigger EAS workflow with build IDs + update group
 console.log('\nTriggering EAS Maestro workflow...');
 run(
   `npx eas-cli workflow:run .eas/workflows/e2e-test.yml ` +
