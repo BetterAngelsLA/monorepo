@@ -3,7 +3,9 @@
 # This workflow runs device-based Maestro tests.
 # GitHub Actions handles orchestration (fingerprint computation, build triggering,
 # update publishing) where GitHub Secrets and NX monorepo tooling are available.
-# This workflow waits for builds to finish via get-build, then runs Maestro.
+#
+# Build IDs are passed directly. If a build is still in progress, Maestro will
+# wait for it to complete before running tests.
 #
 # Triggered via: eas workflow:run (from GitHub Actions)
 name: e2e-test
@@ -11,44 +13,32 @@ name: e2e-test
 on:
   workflow_dispatch:
     inputs:
-      fingerprint_hash:
+      android_build_id:
         type: string
         required: true
-        description: 'Fingerprint hash to find builds for'
+        description: 'EAS Build ID for Android'
+      ios_build_id:
+        type: string
+        required: true
+        description: 'EAS Build ID for iOS'
       update_group_id:
         type: string
         required: true
         description: 'EAS Update group ID'
 
 jobs:
-  get_android_build:
-    type: get-build
-    params:
-      fingerprint_hash: ${{ inputs.fingerprint_hash }}
-      platform: android
-      wait_for_in_progress: true
-
-  get_ios_build:
-    type: get-build
-    params:
-      fingerprint_hash: ${{ inputs.fingerprint_hash }}
-      platform: ios
-      wait_for_in_progress: true
-
   maestro_android_test:
-    needs: [get_android_build]
     type: maestro
     env:
       MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=android%26disableOnboarding%3D1
     params:
-      build_id: ${{ needs.get_android_build.outputs.build_id }}
+      build_id: ${{ inputs.android_build_id }}
       flow_path: ['.maestro/tests/landing.yml']
 
   maestro_ios_test:
-    needs: [get_ios_build]
     type: maestro
     env:
       MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=ios%26disableOnboarding%3D1
     params:
-      build_id: ${{ needs.get_ios_build.outputs.build_id }}
+      build_id: ${{ inputs.ios_build_id }}
       flow_path: ['.maestro/tests/landing.yml']

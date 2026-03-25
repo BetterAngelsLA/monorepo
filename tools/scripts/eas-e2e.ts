@@ -44,8 +44,8 @@ const projectDir = resolveProjectDir(project);
 // 1. Setup env and compute fingerprint
 const fingerprint = setupEnvAndFingerprint(projectDir, profile);
 
-// 2. Ensure builds exist for this fingerprint (trigger if missing, don't wait)
-function ensureBuildExists(platform: string): void {
+// 2. Find or trigger builds for this fingerprint
+function findOrTriggerBuild(platform: string): string {
   console.log(
     `\nChecking for ${platform} build with runtime version: ${fingerprint}`
   );
@@ -61,20 +61,21 @@ function ensureBuildExists(platform: string): void {
 
   if (builds.length > 0) {
     console.log(`Found existing ${platform} build: ${builds[0].id} (${builds[0].status})`);
-    return;
+    return builds[0].id;
   }
 
   console.log(
-    `No ${platform} build for runtime ${fingerprint}. Triggering build...`
+    `No ${platform} build for runtime ${fingerprint}. Triggering build (--wait false)...`
   );
   const newBuilds = runJson<Array<{ id: string }>>(
     `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --interactive false --wait false --json`
   );
-  console.log(`Triggered ${platform} build: ${newBuilds[0].id} (EAS workflow will wait for it)`);
+  console.log(`Triggered ${platform} build: ${newBuilds[0].id}`);
+  return newBuilds[0].id;
 }
 
-ensureBuildExists('android');
-ensureBuildExists('ios');
+const androidBuildId = findOrTriggerBuild('android');
+const iosBuildId = findOrTriggerBuild('ios');
 
 // 3. Publish update
 console.log(`\nPublishing update on branch: ${branch}`);
@@ -87,16 +88,17 @@ if (!groupId) {
 }
 console.log(`Update group: ${groupId}`);
 
-// 4. Trigger EAS workflow — it uses get-build with wait_for_in_progress
+// 4. Trigger EAS workflow with build IDs + update group
 console.log('\nTriggering EAS Maestro workflow...');
 run(
   `npx eas-cli workflow:run .eas/workflows/e2e-test.yml ` +
-    `-F fingerprint_hash=${fingerprint} ` +
+    `-F android_build_id=${androidBuildId} ` +
+    `-F ios_build_id=${iosBuildId} ` +
     `-F update_group_id=${groupId} ` +
     `--non-interactive`,
   { cwd: projectDir }
 );
 
-console.log('\nE2E tests triggered on EAS (builds will be awaited there)');
+console.log('\nE2E tests triggered on EAS');
 
 console.log('\nE2E tests triggered on EAS');
