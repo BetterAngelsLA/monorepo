@@ -64,7 +64,7 @@ export function ShelterPage({ id }: { id: string }) {
   const hasRestrictions =
     !!shelter.maxStay ||
     !!shelter.curfew ||
-    !!shelter.onSiteSecurity ||
+    shelter.onSiteSecurity != null ||
     hasWysiwygContent(shelter.otherRules);
 
   const hasEcosystemInfo =
