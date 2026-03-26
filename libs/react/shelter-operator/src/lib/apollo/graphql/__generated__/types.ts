@@ -85,8 +85,11 @@ export type AdminShelterType = {
   description: Scalars['String']['output'];
   distanceInMiles?: Maybe<Scalars['Float']['output']>;
   email?: Maybe<Scalars['String']['output']>;
+  emergencySurge?: Maybe<Scalars['Boolean']['output']>;
   entryInfo?: Maybe<Scalars['String']['output']>;
   entryRequirements: Array<EntryRequirementType>;
+  exitPolicy: Array<ExitPolicyType>;
+  exitPolicyOther?: Maybe<Scalars['String']['output']>;
   exteriorPhotos: Array<ShelterPhotoType>;
   funders: Array<FunderType>;
   fundersOther?: Maybe<Scalars['String']['output']>;
@@ -106,6 +109,7 @@ export type AdminShelterType = {
   pets: Array<PetType>;
   phone?: Maybe<Scalars['PhoneNumber']['output']>;
   programFees?: Maybe<Scalars['String']['output']>;
+  referralRequirement: Array<ReferralRequirementType>;
   roomStyles: Array<RoomStyleType>;
   roomStylesOther?: Maybe<Scalars['String']['output']>;
   schedules: Array<ScheduleType>;
@@ -122,6 +126,7 @@ export type AdminShelterType = {
   supervisorialDistrict?: Maybe<Scalars['Int']['output']>;
   totalBeds?: Maybe<Scalars['Int']['output']>;
   updatedAt: Scalars['DateTime']['output'];
+  visitorsAllowed?: Maybe<Scalars['Boolean']['output']>;
   website?: Maybe<Scalars['String']['output']>;
 };
 
@@ -870,6 +875,11 @@ export enum ExitPolicyChoices {
   Other = 'OTHER',
   Violence = 'VIOLENCE'
 }
+
+export type ExitPolicyType = {
+  __typename?: 'ExitPolicyType';
+  name?: Maybe<ExitPolicyChoices>;
+};
 
 export enum EyeColorEnum {
   Blue = 'BLUE',
@@ -2276,6 +2286,11 @@ export enum ReferralRequirementChoices {
   ServiceProviderSubmission = 'SERVICE_PROVIDER_SUBMISSION'
 }
 
+export type ReferralRequirementType = {
+  __typename?: 'ReferralRequirementType';
+  name?: Maybe<ReferralRequirementChoices>;
+};
+
 export enum RelationshipTypeEnum {
   Aunt = 'AUNT',
   Child = 'CHILD',
@@ -2592,8 +2607,11 @@ export type ShelterType = {
   description: Scalars['String']['output'];
   distanceInMiles?: Maybe<Scalars['Float']['output']>;
   email?: Maybe<Scalars['String']['output']>;
+  emergencySurge?: Maybe<Scalars['Boolean']['output']>;
   entryInfo?: Maybe<Scalars['String']['output']>;
   entryRequirements: Array<EntryRequirementType>;
+  exitPolicy: Array<ExitPolicyType>;
+  exitPolicyOther?: Maybe<Scalars['String']['output']>;
   exteriorPhotos: Array<ShelterPhotoType>;
   funders: Array<FunderType>;
   fundersOther?: Maybe<Scalars['String']['output']>;
@@ -2613,6 +2631,7 @@ export type ShelterType = {
   pets: Array<PetType>;
   phone?: Maybe<Scalars['PhoneNumber']['output']>;
   programFees?: Maybe<Scalars['String']['output']>;
+  referralRequirement: Array<ReferralRequirementType>;
   roomStyles: Array<RoomStyleType>;
   roomStylesOther?: Maybe<Scalars['String']['output']>;
   schedules: Array<ScheduleType>;
@@ -2629,6 +2648,7 @@ export type ShelterType = {
   supervisorialDistrict?: Maybe<Scalars['Int']['output']>;
   totalBeds?: Maybe<Scalars['Int']['output']>;
   updatedAt: Scalars['DateTime']['output'];
+  visitorsAllowed?: Maybe<Scalars['Boolean']['output']>;
   website?: Maybe<Scalars['String']['output']>;
 };
 
