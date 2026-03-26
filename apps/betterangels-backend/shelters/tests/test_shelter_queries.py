@@ -167,11 +167,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             }}
         """
         variables = {"id": shelter.pk}
-<<<<<<< HEAD
-        expected_query_count = 19
-=======
         expected_query_count = 20
->>>>>>> main
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
