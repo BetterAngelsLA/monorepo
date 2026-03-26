@@ -96,6 +96,13 @@ class ClientProfileOrder:
 
 
 @strawberry.input
+class PresignedClientUploadInput:
+    client_profile: ID
+    filename: str
+    content_type: str
+
+
+@strawberry.input
 class ClientSearchInput:
     excluded_client_profile_id: Optional[str] = None
     california_id: Optional[str] = None

@@ -226,7 +226,6 @@ CACHES = {
     }
 }
 
-
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASES = {
@@ -280,6 +279,10 @@ USE_I18N = True
 USE_TZ = True
 
 # Storage Settings
+AWS_REGION = env("AWS_REGION")
+AWS_S3_STORAGE_BUCKET_NAME = env("AWS_S3_STORAGE_BUCKET_NAME")
+
+
 if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
     STORAGES = {
         "default": {

@@ -16,6 +16,8 @@ import UploadsPreview from './UploadsPreview';
 import { IMultipleDocUploadsProps } from './types';
 
 export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
+  console.log('################################### MultipleDocUploads');
+
   const { setTab, client, setDocs, docs, title, docType } = props;
   const [createDocument, { loading }] = useMutation(
     CreateClientDocumentDocument,

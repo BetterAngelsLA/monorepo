@@ -898,6 +898,8 @@ enum GenderEnum {
   PREFER_NOT_TO_SAY
 }
 
+union GenerateClientDocumentUploadUrlPayload = PresignedUploadOutput | OperationInfo
+
 input GeolocationInput {
   latitude: Float!
   longitude: Float!
@@ -1379,6 +1381,7 @@ type Mutation {
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
+  generateClientDocumentUploadUrl(data: PresignedClientUploadInput!): GenerateClientDocumentUploadUrlPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
@@ -1715,6 +1718,18 @@ enum PreferredCommunicationEnum {
   LINKEDIN
   TEXT
   WHATSAPP
+}
+
+input PresignedClientUploadInput {
+  clientProfile: ID!
+  filename: String!
+  contentType: String!
+}
+
+type PresignedUploadOutput {
+  url: String!
+  fields: JSON!
+  key: String!
 }
 
 type ProgramEnrollmentType {

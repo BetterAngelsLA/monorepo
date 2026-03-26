@@ -16,6 +16,8 @@ import UploadsPreview from './UploadsPreview';
 import { ISingleDocUploadsProps } from './types';
 
 export default function SingleDocUploads(props: ISingleDocUploadsProps) {
+  console.log('################################### SingleDocUploads');
+
   const { setTab, client, setDocs, docs, title, docType } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { showSnackbar } = useSnackbar();
@@ -34,6 +36,8 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
   );
 
   const uploadDocument = async () => {
+    console.log('################################### uploadDocument');
+
     const document = docs?.[docType];
 
     if (!document || !client) {
@@ -46,6 +50,8 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
         type: document.type,
         name: document.name,
       });
+
+      console.log(JSON.stringify(fileToUpload, null, 2));
 
       await createDocument({
         variables: {

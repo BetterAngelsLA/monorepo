@@ -1,3 +1,5 @@
+# apps/betterangels-backend/clients/schema.py
+
 import re
 from typing import Any, Dict, List, Optional, cast
 
@@ -6,13 +8,7 @@ import strawberry_django
 from accounts.models import User
 from accounts.utils import get_user_permission_group
 from clients.enums import ErrorCodeEnum
-from clients.models import (
-    ClientContact,
-    ClientProfile,
-    ClientProfileDataImport,
-    ClientProfileImportRecord,
-    HmisProfile,
-)
+from clients.models import ClientContact, ClientProfile, ClientProfileDataImport, ClientProfileImportRecord, HmisProfile
 from clients.permissions import (
     ClientContactPermissions,
     ClientHouseholdMemberPermissions,
@@ -21,7 +17,9 @@ from clients.permissions import (
     HmisProfilePermissions,
     SocialMediaProfilePermissions,
 )
+from clients.services.upload import generate_client_document_presigned_upload
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
+from common.graphql.schema import PresignedUploadOutput
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, PhoneNumber
 from common.permissions.enums import AttachmentPermissions
@@ -33,6 +31,7 @@ from django.db import transaction
 from django.db.models import ForeignKey, Prefetch
 from graphql import GraphQLError
 from phonenumber_field.validators import validate_international_phonenumber
+from strawberry.scalars import JSON
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
@@ -59,6 +58,7 @@ from .types import (
     HmisProfileInput,
     HmisProfileType,
     ImportClientProfileInput,
+    PresignedClientUploadInput,
     SocialMediaProfileInput,
     SocialMediaProfileType,
     UpdateClientDocumentInput,
@@ -588,7 +588,36 @@ class Mutation:
     )
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
+    def generate_client_document_upload_url(
+        self,
+        info: Info,
+        data: PresignedClientUploadInput,
+    ) -> PresignedUploadOutput:
+
+        print()
+        print("")
+        print("******************* generate_client_document_upload_url")
+        print()
+
+        result = generate_client_document_presigned_upload(
+            filename=data.filename,
+            content_type=data.content_type,
+        )
+
+        return PresignedUploadOutput(
+            url=result["url"],
+            fields=cast(JSON, result["fields"]),
+            key=result["key"],
+        )
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
     def create_client_document(self, info: Info, data: CreateClientDocumentInput) -> ClientDocumentType:
+
+        print()
+        print("")
+        print("******************* create_client_document")
+        print()
+
         with transaction.atomic():
             user = cast(User, get_current_user(info))
             client_profile = filter_for_user(
@@ -600,6 +629,11 @@ class Mutation:
             permission_group = get_user_permission_group(user)
 
             content_type = ContentType.objects.get_for_model(ClientProfile)
+
+            print(f"******************* {"content_type"}: {content_type}")
+            print("")
+            print("")
+
             client_document = Attachment.objects.create(
                 file=data.file,
                 namespace=data.namespace,

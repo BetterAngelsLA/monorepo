@@ -1,14 +1,26 @@
+# apps/betterangels-backend/common/graphql/schema.py
+
 from datetime import datetime
 from typing import Optional, cast
 
 import strawberry
 from common.graphql.types import FeatureControlData, FlagType, SampleType, SwitchType
+from strawberry.scalars import JSON
 from strawberry.types import Info
-from waffle import (
-    get_waffle_flag_model,
-    get_waffle_sample_model,
-    get_waffle_switch_model,
-)
+from waffle import get_waffle_flag_model, get_waffle_sample_model, get_waffle_switch_model
+
+
+@strawberry.input
+class PresignedUploadInput:
+    filename: str
+    content_type: str
+
+
+@strawberry.type
+class PresignedUploadOutput:
+    url: str
+    fields: JSON
+    key: str
 
 
 @strawberry.type

@@ -1,10 +1,12 @@
+# apps/betterangels-backend/common/models.py
+
 import json
 from typing import Any, Dict, Optional
 from urllib.parse import unquote
 
 import magic
 from common.enums import AttachmentType
-from common.utils import canonicalise_filename, get_unique_file_path
+from common.files.utils import canonicalise_filename, get_unique_file_path, infer_attachment_type
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
@@ -86,15 +88,7 @@ class Attachment(BaseModel):
             self.file.seek(0)
             mime_type = self.file.file.content_type or magic.from_buffer(self.file.read(), mime=True)
             self.mime_type = mime_type
-            # Map MIME type to AttachmentType enum
-            if mime_type.startswith("image"):
-                self.attachment_type = AttachmentType.IMAGE
-            elif mime_type.startswith("audio"):
-                self.attachment_type = AttachmentType.AUDIO
-            elif mime_type.startswith("video"):
-                self.attachment_type = AttachmentType.VIDEO
-            else:
-                self.attachment_type = AttachmentType.DOCUMENT
+            self.attachment_type = infer_attachment_type(self.mime_type)
             self.file.seek(0)
 
         filename = self.original_filename or unquote(self.file.name)

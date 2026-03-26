@@ -1,3 +1,5 @@
+# apps/betterangels-backend/shelters/models/media.py
+
 """Media models — photos and videos attached to shelters."""
 
 from typing import Optional

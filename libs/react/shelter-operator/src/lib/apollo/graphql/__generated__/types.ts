@@ -920,6 +920,8 @@ export enum GenderEnum {
   TransMale = 'TRANS_MALE'
 }
 
+export type GenerateClientDocumentUploadUrlPayload = OperationInfo | PresignedUploadOutput;
+
 export type GeolocationInput = {
   latitude: Scalars['Float']['input'];
   longitude: Scalars['Float']['input'];
@@ -1400,6 +1402,7 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
+  generateClientDocumentUploadUrl: GenerateClientDocumentUploadUrlPayload;
   hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
@@ -1569,6 +1572,11 @@ export type MutationDeleteSocialMediaProfileArgs = {
 
 export type MutationDeleteTaskArgs = {
   data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationGenerateClientDocumentUploadUrlArgs = {
+  data: PresignedClientUploadInput;
 };
 
 
@@ -2010,6 +2018,19 @@ export enum PreferredCommunicationEnum {
   Text = 'TEXT',
   Whatsapp = 'WHATSAPP'
 }
+
+export type PresignedClientUploadInput = {
+  clientProfile: Scalars['ID']['input'];
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+};
+
+export type PresignedUploadOutput = {
+  __typename?: 'PresignedUploadOutput';
+  fields: Scalars['JSON']['output'];
+  key: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+};
 
 export type ProgramEnrollmentType = {
   __typename?: 'ProgramEnrollmentType';

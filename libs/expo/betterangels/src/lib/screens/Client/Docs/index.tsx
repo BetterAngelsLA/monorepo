@@ -1,11 +1,17 @@
+import { useMutation } from '@apollo/client/react';
+import { uploadFileToS3WithPresignedPost } from '@monorepo/expo/shared/clients';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { IconButton, TextMedium } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { File, Paths } from 'expo-file-system';
+import { useEffect, useState } from 'react';
+import { Button, ScrollView, View } from 'react-native';
 import { ClientDocumentType } from '../../../apollo';
 import { useModalScreen } from '../../../providers';
-import { ClientProfileQuery } from '../__generated__/Client.generated';
+import {
+  ClientProfileQuery,
+  GenerateClientDocumentUploadUrlDocument,
+} from '../__generated__/Client.generated';
 import Documents from './Documents';
 import UploadModal from './UploadModal';
 
@@ -22,11 +28,97 @@ export default function Docs({
     setExpanded,
   };
 
+  const [createSignature, { loading }] = useMutation(
+    GenerateClientDocumentUploadUrlDocument,
+    {}
+  );
+
+  useEffect(() => {
+    console.log('*****************  loading:', loading);
+  }, [loading]);
+
+  // generateClientDocumentUploadUrl(filename: String!, contentType: String!): GenerateClientDocumentUploadUrlPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  async function getSig() {
+    console.log('');
+    console.log('################################### getSig');
+    console.log('');
+
+    const filename = 'test.txt';
+    const file = new File(Paths.cache, filename);
+
+    file.write('hello world');
+
+    const fileUri = file.uri;
+
+    if (!client) {
+      return;
+    }
+
+    //     @strawberry.input
+    // class PresignedClientUploadInput:
+    //     client_profile: ID
+    //     filename: str
+    //     content_type: str
+
+    try {
+      const result = await createSignature({
+        variables: {
+          data: {
+            filename: filename,
+            clientProfile: client.clientProfile.id,
+            contentType: 'text/plain',
+          },
+        },
+      });
+
+      console.log();
+      console.log('| -------------  SIG result  ------------- |');
+      console.log(JSON.stringify(result, null, 2));
+      console.log();
+
+      const payload = result.data?.generateClientDocumentUploadUrl;
+
+      if (!payload) {
+        throw new Error('Missing response');
+      }
+
+      if (payload.__typename === 'OperationInfo') {
+        throw new Error(payload.messages.map((m) => m.message).join(', '));
+      }
+
+      if (payload.__typename !== 'PresignedUploadOutput') {
+        throw new Error('Unexpected response type');
+      }
+
+      const presignedPost = {
+        url: payload.url,
+        fields: payload.fields as Record<string, string>,
+        key: payload.key,
+      };
+
+      console.log();
+      console.log('| -------------  presignedPost  ------------- |');
+      console.log(JSON.stringify(presignedPost, null, 2));
+      console.log();
+
+      await uploadFileToS3WithPresignedPost({
+        presignedPost,
+        fileUri,
+        fileName: filename,
+        contentType: 'text/plain',
+      });
+    } catch (err) {
+      console.error(`error SIG `, err);
+    }
+  }
+
   return (
     <ScrollView
       contentContainerStyle={{ paddingVertical: Spacings.lg }}
       style={{ paddingHorizontal: Spacings.sm }}
     >
+      <Button title="get sig" onPress={getSig} />
+
       <View
         style={{
           flexDirection: 'row',
@@ -34,7 +126,7 @@ export default function Docs({
           justifyContent: 'space-between',
         }}
       >
-        <TextMedium size="lg">Doc Library</TextMedium>
+        <TextMedium size="lg">Doc Library x</TextMedium>
         <IconButton
           onPress={() =>
             showModalScreen({
