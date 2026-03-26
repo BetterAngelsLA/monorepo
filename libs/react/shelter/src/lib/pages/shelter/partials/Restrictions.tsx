@@ -17,16 +17,6 @@ function formatCurfewTime(curfew: string): string {
   return format(parsedTime, 'h:mm a');
 }
 
-function formatCurfewTime(curfew: string): string {
-  const parsedTime = parse(curfew.trim(), 'HH:mm:ss', new Date());
-
-  if (!isValid(parsedTime)) {
-    return curfew;
-  }
-
-  return format(parsedTime, 'h:mm a');
-}
-
 export function Restrictions({
   shelter,
 }: {
