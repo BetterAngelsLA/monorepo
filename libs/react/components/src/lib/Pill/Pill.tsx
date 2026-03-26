@@ -14,7 +14,8 @@ export interface IPillProps {
 export function Pill(props: IPillProps) {
   const { label, type = 'success', className } = props;
 
-  const baseClasses = 'rounded-[20px] inline-flex items-center justify-center';
+  const baseClasses =
+    'rounded-[20px] inline-flex items-center justify-center text-center';
 
   const typeClasses = {
     success: 'bg-success-90 text-primary-20 px-4 py-1',

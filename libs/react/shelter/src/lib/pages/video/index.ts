@@ -1,0 +1,1 @@
+export { VideoPage } from './VideoPage';

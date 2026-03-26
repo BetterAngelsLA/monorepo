@@ -16,9 +16,19 @@ export function FilterPills(props: IProps) {
 
   const pillTextArr: string[] = [];
 
-  for (const [key, valueArr] of Object.entries(filters)) {
-    valueArr?.forEach((val) => {
-      const label = getFilterLabel(key as keyof TShelterPropertyFilters, val);
+  for (const [key, value] of Object.entries(filters)) {
+    if (key === 'openNow') {
+      if (value) {
+        pillTextArr.push('Open now');
+      }
+      continue;
+    }
+
+    (value as string[] | undefined)?.forEach((val) => {
+      const label = getFilterLabel(
+        key as keyof TShelterPropertyFilters,
+        val as never
+      );
 
       if (label) {
         pillTextArr.push(label);

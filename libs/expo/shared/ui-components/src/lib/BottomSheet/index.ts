@@ -1,5 +1,6 @@
-export { BottomSheetModal } from './BottomSheetModal';
+export { BottomSheetModalControlled } from './BottomSheetModalControlled';
 export * from './components';
+export * from './constants';
+export { BottomSheetFullScreenContainer } from './core/BottomSheetFullScreenContainer';
 export * from './hooks';
-export { BottomSheetModalProvider } from './modalProvider/BottomSheetModalProvider';
-export { useBottomSheet } from './modalProvider/useBottomSheet';
+export * from './providers';

@@ -1,4 +1,5 @@
 from django.db import migrations
+from shelters.deprecated.deprecated_permissions import TrainingServicePermissions
 from shelters.utils import assign_permissions_to_group_in_migration
 
 
@@ -11,7 +12,6 @@ def modify_shelter_group_permissions(apps, schema_editor):
         RoomStylePermissions,
         ShelterProgramPermissions,
         SpecialSituationRestrictionPermissions,
-        TrainingServicePermissions,
         VideoPermissions,
     )
 

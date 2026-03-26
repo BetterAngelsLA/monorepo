@@ -50,7 +50,7 @@ export default function Partners() {
       <h2 className="text-2xl md:text-[40px] md:leading-[1.2] font-bold mb-6">
         This site is brought to you by
       </h2>
-      <div className="flex flex-col justify-center flex-wrap md:flex-row flex-grow h-full gap-6">
+      <div className="flex flex-col justify-center flex-wrap md:flex-row grow h-full gap-6">
         {PARTNERS.map(({ link, ariaLabel, imgSrc, imgAlt, width }) => (
           <PartnerCard key={link} ariaLabel={ariaLabel} link={link}>
             <img className={`w-${width}`} src={imgSrc} alt={imgAlt} />

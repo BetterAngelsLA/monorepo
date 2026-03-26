@@ -11,7 +11,7 @@ export function SectionBanner(props: IProps) {
   const { className, title, subtitle, variant = 'large' } = props;
 
   const parentCss = [
-    'border-l-[10px]',
+    'border-l-10',
     'border-brand-sky-blue',
     'pl-4',
     'lg:pl-8',
@@ -28,7 +28,7 @@ export function SectionBanner(props: IProps) {
   const subtitleCss = [
     'text-2xl',
     'leading-normal',
-    'md:leading-[4.5rem]',
+    'md:leading-18',
     'lg:text-[42px]',
   ];
 

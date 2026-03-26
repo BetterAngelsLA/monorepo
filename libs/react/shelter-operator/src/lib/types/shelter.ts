@@ -3,5 +3,6 @@ export type Shelter = {
   name: string | null;
   address: string | null;
   totalBeds: number | null;
+  availableBeds: number | null;
   tags: string[] | null;
 };

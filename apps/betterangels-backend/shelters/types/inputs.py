@@ -1,6 +1,6 @@
 """Input types for shelter mutations."""
 
-from datetime import time
+from datetime import date, datetime, time
 from typing import List, Optional
 
 import strawberry
@@ -10,18 +10,20 @@ from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
     BedStatusChoices,
+    BedTypeChoices,
+    ConditionChoices,
+    DayOfWeekChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
     FunderChoices,
-    GeneralServiceChoices,
-    HealthServiceChoices,
-    ImmediateNeedChoices,
-    MealServiceChoices,
+    MedicalNeedChoices,
     ParkingChoices,
     PetChoices,
     ReferralRequirementChoices,
+    RoomStatusChoices,
     RoomStyleChoices,
+    ScheduleTypeChoices,
 )
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import (
@@ -29,7 +31,6 @@ from shelters.enums import (
     SPAChoices,
     SpecialSituationRestrictionChoices,
     StorageChoices,
-    TrainingServiceChoices,
 )
 from strawberry import ID, auto
 
@@ -42,9 +43,24 @@ class ShelterLocationInput:
 
 
 @strawberry.input
-class TimeRangeInput:
-    start: Optional[time] = None
-    end: Optional[time] = None
+class ScheduleInput:
+    schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING
+    days: Optional[List[DayOfWeekChoices]] = None
+    start_time: Optional[time] = None
+    end_time: Optional[time] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    condition: Optional[ConditionChoices] = None
+    is_exception: bool = False
+
+
+@strawberry.input
+class ServiceInput:
+    """Either pick an existing service by ID, or create a new one by category + name."""
+
+    id: Optional[ID] = None
+    category_id: Optional[ID] = None
+    display_name: Optional[str] = None
 
 
 @strawberry_django.input(models.Shelter)
@@ -63,11 +79,6 @@ class CreateShelterInput:
     storage: List[StorageChoices]
     pets: List[PetChoices]
     parking: List[ParkingChoices]
-    immediate_needs: List[ImmediateNeedChoices]
-    general_services: List[GeneralServiceChoices]
-    health_services: List[HealthServiceChoices]
-    training_services: List[TrainingServiceChoices]
-    meal_services: List[MealServiceChoices]
     entry_requirements: List[EntryRequirementChoices]
     referral_requirement: List[ReferralRequirementChoices]
     exit_policy: List[ExitPolicyChoices]
@@ -79,8 +90,8 @@ class CreateShelterInput:
     # Custom field types — can't be auto-derived from Django model fields
     organization: ID
     location: Optional[ShelterLocationInput] = None
-    operating_hours: Optional[List[TimeRangeInput]] = None
-    intake_hours: Optional[List[TimeRangeInput]] = None
+    schedules: Optional[List[ScheduleInput]] = None
+    services: Optional[List[ServiceInput]] = None
 
     # Optional scalars — all model fields below have null=True, blank=True.
     # Using auto where strawberry-django can resolve the type; explicit types
@@ -118,4 +129,30 @@ class CreateShelterInput:
 @strawberry.input
 class CreateBedInput:
     shelter_id: ID
-    status: BedStatusChoices
+    status: Optional[BedStatusChoices] = None
+    bed_name: Optional[str] = None
+    status_notes: Optional[str] = None
+    bed_type: Optional[BedTypeChoices] = None
+    demographics: Optional[List[DemographicChoices]] = None
+    accessibility: Optional[List[AccessibilityChoices]] = None
+    funders: Optional[List[FunderChoices]] = None
+    pets: Optional[List[PetChoices]] = None
+    storage: Optional[bool] = None
+    maintenance_flag: Optional[bool] = None
+    last_cleaned_inspected: Optional[datetime] = None
+    medical_needs: Optional[MedicalNeedChoices] = None
+    b7: Optional[bool] = None
+    fees: Optional[int] = None
+
+
+@strawberry.input
+class CreateRoomInput:
+    shelter_id: ID
+    room_identifier: str
+    room_type: Optional[RoomStyleChoices] = None
+    room_type_other: Optional[str] = None
+    status: Optional[RoomStatusChoices] = None
+    notes: Optional[str] = None
+    amenities: Optional[str] = None
+    medical_respite: Optional[bool] = False
+    last_cleaned_inspected: Optional[datetime] = None

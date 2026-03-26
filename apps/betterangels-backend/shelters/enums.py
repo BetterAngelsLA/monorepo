@@ -1,3 +1,5 @@
+import datetime
+
 import strawberry
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -64,6 +66,7 @@ class AccessibilityChoices(models.TextChoices):
 
 @strawberry.enum
 class StorageChoices(models.TextChoices):
+    UNIT_STORAGE = "unit_storage", _("Unit-level Storage")
     AMNESTY_LOCKERS = "amnesty_lockers", _("Amnesty Lockers")
     STANDARD_LOCKERS = "standard_lockers", _("Standard Lockers")
     SHARED_STORAGE = "shared_storage", _("Shared Storage")
@@ -87,46 +90,8 @@ class ParkingChoices(models.TextChoices):
     MOTORCYCLE = "motorcycle", _("Motorcycle")
     AUTOMOBILE = "automobile", _("Automobile")
     RV = "rv", _("RV")
+    STREET = "street", _("Street Parking")
     NO_PARKING = "no_parking", _("No Parking")
-
-
-# Services Offered
-@strawberry.enum
-class ImmediateNeedChoices(models.TextChoices):
-    CLOTHING = "clothing", _("Clothing")
-    FOOD = "food", _("Food")
-    SHOWERS = "showers", _("Showers")
-
-
-@strawberry.enum
-class GeneralServiceChoices(models.TextChoices):
-    CASE_MANAGEMENT = "case_management", _("Case Management")
-    CHILDCARE = "childcare", _("Childcare")
-    COMPUTER_ACCESS = "computer_access", _("Computer Access")
-    EMPLOYMENT_SERVICES = "employment_services", _("Employment Services")
-    FINANCIAL_LITERACY_ASSISTANCE = "financial_literacy_assistance", _("Financial Literacy/Assistance")
-    HOUSING_NAVIGATION = "housing_navigation", _("Housing Navigation")
-    LEGAL_ASSISTANCE = "legal_assistance", _("Legal Assistance")
-    MAIL = "mail", _("Mail")
-    PHONE = "phone", _("Phone")
-    TRANSPORTATION = "transportation", _("Transportation")
-    LAUNDRY = "laundry", _("Laundry Services")
-    TLS = "tls", _("TLS (Time Limited Subsidies)")
-
-
-@strawberry.enum
-class HealthServiceChoices(models.TextChoices):
-    DENTAL = "dental", _("Dental")
-    MEDICAL = "medical", _("Medical")
-    MENTAL_HEALTH = "mental_health", _("Mental Health")
-    SUBSTANCE_USE_TREATMENT = "substance_use_treatment", _("Substance Use Treatment")
-
-
-@strawberry.enum
-class TrainingServiceChoices(models.TextChoices):
-    JOB_TRAINING = "job_training", _("Job Training")
-    LIFE_SKILLS_TRAINING = "life_skills_training", _("Life Skills Training")
-    TUTORING = "tutoring", _("Tutoring")
 
 
 # Entry Requirements
@@ -209,13 +174,6 @@ class ExitPolicyChoices(models.TextChoices):
 
 
 @strawberry.enum
-class MealServiceChoices(models.TextChoices):
-    BREAKFAST = "breakfast", _("Breakfast")
-    LUNCH = "lunch", _("Lunch")
-    DINNER = "dinner", _("Dinner")
-
-
-@strawberry.enum
 class ReferralRequirementChoices(models.TextChoices):
     REFERRAL_MATCHED = "referral_matched", _("Matched Referral")
     REFERRAL_NONMATCHED = "referral_nonmatched", _("Non-Matched Referral")
@@ -227,7 +185,9 @@ class ReferralRequirementChoices(models.TextChoices):
 @strawberry.enum
 class BedStatusChoices(models.TextChoices):
     AVAILABLE = "available", _("Available")
+    OCCUPIED = "occupied", _("Occupied")
     RESERVED = "reserved", _("Reserved")
+    OUT_OF_SERVICE = "out_of_service", _("Out-of-Service")
 
 
 @strawberry.enum
@@ -235,3 +195,64 @@ class RoomStatusChoices(models.TextChoices):
     AVAILABLE = "available", _("Available")
     RESERVED = "reserved", _("Reserved")
     NEEDS_MAINTENANCE = "needs_maintenance", _("Needs Maintenance")
+
+
+@strawberry.enum
+class BedTypeChoices(models.TextChoices):
+    TWIN = "twin", _("Twin")
+    BUNK = "bunk", _("Bunk")
+    ROLLAWAY = "rollaway", _("Rollaway")
+    OTHER = "other", _("Other")
+
+
+@strawberry.enum
+class MedicalNeedChoices(models.TextChoices):
+    ERC = "erc", _("ERC (Enrich Residential Care)")
+    DMH = "dmh", _("DMH Beds (Dept of Mental Health)")
+    OXYGEN = "oxygen", _("Oxygen")
+    DIALYSIS = "dialysis", _("Dialysis")
+
+
+@strawberry.enum
+class ReservationStatusChoices(models.TextChoices):
+    OPEN = "open", _("Open")
+    CONFIRMED = "confirmed", _("Confirmed")
+    CHECKED_IN = "checked_in", _("Checked In")
+    COMPLETED = "completed", _("Completed")
+    CANCELLED = "cancelled", _("Cancelled")
+    CHECK_IN_OVERDUE = "check_in_overdue", _("Check-in Overdue")
+
+
+@strawberry.enum
+class DayOfWeekChoices(models.TextChoices):
+    MONDAY = "monday", _("Monday")
+    TUESDAY = "tuesday", _("Tuesday")
+    WEDNESDAY = "wednesday", _("Wednesday")
+    THURSDAY = "thursday", _("Thursday")
+    FRIDAY = "friday", _("Friday")
+    SATURDAY = "saturday", _("Saturday")
+    SUNDAY = "sunday", _("Sunday")
+
+    @classmethod
+    def from_date(cls, d: "datetime.date") -> "DayOfWeekChoices":
+        """Return the enum member for the weekday of *d*."""
+        return list(cls)[d.weekday()]
+
+
+@strawberry.enum
+class ScheduleTypeChoices(models.TextChoices):
+    OPERATING = "operating", _("Operating Hours")
+    INTAKE = "intake", _("Intake Hours")
+    MEAL_SERVICE = "meal_service", _("Meal Service Hours")
+    STAFF_AVAILABILITY = "staff_availability", _("Staff Availability")
+
+
+@strawberry.enum
+class ConditionChoices(models.TextChoices):
+    HEAT = "heat", _("Heat")
+    FIRE = "fire", _("Fire")
+    RAIN_SEVERE_WEATHER = "rain_severe_weather", _("Rain / Severe Weather")
+    WIND = "wind", _("Wind")
+    AIR_QUALITY_SMOKE = "air_quality_smoke", _("Air Quality / Smoke")
+    PUBLIC_HEALTH_EMERGENCY = "public_health_emergency", _("Public Health Emergency")
+    EMERGENCY_EVACUATION = "emergency_evacuation", _("Emergency Evacuation")

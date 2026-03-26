@@ -6,6 +6,7 @@ import django_choices_field.fields
 import django_ckeditor_5.fields
 import phonenumber_field.modelfields
 import shelters.enums
+import shelters.deprecated.deprecated_enums
 from django.db import migrations, models
 
 from ..deprecated import deprecated_enums
@@ -52,7 +53,7 @@ class Migration(migrations.Migration):
                             ("Life Skills Training", "Life Skills Training"),
                             ("Tutoring", "Tutoring"),
                         ],
-                        choices_enum=shelters.enums.TrainingServiceChoices,
+                        choices_enum=shelters.deprecated.deprecated_enums.TrainingServiceChoices,
                         max_length=20,
                         null=True,
                         unique=True,
@@ -158,7 +159,7 @@ class Migration(migrations.Migration):
                             ("Westlake Village", "Westlake Village"),
                             ("Whittier", "Whittier"),
                         ],
-                        choices_enum=deprecated_enums.CityChoices,
+                        choices_enum=shelters.deprecated.deprecated_enums.CityChoices,
                         max_length=21,
                         null=True,
                         unique=True,
@@ -205,7 +206,7 @@ class Migration(migrations.Migration):
                             ("Phone", "Phone"),
                             ("Transportation", "Transportation"),
                         ],
-                        choices_enum=shelters.enums.GeneralServiceChoices,
+                        choices_enum=shelters.deprecated.deprecated_enums.GeneralServiceChoices,
                         max_length=16,
                         null=True,
                         unique=True,
@@ -227,7 +228,7 @@ class Migration(migrations.Migration):
                             ("Medication Monitoring", "Medication Monitoring"),
                             ("Mental Health", "Mental Health"),
                         ],
-                        choices_enum=shelters.enums.HealthServiceChoices,
+                        choices_enum=shelters.deprecated.deprecated_enums.HealthServiceChoices,
                         max_length=25,
                         null=True,
                         unique=True,
@@ -244,7 +245,7 @@ class Migration(migrations.Migration):
                     django_choices_field.fields.TextChoicesField(
                         blank=True,
                         choices=[("Clothing", "Clothing"), ("Food", "Food"), ("Showers", "Showers")],
-                        choices_enum=shelters.enums.ImmediateNeedChoices,
+                        choices_enum=shelters.deprecated.deprecated_enums.ImmediateNeedChoices,
                         max_length=8,
                         null=True,
                         unique=True,
@@ -314,7 +315,7 @@ class Migration(migrations.Migration):
                             ("Shared Rooms", "Shared Rooms"),
                             ("Single Room", "Single Room"),
                         ],
-                        choices_enum=deprecated_enums.SleepingChoices,
+                        choices_enum=shelters.deprecated.deprecated_enums.SleepingChoices,
                         max_length=12,
                         null=True,
                         unique=True,
@@ -449,7 +450,7 @@ class Migration(migrations.Migration):
                     ("Women", "Women"),
                     ("Youth (TAY)", "Youth (TAY)"),
                 ],
-                choices_enum=deprecated_enums.PopulationChoices,
+                choices_enum=shelters.deprecated.deprecated_enums.PopulationChoices,
                 max_length=13,
                 null=True,
                 unique=True,

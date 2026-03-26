@@ -1,13 +1,15 @@
 import { BottomSheetInputForm } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { View, ViewStyle } from 'react-native';
 
 type TProps = {
   onSubmit: (value: string) => void;
+  contentStyle?: ViewStyle;
+  footerStyle?: ViewStyle;
 };
 
 export function CustomFileNamePrompt(props: TProps) {
-  const { onSubmit } = props;
+  const { onSubmit, contentStyle, footerStyle } = props;
 
   const [value, setValue] = useState('');
 
@@ -35,6 +37,8 @@ export function CustomFileNamePrompt(props: TProps) {
         subtitle="If you selected Other in Predefined file name, fill out the name of the file here."
         ctaButtonText="Done"
         ctaDisabled={isSubmitDisabled}
+        contentStyle={contentStyle}
+        footerStyle={footerStyle}
       />
     </View>
   );

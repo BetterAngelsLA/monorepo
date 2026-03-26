@@ -1,24 +1,22 @@
 import type {
   AccessibilityChoices,
+  ConditionChoices,
+  DayOfWeekChoices,
   DemographicChoices,
   EntryRequirementChoices,
   ExitPolicyChoices,
   FunderChoices,
-  GeneralServiceChoices,
-  HealthServiceChoices,
-  ImmediateNeedChoices,
-  MealServiceChoices,
   ParkingChoices,
   PetChoices,
   ReferralRequirementChoices,
   RoomStyleChoices,
+  ScheduleTypeChoices,
   ShelterChoices,
   ShelterProgramChoices,
   SpaChoices,
   SpecialSituationRestrictionChoices,
   StatusChoices,
   StorageChoices,
-  TrainingServiceChoices,
 } from '@monorepo/react/shelter';
 
 // ---------------------------------------------------------------------------
@@ -36,6 +34,17 @@ export interface TimeRange {
   end: string; // "HH:MM:SS"
 }
 
+export interface ScheduleFormEntry {
+  scheduleType: ScheduleTypeChoices;
+  days: DayOfWeekChoices[];
+  startTime: string; // "HH:MM" or "HH:MM:SS"
+  endTime: string; // "HH:MM" or "HH:MM:SS"
+  startDate: string; // "YYYY-MM-DD" or ""
+  endDate: string; // "YYYY-MM-DD" or ""
+  condition: ConditionChoices | '';
+  isException: boolean;
+}
+
 // ---------------------------------------------------------------------------
 // Form state — camelCase, structured, no dead fields
 // ---------------------------------------------------------------------------
@@ -49,7 +58,9 @@ export interface ShelterFormData {
   phone: string;
   website: string;
   instagram: string;
-  operatingHours: TimeRange[];
+
+  // Schedules (operating hours, intake hours, etc.)
+  schedules: ScheduleFormEntry[];
 
   // Summary Information
   demographics: DemographicChoices[];
@@ -74,7 +85,6 @@ export interface ShelterFormData {
 
   // Policies
   maxStay: number | null;
-  intakeHours: TimeRange[];
   curfew: string; // single Time value "HH:MM:SS" (backend is TimeField)
   onSiteSecurity: boolean | null;
   visitorsAllowed: boolean | null;
@@ -84,11 +94,8 @@ export interface ShelterFormData {
   otherRules: string;
 
   // Services Offered
-  immediateNeeds: ImmediateNeedChoices[];
-  generalServices: GeneralServiceChoices[];
-  healthServices: HealthServiceChoices[];
-  trainingServices: TrainingServiceChoices[];
-  mealServices: MealServiceChoices[];
+  services: string[];
+  pendingServicesByCategory: Record<string, string[]>;
   otherServices: string;
 
   // Entry Requirements

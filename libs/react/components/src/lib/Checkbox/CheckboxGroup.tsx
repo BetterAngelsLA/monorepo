@@ -1,5 +1,4 @@
 import { mergeCss } from '@monorepo/react/shared';
-import { useEffect, useState } from 'react';
 import { Checkbox } from './Checkbox';
 
 const SELECT_ALL_KEY = 'select_all';
@@ -46,13 +45,7 @@ export function CheckboxGroup(props: TProps) {
     onChange,
   } = props;
 
-  const [cbxOptions, setCbxOptions] = useState<TCheckboxOptionKv[]>([]);
-
-  useEffect(() => {
-    const normalized = normalizeOptions(options);
-
-    setCbxOptions(normalized);
-  }, [options]);
+  const cbxOptions = normalizeOptions(options);
 
   function handleChange(value: string, checked: boolean) {
     // add filter
@@ -103,7 +96,8 @@ export function CheckboxGroup(props: TProps) {
     });
   }
 
-  const allSelected = cbxOptions.length === values.length;
+  const allSelected =
+    cbxOptions.length > 0 && cbxOptions.length === values.length;
 
   return (
     <div className={mergeCss(className)}>

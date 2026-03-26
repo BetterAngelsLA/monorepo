@@ -32,7 +32,7 @@
         "platform": "android"
       }
     },
-    "build": {
+    "eas-build": {
       "executor": "@nx/expo:build",
       "options": {}
     },
@@ -69,6 +69,18 @@
         "auto": true
       }
     },
+    "build": {
+      "executor": "nx:run-commands",
+      "configurations": {
+        "preview": {
+          "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-deploy.ts --project betterangels --profile preview"
+        },
+        "production": {
+          "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-deploy.ts --project betterangels --profile production"
+        }
+      },
+      "defaultConfiguration": "preview"
+    },
     "export": {
       "executor": "@nx/expo:export",
       "dependsOn": ["sync-deps"],
@@ -101,6 +113,29 @@
             "command": "tsc --noEmit -p tsconfig.spec.json"
           }
         ]
+      }
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/betterangels"
+      },
+      "configurations": {
+        "ios": {
+          "command": ".maestro/scripts/setup-maestro.sh",
+          "env": { "MAESTRO_PLATFORM": "ios" }
+        },
+        "android": {
+          "command": ".maestro/scripts/setup-maestro.sh",
+          "env": { "MAESTRO_PLATFORM": "android" }
+        }
+      },
+      "defaultConfiguration": "ios"
+    },
+    "eas-e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-e2e.ts --project betterangels"
       }
     }
   }
