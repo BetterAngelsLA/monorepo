@@ -47,14 +47,14 @@ export default function ClientSummaryGeneral(
     },
     notifyOnNetworkStatusChange: true,
   });
-  const primaryPhoneNumber = client.phoneNumbers?.find(
-    (item) => item.isPrimary
-  )?.number;
+  const clientPhoneNumber =
+    client.phoneNumbers?.find((item) => item.isPrimary)?.number ||
+    client.phoneNumbers?.[0]?.number;
 
   const formattedNumber =
-    primaryPhoneNumber && formatPhoneNumber(primaryPhoneNumber);
+    clientPhoneNumber && formatPhoneNumber(clientPhoneNumber);
 
-  const [phoneNumber, extension] = primaryPhoneNumber || [];
+  const [phoneNumber, extension] = formattedNumber || [];
 
   const phoneNumberUrl = extension
     ? `${phoneNumber},${extension}`
