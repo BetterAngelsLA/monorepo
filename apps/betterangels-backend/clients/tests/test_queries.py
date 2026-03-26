@@ -303,7 +303,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             ("123-45-6789", 1),  # formatted SSN with dashes
             ("123 45 6789", 1),  # formatted SSN with spaces
             ("000", 0),  # no SSN match
-            ("L12", 0),  # alphanumeric input uses name search, not SSN
+            ("L12", 1),  # alphanumeric input falls back to name search, matches california_id
         ],
     )
     def test_client_profiles_query_numeric_search(self, search_value: str, expected_client_profile_count: int) -> None:
