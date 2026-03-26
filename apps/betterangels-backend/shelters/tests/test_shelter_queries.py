@@ -2,7 +2,9 @@ import datetime
 from unittest.mock import ANY
 
 from accounts.tests.baker_recipes import organization_recipe
+from common.imgproxy import IMGPROXY_SWITCH
 from common.tests.utils import GraphQLBaseTestCase
+from django.test import override_settings
 from model_bakery.recipe import seq
 from places import Places
 from shelters.enums import (
@@ -46,8 +48,11 @@ from shelters.models import (
 )
 from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
 from shelters.tests.graphql_helpers import ShelterGraphQLFixtureMixin
+from waffle.testutils import override_switch
 
 
+@override_settings(IS_LOCAL_DEV=True)
+@override_switch(IMGPROXY_SWITCH, active=True)
 class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -351,5 +356,5 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         shelters = response["data"]["shelters"]["results"]
         self.assertEqual(len(shelters), shelter_count)
         self.assertEqual(Shelter.objects.count(), shelter_count + 1)
-        self.assertEqual(shelters[0]["heroImage"], exterior_photo_0.file.url)
-        self.assertEqual(shelters[1]["heroImage"], interior_photo_1.file.url)
+        self.assertEqual(self._get_imgproxy_url(exterior_photo_0.file), shelters[0]["heroImage"])
+        self.assertEqual(self._get_imgproxy_url(interior_photo_1.file), shelters[1]["heroImage"])

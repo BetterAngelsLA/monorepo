@@ -2553,7 +2553,7 @@ export type ShelterOrder = {
 export type ShelterPhotoType = {
   __typename?: 'ShelterPhotoType';
   createdAt: Scalars['DateTime']['output'];
-  file: DjangoFileType;
+  file: DjangoImageType;
   id: Scalars['ID']['output'];
 };
 

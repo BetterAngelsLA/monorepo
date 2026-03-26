@@ -13,20 +13,33 @@ from django.conf import settings
 IMGPROXY_SWITCH = "imgproxy_enabled"
 IMGPROXY_PRESETS: dict[ImagePresetEnum, str] = {
     ImagePresetEnum.ORIGINAL: "rs:force:0:0",
-    ImagePresetEnum.SM: "rs:fill:100:100/f:jpg",
-    ImagePresetEnum.MD: "rs:fill:400:400/f:jpg",
-    ImagePresetEnum.LG: "rs:fill:800:800/f:jpg",
+    ImagePresetEnum.SM: "rs:fill:100:100",
+    ImagePresetEnum.MD: "rs:fill:400:400",
+    ImagePresetEnum.LG: "rs:fill:800:800",
 }
+WEB_IMAGE_EXTENSIONS = frozenset[str]({"jpg", "jpeg", "png", "gif", "webp"})
+
+
+def _handle_format_conversion(ops: str, source_url: str) -> str:
+    ops_specifies_format = any(part.startswith("f:") for part in ops.split("/"))
+    if ops_specifies_format:
+        return ops
+
+    ext = source_url.split(".")[-1].lower()
+    if ext in WEB_IMAGE_EXTENSIONS:
+        return ops
+
+    return f"{ops}/f:jpg"
 
 
 def _resolve_imgproxy_ops(
     preset: Optional[ImagePresetEnum],
     processing_options: Optional[str],
+    source_url: str,
 ) -> Optional[str]:
-    if processing_options:
-        return processing_options
-    if preset:
-        return IMGPROXY_PRESETS.get(preset)
+    if ops := processing_options or (IMGPROXY_PRESETS.get(preset) if preset else None):
+        return _handle_format_conversion(ops, source_url)
+
     return None
 
 
@@ -104,12 +117,12 @@ def build_imgproxy_url(
         The complete imgproxy URL, or None if the URL cannot be built.
     """
 
-    ops = _resolve_imgproxy_ops(preset, processing_options)
-    if not ops:
-        return None
-
     source_url = _get_image_source_url(file)
     if not source_url:
+        return None
+
+    ops = _resolve_imgproxy_ops(preset, processing_options, source_url)
+    if not ops:
         return None
 
     signed_imgproxy_path = _build_signed_imgproxy_path(source_url, ops)
