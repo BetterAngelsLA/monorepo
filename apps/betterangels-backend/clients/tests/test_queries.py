@@ -300,6 +300,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             ("12345", 1),  # longer SSN prefix match
             ("999", 1),  # SSN prefix match on client_profile_2
             ("123456789", 1),  # exact SSN match
+            ("123-45-6789", 1),  # formatted SSN with dashes
+            ("123 45 6789", 1),  # formatted SSN with spaces
             ("000", 0),  # no SSN match
             ("L12", 0),  # alphanumeric input uses name search, not SSN
         ],

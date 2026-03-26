@@ -1,3 +1,4 @@
+import django.core.validators
 from django.db import migrations, models
 
 
@@ -11,6 +12,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="clientprofile",
             name="ssn",
-            field=models.CharField(blank=True, db_index=True, max_length=9, null=True),
+            field=models.CharField(
+                blank=True,
+                db_index=True,
+                max_length=9,
+                null=True,
+                validators=[
+                    django.core.validators.RegexValidator(
+                        message="SSN must be exactly 9 digits",
+                        regex="^\\d{9}$",
+                    )
+                ],
+            ),
         ),
     ]
