@@ -148,6 +148,7 @@ class ClientProfile(AbstractClientProfile):
     nickname = models.CharField(max_length=50, blank=True, null=True)
     profile_photo = models.ImageField(upload_to=get_client_profile_photo_file_path, blank=True, null=True)
     race = TextChoicesField(choices_enum=RaceEnum, blank=True, null=True)
+    ssn = models.CharField(max_length=9, blank=True, null=True, db_index=True)
     veteran_status = TextChoicesField(choices_enum=VeteranStatusEnum, blank=True, null=True)
 
     @model_property
