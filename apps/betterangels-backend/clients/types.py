@@ -135,13 +135,24 @@ class ClientProfileFilter:
 
         search_terms = value.split()
 
-        searchable_fields = [
-            "california_id",
-            "first_name",
-            "last_name",
-            "middle_name",
-            "nickname",
-        ]
+        if not search_terms:
+            return queryset, Q()
+
+        is_numeric_input = all(term.isdigit() for term in search_terms)
+
+        if is_numeric_input:
+            searchable_fields = [
+                "california_id",
+                "ssn",
+            ]
+        else:
+            searchable_fields = [
+                "california_id",
+                "first_name",
+                "last_name",
+                "middle_name",
+                "nickname",
+            ]
 
         # Build queries for direct fields
         direct_queries = [
