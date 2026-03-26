@@ -2085,6 +2085,7 @@ input ShelterPropertyInput {
   shelterTypes: [ShelterChoices!] = null
   roomStyles: [RoomStyleChoices!] = null
   parking: [ParkingChoices!] = null
+  spa: [SPAChoices!] = null
 }
 
 type ShelterType {
