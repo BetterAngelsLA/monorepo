@@ -306,9 +306,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             ("L12", 0),  # alphanumeric input uses name search, not SSN
         ],
     )
-    def test_client_profiles_query_numeric_search(
-        self, search_value: str, expected_client_profile_count: int
-    ) -> None:
+    def test_client_profiles_query_numeric_search(self, search_value: str, expected_client_profile_count: int) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
         ClientProfile.objects.filter(id=self.client_profile_1["id"]).update(ssn="123456789")

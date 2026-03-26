@@ -153,9 +153,7 @@ class ClientProfile(AbstractClientProfile):
         blank=True,
         null=True,
         db_index=True,
-        validators=[
-            RegexValidator(regex=SSN_REGEX, message="SSN must be exactly 9 digits")
-        ],
+        validators=[RegexValidator(regex=SSN_REGEX, message="SSN must be exactly 9 digits")],
     )
     veteran_status = TextChoicesField(choices_enum=VeteranStatusEnum, blank=True, null=True)
 
