@@ -28,7 +28,7 @@ import { ShelterDetailsSection } from './sections/ShelterDetailsSection';
 import { SleepingDetailsSection } from './sections/SleepingDetailsSection';
 import { SummaryInformationSection } from './sections/SummaryInformationSection';
 
-export default function CreateShelterForm() {
+export function CreateShelterForm() {
   const navigate = useNavigate();
   const { activeOrg } = useActiveOrg();
   const selectedOrganizationId = activeOrg?.id ?? '';

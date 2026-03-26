@@ -29,6 +29,15 @@ query ViewShelter($id: ID!) {
     supervisorialDistrict
     totalBeds
     website
+    visitorsAllowed
+    emergencySurge
+    exitPolicy {
+      name
+    }
+    exitPolicyOther
+    referralRequirement {
+      name
+    }
     accessibility {
       name
     }
@@ -52,15 +61,6 @@ query ViewShelter($id: ID!) {
       }
     }
     funders {
-      name
-    }
-    generalServices {
-      name
-    }
-    healthServices {
-      name
-    }
-    immediateNeeds {
       name
     }
     interiorPhotos {
@@ -101,6 +101,16 @@ query ViewShelter($id: ID!) {
       }
       isException
     }
+    services {
+      id
+      displayName
+      priority
+      category {
+        id
+        displayName
+        priority
+      }
+    }
     shelterPrograms {
       name
     }
@@ -116,8 +126,6 @@ query ViewShelter($id: ID!) {
     storage {
       name
     }
-    trainingServices {
-      name
-    }
+    updatedAt
   }
 }

@@ -86,12 +86,12 @@ type AdminShelterType {
   email: String
   entryInfo: String
   entryRequirements: [EntryRequirementType!]!
+  exitPolicy: [ExitPolicyType!]!
+  exitPolicyOther: String
+  emergencySurge: Boolean
   exteriorPhotos: [ShelterPhotoType!]!
   funders: [FunderType!]!
   fundersOther: String
-  generalServices: [GeneralServiceType!]!
-  healthServices: [HealthServiceType!]!
-  immediateNeeds: [ImmediateNeedType!]!
   instagram: String
   interiorPhotos: [ShelterPhotoType!]!
   location: ShelterLocationType
@@ -106,9 +106,11 @@ type AdminShelterType {
   pets: [PetType!]!
   phone: PhoneNumber
   programFees: String
+  referralRequirement: [ReferralRequirementType!]!
   roomStyles: [RoomStyleType!]!
   roomStylesOther: String
   schedules: [ScheduleType!]!
+  services: [ServiceType!]!
   shelterPrograms: [ShelterProgramType!]!
   shelterProgramsOther: String
   shelterTypes: [ShelterTypeType!]!
@@ -120,8 +122,8 @@ type AdminShelterType {
   subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
-  trainingServices: [TrainingServiceType!]!
   updatedAt: DateTime!
+  visitorsAllowed: Boolean
   website: String
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
@@ -667,11 +669,6 @@ input CreateShelterInput {
   storage: [StorageChoices!]!
   pets: [PetChoices!]!
   parking: [ParkingChoices!]!
-  immediateNeeds: [ImmediateNeedChoices!]!
-  generalServices: [GeneralServiceChoices!]!
-  healthServices: [HealthServiceChoices!]!
-  trainingServices: [TrainingServiceChoices!]!
-  mealServices: [MealServiceChoices!]!
   entryRequirements: [EntryRequirementChoices!]!
   referralRequirement: [ReferralRequirementChoices!]!
   exitPolicy: [ExitPolicyChoices!]!
@@ -682,6 +679,7 @@ input CreateShelterInput {
   organization: ID!
   location: ShelterLocationInput = null
   schedules: [ScheduleInput!] = null
+  services: [ServiceInput!] = null
   email: String = null
   phone: PhoneNumber = null
   website: String = null
@@ -859,6 +857,10 @@ enum ExitPolicyChoices {
   OTHER
 }
 
+type ExitPolicyType {
+  name: ExitPolicyChoices
+}
+
 enum EyeColorEnum {
   BLUE
   BROWN
@@ -905,25 +907,6 @@ enum GenderEnum {
   PREFER_NOT_TO_SAY
 }
 
-enum GeneralServiceChoices {
-  CASE_MANAGEMENT
-  CHILDCARE
-  COMPUTER_ACCESS
-  EMPLOYMENT_SERVICES
-  FINANCIAL_LITERACY_ASSISTANCE
-  HOUSING_NAVIGATION
-  LEGAL_ASSISTANCE
-  MAIL
-  PHONE
-  TRANSPORTATION
-  LAUNDRY
-  TLS
-}
-
-type GeneralServiceType {
-  name: GeneralServiceChoices
-}
-
 input GeolocationInput {
   latitude: Float!
   longitude: Float!
@@ -939,17 +922,6 @@ enum HairColorEnum {
   WHITE
   BALD
   OTHER
-}
-
-enum HealthServiceChoices {
-  DENTAL
-  MEDICAL
-  MENTAL_HEALTH
-  SUBSTANCE_USE_TREATMENT
-}
-
-type HealthServiceType {
-  name: HealthServiceChoices
 }
 
 enum HmisAgencyEnum {
@@ -1253,16 +1225,6 @@ enum ImagePresetEnum {
   LG
 }
 
-enum ImmediateNeedChoices {
-  CLOTHING
-  FOOD
-  SHOWERS
-}
-
-type ImmediateNeedType {
-  name: ImmediateNeedChoices
-}
-
 input ImportClientProfileInput {
   importJobId: UUID!
   sourceId: String!
@@ -1392,12 +1354,6 @@ enum MaritalStatusEnum {
   SEPARATED
   SINGLE
   WIDOWED
-}
-
-enum MealServiceChoices {
-  BREAKFAST
-  LUNCH
-  DINNER
 }
 
 enum MedicalNeedChoices {
@@ -1721,6 +1677,7 @@ enum ParkingChoices {
   MOTORCYCLE
   AUTOMOBILE
   RV
+  STREET
   NO_PARKING
 }
 
@@ -1817,6 +1774,7 @@ type Query {
   adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
+  shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
 }
 
 enum RaceEnum {
@@ -1835,6 +1793,10 @@ enum ReferralRequirementChoices {
   SERVICE_PROVIDER_SUBMISSION
   SELF_REFERRAL
   SAME_DAY_INTAKE
+}
+
+type ReferralRequirementType {
+  name: ReferralRequirementChoices
 }
 
 enum RelationshipTypeEnum {
@@ -1993,6 +1955,30 @@ enum SelahTeamEnum {
   WDI_OUTREACH
 }
 
+type ServiceCategoryType {
+  id: ID!
+  name: String!
+  displayName: String!
+  priority: Int!
+  services: [ServiceType!]!
+}
+
+type ServiceCategoryTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [ServiceCategoryType!]!
+}
+
+input ServiceInput {
+  id: ID = null
+  categoryId: ID = null
+  displayName: String = null
+}
+
 enum ServiceRequestStatusEnum {
   COMPLETED
   TO_DO
@@ -2012,6 +1998,15 @@ type ServiceRequestType {
 enum ServiceRequestTypeEnum {
   PROVIDED
   REQUESTED
+}
+
+type ServiceType {
+  id: ID!
+  category: ServiceCategoryType!
+  name: String!
+  displayName: String!
+  isOther: Boolean!
+  priority: Int!
 }
 
 enum ShelterChoices {
@@ -2109,12 +2104,12 @@ type ShelterType {
   email: String
   entryInfo: String
   entryRequirements: [EntryRequirementType!]!
+  exitPolicy: [ExitPolicyType!]!
+  exitPolicyOther: String
+  emergencySurge: Boolean
   exteriorPhotos: [ShelterPhotoType!]!
   funders: [FunderType!]!
   fundersOther: String
-  generalServices: [GeneralServiceType!]!
-  healthServices: [HealthServiceType!]!
-  immediateNeeds: [ImmediateNeedType!]!
   instagram: String
   interiorPhotos: [ShelterPhotoType!]!
   location: ShelterLocationType
@@ -2129,9 +2124,11 @@ type ShelterType {
   pets: [PetType!]!
   phone: PhoneNumber
   programFees: String
+  referralRequirement: [ReferralRequirementType!]!
   roomStyles: [RoomStyleType!]!
   roomStylesOther: String
   schedules: [ScheduleType!]!
+  services: [ServiceType!]!
   shelterPrograms: [ShelterProgramType!]!
   shelterProgramsOther: String
   shelterTypes: [ShelterTypeType!]!
@@ -2143,8 +2140,8 @@ type ShelterType {
   subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
-  trainingServices: [TrainingServiceType!]!
   updatedAt: DateTime!
+  visitorsAllowed: Boolean
   website: String
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
@@ -2222,6 +2219,7 @@ enum StatusChoices {
 }
 
 enum StorageChoices {
+  UNIT_STORAGE
   AMNESTY_LOCKERS
   STANDARD_LOCKERS
   SHARED_STORAGE
@@ -2300,16 +2298,6 @@ type TaskTypeOffsetPaginated {
 
 """Time (isoformat)"""
 scalar Time
-
-enum TrainingServiceChoices {
-  JOB_TRAINING
-  LIFE_SKILLS_TRAINING
-  TUTORING
-}
-
-type TrainingServiceType {
-  name: TrainingServiceChoices
-}
 
 scalar UUID
 

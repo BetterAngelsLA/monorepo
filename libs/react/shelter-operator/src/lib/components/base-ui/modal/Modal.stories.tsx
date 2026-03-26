@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
+import { Button } from '../buttons/buttons';
+import { Text } from '../text/text';
 import { ConfirmationModal } from './ConfirmationModal';
 import { Modal, TModalSize } from './Modal';
 import { ModalBody } from './ModalBody';
@@ -12,6 +14,23 @@ const meta: Meta = {
 export default meta;
 
 type Story = StoryObj;
+
+type ModalStoryArgs = {
+  size: TModalSize;
+  title: string;
+  bodyContent: string;
+};
+
+type ConfirmationStoryArgs = {
+  title: string;
+  description: string;
+};
+
+type ScrollableStoryArgs = {
+  size: TModalSize;
+  title: string;
+  paragraphs: number;
+};
 
 export const BaseModal: Story = {
   args: {
@@ -29,41 +48,45 @@ export const BaseModal: Story = {
     bodyContent: { control: 'text' },
   },
   render: (args) => {
+    const typedArgs = args as ModalStoryArgs;
     const Demo = () => {
       const [isOpen, setIsOpen] = useState(true);
 
       return (
         <>
-          <button
+          <Button
+            variant="primary"
+            color="blue"
             onClick={() => setIsOpen(true)}
-            className="px-4 py-2 bg-[#008CEE] text-white rounded-lg"
           >
             Open Modal
-          </button>
+          </Button>
           <Modal
             isOpen={isOpen}
             onClose={() => setIsOpen(false)}
-            size={args.size as TModalSize}
+            size={typedArgs.size}
           >
             <ModalHeader onClose={() => setIsOpen(false)}>
-              <h3 className="text-lg font-semibold">{args.title}</h3>
+              <Text variant="header-md" className="font-semibold">
+                {typedArgs.title}
+              </Text>
             </ModalHeader>
             <ModalBody>
-              <p className="text-[#747A82]">{args.bodyContent}</p>
+              <Text variant="body-lg" className="text-[#747A82]">
+                {typedArgs.bodyContent}
+              </Text>
             </ModalBody>
             <ModalFooter>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="px-5 py-2 rounded-lg text-sm font-medium border border-[#D3D9E3] text-[#383B40] hover:bg-[#F4F6FD]"
-              >
+              <Button variant="primary" onClick={() => setIsOpen(false)}>
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
+                color="blue"
                 onClick={() => setIsOpen(false)}
-                className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-[#008CEE] hover:bg-[#0374c4]"
               >
                 Confirm
-              </button>
+              </Button>
             </ModalFooter>
           </Modal>
         </>
@@ -89,42 +112,43 @@ export const BottomButtons: Story = {
     bodyContent: { control: 'text' },
   },
   render: (args) => {
+    const typedArgs = args as ModalStoryArgs;
     const Demo = () => {
       const [isOpen, setIsOpen] = useState(true);
 
       return (
         <>
-          <button
+          <Button
+            variant="primary"
+            color="blue"
             onClick={() => setIsOpen(true)}
-            className="px-4 py-2 bg-[#008CEE] text-white rounded-lg"
           >
             Open Modal
-          </button>
+          </Button>
           <Modal
             isOpen={isOpen}
             onClose={() => setIsOpen(false)}
-            size={args.size as TModalSize}
+            size={typedArgs.size}
           >
             <ModalHeader showCloseButton={false}>
-              <h3 className="text-lg font-semibold">{args.title}</h3>
+              <Text variant="header-md" className="font-semibold">
+                {typedArgs.title}
+              </Text>
             </ModalHeader>
             <ModalBody className="min-h-[200px]">
-              <p className="text-[#747A82]">{args.bodyContent}</p>
+              <Text variant="body-lg" className="text-[#747A82]">
+                {typedArgs.bodyContent}
+              </Text>
             </ModalBody>
             <ModalFooter className="justify-between">
-              <button
-                onClick={() => setIsOpen(false)}
-                className="px-5 py-2 rounded-lg text-sm font-medium border border-[#D3D9E3] text-[#747A82] hover:bg-[#F4F6FD]"
-              >
+              <Button variant="primary" onClick={() => setIsOpen(false)}>
                 Back
-              </button>
+              </Button>
               <div className="flex gap-3">
-                <button className="px-5 py-2 rounded-lg text-sm font-medium border border-[#D3D9E3] text-[#747A82] hover:bg-[#F4F6FD]">
-                  Clear All
-                </button>
-                <button className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-[#008CEE] hover:bg-[#0374c4]">
+                <Button variant="primary">Clear All</Button>
+                <Button variant="primary" color="blue">
                   Show 11 Shelters
-                </button>
+                </Button>
               </div>
             </ModalFooter>
           </Modal>
@@ -146,23 +170,21 @@ export const ConfirmationDanger: Story = {
     description: { control: 'text' },
   },
   render: (args) => {
+    const typedArgs = args as ConfirmationStoryArgs;
     const Demo = () => {
       const [isOpen, setIsOpen] = useState(true);
 
       return (
         <>
-          <button
-            onClick={() => setIsOpen(true)}
-            className="px-4 py-2 bg-[#CB0808] text-white rounded-lg"
-          >
+          <Button variant="primary" onClick={() => setIsOpen(true)} color="red">
             Delete Item
-          </button>
+          </Button>
           <ConfirmationModal
             isOpen={isOpen}
             onClose={() => setIsOpen(false)}
             variant="danger"
-            title={args.title}
-            description={args.description}
+            title={typedArgs.title}
+            description={typedArgs.description}
             primaryAction={{
               label: 'Delete',
               onClick: () => setIsOpen(false),
@@ -190,23 +212,21 @@ export const ConfirmationSuccess: Story = {
     description: { control: 'text' },
   },
   render: (args) => {
+    const typedArgs = args as ConfirmationStoryArgs;
     const Demo = () => {
       const [isOpen, setIsOpen] = useState(true);
 
       return (
         <>
-          <button
-            onClick={() => setIsOpen(true)}
-            className="px-4 py-2 bg-[#23CE6B] text-white rounded-lg"
-          >
+          <Button variant="primary" onClick={() => setIsOpen(true)}>
             Confirm Action
-          </button>
+          </Button>
           <ConfirmationModal
             isOpen={isOpen}
             onClose={() => setIsOpen(false)}
             variant="success"
-            title={args.title}
-            description={args.description}
+            title={typedArgs.title}
+            description={typedArgs.description}
             primaryAction={{
               label: 'Confirm',
               onClick: () => setIsOpen(false),
@@ -234,23 +254,25 @@ export const ConfirmationInfo: Story = {
     description: { control: 'text' },
   },
   render: (args) => {
+    const typedArgs = args as ConfirmationStoryArgs;
     const Demo = () => {
       const [isOpen, setIsOpen] = useState(true);
 
       return (
         <>
-          <button
+          <Button
+            variant="primary"
+            color="blue"
             onClick={() => setIsOpen(true)}
-            className="px-4 py-2 bg-[#008CEE] text-white rounded-lg"
           >
             Info Action
-          </button>
+          </Button>
           <ConfirmationModal
             isOpen={isOpen}
             onClose={() => setIsOpen(false)}
             variant="info"
-            title={args.title}
-            description={args.description}
+            title={typedArgs.title}
+            description={typedArgs.description}
             primaryAction={{
               label: 'OK',
               onClick: () => setIsOpen(false),
@@ -271,7 +293,9 @@ export const ConfirmationInfo: Story = {
 const LONG_CONTENT_PARAGRAPHS = Array.from(
   { length: 8 },
   (_, i) =>
-    `Paragraph ${i + 1}: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.`
+    `Paragraph ${
+      i + 1
+    }: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.`
 );
 
 export const ScrollableContent: Story = {
@@ -291,50 +315,51 @@ export const ScrollableContent: Story = {
     },
   },
   render: (args) => {
+    const typedArgs = args as ScrollableStoryArgs;
     const Demo = () => {
       const [isOpen, setIsOpen] = useState(true);
       const content = Array.from(
-        { length: args.paragraphs },
-        (_, i) =>
-          LONG_CONTENT_PARAGRAPHS[i % LONG_CONTENT_PARAGRAPHS.length]
+        { length: typedArgs.paragraphs },
+        (_, i) => LONG_CONTENT_PARAGRAPHS[i % LONG_CONTENT_PARAGRAPHS.length]
       );
 
       return (
         <>
-          <button
+          <Button
+            variant="primary"
+            color="blue"
             onClick={() => setIsOpen(true)}
-            className="px-4 py-2 bg-[#008CEE] text-white rounded-lg"
           >
             Open Scrollable Modal
-          </button>
+          </Button>
           <Modal
             isOpen={isOpen}
             onClose={() => setIsOpen(false)}
-            size={args.size as TModalSize}
+            size={typedArgs.size}
           >
             <ModalHeader onClose={() => setIsOpen(false)}>
-              <h3 className="text-lg font-semibold">{args.title}</h3>
+              <Text variant="header-md" className="font-semibold">
+                {typedArgs.title}
+              </Text>
             </ModalHeader>
             <ModalBody>
               {content.map((text, i) => (
-                <p key={i} className="text-[#747A82] mb-4">
+                <Text key={i} variant="body" className="text-[#747A82] mb-4">
                   {text}
-                </p>
+                </Text>
               ))}
             </ModalBody>
             <ModalFooter>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="px-5 py-2 rounded-lg text-sm font-medium border border-[#D3D9E3] text-[#383B40] hover:bg-[#F4F6FD]"
-              >
+              <Button variant="primary" onClick={() => setIsOpen(false)}>
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
+                color="blue"
                 onClick={() => setIsOpen(false)}
-                className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-[#008CEE] hover:bg-[#0374c4]"
               >
                 Save
-              </button>
+              </Button>
             </ModalFooter>
           </Modal>
         </>
