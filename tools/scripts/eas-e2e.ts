@@ -141,6 +141,8 @@ run(
     `-F android_build_id=${androidBuildId} ` +
     `-F ios_build_id=${iosBuildId} ` +
     `-F update_group_id=${groupId} ` +
+    `-F MAESTRO_BA_USER_EMAIL=${process.env.MAESTRO_BA_USER_EMAIL} ` +
+    `-F MAESTRO_BA_USER_PASSWORD=${process.env.MAESTRO_BA_USER_PASSWORD} ` +
     `--non-interactive`,
   { cwd: projectDir }
 );

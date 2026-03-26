@@ -30,6 +30,12 @@ on:
         type: string
         required: true
         description: 'EAS Update group ID'
+      MAESTRO_BA_USER_EMAIL:
+        type: string
+        required: true
+      MAESTRO_BA_USER_PASSWORD:
+        type: string
+        required: true
 
 jobs:
   set_pending_github_status:
@@ -96,6 +102,8 @@ jobs:
     type: maestro
     env:
       MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=android%26disableOnboarding%3D1
+      MAESTRO_BA_USER_EMAIL: ${{ inputs.MAESTRO_BA_USER_EMAIL }}
+      MAESTRO_BA_USER_PASSWORD: ${{ inputs.MAESTRO_BA_USER_PASSWORD }}
     params:
       build_id: ${{ inputs.android_build_id }}
       flow_path: ['.maestro/tests/']
@@ -105,6 +113,8 @@ jobs:
     type: maestro
     env:
       MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=ios%26disableOnboarding%3D1
+      MAESTRO_BA_USER_EMAIL: ${{ inputs.MAESTRO_BA_USER_EMAIL }}
+      MAESTRO_BA_USER_PASSWORD: ${{ inputs.MAESTRO_BA_USER_PASSWORD }}
     params:
       build_id: ${{ inputs.ios_build_id }}
       flow_path: ['.maestro/tests/']
