@@ -38,6 +38,25 @@ export const enumDisplayLanguage: { [key in LanguageEnum]: string } = {
   [LanguageEnum.Vietnamese]: 'Vietnamese',
 };
 
+export const enumLanguageCode: { [key in LanguageEnum]: string } = {
+  [LanguageEnum.Arabic]: 'AR',
+  [LanguageEnum.Armenian]: 'HY',
+  [LanguageEnum.Asl]: 'ASL',
+  [LanguageEnum.SimplifiedChinese]: 'ZH',
+  [LanguageEnum.TraditionalChinese]: 'ZH',
+  [LanguageEnum.English]: 'EN',
+  [LanguageEnum.Farsi]: 'FA',
+  [LanguageEnum.French]: 'FR',
+  [LanguageEnum.Indonesian]: 'ID',
+  [LanguageEnum.Japanese]: 'JA',
+  [LanguageEnum.Khmer]: 'KM',
+  [LanguageEnum.Korean]: 'KO',
+  [LanguageEnum.Russian]: 'RU',
+  [LanguageEnum.Spanish]: 'ES',
+  [LanguageEnum.Tagalog]: 'TL',
+  [LanguageEnum.Vietnamese]: 'VI',
+};
+
 export const enumDisplayLivingSituation: {
   [key in LivingSituationEnum]: string;
 } = {

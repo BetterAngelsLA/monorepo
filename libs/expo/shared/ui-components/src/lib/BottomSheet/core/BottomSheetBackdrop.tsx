@@ -1,18 +1,22 @@
 /**
  * BottomSheetBackdrop
  *
- * Wrapper around Gorhom's BottomSheetBackdrop.
+ * Internal wrapper around Gorhom's backdrop component.
  *
  * Responsibilities:
- * - Allows backdrop disabling
- * - Allows opacity customization
- * - Allows full custom backdrop override
+ * - Conditionally render backdrop
+ * - Apply opacity defaults
+ * - Allow full override via custom component
  *
- * If a custom component is provided, it completely replaces
- * the default Gorhom backdrop behavior.
+ * Behavior:
+ * - `disableBackdrop` → no render
+ * - `component`       → fully replaces default implementation
  *
- * This component is purely render-level and does not manage
- * lifecycle or stacking.
+ * This is a render-only primitive.
+ *
+ * Upstream:
+ * - Configured via `BottomSheetOptions`
+ * - Used by `BottomSheetBase`
  */
 
 import {

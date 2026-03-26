@@ -5,6 +5,7 @@ from urllib.parse import quote
 
 import places
 import requests
+from adminsortable2.admin import SortableAdminMixin, SortableStackedInline
 from betterangels_backend import settings
 from common.imgproxy import build_imgproxy_url, is_imgproxy_enabled
 from common.models import Location
@@ -41,10 +42,6 @@ from .enums import (
     EntryRequirementChoices,
     ExitPolicyChoices,
     FunderChoices,
-    GeneralServiceChoices,
-    HealthServiceChoices,
-    ImmediateNeedChoices,
-    MealServiceChoices,
     ParkingChoices,
     PetChoices,
     ReferralRequirementChoices,
@@ -55,7 +52,6 @@ from .enums import (
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
-    TrainingServiceChoices,
 )
 from .models import (
     SPA,
@@ -67,9 +63,6 @@ from .models import (
     EntryRequirement,
     ExteriorPhoto,
     Funder,
-    GeneralService,
-    HealthService,
-    ImmediateNeed,
     InteriorPhoto,
     Parking,
     Pet,
@@ -78,12 +71,13 @@ from .models import (
     Room,
     RoomStyle,
     Schedule,
+    Service,
+    ServiceCategory,
     Shelter,
     ShelterProgram,
     ShelterType,
     SpecialSituationRestriction,
     Storage,
-    TrainingService,
     Video,
     get_fields_with_other_option,
 )
@@ -138,6 +132,63 @@ def create_select2_multiple_field(
     return field
 
 
+class GroupedServiceWidget(forms.Widget):
+    """Per-category structured service picker plus inline creation helper."""
+
+    template_name = "admin/shelters/widgets/grouped_service_select2.html"
+
+    class Media:
+        css = {"all": ("shelters/admin/grouped_service_widget.css",)}
+        js = ("shelters/admin/grouped_service_widget.js",)
+
+    def get_context(self, name: str, value: Any, attrs: Any) -> dict:
+        context = super().get_context(name, value, attrs)
+        categories = ServiceCategory.objects.prefetch_related("services").all()
+        selected_ids = set()
+        if value:
+            selected_ids = {str(v) for v in value}
+
+        grouped: list[dict] = []
+        for cat in categories:
+            services = list(cat.services.all())
+            official_services = [svc for svc in services if not svc.is_other]
+            other_services = [svc for svc in services if svc.is_other]
+            grouped.append(
+                {
+                    "category": cat,
+                    "official_services": [
+                        {
+                            "id": str(svc.pk),
+                            "display_name": svc.display_name,
+                            "selected": str(svc.pk) in selected_ids,
+                        }
+                        for svc in official_services
+                    ],
+                    "other_services": [
+                        {
+                            "id": str(svc.pk),
+                            "display_name": svc.display_name,
+                            "selected": str(svc.pk) in selected_ids,
+                        }
+                        for svc in other_services
+                    ],
+                }
+            )
+        context["grouped_services"] = grouped
+        context["widget_name"] = name
+        return context
+
+    def value_from_datadict(self, data: Any, files: Any, name: str) -> list[str]:
+        if hasattr(data, "getlist"):
+            values = data.getlist(name)
+        else:
+            values = data.get(name, [])
+            if isinstance(values, str):
+                values = [values]
+
+        return [value for value in values if value and not str(value).startswith("__new__:")]
+
+
 class ShelterForm(forms.ModelForm):
     template_name = "admin/shelters/shelter/change_form.html"
 
@@ -172,12 +223,6 @@ class ShelterForm(forms.ModelForm):
     # Restrictions
     curfew = forms.TimeField(widget=TimeInput(attrs={"type": "time"}), required=False)
 
-    # Services Offered
-    immediate_needs = create_select2_multiple_field(ImmediateNeedChoices, "Select immediate needs...")
-    general_services = create_select2_multiple_field(GeneralServiceChoices, "Select general services...")
-    health_services = create_select2_multiple_field(HealthServiceChoices, "Select health services...")
-    training_services = create_select2_multiple_field(TrainingServiceChoices, "Select training services...")
-
     # Entry Requirements
     entry_requirements = create_select2_multiple_field(EntryRequirementChoices, "Select entry requirements...")
 
@@ -202,8 +247,14 @@ class ShelterForm(forms.ModelForm):
 
     exit_policy = create_select2_multiple_field(ExitPolicyChoices, "Select exit policies...")
     exit_policy_other = create_other_text_field()
-    meal_services = create_select2_multiple_field(MealServiceChoices, "Select meal services...")
     referral_requirement = create_select2_multiple_field(ReferralRequirementChoices, "Select requirements...")
+
+    # Services - per-category Select2 tag inputs
+    services = forms.ModelMultipleChoiceField(
+        queryset=Service.objects.select_related("category").all(),
+        widget=GroupedServiceWidget(),
+        required=False,
+    )
 
     class Meta:
         model = Shelter
@@ -214,6 +265,40 @@ class ShelterForm(forms.ModelForm):
             "admin/js/jquery.init.js",
             "admin/js/dynamic_fields.js",
         )
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._pending_service_entries: list[tuple[int, str]] = []
+
+    def clean_services(self) -> Any:
+        services = self.cleaned_data.get("services")
+        raw_entries = self.data.getlist("services__new") if hasattr(self.data, "getlist") else []
+        pending_entries: list[tuple[int, str]] = []
+        seen_entries: set[tuple[int, str]] = set()
+
+        for raw_entry in raw_entries:
+            if not raw_entry:
+                continue
+
+            category_id, separator, display_name = raw_entry.partition("::")
+            display_name = display_name.strip()
+
+            if not separator or not category_id.isdigit() or not display_name:
+                raise ValidationError("Invalid new service entry.")
+
+            category = ServiceCategory.objects.filter(pk=category_id).only("id").first()
+            if category is None:
+                raise ValidationError(f"Unknown service category: {category_id}.")
+
+            dedupe_key = (category.id, display_name.casefold())
+            if dedupe_key in seen_entries:
+                continue
+
+            seen_entries.add(dedupe_key)
+            pending_entries.append((category.id, display_name))
+
+        self._pending_service_entries = pending_entries
+        return services
 
     def clean(self) -> dict:
         """
@@ -289,6 +374,16 @@ class ShelterForm(forms.ModelForm):
             existing_objects.extend(new_objects)
 
         return existing_objects
+
+    def save_pending_service_entries(self) -> None:
+        if not self._pending_service_entries:
+            return
+
+        from shelters.services import resolve_pending_service_entries
+
+        resolved = resolve_pending_service_entries(self._pending_service_entries)
+        if resolved:
+            self.instance.services.add(*resolved)
 
 
 @admin.register(ContactInfo)
@@ -415,6 +510,54 @@ class ScheduleInline(admin.StackedInline):
     )
 
 
+class ServiceInline(SortableStackedInline):
+    model = Service
+    extra = 0
+    ordering = ["priority"]
+    fields = ("display_name", "name", "is_other", "priority")
+
+
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = (
+        "display_name",
+        "category",
+        "name",
+        "is_other",
+        "priority",
+        "created_at",
+    )
+    list_filter = ("category", "is_other", "created_at")
+    list_select_related = ("category",)
+    ordering = ("category__priority", "category__display_name", "is_other", "priority", "display_name")
+    search_fields = (
+        "display_name",
+        "name",
+        "category__display_name",
+        "category__name",
+    )
+    autocomplete_fields = ("category",)
+
+
+@admin.register(ServiceCategory)
+class ServiceCategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
+    inlines = [ServiceInline]
+    ordering = ["priority"]
+    list_display = (
+        "display_name",
+        "name",
+        "priority",
+        "created_at",
+    )
+    list_filter = ("created_at",)
+    search_fields = (
+        "display_name",
+        "name",
+        "services__display_name",
+        "services__name",
+    )
+
+
 class ShelterResource(resources.ModelResource):
 
     organization = Field(
@@ -430,16 +573,6 @@ class ShelterResource(resources.ModelResource):
         column_name="special_situation_restrictions",
         attribute="special_situation_restrictions",
         widget=ManyToManyWidget(SpecialSituationRestriction, separator=",", field="name"),
-    )
-    general_services = Field(
-        column_name="general_services",
-        attribute="general_services",
-        widget=ManyToManyWidget(GeneralService, separator=",", field="name"),
-    )
-    immediate_needs = Field(
-        column_name="immediate_needs",
-        attribute="immediate_needs",
-        widget=ManyToManyWidget(ImmediateNeed, separator=",", field="name"),
     )
     shelter_types = Field(
         column_name="shelter_types",
@@ -471,11 +604,6 @@ class ShelterResource(resources.ModelResource):
         attribute="parking",
         widget=ManyToManyWidget(Parking, separator=",", field="name"),
     )
-    training_services = Field(
-        column_name="training_services",
-        attribute="training_services",
-        widget=ManyToManyWidget(TrainingService, separator=",", field="name"),
-    )
     cities = Field(
         column_name="cities",
         attribute="cities",
@@ -485,11 +613,6 @@ class ShelterResource(resources.ModelResource):
         column_name="funders",
         attribute="funders",
         widget=ManyToManyWidget(Funder, separator=",", field="name"),
-    )
-    health_services = Field(
-        column_name="health_services",
-        attribute="health_services",
-        widget=ManyToManyWidget(HealthService, separator=",", field="name"),
     )
     entry_requirements = Field(
         column_name="entry_requirements",
@@ -617,14 +740,10 @@ class ShelterResource(resources.ModelResource):
         customFields = [
             "demographics",
             "special_situation_restrictions",
-            "general_services",
-            "immediate_needs",
             "shelter_types",
             "shelter_programs",
-            "training_services",
             "room_styles",
             "funders",
-            "health_services",
             "entry_requirements",
             "storage",
             "pets",
@@ -757,11 +876,7 @@ class ShelterAdmin(ImportExportModelAdmin):
             "Services Offered",
             {
                 "fields": (
-                    "immediate_needs",
-                    "general_services",
-                    "health_services",
-                    "training_services",
-                    "meal_services",
+                    "services",
                     "other_services",
                 )
             },
@@ -848,10 +963,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         "max_stay",
         "on_site_security",
         # Services Offered
-        "immediate_needs",
-        "general_services",
-        "health_services",
-        "training_services",
+        "services",
         # Entry Requirements
         "entry_requirements",
         # Ecosystem Information
@@ -958,6 +1070,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         change: bool,
     ) -> None:
         super().save_related(request, form, formsets, change)
+        form.save_pending_service_entries()
 
         if form.cleaned_data.get("clear_hero_image"):
             form.instance.hero_image_content_type = None

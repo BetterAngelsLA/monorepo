@@ -11,7 +11,7 @@ interface IAvatarProps {
    * size:
    * sm(24) lg(40) xl(60)
    */
-  size?: 'sm' | 'lg' | 'xl';
+  size?: 'sm' | 'lg' | 'xl' | '2xl';
   imageUrl?: string | null;
   hasBorder?: boolean;
   mb?: TSpacing;
@@ -32,6 +32,7 @@ export const SIZE = {
   sm: 24,
   lg: 40,
   xl: 60,
+  '2xl': 80,
 } as const;
 
 export function Avatar(props: IAvatarProps) {
@@ -52,7 +53,7 @@ export function Avatar(props: IAvatarProps) {
     loading,
   } = props;
 
-  const getTextComponent = (size: 'sm' | 'lg' | 'xl') => {
+  const getTextComponent = (size: 'sm' | 'lg' | 'xl' | '2xl') => {
     switch (size) {
       case 'sm':
         return <UserOutlineIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />;
@@ -60,6 +61,8 @@ export function Avatar(props: IAvatarProps) {
         return <UserOutlineIcon size="lg" color={Colors.PRIMARY_EXTRA_DARK} />;
       case 'xl':
         return <UserOutlineIcon size="xl" color={Colors.PRIMARY_EXTRA_DARK} />;
+      case '2xl':
+        return <UserOutlineIcon size="2xl" color={Colors.PRIMARY_EXTRA_DARK} />;
       default:
         return null;
     }

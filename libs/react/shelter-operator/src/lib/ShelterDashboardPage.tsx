@@ -1,7 +1,7 @@
 import { ShelterPage } from '@monorepo/react/shelter';
 import { useParams } from 'react-router-dom';
 
-export default function Shelter() {
+export function ShelterDashboardPage() {
   const { id } = useParams();
 
   if (!id) return null;
