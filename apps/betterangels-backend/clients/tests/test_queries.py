@@ -251,6 +251,40 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
 
     @parametrize(
+        ("search_value, expected_client_profile_count"),
+        [
+            ("123", 1),  # SSN prefix match on client_profile_1
+            ("12345", 1),  # longer SSN prefix match
+            ("999", 1),  # SSN prefix match on client_profile_2
+            ("123456789", 1),  # exact SSN match
+            ("000", 0),  # no SSN match
+            ("L12", 0),  # alphanumeric input uses name search, not SSN
+        ],
+    )
+    def test_client_profiles_query_numeric_search(
+        self, search_value: str, expected_client_profile_count: int
+    ) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        ClientProfile.objects.filter(id=self.client_profile_1["id"]).update(ssn="123456789")
+        ClientProfile.objects.filter(id=self.client_profile_2["id"]).update(ssn="999887766")
+
+        query = """
+            query ($search: String) {
+                clientProfiles(filters: {search: $search}) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        response = self.execute_graphql(query, variables={"search": search_value})
+
+        self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
+
+    @parametrize(
         ("search_value, is_active, expected_client_profile_count"),
         [
             ("tod", True, 0),  # first_name search for active clients, no match
