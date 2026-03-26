@@ -1,0 +1,35 @@
+appId: ${MAESTRO_APP_ID}
+---
+# for a succesfull `login` flow, the following are required:
+#   1. user exists in the database
+#   2. user has first and last name
+#   3. user has accepted terms of service (hasAcceptedTos) and privacy policy (hasAcceptedPrivacyPolicy)
+#       - otherwise the flow will prompt other screens after login
+
+# If we landed on the landing page, open the login screen
+- runFlow:
+    when:
+      visible:
+        id: landing-screen
+    commands:
+      - tapOn:
+          id: better-angels-login
+
+# Ensure the login form is visible
+- assertVisible:
+    id: sign-in-screen
+
+- tapOn:
+    id: 'ba-email-input'
+- inputText: ${MAESTRO_BA_USER_EMAIL}
+
+# Password field becomes visible after email is entered
+- tapOn:
+    id: 'ba-password-input'
+- inputText: ${MAESTRO_BA_USER_PASSWORD}
+
+- tapOn:
+    id: 'ba-login-submit'
+
+- assertVisible:
+    id: clients-screen
