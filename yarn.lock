@@ -6419,6 +6419,7 @@ __metadata:
     "@types/google.maps": "npm:^3.58.1"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:^4.17.23"
+    "@types/minimist": "npm:^1.2.5"
     "@types/node": "npm:^20.0.0"
     "@types/react": "npm:~19.1.10"
     "@types/react-dom": "npm:~19.1.7"
@@ -11438,6 +11439,13 @@ __metadata:
   version: 2.0.13
   resolution: "@types/mdx@npm:2.0.13"
   checksum: 10/b73ed5f08114879b9590dc6a9ee8b648643c57c708583cd24b2bc3cc8961361fc63139ac7e9291e7b3b6e6b45707749d01d6f9727ddec5533df75dc3b90871a4
+  languageName: node
+  linkType: hard
+
+"@types/minimist@npm:^1.2.5":
+  version: 1.2.5
+  resolution: "@types/minimist@npm:1.2.5"
+  checksum: 10/477047b606005058ab0263c4f58097136268007f320003c348794f74adedc3166ffc47c80ec3e94687787f2ab7f4e72c468223946e79892cf0fd9e25e9970a90
   languageName: node
   linkType: hard
 

@@ -1,7 +1,7 @@
 import { Card, ExpandableContainer } from '@monorepo/react/components';
 import { RoomStyleChoices } from '../../../apollo';
 import { WysiwygContainer } from '../../../components';
-import { enumDisplayRoomStyles } from '../../../static';
+import { displayListWithOther, enumDisplayRoomStyles } from '../../../static';
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
 import { InlineList } from '../common';
 import { hasWysiwygContent } from '../utils';
@@ -15,13 +15,16 @@ export function RoomStyles({
 
   const hasNotesContent = hasWysiwygContent(shelter.addNotesSleepingDetails);
 
+  const roomStyles = displayListWithOther(
+    shelter?.roomStyles as readonly { name?: RoomStyleChoices.Other | null }[],
+    shelter?.roomStylesOther,
+    enumDisplayRoomStyles,
+    RoomStyleChoices.Other
+  );
+
   return (
     <Card title="Sleeping Details">
-      <InlineList
-        items={shelter.roomStyles.map(
-          (i) => enumDisplayRoomStyles[i.name as RoomStyleChoices]
-        )}
-      />
+      <InlineList items={roomStyles} />
 
       {hasNotesContent && (
         <ExpandableContainer

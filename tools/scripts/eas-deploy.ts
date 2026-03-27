@@ -33,11 +33,20 @@
  *   EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID
  */
 
-import { execSync } from 'child_process';
 import * as fs from 'fs';
-import * as http from 'http';
-import * as https from 'https';
 import * as path from 'path';
+
+import {
+  EAS_ACCOUNT,
+  UpdateResult,
+  argv,
+  getEnv,
+  getOptionalEnv,
+  resolveProjectDir,
+  run,
+  runJson,
+  setupEnvAndFingerprint,
+} from './eas-utils';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -63,15 +72,6 @@ interface PlatformBuildResult {
   gitCommit: string;
 }
 
-interface UpdateResult {
-  platform: string;
-  id: string;
-  group: string;
-  branch: string;
-  gitCommitHash: string;
-  runtimeVersion: string;
-}
-
 interface DeployResults {
   project: string;
   slug: string;
@@ -93,18 +93,11 @@ interface DeployResults {
 }
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Arg parsing
 // ---------------------------------------------------------------------------
 
 function parseArgs(): { project: string; profile: string } {
-  const args = process.argv.slice(2);
-  const get = (flag: string): string => {
-    const i = args.findIndex((a) => a === flag || a.startsWith(`${flag}=`));
-    if (i === -1) return '';
-    return args[i].includes('=') ? args[i].split('=')[1] : args[i + 1] ?? '';
-  };
-  const project = get('--project');
-  const profile = get('--profile');
+  const { project, profile } = argv;
   if (!project || !profile) {
     console.error('Usage: eas-deploy.ts --project <name> --profile <profile>');
     process.exit(1);
@@ -112,142 +105,8 @@ function parseArgs(): { project: string; profile: string } {
   return { project, profile };
 }
 
-function getEnv(name: string, fallback?: string): string {
-  const val = process.env[name] ?? fallback;
-  if (val === undefined) {
-    throw new Error(`Missing required env var: ${name}`);
-  }
-  return val;
-}
-
-function getOptionalEnv(name: string): string | undefined {
-  return process.env[name];
-}
-
-/**
- * Run a command and return stdout.
- */
-function run(cmd: string, opts?: { cwd?: string; silent?: boolean }): string {
-  const cwd = opts?.cwd ?? process.cwd();
-  if (!opts?.silent) console.log(`> ${cmd}`);
-  return execSync(cmd, {
-    cwd,
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'pipe'],
-  }).trim();
-}
-
-/**
- * Run a command and parse its stdout as JSON.
- * Handles nx/eas CLI output that may contain ANSI codes and non-JSON text.
- */
-function runJson<T>(cmd: string, opts?: { cwd?: string }): T {
-  const raw = run(cmd, { silent: true, ...opts });
-  // Strip ANSI escape codes so they don't interfere with JSON detection
-  // eslint-disable-next-line no-control-regex
-  const cleaned = raw.replace(/\x1B\[[0-9;]*[A-Za-z]/g, '');
-  // Try parsing from every [ or { — earlier ones may be non-JSON text
-  const re = /[\[{]/g;
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(cleaned)) !== null) {
-    const sub = cleaned.substring(match.index);
-    const endChar = sub[0] === '[' ? ']' : '}';
-    for (let i = 0; i < sub.length; i++) {
-      if (sub[i] === endChar) {
-        try {
-          return JSON.parse(sub.substring(0, i + 1)) as T;
-        } catch {
-          // Not valid JSON yet, keep scanning
-        }
-      }
-    }
-  }
-  throw new Error(
-    `Could not parse JSON from output:\n${cleaned.slice(0, 500)}`
-  );
-}
-
-/**
- * Simple HTTPS/HTTP request helper (no external deps needed).
- */
-function httpRequest(
-  url: string,
-  options: {
-    method: string;
-    headers?: Record<string, string>;
-    body?: string;
-  }
-): Promise<{ status: number; body: string }> {
-  return new Promise((resolve, reject) => {
-    const parsedUrl = new URL(url);
-    const opts = { method: options.method, headers: options.headers };
-    const callback = (res: http.IncomingMessage) => {
-      let data = '';
-      res.on('data', (chunk: Buffer) => (data += chunk.toString()));
-      res.on('end', () => resolve({ status: res.statusCode ?? 0, body: data }));
-    };
-    const req =
-      parsedUrl.protocol === 'https:'
-        ? https.request(parsedUrl, opts, callback)
-        : http.request(parsedUrl, opts, callback);
-    req.on('error', reject);
-    if (options.body) req.write(options.body);
-    req.end();
-  });
-}
-
 // ---------------------------------------------------------------------------
-// Step 1: Setup Secrets
-// ---------------------------------------------------------------------------
-
-function setupSecrets(projectDir: string, profile: string): string {
-  console.log(`\n=== Setting up secrets for profile: ${profile} ===`);
-
-  const envPath = path.join(projectDir, '.env');
-  const envLines: string[] = [];
-
-  // 1. Load non-secret env vars from eas.json build profile
-  const easJsonPath = path.join(projectDir, 'eas.json');
-  if (fs.existsSync(easJsonPath)) {
-    const easConfig = JSON.parse(fs.readFileSync(easJsonPath, 'utf-8'));
-    const profileEnv = easConfig?.build?.[profile]?.env;
-    if (profileEnv && typeof profileEnv === 'object') {
-      for (const [key, value] of Object.entries(profileEnv)) {
-        envLines.push(`${key}=${value}`);
-      }
-    }
-  }
-
-  // 2. Collect EXPO_PUBLIC_* secrets from env (passed individually from CI)
-  for (const [key, value] of Object.entries(process.env)) {
-    if (key.startsWith('EXPO_PUBLIC') && value) {
-      envLines.push(`${key}=${value}`);
-    }
-  }
-
-  fs.writeFileSync(envPath, envLines.join('\n') + '\n');
-
-  // Compute fingerprint locally — this hash becomes the runtimeVersion.
-  // app.config.js reads RUNTIME_VERSION from .env via dotenv, so we must
-  // write it to the .env file. For EAS Build, we also pass it via
-  // --build-env so it's available on the remote build server.
-  console.log('Computing fingerprint...');
-  const fingerprintJson = run(
-    `node -e "const fp = require('@expo/fingerprint'); fp.createFingerprintAsync('.').then(r => console.log(JSON.stringify(r)));"`,
-    { cwd: projectDir }
-  );
-  const hash = JSON.parse(fingerprintJson).hash as string;
-  console.log(`Runtime version (fingerprint): ${hash}`);
-
-  // Write to .env so dotenv.config() in app.config.js picks it up
-  fs.appendFileSync(envPath, `RUNTIME_VERSION=${hash}\n`);
-  process.env.RUNTIME_VERSION = hash;
-
-  return hash;
-}
-
-// ---------------------------------------------------------------------------
-// Step 2: Check/Trigger EAS Build
+// Step 1: Check/Trigger EAS Build
 // ---------------------------------------------------------------------------
 
 function checkOrTriggerBuild(
@@ -307,7 +166,7 @@ function checkOrTriggerBuild(
 function toBuildResult(info: BuildInfo, slug: string): PlatformBuildResult {
   return {
     buildId: info.id,
-    buildLink: `https://expo.dev/accounts/better-angels/projects/${slug}/builds/${info.id}`,
+    buildLink: `https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${slug}/builds/${info.id}`,
     distribution: info.distribution,
     buildProfile: info.buildProfile,
     runtimeVersion: info.runtimeVersion,
@@ -355,47 +214,7 @@ function performEasUpdate(
 }
 
 // ---------------------------------------------------------------------------
-// Step 4: Write E2E metadata + trigger
-// ---------------------------------------------------------------------------
-
-function writeE2eMetadata(
-  projectDir: string,
-  slug: string,
-  projectId: string,
-  groupId: string,
-  runtimeVersion: string
-): void {
-  const envPath = path.join(projectDir, '.env');
-  const repository = getOptionalEnv('GITHUB_REPOSITORY') ?? '';
-  const sha = getOptionalEnv('GITHUB_SHA') ?? '';
-  const account = getOptionalEnv('EAS_ACCOUNT') ?? 'better-angels';
-
-  const lines = [
-    `GITHUB_REPOSITORY=${repository}`,
-    `GITHUB_STATUS_SHA=${sha}`,
-    `GITHUB_STATUS_CONTEXT=Betterangels E2E Tests`,
-    `EAS_ACCOUNT=${account}`,
-    `EAS_PROJECT_SLUG=${slug}`,
-    `PROJECT_ID=${projectId}`,
-    `GROUP_ID=${groupId}`,
-    `RUNTIME_VERSION=${runtimeVersion}`,
-  ];
-
-  fs.appendFileSync(envPath, lines.join('\n') + '\n');
-}
-
-function triggerE2e(projectDir: string): void {
-  console.log('\n=== Triggering E2E workflow ===');
-  run(
-    'npx eas-cli workflow:run .eas/workflows/e2e-test.yml --non-interactive',
-    {
-      cwd: projectDir,
-    }
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Step 5: PR Comment
+// Step 2: PR Comment
 // ---------------------------------------------------------------------------
 
 async function postPrComment(results: DeployResults): Promise<void> {
@@ -487,13 +306,15 @@ Update QR   | <a href="${androidUpdate?.qrUrl ?? ''}"><img src="${
     'User-Agent': 'eas-deploy-script',
   };
 
-  const listRes = await httpRequest(listUrl, { method: 'GET', headers });
+  const listRes = await fetch(listUrl, { method: 'GET', headers });
   if (listRes.status !== 200) {
-    console.error(`Failed to list comments: ${listRes.status} ${listRes.body}`);
+    console.error(
+      `Failed to list comments: ${listRes.status} ${await listRes.text()}`
+    );
     return;
   }
 
-  const comments = JSON.parse(listRes.body) as Array<{
+  const comments = (await listRes.json()) as Array<{
     id: number;
     body: string;
   }>;
@@ -501,28 +322,32 @@ Update QR   | <a href="${androidUpdate?.qrUrl ?? ''}"><img src="${
 
   if (existing) {
     const updateUrl = `https://api.github.com/repos/${owner}/${repoName}/issues/comments/${existing.id}`;
-    const updateRes = await httpRequest(updateUrl, {
+    const updateRes = await fetch(updateUrl, {
       method: 'PATCH',
       headers,
       body: JSON.stringify({ body }),
     });
     if (updateRes.status !== 200) {
       console.error(
-        `Failed to update comment: ${updateRes.status} ${updateRes.body}`
+        `Failed to update comment: ${
+          updateRes.status
+        } ${await updateRes.text()}`
       );
     } else {
       console.log('Updated existing PR comment');
     }
   } else {
     const createUrl = `https://api.github.com/repos/${owner}/${repoName}/issues/${prNumber}/comments`;
-    const createRes = await httpRequest(createUrl, {
+    const createRes = await fetch(createUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify({ body }),
     });
     if (createRes.status !== 201) {
       console.error(
-        `Failed to create comment: ${createRes.status} ${createRes.body}`
+        `Failed to create comment: ${
+          createRes.status
+        } ${await createRes.text()}`
       );
     } else {
       console.log('Created new PR comment');
@@ -586,14 +411,16 @@ async function postSlackNotification(results: DeployResults): Promise<void> {
     ],
   };
 
-  const res = await httpRequest(webhookUrl, {
+  const res = await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
   if (res.status !== 200) {
-    console.error(`Slack notification failed: ${res.status} ${res.body}`);
+    console.error(
+      `Slack notification failed: ${res.status} ${await res.text()}`
+    );
   } else {
     console.log('Slack notification sent');
   }
@@ -608,13 +435,10 @@ async function main(): Promise<void> {
   const branchName = getEnv('BRANCH_NAME');
   const eventName = getOptionalEnv('GITHUB_EVENT_NAME') ?? '';
 
-  const projectDir = path.resolve(process.cwd(), 'apps', project);
-  if (!fs.existsSync(projectDir)) {
-    throw new Error(`Project directory not found: ${projectDir}`);
-  }
+  const projectDir = resolveProjectDir(project);
 
   // 1. Setup secrets and get runtime version
-  const runtimeVersion = setupSecrets(projectDir, profile);
+  const runtimeVersion = setupEnvAndFingerprint(projectDir, profile);
 
   // 2. Check/trigger builds
   const isPreview = profile === 'preview';
@@ -661,18 +485,12 @@ async function main(): Promise<void> {
   fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2));
   console.log(`\nResults written to ${resultsPath}`);
 
-  // 5. E2E (merge_group only)
-  if (eventName === 'merge_group' && isPreview) {
-    writeE2eMetadata(projectDir, slug, projectId, groupId, runtimeVersion);
-    triggerE2e(projectDir);
-  }
-
-  // 6. PR comment (pull_request only, preview only)
+  // 5. PR comment (pull_request only, preview only)
   if (eventName === 'pull_request' && isPreview) {
     await postPrComment(results);
   }
 
-  // 7. Slack (push to main, both preview and production)
+  // 6. Slack (push to main, both preview and production)
   if (eventName === 'push') {
     await postSlackNotification(results);
   }
