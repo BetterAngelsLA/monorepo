@@ -16,7 +16,7 @@ const ALL_STEPS: WizardStep[] = [
   { label: 'Add Profile', pathSegment: reservationAddProfileSegment },
   { label: 'Select Shelter', pathSegment: reservationSelectShelterSegment },
   { label: 'Select Room / Bed', pathSegment: reservationSelectRoomSegment },
-  { label: 'Select a Check-in By Date', pathSegment: reservationCheckInByDateSegment,
+  { label: 'Select Check-in By Date', pathSegment: reservationCheckInByDateSegment,
   },
   { label: 'Confirmation', pathSegment: reservationConfirmationSegment },
 ];
