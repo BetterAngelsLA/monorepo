@@ -1,6 +1,7 @@
 import {
   operatorPath,
   reservationAddProfileSegment,
+  reservationCheckInByDateSegment,
   reservationConfirmationSegment,
   reservationPathSegment,
   reservationSelectRoomSegment,
@@ -15,6 +16,8 @@ const ALL_STEPS: WizardStep[] = [
   { label: 'Add Profile', pathSegment: reservationAddProfileSegment },
   { label: 'Select Shelter', pathSegment: reservationSelectShelterSegment },
   { label: 'Select Room / Bed', pathSegment: reservationSelectRoomSegment },
+  { label: 'Select a Check-in By Date', pathSegment: reservationCheckInByDateSegment,
+  },
   { label: 'Confirmation', pathSegment: reservationConfirmationSegment },
 ];
 
@@ -34,7 +37,7 @@ export function ReservationPage() {
       ? `${operatorPath}/shelter/${shelterId}/${reservationPathSegment}`
       : `${operatorPath}/${reservationPathSegment}`;
 
-    return steps.map(step => `${base}/${step.pathSegment}`);
+    return steps.map((step) => `${base}/${step.pathSegment}`);
   }, [isShelterLevel, shelterId, steps]);
 
   return (

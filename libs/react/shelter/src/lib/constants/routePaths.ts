@@ -9,4 +9,5 @@ export const reservationPathSegment = 'reservation';
 export const reservationAddProfileSegment = 'add-profile';
 export const reservationSelectShelterSegment = 'select-shelter';
 export const reservationSelectRoomSegment = 'select-room';
+export const reservationCheckInByDateSegment = 'check-in-by-date';
 export const reservationConfirmationSegment = 'confirmation';

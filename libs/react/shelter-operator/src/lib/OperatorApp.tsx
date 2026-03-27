@@ -1,5 +1,6 @@
 import {
   reservationAddProfileSegment,
+  reservationCheckInByDateSegment,
   reservationConfirmationSegment,
   reservationPathSegment,
   reservationSelectRoomSegment,
@@ -12,6 +13,7 @@ import { ShelterDashboardPage } from './ShelterDashboardPage';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import { CreateShelterForm } from './pages/dashboard/components/create-shelter-form';
 import { AddProfilePage } from './pages/reservation/AddProfilePage';
+import { CheckInByDate } from './pages/reservation/CheckInByDate';
 import { ConfirmationPage } from './pages/reservation/ConfirmationPage';
 import { ReservationPage } from './pages/reservation/ReservationPage';
 import { SelectRoomPage } from './pages/reservation/SelectRoomPage';
@@ -35,6 +37,7 @@ export function OperatorApp() {
               <Route path={reservationAddProfileSegment} element={<AddProfilePage />} />
               <Route path={reservationSelectShelterSegment} element={<SelectShelterPage />} />
               <Route path={reservationSelectRoomSegment} element={<SelectRoomPage />} />
+              <Route path={reservationCheckInByDateSegment} element={<CheckInByDate />} />
               <Route path={reservationConfirmationSegment} element={<ConfirmationPage />} />
             </Route>
             <Route
@@ -43,6 +46,7 @@ export function OperatorApp() {
             >
               <Route path={reservationAddProfileSegment} element={<AddProfilePage />} />
               <Route path={reservationSelectRoomSegment} element={<SelectRoomPage />} />
+              <Route path={reservationCheckInByDateSegment} element={<CheckInByDate />} />
               <Route path={reservationConfirmationSegment} element={<ConfirmationPage />} />
             </Route>
           </Route>

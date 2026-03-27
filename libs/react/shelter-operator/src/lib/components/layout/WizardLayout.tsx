@@ -72,7 +72,7 @@ export function WizardLayout<T extends FieldValues = FieldValues>({
     <FormProvider {...methods}>
       <div className="w-full flex flex-col items-center flex-1">
         <div className="w-full flex justify-center py-2 px-8">
-          <div className="w-full max-w-2xl">
+          <div className="w-full max-w-4xl">
             <WizardProgressBar
               steps={steps}
               currentStep={navigation.currentStep}

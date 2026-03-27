@@ -56,7 +56,7 @@ export const WizardProgressBar = memo(
             ].join(' ');
 
             const labelClasses = [
-              'text-xs transition-colors duration-300 leading-tight text-center w-max max-w-36',
+              'text-xs transition-colors duration-300 leading-tight text-center w-max',
               state === 'completed' || state === 'active'
                 ? 'text-[#008CEE]'
                 : 'text-gray-400',
