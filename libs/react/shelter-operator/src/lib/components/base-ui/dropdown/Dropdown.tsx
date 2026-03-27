@@ -88,11 +88,17 @@ export function Dropdown<T extends string | number = string | number>(
     [selectedValues]
   );
 
+  const prevOtherSelectedRef = useRef(otherSelected);
+
   useEffect(() => {
     if (!otherSelected) {
       setOtherDetailText('');
+      if (prevOtherSelectedRef.current) {
+        onOtherTextChange?.('');
+      }
     }
-  }, [otherSelected]);
+    prevOtherSelectedRef.current = otherSelected;
+  }, [otherSelected, onOtherTextChange]);
 
   // Multi-select trigger grows and uses rounded rectangle styling
   const isStackedMultiSelect =
