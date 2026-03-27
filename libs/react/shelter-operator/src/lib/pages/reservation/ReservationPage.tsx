@@ -8,15 +8,19 @@ import {
   reservationSelectShelterSegment,
 } from '@monorepo/react/shelter';
 import { useMemo } from 'react';
+import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import { WizardLayout } from '../../components/layout/WizardLayout';
 import type { WizardStep } from '../../components/layout/WizardProgressBar';
+import { ReservationFormData } from './types';
 
 const ALL_STEPS: WizardStep[] = [
   { label: 'Add Profile', pathSegment: reservationAddProfileSegment },
   { label: 'Select Shelter', pathSegment: reservationSelectShelterSegment },
   { label: 'Select Room / Bed', pathSegment: reservationSelectRoomSegment },
-  { label: 'Select Check-in By Date', pathSegment: reservationCheckInByDateSegment,
+  {
+    label: 'Select Check-in By Date',
+    pathSegment: reservationCheckInByDateSegment,
   },
   { label: 'Confirmation', pathSegment: reservationConfirmationSegment },
 ];
@@ -24,6 +28,17 @@ const ALL_STEPS: WizardStep[] = [
 export function ReservationPage() {
   const { shelterId } = useParams();
   const isShelterLevel = !!shelterId;
+
+  const methods = useForm<ReservationFormData>({
+    defaultValues: {
+      clients: [],
+      shelterId: shelterId || '',
+      roomId: null,
+      bedId: null,
+      startDate: null,
+    },
+    mode: 'onTouched',
+  });
 
   const steps = useMemo(() => {
     if (isShelterLevel) {
@@ -41,9 +56,10 @@ export function ReservationPage() {
   }, [isShelterLevel, shelterId, steps]);
 
   return (
-    <WizardLayout
+    <WizardLayout<ReservationFormData>
       steps={steps}
       stepPaths={paths}
+      methods={methods}
       navigationConfig={{
         showNavigation: true,
       }}
