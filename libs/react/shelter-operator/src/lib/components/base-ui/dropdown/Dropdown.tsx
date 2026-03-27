@@ -84,8 +84,7 @@ export function Dropdown<T extends string | number = string | number>(
   const hasSelection = selectedValues.length > 0;
 
   const otherSelected = useMemo(
-    () =>
-      selectedValues.some((v) => String(v.value) === '__dropdown_other__'),
+    () => selectedValues.some((v) => String(v.value) === '__dropdown_other__'),
     [selectedValues]
   );
 
@@ -105,8 +104,7 @@ export function Dropdown<T extends string | number = string | number>(
   );
 
   const menuOptionsWithoutOther = useMemo(
-    () =>
-      options.filter((o) => String(o.value) !== '__dropdown_other__'),
+    () => options.filter((o) => String(o.value) !== '__dropdown_other__'),
     [options]
   );
 
@@ -208,7 +206,9 @@ export function Dropdown<T extends string | number = string | number>(
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
-    <div className={cn('relative flex flex-col gap-1 w-full', className)}>
+    <div
+      className={cn('relative flex w-full flex-col gap-1 font-sans', className)}
+    >
       {label && (
         <label id={labelId} className="text-sm text-gray-900">
           <Text variant="body" className="text-gray-900">
@@ -223,10 +223,7 @@ export function Dropdown<T extends string | number = string | number>(
         </label>
       )}
 
-      <div
-        ref={menuAnchorRef}
-        className="flex w-full flex-col gap-1"
-      >
+      <div ref={menuAnchorRef} className="flex w-full flex-col gap-1">
         <div
           ref={triggerRef}
           role="combobox"
@@ -283,7 +280,7 @@ export function Dropdown<T extends string | number = string | number>(
             value={otherDetailText}
             placeholder="Please specify..."
             className={cn(
-              'w-full h-12 rounded-full border bg-white px-4 text-sm transition-colors duration-200',
+              'w-full h-12 rounded-full border bg-white px-4 font-sans text-sm transition-colors duration-200',
               'text-gray-900 placeholder:text-gray-400',
               'border-gray-200 outline-none focus:border-[#008CEE]',
               disabled && 'cursor-not-allowed opacity-50'

@@ -12,7 +12,7 @@ export function DropdownChips<T extends string | number>({
   onRemove,
 }: DropdownChipsProps<T>) {
   return (
-    <div className="flex flex-1 min-w-0 flex-row flex-wrap items-center content-start gap-1">
+    <div className="flex min-w-0 flex-1 flex-row flex-wrap content-start items-center gap-1 font-sans">
       {selectedValues.map((v) => (
         <span
           key={v.value}
