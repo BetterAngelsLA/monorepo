@@ -1,5 +1,6 @@
 import { Check, Search } from 'lucide-react';
 import type { RefObject } from 'react';
+import { Button } from '../buttons/buttons';
 import { Text } from '../text/text';
 import { cn, Z_BACKDROP, Z_MENU } from './constants';
 import type { DropdownOption } from './types';
@@ -60,7 +61,7 @@ export function DropdownMenu<T extends string | number>({
           width: menuPos.width,
           zIndex: Z_MENU,
         }}
-        className="bg-white border border-gray-200 rounded-2xl shadow-lg flex flex-col overflow-hidden"
+        className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white font-sans shadow-lg"
       >
         {isSearchable && (
           <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
@@ -68,7 +69,7 @@ export function DropdownMenu<T extends string | number>({
             <input
               autoFocus
               type="text"
-              className="flex-1 text-sm bg-transparent text-gray-900 placeholder:text-gray-400 border-none outline-hidden focus:outline-hidden focus:ring-0 focus:border-none"
+              className="flex-1 border-none bg-transparent font-sans text-sm text-gray-900 outline-hidden placeholder:text-gray-400 focus:border-none focus:outline-hidden focus:ring-0"
               placeholder="Type to search..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
@@ -81,7 +82,7 @@ export function DropdownMenu<T extends string | number>({
         <div
           ref={listRef}
           role="listbox"
-          className="overflow-y-auto max-h-[352px]"
+          className="max-h-[352px] space-y-1 overflow-y-auto px-2 py-2"
         >
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option, index) => {
@@ -93,7 +94,7 @@ export function DropdownMenu<T extends string | number>({
                   role="option"
                   aria-selected={active}
                   className={cn(
-                    ' px-4 py-3 cursor-pointer transition-colors',
+                    'cursor-pointer rounded-lg px-3 py-2.5 transition-colors',
                     active ? 'bg-blue-50' : '',
                     focused && !active && 'bg-gray-100',
                     !focused && !active && 'hover:bg-gray-50'
@@ -105,18 +106,18 @@ export function DropdownMenu<T extends string | number>({
                     variant="body"
                     className={cn(
                       'flex items-center justify-between',
-                      active ? 'text-blue-600 font-medium' : 'text-gray-900'
+                      active ? 'text-[#008CEE]' : 'text-gray-900'
                     )}
                   >
                     {option.label}
-                    {active && <Check size={16} className="shrink-0" />}
+                    {active && <Check size={20} className="shrink-0" />}
                   </Text>
                 </div>
               );
             })
           ) : (
-            <div className="px-4 py-3">
-              <Text variant="body" className="text-gray-400 text-center">
+            <div className="px-3 py-3">
+              <Text variant="body" className="text-center text-gray-400">
                 No results found
               </Text>
             </div>
@@ -124,40 +125,17 @@ export function DropdownMenu<T extends string | number>({
         </div>
 
         {isMulti && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-            <button
-              type="button"
-              className={cn(
-                'transition-colors cursor-pointer',
-                hasSelection ? '' : 'cursor-default'
-              )}
+          <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-gray-200">
+            <Button
+              variant="primary-sm"
               disabled={!hasSelection}
               onClick={onClearAll}
             >
-              <Text
-                variant="body"
-                className={cn(
-                  '',
-                  hasSelection
-                    ? 'text-red-500 hover:text-red-600'
-                    : 'text-gray-300'
-                )}
-              >
-                Clear all
-              </Text>
-            </button>
-            <button
-              type="button"
-              className="cursor-pointer transition-colors"
-              onClick={onClose}
-            >
-              <Text
-                variant="body"
-                className="font-medium text-blue-600 hover:text-blue-700"
-              >
-                Done
-              </Text>
-            </button>
+              Unselect All
+            </Button>
+            <Button variant="primary-sm" color="blue" onClick={onClose}>
+              Apply
+            </Button>
           </div>
         )}
       </div>
