@@ -9,6 +9,7 @@ import {
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
 import { useActiveOrg } from '../../providers/activeOrg';
+import { operatorPath, reservationPathSegment } from '@monorepo/react/shelter';
 import type { Shelter } from '../../types/shelter';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -194,9 +195,11 @@ export function Dashboard() {
 
       {isOperatorRoot && (
         <div className="fixed bottom-6 right-6 text-sm z-20 ">
-          <Button leftIcon={<BookCheck size={24} />} rightIcon={false} variant="floating">
-            Reserve
-          </Button>
+          <Link to={`${operatorPath}/${reservationPathSegment}`}>
+            <Button leftIcon={<BookCheck size={24} />} rightIcon={false} variant="floating">
+              Reserve
+            </Button>
+          </Link>
         </div>
       )}
     </>
