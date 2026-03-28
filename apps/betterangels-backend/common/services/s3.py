@@ -2,11 +2,41 @@
 
 import uuid
 from pathlib import Path
-from typing import TypedDict
+from typing import NotRequired, TypedDict, cast
 
 import boto3
 from botocore.client import Config
 from django.conf import settings
+from mypy_boto3_s3 import S3Client
+
+S3_SIGNATURE_VERSION = "s3v4"
+DEFAULT_EXPIRATION = 300
+DEFAULT_MAX_FILE_SIZE = 10_000_000
+
+
+class PresignedS3UploadInput(TypedDict):
+    upload_ref: str
+    filename: str
+    content_type: str
+    upload_path: str
+    expires_in: NotRequired[int]
+    max_file_size: NotRequired[int]
+
+
+class S3ClientPresignedPostResponse(TypedDict):
+    url: str
+    fields: dict[str, str]
+
+
+class PresignedS3UploadResult(TypedDict):
+    upload_ref: str
+    url: str
+    fields: dict[str, str]
+    key: str
+
+
+class PresignedS3UploadBatchResult(TypedDict):
+    uploads: list[PresignedS3UploadResult]
 
 
 def _normalize_upload_path(upload_path: str) -> str:
@@ -16,7 +46,7 @@ def _normalize_upload_path(upload_path: str) -> str:
     return upload_path.strip("/")
 
 
-def _build_s3_key(*, filename: str, upload_path: str) -> str:
+def _build_s3_key(*, filename: str, content_type: str, upload_path: str) -> str:
     """
     Build a deterministic S3 key relative to the storage `location`
     (e.g. "media/").
@@ -31,6 +61,10 @@ def _build_s3_key(*, filename: str, upload_path: str) -> str:
         upload_path=""
             → <uuid>.jpg
     """
+    # TODO: derive extension
+    # add mimetypes.guess_extension to common/files?
+    # ext = mimetypes.guess_extension(content_type) or Path(filename).suffix
+
     ext = Path(filename).suffix
     uid = uuid.uuid4()
 
@@ -39,83 +73,99 @@ def _build_s3_key(*, filename: str, upload_path: str) -> str:
 
     return f"{uid}{ext}"
 
-    # s3_client = boto3.client(
-    #     "s3",
-    #     aws_access_key_id=...,
-    #     aws_secret_access_key=...,
-    #     region_name=...,
-    # )
 
-
-class PresignedPostResult(TypedDict):
-    url: str
-    fields: dict[str, str]
-    key: str
-
-
-def generate_s3_presigned_post(
+def _generate_presigned_post_with_client(
     *,
+    s3_client: S3Client,
+    upload_ref: str,
     filename: str,
     content_type: str,
     upload_path: str,
-    expires_in: int = 300,  # 5 minutes
-    max_file_size: int = 10_000_000,  # ≈ 9.54 MB
-) -> PresignedPostResult:
-    """
-    Generate a presigned POST upload for S3.
+    expires_in: int | None = None,
+    max_file_size: int | None = None,
+) -> PresignedS3UploadResult:
+    if expires_in is None:
+        expires_in = DEFAULT_EXPIRATION
 
-    Notes:
-    - `upload_path` must be relative to storage `location` (e.g. "media/")
-    - Do NOT include "media/" in upload_path
-    - Resulting S3 key will be: <location>/<key>
-    """
-    s3_client = boto3.client(
-        "s3",
-        config=Config(signature_version="s3v4"),
-    )
-
-    print("")
-    print("******************* generate_s3_presigned_post")
-    print()
+    if max_file_size is None:
+        max_file_size = DEFAULT_MAX_FILE_SIZE
 
     normalized_path = _normalize_upload_path(upload_path)
-    key = _build_s3_key(filename=filename, upload_path=normalized_path)
-
-    print(f"******************* {"normalized_path"}: {normalized_path}")
-    print(f"******************* {"key"}: {key}")
+    key = _build_s3_key(
+        filename=filename,
+        content_type=content_type,
+        upload_path=normalized_path,
+    )
 
     conditions = [
         {"Content-Type": content_type},
         ["content-length-range", 0, max_file_size],
     ]
 
-    # Only enforce prefix restriction if a path is provided
     if normalized_path:
         conditions.append(["starts-with", "$key", f"{normalized_path}/"])
     else:
-        # Allow any key at root
         conditions.append(["starts-with", "$key", ""])
 
-    response = s3_client.generate_presigned_post(
-        Bucket=settings.AWS_S3_STORAGE_BUCKET_NAME,
-        Key=key,
-        Fields={
-            "Content-Type": content_type,
-        },
-        Conditions=conditions,
-        ExpiresIn=expires_in,
+    # other conditions:
+    # Optional: restrict content-type prefix?
+    # -- ["starts-with", "$Content-Type", "image/"]
+
+    response = cast(
+        S3ClientPresignedPostResponse,
+        s3_client.generate_presigned_post(
+            Bucket=settings.AWS_S3_STORAGE_BUCKET_NAME,
+            Key=key,
+            Fields={"Content-Type": content_type},
+            Conditions=conditions,
+            ExpiresIn=expires_in,
+        ),
     )
 
-    print()
-    print("| ------------- generate_s3_presigned_post  response  ------------- |")
-    print(response)
-    print()
+    fields = response.get("fields")
+    fields_key = fields.get("key")
 
-    return PresignedPostResult(
+    if not fields_key:
+        raise RuntimeError("Presigned POST response missing 'fields.key'")
+
+    if fields_key != key:
+        raise RuntimeError(f"Presigned POST key mismatch: expected '{key}', got '{fields_key}'")
+
+    return PresignedS3UploadResult(
+        upload_ref=upload_ref,
         url=response["url"],
-        fields=response["fields"],
+        fields=fields,
         key=key,
     )
+
+
+def generate_s3_presigned_upload_urls(
+    *,
+    uploads: list[PresignedS3UploadInput],
+) -> PresignedS3UploadBatchResult:
+    s3_client = boto3.client(
+        "s3",
+        config=Config(
+            signature_version=S3_SIGNATURE_VERSION,
+        ),
+    )
+
+    results: list[PresignedS3UploadResult] = []
+
+    for upload in uploads:
+        result = _generate_presigned_post_with_client(
+            s3_client=s3_client,
+            upload_ref=upload["upload_ref"],
+            filename=upload["filename"],
+            content_type=upload["content_type"],
+            upload_path=upload["upload_path"],
+            expires_in=upload.get("expires_in"),
+            max_file_size=upload.get("max_file_size"),
+        )
+
+        results.append(result)
+
+    return {"uploads": results}
 
 
 # aws sso login

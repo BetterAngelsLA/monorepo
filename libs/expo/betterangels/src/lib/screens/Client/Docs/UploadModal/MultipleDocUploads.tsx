@@ -1,16 +1,9 @@
-import { useMutation } from '@apollo/client/react';
-import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { UploadIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { MediaPicker, TextBold } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-import { useSnackbar } from '../../../../hooks';
-import {
-  ClientProfileDocument,
-  CreateClientDocumentDocument,
-} from '../../__generated__/Client.generated';
 import { UploadSection } from './UploadSection';
 import UploadsPreview from './UploadsPreview';
 import { IMultipleDocUploadsProps } from './types';
@@ -19,21 +12,22 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
   console.log('################################### MultipleDocUploads');
 
   const { setTab, client, setDocs, docs, title, docType } = props;
-  const [createDocument, { loading }] = useMutation(
-    CreateClientDocumentDocument,
-    {
-      refetchQueries: [
-        {
-          query: ClientProfileDocument,
-          variables: {
-            id: client?.clientProfile.id,
-          },
-        },
-      ],
-    }
-  );
+  // const [createDocument, { loading }] = useMutation(
+  //   CreateClientDocumentDocument,
+  //   {
+  //     refetchQueries: [
+  //       {
+  //         query: ClientProfileDocument,
+  //         variables: {
+  //           id: client?.clientProfile.id,
+  //         },
+  //       },
+  //     ],
+  //   }
+  // );
+
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const { showSnackbar } = useSnackbar();
+  // const { showSnackbar } = useSnackbar();
 
   const uploadDocuments = async () => {
     const documents = docs?.[docType];
@@ -43,36 +37,50 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
     }
 
     try {
-      const uploads = documents.map((form) => {
-        const fileToUpload = new ReactNativeFile({
-          uri: form.uri,
-          type: form.type,
-          name: form.name,
-        });
-
-        return createDocument({
-          variables: {
-            data: {
-              file: fileToUpload,
-              clientProfile: client.clientProfile.id,
-              namespace: ClientDocumentNamespaceEnum[docType],
-            },
-          },
-        });
-      });
-
-      await Promise.all(uploads);
+      console.log(documents);
     } catch (err) {
-      console.error(`error uploading ${docType} forms: `, err);
-
-      showSnackbar({
-        message: `Sorry, there was an error with the file upload.`,
-        type: 'error',
-      });
+      console.log(err);
     }
-
-    setTab(undefined);
   };
+
+  // const uploadDocuments = async () => {
+  //   const documents = docs?.[docType];
+
+  //   if (!documents || documents.length < 1 || !client) {
+  //     return;
+  //   }
+
+  //   try {
+  //     const uploads = documents.map((form) => {
+  //       const fileToUpload = new ReactNativeFile({
+  //         uri: form.uri,
+  //         type: form.type,
+  //         name: form.name,
+  //       });
+
+  //       return createDocument({
+  //         variables: {
+  //           data: {
+  //             file: fileToUpload,
+  //             clientProfile: client.clientProfile.id,
+  //             namespace: ClientDocumentNamespaceEnum[docType],
+  //           },
+  //         },
+  //       });
+  //     });
+
+  //     await Promise.all(uploads);
+  //   } catch (err) {
+  //     console.error(`error uploading ${docType} forms: `, err);
+
+  //     showSnackbar({
+  //       message: `Sorry, there was an error with the file upload.`,
+  //       type: 'error',
+  //     });
+  //   }
+
+  //   setTab(undefined);
+  // };
 
   const onRemoveFile = (index: number) => {
     setDocs({
@@ -99,7 +107,7 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
   return (
     <>
       <UploadSection
-        loading={loading}
+        // loading={loading}
         disabled={!docsToUpload.length || !allDocsValid}
         title={title}
         onSubmit={uploadDocuments}

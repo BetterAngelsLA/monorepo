@@ -20,12 +20,18 @@
   "[toml]": {
     "editor.defaultFormatter": "tamasfe.even-better-toml"
   },
-  "typescript.suggest.autoImports": true,
+  "js/ts.suggest.autoImports": true,
   "search.exclude": {
     "**/.pnp.*": true,
     "**/.yarn": true,
-    "**/.venv": true
+    "**/.venv": true,
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/.nx": true,
+    "**/dist": true,
+    "**/.mypy_cache": true
   },
+
   "mypy.enabled": true,
   "mypy.runUsingActiveInterpreter": true,
   "python.analysis.typeCheckingMode": "off",
@@ -34,5 +40,23 @@
   "python.testing.pytestEnabled": true,
   "python.analysis.autoImportCompletions": true,
   "python-envs.defaultEnvManager": "ms-python.python:poetry",
-  "python-envs.defaultPackageManager": "ms-python.python:poetry"
+  "python-envs.defaultPackageManager": "ms-python.python:poetry",
+
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.git/**": true,
+    "**/.nx/**": true,
+    "**/dist/**": true,
+    "**/.venv/**": true,
+    "**/.mypy_cache/**": true
+  },
+
+  "python.analysis.exclude": [
+    "**/__pycache__",
+    "**/.*",
+    "**/node_modules",
+    "**/.venv",
+    "**/dist",
+    "**/.mypy_cache"
+  ]
 }

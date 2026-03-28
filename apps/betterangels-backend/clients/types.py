@@ -96,10 +96,17 @@ class ClientProfileOrder:
 
 
 @strawberry.input
-class PresignedClientUploadInput:
-    client_profile: ID
+class ClientDocumentUploadsInputItem:
+    upload_ref: str
     filename: str
     content_type: str
+
+
+@strawberry.input
+class ClientDocumentUploadsInput:
+    # client_profile_id: ID
+    client_profile: ID
+    uploads: list[ClientDocumentUploadsInputItem]
 
 
 @strawberry.input

@@ -280,6 +280,17 @@ export type ClientDocumentTypeOffsetPaginated = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type ClientDocumentUploadsInput = {
+  clientProfileId: Scalars['ID']['input'];
+  uploads: Array<ClientDocumentUploadsInputItem>;
+};
+
+export type ClientDocumentUploadsInputItem = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  uploadRef: Scalars['String']['input'];
+};
+
 export type ClientHouseholdMemberInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
@@ -480,6 +491,8 @@ export type CreateClientDocumentInput = {
 };
 
 export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
+
+export type CreateClientDocumentUploadsPayload = OperationInfo | PresignedS3UploadsResult;
 
 export type CreateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo;
 
@@ -919,8 +932,6 @@ export enum GenderEnum {
   TransFemale = 'TRANS_FEMALE',
   TransMale = 'TRANS_MALE'
 }
-
-export type GenerateClientDocumentUploadUrlPayload = OperationInfo | PresignedUploadOutput;
 
 export type GeolocationInput = {
   latitude: Scalars['Float']['input'];
@@ -1376,6 +1387,7 @@ export type Mutation = {
   createBed: CreateBedPayload;
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
+  createClientDocumentUploads: CreateClientDocumentUploadsPayload;
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
   createClientProfile: CreateClientProfilePayload;
   createClientProfileDataImport: CreateClientProfileDataImportPayload;
@@ -1402,7 +1414,6 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
-  generateClientDocumentUploadUrl: GenerateClientDocumentUploadUrlPayload;
   hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
@@ -1446,6 +1457,11 @@ export type MutationCreateClientContactArgs = {
 
 export type MutationCreateClientDocumentArgs = {
   data: CreateClientDocumentInput;
+};
+
+
+export type MutationCreateClientDocumentUploadsArgs = {
+  data: ClientDocumentUploadsInput;
 };
 
 
@@ -1572,11 +1588,6 @@ export type MutationDeleteSocialMediaProfileArgs = {
 
 export type MutationDeleteTaskArgs = {
   data: DeleteDjangoObjectInput;
-};
-
-
-export type MutationGenerateClientDocumentUploadUrlArgs = {
-  data: PresignedClientUploadInput;
 };
 
 
@@ -2019,17 +2030,17 @@ export enum PreferredCommunicationEnum {
   Whatsapp = 'WHATSAPP'
 }
 
-export type PresignedClientUploadInput = {
-  clientProfile: Scalars['ID']['input'];
-  contentType: Scalars['String']['input'];
-  filename: Scalars['String']['input'];
-};
-
-export type PresignedUploadOutput = {
-  __typename?: 'PresignedUploadOutput';
+export type PresignedS3UploadResultItem = {
+  __typename?: 'PresignedS3UploadResultItem';
   fields: Scalars['JSON']['output'];
   key: Scalars['String']['output'];
+  uploadRef: Scalars['String']['output'];
   url: Scalars['String']['output'];
+};
+
+export type PresignedS3UploadsResult = {
+  __typename?: 'PresignedS3UploadsResult';
+  uploads: Array<PresignedS3UploadResultItem>;
 };
 
 export type ProgramEnrollmentType = {

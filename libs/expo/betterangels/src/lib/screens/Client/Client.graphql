@@ -110,29 +110,29 @@ query ClientProfile($id: ID!) {
   }
 }
 
-mutation GenerateClientDocumentUploadUrl($data: PresignedClientUploadInput!) {
-  generateClientDocumentUploadUrl(data: $data) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
+# mutation GenerateClientDocumentUploadUrl($data: PresignedClientUploadInput!) {
+#   generateClientDocumentUploadUrl(data: $data) {
+#     ... on OperationInfo {
+#       messages {
+#         kind
+#         field
+#         message
+#       }
+#     }
 
-    # return PresignedUploadOutput(
-    #     url=result["url"],
-    #     fields=cast(JSON, result["fields"]),
-    #     key=result["key"],
-    # )
+#     # return PresignedUploadOutput(
+#     #     url=result["url"],
+#     #     fields=cast(JSON, result["fields"]),
+#     #     key=result["key"],
+#     # )
 
-    ... on PresignedUploadOutput {
-      url
-      fields
-      key
-    }
-  }
-}
+#     ... on PresignedUploadOutput {
+#       url
+#       fields
+#       key
+#     }
+#   }
+# }
 
 mutation CreateClientDocument($data: CreateClientDocumentInput!) {
   createClientDocument(data: $data) {

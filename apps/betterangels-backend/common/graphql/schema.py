@@ -7,20 +7,22 @@ import strawberry
 from common.graphql.types import FeatureControlData, FlagType, SampleType, SwitchType
 from strawberry.scalars import JSON
 from strawberry.types import Info
+
+# from strawberry. import JSON
 from waffle import get_waffle_flag_model, get_waffle_sample_model, get_waffle_switch_model
 
 
-@strawberry.input
-class PresignedUploadInput:
-    filename: str
-    content_type: str
-
-
 @strawberry.type
-class PresignedUploadOutput:
+class PresignedS3UploadResultItem:
+    upload_ref: str
     url: str
     fields: JSON
     key: str
+
+
+@strawberry.type
+class PresignedS3UploadsResult:
+    uploads: list[PresignedS3UploadResultItem]
 
 
 @strawberry.type
