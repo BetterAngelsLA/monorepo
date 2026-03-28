@@ -9,7 +9,7 @@ import strawberry_django
 from accounts.models import User
 from accounts.types import OrganizationType
 from common.graphql.types import PhoneNumberScalar
-from django.db.models import Prefetch, QuerySet
+from django.db.models import Count, Prefetch, Q, QuerySet
 from shelters import models
 from shelters.enums import (
     BedStatusChoices,
@@ -165,31 +165,17 @@ class ShelterTypeMixin:
 
         return None
 
-    @strawberry_django.field(
-        prefetch_related=[
-            lambda x: Prefetch(
-                "beds",
-                queryset=models.Bed.objects.only("id", "shelter_id", "status"),
-                to_attr="_prefetched_beds",
-            ),
-        ],
-    )
+    @strawberry_django.field
     def bed_capacity(self, root: models.Shelter) -> BedCapacityType:
-        beds = getattr(root, "_prefetched_beds", None)
-        if beds is None:
-            beds = list(root.beds.only("id", "shelter_id", "status"))
-        capacity = BedCapacityType()
-        for bed in beds:
-            if bed.status == BedStatusChoices.AVAILABLE:
-                capacity.available += 1
-            elif bed.status == BedStatusChoices.OCCUPIED:
-                capacity.occupied += 1
-            elif bed.status == BedStatusChoices.RESERVED:
-                capacity.reserved += 1
-            elif bed.status == BedStatusChoices.OUT_OF_SERVICE:
-                capacity.out_of_service += 1
-            # beds with status=None are intentionally uncounted
-        return capacity
+        # NOTE: When adding a new BedStatusChoices value, add a Count here
+        # and a corresponding field on BedCapacityType.
+        counts = root.beds.aggregate(
+            available=Count("id", filter=Q(status=BedStatusChoices.AVAILABLE)),
+            occupied=Count("id", filter=Q(status=BedStatusChoices.OCCUPIED)),
+            reserved=Count("id", filter=Q(status=BedStatusChoices.RESERVED)),
+            out_of_service=Count("id", filter=Q(status=BedStatusChoices.OUT_OF_SERVICE)),
+        )
+        return BedCapacityType(**counts)
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
