@@ -8,8 +8,8 @@ TEST_IMAGE_CONTENT = (
 
 SHELTER_FIELDS = """
     id
-    addNotesSleepingDetails
     addNotesShelterDetails
+    addNotesSleepingDetails
     bedFees
     cityCouncilDistrict
     curfew
@@ -17,7 +17,9 @@ SHELTER_FIELDS = """
     description
     distanceInMiles
     email
+    emergencySurge
     entryInfo
+    exitPolicyOther
     fundersOther
     maxStay
     name
@@ -34,11 +36,14 @@ SHELTER_FIELDS = """
     subjectiveReview
     supervisorialDistrict
     totalBeds
+    visitorsAllowed
     website
     accessibility {name}
     cities {name}
     demographics {name}
     entryRequirements {name}
+    exitPolicy {name}
+    referralRequirement {name}
     funders {name}
     parking {name}
     pets {name}

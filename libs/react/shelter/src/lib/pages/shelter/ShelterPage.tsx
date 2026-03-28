@@ -49,6 +49,7 @@ export function ShelterPage({ id }: { id: string }) {
   const hasDescription = hasWysiwygContent(shelter.description);
   const hasEntryRequirements =
     !!shelter.entryRequirements?.length ||
+    !!shelter.referralRequirement?.length ||
     hasWysiwygContent(shelter.entryInfo) ||
     hasWysiwygContent(shelter.bedFees) ||
     hasWysiwygContent(shelter.programFees);
@@ -64,7 +65,10 @@ export function ShelterPage({ id }: { id: string }) {
   const hasRestrictions =
     !!shelter.maxStay ||
     !!shelter.curfew ||
-    !!shelter.onSiteSecurity ||
+    !!shelter.exitPolicy?.length ||
+    shelter.visitorsAllowed != null ||
+    shelter.emergencySurge != null ||
+    shelter.onSiteSecurity != null ||
     hasWysiwygContent(shelter.otherRules);
 
   const hasEcosystemInfo =

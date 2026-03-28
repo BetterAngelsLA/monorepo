@@ -25,9 +25,11 @@ from shelters.types.lookups import (
     ContactInfoType,
     DemographicType,
     EntryRequirementType,
+    ExitPolicyType,
     FunderType,
     ParkingType,
     PetType,
+    ReferralRequirementType,
     RoomStyleType,
     ScheduleType,
     ServiceType,
@@ -82,6 +84,9 @@ class ShelterTypeMixin:
     email: auto
     entry_info: Optional[str]
     entry_requirements: List[EntryRequirementType]
+    exit_policy: List[ExitPolicyType]
+    exit_policy_other: auto
+    emergency_surge: auto
     exterior_photos: List[ShelterPhotoType]
     funders: List[FunderType]
     funders_other: auto
@@ -99,6 +104,7 @@ class ShelterTypeMixin:
     pets: List[PetType]
     phone: Optional[PhoneNumberScalar]  # type: ignore
     program_fees: Optional[str]
+    referral_requirement: List[ReferralRequirementType]
     room_styles: List[RoomStyleType]
     room_styles_other: auto
     schedules: List[ScheduleType]
@@ -115,6 +121,7 @@ class ShelterTypeMixin:
     supervisorial_district: auto
     total_beds: auto
     updated_at: auto
+    visitors_allowed: auto
     website: auto
 
     _exterior_photos: Optional[List[ShelterPhotoType]] = None

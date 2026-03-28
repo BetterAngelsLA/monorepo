@@ -5,6 +5,7 @@ import {
   SpaChoices,
 } from '../../../apollo';
 import {
+  displayListWithOther,
   enumDisplayFunderChoices,
   enumDisplayShelterProgramChoices,
   enumDisplaySpaChoices,
@@ -20,6 +21,22 @@ export function EcosystemInfo({
 }) {
   const cityCouncilDistrict = formatCityCouncilDistrict(
     shelter.cityCouncilDistrict
+  );
+
+  const funderItems = displayListWithOther(
+    shelter?.funders as readonly { name?: FunderChoices.Other | null }[],
+    shelter?.fundersOther,
+    enumDisplayFunderChoices,
+    FunderChoices.Other
+  );
+
+  const shelterPrograms = displayListWithOther(
+    shelter?.shelterPrograms as readonly {
+      name?: ShelterProgramChoices.Other | null;
+    }[],
+    shelter?.shelterProgramsOther,
+    enumDisplayShelterProgramChoices,
+    ShelterProgramChoices.Other
   );
 
   return (
@@ -46,20 +63,9 @@ export function EcosystemInfo({
           </div>
         )}
 
-        <InlineList
-          title="Program:"
-          items={shelter?.shelterPrograms.map(
-            (i) =>
-              enumDisplayShelterProgramChoices[i.name as ShelterProgramChoices]
-          )}
-        />
+        <InlineList title="Program:" items={shelterPrograms} />
 
-        <InlineList
-          title="Funders:"
-          items={shelter?.funders.map(
-            (i) => enumDisplayFunderChoices[i.name as FunderChoices]
-          )}
-        />
+        <InlineList title="Funders:" items={funderItems} />
       </div>
     </Card>
   );

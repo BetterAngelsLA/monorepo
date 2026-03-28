@@ -66,8 +66,10 @@ def main() -> None:
         )
 
         # Give ~15% of shelters a long unbroken name to exercise the
-        # break-all CSS safeguard in ShelterCard.
-        long_name = "VeryLongShelterName" * 25  # ~475 chars, no spaces
+        # break-all CSS safeguard in ShelterCard without exceeding the model
+        # field limit.
+        name_max_length = Shelter._meta.get_field("name").max_length or 255
+        long_name = ("VeryLongShelterName" * 25)[:name_max_length]
         for shelter in shelters:
             if random.random() < 0.15:
                 shelter.name = long_name

@@ -29,6 +29,15 @@ query ViewShelter($id: ID!) {
     supervisorialDistrict
     totalBeds
     website
+    visitorsAllowed
+    emergencySurge
+    exitPolicy {
+      name
+    }
+    exitPolicyOther
+    referralRequirement {
+      name
+    }
     accessibility {
       name
     }
