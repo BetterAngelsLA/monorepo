@@ -17,6 +17,24 @@ query ViewSheltersByOrganization(
         place
       }
       totalBeds
+      bedCapacity {
+        available
+        occupied
+        reserved
+        outOfService
+      }
+      demographics {
+        name
+      }
+      specialSituationRestrictions {
+        name
+      }
+      shelterTypes {
+        name
+      }
+      spa {
+        name
+      }
     }
   }
 }

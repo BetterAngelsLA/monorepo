@@ -129,6 +129,7 @@ type AdminShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
+  bedCapacity: BedCapacityType!
 }
 
 type AdminShelterTypeOffsetPaginated {
@@ -161,6 +162,13 @@ enum AttachmentType {
 
 type AuthResponse {
   status_code: String!
+}
+
+type BedCapacityType {
+  available: Int!
+  occupied: Int!
+  reserved: Int!
+  outOfService: Int!
 }
 
 enum BedStatusChoices {
@@ -2146,6 +2154,7 @@ type ShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
+  bedCapacity: BedCapacityType!
 }
 
 type ShelterTypeOffsetPaginated {

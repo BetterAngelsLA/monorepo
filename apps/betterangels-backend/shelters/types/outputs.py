@@ -9,7 +9,7 @@ import strawberry_django
 from accounts.models import User
 from accounts.types import OrganizationType
 from common.graphql.types import PhoneNumberScalar
-from django.db.models import Prefetch, QuerySet
+from django.db.models import Count, Prefetch, Q, QuerySet
 from shelters import models
 from shelters.enums import (
     BedStatusChoices,
@@ -57,6 +57,14 @@ class ShelterPhotoType:
     id: ID
     created_at: datetime
     file: strawberry_django.DjangoFileType
+
+
+@strawberry.type
+class BedCapacityType:
+    available: int = 0
+    occupied: int = 0
+    reserved: int = 0
+    out_of_service: int = 0
 
 
 @strawberry.type
@@ -156,6 +164,18 @@ class ShelterTypeMixin:
             return float(distance.mi)
 
         return None
+
+    @strawberry_django.field
+    def bed_capacity(self, root: models.Shelter) -> BedCapacityType:
+        # NOTE: When adding a new BedStatusChoices value, add a Count here
+        # and a corresponding field on BedCapacityType.
+        counts = root.beds.aggregate(
+            available=Count("id", filter=Q(status=BedStatusChoices.AVAILABLE)),
+            occupied=Count("id", filter=Q(status=BedStatusChoices.OCCUPIED)),
+            reserved=Count("id", filter=Q(status=BedStatusChoices.RESERVED)),
+            out_of_service=Count("id", filter=Q(status=BedStatusChoices.OUT_OF_SERVICE)),
+        )
+        return BedCapacityType(**counts)
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
