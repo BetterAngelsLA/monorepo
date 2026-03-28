@@ -290,6 +290,24 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
 
 
 _BED_M2M_FIELDS = _get_m2m_field_names(Bed)
+_ROOM_M2M_FIELDS = _get_m2m_field_names(Room)
+
+
+def _validate_subset_attributes(shelter: Shelter, m2m_data: Dict[str, List[Any]]) -> None:
+    """Ensure room/bed attributes are a strict subset of the shelter's attributes."""
+    for field_name in ["demographics", "accessibility", "funders", "pets"]:
+        if field_name not in m2m_data:
+            continue
+        provided_values = [getattr(v, "value", v) for v in m2m_data[field_name]]
+        if not provided_values:
+            continue
+
+        shelter_allowed = set(getattr(shelter, field_name).values_list("name", flat=True))
+        invalid = set(provided_values) - shelter_allowed
+        if invalid:
+            raise ValidationError(
+                {field_name: f"The following {field_name} are not supported by the shelter: {', '.join(invalid)}"}
+            )
 
 
 @transaction.atomic
@@ -314,6 +332,8 @@ def bed_create(*, user: "User", data: Dict[str, Any]) -> Bed:
     m2m_data: Dict[str, List[Any]] = {
         k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and data[k] is not None
     }
+
+    _validate_subset_attributes(shelter, m2m_data)
 
     # Drop None values so model defaults apply
     scalar_data = {k: v for k, v in data.items() if v is not None}
@@ -345,10 +365,22 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
     except Shelter.DoesNotExist:
         raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
 
+    m2m_data: Dict[str, List[Any]] = {
+        k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and data[k] is not None
+    }
+
+    _validate_subset_attributes(shelter, m2m_data)
+    
+    raw_occupants = m2m_data.pop("occupants", [])
+
     # Drop None values so model defaults apply
     scalar_data = {k: v for k, v in data.items() if v is not None}
 
     room = Room(shelter=shelter, **scalar_data)
     room.full_clean()
     room.save()
+    _set_m2m_from_enums(room, m2m_data)
+    if raw_occupants:
+        room.occupants.set(raw_occupants)
+        
     return room

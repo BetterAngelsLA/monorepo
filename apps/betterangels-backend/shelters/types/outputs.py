@@ -177,6 +177,7 @@ class AdminShelterType(ShelterTypeMixin):
 class BedType:
     id: ID
     shelter: "ShelterType"
+    room: Optional["RoomType"]
     bed_name: Optional[str]
     status: Optional[BedStatusChoices]
     status_notes: Optional[str]
@@ -204,5 +205,16 @@ class RoomType:
     status: Optional[RoomStatusChoices]
     notes: auto
     amenities: auto
+    demographics: List[DemographicType]
+    accessibility: List[AccessibilityType]
+    funders: List[FunderType]
+    pets: List[PetType]
+    storage: bool
+    maintenance_flag: bool
     medical_respite: auto
     last_cleaned_inspected: auto
+    beds: List["BedType"]
+
+    @strawberry_django.field
+    def occupant_ids(self, root: models.Room) -> List[ID]:
+        return [str(pk) for pk in root.occupants.values_list("pk", flat=True)]

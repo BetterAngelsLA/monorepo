@@ -173,6 +173,7 @@ enum BedStatusChoices {
 type BedType {
   id: ID!
   shelter: ShelterType!
+  room: RoomType
   bedName: String
   status: BedStatusChoices
   statusNotes: String
@@ -455,6 +456,7 @@ type ContactInfoType {
 
 input CreateBedInput {
   shelterId: ID!
+  roomId: ID = null
   status: BedStatusChoices = null
   bedName: String = null
   statusNotes: String = null
@@ -652,6 +654,13 @@ input CreateRoomInput {
   status: RoomStatusChoices = null
   notes: String = null
   amenities: String = null
+  demographics: [DemographicChoices!] = null
+  accessibility: [AccessibilityChoices!] = null
+  funders: [FunderChoices!] = null
+  pets: [PetChoices!] = null
+  storage: Boolean = null
+  maintenanceFlag: Boolean = null
+  occupants: [ID!] = null
   medicalRespite: Boolean = false
   lastCleanedInspected: DateTime = null
 }
@@ -1882,8 +1891,16 @@ type RoomType {
   status: RoomStatusChoices
   notes: String
   amenities: String
+  demographics: [DemographicType!]!
+  accessibility: [AccessibilityType!]!
+  funders: [FunderType!]!
+  pets: [PetType!]!
+  storage: Boolean!
+  maintenanceFlag: Boolean!
   medicalRespite: Boolean!
   lastCleanedInspected: DateTime
+  beds: [BedType!]!
+  occupantIds: [ID!]!
 }
 
 enum SPAChoices {
