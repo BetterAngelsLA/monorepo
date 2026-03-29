@@ -217,4 +217,4 @@ class RoomType:
 
     @strawberry_django.field
     def occupant_ids(self, root: models.Room) -> List[ID]:
-        return [str(pk) for pk in root.occupants.values_list("pk", flat=True)]
+        return cast(List[ID], [str(pk) for pk in root.occupants.values_list("pk", flat=True)])

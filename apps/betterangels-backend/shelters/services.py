@@ -370,7 +370,6 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
     }
 
     _validate_subset_attributes(shelter, m2m_data)
-    
     raw_occupants = m2m_data.pop("occupants", [])
 
     # Drop None values so model defaults apply
@@ -382,5 +381,4 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
     _set_m2m_from_enums(room, m2m_data)
     if raw_occupants:
         room.occupants.set(raw_occupants)
-        
     return room
