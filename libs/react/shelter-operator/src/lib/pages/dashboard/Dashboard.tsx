@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client/react';
 import { BookCheck, Filter, Search, Settings2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons';
 import { ShelterTable } from '../../components/ShelterTable';
 import {
@@ -38,8 +38,8 @@ const emptyState = (
 
 export function Dashboard() {
   const { pathname } = useLocation();
-  const isOperatorRoot =
-    pathname === '/operator' || pathname === '/operator/';
+  const navigate = useNavigate();
+  const isOperatorRoot = pathname === '/operator' || pathname === '/operator/';
 
   const { activeOrg } = useActiveOrg();
   const selectedOrganizationId = activeOrg?.id ?? '';
@@ -195,11 +195,16 @@ export function Dashboard() {
 
       {isOperatorRoot && (
         <div className="fixed bottom-6 right-6 text-sm z-20 ">
-          <Link to={`${operatorPath}/${reservationPathSegment}`}>
-            <Button leftIcon={<BookCheck size={24} />} rightIcon={false} variant="floating">
-              Reserve
-            </Button>
-          </Link>
+          <Button
+            leftIcon={<BookCheck size={24} />}
+            rightIcon={false}
+            variant="floating"
+            onClick={() =>
+              navigate(`${operatorPath}/${reservationPathSegment}`)
+            }
+          >
+            Reserve
+          </Button>
         </div>
       )}
     </>

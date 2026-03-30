@@ -1,15 +1,10 @@
-import { useQuery } from '@apollo/client/react';
 import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
-import {
-  operatorPath,
-  reservationPathSegment,
-  useUser,
-} from '@monorepo/react/shelter';
+import { operatorPath } from '@monorepo/react/shelter';
 import { Plus, UserCog } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
-import { GetShelterNameDocument } from '../graphql/__generated__/shelters.generated';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useBreadcrumbs } from '../hooks/useBreadcrumbs';
 import { useActiveOrg } from '../providers/activeOrg';
 import { Button } from './base-ui/buttons';
 import { Dropdown } from './base-ui/dropdown';
@@ -32,34 +27,15 @@ function NavBarActions({ children }: { children?: ReactNode }) {
 export function NavBar() {
   const { activeOrg, organizations, setActiveOrgId } = useActiveOrg();
   const location = useLocation();
-  const params = useParams<{ id?: string; shelterId?: string }>();
-  const { user } = useUser();
+  const navigate = useNavigate();
   const selectedOrganizationId = activeOrg?.id ?? '';
 
   const isDashboardPage =
     location.pathname === operatorPath ||
     location.pathname === `${operatorPath}/`;
 
-  const shelterId = params.shelterId || params.id;
-  const isShelterPage =
-    !!shelterId && location.pathname.includes(`/shelter/${shelterId}`);
-
-  const { data: shelterData } = useQuery(GetShelterNameDocument, {
-    variables: { id: shelterId || '' },
-    skip: !isShelterPage || !shelterId,
-  });
-
-  const isReservationPage = location.pathname.includes(
-    `/${reservationPathSegment}`
-  );
-  const organizationName = user?.organization?.name;
-  const shelterName = shelterData?.shelter?.name;
-  const pageTitle = isReservationPage ? 'Shelter Reservation' : undefined;
+  const breadcrumbs = useBreadcrumbs();
   const showCreateButton = isDashboardPage;
-
-  const breadcrumbs = [organizationName, shelterName, pageTitle].filter(
-    Boolean
-  );
 
   const displayTitle =
     breadcrumbs.length > 0
@@ -133,15 +109,14 @@ export function NavBar() {
 
         <NavBarActions>
           {showCreateButton && (
-            <Link to={`${operatorPath}/dashboard/create`}>
-              <Button
-                variant="primary"
-                leftIcon={<Plus size={20} />}
-                rightIcon={false}
-              >
-                Create Shelter
-              </Button>
-            </Link>
+            <Button
+              variant="primary"
+              leftIcon={<Plus size={20} />}
+              rightIcon={false}
+              onClick={() => navigate(`${operatorPath}/dashboard/create`)}
+            >
+              Create Shelter
+            </Button>
           )}
         </NavBarActions>
       </div>

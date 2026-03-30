@@ -1,5 +1,9 @@
 import { useFeatureFlagActive } from '@monorepo/react/shared';
-import { FeatureFlags, MainLayout, operatorPath } from '@monorepo/react/shelter';
+import {
+  FeatureFlags,
+  MainLayout,
+  operatorPath,
+} from '@monorepo/react/shelter';
 import { APIProvider as MapsApiProvider } from '@vis.gl/react-google-maps';
 import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
@@ -26,9 +30,7 @@ export function App() {
   return (
     <MapsApiProvider apiKey={googleMapsApiKey} onError={onMapsProviderError}>
       <Routes>
-        <Route element={<MainLayout />}>
-          {shelterRoutes}
-        </Route>
+        <Route element={<MainLayout />}>{shelterRoutes}</Route>
         {operatorEnabled && (
           <Route
             path={`${operatorPath}/*`}
