@@ -239,6 +239,12 @@ export type ClientDocumentFilter = {
   documentGroups?: InputMaybe<Array<ClientDocumentGroupEnum>>;
 };
 
+export type ClientDocumentFromUploadsInput = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  key: Scalars['String']['input'];
+};
+
 export enum ClientDocumentGroupEnum {
   DocReady = 'DOC_READY',
   Forms = 'FORMS',
@@ -289,6 +295,12 @@ export type ClientDocumentUploadsInputItem = {
   contentType: Scalars['String']['input'];
   filename: Scalars['String']['input'];
   uploadRef: Scalars['String']['input'];
+};
+
+export type ClientDocumentsFromUploadsInput = {
+  clientProfileId: Scalars['ID']['input'];
+  documents: Array<ClientDocumentFromUploadsInput>;
+  namespace?: InputMaybe<ClientDocumentNamespaceEnum>;
 };
 
 export type ClientHouseholdMemberInput = {
@@ -493,6 +505,13 @@ export type CreateClientDocumentInput = {
 export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
 
 export type CreateClientDocumentUploadsPayload = OperationInfo | PresignedS3UploadsResult;
+
+export type CreateClientDocumentsFromUploadsPayload = CreateClientDocumentsFromUploadsResult | OperationInfo;
+
+export type CreateClientDocumentsFromUploadsResult = {
+  __typename?: 'CreateClientDocumentsFromUploadsResult';
+  documents: Array<ClientDocumentType>;
+};
 
 export type CreateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo;
 
@@ -1388,6 +1407,7 @@ export type Mutation = {
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
   createClientDocumentUploads: CreateClientDocumentUploadsPayload;
+  createClientDocumentsFromUploads: CreateClientDocumentsFromUploadsPayload;
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
   createClientProfile: CreateClientProfilePayload;
   createClientProfileDataImport: CreateClientProfileDataImportPayload;
@@ -1462,6 +1482,11 @@ export type MutationCreateClientDocumentArgs = {
 
 export type MutationCreateClientDocumentUploadsArgs = {
   data: ClientDocumentUploadsInput;
+};
+
+
+export type MutationCreateClientDocumentsFromUploadsArgs = {
+  data: ClientDocumentsFromUploadsInput;
 };
 
 

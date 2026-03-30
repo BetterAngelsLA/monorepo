@@ -238,6 +238,12 @@ input ClientDocumentFilter {
   documentGroups: [ClientDocumentGroupEnum!]
 }
 
+input ClientDocumentFromUploadsInput {
+  key: String!
+  filename: String!
+  contentType: String!
+}
+
 enum ClientDocumentGroupEnum {
   DOC_READY
   FORMS
@@ -288,6 +294,12 @@ input ClientDocumentUploadsInputItem {
   uploadRef: String!
   filename: String!
   contentType: String!
+}
+
+input ClientDocumentsFromUploadsInput {
+  clientProfileId: ID!
+  namespace: ClientDocumentNamespaceEnum = null
+  documents: [ClientDocumentFromUploadsInput!]!
 }
 
 input ClientHouseholdMemberInput {
@@ -490,6 +502,12 @@ input CreateClientDocumentInput {
 union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
 
 union CreateClientDocumentUploadsPayload = PresignedS3UploadsResult | OperationInfo
+
+union CreateClientDocumentsFromUploadsPayload = CreateClientDocumentsFromUploadsResult | OperationInfo
+
+type CreateClientDocumentsFromUploadsResult {
+  documents: [ClientDocumentType!]!
+}
 
 union CreateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo
 
@@ -1393,6 +1411,7 @@ type Mutation {
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   createClientDocumentUploads(data: ClientDocumentUploadsInput!): CreateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  createClientDocumentsFromUploads(data: ClientDocumentsFromUploadsInput!): CreateClientDocumentsFromUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)

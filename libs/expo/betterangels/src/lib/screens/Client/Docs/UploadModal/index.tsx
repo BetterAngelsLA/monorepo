@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
+import { ClientDocUploads } from './ClientDocUploads/ClientDocUploads';
 import FileUploadTab from './FileUploadTab';
 import MultipleDocUploads from './MultipleDocUploads';
 import SingleDocUploads from './SingleDocUploads';
@@ -76,7 +77,7 @@ export default function UploadModal(props: IUploadModalProps) {
       />
     ),
     ConsentForm: (
-      <MultipleDocUploads
+      <ClientDocUploads
         docType="ConsentForm"
         title="Upload Consent Forms"
         {...docProps}

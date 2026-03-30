@@ -104,9 +104,27 @@ class ClientDocumentUploadsInputItem:
 
 @strawberry.input
 class ClientDocumentUploadsInput:
-    # client_profile_id: ID
-    client_profile: ID
+    client_profile_id: ID
     uploads: list[ClientDocumentUploadsInputItem]
+
+
+@strawberry.input
+class ClientDocumentFromUploadsInput:
+    key: str
+    filename: str
+    content_type: str
+
+
+@strawberry.input
+class ClientDocumentsFromUploadsInput:
+    client_profile_id: ID
+    namespace: Optional[ClientDocumentNamespaceEnum] = None
+    documents: list[ClientDocumentFromUploadsInput]
+
+
+@strawberry.type
+class CreateClientDocumentsFromUploadsResult:
+    documents: list[ClientDocumentType]
 
 
 @strawberry.input

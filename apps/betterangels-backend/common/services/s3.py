@@ -104,8 +104,8 @@ def _generate_presigned_post_with_client(
 
     if normalized_path:
         conditions.append(["starts-with", "$key", f"{normalized_path}/"])
-    else:
-        conditions.append(["starts-with", "$key", ""])
+    # else:
+    #     conditions.append(["starts-with", "$key", ""]) # may be too loose
 
     # other conditions:
     # Optional: restrict content-type prefix?

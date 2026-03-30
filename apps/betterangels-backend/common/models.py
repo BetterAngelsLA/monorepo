@@ -76,7 +76,12 @@ class Attachment(BaseModel):
             )
         ]
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(
+        self,
+        *args: Any,
+        direct_upload: bool = False,
+        **kwargs: Any,
+    ) -> None:
         """
         Saves the Attachment instance. If it's a new instance (without an ID),
         it stores the original file name and determines the file type based on
@@ -84,12 +89,18 @@ class Attachment(BaseModel):
         the original file name and categorizing the file for easier management.
         """
         if not self.pk:
-            # Determine the MIME type of the file
-            self.file.seek(0)
-            mime_type = self.file.file.content_type or magic.from_buffer(self.file.read(), mime=True)
-            self.mime_type = mime_type
-            self.attachment_type = infer_attachment_type(self.mime_type)
-            self.file.seek(0)
+            if direct_upload:
+                if not self.mime_type:
+                    raise ValueError("mime_type required for direct upload")
+
+                self.attachment_type = infer_attachment_type(self.mime_type)
+            else:
+                # Determine the MIME type of the file
+                self.file.seek(0)
+                mime_type = self.file.file.content_type or magic.from_buffer(self.file.read(), mime=True)
+                self.mime_type = mime_type
+                self.attachment_type = infer_attachment_type(self.mime_type)
+                self.file.seek(0)
 
         filename = self.original_filename or unquote(self.file.name)
         self.original_filename = canonicalise_filename(self.mime_type, filename)

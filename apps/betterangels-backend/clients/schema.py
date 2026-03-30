@@ -16,7 +16,10 @@ from clients.permissions import (
     HmisProfilePermissions,
     SocialMediaProfilePermissions,
 )
-from clients.services.client_document import create_client_document_presigned_uploads
+from clients.services.client_document import (
+    create_client_document_presigned_uploads,
+    create_client_documents_from_s3_uploads,
+)
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.schema import PresignedS3UploadResultItem, PresignedS3UploadsResult
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
@@ -43,6 +46,7 @@ from .enums import RelationshipTypeEnum
 from .types import (
     ClientContactInput,
     ClientContactType,
+    ClientDocumentsFromUploadsInput,
     ClientDocumentType,
     ClientDocumentUploadsInput,
     ClientHouseholdMemberInput,
@@ -53,6 +57,7 @@ from .types import (
     ClientProfilePhotoInput,
     ClientProfileType,
     CreateClientDocumentInput,
+    CreateClientDocumentsFromUploadsResult,
     CreateClientProfileInput,
     CreateProfileDataImportInput,
     HmisProfileInput,
@@ -613,6 +618,28 @@ class Mutation:
                 for item in result["uploads"]
             ]
         )
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
+    def create_client_documents_from_uploads(
+        self, info: Info, data: ClientDocumentsFromUploadsInput
+    ) -> CreateClientDocumentsFromUploadsResult:
+        with transaction.atomic():
+            user = cast(User, get_current_user(info))
+
+            client_profile = filter_for_user(
+                ClientProfile.objects.all(),
+                user,
+                [ClientProfilePermissions.CHANGE],
+            ).get(id=data.client_profile_id)
+
+            attachments = create_client_documents_from_s3_uploads(
+                user=user,
+                client_profile=client_profile,
+                documents=data.documents,
+                namespace=data.namespace,
+            )
+
+            return CreateClientDocumentsFromUploadsResult(documents=attachments)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
     def create_client_document(self, info: Info, data: CreateClientDocumentInput) -> ClientDocumentType:
