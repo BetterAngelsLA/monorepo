@@ -7,6 +7,13 @@ from django.utils.translation import gettext_lazy as _
 
 # Summary Info
 @strawberry.enum
+class ShelterLayoutChoices(models.TextChoices):
+    CONGREGATE = "congregate", _("Congregate")
+    MOTEL = "motel", _("Motel/Single-Occupancy")
+    MIXED = "mixed", _("Mixed")
+
+
+@strawberry.enum
 class DemographicChoices(models.TextChoices):
     ALL = "all", _("All")
     SINGLE_MEN = "single_men", _("Single Men")

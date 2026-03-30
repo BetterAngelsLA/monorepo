@@ -17,6 +17,7 @@ from shelters.enums import (
     MedicalNeedChoices,
     RoomStatusChoices,
     RoomStyleChoices,
+    ShelterLayoutChoices,
 )
 from shelters.selectors import admin_shelter_list, shelter_list
 from shelters.types.lookups import (
@@ -101,6 +102,7 @@ class ShelterTypeMixin:
     room_styles_other: auto
     schedules: List[ScheduleType]
     services: List[ServiceType]
+    shelter_layout: Optional[ShelterLayoutChoices]
     shelter_programs: List[ShelterProgramType]
     shelter_programs_other: auto
     shelter_types: List[ShelterTypeType]

@@ -27,6 +27,7 @@ from shelters.enums import (
 )
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import (
+    ShelterLayoutChoices,
     ShelterProgramChoices,
     SPAChoices,
     SpecialSituationRestrictionChoices,
@@ -96,6 +97,7 @@ class CreateShelterInput:
     # Optional scalars — all model fields below have null=True, blank=True.
     # Using auto where strawberry-django can resolve the type; explicit types
     # for CKEditor5Field and PhoneNumberField which auto can't handle.
+    shelter_layout: Optional[ShelterLayoutChoices] = None
     email: auto = None
     phone: Optional[PhoneNumberScalar] = None  # PhoneNumberField
     website: auto = None
