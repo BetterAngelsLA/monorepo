@@ -1,9 +1,10 @@
-import { FilterIcon } from '@monorepo/react/icons';
+import { FilterIcon, SearchIcon } from '@monorepo/react/icons';
 import { useAtom } from 'jotai';
 import { useResetAtom } from 'jotai/utils';
 import { useEffect, useState } from 'react';
 import { locationAtom, shelterFiltersAtom } from '../../atoms';
 import { AddressAutocomplete, TPlaceResult } from '../AddressAutocomplete';
+import { Input } from '../Input';
 import { TMapBounds } from '../Map';
 import { ModalAnimationEnum, modalAtom } from '../Modal';
 import { FilterPills, FiltersActions, ShelterFilters } from '../ShelterFilters';
@@ -23,6 +24,7 @@ export function ShelterSearch(props: TProps) {
   const [submitQueryTs, setSubmitQueryTs] = useState<number>();
   const [filters] = useAtom(shelterFiltersAtom);
   const resetFilters = useResetAtom(shelterFiltersAtom);
+  const [nameSearch, setNameSearch] = useState('');
 
   function onPlaceSelect(place: TPlaceResult | null) {
     if (!place) {
@@ -35,7 +37,7 @@ export function ShelterSearch(props: TProps) {
     if (!latitude || !longitude) {
       return;
     }
-
+    setNameSearch('');
     setLocation({
       latitude,
       longitude,
@@ -66,18 +68,36 @@ export function ShelterSearch(props: TProps) {
     });
   }
 
+  function onSearchClick() {
+    setSubmitQueryTs(Date.now());
+  }
+
   return (
     <>
-      <div className="mt-4 flex items-center justify-between">
-        <AddressAutocomplete
-          className="w-full"
-          placeholder="Search address"
-          onPlaceSelect={onPlaceSelect}
-        />
+      <div className="mt-4 flex flex-col items-center justify-between">
+        <div className="flex items-center justify-between w-full">
+          <AddressAutocomplete
+            className="w-full"
+            placeholder="Search by location"
+            onPlaceSelect={onPlaceSelect}
+          />
+          <button onClick={onFilterClick} className="self-start ml-4 mt-4">
+            <FilterIcon className="w-6 text-primary-20" />
+          </button>
+        </div>
+        <div className="mt-2 flex items-center justify-between w-full">
+          <Input
+            value={nameSearch}
+            placeholder="Search by name"
+            className="w-full"
+            onChange={setNameSearch}
+            leftIcon={<SearchIcon className="text-neutral-70 w-4 h-4" />}
+          />
 
-        <button onClick={onFilterClick} className="self-start ml-4 mt-4">
-          <FilterIcon className="w-6 text-primary-20" />
-        </button>
+          <button onClick={onSearchClick} className="self-start ml-4 mt-4">
+            <SearchIcon className="w-6 text-primary-20" />
+          </button>
+        </div>
       </div>
 
       <FilterPills className="mt-2" filters={filters} />
