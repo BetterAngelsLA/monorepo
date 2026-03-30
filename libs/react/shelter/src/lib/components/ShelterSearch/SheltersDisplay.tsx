@@ -24,6 +24,7 @@ type TProps = {
   mapBoundsFilter?: TMapBounds | null;
   propertyFilters?: TShelterPropertyFilters;
   rangeInMiles?: number;
+  nameFilter?: string;
 };
 
 export function SheltersDisplay(props: TProps) {
@@ -34,6 +35,7 @@ export function SheltersDisplay(props: TProps) {
     propertyFilters,
     rangeInMiles = SEARCH_RANGE_MILES,
     className = '',
+    nameFilter,
   } = props;
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
 
@@ -78,6 +80,12 @@ export function SheltersDisplay(props: TProps) {
 
       queryVariables.filters.properties = prunedFilters;
     }
+  }
+
+  if (nameFilter) {
+    queryVariables = queryVariables || {};
+    queryVariables.filters = queryVariables.filters || {};
+    queryVariables.filters.name = nameFilter;
   }
 
   const { items, total, loadMore, loading, loadingMore, hasMore, error } =

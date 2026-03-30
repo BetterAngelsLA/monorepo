@@ -13,16 +13,18 @@ import { TShelterPropertyFilters } from './types';
 
 type TProps = {
   mapBoundsFilter?: TMapBounds;
+  setMapBoundsFilter: (mapBoundsFilter: TMapBounds | undefined) => void;
 };
 
 export function ShelterSearch(props: TProps) {
-  const { mapBoundsFilter } = props;
+  const { mapBoundsFilter, setMapBoundsFilter } = props;
   const [location, setLocation] = useAtom(locationAtom);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_modal, setModal] = useAtom(modalAtom);
   const [queryFilters, setQueryFilters] = useState<TShelterPropertyFilters>();
   const [submitQueryTs, setSubmitQueryTs] = useState<number>();
   const [filters] = useAtom(shelterFiltersAtom);
+  const [queryNameFilter, setQueryNameFilter] = useState<string>();
   const resetFilters = useResetAtom(shelterFiltersAtom);
   const [nameSearch, setNameSearch] = useState('');
 
@@ -37,7 +39,10 @@ export function ShelterSearch(props: TProps) {
     if (!latitude || !longitude) {
       return;
     }
+
     setNameSearch('');
+    setQueryNameFilter(undefined);
+
     setLocation({
       latitude,
       longitude,
@@ -69,6 +74,10 @@ export function ShelterSearch(props: TProps) {
   }
 
   function onSearchClick() {
+    setMapBoundsFilter(undefined);
+
+    setQueryNameFilter(nameSearch);
+    // onSearchSubmit?.({ trigger: 'nameSearch' });
     setSubmitQueryTs(Date.now());
   }
 
@@ -107,6 +116,7 @@ export function ShelterSearch(props: TProps) {
         coordinatesSource={location?.source}
         mapBoundsFilter={mapBoundsFilter}
         propertyFilters={queryFilters}
+        nameFilter={queryNameFilter}
       />
     </>
   );

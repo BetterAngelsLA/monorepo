@@ -177,7 +177,10 @@ export function HomePage() {
           onSearchMapArea={onSearchMapArea}
         />
       </MaxWLayout>
-      <ShelterSearch mapBoundsFilter={mapBoundsFilter} />
+      <ShelterSearch
+        mapBoundsFilter={mapBoundsFilter}
+        setMapBoundsFilter={setMapBoundsFilter}
+      />
     </>
   );
 }
