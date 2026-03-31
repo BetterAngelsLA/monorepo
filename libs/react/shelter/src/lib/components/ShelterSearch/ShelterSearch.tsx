@@ -15,7 +15,7 @@ type TProps = {
   mapBoundsFilter?: TMapBounds;
   nameSearchPinFitRequestId?: number;
   onShelterPinsReadyForMapFit?: (pinLocations: TLatLng[]) => void;
-  onSearchSubmit: (trigger?: 'nameSearch') => void;
+  onNameSearch: () => void;
 };
 
 export function ShelterSearch(props: TProps) {
@@ -23,7 +23,7 @@ export function ShelterSearch(props: TProps) {
     mapBoundsFilter,
     nameSearchPinFitRequestId = 0,
     onShelterPinsReadyForMapFit,
-    onSearchSubmit,
+    onNameSearch,
   } = props;
   const [location, setLocation] = useAtom(locationAtom);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -81,9 +81,12 @@ export function ShelterSearch(props: TProps) {
   }
 
   function onSearchClick() {
+    // Name search should ignore any previously-selected property filters.
+    // Clear both the query-side filters (used for the API) and the UI pill selections.
+    setQueryFilters(undefined);
+    resetFilters();
     setQueryNameFilter(nameSearchValue.trim());
-
-    onSearchSubmit?.('nameSearch');
+    onNameSearch();
   }
 
   return (

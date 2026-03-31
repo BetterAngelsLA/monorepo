@@ -85,8 +85,7 @@ export function HomePage() {
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
   const [hasInitialized, setHasInitialized] = useState(false);
-  const [nameSearchPinFitRequestId, setNameSearchPinFitRequestId] =
-    useState(0);
+  const [nameSearchPinFitRequestId, setNameSearchPinFitRequestId] = useState(0);
   const map = useMap();
   const hasLocationPermission = useLocationPermission();
 
@@ -220,12 +219,10 @@ export function HomePage() {
     }
   }, [map, hasInitialized, applyMapCenter]);
 
-  function onSearchSubmit(trigger?: 'nameSearch') {
+  function onNameSearch() {
     setMapBoundsFilter(undefined);
     setShowSearchButton(false);
-    if (trigger === 'nameSearch') {
-      setNameSearchPinFitRequestId((n) => n + 1);
-    }
+    setNameSearchPinFitRequestId((n) => n + 1);
   }
 
   return (
@@ -248,7 +245,7 @@ export function HomePage() {
         mapBoundsFilter={mapBoundsFilter}
         nameSearchPinFitRequestId={nameSearchPinFitRequestId}
         onShelterPinsReadyForMapFit={onShelterPinsReadyForMapFit}
-        onSearchSubmit={onSearchSubmit}
+        onNameSearch={onNameSearch}
       />
     </>
   );
