@@ -1,6 +1,7 @@
 import json
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from common.enums import AttachmentType
 from common.models import Address, Attachment, Location, PhoneNumber
 from common.tests.utils import build_address_inputs
 from django.contrib.contenttypes.models import ContentType
@@ -418,6 +419,11 @@ class PhoneNumberTestCase(TestCase):
         self.assertTrue(phone_number_2.is_primary)
 
 
+# apps/betterangels-backend/common/tests/test_models.py
+# python manage.py test attachments.tests.test_models.AttachmentTestCase
+# python manage.py test apps.betterangels-backend.common.tests.test_models.AttachmentTestCase
+
+
 class AttachmentTestCase(TestCase):
     def test_save(self) -> None:
         file_content = b"Test file content"
@@ -427,3 +433,35 @@ class AttachmentTestCase(TestCase):
         attachment = Attachment.objects.create(content_type=content_type, object_id=1, file=file)
 
         self.assertEqual(attachment.original_filename, "test file name.txt")
+
+    def test_save_direct_upload(self) -> None:
+        file_name = "test%20file%20name.jpg"
+        file = SimpleUploadedFile(name=file_name, content=b"irrelevant")
+
+        content_type = ContentType.objects.get_for_model(Address)
+
+        attachment = Attachment(
+            content_type=content_type,
+            object_id=1,
+            file=file,
+            mime_type="image/jpeg",
+        )
+
+        attachment.save(direct_upload=True)
+
+        self.assertEqual(attachment.mime_type, "image/jpeg")
+        self.assertEqual(attachment.original_filename, "test file name.jpg")
+        self.assertEqual(attachment.attachment_type, AttachmentType.IMAGE)
+
+    def test_save_direct_upload_requires_mime_type(self) -> None:
+        file = SimpleUploadedFile(name="file.jpg", content=b"irrelevant")
+        content_type = ContentType.objects.get_for_model(Address)
+
+        attachment = Attachment(
+            content_type=content_type,
+            object_id=1,
+            file=file,
+        )
+
+        with self.assertRaises(ValueError):
+            attachment.save(direct_upload=True)
