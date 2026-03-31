@@ -124,7 +124,6 @@ export function HomePage() {
       .filter((loc) => loc != null) as unknown as TLatLng[];
 
     if (!pinLocations.length) {
-      shouldFitMapToPinsRef.current = false;
       return;
     }
 
@@ -231,7 +230,6 @@ export function HomePage() {
   }, [map, hasInitialized, applyMapCenter]);
 
   function onSearchSubmit(opts?: { trigger?: 'nameSearch' }) {
-    console.log('onSearchSubmit', opts);
     setMapBoundsFilter(undefined);
     setShowSearchButton(false);
     if (opts?.trigger === 'nameSearch') {
