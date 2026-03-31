@@ -2,7 +2,7 @@ import { useLocationPermission } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { locationAtom, sheltersAtom } from '../../atoms';
 import {
   DEFAULT_BOUNDS_MILES,
@@ -85,7 +85,8 @@ export function HomePage() {
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
   const [hasInitialized, setHasInitialized] = useState(false);
-  const shouldFitMapToPinsRef = useRef(false);
+  const [nameSearchPinFitRequestId, setNameSearchPinFitRequestId] =
+    useState(0);
   const map = useMap();
   const hasLocationPermission = useLocationPermission();
 
@@ -111,27 +112,17 @@ export function HomePage() {
     [setModal, shelters]
   );
 
-  useEffect(() => {
-    if (!shouldFitMapToPinsRef.current) {
-      return;
-    }
-    if (!map) {
-      return;
-    }
+  const onShelterPinsReadyForMapFit = useCallback(
+    (pinLocations: TLatLng[]) => {
+      if (!map || !pinLocations.length) {
+        return;
+      }
 
-    const pinLocations = shelters
-      .map((shelter) => shelter.location)
-      .filter((loc) => loc != null) as unknown as TLatLng[];
-
-    if (!pinLocations.length) {
-      return;
-    }
-
-    const bounds = symmetricBoundsAroundPinCentroid(pinLocations);
-    map.fitBounds(bounds);
-
-    shouldFitMapToPinsRef.current = false;
-  }, [map, shelters]);
+      const bounds = symmetricBoundsAroundPinCentroid(pinLocations);
+      map.fitBounds(bounds);
+    },
+    [map]
+  );
 
   useEffect(() => {
     const markers = shelters
@@ -233,7 +224,7 @@ export function HomePage() {
     setMapBoundsFilter(undefined);
     setShowSearchButton(false);
     if (trigger === 'nameSearch') {
-      shouldFitMapToPinsRef.current = true;
+      setNameSearchPinFitRequestId((n) => n + 1);
     }
   }
 
@@ -255,6 +246,8 @@ export function HomePage() {
       </MaxWLayout>
       <ShelterSearch
         mapBoundsFilter={mapBoundsFilter}
+        nameSearchPinFitRequestId={nameSearchPinFitRequestId}
+        onShelterPinsReadyForMapFit={onShelterPinsReadyForMapFit}
         onSearchSubmit={onSearchSubmit}
       />
     </>

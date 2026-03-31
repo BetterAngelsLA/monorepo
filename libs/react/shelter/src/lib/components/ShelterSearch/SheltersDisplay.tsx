@@ -1,7 +1,7 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { InfiniteList } from '@monorepo/react/components';
 import { useAtom } from 'jotai';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { TLocationSource, sheltersAtom } from '../../atoms';
 import {
   ViewSheltersDocument,
@@ -25,6 +25,9 @@ type TProps = {
   propertyFilters?: TShelterPropertyFilters;
   rangeInMiles?: number;
   nameFilter?: string;
+  /** Incremented on each name search submit; used to fit the map after fresh query results. */
+  nameSearchPinFitRequestId?: number;
+  onShelterPinsReadyForMapFit?: (pinLocations: TLatLng[]) => void;
 };
 
 export function SheltersDisplay(props: TProps) {
@@ -36,6 +39,8 @@ export function SheltersDisplay(props: TProps) {
     rangeInMiles = SEARCH_RANGE_MILES,
     className = '',
     nameFilter,
+    nameSearchPinFitRequestId = 0,
+    onShelterPinsReadyForMapFit,
   } = props;
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
 
@@ -100,6 +105,54 @@ export function SheltersDisplay(props: TProps) {
       pageSize: 25,
     });
 
+  const prevLoadingRef = useRef(loading);
+  const lastPinFitRequestHandledRef = useRef(0);
+
+  useEffect(() => {
+    if (!onShelterPinsReadyForMapFit || nameSearchPinFitRequestId <= 0) {
+      prevLoadingRef.current = loading;
+      return;
+    }
+
+    if (loading) {
+      prevLoadingRef.current = loading;
+      return;
+    }
+
+    const prev = prevLoadingRef.current;
+    prevLoadingRef.current = loading;
+
+    if (lastPinFitRequestHandledRef.current === nameSearchPinFitRequestId) {
+      return;
+    }
+
+    const loadingJustFinished = prev === true;
+
+    const emit = () => {
+      if (lastPinFitRequestHandledRef.current === nameSearchPinFitRequestId) {
+        return;
+      }
+      lastPinFitRequestHandledRef.current = nameSearchPinFitRequestId;
+      onShelterPinsReadyForMapFit(shelterListToPinLatLng(items ?? []));
+    };
+
+    if (loadingJustFinished) {
+      emit();
+      return;
+    }
+
+    const raf = requestAnimationFrame(() => {
+      emit();
+    });
+
+    return () => cancelAnimationFrame(raf);
+  }, [
+    loading,
+    nameSearchPinFitRequestId,
+    items,
+    onShelterPinsReadyForMapFit,
+  ]);
+
   useEffect(() => {
     setSheltersData(items || []);
   }, [items, setSheltersData]);
@@ -141,6 +194,22 @@ export function SheltersDisplay(props: TProps) {
       />
     </div>
   );
+}
+
+function shelterListToPinLatLng(shelters: TShelter[]): TLatLng[] {
+  const pins: TLatLng[] = [];
+
+  for (const shelter of shelters) {
+    const loc = shelter.location;
+
+    if (loc == null) {
+      continue;
+    }
+
+    pins.push({ latitude: loc.latitude, longitude: loc.longitude });
+  }
+
+  return pins;
 }
 
 function pruneFilters(

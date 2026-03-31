@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { locationAtom, shelterFiltersAtom } from '../../atoms';
 import { AddressAutocomplete, TPlaceResult } from '../AddressAutocomplete';
 import { Input } from '../Input';
-import { TMapBounds } from '../Map';
+import { TLatLng, TMapBounds } from '../Map';
 import { ModalAnimationEnum, modalAtom } from '../Modal';
 import { FilterPills, FiltersActions, ShelterFilters } from '../ShelterFilters';
 import { SheltersDisplay } from './SheltersDisplay';
@@ -13,11 +13,18 @@ import { TShelterPropertyFilters } from './types';
 
 type TProps = {
   mapBoundsFilter?: TMapBounds;
+  nameSearchPinFitRequestId?: number;
+  onShelterPinsReadyForMapFit?: (pinLocations: TLatLng[]) => void;
   onSearchSubmit: (trigger?: 'nameSearch') => void;
 };
 
 export function ShelterSearch(props: TProps) {
-  const { mapBoundsFilter, onSearchSubmit } = props;
+  const {
+    mapBoundsFilter,
+    nameSearchPinFitRequestId = 0,
+    onShelterPinsReadyForMapFit,
+    onSearchSubmit,
+  } = props;
   const [location, setLocation] = useAtom(locationAtom);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_modal, setModal] = useAtom(modalAtom);
@@ -116,6 +123,8 @@ export function ShelterSearch(props: TProps) {
         mapBoundsFilter={mapBoundsFilter}
         propertyFilters={queryFilters}
         nameFilter={queryNameFilter}
+        nameSearchPinFitRequestId={nameSearchPinFitRequestId}
+        onShelterPinsReadyForMapFit={onShelterPinsReadyForMapFit}
       />
     </>
   );
