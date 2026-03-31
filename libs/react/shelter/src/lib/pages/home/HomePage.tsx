@@ -229,10 +229,10 @@ export function HomePage() {
     }
   }, [map, hasInitialized, applyMapCenter]);
 
-  function onSearchSubmit(opts?: { trigger?: 'nameSearch' }) {
+  function onSearchSubmit(trigger?: 'nameSearch') {
     setMapBoundsFilter(undefined);
     setShowSearchButton(false);
-    if (opts?.trigger === 'nameSearch') {
+    if (trigger === 'nameSearch') {
       shouldFitMapToPinsRef.current = true;
     }
   }
@@ -255,7 +255,6 @@ export function HomePage() {
       </MaxWLayout>
       <ShelterSearch
         mapBoundsFilter={mapBoundsFilter}
-        setMapBoundsFilter={setMapBoundsFilter}
         onSearchSubmit={onSearchSubmit}
       />
     </>

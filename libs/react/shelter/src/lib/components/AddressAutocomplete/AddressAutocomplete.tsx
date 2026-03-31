@@ -15,7 +15,7 @@ type TProps = {
   placeholder?: string;
   onPlaceSelect: (place: TPlaceResult | null) => void;
   countryRestrictions?: ISO3166Alpha2 | ISO3166Alpha2[] | null;
-  leftIcon?: React.ReactNode;
+  leftIcon?: React.ReactElement;
 };
 
 export function AddressAutocomplete(props: TProps) {

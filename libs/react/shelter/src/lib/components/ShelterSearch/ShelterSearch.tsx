@@ -13,12 +13,11 @@ import { TShelterPropertyFilters } from './types';
 
 type TProps = {
   mapBoundsFilter?: TMapBounds;
-  setMapBoundsFilter: (mapBoundsFilter: TMapBounds | undefined) => void;
-  onSearchSubmit: (opts?: { trigger?: 'nameSearch' }) => void;
+  onSearchSubmit: (trigger?: 'nameSearch') => void;
 };
 
 export function ShelterSearch(props: TProps) {
-  const { mapBoundsFilter, setMapBoundsFilter, onSearchSubmit } = props;
+  const { mapBoundsFilter, onSearchSubmit } = props;
   const [location, setLocation] = useAtom(locationAtom);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_modal, setModal] = useAtom(modalAtom);
@@ -27,7 +26,7 @@ export function ShelterSearch(props: TProps) {
   const [filters] = useAtom(shelterFiltersAtom);
   const [queryNameFilter, setQueryNameFilter] = useState<string>();
   const resetFilters = useResetAtom(shelterFiltersAtom);
-  const [nameSearch, setNameSearch] = useState('');
+  const [nameSearchValue, setNameSearchValue] = useState('');
 
   function onPlaceSelect(place: TPlaceResult | null) {
     if (!place) {
@@ -41,7 +40,7 @@ export function ShelterSearch(props: TProps) {
       return;
     }
 
-    setNameSearch('');
+    setNameSearchValue('');
     setQueryNameFilter(undefined);
 
     setLocation({
@@ -57,7 +56,7 @@ export function ShelterSearch(props: TProps) {
     }
 
     setQueryFilters(filters);
-  }, [submitQueryTs]);
+  }, [submitQueryTs, filters]);
 
   function onSubmitFilters() {
     setSubmitQueryTs(Date.now());
@@ -75,10 +74,9 @@ export function ShelterSearch(props: TProps) {
   }
 
   function onSearchClick() {
-    setMapBoundsFilter(undefined);
-    setQueryNameFilter(nameSearch);
+    setQueryNameFilter(nameSearchValue.trim());
 
-    onSearchSubmit?.({ trigger: 'nameSearch' });
+    onSearchSubmit?.('nameSearch');
   }
 
   return (
@@ -97,10 +95,10 @@ export function ShelterSearch(props: TProps) {
         </div>
         <div className="mt-2 flex items-center justify-between w-full">
           <Input
-            value={nameSearch}
+            value={nameSearchValue}
             placeholder="Search by name"
             className="w-full"
-            onChange={setNameSearch}
+            onChange={setNameSearchValue}
             leftIcon={<SearchIcon className="text-neutral-70 w-4 h-4" />}
           />
 
