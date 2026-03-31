@@ -14,10 +14,11 @@ import { TShelterPropertyFilters } from './types';
 type TProps = {
   mapBoundsFilter?: TMapBounds;
   setMapBoundsFilter: (mapBoundsFilter: TMapBounds | undefined) => void;
+  onSearchSubmit: (opts?: { trigger?: 'nameSearch' }) => void;
 };
 
 export function ShelterSearch(props: TProps) {
-  const { mapBoundsFilter, setMapBoundsFilter } = props;
+  const { mapBoundsFilter, setMapBoundsFilter, onSearchSubmit } = props;
   const [location, setLocation] = useAtom(locationAtom);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_modal, setModal] = useAtom(modalAtom);
@@ -75,10 +76,9 @@ export function ShelterSearch(props: TProps) {
 
   function onSearchClick() {
     setMapBoundsFilter(undefined);
-
     setQueryNameFilter(nameSearch);
-    // onSearchSubmit?.({ trigger: 'nameSearch' });
-    setSubmitQueryTs(Date.now());
+
+    onSearchSubmit?.({ trigger: 'nameSearch' });
   }
 
   return (

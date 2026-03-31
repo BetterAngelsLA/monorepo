@@ -2,10 +2,12 @@ import { useLocationPermission } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { locationAtom, sheltersAtom } from '../../atoms';
 import {
+  DEFAULT_BOUNDS_MILES,
   LA_COUNTY_CENTER,
+  MILES_TO_DEGREES_AT_EQUATOR,
   Map,
   ModalAnimationEnum,
   ShelterCard,
@@ -29,6 +31,49 @@ const FOOTER_STYLE = [
   'text-primary-60',
   'active:text-primary-dark',
 ];
+/**
+ * Builds a LatLngBounds symmetric around the centroid of pins so `fitBounds`
+ * centers the map on that centroid (not on a corner of an asymmetric cluster)
+ * while keeping every pin inside the bounds, with a minimum padding radius.
+ */
+
+function symmetricBoundsAroundPinCentroid(
+  pinLocations: TLatLng[]
+): google.maps.LatLngBounds {
+  const n = pinLocations.length;
+  const centroidLat = pinLocations.reduce((sum, p) => sum + p.latitude, 0) / n;
+  const centroidLng = pinLocations.reduce((sum, p) => sum + p.longitude, 0) / n;
+
+  let maxHalfLatDeg = 0;
+  let maxHalfLngDeg = 0;
+
+  for (const p of pinLocations) {
+    maxHalfLatDeg = Math.max(maxHalfLatDeg, Math.abs(p.latitude - centroidLat));
+    maxHalfLngDeg = Math.max(
+      maxHalfLngDeg,
+      Math.abs(p.longitude - centroidLng)
+    );
+  }
+
+  const minHalfLatDeg = DEFAULT_BOUNDS_MILES / 2 / MILES_TO_DEGREES_AT_EQUATOR;
+  const cosLat = Math.cos((centroidLat * Math.PI) / 180) || 1e-6;
+  const minHalfLngDeg =
+    DEFAULT_BOUNDS_MILES / 2 / (MILES_TO_DEGREES_AT_EQUATOR * cosLat);
+
+  const halfLat = Math.max(maxHalfLatDeg, minHalfLatDeg);
+  const halfLng = Math.max(maxHalfLngDeg, minHalfLngDeg);
+
+  const sw = {
+    lat: centroidLat - halfLat,
+    lng: centroidLng - halfLng,
+  };
+  const ne = {
+    lat: centroidLat + halfLat,
+    lng: centroidLng + halfLng,
+  };
+
+  return new google.maps.LatLngBounds(sw, ne);
+}
 
 export function HomePage() {
   const [location, setLocation] = useAtom(locationAtom);
@@ -40,6 +85,7 @@ export function HomePage() {
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
   const [hasInitialized, setHasInitialized] = useState(false);
+  const shouldFitMapToPinsRef = useRef(false);
   const map = useMap();
   const hasLocationPermission = useLocationPermission();
 
@@ -64,6 +110,29 @@ export function HomePage() {
     },
     [setModal, shelters]
   );
+
+  useEffect(() => {
+    if (!shouldFitMapToPinsRef.current) {
+      return;
+    }
+    if (!map) {
+      return;
+    }
+
+    const pinLocations = shelters
+      .map((shelter) => shelter.location)
+      .filter((loc) => loc != null) as unknown as TLatLng[];
+
+    if (!pinLocations.length) {
+      shouldFitMapToPinsRef.current = false;
+      return;
+    }
+
+    const bounds = symmetricBoundsAroundPinCentroid(pinLocations);
+    map.fitBounds(bounds);
+
+    shouldFitMapToPinsRef.current = false;
+  }, [map, shelters]);
 
   useEffect(() => {
     const markers = shelters
@@ -161,6 +230,15 @@ export function HomePage() {
     }
   }, [map, hasInitialized, applyMapCenter]);
 
+  function onSearchSubmit(opts?: { trigger?: 'nameSearch' }) {
+    console.log('onSearchSubmit', opts);
+    setMapBoundsFilter(undefined);
+    setShowSearchButton(false);
+    if (opts?.trigger === 'nameSearch') {
+      shouldFitMapToPinsRef.current = true;
+    }
+  }
+
   return (
     <>
       <MaxWLayout className="-mx-4">
@@ -180,6 +258,7 @@ export function HomePage() {
       <ShelterSearch
         mapBoundsFilter={mapBoundsFilter}
         setMapBoundsFilter={setMapBoundsFilter}
+        onSearchSubmit={onSearchSubmit}
       />
     </>
   );
