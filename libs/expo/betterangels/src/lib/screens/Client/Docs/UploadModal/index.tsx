@@ -2,7 +2,7 @@ import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { Colors, Spacings, thumbnailSizes } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import * as React from 'react';
-import { useEffect } from 'react';
+import { Dispatch, SetStateAction, useEffect } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
@@ -10,7 +10,14 @@ import { ClientDocUploads } from './ClientDocUploads/ClientDocUploads';
 import FileUploadTab from './FileUploadTab';
 import MultipleDocUploads from './MultipleDocUploads';
 import SingleDocUploads from './SingleDocUploads';
-import { Docs, ITab, IUploadModalProps } from './types';
+import { Docs, DocUploads, ITab, IUploadModalProps } from './types';
+
+function toArray(
+  value: ReactNativeFile | ReactNativeFile[] | undefined
+): ReactNativeFile[] {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
 
 export default function UploadModal(props: IUploadModalProps) {
   const { client } = props;
@@ -27,6 +34,51 @@ export default function UploadModal(props: IUploadModalProps) {
     IncomeForm: [],
     OtherClientDocument: [],
   });
+
+  // TEMP shim for ClientDocUploads (ConsentForm only)
+
+  const docUploads: DocUploads = {
+    DriversLicenseFront: toArray(docs.DriversLicenseFront),
+    DriversLicenseBack: toArray(docs.DriversLicenseBack),
+    BirthCertificate: toArray(docs.BirthCertificate),
+    PhotoId: toArray(docs.PhotoId),
+    SocialSecurityCard: toArray(docs.SocialSecurityCard),
+    ConsentForm: toArray(docs.ConsentForm),
+    HmisForm: toArray(docs.HmisForm),
+    IncomeForm: toArray(docs.IncomeForm),
+    OtherClientDocument: toArray(docs.OtherClientDocument),
+  };
+
+  const setDocUploads: Dispatch<SetStateAction<DocUploads>> = (updater) => {
+    setDocs((prev) => {
+      const current: DocUploads = {
+        DriversLicenseFront: toArray(prev.DriversLicenseFront),
+        DriversLicenseBack: toArray(prev.DriversLicenseBack),
+        BirthCertificate: toArray(prev.BirthCertificate),
+        PhotoId: toArray(prev.PhotoId),
+        SocialSecurityCard: toArray(prev.SocialSecurityCard),
+        ConsentForm: toArray(prev.ConsentForm),
+        HmisForm: toArray(prev.HmisForm),
+        IncomeForm: toArray(prev.IncomeForm),
+        OtherClientDocument: toArray(prev.OtherClientDocument),
+      };
+
+      const next = typeof updater === 'function' ? updater(current) : updater;
+
+      return {
+        ...prev,
+        DriversLicenseFront: next.DriversLicenseFront[0],
+        DriversLicenseBack: next.DriversLicenseBack[0],
+        BirthCertificate: next.BirthCertificate[0],
+        PhotoId: next.PhotoId[0],
+        SocialSecurityCard: next.SocialSecurityCard[0],
+        ConsentForm: next.ConsentForm,
+        HmisForm: next.HmisForm,
+        IncomeForm: next.IncomeForm,
+        OtherClientDocument: next.OtherClientDocument,
+      };
+    });
+  };
 
   const docProps = {
     setTab,
@@ -76,13 +128,20 @@ export default function UploadModal(props: IUploadModalProps) {
         {...docProps}
       />
     ),
+
+    // TEMP HACK
+
     ConsentForm: (
       <ClientDocUploads
         docType="ConsentForm"
         title="Upload Consent Forms"
-        {...docProps}
+        setTab={setTab}
+        client={client}
+        docs={docUploads}
+        setDocs={setDocUploads}
       />
     ),
+
     HmisForm: (
       <MultipleDocUploads
         docType="HmisForm"

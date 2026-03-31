@@ -9,36 +9,43 @@ import { MediaPicker, TextBold } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
+import { useSnackbar } from '../../../../../hooks';
 import {
   CreateClientDocumentsFromUploadsDocument,
   CreateClientDocumentUploadsDocument,
 } from '../../../__generated__/Client.generated';
 import { UploadSection } from '../UploadSection';
 import UploadsPreview from '../UploadsPreview';
-import { IMultipleDocUploadsProps } from '../types';
+import { IClientDocUploadsProps } from '../types';
+import { DOCUMENT_CONFIG } from './constants';
 
 function generateUploadRef(index: number): string {
   return `${Date.now()}-${index}`;
 }
 
-export function ClientDocUploads(props: IMultipleDocUploadsProps) {
+export function ClientDocUploads(props: IClientDocUploadsProps) {
   console.log('################################### ClientDocUploads');
 
   const { setTab, client, setDocs, docs, title, docType } = props;
 
-  const [processing, setProcessing] = useState(false);
+  const { showSnackbar } = useSnackbar();
+
   const [isModalVisible, setIsModalVisible] = useState(false);
-  // const { showSnackbar } = useSnackbar();
+  const [processing, setProcessing] = useState(false);
 
   const [createUploads] = useMutation(CreateClientDocumentUploadsDocument);
   const [resolveUploads] = useMutation(
     CreateClientDocumentsFromUploadsDocument
   );
 
-  const uploadDocuments = async () => {
-    const documents = docs?.[docType];
+  const { multiple: allowMultiple } = DOCUMENT_CONFIG[docType];
 
-    if (!documents || documents.length < 1 || !client) {
+  const namespace = ClientDocumentNamespaceEnum[docType];
+
+  const uploadDocuments = async () => {
+    const documents = docs[docType];
+
+    if (!documents.length || !client?.clientProfile.id) {
       return;
     }
 
@@ -46,10 +53,6 @@ export function ClientDocUploads(props: IMultipleDocUploadsProps) {
       setProcessing(true);
 
       console.log(JSON.stringify(documents, null, 2));
-
-      if (!client.clientProfile.id) {
-        return;
-      }
 
       const documentUploadMap = new Map<string, ReactNativeFile>();
 
@@ -133,7 +136,7 @@ export function ClientDocUploads(props: IMultipleDocUploadsProps) {
           key: fileUpload.key,
           filename: originalDoc.name,
           contentType: originalDoc.type,
-          namespace: ClientDocumentNamespaceEnum[docType],
+          namespace,
         };
       });
 
@@ -161,70 +164,39 @@ export function ClientDocUploads(props: IMultipleDocUploadsProps) {
       // 2. close modal?
 
       // call mutation with documentsToSave payload
+
+      // reset tab
+      setTab(undefined);
     } catch (err) {
       // show snackbar?
-      console.log(err);
+      console.error(`error uploading client ${docType} files: `, err);
+
+      showSnackbar({
+        message: `Sorry, there was an error with the file upload.`,
+        type: 'error',
+      });
     } finally {
       setProcessing(false);
     }
   };
 
-  // const uploadDocuments = async () => {
-  //   const documents = docs?.[docType];
-
-  //   if (!documents || documents.length < 1 || !client) {
-  //     return;
-  //   }
-
-  //   try {
-  //     const uploads = documents.map((form) => {
-  //       const fileToUpload = new ReactNativeFile({
-  //         uri: form.uri,
-  //         type: form.type,
-  //         name: form.name,
-  //       });
-
-  //       return createDocument({
-  //         variables: {
-  //           data: {
-  //             file: fileToUpload,
-  //             clientProfile: client.clientProfile.id,
-  //             namespace: ClientDocumentNamespaceEnum[docType],
-  //           },
-  //         },
-  //       });
-  //     });
-
-  //     await Promise.all(uploads);
-  //   } catch (err) {
-  //     console.error(`error uploading ${docType} forms: `, err);
-
-  //     showSnackbar({
-  //       message: `Sorry, there was an error with the file upload.`,
-  //       type: 'error',
-  //     });
-  //   }
-
-  //   setTab(undefined);
-  // };
-
   const onRemoveFile = (index: number) => {
-    setDocs({
-      ...docs,
-      [docType]: docs[docType]?.filter((_, i) => i !== index),
-    });
+    setDocs((prev) => ({
+      ...prev,
+      [docType]: prev[docType].filter((_, i) => i !== index),
+    }));
   };
 
   const onFilenameChange = (index: number, value: string) => {
-    setDocs({
-      ...docs,
-      [docType]: docs[docType]?.map((file, i) =>
+    setDocs((prev) => ({
+      ...prev,
+      [docType]: prev[docType].map((file, i) =>
         i === index ? { ...file, name: value } : file
       ),
-    });
+    }));
   };
 
-  const docsToUpload = (docs && docs[docType]) || [];
+  const docsToUpload = docs[docType];
 
   const allDocsValid = docsToUpload.every((file) => {
     return !!file.name && !!file.type && !!file.uri;
@@ -288,25 +260,35 @@ export function ClientDocUploads(props: IMultipleDocUploadsProps) {
             files={docsToUpload}
             onRemoveFile={onRemoveFile}
             onFilenameChange={onFilenameChange}
-            documentType={ClientDocumentNamespaceEnum[docType]}
+            documentType={namespace}
           />
         )}
       </UploadSection>
 
       <MediaPicker
-        allowMultiple={true}
+        allowMultiple={allowMultiple}
         isOpen={isModalVisible}
         onClose={() => setIsModalVisible(false)}
         onCameraCapture={(file) => {
-          setDocs({
-            ...docs,
-            [docType]: [...(docs[docType] ?? []), file],
+          setDocs((prev) => {
+            const next = allowMultiple ? [...prev[docType], file] : [file];
+
+            return {
+              ...prev,
+              [docType]: next,
+            };
           });
         }}
         onFilesSelected={(files) => {
-          setDocs({
-            ...docs,
-            [docType]: [...(docs[docType] ?? []), ...files],
+          setDocs((prev) => {
+            const existing = prev[docType];
+
+            const next = allowMultiple ? [...existing, ...files] : [files[0]]; // enforce single
+
+            return {
+              ...prev,
+              [docType]: next,
+            };
           });
         }}
       />

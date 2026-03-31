@@ -34,6 +34,15 @@ export interface IIdDocUploadsProps {
     | 'PhotoId';
 }
 
+// ClientDocUploads
+export interface IClientDocUploadsProps {
+  setTab: (tab: ITab) => void;
+  client: ClientProfileQuery | undefined;
+  docs: DocUploads;
+  setDocs: Dispatch<SetStateAction<DocUploads>>;
+  title: string;
+  docType: keyof DocUploads;
+}
 export interface IMultipleDocUploadsProps {
   setTab: (tab: ITab) => void;
   client: ClientProfileQuery | undefined;
@@ -68,6 +77,18 @@ export type Docs = {
   HmisForm?: ReactNativeFile[];
   IncomeForm?: ReactNativeFile[];
   OtherClientDocument?: ReactNativeFile[];
+};
+
+export type DocUploads = {
+  DriversLicenseFront: ReactNativeFile[];
+  DriversLicenseBack: ReactNativeFile[];
+  BirthCertificate: ReactNativeFile[];
+  PhotoId: ReactNativeFile[];
+  SocialSecurityCard: ReactNativeFile[];
+  ConsentForm: ReactNativeFile[];
+  HmisForm: ReactNativeFile[];
+  IncomeForm: ReactNativeFile[];
+  OtherClientDocument: ReactNativeFile[];
 };
 
 export type ITab =
