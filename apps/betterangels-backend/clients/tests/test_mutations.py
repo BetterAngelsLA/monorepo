@@ -1,4 +1,4 @@
-from unittest.mock import ANY
+from unittest.mock import ANY, patch
 
 from clients.enums import (
     AdaAccommodationEnum,
@@ -18,13 +18,7 @@ from clients.enums import (
     SocialMediaEnum,
     VeteranStatusEnum,
 )
-from clients.models import (
-    ClientContact,
-    ClientHouseholdMember,
-    ClientProfile,
-    HmisProfile,
-    SocialMediaProfile,
-)
+from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile, SocialMediaProfile
 from clients.tests.utils import (
     ClientContactBaseTestCase,
     ClientHouseholdMemberBaseTestCase,
@@ -871,3 +865,106 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         # Verify database was updated
         document = Attachment.objects.get(id=document_id)
         self.assertEqual(document.original_filename, new_filename)
+
+
+class ClientDocumentUploadsMutationTestCase(ClientProfileGraphQLBaseTestCase):
+    CREATE_CLIENT_DOCUMENT_UPLOADS_MUTATION = """
+        mutation CreateClientDocumentUploads($data: ClientDocumentUploadsInput!) {
+            createClientDocumentUploads(data: $data) {
+                ... on PresignedS3UploadsResult {
+                    uploads {
+                        refId
+                        url
+                        fields
+                        key
+                    }
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def _build_variables(self, client_profile_id: str, uploads: list = None) -> dict:
+        if uploads is None:
+            uploads = [
+                {
+                    "refId": "ref-1",
+                    "filename": "document.pdf",
+                    "contentType": "application/pdf",
+                },
+            ]
+        return {"data": {"clientProfileId": client_profile_id, "uploads": uploads}}
+
+    @patch("clients.schema.create_client_document_presigned_uploads")
+    def test_create_client_document_uploads(self, mock_presigned) -> None:
+        mock_presigned.return_value = {
+            "uploads": [
+                {
+                    "ref_id": "ref-1",
+                    "url": "https://s3.example.com/upload",
+                    "fields": {"key": "media/attachments_test/abc.pdf", "policy": "xxx"},
+                    "key": "media/attachments_test/abc.pdf",
+                },
+            ]
+        }
+
+        variables = self._build_variables(self.client_profile_1["id"])
+        response = self.execute_graphql(self.CREATE_CLIENT_DOCUMENT_UPLOADS_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        uploads = response["data"]["createClientDocumentUploads"]["uploads"]
+        self.assertEqual(len(uploads), 1)
+        self.assertEqual(uploads[0]["refId"], "ref-1")
+        self.assertEqual(uploads[0]["url"], "https://s3.example.com/upload")
+        self.assertEqual(uploads[0]["key"], "media/attachments_test/abc.pdf")
+        mock_presigned.assert_called_once()
+
+    @patch("clients.schema.create_client_document_presigned_uploads")
+    def test_create_client_document_uploads_multiple_files(self, mock_presigned) -> None:
+        mock_presigned.return_value = {
+            "uploads": [
+                {
+                    "ref_id": "ref-1",
+                    "url": "https://s3.example.com/upload1",
+                    "fields": {"key": "media/attachments_test/a.pdf"},
+                    "key": "media/attachments_test/a.pdf",
+                },
+                {
+                    "ref_id": "ref-2",
+                    "url": "https://s3.example.com/upload2",
+                    "fields": {"key": "media/attachments_test/b.jpg"},
+                    "key": "media/attachments_test/b.jpg",
+                },
+            ]
+        }
+
+        uploads = [
+            {"refId": "ref-1", "filename": "a.pdf", "contentType": "application/pdf"},
+            {"refId": "ref-2", "filename": "b.jpg", "contentType": "image/jpeg"},
+        ]
+        variables = self._build_variables(self.client_profile_1["id"], uploads)
+        response = self.execute_graphql(self.CREATE_CLIENT_DOCUMENT_UPLOADS_MUTATION, variables)
+
+        self.assertIsNone(response.get("errors"))
+        result_uploads = response["data"]["createClientDocumentUploads"]["uploads"]
+        self.assertEqual(len(result_uploads), 2)
+        self.assertEqual(result_uploads[0]["refId"], "ref-1")
+        self.assertEqual(result_uploads[1]["refId"], "ref-2")
+
+    def test_create_client_document_uploads_unauthenticated(self) -> None:
+        self._handle_user_login(None)
+        variables = self._build_variables(self.client_profile_1["id"])
+        response = self.execute_graphql(self.CREATE_CLIENT_DOCUMENT_UPLOADS_MUTATION, variables)
+        self.assertGraphQLUnauthenticated(response)
+
+    @patch("clients.schema.create_client_document_presigned_uploads")
+    def test_create_client_document_uploads_non_case_manager(self, mock_presigned) -> None:
+        self._handle_user_login("non_case_manager_user")
+        variables = self._build_variables(self.client_profile_1["id"])
+        response = self.execute_graphql(self.CREATE_CLIENT_DOCUMENT_UPLOADS_MUTATION, variables)
+        self.assertIsNotNone(response.get("errors") or response["data"]["createClientDocumentUploads"] is None)
+        mock_presigned.assert_not_called()
+        mock_presigned.assert_not_called()
