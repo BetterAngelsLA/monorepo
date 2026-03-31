@@ -1,4 +1,4 @@
-import { FilterIcon, SearchIcon } from '@monorepo/react/icons';
+import { FilterIcon, LocationIcon, SearchIcon } from '@monorepo/react/icons';
 import { useAtom } from 'jotai';
 import { useResetAtom } from 'jotai/utils';
 import { useEffect, useState } from 'react';
@@ -89,6 +89,7 @@ export function ShelterSearch(props: TProps) {
             className="w-full"
             placeholder="Search by location"
             onPlaceSelect={onPlaceSelect}
+            leftIcon={<LocationIcon className="text-neutral-70 w-4 h-4" />}
           />
           <button onClick={onFilterClick} className="self-start ml-4 mt-4">
             <FilterIcon className="w-6 text-primary-20" />
