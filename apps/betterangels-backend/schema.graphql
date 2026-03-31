@@ -242,6 +242,7 @@ input ClientDocumentFromUploadsInput {
   key: String!
   filename: String!
   contentType: String!
+  namespace: ClientDocumentNamespaceEnum!
 }
 
 enum ClientDocumentGroupEnum {
@@ -291,14 +292,13 @@ input ClientDocumentUploadsInput {
 }
 
 input ClientDocumentUploadsInputItem {
-  uploadRef: String!
+  refId: String!
   filename: String!
   contentType: String!
 }
 
 input ClientDocumentsFromUploadsInput {
   clientProfileId: ID!
-  namespace: ClientDocumentNamespaceEnum = null
   documents: [ClientDocumentFromUploadsInput!]!
 }
 
@@ -1751,7 +1751,7 @@ enum PreferredCommunicationEnum {
 }
 
 type PresignedS3UploadResultItem {
-  uploadRef: String!
+  refId: String!
   url: String!
   fields: JSON!
   key: String!

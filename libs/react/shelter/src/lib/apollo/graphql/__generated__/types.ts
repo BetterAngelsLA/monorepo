@@ -243,6 +243,7 @@ export type ClientDocumentFromUploadsInput = {
   contentType: Scalars['String']['input'];
   filename: Scalars['String']['input'];
   key: Scalars['String']['input'];
+  namespace: ClientDocumentNamespaceEnum;
 };
 
 export enum ClientDocumentGroupEnum {
@@ -294,13 +295,12 @@ export type ClientDocumentUploadsInput = {
 export type ClientDocumentUploadsInputItem = {
   contentType: Scalars['String']['input'];
   filename: Scalars['String']['input'];
-  uploadRef: Scalars['String']['input'];
+  refId: Scalars['String']['input'];
 };
 
 export type ClientDocumentsFromUploadsInput = {
   clientProfileId: Scalars['ID']['input'];
   documents: Array<ClientDocumentFromUploadsInput>;
-  namespace?: InputMaybe<ClientDocumentNamespaceEnum>;
 };
 
 export type ClientHouseholdMemberInput = {
@@ -2059,7 +2059,7 @@ export type PresignedS3UploadResultItem = {
   __typename?: 'PresignedS3UploadResultItem';
   fields: Scalars['JSON']['output'];
   key: Scalars['String']['output'];
-  uploadRef: Scalars['String']['output'];
+  refId: Scalars['String']['output'];
   url: Scalars['String']['output'];
 };
 

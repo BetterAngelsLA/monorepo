@@ -97,7 +97,7 @@ class ClientProfileOrder:
 
 @strawberry.input
 class ClientDocumentUploadsInputItem:
-    upload_ref: str
+    ref_id: str
     filename: str
     content_type: str
 
@@ -113,12 +113,12 @@ class ClientDocumentFromUploadsInput:
     key: str
     filename: str
     content_type: str
+    namespace: ClientDocumentNamespaceEnum
 
 
 @strawberry.input
 class ClientDocumentsFromUploadsInput:
     client_profile_id: ID
-    namespace: Optional[ClientDocumentNamespaceEnum] = None
     documents: list[ClientDocumentFromUploadsInput]
 
 

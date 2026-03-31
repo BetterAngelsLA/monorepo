@@ -15,7 +15,7 @@ DEFAULT_MAX_FILE_SIZE = 10_000_000
 
 
 class PresignedS3UploadInput(TypedDict):
-    upload_ref: str
+    ref_id: str
     filename: str
     content_type: str
     upload_path: str
@@ -29,7 +29,7 @@ class S3ClientPresignedPostResponse(TypedDict):
 
 
 class PresignedS3UploadResult(TypedDict):
-    upload_ref: str
+    ref_id: str
     url: str
     fields: dict[str, str]
     key: str
@@ -77,7 +77,7 @@ def _build_s3_key(*, filename: str, content_type: str, upload_path: str) -> str:
 def _generate_presigned_post_with_client(
     *,
     s3_client: S3Client,
-    upload_ref: str,
+    ref_id: str,
     filename: str,
     content_type: str,
     upload_path: str,
@@ -132,7 +132,7 @@ def _generate_presigned_post_with_client(
         raise RuntimeError(f"Presigned POST key mismatch: expected '{key}', got '{fields_key}'")
 
     return PresignedS3UploadResult(
-        upload_ref=upload_ref,
+        ref_id=ref_id,
         url=response["url"],
         fields=fields,
         key=key,
@@ -155,7 +155,7 @@ def generate_s3_presigned_upload_urls(
     for upload in uploads:
         result = _generate_presigned_post_with_client(
             s3_client=s3_client,
-            upload_ref=upload["upload_ref"],
+            ref_id=upload["ref_id"],
             filename=upload["filename"],
             content_type=upload["content_type"],
             upload_path=upload["upload_path"],

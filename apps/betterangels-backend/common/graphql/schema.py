@@ -14,7 +14,7 @@ from waffle import get_waffle_flag_model, get_waffle_sample_model, get_waffle_sw
 
 @strawberry.type
 class PresignedS3UploadResultItem:
-    upload_ref: str
+    ref_id: str
     url: str
     fields: JSON
     key: str

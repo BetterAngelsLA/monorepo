@@ -605,19 +605,21 @@ class Mutation:
             [ClientProfilePermissions.CHANGE],
         ).get(id=data.client_profile_id)
 
-        result = create_client_document_presigned_uploads(uploads=data.uploads)
+        results: list[PresignedS3UploadResultItem] = []
 
-        return PresignedS3UploadsResult(
-            uploads=[
-                PresignedS3UploadResultItem(
-                    upload_ref=item["upload_ref"],
-                    url=item["url"],
-                    fields=cast(JSON, item["fields"]),
-                    key=item["key"],
-                )
-                for item in result["uploads"]
-            ]
-        )
+        presigned_uploads = create_client_document_presigned_uploads(uploads=data.uploads)
+
+        for item in presigned_uploads["uploads"]:
+            upload = PresignedS3UploadResultItem(
+                ref_id=item["ref_id"],
+                url=item["url"],
+                fields=cast(JSON, item["fields"]),
+                key=item["key"],
+            )
+
+            results.append(upload)
+
+        return PresignedS3UploadsResult(uploads=results)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
     def create_client_documents_from_uploads(
@@ -636,7 +638,6 @@ class Mutation:
                 user=user,
                 client_profile=client_profile,
                 documents=data.documents,
-                namespace=data.namespace,
             )
 
             return CreateClientDocumentsFromUploadsResult(documents=attachments)

@@ -54,12 +54,12 @@ export function ClientDocUploads(props: IMultipleDocUploadsProps) {
       const documentUploadMap = new Map<string, ReactNativeFile>();
 
       const documentUploadInput = documents.map((doc, index) => {
-        const uploadRef = generateUploadRef(index);
+        const refId = generateUploadRef(index);
 
-        documentUploadMap.set(uploadRef, doc);
+        documentUploadMap.set(refId, doc);
 
         return {
-          uploadRef,
+          refId,
           filename: doc.name,
           contentType: doc.type,
         };
@@ -95,11 +95,11 @@ export function ClientDocUploads(props: IMultipleDocUploadsProps) {
 
       const results = await Promise.all(
         payload.uploads.map((fileUpload) => {
-          const originalDoc = documentUploadMap.get(fileUpload.uploadRef);
+          const originalDoc = documentUploadMap.get(fileUpload.refId);
 
           if (!originalDoc) {
             throw new Error(
-              `cannot find document by ref [${fileUpload.uploadRef}]`
+              `cannot find document by refId [${fileUpload.refId}]`
             );
           }
 
@@ -122,10 +122,10 @@ export function ClientDocUploads(props: IMultipleDocUploadsProps) {
       console.log();
 
       const documentsToSave = payload.uploads.map((fileUpload) => {
-        const originalDoc = documentUploadMap.get(fileUpload.uploadRef);
+        const originalDoc = documentUploadMap.get(fileUpload.refId);
 
         if (!originalDoc) {
-          throw new Error(`Missing document for ${fileUpload.uploadRef}`);
+          throw new Error(`Missing document for ${fileUpload.refId}`);
         }
 
         // or whatever we save to DB
@@ -133,6 +133,7 @@ export function ClientDocUploads(props: IMultipleDocUploadsProps) {
           key: fileUpload.key,
           filename: originalDoc.name,
           contentType: originalDoc.type,
+          namespace: ClientDocumentNamespaceEnum[docType],
         };
       });
 
@@ -141,12 +142,10 @@ export function ClientDocUploads(props: IMultipleDocUploadsProps) {
       console.log(JSON.stringify(documentsToSave, null, 2));
       console.log();
 
-      // resolveUploads
       const resolved = await resolveUploads({
         variables: {
           data: {
             clientProfileId: client.clientProfile.id,
-            namespace: ClientDocumentNamespaceEnum[docType],
             documents: documentsToSave,
           },
         },

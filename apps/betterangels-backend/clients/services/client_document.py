@@ -26,7 +26,7 @@ def create_client_document_presigned_uploads(
     for upload in uploads:
         mapped_uploads.append(
             {
-                "upload_ref": upload.upload_ref,
+                "ref_id": upload.ref_id,
                 "filename": upload.filename,
                 "content_type": upload.content_type,
                 "upload_path": S3_CLIENT_DOCUMENT_PREFIX,
@@ -41,7 +41,6 @@ def create_client_documents_from_s3_uploads(
     user: User,
     client_profile: ClientProfile,
     documents: Iterable[ClientDocumentFromUploadsInput],
-    namespace: str | None,
 ) -> list[Attachment]:
     permission_group = get_user_permission_group(user)
     content_type = ContentType.objects.get_for_model(ClientProfile)
@@ -58,7 +57,7 @@ def create_client_documents_from_s3_uploads(
             file=file_path,
             mime_type=doc.content_type,
             original_filename=doc.filename,
-            namespace=namespace,
+            namespace=doc.namespace,
             content_type=content_type,
             object_id=client_profile.id,
             uploaded_by=user,
