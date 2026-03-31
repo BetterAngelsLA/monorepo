@@ -41,9 +41,9 @@ const variantColorDefaults: Record<ButtonVariant, string> = {
     'bg-white hover:bg-[#F4F6FD] disabled:bg-[#D3D9E3] border-[#D3D9E3] text-[#747A82]',
   'primary-sm':
     'bg-white hover:bg-[#F4F6FD] disabled:bg-[#D3D9E3] border-[#D3D9E3] text-[#747A82]',
-  edit: 'hover:bg-[#F4F6FD] active:bg-[#D3D9E3]',
+  edit: 'bg-white hover:bg-[#F4F6FD] active:bg-[#D3D9E3]',
   trash:
-    'hover:bg-[#FFECE8] active:bg-[#FFC5BF] text-[#747A82] hover:text-[#CB0808]',
+    'bg-white hover:bg-[#FFECE8] active:bg-[#FFC5BF] text-black hover:text-[#CB0808]',
   'right-arrow': 'bg-[#FFF82E]',
 };
 
@@ -71,7 +71,7 @@ const colorSchemes: Record<
 };
 
 const defaultIcons: Partial<Record<ButtonVariant, ReactNode>> = {
-  edit: <Pencil size={22} stroke="#747A82" />,
+  edit: <Pencil size={22} stroke="black" />,
   trash: <Trash2 size={22} color="currentColor" />,
   'right-arrow': <ArrowRight size={24} stroke="black" />,
 };

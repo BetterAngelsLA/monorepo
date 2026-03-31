@@ -1,34 +1,10 @@
-import { Outlet, useLocation } from 'react-router-dom';
-import { useUser } from '@monorepo/react/shelter';
-import NavBar from '../NavBar';
+import { Outlet } from 'react-router-dom';
+import { NavBar } from '../NavBar';
 
 export function OperatorLayout() {
-  const location = useLocation();
-  const { user } = useUser();
-
-  const isDashboardPage =
-    location.pathname === '/operator' || location.pathname === '/operator/';
-  const isReservationPage = location.pathname.includes('/reservation');
-  const isShelterPage = location.pathname.includes('/shelter/');
-
-  const routeState =
-    (location.state as { shelter?: { name?: string | null } } | null) ?? null;
-
-  const organizationName =
-    isShelterPage && user?.organizations?.length
-      ? user.organizations[0]?.name
-      : undefined;
-  const shelterName = routeState?.shelter?.name ?? undefined;
-  const pageTitle = isReservationPage ? 'Shelter Reservation' : undefined;
-
   return (
     <div className="flex flex-col min-h-screen">
-      <NavBar
-        showCreateButton={isDashboardPage}
-        organizationName={organizationName}
-        shelterName={shelterName}
-        pageTitle={pageTitle}
-      />
+      <NavBar />
       <main className="flex-1">
         <Outlet />
       </main>

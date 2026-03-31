@@ -1,36 +1,41 @@
 import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
+import { operatorPath } from '@monorepo/react/shelter';
 import { Plus, UserCog } from 'lucide-react';
-import { useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import { useCallback, useMemo } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useBreadcrumbs } from '../hooks/useBreadcrumbs';
 import { useActiveOrg } from '../providers/activeOrg';
 import { Button } from './base-ui/buttons';
 import { Dropdown } from './base-ui/dropdown';
-import { Text } from './base-ui/text/text';
 
-interface NavBarProps {
-  organizationName?: string;
-  shelterName?: string;
-  pageTitle?: string;
-  showCreateButton?: boolean;
+function NavBarActions({ children }: { children?: ReactNode }) {
+  return (
+    <div className="flex items-center gap-3">
+      {children}
+      <button
+        type="button"
+        aria-label="Account settings"
+        className="inline-flex size-11 items-center justify-center rounded-full border border-[#D3D9E3] bg-white text-[#3E4652] transition-colors hover:bg-[#F8FAFC] pl-1"
+      >
+        <UserCog size={20} />
+      </button>
+    </div>
+  );
 }
 
-export default function NavBar({
-  organizationName,
-  shelterName,
-  pageTitle,
-  showCreateButton = true,
-}: NavBarProps = {}) {
+export function NavBar() {
   const { activeOrg, organizations, setActiveOrgId } = useActiveOrg();
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const selectedOrganizationId = activeOrg?.id ?? '';
 
-  const isShelterRoute = /^\/operator\/shelter\/[^/]+(?:\/.*)?$/.test(pathname);
-  const breadcrumbShelterName = isShelterRoute ? undefined : shelterName;
+  const isDashboardPage =
+    location.pathname === operatorPath ||
+    location.pathname === `${operatorPath}/`;
 
-  const breadcrumbs = [
-    organizationName,
-    breadcrumbShelterName,
-    pageTitle,
-  ].filter(Boolean) as string[];
+  const breadcrumbs = useBreadcrumbs();
+  const showCreateButton = isDashboardPage;
 
   const displayTitle =
     breadcrumbs.length > 0
@@ -39,44 +44,54 @@ export default function NavBar({
       ? organizations[0].name
       : 'Admin Dashboard';
 
+  const selectedOption = useMemo(() => {
+    const org = organizations.find((o) => o.id === selectedOrganizationId);
+    return org ? { label: org.name, value: org.id } : null;
+  }, [organizations, selectedOrganizationId]);
+
   const dropdownOptions = useMemo(
     () => organizations.map((org) => ({ label: org.name, value: org.id })),
     [organizations]
   );
 
-  const dropdownValue = useMemo(
-    () => (activeOrg ? { label: activeOrg.name, value: activeOrg.id } : null),
-    [activeOrg]
+  const handleOrgChange = useCallback(
+    (option: { value: string } | null) => {
+      if (option) setActiveOrgId(option.value);
+    },
+    [setActiveOrgId]
   );
 
   return (
     <div className="mb-6 bg-[#FAFAFA] px-5 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3 md:gap-4">
-          <Link to="/" className="shrink-0">
+          <Link to={operatorPath} className="shrink-0">
             <BetterAngelsLogoIcon fill="#1E3342" className="h-9 w-auto" />
           </Link>
 
           {breadcrumbs.length > 0 ? (
             <div className="flex items-center gap-2 text-base md:text-xl">
               {breadcrumbs.map((item, index) => (
-                <div
-                  key={`${item}-${index}`}
-                  className="flex items-center gap-2"
-                >
+                <div key={index} className="flex items-center gap-2">
                   {index > 0 && (
                     <span className="text-gray-400 font-normal">/</span>
                   )}
-                  <Text variant="header-md" className="text-[#5A616B]">
+                  <span
+                    className={
+                      index === breadcrumbs.length - 1
+                        ? 'font-medium text-[#5A616B]'
+                        : 'font-normal text-[#5A616B]'
+                    }
+                  >
                     {item}
-                  </Text>
+                  </span>
                 </div>
               ))}
             </div>
           ) : (
-            <Text variant="header-md" className=" text-[#5A616B]">
+            <p className="truncate text-xl font-medium text-[#5A616B] md:text-2xl">
               {displayTitle}
-            </Text>
+            </p>
           )}
 
           {organizations.length > 1 && breadcrumbs.length === 0 && (
@@ -85,36 +100,28 @@ export default function NavBar({
                 label="Organization"
                 placeholder="Select organization"
                 options={dropdownOptions}
-                value={dropdownValue}
-                onChange={(option) => {
-                  if (option) setActiveOrgId(option.value);
-                }}
+                value={selectedOption}
+                onChange={handleOrgChange}
               />
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <NavBarActions>
           {showCreateButton && (
-            <Link to="/operator/dashboard/create">
-              <Button
-                variant="primary"
-                leftIcon={<Plus size={20} />}
-                rightIcon={false}
-              >
-                Create Shelter
-              </Button>
-            </Link>
+            <Button
+              variant="primary"
+              leftIcon={<Plus size={20} />}
+              rightIcon={false}
+              onClick={() => navigate(`${operatorPath}/dashboard/create`)}
+            >
+              Create Shelter
+            </Button>
           )}
-          <button
-            type="button"
-            aria-label="Account settings"
-            className="inline-flex size-11 items-center justify-center rounded-full border border-[#D3D9E3] bg-white text-[#3E4652] transition-colors hover:bg-[#F8FAFC] pl-1"
-          >
-            <UserCog size={20} />
-          </button>
-        </div>
+        </NavBarActions>
       </div>
     </div>
   );
 }
+
+export { NavBarActions };

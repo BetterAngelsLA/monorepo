@@ -1,19 +1,14 @@
-import { Filter, Search, Settings2 } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
-import { useEffect, useMemo, useState } from 'react';
-import type { Shelter } from '../types/shelter';
-import { Button } from './base-ui/buttons';
-import { ConfirmationModal } from './base-ui/modal/ConfirmationModal';
-import { Text } from './base-ui/text/text';
+import { useMemo } from 'react';
 import { Table, type TableColumn } from './Table';
+import type { Shelter } from '../types/shelter';
 
 export type ShelterRowObject = {
   id: string;
-  shelter: Shelter;
   name: string;
   address: string;
   totalBeds: number;
-  reservedBeds: number;
+  reservedBeds: number | null;
   tags: string[];
 };
 
@@ -30,12 +25,18 @@ type ShelterTableProps = {
   tableStyle?: CSSProperties;
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
-  onSearchChange?: (value: string) => void;
-  searchPlaceholder?: string;
-  onDeleteShelter?: (shelterId: string) => void;
 };
 
 const MAX_VISIBLE_TAG_CHAR_COUNT = 15;
+
+function computeReservedBeds(shelter: Shelter): number | null {
+  const totalBeds = shelter.totalBeds ?? 0;
+  if (totalBeds === 0) return null;
+  return Math.min(
+    Math.max(totalBeds - (shelter.availableBeds ?? 0), 0),
+    totalBeds
+  );
+}
 
 function renderTags(tags: string[] | null) {
   const validTags = (tags ?? []).filter((tag) => Boolean(tag?.trim()));
@@ -58,18 +59,17 @@ function renderTags(tags: string[] | null) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       {visibleTags.map((tag) => (
-        <div key={tag} className="rounded-full bg-[#EDEFF5] px-3 py-1">
-          <Text variant="tag-sm" className="text-[#747A82]">
-            {tag}
-          </Text>
-        </div>
+        <span
+          key={tag}
+          className="rounded-full bg-[#EDEFF5] px-3 py-1 text-xs text-[#747A82]"
+        >
+          {tag}
+        </span>
       ))}
       {remainingTagsCount > 0 && (
-        <div className="rounded-full bg-[#EDEFF5] px-3 py-1">
-          <Text variant="tag-sm" className="text-[#747A82]">
-            +{remainingTagsCount}
-          </Text>
-        </div>
+        <span className="rounded-full bg-[#EDEFF5] px-3 py-1 text-xs text-[#747A82]">
+          +{remainingTagsCount}
+        </span>
       )}
     </div>
   );
@@ -88,70 +88,38 @@ export function ShelterTable({
   tableStyle,
   headerStyle,
   rowStyle,
-  onSearchChange,
-  searchPlaceholder = 'Search shelters',
-  onDeleteShelter,
 }: ShelterTableProps) {
-  const [searchInput, setSearchInput] = useState('');
-  const [deleteConfirmation, setDeleteConfirmation] = useState<{
-    isOpen: boolean;
-    shelterId?: string;
-    shelterName?: string;
-  }>({ isOpen: false });
-
-  useEffect(() => {
-    onSearchChange?.(searchInput);
-  }, [onSearchChange, searchInput]);
-
   const columns: TableColumn<Shelter>[] = useMemo(
     () => [
       {
         key: 'name',
         label: 'Shelter Name',
         width: '1fr',
-        cellClassName: 'overflow-hidden text-ellipsis whitespace-nowrap',
-        render: (shelter) => (
-          <Text variant="body" className="text-black">
-            {shelter.name ?? 'N/A'}
-          </Text>
-        ),
+        cellClassName:
+          'font-medium text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap',
+        render: (shelter) => shelter.name ?? 'N/A',
       },
       {
         key: 'address',
         label: 'Address',
         width: '1fr',
-        cellClassName: 'overflow-hidden text-ellipsis whitespace-nowrap',
-        render: (shelter) => (
-          <Text variant="body" className="text-black">
-            {shelter.address ?? 'N/A'}
-          </Text>
-        ),
+        cellClassName:
+          'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
+        render: (shelter) => shelter.address ?? 'N/A',
       },
       {
         key: 'capacity',
         label: 'Capacity',
         width: '1.2fr',
-        cellClassName: 'whitespace-nowrap',
+        cellClassName: 'whitespace-nowrap text-gray-700',
         render: (shelter) => {
           const totalBeds = shelter.totalBeds ?? 0;
-          const hasCapacity = totalBeds > 0;
-          const reservedBeds = hasCapacity
-            ? Math.min(
-                Math.max(totalBeds - (shelter.availableBeds ?? 0), 0),
-                totalBeds
-              )
-            : null;
+          const reservedBeds = computeReservedBeds(shelter);
           const progressPct =
-            hasCapacity && reservedBeds !== null
-              ? (reservedBeds / totalBeds) * 100
-              : 0;
+            reservedBeds !== null ? (reservedBeds / totalBeds) * 100 : 0;
 
-          if (!hasCapacity || reservedBeds === null) {
-            return (
-              <Text variant="body" className="text-black whitespace-nowrap">
-                N/A
-              </Text>
-            );
+          if (reservedBeds === null) {
+            return <div className="whitespace-nowrap">N/A</div>;
           }
 
           return (
@@ -162,9 +130,9 @@ export function ShelterTable({
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
-              <Text variant="body" className="leading-5 text-black">
+              <span className="leading-5 text-slate-700">
                 {reservedBeds} / {totalBeds} beds
-              </Text>
+              </span>
             </div>
           );
         },
@@ -173,6 +141,7 @@ export function ShelterTable({
         key: 'tags',
         label: 'Tags',
         width: '0.8fr',
+        cellClassName: 'text-gray-600',
         render: (shelter) => renderTags(shelter.tags),
       },
     ],
@@ -180,132 +149,33 @@ export function ShelterTable({
   );
 
   return (
-    <div className="flex flex-col">
-      <form
-        className="my-1 flex w-full flex-wrap items-center gap-3 bg-white px-3"
-        onSubmit={(event) => event.preventDefault()}
-      >
-        <label className="flex h-11 w-full max-w-[380px] items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2">
-          <span className="flex h-8 w-9 items-center justify-center rounded-full bg-[#FCF500] text-[#1E3342]">
-            <Search size={20} />
-          </span>
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder={searchPlaceholder}
-            className="h-full w-full rounded-full bg-transparent pr-3 text-base text-[#4A4F57] outline-none transition-colors placeholder:text-[#7A818A]"
-          />
-        </label>
+    <Table<Shelter, ShelterRowObject>
+      columns={columns}
+      rows={rows}
+      getRowKey={getRowKey ?? ((shelter) => shelter.id)}
+      getRowObject={(shelter) => {
+        const totalBeds = shelter.totalBeds ?? 0;
+        const reservedBeds = computeReservedBeds(shelter);
 
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          <Button
-            variant="primary"
-            leftIcon={<Filter size={20} />}
-            rightIcon={false}
-          >
-            Filter
-          </Button>
-
-          <Button
-            variant="primary"
-            leftIcon={<Settings2 size={20} />}
-            rightIcon={false}
-          >
-            Sort
-          </Button>
-        </div>
-      </form>
-
-      <Table<Shelter, ShelterRowObject>
-        columns={columns}
-        rows={rows}
-        getRowKey={getRowKey ?? ((shelter) => shelter.id)}
-        getRowObject={(shelter) => {
-          const totalBeds = shelter.totalBeds ?? 0;
-          const reservedBeds =
-            totalBeds === 0
-              ? 0
-              : Math.min(
-                  Math.max(totalBeds - (shelter.availableBeds ?? 0), 0),
-                  totalBeds
-                );
-
-          return {
-            id: shelter.id,
-            shelter,
-            name: shelter.name ?? 'N/A',
-            address: shelter.address ?? 'N/A',
-            totalBeds,
-            reservedBeds,
-            tags: shelter.tags ?? [],
-          };
-        }}
-        getTrailingContent={(rowObject) => (
-          <div className="flex items-center gap-1">
-            <Button
-              variant="trash"
-              onClick={(e) => {
-                e.stopPropagation();
-                setDeleteConfirmation({
-                  isOpen: true,
-                  shelterId: rowObject.id,
-                  shelterName: rowObject.name,
-                });
-              }}
-            />
-          </div>
-        )}
-        trailingColumnWidth="60px"
-        onRowClick={onRowClick}
-        loading={loading}
-        loadingState={loadingState}
-        emptyState={emptyState}
-        wrapperClassName={wrapperClassName}
-        headerClassName={headerClassName}
-        rowClassName={rowClassName}
-        tableStyle={tableStyle}
-        headerStyle={headerStyle}
-        rowStyle={rowStyle}
-      />
-
-      <ConfirmationModal
-        isOpen={deleteConfirmation.isOpen}
-        onClose={() =>
-          setDeleteConfirmation({
-            isOpen: false,
-            shelterId: undefined,
-            shelterName: undefined,
-          })
-        }
-        variant="danger"
-        title={`Are you sure you want to delete ${
-          deleteConfirmation.shelterName || 'this shelter'
-        }?`}
-        description="This action cannot be undone."
-        primaryAction={{
-          label: 'Delete',
-          onClick: () => {
-            if (deleteConfirmation.shelterId) {
-              onDeleteShelter?.(deleteConfirmation.shelterId);
-            }
-            setDeleteConfirmation({
-              isOpen: false,
-              shelterId: undefined,
-              shelterName: undefined,
-            });
-          },
-        }}
-        secondaryAction={{
-          label: 'Cancel',
-          onClick: () =>
-            setDeleteConfirmation({
-              isOpen: false,
-              shelterId: undefined,
-              shelterName: undefined,
-            }),
-        }}
-      />
-    </div>
+        return {
+          id: shelter.id,
+          name: shelter.name ?? 'N/A',
+          address: shelter.address ?? 'N/A',
+          totalBeds,
+          reservedBeds,
+          tags: shelter.tags ?? [],
+        };
+      }}
+      onRowClick={onRowClick}
+      loading={loading}
+      loadingState={loadingState}
+      emptyState={emptyState}
+      wrapperClassName={wrapperClassName}
+      headerClassName={headerClassName}
+      rowClassName={rowClassName}
+      tableStyle={tableStyle}
+      headerStyle={headerStyle}
+      rowStyle={rowStyle}
+    />
   );
 }

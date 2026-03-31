@@ -1,5 +1,4 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { Text } from './base-ui/text/text';
 import { Row, type RowCell, type RowClickHandler } from './Row';
 
 export type TableColumn<TItem> = {
@@ -16,15 +15,6 @@ type TableProps<TItem, TRowObject = TItem> = {
   rows: TItem[];
   getRowKey: (item: TItem, index: number) => string;
   getRowObject?: (item: TItem, index: number) => TRowObject;
-  trailingColumnWidth?: string;
-  trailingHeader?: ReactNode;
-  getTrailingContent?: (
-    rowObject: TRowObject,
-    item: TItem,
-    index: number
-  ) => ReactNode;
-  headerInsetClassName?: string;
-  rowInsetClassName?: string;
   onRowClick?: RowClickHandler<TRowObject>;
   onDelete?: (rowObject: TRowObject, rowIndex: number) => void;
   loading?: boolean;
@@ -43,10 +33,6 @@ export function Table<TItem, TRowObject = TItem>({
   rows,
   getRowKey,
   getRowObject,
-  trailingColumnWidth = '56px',
-  trailingHeader,
-  getTrailingContent,
-  headerInsetClassName = 'px-6 py-2 pt-6',
   onRowClick,
   onDelete,
   loading = false,
@@ -62,14 +48,13 @@ export function Table<TItem, TRowObject = TItem>({
   const dataTemplateColumns = columns
     .map((column) => column.width ?? '1fr')
     .join(' ');
-
-  const hasTrailingColumn = Boolean(trailingHeader || getTrailingContent || onDelete);
-  const templateColumns = hasTrailingColumn
-    ? `${dataTemplateColumns} ${trailingColumnWidth}`
+  const templateColumns = onDelete
+    ? `${dataTemplateColumns} 56px`
     : dataTemplateColumns;
 
   return (
     <div
+      role="table"
       className={[
         'bg-white rounded-2xl overflow-hidden w-full',
         wrapperClassName,
@@ -79,15 +64,16 @@ export function Table<TItem, TRowObject = TItem>({
       style={tableStyle}
     >
       <div
+        role="row"
         className={[
-          'grid items-center',
-          headerInsetClassName,
+          'grid items-center px-6 pb-2 pt-6 font-medium text-[22px] text-[#747A82]',
           headerClassName,
         ].join(' ')}
         style={{ gridTemplateColumns: templateColumns, ...headerStyle }}
       >
         {columns.map((column) => (
           <div
+            role="columnheader"
             key={column.key}
             className={[
               'text-left justify-self-start',
@@ -96,17 +82,10 @@ export function Table<TItem, TRowObject = TItem>({
               .join(' ')
               .trim()}
           >
-            {typeof column.label === 'string' ||
-            typeof column.label === 'number' ? (
-              <Text variant="body" className="text-[#767676]">
-                {column.label}
-              </Text>
-            ) : (
-              column.label
-            )}
+            {column.label}
           </div>
         ))}
-        {hasTrailingColumn && <div aria-hidden="true">{trailingHeader}</div>}
+        {onDelete && <div aria-hidden="true" />}
       </div>
 
       {loading && loadingState}
@@ -131,7 +110,6 @@ export function Table<TItem, TRowObject = TItem>({
               cells={cells}
               rowObject={rowObject}
               rowIndex={index}
-              trailingContent={getTrailingContent?.(rowObject, item, index)}
               onRowClick={onRowClick}
               onDelete={onDelete}
               templateColumns={templateColumns}

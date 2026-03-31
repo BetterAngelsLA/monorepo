@@ -6,6 +6,7 @@ import pgtrigger.compiler
 import pgtrigger.migrations
 import phonenumber_field.modelfields
 import shelters.enums
+import shelters.deprecated.deprecated_enums
 from django.db import migrations, models
 
 
@@ -47,7 +48,7 @@ class Migration(migrations.Migration):
                     django_choices_field.fields.TextChoicesField(
                         blank=True,
                         choices=[("breakfast", "Breakfast"), ("lunch", "Lunch"), ("dinner", "Dinner")],
-                        choices_enum=shelters.enums.MealServiceChoices,
+                        choices_enum=shelters.deprecated.deprecated_enums.MealServiceChoices,
                         max_length=9,
                         null=True,
                         unique=True,

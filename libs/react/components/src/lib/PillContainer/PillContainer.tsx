@@ -4,7 +4,7 @@ import Pill from '../Pill';
 export interface IPillContainerProps {
   data: string[];
   type?: 'success';
-  maxVisible: number;
+  maxVisible?: number;
 }
 
 export function PillContainer({
@@ -13,17 +13,19 @@ export function PillContainer({
   maxVisible,
 }: IPillContainerProps) {
   const [showAll, setShowAll] = useState(false);
-  const servicesToDisplay = showAll ? data : data.slice(0, maxVisible);
+  const hasLimit = maxVisible != null;
+  const servicesToDisplay =
+    hasLimit && !showAll ? data.slice(0, maxVisible) : data;
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-2">
         {servicesToDisplay.map((item, idx) => (
           <Pill type={type} label={item} key={idx} />
         ))}
       </div>
 
-      {data.length > maxVisible && (
+      {hasLimit && data.length > maxVisible && (
         <button
           className="mt-3 ml-auto mr-auto"
           onClick={() => setShowAll(!showAll)}
@@ -32,7 +34,6 @@ export function PillContainer({
           <p className="text-xs font-semibold">
             {showAll ? `View Less` : `View All (+${data.length - maxVisible})`}
           </p>
-          {/* <ChevronLeftIcon className={clsx('chevron-icon', { rotated: showAll })} /> */}
         </button>
       )}
     </div>

@@ -1,0 +1,45 @@
+<div class="grouped-service-widget"
+     data-new-input-name="{{ widget_name }}__new">
+  {% for group in grouped_services %}
+    <div class="grouped-service-fieldset">
+      <div class="grouped-service-legend">{{ group.category.display_name }}</div>
+      <div class="grouped-service-stack">
+        <div>
+          <label class="grouped-service-label">Official services</label>
+          <select multiple
+                  name="{{ widget_name }}"
+                  class="grouped-service-select"
+                  data-category-id="{{ group.category.id }}"
+                  data-role="official"
+                  data-placeholder="Select official services...">
+            {% for svc in group.official_services %}
+              <option value="{{ svc.id }}" {% if svc.selected %}selected{% endif %}>{{ svc.display_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="grouped-service-label">Other services</label>
+          <select multiple
+                  name="{{ widget_name }}"
+                  class="grouped-service-select"
+                  data-category-id="{{ group.category.id }}"
+                  data-role="other"
+                  data-allow-create="true"
+                  data-placeholder="Search or add other services...">
+            {% for svc in group.other_services %}
+              <option value="{{ svc.id }}" {% if svc.selected %}selected{% endif %}>{{ svc.display_name }}</option>
+            {% endfor %}
+          </select>
+          <p class="grouped-service-help">
+            Type to search existing other services. Press Enter to add a new one if it doesn't exist.
+          </p>
+        </div>
+        <div class="grouped-service-pending-list"
+             data-category-id="{{ group.category.id }}"
+             aria-live="polite"></div>
+      </div>
+    </div>
+  {% empty %}
+    <p>No service categories defined yet.</p>
+  {% endfor %}
+</div>

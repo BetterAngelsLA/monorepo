@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 import { Button } from './base-ui/buttons';
 
 export type RowCell = {
@@ -17,7 +17,6 @@ type RowProps<TRowObject> = {
   rowObject: TRowObject;
   rowIndex: number;
   templateColumns: string;
-  trailingContent?: ReactNode;
   className?: string;
   style?: CSSProperties;
   onRowClick?: RowClickHandler<TRowObject>;
@@ -29,7 +28,6 @@ export function Row<TRowObject>({
   rowObject,
   rowIndex,
   templateColumns,
-  trailingContent,
   className = '',
   style,
   onRowClick,
@@ -39,9 +37,19 @@ export function Row<TRowObject>({
     onRowClick?.(rowObject, rowIndex);
   };
 
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (onRowClick && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      handleRowClick();
+    }
+  };
+
   return (
     <div
+      role="row"
+      tabIndex={onRowClick ? 0 : undefined}
       onClick={handleRowClick}
+      onKeyDown={onRowClick ? handleKeyDown : undefined}
       className={[
         'grid items-center px-4 mx-4 py-2 text-sm border-t border-gray-200',
         'hover:bg-[#F4F6FD]',
@@ -54,6 +62,7 @@ export function Row<TRowObject>({
     >
       {cells.map((cell) => (
         <div
+          role="cell"
           key={cell.key}
           className={['text-left justify-self-start', cell.className ?? '']
             .join(' ')
@@ -63,9 +72,7 @@ export function Row<TRowObject>({
         </div>
       ))}
 
-      {trailingContent ? (
-        <div className="justify-self-end">{trailingContent}</div>
-      ) : onDelete ? (
+      {onDelete && (
         <div
           className="justify-self-end"
           onClick={(e) => {
@@ -75,7 +82,7 @@ export function Row<TRowObject>({
         >
           <Button variant="trash" />
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

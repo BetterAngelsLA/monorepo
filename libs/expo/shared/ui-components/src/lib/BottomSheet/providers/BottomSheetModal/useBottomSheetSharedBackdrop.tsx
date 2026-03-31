@@ -1,3 +1,20 @@
+/**
+ * useBottomSheetSharedBackdrop
+ *
+ * Internal hook that renders a single shared backdrop for all sheets.
+ *
+ * Used when `enableSharedBackdrop` is enabled to avoid multiple
+ * Gorhom backdrops competing in the view hierarchy (e.g. when using
+ * FullWindowOverlay).
+ *
+ * Behavior:
+ * - Backdrop is visible if any non-closing sheet exists
+ * - Pressing backdrop triggers `popTopSheet`
+ * - Rendered inside optional `containerComponent`
+ *
+ * This replaces per-sheet backdrops with a centralized overlay.
+ */
+
 import { ComponentType, ReactNode, useCallback } from 'react';
 import { BackdropOverlay } from '../../core/BackdropOverlay';
 import { TBottomSheetInstance } from './types.internal';

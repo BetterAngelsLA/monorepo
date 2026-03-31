@@ -15,10 +15,6 @@ from shelters.enums import (
     EntryRequirementChoices,
     ExitPolicyChoices,
     FunderChoices,
-    GeneralServiceChoices,
-    HealthServiceChoices,
-    ImmediateNeedChoices,
-    MealServiceChoices,
     ParkingChoices,
     PetChoices,
     ReferralRequirementChoices,
@@ -28,7 +24,6 @@ from shelters.enums import (
     SPAChoices,
     SpecialSituationRestrictionChoices,
     StorageChoices,
-    TrainingServiceChoices,
 )
 
 
@@ -91,35 +86,6 @@ class Parking(models.Model):
         return str(self.name)
 
 
-# Services Offered
-class ImmediateNeed(models.Model):
-    name = TextChoicesField(choices_enum=ImmediateNeedChoices, unique=True, blank=True, null=True)
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
-class GeneralService(models.Model):
-    name = TextChoicesField(choices_enum=GeneralServiceChoices, unique=True, blank=True, null=True)
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
-class HealthService(models.Model):
-    name = TextChoicesField(choices_enum=HealthServiceChoices, unique=True, blank=True, null=True)
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
-class TrainingService(models.Model):
-    name = TextChoicesField(choices_enum=TrainingServiceChoices, unique=True, blank=True, null=True)
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
 # Entry Requirements
 class EntryRequirement(models.Model):
     name = TextChoicesField(choices_enum=EntryRequirementChoices, unique=True, blank=True, null=True)
@@ -171,13 +137,6 @@ class Funder(models.Model):
 
 class ExitPolicy(models.Model):
     name = TextChoicesField(choices_enum=ExitPolicyChoices, unique=True, blank=True, null=True)
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
-class MealService(models.Model):
-    name = TextChoicesField(choices_enum=MealServiceChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.name)
