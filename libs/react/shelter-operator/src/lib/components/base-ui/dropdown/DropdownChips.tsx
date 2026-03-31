@@ -16,23 +16,26 @@ export function DropdownChips<T extends string | number>({
       {selectedValues.map((v) => (
         <span
           key={v.value}
-          className="group inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-2xl bg-gray-200 px-3 py-1"
+          className="group inline-flex max-w-full min-w-0 items-center gap-0 rounded-full bg-gray-100 px-3 py-1 transition-[gap] duration-200 hover:gap-1"
         >
-          <Text variant="tag" className="text-gray-700 truncate">
+          <Text
+            variant="tag"
+            className="truncate text-gray-600 transition-colors duration-200 group-hover:text-gray-900"
+          >
             {v.label}
           </Text>
           <button
             type="button"
             aria-label={`Remove ${v.label}`}
-            className="w-4 leading-none outline-hidden focus:outline-hidden shrink-0"
+            className="min-w-0 max-w-0 shrink-0 overflow-hidden p-0 leading-none text-gray-900 opacity-0 outline-hidden transition-all duration-200 focus:outline-hidden group-hover:max-w-4 group-hover:opacity-100"
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
               onRemove(v);
             }}
           >
-            <Text variant="tag" className="text-gray-400 hover:text-red-500">
-              <X size={16} />
+            <Text variant="tag" className="text-gray-900">
+              <X size={17} className="shrink-0" />
             </Text>
           </button>
         </span>
