@@ -114,6 +114,7 @@ export type AdminShelterType = {
   roomStylesOther?: Maybe<Scalars['String']['output']>;
   schedules: Array<ScheduleType>;
   services: Array<ServiceType>;
+  shelterLayout?: Maybe<ShelterLayoutChoices>;
   shelterPrograms: Array<ShelterProgramType>;
   shelterProgramsOther?: Maybe<Scalars['String']['output']>;
   shelterTypes: Array<ShelterTypeType>;
@@ -698,6 +699,7 @@ export type CreateShelterInput = {
   roomStylesOther?: InputMaybe<Scalars['String']['input']>;
   schedules?: InputMaybe<Array<ScheduleInput>>;
   services?: InputMaybe<Array<ServiceInput>>;
+  shelterLayout?: InputMaybe<ShelterLayoutChoices>;
   shelterPrograms: Array<ShelterProgramChoices>;
   shelterProgramsOther?: InputMaybe<Scalars['String']['input']>;
   shelterTypes: Array<ShelterChoices>;
@@ -2532,6 +2534,12 @@ export type ShelterFilter = {
   properties?: InputMaybe<ShelterPropertyInput>;
 };
 
+export enum ShelterLayoutChoices {
+  Congregate = 'CONGREGATE',
+  Mixed = 'MIXED',
+  Motel = 'MOTEL'
+}
+
 export type ShelterLocationInput = {
   latitude?: InputMaybe<Scalars['Float']['input']>;
   longitude?: InputMaybe<Scalars['Float']['input']>;
@@ -2636,6 +2644,7 @@ export type ShelterType = {
   roomStylesOther?: Maybe<Scalars['String']['output']>;
   schedules: Array<ScheduleType>;
   services: Array<ServiceType>;
+  shelterLayout?: Maybe<ShelterLayoutChoices>;
   shelterPrograms: Array<ShelterProgramType>;
   shelterProgramsOther?: Maybe<Scalars['String']['output']>;
   shelterTypes: Array<ShelterTypeType>;

@@ -47,6 +47,7 @@ from .enums import (
     ReferralRequirementChoices,
     RoomStyleChoices,
     ShelterChoices,
+    ShelterLayoutChoices,
     ShelterProgramChoices,
     SPAChoices,
     SpecialSituationRestrictionChoices,
@@ -199,6 +200,11 @@ class ShelterForm(forms.ModelForm):
     )
 
     # Summary Info
+    shelter_layout = forms.ChoiceField(
+        choices=[("", "---------")] + [(c.value, c.label) for c in ShelterLayoutChoices],
+        required=False,
+        label="Shelter Layout",
+    )
     demographics = create_select2_multiple_field(DemographicChoices, "Select demographics...", required=True)
     demographics_other = create_other_text_field()
     special_situation_restrictions = create_select2_multiple_field(
@@ -825,6 +831,7 @@ class ShelterAdmin(ImportExportModelAdmin):
             "Summary Info",
             {
                 "fields": (
+                    "shelter_layout",
                     "demographics",
                     "demographics_other",
                     "special_situation_restrictions",

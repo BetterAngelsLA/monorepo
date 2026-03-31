@@ -111,6 +111,7 @@ type AdminShelterType {
   roomStylesOther: String
   schedules: [ScheduleType!]!
   services: [ServiceType!]!
+  shelterLayout: ShelterLayoutChoices
   shelterPrograms: [ShelterProgramType!]!
   shelterProgramsOther: String
   shelterTypes: [ShelterTypeType!]!
@@ -680,6 +681,7 @@ input CreateShelterInput {
   location: ShelterLocationInput = null
   schedules: [ScheduleInput!] = null
   services: [ServiceInput!] = null
+  shelterLayout: ShelterLayoutChoices = null
   email: String = null
   phone: PhoneNumber = null
   website: String = null
@@ -2032,6 +2034,12 @@ input ShelterFilter {
   geolocation: GeolocationInput
 }
 
+enum ShelterLayoutChoices {
+  CONGREGATE
+  MOTEL
+  MIXED
+}
+
 input ShelterLocationInput {
   place: String!
   latitude: Float = null
@@ -2128,6 +2136,7 @@ type ShelterType {
   roomStylesOther: String
   schedules: [ScheduleType!]!
   services: [ServiceType!]!
+  shelterLayout: ShelterLayoutChoices
   shelterPrograms: [ShelterProgramType!]!
   shelterProgramsOther: String
   shelterTypes: [ShelterTypeType!]!

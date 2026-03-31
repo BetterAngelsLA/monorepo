@@ -27,6 +27,7 @@ from shelters.enums import (
     RoomStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
+    ShelterLayoutChoices,
     StatusChoices,
 )
 from shelters.managers import AdminShelterManager, ShelterManager
@@ -78,6 +79,7 @@ class Shelter(BaseModel):
     hero_image = GenericForeignKey("hero_image_content_type", "hero_image_object_id")
 
     # Summary Information
+    shelter_layout = TextChoicesField(choices_enum=ShelterLayoutChoices, null=True, blank=True)
     description = CKEditor5Field()
     demographics = models.ManyToManyField(Demographic)
     demographics_other = models.CharField(max_length=255, blank=True, null=True)
