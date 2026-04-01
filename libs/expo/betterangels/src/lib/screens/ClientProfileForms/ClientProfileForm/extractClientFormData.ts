@@ -46,6 +46,7 @@ export const extractClientFormData = (
         livingSituation,
         preferredLanguage,
         profilePhoto,
+        unhousedStartDate,
         veteranStatus,
       } = clientProfile;
 
@@ -58,6 +59,17 @@ export const extractClientFormData = (
         });
       }
 
+      let unhousedStartDateAsDate: Date | null | undefined;
+
+      if (unhousedStartDate) {
+        unhousedStartDateAsDate = parseToDate({
+          date: unhousedStartDate,
+          inputFormat: 'yyyy-MM-dd',
+        });
+      }
+
+      console.log('unhousedStartDateAsDate', unhousedStartDateAsDate);
+      console.log('unhousedStartDate', unhousedStartDate);
       return {
         id,
         californiaId,
@@ -65,6 +77,7 @@ export const extractClientFormData = (
         livingSituation,
         preferredLanguage,
         profilePhoto,
+        unhousedStartDate: unhousedStartDateAsDate,
         veteranStatus,
       };
     }
