@@ -47,8 +47,7 @@ export function ShelterSearch(props: TProps) {
       return;
     }
 
-    setNameSearchValue('');
-    setNameFilter(undefined);
+    onNameSearchChange('');
 
     setLocation({
       latitude,
@@ -80,11 +79,14 @@ export function ShelterSearch(props: TProps) {
     });
   }
 
+  function onNameSearchChange(value: string) {
+    setNameSearchValue(value);
+    if (!value.trim()) {
+      setNameFilter(undefined);
+    }
+  }
+
   function onSearchClick() {
-    // Name search should ignore any previously-selected property filters.
-    // Clear both the query-side filters (used for the API) and the UI pill selections.
-    // setQueryFilters(undefined);
-    // resetFilters();
     setNameFilter(nameSearchValue.trim());
     onNameSearch();
   }
@@ -108,7 +110,7 @@ export function ShelterSearch(props: TProps) {
             value={nameSearchValue}
             placeholder="Search by name"
             className="w-full"
-            onChange={setNameSearchValue}
+            onChange={onNameSearchChange}
             leftIcon={<SearchIcon className="text-neutral-70 w-4 h-4" />}
           />
 
