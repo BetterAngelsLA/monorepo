@@ -2,7 +2,7 @@ import { Checkbox, ExpandableContainer } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
-import { shelterFiltersAtom } from '../../atoms';
+import { shelterPropertyFiltersAtom } from '../../atoms';
 import { TShelterPropertyFilters } from '../ShelterSearch';
 import { FilterSelector } from './FilterSelector';
 import {
@@ -23,7 +23,7 @@ type IProps = {
 export function ShelterFilters(props: IProps) {
   const { onChange, className } = props;
 
-  const [filters, setFilters] = useAtom(shelterFiltersAtom);
+  const [filters, setFilters] = useAtom(shelterPropertyFiltersAtom);
 
   const parentCss = ['pb-24', className];
 

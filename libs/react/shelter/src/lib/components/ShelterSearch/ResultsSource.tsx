@@ -1,5 +1,6 @@
 import { ViewSheltersQueryVariables } from '../../pages';
 import { TShelterPropertyFilters } from './types';
+
 type TProps = {
   className?: string;
   queryFilters?: ViewSheltersQueryVariables['filters'];

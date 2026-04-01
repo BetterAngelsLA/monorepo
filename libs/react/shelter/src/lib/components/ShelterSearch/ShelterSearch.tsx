@@ -2,7 +2,7 @@ import { FilterIcon, LocationIcon, SearchIcon } from '@monorepo/react/icons';
 import { useAtom } from 'jotai';
 import { useResetAtom } from 'jotai/utils';
 import { useEffect, useState } from 'react';
-import { locationAtom, shelterFiltersAtom } from '../../atoms';
+import { locationAtom, shelterPropertyFiltersAtom } from '../../atoms';
 import { AddressAutocomplete, TPlaceResult } from '../AddressAutocomplete';
 import { Input } from '../Input';
 import { TLatLng, TMapBounds } from '../Map';
@@ -30,9 +30,9 @@ export function ShelterSearch(props: TProps) {
   const [_modal, setModal] = useAtom(modalAtom);
   const [queryFilters, setQueryFilters] = useState<TShelterPropertyFilters>();
   const [submitQueryTs, setSubmitQueryTs] = useState<number>();
-  const [filters] = useAtom(shelterFiltersAtom);
+  const [filters] = useAtom(shelterPropertyFiltersAtom);
   const [nameFilter, setNameFilter] = useState<string>();
-  const resetFilters = useResetAtom(shelterFiltersAtom);
+  const resetFilters = useResetAtom(shelterPropertyFiltersAtom);
   const [nameSearchValue, setNameSearchValue] = useState('');
 
   function onPlaceSelect(place: TPlaceResult | null) {
