@@ -31,7 +31,7 @@ export function ShelterSearch(props: TProps) {
   const [queryFilters, setQueryFilters] = useState<TShelterPropertyFilters>();
   const [submitQueryTs, setSubmitQueryTs] = useState<number>();
   const [filters] = useAtom(shelterFiltersAtom);
-  const [queryNameFilter, setQueryNameFilter] = useState<string>();
+  const [nameFilter, setNameFilter] = useState<string>();
   const resetFilters = useResetAtom(shelterFiltersAtom);
   const [nameSearchValue, setNameSearchValue] = useState('');
 
@@ -48,7 +48,7 @@ export function ShelterSearch(props: TProps) {
     }
 
     setNameSearchValue('');
-    setQueryNameFilter(undefined);
+    setNameFilter(undefined);
 
     setLocation({
       latitude,
@@ -83,9 +83,9 @@ export function ShelterSearch(props: TProps) {
   function onSearchClick() {
     // Name search should ignore any previously-selected property filters.
     // Clear both the query-side filters (used for the API) and the UI pill selections.
-    setQueryFilters(undefined);
-    resetFilters();
-    setQueryNameFilter(nameSearchValue.trim());
+    // setQueryFilters(undefined);
+    // resetFilters();
+    setNameFilter(nameSearchValue.trim());
     onNameSearch();
   }
 
@@ -122,10 +122,9 @@ export function ShelterSearch(props: TProps) {
       <SheltersDisplay
         className="mt-8"
         coordinates={location}
-        coordinatesSource={location?.source}
         mapBoundsFilter={mapBoundsFilter}
         propertyFilters={queryFilters}
-        nameFilter={queryNameFilter}
+        nameFilter={nameFilter}
         nameSearchPinFitRequestId={nameSearchPinFitRequestId}
         onShelterPinsReadyForMapFit={onShelterPinsReadyForMapFit}
       />

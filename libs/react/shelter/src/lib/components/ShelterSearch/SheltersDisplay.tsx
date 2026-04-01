@@ -2,7 +2,7 @@ import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { InfiniteList } from '@monorepo/react/components';
 import { useAtom } from 'jotai';
 import { useCallback, useEffect, useRef } from 'react';
-import { TLocationSource, sheltersAtom } from '../../atoms';
+import { sheltersAtom } from '../../atoms';
 import {
   ViewSheltersDocument,
   ViewSheltersQuery,
@@ -10,7 +10,7 @@ import {
 } from '../../pages';
 import { TLatLng, TMapBounds } from '../Map';
 import { ShelterCard } from '../ShelterCard';
-import { SearchSource } from './SearchSource';
+import { ResultsSource } from './ResultsSource';
 import { TShelterPropertyFilters } from './types';
 
 type TShelter = ViewSheltersQuery['shelters']['results'][number];
@@ -20,7 +20,6 @@ const SEARCH_RANGE_MILES = 20;
 type TProps = {
   className?: string;
   coordinates?: TLatLng | null;
-  coordinatesSource?: TLocationSource;
   mapBoundsFilter?: TMapBounds | null;
   propertyFilters?: TShelterPropertyFilters;
   rangeInMiles?: number;
@@ -33,7 +32,6 @@ type TProps = {
 export function SheltersDisplay(props: TProps) {
   const {
     coordinates,
-    coordinatesSource,
     mapBoundsFilter,
     propertyFilters,
     rangeInMiles = SEARCH_RANGE_MILES,
@@ -46,7 +44,7 @@ export function SheltersDisplay(props: TProps) {
 
   let queryVariables: ViewSheltersQueryVariables | undefined;
 
-  if (coordinates) {
+  if (coordinates && !mapBoundsFilter) {
     const { latitude, longitude } = coordinates;
 
     queryVariables = queryVariables || {};
@@ -146,12 +144,7 @@ export function SheltersDisplay(props: TProps) {
     });
 
     return () => cancelAnimationFrame(raf);
-  }, [
-    loading,
-    nameSearchPinFitRequestId,
-    items,
-    onShelterPinsReadyForMapFit,
-  ]);
+  }, [loading, nameSearchPinFitRequestId, items, onShelterPinsReadyForMapFit]);
 
   useEffect(() => {
     setSheltersData(items || []);
@@ -169,11 +162,11 @@ export function SheltersDisplay(props: TProps) {
       return (
         <div className="mb-4">
           <div className="text-xl font-semibold">{text}</div>
-          <SearchSource coordinatesSource={coordinatesSource} />
+          <ResultsSource queryFilters={queryVariables?.filters} />
         </div>
       );
     },
-    [coordinatesSource]
+    [queryVariables?.filters]
   );
 
   return (
@@ -225,5 +218,5 @@ function pruneFilters(
     })
   );
 
-  return result;
+  return Object.keys(result).length > 0 ? result : null;
 }
