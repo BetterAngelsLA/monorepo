@@ -87,6 +87,9 @@ export function ShelterSearch(props: TProps) {
   }
 
   function onSearchClick() {
+    // Name search ignores any previously-selected property filters.
+    setQueryFilters(undefined);
+    resetFilters();
     setNameFilter(nameSearchValue.trim());
     onNameSearch();
   }
