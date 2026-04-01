@@ -81,7 +81,7 @@ export function DropdownMenu<T extends string | number>({
         <div
           ref={listRef}
           role="listbox"
-          className="overflow-y-auto max-h-[352px]"
+          className="overflow-y-auto max-h-352"
         >
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option, index) => {

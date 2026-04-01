@@ -17,7 +17,9 @@ type RowProps<TRowObject> = {
   rowObject: TRowObject;
   rowIndex: number;
   templateColumns: string;
+  trailingContent?: ReactNode;
   className?: string;
+  rowInsetClassName?: string;
   style?: CSSProperties;
   onRowClick?: RowClickHandler<TRowObject>;
   onDelete?: (rowObject: TRowObject, rowIndex: number) => void;
@@ -28,7 +30,9 @@ export function Row<TRowObject>({
   rowObject,
   rowIndex,
   templateColumns,
+  trailingContent,
   className = '',
+  rowInsetClassName = '',
   style,
   onRowClick,
   onDelete,
@@ -51,7 +55,8 @@ export function Row<TRowObject>({
       onClick={handleRowClick}
       onKeyDown={onRowClick ? handleKeyDown : undefined}
       className={[
-        'grid items-center px-4 mx-4 py-2 text-sm border-t border-gray-200',
+        'grid items-center py-2 text-sm border-t border-gray-200',
+        rowInsetClassName || 'px-4 mx-4',
         'hover:bg-[#F4F6FD]',
         onRowClick && 'cursor-pointer',
         className,
@@ -72,7 +77,7 @@ export function Row<TRowObject>({
         </div>
       ))}
 
-      {onDelete && (
+      {onDelete && !trailingContent && (
         <div
           className="justify-self-end"
           onClick={(e) => {
@@ -82,6 +87,9 @@ export function Row<TRowObject>({
         >
           <Button variant="trash" />
         </div>
+      )}
+      {trailingContent && (
+        <div className="justify-self-end">{trailingContent}</div>
       )}
     </div>
   );

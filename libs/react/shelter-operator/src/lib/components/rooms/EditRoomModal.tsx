@@ -3,7 +3,7 @@ import { Modal } from '../base-ui/modal/Modal';
 import { ModalFooter } from '../base-ui/modal/ModalFooter';
 import { ModalHeader } from '../base-ui/modal/ModalHeader';
 import { Text } from '../base-ui/text/text';
-import type { Room } from '../RoomTable';
+import type { RoomType as Room } from '../../apollo/graphql/__generated__/types';
 
 export type EditRoomModalProps = {
   isOpen: boolean;
@@ -27,7 +27,7 @@ export function EditRoomModal({
     <Modal isOpen={isOpen} onClose={onClose} size="sm">
       <ModalHeader onClose={onClose}>
         <Text variant="header-md" className="text-black">
-          {`Edit "${room?.name || 'Room'}"`}
+          {`Edit "${room?.roomIdentifier || 'Room'}"`}
         </Text>
       </ModalHeader>
 

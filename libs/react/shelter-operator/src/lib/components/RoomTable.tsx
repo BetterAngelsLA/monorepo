@@ -1,3 +1,4 @@
+import { mergeCss } from '@monorepo/react/shared';
 import {
   CopyPlus,
   Filter,
@@ -14,18 +15,12 @@ import { Text } from './base-ui/text/text';
 import { Table, type TableColumn } from './Table';
 
 // REPLACE WITH ACTUAL QUERIED DATA
-export type RoomStatus =
-  | 'available'
-  | 'occupied'
-  | 'out-of-service'
-  | 'reserved';
+import {
+  RoomStatusChoices,
+  type RoomType,
+} from '../apollo/graphql/__generated__/types';
 
-export type Room = {
-  id: string;
-  name: string;
-  status: RoomStatus;
-  tags: string[];
-};
+export type Room = RoomType;
 
 export type RoomRowObject = {
   id: string;
@@ -53,25 +48,22 @@ type RoomTableProps = {
 };
 
 // TODO: Create Tag Components in Base UI -----------------
-const STATUS_STYLE: Record<RoomStatus, string> = {
-  available: 'bg-[#D7F5DF]',
-  occupied: 'bg-[#DCEEFF]',
-  'out-of-service': 'bg-[#FFE5E0]',
-  reserved: 'bg-[#FFEBCB]',
+const STATUS_STYLE: Record<string, string> = {
+  [RoomStatusChoices.Available]: 'bg-[#D7F5DF]',
+  [RoomStatusChoices.NeedsMaintenance]: 'bg-[#FFE5E0]',
+  [RoomStatusChoices.Reserved]: 'bg-[#FFEBCB]',
 };
 
-const STATUS_TEXT_STYLE: Record<RoomStatus, string> = {
-  available: 'text-[#0F8F2F] font-medium',
-  occupied: 'text-[#1F6FC7] font-medium',
-  'out-of-service': 'text-[#D7332A] font-medium',
-  reserved: 'text-[#CC6F00] font-medium',
+const STATUS_TEXT_STYLE: Record<string, string> = {
+  [RoomStatusChoices.Available]: 'text-[#0F8F2F] font-medium',
+  [RoomStatusChoices.NeedsMaintenance]: 'text-[#D7332A] font-medium',
+  [RoomStatusChoices.Reserved]: 'text-[#CC6F00] font-medium',
 };
 
-const STATUS_LABEL: Record<RoomStatus, string> = {
-  available: 'Available',
-  occupied: 'Occupied',
-  'out-of-service': 'Out of Service',
-  reserved: 'Reserved',
+const STATUS_LABEL: Record<string, string> = {
+  [RoomStatusChoices.Available]: 'Available',
+  [RoomStatusChoices.NeedsMaintenance]: 'Out of Service',
+  [RoomStatusChoices.Reserved]: 'Reserved',
 };
 // ------------------------------------------
 
@@ -171,12 +163,12 @@ export function RoomTable({
                 event.stopPropagation();
                 toggleRowSelection(room.id);
               }}
-              className={[
+              className={mergeCss([
                 'inline-flex size-5 items-center justify-center rounded border transition-colors',
                 isSelected
                   ? 'border-[#4A90E2] bg-[#4A90E2] text-white'
                   : 'border-[#808080] bg-white text-transparent hover:border-[#4A90E2]',
-              ].join(' ')}
+              ])}
             >
               <Minus size={14} strokeWidth={3} />
             </button>
@@ -189,7 +181,7 @@ export function RoomTable({
         width: '1.5fr',
         render: (room) => (
           <Text variant="body" className="text-black">
-            {room.name}
+            {room.roomIdentifier}
           </Text>
         ),
       },
@@ -199,13 +191,18 @@ export function RoomTable({
         width: '1.5fr',
         render: (room) => (
           <span
-            className={[
+            className={mergeCss([
               'inline-flex rounded-full px-3 py-1 leading-none',
-              STATUS_STYLE[room.status],
-            ].join(' ')}
+              STATUS_STYLE[room.status ?? RoomStatusChoices.Available],
+            ])}
           >
-            <Text variant="tag-sm" className={STATUS_TEXT_STYLE[room.status]}>
-              {STATUS_LABEL[room.status]}
+            <Text
+              variant="tag-sm"
+              className={
+                STATUS_TEXT_STYLE[room.status ?? RoomStatusChoices.Available]
+              }
+            >
+              {STATUS_LABEL[room.status ?? RoomStatusChoices.Available]}
             </Text>
           </span>
         ),
@@ -216,17 +213,38 @@ export function RoomTable({
         width: '1.5fr',
         render: (room) => (
           <div className="flex flex-wrap items-center gap-2">
-            {room.tags.slice(0, 2).map((tag) => (
-              <div key={tag} className="rounded-full bg-[#EDEFF5] px-3 py-1">
-                <Text variant="tag-sm" className="text-[#747A82]">
-                  {tag}
-                </Text>
-              </div>
-            ))}
-            {room.tags.length > 2 && (
+            {(room.amenities
+              ? room.amenities
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              : []
+            )
+              .slice(0, 2)
+              .map((tag) => (
+                <div key={tag} className="rounded-full bg-[#EDEFF5] px-3 py-1">
+                  <Text variant="tag-sm" className="text-[#747A82]">
+                    {tag}
+                  </Text>
+                </div>
+              ))}
+            {(room.amenities
+              ? room.amenities
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              : []
+            ).length > 2 && (
               <div className="rounded-full bg-[#EDEFF5] px-3 py-1">
                 <Text variant="tag-sm" className="text-[#747A82]">
-                  +{room.tags.length - 2}
+                  +
+                  {(room.amenities
+                    ? room.amenities
+                        .split(',')
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                    : []
+                  ).length - 2}
                 </Text>
               </div>
             )}
@@ -244,12 +262,18 @@ export function RoomTable({
     if (!query) return rows;
 
     return rows.filter((room) => {
-      const normalizedStatus = STATUS_LABEL[room.status].toLowerCase();
-      const matchesName = room.name.toLowerCase().includes(query);
+      const normalizedStatus =
+        STATUS_LABEL[room.status ?? RoomStatusChoices.Available].toLowerCase();
+      const matchesName = room.roomIdentifier.toLowerCase().includes(query);
       const matchesStatus = normalizedStatus.includes(query);
-      const matchesTags = room.tags.some((tag) =>
-        tag.toLowerCase().includes(query)
-      );
+      const matchesTags = (
+        room.amenities
+          ? room.amenities
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : []
+      ).some((tag) => tag.toLowerCase().includes(query));
 
       return matchesName || matchesStatus || matchesTags;
     });
@@ -261,7 +285,7 @@ export function RoomTable({
         className="mt-8 flex w-full px-4 flex-wrap items-center bg-white"
         onSubmit={(event) => event.preventDefault()}
       >
-        <label className="flex h-11 w-full max-w-[380px] items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2">
+        <label className="flex h-11 w-full max-w-[380px] flex-shrink items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2">
           <span className="flex h-8 w-9 items-center justify-center rounded-full bg-[#FCF500] text-[#1E3342]">
             <Search size={20} />
           </span>
@@ -331,7 +355,7 @@ export function RoomTable({
                   isOpen: true,
                   roomIds: undefined,
                   roomId: rowObject.id,
-                  roomName: rowObject.room.name,
+                  roomName: rowObject.room.roomIdentifier,
                 });
               }}
             />

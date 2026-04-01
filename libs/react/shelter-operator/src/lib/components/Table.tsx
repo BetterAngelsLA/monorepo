@@ -15,6 +15,13 @@ type TableProps<TItem, TRowObject = TItem> = {
   rows: TItem[];
   getRowKey: (item: TItem, index: number) => string;
   getRowObject?: (item: TItem, index: number) => TRowObject;
+  getTrailingContent?: (
+    rowObject: TRowObject,
+    item: TItem,
+    index: number
+  ) => ReactNode;
+  trailingHeader?: ReactNode;
+  trailingColumnWidth?: string;
   onRowClick?: RowClickHandler<TRowObject>;
   onDelete?: (rowObject: TRowObject, rowIndex: number) => void;
   loading?: boolean;
@@ -22,7 +29,9 @@ type TableProps<TItem, TRowObject = TItem> = {
   emptyState?: ReactNode;
   wrapperClassName?: string;
   headerClassName?: string;
+  headerInsetClassName?: string;
   rowClassName?: string;
+  rowInsetClassName?: string;
   tableStyle?: CSSProperties;
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
@@ -33,6 +42,9 @@ export function Table<TItem, TRowObject = TItem>({
   rows,
   getRowKey,
   getRowObject,
+  getTrailingContent,
+  trailingHeader,
+  trailingColumnWidth = '80px',
   onRowClick,
   onDelete,
   loading = false,
@@ -40,7 +52,9 @@ export function Table<TItem, TRowObject = TItem>({
   emptyState,
   wrapperClassName = '',
   headerClassName = '',
+  headerInsetClassName = '',
   rowClassName = '',
+  rowInsetClassName = '',
   tableStyle,
   headerStyle,
   rowStyle,
@@ -48,8 +62,10 @@ export function Table<TItem, TRowObject = TItem>({
   const dataTemplateColumns = columns
     .map((column) => column.width ?? '1fr')
     .join(' ');
-  const templateColumns = onDelete
-    ? `${dataTemplateColumns} 56px`
+  const hasTrailingColumn =
+    !!onDelete || !!getTrailingContent || !!trailingHeader;
+  const templateColumns = hasTrailingColumn
+    ? `${dataTemplateColumns} ${trailingColumnWidth}`
     : dataTemplateColumns;
 
   return (
@@ -68,6 +84,7 @@ export function Table<TItem, TRowObject = TItem>({
         className={[
           'grid items-center px-6 pb-2 pt-6 font-medium text-[22px] text-[#747A82]',
           headerClassName,
+          headerInsetClassName,
         ].join(' ')}
         style={{ gridTemplateColumns: templateColumns, ...headerStyle }}
       >
@@ -85,7 +102,11 @@ export function Table<TItem, TRowObject = TItem>({
             {column.label}
           </div>
         ))}
-        {onDelete && <div aria-hidden="true" />}
+        {hasTrailingColumn && (
+          <div aria-hidden="true" className="justify-self-end">
+            {trailingHeader || null}
+          </div>
+        )}
       </div>
 
       {loading && loadingState}
@@ -110,10 +131,12 @@ export function Table<TItem, TRowObject = TItem>({
               cells={cells}
               rowObject={rowObject}
               rowIndex={index}
+              trailingContent={getTrailingContent?.(rowObject, item, index)}
               onRowClick={onRowClick}
               onDelete={onDelete}
               templateColumns={templateColumns}
               className={rowClassName}
+              rowInsetClassName={rowInsetClassName}
               style={rowStyle}
             />
           );

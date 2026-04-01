@@ -2,11 +2,8 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../../../components/base-ui/buttons';
 import { EditRoomModal } from '../../../components/rooms/EditRoomModal';
-import {
-  RoomTable,
-  type Room,
-  type RoomRowObject,
-} from '../../../components/RoomTable';
+import { RoomTable, type RoomRowObject } from '../../../components/RoomTable';
+import { RoomStatusChoices, type RoomType } from '../../../apollo/graphql/__generated__/types';
 import type { Shelter } from '../../../types/shelter';
 
 type ShelterTab = 'overview' | 'rooms' | 'beds' | 'occupancy' | 'label';
@@ -16,54 +13,39 @@ export function OverviewTabContent() {
 }
 
 export function RoomsTabContent() {
-  const rows: Room[] = [
-    {
-      id: 'room-1',
-      name: 'Room Name',
-      status: 'available',
-      tags: ['Women Only', 'Shared', 'Overflow'],
-    },
-    {
-      id: 'room-2',
-      name: 'Room Name',
-      status: 'occupied',
-      tags: ['Women Only', 'Shared', 'Medical'],
-    },
-    {
-      id: 'room-3',
-      name: 'Room Name',
-      status: 'out-of-service',
-      tags: ['Women Only', 'Shared', 'Repair'],
-    },
+  const rows: RoomType[] = [
+    { id: 'room-1', roomIdentifier: 'Room Name', status: RoomStatusChoices.Available, amenities: 'Women Only, Shared, Overflow', __typename: 'RoomType', medicalRespite: false, shelter: {} as any } as RoomType,
+    { id: 'room-2', roomIdentifier: 'Room Name', status: RoomStatusChoices.Available, amenities: 'Women Only, Shared, Medical', __typename: 'RoomType', medicalRespite: false, shelter: {} as any } as RoomType,
+    { id: 'room-3', roomIdentifier: 'Room Name', status: RoomStatusChoices.NeedsMaintenance, amenities: 'Women Only, Shared, Repair', __typename: 'RoomType', medicalRespite: false, shelter: {} as any } as RoomType,
     {
       id: 'room-4',
-      name: 'Room Name',
-      status: 'reserved',
-      tags: ['Women Only', 'Shared', 'Hold'],
+      roomIdentifier: 'Room Name', shelter: {} as any, __typename: 'RoomType', medicalRespite: false, amenities: '',
+      status: RoomStatusChoices.Reserved,
+      // tags: ['Women Only', 'Shared', 'Hold'],
     },
     {
       id: 'room-5',
-      name: 'Room Name',
-      status: 'available',
-      tags: ['Women Only', 'Shared', 'Quiet'],
+      roomIdentifier: 'Room Name', shelter: {} as any, __typename: 'RoomType', medicalRespite: false, amenities: '',
+      status: RoomStatusChoices.Available,
+      // tags: ['Women Only', 'Shared', 'Quiet'],
     },
     {
       id: 'room-6',
-      name: 'Room Name',
-      status: 'available',
-      tags: ['Women Only', 'Shared', 'Near Exit'],
+      roomIdentifier: 'Room Name', shelter: {} as any, __typename: 'RoomType', medicalRespite: false, amenities: '',
+      status: RoomStatusChoices.Available,
+      // tags: ['Women Only', 'Shared', 'Near Exit'],
     },
   ];
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedRoom, setSelectedRoom] = useState<Room | undefined>();
+  const [selectedRoom, setSelectedRoom] = useState<RoomType | undefined>();
 
   const handleRowClick = (rowObject: RoomRowObject) => {
     setSelectedRoom(rowObject.room);
     setIsEditModalOpen(true);
   };
 
-  const handleSaveRoom = (updatedRoom: Room) => {
+  const handleSaveRoom = (updatedRoom: RoomType) => {
     console.log('Saving room:', updatedRoom);
     setIsEditModalOpen(false);
   };
