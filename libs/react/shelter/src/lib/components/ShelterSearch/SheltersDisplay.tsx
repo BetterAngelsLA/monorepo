@@ -1,7 +1,7 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { InfiniteList } from '@monorepo/react/components';
 import { useAtom } from 'jotai';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { sheltersAtom } from '../../atoms';
 import {
   ViewSheltersDocument,
@@ -42,54 +42,58 @@ export function SheltersDisplay(props: TProps) {
   } = props;
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
 
-  let queryVariables: ViewSheltersQueryVariables | undefined;
+  const queryVariables = useMemo<ViewSheltersQueryVariables | undefined>(() => {
+    let vars: ViewSheltersQueryVariables | undefined;
 
-  if (coordinates && !mapBoundsFilter) {
-    const { latitude, longitude } = coordinates;
+    if (coordinates && !mapBoundsFilter) {
+      const { latitude, longitude } = coordinates;
 
-    queryVariables = queryVariables || {};
-    queryVariables.filters = queryVariables.filters || {};
+      vars = vars || {};
+      vars.filters = vars.filters || {};
 
-    queryVariables.filters.geolocation = {
-      latitude,
-      longitude,
-      // Only apply range limit when there's no map bounds filter;
-      // map bounds already constrains the spatial area.
-      ...(mapBoundsFilter ? {} : { rangeInMiles }),
-    };
-  }
-
-  if (mapBoundsFilter) {
-    queryVariables = queryVariables || {};
-    queryVariables.filters = queryVariables.filters || {};
-
-    queryVariables.filters.mapBounds = mapBoundsFilter;
-  }
-
-  if (propertyFilters) {
-    const { openNow, ...propertyOnlyFilters } = propertyFilters;
-
-    if (openNow) {
-      queryVariables = queryVariables || {};
-      queryVariables.filters = queryVariables.filters || {};
-      queryVariables.filters.openNow = true;
+      vars.filters.geolocation = {
+        latitude,
+        longitude,
+        // Only apply range limit when there's no map bounds filter;
+        // map bounds already constrains the spatial area.
+        rangeInMiles,
+      };
     }
 
-    const prunedFilters = pruneFilters(propertyOnlyFilters);
+    if (mapBoundsFilter) {
+      vars = vars || {};
+      vars.filters = vars.filters || {};
 
-    if (prunedFilters) {
-      queryVariables = queryVariables || {};
-      queryVariables.filters = queryVariables.filters || {};
-
-      queryVariables.filters.properties = prunedFilters;
+      vars.filters.mapBounds = mapBoundsFilter;
     }
-  }
 
-  if (nameFilter) {
-    queryVariables = queryVariables || {};
-    queryVariables.filters = queryVariables.filters || {};
-    queryVariables.filters.name = nameFilter;
-  }
+    if (propertyFilters) {
+      const { openNow, ...propertyOnlyFilters } = propertyFilters;
+
+      if (openNow) {
+        vars = vars || {};
+        vars.filters = vars.filters || {};
+        vars.filters.openNow = true;
+      }
+
+      const prunedFilters = pruneFilters(propertyOnlyFilters);
+
+      if (prunedFilters) {
+        vars = vars || {};
+        vars.filters = vars.filters || {};
+
+        vars.filters.properties = prunedFilters;
+      }
+    }
+
+    if (nameFilter) {
+      vars = vars || {};
+      vars.filters = vars.filters || {};
+      vars.filters.name = nameFilter;
+    }
+
+    return vars;
+  }, [coordinates, mapBoundsFilter, propertyFilters, rangeInMiles, nameFilter]);
 
   const { items, total, loadMore, loading, loadingMore, hasMore, error } =
     useInfiniteScrollQuery<
