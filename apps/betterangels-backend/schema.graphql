@@ -404,6 +404,7 @@ type ClientProfileType {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactType!]
@@ -519,6 +520,7 @@ input CreateClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
@@ -2343,6 +2345,7 @@ input UpdateClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactInput!]
