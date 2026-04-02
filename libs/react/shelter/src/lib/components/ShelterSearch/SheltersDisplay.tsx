@@ -144,7 +144,12 @@ export function SheltersDisplay(props: TProps) {
       return (
         <div className="mb-4">
           <div className="text-xl font-semibold">{text}</div>
-          <ResultsSource queryFilters={queryVariables?.filters} />
+          <ResultsSource
+            nameFilter={nameFilter}
+            mapBoundsFilter={mapBoundsFilter}
+            openNowFilter={propertyFilters?.openNow}
+            propertyFilters={pruneFilters(propertyFilters)}
+          />
         </div>
       );
     },

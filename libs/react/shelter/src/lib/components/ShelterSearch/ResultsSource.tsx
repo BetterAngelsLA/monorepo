@@ -1,23 +1,22 @@
-import { ViewSheltersQueryVariables } from '../../pages';
+import { TMapBounds } from '../Map';
 import { TShelterPropertyFilters } from './types';
 
 type TProps = {
   className?: string;
-  queryFilters?: ViewSheltersQueryVariables['filters'];
+  nameFilter?: string;
+  mapBoundsFilter?: TMapBounds | null;
+  openNowFilter?: boolean | null;
+  propertyFilters?: TShelterPropertyFilters | null;
 };
 
 function propertyFiltersAffectQuery(
-  propertyFilters?: TShelterPropertyFilters
+  propertyFilters?: TShelterPropertyFilters | null
 ): boolean {
   if (!propertyFilters) {
     return false;
   }
 
-  if (propertyFilters.openNow) {
-    return true;
-  }
-
-  const { openNow: _openNow, ...propertyOnly } = propertyFilters;
+  const { openNow, ...propertyOnly } = propertyFilters;
 
   return Object.keys(propertyOnly).length > 0;
 }
@@ -35,21 +34,23 @@ function formatWithOxfordComma(parts: string[]): string {
 }
 
 export function ResultsSource(props: TProps) {
-  const { queryFilters, className = '' } = props;
+  const {
+    nameFilter,
+    mapBoundsFilter,
+    openNowFilter,
+    propertyFilters,
+    className = '',
+  } = props;
 
   const resultSourceParts: string[] = [];
 
-  if (queryFilters?.mapBounds) {
+  if (mapBoundsFilter) {
     resultSourceParts.push('map area');
   }
-  if (
-    propertyFiltersAffectQuery(
-      queryFilters?.properties as TShelterPropertyFilters | undefined
-    )
-  ) {
+  if (openNowFilter || propertyFiltersAffectQuery(propertyFilters)) {
     resultSourceParts.push('filters');
   }
-  if (queryFilters?.name?.trim()) {
+  if (nameFilter?.trim()) {
     resultSourceParts.push('name search');
   }
 
