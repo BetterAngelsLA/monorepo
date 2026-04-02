@@ -97,7 +97,7 @@ export function Button(props: IButtonProps) {
   const textVariant = variant === 'primary-sm' ? 'body' : 'btn';
 
   const buttonCss = [
-    'font-sans focus:outline-hidden inline-flex items-center whitespace-nowrap transition-all',
+    'focus:outline-hidden inline-flex items-center whitespace-nowrap transition-all',
     isIconOnly ? '' : 'h-fit',
     variantBaseClasses[variant],
     colorClass,
