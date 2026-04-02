@@ -45,6 +45,7 @@ export function ClientDocUploads(props: IClientDocUploadsProps) {
       showSnackbar({
         message: `Sorry, there was an error with the file upload.`,
         type: 'error',
+        durationMs: 99999999999,
       });
     } finally {
       setProcessing(false);

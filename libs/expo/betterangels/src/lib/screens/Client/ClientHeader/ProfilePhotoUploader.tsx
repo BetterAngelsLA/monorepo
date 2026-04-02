@@ -21,6 +21,14 @@ export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
   const [modalType, setModalType] = useState<ModalType>(null);
   const { showSnackbar } = useSnackbar();
 
+  console.log();
+  console.log(
+    '| -------------  ProfilePhotoUploader  ------------- | ',
+    clientId
+  );
+  console.log(imageUrl);
+  console.log();
+
   const [updatePhoto, { loading }] = useMutation(
     UpdateClientProfilePhotoDocument,
     {

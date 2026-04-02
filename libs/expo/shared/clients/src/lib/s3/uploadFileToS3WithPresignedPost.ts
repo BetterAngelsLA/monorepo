@@ -19,6 +19,13 @@ export async function uploadFileToS3WithPresignedPost(
 ): Promise<{ key: string }> {
   const { presignedPost, fileUri } = input;
 
+  console.log();
+  console.log(
+    '| ------------- uploadFileToS3WithPresignedPost input  ------------- |'
+  );
+  console.log(JSON.stringify(input, null, 2));
+  console.log();
+
   const formData = new FormData();
 
   const presignedFields = presignedPost.fields;
@@ -70,6 +77,15 @@ export async function uploadFileToS3WithPresignedPost(
   }
 
   const errorText = await response.text();
+
+  console.log('');
+  console.log('');
+  console.log('################################### error');
+  console.log('################################### error');
+  console.log('################################### error');
+  console.log('*****************  errorText:', errorText);
+  console.log('');
+  console.log('');
 
   throw new Error(
     [

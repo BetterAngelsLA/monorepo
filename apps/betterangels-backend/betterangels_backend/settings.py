@@ -309,7 +309,7 @@ if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
 elif IS_LOCAL_DEV and LOCAL_S3_INTERNAL_ENDPOINT_URL:
     STORAGES = {
         "default": {
-            "BACKEND": "storages.backends.s3.S3Storage",
+            "BACKEND": "common.storage.LocalS3Storage",
             "OPTIONS": {
                 "bucket_name": AWS_S3_STORAGE_BUCKET_NAME,
                 "endpoint_url": LOCAL_S3_INTERNAL_ENDPOINT_URL,

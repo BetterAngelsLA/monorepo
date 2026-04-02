@@ -54,6 +54,11 @@ export function useClientDocumentUpload() {
       },
     });
 
+    console.log();
+    console.log('| -------------  createUploads result  ------------- |');
+    console.log(JSON.stringify(result, null, 2));
+    console.log();
+
     const payload = result.data?.createClientDocumentUploads;
 
     if (!payload) {
@@ -69,7 +74,7 @@ export function useClientDocumentUpload() {
     }
 
     // 3: Upload files directly to S3 using presigned POST
-    await Promise.all(
+    const uploaded = await Promise.all(
       payload.uploads.map((fileUpload) => {
         const originalDoc = documentUploadMap.get(fileUpload.refId);
 
@@ -88,6 +93,11 @@ export function useClientDocumentUpload() {
         });
       })
     );
+
+    console.log();
+    console.log('| -------------  uploaded  ------------- |');
+    console.log(JSON.stringify(uploaded, null, 2));
+    console.log();
 
     // 4: Build payload for backend persistence
     // - S3 upload is complete at this point
@@ -108,7 +118,7 @@ export function useClientDocumentUpload() {
 
     // 5: Persist uploaded documents in backend
     // - creates DB records referencing S3 keys
-    return resolveUploads({
+    const resolved = resolveUploads({
       variables: {
         data: {
           clientProfileId,
@@ -116,6 +126,13 @@ export function useClientDocumentUpload() {
         },
       },
     });
+
+    console.log();
+    console.log('| -------------  resolved  ------------- |');
+    console.log(JSON.stringify(resolved, null, 2));
+    console.log();
+
+    return resolved;
   }
 
   return { uploadDocuments };

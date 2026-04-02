@@ -8,9 +8,9 @@ from urllib.parse import urlparse, urlunparse
 import boto3
 from botocore.client import Config
 from django.conf import settings
+from django.core.files.storage import default_storage
 from mypy_boto3_s3 import S3Client
 
-S3_SIGNATURE_VERSION = "s3v4"
 DEFAULT_EXPIRATION = 300
 DEFAULT_MAX_FILE_SIZE = 10_000_000
 
@@ -49,18 +49,19 @@ def _rewrite_presigned_url_for_local(url: str) -> str:
     policy document (bucket, conditions, expiry) — not the Host header — so changing
     the hostname does not invalidate the signature.
     """
-    is_local_dev = settings.IS_LOCAL_DEV
-    local_internal_endpoint_url: str | None = settings.LOCAL_S3_INTERNAL_ENDPOINT_URL or None
+    local_internal_endpoint_url: str | None = getattr(default_storage, "endpoint_url", None) or None
     local_public_endpoint_url: str | None = settings.LOCAL_S3_PUBLIC_ENDPOINT_URL or None
 
-    if not (is_local_dev and local_internal_endpoint_url and local_public_endpoint_url):
+    if not (local_internal_endpoint_url and local_public_endpoint_url):
         return url
 
     parsed_internal = urlparse(local_internal_endpoint_url)
     parsed_public = urlparse(local_public_endpoint_url)
     parsed_url = urlparse(url)
+
     if parsed_url.netloc == parsed_internal.netloc:
         return urlunparse(parsed_url._replace(scheme=parsed_public.scheme, netloc=parsed_public.netloc))
+
     return url
 
 
@@ -102,6 +103,7 @@ def _build_s3_key(*, filename: str, content_type: str, upload_path: str) -> str:
 def _generate_presigned_post_with_client(
     *,
     s3_client: S3Client,
+    bucket_name: str,
     ref_id: str,
     filename: str,
     content_type: str,
@@ -139,7 +141,7 @@ def _generate_presigned_post_with_client(
     response = cast(
         S3ClientPresignedPostResponse,
         s3_client.generate_presigned_post(
-            Bucket=settings.AWS_S3_STORAGE_BUCKET_NAME,
+            Bucket=bucket_name,
             Key=key,
             Fields={"Content-Type": content_type},
             Conditions=conditions,
@@ -168,33 +170,33 @@ def generate_s3_presigned_upload_urls(
     *,
     uploads: list[PresignedS3UploadInput],
 ) -> PresignedS3UploadBatchResult:
-    local_internal_endpoint_url: str | None = settings.LOCAL_S3_INTERNAL_ENDPOINT_URL or None
-
-    print()
-    print()
-    print("******************* generate_s3_presigned_upload_urls")
-    print(f"******************* {"local_internal_endpoint_url"}: {local_internal_endpoint_url}")
-    print()
-    print("uploads")
-    print(uploads)
-    print()
+    storage = default_storage
+    local_internal_endpoint_url: str | None = getattr(storage, "endpoint_url", None) or None
+    bucket_name: str = storage.bucket_name
+    signature_version: str = storage.signature_version
+    addressing_style: str = storage.addressing_style
 
     s3_config = Config(
-        signature_version=S3_SIGNATURE_VERSION,
-        s3={"addressing_style": "path"} if local_internal_endpoint_url else {},
+        signature_version=signature_version,
+        s3={"addressing_style": addressing_style},
     )
 
-    s3_client = boto3.client(
-        "s3",
-        endpoint_url=local_internal_endpoint_url,
-        config=s3_config,
-    )
+    client_kwargs: dict[str, object] = {
+        "service_name": "s3",
+        "config": s3_config,
+    }
+
+    if local_internal_endpoint_url:
+        client_kwargs["endpoint_url"] = local_internal_endpoint_url
+
+    s3_client = boto3.client(**client_kwargs)
 
     results: list[PresignedS3UploadResult] = []
 
     for upload in uploads:
         result = _generate_presigned_post_with_client(
             s3_client=s3_client,
+            bucket_name=bucket_name,
             ref_id=upload["ref_id"],
             filename=upload["filename"],
             content_type=upload["content_type"],
