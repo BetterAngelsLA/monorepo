@@ -8,8 +8,8 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { mergeCss } from '@monorepo/react/shared';
 import { Text } from '../text/text';
-import { cn } from './constants';
 import { DropdownChips } from './DropdownChips';
 import { DropdownMenu } from './DropdownMenu';
 import type {
@@ -213,7 +213,7 @@ export function Dropdown<T extends string | number = string | number>(
 
   return (
     <div
-      className={cn('relative flex w-full flex-col gap-1 font-sans', className)}
+      className={mergeCss(['relative flex w-full flex-col gap-1 font-sans', className])}
     >
       {label && (
         <label id={labelId} className="text-sm text-gray-900">
@@ -238,14 +238,14 @@ export function Dropdown<T extends string | number = string | number>(
           aria-labelledby={label ? labelId : undefined}
           aria-disabled={disabled}
           tabIndex={disabled ? -1 : 0}
-          className={cn(
+          className={mergeCss([
             'relative flex justify-between gap-2 w-full border bg-white cursor-pointer select-none transition-colors duration-200',
             isStackedMultiSelect
               ? 'min-h-12 items-start rounded-2xl px-4 py-3'
               : 'h-12 items-center rounded-full px-4 overflow-hidden',
             isOpen ? 'border-[#008CEE]' : 'border-gray-200',
-            disabled && 'opacity-50 cursor-not-allowed'
-          )}
+            disabled && 'opacity-50 cursor-not-allowed',
+          ])}
           onClick={() => {
             if (!disabled) setIsOpen((o) => !o);
           }}
@@ -260,21 +260,21 @@ export function Dropdown<T extends string | number = string | number>(
             <span className="text-sm flex-1 truncate">
               <Text
                 variant="body"
-                className={cn(
+                className={mergeCss([
                   'text-sm flex-1 truncate',
-                  hasSelection ? 'text-gray-900' : 'text-gray-400'
-                )}
+                  hasSelection ? 'text-gray-900' : 'text-gray-400',
+                ])}
               >
                 {hasSelection ? selectedValues[0].label : placeholder}
               </Text>
             </span>
           )}
           <ChevronDown
-            className={cn(
+            className={mergeCss([
               'w-4 h-4 shrink-0 transition-transform duration-200 text-gray-400 z-10',
               isOpen && 'rotate-180',
-              isStackedMultiSelect && 'self-start mt-1.5'
-            )}
+              isStackedMultiSelect && 'self-start mt-1.5',
+            ])}
           />
         </div>
 
@@ -285,12 +285,12 @@ export function Dropdown<T extends string | number = string | number>(
             disabled={disabled}
             value={otherDetailText}
             placeholder="Please specify..."
-            className={cn(
+            className={mergeCss([
               'w-full h-12 rounded-full border bg-white px-4 font-sans text-sm transition-colors duration-200',
               'text-gray-900 placeholder:text-gray-400',
               'border-gray-200 outline-none focus:border-[#008CEE]',
-              disabled && 'cursor-not-allowed opacity-50'
-            )}
+              disabled && 'cursor-not-allowed opacity-50',
+            ])}
             onChange={(e) => {
               const next = e.target.value;
               setOtherDetailText(next);

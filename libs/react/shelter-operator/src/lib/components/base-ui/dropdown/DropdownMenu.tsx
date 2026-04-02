@@ -1,8 +1,9 @@
 import { Check, Search } from 'lucide-react';
 import type { RefObject } from 'react';
+import { mergeCss } from '@monorepo/react/shared';
 import { Button } from '../buttons/buttons';
 import { Text } from '../text/text';
-import { cn, Z_BACKDROP, Z_MENU } from './constants';
+import { Z_BACKDROP, Z_MENU } from './constants';
 import type { DropdownOption } from './types';
 
 interface DropdownMenuProps<T extends string | number> {
@@ -93,21 +94,21 @@ export function DropdownMenu<T extends string | number>({
                   key={option.value}
                   role="option"
                   aria-selected={active}
-                  className={cn(
+                  className={mergeCss([
                     'cursor-pointer rounded-lg px-3 py-2.5 transition-colors',
                     active ? 'bg-blue-50' : '',
                     focused && !active && 'bg-gray-100',
-                    !focused && !active && 'hover:bg-gray-50'
-                  )}
+                    !focused && !active && 'hover:bg-gray-50',
+                  ])}
                   onClick={() => onOptionClick(option)}
                   onMouseEnter={() => onFocusIndex(index)}
                 >
                   <Text
                     variant="body"
-                    className={cn(
+                    className={mergeCss([
                       'flex items-center justify-between',
-                      active ? 'text-[#008CEE]' : 'text-gray-900'
-                    )}
+                      active ? 'text-[#008CEE]' : 'text-gray-900',
+                    ])}
                   >
                     {option.label}
                     {active && <Check size={20} className="shrink-0" />}
