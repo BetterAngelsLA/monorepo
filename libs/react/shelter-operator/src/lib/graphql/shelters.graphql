@@ -20,3 +20,10 @@ query ViewSheltersByOrganization(
     }
   }
 }
+
+query GetShelterName($id: ID!) {
+  shelter(pk: $id) {
+    id
+    name
+  }
+}
