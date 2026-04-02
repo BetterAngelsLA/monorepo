@@ -70,13 +70,15 @@ export function WizardLayout<T extends FieldValues = FieldValues>({
 
   return (
     <FormProvider {...methods}>
-      <div className="w-full flex flex-col items-center min-h-screen bg-white">
-        <div className="w-full max-w-2xl">
-          <WizardProgressBar
-            steps={steps}
-            currentStep={navigation.currentStep}
-            onStepClick={navigation.goToStep}
-          />
+      <div className="w-full flex flex-col items-center flex-1">
+        <div className="w-full flex justify-center py-2 px-8">
+          <div className="w-full max-w-4xl">
+            <WizardProgressBar
+              steps={steps}
+              currentStep={navigation.currentStep}
+              onStepClick={navigation.goToStep}
+            />
+          </div>
         </div>
         <div className="w-full flex-1 px-8 py-6">
           <Outlet />
@@ -87,7 +89,16 @@ export function WizardLayout<T extends FieldValues = FieldValues>({
               showBack={!navigation.isFirstStep}
               showNext={!navigation.isLastStep}
               onBack={navigationConfig.onBack || navigation.goToPrev}
-              onNext={navigationConfig.onNext || navigation.goToNext}
+              onNext={async () => {
+                const isValid = await methods.trigger();
+                if (isValid) {
+                  if (navigationConfig.onNext) {
+                    await navigationConfig.onNext();
+                  } else {
+                    navigation.goToNext();
+                  }
+                }
+              }}
               nextLabel={navigationConfig.nextLabel}
               backLabel={navigationConfig.backLabel}
               nextDisabled={navigationConfig.nextDisabled}
