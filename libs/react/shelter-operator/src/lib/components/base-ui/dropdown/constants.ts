@@ -1,8 +1,3 @@
-/** Concatenate class names, filtering out falsy values. */
-export function cn(...classes: (string | false | null | undefined)[]): string {
-  return classes.filter(Boolean).join(' ');
-}
-
 /** Z-index for the invisible backdrop that captures outside clicks. */
 export const Z_BACKDROP = 9998;
 
