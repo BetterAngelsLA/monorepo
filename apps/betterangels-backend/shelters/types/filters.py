@@ -13,9 +13,18 @@ from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
 from django.db.models import Q, QuerySet
 from shelters import models
-from shelters.enums import DemographicChoices, ParkingChoices, PetChoices, RoomStyleChoices, ScheduleTypeChoices
+from shelters.enums import (
+    DemographicChoices,
+    ParkingChoices,
+    PetChoices,
+    RoomStyleChoices,
+    ScheduleTypeChoices,
+)
 from shelters.enums import ShelterChoices as ShelterTypeChoices
-from shelters.enums import SpecialSituationRestrictionChoices
+from shelters.enums import (
+    SPAChoices,
+    SpecialSituationRestrictionChoices,
+)
 from shelters.selectors import shelters_open_at
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
@@ -50,6 +59,7 @@ class ShelterPropertyInput:
     shelter_types: Optional[List[ShelterTypeChoices]] = None
     room_styles: Optional[List[RoomStyleChoices]] = None
     parking: Optional[List[ParkingChoices]] = None
+    spa: Optional[List[SPAChoices]] = None
 
 
 @strawberry_django.filter_type(models.Shelter)
