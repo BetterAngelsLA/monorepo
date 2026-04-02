@@ -1,7 +1,7 @@
-import { useInfiniteScrollQuery } from '@monorepo/apollo';
+import { useQuery } from '@apollo/client/react';
 import { InfiniteList } from '@monorepo/react/components';
 import { useAtom } from 'jotai';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { TLocationSource, sheltersAtom } from '../../atoms';
 import {
   ViewSheltersDocument,
@@ -80,21 +80,23 @@ export function SheltersDisplay(props: TProps) {
     }
   }
 
-  const { items, total, loadMore, loading, loadingMore, hasMore, error } =
-    useInfiniteScrollQuery<
-      TShelter,
-      ViewSheltersQuery,
-      ViewSheltersQueryVariables
-    >({
-      document: ViewSheltersDocument,
-      queryFieldName: 'shelters',
-      variables: queryVariables,
-      pageSize: 25,
-    });
+  const { data, loading, error } = useQuery<
+    ViewSheltersQuery,
+    ViewSheltersQueryVariables
+  >(ViewSheltersDocument, {
+    variables: {
+      ...queryVariables,
+      pagination: { limit: 5000, offset: 0 },
+    },
+    skip: !queryVariables,
+  });
+
+  const shelters = useMemo(() => data?.shelters.results ?? [], [data]);
+  const total = data?.shelters.totalCount;
 
   useEffect(() => {
-    setSheltersData(items || []);
-  }, [items, setSheltersData]);
+    setSheltersData(shelters);
+  }, [shelters, setSheltersData]);
 
   const renderListHeader = useCallback(
     (visible: number, total: number | undefined) => {
@@ -118,13 +120,11 @@ export function SheltersDisplay(props: TProps) {
   return (
     <div className={className}>
       <InfiniteList<TShelter>
-        data={items}
+        data={shelters}
         totalItems={total}
         loading={loading}
-        loadingMore={loadingMore}
         error={error}
-        hasMore={hasMore}
-        loadMore={loadMore}
+        hasMore={false}
         itemGap={24}
         renderResultsHeader={renderListHeader}
         renderItem={(shelter) => <ShelterCard shelter={shelter} />}
