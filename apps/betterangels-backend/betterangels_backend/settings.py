@@ -31,6 +31,8 @@ env = environ.Env(
     AWS_S3_STORAGE_BUCKET_NAME=(str, ""),
     AWS_S3_CUSTOM_DOMAIN=(str, ""),
     AWS_S3_MEDIA_STORAGE_ENABLED=(bool, False),
+    LOCAL_S3_INTERNAL_ENDPOINT_URL=(str, ""),
+    LOCAL_S3_PUBLIC_ENDPOINT_URL=(str, ""),
     AWS_CLOUDFRONT_KEY=(str, ""),
     AWS_CLOUDFRONT_KEY_ID=(str, ""),
     AWS_CLOUDFRONT_MEDIA_LOCATION=(str, "media"),
@@ -80,10 +82,12 @@ env = environ.Env(
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+WORKSPACE_DIR = BASE_DIR.parent.parent
 
 IS_LOCAL_DEV = env("IS_LOCAL_DEV")
 if IS_LOCAL_DEV:
     environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
+    environ.Env.read_env(env_file=os.path.join(WORKSPACE_DIR, ".compose", "local.shared.env"), overwrite=True)
     environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env.local"), overwrite=True)
 
 
@@ -281,6 +285,8 @@ USE_TZ = True
 # Storage Settings
 AWS_REGION = env("AWS_REGION")
 AWS_S3_STORAGE_BUCKET_NAME = env("AWS_S3_STORAGE_BUCKET_NAME")
+LOCAL_S3_INTERNAL_ENDPOINT_URL = env("LOCAL_S3_INTERNAL_ENDPOINT_URL")
+LOCAL_S3_PUBLIC_ENDPOINT_URL = env("LOCAL_S3_PUBLIC_ENDPOINT_URL")
 
 
 if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
@@ -293,6 +299,22 @@ if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
                 "cloudfront_key_id": env("AWS_CLOUDFRONT_KEY_ID"),
                 "custom_domain": env("AWS_S3_CUSTOM_DOMAIN"),
                 "location": env("AWS_CLOUDFRONT_MEDIA_LOCATION"),
+                "signature_version": "s3v4",
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+elif IS_LOCAL_DEV and LOCAL_S3_INTERNAL_ENDPOINT_URL:
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "bucket_name": AWS_S3_STORAGE_BUCKET_NAME,
+                "endpoint_url": LOCAL_S3_INTERNAL_ENDPOINT_URL,
+                "location": env("AWS_CLOUDFRONT_MEDIA_LOCATION"),
+                "addressing_style": "path",
                 "signature_version": "s3v4",
             },
         },

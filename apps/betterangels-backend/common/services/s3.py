@@ -3,6 +3,7 @@
 import uuid
 from pathlib import Path
 from typing import NotRequired, TypedDict, cast
+from urllib.parse import urlparse, urlunparse
 
 import boto3
 from botocore.client import Config
@@ -37,6 +38,30 @@ class PresignedS3UploadResult(TypedDict):
 
 class PresignedS3UploadBatchResult(TypedDict):
     uploads: list[PresignedS3UploadResult]
+
+
+def _rewrite_presigned_url_for_local(url: str) -> str:
+    """
+    Rewrite the host in a presigned POST URL from the local internal endpoint to the
+    local public-facing endpoint when local S3 upload settings are enabled.
+
+    Safe for presigned POST because the policy signature covers only the base64-encoded
+    policy document (bucket, conditions, expiry) — not the Host header — so changing
+    the hostname does not invalidate the signature.
+    """
+    is_local_dev = settings.IS_LOCAL_DEV
+    local_internal_endpoint_url: str | None = settings.LOCAL_S3_INTERNAL_ENDPOINT_URL or None
+    local_public_endpoint_url: str | None = settings.LOCAL_S3_PUBLIC_ENDPOINT_URL or None
+
+    if not (is_local_dev and local_internal_endpoint_url and local_public_endpoint_url):
+        return url
+
+    parsed_internal = urlparse(local_internal_endpoint_url)
+    parsed_public = urlparse(local_public_endpoint_url)
+    parsed_url = urlparse(url)
+    if parsed_url.netloc == parsed_internal.netloc:
+        return urlunparse(parsed_url._replace(scheme=parsed_public.scheme, netloc=parsed_public.netloc))
+    return url
 
 
 def _normalize_upload_path(upload_path: str) -> str:
@@ -143,11 +168,26 @@ def generate_s3_presigned_upload_urls(
     *,
     uploads: list[PresignedS3UploadInput],
 ) -> PresignedS3UploadBatchResult:
+    local_internal_endpoint_url: str | None = settings.LOCAL_S3_INTERNAL_ENDPOINT_URL or None
+
+    print()
+    print()
+    print("******************* generate_s3_presigned_upload_urls")
+    print(f"******************* {"local_internal_endpoint_url"}: {local_internal_endpoint_url}")
+    print()
+    print("uploads")
+    print(uploads)
+    print()
+
+    s3_config = Config(
+        signature_version=S3_SIGNATURE_VERSION,
+        s3={"addressing_style": "path"} if local_internal_endpoint_url else {},
+    )
+
     s3_client = boto3.client(
         "s3",
-        config=Config(
-            signature_version=S3_SIGNATURE_VERSION,
-        ),
+        endpoint_url=local_internal_endpoint_url,
+        config=s3_config,
     )
 
     results: list[PresignedS3UploadResult] = []
@@ -162,6 +202,18 @@ def generate_s3_presigned_upload_urls(
             expires_in=upload.get("expires_in"),
             max_file_size=upload.get("max_file_size"),
         )
+
+        result = PresignedS3UploadResult(
+            ref_id=result["ref_id"],
+            url=_rewrite_presigned_url_for_local(result["url"]),
+            fields=result["fields"],
+            key=result["key"],
+        )
+
+        print()
+        print("******************* rpresigned RESULT")
+        print(result)
+        print()
 
         results.append(result)
 

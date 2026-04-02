@@ -13,7 +13,7 @@ from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadIn
 from django.contrib.contenttypes.models import ContentType
 
 STORAGE_DIR = "media"
-CLIENT_DOCUMENT_RELATIVE_PATH = "attachments_test"
+CLIENT_DOCUMENT_RELATIVE_PATH = "attachments_hello"
 S3_CLIENT_DOCUMENT_PREFIX = f"{STORAGE_DIR}/{CLIENT_DOCUMENT_RELATIVE_PATH}"
 
 
