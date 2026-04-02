@@ -119,9 +119,14 @@ export function ShelterSearch(props: TProps) {
             placeholder="Search by name"
             className="w-full"
             onChange={onNameSearchChange}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                onSearchClick();
+              }
+            }}
             leftIcon={<SearchIcon className="text-neutral-70 w-4 h-4" />}
           />
-
           <button onClick={onSearchClick} className="self-start ml-4 mt-4">
             <SearchIcon className="w-6 text-primary-20" />
           </button>
