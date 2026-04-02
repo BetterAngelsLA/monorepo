@@ -271,6 +271,19 @@ class ClientProfilePhotoInput:
     photo: Optional[Upload]
 
 
+@strawberry.input
+class ClientProfilePhotoUploadInput:
+    ref_id: str
+    filename: str
+    content_type: str
+
+
+@strawberry.input
+class ClientProfilePhotoUrlUpdateInput:
+    client_profile_id: ID
+    file_path: str
+
+
 @strawberry_django.type(ClientContact)
 class ClientContactBaseType:
     name: auto

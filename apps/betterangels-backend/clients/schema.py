@@ -20,6 +20,10 @@ from clients.services.client_document import (
     create_client_document_presigned_uploads,
     create_client_documents_from_s3_uploads,
 )
+from clients.services.client_profile_photo import (
+    create_client_profile_photo_presigned_upload,
+    update_client_profile_photo_url,
+)
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.schema import PresignedS3UploadResultItem, PresignedS3UploadsResult
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
@@ -55,6 +59,8 @@ from .types import (
     ClientProfileImportRecordsBulkInput,
     ClientProfileImportRecordType,
     ClientProfilePhotoInput,
+    ClientProfilePhotoUploadInput,
+    ClientProfilePhotoUrlUpdateInput,
     ClientProfileType,
     CreateClientDocumentInput,
     CreateClientDocumentsFromUploadsResult,
@@ -699,6 +705,50 @@ class Mutation:
                 client_profile.save(update_fields=["profile_photo"])
             except ClientProfile.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this client.")
+
+            return cast(ClientProfileType, client_profile)
+
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(perms=[ClientProfilePermissions.CHANGE])],
+    )
+    def create_client_profile_photo_upload(
+        self,
+        info: Info,
+        data: ClientProfilePhotoUploadInput,
+    ) -> PresignedS3UploadResultItem:
+        user = cast(User, get_current_user(info))
+
+        result = create_client_profile_photo_presigned_upload(
+            user=user,
+            upload=data,
+        )
+
+        return PresignedS3UploadResultItem(
+            ref_id=result["ref_id"],
+            url=result["url"],
+            fields=cast(JSON, result["fields"]),
+            key=result["key"],
+        )
+
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])]
+    )
+    def update_client_profile_photo_url(self, info: Info, data: ClientProfilePhotoUrlUpdateInput) -> ClientProfileType:
+        with transaction.atomic():
+            user = cast(User, get_current_user(info))
+
+            client_profile = filter_for_user(
+                ClientProfile.objects.all(),
+                user,
+                [ClientProfilePermissions.CHANGE],
+            ).get(id=data.client_profile_id)
+
+            client_profile = update_client_profile_photo_url(
+                user=user,
+                client_profile=client_profile,
+                photo=data,
+            )
 
             return cast(ClientProfileType, client_profile)
 
