@@ -11,9 +11,11 @@ from shelters.enums import (
     AccessibilityChoices,
     DemographicChoices,
     EntryRequirementChoices,
+    ExitPolicyChoices,
     FunderChoices,
     ParkingChoices,
     PetChoices,
+    ReferralRequirementChoices,
     RoomStyleChoices,
 )
 from shelters.enums import ShelterChoices as ShelterTypeChoices
@@ -30,9 +32,11 @@ from shelters.models import (
     City,
     Demographic,
     EntryRequirement,
+    ExitPolicy,
     Funder,
     Parking,
     Pet,
+    ReferralRequirement,
     RoomStyle,
     Service,
     Shelter,
@@ -70,12 +74,13 @@ class related_m2m_unique(related):
 
     def make(self, **attrs: Any) -> Any:
         related_objs = set()
+        choices = list(self.choices_enum)
 
         # limit to 5 related objects per type, for readability
-        quantity = random.randint(0, min(len(self.choices_enum), 5))
+        quantity = random.randint(0, min(len(choices), 5))
+        selected = random.sample(choices, quantity)
 
-        for i in range(quantity):
-            choice_value = list(self.choices_enum)[i]
+        for choice_value in selected:
             try:
                 name_field = self.related_model._meta.get_field("name")
                 if hasattr(name_field, "choices_enum"):
@@ -128,6 +133,7 @@ shelter_recipe = Recipe(
     description=seq("description "),  # type: ignore
     email=seq("shelter", suffix="@example.com"),  # type: ignore
     entry_info=seq("entry info "),  # type: ignore
+    exit_policy_other=seq("exit policy other "),  # type: ignore
     funders_other=seq("funders other "),  # type: ignore
     location=get_random_shelter_location,
     max_stay=lambda: random.randint(7, 21),
@@ -161,4 +167,6 @@ shelter_recipe = Recipe(
     spa=related_m2m_unique(SPA, SPAChoices),
     special_situation_restrictions=related_m2m_unique(SpecialSituationRestriction, SpecialSituationRestrictionChoices),
     storage=related_m2m_unique(Storage, StorageChoices),
+    exit_policy=related_m2m_unique(ExitPolicy, ExitPolicyChoices),
+    referral_requirement=related_m2m_unique(ReferralRequirement, ReferralRequirementChoices),
 )

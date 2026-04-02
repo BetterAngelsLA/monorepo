@@ -256,12 +256,26 @@ Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by("me
 
 #### Seeding Shelters
 
-To populate the database with test shelters:
+To populate the database with fully valid test shelters (all required fields,
+randomized multi-select values, 1–10 photos, varied schedules, contacts, etc.):
 
 ```bash
 cd apps/betterangels-backend/shelters/scripts/
 poetry run python seed_shelters.py 10
 ```
+
+##### Reseeding from scratch
+
+To clear all existing shelters and reseed:
+
+```bash
+cd apps/betterangels-backend/shelters/scripts/
+poetry run python seed_shelters.py 20 --clear
+```
+
+The `--clear` flag deletes every existing `Shelter` (and cascaded relations)
+before creating new ones. This is useful when the schema changes or you want
+a clean slate without resetting the full database.
 
 ### Troubleshooting
 
