@@ -12,6 +12,7 @@ import { SheltersDisplay } from './SheltersDisplay';
 import { TShelterPropertyFilters } from './types';
 
 type TProps = {
+  locationSearchInputKey?: number;
   mapBoundsFilter?: TMapBounds;
   nameSearchPinFitRequestId?: number;
   onShelterPinsReadyForMapFit?: (pinLocations: TLatLng[]) => void;
@@ -21,6 +22,7 @@ type TProps = {
 
 export function ShelterSearch(props: TProps) {
   const {
+    locationSearchInputKey = 0,
     mapBoundsFilter,
     nameSearchPinFitRequestId = 0,
     onShelterPinsReadyForMapFit,
@@ -101,6 +103,7 @@ export function ShelterSearch(props: TProps) {
       <div className="mt-4 flex flex-col items-center justify-between">
         <div className="flex items-center justify-between w-full">
           <AddressAutocomplete
+            key={locationSearchInputKey}
             className="w-full"
             placeholder="Search by location"
             onPlaceSelect={onPlaceSelect}

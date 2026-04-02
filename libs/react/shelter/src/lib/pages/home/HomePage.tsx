@@ -86,6 +86,7 @@ export function HomePage() {
   const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
   const [hasInitialized, setHasInitialized] = useState(false);
   const [nameSearchPinFitRequestId, setNameSearchPinFitRequestId] = useState(0);
+  const [locationSearchInputKey, setLocationSearchInputKey] = useState(0);
   const map = useMap();
   const hasLocationPermission = useLocationPermission();
 
@@ -152,6 +153,7 @@ export function HomePage() {
 
     setMapBoundsFilter(toMapBounds(bounds));
     setShowSearchButton(false);
+    setLocationSearchInputKey((k) => k + 1);
   }
 
   const applyMapCenter = useCallback(
@@ -233,6 +235,7 @@ export function HomePage() {
         />
       </MaxWLayout>
       <ShelterSearch
+        locationSearchInputKey={locationSearchInputKey}
         mapBoundsFilter={mapBoundsFilter}
         nameSearchPinFitRequestId={nameSearchPinFitRequestId}
         onShelterPinsReadyForMapFit={onShelterPinsReadyForMapFit}
