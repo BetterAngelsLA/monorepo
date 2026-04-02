@@ -68,8 +68,6 @@ export const extractClientFormData = (
         });
       }
 
-      console.log('unhousedStartDateAsDate', unhousedStartDateAsDate);
-      console.log('unhousedStartDate', unhousedStartDate);
       return {
         id,
         californiaId,
