@@ -1,13 +1,20 @@
 import type { Meta } from '@storybook/react';
-import { useState } from 'react';
-import type { DropdownOption } from './types';
+import React, { useState } from 'react';
 import { Dropdown } from './Dropdown';
+import type { DropdownOption } from './types';
 
 const meta: Meta<typeof Dropdown> = {
   component: Dropdown,
   title: 'Base UI/Dropdown',
+  parameters: {
+    customLayout: {
+      canvasClassName: 'w-[36rem] max-w-[min(36rem,calc(100vw-4rem))]',
+    },
+  },
 };
 export default meta;
+
+const storyWrapperClass = 'w-full p-4';
 
 const options: DropdownOption[] = [
   { label: 'Alphabetical Order', value: 'alphabetical' },
@@ -24,7 +31,7 @@ const options: DropdownOption[] = [
 export const SingleSelect = () => {
   const [value, setValue] = useState<DropdownOption | null>(null);
   return (
-    <div className="w-80 p-4">
+    <div className={storyWrapperClass}>
       <Dropdown
         label="Sort By"
         placeholder="Please select"
@@ -39,7 +46,7 @@ export const SingleSelect = () => {
 export const SingleSelectSearchable = () => {
   const [value, setValue] = useState<DropdownOption | null>(null);
   return (
-    <div className="w-80 p-4">
+    <div className={storyWrapperClass}>
       <Dropdown
         label="Sort By"
         placeholder="Please select"
@@ -55,7 +62,7 @@ export const SingleSelectSearchable = () => {
 export const MultiSelect = () => {
   const [value, setValue] = useState<DropdownOption[] | null>(null);
   return (
-    <div className="w-80 p-4">
+    <div className={storyWrapperClass}>
       <Dropdown
         label="Categories"
         placeholder="Please select"
@@ -71,7 +78,7 @@ export const MultiSelect = () => {
 export const MultiSelectSearchable = () => {
   const [value, setValue] = useState<DropdownOption[] | null>(null);
   return (
-    <div className="w-80 p-4">
+    <div className={storyWrapperClass}>
       <Dropdown
         label="Categories"
         placeholder="Please select"
@@ -98,7 +105,7 @@ export const InsideOverflowHidden = () => {
         The grey box below has <code>overflow: hidden</code>. The dropdown menu
         escapes it because the menu is rendered via a portal.
       </p>
-      <div className="w-80 h-24 overflow-hidden border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
+      <div className="w-full max-w-[36rem] h-24 overflow-hidden border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
         <Dropdown
           label="Portal Demo"
           placeholder="Open me"

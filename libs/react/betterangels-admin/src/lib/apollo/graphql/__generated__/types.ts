@@ -419,6 +419,7 @@ export type ClientProfileType = {
   residenceGeolocation?: Maybe<Scalars['Point']['output']>;
   socialMediaProfiles?: Maybe<Array<SocialMediaProfileType>>;
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
+  unhousedStartDate?: Maybe<Scalars['Date']['output']>;
   veteranStatus?: Maybe<VeteranStatusEnum>;
 };
 
@@ -527,6 +528,7 @@ export type CreateClientProfileInput = {
   residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
+  unhousedStartDate?: InputMaybe<Scalars['Date']['input']>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 
@@ -2851,6 +2853,7 @@ export type UpdateClientProfileInput = {
   residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
+  unhousedStartDate?: InputMaybe<Scalars['Date']['input']>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 
