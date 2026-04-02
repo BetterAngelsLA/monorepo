@@ -2,7 +2,7 @@ import { FilterIcon, LocationIcon, SearchIcon } from '@monorepo/react/icons';
 import { useAtom } from 'jotai';
 import { useResetAtom } from 'jotai/utils';
 import { useEffect, useState } from 'react';
-import { locationAtom, shelterPropertyFiltersAtom } from '../../atoms';
+import { shelterPropertyFiltersAtom } from '../../atoms';
 import { AddressAutocomplete, TPlaceResult } from '../AddressAutocomplete';
 import { Input } from '../Input';
 import { TLatLng, TMapBounds } from '../Map';
@@ -16,6 +16,7 @@ type TProps = {
   nameSearchPinFitRequestId?: number;
   onShelterPinsReadyForMapFit?: (pinLocations: TLatLng[]) => void;
   onNameSearch: () => void;
+  setLocation: (location: TLatLng) => void;
 };
 
 export function ShelterSearch(props: TProps) {
@@ -24,8 +25,8 @@ export function ShelterSearch(props: TProps) {
     nameSearchPinFitRequestId = 0,
     onShelterPinsReadyForMapFit,
     onNameSearch,
+    setLocation,
   } = props;
-  const [location, setLocation] = useAtom(locationAtom);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_modal, setModal] = useAtom(modalAtom);
   const [queryFilters, setQueryFilters] = useState<TShelterPropertyFilters>();
@@ -52,7 +53,6 @@ export function ShelterSearch(props: TProps) {
     setLocation({
       latitude,
       longitude,
-      source: 'address',
     });
   }
 
@@ -91,6 +91,8 @@ export function ShelterSearch(props: TProps) {
     setQueryFilters(undefined);
     resetFilters();
     setNameFilter(nameSearchValue.trim());
+    console.log('nameFilter', nameFilter);
+    console.log('nameSearchValue', nameSearchValue);
     onNameSearch();
   }
 
@@ -126,7 +128,6 @@ export function ShelterSearch(props: TProps) {
       <FilterPills className="mt-2" filters={filters} />
       <SheltersDisplay
         className="mt-8"
-        coordinates={location}
         mapBoundsFilter={mapBoundsFilter}
         propertyFilters={queryFilters}
         nameFilter={nameFilter}

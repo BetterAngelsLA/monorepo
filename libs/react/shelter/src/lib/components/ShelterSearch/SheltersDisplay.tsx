@@ -14,15 +14,10 @@ import { ResultsSource } from './ResultsSource';
 import { TShelterPropertyFilters } from './types';
 
 type TShelter = ViewSheltersQuery['shelters']['results'][number];
-
-const SEARCH_RANGE_MILES = 20;
-
 type TProps = {
   className?: string;
-  coordinates?: TLatLng | null;
   mapBoundsFilter?: TMapBounds | null;
   propertyFilters?: TShelterPropertyFilters;
-  rangeInMiles?: number;
   nameFilter?: string;
   /** Incremented on each name search submit; used to fit the map after fresh query results. */
   nameSearchPinFitRequestId?: number;
@@ -31,10 +26,8 @@ type TProps = {
 
 export function SheltersDisplay(props: TProps) {
   const {
-    coordinates,
     mapBoundsFilter,
     propertyFilters,
-    rangeInMiles = SEARCH_RANGE_MILES,
     className = '',
     nameFilter,
     nameSearchPinFitRequestId = 0,
@@ -44,21 +37,6 @@ export function SheltersDisplay(props: TProps) {
 
   const queryVariables = useMemo<ViewSheltersQueryVariables | undefined>(() => {
     let vars: ViewSheltersQueryVariables | undefined;
-
-    if (coordinates && !mapBoundsFilter) {
-      const { latitude, longitude } = coordinates;
-
-      vars = vars || {};
-      vars.filters = vars.filters || {};
-
-      vars.filters.geolocation = {
-        latitude,
-        longitude,
-        // Only apply range limit when there's no map bounds filter;
-        // map bounds already constrains the spatial area.
-        rangeInMiles,
-      };
-    }
 
     if (mapBoundsFilter) {
       vars = vars || {};
@@ -93,7 +71,7 @@ export function SheltersDisplay(props: TProps) {
     }
 
     return vars;
-  }, [coordinates, mapBoundsFilter, propertyFilters, rangeInMiles, nameFilter]);
+  }, [mapBoundsFilter, nameFilter, propertyFilters]);
 
   const { items, total, loadMore, loading, loadingMore, hasMore, error } =
     useInfiniteScrollQuery<

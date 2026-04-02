@@ -3,7 +3,7 @@ import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
 import { useCallback, useEffect, useState } from 'react';
-import { locationAtom, sheltersAtom } from '../../atoms';
+import { sheltersAtom } from '../../atoms';
 import {
   DEFAULT_BOUNDS_MILES,
   LA_COUNTY_CENTER,
@@ -76,7 +76,7 @@ function symmetricBoundsAroundPinCentroid(
 }
 
 export function HomePage() {
-  const [location, setLocation] = useAtom(locationAtom);
+  const [location, setLocation] = useState<TLatLng | null>(null);
   const [userLocation, setUserLocation] = useState<TLatLng | null>(null);
   const [_modal, setModal] = useAtom(modalAtom);
   const [shelters] = useAtom(sheltersAtom);
@@ -142,7 +142,6 @@ export function HomePage() {
     setUserLocation(center);
     setLocation({
       ...center,
-      source: 'currentLocation',
     });
   }
 
@@ -156,10 +155,10 @@ export function HomePage() {
   }
 
   const applyMapCenter = useCallback(
-    (lat: number, lng: number, source: 'address' | 'currentLocation') => {
+    (lat: number, lng: number) => {
       const location = { latitude: lat, longitude: lng };
       setDefaultCenter(location);
-      setLocation({ ...location, source });
+      setLocation(location);
     },
     [setLocation]
   );
@@ -188,7 +187,7 @@ export function HomePage() {
 
     if (savedCenter) {
       const { lat, lng } = JSON.parse(savedCenter);
-      applyMapCenter(lat, lng, 'address');
+      applyMapCenter(lat, lng);
       return;
     }
 
@@ -199,23 +198,15 @@ export function HomePage() {
 
           setUserLocation({ latitude, longitude });
 
-          applyMapCenter(latitude, longitude, 'currentLocation');
+          applyMapCenter(latitude, longitude);
         },
         () => {
-          applyMapCenter(
-            LA_COUNTY_CENTER.latitude,
-            LA_COUNTY_CENTER.longitude,
-            'address'
-          );
+          applyMapCenter(LA_COUNTY_CENTER.latitude, LA_COUNTY_CENTER.longitude);
         },
         { enableHighAccuracy: true, timeout: 5000 }
       );
     } else {
-      applyMapCenter(
-        LA_COUNTY_CENTER.latitude,
-        LA_COUNTY_CENTER.longitude,
-        'address'
-      );
+      applyMapCenter(LA_COUNTY_CENTER.latitude, LA_COUNTY_CENTER.longitude);
     }
   }, [map, hasInitialized, applyMapCenter]);
 
@@ -246,6 +237,7 @@ export function HomePage() {
         nameSearchPinFitRequestId={nameSearchPinFitRequestId}
         onShelterPinsReadyForMapFit={onShelterPinsReadyForMapFit}
         onNameSearch={onNameSearch}
+        setLocation={setLocation}
       />
     </>
   );
