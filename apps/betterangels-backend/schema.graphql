@@ -570,6 +570,7 @@ input CreateHmisClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
 }
 
 union CreateHmisClientProfilePayload = HmisClientProfileType | OperationInfo
@@ -989,6 +990,7 @@ type HmisClientProfileType {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   id: ID!
   hmisId: String
   personalId: String
@@ -2400,6 +2402,7 @@ input UpdateHmisClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   id: ID!
   phoneNumbers: [PhoneNumberInput!]
 }

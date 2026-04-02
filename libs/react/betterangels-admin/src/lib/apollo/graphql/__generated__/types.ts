@@ -572,6 +572,7 @@ export type CreateHmisClientProfileInput = {
   ssn2?: InputMaybe<Scalars['String']['input']>;
   ssn3?: InputMaybe<Scalars['String']['input']>;
   ssnQuality?: InputMaybe<HmisSsnQualityEnum>;
+  unhousedStartDate?: InputMaybe<Scalars['Date']['input']>;
   veteran?: InputMaybe<HmisVeteranStatusEnum>;
 };
 
@@ -1020,6 +1021,7 @@ export type HmisClientProfileType = {
   ssn2?: Maybe<Scalars['String']['output']>;
   ssn3?: Maybe<Scalars['String']['output']>;
   ssnQuality?: Maybe<HmisSsnQualityEnum>;
+  unhousedStartDate?: Maybe<Scalars['Date']['output']>;
   uniqueIdentifier?: Maybe<Scalars['String']['output']>;
   veteran?: Maybe<HmisVeteranStatusEnum>;
 };
@@ -2903,6 +2905,7 @@ export type UpdateHmisClientProfileInput = {
   ssn2?: InputMaybe<Scalars['String']['input']>;
   ssn3?: InputMaybe<Scalars['String']['input']>;
   ssnQuality?: InputMaybe<HmisSsnQualityEnum>;
+  unhousedStartDate?: InputMaybe<Scalars['Date']['input']>;
   veteran?: InputMaybe<HmisVeteranStatusEnum>;
 };
 
