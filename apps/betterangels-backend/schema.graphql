@@ -412,6 +412,7 @@ type ClientProfileType {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactType!]
@@ -527,6 +528,7 @@ input CreateClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
@@ -576,6 +578,7 @@ input CreateHmisClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
 }
 
 union CreateHmisClientProfilePayload = HmisClientProfileType | OperationInfo
@@ -995,6 +998,7 @@ type HmisClientProfileType {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   id: ID!
   hmisId: String
   personalId: String
@@ -2352,6 +2356,7 @@ input UpdateClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactInput!]
@@ -2406,6 +2411,7 @@ input UpdateHmisClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   id: ID!
   phoneNumbers: [PhoneNumberInput!]
 }
