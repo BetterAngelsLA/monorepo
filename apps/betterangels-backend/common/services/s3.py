@@ -11,7 +11,8 @@ from django.conf import settings
 from django.core.files.storage import default_storage
 from mypy_boto3_s3 import S3Client
 
-DEFAULT_EXPIRATION = 300
+# generate_presigned_post
+DEFAULT_UPLOAD_EXPIRATION_SECONDS = 300
 DEFAULT_MAX_FILE_SIZE = 10_000_000
 
 
@@ -112,7 +113,7 @@ def _generate_presigned_post_with_client(
     max_file_size: int | None = None,
 ) -> PresignedS3UploadResult:
     if expires_in is None:
-        expires_in = DEFAULT_EXPIRATION
+        expires_in = DEFAULT_UPLOAD_EXPIRATION_SECONDS
 
     if max_file_size is None:
         max_file_size = DEFAULT_MAX_FILE_SIZE

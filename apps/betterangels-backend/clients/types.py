@@ -272,16 +272,17 @@ class ClientProfilePhotoInput:
 
 
 @strawberry.input
-class ClientProfilePhotoUploadInput:
+class GenerateClientProfilePhotoUploadInput:
     ref_id: str
     filename: str
     content_type: str
 
 
 @strawberry.input
-class ClientProfilePhotoUrlUpdateInput:
+class ResolveClentProfilePhotoInput:
     client_profile_id: ID
     file_path: str
+    signature_key: str
 
 
 @strawberry_django.type(ClientContact)

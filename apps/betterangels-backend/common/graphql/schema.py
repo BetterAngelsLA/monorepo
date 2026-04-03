@@ -18,6 +18,7 @@ class PresignedS3UploadResultItem:
     url: str
     fields: JSON
     key: str
+    signature_key: Optional[str] = None
 
 
 @strawberry.type

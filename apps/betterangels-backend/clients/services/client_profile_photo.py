@@ -1,18 +1,27 @@
 from accounts.models import User
 from clients.models import ClientProfile
-from clients.types import ClientProfilePhotoUploadInput
-from common.services.s3 import PresignedS3UploadResult, generate_s3_presigned_upload_urls
+from clients.types import GenerateClientProfilePhotoUploadInput
+from common.services.s3 import (
+    DEFAULT_UPLOAD_EXPIRATION_SECONDS,
+    PresignedS3UploadResult,
+    generate_s3_presigned_upload_urls,
+)
+from common.services.upload_signature import create_upload_signature, validate_upload_signature
 
 STORAGE_DIR = "media"
 
 CLIENT_PROFILE_PHOTO_PATH = f"{STORAGE_DIR}/client_profile_photos"
 
 
-def create_client_profile_photo_presigned_upload(
+class SecurePresignedS3UploadResult(PresignedS3UploadResult):
+    signature_key: str
+
+
+def create_presigned_upload(
     *,
     user: User,
-    upload: ClientProfilePhotoUploadInput,
-) -> PresignedS3UploadResult:
+    upload: GenerateClientProfilePhotoUploadInput,
+) -> SecurePresignedS3UploadResult:
     presigned_urls = generate_s3_presigned_upload_urls(
         uploads=[
             {
@@ -24,17 +33,32 @@ def create_client_profile_photo_presigned_upload(
         ]
     )
 
-    return presigned_urls["uploads"][0]
+    result = presigned_urls["uploads"][0]
+
+    signature_key = create_upload_signature(
+        key=result["key"],
+        user_id=user.pk,
+        expires_in_seconds=DEFAULT_UPLOAD_EXPIRATION_SECONDS,
+    )
+
+    return SecurePresignedS3UploadResult(
+        key=result["key"],
+        ref_id=result["ref_id"],
+        url=result["url"],
+        fields=result["fields"],
+        signature_key=signature_key,
+    )
 
 
-def update_client_profile_photo_url(
+def resolve_upload(
     *,
     user: User,
     client_profile: ClientProfile,
     file_path: str,
+    signature_key: str,
 ) -> ClientProfile:
-    if not file_path.startswith(CLIENT_PROFILE_PHOTO_PATH):
-        raise ValueError(f"Invalid key: {file_path}")
+    if not validate_upload_signature(signature_key=signature_key, key=file_path, user_id=user.pk):
+        raise ValueError("Invalid or expired upload signature")
 
     profile_photo_path = file_path[len(STORAGE_DIR) + 1 :]  # strip "media/"
 

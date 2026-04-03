@@ -16,13 +16,12 @@ from clients.permissions import (
     HmisProfilePermissions,
     SocialMediaProfilePermissions,
 )
+
+# from clients.services.client_profile_photo import create_client_profile_photo_presigned_upload, resolve_client_profile_photo_presigned_upload
+from clients.services import client_profile_photo
 from clients.services.client_document import (
     create_client_document_presigned_uploads,
     create_client_documents_from_s3_uploads,
-)
-from clients.services.client_profile_photo import (
-    create_client_profile_photo_presigned_upload,
-    update_client_profile_photo_url,
 )
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.schema import PresignedS3UploadResultItem, PresignedS3UploadsResult
@@ -59,16 +58,16 @@ from .types import (
     ClientProfileImportRecordsBulkInput,
     ClientProfileImportRecordType,
     ClientProfilePhotoInput,
-    ClientProfilePhotoUploadInput,
-    ClientProfilePhotoUrlUpdateInput,
     ClientProfileType,
     CreateClientDocumentInput,
     CreateClientDocumentsFromUploadsResult,
     CreateClientProfileInput,
     CreateProfileDataImportInput,
+    GenerateClientProfilePhotoUploadInput,
     HmisProfileInput,
     HmisProfileType,
     ImportClientProfileInput,
+    ResolveClentProfilePhotoInput,
     SocialMediaProfileInput,
     SocialMediaProfileType,
     UpdateClientDocumentInput,
@@ -712,14 +711,14 @@ class Mutation:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(perms=[ClientProfilePermissions.CHANGE])],
     )
-    def create_client_profile_photo_upload(
+    def generate_client_profile_photo_upload(
         self,
         info: Info,
-        data: ClientProfilePhotoUploadInput,
+        data: GenerateClientProfilePhotoUploadInput,
     ) -> PresignedS3UploadResultItem:
         user = cast(User, get_current_user(info))
 
-        result = create_client_profile_photo_presigned_upload(
+        result = client_profile_photo.create_presigned_upload(
             user=user,
             upload=data,
         )
@@ -729,12 +728,17 @@ class Mutation:
             url=result["url"],
             fields=cast(JSON, result["fields"]),
             key=result["key"],
+            signature_key=result["signature_key"],
         )
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])]
     )
-    def update_client_profile_photo_url(self, info: Info, data: ClientProfilePhotoUrlUpdateInput) -> ClientProfileType:
+    def resolve_client_profile_photo_upload(
+        self,
+        info: Info,
+        data: ResolveClentProfilePhotoInput,
+    ) -> ClientProfileType:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
 
@@ -744,10 +748,11 @@ class Mutation:
                 [ClientProfilePermissions.CHANGE],
             ).get(id=data.client_profile_id)
 
-            client_profile = update_client_profile_photo_url(
+            client_profile = client_profile_photo.resolve_upload(
                 user=user,
                 client_profile=client_profile,
-                photo=data,
+                file_path=data.file_path,
+                signature_key=data.signature_key,
             )
 
             return cast(ClientProfileType, client_profile)

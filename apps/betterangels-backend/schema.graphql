@@ -929,6 +929,14 @@ enum GenderEnum {
   PREFER_NOT_TO_SAY
 }
 
+input GenerateClientProfilePhotoUploadInput {
+  refId: String!
+  filename: String!
+  contentType: String!
+}
+
+union GenerateClientProfilePhotoUploadPayload = PresignedS3UploadResultItem | OperationInfo
+
 input GeolocationInput {
   latitude: Float!
   longitude: Float!
@@ -1414,6 +1422,8 @@ type Mutation {
   createClientDocumentsFromUploads(data: ClientDocumentsFromUploadsInput!): CreateClientDocumentsFromUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  generateClientProfilePhotoUpload(data: GenerateClientProfilePhotoUploadInput!): GenerateClientProfilePhotoUploadPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  resolveClientProfilePhotoUpload(data: ResolveClentProfilePhotoInput!): ResolveClientProfilePhotoUploadPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError! @hmisDirective
@@ -1755,6 +1765,7 @@ type PresignedS3UploadResultItem {
   url: String!
   fields: JSON!
   key: String!
+  signatureKey: String
 }
 
 type PresignedS3UploadsResult {
@@ -1874,6 +1885,14 @@ type ReportSummaryType {
   topProvidedServices: [NameCountType!]!
   topRequestedServices: [NameCountType!]!
 }
+
+input ResolveClentProfilePhotoInput {
+  clientProfileId: ID!
+  filePath: String!
+  signatureKey: String!
+}
+
+union ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo
 
 input RevertNoteInput {
   id: ID!
