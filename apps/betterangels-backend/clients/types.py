@@ -318,6 +318,7 @@ class ClientProfileBaseType:
     residence_address: auto
     residence_geolocation: auto
     spoken_languages: Optional[List[LanguageEnum]]
+    unhoused_start_date: auto
     veteran_status: auto
 
 

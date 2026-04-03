@@ -11,6 +11,7 @@ interface DropdownBaseProps<T extends string | number = string | number> {
   required?: boolean;
   disabled?: boolean;
   className?: string;
+  onOtherTextChange?: (text: string) => void;
 }
 
 export type DropdownProps<T extends string | number = string | number> =

@@ -393,6 +393,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
             residence_address="123 Res St",
             residence_geolocation=Point(self.residence_geolocation),
             spoken_languages=[LanguageEnum.ENGLISH, LanguageEnum.SPANISH],
+            unhoused_start_date=datetime.date.fromisoformat("2025-01-01"),
             created_by=self.org_1_case_manager_1,
         )
         content_type = ContentType.objects.get_for_model(HmisClientProfile)
@@ -465,6 +466,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
             "residenceAddress": None,
             "residenceGeolocation": None,
             "spokenLanguages": None,
+            "unhousedStartDate": None,
         }
 
         self.assertEqual(expected, client)
@@ -534,6 +536,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
             "residenceAddress": "3 Amity Res St.",
             "residenceGeolocation": self.residence_geolocation,
             "spokenLanguages": [LanguageEnum.ENGLISH.name],
+            "unhousedStartDate": datetime.date.fromisoformat("2026-01-01"),
         }
         response = self._update_hmis_client_profile_fixture(variables)
         client = response["data"]["updateHmisClientProfile"]
@@ -589,6 +592,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
             "residenceAddress": "3 Amity Res St.",
             "residenceGeolocation": self.residence_geolocation,
             "spokenLanguages": [LanguageEnum.ENGLISH.name],
+            "unhousedStartDate": "2026-01-01",
         }
 
         self.assertEqual(expected, client)
