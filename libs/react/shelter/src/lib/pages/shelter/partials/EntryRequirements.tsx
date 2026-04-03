@@ -1,7 +1,13 @@
 import { Card, ExpandableContainer } from '@monorepo/react/components';
-import { EntryRequirementChoices } from '../../../apollo';
+import {
+  EntryRequirementChoices,
+  ReferralRequirementChoices,
+} from '../../../apollo';
 import { WysiwygContainer } from '../../../components';
-import { enumDisplayEntryRequirementChoices } from '../../../static';
+import {
+  enumDisplayEntryRequirementChoices,
+  enumDisplayReferralRequirementChoices,
+} from '../../../static';
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
 import { InlineList, WysiwygSection } from '../common';
 import { hasWysiwygContent } from '../utils';
@@ -34,7 +40,15 @@ export function EntryRequirements({
           title="Program Fees:"
           items={[shelter?.programFees as string]}
         />
-
+        <InlineList
+          title="Referral Requirement:"
+          items={shelter?.referralRequirement.map(
+            (requirement) =>
+              enumDisplayReferralRequirementChoices[
+                requirement.name as ReferralRequirementChoices
+              ]
+          )}
+        />
         {hasNotesContent && (
           <ExpandableContainer
             header="Additional Notes"

@@ -1,6 +1,6 @@
 import { FilePlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
 import { useMemo } from 'react';
-import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.generated';
+import { ClientProfilesQuery } from './ClientProfileList/__generated__/ClientProfiles.generated';
 import { CreateClientInteractionBtn } from './CreateClientInteraction';
 import { MainModal, MainModalActionBtnBody } from './MainModal';
 

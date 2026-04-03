@@ -8,6 +8,7 @@ import pgtrigger.compiler
 import pgtrigger.migrations
 import phonenumber_field.modelfields
 import places.fields
+import shelters.deprecated.deprecated_enums
 import shelters.enums
 import shelters.models
 from django.db import migrations, models
@@ -371,7 +372,7 @@ class Migration(migrations.Migration):
                             ("life_skills_training", "Life Skills Training"),
                             ("tutoring", "Tutoring"),
                         ],
-                        choices_enum=shelters.enums.TrainingServiceChoices,
+                        choices_enum=shelters.deprecated.deprecated_enums.TrainingServiceChoices,
                         max_length=20,
                         null=True,
                         unique=True,
@@ -550,7 +551,7 @@ class Migration(migrations.Migration):
                     ("mental_health", "Mental Health"),
                     ("substance_use_treatment", "Substance Use Treatment"),
                 ],
-                choices_enum=shelters.enums.HealthServiceChoices,
+                choices_enum=shelters.deprecated.deprecated_enums.HealthServiceChoices,
                 max_length=23,
                 null=True,
                 unique=True,

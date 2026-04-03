@@ -7,6 +7,7 @@ import {
   aboutUsPath,
   operatorPath,
   shelterHomePath,
+  shelterVideoPath,
 } from '../../constants';
 import { FlyoutAnimationEnum, flyoutAtom } from '../Flyout';
 import { MenuMobile } from './MenuMobile';
@@ -34,6 +35,12 @@ export function Navigation() {
         </Link>
         <Link aria-label="navigate to about us" to={aboutUsPath}>
           About Us
+        </Link>
+        <Link
+          aria-label="watch shelter directory video overview"
+          to={shelterVideoPath}
+        >
+          Watch Video
         </Link>
         {showOperator ? (
           <Link aria-label="navigate to operator dashboard" to={operatorPath}>

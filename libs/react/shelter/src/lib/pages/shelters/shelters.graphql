@@ -31,6 +31,25 @@ query ViewShelters(
   }
 }
 
+query ShelterServiceCategories {
+  shelterServiceCategories {
+    totalCount
+    results {
+      id
+      name
+      displayName
+      priority
+      services {
+        id
+        name
+        displayName
+        isOther
+        priority
+      }
+    }
+  }
+}
+
 mutation CreateShelter($data: CreateShelterInput!) {
   createShelter(data: $data) {
     ... on ShelterType {

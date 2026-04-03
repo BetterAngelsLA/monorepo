@@ -1,4 +1,9 @@
 from django.db import migrations, models
+from shelters.deprecated.deprecated_permissions import (
+    GeneralServicePermissions,
+    HealthServicePermissions,
+    ImmediateNeedPermissions,
+)
 from shelters.utils import assign_permissions_to_group_in_migration
 
 
@@ -9,9 +14,6 @@ def create_shelter_data_entry_group(apps, schema_editor):
         CityPermissions,
         EntryRequirementPermissions,
         FunderPermissions,
-        GeneralServicePermissions,
-        HealthServicePermissions,
-        ImmediateNeedPermissions,
         ParkingPermissions,
         PetPermissions,
         PopulationPermissions,

@@ -1,60 +1,20 @@
 /**
  * BottomSheetFullScreenContainer
  *
- * Container component used by `@gorhom/bottom-sheet` to render sheets
- * above native navigation screens.
+ * Optional container that renders sheets above native navigation layers.
  *
- * ---------------------------------------------------------------------
- * WHY THIS EXISTS
- * ---------------------------------------------------------------------
+ * Required when using `react-native-screens` with native modal
+ * presentations on iOS, where sheets may otherwise render behind
+ * the current screen.
  *
- * When using navigation stacks powered by `react-native-screens`
- * (such as Expo Router or React Navigation), certain modal presentations
- * (`presentation: 'modal'`, `fullScreenModal`, etc.) are rendered inside
- * a native view controller layer above the React Native root view.
+ * Implementation:
+ * - iOS   → FullWindowOverlay
+ * - other → absolute positioned View
  *
- * In these cases, a BottomSheet rendered from the normal React tree may
- * appear *behind* the modal screen, even when using portals.
+ * Usage:
+ * - Passed via `containerComponent` (provider or per-sheet)
  *
- * `FullWindowOverlay` mounts the sheet at the top-most native window
- * layer so it correctly appears above modal screens.
- *
- * ---------------------------------------------------------------------
- * PLATFORM BEHAVIOR
- * ---------------------------------------------------------------------
- *
- * `FullWindowOverlay` is only available on **iOS**.
- *
- * On Android and Web this container simply renders its children normally,
- * as the underlying navigation stack does not suffer from the same
- * layering issue.
- *
- * ---------------------------------------------------------------------
- * WHEN TO USE
- * ---------------------------------------------------------------------
- *
- * Use this container when your app:
- *
- * - uses `react-native-screens`
- * - presents modal routes using native presentation styles
- * - needs BottomSheets to appear above those modal screens
- *
- * ---------------------------------------------------------------------
- * HOW TO ENABLE
- * ---------------------------------------------------------------------
- *
- * Pass this component as the `containerComponent` option.
- *
- * Recommended: configure globally via `BottomSheetModalProvider`.
- *
- * Example:
- *
- * showBottomSheet({
- *   render: () => <MySheet />,
- *   options: {
- *     containerComponent: BottomSheetFullScreenContainer
- *   }
- * });
+ * See `useBottomSheet` for integration details.
  */
 
 import { ReactNode } from 'react';

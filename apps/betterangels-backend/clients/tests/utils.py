@@ -61,6 +61,7 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
             residenceAddress
             residenceGeolocation
             spokenLanguages
+            unhousedStartDate
             veteranStatus
             displayCaseManager
             displayGender
@@ -276,6 +277,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "residenceGeolocation": self.residence_geolocation,
                 "socialMediaProfiles": self.client_1_social_media_profiles,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+                "unhousedStartDate": "2026-01-01",
                 "veteranStatus": VeteranStatusEnum.NO.name,
             }
         )["data"]["createClientProfile"]
@@ -315,6 +317,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "residenceGeolocation": None,
                 "socialMediaProfiles": [],
                 "spokenLanguages": [],
+                "unhousedStartDate": None,
                 "veteranStatus": None,
             }
         )["data"]["createClientProfile"]

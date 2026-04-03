@@ -4,10 +4,11 @@ import { Table, type TableColumn } from './Table';
 import type { Shelter } from '../types/shelter';
 
 export type ShelterRowObject = {
+  id: string;
   name: string;
   address: string;
   totalBeds: number;
-  reservedBeds: number;
+  reservedBeds: number | null;
   tags: string[];
 };
 
@@ -27,6 +28,15 @@ type ShelterTableProps = {
 };
 
 const MAX_VISIBLE_TAG_CHAR_COUNT = 15;
+
+function computeReservedBeds(shelter: Shelter): number | null {
+  const totalBeds = shelter.totalBeds ?? 0;
+  if (totalBeds === 0) return null;
+  return Math.min(
+    Math.max(totalBeds - (shelter.availableBeds ?? 0), 0),
+    totalBeds
+  );
+}
 
 function renderTags(tags: string[] | null) {
   const validTags = (tags ?? []).filter((tag) => Boolean(tag?.trim()));
@@ -104,19 +114,11 @@ export function ShelterTable({
         cellClassName: 'whitespace-nowrap text-gray-700',
         render: (shelter) => {
           const totalBeds = shelter.totalBeds ?? 0;
-          const hasCapacity = totalBeds > 0;
-          const reservedBeds = hasCapacity
-            ? Math.min(
-                Math.max(totalBeds - (shelter.availableBeds ?? 0), 0),
-                totalBeds
-              )
-            : null;
+          const reservedBeds = computeReservedBeds(shelter);
           const progressPct =
-            hasCapacity && reservedBeds !== null
-              ? (reservedBeds / totalBeds) * 100
-              : 0;
+            reservedBeds !== null ? (reservedBeds / totalBeds) * 100 : 0;
 
-          if (!hasCapacity || reservedBeds === null) {
+          if (reservedBeds === null) {
             return <div className="whitespace-nowrap">N/A</div>;
           }
 
@@ -153,15 +155,10 @@ export function ShelterTable({
       getRowKey={getRowKey ?? ((shelter) => shelter.id)}
       getRowObject={(shelter) => {
         const totalBeds = shelter.totalBeds ?? 0;
-        const reservedBeds =
-          totalBeds === 0
-            ? 0
-            : Math.min(
-                Math.max(totalBeds - (shelter.availableBeds ?? 0), 0),
-                totalBeds
-              );
+        const reservedBeds = computeReservedBeds(shelter);
 
         return {
+          id: shelter.id,
           name: shelter.name ?? 'N/A',
           address: shelter.address ?? 'N/A',
           totalBeds,

@@ -54,6 +54,7 @@ export function Table<TItem, TRowObject = TItem>({
 
   return (
     <div
+      role="table"
       className={[
         'bg-white rounded-2xl overflow-hidden w-full',
         wrapperClassName,
@@ -63,14 +64,16 @@ export function Table<TItem, TRowObject = TItem>({
       style={tableStyle}
     >
       <div
+        role="row"
         className={[
-          'grid items-center gap-x-6 px-6 py-2 pt-6 text-base font-medium text-[22px] text-[#747A82]',
+          'grid items-center px-6 pb-2 pt-6 font-medium text-[22px] text-[#747A82]',
           headerClassName,
         ].join(' ')}
         style={{ gridTemplateColumns: templateColumns, ...headerStyle }}
       >
         {columns.map((column) => (
           <div
+            role="columnheader"
             key={column.key}
             className={[
               'text-left justify-self-start',
