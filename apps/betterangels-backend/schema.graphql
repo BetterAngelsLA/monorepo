@@ -1420,10 +1420,10 @@ type Mutation {
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   createClientDocumentUploads(data: ClientDocumentUploadsInput!): CreateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   createClientDocumentsFromUploads(data: ClientDocumentsFromUploadsInput!): CreateClientDocumentsFromUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
-  createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true) @deprecated(reason: "Use createClientDocumentUploads and createClientDocumentsFromUploads instead.")
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   generateClientProfilePhotoUpload(data: GenerateClientProfilePhotoUploadInput!): GenerateClientProfilePhotoUploadPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
-  resolveClientProfilePhotoUpload(data: ResolveClentProfilePhotoInput!): ResolveClientProfilePhotoUploadPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  resolveClientProfilePhotoUpload(data: ResolveClientProfilePhotoUploadInput!): ResolveClientProfilePhotoUploadPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError! @hmisDirective
@@ -1886,7 +1886,7 @@ type ReportSummaryType {
   topRequestedServices: [NameCountType!]!
 }
 
-input ResolveClentProfilePhotoInput {
+input ResolveClientProfilePhotoUploadInput {
   clientProfileId: ID!
   filePath: String!
   signatureKey: String!

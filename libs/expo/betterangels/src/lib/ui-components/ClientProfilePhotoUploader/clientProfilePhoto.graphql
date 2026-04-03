@@ -1,0 +1,43 @@
+mutation GenerateClientProfilePhotoUpload(
+  $data: GenerateClientProfilePhotoUploadInput!
+) {
+  generateClientProfilePhotoUpload(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on PresignedS3UploadResultItem {
+      refId
+      url
+      fields
+      key
+      signatureKey
+    }
+  }
+}
+
+mutation ResolveClentProfilePhotoUpload(
+  $data: ResolveClientProfilePhotoUploadInput!
+) {
+  resolveClientProfilePhotoUpload(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on ClientProfileType {
+      id
+      profilePhoto {
+        name
+        url
+      }
+    }
+  }
+}

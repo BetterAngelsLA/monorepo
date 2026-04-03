@@ -279,7 +279,7 @@ class GenerateClientProfilePhotoUploadInput:
 
 
 @strawberry.input
-class ResolveClentProfilePhotoInput:
+class ResolveClientProfilePhotoUploadInput:
     client_profile_id: ID
     file_path: str
     signature_key: str

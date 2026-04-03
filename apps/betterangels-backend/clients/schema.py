@@ -67,7 +67,7 @@ from .types import (
     HmisProfileInput,
     HmisProfileType,
     ImportClientProfileInput,
-    ResolveClentProfilePhotoInput,
+    ResolveClientProfilePhotoUploadInput,
     SocialMediaProfileInput,
     SocialMediaProfileType,
     UpdateClientDocumentInput,
@@ -647,7 +647,10 @@ class Mutation:
 
             return CreateClientDocumentsFromUploadsResult(documents=attachments)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(AttachmentPermissions.ADD)],
+    )
     def create_client_document(self, info: Info, data: CreateClientDocumentInput) -> ClientDocumentType:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
@@ -737,7 +740,7 @@ class Mutation:
     def resolve_client_profile_photo_upload(
         self,
         info: Info,
-        data: ResolveClentProfilePhotoInput,
+        data: ResolveClientProfilePhotoUploadInput,
     ) -> ClientProfileType:
         with transaction.atomic():
             user = cast(User, get_current_user(info))

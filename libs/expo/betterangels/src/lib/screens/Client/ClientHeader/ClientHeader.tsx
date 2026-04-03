@@ -7,9 +7,9 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextMedium, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { enumDisplayLanguage } from '../../../static/enumDisplayMapping';
+import { ClientProfilePhotoUploader } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { ClientCaseManager } from './ClientCaseManager';
-import { ProfilePhotoUploader } from './ProfilePhotoUploader';
 
 interface IClientHeaderProps {
   client: ClientProfileQuery['clientProfile'] | undefined;
@@ -34,10 +34,11 @@ export function ClientHeader(props: IClientHeaderProps) {
           marginBottom: Spacings.xxs,
         }}
       >
-        <ProfilePhotoUploader
+        <ClientProfilePhotoUploader
           clientId={client?.id ?? ''}
           imageUrl={client?.profilePhoto?.url}
         />
+
         <TextMedium selectable size="lg">
           {client?.firstName} {client?.lastName}{' '}
           {client?.nickname && `(${client.nickname})`}
@@ -45,7 +46,11 @@ export function ClientHeader(props: IClientHeaderProps) {
       </View>
 
       <View
-        style={{ flexDirection: 'row', alignItems: 'center', gap: Spacings.xs }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: Spacings.xs,
+        }}
       >
         {client?.preferredLanguage && (
           <View
@@ -75,7 +80,9 @@ export function ClientHeader(props: IClientHeaderProps) {
           </View>
         )}
       </View>
+
       <ClientCaseManager client={client} />
+
       {client?.residenceAddress && (
         <View
           style={{

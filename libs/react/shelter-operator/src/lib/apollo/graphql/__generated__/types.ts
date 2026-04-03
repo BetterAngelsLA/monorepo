@@ -952,6 +952,14 @@ export enum GenderEnum {
   TransMale = 'TRANS_MALE'
 }
 
+export type GenerateClientProfilePhotoUploadInput = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  refId: Scalars['String']['input'];
+};
+
+export type GenerateClientProfilePhotoUploadPayload = OperationInfo | PresignedS3UploadResultItem;
+
 export type GeolocationInput = {
   latitude: Scalars['Float']['input'];
   longitude: Scalars['Float']['input'];
@@ -1405,6 +1413,7 @@ export type Mutation = {
   addOrganizationMember: AddOrganizationMemberPayload;
   createBed: CreateBedPayload;
   createClientContact: CreateClientContactPayload;
+  /** @deprecated Use createClientDocumentUploads and createClientDocumentsFromUploads instead. */
   createClientDocument: CreateClientDocumentPayload;
   createClientDocumentUploads: CreateClientDocumentUploadsPayload;
   createClientDocumentsFromUploads: CreateClientDocumentsFromUploadsPayload;
@@ -1434,6 +1443,7 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
+  generateClientProfilePhotoUpload: GenerateClientProfilePhotoUploadPayload;
   hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
@@ -1441,6 +1451,7 @@ export type Mutation = {
   logout: Scalars['Boolean']['output'];
   removeHmisNoteServiceRequest: RemoveHmisNoteServiceRequestPayload;
   removeOrganizationMember: RemoveOrganizationMemberPayload;
+  resolveClientProfilePhotoUpload: ResolveClientProfilePhotoUploadPayload;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
   updateClientDocument: UpdateClientDocumentPayload;
@@ -1616,6 +1627,11 @@ export type MutationDeleteTaskArgs = {
 };
 
 
+export type MutationGenerateClientProfilePhotoUploadArgs = {
+  data: GenerateClientProfilePhotoUploadInput;
+};
+
+
 export type MutationHmisLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
@@ -1644,6 +1660,11 @@ export type MutationRemoveHmisNoteServiceRequestArgs = {
 
 export type MutationRemoveOrganizationMemberArgs = {
   data: RemoveOrganizationMemberInput;
+};
+
+
+export type MutationResolveClientProfilePhotoUploadArgs = {
+  data: ResolveClientProfilePhotoUploadInput;
 };
 
 
@@ -2060,6 +2081,7 @@ export type PresignedS3UploadResultItem = {
   fields: Scalars['JSON']['output'];
   key: Scalars['String']['output'];
   refId: Scalars['String']['output'];
+  signatureKey?: Maybe<Scalars['String']['output']>;
   url: Scalars['String']['output'];
 };
 
@@ -2378,6 +2400,14 @@ export type ReportSummaryType = {
   uniqueClients: Scalars['Int']['output'];
   uniqueClientsByDate: Array<DateCountType>;
 };
+
+export type ResolveClientProfilePhotoUploadInput = {
+  clientProfileId: Scalars['ID']['input'];
+  filePath: Scalars['String']['input'];
+  signatureKey: Scalars['String']['input'];
+};
+
+export type ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo;
 
 export type RevertNoteInput = {
   id: Scalars['ID']['input'];
