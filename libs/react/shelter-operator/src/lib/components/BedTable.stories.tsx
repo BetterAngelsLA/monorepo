@@ -1,45 +1,43 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { BedStatusChoices } from '../apollo/graphql/__generated__/types';
-import type { BedRoomForList } from '../types/bed';
-import { BedTable } from './BedTable';
+import { BedTable, type BedRoomForList } from './BedTable';
+
+const bed = (
+  id: string,
+  bedName: string,
+  status: BedStatusChoices,
+  maintenanceFlag = false
+) =>
+  ({
+    id,
+    bedName,
+    status,
+    maintenanceFlag,
+    accessibility: [],
+    b7: false,
+    demographics: [],
+    funders: [],
+    pets: [],
+    shelter: {} as never,
+    storage: false,
+  });
 
 const mockRooms: BedRoomForList[] = [
   {
     id: 'room-1',
     roomLabel: 'Room 1',
     beds: [
-      {
-        id: 'bed-1',
-        bedName: 'North bunk',
-        status: BedStatusChoices.Available,
-        tags: ['Women Only', 'Shared'],
-      },
-      {
-        id: 'bed-2',
-        bedName: 'South bunk',
-        status: BedStatusChoices.Occupied,
-        tags: ['Shared'],
-      },
+      bed('bed-1', 'North bunk', BedStatusChoices.Available),
+      bed('bed-2', 'South bunk', BedStatusChoices.Occupied),
     ],
   },
   {
     id: 'room-2',
     roomLabel: 'Room 2',
     beds: [
-      {
-        id: 'bed-3',
-        bedName: 'Rollaway 1',
-        status: BedStatusChoices.Reserved,
-        tags: ['Pets Allowed'],
-      },
-      {
-        id: 'bed-4',
-        bedName: 'Twin 2',
-        status: BedStatusChoices.OutOfService,
-        maintenanceFlag: true,
-        tags: [],
-      },
+      bed('bed-3', 'Rollaway 1', BedStatusChoices.Reserved),
+      bed('bed-4', 'Twin 2', BedStatusChoices.OutOfService, true),
     ],
   },
 ];
@@ -72,9 +70,19 @@ export const Default: Story = {
         onDuplicate={() => undefined}
         onEdit={() => undefined}
         onDelete={() => undefined}
-        headerStyle={{ fontFamily: 'Poppins, sans-serif' }}
-        rowStyle={{ fontFamily: 'Poppins, sans-serif' }}
       />
     );
   },
+};
+
+export const WithoutRowSelection: Story = {
+  render: () => (
+    <BedTable
+      rooms={mockRooms}
+      onRowClick={() => undefined}
+      onDuplicate={() => undefined}
+      onEdit={() => undefined}
+      onDelete={() => undefined}
+    />
+  ),
 };

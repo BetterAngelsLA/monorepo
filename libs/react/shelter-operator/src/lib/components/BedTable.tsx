@@ -1,52 +1,28 @@
 import { CopyPlus, Minus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
-import { BedStatusChoices } from '../apollo/graphql/__generated__/types';
-import type { BedListItem, BedRoomForList, BedRowObject } from '../types/bed';
+import {
+  BedStatusChoices,
+  type BedType,
+} from '../apollo/graphql/__generated__/types';
 import { Button } from './base-ui/buttons';
 import { Table, type TableColumn } from './Table';
 
-const MAX_VISIBLE_TAG_CHAR_COUNT = 15;
+export type BedRoomForList = {
+  id: string;
+  roomLabel: string;
+  beds: BedType[];
+};
 
-function renderTags(tags: string[] | null) {
-  const validTags = (tags ?? []).filter((tag) => Boolean(tag?.trim()));
-  const hardcodedTags = ['Women Only', 'Shared', 'Pets Allowed', 'No Parking'];
-  const tagsToShow = validTags.length > 0 ? validTags : hardcodedTags;
-
-  let visibleCharCount = 0;
-  const visibleTags = tagsToShow.filter((tag) => {
-    const nextCount = visibleCharCount + tag.length;
-    if (nextCount >= MAX_VISIBLE_TAG_CHAR_COUNT) return false;
-    visibleCharCount += tag.length;
-    return true;
-  });
-
-  const remainingTagsCount = Math.max(
-    tagsToShow.length - visibleTags.length,
-    0
-  );
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {visibleTags.map((tag) => (
-        <span
-          key={tag}
-          className="rounded-full bg-[#EDEFF5] px-3 py-1 text-xs text-[#747A82]"
-        >
-          {tag}
-        </span>
-      ))}
-      {remainingTagsCount > 0 && (
-        <span className="rounded-full bg-[#EDEFF5] px-3 py-1 text-xs text-[#747A82]">
-          +{remainingTagsCount}
-        </span>
-      )}
-    </div>
-  );
-}
+export type BedRowObject = {
+  bedId: string;
+  bedName: string;
+  status?: BedType['status'];
+  roomAssignment: string;
+};
 
 type FlatBedRow = {
-  bed: BedListItem;
+  bed: BedType;
   roomAssignment: string;
   rowIndex: number;
 };
@@ -142,13 +118,12 @@ type BedTableProps = {
   rowStyle?: CSSProperties;
 };
 
-function toRowObject(bed: BedListItem, roomAssignment: string): BedRowObject {
+function toRowObject(bed: BedType, roomAssignment: string): BedRowObject {
   return {
     bedId: bed.id,
-    bedName: bed.bedName,
+    bedName: bed.bedName ?? '',
     status: bed.status,
     roomAssignment,
-    tags: bed.tags ?? [],
   };
 }
 
@@ -261,13 +236,6 @@ export function BedTable({
         cellClassName:
           'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
         render: ({ roomAssignment }) => roomAssignment || '—',
-      },
-      {
-        key: 'tags',
-        label: 'Tags',
-        width: '1.1fr',
-        cellClassName: 'text-gray-600',
-        render: ({ bed }) => renderTags(bed.tags ?? null),
       },
       {
         key: 'actions',

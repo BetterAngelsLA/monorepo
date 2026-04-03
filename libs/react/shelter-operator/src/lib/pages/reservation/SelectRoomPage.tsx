@@ -1,8 +1,18 @@
 import { useFormContext } from 'react-hook-form';
 import { BedStatusChoices } from '../../apollo/graphql/__generated__/types';
-import { BedTable } from '../../components/BedTable';
-import type { BedRoomForList, BedRowObject } from '../../types/bed';
+import { BedTable, type BedRoomForList, type BedRowObject } from '../../components/BedTable';
 import type { ReservationFormData } from './types';
+
+const MOCK_BED_DEFAULTS = {
+  maintenanceFlag: false,
+  accessibility: [],
+  b7: false,
+  demographics: [],
+  funders: [],
+  pets: [],
+  shelter: {} as never,
+  storage: false,
+};
 
 // TODO: Replace with real GraphQL query once rooms/beds query is available
 const MOCK_ROOMS: BedRoomForList[] = [
@@ -10,55 +20,24 @@ const MOCK_ROOMS: BedRoomForList[] = [
     id: 'room-1',
     roomLabel: 'Room 101',
     beds: [
-      {
-        id: 'bed-1',
-        bedName: 'Bed A',
-        status: BedStatusChoices.Available,
-        tags: ['Women Only', 'Shared'],
-      },
-      {
-        id: 'bed-2',
-        bedName: 'Bed B',
-        status: BedStatusChoices.Occupied,
-        tags: ['Shared'],
-      },
+      { ...MOCK_BED_DEFAULTS, id: 'bed-1', bedName: 'Bed A', status: BedStatusChoices.Available },
+      { ...MOCK_BED_DEFAULTS, id: 'bed-2', bedName: 'Bed B', status: BedStatusChoices.Occupied },
     ],
   },
   {
     id: 'room-2',
     roomLabel: 'Room 102',
     beds: [
-      {
-        id: 'bed-3',
-        bedName: 'Bed A',
-        status: BedStatusChoices.Available,
-        tags: ['Pets Allowed'],
-      },
-      {
-        id: 'bed-4',
-        bedName: 'Bed B',
-        status: BedStatusChoices.OutOfService,
-        maintenanceFlag: true,
-        tags: [],
-      },
+      { ...MOCK_BED_DEFAULTS, id: 'bed-3', bedName: 'Bed A', status: BedStatusChoices.Available },
+      { ...MOCK_BED_DEFAULTS, id: 'bed-4', bedName: 'Bed B', status: BedStatusChoices.OutOfService, maintenanceFlag: true },
     ],
   },
   {
     id: 'room-3',
     roomLabel: 'Room 103',
     beds: [
-      {
-        id: 'bed-5',
-        bedName: 'Bed A',
-        status: BedStatusChoices.Reserved,
-        tags: ['No Parking'],
-      },
-      {
-        id: 'bed-6',
-        bedName: 'Bed B',
-        status: BedStatusChoices.Available,
-        tags: ['Women Only'],
-      },
+      { ...MOCK_BED_DEFAULTS, id: 'bed-5', bedName: 'Bed A', status: BedStatusChoices.Reserved },
+      { ...MOCK_BED_DEFAULTS, id: 'bed-6', bedName: 'Bed B', status: BedStatusChoices.Available },
     ],
   },
 ];
@@ -100,8 +79,7 @@ export function SelectRoomPage() {
         onRowClick={handleBedClick}
         selectedBedIds={selectedBedId ? [selectedBedId] : []}
         onSelectedBedIdsChange={(ids) => {
-          const id = ids[ids.length - 1] ?? null;
-          setValue('bedId', id);
+          setValue('bedId', ids[ids.length - 1] ?? null);
         }}
         onEdit={(rowObject) => {
           // TODO: open edit bed modal
