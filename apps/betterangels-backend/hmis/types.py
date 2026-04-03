@@ -142,6 +142,7 @@ class HmisClientProfileBaseType:
     residence_address: auto
     residence_geolocation: auto
     spoken_languages: Optional[list[LanguageEnum]]
+    unhoused_start_date: auto
 
 
 @strawberry_django.type(

@@ -125,6 +125,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "residenceGeolocation": self.residence_geolocation,
             "socialMediaProfiles": self.client_profile_1["socialMediaProfiles"],
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+            "unhousedStartDate": "2026-01-01",
             "veteranStatus": VeteranStatusEnum.NO.name,
         }
 

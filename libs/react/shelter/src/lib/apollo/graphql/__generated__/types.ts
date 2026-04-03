@@ -419,6 +419,7 @@ export type ClientProfileType = {
   residenceGeolocation?: Maybe<Scalars['Point']['output']>;
   socialMediaProfiles?: Maybe<Array<SocialMediaProfileType>>;
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
+  unhousedStartDate?: Maybe<Scalars['Date']['output']>;
   veteranStatus?: Maybe<VeteranStatusEnum>;
 };
 
@@ -527,6 +528,7 @@ export type CreateClientProfileInput = {
   residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
+  unhousedStartDate?: InputMaybe<Scalars['Date']['input']>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 
@@ -570,6 +572,7 @@ export type CreateHmisClientProfileInput = {
   ssn2?: InputMaybe<Scalars['String']['input']>;
   ssn3?: InputMaybe<Scalars['String']['input']>;
   ssnQuality?: InputMaybe<HmisSsnQualityEnum>;
+  unhousedStartDate?: InputMaybe<Scalars['Date']['input']>;
   veteran?: InputMaybe<HmisVeteranStatusEnum>;
 };
 
@@ -1018,6 +1021,7 @@ export type HmisClientProfileType = {
   ssn2?: Maybe<Scalars['String']['output']>;
   ssn3?: Maybe<Scalars['String']['output']>;
   ssnQuality?: Maybe<HmisSsnQualityEnum>;
+  unhousedStartDate?: Maybe<Scalars['Date']['output']>;
   uniqueIdentifier?: Maybe<Scalars['String']['output']>;
   veteran?: Maybe<HmisVeteranStatusEnum>;
 };
@@ -2851,6 +2855,7 @@ export type UpdateClientProfileInput = {
   residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
+  unhousedStartDate?: InputMaybe<Scalars['Date']['input']>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 
@@ -2900,6 +2905,7 @@ export type UpdateHmisClientProfileInput = {
   ssn2?: InputMaybe<Scalars['String']['input']>;
   ssn3?: InputMaybe<Scalars['String']['input']>;
   ssnQuality?: InputMaybe<HmisSsnQualityEnum>;
+  unhousedStartDate?: InputMaybe<Scalars['Date']['input']>;
   veteran?: InputMaybe<HmisVeteranStatusEnum>;
 };
 
