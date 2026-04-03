@@ -129,7 +129,7 @@ type AdminShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
-  bedCapacity: BedCapacityType!
+  bedsByStatus: BedsByStatusType!
 }
 
 type AdminShelterTypeOffsetPaginated {
@@ -164,13 +164,6 @@ type AuthResponse {
   status_code: String!
 }
 
-type BedCapacityType {
-  available: Int!
-  occupied: Int!
-  reserved: Int!
-  outOfService: Int!
-}
-
 enum BedStatusChoices {
   AVAILABLE
   OCCUPIED
@@ -203,6 +196,13 @@ enum BedTypeChoices {
   BUNK
   ROLLAWAY
   OTHER
+}
+
+type BedsByStatusType {
+  available: Int!
+  occupied: Int!
+  reserved: Int!
+  outOfService: Int!
 }
 
 type CityType {
@@ -2158,7 +2158,7 @@ type ShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
-  bedCapacity: BedCapacityType!
+  bedsByStatus: BedsByStatusType!
 }
 
 type ShelterTypeOffsetPaginated {

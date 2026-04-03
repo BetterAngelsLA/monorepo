@@ -76,8 +76,8 @@ export type AdminShelterType = {
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
-  bedCapacity: BedCapacityType;
   bedFees?: Maybe<Scalars['String']['output']>;
+  bedsByStatus: BedsByStatusType;
   cities: Array<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
   curfew?: Maybe<Scalars['Time']['output']>;
@@ -163,14 +163,6 @@ export type AuthResponse = {
   status_code: Scalars['String']['output'];
 };
 
-export type BedCapacityType = {
-  __typename?: 'BedCapacityType';
-  available: Scalars['Int']['output'];
-  occupied: Scalars['Int']['output'];
-  outOfService: Scalars['Int']['output'];
-  reserved: Scalars['Int']['output'];
-};
-
 export enum BedStatusChoices {
   Available = 'AVAILABLE',
   Occupied = 'OCCUPIED',
@@ -205,6 +197,14 @@ export enum BedTypeChoices {
   Rollaway = 'ROLLAWAY',
   Twin = 'TWIN'
 }
+
+export type BedsByStatusType = {
+  __typename?: 'BedsByStatusType';
+  available: Scalars['Int']['output'];
+  occupied: Scalars['Int']['output'];
+  outOfService: Scalars['Int']['output'];
+  reserved: Scalars['Int']['output'];
+};
 
 export type CityType = {
   __typename?: 'CityType';
@@ -2611,8 +2611,8 @@ export type ShelterType = {
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
-  bedCapacity: BedCapacityType;
   bedFees?: Maybe<Scalars['String']['output']>;
+  bedsByStatus: BedsByStatusType;
   cities: Array<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
   curfew?: Maybe<Scalars['Time']['output']>;
