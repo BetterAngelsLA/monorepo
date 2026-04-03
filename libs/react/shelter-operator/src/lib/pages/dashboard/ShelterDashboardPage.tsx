@@ -1,7 +1,9 @@
+import { useQuery } from '@apollo/client/react';
 import { BookCheck, Settings } from 'lucide-react';
 import { useLocation, useParams } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { Text } from '../../components/base-ui/text/text';
+import { GetShelterNameDocument } from '../../graphql/__generated__/shelters.generated';
 import type { Shelter } from '../../types/shelter';
 import { ShelterTabContent } from './components/ShelterTabContent';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
@@ -32,11 +34,20 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
   const routeState = (location.state as { shelter?: Shelter } | null) ?? null;
   const shelterFromState = routeState?.shelter;
 
+  const { data: shelterData } = useQuery(GetShelterNameDocument, {
+    variables: { id: shelterId },
+    skip: !shelterId,
+  });
+
   if (!id) return null;
 
-  const shelterName = shelterFromState?.name ?? 'Shelter Name';
+  const shelterName = shelterData?.shelter?.name ?? shelterFromState?.name ?? 'Shelter Name';
   const shelterAddress =
     shelterFromState?.address ?? '123 Thisisastreetname Street';
+
+  const shelterForTabs = shelterFromState
+    ? { ...shelterFromState, name: shelterName }
+    : undefined;
 
   return (
     <div className="w-full">
@@ -80,10 +91,10 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
         activePathSuffix={TAB_CONFIG[tab].pathSuffix}
         basePath={`/operator/shelter/${shelterId}`}
         items={TAB_ITEMS}
-        linkState={routeState ?? undefined}
+        linkState={shelterForTabs ? { shelter: shelterForTabs } : undefined}
       />
 
-      <ShelterTabContent tab={tab} shelter={shelterFromState} />
+      <ShelterTabContent tab={tab} shelter={shelterForTabs} />
     </div>
   );
 }

@@ -362,8 +362,6 @@ export function RoomTable({
           </div>
         )}
         trailingColumnWidth="128px"
-        headerInsetClassName="px-0 py-2 pt-6"
-        rowInsetClassName="px-0 mx-0 py-2"
         loading={loading}
         loadingState={loadingState}
         emptyState={emptyState}
