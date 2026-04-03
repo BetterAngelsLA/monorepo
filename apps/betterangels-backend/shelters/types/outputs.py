@@ -60,7 +60,7 @@ class ShelterPhotoType:
 
 
 @strawberry.type
-class BedCapacityType:
+class BedsByStatusType:
     available: int = 0
     occupied: int = 0
     reserved: int = 0
@@ -165,17 +165,21 @@ class ShelterTypeMixin:
 
         return None
 
-    @strawberry_django.field
-    def bed_capacity(self, root: models.Shelter) -> BedCapacityType:
-        # NOTE: When adding a new BedStatusChoices value, add a Count here
-        # and a corresponding field on BedCapacityType.
-        counts = root.beds.aggregate(
-            available=Count("id", filter=Q(status=BedStatusChoices.AVAILABLE)),
-            occupied=Count("id", filter=Q(status=BedStatusChoices.OCCUPIED)),
-            reserved=Count("id", filter=Q(status=BedStatusChoices.RESERVED)),
-            out_of_service=Count("id", filter=Q(status=BedStatusChoices.OUT_OF_SERVICE)),
+    @strawberry_django.field(
+        annotate={
+            "_bed_available": lambda info: Count("beds", filter=Q(beds__status=BedStatusChoices.AVAILABLE)),
+            "_bed_occupied": lambda info: Count("beds", filter=Q(beds__status=BedStatusChoices.OCCUPIED)),
+            "_bed_reserved": lambda info: Count("beds", filter=Q(beds__status=BedStatusChoices.RESERVED)),
+            "_bed_out_of_service": lambda info: Count("beds", filter=Q(beds__status=BedStatusChoices.OUT_OF_SERVICE)),
+        }
+    )
+    def beds_by_status(self, root: models.Shelter) -> BedsByStatusType:
+        return BedsByStatusType(
+            available=getattr(root, "_bed_available", 0),
+            occupied=getattr(root, "_bed_occupied", 0),
+            reserved=getattr(root, "_bed_reserved", 0),
+            out_of_service=getattr(root, "_bed_out_of_service", 0),
         )
-        return BedCapacityType(**counts)
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
