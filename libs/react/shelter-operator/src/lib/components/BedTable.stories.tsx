@@ -78,18 +78,3 @@ export const Default: Story = {
     );
   },
 };
-
-/** No selection column — omit `onSelectedBedIdsChange`. */
-export const WithoutRowSelection: Story = {
-  render: () => (
-    <BedTable
-      rooms={mockRooms}
-      onRowClick={() => undefined}
-      onDuplicate={() => undefined}
-      onEdit={() => undefined}
-      onDelete={() => undefined}
-      headerStyle={{ fontFamily: 'Poppins, sans-serif' }}
-      rowStyle={{ fontFamily: 'Poppins, sans-serif' }}
-    />
-  ),
-};
