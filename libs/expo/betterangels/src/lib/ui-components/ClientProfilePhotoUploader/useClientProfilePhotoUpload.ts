@@ -48,7 +48,7 @@ export function useClientProfilePhotoUpload() {
       throw new Error(payload.messages.map((m) => m.message).join(', '));
     }
 
-    if (payload.__typename !== 'PresignedS3UploadResultItem') {
+    if (payload.__typename !== 'AuthorizedPresignedS3UploadType') {
       throw new Error('Unexpected response type');
     }
 

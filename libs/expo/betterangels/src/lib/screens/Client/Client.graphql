@@ -110,54 +110,6 @@ query ClientProfile($id: ID!) {
   }
 }
 
-mutation CreateClientDocumentUploads($data: ClientDocumentUploadsInput!) {
-  createClientDocumentUploads(data: $data) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-
-    ... on PresignedS3UploadsResult {
-      uploads {
-        refId
-        url
-        fields
-        key
-      }
-    }
-  }
-}
-
-mutation CreateClientDocumentsFromUploads(
-  $data: ClientDocumentsFromUploadsInput!
-) {
-  createClientDocumentsFromUploads(data: $data) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-
-    ... on CreateClientDocumentsFromUploadsResult {
-      documents {
-        id
-        file {
-          url
-          name
-        }
-        originalFilename
-        mimeType
-        namespace
-      }
-    }
-  }
-}
-
 mutation CreateClientDocument($data: CreateClientDocumentInput!) {
   createClientDocument(data: $data) {
     ... on OperationInfo {

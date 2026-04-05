@@ -157,6 +157,20 @@ export type AuthResponse = {
   status_code: Scalars['String']['output'];
 };
 
+export type AuthorizedPresignedS3UploadType = {
+  __typename?: 'AuthorizedPresignedS3UploadType';
+  fields: Scalars['JSON']['output'];
+  key: Scalars['String']['output'];
+  refId: Scalars['String']['output'];
+  signatureKey: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+};
+
+export type AuthorizedPresignedS3UploadsType = {
+  __typename?: 'AuthorizedPresignedS3UploadsType';
+  uploads: Array<AuthorizedPresignedS3UploadType>;
+};
+
 export enum BedStatusChoices {
   Available = 'AVAILABLE',
   Occupied = 'OCCUPIED',
@@ -244,6 +258,7 @@ export type ClientDocumentFromUploadsInput = {
   filename: Scalars['String']['input'];
   key: Scalars['String']['input'];
   namespace: ClientDocumentNamespaceEnum;
+  signatureKey: Scalars['String']['input'];
 };
 
 export enum ClientDocumentGroupEnum {
@@ -287,20 +302,15 @@ export type ClientDocumentTypeOffsetPaginated = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type ClientDocumentUploadsInput = {
-  clientProfileId: Scalars['ID']['input'];
-  uploads: Array<ClientDocumentUploadsInputItem>;
-};
-
 export type ClientDocumentUploadsInputItem = {
   contentType: Scalars['String']['input'];
   filename: Scalars['String']['input'];
   refId: Scalars['String']['input'];
 };
 
-export type ClientDocumentsFromUploadsInput = {
-  clientProfileId: Scalars['ID']['input'];
-  documents: Array<ClientDocumentFromUploadsInput>;
+export type ClientDocumentUploadsType = {
+  __typename?: 'ClientDocumentUploadsType';
+  documents: Array<ClientDocumentType>;
 };
 
 export type ClientHouseholdMemberInput = {
@@ -503,15 +513,6 @@ export type CreateClientDocumentInput = {
 };
 
 export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
-
-export type CreateClientDocumentUploadsPayload = OperationInfo | PresignedS3UploadsResult;
-
-export type CreateClientDocumentsFromUploadsPayload = CreateClientDocumentsFromUploadsResult | OperationInfo;
-
-export type CreateClientDocumentsFromUploadsResult = {
-  __typename?: 'CreateClientDocumentsFromUploadsResult';
-  documents: Array<ClientDocumentType>;
-};
 
 export type CreateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo;
 
@@ -952,13 +953,20 @@ export enum GenderEnum {
   TransMale = 'TRANS_MALE'
 }
 
+export type GenerateClientDocumentUploadsInput = {
+  clientProfileId: Scalars['ID']['input'];
+  uploads: Array<ClientDocumentUploadsInputItem>;
+};
+
+export type GenerateClientDocumentUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo;
+
 export type GenerateClientProfilePhotoUploadInput = {
   contentType: Scalars['String']['input'];
   filename: Scalars['String']['input'];
   refId: Scalars['String']['input'];
 };
 
-export type GenerateClientProfilePhotoUploadPayload = OperationInfo | PresignedS3UploadResultItem;
+export type GenerateClientProfilePhotoUploadPayload = AuthorizedPresignedS3UploadType | OperationInfo;
 
 export type GeolocationInput = {
   latitude: Scalars['Float']['input'];
@@ -1413,10 +1421,7 @@ export type Mutation = {
   addOrganizationMember: AddOrganizationMemberPayload;
   createBed: CreateBedPayload;
   createClientContact: CreateClientContactPayload;
-  /** @deprecated Use createClientDocumentUploads and createClientDocumentsFromUploads instead. */
   createClientDocument: CreateClientDocumentPayload;
-  createClientDocumentUploads: CreateClientDocumentUploadsPayload;
-  createClientDocumentsFromUploads: CreateClientDocumentsFromUploadsPayload;
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
   createClientProfile: CreateClientProfilePayload;
   createClientProfileDataImport: CreateClientProfileDataImportPayload;
@@ -1443,6 +1448,7 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
+  generateClientDocumentUploads: GenerateClientDocumentUploadsPayload;
   generateClientProfilePhotoUpload: GenerateClientProfilePhotoUploadPayload;
   hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
@@ -1451,6 +1457,7 @@ export type Mutation = {
   logout: Scalars['Boolean']['output'];
   removeHmisNoteServiceRequest: RemoveHmisNoteServiceRequestPayload;
   removeOrganizationMember: RemoveOrganizationMemberPayload;
+  resolveClientDocumentUploads: ResolveClientDocumentUploadsPayload;
   resolveClientProfilePhotoUpload: ResolveClientProfilePhotoUploadPayload;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
@@ -1488,16 +1495,6 @@ export type MutationCreateClientContactArgs = {
 
 export type MutationCreateClientDocumentArgs = {
   data: CreateClientDocumentInput;
-};
-
-
-export type MutationCreateClientDocumentUploadsArgs = {
-  data: ClientDocumentUploadsInput;
-};
-
-
-export type MutationCreateClientDocumentsFromUploadsArgs = {
-  data: ClientDocumentsFromUploadsInput;
 };
 
 
@@ -1627,6 +1624,11 @@ export type MutationDeleteTaskArgs = {
 };
 
 
+export type MutationGenerateClientDocumentUploadsArgs = {
+  data: GenerateClientDocumentUploadsInput;
+};
+
+
 export type MutationGenerateClientProfilePhotoUploadArgs = {
   data: GenerateClientProfilePhotoUploadInput;
 };
@@ -1660,6 +1662,11 @@ export type MutationRemoveHmisNoteServiceRequestArgs = {
 
 export type MutationRemoveOrganizationMemberArgs = {
   data: RemoveOrganizationMemberInput;
+};
+
+
+export type MutationResolveClientDocumentUploadsArgs = {
+  data: ResolveClientDocumentUploadsInput;
 };
 
 
@@ -2076,20 +2083,6 @@ export enum PreferredCommunicationEnum {
   Whatsapp = 'WHATSAPP'
 }
 
-export type PresignedS3UploadResultItem = {
-  __typename?: 'PresignedS3UploadResultItem';
-  fields: Scalars['JSON']['output'];
-  key: Scalars['String']['output'];
-  refId: Scalars['String']['output'];
-  signatureKey?: Maybe<Scalars['String']['output']>;
-  url: Scalars['String']['output'];
-};
-
-export type PresignedS3UploadsResult = {
-  __typename?: 'PresignedS3UploadsResult';
-  uploads: Array<PresignedS3UploadResultItem>;
-};
-
 export type ProgramEnrollmentType = {
   __typename?: 'ProgramEnrollmentType';
   clientId: Scalars['String']['output'];
@@ -2400,6 +2393,13 @@ export type ReportSummaryType = {
   uniqueClients: Scalars['Int']['output'];
   uniqueClientsByDate: Array<DateCountType>;
 };
+
+export type ResolveClientDocumentUploadsInput = {
+  clientProfileId: Scalars['ID']['input'];
+  documents: Array<ClientDocumentFromUploadsInput>;
+};
+
+export type ResolveClientDocumentUploadsPayload = ClientDocumentUploadsType | OperationInfo;
 
 export type ResolveClientProfilePhotoUploadInput = {
   clientProfileId: Scalars['ID']['input'];

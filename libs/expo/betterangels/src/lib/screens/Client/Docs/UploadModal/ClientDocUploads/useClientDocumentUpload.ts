@@ -5,15 +5,13 @@ import {
 } from '@monorepo/expo/shared/clients';
 import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
 import {
-  CreateClientDocumentsFromUploadsDocument,
-  CreateClientDocumentUploadsDocument,
-} from '../../../__generated__/Client.generated';
+  GenerateClientDocumentUploadsDocument,
+  ResolveClientDocumentUploadsDocument,
+} from './__generated__/ClientDocUploads.generated';
 
 export function useClientDocumentUpload() {
-  const [createUploads] = useMutation(CreateClientDocumentUploadsDocument);
-  const [resolveUploads] = useMutation(
-    CreateClientDocumentsFromUploadsDocument
-  );
+  const [createUploads] = useMutation(GenerateClientDocumentUploadsDocument);
+  const [resolveUploads] = useMutation(ResolveClientDocumentUploadsDocument);
 
   async function uploadDocuments({
     clientProfileId,
@@ -59,7 +57,7 @@ export function useClientDocumentUpload() {
     console.log(JSON.stringify(result, null, 2));
     console.log();
 
-    const payload = result.data?.createClientDocumentUploads;
+    const payload = result.data?.generateClientDocumentUploads;
 
     if (!payload) {
       throw new Error('Missing response');
@@ -69,7 +67,7 @@ export function useClientDocumentUpload() {
       throw new Error(payload.messages.map((m) => m.message).join(', '));
     }
 
-    if (payload.__typename !== 'PresignedS3UploadsResult') {
+    if (payload.__typename !== 'AuthorizedPresignedS3UploadsType') {
       throw new Error('Unexpected response type');
     }
 
@@ -113,12 +111,13 @@ export function useClientDocumentUpload() {
         filename: originalDoc.name,
         contentType: originalDoc.type,
         namespace,
+        signatureKey: fileUpload.signatureKey,
       };
     });
 
     // 5: Persist uploaded documents in backend
     // - creates DB records referencing S3 keys
-    const resolved = resolveUploads({
+    const resolved = await resolveUploads({
       variables: {
         data: {
           clientProfileId,

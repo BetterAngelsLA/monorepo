@@ -5,25 +5,8 @@ from typing import Optional, cast
 
 import strawberry
 from common.graphql.types import FeatureControlData, FlagType, SampleType, SwitchType
-from strawberry.scalars import JSON
 from strawberry.types import Info
-
-# from strawberry. import JSON
 from waffle import get_waffle_flag_model, get_waffle_sample_model, get_waffle_switch_model
-
-
-@strawberry.type
-class PresignedS3UploadResultItem:
-    ref_id: str
-    url: str
-    fields: JSON
-    key: str
-    signature_key: Optional[str] = None
-
-
-@strawberry.type
-class PresignedS3UploadsResult:
-    uploads: list[PresignedS3UploadResultItem]
 
 
 @strawberry.type

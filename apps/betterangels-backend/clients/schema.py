@@ -18,14 +18,14 @@ from clients.permissions import (
 )
 
 # from clients.services.client_profile_photo import create_client_profile_photo_presigned_upload, resolve_client_profile_photo_presigned_upload
-from clients.services import client_profile_photo
-from clients.services.client_document import (
-    create_client_document_presigned_uploads,
-    create_client_documents_from_s3_uploads,
-)
+from clients.services import client_document, client_profile_photo
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
-from common.graphql.schema import PresignedS3UploadResultItem, PresignedS3UploadsResult
-from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.graphql.types import (
+    AuthorizedPresignedS3UploadsType,
+    AuthorizedPresignedS3UploadType,
+    DeleteDjangoObjectInput,
+    DeletedObjectType,
+)
 from common.models import Attachment, PhoneNumber
 from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated, assign_object_permissions
@@ -49,9 +49,8 @@ from .enums import RelationshipTypeEnum
 from .types import (
     ClientContactInput,
     ClientContactType,
-    ClientDocumentsFromUploadsInput,
     ClientDocumentType,
-    ClientDocumentUploadsInput,
+    ClientDocumentUploadsType,
     ClientHouseholdMemberInput,
     ClientHouseholdMemberType,
     ClientProfileDataImportType,
@@ -60,13 +59,14 @@ from .types import (
     ClientProfilePhotoInput,
     ClientProfileType,
     CreateClientDocumentInput,
-    CreateClientDocumentsFromUploadsResult,
     CreateClientProfileInput,
     CreateProfileDataImportInput,
+    GenerateClientDocumentUploadsInput,
     GenerateClientProfilePhotoUploadInput,
     HmisProfileInput,
     HmisProfileType,
     ImportClientProfileInput,
+    ResolveClientDocumentUploadsInput,
     ResolveClientProfilePhotoUploadInput,
     SocialMediaProfileInput,
     SocialMediaProfileType,
@@ -597,11 +597,11 @@ class Mutation:
     )
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
-    def create_client_document_uploads(
+    def generate_client_document_uploads(
         self,
         info: Info,
-        data: ClientDocumentUploadsInput,
-    ) -> PresignedS3UploadsResult:
+        data: GenerateClientDocumentUploadsInput,
+    ) -> AuthorizedPresignedS3UploadsType:
         user = cast(User, get_current_user(info))
 
         filter_for_user(
@@ -610,26 +610,27 @@ class Mutation:
             [ClientProfilePermissions.CHANGE],
         ).get(id=data.client_profile_id)
 
-        results: list[PresignedS3UploadResultItem] = []
+        results: list[AuthorizedPresignedS3UploadType] = []
 
-        presigned_uploads = create_client_document_presigned_uploads(uploads=data.uploads)
+        presigned_uploads = client_document.create_presigned_uploads(user=user, uploads=data.uploads)
 
-        for item in presigned_uploads["uploads"]:
-            upload = PresignedS3UploadResultItem(
-                ref_id=item["ref_id"],
-                url=item["url"],
-                fields=cast(JSON, item["fields"]),
-                key=item["key"],
+        for item in presigned_uploads.uploads:
+            upload = AuthorizedPresignedS3UploadType(
+                ref_id=item.ref_id,
+                url=item.url,
+                fields=cast(JSON, item.fields),
+                key=item.key,
+                signature_key=item.signature_key,
             )
 
             results.append(upload)
 
-        return PresignedS3UploadsResult(uploads=results)
+        return AuthorizedPresignedS3UploadsType(uploads=results)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
-    def create_client_documents_from_uploads(
-        self, info: Info, data: ClientDocumentsFromUploadsInput
-    ) -> CreateClientDocumentsFromUploadsResult:
+    def resolve_client_document_uploads(
+        self, info: Info, data: ResolveClientDocumentUploadsInput
+    ) -> ClientDocumentUploadsType:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
 
@@ -639,13 +640,13 @@ class Mutation:
                 [ClientProfilePermissions.CHANGE],
             ).get(id=data.client_profile_id)
 
-            attachments = create_client_documents_from_s3_uploads(
+            documents = client_document.resolve_upload(
                 user=user,
                 client_profile=client_profile,
                 documents=data.documents,
             )
 
-            return CreateClientDocumentsFromUploadsResult(documents=attachments)
+            return ClientDocumentUploadsType(documents=documents)
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
@@ -718,7 +719,7 @@ class Mutation:
         self,
         info: Info,
         data: GenerateClientProfilePhotoUploadInput,
-    ) -> PresignedS3UploadResultItem:
+    ) -> AuthorizedPresignedS3UploadType:
         user = cast(User, get_current_user(info))
 
         result = client_profile_photo.create_presigned_upload(
@@ -726,7 +727,7 @@ class Mutation:
             upload=data,
         )
 
-        return PresignedS3UploadResultItem(
+        return AuthorizedPresignedS3UploadType(
             ref_id=result["ref_id"],
             url=result["url"],
             fields=cast(JSON, result["fields"]),

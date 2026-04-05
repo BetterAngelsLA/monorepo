@@ -96,38 +96,6 @@ class ClientProfileOrder:
 
 
 @strawberry.input
-class ClientDocumentUploadsInputItem:
-    ref_id: str
-    filename: str
-    content_type: str
-
-
-@strawberry.input
-class ClientDocumentUploadsInput:
-    client_profile_id: ID
-    uploads: list[ClientDocumentUploadsInputItem]
-
-
-@strawberry.input
-class ClientDocumentFromUploadsInput:
-    key: str
-    filename: str
-    content_type: str
-    namespace: ClientDocumentNamespaceEnum
-
-
-@strawberry.input
-class ClientDocumentsFromUploadsInput:
-    client_profile_id: ID
-    documents: list[ClientDocumentFromUploadsInput]
-
-
-@strawberry.type
-class CreateClientDocumentsFromUploadsResult:
-    documents: list[ClientDocumentType]
-
-
-@strawberry.input
 class ClientSearchInput:
     excluded_client_profile_id: Optional[str] = None
     california_id: Optional[str] = None
@@ -458,3 +426,40 @@ class ImportClientProfileInput:
 class UpdateClientDocumentInput:
     id: ID
     original_filename: auto
+
+
+# new upload types
+
+
+# client docs
+@strawberry.input
+class ClientDocumentUploadsInputItem:
+    ref_id: str
+    filename: str
+    content_type: str
+
+
+@strawberry.input
+class GenerateClientDocumentUploadsInput:
+    client_profile_id: ID
+    uploads: list[ClientDocumentUploadsInputItem]
+
+
+@strawberry.input
+class ClientDocumentFromUploadsInput:
+    key: str
+    signature_key: str
+    filename: str
+    content_type: str
+    namespace: ClientDocumentNamespaceEnum
+
+
+@strawberry.input
+class ResolveClientDocumentUploadsInput:
+    client_profile_id: ID
+    documents: list[ClientDocumentFromUploadsInput]
+
+
+@strawberry.type
+class ClientDocumentUploadsType:
+    documents: list[ClientDocumentType]

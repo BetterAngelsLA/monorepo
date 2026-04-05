@@ -10,7 +10,7 @@ mutation GenerateClientProfilePhotoUpload(
       }
     }
 
-    ... on PresignedS3UploadResultItem {
+    ... on AuthorizedPresignedS3UploadType {
       refId
       url
       fields

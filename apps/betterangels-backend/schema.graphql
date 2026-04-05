@@ -158,6 +158,18 @@ type AuthResponse {
   status_code: String!
 }
 
+type AuthorizedPresignedS3UploadType {
+  refId: String!
+  url: String!
+  fields: JSON!
+  key: String!
+  signatureKey: String!
+}
+
+type AuthorizedPresignedS3UploadsType {
+  uploads: [AuthorizedPresignedS3UploadType!]!
+}
+
 enum BedStatusChoices {
   AVAILABLE
   OCCUPIED
@@ -240,6 +252,7 @@ input ClientDocumentFilter {
 
 input ClientDocumentFromUploadsInput {
   key: String!
+  signatureKey: String!
   filename: String!
   contentType: String!
   namespace: ClientDocumentNamespaceEnum!
@@ -286,20 +299,14 @@ type ClientDocumentTypeOffsetPaginated {
   results: [ClientDocumentType!]!
 }
 
-input ClientDocumentUploadsInput {
-  clientProfileId: ID!
-  uploads: [ClientDocumentUploadsInputItem!]!
-}
-
 input ClientDocumentUploadsInputItem {
   refId: String!
   filename: String!
   contentType: String!
 }
 
-input ClientDocumentsFromUploadsInput {
-  clientProfileId: ID!
-  documents: [ClientDocumentFromUploadsInput!]!
+type ClientDocumentUploadsType {
+  documents: [ClientDocumentType!]!
 }
 
 input ClientHouseholdMemberInput {
@@ -500,14 +507,6 @@ input CreateClientDocumentInput {
 }
 
 union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
-
-union CreateClientDocumentUploadsPayload = PresignedS3UploadsResult | OperationInfo
-
-union CreateClientDocumentsFromUploadsPayload = CreateClientDocumentsFromUploadsResult | OperationInfo
-
-type CreateClientDocumentsFromUploadsResult {
-  documents: [ClientDocumentType!]!
-}
 
 union CreateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo
 
@@ -929,13 +928,20 @@ enum GenderEnum {
   PREFER_NOT_TO_SAY
 }
 
+input GenerateClientDocumentUploadsInput {
+  clientProfileId: ID!
+  uploads: [ClientDocumentUploadsInputItem!]!
+}
+
+union GenerateClientDocumentUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo
+
 input GenerateClientProfilePhotoUploadInput {
   refId: String!
   filename: String!
   contentType: String!
 }
 
-union GenerateClientProfilePhotoUploadPayload = PresignedS3UploadResultItem | OperationInfo
+union GenerateClientProfilePhotoUploadPayload = AuthorizedPresignedS3UploadType | OperationInfo
 
 input GeolocationInput {
   latitude: Float!
@@ -1418,9 +1424,9 @@ type Mutation {
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
-  createClientDocumentUploads(data: ClientDocumentUploadsInput!): CreateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
-  createClientDocumentsFromUploads(data: ClientDocumentsFromUploadsInput!): CreateClientDocumentsFromUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
-  createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true) @deprecated(reason: "Use createClientDocumentUploads and createClientDocumentsFromUploads instead.")
+  generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  resolveClientDocumentUploads(data: ResolveClientDocumentUploadsInput!): ResolveClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   generateClientProfilePhotoUpload(data: GenerateClientProfilePhotoUploadInput!): GenerateClientProfilePhotoUploadPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   resolveClientProfilePhotoUpload(data: ResolveClientProfilePhotoUploadInput!): ResolveClientProfilePhotoUploadPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
@@ -1760,18 +1766,6 @@ enum PreferredCommunicationEnum {
   WHATSAPP
 }
 
-type PresignedS3UploadResultItem {
-  refId: String!
-  url: String!
-  fields: JSON!
-  key: String!
-  signatureKey: String
-}
-
-type PresignedS3UploadsResult {
-  uploads: [PresignedS3UploadResultItem!]!
-}
-
 type ProgramEnrollmentType {
   id: String!
   clientId: String!
@@ -1885,6 +1879,13 @@ type ReportSummaryType {
   topProvidedServices: [NameCountType!]!
   topRequestedServices: [NameCountType!]!
 }
+
+input ResolveClientDocumentUploadsInput {
+  clientProfileId: ID!
+  documents: [ClientDocumentFromUploadsInput!]!
+}
+
+union ResolveClientDocumentUploadsPayload = ClientDocumentUploadsType | OperationInfo
 
 input ResolveClientProfilePhotoUploadInput {
   clientProfileId: ID!
