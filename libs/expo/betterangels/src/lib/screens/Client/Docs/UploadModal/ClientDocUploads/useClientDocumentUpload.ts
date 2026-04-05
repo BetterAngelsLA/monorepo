@@ -4,6 +4,7 @@ import {
   uploadFileToS3WithPresignedPost,
 } from '@monorepo/expo/shared/clients';
 import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
+import { ClientProfileDocument } from '../../../__generated__/Client.generated';
 import {
   GenerateClientDocumentUploadsDocument,
   ResolveClientDocumentUploadsDocument,
@@ -84,7 +85,7 @@ export function useClientDocumentUpload() {
           presignedPost: {
             url: fileUpload.url,
             fields: fileUpload.fields as Record<string, string>,
-            key: fileUpload.key,
+            key: fileUpload.presignedKey,
           },
           fileUri: originalDoc.uri,
           fileName: originalDoc.name,
@@ -107,11 +108,11 @@ export function useClientDocumentUpload() {
       }
 
       return {
-        key: fileUpload.key,
+        presignedKey: fileUpload.presignedKey,
         filename: originalDoc.name,
         contentType: originalDoc.type,
         namespace,
-        signatureKey: fileUpload.signatureKey,
+        uploadToken: fileUpload.uploadToken,
       };
     });
 
@@ -124,6 +125,12 @@ export function useClientDocumentUpload() {
           documents: documentsToSave,
         },
       },
+      refetchQueries: [
+        {
+          query: ClientProfileDocument,
+          variables: { id: clientProfileId },
+        },
+      ],
     });
 
     console.log();

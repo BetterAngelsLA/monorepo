@@ -162,8 +162,8 @@ type AuthorizedPresignedS3UploadType {
   refId: String!
   url: String!
   fields: JSON!
-  key: String!
-  signatureKey: String!
+  presignedKey: String!
+  uploadToken: String!
 }
 
 type AuthorizedPresignedS3UploadsType {
@@ -251,8 +251,8 @@ input ClientDocumentFilter {
 }
 
 input ClientDocumentFromUploadsInput {
-  key: String!
-  signatureKey: String!
+  presignedKey: String!
+  uploadToken: String!
   filename: String!
   contentType: String!
   namespace: ClientDocumentNamespaceEnum!
@@ -1889,8 +1889,8 @@ union ResolveClientDocumentUploadsPayload = ClientDocumentUploadsType | Operatio
 
 input ResolveClientProfilePhotoUploadInput {
   clientProfileId: ID!
-  filePath: String!
-  signatureKey: String!
+  presignedKey: String!
+  uploadToken: String!
 }
 
 union ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo

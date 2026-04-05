@@ -159,12 +159,12 @@ def _generate_presigned_post_with_client(
     if fields_key != key:
         raise RuntimeError(f"Presigned POST key mismatch: expected '{key}', got '{fields_key}'")
 
-    return PresignedS3UploadResult(
-        ref_id=ref_id,
-        url=response["url"],
-        fields=fields,
-        key=key,
-    )
+    return {
+        "ref_id": ref_id,
+        "url": response["url"],
+        "fields": fields,
+        "key": key,
+    }
 
 
 def generate_s3_presigned_upload_urls(
@@ -206,12 +206,12 @@ def generate_s3_presigned_upload_urls(
             max_file_size=upload.get("max_file_size"),
         )
 
-        result = PresignedS3UploadResult(
-            ref_id=result["ref_id"],
-            url=_rewrite_presigned_url_for_local(result["url"]),
-            fields=result["fields"],
-            key=result["key"],
-        )
+        result = {
+            "ref_id": result["ref_id"],
+            "url": _rewrite_presigned_url_for_local(result["url"]),
+            "fields": result["fields"],
+            "key": result["key"],
+        }
 
         print()
         print("******************* rpresigned RESULT")
@@ -221,57 +221,3 @@ def generate_s3_presigned_upload_urls(
         results.append(result)
 
     return {"uploads": results}
-
-
-# aws sso login
-# check boto3 default creds usage -
-
-
-# res = {
-#     "url": "https://development-us-west-2-betterangels-backend.s3.amazonaws.com/",
-#     "fields": {
-#         "Content-Type": "image/jpg",
-#         "key": "attachments/00299efa-a960-4650-8c2c-1507fbd9f274.jpg",
-#         "AWSAccessKeyId": "ASIA3NE2EA5R777OFDA7",
-#         "policy": "eyJleHBpcmF0aW9uIjogIjIwMjYtMDMtMjVUMjI6MzA6NTlaIiwgImNvbmRpdGlvbnMiOiBbeyJDb250ZW50LVR5cGUiOiAiaW1hZ2UvanBnIn0sIFsiY29udGVudC1sZW5ndGgtcmFuZ2UiLCAwLCAxMDAwMDAwMF0sIFsic3RhcnRzLXdpdGgiLCAiJGtleSIsICJhdHRhY2htZW50cy8iXSwgeyJidWNrZXQiOiAiZGV2ZWxvcG1lbnQtdXMtd2VzdC0yLWJldHRlcmFuZ2Vscy1iYWNrZW5kIn0sIHsia2V5IjogImF0dGFjaG1lbnRzLzAwMjk5ZWZhLWE5NjAtNDY1MC04YzJjLTE1MDdmYmQ5ZjI3NC5qcGcifV19",
-#         "signature": "nvjPGAVFTEe7Z/IeFB9sahiIOmM=",
-#     },
-# }
-
-
-generate_presigned_post_response = {
-    "url": "https://development-us-west-2-betterangels-backend.s3.amazonaws.com/",
-    "fields": {
-        "Content-Type": "image/jpg",
-        "key": "attachments/00299efa-a960-4650-8c2c-1507fbd9f274.jpg",
-        "AWSAccessKeyId": "A....",
-        "policy": "eyJ....",
-        "signature": "nvjPGAVFTEe7Z/IeFB9sahiIOmM=",
-    },
-}
-
-presigned_s3v4_response = {
-    "url": "https://development-us-west-2-betterangels-backend.s3.amazonaws.com/",
-    "fields": {
-        "Content-Type": "image/jpeg",
-        "key": "attachments/0d6982df-b63a-49b4-bb87-4d8590050164.jpg",
-        "x-amz-algorithm": "AWS4-HMAC-SHA256",
-        "x-amz-credential": "ASIA3NE2EA5R777OFDA7/20260325/us-west-2/s3/aws4_request",
-        "x-amz-date": "20260325T223204Z",
-        "policy": "eyJleHBpcmF0aW9uIjogIjIwMjYtMDMtMjVUMjI6Mzc6MDRaIiwgImNvbmRpdGlvbnMiOiBbeyJDb250ZW50LVR5cGUiOiAiaW1hZ2UvanBlZyJ9LCBbImNvbnRlbnQtbGVuZ3RoLXJhbmdlIiwgMCwgMTAwMDAwMDBdLCBbInN0YXJ0cy13aXRoIiwgIiRrZXkiLCAiYXR0YWNobWVudHMvIl0sIHsiYnVja2V0IjogImRldmVsb3BtZW50LXVzLXdlc3QtMi1iZXR0ZXJhbmdlbHMtYmFja2VuZCJ9LCB7ImtleSI6ICJhdHRhY2htZW50cy8wZDY5ODJkZi1iNjNhLTQ5YjQtYmI4Ny00ZDg1OTAwNTAxNjQuanBnIn0sIHsieC1hbXotYWxnb3JpdGhtIjogIkFXUzQtSE1BQy1TSEEyNTYifSwgeyJ4LWFtei1jcmVkZW50aWFsIjogIkFTSUEzTkUyRUE1Ujc3N09GREE3LzIwMjYwMzI1L3VzLXdlc3QtMi9zMy9hd3M0X3JlcXVlc3QifSwgeyJ4LWFtei1kYXRlIjogIjIwMjYwMzI1VDIyMzIwNFoifV19",
-        "x-amz-signature": "376b072b23978d0fda4585a21e12d5377ae7afa527a67d7ffffcb6189384dd7a",
-    },
-}
-
-presigned_s3v4_response_min = {
-    "url": "https://development-us-west-2-betterangels-backend.s3.amazonaws.com/",
-    "fields": {
-        "Content-Type": "image/jpeg",
-        "key": "attachments/0d6982df-b63a-49b4-bb87-4d8590050164.jpg",
-        "x-amz-algorithm": "AWS4-HMAC-SHA256",
-        "x-amz-credential": "ASIA3NE2EA5R777OFDA7/20260325/us-west-2/s3/aws4_request",
-        "x-amz-date": "20260325T223204Z",
-        "policy": "eyJleHBpcmF0aW9uIjogIjIwMjYtMDMtMjVUMjI6Mzc6MDRaIiwgImNvbmRpdGlvbnMiOiBbeyJDb250ZW50LVR5cGUiOiAiaW1hZ2UvanBlZyJ9LCBbImNvbnRlbnQtbGVuZ3RoLXJhbmdlIiwgMCwgMTAwMDAwMDBdLCBbInN0YXJ0cy13aXRoIiwgIiRrZXkiLCAiYXR0YWNobWVudHMvIl0sIHsiYnVja2V0IjogImRldmVsb3BtZW50LXVzLXdlc3QtMi1iZXR0ZXJhbmdlbHMtYmFja2VuZCJ9LCB7ImtleSI6ICJhdHRhY2htZW50cy8wZDY5ODJkZi1iNjNhLTQ5YjQtYmI4Ny00ZDg1OTAwNTAxNjQuanBnIn0sIHsieC1hbXotYWxnb3JpdGhtIjogIkFXUzQtSE1BQy1TSEEyNTYifSwgeyJ4LWFtei1jcmVkZW50aWFsIjogIkFTSUEzTkUyRUE1Ujc3N09GREE3LzIwMjYwMzI1L3VzLXdlc3QtMi9zMy9hd3M0X3JlcXVlc3QifSwgeyJ4LWFtei1kYXRlIjogIjIwMjYwMzI1VDIyMzIwNFoifV19",
-        "x-amz-signature": "376b072b23978d0fda4585a21e12d5377ae7afa527a67d7ffffcb6189384dd7a",
-    },
-}

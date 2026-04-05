@@ -16,8 +16,8 @@ mutation GenerateClientDocumentUploads(
         refId
         url
         fields
-        key
-        signatureKey
+        presignedKey
+        uploadToken
       }
     }
   }

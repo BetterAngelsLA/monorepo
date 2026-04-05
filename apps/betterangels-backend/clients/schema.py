@@ -16,8 +16,6 @@ from clients.permissions import (
     HmisProfilePermissions,
     SocialMediaProfilePermissions,
 )
-
-# from clients.services.client_profile_photo import create_client_profile_photo_presigned_upload, resolve_client_profile_photo_presigned_upload
 from clients.services import client_document, client_profile_photo
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.types import (
@@ -604,28 +602,26 @@ class Mutation:
     ) -> AuthorizedPresignedS3UploadsType:
         user = cast(User, get_current_user(info))
 
-        filter_for_user(
+        _ = filter_for_user(
             ClientProfile.objects.all(),
             user,
             [ClientProfilePermissions.CHANGE],
         ).get(id=data.client_profile_id)
 
-        results: list[AuthorizedPresignedS3UploadType] = []
-
         presigned_uploads = client_document.create_presigned_uploads(user=user, uploads=data.uploads)
 
-        for item in presigned_uploads.uploads:
-            upload = AuthorizedPresignedS3UploadType(
-                ref_id=item.ref_id,
-                url=item.url,
-                fields=cast(JSON, item.fields),
-                key=item.key,
-                signature_key=item.signature_key,
-            )
-
-            results.append(upload)
-
-        return AuthorizedPresignedS3UploadsType(uploads=results)
+        return AuthorizedPresignedS3UploadsType(
+            uploads=[
+                AuthorizedPresignedS3UploadType(
+                    ref_id=item["ref_id"],
+                    url=item["url"],
+                    fields=cast(JSON, item["fields"]),
+                    presigned_key=item["presigned_key"],
+                    upload_token=item["upload_token"],
+                )
+                for item in presigned_uploads["uploads"]
+            ]
+        )
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
     def resolve_client_document_uploads(
@@ -731,8 +727,8 @@ class Mutation:
             ref_id=result["ref_id"],
             url=result["url"],
             fields=cast(JSON, result["fields"]),
-            key=result["key"],
-            signature_key=result["signature_key"],
+            presigned_key=result["presigned_key"],
+            upload_token=result["upload_token"],
         )
 
     @strawberry_django.mutation(
@@ -755,8 +751,8 @@ class Mutation:
             client_profile = client_profile_photo.resolve_upload(
                 user=user,
                 client_profile=client_profile,
-                file_path=data.file_path,
-                signature_key=data.signature_key,
+                presigned_key=data.presigned_key,
+                upload_token=data.upload_token,
             )
 
             return cast(ClientProfileType, client_profile)

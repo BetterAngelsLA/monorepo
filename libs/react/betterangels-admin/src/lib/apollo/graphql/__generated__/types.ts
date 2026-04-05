@@ -160,9 +160,9 @@ export type AuthResponse = {
 export type AuthorizedPresignedS3UploadType = {
   __typename?: 'AuthorizedPresignedS3UploadType';
   fields: Scalars['JSON']['output'];
-  key: Scalars['String']['output'];
+  presignedKey: Scalars['String']['output'];
   refId: Scalars['String']['output'];
-  signatureKey: Scalars['String']['output'];
+  uploadToken: Scalars['String']['output'];
   url: Scalars['String']['output'];
 };
 
@@ -256,9 +256,9 @@ export type ClientDocumentFilter = {
 export type ClientDocumentFromUploadsInput = {
   contentType: Scalars['String']['input'];
   filename: Scalars['String']['input'];
-  key: Scalars['String']['input'];
   namespace: ClientDocumentNamespaceEnum;
-  signatureKey: Scalars['String']['input'];
+  presignedKey: Scalars['String']['input'];
+  uploadToken: Scalars['String']['input'];
 };
 
 export enum ClientDocumentGroupEnum {
@@ -2403,8 +2403,8 @@ export type ResolveClientDocumentUploadsPayload = ClientDocumentUploadsType | Op
 
 export type ResolveClientProfilePhotoUploadInput = {
   clientProfileId: Scalars['ID']['input'];
-  filePath: Scalars['String']['input'];
-  signatureKey: Scalars['String']['input'];
+  presignedKey: Scalars['String']['input'];
+  uploadToken: Scalars['String']['input'];
 };
 
 export type ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo;

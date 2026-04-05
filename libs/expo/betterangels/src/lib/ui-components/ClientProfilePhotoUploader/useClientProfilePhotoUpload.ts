@@ -52,8 +52,8 @@ export function useClientProfilePhotoUpload() {
       throw new Error('Unexpected response type');
     }
 
-    if (!payload.signatureKey) {
-      throw new Error('Missing signatureKey in presigned upload response');
+    if (!payload.uploadToken) {
+      throw new Error('Missing uploadToken in presigned upload response');
     }
 
     // 2: Upload file directly to S3 using presigned POST
@@ -61,7 +61,7 @@ export function useClientProfilePhotoUpload() {
       presignedPost: {
         url: payload.url,
         fields: payload.fields as Record<string, string>,
-        key: payload.key,
+        key: payload.presignedKey,
       },
       fileUri: file.uri,
       fileName: file.name,
@@ -72,8 +72,8 @@ export function useClientProfilePhotoUpload() {
       variables: {
         data: {
           clientProfileId,
-          filePath: payload.key,
-          signatureKey: payload.signatureKey,
+          presignedKey: payload.presignedKey,
+          uploadToken: payload.uploadToken,
         },
       },
     });

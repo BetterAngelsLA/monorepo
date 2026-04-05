@@ -249,8 +249,8 @@ class GenerateClientProfilePhotoUploadInput:
 @strawberry.input
 class ResolveClientProfilePhotoUploadInput:
     client_profile_id: ID
-    file_path: str
-    signature_key: str
+    presigned_key: str
+    upload_token: str
 
 
 @strawberry_django.type(ClientContact)
@@ -447,8 +447,8 @@ class GenerateClientDocumentUploadsInput:
 
 @strawberry.input
 class ClientDocumentFromUploadsInput:
-    key: str
-    signature_key: str
+    presigned_key: str
+    upload_token: str
     filename: str
     content_type: str
     namespace: ClientDocumentNamespaceEnum

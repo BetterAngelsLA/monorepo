@@ -14,8 +14,8 @@ mutation GenerateClientProfilePhotoUpload(
       refId
       url
       fields
-      key
-      signatureKey
+      presignedKey
+      uploadToken
     }
   }
 }

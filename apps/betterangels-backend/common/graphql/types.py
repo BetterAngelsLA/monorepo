@@ -250,7 +250,7 @@ class PresignedS3UploadType:
     ref_id: str
     url: str
     fields: JSON
-    key: str
+    presigned_key: str
 
 
 @strawberry.type
@@ -260,7 +260,7 @@ class PresignedS3UploadsType:
 
 @strawberry.type
 class AuthorizedPresignedS3UploadType(PresignedS3UploadType):
-    signature_key: str
+    upload_token: str
 
 
 @strawberry.type
