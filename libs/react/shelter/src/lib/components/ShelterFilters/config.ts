@@ -196,8 +196,9 @@ const parkingOptions = [
   ParkingChoices.Automobile,
   ParkingChoices.Bicycle,
   ParkingChoices.Motorcycle,
-  ParkingChoices.NoParking,
   ParkingChoices.Rv,
+  ParkingChoices.Street,
+  ParkingChoices.NoParking,
 ];
 
 const parkingOptionsList: TShelterFilterOption[] = parkingOptions.map(
