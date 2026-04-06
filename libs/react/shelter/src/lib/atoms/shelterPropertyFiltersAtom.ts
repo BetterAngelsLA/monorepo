@@ -3,6 +3,7 @@ import { TShelterPropertyFilters } from '../components/ShelterSearch';
 
 export const nullShelterPropertyFilters: TShelterPropertyFilters = {
   openNow: false,
+  isAccessCenter: false,
   pets: [],
   demographics: [],
   specialSituationRestrictions: [],

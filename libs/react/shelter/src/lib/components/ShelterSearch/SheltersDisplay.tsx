@@ -46,12 +46,19 @@ export function SheltersDisplay(props: TProps) {
     }
 
     if (propertyFilters) {
-      const { openNow, ...propertyOnlyFilters } = propertyFilters;
+      const { openNow, isAccessCenter, ...propertyOnlyFilters } =
+        propertyFilters;
 
       if (openNow) {
         vars = vars || {};
         vars.filters = vars.filters || {};
         vars.filters.openNow = true;
+      }
+
+      if (isAccessCenter) {
+        vars = vars || {};
+        vars.filters = vars.filters || {};
+        vars.filters.isAccessCenter = true;
       }
 
       const prunedFilters = pruneFilters(propertyOnlyFilters);
