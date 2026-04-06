@@ -2088,6 +2088,7 @@ export type Query = {
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
+  shelterMaxStay?: Maybe<Scalars['Int']['output']>;
   shelterServiceCategories: ServiceCategoryTypeOffsetPaginated;
   shelters: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
@@ -2559,6 +2560,7 @@ export type ShelterFilter = {
   geolocation?: InputMaybe<GeolocationInput>;
   isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
   mapBounds?: InputMaybe<MapBoundsInput>;
+  maxStay?: InputMaybe<Scalars['Int']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   openNow?: InputMaybe<Scalars['Boolean']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;

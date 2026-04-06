@@ -62,6 +62,13 @@ class ShelterFilter:
         return Q(**{f"{prefix}shelter_types__name__exact": ShelterTypeChoices.ACCESS_CENTER})
 
     @strawberry_django.filter_field
+    def max_stay(self, info: Info, value: Optional[int], prefix: str) -> Q:
+        if not value:
+            return Q()
+
+        return Q(**{f"{prefix}max_stay__gte": value})
+
+    @strawberry_django.filter_field
     def name(self, info: Info, value: Optional[str], prefix: str) -> Q:
         if not value:
             return Q()

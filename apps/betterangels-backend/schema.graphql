@@ -1796,6 +1796,7 @@ type Query {
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
+  shelterMaxStay: Int
 }
 
 enum RaceEnum {
@@ -2056,6 +2057,7 @@ input ShelterFilter {
   NOT: ShelterFilter
   DISTINCT: Boolean
   isAccessCenter: Boolean
+  maxStay: Int
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
