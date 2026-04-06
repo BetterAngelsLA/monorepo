@@ -46,6 +46,13 @@ export function ShelterFilters(props: IProps) {
     }));
   }
 
+  function onIsAccessCenterChange(checked: boolean) {
+    setFilters((prev) => ({
+      ...prev,
+      isAccessCenter: checked,
+    }));
+  }
+
   useEffect(() => {
     onChange && onChange(filters);
   }, [filters, onChange]);
@@ -59,6 +66,15 @@ export function ShelterFilters(props: IProps) {
         </div>
       </div>
       <div>
+        <div className="mt-8">
+          <ExpandableContainer header="Access Center">
+            <Checkbox
+              label="Shelter is Access Center"
+              checked={!!filters.isAccessCenter}
+              onChange={onIsAccessCenterChange}
+            />
+          </ExpandableContainer>
+        </div>
         <div className="mt-8">
           <ExpandableContainer header="Availability">
             <Checkbox

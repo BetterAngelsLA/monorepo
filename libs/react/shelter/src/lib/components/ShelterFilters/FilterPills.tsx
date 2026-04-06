@@ -23,6 +23,12 @@ export function FilterPills(props: IProps) {
       }
       continue;
     }
+    if (key === 'isAccessCenter') {
+      if (value) {
+        pillTextArr.push('Shelter is Access Center');
+      }
+      continue;
+    }
 
     (value as string[] | undefined)?.forEach((val) => {
       const label = getFilterLabel(

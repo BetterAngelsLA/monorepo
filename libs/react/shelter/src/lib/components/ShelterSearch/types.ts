@@ -9,6 +9,7 @@ import {
 
 export type TShelterPropertyFilters = {
   openNow?: boolean | null;
+  isAccessCenter?: boolean | null;
   demographics?: DemographicChoices[] | null;
   parking?: ParkingChoices[] | null;
   pets?: PetChoices[] | null;
