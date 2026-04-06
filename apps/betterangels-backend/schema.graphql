@@ -164,6 +164,18 @@ type AuthResponse {
   status_code: String!
 }
 
+type AuthorizedPresignedS3UploadType {
+  refId: String!
+  url: String!
+  fields: JSON!
+  presignedKey: String!
+  uploadToken: String!
+}
+
+type AuthorizedPresignedS3UploadsType {
+  uploads: [AuthorizedPresignedS3UploadType!]!
+}
+
 enum BedStatusChoices {
   AVAILABLE
   OCCUPIED
@@ -251,6 +263,14 @@ input ClientDocumentFilter {
   documentGroups: [ClientDocumentGroupEnum!]
 }
 
+input ClientDocumentFromUploadsInput {
+  presignedKey: String!
+  uploadToken: String!
+  filename: String!
+  contentType: String!
+  namespace: ClientDocumentNamespaceEnum!
+}
+
 enum ClientDocumentGroupEnum {
   DOC_READY
   FORMS
@@ -290,6 +310,16 @@ type ClientDocumentTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [ClientDocumentType!]!
+}
+
+input ClientDocumentUploadsInputItem {
+  refId: String!
+  filename: String!
+  contentType: String!
+}
+
+type ClientDocumentUploadsType {
+  documents: [ClientDocumentType!]!
 }
 
 input ClientHouseholdMemberInput {
@@ -918,6 +948,21 @@ enum GenderEnum {
   PREFER_NOT_TO_SAY
 }
 
+input GenerateClientDocumentUploadsInput {
+  clientProfileId: ID!
+  uploads: [ClientDocumentUploadsInputItem!]!
+}
+
+union GenerateClientDocumentUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo
+
+input GenerateClientProfilePhotoUploadInput {
+  refId: String!
+  filename: String!
+  contentType: String!
+}
+
+union GenerateClientProfilePhotoUploadPayload = AuthorizedPresignedS3UploadType | OperationInfo
+
 input GeolocationInput {
   latitude: Float!
   longitude: Float!
@@ -1402,6 +1447,10 @@ type Mutation {
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  resolveClientDocumentUploads(data: ResolveClientDocumentUploadsInput!): ResolveClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  generateClientProfilePhotoUpload(data: GenerateClientProfilePhotoUploadInput!): GenerateClientProfilePhotoUploadPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  resolveClientProfilePhotoUpload(data: ResolveClientProfilePhotoUploadInput!): ResolveClientProfilePhotoUploadPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError! @hmisDirective
@@ -1855,6 +1904,21 @@ type ReportSummaryType {
   topProvidedServices: [NameCountType!]!
   topRequestedServices: [NameCountType!]!
 }
+
+input ResolveClientDocumentUploadsInput {
+  clientProfileId: ID!
+  documents: [ClientDocumentFromUploadsInput!]!
+}
+
+union ResolveClientDocumentUploadsPayload = ClientDocumentUploadsType | OperationInfo
+
+input ResolveClientProfilePhotoUploadInput {
+  clientProfileId: ID!
+  presignedKey: String!
+  uploadToken: String!
+}
+
+union ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo
 
 input RevertNoteInput {
   id: ID!

@@ -1,18 +1,8 @@
 from typing import Optional
 
 from accounts.tests.baker_recipes import permission_group_recipe
-from clients.enums import (
-    ClientDocumentNamespaceEnum,
-    GenderEnum,
-    HmisAgencyEnum,
-    LanguageEnum,
-)
-from clients.models import (
-    ClientContact,
-    ClientHouseholdMember,
-    ClientProfile,
-    HmisProfile,
-)
+from clients.enums import ClientDocumentNamespaceEnum, GenderEnum, HmisAgencyEnum, LanguageEnum
+from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile
 from clients.tests.utils import (
     ClientContactBaseTestCase,
     ClientHouseholdMemberBaseTestCase,
@@ -209,7 +199,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
                 self.assertGraphQLUnauthenticated(response)
 
 
-@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+@override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
 class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()

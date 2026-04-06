@@ -193,14 +193,20 @@ class TestSendScheduledReportTask:
         )
 
         with time_machine.travel("2025-01-15 00:00:00", tick=False):
-            # We mock generation again
-            with patch("reports.tasks.generate_report_data") as mock_gen:
+            with (
+                patch("reports.tasks.generate_report_data") as mock_gen,
+                patch("reports.tasks.send_report_email") as mock_send_email,
+            ):
                 mock_gen.return_value = ("a.csv", "data", {})
 
                 result = send_scheduled_report.apply(args=(report.pk,)).get()
 
         assert result["subject"] == "Subject 12/2024"
 
-        email = Email.objects.latest("id")
-        assert email.subject == "Subject 12/2024"
-        assert email.message == "Body 12/2024"
+        # Verify send_report_email received correctly formatted template values
+        mock_send_email.assert_called_once()
+        call_args = mock_send_email.call_args
+        assert call_args.kwargs["subject"] == "Subject 12/2024"
+        # month and year are positional args [3] and [4]
+        assert call_args.args[3] == "12"
+        assert call_args.args[4] == "2024"

@@ -18,13 +18,7 @@ from clients.enums import (
     SocialMediaEnum,
     VeteranStatusEnum,
 )
-from clients.models import (
-    ClientContact,
-    ClientHouseholdMember,
-    ClientProfile,
-    HmisProfile,
-    SocialMediaProfile,
-)
+from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile, SocialMediaProfile
 from clients.tests.utils import (
     ClientContactBaseTestCase,
     ClientHouseholdMemberBaseTestCase,
@@ -255,9 +249,14 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             expected_client_profile,
             client_profile,
             ignore_order=True,
-            exclude_regex_paths=[r"\['id'\]$"],
+            exclude_regex_paths=[r"\['id'\]$", r"\['profilePhoto'\]\['url'\]$"],
         )
         self.assertFalse(client_differences)
+
+        # Verify profile photo URL path matches (ignoring presigned query params)
+        expected_photo_url = self.client_profile_1_photo_url.split("?")[0]
+        actual_photo_url = client_profile["profilePhoto"]["url"].split("?")[0]
+        self.assertEqual(expected_photo_url, actual_photo_url)
 
     def test_client_profile_mutation_validation(self) -> None:
         contact = {
@@ -379,6 +378,13 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         response = self._update_client_profile_fixture(variables)
         client_profile = response["data"]["updateClientProfile"]
 
+        # Presigned URL query params (timestamps/signatures) may differ between requests,
+        # so compare the URL path separately then normalize for the full profile comparison.
+        expected_photo_url = self.client_profile_1["profilePhoto"]["url"].split("?")[0]
+        actual_photo_url = client_profile["profilePhoto"]["url"].split("?")[0]
+        self.assertEqual(expected_photo_url, actual_photo_url)
+
+        client_profile["profilePhoto"] = self.client_profile_1["profilePhoto"]
         self.assertEqual(client_profile, self.client_profile_1)
 
     def test_update_client_profile_email_upper_mutation(self) -> None:
@@ -461,7 +467,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertIsNotNone(response["data"]["deleteClientProfile"])
         self.assertFalse(ClientProfile.objects.filter(id=client_profile["id"]).exists())
 
-    @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+    @override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
     def test_update_client_profile_photo(self) -> None:
         client_profile_id = self.client_profile_1["id"]
         photo_content = (
@@ -810,7 +816,7 @@ class SocialMediaProfileMutationTestCase(SocialMediaProfileBaseTestCase):
             self.assertEqual(response, variables)
 
 
-@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+@override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
 class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
