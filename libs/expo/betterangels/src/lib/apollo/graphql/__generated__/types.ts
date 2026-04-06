@@ -77,6 +77,7 @@ export type AdminShelterType = {
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
   bedFees?: Maybe<Scalars['String']['output']>;
+  bedsByStatus: BedsByStatusType;
   cities: Array<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
   curfew?: Maybe<Scalars['Time']['output']>;
@@ -196,6 +197,14 @@ export enum BedTypeChoices {
   Rollaway = 'ROLLAWAY',
   Twin = 'TWIN'
 }
+
+export type BedsByStatusType = {
+  __typename?: 'BedsByStatusType';
+  available: Scalars['Int']['output'];
+  occupied: Scalars['Int']['output'];
+  outOfService: Scalars['Int']['output'];
+  reserved: Scalars['Int']['output'];
+};
 
 export type CityType = {
   __typename?: 'CityType';
@@ -2603,6 +2612,7 @@ export type ShelterType = {
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
   bedFees?: Maybe<Scalars['String']['output']>;
+  bedsByStatus: BedsByStatusType;
   cities: Array<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
   curfew?: Maybe<Scalars['Time']['output']>;
