@@ -179,6 +179,7 @@ export const enumDisplayStorageChoices: { [key in StorageChoices]: string } = {
   [StorageChoices.SharedStorage]: 'Shared Storage',
   [StorageChoices.StandardLockers]: 'Standard Lockers',
   [StorageChoices.UnitStorage]: 'Unit-level Storage',
+  [StorageChoices.PersonalBin]: 'Personal Storage Bin',
 };
 
 /*
