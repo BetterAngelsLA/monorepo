@@ -1,8 +1,8 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { InfiniteList } from '@monorepo/react/components';
 import { useAtom } from 'jotai';
-import { useCallback, useEffect } from 'react';
-import { TLocationSource, sheltersAtom } from '../../atoms';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { sheltersAtom } from '../../atoms';
 import {
   ViewSheltersDocument,
   ViewSheltersQuery,
@@ -10,75 +10,68 @@ import {
 } from '../../pages';
 import { TLatLng, TMapBounds } from '../Map';
 import { ShelterCard } from '../ShelterCard';
-import { SearchSource } from './SearchSource';
+import { ResultsSource } from './ResultsSource';
 import { TShelterPropertyFilters } from './types';
 
 type TShelter = ViewSheltersQuery['shelters']['results'][number];
-
-const SEARCH_RANGE_MILES = 20;
-
 type TProps = {
   className?: string;
-  coordinates?: TLatLng | null;
-  coordinatesSource?: TLocationSource;
   mapBoundsFilter?: TMapBounds | null;
   propertyFilters?: TShelterPropertyFilters;
-  rangeInMiles?: number;
+  nameFilter?: string;
+  /** Incremented on each name search submit; used to fit the map after fresh query results. */
+  nameSearchPinFitRequestId?: number;
+  onShelterPinsReadyForMapFit?: (pinLocations: TLatLng[]) => void;
 };
 
 export function SheltersDisplay(props: TProps) {
   const {
-    coordinates,
-    coordinatesSource,
     mapBoundsFilter,
     propertyFilters,
-    rangeInMiles = SEARCH_RANGE_MILES,
     className = '',
+    nameFilter,
+    nameSearchPinFitRequestId = 0,
+    onShelterPinsReadyForMapFit,
   } = props;
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
 
-  let queryVariables: ViewSheltersQueryVariables | undefined;
+  const queryVariables = useMemo<ViewSheltersQueryVariables | undefined>(() => {
+    let vars: ViewSheltersQueryVariables | undefined;
 
-  if (coordinates) {
-    const { latitude, longitude } = coordinates;
+    if (mapBoundsFilter) {
+      vars = vars || {};
+      vars.filters = vars.filters || {};
 
-    queryVariables = queryVariables || {};
-    queryVariables.filters = queryVariables.filters || {};
-
-    queryVariables.filters.geolocation = {
-      latitude,
-      longitude,
-      // Only apply range limit when there's no map bounds filter;
-      // map bounds already constrains the spatial area.
-      ...(mapBoundsFilter ? {} : { rangeInMiles }),
-    };
-  }
-
-  if (mapBoundsFilter) {
-    queryVariables = queryVariables || {};
-    queryVariables.filters = queryVariables.filters || {};
-
-    queryVariables.filters.mapBounds = mapBoundsFilter;
-  }
-
-  if (propertyFilters) {
-    const { openNow, ...propertyOnlyFilters } = propertyFilters;
-
-    if (openNow) {
-      queryVariables = queryVariables || {};
-      queryVariables.filters = queryVariables.filters || {};
-      queryVariables.filters.openNow = true;
+      vars.filters.mapBounds = mapBoundsFilter;
     }
 
-    const prunedFilters = pruneFilters(propertyOnlyFilters);
+    if (propertyFilters) {
+      const { openNow, ...propertyOnlyFilters } = propertyFilters;
 
-    if (prunedFilters) {
-      queryVariables = queryVariables || {};
-      queryVariables.filters = queryVariables.filters || {};
+      if (openNow) {
+        vars = vars || {};
+        vars.filters = vars.filters || {};
+        vars.filters.openNow = true;
+      }
 
-      queryVariables.filters.properties = prunedFilters;
+      const prunedFilters = pruneFilters(propertyOnlyFilters);
+
+      if (prunedFilters) {
+        vars = vars || {};
+        vars.filters = vars.filters || {};
+
+        vars.filters.properties = prunedFilters;
+      }
     }
-  }
+
+    if (nameFilter) {
+      vars = vars || {};
+      vars.filters = vars.filters || {};
+      vars.filters.name = nameFilter;
+    }
+
+    return vars;
+  }, [mapBoundsFilter, nameFilter, propertyFilters]);
 
   const { items, total, loadMore, loading, loadingMore, hasMore, error } =
     useInfiniteScrollQuery<
@@ -91,6 +84,49 @@ export function SheltersDisplay(props: TProps) {
       variables: queryVariables,
       pageSize: 25,
     });
+
+  const prevLoadingRef = useRef(loading);
+  const lastPinFitRequestHandledRef = useRef(0);
+
+  useEffect(() => {
+    if (!onShelterPinsReadyForMapFit || nameSearchPinFitRequestId <= 0) {
+      prevLoadingRef.current = loading;
+      return;
+    }
+
+    if (loading) {
+      prevLoadingRef.current = loading;
+      return;
+    }
+
+    const prev = prevLoadingRef.current;
+    prevLoadingRef.current = loading;
+
+    if (lastPinFitRequestHandledRef.current === nameSearchPinFitRequestId) {
+      return;
+    }
+
+    const loadingJustFinished = prev === true;
+
+    const emit = () => {
+      if (lastPinFitRequestHandledRef.current === nameSearchPinFitRequestId) {
+        return;
+      }
+      lastPinFitRequestHandledRef.current = nameSearchPinFitRequestId;
+      onShelterPinsReadyForMapFit(shelterListToPinLatLng(items ?? []));
+    };
+
+    if (loadingJustFinished) {
+      emit();
+      return;
+    }
+
+    const raf = requestAnimationFrame(() => {
+      emit();
+    });
+
+    return () => cancelAnimationFrame(raf);
+  }, [loading, nameSearchPinFitRequestId, items, onShelterPinsReadyForMapFit]);
 
   useEffect(() => {
     setSheltersData(items || []);
@@ -108,11 +144,16 @@ export function SheltersDisplay(props: TProps) {
       return (
         <div className="mb-4">
           <div className="text-xl font-semibold">{text}</div>
-          <SearchSource coordinatesSource={coordinatesSource} />
+          <ResultsSource
+            nameFilter={nameFilter}
+            mapBoundsFilter={mapBoundsFilter}
+            openNowFilter={propertyFilters?.openNow}
+            propertyFilters={pruneFilters(propertyFilters)}
+          />
         </div>
       );
     },
-    [coordinatesSource]
+    [queryVariables?.filters]
   );
 
   return (
@@ -135,6 +176,22 @@ export function SheltersDisplay(props: TProps) {
   );
 }
 
+function shelterListToPinLatLng(shelters: TShelter[]): TLatLng[] {
+  const pins: TLatLng[] = [];
+
+  for (const shelter of shelters) {
+    const loc = shelter.location;
+
+    if (loc == null) {
+      continue;
+    }
+
+    pins.push({ latitude: loc.latitude, longitude: loc.longitude });
+  }
+
+  return pins;
+}
+
 function pruneFilters(
   filters?: TShelterPropertyFilters | null
 ): TShelterPropertyFilters | null {
@@ -148,5 +205,5 @@ function pruneFilters(
     })
   );
 
-  return result;
+  return Object.keys(result).length > 0 ? result : null;
 }

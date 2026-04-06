@@ -1,7 +1,7 @@
 import { atomWithReset } from 'jotai/utils';
 import { TShelterPropertyFilters } from '../components/ShelterSearch';
 
-export const nullShelterFilters: TShelterPropertyFilters = {
+export const nullShelterPropertyFilters: TShelterPropertyFilters = {
   openNow: false,
   pets: [],
   demographics: [],
@@ -11,5 +11,5 @@ export const nullShelterFilters: TShelterPropertyFilters = {
   parking: [],
 };
 
-export const shelterFiltersAtom =
-  atomWithReset<TShelterPropertyFilters>(nullShelterFilters);
+export const shelterPropertyFiltersAtom =
+  atomWithReset<TShelterPropertyFilters>(nullShelterPropertyFilters);
