@@ -93,8 +93,6 @@ export function ShelterSearch(props: TProps) {
     setQueryFilters(undefined);
     resetFilters();
     setNameFilter(nameSearchValue.trim());
-    console.log('nameFilter', nameFilter);
-    console.log('nameSearchValue', nameSearchValue);
     onNameSearch();
   }
 
