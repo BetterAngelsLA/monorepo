@@ -64,6 +64,7 @@ def validate_upload_token(
     if stored.get("scope") != scope:
         return False
 
+    # delete token after usage
     cache.delete(cache_key)
 
     return True

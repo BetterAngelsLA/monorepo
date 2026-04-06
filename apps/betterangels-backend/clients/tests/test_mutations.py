@@ -1292,3 +1292,212 @@ class ResolveClientDocumentUploadsMutationTestCase(ClientProfileGraphQLBaseTestC
         data = response["data"]["resolveClientDocumentUploads"]
         self.assertEqual(len(data["documents"]), 1)
         self.assertEqual(data["documents"][0]["originalFilename"], "doc.pdf")
+
+
+class GenerateClientProfilePhotoUploadMutationTestCase(ClientProfileGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def _mock_generate_presigned_post(self, mock_boto3: MagicMock) -> MagicMock:
+        mock_client = MagicMock()
+        mock_boto3.return_value = mock_client
+        mock_client.generate_presigned_post.side_effect = lambda **kwargs: {
+            "url": f"https://s3.amazonaws.com/{kwargs['Bucket']}",
+            "fields": {"key": kwargs["Key"], "policy": "encoded-policy"},
+        }
+        return mock_client
+
+    @patch("common.services.s3.boto3.client")
+    def test_generate_photo_upload(self, mock_boto3: MagicMock) -> None:
+        self._mock_generate_presigned_post(mock_boto3)
+
+        response = self._generate_client_profile_photo_upload_fixture(
+            ref_id="photo-ref-1",
+            filename="profile.jpg",
+            content_type="image/jpeg",
+        )
+
+        data = response["data"]["generateClientProfilePhotoUpload"]
+        self.assertEqual(data["refId"], "photo-ref-1")
+        self.assertIsNotNone(data["url"])
+        self.assertIsNotNone(data["fields"])
+        self.assertIsNotNone(data["presignedKey"])
+        self.assertIsNotNone(data["uploadToken"])
+
+    @patch("common.services.s3.boto3.client")
+    def test_generate_photo_upload_returns_unique_tokens(self, mock_boto3: MagicMock) -> None:
+        self._mock_generate_presigned_post(mock_boto3)
+
+        response_1 = self._generate_client_profile_photo_upload_fixture(
+            ref_id="photo-ref-1",
+            filename="profile1.jpg",
+            content_type="image/jpeg",
+        )
+        response_2 = self._generate_client_profile_photo_upload_fixture(
+            ref_id="photo-ref-2",
+            filename="profile2.jpg",
+            content_type="image/jpeg",
+        )
+
+        data_1 = response_1["data"]["generateClientProfilePhotoUpload"]
+        data_2 = response_2["data"]["generateClientProfilePhotoUpload"]
+
+        self.assertNotEqual(data_1["uploadToken"], data_2["uploadToken"])
+        self.assertNotEqual(data_1["presignedKey"], data_2["presignedKey"])
+
+    @patch("common.services.s3.boto3.client")
+    def test_generate_photo_upload_requires_authentication(self, mock_boto3: MagicMock) -> None:
+        self._mock_generate_presigned_post(mock_boto3)
+        self._handle_user_login(None)
+
+        response = self._generate_client_profile_photo_upload_fixture(
+            ref_id="photo-ref-1",
+            filename="profile.jpg",
+            content_type="image/jpeg",
+        )
+
+        self.assertGraphQLUnauthenticated(response)
+
+    @patch("common.services.s3.boto3.client")
+    def test_generate_photo_upload_different_content_types(self, mock_boto3: MagicMock) -> None:
+        self._mock_generate_presigned_post(mock_boto3)
+
+        for content_type in ["image/jpeg", "image/png", "image/webp"]:
+            response = self._generate_client_profile_photo_upload_fixture(
+                ref_id="photo-ref-1",
+                filename="profile.img",
+                content_type=content_type,
+            )
+
+            data = response["data"]["generateClientProfilePhotoUpload"]
+            self.assertIsNotNone(data["url"])
+            self.assertIsNotNone(data["presignedKey"])
+            self.assertIsNotNone(data["uploadToken"])
+
+
+class ResolveClientProfilePhotoUploadMutationTestCase(ClientProfileGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def _mock_generate_presigned_post(self, mock_boto3: MagicMock) -> MagicMock:
+        mock_client = MagicMock()
+        mock_boto3.return_value = mock_client
+        mock_client.generate_presigned_post.side_effect = lambda **kwargs: {
+            "url": f"https://s3.amazonaws.com/{kwargs['Bucket']}",
+            "fields": {"key": kwargs["Key"], "policy": "encoded-policy"},
+        }
+        return mock_client
+
+    def _generate_and_get_upload(self, mock_boto3: MagicMock) -> dict:
+        """Helper to generate a presigned photo upload and return the upload data."""
+        self._mock_generate_presigned_post(mock_boto3)
+        response = self._generate_client_profile_photo_upload_fixture(
+            ref_id="photo-ref-1",
+            filename="profile.jpg",
+            content_type="image/jpeg",
+        )
+        return response["data"]["generateClientProfilePhotoUpload"]
+
+    @patch("common.services.s3.boto3.client")
+    def test_resolve_photo_upload(self, mock_boto3: MagicMock) -> None:
+        generated = self._generate_and_get_upload(mock_boto3)
+
+        response = self._resolve_client_profile_photo_upload_fixture(
+            client_profile_id=self.client_profile_1["id"],
+            presigned_key=generated["presignedKey"],
+            upload_token=generated["uploadToken"],
+        )
+
+        data = response["data"]["resolveClientProfilePhotoUpload"]
+        self.assertEqual(data["id"], self.client_profile_1["id"])
+        self.assertIsNotNone(data["profilePhoto"])
+        self.assertIsNotNone(data["profilePhoto"]["url"])
+
+        # Verify the profile photo path was saved on the model
+        client_profile = ClientProfile.objects.get(id=self.client_profile_1["id"])
+        self.assertTrue(bool(client_profile.profile_photo))
+
+    @patch("common.services.s3.boto3.client")
+    def test_resolve_photo_upload_requires_authentication(self, mock_boto3: MagicMock) -> None:
+        generated = self._generate_and_get_upload(mock_boto3)
+
+        self._handle_user_login(None)
+
+        response = self._resolve_client_profile_photo_upload_fixture(
+            client_profile_id=self.client_profile_1["id"],
+            presigned_key=generated["presignedKey"],
+            upload_token=generated["uploadToken"],
+        )
+
+        self.assertGraphQLUnauthenticated(response)
+
+    @patch("common.services.s3.boto3.client")
+    def test_resolve_photo_upload_invalid_client_profile(self, mock_boto3: MagicMock) -> None:
+        """Using a non-existent client profile ID should error."""
+        generated = self._generate_and_get_upload(mock_boto3)
+
+        response = self._resolve_client_profile_photo_upload_fixture(
+            client_profile_id="99999",
+            presigned_key=generated["presignedKey"],
+            upload_token=generated["uploadToken"],
+        )
+
+        mutation_data = response["data"]["resolveClientProfilePhotoUpload"]
+        self.assertIn("messages", mutation_data)
+        self.assertEqual(mutation_data["messages"][0]["kind"], "ERROR")
+
+    @patch("common.services.s3.boto3.client")
+    def test_resolve_photo_upload_invalid_token(self, mock_boto3: MagicMock) -> None:
+        """Using an invalid upload token should error."""
+        generated = self._generate_and_get_upload(mock_boto3)
+
+        response = self._resolve_client_profile_photo_upload_fixture(
+            client_profile_id=self.client_profile_1["id"],
+            presigned_key=generated["presignedKey"],
+            upload_token="invalid-token",
+        )
+
+        self.assertIn("errors", response)
+        self.assertIn("Invalid or expired upload signature", response["errors"][0]["message"])
+
+    @patch("common.services.s3.boto3.client")
+    def test_resolve_photo_upload_token_is_single_use(self, mock_boto3: MagicMock) -> None:
+        """Upload tokens should be consumed after first use."""
+        generated = self._generate_and_get_upload(mock_boto3)
+
+        # First resolve should succeed
+        response = self._resolve_client_profile_photo_upload_fixture(
+            client_profile_id=self.client_profile_1["id"],
+            presigned_key=generated["presignedKey"],
+            upload_token=generated["uploadToken"],
+        )
+        data = response["data"]["resolveClientProfilePhotoUpload"]
+        self.assertEqual(data["id"], self.client_profile_1["id"])
+
+        # Second resolve with same token should fail
+        response = self._resolve_client_profile_photo_upload_fixture(
+            client_profile_id=self.client_profile_1["id"],
+            presigned_key=generated["presignedKey"],
+            upload_token=generated["uploadToken"],
+        )
+        self.assertIn("errors", response)
+        self.assertIn("Invalid or expired upload signature", response["errors"][0]["message"])
+
+    @patch("common.services.s3.boto3.client")
+    def test_resolve_photo_upload_other_org_user(self, mock_boto3: MagicMock) -> None:
+        """Another org's case manager with CHANGE permission can resolve photo uploads they generated."""
+        self._handle_user_login("org_2_case_manager_1")
+
+        generated = self._generate_and_get_upload(mock_boto3)
+
+        response = self._resolve_client_profile_photo_upload_fixture(
+            client_profile_id=self.client_profile_1["id"],
+            presigned_key=generated["presignedKey"],
+            upload_token=generated["uploadToken"],
+        )
+
+        data = response["data"]["resolveClientProfilePhotoUpload"]
+        self.assertEqual(data["id"], self.client_profile_1["id"])
+        self.assertIsNotNone(data["profilePhoto"])
