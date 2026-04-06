@@ -1,14 +1,14 @@
 from unittest.mock import MagicMock, patch
 
 from common.services.s3 import (
-    DEFAULT_EXPIRATION,
     DEFAULT_MAX_FILE_SIZE,
+    DEFAULT_UPLOAD_EXPIRATION_SECONDS,
     PresignedS3UploadInput,
     generate_s3_presigned_upload_urls,
 )
 from django.test import TestCase, override_settings
 
-TEST_BUCKET = "test-bucket"
+TEST_BUCKET = "betterangels-local"
 
 
 @override_settings(AWS_S3_STORAGE_BUCKET_NAME=TEST_BUCKET)
@@ -49,7 +49,7 @@ class GenerateS3PresignedUploadUrlsTestCase(TestCase):
         mock_client.generate_presigned_post.assert_called_once()
         call_kwargs = mock_client.generate_presigned_post.call_args.kwargs
         self.assertEqual(call_kwargs["Bucket"], TEST_BUCKET)
-        self.assertEqual(call_kwargs["ExpiresIn"], DEFAULT_EXPIRATION)
+        self.assertEqual(call_kwargs["ExpiresIn"], DEFAULT_UPLOAD_EXPIRATION_SECONDS)
 
     @patch("common.services.s3.boto3.client")
     def test_multiple_uploads(self, mock_boto3: MagicMock) -> None:

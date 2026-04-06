@@ -648,7 +648,7 @@ class SocialMediaProfileQueryTestCase(SocialMediaProfileBaseTestCase):
         self.assertCountEqual(results, [self.social_media_profile_1, self.social_media_profile_2])
 
 
-@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+@override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}})
 class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()

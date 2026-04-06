@@ -209,7 +209,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
                 self.assertGraphQLUnauthenticated(response)
 
 
-@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+@override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}})
 class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
