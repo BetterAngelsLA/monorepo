@@ -2523,6 +2523,7 @@ export type ServiceType = {
 };
 
 export enum ShelterChoices {
+  AccessCenter = 'ACCESS_CENTER',
   Building = 'BUILDING',
   Church = 'CHURCH',
   HotelMotel = 'HOTEL_MOTEL',
@@ -2538,6 +2539,7 @@ export type ShelterFilter = {
   NOT?: InputMaybe<ShelterFilter>;
   OR?: InputMaybe<ShelterFilter>;
   geolocation?: InputMaybe<GeolocationInput>;
+  isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
   mapBounds?: InputMaybe<MapBoundsInput>;
   name?: InputMaybe<Scalars['String']['input']>;
   openNow?: InputMaybe<Scalars['Boolean']['input']>;

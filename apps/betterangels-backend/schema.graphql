@@ -2022,6 +2022,7 @@ type ServiceType {
 }
 
 enum ShelterChoices {
+  ACCESS_CENTER
   BUILDING
   CHURCH
   HOTEL_MOTEL
@@ -2036,6 +2037,7 @@ input ShelterFilter {
   OR: ShelterFilter
   NOT: ShelterFilter
   DISTINCT: Boolean
+  isAccessCenter: Boolean
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
