@@ -1,4 +1,4 @@
-from unittest.mock import ANY
+from unittest.mock import ANY, MagicMock, patch
 
 from clients.enums import (
     AdaAccommodationEnum,
@@ -453,7 +453,12 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertIsNotNone(response["data"]["deleteClientProfile"])
         self.assertFalse(ClientProfile.objects.filter(id=client_profile["id"]).exists())
 
-    @override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}})
+    @override_settings(
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+        }
+    )
     def test_update_client_profile_photo(self) -> None:
         client_profile_id = self.client_profile_1["id"]
         photo_content = (
@@ -802,7 +807,12 @@ class SocialMediaProfileMutationTestCase(SocialMediaProfileBaseTestCase):
             self.assertEqual(response, variables)
 
 
-@override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}})
+@override_settings(
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+)
 class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -865,3 +875,420 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         # Verify database was updated
         document = Attachment.objects.get(id=document_id)
         self.assertEqual(document.original_filename, new_filename)
+
+
+class GenerateClientDocumentUploadsMutationTestCase(ClientProfileGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def _mock_generate_presigned_post(self, mock_boto3: MagicMock) -> MagicMock:
+        mock_client = MagicMock()
+        mock_boto3.return_value = mock_client
+        mock_client.generate_presigned_post.side_effect = lambda **kwargs: {
+            "url": f"https://s3.amazonaws.com/{kwargs['Bucket']}",
+            "fields": {"key": kwargs["Key"], "policy": "encoded-policy"},
+        }
+        return mock_client
+
+    @patch("common.services.s3.boto3.client")
+    def test_generate_single_upload(self, mock_boto3: MagicMock) -> None:
+        self._mock_generate_presigned_post(mock_boto3)
+
+        uploads = [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}]
+        response = self._generate_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            uploads,
+        )
+
+        data = response["data"]["generateClientDocumentUploads"]
+        self.assertEqual(len(data["uploads"]), 1)
+
+        upload = data["uploads"][0]
+        self.assertEqual(upload["refId"], "ref-1")
+        self.assertIsNotNone(upload["url"])
+        self.assertIsNotNone(upload["fields"])
+        self.assertIsNotNone(upload["presignedKey"])
+        self.assertIsNotNone(upload["uploadToken"])
+
+    @patch("common.services.s3.boto3.client")
+    def test_generate_multiple_uploads(self, mock_boto3: MagicMock) -> None:
+        self._mock_generate_presigned_post(mock_boto3)
+
+        uploads = [
+            {"refId": "ref-1", "filename": "doc1.pdf", "contentType": "application/pdf"},
+            {"refId": "ref-2", "filename": "doc2.png", "contentType": "image/png"},
+            {"refId": "ref-3", "filename": "doc3.jpg", "contentType": "image/jpeg"},
+        ]
+        response = self._generate_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            uploads,
+        )
+
+        data = response["data"]["generateClientDocumentUploads"]
+        self.assertEqual(len(data["uploads"]), 3)
+
+        ref_ids = [u["refId"] for u in data["uploads"]]
+        self.assertEqual(ref_ids, ["ref-1", "ref-2", "ref-3"])
+
+        for upload in data["uploads"]:
+            self.assertIsNotNone(upload["url"])
+            self.assertIsNotNone(upload["presignedKey"])
+            self.assertIsNotNone(upload["uploadToken"])
+
+    @patch("common.services.s3.boto3.client")
+    def test_generate_uploads_returns_unique_tokens(self, mock_boto3: MagicMock) -> None:
+        self._mock_generate_presigned_post(mock_boto3)
+
+        uploads = [
+            {"refId": "ref-1", "filename": "doc1.pdf", "contentType": "application/pdf"},
+            {"refId": "ref-2", "filename": "doc2.pdf", "contentType": "application/pdf"},
+        ]
+        response = self._generate_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            uploads,
+        )
+
+        data = response["data"]["generateClientDocumentUploads"]
+        tokens = [u["uploadToken"] for u in data["uploads"]]
+        self.assertEqual(len(set(tokens)), 2, "Each upload should have a unique token")
+
+        keys = [u["presignedKey"] for u in data["uploads"]]
+        self.assertEqual(len(set(keys)), 2, "Each upload should have a unique presigned key")
+
+    @patch("common.services.s3.boto3.client")
+    def test_generate_uploads_requires_authentication(self, mock_boto3: MagicMock) -> None:
+        self._mock_generate_presigned_post(mock_boto3)
+        self._handle_user_login(None)
+
+        uploads = [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}]
+        response = self._generate_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            uploads,
+        )
+
+        self.assertGraphQLUnauthenticated(response)
+
+    @patch("common.services.s3.boto3.client")
+    def test_generate_uploads_other_org_user(self, mock_boto3: MagicMock) -> None:
+        """Another org's case manager with CHANGE permission can also generate uploads."""
+        self._mock_generate_presigned_post(mock_boto3)
+        self._handle_user_login("org_2_case_manager_1")
+
+        uploads = [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}]
+        response = self._generate_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            uploads,
+        )
+
+        data = response["data"]["generateClientDocumentUploads"]
+        self.assertEqual(len(data["uploads"]), 1)
+        self.assertEqual(data["uploads"][0]["refId"], "ref-1")
+
+    @patch("common.services.s3.boto3.client")
+    def test_generate_uploads_invalid_client_profile(self, mock_boto3: MagicMock) -> None:
+        """Using a non-existent client profile ID should error."""
+        self._mock_generate_presigned_post(mock_boto3)
+
+        uploads = [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}]
+        response = self._generate_client_document_uploads_fixture(
+            "99999",
+            uploads,
+        )
+
+        mutation_data = response["data"]["generateClientDocumentUploads"]
+        self.assertIn("messages", mutation_data)
+        self.assertEqual(mutation_data["messages"][0]["kind"], "ERROR")
+
+    @patch("common.services.s3.boto3.client")
+    def test_generate_uploads_empty_list(self, mock_boto3: MagicMock) -> None:
+        self._mock_generate_presigned_post(mock_boto3)
+
+        response = self._generate_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            [],
+        )
+
+        data = response["data"]["generateClientDocumentUploads"]
+        self.assertEqual(len(data["uploads"]), 0)
+
+
+class ResolveClientDocumentUploadsMutationTestCase(ClientProfileGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def _mock_generate_presigned_post(self, mock_boto3: MagicMock) -> MagicMock:
+        mock_client = MagicMock()
+        mock_boto3.return_value = mock_client
+        mock_client.generate_presigned_post.side_effect = lambda **kwargs: {
+            "url": f"https://s3.amazonaws.com/{kwargs['Bucket']}",
+            "fields": {"key": kwargs["Key"], "policy": "encoded-policy"},
+        }
+        return mock_client
+
+    def _generate_and_get_uploads(self, mock_boto3: MagicMock, uploads: list) -> list:
+        """Helper to generate presigned uploads and return the upload data."""
+        self._mock_generate_presigned_post(mock_boto3)
+        response = self._generate_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            uploads,
+        )
+        return response["data"]["generateClientDocumentUploads"]["uploads"]
+
+    @patch("common.services.s3.boto3.client")
+    def test_resolve_single_upload(self, mock_boto3: MagicMock) -> None:
+        generated = self._generate_and_get_uploads(
+            mock_boto3,
+            [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}],
+        )
+
+        documents = [
+            {
+                "presignedKey": generated[0]["presignedKey"],
+                "uploadToken": generated[0]["uploadToken"],
+                "filename": "doc.pdf",
+                "contentType": "application/pdf",
+                "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            }
+        ]
+        response = self._resolve_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            documents,
+        )
+
+        data = response["data"]["resolveClientDocumentUploads"]
+        self.assertEqual(len(data["documents"]), 1)
+
+        doc = data["documents"][0]
+        self.assertIsNotNone(doc["id"])
+        self.assertEqual(doc["originalFilename"], "doc.pdf")
+        self.assertEqual(doc["namespace"], ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name)
+        self.assertEqual(doc["mimeType"], "application/pdf")
+
+        self.assertTrue(Attachment.objects.filter(id=doc["id"]).exists())
+
+    @patch("common.services.s3.boto3.client")
+    def test_resolve_multiple_uploads(self, mock_boto3: MagicMock) -> None:
+        generated = self._generate_and_get_uploads(
+            mock_boto3,
+            [
+                {"refId": "ref-1", "filename": "doc1.pdf", "contentType": "application/pdf"},
+                {"refId": "ref-2", "filename": "doc2.png", "contentType": "image/png"},
+                {"refId": "ref-3", "filename": "doc3.jpg", "contentType": "image/jpeg"},
+            ],
+        )
+
+        documents = [
+            {
+                "presignedKey": generated[i]["presignedKey"],
+                "uploadToken": generated[i]["uploadToken"],
+                "filename": filename,
+                "contentType": content_type,
+                "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            }
+            for i, (filename, content_type) in enumerate(
+                [("doc1.pdf", "application/pdf"), ("doc2.png", "image/png"), ("doc3.jpg", "image/jpeg")]
+            )
+        ]
+        response = self._resolve_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            documents,
+        )
+
+        data = response["data"]["resolveClientDocumentUploads"]
+        self.assertEqual(len(data["documents"]), 3)
+
+        filenames = [d["originalFilename"] for d in data["documents"]]
+        self.assertEqual(filenames, ["doc1.pdf", "doc2.png", "doc3.jpg"])
+
+        for doc in data["documents"]:
+            self.assertIsNotNone(doc["id"])
+            self.assertTrue(Attachment.objects.filter(id=doc["id"]).exists())
+
+    @patch("common.services.s3.boto3.client")
+    def test_resolve_uploads_requires_authentication(self, mock_boto3: MagicMock) -> None:
+        generated = self._generate_and_get_uploads(
+            mock_boto3,
+            [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}],
+        )
+
+        self._handle_user_login(None)
+
+        documents = [
+            {
+                "presignedKey": generated[0]["presignedKey"],
+                "uploadToken": generated[0]["uploadToken"],
+                "filename": "doc.pdf",
+                "contentType": "application/pdf",
+                "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            }
+        ]
+        response = self._resolve_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            documents,
+        )
+
+        self.assertGraphQLUnauthenticated(response)
+
+    @patch("common.services.s3.boto3.client")
+    def test_resolve_uploads_invalid_client_profile(self, mock_boto3: MagicMock) -> None:
+        """Using a non-existent client profile ID should error."""
+        generated = self._generate_and_get_uploads(
+            mock_boto3,
+            [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}],
+        )
+
+        documents = [
+            {
+                "presignedKey": generated[0]["presignedKey"],
+                "uploadToken": generated[0]["uploadToken"],
+                "filename": "doc.pdf",
+                "contentType": "application/pdf",
+                "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            }
+        ]
+        response = self._resolve_client_document_uploads_fixture(
+            "99999",
+            documents,
+        )
+
+        mutation_data = response["data"]["resolveClientDocumentUploads"]
+        self.assertIn("messages", mutation_data)
+        self.assertEqual(mutation_data["messages"][0]["kind"], "ERROR")
+
+    @patch("common.services.s3.boto3.client")
+    def test_resolve_uploads_invalid_token(self, mock_boto3: MagicMock) -> None:
+        """Using an invalid upload token should error."""
+        generated = self._generate_and_get_uploads(
+            mock_boto3,
+            [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}],
+        )
+
+        documents = [
+            {
+                "presignedKey": generated[0]["presignedKey"],
+                "uploadToken": "invalid-token",
+                "filename": "doc.pdf",
+                "contentType": "application/pdf",
+                "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            }
+        ]
+        response = self._resolve_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            documents,
+        )
+
+        self.assertIn("errors", response)
+        self.assertIn("Invalid or expired upload signature", response["errors"][0]["message"])
+
+    @patch("common.services.s3.boto3.client")
+    def test_resolve_uploads_token_is_single_use(self, mock_boto3: MagicMock) -> None:
+        """Upload tokens should be consumed after first use."""
+        generated = self._generate_and_get_uploads(
+            mock_boto3,
+            [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}],
+        )
+
+        documents = [
+            {
+                "presignedKey": generated[0]["presignedKey"],
+                "uploadToken": generated[0]["uploadToken"],
+                "filename": "doc.pdf",
+                "contentType": "application/pdf",
+                "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            }
+        ]
+
+        # First resolve should succeed
+        response = self._resolve_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            documents,
+        )
+        data = response["data"]["resolveClientDocumentUploads"]
+        self.assertEqual(len(data["documents"]), 1)
+
+        # Second resolve with same token should fail
+        response = self._resolve_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            documents,
+        )
+        self.assertIn("errors", response)
+        self.assertIn("Invalid or expired upload signature", response["errors"][0]["message"])
+
+    @patch("common.services.s3.boto3.client")
+    def test_resolve_uploads_empty_list(self, mock_boto3: MagicMock) -> None:
+        self._mock_generate_presigned_post(mock_boto3)
+
+        response = self._resolve_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            [],
+        )
+
+        data = response["data"]["resolveClientDocumentUploads"]
+        self.assertEqual(len(data["documents"]), 0)
+
+    @patch("common.services.s3.boto3.client")
+    def test_resolve_uploads_different_namespaces(self, mock_boto3: MagicMock) -> None:
+        """Documents can be resolved with different namespace values."""
+        generated = self._generate_and_get_uploads(
+            mock_boto3,
+            [
+                {"refId": "ref-1", "filename": "license_front.pdf", "contentType": "application/pdf"},
+                {"refId": "ref-2", "filename": "hmis_form.pdf", "contentType": "application/pdf"},
+            ],
+        )
+
+        documents = [
+            {
+                "presignedKey": generated[0]["presignedKey"],
+                "uploadToken": generated[0]["uploadToken"],
+                "filename": "license_front.pdf",
+                "contentType": "application/pdf",
+                "namespace": ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+            },
+            {
+                "presignedKey": generated[1]["presignedKey"],
+                "uploadToken": generated[1]["uploadToken"],
+                "filename": "hmis_form.pdf",
+                "contentType": "application/pdf",
+                "namespace": ClientDocumentNamespaceEnum.HMIS_FORM.name,
+            },
+        ]
+        response = self._resolve_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            documents,
+        )
+
+        data = response["data"]["resolveClientDocumentUploads"]
+        self.assertEqual(len(data["documents"]), 2)
+        self.assertEqual(data["documents"][0]["namespace"], ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name)
+        self.assertEqual(data["documents"][1]["namespace"], ClientDocumentNamespaceEnum.HMIS_FORM.name)
+
+    @patch("common.services.s3.boto3.client")
+    def test_resolve_uploads_other_org_user(self, mock_boto3: MagicMock) -> None:
+        """Another org's case manager with CHANGE permission can resolve uploads they generated."""
+        self._handle_user_login("org_2_case_manager_1")
+
+        generated = self._generate_and_get_uploads(
+            mock_boto3,
+            [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}],
+        )
+
+        documents = [
+            {
+                "presignedKey": generated[0]["presignedKey"],
+                "uploadToken": generated[0]["uploadToken"],
+                "filename": "doc.pdf",
+                "contentType": "application/pdf",
+                "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            }
+        ]
+        response = self._resolve_client_document_uploads_fixture(
+            self.client_profile_1["id"],
+            documents,
+        )
+
+        data = response["data"]["resolveClientDocumentUploads"]
+        self.assertEqual(len(data["documents"]), 1)
+        self.assertEqual(data["documents"][0]["originalFilename"], "doc.pdf")
