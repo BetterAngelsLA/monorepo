@@ -41,12 +41,12 @@ export default function ClientSummaryIdentity(
       </View>
       <PressablePanel style={{ padding: Spacings.sm }}>
         {client.livingSituation && (
-          <>
+          <View style={{ marginBottom: Spacings.sm }}>
             <TextRegular size="xs">Living Situation</TextRegular>
             <TextBold size="sm">
               {enumDisplayLivingSituation[client.livingSituation]}
             </TextBold>
-          </>
+          </View>
         )}
         {client.unhousedStartDate && (
           <>
