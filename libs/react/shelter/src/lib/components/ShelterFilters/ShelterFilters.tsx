@@ -2,7 +2,7 @@ import { Checkbox, ExpandableContainer } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
-import { shelterFiltersAtom } from '../../atoms';
+import { shelterPropertyFiltersAtom } from '../../atoms';
 import { TShelterPropertyFilters } from '../ShelterSearch';
 import { FilterSelector } from './FilterSelector';
 import {
@@ -23,7 +23,7 @@ type IProps = {
 export function ShelterFilters(props: IProps) {
   const { onChange, className } = props;
 
-  const [filters, setFilters] = useAtom(shelterFiltersAtom);
+  const [filters, setFilters] = useAtom(shelterPropertyFiltersAtom);
 
   const parentCss = ['pb-24', className];
 
@@ -46,6 +46,13 @@ export function ShelterFilters(props: IProps) {
     }));
   }
 
+  function onIsAccessCenterChange(checked: boolean) {
+    setFilters((prev) => ({
+      ...prev,
+      isAccessCenter: checked,
+    }));
+  }
+
   useEffect(() => {
     onChange && onChange(filters);
   }, [filters, onChange]);
@@ -59,6 +66,15 @@ export function ShelterFilters(props: IProps) {
         </div>
       </div>
       <div>
+        <div className="mt-8">
+          <ExpandableContainer header="Access Center">
+            <Checkbox
+              label="Shelter is Access Center"
+              checked={!!filters.isAccessCenter}
+              onChange={onIsAccessCenterChange}
+            />
+          </ExpandableContainer>
+        </div>
         <div className="mt-8">
           <ExpandableContainer header="Availability">
             <Checkbox

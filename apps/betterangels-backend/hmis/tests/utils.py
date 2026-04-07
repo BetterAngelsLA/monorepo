@@ -58,6 +58,7 @@ class HmisClientProfileBaseTestCase(GraphQLBaseTestCase):
             residenceAddress
             residenceGeolocation
             spokenLanguages
+            unhousedStartDate
 
             createdBy { id }
         """

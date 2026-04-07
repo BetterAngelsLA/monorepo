@@ -69,6 +69,7 @@ export function PersonalInfoForm() {
     preferredLanguage,
     veteranStatus,
     livingSituation,
+    unhousedStartDate,
   ] = useWatch({
     control,
     name: [
@@ -78,6 +79,7 @@ export function PersonalInfoForm() {
       'preferredLanguage',
       'veteranStatus',
       'livingSituation',
+      'unhousedStartDate',
     ],
   });
 
@@ -207,6 +209,24 @@ export function PersonalInfoForm() {
           onChange={(value) =>
             setValue('preferredLanguage', value as LanguageEnum)
           }
+        />
+      </Form.Field>
+
+      <Form.Field title="Approximate Date Homelessness Started">
+        <DatePicker
+          type="numeric"
+          placeholder="Enter date"
+          validRange={{
+            endDate: new Date(),
+            startDate: new Date('1900-01-01'),
+          }}
+          value={unhousedStartDate || undefined}
+          onChange={(date) => {
+            setValue('unhousedStartDate', date);
+          }}
+          onDelete={() => {
+            setValue('unhousedStartDate', null);
+          }}
         />
       </Form.Field>
     </Form>
