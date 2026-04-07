@@ -415,9 +415,6 @@ class UpdateClientDocumentInput:
     original_filename: auto
 
 
-# NEW
-
-
 @strawberry.input
 class ClientDocumentUploadsInputItem:
     ref_id: str

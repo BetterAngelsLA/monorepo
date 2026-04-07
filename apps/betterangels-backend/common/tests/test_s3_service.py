@@ -1,3 +1,4 @@
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 from common.services.s3 import (
@@ -13,14 +14,15 @@ TEST_BUCKET = "betterangels-local"
 
 @override_settings(AWS_S3_STORAGE_BUCKET_NAME=TEST_BUCKET)
 class GenerateS3PresignedUploadUrlsTestCase(TestCase):
-    def _make_upload(self, **overrides) -> PresignedS3UploadInput:
-        defaults: PresignedS3UploadInput = {
+    def _make_upload(self, **overrides: Any) -> PresignedS3UploadInput:
+        base: dict[str, Any] = {
             "ref_id": "ref-1",
             "filename": "photo.jpg",
             "content_type": "image/jpeg",
             "upload_path": "attachments",
         }
-        return {**defaults, **overrides}
+        base.update(overrides)
+        return cast(PresignedS3UploadInput, base)
 
     def _mock_generate_presigned_post(self, mock_boto3: MagicMock) -> MagicMock:
         mock_client = MagicMock()

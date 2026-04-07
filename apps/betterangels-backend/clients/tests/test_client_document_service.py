@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 from clients.services.client_document import (
@@ -15,8 +16,8 @@ from model_bakery import baker
 
 
 class CreatePresignedUploadsTest(TestCase):
-    def setUp(self):
-        self.user = baker.make("accounts.User")
+    def setUp(self) -> None:
+        self.user: Any = baker.make("accounts.User")
         self.upload_1 = MagicMock()
         self.upload_1.ref_id = "ref-1"
         self.upload_1.filename = "doc1.pdf"
@@ -28,7 +29,7 @@ class CreatePresignedUploadsTest(TestCase):
 
     @patch("clients.services.client_document.create_upload_token")
     @patch("clients.services.client_document.generate_s3_presigned_upload_urls")
-    def test_returns_batch_with_all_uploads(self, mock_s3, mock_token):
+    def test_returns_batch_with_all_uploads(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
         mock_s3.return_value = {
             "uploads": [
                 {
@@ -60,7 +61,7 @@ class CreatePresignedUploadsTest(TestCase):
 
     @patch("clients.services.client_document.create_upload_token")
     @patch("clients.services.client_document.generate_s3_presigned_upload_urls")
-    def test_passes_correct_upload_path_to_s3(self, mock_s3, mock_token):
+    def test_passes_correct_upload_path_to_s3(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
         mock_s3.return_value = {"uploads": [{"ref_id": "ref-1", "key": "k", "url": "u", "fields": {}}]}
         mock_token.return_value = "t"
 
@@ -79,7 +80,7 @@ class CreatePresignedUploadsTest(TestCase):
 
     @patch("clients.services.client_document.create_upload_token")
     @patch("clients.services.client_document.generate_s3_presigned_upload_urls")
-    def test_creates_token_per_upload_with_correct_params(self, mock_s3, mock_token):
+    def test_creates_token_per_upload_with_correct_params(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
         mock_s3.return_value = {
             "uploads": [
                 {"ref_id": "ref-1", "key": "media/attachments/abc.pdf", "url": "u", "fields": {}},
@@ -106,7 +107,7 @@ class CreatePresignedUploadsTest(TestCase):
 
     @patch("clients.services.client_document.create_upload_token")
     @patch("clients.services.client_document.generate_s3_presigned_upload_urls")
-    def test_single_upload(self, mock_s3, mock_token):
+    def test_single_upload(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
         mock_s3.return_value = {
             "uploads": [
                 {
@@ -126,20 +127,20 @@ class CreatePresignedUploadsTest(TestCase):
 
 
 class ResolveUploadTest(TestCase):
-    def setUp(self):
-        self.user = baker.make("accounts.User")
-        self.client_profile = baker.make("clients.ClientProfile")
+    def setUp(self) -> None:
+        self.user: Any = baker.make("accounts.User")
+        self.client_profile: Any = baker.make("clients.ClientProfile")
         self.permission_group = MagicMock()
         self.permission_group.group = MagicMock()
 
     def _make_doc(
         self,
-        presigned_key=None,
-        upload_token="valid-token",
-        filename="doc.pdf",
-        content_type="application/pdf",
-        namespace="OTHER_CLIENT_DOCUMENT",
-    ):
+        presigned_key: str | None = None,
+        upload_token: str = "valid-token",
+        filename: str = "doc.pdf",
+        content_type: str = "application/pdf",
+        namespace: str = "OTHER_CLIENT_DOCUMENT",
+    ) -> MagicMock:
         doc = MagicMock()
         doc.presigned_key = presigned_key or f"{STORAGE_DIR}/attachments/abc.pdf"
         doc.upload_token = upload_token
@@ -151,7 +152,9 @@ class ResolveUploadTest(TestCase):
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
-    def test_creates_attachment(self, mock_validate, mock_perm_group, mock_assign):
+    def test_creates_attachment(
+        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+    ) -> None:
         mock_perm_group.return_value = self.permission_group
         doc = self._make_doc()
 
@@ -174,7 +177,9 @@ class ResolveUploadTest(TestCase):
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
-    def test_creates_multiple_attachments(self, mock_validate, mock_perm_group, mock_assign):
+    def test_creates_multiple_attachments(
+        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+    ) -> None:
         mock_perm_group.return_value = self.permission_group
         doc1 = self._make_doc(presigned_key=f"{STORAGE_DIR}/attachments/a.pdf", filename="a.pdf")
         doc2 = self._make_doc(
@@ -194,7 +199,9 @@ class ResolveUploadTest(TestCase):
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
-    def test_validates_each_token(self, mock_validate, mock_perm_group, mock_assign):
+    def test_validates_each_token(
+        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+    ) -> None:
         mock_perm_group.return_value = self.permission_group
         doc1 = self._make_doc(presigned_key=f"{STORAGE_DIR}/attachments/a.pdf", upload_token="tok-1")
         doc2 = self._make_doc(presigned_key=f"{STORAGE_DIR}/attachments/b.pdf", upload_token="tok-2")
@@ -222,7 +229,9 @@ class ResolveUploadTest(TestCase):
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
-    def test_assigns_permissions_per_attachment(self, mock_validate, mock_perm_group, mock_assign):
+    def test_assigns_permissions_per_attachment(
+        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+    ) -> None:
         mock_perm_group.return_value = self.permission_group
         doc = self._make_doc()
 
@@ -241,7 +250,9 @@ class ResolveUploadTest(TestCase):
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
     @patch("clients.services.client_document.validate_upload_token", return_value=False)
-    def test_raises_on_invalid_token(self, mock_validate, mock_perm_group, mock_assign):
+    def test_raises_on_invalid_token(
+        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+    ) -> None:
         mock_perm_group.return_value = self.permission_group
         doc = self._make_doc(upload_token="bad-token")
 
@@ -255,7 +266,9 @@ class ResolveUploadTest(TestCase):
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
-    def test_raises_on_invalid_storage_key(self, mock_validate, mock_perm_group, mock_assign):
+    def test_raises_on_invalid_storage_key(
+        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+    ) -> None:
         mock_perm_group.return_value = self.permission_group
         doc = self._make_doc(presigned_key="wrong_prefix/doc.pdf")
 
@@ -269,7 +282,9 @@ class ResolveUploadTest(TestCase):
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
-    def test_strips_storage_dir_prefix(self, mock_validate, mock_perm_group, mock_assign):
+    def test_strips_storage_dir_prefix(
+        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+    ) -> None:
         mock_perm_group.return_value = self.permission_group
         doc = self._make_doc(presigned_key="media/some_path/file.txt")
 
@@ -284,7 +299,9 @@ class ResolveUploadTest(TestCase):
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
     @patch("clients.services.client_document.validate_upload_token", return_value=False)
-    def test_does_not_create_attachments_on_invalid_token(self, mock_validate, mock_perm_group, mock_assign):
+    def test_does_not_create_attachments_on_invalid_token(
+        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+    ) -> None:
         mock_perm_group.return_value = self.permission_group
         initial_count = Attachment.objects.count()
         doc = self._make_doc(upload_token="bad-token")
@@ -301,7 +318,9 @@ class ResolveUploadTest(TestCase):
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
     @patch("clients.services.client_document.validate_upload_token")
-    def test_stops_on_first_invalid_token_in_batch(self, mock_validate, mock_perm_group, mock_assign):
+    def test_stops_on_first_invalid_token_in_batch(
+        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+    ) -> None:
         mock_perm_group.return_value = self.permission_group
         mock_validate.side_effect = [True, False]
         initial_count = Attachment.objects.count()

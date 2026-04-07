@@ -266,4 +266,3 @@ class AuthorizedPresignedS3UploadType(PresignedS3UploadType):
 @strawberry.type
 class AuthorizedPresignedS3UploadsType:
     uploads: list[AuthorizedPresignedS3UploadType]
-    uploads: list[AuthorizedPresignedS3UploadType]

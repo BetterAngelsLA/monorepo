@@ -1,7 +1,10 @@
+from typing import Any
+
 import boto3
 from botocore.client import Config
 from django.conf import settings
 from django.utils.encoding import filepath_to_uri
+from mypy_boto3_s3 import S3Client
 from storages.backends.s3 import S3Storage
 from storages.utils import clean_name
 
@@ -17,9 +20,9 @@ class LocalS3Storage(S3Storage):
     Docker network name minio while the client browser/device uses localhost.
     """
 
-    _local_public_client = None
+    _local_public_client: S3Client | None = None
 
-    def _get_local_public_client(self):
+    def _get_local_public_client(self) -> S3Client:
         if self._local_public_client is None:
             self._local_public_client = boto3.client(
                 "s3",
@@ -37,9 +40,15 @@ class LocalS3Storage(S3Storage):
 
         return self._local_public_client
 
-    def url(self, name, parameters=None, expire=None, http_method=None):
+    def url(
+        self,
+        name: str,
+        parameters: dict[str, Any] | None = None,
+        expire: int | None = None,
+        http_method: str | None = None,
+    ) -> str:
         if not settings.LOCAL_S3_PUBLIC_ENDPOINT_URL:
-            return super().url(name, parameters=parameters, expire=expire, http_method=http_method)
+            return super().url(name, parameters=parameters, expire=expire, http_method=http_method)  # type: ignore[no-any-return]
 
         params = parameters.copy() if parameters else {}
 
@@ -55,7 +64,7 @@ class LocalS3Storage(S3Storage):
                 ClientMethod="get_object",
                 Params=params,
                 ExpiresIn=expire,
-                HttpMethod=http_method,
+                HttpMethod=http_method or "",
             )
 
         return (

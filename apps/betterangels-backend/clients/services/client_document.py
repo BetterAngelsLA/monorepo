@@ -7,7 +7,11 @@ from clients.types import ClientDocumentFromUploadsInput, ClientDocumentUploadsI
 from common.models import Attachment
 from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import assign_object_permissions
-from common.services.s3 import DEFAULT_UPLOAD_EXPIRATION_SECONDS, generate_s3_presigned_upload_urls
+from common.services.s3 import (
+    DEFAULT_UPLOAD_EXPIRATION_SECONDS,
+    PresignedS3UploadInput,
+    generate_s3_presigned_upload_urls,
+)
 from common.services.upload_token import create_upload_token, validate_upload_token
 from django.contrib.contenttypes.models import ContentType
 
@@ -34,7 +38,7 @@ def create_presigned_uploads(
     user: User,
     uploads: Iterable[ClientDocumentUploadsInputItem],
 ) -> AuthorizedPresignedUploadBatch:
-    mapped_uploads = [
+    mapped_uploads: list[PresignedS3UploadInput] = [
         {
             "ref_id": upload.ref_id,
             "filename": upload.filename,

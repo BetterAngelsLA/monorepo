@@ -8,6 +8,7 @@ from botocore.client import Config
 from django.conf import settings
 from django.core.files.storage import default_storage
 from mypy_boto3_s3 import S3Client
+from storages.backends.s3 import S3Storage
 
 # generate_presigned_post
 DEFAULT_UPLOAD_EXPIRATION_SECONDS = 300
@@ -130,10 +131,9 @@ def _generate_presigned_post_with_client(
 
     if normalized_path:
         conditions.append(["starts-with", "$key", f"{normalized_path}/"])
-    # else:
-    #     conditions.append(["starts-with", "$key", ""]) # may be too loose
 
-    # other conditions:
+    # TODO - ohter conditions?
+    # conditions.append(["starts-with", "$key", ""]) # may be too loose
     # Optional: restrict content-type prefix?
     # -- ["starts-with", "$Content-Type", "image/"]
 
@@ -169,7 +169,7 @@ def generate_s3_presigned_upload_urls(
     *,
     uploads: list[PresignedS3UploadInput],
 ) -> PresignedS3UploadBatchResult:
-    storage = default_storage
+    storage = cast(S3Storage, default_storage)
     local_internal_endpoint_url: str | None = getattr(storage, "endpoint_url", None) or None
     bucket_name: str = storage.bucket_name
     signature_version: str = storage.signature_version
@@ -177,7 +177,7 @@ def generate_s3_presigned_upload_urls(
 
     s3_config = Config(
         signature_version=signature_version,
-        s3={"addressing_style": addressing_style},
+        s3={"addressing_style": addressing_style},  # type: ignore[arg-type]
     )
 
     client_kwargs: dict[str, object] = {
@@ -188,7 +188,7 @@ def generate_s3_presigned_upload_urls(
     if local_internal_endpoint_url:
         client_kwargs["endpoint_url"] = local_internal_endpoint_url
 
-    s3_client = boto3.client(**client_kwargs)
+    s3_client = cast(S3Client, boto3.client(**client_kwargs))  # type: ignore[call-overload]
 
     results: list[PresignedS3UploadResult] = []
 
@@ -204,18 +204,13 @@ def generate_s3_presigned_upload_urls(
             max_file_size=upload.get("max_file_size"),
         )
 
-        result = {
+        rewritten: PresignedS3UploadResult = {
             "ref_id": result["ref_id"],
             "url": _rewrite_presigned_url_for_local(result["url"]),
             "fields": result["fields"],
             "key": result["key"],
         }
 
-        print()
-        print("******************* rpresigned RESULT")
-        print(result)
-        print()
-
-        results.append(result)
+        results.append(rewritten)
 
     return {"uploads": results}

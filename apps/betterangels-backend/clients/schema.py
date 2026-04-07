@@ -697,7 +697,7 @@ class Mutation:
                 documents=data.documents,
             )
 
-            return ClientDocumentUploadsType(documents=documents)
+            return ClientDocumentUploadsType(documents=cast(list[ClientDocumentType], documents))
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated], extensions=[HasPerm(perms=[ClientProfilePermissions.CHANGE])]

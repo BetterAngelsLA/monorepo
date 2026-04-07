@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 from clients.services.client_profile_photo import (
@@ -13,8 +14,8 @@ from model_bakery import baker
 
 
 class CreatePresignedUploadTest(TestCase):
-    def setUp(self):
-        self.user = baker.make("accounts.User")
+    def setUp(self) -> None:
+        self.user: Any = baker.make("accounts.User")
         self.upload = MagicMock()
         self.upload.ref_id = "ref-123"
         self.upload.filename = "photo.jpg"
@@ -22,7 +23,7 @@ class CreatePresignedUploadTest(TestCase):
 
     @patch("clients.services.client_profile_photo.create_upload_token")
     @patch("clients.services.client_profile_photo.generate_s3_presigned_upload_urls")
-    def test_returns_presigned_upload_dict(self, mock_s3, mock_token):
+    def test_returns_presigned_upload_dict(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
         mock_s3.return_value = {
             "uploads": [
                 {
@@ -45,7 +46,7 @@ class CreatePresignedUploadTest(TestCase):
 
     @patch("clients.services.client_profile_photo.create_upload_token")
     @patch("clients.services.client_profile_photo.generate_s3_presigned_upload_urls")
-    def test_passes_correct_upload_path_to_s3(self, mock_s3, mock_token):
+    def test_passes_correct_upload_path_to_s3(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
         mock_s3.return_value = {"uploads": [{"ref_id": "ref-123", "key": "k", "url": "u", "fields": {}}]}
         mock_token.return_value = "t"
 
@@ -64,7 +65,7 @@ class CreatePresignedUploadTest(TestCase):
 
     @patch("clients.services.client_profile_photo.create_upload_token")
     @patch("clients.services.client_profile_photo.generate_s3_presigned_upload_urls")
-    def test_creates_token_with_correct_params(self, mock_s3, mock_token):
+    def test_creates_token_with_correct_params(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
         mock_s3.return_value = {
             "uploads": [{"ref_id": "ref-123", "key": "media/client_profile_photos/abc.jpg", "url": "u", "fields": {}}]
         }
@@ -81,14 +82,14 @@ class CreatePresignedUploadTest(TestCase):
 
 
 class ResolveUploadTest(TestCase):
-    def setUp(self):
-        self.user = baker.make("accounts.User")
-        self.client_profile = baker.make("clients.ClientProfile")
+    def setUp(self) -> None:
+        self.user: Any = baker.make("accounts.User")
+        self.client_profile: Any = baker.make("clients.ClientProfile")
         self.presigned_key = f"{STORAGE_DIR}/client_profile_photos/abc.jpg"
         self.upload_token = "valid-token"
 
     @patch("clients.services.client_profile_photo.validate_upload_token", return_value=True)
-    def test_saves_profile_photo_path(self, mock_validate):
+    def test_saves_profile_photo_path(self, mock_validate: MagicMock) -> None:
         result = resolve_upload(
             user=self.user,
             client_profile=self.client_profile,
@@ -100,7 +101,7 @@ class ResolveUploadTest(TestCase):
         self.assertEqual(result.profile_photo.name, "client_profile_photos/abc.jpg")
 
     @patch("clients.services.client_profile_photo.validate_upload_token", return_value=True)
-    def test_returns_client_profile(self, mock_validate):
+    def test_returns_client_profile(self, mock_validate: MagicMock) -> None:
         result = resolve_upload(
             user=self.user,
             client_profile=self.client_profile,
@@ -111,7 +112,7 @@ class ResolveUploadTest(TestCase):
         self.assertEqual(result.pk, self.client_profile.pk)
 
     @patch("clients.services.client_profile_photo.validate_upload_token", return_value=True)
-    def test_validates_token_with_correct_params(self, mock_validate):
+    def test_validates_token_with_correct_params(self, mock_validate: MagicMock) -> None:
         resolve_upload(
             user=self.user,
             client_profile=self.client_profile,
@@ -127,7 +128,7 @@ class ResolveUploadTest(TestCase):
         )
 
     @patch("clients.services.client_profile_photo.validate_upload_token", return_value=False)
-    def test_raises_on_invalid_token(self, mock_validate):
+    def test_raises_on_invalid_token(self, mock_validate: MagicMock) -> None:
         with self.assertRaises(ValueError, msg="Invalid or expired upload signature"):
             resolve_upload(
                 user=self.user,
@@ -137,7 +138,7 @@ class ResolveUploadTest(TestCase):
             )
 
     @patch("clients.services.client_profile_photo.validate_upload_token", return_value=True)
-    def test_raises_on_invalid_storage_key(self, mock_validate):
+    def test_raises_on_invalid_storage_key(self, mock_validate: MagicMock) -> None:
         with self.assertRaises(ValueError, msg="Invalid storage key"):
             resolve_upload(
                 user=self.user,
@@ -147,7 +148,7 @@ class ResolveUploadTest(TestCase):
             )
 
     @patch("clients.services.client_profile_photo.validate_upload_token", return_value=True)
-    def test_strips_storage_dir_prefix(self, mock_validate):
+    def test_strips_storage_dir_prefix(self, mock_validate: MagicMock) -> None:
         resolve_upload(
             user=self.user,
             client_profile=self.client_profile,
@@ -159,7 +160,7 @@ class ResolveUploadTest(TestCase):
         self.assertEqual(self.client_profile.profile_photo.name, "some_other_path/photo.png")
 
     @patch("clients.services.client_profile_photo.validate_upload_token", return_value=False)
-    def test_does_not_save_on_invalid_token(self, mock_validate):
+    def test_does_not_save_on_invalid_token(self, mock_validate: MagicMock) -> None:
         with self.assertRaises(ValueError):
             resolve_upload(
                 user=self.user,

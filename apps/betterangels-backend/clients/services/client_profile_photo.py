@@ -1,4 +1,3 @@
-# apps/betterangels-backend/clients/services/client_profile_photo.py
 from typing import TypedDict
 
 from accounts.models import User
