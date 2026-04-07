@@ -10,6 +10,7 @@ export {
   TClientProfileCardItem,
 } from './ClientProfileCard';
 export * from './ClientProfileList';
+export * from './ClientProfilePhotoUploader';
 export { default as ConsentModal } from './ConsentModal';
 export * from './CreateClientInteraction';
 export { default as DocumentModal } from './DocumentModal';
@@ -37,8 +38,8 @@ export { default as Modal } from './Modal';
 export * from './Nav';
 export * from './NavModal';
 export { default as NoteCard } from './NoteCard';
-export { default as NoteTasks } from './NoteTasks';
 export { default as NoteCardHmis } from './NoteCardHmis';
+export { default as NoteTasks } from './NoteTasks';
 export { default as RequestedProvidedServices } from './RequestedProvidedServices';
 export { default as OtherCategory } from './RequestedProvidedServices/OtherCategory';
 export { default as RequestedProvidedServicesHmis } from './RequestedProvidedServicesHmis';
