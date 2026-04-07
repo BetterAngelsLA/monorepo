@@ -548,6 +548,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
 
     def _generate_client_profile_photo_upload_fixture(
         self,
+        client_profile_id: str,
         ref_id: str,
         filename: str,
         content_type: str,
@@ -575,6 +576,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
             """,
             variables={
                 "data": {
+                    "clientProfileId": client_profile_id,
                     "refId": ref_id,
                     "filename": filename,
                     "contentType": content_type,

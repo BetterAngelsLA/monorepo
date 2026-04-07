@@ -450,6 +450,7 @@ class ClientDocumentUploadsType:
 
 @strawberry.input
 class GenerateClientProfilePhotoUploadInput:
+    client_profile_id: ID
     ref_id: str
     filename: str
     content_type: str

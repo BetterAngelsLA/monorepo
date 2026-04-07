@@ -709,6 +709,12 @@ class Mutation:
     ) -> AuthorizedPresignedS3UploadType:
         user = cast(User, get_current_user(info))
 
+        _ = filter_for_user(
+            ClientProfile.objects.all(),
+            user,
+            [ClientProfilePermissions.CHANGE],
+        ).get(id=data.client_profile_id)
+
         result = client_profile_photo.create_presigned_upload(
             user=user,
             upload=data,
