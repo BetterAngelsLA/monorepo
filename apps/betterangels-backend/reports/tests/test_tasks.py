@@ -84,6 +84,11 @@ class TestProcessScheduledReportsTask:
 class TestSendScheduledReportTask:
     """Tests for the send_scheduled_report Celery task orchestration."""
 
+    @pytest.fixture(autouse=True)
+    def _use_in_memory_storage(self, settings):  # type: ignore[no-untyped-def]
+        """Use in-memory storage so email attachments don't hit S3."""
+        settings.STORAGES = {"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}}
+
     def test_report_not_found(self) -> None:
         """Test task with non-existent report ID."""
         result = send_scheduled_report.apply(args=(99999,)).get()
