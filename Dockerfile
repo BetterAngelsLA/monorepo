@@ -94,7 +94,7 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 
 # EAS CLI (globally installed for Expo builds/updates)
-RUN npm install -g eas-cli
+RUN npm install -g eas-cli@18.5.0
 
 # Python
 RUN pip install poetry==2.3.2
