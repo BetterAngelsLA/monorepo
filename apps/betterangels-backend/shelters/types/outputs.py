@@ -10,15 +10,9 @@ from accounts.models import User
 from accounts.types import OrganizationType
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.imgproxy import build_imgproxy_url
-from django.db.models import Prefetch, QuerySet
+from django.db.models import Count, Prefetch, Q, QuerySet
 from shelters import models
-from shelters.enums import (
-    BedStatusChoices,
-    BedTypeChoices,
-    MedicalNeedChoices,
-    RoomStatusChoices,
-    RoomStyleChoices,
-)
+from shelters.enums import BedStatusChoices, BedTypeChoices, MedicalNeedChoices, RoomStatusChoices, RoomStyleChoices
 from shelters.selectors import admin_shelter_list, shelter_list
 from shelters.types.lookups import (
     AccessibilityType,
@@ -58,6 +52,14 @@ class ShelterPhotoType:
     id: ID
     created_at: datetime
     file: TransformableImageType
+
+
+@strawberry.type
+class BedsByStatusType:
+    available: int = 0
+    occupied: int = 0
+    reserved: int = 0
+    out_of_service: int = 0
 
 
 @strawberry.type
@@ -157,6 +159,22 @@ class ShelterTypeMixin:
             return float(distance.mi)
 
         return None
+
+    @strawberry_django.field(
+        annotate={
+            "_bed_available": lambda info: Count("beds", filter=Q(beds__status=BedStatusChoices.AVAILABLE)),
+            "_bed_occupied": lambda info: Count("beds", filter=Q(beds__status=BedStatusChoices.OCCUPIED)),
+            "_bed_reserved": lambda info: Count("beds", filter=Q(beds__status=BedStatusChoices.RESERVED)),
+            "_bed_out_of_service": lambda info: Count("beds", filter=Q(beds__status=BedStatusChoices.OUT_OF_SERVICE)),
+        }
+    )
+    def beds_by_status(self, root: models.Shelter) -> BedsByStatusType:
+        return BedsByStatusType(
+            available=getattr(root, "_bed_available", 0),
+            occupied=getattr(root, "_bed_occupied", 0),
+            reserved=getattr(root, "_bed_reserved", 0),
+            out_of_service=getattr(root, "_bed_out_of_service", 0),
+        )
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)

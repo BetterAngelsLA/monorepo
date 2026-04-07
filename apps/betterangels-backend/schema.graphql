@@ -129,6 +129,7 @@ type AdminShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
+  bedsByStatus: BedsByStatusType!
 }
 
 type AdminShelterTypeOffsetPaginated {
@@ -195,6 +196,13 @@ enum BedTypeChoices {
   BUNK
   ROLLAWAY
   OTHER
+}
+
+type BedsByStatusType {
+  available: Int!
+  occupied: Int!
+  reserved: Int!
+  outOfService: Int!
 }
 
 type CityType {
@@ -570,6 +578,7 @@ input CreateHmisClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
 }
 
 union CreateHmisClientProfilePayload = HmisClientProfileType | OperationInfo
@@ -989,6 +998,7 @@ type HmisClientProfileType {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   id: ID!
   hmisId: String
   personalId: String
@@ -2012,6 +2022,7 @@ type ServiceType {
 }
 
 enum ShelterChoices {
+  ACCESS_CENTER
   BUILDING
   CHURCH
   HOTEL_MOTEL
@@ -2026,6 +2037,7 @@ input ShelterFilter {
   OR: ShelterFilter
   NOT: ShelterFilter
   DISTINCT: Boolean
+  isAccessCenter: Boolean
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
@@ -2148,6 +2160,7 @@ type ShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
+  bedsByStatus: BedsByStatusType!
 }
 
 type ShelterTypeOffsetPaginated {
@@ -2224,6 +2237,7 @@ enum StorageChoices {
   AMNESTY_LOCKERS
   STANDARD_LOCKERS
   SHARED_STORAGE
+  PERSONAL_BIN
   NO_STORAGE
 }
 
@@ -2400,6 +2414,7 @@ input UpdateHmisClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   id: ID!
   phoneNumbers: [PhoneNumberInput!]
 }
