@@ -49,6 +49,7 @@ query ClientProfileHmis($id: ID!) {
       residenceAddress
       residenceGeolocation
       spokenLanguages
+      unhousedStartDate
       phoneNumbers {
         id
         number

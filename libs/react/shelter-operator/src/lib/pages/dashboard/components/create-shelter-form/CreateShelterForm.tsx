@@ -103,7 +103,7 @@ export function CreateShelterForm() {
     <APIProvider
       apiKey={import.meta.env.VITE_SHELTER_GOOGLE_MAPS_API_KEY as string}
     >
-      <div className="space-y-6">
+      <div className="space-y-6 p-8">
         <Link
           to="/operator"
           className="inline-block border border-gray-300 rounded-md px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"

@@ -119,6 +119,7 @@ export const enumDisplayRoomStyles: { [key in RoomStyleChoices]: string } = {
 export const enumDisplayShelterChoices: {
   [key in ShelterChoices]: string;
 } = {
+  [ShelterChoices.AccessCenter]: 'Access Center / Day Center',
   [ShelterChoices.Building]: 'Building',
   [ShelterChoices.Church]: 'Church',
   [ShelterChoices.HotelMotel]: 'Hotel/Motel',
@@ -178,6 +179,7 @@ export const enumDisplayStorageChoices: { [key in StorageChoices]: string } = {
   [StorageChoices.SharedStorage]: 'Shared Storage',
   [StorageChoices.StandardLockers]: 'Standard Lockers',
   [StorageChoices.UnitStorage]: 'Unit-level Storage',
+  [StorageChoices.PersonalBin]: 'Personal Storage Bin',
 };
 
 /*

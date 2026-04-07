@@ -17,6 +17,31 @@ query ViewSheltersByOrganization(
         place
       }
       totalBeds
+      bedsByStatus {
+        available
+        occupied
+        reserved
+        outOfService
+      }
+      demographics {
+        name
+      }
+      specialSituationRestrictions {
+        name
+      }
+      shelterTypes {
+        name
+      }
+      spa {
+        name
+      }
     }
+  }
+}
+
+query GetShelterName($id: ID!) {
+  shelter(pk: $id) {
+    id
+    name
   }
 }
