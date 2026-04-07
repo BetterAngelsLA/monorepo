@@ -7,7 +7,7 @@ from common.tests.utils import build_address_inputs
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
@@ -419,6 +419,7 @@ class PhoneNumberTestCase(TestCase):
         self.assertTrue(phone_number_2.is_primary)
 
 
+@override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
 class AttachmentTestCase(TestCase):
     def test_save(self) -> None:
         file_content = b"Test file content"

@@ -20,6 +20,7 @@ from clients.enums import (
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 from django.utils import timezone
 
 
@@ -133,6 +134,7 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
         return self.execute_graphql(mutation, {"data": variables})
 
 
+@override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
 class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
     def setUp(self) -> None:
         super().setUp()

@@ -11,7 +11,6 @@ from clients.tests.utils import (
 )
 from common.models import Attachment
 from common.tests.utils import GraphQLBaseTestCase
-from django.test import override_settings
 from unittest_parametrize import parametrize
 
 
@@ -199,7 +198,6 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
                 self.assertGraphQLUnauthenticated(response)
 
 
-@override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
 class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()

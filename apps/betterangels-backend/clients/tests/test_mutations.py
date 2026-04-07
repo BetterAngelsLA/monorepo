@@ -28,7 +28,6 @@ from clients.tests.utils import (
 )
 from common.models import Attachment
 from deepdiff import DeepDiff
-from django.test import override_settings
 from unittest_parametrize import parametrize
 
 
@@ -467,7 +466,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertIsNotNone(response["data"]["deleteClientProfile"])
         self.assertFalse(ClientProfile.objects.filter(id=client_profile["id"]).exists())
 
-    @override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
     def test_update_client_profile_photo(self) -> None:
         client_profile_id = self.client_profile_1["id"]
         photo_content = (
@@ -816,7 +814,6 @@ class SocialMediaProfileMutationTestCase(SocialMediaProfileBaseTestCase):
             self.assertEqual(response, variables)
 
 
-@override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
 class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
