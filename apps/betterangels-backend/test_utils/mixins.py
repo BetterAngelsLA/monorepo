@@ -1,8 +1,6 @@
 import json
 from typing import Any, Dict, Optional, Protocol
 
-from common.imgproxy import build_imgproxy_url
-from django.core.files.base import File
 from django.test import Client, TestCase
 
 
@@ -23,9 +21,6 @@ class GraphQLTestCaseMixin:
         if isinstance(self, TestCase):
             super(TestCase, self).setUp()
         self.graphql_client = Client()
-
-    def _get_imgproxy_url(self, file: File) -> Optional[str]:
-        return build_imgproxy_url(file, preset=None, processing_options="f:jpg")
 
     def execute_graphql(
         self,

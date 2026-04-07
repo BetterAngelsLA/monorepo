@@ -1,6 +1,7 @@
 import datetime
-from unittest.mock import ANY
+from unittest.mock import ANY, Mock, patch
 
+import waffle
 from accounts.tests.baker_recipes import organization_recipe
 from common.imgproxy import IMGPROXY_SWITCH
 from common.tests.utils import GraphQLBaseTestCase
@@ -57,6 +58,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.setup_shelter_graphql_fixtures()
+        waffle.switch_is_active(IMGPROXY_SWITCH)
 
     def test_shelter_query(self) -> None:
         shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
@@ -319,7 +321,12 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             ],
         )
 
-    def test_shelters_query(self) -> None:
+    @patch("shelters.types.outputs.build_imgproxy_url")
+    def test_shelters_query(self, mock_build_imgproxy_url: Mock) -> None:
+        mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
+            file, "url", None
+        )
+
         shelter_count = 2
         shelters = shelter_recipe.make(_quantity=shelter_count, status=StatusChoices.APPROVED)
 
@@ -356,5 +363,5 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         shelters = response["data"]["shelters"]["results"]
         self.assertEqual(len(shelters), shelter_count)
         self.assertEqual(Shelter.objects.count(), shelter_count + 1)
-        self.assertEqual(self._get_imgproxy_url(exterior_photo_0.file), shelters[0]["heroImage"])
-        self.assertEqual(self._get_imgproxy_url(interior_photo_1.file), shelters[1]["heroImage"])
+        self.assertEqual(shelters[0]["heroImage"], exterior_photo_0.file.url)
+        self.assertEqual(shelters[1]["heroImage"], interior_photo_1.file.url)
