@@ -7,7 +7,7 @@ from accounts.utils import get_user_permission_group
 from clients.models import ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.graphql.utils import get_object_or_permission_error, strip_unset
+from common.graphql.utils import get_object_or_permission_error
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
 from django.db.models import QuerySet
@@ -91,10 +91,10 @@ class Mutation:
         user = cast(User, get_current_user(info))
         permission_group = get_user_permission_group(user)
 
-        location_dict = strip_unset(asdict(data.location)) if data.location else None
-        provided_list = [strip_unset(asdict(s)) for s in data.provided_services] if data.provided_services else None
-        requested_list = [strip_unset(asdict(s)) for s in data.requested_services] if data.requested_services else None
-        tasks_list = [strip_unset(asdict(t)) for t in data.tasks] if data.tasks else None
+        location_dict = asdict(data.location) if data.location else None
+        provided_list = [asdict(s) for s in data.provided_services] if data.provided_services else None
+        requested_list = [asdict(s) for s in data.requested_services] if data.requested_services else None
+        tasks_list = [asdict(t) for t in data.tasks] if data.tasks else None
 
         note = note_create(
             user=user,
@@ -125,7 +125,7 @@ class Mutation:
         permission_group = get_user_permission_group(user)
 
         qs: QuerySet[Note] = info.context.qs
-        clean = strip_unset(asdict(data))
+        clean = asdict(data)
 
         note = get_object_or_permission_error(qs, data.id)
         note = note_update(
@@ -146,7 +146,7 @@ class Mutation:
         qs: QuerySet[Note] = info.context.qs
         note = get_object_or_permission_error(qs, data.id)
 
-        location_data: dict = strip_unset(strawberry.asdict(data)["location"])
+        location_data: dict = strawberry.asdict(data)["location"]
         note = note_update_location(note=note, location_data=location_data)
 
         return cast(NoteType, note)
