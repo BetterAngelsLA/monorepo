@@ -1,4 +1,4 @@
-from unittest.mock import ANY
+from unittest.mock import ANY, patch
 
 from clients.enums import (
     AdaAccommodationEnum,
@@ -496,6 +496,82 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client_profile.refresh_from_db()
         self.assertIn(updated_photo_name, client_profile.profile_photo.url)
 
+    def test_generate_client_profile_photo_upload(self) -> None:
+        with patch(
+            "clients.services.client_profile_photo.generate_s3_presigned_upload_urls",
+            return_value={
+                "uploads": [
+                    {
+                        "ref_id": "photo-ref-1",
+                        "key": "media/client_profile_photos/photo.jpg",
+                        "url": "https://s3.example.com/upload-photo",
+                        "fields": {"Policy": "abc", "X-Amz-Signature": "sig1"},
+                    },
+                ]
+            },
+        ), patch(
+            "clients.services.client_profile_photo.create_upload_token",
+            return_value="photo-token-1",
+        ):
+            expected_query_count = 5
+            with self.assertNumQueriesWithoutCache(expected_query_count):
+                response = self._generate_client_profile_photo_upload_fixture(
+                    client_profile_id=self.client_profile_1["id"],
+                    ref_id="photo-ref-1",
+                    filename="photo.jpg",
+                    content_type="image/jpeg",
+                )
+
+        result = response["data"]["generateClientProfilePhotoUpload"]
+        self.assertEqual(result["refId"], "photo-ref-1")
+        self.assertEqual(result["url"], "https://s3.example.com/upload-photo")
+        self.assertEqual(result["presignedKey"], "media/client_profile_photos/photo.jpg")
+        self.assertEqual(result["uploadToken"], "photo-token-1")
+        self.assertIn("Policy", result["fields"])
+
+    def test_resolve_client_profile_photo_upload(self) -> None:
+        with patch("clients.services.client_profile_photo.validate_upload_token", return_value=True):
+            expected_query_count = 8
+            with self.assertNumQueriesWithoutCache(expected_query_count):
+                response = self._resolve_client_profile_photo_upload_fixture(
+                    client_profile_id=self.client_profile_1["id"],
+                    presigned_key="media/client_profile_photos/photo.jpg",
+                    upload_token="valid-photo-token",
+                )
+
+        result = response["data"]["resolveClientProfilePhotoUpload"]
+        self.assertEqual(result["id"], self.client_profile_1["id"])
+        self.assertIsNotNone(result["profilePhoto"])
+        self.assertIn("client_profile_photos/photo.jpg", result["profilePhoto"]["url"])
+
+        # Verify database was updated
+        client_profile = ClientProfile.objects.get(id=self.client_profile_1["id"])
+        self.assertIn("client_profile_photos/photo.jpg", client_profile.profile_photo.name)
+
+    def test_resolve_client_profile_photo_upload_invalid_token(self) -> None:
+        with patch("clients.services.client_profile_photo.validate_upload_token", return_value=False):
+            expected_query_count = 6
+            with self.assertNumQueriesWithoutCache(expected_query_count):
+                response = self._resolve_client_profile_photo_upload_fixture(
+                    client_profile_id=self.client_profile_1["id"],
+                    presigned_key="media/client_profile_photos/photo.jpg",
+                    upload_token="bad-token",
+                )
+
+        self.assertIsNotNone(response.get("errors"))
+
+    def test_resolve_client_profile_photo_upload_invalid_storage_key(self) -> None:
+        with patch("clients.services.client_profile_photo.validate_upload_token", return_value=True):
+            expected_query_count = 6
+            with self.assertNumQueriesWithoutCache(expected_query_count):
+                response = self._resolve_client_profile_photo_upload_fixture(
+                    client_profile_id=self.client_profile_1["id"],
+                    presigned_key="wrong_prefix/photo.jpg",
+                    upload_token="valid-photo-token",
+                )
+
+        self.assertIsNotNone(response.get("errors"))
+
 
 class ClientContactMutationTestCase(ClientContactBaseTestCase):
     def setUp(self) -> None:
@@ -876,3 +952,135 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         # Verify database was updated
         document = Attachment.objects.get(id=document_id)
         self.assertEqual(document.original_filename, new_filename)
+
+    def test_generate_client_document_uploads(self) -> None:
+        uploads = [
+            {"refId": "ref-1", "filename": "doc1.pdf", "contentType": "application/pdf"},
+            {"refId": "ref-2", "filename": "doc2.jpg", "contentType": "image/jpeg"},
+        ]
+
+        with patch(
+            "clients.services.client_document.generate_s3_presigned_upload_urls",
+            return_value={
+                "uploads": [
+                    {
+                        "ref_id": "ref-1",
+                        "key": "media/attachments/doc1.pdf",
+                        "url": "https://s3.example.com/upload1",
+                        "fields": {"Policy": "abc", "X-Amz-Signature": "sig1"},
+                    },
+                    {
+                        "ref_id": "ref-2",
+                        "key": "media/attachments/doc2.jpg",
+                        "url": "https://s3.example.com/upload2",
+                        "fields": {"Policy": "def", "X-Amz-Signature": "sig2"},
+                    },
+                ]
+            },
+        ), patch("clients.services.client_document.create_upload_token", side_effect=["token-1", "token-2"]):
+            expected_query_count = 5
+            with self.assertNumQueriesWithoutCache(expected_query_count):
+                response = self._generate_client_document_uploads_fixture(
+                    self.client_profile_1["id"],
+                    uploads,
+                )
+
+        result_uploads = response["data"]["generateClientDocumentUploads"]["uploads"]
+        self.assertEqual(len(result_uploads), 2)
+
+        self.assertEqual(result_uploads[0]["refId"], "ref-1")
+        self.assertEqual(result_uploads[0]["url"], "https://s3.example.com/upload1")
+        self.assertEqual(result_uploads[0]["presignedKey"], "media/attachments/doc1.pdf")
+        self.assertEqual(result_uploads[0]["uploadToken"], "token-1")
+        self.assertIn("Policy", result_uploads[0]["fields"])
+
+        self.assertEqual(result_uploads[1]["refId"], "ref-2")
+        self.assertEqual(result_uploads[1]["url"], "https://s3.example.com/upload2")
+        self.assertEqual(result_uploads[1]["presignedKey"], "media/attachments/doc2.jpg")
+        self.assertEqual(result_uploads[1]["uploadToken"], "token-2")
+
+    def test_resolve_client_document_uploads(self) -> None:
+        documents = [
+            {
+                "presignedKey": "media/attachments/doc1.pdf",
+                "uploadToken": "valid-token-1",
+                "filename": "doc1.pdf",
+                "contentType": "application/pdf",
+                "namespace": ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+            },
+            {
+                "presignedKey": "media/attachments/doc2.jpg",
+                "uploadToken": "valid-token-2",
+                "filename": "doc2.jpg",
+                "contentType": "image/jpeg",
+                "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            },
+        ]
+
+        with patch("clients.services.client_document.validate_upload_token", return_value=True):
+            expected_query_count = 35
+            with self.assertNumQueriesWithoutCache(expected_query_count):
+                response = self._resolve_client_document_uploads_fixture(
+                    self.client_profile_1["id"],
+                    documents,
+                )
+
+        result_docs = response["data"]["resolveClientDocumentUploads"]["documents"]
+        self.assertEqual(len(result_docs), 2)
+
+        self.assertEqual(result_docs[0]["originalFilename"], "doc1.pdf")
+        self.assertEqual(result_docs[0]["mimeType"], "application/pdf")
+        self.assertEqual(result_docs[0]["namespace"], ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name)
+        self.assertIsNotNone(result_docs[0]["id"])
+
+        self.assertEqual(result_docs[1]["originalFilename"], "doc2.jpg")
+        self.assertEqual(result_docs[1]["mimeType"], "image/jpeg")
+        self.assertEqual(result_docs[1]["namespace"], ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name)
+        self.assertIsNotNone(result_docs[1]["id"])
+
+        # Verify documents were created in the database
+        for doc in result_docs:
+            attachment = Attachment.objects.get(id=doc["id"])
+            self.assertEqual(attachment.object_id, int(self.client_profile_1["id"]))
+
+    def test_resolve_client_document_uploads_invalid_token(self) -> None:
+        documents = [
+            {
+                "presignedKey": "media/attachments/doc1.pdf",
+                "uploadToken": "bad-token",
+                "filename": "doc1.pdf",
+                "contentType": "application/pdf",
+                "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            },
+        ]
+
+        with patch("clients.services.client_document.validate_upload_token", return_value=False):
+            expected_query_count = 9
+            with self.assertNumQueriesWithoutCache(expected_query_count):
+                response = self._resolve_client_document_uploads_fixture(
+                    self.client_profile_1["id"],
+                    documents,
+                )
+
+        self.assertIsNotNone(response.get("errors"))
+
+    def test_resolve_client_document_uploads_invalid_storage_key(self) -> None:
+        documents = [
+            {
+                "presignedKey": "wrong_prefix/doc1.pdf",
+                "uploadToken": "valid-token",
+                "filename": "doc1.pdf",
+                "contentType": "application/pdf",
+                "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            },
+        ]
+
+        with patch("clients.services.client_document.validate_upload_token", return_value=True):
+            expected_query_count = 9
+            with self.assertNumQueriesWithoutCache(expected_query_count):
+                response = self._resolve_client_document_uploads_fixture(
+                    self.client_profile_1["id"],
+                    documents,
+                )
+
+        self.assertIsNotNone(response.get("errors"))
