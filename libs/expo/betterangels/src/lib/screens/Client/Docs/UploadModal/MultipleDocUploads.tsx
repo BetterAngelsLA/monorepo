@@ -3,7 +3,7 @@ import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { UploadIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { MediaPicker, TextBold } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import { useSnackbar } from '../../../../hooks';
@@ -16,7 +16,16 @@ import UploadsPreview from './UploadsPreview';
 import { IMultipleDocUploadsProps } from './types';
 
 export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
-  const { setTab, client, setDocs, docs, title, docType } = props;
+  const {
+    setTab,
+    client,
+    setDocs,
+    docs,
+    title,
+    docType,
+    onUploadSuccess,
+    onUploadError,
+  } = props;
   const [createDocument, { loading }] = useMutation(
     CreateClientDocumentDocument,
     {
@@ -30,6 +39,11 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
       ],
     }
   );
+
+  useEffect(() => {
+    setIsModalVisible(true);
+  }, []);
+
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { showSnackbar } = useSnackbar();
 
@@ -60,8 +74,14 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
       });
 
       await Promise.all(uploads);
+      onUploadSuccess?.('Files uploaded successfully.');
+      setTab(undefined);
+      
     } catch (err) {
       console.error(`error uploading ${docType} forms: `, err);
+
+      onUploadError?.('Upload failed. Please try again.');
+      setTab(undefined);
 
       showSnackbar({
         message: `Sorry, there was an error with the file upload.`,

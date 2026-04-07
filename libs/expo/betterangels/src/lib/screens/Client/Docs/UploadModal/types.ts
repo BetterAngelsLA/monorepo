@@ -40,6 +40,8 @@ export interface IMultipleDocUploadsProps {
   docs: Docs;
   setDocs: Dispatch<SetStateAction<Docs>>;
   title: string;
+  onUploadSuccess?: (message: string) => void;
+  onUploadError?: (message: string) => void;
   docType: 'ConsentForm' | 'HmisForm' | 'IncomeForm' | 'OtherClientDocument';
 }
 
@@ -49,6 +51,8 @@ export interface ISingleDocUploadsProps {
   docs: Docs;
   setDocs: Dispatch<SetStateAction<Docs>>;
   title: string;
+  onUploadSuccess?: (message: string) => void;
+  onUploadError?: (message: string) => void;
   docType:
     | 'DriversLicenseFront'
     | 'DriversLicenseBack'

@@ -3,7 +3,7 @@ import { Colors, Spacings, thumbnailSizes } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import * as React from 'react';
 import { useEffect } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import FileUploadTab from './FileUploadTab';
@@ -26,12 +26,28 @@ export default function UploadModal(props: IUploadModalProps) {
     IncomeForm: [],
     OtherClientDocument: [],
   });
+  const [banner, setBanner] = React.useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
   const docProps = {
     setTab,
     client,
     docs,
     setDocs,
+    onUploadSuccess: (message: string) => {
+      setBanner({
+        type: 'success',
+        message,
+      });
+    },
+    onUploadError: (message: string) => {
+      setBanner({
+        type: 'error',
+        message,
+      });
+    },
   };
 
   const TABS = {
@@ -229,6 +245,32 @@ export default function UploadModal(props: IUploadModalProps) {
             />
           </View>
         </ScrollView>
+      )}
+
+      {banner && !tab && (
+        <View
+          style={{
+            position: 'absolute',
+            left: 16,
+            right: 16,
+            bottom: bottomOffset + 16,
+            height: 48,
+            backgroundColor: banner.type === 'success' ? '#EAF8EE' : '#FFF4F4',
+            borderColor: banner.type === 'success' ? '#22C55E' : '#FF3B30',
+            borderWidth: 1,
+            borderRadius: 4,
+            paddingHorizontal: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <TextRegular size="sm">{banner.message}</TextRegular>
+
+          <Pressable accessibilityRole="button" onPress={() => setBanner(null)}>
+            <TextBold size="sm">Close</TextBold>
+          </Pressable>
+        </View>
       )}
     </View>
   );
