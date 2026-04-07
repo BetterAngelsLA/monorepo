@@ -45,6 +45,8 @@ query ClientProfiles(
         name
         relationshipToClient
         phoneNumber
+        email
+        mailingAddress
       }
       phoneNumbers {
         id
