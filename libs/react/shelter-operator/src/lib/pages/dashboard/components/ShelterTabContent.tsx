@@ -1,10 +1,12 @@
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
+import {
+  RoomStatusChoices,
+  type RoomType,
+} from '../../../apollo/graphql/__generated__/types';
 import { Button } from '../../../components/base-ui/buttons';
 import { EditRoomModal } from '../../../components/rooms/EditRoomModal';
 import { RoomTable, type RoomRowObject } from '../../../components/RoomTable';
-import { RoomStatusChoices, type RoomType } from '../../../apollo/graphql/__generated__/types';
-import type { Shelter } from '../../../types/shelter';
 
 type ShelterTab = 'overview' | 'rooms' | 'beds' | 'occupancy' | 'label';
 
@@ -14,40 +16,74 @@ export function OverviewTabContent() {
 
 export function RoomsTabContent() {
   const rows: RoomType[] = [
-    { id: 'room-1', roomIdentifier: 'Room Name', status: RoomStatusChoices.Available, amenities: 'Women Only, Shared, Overflow', __typename: 'RoomType', medicalRespite: false, shelter: {} as any } as RoomType,
-    { id: 'room-2', roomIdentifier: 'Room Name', status: RoomStatusChoices.Available, amenities: 'Women Only, Shared, Medical', __typename: 'RoomType', medicalRespite: false, shelter: {} as any } as RoomType,
-    { id: 'room-3', roomIdentifier: 'Room Name', status: RoomStatusChoices.NeedsMaintenance, amenities: 'Women Only, Shared, Repair', __typename: 'RoomType', medicalRespite: false, shelter: {} as any } as RoomType,
+    {
+      id: 'room-1',
+      roomIdentifier: 'Room Name',
+      status: RoomStatusChoices.Available,
+      amenities: 'Women Only, Shared, Overflow',
+      __typename: 'RoomType',
+      medicalRespite: false,
+      shelter: {} as any,
+    } as RoomType,
+    {
+      id: 'room-2',
+      roomIdentifier: 'Room Name',
+      status: RoomStatusChoices.Available,
+      amenities: 'Women Only, Shared, Medical',
+      __typename: 'RoomType',
+      medicalRespite: false,
+      shelter: {} as any,
+    } as RoomType,
+    {
+      id: 'room-3',
+      roomIdentifier: 'Room Name',
+      status: RoomStatusChoices.NeedsMaintenance,
+      amenities: 'Women Only, Shared, Repair',
+      __typename: 'RoomType',
+      medicalRespite: false,
+      shelter: {} as any,
+    } as RoomType,
     {
       id: 'room-4',
-      roomIdentifier: 'Room Name', shelter: {} as any, __typename: 'RoomType', medicalRespite: false, amenities: '',
+      roomIdentifier: 'Room Name',
+      shelter: {} as any,
+      __typename: 'RoomType',
+      medicalRespite: false,
+      amenities: '',
       status: RoomStatusChoices.Reserved,
       // tags: ['Women Only', 'Shared', 'Hold'],
     },
     {
       id: 'room-5',
-      roomIdentifier: 'Room Name', shelter: {} as any, __typename: 'RoomType', medicalRespite: false, amenities: '',
+      roomIdentifier: 'Room Name',
+      shelter: {} as any,
+      __typename: 'RoomType',
+      medicalRespite: false,
+      amenities: '',
       status: RoomStatusChoices.Available,
       // tags: ['Women Only', 'Shared', 'Quiet'],
     },
     {
       id: 'room-6',
-      roomIdentifier: 'Room Name', shelter: {} as any, __typename: 'RoomType', medicalRespite: false, amenities: '',
+      roomIdentifier: 'Room Name',
+      shelter: {} as any,
+      __typename: 'RoomType',
+      medicalRespite: false,
+      amenities: '',
       status: RoomStatusChoices.Available,
       // tags: ['Women Only', 'Shared', 'Near Exit'],
     },
   ];
 
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedRoom, setSelectedRoom] = useState<RoomType | undefined>();
+  const [selectedRoom, setSelectedRoom] = useState<RoomType | null>(null);
 
   const handleRowClick = (rowObject: RoomRowObject) => {
     setSelectedRoom(rowObject.room);
-    setIsEditModalOpen(true);
   };
 
   const handleSaveRoom = (updatedRoom: RoomType) => {
     console.log('Saving room:', updatedRoom);
-    setIsEditModalOpen(false);
+    setSelectedRoom(null);
   };
 
   return (
@@ -60,12 +96,14 @@ export function RoomsTabContent() {
           Create Room
         </Button>
       </div>
-      <EditRoomModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        room={selectedRoom}
-        onSave={handleSaveRoom}
-      />
+      {selectedRoom && (
+        <EditRoomModal
+          isOpen={true}
+          onClose={() => setSelectedRoom(null)}
+          room={selectedRoom}
+          onSave={handleSaveRoom}
+        />
+      )}
     </>
   );
 }
@@ -82,15 +120,7 @@ export function LabelTabContent() {
   return null;
 }
 
-export function ShelterTabContent({
-  tab,
-  shelter,
-}: {
-  tab: ShelterTab;
-  shelter?: Shelter;
-}) {
-  void shelter;
-
+export function ShelterTabContent({ tab }: { tab: ShelterTab }) {
   switch (tab) {
     case 'overview':
       return <OverviewTabContent />;

@@ -107,10 +107,9 @@ export function Dashboard() {
 
   const handleRowClick = useCallback(
     (row: ShelterRowObject) => {
-      const fullShelter = shelters.find((s) => s.id === row.id) ?? row;
-      navigate(`shelter/${row.id}`, { state: { shelter: fullShelter } });
+      navigate(`shelter/${row.id}`);
     },
-    [navigate, shelters]
+    [navigate]
   );
 
   return (

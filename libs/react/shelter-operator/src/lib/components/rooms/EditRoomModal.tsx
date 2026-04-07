@@ -8,8 +8,8 @@ import type { RoomType as Room } from '../../apollo/graphql/__generated__/types'
 export type EditRoomModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  room?: Room;
-  onSave?: (updatedRoom: Room) => void;
+  room: Room;
+  onSave: (updatedRoom: Room) => void;
 };
 
 export function EditRoomModal({
@@ -19,7 +19,7 @@ export function EditRoomModal({
   onSave,
 }: EditRoomModalProps) {
   const handleConfirm = () => {
-    if (room) onSave?.(room);
+    onSave(room);
     onClose();
   };
 
@@ -27,7 +27,7 @@ export function EditRoomModal({
     <Modal isOpen={isOpen} onClose={onClose} size="sm">
       <ModalHeader onClose={onClose}>
         <Text variant="header-md" className="text-black">
-          {`Edit "${room?.roomIdentifier || 'Room'}"`}
+          {`Edit "${room.roomIdentifier || 'Room'}"`}
         </Text>
       </ModalHeader>
 
@@ -36,7 +36,7 @@ export function EditRoomModal({
           Cancel
         </Button>
         <Button variant="primary" color="blue" onClick={handleConfirm}>
-          Confirm
+          Save
         </Button>
       </ModalFooter>
     </Modal>

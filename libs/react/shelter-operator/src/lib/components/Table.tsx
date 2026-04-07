@@ -1,5 +1,9 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { Row, type RowCell, type RowClickHandler } from './Row';
+import {
+  TableRow,
+  type TableRowCell,
+  type TableRowClickHandler,
+} from './TableRow';
 
 export type TableColumn<TItem> = {
   key: string;
@@ -15,6 +19,7 @@ type TableProps<TItem, TRowObject = TItem> = {
   rows: TItem[];
   getRowKey: (item: TItem, index: number) => string;
   getRowObject?: (item: TItem, index: number) => TRowObject;
+  getRowSlot?: (rowObject: TRowObject, item: TItem, index: number) => ReactNode;
   getTrailingContent?: (
     rowObject: TRowObject,
     item: TItem,
@@ -22,7 +27,7 @@ type TableProps<TItem, TRowObject = TItem> = {
   ) => ReactNode;
   trailingHeader?: ReactNode;
   trailingColumnWidth?: string;
-  onRowClick?: RowClickHandler<TRowObject>;
+  onRowClick?: TableRowClickHandler<TRowObject>;
   onDelete?: (rowObject: TRowObject, rowIndex: number) => void;
   loading?: boolean;
   loadingState?: ReactNode;
@@ -37,11 +42,12 @@ type TableProps<TItem, TRowObject = TItem> = {
   rowStyle?: CSSProperties;
 };
 
-export function Table<TItem, TRowObject = TItem>({
+const TableBase = <TItem, TRowObject = TItem>({
   columns,
   rows,
   getRowKey,
   getRowObject,
+  getRowSlot,
   getTrailingContent,
   trailingHeader,
   trailingColumnWidth = '80px',
@@ -58,12 +64,12 @@ export function Table<TItem, TRowObject = TItem>({
   tableStyle,
   headerStyle,
   rowStyle,
-}: TableProps<TItem, TRowObject>) {
+}: TableProps<TItem, TRowObject>) => {
   const dataTemplateColumns = columns
     .map((column) => column.width ?? '1fr')
     .join(' ');
   const hasTrailingColumn =
-    !!onDelete || !!getTrailingContent || !!trailingHeader;
+    !!onDelete || !!getRowSlot || !!getTrailingContent || !!trailingHeader;
   const templateColumns = hasTrailingColumn
     ? `${dataTemplateColumns} ${trailingColumnWidth}`
     : dataTemplateColumns;
@@ -119,19 +125,23 @@ export function Table<TItem, TRowObject = TItem>({
             ? getRowObject(item, index)
             : (item as unknown as TRowObject);
 
-          const cells: RowCell[] = columns.map((column) => ({
+          const cells: TableRowCell[] = columns.map((column) => ({
             key: column.key,
             content: column.render(item),
             className: column.cellClassName,
           }));
 
+          const rowSlot =
+            getRowSlot?.(rowObject, item, index) ??
+            getTrailingContent?.(rowObject, item, index);
+
           return (
-            <Row
+            <TableRow
               key={getRowKey(item, index)}
               cells={cells}
               rowObject={rowObject}
               rowIndex={index}
-              trailingContent={getTrailingContent?.(rowObject, item, index)}
+              slot={rowSlot}
               onRowClick={onRowClick}
               onDelete={onDelete}
               templateColumns={templateColumns}
@@ -143,4 +153,14 @@ export function Table<TItem, TRowObject = TItem>({
         })}
     </div>
   );
-}
+};
+
+type TableComponent = (<TItem, TRowObject = TItem>(
+  props: TableProps<TItem, TRowObject>
+) => JSX.Element) & {
+  Row: typeof TableRow;
+};
+
+export const Table = Object.assign(TableBase, {
+  Row: TableRow,
+}) as TableComponent;
