@@ -108,9 +108,7 @@ const TableRowBase = <TRowObject,>({
   );
 };
 
-type TableRowComponent = (<TRowObject>(
-  props: TableRowProps<TRowObject>
-) => JSX.Element) & {
+type TableRowComponent = typeof TableRowBase & {
   Slot: typeof TableRowSlot;
 };
 

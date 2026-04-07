@@ -155,9 +155,7 @@ const TableBase = <TItem, TRowObject = TItem>({
   );
 };
 
-type TableComponent = (<TItem, TRowObject = TItem>(
-  props: TableProps<TItem, TRowObject>
-) => JSX.Element) & {
+type TableComponent = typeof TableBase & {
   Row: typeof TableRow;
 };
 
