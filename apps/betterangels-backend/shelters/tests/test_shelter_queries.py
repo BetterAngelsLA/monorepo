@@ -60,7 +60,11 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         self.setup_shelter_graphql_fixtures()
         waffle.switch_is_active(IMGPROXY_SWITCH)
 
-    def test_shelter_query(self) -> None:
+    @patch("common.graphql.types.build_imgproxy_url")
+    def test_shelter_query(self, mock_build_imgproxy_url: Mock) -> None:
+        mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
+            file, "url", None
+        )
         shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
         shelter_organization = organization_recipe.make()
         service_category, _ = ServiceCategory.objects.get_or_create(
@@ -146,7 +150,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         interior_photo = InteriorPhoto.objects.create(shelter=shelter, file=self.file)
 
         query = f"""
-            query ViewShelter($id: ID!) {{
+            query ($id: ID!) {{
                 shelter(pk: $id) {{
                     {self.shelter_fields}
                     exteriorPhotos {{
@@ -154,7 +158,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
                         createdAt
                         file {{
                             name
-                            url
+                            url (preset: ORIGINAL)
                         }}
                     }}
                     interiorPhotos {{

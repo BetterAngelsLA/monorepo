@@ -151,7 +151,7 @@ class ShelterTypeMixin:
             ),
             None,
         )
-        return build_imgproxy_url(photo.file, preset=None, processing_options="f:jpg") if photo else None
+        return build_imgproxy_url(photo.file, preset=None, processing_options=None) if photo else None
 
     @strawberry_django.field
     def distance_in_miles(self, root: models.Shelter) -> Optional[float]:

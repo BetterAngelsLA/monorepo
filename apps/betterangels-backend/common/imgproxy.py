@@ -36,11 +36,11 @@ def _resolve_imgproxy_ops(
     preset: Optional[ImagePresetEnum],
     processing_options: Optional[str],
     source_url: str,
-) -> Optional[str]:
-    if ops := processing_options or (IMGPROXY_PRESETS.get(preset) if preset else None):
-        return _handle_format_conversion(ops, source_url)
+) -> str:
+    resolved = processing_options or (IMGPROXY_PRESETS.get(preset) if preset else None)
+    ops = resolved or IMGPROXY_PRESETS[ImagePresetEnum.ORIGINAL]
 
-    return None
+    return _handle_format_conversion(ops, source_url)
 
 
 def _get_image_source_url(file: object) -> Optional[str]:
@@ -122,8 +122,6 @@ def build_imgproxy_url(
         return None
 
     ops = _resolve_imgproxy_ops(preset, processing_options, source_url)
-    if not ops:
-        return None
 
     signed_imgproxy_path = _build_signed_imgproxy_path(source_url, ops)
 
