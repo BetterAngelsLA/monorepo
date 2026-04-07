@@ -71,6 +71,7 @@ class StorageChoices(models.TextChoices):
     AMNESTY_LOCKERS = "amnesty_lockers", _("Amnesty Lockers")
     STANDARD_LOCKERS = "standard_lockers", _("Standard Lockers")
     SHARED_STORAGE = "shared_storage", _("Shared Storage")
+    PERSONAL_BIN = "personal_bin", _("Personal Storage Bin")
     NO_STORAGE = "no_storage", _("No Storage")
 
 

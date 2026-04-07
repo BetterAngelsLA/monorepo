@@ -2742,6 +2742,7 @@ export enum StatusChoices {
 export enum StorageChoices {
   AmnestyLockers = 'AMNESTY_LOCKERS',
   NoStorage = 'NO_STORAGE',
+  PersonalBin = 'PERSONAL_BIN',
   SharedStorage = 'SHARED_STORAGE',
   StandardLockers = 'STANDARD_LOCKERS',
   UnitStorage = 'UNIT_STORAGE'
