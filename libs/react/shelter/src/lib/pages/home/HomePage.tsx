@@ -133,6 +133,9 @@ export function HomePage() {
           position: shelter.location,
           label: shelter.name,
           onClick: () => handleClick(shelter.id),
+          type: shelter.shelterTypes.find((t) => t.name === 'ACCESS_CENTER')
+            ? 'secondary'
+            : 'primary',
         } as TMarker;
       });
 

@@ -20,6 +20,7 @@ export type TShelter = {
   location?: TShelterLocation | null;
   exteriorPhotos?: Array<{ file: { url: string; name: string } }> | null;
   interiorPhotos?: Array<{ file: { url: string; name: string } }> | null;
+  shelterTypes: Array<{ name?: string | null }>;
 };
 
 type TShelterCard = {

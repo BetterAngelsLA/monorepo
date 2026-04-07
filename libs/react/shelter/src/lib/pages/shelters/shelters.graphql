@@ -27,6 +27,9 @@ query ViewShelters(
         longitude
         place
       }
+      shelterTypes {
+        name
+      }
     }
   }
 }
