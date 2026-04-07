@@ -146,7 +146,7 @@ class Mutation:
         qs: QuerySet[Note] = info.context.qs
         note = get_object_or_permission_error(qs, data.id)
 
-        location_data: dict = strawberry.asdict(data)["location"]
+        location_data = cast(dict, strawberry.asdict(data)["location"])
         note = note_update_location(note=note, location_data=location_data)
 
         return cast(NoteType, note)
