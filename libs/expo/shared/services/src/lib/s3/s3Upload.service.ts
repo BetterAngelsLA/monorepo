@@ -1,3 +1,7 @@
+/**
+ * S3 upload utilities for direct client-to-S3 file uploads via presigned POSTs.
+ */
+
 export type PresignedPostFields = Record<string, string>;
 
 export interface PresignedPostPayload {
@@ -9,9 +13,14 @@ export interface PresignedPostPayload {
 export interface UploadFileToS3Input {
   presignedPost: PresignedPostPayload;
   fileUri: string;
-  fileName: string;
 }
 
+/**
+ * Uploads a file directly to S3 using a presigned POST.
+ *
+ * Appends all presigned fields to a FormData payload, then appends
+ * the file blob last (required by S3). Returns the S3 object key on success.
+ */
 export async function uploadFileToS3WithPresignedPost(
   input: UploadFileToS3Input
 ): Promise<{ key: string }> {
@@ -47,7 +56,6 @@ export async function uploadFileToS3WithPresignedPost(
   // 2. append file LAST
   formData.append('file', {
     uri: fileUri,
-    // name: fileName, //
     type: contentType,
   } as unknown as Blob);
 

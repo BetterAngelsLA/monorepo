@@ -4,14 +4,14 @@ import { uploadFileToS3WithPresignedPost } from '@monorepo/expo/shared/services'
 import { useCallback, useState } from 'react';
 import {
   GenerateClientProfilePhotoUploadDocument,
-  ResolveClentProfilePhotoUploadDocument,
+  ResolveClientProfilePhotoUploadDocument,
 } from './__generated__/clientProfilePhoto.generated';
 
 export function useClientProfilePhotoUpload() {
   const [generateUpload] = useMutation(
     GenerateClientProfilePhotoUploadDocument
   );
-  const [resolveUpload] = useMutation(ResolveClentProfilePhotoUploadDocument);
+  const [resolveUpload] = useMutation(ResolveClientProfilePhotoUploadDocument);
 
   const [processing, setProcessing] = useState(false);
 
@@ -66,7 +66,6 @@ export function useClientProfilePhotoUpload() {
             key: payload.presignedKey,
           },
           fileUri: file.uri,
-          fileName: file.name,
         });
 
         // 3: Persist uploaded photo in backend
@@ -80,7 +79,17 @@ export function useClientProfilePhotoUpload() {
           },
         });
 
-        return resolved;
+        const resolvePayload = resolved.data?.resolveClientProfilePhotoUpload;
+
+        if (!resolvePayload) {
+          throw new Error('Missing resolveUpload response');
+        }
+
+        if (resolvePayload.__typename === 'OperationInfo') {
+          throw new Error(
+            resolvePayload.messages.map((m) => m.message).join(', ')
+          );
+        }
       } finally {
         setProcessing(false);
       }
