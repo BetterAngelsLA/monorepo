@@ -3,7 +3,6 @@ from typing import cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from common.graphql.utils import strip_unset
 from common.permissions.utils import IsAuthenticated
 from shelters.permissions import BedPermissions, RoomPermissions, ShelterPermissions
 from shelters.services import bed_create, room_create, shelter_create
@@ -43,17 +42,17 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(ShelterPermissions.ADD)])
     def create_shelter(self, info: Info, data: CreateShelterInput) -> ShelterType:
         user = cast(User, get_current_user(info))
-        clean = strip_unset(strawberry.asdict(data))
+        clean = strawberry.asdict(data)
         return cast(ShelterType, shelter_create(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(BedPermissions.ADD)])
     def create_bed(self, info: Info, data: CreateBedInput) -> BedType:
         user = cast(User, get_current_user(info))
-        clean = strip_unset(strawberry.asdict(data))
+        clean = strawberry.asdict(data)
         return cast(BedType, bed_create(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(RoomPermissions.ADD)])
     def create_room(self, info: Info, data: CreateRoomInput) -> RoomType:
         user = cast(User, get_current_user(info))
-        clean = strip_unset(strawberry.asdict(data))
+        clean = strawberry.asdict(data)
         return cast(RoomType, room_create(user=user, data=clean))
