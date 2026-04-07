@@ -4,10 +4,10 @@ from typing import Any, cast
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.utils import timezone
-from shelters.enums import DemographicChoices
+from shelters.enums import BedStatusChoices, DemographicChoices, PetChoices
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import SPAChoices, SpecialSituationRestrictionChoices
-from shelters.models import SPA, Demographic, ShelterType, SpecialSituationRestriction
+from shelters.models import SPA, Bed, Demographic, Pet, ShelterType, SpecialSituationRestriction
 from shelters.permissions import ShelterPermissions
 from shelters.tests.baker_recipes import shelter_recipe
 from unittest_parametrize import ParametrizedTestCase, parametrize
@@ -144,6 +144,127 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         payload = response["data"]["adminShelters"]
         self.assertEqual(payload["totalCount"], 0)
         self.assertEqual(payload["results"], [])
+
+    def test_admin_shelters_filter_by_name(self) -> None:
+        """Name filter returns only shelters whose name matches (case-insensitive)."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.org_1_shelter_newer.name = "Safe Haven"
+        self.org_1_shelter_newer.save()
+
+        query = """
+            query AdminShelters($orgIds: [ID!], $name: String) {
+                adminShelters(
+                    filters: { organizations: $orgIds, name: $name }
+                ) {
+                    totalCount
+                    results { id name }
+                }
+            }
+        """
+        response = self.execute_graphql(
+            query,
+            variables={"orgIds": [str(self.org_1.id)], "name": "safe haven"},
+        )
+
+        payload = response["data"]["adminShelters"]
+        self.assertEqual(payload["totalCount"], 1)
+        self.assertEqual(payload["results"][0]["id"], str(self.org_1_shelter_newer.id))
+        self.assertEqual(payload["results"][0]["name"], "Safe Haven")
+
+    def test_admin_shelters_filter_by_properties(self) -> None:
+        """Property filters narrow results through the admin endpoint."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        pet_cats, _ = Pet.objects.get_or_create(name=PetChoices.CATS)
+        self.org_1_shelter_newer.pets.set([pet_cats])
+        self.org_1_shelter_older.pets.clear()
+
+        query = """
+            query AdminShelters($orgIds: [ID!], $properties: ShelterPropertyInput) {
+                adminShelters(
+                    filters: { organizations: $orgIds, properties: $properties }
+                ) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+        response = self.execute_graphql(
+            query,
+            variables={
+                "orgIds": [str(self.org_1.id)],
+                "properties": {"pets": [PetChoices.CATS.name]},
+            },
+        )
+
+        payload = response["data"]["adminShelters"]
+        self.assertEqual(payload["totalCount"], 1)
+        self.assertEqual(payload["results"][0]["id"], str(self.org_1_shelter_newer.id))
+
+    def test_admin_shelters_beds_by_status(self) -> None:
+        """Bed counts are returned grouped by status."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        shelter = self.org_1_shelter_newer
+
+        Bed.objects.create(shelter=shelter, status=BedStatusChoices.AVAILABLE)
+        Bed.objects.create(shelter=shelter, status=BedStatusChoices.AVAILABLE)
+        Bed.objects.create(shelter=shelter, status=BedStatusChoices.OCCUPIED)
+        Bed.objects.create(shelter=shelter, status=BedStatusChoices.RESERVED)
+        Bed.objects.create(shelter=shelter, status=BedStatusChoices.OUT_OF_SERVICE)
+
+        query = """
+            query AdminShelters($orgIds: [ID!]) {
+                adminShelters(filters: { organizations: $orgIds }) {
+                    results {
+                        id
+                        bedsByStatus {
+                            available
+                            occupied
+                            reserved
+                            outOfService
+                        }
+                    }
+                }
+            }
+        """
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
+        results = response["data"]["adminShelters"]["results"]
+        shelter_data = next(r for r in results if r["id"] == str(shelter.id))
+        self.assertEqual(
+            shelter_data["bedsByStatus"],
+            {"available": 2, "occupied": 1, "reserved": 1, "outOfService": 1},
+        )
+
+    def test_admin_shelters_beds_by_status_no_beds(self) -> None:
+        """Shelter with no beds returns all zeros for beds by status."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        query = """
+            query AdminShelters($orgIds: [ID!]) {
+                adminShelters(filters: { organizations: $orgIds }) {
+                    results {
+                        id
+                        bedsByStatus {
+                            available
+                            occupied
+                            reserved
+                            outOfService
+                        }
+                    }
+                }
+            }
+        """
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
+        results = response["data"]["adminShelters"]["results"]
+        for result in results:
+            self.assertEqual(
+                result["bedsByStatus"],
+                {"available": 0, "occupied": 0, "reserved": 0, "outOfService": 0},
+            )
 
 
 class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
