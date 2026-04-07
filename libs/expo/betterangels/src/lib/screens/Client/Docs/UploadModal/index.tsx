@@ -206,7 +206,7 @@ export default function UploadModal(props: IUploadModalProps) {
             (optional).
           </TextRegular>
           <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
-            <TextBold>Doc-Ready x</TextBold>
+            <TextBold>Doc-Ready</TextBold>
             <FileUploadTab
               docs={docs}
               setTab={setTab}

@@ -1,4 +1,3 @@
-# generate_client_document_uploads
 mutation GenerateClientDocumentUploads(
   $data: GenerateClientDocumentUploadsInput!
 ) {

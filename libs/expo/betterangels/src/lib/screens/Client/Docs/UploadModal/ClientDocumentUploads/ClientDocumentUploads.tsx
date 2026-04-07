@@ -21,8 +21,6 @@ export interface IClientDocUploadsProps {
 }
 
 export function ClientDocumentUploads(props: IClientDocUploadsProps) {
-  console.log('################################### ClientDocUploads');
-
   const {
     clientProfileId,
     files,
@@ -55,6 +53,8 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
 
       onClose();
     } catch (err) {
+      console.error(`[ClientDocumentUploads error:] ${err}`);
+
       showSnackbar({
         message: `Sorry, there was an error with the file upload.`,
         type: 'error',

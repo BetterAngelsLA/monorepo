@@ -20,7 +20,7 @@ mutation GenerateClientProfilePhotoUpload(
   }
 }
 
-mutation ResolveClentProfilePhotoUpload(
+mutation ResolveClientProfilePhotoUpload(
   $data: ResolveClientProfilePhotoUploadInput!
 ) {
   resolveClientProfilePhotoUpload(data: $data) {
