@@ -1,0 +1,51 @@
+# generate_client_document_uploads
+mutation GenerateClientDocumentUploads(
+  $data: GenerateClientDocumentUploadsInput!
+) {
+  generateClientDocumentUploads(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on AuthorizedPresignedS3UploadsType {
+      uploads {
+        refId
+        url
+        fields
+        presignedKey
+        uploadToken
+      }
+    }
+  }
+}
+
+mutation ResolveClientDocumentUploads(
+  $data: ResolveClientDocumentUploadsInput!
+) {
+  resolveClientDocumentUploads(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on ClientDocumentUploadsType {
+      documents {
+        id
+        file {
+          url
+          name
+        }
+        originalFilename
+        mimeType
+        namespace
+      }
+    }
+  }
+}

@@ -1,5 +1,3 @@
-// libs/expo/shared/clients/src/lib/s3/uploadFileToS3WithPresignedPost.ts
-
 export type PresignedPostFields = Record<string, string>;
 
 export interface PresignedPostPayload {
@@ -18,13 +16,6 @@ export async function uploadFileToS3WithPresignedPost(
   input: UploadFileToS3Input
 ): Promise<{ key: string }> {
   const { presignedPost, fileUri } = input;
-
-  console.log();
-  console.log(
-    '| ------------- uploadFileToS3WithPresignedPost input  ------------- |'
-  );
-  console.log(JSON.stringify(input, null, 2));
-  console.log();
 
   const formData = new FormData();
 
@@ -65,27 +56,11 @@ export async function uploadFileToS3WithPresignedPost(
     body: formData,
   });
 
-  console.log();
-  console.log(
-    '| ------------- uploadFileToS3WithPresignedPost response  ------------- |'
-  );
-  console.log(JSON.stringify(response, null, 2));
-  console.log();
-
   if (response.ok) {
     return { key: presignedPost.key };
   }
 
   const errorText = await response.text();
-
-  console.log('');
-  console.log('');
-  console.log('################################### error');
-  console.log('################################### error');
-  console.log('################################### error');
-  console.log('*****************  errorText:', errorText);
-  console.log('');
-  console.log('');
 
   throw new Error(
     [
@@ -96,25 +71,3 @@ export async function uploadFileToS3WithPresignedPost(
     ].join(' ')
   );
 }
-
-// 1. Request presigned upload
-
-// const presigned = await generateClientDocumentUploadUrl({
-//   filename,
-//   contentType,
-// });
-
-// 2. Upload to S3
-
-// const uploadResult = await uploadFileToS3WithPresignedPost({
-//   presignedPost: presigned,
-//   fileUri,
-//   fileName: filename,
-//   contentType,
-// });
-
-// 3. Persist in backend
-
-// await createClientDocument({
-//   file: uploadResult.key,
-// });
