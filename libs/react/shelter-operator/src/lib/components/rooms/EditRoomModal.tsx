@@ -1,9 +1,32 @@
+import type { RoomType as Room } from '../../apollo/graphql/__generated__/types';
 import { Button } from '../base-ui/buttons/buttons';
 import { Modal } from '../base-ui/modal/Modal';
 import { ModalFooter } from '../base-ui/modal/ModalFooter';
 import { ModalHeader } from '../base-ui/modal/ModalHeader';
 import { Text } from '../base-ui/text/text';
-import type { RoomType as Room } from '../../apollo/graphql/__generated__/types';
+
+export type EditRoomFormProps = {
+  room: Room;
+  onSave: (updatedRoom: Room) => void;
+  onCancel: () => void;
+};
+
+export function EditRoomForm({ room, onSave, onCancel }: EditRoomFormProps) {
+  const handleConfirm = () => {
+    onSave(room);
+  };
+
+  return (
+    <ModalFooter>
+      <Button variant="primary" onClick={onCancel}>
+        Cancel
+      </Button>
+      <Button variant="primary" color="blue" onClick={handleConfirm}>
+        Save
+      </Button>
+    </ModalFooter>
+  );
+}
 
 export type EditRoomModalProps = {
   isOpen: boolean;
@@ -18,8 +41,8 @@ export function EditRoomModal({
   room,
   onSave,
 }: EditRoomModalProps) {
-  const handleConfirm = () => {
-    onSave(room);
+  const handleSave = (updatedRoom: Room) => {
+    onSave(updatedRoom);
     onClose();
   };
 
@@ -31,14 +54,7 @@ export function EditRoomModal({
         </Text>
       </ModalHeader>
 
-      <ModalFooter>
-        <Button variant="primary" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button variant="primary" color="blue" onClick={handleConfirm}>
-          Save
-        </Button>
-      </ModalFooter>
+      <EditRoomForm room={room} onSave={handleSave} onCancel={onClose} />
     </Modal>
   );
 }

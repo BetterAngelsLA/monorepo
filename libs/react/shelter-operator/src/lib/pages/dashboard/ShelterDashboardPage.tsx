@@ -3,8 +3,8 @@ import { BookCheck, Settings } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { Text } from '../../components/base-ui/text/text';
+import { RoomsView } from '../../components/rooms/RoomsView';
 import { GetShelterNameDocument } from '../../graphql/__generated__/shelters.generated';
-import { ShelterTabContent } from './components/ShelterTabContent';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
 
 type ShelterTab = 'overview' | 'rooms' | 'beds' | 'occupancy' | 'label';
@@ -83,7 +83,11 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
         items={TAB_ITEMS}
       />
 
-      <ShelterTabContent tab={tab} />
+      {tab === 'rooms' && <RoomsView />}
+      {tab === 'overview' && null}
+      {tab === 'beds' && null}
+      {tab === 'occupancy' && null}
+      {tab === 'label' && null}
     </div>
   );
 }

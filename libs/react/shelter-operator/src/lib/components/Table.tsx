@@ -20,11 +20,6 @@ type TableProps<TItem, TRowObject = TItem> = {
   getRowKey: (item: TItem, index: number) => string;
   getRowObject?: (item: TItem, index: number) => TRowObject;
   getRowSlot?: (rowObject: TRowObject, item: TItem, index: number) => ReactNode;
-  getTrailingContent?: (
-    rowObject: TRowObject,
-    item: TItem,
-    index: number
-  ) => ReactNode;
   trailingHeader?: ReactNode;
   trailingColumnWidth?: string;
   onRowClick?: TableRowClickHandler<TRowObject>;
@@ -48,7 +43,6 @@ const TableBase = <TItem, TRowObject = TItem>({
   getRowKey,
   getRowObject,
   getRowSlot,
-  getTrailingContent,
   trailingHeader,
   trailingColumnWidth = '80px',
   onRowClick,
@@ -69,7 +63,7 @@ const TableBase = <TItem, TRowObject = TItem>({
     .map((column) => column.width ?? '1fr')
     .join(' ');
   const hasTrailingColumn =
-    !!onDelete || !!getRowSlot || !!getTrailingContent || !!trailingHeader;
+    !!onDelete || !!getRowSlot || !!trailingHeader;
   const templateColumns = hasTrailingColumn
     ? `${dataTemplateColumns} ${trailingColumnWidth}`
     : dataTemplateColumns;
@@ -131,9 +125,7 @@ const TableBase = <TItem, TRowObject = TItem>({
             className: column.cellClassName,
           }));
 
-          const rowSlot =
-            getRowSlot?.(rowObject, item, index) ??
-            getTrailingContent?.(rowObject, item, index);
+          const rowSlot = getRowSlot?.(rowObject, item, index);
 
           return (
             <TableRow

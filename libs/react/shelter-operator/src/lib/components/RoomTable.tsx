@@ -332,7 +332,7 @@ export function RoomTable({
         rows={filteredRows}
         getRowKey={getRowKey ?? ((room) => room.id)}
         getRowObject={(room) => ({ id: room.id, room })}
-        getTrailingContent={(rowObject) => (
+        getRowSlot={(rowObject) => (
           <div className="flex items-center gap-1">
             <Button
               variant="edit"

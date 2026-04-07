@@ -3,18 +3,12 @@ import { useState } from 'react';
 import {
   RoomStatusChoices,
   type RoomType,
-} from '../../../apollo/graphql/__generated__/types';
-import { Button } from '../../../components/base-ui/buttons';
-import { EditRoomModal } from '../../../components/rooms/EditRoomModal';
-import { RoomTable, type RoomRowObject } from '../../../components/RoomTable';
+} from '../../apollo/graphql/__generated__/types';
+import { Button } from '../base-ui/buttons';
+import { EditRoomModal } from './EditRoomModal';
+import { RoomTable, type RoomRowObject } from '../RoomTable';
 
-type ShelterTab = 'overview' | 'rooms' | 'beds' | 'occupancy' | 'label';
-
-export function OverviewTabContent() {
-  return null;
-}
-
-export function RoomsTabContent() {
+export function RoomsView() {
   const rows: RoomType[] = [
     {
       id: 'room-1',
@@ -51,7 +45,6 @@ export function RoomsTabContent() {
       medicalRespite: false,
       amenities: '',
       status: RoomStatusChoices.Reserved,
-      // tags: ['Women Only', 'Shared', 'Hold'],
     },
     {
       id: 'room-5',
@@ -61,7 +54,6 @@ export function RoomsTabContent() {
       medicalRespite: false,
       amenities: '',
       status: RoomStatusChoices.Available,
-      // tags: ['Women Only', 'Shared', 'Quiet'],
     },
     {
       id: 'room-6',
@@ -71,7 +63,6 @@ export function RoomsTabContent() {
       medicalRespite: false,
       amenities: '',
       status: RoomStatusChoices.Available,
-      // tags: ['Women Only', 'Shared', 'Near Exit'],
     },
   ];
 
@@ -106,33 +97,4 @@ export function RoomsTabContent() {
       )}
     </>
   );
-}
-
-export function BedsTabContent() {
-  return null;
-}
-
-export function OccupancyTabContent() {
-  return null;
-}
-
-export function LabelTabContent() {
-  return null;
-}
-
-export function ShelterTabContent({ tab }: { tab: ShelterTab }) {
-  switch (tab) {
-    case 'overview':
-      return <OverviewTabContent />;
-    case 'rooms':
-      return <RoomsTabContent />;
-    case 'beds':
-      return <BedsTabContent />;
-    case 'occupancy':
-      return <OccupancyTabContent />;
-    case 'label':
-      return <LabelTabContent />;
-    default:
-      return null;
-  }
 }
