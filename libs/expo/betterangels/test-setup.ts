@@ -1,4 +1,4 @@
-import '@testing-library/jest-native/extend-expect';
+import '@testing-library/react-native/extend-expect';
 
 // Mock native modules that crash in Node.js environment
 jest.mock('@preeternal/react-native-cookie-manager', () => ({

@@ -93,6 +93,9 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 
+# EAS CLI (globally installed for Expo builds/updates)
+RUN npm install -g eas-cli
+
 # Python
 RUN pip install poetry==2.3.2
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
