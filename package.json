@@ -218,7 +218,7 @@
     "raw-loader": "^4.0.2",
     "react-docgen-typescript": "^2.4.0",
     "react-refresh": "^0.18.0",
-    "react-test-renderer": "^19.2.4",
+    "react-test-renderer": "19.2.0",
     "storybook": "10.1.11",
     "storybook-addon-pseudo-states": "^9.1.17",
     "swc-loader": "0.1.15",
@@ -238,7 +238,8 @@
   "resolutions": {
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "ws": ">=8.17.1"
+    "ws": ">=8.17.1",
+    "@types/apollo-upload-client/graphql": "^16.13.2"
   },
   "expo": {},
   "engines": {

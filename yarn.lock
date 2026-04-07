@@ -6453,7 +6453,7 @@ __metadata:
     react-native-worklets: "npm:0.7.2"
     react-refresh: "npm:^0.18.0"
     react-router-dom: "npm:6.30.3"
-    react-test-renderer: "npm:^19.2.4"
+    react-test-renderer: "npm:19.2.0"
     remeda: "npm:^2.20.0"
     rxjs: "npm:^7.8.2"
     sanitize-html: "npm:^2.17.0"
@@ -19248,13 +19248,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql@npm:14 - 16":
-  version: 16.12.0
-  resolution: "graphql@npm:16.12.0"
-  checksum: 10/e299bc97cca178e549c8c1ed4cb164f631f07be987d3657f76cdf18c0250040cc0d456d4b6d41c87b855cac97b15a62ed345557527efcb0546492895a893bb87
-  languageName: node
-  linkType: hard
-
 "graphql@npm:^16.13.2":
   version: 16.13.2
   resolution: "graphql@npm:16.13.2"
@@ -26119,7 +26112,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-is@npm:^19.2.0, react-is@npm:^19.2.4":
+"react-is@npm:^19.2.0":
   version: 19.2.4
   resolution: "react-is@npm:19.2.4"
   checksum: 10/3360fc50a38c23299c5003a709949f2439b2901e77962eea78d892f526f710d05a7777b600b302f853583d1861979b00d7a0a071c89c6562eac5740ac29b9665
@@ -26609,18 +26602,6 @@ __metadata:
   peerDependencies:
     react: ^19.2.0
   checksum: 10/1a072bf5c383ee9cec1eed5872114a25d8029e8fabe17a9154cbb7b5d6e5570711efc3e80e336d170bb1f60e29d395087147891fa198743d17c29ff86782cde3
-  languageName: node
-  linkType: hard
-
-"react-test-renderer@npm:^19.2.4":
-  version: 19.2.4
-  resolution: "react-test-renderer@npm:19.2.4"
-  dependencies:
-    react-is: "npm:^19.2.4"
-    scheduler: "npm:^0.27.0"
-  peerDependencies:
-    react: ^19.2.4
-  checksum: 10/b88d4dd3cf6ca89b8fac0bdaa8e98193048f24b963cb255f013f3a7decc41194d7cd15181d4056a966279870b2c132b735ca490b52847ae8816347d7856dea93
   languageName: node
   linkType: hard
 
