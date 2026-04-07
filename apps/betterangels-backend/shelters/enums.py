@@ -33,6 +33,7 @@ class SpecialSituationRestrictionChoices(models.TextChoices):
 
 @strawberry.enum
 class ShelterChoices(models.TextChoices):
+    ACCESS_CENTER = "access_center", _("Access Center / Day Center")
     BUILDING = "building", _("Building")
     CHURCH = "church", _("Church")
     HOTEL_MOTEL = "hotel_motel", _("Hotel/Motel")
@@ -70,6 +71,7 @@ class StorageChoices(models.TextChoices):
     AMNESTY_LOCKERS = "amnesty_lockers", _("Amnesty Lockers")
     STANDARD_LOCKERS = "standard_lockers", _("Standard Lockers")
     SHARED_STORAGE = "shared_storage", _("Shared Storage")
+    PERSONAL_BIN = "personal_bin", _("Personal Storage Bin")
     NO_STORAGE = "no_storage", _("No Storage")
 
 

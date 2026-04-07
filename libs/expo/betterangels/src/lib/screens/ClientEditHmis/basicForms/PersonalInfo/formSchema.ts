@@ -17,6 +17,7 @@ export const personalInfoFormEmptyState: TPersonalInfoFormSchema = {
   californiaId: '',
   livingSituation: '',
   preferredLanguage: '',
+  unhousedStartDate: null,
 };
 
 export const PersonalInfoFormSchema = z.object({
@@ -33,6 +34,18 @@ export const PersonalInfoFormSchema = z.object({
       }
     ),
   dobQuality: z.enum(HmisDobQualityEnum).or(z.literal('')),
+  unhousedStartDate: z.coerce
+    .date()
+    .nullable()
+    .refine(
+      (date) => {
+        if (!date) return true;
+        return !Number.isNaN(date.getTime());
+      },
+      {
+        message: 'Date is invalid.',
+      }
+    ),
   veteran: z.enum(HmisVeteranStatusEnum).or(z.literal('')),
   livingSituation: z.enum(LivingSituationEnum).or(z.literal('')),
   preferredLanguage: z.enum(LanguageEnum).or(z.literal('')),
@@ -47,20 +60,28 @@ export const PersonalInfoFormSchema = z.object({
 export const PersonalInfoFormSchemaOut = PersonalInfoFormSchema.transform(
   ({
     birthDate,
+    unhousedStartDate,
     preferredLanguage,
     livingSituation,
     dobQuality,
     veteran,
     ...rest
   }) => {
-    const formattedDate =
+    const formattedDob =
       birthDate instanceof Date && !Number.isNaN(birthDate.getTime())
         ? format(birthDate, 'yyyy-MM-dd')
         : null;
 
+    const formattedUnhousedStartDate =
+      unhousedStartDate instanceof Date &&
+      !Number.isNaN(unhousedStartDate.getTime())
+        ? format(unhousedStartDate, 'yyyy-MM-dd')
+        : null;
+
     return {
       ...rest,
-      birthDate: formattedDate,
+      birthDate: formattedDob,
+      unhousedStartDate: formattedUnhousedStartDate,
       preferredLanguage: preferredLanguage === '' ? null : preferredLanguage,
       livingSituation: livingSituation === '' ? null : livingSituation,
       dobQuality: dobQuality === '' ? null : dobQuality,

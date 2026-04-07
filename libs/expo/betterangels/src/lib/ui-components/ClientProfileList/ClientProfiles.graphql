@@ -21,11 +21,13 @@ query ClientProfiles(
       firstName
       heightInInches
       lastName
+      livingSituation
       mailingAddress
       preferredLanguage
       middleName
       nickname
       residenceAddress
+      unhousedStartDate
       displayPronouns
       importantNotes
       physicalDescription

@@ -127,6 +127,19 @@ export function PersonalInfoFormHmis() {
           )}
         />
 
+        <DatePicker
+          name="unhousedStartDate"
+          control={control}
+          type="numeric"
+          label="Approximate Date Homelessness Started"
+          placeholder="Enter date"
+          disabled={isDobDisabled || isSubmitting}
+          validRange={{
+            endDate: new Date(),
+            startDate: new Date('1900-01-01'),
+          }}
+        />
+
         <Controller
           name="preferredLanguage"
           control={control}
