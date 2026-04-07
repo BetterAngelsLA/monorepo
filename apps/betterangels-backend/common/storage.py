@@ -40,6 +40,13 @@ class LocalS3Storage(S3Storage):
 
         return self._local_public_client
 
+    def get_client_for_presigned_urls(self) -> S3Client:
+        """
+        Return a boto3 S3 client that generates browser-reachable presigned URLs.
+        Uses the public MinIO endpoint instead of the Docker-internal one.
+        """
+        return self._get_local_public_client()
+
     def url(
         self,
         name: str,
@@ -64,7 +71,7 @@ class LocalS3Storage(S3Storage):
                 ClientMethod="get_object",
                 Params=params,
                 ExpiresIn=expire,
-                HttpMethod=http_method or "",
+                HttpMethod=http_method,  # type: ignore[arg-type]
             )
 
         return (

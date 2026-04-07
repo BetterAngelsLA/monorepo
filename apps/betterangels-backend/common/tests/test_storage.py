@@ -43,3 +43,25 @@ class LocalS3StorageTest(SimpleTestCase):
             ExpiresIn=3600,
             HttpMethod=None,
         )
+
+    @patch("common.storage.boto3.client")
+    def test_get_client_for_presigned_urls_returns_public_client(self, mock_boto_client: Mock) -> None:
+        client = Mock()
+        mock_boto_client.return_value = client
+
+        storage = LocalS3Storage(
+            bucket_name="betterangels-local",
+            endpoint_url="http://minio:9000",
+            location="media",
+            addressing_style="path",
+            signature_version="s3v4",
+            access_key="minioadmin",
+            secret_key="minioadmin",
+        )
+
+        result = storage.get_client_for_presigned_urls()
+
+        self.assertIs(result, client)
+        mock_boto_client.assert_called_once()
+        call_kwargs = mock_boto_client.call_args.kwargs
+        self.assertEqual(call_kwargs["endpoint_url"], "http://localhost:9000")

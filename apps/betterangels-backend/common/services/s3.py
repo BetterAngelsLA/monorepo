@@ -1,11 +1,9 @@
 import uuid
 from pathlib import Path
 from typing import NotRequired, TypedDict, cast
-from urllib.parse import urlparse, urlunparse
 
 import boto3
 from botocore.client import Config
-from django.conf import settings
 from django.core.files.storage import default_storage
 from mypy_boto3_s3 import S3Client
 from storages.backends.s3 import S3Storage
@@ -38,31 +36,6 @@ class PresignedS3UploadResult(TypedDict):
 
 class PresignedS3UploadBatchResult(TypedDict):
     uploads: list[PresignedS3UploadResult]
-
-
-def _rewrite_presigned_url_for_local(url: str) -> str:
-    """
-    Rewrite the host in a presigned POST URL from the local internal endpoint to the
-    local public-facing endpoint when local S3 upload settings are enabled.
-
-    Safe for presigned POST because the policy signature covers only the base64-encoded
-    policy document (bucket, conditions, expiry) — not the Host header — so changing
-    the hostname does not invalidate the signature.
-    """
-    local_internal_endpoint_url: str | None = getattr(default_storage, "endpoint_url", None) or None
-    local_public_endpoint_url: str | None = settings.LOCAL_S3_PUBLIC_ENDPOINT_URL or None
-
-    if not (local_internal_endpoint_url and local_public_endpoint_url):
-        return url
-
-    parsed_internal = urlparse(local_internal_endpoint_url)
-    parsed_public = urlparse(local_public_endpoint_url)
-    parsed_url = urlparse(url)
-
-    if parsed_url.netloc == parsed_internal.netloc:
-        return urlunparse(parsed_url._replace(scheme=parsed_public.scheme, netloc=parsed_public.netloc))
-
-    return url
 
 
 def _normalize_upload_path(upload_path: str) -> str:
@@ -170,25 +143,20 @@ def generate_s3_presigned_upload_urls(
     uploads: list[PresignedS3UploadInput],
 ) -> PresignedS3UploadBatchResult:
     storage = cast(S3Storage, default_storage)
-    local_internal_endpoint_url: str | None = getattr(storage, "endpoint_url", None) or None
     bucket_name: str = storage.bucket_name
-    signature_version: str = storage.signature_version
-    addressing_style: str = storage.addressing_style
 
-    s3_config = Config(
-        signature_version=signature_version,
-        s3={"addressing_style": addressing_style},  # type: ignore[arg-type]
-    )
-
-    client_kwargs: dict[str, object] = {
-        "service_name": "s3",
-        "config": s3_config,
-    }
-
-    if local_internal_endpoint_url:
-        client_kwargs["endpoint_url"] = local_internal_endpoint_url
-
-    s3_client = cast(S3Client, boto3.client(**client_kwargs))  # type: ignore[call-overload]
+    # get_client_for_presigned_urls() exists in LocalS3Storage (local dev),
+    # and returns a client pointed at the public MinIO endpoint.
+    # In production we use a standard boto3 client.
+    get_client_fn = getattr(storage, "get_client_for_presigned_urls", None)
+    if callable(get_client_fn):
+        s3_client: S3Client = get_client_fn()
+    else:
+        s3_config = Config(
+            signature_version=storage.signature_version,
+            s3={"addressing_style": storage.addressing_style},  # type: ignore[arg-type]
+        )
+        s3_client = boto3.client("s3", config=s3_config)
 
     results: list[PresignedS3UploadResult] = []
 
@@ -203,14 +171,6 @@ def generate_s3_presigned_upload_urls(
             expires_in=upload.get("expires_in"),
             max_file_size=upload.get("max_file_size"),
         )
-
-        rewritten: PresignedS3UploadResult = {
-            "ref_id": result["ref_id"],
-            "url": _rewrite_presigned_url_for_local(result["url"]),
-            "fields": result["fields"],
-            "key": result["key"],
-        }
-
-        results.append(rewritten)
+        results.append(result)
 
     return {"uploads": results}

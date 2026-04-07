@@ -7,13 +7,23 @@ from common.services.s3 import (
     PresignedS3UploadInput,
     generate_s3_presigned_upload_urls,
 )
-from django.test import TestCase, override_settings
+from django.test import TestCase
+from storages.backends.s3 import S3Storage
 
 TEST_BUCKET = "betterangels-local"
 
 
-@override_settings(AWS_S3_STORAGE_BUCKET_NAME=TEST_BUCKET)
 class GenerateS3PresignedUploadUrlsTestCase(TestCase):
+    """Tests the production path where default_storage is plain S3Storage."""
+
+    def setUp(self) -> None:
+        storage_patcher = patch("common.services.s3.default_storage", spec=S3Storage)
+        self.mock_storage = storage_patcher.start()
+        self.mock_storage.bucket_name = TEST_BUCKET
+        self.mock_storage.signature_version = "s3v4"
+        self.mock_storage.addressing_style = "path"
+        self.addCleanup(storage_patcher.stop)
+
     def _make_upload(self, **overrides: Any) -> PresignedS3UploadInput:
         base: dict[str, Any] = {
             "ref_id": "ref-1",
@@ -153,3 +163,34 @@ class GenerateS3PresignedUploadUrlsTestCase(TestCase):
 
         with self.assertRaises(RuntimeError, msg="Presigned POST key mismatch"):
             generate_s3_presigned_upload_urls(uploads=[self._make_upload()])
+
+
+class GenerateS3PresignedUploadUrlsLocalDevTestCase(TestCase):
+    """Tests the local dev path where storage exposes get_client_for_presigned_urls."""
+
+    def _make_upload(self, **overrides: Any) -> PresignedS3UploadInput:
+        base: dict[str, Any] = {
+            "ref_id": "ref-1",
+            "filename": "photo.jpg",
+            "content_type": "image/jpeg",
+            "upload_path": "attachments",
+        }
+        base.update(overrides)
+        return cast(PresignedS3UploadInput, base)
+
+    @patch("common.services.s3.default_storage")
+    def test_uses_storage_client_when_available(self, mock_storage: MagicMock) -> None:
+        mock_client = MagicMock()
+        mock_storage.bucket_name = TEST_BUCKET
+        mock_storage.get_client_for_presigned_urls.return_value = mock_client
+        mock_client.generate_presigned_post.side_effect = lambda **kwargs: {
+            "url": f"http://localhost:9000/{kwargs['Bucket']}",
+            "fields": {"key": kwargs["Key"], "policy": "encoded-policy"},
+        }
+
+        result = generate_s3_presigned_upload_urls(uploads=[self._make_upload()])
+
+        mock_storage.get_client_for_presigned_urls.assert_called_once()
+        self.assertEqual(len(result["uploads"]), 1)
+        upload = result["uploads"][0]
+        self.assertIn("http://localhost:9000/", upload["url"])
