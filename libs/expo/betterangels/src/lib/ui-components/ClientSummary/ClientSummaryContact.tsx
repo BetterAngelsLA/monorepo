@@ -42,16 +42,16 @@ export default function ClientSummaryContact(
     ? `${phoneNumber},${extension}`
     : phoneNumber;
 
-  const hasPhone = !!phoneNumber;
-  const hasEmail = !hasPhone && !!email;
-  const hasAddressOnly = !hasPhone && !hasEmail && !!mailingAddress;
+  const showPhone = !!phoneNumber;
+  const showEmail = !showPhone && !!email;
+  const showAddress = !showPhone && !showEmail && !!mailingAddress;
 
-  const isTappable = hasPhone || hasEmail;
+  const isTappable = showPhone || showEmail;
 
   const handlePress = () => {
-    if (hasPhone) {
+    if (showPhone) {
       Linking.openURL(`tel:${phoneNumberUrl}`);
-    } else if (hasEmail) {
+    } else if (showEmail) {
       Linking.openURL(`mailto:${email}`);
     }
   };
@@ -66,10 +66,10 @@ export default function ClientSummaryContact(
           marginBottom: Spacings.xs,
         }}
       >
-        {(hasEmail || hasAddressOnly) && (
+        {(showEmail || showAddress) && (
           <EmailIcon color={Colors.NEUTRAL_DARK} />
         )}
-        {hasPhone && <CallOutlinedIcon color={Colors.NEUTRAL_DARK} />}
+        {showPhone && <CallOutlinedIcon color={Colors.NEUTRAL_DARK} />}
         <TextBold size="xs" color={Colors.NEUTRAL_DARK}>
           CONTACT INFO
         </TextBold>
@@ -95,7 +95,7 @@ export default function ClientSummaryContact(
             <TextRegular size="xs">
               Case Manager: {primaryCCM?.name || 'N/A'}
             </TextRegular>
-            {hasPhone && (
+            {showPhone && (
               <>
                 <TextBold textDecorationLine="underline" size="sm">
                   {phoneNumber}
@@ -108,12 +108,12 @@ export default function ClientSummaryContact(
                 )}
               </>
             )}
-            {hasEmail && (
+            {showEmail && (
               <TextBold textDecorationLine="underline" size="sm">
                 {email}
               </TextBold>
             )}
-            {hasAddressOnly && (
+            {showAddress && (
               <TextRegular size="sm">{mailingAddress}</TextRegular>
             )}
           </View>
