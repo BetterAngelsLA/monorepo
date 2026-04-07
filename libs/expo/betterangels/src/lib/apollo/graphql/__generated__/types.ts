@@ -983,6 +983,7 @@ export type GenerateClientDocumentUploadsInput = {
 export type GenerateClientDocumentUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo;
 
 export type GenerateClientProfilePhotoUploadInput = {
+  clientProfileId: Scalars['ID']['input'];
   contentType: Scalars['String']['input'];
   filename: Scalars['String']['input'];
   refId: Scalars['String']['input'];

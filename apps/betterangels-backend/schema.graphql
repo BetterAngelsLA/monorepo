@@ -956,6 +956,7 @@ input GenerateClientDocumentUploadsInput {
 union GenerateClientDocumentUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo
 
 input GenerateClientProfilePhotoUploadInput {
+  clientProfileId: ID!
   refId: String!
   filename: String!
   contentType: String!
