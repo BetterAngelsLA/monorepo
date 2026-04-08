@@ -65,7 +65,7 @@ export function TextButton(props: ITextButtonProps) {
           marginRight: mr && Spacings[mr],
           marginHorizontal: mx && Spacings[mx],
           marginVertical: my && Spacings[my],
-          opacity: pressed ? 0.4 : 1,
+          backgroundColor: pressed ? Colors.GRAY_PRESSED : 'transparent',
         },
       ]}
       onPress={onPress}

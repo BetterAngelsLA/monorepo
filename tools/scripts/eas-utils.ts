@@ -163,7 +163,10 @@ export function setupEnvAndFingerprint(
   }
 
   // Write .env (without RUNTIME_VERSION) so fingerprint includes env var values.
-  const envLines = Array.from(envMap, ([k, v]) => `${k}=${v}`);
+  const envLines: string[] = [];
+  envMap.forEach((v, k) => {
+    envLines.push(`${k}=${v}`);
+  });
   fs.writeFileSync(envPath, envLines.join('\n') + '\n');
 
   // Compute fingerprint — this hash becomes the runtimeVersion.
@@ -178,9 +181,9 @@ export function setupEnvAndFingerprint(
   // Append RUNTIME_VERSION to .env and propagate everything to process.env.
   fs.appendFileSync(envPath, `RUNTIME_VERSION=${hash}\n`);
   envMap.set('RUNTIME_VERSION', hash);
-  for (const [key, value] of envMap) {
+  envMap.forEach((value, key) => {
     process.env[key] = value;
-  }
+  });
 
   return hash;
 }
