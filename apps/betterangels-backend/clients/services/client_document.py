@@ -11,6 +11,7 @@ from common.services.s3 import (
     DEFAULT_UPLOAD_EXPIRATION_SECONDS,
     PresignedS3UploadInput,
     generate_s3_presigned_upload_urls,
+    s3_key_exists,
 )
 from common.services.upload_token import create_upload_token, validate_upload_token
 from django.contrib.contenttypes.models import ContentType
@@ -93,10 +94,10 @@ def resolve_upload(
         ):
             raise ValueError("Invalid or expired upload signature")
 
-        storage_prefix = f"{STORAGE_DIR}/"
+        if not s3_key_exists(key=doc.presigned_key):
+            raise ValueError("File not found in storage")
 
-        if not doc.presigned_key.startswith(storage_prefix):
-            raise ValueError("Invalid storage key")
+        storage_prefix = f"{STORAGE_DIR}/"
 
         # strip "media/"
         file_path = doc.presigned_key[len(storage_prefix) :]

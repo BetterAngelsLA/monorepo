@@ -1,11 +1,13 @@
 from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
+from botocore.exceptions import ClientError
 from common.services.s3 import (
     DEFAULT_MAX_FILE_SIZE,
     DEFAULT_UPLOAD_EXPIRATION_SECONDS,
     PresignedS3UploadInput,
     generate_s3_presigned_upload_urls,
+    s3_key_exists,
 )
 from django.test import TestCase
 from storages.backends.s3 import S3Storage
@@ -194,3 +196,57 @@ class GenerateS3PresignedUploadUrlsLocalDevTestCase(TestCase):
         self.assertEqual(len(result["uploads"]), 1)
         upload = result["uploads"][0]
         self.assertIn("http://localhost:9000/", upload["url"])
+
+
+class S3KeyExistsTestCase(TestCase):
+    """Tests for s3_key_exists."""
+
+    def setUp(self) -> None:
+        storage_patcher = patch("common.services.s3.default_storage", spec=S3Storage)
+        self.mock_storage = storage_patcher.start()
+        self.mock_storage.bucket_name = TEST_BUCKET
+        self.mock_storage.signature_version = "s3v4"
+        self.mock_storage.addressing_style = "path"
+        self.addCleanup(storage_patcher.stop)
+
+    @patch("common.services.s3.boto3.client")
+    def test_returns_true_when_object_exists(self, mock_boto3: MagicMock) -> None:
+        mock_client = MagicMock()
+        mock_boto3.return_value = mock_client
+        mock_client.head_object.return_value = {"ContentLength": 12345}
+
+        self.assertTrue(s3_key_exists(key="attachments/photo.jpg"))
+        mock_client.head_object.assert_called_once_with(Bucket=TEST_BUCKET, Key="attachments/photo.jpg")
+
+    @patch("common.services.s3.boto3.client")
+    def test_returns_false_when_object_does_not_exist(self, mock_boto3: MagicMock) -> None:
+        mock_client = MagicMock()
+        mock_boto3.return_value = mock_client
+        mock_client.head_object.side_effect = ClientError(
+            {"Error": {"Code": "404", "Message": "Not Found"}},
+            "HeadObject",
+        )
+
+        self.assertFalse(s3_key_exists(key="attachments/missing.jpg"))
+
+    @patch("common.services.s3.boto3.client")
+    def test_raises_on_other_client_error(self, mock_boto3: MagicMock) -> None:
+        mock_client = MagicMock()
+        mock_boto3.return_value = mock_client
+        mock_client.head_object.side_effect = ClientError(
+            {"Error": {"Code": "403", "Message": "Forbidden"}},
+            "HeadObject",
+        )
+
+        with self.assertRaises(ClientError):
+            s3_key_exists(key="attachments/secret.jpg")
+
+    @patch("common.services.s3.default_storage")
+    def test_uses_local_dev_client_when_available(self, mock_storage: MagicMock) -> None:
+        mock_client = MagicMock()
+        mock_storage.bucket_name = TEST_BUCKET
+        mock_storage.get_client_for_presigned_urls.return_value = mock_client
+        mock_client.head_object.return_value = {"ContentLength": 100}
+
+        self.assertTrue(s3_key_exists(key="attachments/photo.jpg"))
+        mock_storage.get_client_for_presigned_urls.assert_called_once()

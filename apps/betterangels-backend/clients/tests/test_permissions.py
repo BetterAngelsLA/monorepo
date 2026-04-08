@@ -423,7 +423,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self._handle_user_login(user_label)
         with patch("clients.services.client_document.validate_upload_token", return_value=True), patch(
             "clients.services.client_document.assign_object_permissions"
-        ):
+        ), patch("clients.services.client_document.s3_key_exists", return_value=True):
             response = self._resolve_client_document_uploads_fixture(
                 self.client_profile_1["id"],
                 [
@@ -503,7 +503,9 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self, user_label: Optional[str], should_succeed: bool
     ) -> None:
         self._handle_user_login(user_label)
-        with patch("clients.services.client_profile_photo.validate_upload_token", return_value=True):
+        with patch("clients.services.client_profile_photo.validate_upload_token", return_value=True), patch(
+            "clients.services.client_profile_photo.s3_key_exists", return_value=True
+        ):
             response = self._resolve_client_profile_photo_upload_fixture(
                 client_profile_id=self.client_profile_1["id"],
                 presigned_key="media/client_profile_photos/test.jpg",

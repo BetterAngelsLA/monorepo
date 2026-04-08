@@ -88,8 +88,9 @@ class ResolveUploadTest(TestCase):
         self.presigned_key = f"{STORAGE_DIR}/client_profile_photos/abc.jpg"
         self.upload_token = "valid-token"
 
+    @patch("clients.services.client_profile_photo.s3_key_exists", return_value=True)
     @patch("clients.services.client_profile_photo.validate_upload_token", return_value=True)
-    def test_saves_profile_photo_path(self, mock_validate: MagicMock) -> None:
+    def test_saves_profile_photo_path(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         result = resolve_upload(
             user=self.user,
             client_profile=self.client_profile,
@@ -100,8 +101,9 @@ class ResolveUploadTest(TestCase):
         result.refresh_from_db()
         self.assertEqual(result.profile_photo.name, "client_profile_photos/abc.jpg")
 
+    @patch("clients.services.client_profile_photo.s3_key_exists", return_value=True)
     @patch("clients.services.client_profile_photo.validate_upload_token", return_value=True)
-    def test_returns_client_profile(self, mock_validate: MagicMock) -> None:
+    def test_returns_client_profile(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         result = resolve_upload(
             user=self.user,
             client_profile=self.client_profile,
@@ -111,8 +113,9 @@ class ResolveUploadTest(TestCase):
 
         self.assertEqual(result.pk, self.client_profile.pk)
 
+    @patch("clients.services.client_profile_photo.s3_key_exists", return_value=True)
     @patch("clients.services.client_profile_photo.validate_upload_token", return_value=True)
-    def test_validates_token_with_correct_params(self, mock_validate: MagicMock) -> None:
+    def test_validates_token_with_correct_params(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         resolve_upload(
             user=self.user,
             client_profile=self.client_profile,
@@ -137,18 +140,9 @@ class ResolveUploadTest(TestCase):
                 upload_token="bad-token",
             )
 
+    @patch("clients.services.client_profile_photo.s3_key_exists", return_value=True)
     @patch("clients.services.client_profile_photo.validate_upload_token", return_value=True)
-    def test_raises_on_invalid_storage_key(self, mock_validate: MagicMock) -> None:
-        with self.assertRaises(ValueError, msg="Invalid storage key"):
-            resolve_upload(
-                user=self.user,
-                client_profile=self.client_profile,
-                presigned_key="wrong_prefix/photo.jpg",
-                upload_token=self.upload_token,
-            )
-
-    @patch("clients.services.client_profile_photo.validate_upload_token", return_value=True)
-    def test_strips_storage_dir_prefix(self, mock_validate: MagicMock) -> None:
+    def test_strips_storage_dir_prefix(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         resolve_upload(
             user=self.user,
             client_profile=self.client_profile,
@@ -158,6 +152,20 @@ class ResolveUploadTest(TestCase):
 
         self.client_profile.refresh_from_db()
         self.assertEqual(self.client_profile.profile_photo.name, "some_other_path/photo.png")
+
+    @patch("clients.services.client_profile_photo.s3_key_exists", return_value=False)
+    @patch("clients.services.client_profile_photo.validate_upload_token", return_value=True)
+    def test_raises_when_file_not_in_s3(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
+        with self.assertRaises(ValueError, msg="File not found in storage"):
+            resolve_upload(
+                user=self.user,
+                client_profile=self.client_profile,
+                presigned_key=self.presigned_key,
+                upload_token=self.upload_token,
+            )
+
+        self.client_profile.refresh_from_db()
+        self.assertFalse(self.client_profile.profile_photo)
 
     @patch("clients.services.client_profile_photo.validate_upload_token", return_value=False)
     def test_does_not_save_on_invalid_token(self, mock_validate: MagicMock) -> None:

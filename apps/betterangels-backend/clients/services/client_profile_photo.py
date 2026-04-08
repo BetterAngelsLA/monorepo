@@ -3,7 +3,7 @@ from typing import TypedDict
 from accounts.models import User
 from clients.models import ClientProfile
 from clients.types import GenerateClientProfilePhotoUploadInput
-from common.services.s3 import DEFAULT_UPLOAD_EXPIRATION_SECONDS, generate_s3_presigned_upload_urls
+from common.services.s3 import DEFAULT_UPLOAD_EXPIRATION_SECONDS, generate_s3_presigned_upload_urls, s3_key_exists
 from common.services.upload_token import create_upload_token, validate_upload_token
 
 STORAGE_DIR = "media"
@@ -68,10 +68,10 @@ def resolve_upload(
     ):
         raise ValueError("Invalid or expired upload signature")
 
-    storage_prefix = f"{STORAGE_DIR}/"
+    if not s3_key_exists(key=presigned_key):
+        raise ValueError("File not found in storage")
 
-    if not presigned_key.startswith(storage_prefix):
-        raise ValueError("Invalid storage key")
+    storage_prefix = f"{STORAGE_DIR}/"
 
     # strip "media/"
     profile_photo_path = presigned_key[len(storage_prefix) :]

@@ -151,9 +151,10 @@ class ResolveUploadTest(TestCase):
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
     def test_creates_attachment(
-        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+        self, mock_validate: MagicMock, mock_s3_exists: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
     ) -> None:
         mock_perm_group.return_value = self.permission_group
         doc = self._make_doc()
@@ -176,9 +177,10 @@ class ResolveUploadTest(TestCase):
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
     def test_creates_multiple_attachments(
-        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+        self, mock_validate: MagicMock, mock_s3_exists: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
     ) -> None:
         mock_perm_group.return_value = self.permission_group
         doc1 = self._make_doc(presigned_key=f"{STORAGE_DIR}/attachments/a.pdf", filename="a.pdf")
@@ -198,9 +200,10 @@ class ResolveUploadTest(TestCase):
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
     def test_validates_each_token(
-        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+        self, mock_validate: MagicMock, mock_s3_exists: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
     ) -> None:
         mock_perm_group.return_value = self.permission_group
         doc1 = self._make_doc(presigned_key=f"{STORAGE_DIR}/attachments/a.pdf", upload_token="tok-1")
@@ -228,9 +231,10 @@ class ResolveUploadTest(TestCase):
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
     def test_assigns_permissions_per_attachment(
-        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+        self, mock_validate: MagicMock, mock_s3_exists: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
     ) -> None:
         mock_perm_group.return_value = self.permission_group
         doc = self._make_doc()
@@ -265,25 +269,10 @@ class ResolveUploadTest(TestCase):
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
-    @patch("clients.services.client_document.validate_upload_token", return_value=True)
-    def test_raises_on_invalid_storage_key(
-        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
-    ) -> None:
-        mock_perm_group.return_value = self.permission_group
-        doc = self._make_doc(presigned_key="wrong_prefix/doc.pdf")
-
-        with self.assertRaises(ValueError, msg="Invalid storage key"):
-            resolve_upload(
-                user=self.user,
-                client_profile=self.client_profile,
-                documents=[doc],
-            )
-
-    @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
     def test_strips_storage_dir_prefix(
-        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+        self, mock_validate: MagicMock, mock_s3_exists: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
     ) -> None:
         mock_perm_group.return_value = self.permission_group
         doc = self._make_doc(presigned_key="media/some_path/file.txt")
@@ -317,9 +306,10 @@ class ResolveUploadTest(TestCase):
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token")
     def test_stops_on_first_invalid_token_in_batch(
-        self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+        self, mock_validate: MagicMock, mock_s3_exists: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
     ) -> None:
         mock_perm_group.return_value = self.permission_group
         mock_validate.side_effect = [True, False]
@@ -336,3 +326,23 @@ class ResolveUploadTest(TestCase):
 
         # First doc was saved before second failed
         self.assertEqual(Attachment.objects.count(), initial_count + 1)
+
+    @patch("clients.services.client_document.assign_object_permissions")
+    @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.s3_key_exists", return_value=False)
+    @patch("clients.services.client_document.validate_upload_token", return_value=True)
+    def test_raises_when_file_not_in_s3(
+        self, mock_validate: MagicMock, mock_s3_exists: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+    ) -> None:
+        mock_perm_group.return_value = self.permission_group
+        initial_count = Attachment.objects.count()
+        doc = self._make_doc()
+
+        with self.assertRaises(ValueError, msg="File not found in storage"):
+            resolve_upload(
+                user=self.user,
+                client_profile=self.client_profile,
+                documents=[doc],
+            )
+
+        self.assertEqual(Attachment.objects.count(), initial_count)

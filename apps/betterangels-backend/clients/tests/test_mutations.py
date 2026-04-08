@@ -530,7 +530,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertIn("Policy", result["fields"])
 
     def test_resolve_client_profile_photo_upload(self) -> None:
-        with patch("clients.services.client_profile_photo.validate_upload_token", return_value=True):
+        with patch("clients.services.client_profile_photo.validate_upload_token", return_value=True), patch(
+            "clients.services.client_profile_photo.s3_key_exists", return_value=True
+        ):
             expected_query_count = 8
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_profile_photo_upload_fixture(
@@ -556,18 +558,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
                     client_profile_id=self.client_profile_1["id"],
                     presigned_key="media/client_profile_photos/photo.jpg",
                     upload_token="bad-token",
-                )
-
-        self.assertIsNotNone(response.get("errors"))
-
-    def test_resolve_client_profile_photo_upload_invalid_storage_key(self) -> None:
-        with patch("clients.services.client_profile_photo.validate_upload_token", return_value=True):
-            expected_query_count = 6
-            with self.assertNumQueriesWithoutCache(expected_query_count):
-                response = self._resolve_client_profile_photo_upload_fixture(
-                    client_profile_id=self.client_profile_1["id"],
-                    presigned_key="wrong_prefix/photo.jpg",
-                    upload_token="valid-photo-token",
                 )
 
         self.assertIsNotNone(response.get("errors"))
@@ -1017,7 +1007,9 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             },
         ]
 
-        with patch("clients.services.client_document.validate_upload_token", return_value=True):
+        with patch("clients.services.client_document.validate_upload_token", return_value=True), patch(
+            "clients.services.client_document.s3_key_exists", return_value=True
+        ):
             expected_query_count = 35
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_document_uploads_fixture(
@@ -1055,27 +1047,6 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         ]
 
         with patch("clients.services.client_document.validate_upload_token", return_value=False):
-            expected_query_count = 9
-            with self.assertNumQueriesWithoutCache(expected_query_count):
-                response = self._resolve_client_document_uploads_fixture(
-                    self.client_profile_1["id"],
-                    documents,
-                )
-
-        self.assertIsNotNone(response.get("errors"))
-
-    def test_resolve_client_document_uploads_invalid_storage_key(self) -> None:
-        documents = [
-            {
-                "presignedKey": "wrong_prefix/doc1.pdf",
-                "uploadToken": "valid-token",
-                "filename": "doc1.pdf",
-                "contentType": "application/pdf",
-                "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
-            },
-        ]
-
-        with patch("clients.services.client_document.validate_upload_token", return_value=True):
             expected_query_count = 9
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_document_uploads_fixture(
