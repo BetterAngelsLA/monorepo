@@ -1,4 +1,6 @@
+import { execSync as realExecSync } from 'child_process';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import { setupEnvAndFingerprint } from './eas-utils';
 
@@ -25,7 +27,7 @@ describe('setupEnvAndFingerprint', () => {
   ];
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'eas-test-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'eas-test-'));
 
     // Save and clear relevant env vars
     for (const key of envKeysToClean) {
@@ -82,8 +84,12 @@ describe('setupEnvAndFingerprint', () => {
 
     // Verify .env file contents
     const envContent = fs.readFileSync(path.join(tmpDir, '.env'), 'utf-8');
-    expect(envContent).toContain('EXPO_PUBLIC_API_URL=https://api.prod.example.com');
-    expect(envContent).toContain('EXPO_PUBLIC_DEMO_API_URL=https://api.dev.example.com');
+    expect(envContent).toContain(
+      'EXPO_PUBLIC_API_URL=https://api.prod.example.com'
+    );
+    expect(envContent).toContain(
+      'EXPO_PUBLIC_DEMO_API_URL=https://api.dev.example.com'
+    );
     expect(envContent).toContain('RUNTIME_VERSION=abc123');
   });
 
@@ -106,7 +112,9 @@ describe('setupEnvAndFingerprint', () => {
     expect(process.env.EXPO_PUBLIC_API_URL).toBe('https://from-ci-secret.com');
 
     const envContent = fs.readFileSync(path.join(tmpDir, '.env'), 'utf-8');
-    expect(envContent).toContain('EXPO_PUBLIC_API_URL=https://from-ci-secret.com');
+    expect(envContent).toContain(
+      'EXPO_PUBLIC_API_URL=https://from-ci-secret.com'
+    );
   });
 
   it('collects MAESTRO_* vars from process.env', () => {
@@ -133,11 +141,30 @@ describe('setupEnvAndFingerprint', () => {
     expect(process.env.RUNTIME_VERSION).toBe('abc123');
   });
 
-  it('returns the fingerprint hash', () => {
-    writeEasJson({ build: { dev: { env: {} } } });
+  it('child processes inherit the propagated env vars', () => {
 
-    const hash = setupEnvAndFingerprint(tmpDir, 'dev');
+    writeEasJson({
+      build: {
+        production: {
+          env: {
+            EXPO_PUBLIC_API_URL: 'https://api.prod.example.com',
+            EXPO_PUBLIC_DEMO_API_URL: 'https://api.dev.example.com',
+          },
+        },
+      },
+    });
 
-    expect(hash).toBe('abc123');
+    setupEnvAndFingerprint(tmpDir, 'production');
+
+    // Spawn a real child process and verify it inherited the env vars
+    const childOutput = realExecSync(
+      'node -e "console.log(JSON.stringify({api: process.env.EXPO_PUBLIC_API_URL, demo: process.env.EXPO_PUBLIC_DEMO_API_URL, rt: process.env.RUNTIME_VERSION}))"',
+      { encoding: 'utf-8' }
+    );
+    const inherited = JSON.parse(childOutput.trim());
+
+    expect(inherited.api).toBe('https://api.prod.example.com');
+    expect(inherited.demo).toBe('https://api.dev.example.com');
+    expect(inherited.rt).toBe('abc123');
   });
 });
