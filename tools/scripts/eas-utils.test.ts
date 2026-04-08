@@ -22,6 +22,7 @@ describe('setupEnvAndFingerprint', () => {
     'APP_VARIANT',
     'RUNTIME_VERSION',
     'EXPO_PUBLIC_OVERRIDE',
+    'EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY',
     'MAESTRO_APP_ID',
   ];
 
@@ -92,27 +93,63 @@ describe('setupEnvAndFingerprint', () => {
     expect(envContent).toContain('RUNTIME_VERSION=abc123');
   });
 
-  it('CI env vars override eas.json profile defaults', () => {
+  it('eas.json profile values take precedence over pre-existing process.env', () => {
     writeEasJson({
       build: {
         production: {
           env: {
-            EXPO_PUBLIC_API_URL: 'https://from-eas-json.com',
+            EXPO_PUBLIC_API_URL: 'https://api.prod.example.com',
           },
         },
       },
     });
 
-    // Simulate CI secret overriding the eas.json default
-    process.env.EXPO_PUBLIC_API_URL = 'https://from-ci-secret.com';
+    // Simulate NX loading the committed .env (dev values) into process.env
+    process.env.EXPO_PUBLIC_API_URL = 'https://api.dev.example.com';
 
     setupEnvAndFingerprint(tmpDir, 'production');
 
-    expect(process.env.EXPO_PUBLIC_API_URL).toBe('https://from-ci-secret.com');
+    // eas.json profile value should win
+    expect(process.env.EXPO_PUBLIC_API_URL).toBe(
+      'https://api.prod.example.com'
+    );
 
     const envContent = fs.readFileSync(path.join(tmpDir, '.env'), 'utf-8');
     expect(envContent).toContain(
-      'EXPO_PUBLIC_API_URL=https://from-ci-secret.com'
+      'EXPO_PUBLIC_API_URL=https://api.prod.example.com'
+    );
+  });
+
+  it('adds CI secrets not defined in eas.json profile', () => {
+    writeEasJson({
+      build: {
+        production: {
+          env: {
+            EXPO_PUBLIC_API_URL: 'https://api.prod.example.com',
+          },
+        },
+      },
+    });
+
+    // CI secret not in eas.json (e.g., Google Maps API key)
+    process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY = 'secret-key-123';
+
+    setupEnvAndFingerprint(tmpDir, 'production');
+
+    // eas.json value preserved, CI secret added
+    expect(process.env.EXPO_PUBLIC_API_URL).toBe(
+      'https://api.prod.example.com'
+    );
+    expect(process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY).toBe(
+      'secret-key-123'
+    );
+
+    const envContent = fs.readFileSync(path.join(tmpDir, '.env'), 'utf-8');
+    expect(envContent).toContain(
+      'EXPO_PUBLIC_API_URL=https://api.prod.example.com'
+    );
+    expect(envContent).toContain(
+      'EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY=secret-key-123'
     );
   });
 
