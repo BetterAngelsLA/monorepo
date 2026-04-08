@@ -137,7 +137,20 @@ export function setupEnvAndFingerprint(
   const envPath = path.join(projectDir, '.env');
   const envMap = new Map<string, string>();
 
-  // Load non-secret env vars from eas.json build profile
+  // Collect EXPO_PUBLIC_* and MAESTRO_* from process.env first (may include
+  // values from the committed .env loaded by NX, or CI secrets).
+  for (const [key, value] of Object.entries(process.env)) {
+    if (
+      (key.startsWith('EXPO_PUBLIC_') || key.startsWith('MAESTRO_')) &&
+      value
+    ) {
+      envMap.set(key, value);
+    }
+  }
+
+  // Then apply eas.json build profile env vars, which take precedence.
+  // This ensures profile-specific values (e.g., production API URL) override
+  // any stale values that NX loaded from the committed .env file.
   const easJsonPath = path.join(projectDir, 'eas.json');
   if (fs.existsSync(easJsonPath)) {
     const easConfig = JSON.parse(fs.readFileSync(easJsonPath, 'utf-8'));
@@ -146,16 +159,6 @@ export function setupEnvAndFingerprint(
       for (const [key, value] of Object.entries(profileEnv)) {
         envMap.set(key, String(value));
       }
-    }
-  }
-
-  // Collect EXPO_PUBLIC_* and MAESTRO_* secrets from env (CI values override profile defaults)
-  for (const [key, value] of Object.entries(process.env)) {
-    if (
-      (key.startsWith('EXPO_PUBLIC') || key.startsWith('MAESTRO_')) &&
-      value
-    ) {
-      envMap.set(key, value);
     }
   }
 
