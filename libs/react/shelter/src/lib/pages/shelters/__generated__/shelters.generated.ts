@@ -8,7 +8,7 @@ export type ViewSheltersQueryVariables = Types.Exact<{
 }>;
 
 
-export type ViewSheltersQuery = { __typename?: 'Query', shelters: { __typename?: 'ShelterTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'ShelterType', id: string, name: string, heroImage?: string | null, distanceInMiles?: number | null, exteriorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoFileType', url: string, name: string } }>, interiorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoFileType', url: string, name: string } }>, location?: { __typename?: 'ShelterLocationType', latitude: number, longitude: number, place: string } | null }> } };
+export type ViewSheltersQuery = { __typename?: 'Query', shelters: { __typename?: 'ShelterTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'ShelterType', id: string, name: string, heroImage?: string | null, distanceInMiles?: number | null, exteriorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoImageType', url: string, name: string } }>, interiorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoImageType', url: string, name: string } }>, location?: { __typename?: 'ShelterLocationType', latitude: number, longitude: number, place: string } | null }> } };
 
 export type ShelterServiceCategoriesQueryVariables = Types.Exact<{ [key: string]: never; }>;
 

@@ -68,16 +68,19 @@ def get_random_phone_number() -> str:
 
 
 class related_m2m_unique(related):
-    def __init__(self, related_model: Any, choices_enum: Any) -> None:
+    def __init__(self, related_model: Any, choices_enum: Any, min_quantity: int = 0) -> None:
         self.related_model = related_model
         self.choices_enum = choices_enum
+        self.min_quantity = min_quantity
 
     def make(self, **attrs: Any) -> Any:
         related_objs = set()
         choices = list(self.choices_enum)
 
         # limit to 5 related objects per type, for readability
-        quantity = random.randint(0, min(len(choices), 5))
+        upper = min(len(choices), 5)
+        lower = min(self.min_quantity, upper) if upper > 0 else 0
+        quantity = random.randint(lower, upper) if upper > 0 else 0
         selected = random.sample(choices, quantity)
 
         for choice_value in selected:
@@ -155,18 +158,20 @@ shelter_recipe = Recipe(
     website=seq("shelter", suffix=".com"),  # type: ignore
     accessibility=related_m2m_unique(Accessibility, AccessibilityChoices),
     cities=make_cities,
-    demographics=related_m2m_unique(Demographic, DemographicChoices),
+    demographics=related_m2m_unique(Demographic, DemographicChoices, min_quantity=1),
     entry_requirements=related_m2m_unique(EntryRequirement, EntryRequirementChoices),
     funders=related_m2m_unique(Funder, FunderChoices),
-    parking=related_m2m_unique(Parking, ParkingChoices),
-    pets=related_m2m_unique(Pet, PetChoices),
+    parking=related_m2m_unique(Parking, ParkingChoices, min_quantity=1),
+    pets=related_m2m_unique(Pet, PetChoices, min_quantity=1),
     room_styles=related_m2m_unique(RoomStyle, RoomStyleChoices),
     services=make_services,
     shelter_programs=related_m2m_unique(ShelterProgram, ShelterProgramChoices),
     shelter_types=related_m2m_unique(ShelterType, ShelterTypeChoices),
     spa=related_m2m_unique(SPA, SPAChoices),
-    special_situation_restrictions=related_m2m_unique(SpecialSituationRestriction, SpecialSituationRestrictionChoices),
-    storage=related_m2m_unique(Storage, StorageChoices),
+    special_situation_restrictions=related_m2m_unique(
+        SpecialSituationRestriction, SpecialSituationRestrictionChoices, min_quantity=1
+    ),
+    storage=related_m2m_unique(Storage, StorageChoices, min_quantity=1),
     exit_policy=related_m2m_unique(ExitPolicy, ExitPolicyChoices),
     referral_requirement=related_m2m_unique(ReferralRequirement, ReferralRequirementChoices),
 )

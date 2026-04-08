@@ -84,6 +84,7 @@ export type PersonalInfoState = {
   veteranStatus?: VeteranStatusEnum | null;
   livingSituation?: LivingSituationEnum | null;
   profilePhoto?: TProfilePhoto | null;
+  unhousedStartDate?: Date | null;
 };
 
 export type RelevantContactState = {

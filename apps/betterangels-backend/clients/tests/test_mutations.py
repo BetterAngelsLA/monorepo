@@ -108,6 +108,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "residenceGeolocation": self.residence_geolocation,
             "socialMediaProfiles": social_media_profile,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+            "unhousedStartDate": "2026-01-01",
             "veteranStatus": VeteranStatusEnum.YES.name,
         }
         response = self._create_client_profile_fixture(variables)
@@ -228,6 +229,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "residenceGeolocation": [-118, 34],
             "socialMediaProfiles": social_media_profiles,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+            "unhousedStartDate": "2025-01-01",
             "veteranStatus": VeteranStatusEnum.YES.name,
         }
         response = self._update_client_profile_fixture(variables)

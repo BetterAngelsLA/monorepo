@@ -266,6 +266,7 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
             residence_address="123 Res St",
             residence_geolocation=Point(self.residence_geolocation),
             spoken_languages=[LanguageEnum.ENGLISH, LanguageEnum.SPANISH],
+            unhoused_start_date=datetime.date.fromisoformat("2025-01-01"),
             created_by=self.org_1_case_manager_1,
         )
         content_type = ContentType.objects.get_for_model(HmisClientProfile)
@@ -341,6 +342,7 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
             "residenceAddress": "123 Res St",
             "residenceGeolocation": self.residence_geolocation,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+            "unhousedStartDate": "2025-01-01",
         }
 
         self.assertEqual(expected, hmis_client_profile)
