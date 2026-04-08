@@ -1,38 +1,47 @@
 #!/bin/bash
-# Updates imgproxy Lambda functions to use the image tag produced by this CI run.
-# Assumes dev and prod roles in turn and updates the Lambda in each account.
 
-set -euo pipefail
+# Script Description:
+# This script creates a JSON file with container and image URI details, zips the file,
+# and conditionally uploads it to an S3 bucket based on the Docker tag.
 
-: "${DEV_ASSUME_ROLE:?Need to set DEV_ASSUME_ROLE}"
-: "${PROD_ASSUME_ROLE:?Need to set PROD_ASSUME_ROLE}"
-
-for var in LAMBDA_FUNCTION_NAME DOCKER_TAG ECR_REGISTRY ECR_REPO_NAME; do
-  if [ -z "${!var}" ]; then
-    echo "Error: $var is not set."
+# Check for AWS CLI installation
+if ! command -v aws &> /dev/null; then
+    echo "Error: AWS CLI could not be found. Please install it to run this script."
     exit 1
-  fi
+fi
+
+# Ensuring all required environment variables are set
+for var in LAMBDA_FUNCTION_NAME ECR_REGISTRY BUILD_ARTIFACT_BUCKET APP_NAME DOCKER_TAG; do
+    if [ -z "${!var}" ]; then
+        echo "Error: Environment variable $var is not set."
+        exit 1
+    fi
 done
 
-IMAGE_URI="${ECR_REGISTRY}/${ECR_REPO_NAME}:${DOCKER_TAG}"
+# Constants
+IMAGE_JSON_NAME="imagedefinitions.json"
+ZIP_NAME="imagedefinitions.zip"
 
-ROLES=("$DEV_ASSUME_ROLE" "$PROD_ASSUME_ROLE")
+# Paths
+DIST_PATH="./dist/${APP_NAME}"
+REPO_URI="${ECR_REGISTRY}/${ECR_REPO_NAME:-${APP_NAME}}:${DOCKER_TAG}"
+IMAGE_JSON_PATH="${DIST_PATH}/${IMAGE_JSON_NAME}"
+IMAGE_ZIP_PATH="${DIST_PATH}/${ZIP_NAME}"
+S3_PATH="${BUILD_ARTIFACT_BUCKET}/${APP_NAME}/${ZIP_NAME}"
 
-for assume_role in "${ROLES[@]}"; do
-  echo "Assuming role for Lambda update: $assume_role"
-  CREDS=$(aws sts assume-role \
-    --role-arn "$assume_role" \
-    --role-session-name "imgproxy-lambda-deploy" \
-    --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
-    --output text)
-  read -r AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN <<< "$CREDS"
-  export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-  echo "✅ Assumed role and set temporary credentials."
 
-  echo "Updating Lambda function: $LAMBDA_FUNCTION_NAME"
-  echo "Updating Lambda to image: $IMAGE_URI"
-  aws lambda update-function-code \
-    --function-name "$LAMBDA_FUNCTION_NAME" \
-    --image-uri "$IMAGE_URI"
-done
+echo "Creating ${IMAGE_JSON_NAME} file..."
+mkdir -p "${DIST_PATH}" || { echo "Error creating directory ${DIST_PATH}"; exit 1; }
+echo "[{\"name\": \"${LAMBDA_FUNCTION_NAME}\", \"imageUri\": \"${REPO_URI}\"}]" > "${IMAGE_JSON_PATH}" || { echo "Error writing to ${IMAGE_JSON_PATH}"; exit 1; }
 
+# Zip the file
+echo "Zipping ${IMAGE_JSON_NAME}..."
+zip -j "${IMAGE_ZIP_PATH}" "${IMAGE_JSON_PATH}" || { echo "Error zipping file ${IMAGE_JSON_PATH}"; exit 1; }
+
+# Push to S3 if DOCKER_TAG is not 'dev'
+if [ "${DOCKER_TAG}" != "dev" ]; then
+    echo "Pushing ${ZIP_NAME} to S3..."
+    aws s3 cp "${IMAGE_ZIP_PATH}" "${S3_PATH}" || { echo "Error uploading ${ZIP_NAME} to S3"; exit 1; }
+else
+    echo "DOCKER_TAG is 'dev', skipping push to S3."
+fi
