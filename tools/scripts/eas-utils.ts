@@ -151,11 +151,15 @@ export function setupEnvAndFingerprint(
 
   // Collect EXPO_PUBLIC_* and MAESTRO_* secrets from env (CI values override profile defaults)
   for (const [key, value] of Object.entries(process.env)) {
-    if ((key.startsWith('EXPO_PUBLIC') || key.startsWith('MAESTRO_')) && value) {
+    if (
+      (key.startsWith('EXPO_PUBLIC') || key.startsWith('MAESTRO_')) &&
+      value
+    ) {
       envMap.set(key, value);
     }
   }
 
+  // Write .env (without RUNTIME_VERSION) so fingerprint includes env var values.
   const envLines = Array.from(envMap, ([k, v]) => `${k}=${v}`);
   fs.writeFileSync(envPath, envLines.join('\n') + '\n');
 
@@ -168,9 +172,12 @@ export function setupEnvAndFingerprint(
   const hash = JSON.parse(fingerprintJson).hash as string;
   console.log(`Runtime version (fingerprint): ${hash}`);
 
-  // Write to .env so dotenv.config() in app.config.js picks it up
+  // Append RUNTIME_VERSION to .env and propagate everything to process.env.
   fs.appendFileSync(envPath, `RUNTIME_VERSION=${hash}\n`);
-  process.env.RUNTIME_VERSION = hash;
+  envMap.set('RUNTIME_VERSION', hash);
+  for (const [key, value] of envMap) {
+    process.env[key] = value;
+  }
 
   return hash;
 }
