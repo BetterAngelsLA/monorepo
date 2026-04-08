@@ -10,7 +10,7 @@
       "options": {
         "context": "apps/imgproxy",
         "file": "apps/imgproxy/Dockerfile",
-        "push": true,
+        "push": false,
         "platforms": ["linux/arm64"],
         "provenance": "false",
         "cache-from": [
@@ -26,9 +26,9 @@
         }
       },
       "configurations": {
-        "preview": {
+        "production": {
           "options": {
-            "push": false
+            "push": true
           }
         }
       }
