@@ -52,8 +52,6 @@ const projectDir = resolveProjectDir(project);
 const fingerprint = setupEnvAndFingerprint(projectDir, androidProfile);
 
 // DEBUG: log the .env content to verify EXPO_PUBLIC_* values in the EAS Update bundle
-const fs = require('fs');
-const path = require('path');
 const envContent = fs.readFileSync(path.join(projectDir, '.env'), 'utf-8');
 console.log('\n=== DEBUG: .env written for EAS Update ===');
 console.log(envContent);
