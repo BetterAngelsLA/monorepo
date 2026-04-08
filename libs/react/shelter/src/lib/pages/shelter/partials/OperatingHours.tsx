@@ -1,5 +1,5 @@
 import { useAtom } from 'jotai';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ScheduleTypeChoices, ShelterType } from '../../../apollo';
 import { ModalAnimationEnum, modalAtom } from '../../../components/Modal';
 import {
@@ -242,9 +242,16 @@ export function OperatingHours({
       ),
     [entries]
   );
+
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   const status = useMemo(
-    () => getOperatingStatus(operatingSchedules),
-    [operatingSchedules]
+    () => getOperatingStatus(operatingSchedules, now),
+    [operatingSchedules, now]
   );
 
   const [_modal, setModal] = useAtom(modalAtom);

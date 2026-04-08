@@ -176,7 +176,9 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                     results {{
                         id
                         profilePhoto {{
-                            url (preset: {ImagePresetEnum.MD.name})
+                            urlOriginal: url(preset: {ImagePresetEnum.ORIGINAL.name})
+                            urlMedium: url(preset: {ImagePresetEnum.MD.name})
+                            urlLarge: url(preset: {ImagePresetEnum.LG.name})
                         }}
                     }}
                 }}
@@ -192,8 +194,12 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         client_profiles_data = response["data"]["clientProfiles"]
-        self.assertIn("localhost:8080/", client_profiles_data["results"][0]["profilePhoto"]["url"])
-        self.assertIn("localhost:8080/", client_profiles_data["results"][1]["profilePhoto"]["url"])
+        self.assertIn("localhost:8080/", client_profiles_data["results"][0]["profilePhoto"]["urlOriginal"])
+        self.assertIn("localhost:8080/", client_profiles_data["results"][0]["profilePhoto"]["urlMedium"])
+        self.assertIn("localhost:8080/", client_profiles_data["results"][0]["profilePhoto"]["urlLarge"])
+        self.assertIn("localhost:8080/", client_profiles_data["results"][1]["profilePhoto"]["urlOriginal"])
+        self.assertIn("localhost:8080/", client_profiles_data["results"][1]["profilePhoto"]["urlMedium"])
+        self.assertIn("localhost:8080/", client_profiles_data["results"][1]["profilePhoto"]["urlLarge"])
 
     @parametrize(
         ("sort_order, expected_first_name"),
