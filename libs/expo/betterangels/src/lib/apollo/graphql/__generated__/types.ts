@@ -2458,6 +2458,7 @@ export enum SelahTeamEnum {
   LaRiverOutreach = 'LA_RIVER_OUTREACH',
   LosFelizOutreach = 'LOS_FELIZ_OUTREACH',
   NortheastHollywoodOutreach = 'NORTHEAST_HOLLYWOOD_OUTREACH',
+  SelahStaff = 'SELAH_STAFF',
   SilverLakeOutreach = 'SILVER_LAKE_OUTREACH',
   SlccOnSite = 'SLCC_ON_SITE',
   SundaySocialAtwaterOnSite = 'SUNDAY_SOCIAL_ATWATER_ON_SITE',
@@ -2568,7 +2569,7 @@ export type ShelterOrder = {
 export type ShelterPhotoType = {
   __typename?: 'ShelterPhotoType';
   createdAt: Scalars['DateTime']['output'];
-  file: DjangoFileType;
+  file: DjangoImageType;
   id: Scalars['ID']['output'];
 };
 

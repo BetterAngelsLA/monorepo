@@ -1959,6 +1959,7 @@ enum SelahTeamEnum {
   LA_RIVER_OUTREACH
   LOS_FELIZ_OUTREACH
   NORTHEAST_HOLLYWOOD_OUTREACH
+  SELAH_STAFF
   SILVER_LAKE_OUTREACH
   SLCC_ON_SITE
   SUNDAY_SOCIAL_ATWATER_ON_SITE
@@ -2066,7 +2067,7 @@ input ShelterOrder {
 type ShelterPhotoType {
   id: ID!
   createdAt: DateTime!
-  file: DjangoFileType!
+  file: DjangoImageType!
 }
 
 enum ShelterProgramChoices {

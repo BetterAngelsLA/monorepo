@@ -34,7 +34,7 @@ develop = true
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^7.3.0"
-isort = "^7.0.0"
+isort = "^8.0.1"
 black = "^26.1.0"
 flake8-bugbear = "^25.11.29"
 django-stubs-ext = "^5.2.9"
@@ -55,7 +55,7 @@ types-python-dateutil = "^2.9.0.20260124"
 types-gevent = "^25.4.0.20250801"
 types-requests = "^2.32.0"
 pre-commit = "^4.3.1"
-virtualenv = "^20.38.0"
+virtualenv = "^21.1.0"
 
 
 [tool.pytest.ini_options]
