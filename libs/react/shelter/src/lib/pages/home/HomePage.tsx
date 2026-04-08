@@ -137,8 +137,8 @@ export function HomePage() {
           type: shelter.shelterTypes.find(
             (t) => t.name === ShelterChoices.AccessCenter
           )
-            ? 'secondary'
-            : 'primary',
+            ? 'purple'
+            : 'secondary',
         } as TMarker;
       });
 
