@@ -28,6 +28,9 @@ appId: ${MAESTRO_APP_ID}
     id: 'ba-password-input'
 - inputText: ${MAESTRO_BA_USER_PASSWORD}
 
+# Sometimes, especially Android, a visible keyboard may interfere
+- hideKeyboard
+
 - tapOn:
     id: 'ba-login-submit'
 
