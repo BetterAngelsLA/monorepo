@@ -149,9 +149,31 @@ export function setupEnvAndFingerprint(
     }
   }
 
-  // Collect EXPO_PUBLIC_* and MAESTRO_* secrets from env (CI values override profile defaults)
+  // Read existing .env keys so we can distinguish CI-injected secrets from
+  // values that NX auto-loaded from the repo .env into process.env.
+  const existingEnvKeys = new Set<string>();
+  if (fs.existsSync(envPath)) {
+    const lines = fs.readFileSync(envPath, 'utf-8').split('\n');
+    for (const line of lines) {
+      const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=/);
+      if (match) existingEnvKeys.add(match[1]);
+    }
+  }
+
+  // Collect EXPO_PUBLIC_* and MAESTRO_* secrets from env (CI values override profile defaults).
+  // Skip keys that originated from the repo .env (NX loads them into process.env automatically)
+  // unless they are NOT already defined in the eas.json profile — in that case they are genuine
+  // CI secrets that should be included.
   for (const [key, value] of Object.entries(process.env)) {
-    if ((key.startsWith('EXPO_PUBLIC') || key.startsWith('MAESTRO_')) && value) {
+    if (
+      (key.startsWith('EXPO_PUBLIC') || key.startsWith('MAESTRO_')) &&
+      value
+    ) {
+      if (existingEnvKeys.has(key) && envMap.has(key)) {
+        // Key exists in both the repo .env and the eas.json profile —
+        // keep the eas.json value (already in envMap).
+        continue;
+      }
       envMap.set(key, value);
     }
   }
