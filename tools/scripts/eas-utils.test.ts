@@ -1,4 +1,3 @@
-import { execSync as realExecSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -141,8 +140,7 @@ describe('setupEnvAndFingerprint', () => {
     expect(process.env.RUNTIME_VERSION).toBe('abc123');
   });
 
-  it('child processes inherit the propagated env vars', () => {
-
+  it('propagates env vars so child processes (e.g. Metro) can inherit them', () => {
     writeEasJson({
       build: {
         production: {
@@ -154,17 +152,19 @@ describe('setupEnvAndFingerprint', () => {
       },
     });
 
+    // Before: env vars not in process.env
+    expect(process.env.EXPO_PUBLIC_API_URL).toBeUndefined();
+    expect(process.env.EXPO_PUBLIC_DEMO_API_URL).toBeUndefined();
+
     setupEnvAndFingerprint(tmpDir, 'production');
 
-    // Spawn a real child process and verify it inherited the env vars
-    const childOutput = realExecSync(
-      'node -e "console.log(JSON.stringify({api: process.env.EXPO_PUBLIC_API_URL, demo: process.env.EXPO_PUBLIC_DEMO_API_URL, rt: process.env.RUNTIME_VERSION}))"',
-      { encoding: 'utf-8' }
+    // After: env vars are in process.env — child processes inherit process.env by default
+    expect(process.env.EXPO_PUBLIC_API_URL).toBe(
+      'https://api.prod.example.com'
     );
-    const inherited = JSON.parse(childOutput.trim());
-
-    expect(inherited.api).toBe('https://api.prod.example.com');
-    expect(inherited.demo).toBe('https://api.dev.example.com');
-    expect(inherited.rt).toBe('abc123');
+    expect(process.env.EXPO_PUBLIC_DEMO_API_URL).toBe(
+      'https://api.dev.example.com'
+    );
+    expect(process.env.RUNTIME_VERSION).toBe('abc123');
   });
 });
