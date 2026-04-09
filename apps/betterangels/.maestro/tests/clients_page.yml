@@ -5,4 +5,4 @@ appId: ${MAESTRO_APP_ID}
 - assertVisible:
     id: clients-screen
 
-- assertVisible: 'Clients'
+- assertVisible: 'XXXClients'
