@@ -23,16 +23,26 @@ appId: ${MAESTRO_APP_ID}
     id: 'ba-email-input'
 - inputText: ${MAESTRO_BA_USER_EMAIL}
 
-# Password field becomes visible after email is entered
+# Password field becomes visible only after email
+# with @example domain is entered
+- waitForAnimationToEnd
+
 - tapOn:
     id: 'ba-password-input'
 - inputText: ${MAESTRO_BA_USER_PASSWORD}
 
+# Press Enter and scroll down until Submit button is visible.
 # Sometimes a visible keyboard may interfere with a tap/click.
-# `hideKeyboard` command does not seem to work as expected on iOS
-# another alternative is to tapOn some safe area (a header etc...) to
-# dismiss the keybaord
+# `hideKeyboard` is brittle; An alternative is to tapOn
+# some safe area (a header etc...) to dismiss the keybaord.
 - pressKey: Enter
+
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: ba-login-submit
+    direction: DOWN
 
 - tapOn:
     id: 'ba-login-submit'
