@@ -184,6 +184,18 @@ export function HomePage() {
 
     if (bounds) {
       setMapBoundsFilter(toMapBounds(bounds));
+    } else {
+      const listener = map.addListener('idle', () => {
+        const idleBounds = map.getBounds();
+
+        if (idleBounds) {
+          setMapBoundsFilter(toMapBounds(idleBounds));
+        }
+
+        listener.remove();
+      });
+
+      return () => listener.remove();
     }
   }, [map, location]);
 

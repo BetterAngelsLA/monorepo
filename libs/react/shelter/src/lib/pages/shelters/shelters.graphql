@@ -9,18 +9,6 @@ query ViewShelters(
       id
       name
       heroImage
-      exteriorPhotos {
-        file {
-          url
-          name
-        }
-      }
-      interiorPhotos {
-        file {
-          url
-          name
-        }
-      }
       distanceInMiles
       location {
         latitude
