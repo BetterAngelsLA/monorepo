@@ -28,8 +28,11 @@ appId: ${MAESTRO_APP_ID}
     id: 'ba-password-input'
 - inputText: ${MAESTRO_BA_USER_PASSWORD}
 
-# Sometimes, especially Android, a visible keyboard may interfere
-- hideKeyboard
+# Sometimes a visible keyboard may interfere with a tap/click.
+# `hideKeyboard` command does not seem to work as expected on iOS
+# another alternative is to tapOn some safe area (a header etc...) to
+# dismiss the keybaord
+- pressKey: Enter
 
 - tapOn:
     id: 'ba-login-submit'
