@@ -20,17 +20,11 @@ from .lookups import (  # noqa: F401
     SpecialSituationRestriction,
     Storage,
 )
-from .media import ExteriorPhoto, InteriorPhoto, Video, upload_path  # noqa: F401
+from .media import ExteriorPhoto, InteriorPhoto, Video, YouTubeLink, upload_path  # noqa: F401
 from .reservation import Reservation, ReservationClient  # noqa: F401
 from .schedule import Schedule  # noqa: F401
 from .service import Service, ServiceCategory  # noqa: F401
-from .shelter import (  # noqa: F401
-    Bed,
-    ContactInfo,
-    Room,
-    Shelter,
-    get_fields_with_other_option,
-)
+from .shelter import Bed, ContactInfo, Room, Shelter, get_fields_with_other_option  # noqa: F401
 from .tracked import (  # noqa: F401
     TrackedAccessibility,
     TrackedCity,

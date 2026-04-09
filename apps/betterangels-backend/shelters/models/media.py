@@ -39,3 +39,9 @@ class ExteriorPhoto(BaseModel):
 class Video(BaseModel):
     file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="videos")
+
+
+class YouTubeLink(BaseModel):
+    url = models.URLField(max_length=255)
+    title = models.CharField(max_length=255, blank=True)
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="youtube_links")

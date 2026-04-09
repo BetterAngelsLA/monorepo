@@ -79,6 +79,7 @@ from .models import (
     SpecialSituationRestriction,
     Storage,
     Video,
+    YouTubeLink,
     get_fields_with_other_option,
 )
 
@@ -465,6 +466,11 @@ class VideoInline(admin.TabularInline):
     max_num = 0
 
 
+class YouTubeLinkInline(admin.TabularInline):
+    model = YouTubeLink
+    extra = 1
+
+
 class ScheduleForm(forms.ModelForm):
     class Meta:
         model = Schedule
@@ -805,7 +811,7 @@ class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
     list_select_related = ("organization",)
 
-    inlines = [ContactInfoInline, ScheduleInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
+    inlines = [ContactInfoInline, ScheduleInline, ExteriorPhotoInline, InterPhotoInline, VideoInline, YouTubeLinkInline]
     fieldsets = (
         (
             "Basic Information",

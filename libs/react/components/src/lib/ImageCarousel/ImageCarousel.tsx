@@ -3,18 +3,27 @@ import useEmblaCarousel from 'embla-carousel-react';
 import { useEffect, useState } from 'react';
 import { ImageSlide } from './ImageSlide';
 import { SlideCounter } from './SlideCounter';
+import { YouTubeSlide } from './YouTubeSlide';
+
+export type TYouTubeVideo = {
+  videoId: string;
+  title?: string;
+};
 
 export type TProps = {
   imageUrls: string[];
+  youtubeVideos?: TYouTubeVideo[];
   className?: string;
   imageClassName?: string;
 };
 
 export function ImageCarousel(props: TProps) {
-  const { imageUrls, className, imageClassName } = props;
+  const { imageUrls, youtubeVideos = [], className, imageClassName } = props;
 
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel();
+
+  const totalSlides = imageUrls.length + youtubeVideos.length;
 
   useEffect(() => {
     if (!emblaApi) {
@@ -22,7 +31,7 @@ export function ImageCarousel(props: TProps) {
     }
 
     emblaApi.reInit();
-  }, [emblaApi, imageUrls]);
+  }, [emblaApi, imageUrls, youtubeVideos]);
 
   useEffect(() => {
     if (!emblaApi) {
@@ -55,9 +64,16 @@ export function ImageCarousel(props: TProps) {
         {imageUrls.map((src, i) => (
           <ImageSlide key={i} imageSrc={src} imgClassName={imageClassName} />
         ))}
+        {youtubeVideos.map((video, i) => (
+          <YouTubeSlide
+            key={`yt-${i}`}
+            videoId={video.videoId}
+            title={video.title}
+          />
+        ))}
       </div>
 
-      <SlideCounter total={imageUrls.length} current={currentSlideIndex + 1} />
+      <SlideCounter total={totalSlides} current={currentSlideIndex + 1} />
     </div>
   );
 }

@@ -125,6 +125,7 @@ type AdminShelterType {
   updatedAt: DateTime!
   visitorsAllowed: Boolean
   website: String
+  youtubeLinks: [YouTubeLinkType!]!
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
@@ -2157,6 +2158,7 @@ type ShelterType {
   updatedAt: DateTime!
   visitorsAllowed: Boolean
   website: String
+  youtubeLinks: [YouTubeLinkType!]!
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
@@ -2524,6 +2526,12 @@ enum VeteranStatusEnum {
   NO
   PREFER_NOT_TO_SAY
   OTHER_THAN_HONORABLE
+}
+
+type YouTubeLinkType {
+  id: ID!
+  url: String!
+  title: String!
 }
 
 """Permission definition for schema directives."""

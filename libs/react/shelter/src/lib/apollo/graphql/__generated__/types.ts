@@ -129,6 +129,7 @@ export type AdminShelterType = {
   updatedAt: Scalars['DateTime']['output'];
   visitorsAllowed?: Maybe<Scalars['Boolean']['output']>;
   website?: Maybe<Scalars['String']['output']>;
+  youtubeLinks: Array<YouTubeLinkType>;
 };
 
 export type AdminShelterTypeOffsetPaginated = {
@@ -2667,6 +2668,7 @@ export type ShelterType = {
   updatedAt: Scalars['DateTime']['output'];
   visitorsAllowed?: Maybe<Scalars['Boolean']['output']>;
   website?: Maybe<Scalars['String']['output']>;
+  youtubeLinks: Array<YouTubeLinkType>;
 };
 
 export type ShelterTypeOffsetPaginated = {
@@ -3032,3 +3034,10 @@ export enum VeteranStatusEnum {
   PreferNotToSay = 'PREFER_NOT_TO_SAY',
   Yes = 'YES'
 }
+
+export type YouTubeLinkType = {
+  __typename?: 'YouTubeLinkType';
+  id: Scalars['ID']['output'];
+  title: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+};

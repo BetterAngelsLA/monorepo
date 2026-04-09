@@ -54,6 +54,13 @@ class ShelterPhotoType:
     file: TransformableImageType
 
 
+@strawberry_django.type(models.YouTubeLink)
+class YouTubeLinkType:
+    id: ID
+    url: str
+    title: str
+
+
 @strawberry.type
 class BedsByStatusType:
     available: int = 0
@@ -118,6 +125,7 @@ class ShelterTypeMixin:
     updated_at: auto
     visitors_allowed: auto
     website: auto
+    youtube_links: List[YouTubeLinkType]
 
     _exterior_photos: Optional[List[ShelterPhotoType]] = None
     _interior_photos: Optional[List[ShelterPhotoType]] = None
