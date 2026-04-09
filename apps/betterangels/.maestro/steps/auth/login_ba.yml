@@ -23,9 +23,14 @@ appId: ${MAESTRO_APP_ID}
     id: 'ba-email-input'
 - inputText: ${MAESTRO_BA_USER_EMAIL}
 
-# Password field becomes visible only after email
-# with @example domain is entered
-- waitForAnimationToEnd
+# Password field becomes visible once email ending with @example.com
+# is entered. This UI transition can destabilize tests and cause failures
+# that seem random. Extra pressKey and assertVisible commands
+# are meant help stabilize the tests.
+- pressKey: Enter
+
+- assertVisible:
+    id: ba-password-input
 
 - tapOn:
     id: 'ba-password-input'
