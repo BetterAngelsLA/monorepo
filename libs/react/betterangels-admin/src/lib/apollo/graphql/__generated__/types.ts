@@ -77,6 +77,7 @@ export type AdminShelterType = {
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
   bedFees?: Maybe<Scalars['String']['output']>;
+  bedsByStatus: BedsByStatusType;
   cities: Array<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
   curfew?: Maybe<Scalars['Time']['output']>;
@@ -197,6 +198,14 @@ export enum BedTypeChoices {
   Rollaway = 'ROLLAWAY',
   Twin = 'TWIN'
 }
+
+export type BedsByStatusType = {
+  __typename?: 'BedsByStatusType';
+  available: Scalars['Int']['output'];
+  occupied: Scalars['Int']['output'];
+  outOfService: Scalars['Int']['output'];
+  reserved: Scalars['Int']['output'];
+};
 
 export type CityType = {
   __typename?: 'CityType';
@@ -2466,6 +2475,7 @@ export enum SelahTeamEnum {
   LaRiverOutreach = 'LA_RIVER_OUTREACH',
   LosFelizOutreach = 'LOS_FELIZ_OUTREACH',
   NortheastHollywoodOutreach = 'NORTHEAST_HOLLYWOOD_OUTREACH',
+  SelahStaff = 'SELAH_STAFF',
   SilverLakeOutreach = 'SILVER_LAKE_OUTREACH',
   SlccOnSite = 'SLCC_ON_SITE',
   SundaySocialAtwaterOnSite = 'SUNDAY_SOCIAL_ATWATER_ON_SITE',
@@ -2531,6 +2541,7 @@ export type ServiceType = {
 };
 
 export enum ShelterChoices {
+  AccessCenter = 'ACCESS_CENTER',
   Building = 'BUILDING',
   Church = 'CHURCH',
   HotelMotel = 'HOTEL_MOTEL',
@@ -2546,6 +2557,7 @@ export type ShelterFilter = {
   NOT?: InputMaybe<ShelterFilter>;
   OR?: InputMaybe<ShelterFilter>;
   geolocation?: InputMaybe<GeolocationInput>;
+  isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
   mapBounds?: InputMaybe<MapBoundsInput>;
   name?: InputMaybe<Scalars['String']['input']>;
   openNow?: InputMaybe<Scalars['Boolean']['input']>;
@@ -2574,7 +2586,7 @@ export type ShelterOrder = {
 export type ShelterPhotoType = {
   __typename?: 'ShelterPhotoType';
   createdAt: Scalars['DateTime']['output'];
-  file: DjangoFileType;
+  file: DjangoImageType;
   id: Scalars['ID']['output'];
 };
 
@@ -2620,6 +2632,7 @@ export type ShelterType = {
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
   bedFees?: Maybe<Scalars['String']['output']>;
+  bedsByStatus: BedsByStatusType;
   cities: Array<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
   curfew?: Maybe<Scalars['Time']['output']>;
@@ -2746,6 +2759,7 @@ export enum StatusChoices {
 export enum StorageChoices {
   AmnestyLockers = 'AMNESTY_LOCKERS',
   NoStorage = 'NO_STORAGE',
+  PersonalBin = 'PERSONAL_BIN',
   SharedStorage = 'SHARED_STORAGE',
   StandardLockers = 'STANDARD_LOCKERS',
   UnitStorage = 'UNIT_STORAGE'

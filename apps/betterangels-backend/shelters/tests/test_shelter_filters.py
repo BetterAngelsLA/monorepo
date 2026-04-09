@@ -11,9 +11,10 @@ from shelters.enums import (
     ParkingChoices,
     PetChoices,
     ScheduleTypeChoices,
+    ShelterChoices,
     StatusChoices,
 )
-from shelters.models import Parking, Pet, Shelter
+from shelters.models import Parking, Pet, Shelter, ShelterType
 from shelters.models.schedule import Schedule
 from shelters.tests.baker_recipes import shelter_recipe
 from unittest_parametrize import parametrize
@@ -292,6 +293,31 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             self.assertTrue(
                 any(e in msg for msg in error_messages), f"Expected to find {e!r} in one of {error_messages!r}"
             )
+
+    def test_shelter_is_access_center_filter(self) -> None:
+        access_center, _ = ShelterType.objects.get_or_create(name=ShelterChoices.ACCESS_CENTER)
+        shelters = shelter_recipe.make(status=StatusChoices.APPROVED, shelter_types=[access_center], _quantity=2)
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+        filters: dict[str, Any] = {"isAccessCenter": True}
+
+        expected_query_count = 2
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        shelter_ids = {str(shelter.id) for shelter in shelters}
+        result_ids = {s["id"] for s in response["data"]["shelters"]["results"]}
+        self.assertEqual(shelter_ids, result_ids)
 
     @parametrize(
         "property_filters, expected_result_count",

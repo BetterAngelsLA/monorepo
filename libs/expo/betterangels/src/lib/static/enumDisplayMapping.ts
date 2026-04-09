@@ -238,6 +238,7 @@ export const enumDisplaySelahTeam: {
   [SelahTeamEnum.LaRiverOutreach]: 'LA River Outreach',
   [SelahTeamEnum.LosFelizOutreach]: 'Los Feliz Outreach',
   [SelahTeamEnum.NortheastHollywoodOutreach]: 'Northeast Hollywood Outreach',
+  [SelahTeamEnum.SelahStaff]: 'SELAH Staff',
   [SelahTeamEnum.SilverLakeOutreach]: 'Silver Lake Outreach',
   [SelahTeamEnum.SlccOnSite]: 'SLCC On-site',
   [SelahTeamEnum.SundaySocialAtwaterOnSite]: 'Sunday Social / Atwater On-site',

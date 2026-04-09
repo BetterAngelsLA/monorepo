@@ -129,6 +129,7 @@ type AdminShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
+  bedsByStatus: BedsByStatusType!
 }
 
 type AdminShelterTypeOffsetPaginated {
@@ -196,6 +197,13 @@ enum BedTypeChoices {
   BUNK
   ROLLAWAY
   OTHER
+}
+
+type BedsByStatusType {
+  available: Int!
+  occupied: Int!
+  reserved: Int!
+  outOfService: Int!
 }
 
 type CityType {
@@ -1968,6 +1976,7 @@ enum SelahTeamEnum {
   LA_RIVER_OUTREACH
   LOS_FELIZ_OUTREACH
   NORTHEAST_HOLLYWOOD_OUTREACH
+  SELAH_STAFF
   SILVER_LAKE_OUTREACH
   SLCC_ON_SITE
   SUNDAY_SOCIAL_ATWATER_ON_SITE
@@ -2031,6 +2040,7 @@ type ServiceType {
 }
 
 enum ShelterChoices {
+  ACCESS_CENTER
   BUILDING
   CHURCH
   HOTEL_MOTEL
@@ -2045,6 +2055,7 @@ input ShelterFilter {
   OR: ShelterFilter
   NOT: ShelterFilter
   DISTINCT: Boolean
+  isAccessCenter: Boolean
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
@@ -2073,7 +2084,7 @@ input ShelterOrder {
 type ShelterPhotoType {
   id: ID!
   createdAt: DateTime!
-  file: DjangoFileType!
+  file: DjangoImageType!
 }
 
 enum ShelterProgramChoices {
@@ -2167,6 +2178,7 @@ type ShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
+  bedsByStatus: BedsByStatusType!
 }
 
 type ShelterTypeOffsetPaginated {
@@ -2243,6 +2255,7 @@ enum StorageChoices {
   AMNESTY_LOCKERS
   STANDARD_LOCKERS
   SHARED_STORAGE
+  PERSONAL_BIN
   NO_STORAGE
 }
 

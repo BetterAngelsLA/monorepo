@@ -24,10 +24,15 @@ export function PersonalInfoCard(props: TProps) {
     preferredLanguage,
     veteranStatus,
     livingSituation,
+    unhousedStartDate,
   } = clientProfile || {};
 
   const formattedDob = formatDateStatic({
     date: dateOfBirth,
+    inputFormat: 'yyyy-MM-dd',
+  });
+  const formattedUnhousedStartDate = formatDateStatic({
+    date: unhousedStartDate,
     inputFormat: 'yyyy-MM-dd',
   });
 
@@ -51,6 +56,10 @@ export function PersonalInfoCard(props: TProps) {
     {
       header: ['Living Situation'],
       rows: [[livingSituation && enumDisplayLivingSituation[livingSituation]]],
+    },
+    {
+      header: ['Approximate Date Homelessness Started'],
+      rows: [[formattedUnhousedStartDate]],
     },
   ];
 
