@@ -52,7 +52,12 @@ export function ImageCarousel(props: TProps) {
   }, [emblaApi]);
 
   const parentCss = ['overflow-hidden', 'relative', className];
-  const slideContainerCss = ['flex', 'touch-pan-x', '[touch-action:pan-x]'];
+  const slideContainerCss = [
+    'flex',
+    'h-full',
+    'touch-pan-x',
+    '[touch-action:pan-x]',
+  ];
 
   return (
     <div
@@ -69,6 +74,8 @@ export function ImageCarousel(props: TProps) {
             key={`yt-${i}`}
             videoId={video.videoId}
             title={video.title}
+            onPrev={() => emblaApi?.scrollPrev()}
+            onNext={() => emblaApi?.scrollNext()}
           />
         ))}
       </div>
