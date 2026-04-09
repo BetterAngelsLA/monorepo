@@ -18,6 +18,9 @@ export type TShelter = {
   heroImage?: string | null;
   distanceInMiles?: number | null;
   location?: TShelterLocation | null;
+  shelterTypes?: Array<{
+    name?: string | null;
+  }>;
 };
 
 type TShelterCard = {
