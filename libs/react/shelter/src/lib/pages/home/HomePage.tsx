@@ -134,7 +134,7 @@ export function HomePage() {
           position: shelter.location,
           label: shelter.name,
           onClick: () => handleClick(shelter.id),
-          type: shelter.shelterTypes.find(
+          type: shelter.shelterTypes?.find(
             (t) => t.name === ShelterChoices.AccessCenter
           )
             ? 'purple'
