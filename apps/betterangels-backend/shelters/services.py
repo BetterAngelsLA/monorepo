@@ -28,9 +28,16 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 
-def _get_m2m_field_names(model: type[models.Model]) -> list[str]:
-    """Return the names of every ``ManyToManyField`` on *model*."""
-    return [field.name for field in model._meta.many_to_many]
+def _get_m2m_field_names(model: type[models.Model]) -> set[str]:
+    """Return set of ``ManyToManyField`` names on *model*."""
+    return {field.name for field in model._meta.many_to_many}
+
+
+# Pre-compute M2M field names once at module level.
+_SHELTER_M2M_FIELDS = _get_m2m_field_names(Shelter)
+_BED_M2M_FIELDS = _get_m2m_field_names(Bed)
+_ROOM_M2M_FIELDS = _get_m2m_field_names(Room)
+_COMMON_M2M_FIELDS = (_SHELTER_M2M_FIELDS & _BED_M2M_FIELDS) | (_SHELTER_M2M_FIELDS & _ROOM_M2M_FIELDS)
 
 
 def _set_m2m_from_enums(instance: models.Model, data: Dict[str, List[Any]]) -> None:
@@ -67,7 +74,7 @@ def _parse_location(data: Any) -> Any:
 
 def _prepare_shelter_data(
     data: Dict[str, Any],
-    m2m_field_names: list[str],
+    m2m_field_names: set[str],
 ) -> tuple[Dict[str, Any], Dict[str, List[Any]], List[Dict[str, Any]]]:
     """Separate M2M data and schedules from scalar fields.
 
@@ -98,10 +105,6 @@ def _prepare_shelter_data(
             del data["status"]
 
     return data, m2m_data, schedules_data
-
-
-# Pre-compute M2M field names once at module level.
-_SHELTER_M2M_FIELDS = _get_m2m_field_names(Shelter)
 
 
 def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) -> None:
@@ -289,13 +292,9 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     return shelter
 
 
-_BED_M2M_FIELDS = _get_m2m_field_names(Bed)
-_ROOM_M2M_FIELDS = _get_m2m_field_names(Room)
-
-
 def _validate_subset_attributes(shelter: Shelter, m2m_data: Dict[str, List[Any]]) -> None:
     """Ensure room/bed attributes are a strict subset of the shelter's attributes."""
-    for field_name in ["demographics", "accessibility", "funders", "pets"]:
+    for field_name in _COMMON_M2M_FIELDS:
         if field_name not in m2m_data:
             continue
         provided_values = [getattr(v, "value", v) for v in m2m_data[field_name]]
