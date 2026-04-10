@@ -62,10 +62,14 @@ export const WizardProgressBar = memo(
                 : 'text-gray-400',
             ].join(' ');
 
+            const hasLabel = Boolean(step.label?.trim());
+
             return (
               <div
                 key={index}
-                className={`relative min-w-0 pb-8 ${!isLast ? 'flex-1' : ''}`}
+                className={`relative min-w-0 ${hasLabel ? 'pb-8' : 'pb-2'} ${
+                  !isLast ? 'flex-1' : ''
+                }`}
               >
                 <div className="flex items-center">
                   <Button
@@ -95,9 +99,11 @@ export const WizardProgressBar = memo(
                   )}
                 </div>
 
-                <div className="absolute top-7 left-2.5 -translate-x-1/2">
-                  <div className={labelClasses}>{step.label}</div>
-                </div>
+                {hasLabel ? (
+                  <div className="absolute top-7 left-2.5 -translate-x-1/2">
+                    <div className={labelClasses}>{step.label}</div>
+                  </div>
+                ) : null}
               </div>
             );
           })}

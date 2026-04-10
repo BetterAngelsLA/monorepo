@@ -1,6 +1,7 @@
 import { useMutation } from '@apollo/client/react';
 import { Button } from '@monorepo/react/components';
 import { APIProvider } from '@vis.gl/react-google-maps';
+import { Settings2 } from 'lucide-react';
 import { FormEvent, useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -217,84 +218,86 @@ export function CreateShelterForm() {
     <APIProvider
       apiKey={import.meta.env.VITE_SHELTER_GOOGLE_MAPS_API_KEY as string}
     >
-      <div className="space-y-6 p-8">
-        <div className="w-full">
-          <WizardProgressBar
-            steps={CREATE_SHELTER_STEPS}
-            currentStep={currentStep}
-            onStepClick={setCurrentStep}
-          />
-        </div>
-
-        <Link
-          to="/operator"
-          className="inline-block border border-gray-300 rounded-md px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-        >
-          Back to Dashboard
-        </Link>
-
-        <div>
-          <h1 className="text-3xl font-semibold text-gray-900">
-            Create New Shelter
-          </h1>
-          <p className="mt-1 text-sm font-medium text-[#008CEE]">
-            Step {currentStep + 1} of {CREATE_SHELTER_STEPS.length}:{' '}
-            {CREATE_SHELTER_STEPS[currentStep]?.label}
-          </p>
-          <p className="mt-2 text-sm text-gray-600">
-            Provide as much detail as possible to ensure accurate shelter
-            listings.
-          </p>
-        </div>
-
-        {submissionError ? (
-          <div
-            className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-            role="alert"
-          >
-            {submissionError}
-          </div>
-        ) : null}
-
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6"
-          data-testid="create-shelter-form"
-        >
-          {renderCurrentStep()}
-
-          <div className="flex items-center justify-between gap-4">
-            <Button
-              size="xl"
-              type="button"
-              onClick={handlePreviousStep}
-              disabled={currentStep === 0 || isSubmitting}
-              className="h-auto! border border-gray-300! bg-white! px-6 py-3 text-gray-700! hover:bg-gray-50! disabled:opacity-50"
+      <div className="min-h-screen bg-[#ececec] px-3 py-6 md:px-6">
+        <div className="mx-auto w-full max-w-6xl border border-[#d9d9d9] bg-white p-6 md:p-8">
+          <div className="mb-5 flex items-center justify-between border-b border-[#efefef] pb-4">
+            <div className="text-base text-gray-800">
+              <span className="font-medium">
+                {activeOrg?.name ?? 'Organization'}
+              </span>
+              <span className="px-2 text-gray-400">/</span>
+              <span className="font-semibold">Shelter Creation</span>
+            </div>
+            <Link
+              to="/operator"
+              className="rounded-full border border-gray-200 p-2 text-gray-500 hover:bg-gray-50"
+              aria-label="Back to Dashboard"
             >
-              Back
-            </Button>
-
-            {!isLastStep ? (
-              <Button
-                size="xl"
-                type="button"
-                onClick={handleNextStep}
-                className="h-auto! bg-[#008CEE]! px-6 py-3 text-white! hover:bg-[#0077CB]!"
-              >
-                Next
-              </Button>
-            ) : (
-              <Button
-                size="xl"
-                type="submit"
-                className="h-auto! bg-green-600! text-black! px-6 py-3 hover:bg-green-700! transition-colors disabled:opacity-50"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Submitting…' : 'Create Shelter'}
-              </Button>
-            )}
+              <Settings2 size={16} />
+            </Link>
           </div>
-        </form>
+
+          <div className="mb-4 w-full max-w-2xl">
+            <WizardProgressBar
+              steps={CREATE_SHELTER_STEPS}
+              currentStep={currentStep}
+              onStepClick={setCurrentStep}
+            />
+          </div>
+
+          {submissionError ? (
+            <div
+              className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+              role="alert"
+            >
+              {submissionError}
+            </div>
+          ) : null}
+
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-6"
+            data-testid="create-shelter-form"
+          >
+            {renderCurrentStep()}
+
+            <div className="flex items-center justify-between gap-4">
+              {currentStep > 0 ? (
+                <Button
+                  size="xl"
+                  type="button"
+                  onClick={handlePreviousStep}
+                  disabled={isSubmitting}
+                  className="h-auto! border border-gray-300! bg-white! px-6 py-2.5 text-gray-700! hover:bg-gray-50! disabled:opacity-50"
+                >
+                  Back
+                </Button>
+              ) : (
+                <div />
+              )}
+
+              {!isLastStep ? (
+                <Button
+                  size="xl"
+                  type="button"
+                  onClick={handleNextStep}
+                  className="h-auto! border border-gray-200! bg-[#f5f7fb]! px-5 py-2.5 text-gray-700! hover:bg-[#ebeff7]!"
+                >
+                  Next
+                </Button>
+              ) : (
+                <Button
+                  size="xl"
+                  type="submit"
+                  className="h-auto! bg-green-600! px-6 py-2.5 text-white! hover:bg-green-700! transition-colors disabled:opacity-50"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Submitting…' : 'Create Shelter'}
+                </Button>
+              )}
+            </div>
+          </form>
+        </div>
       </div>
     </APIProvider>
   );
