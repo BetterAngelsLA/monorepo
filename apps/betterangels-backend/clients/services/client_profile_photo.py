@@ -1,22 +1,29 @@
-from typing import TypedDict
-
 from accounts.models import User
 from clients.models import ClientProfile
 from clients.types import GenerateClientProfilePhotoUploadInput
 from common.services.s3 import DEFAULT_UPLOAD_EXPIRATION_SECONDS, generate_s3_presigned_upload_urls, s3_key_exists
+from common.services.types import AuthorizedPresignedUpload
 from common.services.upload_token import create_upload_token, validate_upload_token
 
 STORAGE_DIR = "media"
 CLIENT_PROFILE_PHOTO_PATH = f"{STORAGE_DIR}/client_profile_photos"
 SERVICE_NAME = "client_profile_photo"
 
+ALLOWED_CONTENT_TYPES = frozenset(
+    {
+        "image/gif",
+        "image/heic",
+        "image/heif",
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    }
+)
 
-class AuthorizedPresignedUpload(TypedDict):
-    ref_id: str
-    presigned_key: str
-    url: str
-    fields: dict[str, str]
-    upload_token: str
+
+def _validate_content_type(content_type: str) -> None:
+    if content_type not in ALLOWED_CONTENT_TYPES:
+        raise ValueError(f"Content type not allowed: {content_type}")
 
 
 def create_presigned_upload(
@@ -24,6 +31,8 @@ def create_presigned_upload(
     user: User,
     upload: GenerateClientProfilePhotoUploadInput,
 ) -> AuthorizedPresignedUpload:
+    _validate_content_type(upload.content_type)
+
     presigned_urls = generate_s3_presigned_upload_urls(
         uploads=[
             {

@@ -1,4 +1,4 @@
-from typing import Iterable, TypedDict
+from typing import Iterable
 
 from accounts.models import User
 from accounts.utils import get_user_permission_group
@@ -13,6 +13,7 @@ from common.services.s3 import (
     generate_s3_presigned_upload_urls,
     s3_key_exists,
 )
+from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from common.services.upload_token import create_upload_token, validate_upload_token
 from django.contrib.contenttypes.models import ContentType
 
@@ -21,17 +22,32 @@ CLIENT_DOCUMENT_RELATIVE_PATH = "attachments"
 S3_CLIENT_DOCUMENT_PREFIX = f"{STORAGE_DIR}/{CLIENT_DOCUMENT_RELATIVE_PATH}"
 SERVICE_NAME = "client_document"
 
+ALLOWED_CONTENT_TYPES = frozenset(
+    {
+        # Documents
+        "application/msword",
+        "application/pdf",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "text/csv",
+        "text/plain",
+        # Images
+        "image/bmp",  # older windows/systems
+        "image/gif",
+        "image/heic",
+        "image/heif",
+        "image/jpeg",
+        "image/png",
+        "image/tiff",
+        "image/webp",
+    }
+)
 
-class AuthorizedPresignedUpload(TypedDict):
-    ref_id: str
-    presigned_key: str
-    url: str
-    fields: dict[str, str]
-    upload_token: str
 
-
-class AuthorizedPresignedUploadBatch(TypedDict):
-    uploads: list[AuthorizedPresignedUpload]
+def _validate_content_type(content_type: str) -> None:
+    if content_type not in ALLOWED_CONTENT_TYPES:
+        raise ValueError(f"Unsupported content_type: {content_type}.")
 
 
 def create_presigned_uploads(
@@ -39,15 +55,19 @@ def create_presigned_uploads(
     user: User,
     uploads: Iterable[ClientDocumentUploadsInputItem],
 ) -> AuthorizedPresignedUploadBatch:
-    mapped_uploads: list[PresignedS3UploadInput] = [
-        {
-            "ref_id": upload.ref_id,
-            "filename": upload.filename,
-            "content_type": upload.content_type,
-            "upload_path": S3_CLIENT_DOCUMENT_PREFIX,
-        }
-        for upload in uploads
-    ]
+    mapped_uploads: list[PresignedS3UploadInput] = []
+
+    for upload in uploads:
+        _validate_content_type(upload.content_type)
+
+        mapped_uploads.append(
+            {
+                "ref_id": upload.ref_id,
+                "filename": upload.filename,
+                "content_type": upload.content_type,
+                "upload_path": S3_CLIENT_DOCUMENT_PREFIX,
+            }
+        )
 
     presigned_batch = generate_s3_presigned_upload_urls(uploads=mapped_uploads)
 
@@ -86,6 +106,8 @@ def resolve_upload(
     attachments: list[Attachment] = []
 
     for doc in documents:
+        _validate_content_type(doc.content_type)
+
         if not validate_upload_token(
             upload_token=doc.upload_token,
             key=doc.presigned_key,

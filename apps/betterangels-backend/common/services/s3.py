@@ -1,5 +1,5 @@
+import mimetypes
 import uuid
-from pathlib import Path
 from typing import NotRequired, TypedDict, cast
 
 import boto3
@@ -61,11 +61,11 @@ def _build_s3_key(*, filename: str, content_type: str, upload_path: str) -> str:
         upload_path=""
             → <uuid>.jpg
     """
-    # TODO: derive extension
-    # add mimetypes.guess_extension to common/files?
-    # ext = mimetypes.guess_extension(content_type) or Path(filename).suffix
+    ext = mimetypes.guess_extension(content_type)
 
-    ext = Path(filename).suffix
+    if not ext:
+        raise ValueError(f"Unsupported content_type: {content_type} for filename={filename}")
+
     uid = uuid.uuid4()
 
     if upload_path:
@@ -100,7 +100,7 @@ def _generate_presigned_post_with_client(
 
     conditions = [
         {"Content-Type": content_type},
-        ["content-length-range", 0, max_file_size],
+        ["content-length-range", 1, max_file_size],
     ]
 
     if normalized_path:

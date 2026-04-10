@@ -2,15 +2,34 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 from clients.services.client_profile_photo import (
+    ALLOWED_CONTENT_TYPES,
     CLIENT_PROFILE_PHOTO_PATH,
     SERVICE_NAME,
     STORAGE_DIR,
+    _validate_content_type,
     create_presigned_upload,
     resolve_upload,
 )
 from common.services.s3 import DEFAULT_UPLOAD_EXPIRATION_SECONDS
 from django.test import TestCase
 from model_bakery import baker
+
+
+class ValidateContentTypeTest(TestCase):
+    def test_allows_valid_content_types(self) -> None:
+        for content_type in ALLOWED_CONTENT_TYPES:
+            try:
+                _validate_content_type(content_type)
+            except ValueError:
+                self.fail(f"_validate_content_type raised ValueError for allowed type: {content_type}")
+
+    def test_rejects_invalid_content_type(self) -> None:
+        with self.assertRaises(ValueError, msg="Content type not allowed: application/pdf"):
+            _validate_content_type("application/pdf")
+
+    def test_rejects_empty_content_type(self) -> None:
+        with self.assertRaises(ValueError, msg="Content type not allowed: "):
+            _validate_content_type("")
 
 
 class CreatePresignedUploadTest(TestCase):
@@ -62,6 +81,12 @@ class CreatePresignedUploadTest(TestCase):
                 }
             ]
         )
+
+    def test_rejects_invalid_content_type(self) -> None:
+        self.upload.content_type = "application/pdf"
+
+        with self.assertRaises(ValueError, msg="Content type not allowed: application/pdf"):
+            create_presigned_upload(user=self.user, upload=self.upload)
 
     @patch("clients.services.client_profile_photo.create_upload_token")
     @patch("clients.services.client_profile_photo.generate_s3_presigned_upload_urls")

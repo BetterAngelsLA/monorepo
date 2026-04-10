@@ -2,9 +2,11 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 from clients.services.client_document import (
+    ALLOWED_CONTENT_TYPES,
     S3_CLIENT_DOCUMENT_PREFIX,
     SERVICE_NAME,
     STORAGE_DIR,
+    _validate_content_type,
     create_presigned_uploads,
     resolve_upload,
 )
@@ -13,6 +15,23 @@ from common.permissions.enums import AttachmentPermissions
 from common.services.s3 import DEFAULT_UPLOAD_EXPIRATION_SECONDS
 from django.test import TestCase
 from model_bakery import baker
+
+
+class ValidateContentTypeTest(TestCase):
+    def test_allows_valid_content_types(self) -> None:
+        for content_type in ALLOWED_CONTENT_TYPES:
+            try:
+                _validate_content_type(content_type)
+            except ValueError:
+                self.fail(f"_validate_content_type raised ValueError for allowed type: {content_type}")
+
+    def test_rejects_invalid_content_type(self) -> None:
+        with self.assertRaises(ValueError, msg="Unsupported content_type: application/zip."):
+            _validate_content_type("application/zip")
+
+    def test_rejects_empty_content_type(self) -> None:
+        with self.assertRaises(ValueError, msg="Unsupported content_type: ."):
+            _validate_content_type("")
 
 
 class CreatePresignedUploadsTest(TestCase):
@@ -104,6 +123,12 @@ class CreatePresignedUploadsTest(TestCase):
             expires_in_seconds=DEFAULT_UPLOAD_EXPIRATION_SECONDS,
             scope=SERVICE_NAME,
         )
+
+    def test_rejects_invalid_content_type(self) -> None:
+        self.upload_1.content_type = "application/zip"
+
+        with self.assertRaises(ValueError, msg="Unsupported content_type: application/zip."):
+            create_presigned_uploads(user=self.user, uploads=[self.upload_1])
 
     @patch("clients.services.client_document.create_upload_token")
     @patch("clients.services.client_document.generate_s3_presigned_upload_urls")
@@ -250,6 +275,23 @@ class ResolveUploadTest(TestCase):
             result[0],
             [AttachmentPermissions.DELETE, AttachmentPermissions.CHANGE],
         )
+
+    @patch("clients.services.client_document.assign_object_permissions")
+    @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.s3_key_exists", return_value=True)
+    @patch("clients.services.client_document.validate_upload_token", return_value=True)
+    def test_rejects_invalid_content_type(
+        self, mock_validate: MagicMock, mock_s3_exists: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+    ) -> None:
+        mock_perm_group.return_value = self.permission_group
+        doc = self._make_doc(content_type="application/zip")
+
+        with self.assertRaises(ValueError, msg="Unsupported content_type: application/zip."):
+            resolve_upload(
+                user=self.user,
+                client_profile=self.client_profile,
+                documents=[doc],
+            )
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")

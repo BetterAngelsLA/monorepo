@@ -306,7 +306,7 @@ if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
-elif IS_LOCAL_DEV and LOCAL_S3_INTERNAL_ENDPOINT_URL:
+elif IS_LOCAL_DEV and LOCAL_S3_INTERNAL_ENDPOINT_URL and LOCAL_S3_PUBLIC_ENDPOINT_URL:
     STORAGES = {
         "default": {
             "BACKEND": "common.storage.LocalS3Storage",
