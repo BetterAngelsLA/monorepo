@@ -26,9 +26,7 @@
       },
       "configurations": {
         "preview": {
-          "options": {
-            "push": false
-          }
+          "push": false
         }
       }
     },
