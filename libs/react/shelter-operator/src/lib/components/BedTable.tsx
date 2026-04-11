@@ -1,8 +1,10 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { CopyPlus, Minus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
 import {
   BedStatusChoices,
+  BedTypeChoices,
   type BedType,
 } from '../apollo/graphql/__generated__/types';
 import { Button } from './base-ui/buttons';
@@ -21,18 +23,49 @@ export type BedRowObject = {
   roomAssignment: string;
 };
 
+export type BedTableVariant = 'default' | 'reservation';
+
+export type ReservationLayoutStyle = 'congregate' | 'motel' | 'mixed';
+
+export type ReservationBedRowMeta = {
+  tags: string[];
+  suggested?: boolean;
+  maxVisibleTags?: number;
+};
+
+export type MotelRoomRow = {
+  room: BedRoomForList;
+  flatIndex: number;
+};
+
+export type ReservationTableRow = FlatBedRow | MotelRoomRow;
+
 type FlatBedRow = {
   bed: BedType;
   roomAssignment: string;
+  flatIndex: number;
+};
+
+function isMotelRoomRow(row: ReservationTableRow): row is MotelRoomRow {
+  return 'room' in row && !('bed' in row);
+}
+
+const BED_TYPE_LABEL: Record<BedTypeChoices, string> = {
+  [BedTypeChoices.Twin]: 'Twin',
+  [BedTypeChoices.Bunk]: 'Bunk',
+  [BedTypeChoices.Rollaway]: 'Rollaway',
+  [BedTypeChoices.Other]: 'Other',
 };
 
 function flattenRooms(rooms: BedRoomForList[]): FlatBedRow[] {
   const out: FlatBedRow[] = [];
+  let flatIndex = 0;
   for (const room of rooms) {
     for (const bed of room.beds) {
       out.push({
         bed,
         roomAssignment: room.roomLabel,
+        flatIndex: flatIndex++,
       });
     }
   }
@@ -85,19 +118,113 @@ function BedStatusBadge({
 
   return (
     <span
-      className={[
+      className={mergeCss([
         'inline-flex max-w-full rounded-full px-3 py-1 text-xs font-medium',
         bg,
         text,
-      ].join(' ')}
+      ])}
     >
       {label}
     </span>
   );
 }
 
+function ReservationTagPill({
+  children,
+  variant = 'muted',
+}: {
+  children: ReactNode;
+  variant?: 'muted' | 'primary';
+}) {
+  return (
+    <span
+      className={mergeCss([
+        'inline-flex rounded-full px-3 py-1 text-xs font-medium leading-none',
+        variant === 'primary'
+          ? 'bg-[#008CEE] text-white'
+          : 'bg-[#EDEFF5] text-[#747A82]',
+      ])}
+    >
+      {children}
+    </span>
+  );
+}
+
+function ReservationTagsCell({ meta }: { meta: ReservationBedRowMeta }) {
+  const max = meta.maxVisibleTags ?? (meta.suggested ? 1 : 2);
+  const tags = meta.tags;
+  const visible = tags.slice(0, max);
+  const rest = Math.max(tags.length - visible.length, 0);
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {meta.suggested && (
+        <ReservationTagPill variant="primary">Suggested</ReservationTagPill>
+      )}
+      {visible.map((tag) => (
+        <ReservationTagPill key={tag}>{tag}</ReservationTagPill>
+      ))}
+      {rest > 0 && <ReservationTagPill>+ {rest}</ReservationTagPill>}
+    </div>
+  );
+}
+
+function defaultReservationMetaMotel(row: MotelRoomRow): ReservationBedRowMeta {
+  if (row.flatIndex === 0) {
+    return {
+      suggested: true,
+      tags: ['DMH', 'Overflow', 'Shared'],
+      maxVisibleTags: 1,
+    };
+  }
+  return { tags: ['DMH', 'Air Conditioning'] };
+}
+
+function createDefaultReservationMeta(layout: ReservationLayoutStyle) {
+  return (row: ReservationTableRow): ReservationBedRowMeta => {
+    if (isMotelRoomRow(row)) {
+      return defaultReservationMetaMotel(row);
+    }
+    if (row.flatIndex !== 0) {
+      return { tags: ['DMH', 'Air Conditioning'] };
+    }
+    const tags =
+      layout === 'mixed'
+        ? ['DMH', 'Seniors', 'Overflow', 'Shared']
+        : ['DMH', 'Overflow', 'Shared'];
+    return { suggested: true, tags, maxVisibleTags: 1 };
+  };
+}
+
+function ReservationLinkName({
+  label,
+  selected,
+}: {
+  label: string;
+  selected: boolean;
+}) {
+  return (
+    <span
+      className={mergeCss([
+        'text-sm font-medium text-[#008CEE] hover:underline',
+        selected && 'underline decoration-2',
+      ])}
+    >
+      {label || '—'}
+    </span>
+  );
+}
+
 type BedTableProps = {
   rooms: BedRoomForList[];
+  variant?: BedTableVariant;
+  /** Only when `variant="reservation"`. */
+  reservationLayoutStyle?: ReservationLayoutStyle;
+  /** Mixed layout: value in the “Number of Occupants” column (e.g. from API). */
+  getMixedOccupantCount?: (row: FlatBedRow) => number;
+  /** Reservation layout: override tag pills per row. */
+  getReservationRowMeta?: (row: ReservationTableRow) => ReservationBedRowMeta;
+  /** Default (operator) table only; reservation rows use bed or room ids. */
   getRowKey?: (item: FlatBedRow, index: number) => string;
   onRowClick?: (rowObject: BedRowObject, rowIndex: number) => void;
   selectedBedIds?: string[];
@@ -128,9 +255,21 @@ function toRowObject(bed: BedType, roomAssignment: string): BedRowObject {
   };
 }
 
+function motelRowToRowObject(room: BedRoomForList): BedRowObject {
+  return {
+    bedId: room.id,
+    bedName: room.roomLabel,
+    roomAssignment: room.roomLabel,
+  };
+}
+
 export function BedTable({
   rooms,
-  getRowKey,
+  variant = 'default',
+  reservationLayoutStyle = 'congregate',
+  getMixedOccupantCount,
+  getReservationRowMeta,
+  getRowKey: getRowKeyFlat,
   onRowClick,
   selectedBedIds,
   onSelectedBedIdsChange,
@@ -150,7 +289,15 @@ export function BedTable({
   rowStyle,
   trailingColumnWidth = '140px',
 }: BedTableProps) {
-  const rows = useMemo(() => flattenRooms(rooms), [rooms]);
+  const flatBedRows = useMemo(() => flattenRooms(rooms), [rooms]);
+
+  const reservationRows: ReservationTableRow[] = useMemo(() => {
+    if (variant !== 'reservation') return [];
+    if (reservationLayoutStyle === 'motel') {
+      return rooms.map((room, flatIndex) => ({ room, flatIndex }));
+    }
+    return flatBedRows;
+  }, [variant, reservationLayoutStyle, rooms, flatBedRows]);
 
   const selectedSet = useMemo(
     () => new Set(selectedBedIds ?? []),
@@ -169,8 +316,158 @@ export function BedTable({
   );
 
   const hasActionSlot = !!(onDuplicate || onEdit || onDelete);
+  const isReservation = variant === 'reservation';
+  const showCheckboxColumn = !!onSelectedBedIdsChange && !isReservation;
 
-  const columns: TableColumn<FlatBedRow>[] = useMemo(() => {
+  const metaFn = useMemo(
+    () =>
+      getReservationRowMeta ??
+      createDefaultReservationMeta(reservationLayoutStyle),
+    [getReservationRowMeta, reservationLayoutStyle]
+  );
+
+  const occupantFn = useMemo(
+    () => getMixedOccupantCount ?? (() => 7),
+    [getMixedOccupantCount]
+  );
+
+  const reservationColumns: TableColumn<ReservationTableRow>[] = useMemo(() => {
+    if (reservationLayoutStyle === 'motel') {
+      return [
+        {
+          key: 'roomName',
+          label: 'Room Name',
+          width: 'minmax(120px, 1fr)',
+          headerClassName: '!text-sm !font-medium',
+          cellClassName: 'min-w-0',
+          render: (row) => {
+            if (!isMotelRoomRow(row)) return null;
+            const selected = selectedSet.has(row.room.id);
+            return (
+              <ReservationLinkName
+                label={row.room.roomLabel}
+                selected={selected}
+              />
+            );
+          },
+        },
+        {
+          key: 'bedType',
+          label: 'Bed Type',
+          width: 'minmax(100px, 0.85fr)',
+          headerClassName: '!text-sm !font-medium',
+          cellClassName: 'text-sm text-[#1E3342]',
+          render: () => 'Bed Type',
+        },
+        {
+          key: 'bedCount',
+          label: 'Number of Beds',
+          width: 'minmax(100px, 0.75fr)',
+          headerClassName: '!text-sm !font-medium',
+          cellClassName: 'text-sm text-[#1E3342]',
+          render: (r) => (isMotelRoomRow(r) ? String(r.room.beds.length) : '—'),
+        },
+        {
+          key: 'tags',
+          label: 'Tags',
+          width: 'minmax(180px, 1.3fr)',
+          headerClassName: '!text-sm !font-medium',
+          cellClassName: 'min-w-0',
+          render: (row) => <ReservationTagsCell meta={metaFn(row)} />,
+        },
+      ];
+    }
+
+    if (reservationLayoutStyle === 'mixed') {
+      return [
+        {
+          key: 'bedName',
+          label: 'Bed Name',
+          width: 'minmax(160px, 1.4fr)',
+          headerClassName: '!text-sm !font-medium',
+          cellClassName: 'min-w-0',
+          render: (row) => {
+            if (isMotelRoomRow(row)) return null;
+            const selected = selectedSet.has(row.bed.id);
+            const label = `${row.roomAssignment}, Bed ${
+              row.bed.bedName ?? ''
+            }`.trim();
+            return <ReservationLinkName label={label} selected={selected} />;
+          },
+        },
+        {
+          key: 'bedType',
+          label: 'Bed Type',
+          width: 'minmax(100px, 0.75fr)',
+          headerClassName: '!text-sm !font-medium',
+          cellClassName: 'text-sm text-[#1E3342]',
+          render: (row) =>
+            !isMotelRoomRow(row) && row.bed.bedType
+              ? BED_TYPE_LABEL[row.bed.bedType] ?? row.bed.bedType
+              : 'Bed Type',
+        },
+        {
+          key: 'occupants',
+          label: 'Number of Occupants',
+          width: 'minmax(120px, 0.9fr)',
+          headerClassName: '!text-sm !font-medium',
+          cellClassName: 'text-sm text-[#1E3342]',
+          render: (row) =>
+            !isMotelRoomRow(row) ? String(occupantFn(row)) : '—',
+        },
+        {
+          key: 'tags',
+          label: 'Tags',
+          width: 'minmax(180px, 1.2fr)',
+          headerClassName: '!text-sm !font-medium',
+          cellClassName: 'min-w-0',
+          render: (row) => <ReservationTagsCell meta={metaFn(row)} />,
+        },
+      ];
+    }
+
+    // congregate
+    return [
+      {
+        key: 'bedName',
+        label: 'Bed Name',
+        width: 'minmax(120px, 1fr)',
+        headerClassName: '!text-sm !font-medium',
+        cellClassName: 'min-w-0',
+        render: (row) => {
+          if (isMotelRoomRow(row)) return null;
+          const selected = selectedSet.has(row.bed.id);
+          return (
+            <ReservationLinkName
+              label={row.bed.bedName ?? ''}
+              selected={selected}
+            />
+          );
+        },
+      },
+      {
+        key: 'bedType',
+        label: 'Bed Type',
+        width: 'minmax(100px, 0.9fr)',
+        headerClassName: '!text-sm !font-medium',
+        cellClassName: 'text-sm text-[#1E3342]',
+        render: (row) =>
+          !isMotelRoomRow(row) && row.bed.bedType
+            ? BED_TYPE_LABEL[row.bed.bedType] ?? row.bed.bedType
+            : 'Bed Type',
+      },
+      {
+        key: 'tags',
+        label: 'Tags',
+        width: 'minmax(200px, 1.4fr)',
+        headerClassName: '!text-sm !font-medium',
+        cellClassName: 'min-w-0',
+        render: (row) => <ReservationTagsCell meta={metaFn(row)} />,
+      },
+    ];
+  }, [metaFn, occupantFn, reservationLayoutStyle, selectedSet]);
+
+  const defaultColumns: TableColumn<FlatBedRow>[] = useMemo(() => {
     const selectionColumn: TableColumn<FlatBedRow> = {
       key: 'select',
       label: <span className="sr-only">Select row</span>,
@@ -194,12 +491,12 @@ export function BedTable({
                 aria-label={`Select ${bed.bedName}`}
               />
               <span
-                className={[
+                className={mergeCss([
                   'inline-flex size-4 shrink-0 items-center justify-center rounded border border-gray-300 bg-white',
                   'peer-checked:border-[#008CEE] peer-checked:bg-[#008CEE]',
                   'peer-focus-visible:ring-2 peer-focus-visible:ring-[#008CEE] peer-focus-visible:ring-offset-1',
                   'peer-checked:[&_.bed-row-select-minus]:opacity-100',
-                ].join(' ')}
+                ])}
               >
                 <Minus
                   className="bed-row-select-minus opacity-0 text-white"
@@ -215,7 +512,7 @@ export function BedTable({
     };
 
     return [
-      ...(onSelectedBedIdsChange ? [selectionColumn] : []),
+      ...(showCheckboxColumn ? [selectionColumn] : []),
       {
         key: 'bedId',
         label: 'Bed ID',
@@ -244,13 +541,54 @@ export function BedTable({
         render: ({ roomAssignment }) => roomAssignment || '—',
       },
     ];
-  }, [onSelectedBedIdsChange, selectedSet, toggleOne]);
+  }, [showCheckboxColumn, selectedSet, toggleOne]);
+
+  const reservationHeaderClass =
+    '!text-sm !font-medium !normal-case !pb-3 !pt-5 !text-[#747A82]';
+  const reservationRowClass = '!py-4 border-t border-gray-200';
+
+  const sharedTableProps = {
+    loading,
+    loadingState,
+    emptyState,
+    wrapperClassName,
+    headerClassName: mergeCss([
+      isReservation && reservationHeaderClass,
+      headerClassName,
+    ]),
+    headerInsetClassName,
+    rowClassName: mergeCss([
+      isReservation && reservationRowClass,
+      rowClassName,
+    ]),
+    rowInsetClassName: isReservation ? '!mx-0 !px-6' : rowInsetClassName,
+    tableStyle,
+    headerStyle,
+    rowStyle,
+  };
+
+  if (isReservation) {
+    return (
+      <Table<ReservationTableRow, BedRowObject>
+        columns={reservationColumns}
+        rows={reservationRows}
+        getRowKey={(row) => (isMotelRoomRow(row) ? row.room.id : row.bed.id)}
+        getRowObject={(row) =>
+          isMotelRoomRow(row)
+            ? motelRowToRowObject(row.room)
+            : toRowObject(row.bed, row.roomAssignment)
+        }
+        onRowClick={onRowClick}
+        {...sharedTableProps}
+      />
+    );
+  }
 
   return (
     <Table<FlatBedRow, BedRowObject>
-      columns={columns}
-      rows={rows}
-      getRowKey={getRowKey ?? ((row) => row.bed.id)}
+      columns={defaultColumns}
+      rows={flatBedRows}
+      getRowKey={getRowKeyFlat ?? ((row) => row.bed.id)}
       getRowObject={(row) => toRowObject(row.bed, row.roomAssignment)}
       getRowSlot={
         hasActionSlot
@@ -292,17 +630,7 @@ export function BedTable({
       }
       trailingColumnWidth={hasActionSlot ? trailingColumnWidth : undefined}
       onRowClick={onRowClick}
-      loading={loading}
-      loadingState={loadingState}
-      emptyState={emptyState}
-      wrapperClassName={wrapperClassName}
-      headerClassName={headerClassName}
-      headerInsetClassName={headerInsetClassName}
-      rowClassName={rowClassName}
-      rowInsetClassName={rowInsetClassName}
-      tableStyle={tableStyle}
-      headerStyle={headerStyle}
-      rowStyle={rowStyle}
+      {...sharedTableProps}
     />
   );
 }
