@@ -112,10 +112,13 @@ type BedTableProps = {
   emptyState?: ReactNode;
   wrapperClassName?: string;
   headerClassName?: string;
+  headerInsetClassName?: string;
   rowClassName?: string;
+  rowInsetClassName?: string;
   tableStyle?: CSSProperties;
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
+  trailingColumnWidth?: string;
 };
 
 function toRowObject(bed: BedType, roomAssignment: string): BedRowObject {
@@ -141,10 +144,13 @@ export function BedTable({
   emptyState,
   wrapperClassName,
   headerClassName,
+  headerInsetClassName,
   rowClassName,
+  rowInsetClassName,
   tableStyle,
   headerStyle,
   rowStyle,
+  trailingColumnWidth = '140px',
 }: BedTableProps) {
   const rows = useMemo(() => flattenRooms(rooms), [rooms]);
 
@@ -163,6 +169,8 @@ export function BedTable({
     },
     [onSelectedBedIdsChange, selectedSet]
   );
+
+  const hasActionSlot = !!(onDuplicate || onEdit || onDelete);
 
   const columns: TableColumn<FlatBedRow>[] = useMemo(() => {
     const selectionColumn: TableColumn<FlatBedRow> = {
@@ -237,59 +245,8 @@ export function BedTable({
           'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
         render: ({ roomAssignment }) => roomAssignment || '—',
       },
-      {
-        key: 'actions',
-        label: '',
-        width: '140px',
-        headerClassName: 'justify-self-end',
-        cellClassName: 'justify-self-end',
-        render: (row) => {
-          const rowObject = toRowObject(row.bed, row.roomAssignment);
-          return (
-            <div
-              className="flex items-center justify-end gap-1"
-              onClick={(e) => e.stopPropagation()}
-              role="group"
-              aria-label="Bed actions"
-            >
-              {onDuplicate && (
-                <Button
-                  type="button"
-                  variant="edit"
-                  aria-label="Duplicate bed"
-                  leftIcon={<CopyPlus size={22} stroke="black" />}
-                  onClick={() => onDuplicate(rowObject, row.rowIndex)}
-                />
-              )}
-              {onEdit && (
-                <Button
-                  type="button"
-                  variant="edit"
-                  aria-label="Edit bed"
-                  onClick={() => onEdit(rowObject, row.rowIndex)}
-                />
-              )}
-              {onDelete && (
-                <Button
-                  type="button"
-                  variant="trash"
-                  aria-label="Delete bed"
-                  onClick={() => onDelete(rowObject, row.rowIndex)}
-                />
-              )}
-            </div>
-          );
-        },
-      },
     ];
-  }, [
-    onDuplicate,
-    onEdit,
-    onDelete,
-    onSelectedBedIdsChange,
-    selectedSet,
-    toggleOne,
-  ]);
+  }, [onSelectedBedIdsChange, selectedSet, toggleOne]);
 
   return (
     <Table<FlatBedRow, BedRowObject>
@@ -297,13 +254,54 @@ export function BedTable({
       rows={rows}
       getRowKey={getRowKey ?? ((row) => row.bed.id)}
       getRowObject={(row) => toRowObject(row.bed, row.roomAssignment)}
+      getRowSlot={
+        hasActionSlot
+          ? (rowObject, _item, rowIndex) => (
+              <div
+                className="flex items-center justify-end gap-1"
+                onClick={(e) => e.stopPropagation()}
+                role="group"
+                aria-label="Bed actions"
+              >
+                {onDuplicate && (
+                  <Button
+                    type="button"
+                    variant="edit"
+                    aria-label="Duplicate bed"
+                    leftIcon={<CopyPlus size={22} stroke="black" />}
+                    onClick={() => onDuplicate(rowObject, rowIndex)}
+                  />
+                )}
+                {onEdit && (
+                  <Button
+                    type="button"
+                    variant="edit"
+                    aria-label="Edit bed"
+                    onClick={() => onEdit(rowObject, rowIndex)}
+                  />
+                )}
+                {onDelete && (
+                  <Button
+                    type="button"
+                    variant="trash"
+                    aria-label="Delete bed"
+                    onClick={() => onDelete(rowObject, rowIndex)}
+                  />
+                )}
+              </div>
+            )
+          : undefined
+      }
+      trailingColumnWidth={hasActionSlot ? trailingColumnWidth : undefined}
       onRowClick={onRowClick}
       loading={loading}
       loadingState={loadingState}
       emptyState={emptyState}
       wrapperClassName={wrapperClassName}
       headerClassName={headerClassName}
+      headerInsetClassName={headerInsetClassName}
       rowClassName={rowClassName}
+      rowInsetClassName={rowInsetClassName}
       tableStyle={tableStyle}
       headerStyle={headerStyle}
       rowStyle={rowStyle}
