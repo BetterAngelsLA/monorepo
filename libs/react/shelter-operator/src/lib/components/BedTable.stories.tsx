@@ -66,7 +66,6 @@ export const Default: Story = {
         rooms={mockRooms}
         selectedBedIds={selected}
         onSelectedBedIdsChange={setSelected}
-        onRowClick={() => undefined}
         onDuplicate={() => undefined}
         onEdit={() => undefined}
         onDelete={() => undefined}
@@ -79,7 +78,6 @@ export const WithoutRowSelection: Story = {
   render: () => (
     <BedTable
       rooms={mockRooms}
-      onRowClick={() => undefined}
       onDuplicate={() => undefined}
       onEdit={() => undefined}
       onDelete={() => undefined}

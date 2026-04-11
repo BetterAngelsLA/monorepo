@@ -24,7 +24,6 @@ export type BedRowObject = {
 type FlatBedRow = {
   bed: BedType;
   roomAssignment: string;
-  rowIndex: number;
 };
 
 function flattenRooms(rooms: BedRoomForList[]): FlatBedRow[] {
@@ -34,7 +33,6 @@ function flattenRooms(rooms: BedRoomForList[]): FlatBedRow[] {
       out.push({
         bed,
         roomAssignment: room.roomLabel,
-        rowIndex: out.length,
       });
     }
   }
