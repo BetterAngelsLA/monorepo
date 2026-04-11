@@ -1,3 +1,2 @@
-export { locationAtom, type TLocationSource } from './locationAtom';
-export { shelterFiltersAtom } from './shelterFiltersAtom';
+export { shelterPropertyFiltersAtom } from './shelterPropertyFiltersAtom';
 export { sheltersAtom } from './sheltersAtom';

@@ -11,6 +11,7 @@ import ClientSummaryGeneral from './ClientSummaryGeneral';
 import ClientSummaryHeader from './ClientSummaryHeader';
 import ClientSummaryIdentity from './ClientSummaryIdentity';
 import ClientSummaryLastSeen from './ClientSummaryLastSeen';
+import ClientSummaryLivingSituation from './ClientSummaryLivingSituation';
 
 interface IClientSummaryProps {
   client: ClientProfilesQuery['clientProfiles']['results'][number];
@@ -64,6 +65,7 @@ export function ClientSummary(props: IClientSummaryProps) {
           <ClientSummaryLastSeen client={client} />
           <ClientSummaryContact client={client} />
           <ClientSummaryIdentity client={client} />
+          <ClientSummaryLivingSituation client={client} />
         </ScrollView>
       </MainScrollContainer>
 

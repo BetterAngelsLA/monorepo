@@ -4,6 +4,7 @@ const GREEN = '#007934';
 const WHITE = '#FFFFFF';
 const GRAY = '#A8AEB8';
 const RED = '#CB0808';
+const PURPLE = '#A43FE2';
 
 type TColors = {
   border: string;
@@ -13,7 +14,7 @@ type TColors = {
   mask: string;
 };
 
-type TIconType = 'primary' | 'secondary';
+type TIconType = 'primary' | 'secondary' | 'purple';
 
 const styles: Record<TIconType, TColors> = {
   primary: {
@@ -30,10 +31,17 @@ const styles: Record<TIconType, TColors> = {
     shadow: GRAY,
     mask: WHITE,
   },
+  purple: {
+    border: PURPLE,
+    fill: WHITE,
+    center: PURPLE,
+    shadow: GRAY,
+    mask: WHITE,
+  },
 };
 
 interface IProps extends SVGProps<SVGSVGElement> {
-  type?: 'primary' | 'secondary';
+  type?: 'primary' | 'secondary' | 'purple';
 }
 
 export default function mapIcon(props?: IProps) {

@@ -1,5 +1,6 @@
 import {
   CallOutlinedIcon,
+  EmailIcon,
   ExternalLinkOutlinedIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
@@ -34,10 +35,26 @@ export default function ClientSummaryContact(
     primaryCCM?.phoneNumber && formatPhoneNumber(primaryCCM?.phoneNumber);
 
   const [phoneNumber, extension] = formattedNumber || [];
+  const mailingAddress = primaryCCM?.mailingAddress;
+  const email = primaryCCM?.email;
 
   const phoneNumberUrl = extension
     ? `${phoneNumber},${extension}`
     : phoneNumber;
+
+  const showPhone = !!phoneNumber;
+  const showEmail = !showPhone && !!email;
+  const showAddress = !showPhone && !showEmail && !!mailingAddress;
+
+  const isTappable = showPhone || showEmail;
+
+  const handlePress = () => {
+    if (showPhone) {
+      Linking.openURL(`tel:${phoneNumberUrl}`);
+    } else if (showEmail) {
+      Linking.openURL(`mailto:${email}`);
+    }
+  };
 
   return (
     <View>
@@ -49,14 +66,17 @@ export default function ClientSummaryContact(
           marginBottom: Spacings.xs,
         }}
       >
-        <CallOutlinedIcon color={Colors.NEUTRAL_DARK} />
+        {(showEmail || showAddress) && (
+          <EmailIcon color={Colors.NEUTRAL_DARK} />
+        )}
+        {showPhone && <CallOutlinedIcon color={Colors.NEUTRAL_DARK} />}
         <TextBold size="xs" color={Colors.NEUTRAL_DARK}>
           CONTACT INFO
         </TextBold>
       </View>
       <PressablePanel
-        onPress={() => Linking.openURL(`tel:${phoneNumberUrl}`)}
-        disabled={!phoneNumber}
+        onPress={handlePress}
+        disabled={!isTappable}
         style={{ padding: Spacings.sm }}
       >
         <View
@@ -75,19 +95,29 @@ export default function ClientSummaryContact(
             <TextRegular size="xs">
               Case Manager: {primaryCCM?.name || 'N/A'}
             </TextRegular>
-            {phoneNumber && (
+            {showPhone && (
+              <>
+                <TextBold textDecorationLine="underline" size="sm">
+                  {phoneNumber}
+                </TextBold>
+                {extension && (
+                  <TextBold size="sm">
+                    {' ext.'}
+                    {extension}
+                  </TextBold>
+                )}
+              </>
+            )}
+            {showEmail && (
               <TextBold textDecorationLine="underline" size="sm">
-                {phoneNumber}
+                {email}
               </TextBold>
             )}
-            {extension && (
-              <TextBold size="sm">
-                {' ext.'}
-                {extension}
-              </TextBold>
+            {showAddress && (
+              <TextRegular size="sm">{mailingAddress}</TextRegular>
             )}
           </View>
-          {phoneNumber && <ExternalLinkOutlinedIcon color={Colors.PRIMARY} />}
+          {isTappable && <ExternalLinkOutlinedIcon color={Colors.PRIMARY} />}
         </View>
       </PressablePanel>
     </View>

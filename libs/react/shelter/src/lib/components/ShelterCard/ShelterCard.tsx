@@ -18,8 +18,9 @@ export type TShelter = {
   heroImage?: string | null;
   distanceInMiles?: number | null;
   location?: TShelterLocation | null;
-  exteriorPhotos?: Array<{ file: { url: string; name: string } }> | null;
-  interiorPhotos?: Array<{ file: { url: string; name: string } }> | null;
+  shelterTypes?: Array<{
+    name?: string | null;
+  }>;
 };
 
 type TShelterCard = {
@@ -32,15 +33,7 @@ type TShelterCard = {
 
 export function ShelterCard(props: TShelterCard) {
   const {
-    shelter: {
-      id,
-      name,
-      heroImage,
-      distanceInMiles,
-      location,
-      exteriorPhotos,
-      interiorPhotos,
-    },
+    shelter: { id, name, heroImage, distanceInMiles, location },
     originCoordinates,
     className,
     footer,
@@ -72,8 +65,6 @@ export function ShelterCard(props: TShelterCard) {
     navigate(`/shelter/${id}`);
   };
 
-  const photos = [...(exteriorPhotos || []), ...(interiorPhotos || [])];
-
   return (
     <div className={mergeCss(parentCss)} onClick={onNavigate}>
       <div className={mergeCss(bodyCss)}>
@@ -81,7 +72,6 @@ export function ShelterCard(props: TShelterCard) {
           <ShelterCardHero
             className="w-full"
             imageUrl={heroImage}
-            photos={photos}
             shelterName={name}
           />
         </div>

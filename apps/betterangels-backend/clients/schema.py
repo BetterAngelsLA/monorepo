@@ -86,7 +86,7 @@ def _format_graphql_error(error: Exception) -> str:
 
 
 def value_exists(value: Optional[str]) -> bool:
-    return value is not strawberry.UNSET and value is not None and value.strip() != ""
+    return value is not None and value.strip() != ""
 
 
 def _payload_has_name(data: dict) -> bool:
@@ -113,10 +113,10 @@ def validate_name(
 
     if client_profile:
         if (
-            (client_profile.first_name and data.get("first_name") is strawberry.UNSET)
-            or (client_profile.last_name and data.get("last_name") is strawberry.UNSET)
-            or (client_profile.middle_name and data.get("middle_name") is strawberry.UNSET)
-            or (client_profile.nickname and data.get("nickname") is strawberry.UNSET)
+            (client_profile.first_name and "first_name" not in data)
+            or (client_profile.last_name and "last_name" not in data)
+            or (client_profile.middle_name and "middle_name" not in data)
+            or (client_profile.nickname and "nickname" not in data)
         ):
             return []
 
@@ -127,7 +127,7 @@ def validate_email(
     email: Optional[str],
     client_profile_id: Optional[str] = None,
 ) -> list[dict[str, Any]]:
-    if email in [strawberry.UNSET, None, ""]:
+    if not email:
         return []
 
     email: str
@@ -146,7 +146,7 @@ def validate_email(
 def validate_california_id(
     california_id: Optional[str], client_profile_id: Optional[str] = None
 ) -> list[dict[str, Any]]:
-    if california_id in [strawberry.UNSET, None, ""]:
+    if not california_id:
         return []
 
     california_id: str
@@ -473,10 +473,7 @@ class Mutation:
 
             for related_cls in related_classes:
                 related_name = related_cls.name
-                if (
-                    related_name in client_profile_data.keys()
-                    and client_profile_data[related_name] is not strawberry.UNSET
-                ):
+                if related_name in client_profile_data:
                     upsert_or_delete_client_related_object(
                         info,
                         related_cls,

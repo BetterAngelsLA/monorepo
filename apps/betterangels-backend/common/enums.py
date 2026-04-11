@@ -21,6 +21,7 @@ class SelahTeamEnum(models.TextChoices):
     LA_RIVER_OUTREACH = "la_river_outreach", _("LA River Outreach")
     LOS_FELIZ_OUTREACH = "los_feliz_outreach", _("Los Feliz Outreach")
     NORTHEAST_HOLLYWOOD_OUTREACH = "northeast_hollywood_outreach", _("Northeast Hollywood Outreach")
+    SELAH_STAFF = "selah_staff", _("SELAH Staff")
     SILVER_LAKE_OUTREACH = "silver_lake_outreach", _("Silver Lake Outreach")
     SLCC_ON_SITE = "slcc_on_site", _("SLCC On-site")
     SUNDAY_SOCIAL_ATWATER_ON_SITE = "sunday_social_atwater_on_site", _("Sunday Social / Atwater On-site")
