@@ -74,11 +74,13 @@ class ShelterFilter:
         if not value:
             return Q()
 
-        variables = {f"{prefix}max_stay__gte": value.days}
+        conditions = Q()
+        if value.days:
+            conditions |= Q(max_stay__gte=value.days)
         if value.include_null:
-            variables[f"{prefix}max_stay__isnull"] = value.include_null
+            conditions |= Q(max_stay__isnull=value.include_null)
 
-        return reduce(or_, (Q(**{k: v}) for k, v in variables.items()))
+        return conditions
 
     @strawberry_django.filter_field
     def name(self, info: Info, value: Optional[str], prefix: str) -> Q:
