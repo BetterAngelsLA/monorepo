@@ -53,6 +53,27 @@ export function ShelterFilters(props: IProps) {
     }));
   }
 
+  function onMaxStayDaysChange(days: string) {
+    const parsed = parseInt(days, 10);
+    setFilters((prev) => ({
+      ...prev,
+      maxStay: {
+        days: isNaN(parsed) ? 0 : parsed,
+        includeNull: prev.maxStay?.includeNull ?? false,
+      },
+    }));
+  }
+
+  function onMaxStayIncludeNullChange(checked: boolean) {
+    setFilters((prev) => ({
+      ...prev,
+      maxStay: {
+        days: prev.maxStay?.days ?? 0,
+        includeNull: checked,
+      },
+    }));
+  }
+
   useEffect(() => {
     onChange && onChange(filters);
   }, [filters, onChange]);
@@ -126,6 +147,25 @@ export function ShelterFilters(props: IProps) {
           values={filters[parkingFilter.name]}
           {...parkingFilter}
         />
+
+        <div className="mt-8">
+          <div className="flex justify-between items-center">Max Stay</div>
+          <div className="mt-6 flex flex-col gap-2">
+            <input
+              type="number"
+              min={0}
+              value={filters.maxStay?.days ?? ''}
+              onChange={(e) => onMaxStayDaysChange(e.target.value)}
+              placeholder="Max days"
+              className="w-full border border-neutral-90 rounded-lg px-4 py-2 text-sm bg-white"
+            />
+            <Checkbox
+              label="Include shelters with no max stay"
+              checked={!!filters.maxStay?.includeNull}
+              onChange={onMaxStayIncludeNullChange}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
