@@ -74,11 +74,9 @@ class ShelterFilter:
         if not value:
             return Q()
 
-        conditions = Q()
-        if value.days:
-            conditions |= Q(max_stay__gte=value.days)
+        conditions = Q(**{f"{prefix}max_stay__gte": value.days})
         if value.include_null:
-            conditions |= Q(max_stay__isnull=value.include_null)
+            conditions |= Q(**{f"{prefix}max_stay__isnull": value.include_null})
 
         return conditions
 
