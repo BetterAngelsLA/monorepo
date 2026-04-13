@@ -117,7 +117,7 @@ export function Map(props: TMap) {
           zIndex={99}
           onClick={marker.onClick}
         >
-          <MapPinIcon className="h-10" type="secondary" />
+          <MapPinIcon className="h-10" type={marker.type} />
         </AdvancedMarker>
       ))}
 

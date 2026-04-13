@@ -3,6 +3,7 @@ import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
 import { useCallback, useEffect, useState } from 'react';
+import { ShelterChoices } from '../../apollo';
 import { sheltersAtom } from '../../atoms';
 import {
   DEFAULT_BOUNDS_MILES,
@@ -133,6 +134,11 @@ export function HomePage() {
           position: shelter.location,
           label: shelter.name,
           onClick: () => handleClick(shelter.id),
+          type: shelter.shelterTypes?.find(
+            (t) => t.name === ShelterChoices.AccessCenter
+          )
+            ? 'purple'
+            : 'secondary',
         } as TMarker;
       });
 
@@ -178,6 +184,18 @@ export function HomePage() {
 
     if (bounds) {
       setMapBoundsFilter(toMapBounds(bounds));
+    } else {
+      const listener = map.addListener('idle', () => {
+        const idleBounds = map.getBounds();
+
+        if (idleBounds) {
+          setMapBoundsFilter(toMapBounds(idleBounds));
+        }
+
+        listener.remove();
+      });
+
+      return () => listener.remove();
     }
   }, [map, location]);
 

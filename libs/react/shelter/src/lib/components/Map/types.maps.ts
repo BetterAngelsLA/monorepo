@@ -20,6 +20,7 @@ export type TMarker = {
   id?: string;
   label?: string;
   onClick?: ((e: google.maps.MapMouseEvent) => void) | undefined;
+  type?: 'primary' | 'secondary' | 'purple';
 };
 
 export type TMapGestureHandling = 'cooperative' | 'greedy' | 'none' | 'auto';
