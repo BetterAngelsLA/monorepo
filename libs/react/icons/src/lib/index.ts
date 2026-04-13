@@ -5,6 +5,7 @@ export { default as BedIcon } from './components/bedIcon';
 export { default as BenefitsCalIcon } from './components/benefitscalIcon';
 export { default as BetterAngelsLogoIcon } from './components/betterAngelsLogoIcon';
 export { default as CallIcon } from './components/callIcon';
+export { default as CallOutlinedIcon } from './components/callOutlinedIcon';
 export { default as CallRegularIcon } from './components/callRegularIcon';
 export { default as CameraIcon } from './components/cameraIcon';
 export { default as CheckIcon } from './components/checkIcon';
