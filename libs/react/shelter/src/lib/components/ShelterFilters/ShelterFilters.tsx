@@ -1,8 +1,10 @@
+import { useQuery } from '@apollo/client/react';
 import { Checkbox, ExpandableContainer } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
 import { shelterPropertyFiltersAtom } from '../../atoms';
+import { ShelterMaxStayDocument } from '../../pages';
 import { TShelterPropertyFilters } from '../ShelterSearch';
 import { FilterSelector } from './FilterSelector';
 import {
@@ -24,6 +26,9 @@ export function ShelterFilters(props: IProps) {
   const { onChange, className } = props;
 
   const [filters, setFilters] = useAtom(shelterPropertyFiltersAtom);
+
+  const { data: maxStayData } = useQuery(ShelterMaxStayDocument);
+  const maxStayMax = maxStayData?.shelterMaxStay ?? undefined;
 
   const parentCss = ['pb-24', className];
 
@@ -152,15 +157,15 @@ export function ShelterFilters(props: IProps) {
           <div className="flex justify-between items-center">Max Stay</div>
           <div className="mt-6 flex flex-col gap-2">
             <input
-              type="number"
-              min={0}
-              value={filters.maxStay?.days ?? ''}
+              max={maxStayMax}
+              value={filters.maxStay?.days || ''}
               onChange={(e) => onMaxStayDaysChange(e.target.value)}
-              placeholder="Max days"
-              className="w-full border border-neutral-90 rounded-lg px-4 py-2 text-sm bg-white"
+              placeholder={`Enter number between 1 and ${maxStayMax}`}
+              className="w-full border border-neutral-90 rounded-lg px-3 py-2 text-sm bg-white"
             />
             <Checkbox
-              label="Include shelters with no max stay"
+              className="w-full flex flex-row justify-end items-center gap-2 border-0 bg-white"
+              label="Include unknown"
               checked={!!filters.maxStay?.includeNull}
               onChange={onMaxStayIncludeNullChange}
             />
