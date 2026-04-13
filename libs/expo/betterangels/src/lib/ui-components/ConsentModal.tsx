@@ -1,3 +1,4 @@
+import { consentImage } from '@monorepo/expo/shared/icons';
 import {
   Colors,
   FontSizes,
@@ -229,7 +230,7 @@ export default function ConsentModal({
               <Image
                 style={{ height: windowHeight * 0.325 }}
                 contentFit="contain"
-                source={require('../../../../shared/images/consent.png')}
+                source={consentImage}
                 accessibilityIgnoresInvertColors
               />
             </View>
