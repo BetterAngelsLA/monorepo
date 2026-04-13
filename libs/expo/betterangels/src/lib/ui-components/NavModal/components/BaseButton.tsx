@@ -30,7 +30,7 @@ function BaseButton(props: BaseButtonProps) {
       style={({ pressed }) => [
         {
           backgroundColor: pressed ? Colors.NEUTRAL_EXTRA_LIGHT : Colors.WHITE,
-          height: style?.height || 72,
+          height: 72,
         },
         styles.container,
         style,
