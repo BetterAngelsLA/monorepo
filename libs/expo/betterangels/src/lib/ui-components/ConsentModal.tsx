@@ -1,4 +1,4 @@
-import { consentImage } from '@monorepo/expo/shared/icons';
+import { consentImage } from '@monorepo/expo/shared/images';
 import {
   Colors,
   FontSizes,

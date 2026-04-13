@@ -24,6 +24,7 @@
         "libs/expo/shared/clients/src/index.ts"
       ],
       "@monorepo/expo/shared/icons": ["libs/expo/shared/icons/src/index.ts"],
+      "@monorepo/expo/shared/images": ["libs/expo/shared/images/src/index.ts"],
       "@monorepo/expo/shared/services": [
         "libs/expo/shared/services/src/index.ts"
       ],

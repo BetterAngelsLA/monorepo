@@ -119,6 +119,5 @@ export { default as WFLink } from './components/WFLinkIcon';
 export { default as WFLocationPin } from './components/WFLocationPinIcon';
 export { default as WhatsappIcon } from './components/WhatsappIcon';
 export * from './constant';
-export * from './images';
 export * from './types';
 export * from './utils';
