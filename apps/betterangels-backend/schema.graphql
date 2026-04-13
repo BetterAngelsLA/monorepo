@@ -1377,6 +1377,11 @@ enum MaritalStatusEnum {
   WIDOWED
 }
 
+input MaxStayInput {
+  days: Int!
+  includeNull: Boolean = false
+}
+
 enum MedicalNeedChoices {
   ERC
   DMH
@@ -2057,7 +2062,7 @@ input ShelterFilter {
   NOT: ShelterFilter
   DISTINCT: Boolean
   isAccessCenter: Boolean
-  maxStay: Int
+  maxStay: MaxStayInput
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput

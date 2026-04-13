@@ -1,6 +1,8 @@
 """Filter and ordering types for shelter queries."""
 
 import datetime
+from functools import reduce
+from operator import or_
 from typing import List, Optional, Tuple, cast
 from zoneinfo import ZoneInfo
 
@@ -52,6 +54,12 @@ class ShelterPropertyInput:
     parking: Optional[List[ParkingChoices]] = None
 
 
+@strawberry.input
+class MaxStayInput:
+    days: int
+    include_null: Optional[bool] = False
+
+
 @strawberry_django.filter_type(models.Shelter)
 class ShelterFilter:
     @strawberry_django.filter_field
@@ -62,11 +70,15 @@ class ShelterFilter:
         return Q(**{f"{prefix}shelter_types__name__exact": ShelterTypeChoices.ACCESS_CENTER})
 
     @strawberry_django.filter_field
-    def max_stay(self, info: Info, value: Optional[int], prefix: str) -> Q:
+    def max_stay(self, info: Info, value: Optional[MaxStayInput], prefix: str) -> Q:
         if not value:
             return Q()
 
-        return Q(**{f"{prefix}max_stay__gte": value})
+        variables = {f"{prefix}max_stay__gte": value.days}
+        if value.include_null:
+            variables[f"{prefix}max_stay__isnull"] = value.include_null
+
+        return reduce(or_, (Q(**{k: v}) for k, v in variables.items()))
 
     @strawberry_django.filter_field
     def name(self, info: Info, value: Optional[str], prefix: str) -> Q:
