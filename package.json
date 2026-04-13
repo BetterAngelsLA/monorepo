@@ -147,7 +147,7 @@
     "@storybook/addon-docs": "^10.1.1",
     "@storybook/addon-react-native-web": "^0.0.29",
     "@storybook/react-native": "^10.1.1",
-    "@storybook/react-native-web-vite": "^10.1.1",
+    "@storybook/react-native-web-vite": "^10.3.5",
     "@storybook/react-vite": "10.2.10",
     "@storybook/react-webpack5": "10.2.10",
     "@svgr/webpack": "^8.1.0",
