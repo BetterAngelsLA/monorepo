@@ -27,23 +27,16 @@ function BaseButton(props: BaseButtonProps) {
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      style={[styles.container, style]}
+      style={({ pressed }) => [
+        {
+          backgroundColor: pressed ? Colors.NEUTRAL_EXTRA_LIGHT : Colors.WHITE,
+          height: style?.height || 72,
+        },
+        styles.container,
+        style,
+      ]}
     >
-      {({ pressed }) => (
-        <View
-          style={[
-            {
-              backgroundColor: pressed
-                ? Colors.NEUTRAL_EXTRA_LIGHT
-                : Colors.WHITE,
-            },
-            styles.content,
-            contentStyle,
-          ]}
-        >
-          {children}
-        </View>
-      )}
+      <View style={[styles.content, contentStyle]}>{children}</View>
     </Pressable>
   );
 }
@@ -54,7 +47,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: Radiuses.xs,
     paddingHorizontal: Spacings.sm,
-    paddingVertical: Spacings.sm,
   },
   content: {
     flex: 1,
