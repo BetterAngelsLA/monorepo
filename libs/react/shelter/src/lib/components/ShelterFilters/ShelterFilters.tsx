@@ -157,10 +157,16 @@ export function ShelterFilters(props: IProps) {
           <div className="flex justify-between items-center">Max Stay</div>
           <div className="mt-6 flex flex-col gap-2">
             <input
+              type="number"
+              min={1}
               max={maxStayMax}
               value={filters.maxStay?.days || ''}
               onChange={(e) => onMaxStayDaysChange(e.target.value)}
-              placeholder={`Enter number between 1 and ${maxStayMax}`}
+              placeholder={
+                maxStayMax
+                  ? `Enter number between 1 and ${maxStayMax}`
+                  : 'Enter number'
+              }
               className="w-full border border-neutral-90 rounded-lg px-3 py-2 text-sm bg-white"
             />
             <Checkbox
