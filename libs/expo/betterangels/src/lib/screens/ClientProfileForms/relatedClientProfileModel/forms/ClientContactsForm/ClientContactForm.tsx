@@ -9,7 +9,8 @@ import {
 import { useRouter } from 'expo-router';
 import { useRef } from 'react';
 import { Controller } from 'react-hook-form';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
 import { useSnackbar } from '../../../../../hooks';
 import { clientRelevantContactEnumDisplay } from '../../../../../static';
 import AddressAutocomplete from '../../../../../ui-components/AddressField';
@@ -25,7 +26,7 @@ type TProps = {
 export function ClientContactForm(props: TProps) {
   const { clientProfile, relationId } = props;
 
-  const scrollRef = useRef<ScrollView | null>(null);
+  const scrollRef = useRef<KeyboardAwareScrollViewRef | null>(null);
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
