@@ -18,8 +18,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.db import models, transaction
-from django.db.models import Count, F, OuterRef, QuerySet, Subquery
-from django.db.models.functions import Cast, JSONObject
+from django.db.models import Count, F, OuterRef, QuerySet, Subquery, Value
+from django.db.models.functions import Cast, Coalesce, JSONObject
 from django.forms import BaseFormSet, TimeInput
 from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import redirect
@@ -821,7 +821,7 @@ class PhotoCountFilter(admin.ListFilter):
     def __init__(
         self,
         request: HttpRequest,
-        params: dict[str, list[str]],
+        params: dict[str, Any],
         model: type[models.Model],
         model_admin: admin.ModelAdmin,
     ) -> None:
@@ -833,7 +833,7 @@ class PhotoCountFilter(admin.ListFilter):
 
     def choices(self, changelist: Any) -> Iterator[dict[str, Any]]:  # type: ignore[override]
         fields = []
-        for (min_p, max_p), (_, label) in zip(self.PARAMS, self.FILTER_FIELDS):
+        for (min_p, max_p), (_field, label) in zip(self.PARAMS, self.FILTER_FIELDS):
             fields.append(
                 {
                     "label": label,
@@ -852,7 +852,7 @@ class PhotoCountFilter(admin.ListFilter):
         return True
 
     def queryset(self, request: HttpRequest, queryset: QuerySet) -> QuerySet:
-        for (min_p, max_p), (count_field, _) in zip(self.PARAMS, self.FILTER_FIELDS):
+        for (min_p, max_p), (count_field, _label) in zip(self.PARAMS, self.FILTER_FIELDS):
             min_val = self.used_parameters.get(min_p)
             max_val = self.used_parameters.get(max_p)
             if min_val is not None and min_val != "":
@@ -1129,13 +1129,16 @@ class ShelterAdmin(ImportExportModelAdmin):
             )
         )
 
+        interior_count = InteriorPhoto.objects.filter(shelter=OuterRef("pk")).order_by().values("shelter").annotate(c=Count("*")).values("c")
+        exterior_count = ExteriorPhoto.objects.filter(shelter=OuterRef("pk")).order_by().values("shelter").annotate(c=Count("*")).values("c")
+
         return qs.annotate(
             last_event=Subquery(
                 scoped_events.filter(pgh_obj_id=Cast(OuterRef("pk"), output_field=models.TextField())).values("obj")[:1]
             ),
-            interior_photo_count=Count("interior_photos", distinct=True),
-            exterior_photo_count=Count("exterior_photos", distinct=True),
-            total_photo_count=Count("interior_photos", distinct=True) + Count("exterior_photos", distinct=True),
+            interior_photo_count=Coalesce(Subquery(interior_count), Value(0)),
+            exterior_photo_count=Coalesce(Subquery(exterior_count), Value(0)),
+            total_photo_count=Coalesce(Subquery(interior_count), Value(0)) + Coalesce(Subquery(exterior_count), Value(0)),
         )
 
     def save_related(
