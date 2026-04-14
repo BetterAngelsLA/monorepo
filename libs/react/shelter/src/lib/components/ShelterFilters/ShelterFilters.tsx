@@ -9,8 +9,10 @@ import { FilterSelector } from './FilterSelector';
 import { ShelterMaxStayDocument } from './__generated__/shelterMaxStay.generated';
 import {
   demographicFilter,
+  entryRequirementFilter,
   parkingFilter,
   petsFilter,
+  referralRequirementFilter,
   roomStyleFilter,
   shelterTypeFilter,
   specialSituationFilter,
@@ -117,7 +119,18 @@ export function ShelterFilters(props: IProps) {
           values={filters[demographicFilter.name]}
           {...demographicFilter}
         />
-
+        <FilterSelector
+          className="mt-8"
+          onChange={onFilterChange}
+          values={filters[entryRequirementFilter.name]}
+          {...entryRequirementFilter}
+        />
+        <FilterSelector
+          className="mt-8"
+          onChange={onFilterChange}
+          values={filters[referralRequirementFilter.name]}
+          {...referralRequirementFilter}
+        />
         <FilterSelector
           className="mt-8"
           onChange={onFilterChange}

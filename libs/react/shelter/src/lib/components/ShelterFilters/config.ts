@@ -1,15 +1,19 @@
 import {
   DemographicChoices,
+  EntryRequirementChoices,
   ParkingChoices,
   PetChoices,
+  ReferralRequirementChoices,
   RoomStyleChoices,
   ShelterChoices,
   SpecialSituationRestrictionChoices,
 } from '../../apollo';
 import {
   enumDisplayDemographics,
+  enumDisplayEntryRequirementChoices,
   enumDisplayParkingChoices,
   enumDisplayPetChoices,
+  enumDisplayReferralRequirementChoices,
   enumDisplayRoomStyles,
   enumDisplayShelterChoices,
   enumDisplaySpecialSituationRestrictionChoices,
@@ -17,12 +21,14 @@ import {
 import { TShelterPropertyFilters } from '../ShelterSearch';
 
 export type TFilterOptionType =
-  | PetChoices
   | DemographicChoices
-  | SpecialSituationRestrictionChoices
-  | ShelterChoices
+  | EntryRequirementChoices
+  | ParkingChoices
+  | PetChoices
+  | ReferralRequirementChoices
   | RoomStyleChoices
-  | ParkingChoices;
+  | ShelterChoices
+  | SpecialSituationRestrictionChoices;
 
 export type TShelterFilterOption = {
   label: string;
@@ -98,6 +104,25 @@ export const demographicFilter: TFilterConfig = {
   options: demographicOptionList,
 };
 
+const entryRequirementOptions = [
+  EntryRequirementChoices.MedicaidOrMedicare,
+  EntryRequirementChoices.PhotoId,
+  EntryRequirementChoices.Referral,
+  EntryRequirementChoices.Reservation,
+];
+const entryRequirementOptionList: TShelterFilterOption[] =
+  entryRequirementOptions.map((option) => {
+    return {
+      label: enumDisplayEntryRequirementChoices[option],
+      value: option,
+    };
+  });
+
+export const entryRequirementFilter: TFilterConfig = {
+  name: 'entryRequirements',
+  header: 'Entry Requirement',
+  options: entryRequirementOptionList,
+};
 // Parking
 const parkingOptions = [
   ParkingChoices.Automobile,
@@ -144,6 +169,30 @@ export const petsFilter: TFilterConfig = {
   name: 'pets',
   header: 'Pets',
   options: petsOptionsList,
+};
+
+// Referral Requirement
+
+const referralRequirementOptions = [
+  ReferralRequirementChoices.ReferralMatched,
+  ReferralRequirementChoices.ReferralNonmatched,
+  ReferralRequirementChoices.ServiceProviderSubmission,
+  ReferralRequirementChoices.SelfReferral,
+  ReferralRequirementChoices.SameDayIntake,
+];
+
+const referralRequirementOptionList: TShelterFilterOption[] =
+  referralRequirementOptions.map((option) => {
+    return {
+      label: enumDisplayReferralRequirementChoices[option],
+      value: option,
+    };
+  });
+
+export const referralRequirementFilter: TFilterConfig = {
+  name: 'referralRequirement',
+  header: 'Referral Requirement',
+  options: referralRequirementOptionList,
 };
 
 // Room Style
