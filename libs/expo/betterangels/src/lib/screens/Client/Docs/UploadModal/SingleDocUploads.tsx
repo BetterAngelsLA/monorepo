@@ -23,6 +23,7 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
     docs,
     title,
     docType,
+    closeModal,
     onUploadSuccess,
     onUploadError,
   } = props;
@@ -71,11 +72,12 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
       });
 
       onUploadSuccess?.('File uploaded successfully.');
+      closeModal();
     } catch (err) {
       console.error(`error uploading ${docType} forms: `, err);
 
       onUploadError?.('Upload failed. Please try again.');
-      setTab(undefined);
+      closeModal();
 
       showSnackbar({
         message: `Sorry, there was an error updating the file.`,

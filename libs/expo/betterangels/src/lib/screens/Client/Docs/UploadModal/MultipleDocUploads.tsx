@@ -23,6 +23,7 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
     docs,
     title,
     docType,
+    closeModal,
     onUploadSuccess,
     onUploadError,
   } = props;
@@ -75,13 +76,12 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
 
       await Promise.all(uploads);
       onUploadSuccess?.('Files uploaded successfully.');
-      setTab(undefined);
-      
+      closeModal();
     } catch (err) {
       console.error(`error uploading ${docType} forms: `, err);
 
       onUploadError?.('Upload failed. Please try again.');
-      setTab(undefined);
+      closeModal();
 
       showSnackbar({
         message: `Sorry, there was an error with the file upload.`,
