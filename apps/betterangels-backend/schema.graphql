@@ -1378,6 +1378,11 @@ enum MaritalStatusEnum {
   WIDOWED
 }
 
+input MaxStayInput {
+  days: Int!
+  includeNull: Boolean = false
+}
+
 enum MedicalNeedChoices {
   ERC
   DMH
@@ -1797,6 +1802,7 @@ type Query {
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
+  shelterMaxStay: Int
 }
 
 enum RaceEnum {
@@ -2057,6 +2063,7 @@ input ShelterFilter {
   NOT: ShelterFilter
   DISTINCT: Boolean
   isAccessCenter: Boolean
+  maxStay: MaxStayInput
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
