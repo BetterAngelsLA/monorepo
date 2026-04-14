@@ -128,8 +128,26 @@ export function ShelterFilters(props: IProps) {
         <FilterSelector
           className="mt-8"
           onChange={onFilterChange}
+          values={filters[parkingFilter.name]}
+          {...parkingFilter}
+        />
+        <FilterSelector
+          className="mt-8"
+          onChange={onFilterChange}
+          values={filters[petsFilter.name]}
+          {...petsFilter}
+        />
+        <FilterSelector
+          className="mt-8"
+          onChange={onFilterChange}
           values={filters[referralRequirementFilter.name]}
           {...referralRequirementFilter}
+        />
+        <FilterSelector
+          className="mt-8"
+          onChange={onFilterChange}
+          values={filters[roomStyleFilter.name]}
+          {...roomStyleFilter}
         />
         <FilterSelector
           className="mt-8"
@@ -137,33 +155,11 @@ export function ShelterFilters(props: IProps) {
           values={filters[specialSituationFilter.name]}
           {...specialSituationFilter}
         />
-
         <FilterSelector
           className="mt-8"
           onChange={onFilterChange}
           values={filters[shelterTypeFilter.name]}
           {...shelterTypeFilter}
-        />
-
-        <FilterSelector
-          className="mt-8"
-          onChange={onFilterChange}
-          values={filters[roomStyleFilter.name]}
-          {...roomStyleFilter}
-        />
-
-        <FilterSelector
-          className="mt-8"
-          onChange={onFilterChange}
-          values={filters[petsFilter.name]}
-          {...petsFilter}
-        />
-
-        <FilterSelector
-          className="mt-8"
-          onChange={onFilterChange}
-          values={filters[parkingFilter.name]}
-          {...parkingFilter}
         />
 
         <div className="mt-8">
@@ -185,7 +181,11 @@ export function ShelterFilters(props: IProps) {
             <Checkbox
               className="w-full flex flex-row justify-end items-center gap-2 border-0 bg-white"
               label="Include unknown"
-              checked={!!filters.maxStay?.includeNull}
+              disabled={!filters.maxStay?.days}
+              checked={
+                !!filters.maxStay?.includeNull &&
+                (filters.maxStay?.days ?? 0) > 0
+              }
               onChange={onMaxStayIncludeNullChange}
             />
           </div>
