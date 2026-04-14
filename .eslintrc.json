@@ -89,7 +89,9 @@
         "@graphql-eslint/known-type-names": "error"
       },
       "parserOptions": {
-        "schema": "apps/betterangels-backend/schema.graphql"
+        "graphQLConfig": {
+          "schema": "apps/betterangels-backend/schema.graphql"
+        }
       }
     }
   ]
