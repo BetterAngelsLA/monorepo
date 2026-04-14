@@ -2624,8 +2624,10 @@ export type ShelterProgramType = {
 
 export type ShelterPropertyInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
+  entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
   parking?: InputMaybe<Array<ParkingChoices>>;
   pets?: InputMaybe<Array<PetChoices>>;
+  referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;

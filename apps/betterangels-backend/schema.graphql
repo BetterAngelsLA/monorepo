@@ -2121,6 +2121,8 @@ type ShelterProgramType {
 input ShelterPropertyInput {
   pets: [PetChoices!] = null
   demographics: [DemographicChoices!] = null
+  entryRequirements: [EntryRequirementChoices!] = null
+  referralRequirement: [ReferralRequirementChoices!] = null
   specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
   shelterTypes: [ShelterChoices!] = null
   roomStyles: [RoomStyleChoices!] = null

@@ -13,7 +13,15 @@ from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
 from django.db.models import Q, QuerySet
 from shelters import models
-from shelters.enums import DemographicChoices, ParkingChoices, PetChoices, RoomStyleChoices, ScheduleTypeChoices
+from shelters.enums import (
+    DemographicChoices,
+    EntryRequirementChoices,
+    ParkingChoices,
+    PetChoices,
+    ReferralRequirementChoices,
+    RoomStyleChoices,
+    ScheduleTypeChoices,
+)
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import SpecialSituationRestrictionChoices
 from shelters.selectors import shelters_open_at
@@ -46,6 +54,8 @@ class MapBoundsInput:
 class ShelterPropertyInput:
     pets: Optional[List[PetChoices]] = None
     demographics: Optional[List[DemographicChoices]] = None
+    entry_requirements: Optional[List[EntryRequirementChoices]] = None
+    referral_requirement: Optional[List[ReferralRequirementChoices]] = None
     special_situation_restrictions: Optional[List[SpecialSituationRestrictionChoices]] = None
     shelter_types: Optional[List[ShelterTypeChoices]] = None
     room_styles: Optional[List[RoomStyleChoices]] = None
