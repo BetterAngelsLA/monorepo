@@ -1129,16 +1129,28 @@ class ShelterAdmin(ImportExportModelAdmin):
             )
         )
 
-        interior_count = InteriorPhoto.objects.filter(shelter=OuterRef("pk")).order_by().values("shelter").annotate(c=Count("*")).values("c")
-        exterior_count = ExteriorPhoto.objects.filter(shelter=OuterRef("pk")).order_by().values("shelter").annotate(c=Count("*")).values("c")
+        interior_count = Subquery(
+            InteriorPhoto.objects.filter(shelter=OuterRef("pk"))
+            .order_by()
+            .values("shelter")
+            .annotate(c=Count("pk"))
+            .values("c")
+        )
+        exterior_count = Subquery(
+            ExteriorPhoto.objects.filter(shelter=OuterRef("pk"))
+            .order_by()
+            .values("shelter")
+            .annotate(c=Count("pk"))
+            .values("c")
+        )
 
         return qs.annotate(
             last_event=Subquery(
                 scoped_events.filter(pgh_obj_id=Cast(OuterRef("pk"), output_field=models.TextField())).values("obj")[:1]
             ),
-            interior_photo_count=Coalesce(Subquery(interior_count), Value(0)),
-            exterior_photo_count=Coalesce(Subquery(exterior_count), Value(0)),
-            total_photo_count=Coalesce(Subquery(interior_count), Value(0)) + Coalesce(Subquery(exterior_count), Value(0)),
+            interior_photo_count=Coalesce(interior_count, Value(0)),
+            exterior_photo_count=Coalesce(exterior_count, Value(0)),
+            total_photo_count=F("interior_photo_count") + F("exterior_photo_count"),
         )
 
     def save_related(
