@@ -285,7 +285,6 @@ USE_TZ = True
 
 # Storage Settings
 AWS_REGION = env("AWS_REGION")
-AWS_S3_STORAGE_BUCKET_NAME = env("AWS_S3_STORAGE_BUCKET_NAME")
 LOCAL_S3_INTERNAL_ENDPOINT_URL = env("LOCAL_S3_INTERNAL_ENDPOINT_URL")
 LOCAL_S3_PUBLIC_ENDPOINT_URL = env("LOCAL_S3_PUBLIC_ENDPOINT_URL")
 
@@ -311,7 +310,7 @@ elif IS_LOCAL_DEV and LOCAL_S3_INTERNAL_ENDPOINT_URL and LOCAL_S3_PUBLIC_ENDPOIN
         "default": {
             "BACKEND": "common.storage.LocalS3Storage",
             "OPTIONS": {
-                "bucket_name": AWS_S3_STORAGE_BUCKET_NAME,
+                "bucket_name": env("AWS_S3_STORAGE_BUCKET_NAME"),
                 "endpoint_url": LOCAL_S3_INTERNAL_ENDPOINT_URL,
                 "location": env("AWS_CLOUDFRONT_MEDIA_LOCATION"),
                 "addressing_style": "path",

@@ -21,17 +21,19 @@ class ValidateContentTypeTest(TestCase):
     def test_allows_valid_content_types(self) -> None:
         for content_type in ALLOWED_CONTENT_TYPES:
             try:
-                _validate_content_type(content_type)
+                _validate_content_type(content_type, "test_file")
             except ValueError:
                 self.fail(f"_validate_content_type raised ValueError for allowed type: {content_type}")
 
     def test_rejects_invalid_content_type(self) -> None:
-        with self.assertRaises(ValueError, msg="Unsupported content_type: application/zip."):
-            _validate_content_type("application/zip")
+        with self.assertRaisesMessage(
+            ValueError, "Unsupported content_type: application/zip for filename=test_file.zip."
+        ):
+            _validate_content_type("application/zip", "test_file.zip")
 
     def test_rejects_empty_content_type(self) -> None:
-        with self.assertRaises(ValueError, msg="Unsupported content_type: ."):
-            _validate_content_type("")
+        with self.assertRaisesMessage(ValueError, "Unsupported content_type:  for filename=test_file."):
+            _validate_content_type("", "test_file")
 
 
 class CreatePresignedUploadsTest(TestCase):
@@ -127,7 +129,7 @@ class CreatePresignedUploadsTest(TestCase):
     def test_rejects_invalid_content_type(self) -> None:
         self.upload_1.content_type = "application/zip"
 
-        with self.assertRaises(ValueError, msg="Unsupported content_type: application/zip."):
+        with self.assertRaisesMessage(ValueError, "Unsupported content_type: application/zip for filename=doc1.pdf."):
             create_presigned_uploads(user=self.user, uploads=[self.upload_1])
 
     @patch("clients.services.client_document.create_upload_token")
@@ -286,7 +288,7 @@ class ResolveUploadTest(TestCase):
         mock_perm_group.return_value = self.permission_group
         doc = self._make_doc(content_type="application/zip")
 
-        with self.assertRaises(ValueError, msg="Unsupported content_type: application/zip."):
+        with self.assertRaisesMessage(ValueError, "Unsupported content_type: application/zip for filename=doc.pdf."):
             resolve_upload(
                 user=self.user,
                 client_profile=self.client_profile,
@@ -302,7 +304,7 @@ class ResolveUploadTest(TestCase):
         mock_perm_group.return_value = self.permission_group
         doc = self._make_doc(upload_token="bad-token")
 
-        with self.assertRaises(ValueError, msg="Invalid or expired upload signature"):
+        with self.assertRaisesMessage(ValueError, "Invalid or expired upload signature for 'doc.pdf'"):
             resolve_upload(
                 user=self.user,
                 client_profile=self.client_profile,
@@ -330,7 +332,7 @@ class ResolveUploadTest(TestCase):
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")
     @patch("clients.services.client_document.validate_upload_token", return_value=False)
-    def test_does_not_create_attachments_on_invalid_token(
+    def test_does_not_create_attachment_on_invalid_token(
         self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
     ) -> None:
         mock_perm_group.return_value = self.permission_group
@@ -350,7 +352,7 @@ class ResolveUploadTest(TestCase):
     @patch("clients.services.client_document.get_user_permission_group")
     @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token")
-    def test_stops_on_first_invalid_token_in_batch(
+    def test_no_attachments_created_when_batch_validation_fails(
         self, mock_validate: MagicMock, mock_s3_exists: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
     ) -> None:
         mock_perm_group.return_value = self.permission_group
@@ -366,7 +368,43 @@ class ResolveUploadTest(TestCase):
                 documents=[doc1, doc2],
             )
 
-        # First doc was saved before second failed
+        # Upfront validation prevents any DB writes
+        self.assertEqual(Attachment.objects.count(), initial_count)
+
+    @patch("clients.services.client_document.assign_object_permissions")
+    @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.s3_key_exists", return_value=True)
+    @patch("clients.services.client_document.validate_upload_token", return_value=True)
+    def test_save_error_on_second_doc_leaves_first_persisted_without_transaction(
+        self, mock_validate: MagicMock, mock_s3_exists: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
+    ) -> None:
+        """Without an external transaction.atomic(), a save failure on the 2nd doc
+        leaves the 1st doc persisted (orphaned). The caller is responsible for atomicity."""
+        mock_perm_group.return_value = self.permission_group
+        initial_count = Attachment.objects.count()
+        doc1 = self._make_doc(presigned_key=f"{STORAGE_DIR}/attachments/a.pdf", filename="a.pdf")
+        doc2 = self._make_doc(presigned_key=f"{STORAGE_DIR}/attachments/b.pdf", filename="b.pdf")
+
+        original_save = Attachment.save
+
+        call_count = 0
+
+        def save_side_effect(self_attachment: Any, *args: Any, **kwargs: Any) -> None:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 2:
+                raise RuntimeError("Simulated DB error on second save")
+            original_save(self_attachment, *args, **kwargs)
+
+        with patch.object(Attachment, "save", save_side_effect):
+            with self.assertRaisesMessage(RuntimeError, "Simulated DB error on second save"):
+                resolve_upload(
+                    user=self.user,
+                    client_profile=self.client_profile,
+                    documents=[doc1, doc2],
+                )
+
+        # First doc was persisted; second was not — no rollback without a transaction
         self.assertEqual(Attachment.objects.count(), initial_count + 1)
 
     @patch("clients.services.client_document.assign_object_permissions")
@@ -380,7 +418,7 @@ class ResolveUploadTest(TestCase):
         initial_count = Attachment.objects.count()
         doc = self._make_doc()
 
-        with self.assertRaises(ValueError, msg="File not found in storage"):
+        with self.assertRaisesMessage(ValueError, "File not found in storage for 'doc.pdf'"):
             resolve_upload(
                 user=self.user,
                 client_profile=self.client_profile,

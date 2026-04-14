@@ -4,6 +4,7 @@ from accounts.models import User
 from accounts.utils import get_user_permission_group
 from clients.models import ClientProfile
 from clients.types import ClientDocumentFromUploadsInput, ClientDocumentUploadsInputItem
+from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
 from common.models import Attachment
 from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import assign_object_permissions
@@ -22,32 +23,12 @@ CLIENT_DOCUMENT_RELATIVE_PATH = "attachments"
 S3_CLIENT_DOCUMENT_PREFIX = f"{STORAGE_DIR}/{CLIENT_DOCUMENT_RELATIVE_PATH}"
 SERVICE_NAME = "client_document"
 
-ALLOWED_CONTENT_TYPES = frozenset(
-    {
-        # Documents
-        "application/msword",
-        "application/pdf",
-        "application/vnd.ms-excel",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "text/csv",
-        "text/plain",
-        # Images
-        "image/bmp",  # older windows/systems
-        "image/gif",
-        "image/heic",
-        "image/heif",
-        "image/jpeg",
-        "image/png",
-        "image/tiff",
-        "image/webp",
-    }
-)
+ALLOWED_CONTENT_TYPES = DEFAULT_DOCUMENT_CONTENT_TYPES | DEFAULT_IMAGE_CONTENT_TYPES
 
 
-def _validate_content_type(content_type: str) -> None:
+def _validate_content_type(content_type: str, filename: str) -> None:
     if content_type not in ALLOWED_CONTENT_TYPES:
-        raise ValueError(f"Unsupported content_type: {content_type}.")
+        raise ValueError(f"Unsupported content_type: {content_type} for filename={filename}.")
 
 
 def create_presigned_uploads(
@@ -58,7 +39,7 @@ def create_presigned_uploads(
     mapped_uploads: list[PresignedS3UploadInput] = []
 
     for upload in uploads:
-        _validate_content_type(upload.content_type)
+        _validate_content_type(upload.content_type, upload.filename)
 
         mapped_uploads.append(
             {
@@ -103,10 +84,11 @@ def resolve_upload(
     permission_group = get_user_permission_group(user)
     content_type = ContentType.objects.get_for_model(ClientProfile)
 
-    attachments: list[Attachment] = []
+    # Validate the entire batch before any DB writes.
+    docs = list(documents)
 
-    for doc in documents:
-        _validate_content_type(doc.content_type)
+    for doc in docs:
+        _validate_content_type(doc.content_type, doc.filename)
 
         if not validate_upload_token(
             upload_token=doc.upload_token,
@@ -114,13 +96,16 @@ def resolve_upload(
             user_id=user.pk,
             scope=SERVICE_NAME,
         ):
-            raise ValueError("Invalid or expired upload signature")
+            raise ValueError(f"Invalid or expired upload signature for '{doc.filename}'")
 
         if not s3_key_exists(key=doc.presigned_key):
-            raise ValueError("File not found in storage")
+            raise ValueError(f"File not found in storage for '{doc.filename}'")
 
-        storage_prefix = f"{STORAGE_DIR}/"
+    # Validations passed — persist attachments.
+    storage_prefix = f"{STORAGE_DIR}/"
+    attached: list[Attachment] = []
 
+    for doc in docs:
         # strip "media/"
         file_path = doc.presigned_key[len(storage_prefix) :]
 
@@ -145,6 +130,6 @@ def resolve_upload(
             ],
         )
 
-        attachments.append(attachment)
+        attached.append(attachment)
 
-    return attachments
+    return attached

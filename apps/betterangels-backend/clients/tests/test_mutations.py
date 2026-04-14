@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import ANY, patch
 
 from clients.enums import (
@@ -1054,4 +1055,82 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
                     documents,
                 )
 
-        self.assertIsNotNone(response.get("errors"))
+        self.assertGraphQLError(
+            response,
+            "Invalid or expired upload signature for 'doc1.pdf'",
+        )
+
+    def test_resolve_client_document_uploads_batch_validation_failure_creates_no_records(self) -> None:
+        """When the 2nd doc has an invalid token, upfront validation fails
+        and transaction.atomic() ensures no attachments are persisted."""
+        initial_count = Attachment.objects.count()
+        documents = [
+            {
+                "presignedKey": "media/attachments/doc1.pdf",
+                "uploadToken": "valid-token-1",
+                "filename": "doc1.pdf",
+                "contentType": "application/pdf",
+                "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            },
+            {
+                "presignedKey": "media/attachments/doc2.jpg",
+                "uploadToken": "bad-token",
+                "filename": "doc2.jpg",
+                "contentType": "image/jpeg",
+                "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            },
+        ]
+
+        with patch("clients.services.client_document.validate_upload_token", side_effect=[True, False]), patch(
+            "clients.services.client_document.s3_key_exists", return_value=True
+        ):
+            response = self._resolve_client_document_uploads_fixture(
+                self.client_profile_1["id"],
+                documents,
+            )
+
+        self.assertGraphQLError(response, "Invalid or expired upload signature for 'doc2.jpg'")
+        self.assertEqual(Attachment.objects.count(), initial_count)
+
+    def test_resolve_client_document_uploads_save_error_rolls_back_all(self) -> None:
+        """When all validation passes but the 2nd attachment.save() fails,
+        transaction.atomic() rolls back the 1st attachment too."""
+        initial_count = Attachment.objects.count()
+        documents = [
+            {
+                "presignedKey": "media/attachments/doc1.pdf",
+                "uploadToken": "valid-token-1",
+                "filename": "doc1.pdf",
+                "contentType": "application/pdf",
+                "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            },
+            {
+                "presignedKey": "media/attachments/doc2.jpg",
+                "uploadToken": "valid-token-2",
+                "filename": "doc2.jpg",
+                "contentType": "image/jpeg",
+                "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            },
+        ]
+
+        original_save = Attachment.save
+        call_count = 0
+
+        def save_side_effect(self_attachment: Attachment, *args: Any, **kwargs: Any) -> None:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 2:
+                raise RuntimeError("Simulated DB error on second save")
+            original_save(self_attachment, *args, **kwargs)
+
+        with patch("clients.services.client_document.validate_upload_token", return_value=True), patch(
+            "clients.services.client_document.s3_key_exists", return_value=True
+        ), patch.object(Attachment, "save", save_side_effect):
+            response = self._resolve_client_document_uploads_fixture(
+                self.client_profile_1["id"],
+                documents,
+            )
+
+        self.assertGraphQLError(response, "Simulated DB error on second save")
+        # transaction.atomic() in the mutation rolls back both saves
+        self.assertEqual(Attachment.objects.count(), initial_count)
