@@ -98,54 +98,52 @@ export const demographicFilter: TFilterConfig = {
   options: demographicOptionList,
 };
 
-// Special Situation
-const specialSituationOptions = [
-  SpecialSituationRestrictionChoices.DomesticViolence,
-  SpecialSituationRestrictionChoices.HivAids,
-  SpecialSituationRestrictionChoices.HumanTrafficking,
-  SpecialSituationRestrictionChoices.JusticeSystems,
-  SpecialSituationRestrictionChoices.Veterans,
-  SpecialSituationRestrictionChoices.None,
+// Parking
+const parkingOptions = [
+  ParkingChoices.Automobile,
+  ParkingChoices.Bicycle,
+  ParkingChoices.Motorcycle,
+  ParkingChoices.Rv,
+  ParkingChoices.Street,
+  ParkingChoices.NoParking,
 ];
 
-const specialSituationOptionsOptionList: TShelterFilterOption[] =
-  specialSituationOptions.map((option) => {
-    return {
-      label: enumDisplaySpecialSituationRestrictionChoices[option],
-      value: option,
-    };
-  });
-
-export const specialSituationFilter: TFilterConfig = {
-  name: 'specialSituationRestrictions',
-  header: 'Special Situation Restriction',
-  options: specialSituationOptionsOptionList,
-};
-
-// Shelter Type
-const shelterTypeOptions = [
-  ShelterChoices.Building,
-  ShelterChoices.Church,
-  ShelterChoices.HotelMotel,
-  ShelterChoices.SafeParking,
-  ShelterChoices.SingleFamilyHouse,
-  ShelterChoices.TinyHomes,
-  ShelterChoices.Other,
-];
-
-const shelterTypeOptionsList: TShelterFilterOption[] = shelterTypeOptions.map(
+const parkingOptionsList: TShelterFilterOption[] = parkingOptions.map(
   (option) => {
     return {
-      label: enumDisplayShelterChoices[option],
+      label: enumDisplayParkingChoices[option],
       value: option,
     };
   }
 );
 
-export const shelterTypeFilter: TFilterConfig = {
-  name: 'shelterTypes',
-  header: 'Shelter Type',
-  options: shelterTypeOptionsList,
+export const parkingFilter: TFilterConfig = {
+  name: 'parking',
+  header: 'Parking',
+  options: parkingOptionsList,
+};
+
+// Pets
+const petsOptions = [
+  PetChoices.Cats,
+  PetChoices.DogsOver_25Lbs,
+  PetChoices.DogsUnder_25Lbs,
+  PetChoices.ServiceAnimals,
+  PetChoices.Exotics,
+  PetChoices.NoPetsAllowed,
+];
+
+const petsOptionsList: TShelterFilterOption[] = petsOptions.map((option) => {
+  return {
+    label: enumDisplayPetChoices[option],
+    value: option,
+  };
+});
+
+export const petsFilter: TFilterConfig = {
+  name: 'pets',
+  header: 'Pets',
+  options: petsOptionsList,
 };
 
 // Room Style
@@ -174,50 +172,52 @@ export const roomStyleFilter: TFilterConfig = {
   options: roomStyleOptionsList,
 };
 
-// Pets
-const petsOptions = [
-  PetChoices.Cats,
-  PetChoices.DogsOver_25Lbs,
-  PetChoices.DogsUnder_25Lbs,
-  PetChoices.ServiceAnimals,
-  PetChoices.Exotics,
-  PetChoices.NoPetsAllowed,
+// Shelter Type
+const shelterTypeOptions = [
+  ShelterChoices.Building,
+  ShelterChoices.Church,
+  ShelterChoices.HotelMotel,
+  ShelterChoices.SafeParking,
+  ShelterChoices.SingleFamilyHouse,
+  ShelterChoices.TinyHomes,
+  ShelterChoices.Other,
 ];
 
-const petsOptionsList: TShelterFilterOption[] = petsOptions.map((option) => {
-  return {
-    label: enumDisplayPetChoices[option],
-    value: option,
-  };
-});
-
-export const petsFilter: TFilterConfig = {
-  name: 'pets',
-  header: 'Pets',
-  options: petsOptionsList,
-};
-
-// Parking
-const parkingOptions = [
-  ParkingChoices.Automobile,
-  ParkingChoices.Bicycle,
-  ParkingChoices.Motorcycle,
-  ParkingChoices.Rv,
-  ParkingChoices.Street,
-  ParkingChoices.NoParking,
-];
-
-const parkingOptionsList: TShelterFilterOption[] = parkingOptions.map(
+const shelterTypeOptionsList: TShelterFilterOption[] = shelterTypeOptions.map(
   (option) => {
     return {
-      label: enumDisplayParkingChoices[option],
+      label: enumDisplayShelterChoices[option],
       value: option,
     };
   }
 );
 
-export const parkingFilter: TFilterConfig = {
-  name: 'parking',
-  header: 'Parking',
-  options: parkingOptionsList,
+export const shelterTypeFilter: TFilterConfig = {
+  name: 'shelterTypes',
+  header: 'Shelter Type',
+  options: shelterTypeOptionsList,
+};
+
+// Special Situation
+const specialSituationOptions = [
+  SpecialSituationRestrictionChoices.DomesticViolence,
+  SpecialSituationRestrictionChoices.HivAids,
+  SpecialSituationRestrictionChoices.HumanTrafficking,
+  SpecialSituationRestrictionChoices.JusticeSystems,
+  SpecialSituationRestrictionChoices.Veterans,
+  SpecialSituationRestrictionChoices.None,
+];
+
+const specialSituationOptionsOptionList: TShelterFilterOption[] =
+  specialSituationOptions.map((option) => {
+    return {
+      label: enumDisplaySpecialSituationRestrictionChoices[option],
+      value: option,
+    };
+  });
+
+export const specialSituationFilter: TFilterConfig = {
+  name: 'specialSituationRestrictions',
+  header: 'Special Situation Restriction',
+  options: specialSituationOptionsOptionList,
 };
