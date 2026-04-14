@@ -379,11 +379,11 @@ class ResolveUploadTest(TestCase):
     @patch("clients.services.client_document.get_user_permission_group")
     @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
-    def test_save_error_on_second_doc_leaves_first_persisted_without_transaction(
+    def test_save_error_on_second_doc_rolls_back_first(
         self, mock_validate: MagicMock, mock_s3_exists: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
     ) -> None:
-        """Without an external transaction.atomic(), a save failure on the 2nd doc
-        leaves the 1st doc persisted (orphaned). The caller is responsible for atomicity."""
+        """A save failure on the 2nd doc rolls back the entire batch,
+        including the 1st doc."""
         mock_perm_group.return_value = self.permission_group
         initial_count = Attachment.objects.count()
         doc1 = self._make_doc(presigned_key="media/attachments/a.pdf", filename="a.pdf")
@@ -408,8 +408,8 @@ class ResolveUploadTest(TestCase):
                     documents=[doc1, doc2],
                 )
 
-        # First doc was persisted; second was not — no rollback without a transaction
-        self.assertEqual(Attachment.objects.count(), initial_count + 1)
+        # Both docs rolled back — nothing persisted
+        self.assertEqual(Attachment.objects.count(), initial_count)
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.get_user_permission_group")

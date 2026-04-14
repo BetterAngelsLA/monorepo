@@ -1054,7 +1054,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         ]
 
         with patch("clients.services.client_document.validate_upload_token", return_value=False):
-            expected_query_count = 9
+            expected_query_count = 6
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_document_uploads_fixture(
                     self.client_profile_1["id"],

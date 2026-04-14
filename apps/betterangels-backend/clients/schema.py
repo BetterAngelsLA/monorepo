@@ -682,22 +682,21 @@ class Mutation:
     def resolve_client_document_uploads(
         self, info: Info, data: ResolveClientDocumentUploadsInput
     ) -> ClientDocumentUploadsType:
-        with transaction.atomic():
-            user = cast(User, get_current_user(info))
+        user = cast(User, get_current_user(info))
 
-            client_profile = filter_for_user(
-                ClientProfile.objects.all(),
-                user,
-                [ClientProfilePermissions.CHANGE],
-            ).get(id=data.client_profile_id)
+        client_profile = filter_for_user(
+            ClientProfile.objects.all(),
+            user,
+            [ClientProfilePermissions.CHANGE],
+        ).get(id=data.client_profile_id)
 
-            documents = client_document.resolve_upload(
-                user=user,
-                client_profile=client_profile,
-                documents=data.documents,
-            )
+        documents = client_document.resolve_upload(
+            user=user,
+            client_profile=client_profile,
+            documents=data.documents,
+        )
 
-            return ClientDocumentUploadsType(documents=cast(list[ClientDocumentType], documents))
+        return ClientDocumentUploadsType(documents=cast(list[ClientDocumentType], documents))
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated], extensions=[HasPerm(perms=[ClientProfilePermissions.CHANGE])]

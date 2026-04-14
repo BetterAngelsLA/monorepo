@@ -18,6 +18,7 @@ from common.services.s3 import (
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from common.services.upload_token import create_upload_token, validate_upload_token
 from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
 
 UPLOAD_PATH = "attachments"
 SERVICE_NAME = "client_document"
@@ -103,30 +104,31 @@ def resolve_upload(
     # Validations passed — persist attachments.
     attached: list[Attachment] = []
 
-    for doc in docs:
-        file_path = strip_storage_location(doc.presigned_key)
+    with transaction.atomic():
+        for doc in docs:
+            file_path = strip_storage_location(doc.presigned_key)
 
-        attachment = Attachment(
-            file=file_path,
-            mime_type=doc.content_type,
-            original_filename=doc.filename,
-            namespace=doc.namespace,
-            content_type=content_type,
-            object_id=client_profile.id,
-            uploaded_by=user,
-        )
+            attachment = Attachment(
+                file=file_path,
+                mime_type=doc.content_type,
+                original_filename=doc.filename,
+                namespace=doc.namespace,
+                content_type=content_type,
+                object_id=client_profile.id,
+                uploaded_by=user,
+            )
 
-        attachment.save(direct_upload=True)
+            attachment.save(direct_upload=True)
 
-        assign_object_permissions(
-            permission_group.group,
-            attachment,
-            [
-                AttachmentPermissions.DELETE,
-                AttachmentPermissions.CHANGE,
-            ],
-        )
+            assign_object_permissions(
+                permission_group.group,
+                attachment,
+                [
+                    AttachmentPermissions.DELETE,
+                    AttachmentPermissions.CHANGE,
+                ],
+            )
 
-        attached.append(attachment)
+            attached.append(attachment)
 
     return attached
