@@ -862,6 +862,7 @@ export type DeletedObjectType = {
 
 export enum DemographicChoices {
   All = 'ALL',
+  Couples = 'COUPLES',
   Families = 'FAMILIES',
   LgbtqPlus = 'LGBTQ_PLUS',
   Other = 'OTHER',

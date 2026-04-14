@@ -850,6 +850,7 @@ type DeletedObjectType {
 
 enum DemographicChoices {
   ALL
+  COUPLES
   SINGLE_MEN
   SINGLE_WOMEN
   TAY_TEEN
