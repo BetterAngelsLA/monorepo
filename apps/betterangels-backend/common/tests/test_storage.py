@@ -45,7 +45,7 @@ class LocalS3StorageTest(SimpleTestCase):
         )
 
     @patch("common.storage.boto3.client")
-    def test_get_client_for_presigned_urls_returns_public_client(self, mock_boto_client: Mock) -> None:
+    def test_get_external_client_returns_public_client(self, mock_boto_client: Mock) -> None:
         client = Mock()
         mock_boto_client.return_value = client
 
@@ -59,7 +59,7 @@ class LocalS3StorageTest(SimpleTestCase):
             secret_key="minioadmin",
         )
 
-        result = storage.get_client_for_presigned_urls()
+        result = storage.get_external_client()
 
         self.assertIs(result, client)
         mock_boto_client.assert_called_once()

@@ -2,8 +2,6 @@ import mimetypes
 import uuid
 from typing import NotRequired, TypedDict, cast
 
-import boto3
-from botocore.client import Config
 from botocore.exceptions import ClientError
 from django.core.files.storage import default_storage
 from mypy_boto3_s3 import S3Client
@@ -139,20 +137,19 @@ def _generate_presigned_post_with_client(
     }
 
 
-def _get_s3_client_and_bucket() -> tuple[S3Client, str]:
+def _get_s3_client_and_bucket(*, external: bool = False) -> tuple[S3Client, str]:
     storage = cast(S3Storage, default_storage)
     bucket_name: str = storage.bucket_name
 
-    get_client_fn = getattr(storage, "get_client_for_presigned_urls", None)
-    if callable(get_client_fn):
-        s3_client: S3Client = get_client_fn()
-    else:
-        s3_config = Config(
-            signature_version=storage.signature_version,
-            s3={"addressing_style": storage.addressing_style},  # type: ignore[arg-type]
-        )
-        s3_client = boto3.client("s3", config=s3_config)
+    if external:
+        get_client_fn = getattr(storage, "get_external_client", None)
+        if callable(get_client_fn):
+            s3_client: S3Client = get_client_fn()
+            return s3_client, bucket_name
 
+    # Use the storage's own connection which is configured with the
+    # internal endpoint_url (e.g. the Docker-network MinIO address).
+    s3_client = cast(S3Client, storage.connection.meta.client)
     return s3_client, bucket_name
 
 
@@ -172,7 +169,7 @@ def generate_s3_presigned_upload_urls(
     *,
     uploads: list[PresignedS3UploadInput],
 ) -> PresignedS3UploadBatchResult:
-    s3_client, bucket_name = _get_s3_client_and_bucket()
+    s3_client, bucket_name = _get_s3_client_and_bucket(external=True)
 
     results: list[PresignedS3UploadResult] = []
 
