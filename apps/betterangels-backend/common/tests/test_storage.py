@@ -65,3 +65,31 @@ class LocalS3StorageTest(SimpleTestCase):
         mock_boto_client.assert_called_once()
         call_kwargs = mock_boto_client.call_args.kwargs
         self.assertEqual(call_kwargs["endpoint_url"], "http://localhost:9000")
+
+
+class LocalS3StorageFallbackTest(SimpleTestCase):
+    @override_settings(LOCAL_S3_PUBLIC_ENDPOINT_URL="", AWS_REGION="us-west-2")
+    @patch("common.storage.boto3.client")
+    def test_url_falls_back_to_base_s3_storage_when_public_endpoint_not_set(self, mock_boto_client: Mock) -> None:
+        storage = LocalS3Storage(
+            bucket_name="betterangels-local",
+            endpoint_url="http://minio:9000",
+            location="media",
+            addressing_style="path",
+            signature_version="s3v4",
+            access_key="minioadmin",
+            secret_key="minioadmin",
+        )
+
+        url = storage.url("client_profile_photos/test.png")
+
+        # Ensure we never create a separate public client with a custom endpoint URL.
+        for _, kwargs in mock_boto_client.call_args_list:
+            self.assertNotEqual(
+                kwargs.get("endpoint_url"),
+                "http://localhost:9000",
+                "A public S3 client should not be created when LOCAL_S3_PUBLIC_ENDPOINT_URL is not set.",
+            )
+
+        self.assertIn("betterangels-local", url)
+        self.assertIn("client_profile_photos/test.png", url)
