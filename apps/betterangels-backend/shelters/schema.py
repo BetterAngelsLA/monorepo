@@ -1,9 +1,12 @@
-from typing import cast
+from typing import Optional, cast
 
 import strawberry
 import strawberry_django
 from accounts.models import User
 from common.permissions.utils import IsAuthenticated
+from django.db.models import Max
+from shelters.enums import StatusChoices
+from shelters.models import Shelter
 from shelters.permissions import BedPermissions, RoomPermissions, ShelterPermissions
 from shelters.services import bed_create, room_create, shelter_create
 from shelters.types import (
@@ -35,6 +38,10 @@ class Query:
     shelter_service_categories: OffsetPaginated[ServiceCategoryType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
     )
+
+    @strawberry.field()
+    def shelter_max_stay(self, info: Info) -> Optional[int]:
+        return Shelter.objects.filter(status=StatusChoices.APPROVED).aggregate(Max("max_stay"))["max_stay__max"] or None
 
 
 @strawberry.type
