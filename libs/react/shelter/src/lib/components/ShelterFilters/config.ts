@@ -76,6 +76,7 @@ const demographicOptions = [
   DemographicChoices.SingleWomen,
   DemographicChoices.TayTeen,
   DemographicChoices.Seniors,
+  DemographicChoices.Couples,
   DemographicChoices.Families,
   DemographicChoices.SingleMoms,
   DemographicChoices.LgbtqPlus,
