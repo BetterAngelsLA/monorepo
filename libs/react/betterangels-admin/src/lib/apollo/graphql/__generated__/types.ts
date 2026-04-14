@@ -1393,6 +1393,11 @@ export enum MaritalStatusEnum {
   Widowed = 'WIDOWED'
 }
 
+export type MaxStayInput = {
+  days: Scalars['Int']['input'];
+  includeNull?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export enum MedicalNeedChoices {
   Dialysis = 'DIALYSIS',
   Dmh = 'DMH',
@@ -2088,6 +2093,7 @@ export type Query = {
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
+  shelterMaxStay?: Maybe<Scalars['Int']['output']>;
   shelterServiceCategories: ServiceCategoryTypeOffsetPaginated;
   shelters: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
@@ -2559,6 +2565,7 @@ export type ShelterFilter = {
   geolocation?: InputMaybe<GeolocationInput>;
   isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
   mapBounds?: InputMaybe<MapBoundsInput>;
+  maxStay?: InputMaybe<MaxStayInput>;
   name?: InputMaybe<Scalars['String']['input']>;
   openNow?: InputMaybe<Scalars['Boolean']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;

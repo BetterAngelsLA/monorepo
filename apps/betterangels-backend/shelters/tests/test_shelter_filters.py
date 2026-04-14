@@ -320,6 +320,38 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(shelter_ids, result_ids)
 
     @parametrize(
+        "days, include_null, expected_result_count",
+        [
+            (3, True, 2),
+            (3, False, 1),
+            (7, True, 1),
+            (7, False, 0),
+        ],
+    )
+    def test_shelter_max_stay_filter(self, days: int, include_null: bool, expected_result_count: int) -> None:
+        shelter_recipe.make(max_stay=None, status=StatusChoices.APPROVED)
+        shelter_recipe.make(max_stay=0, status=StatusChoices.APPROVED)
+        shelter_recipe.make(max_stay=3, status=StatusChoices.APPROVED)
+        shelter_recipe.make(max_stay=7, status=StatusChoices.PENDING)
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {"maxStay": {"days": days, "includeNull": include_null}}
+
+        response = self.execute_graphql(query, variables={"filters": filters})
+
+        self.assertEqual(response["data"]["shelters"]["totalCount"], expected_result_count)
+
+    @parametrize(
         "property_filters, expected_result_count",
         [
             ({"pets": [PetChoices.CATS.name]}, 2),
