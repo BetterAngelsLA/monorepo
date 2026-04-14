@@ -1,8 +1,6 @@
 """Filter and ordering types for shelter queries."""
 
 import datetime
-from functools import reduce
-from operator import or_
 from typing import List, Optional, Tuple, cast
 from zoneinfo import ZoneInfo
 

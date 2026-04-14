@@ -4,9 +4,9 @@ import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
 import { shelterPropertyFiltersAtom } from '../../atoms';
-import { ShelterMaxStayDocument } from '../../pages';
 import { TShelterPropertyFilters } from '../ShelterSearch';
 import { FilterSelector } from './FilterSelector';
+import { ShelterMaxStayDocument } from './__generated__/shelterMaxStay.generated';
 import {
   demographicFilter,
   parkingFilter,
