@@ -45,6 +45,7 @@ export const enumDisplayEntryRequirementChoices: {
   [EntryRequirementChoices.Background]: 'Background Check',
   [EntryRequirementChoices.HomelessVerification]:
     'Homeless Verification/Observation',
+  [EntryRequirementChoices.InSpaOnly]: 'In-SPA Only',
   [EntryRequirementChoices.MedicaidOrMedicare]: 'Medicaid or Medicare',
   [EntryRequirementChoices.PhotoId]: 'Photo ID',
   [EntryRequirementChoices.Referral]: 'Referral',

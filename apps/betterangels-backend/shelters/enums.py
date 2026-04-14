@@ -100,14 +100,15 @@ class ParkingChoices(models.TextChoices):
 # Entry Requirements
 @strawberry.enum
 class EntryRequirementChoices(models.TextChoices):
+    BACKGROUND = "background", _("Background Check")
+    HOMELESS_VERIFICATION = "homeless_verification", _("Homeless Verification/Observation")
     MEDICAID_OR_MEDICARE = "medicaid_or_medicare", _("Medicaid or Medicare")
     PHOTO_ID = "photo_id", _("Photo ID")
     REFERRAL = "referral", _("Referral")
     RESERVATION = "reservation", _("Reservation")
-    BACKGROUND = "background", _("Background Check")
-    HOMELESS_VERIFICATION = "homeless_verification", _("Homeless Verification/Observation")
-    WALK_UPS = "walk_ups", _("Walk-Ups")
     VEHICLE_REGISTRATION = "vehicle_registration", _("Vehicle Registration/Insurance")
+    WALK_UPS = "walk_ups", _("Walk-Ups")
+    IN_SPA_ONLY = "in_spa_only", _("In-SPA Only")
 
 
 # Ecosystem Information

@@ -878,6 +878,7 @@ export type DjangoModelType = {
 export enum EntryRequirementChoices {
   Background = 'BACKGROUND',
   HomelessVerification = 'HOMELESS_VERIFICATION',
+  InSpaOnly = 'IN_SPA_ONLY',
   MedicaidOrMedicare = 'MEDICAID_OR_MEDICARE',
   PhotoId = 'PHOTO_ID',
   Referral = 'REFERRAL',
