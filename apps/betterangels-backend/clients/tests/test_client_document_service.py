@@ -3,9 +3,8 @@ from unittest.mock import MagicMock, patch
 
 from clients.services.client_document import (
     ALLOWED_CONTENT_TYPES,
-    S3_CLIENT_DOCUMENT_PREFIX,
     SERVICE_NAME,
-    STORAGE_DIR,
+    UPLOAD_PATH,
     _validate_content_type,
     create_presigned_uploads,
     resolve_upload,
@@ -94,7 +93,7 @@ class CreatePresignedUploadsTest(TestCase):
                     "ref_id": "ref-1",
                     "filename": "doc1.pdf",
                     "content_type": "application/pdf",
-                    "upload_path": S3_CLIENT_DOCUMENT_PREFIX,
+                    "upload_path": UPLOAD_PATH,
                 }
             ]
         )
@@ -160,6 +159,13 @@ class ResolveUploadTest(TestCase):
         self.permission_group = MagicMock()
         self.permission_group.group = MagicMock()
 
+        storage_location_patcher = patch(
+            "clients.services.client_document.strip_storage_location",
+            side_effect=lambda key: key.removeprefix("media/"),
+        )
+        storage_location_patcher.start()
+        self.addCleanup(storage_location_patcher.stop)
+
     def _make_doc(
         self,
         presigned_key: str | None = None,
@@ -169,7 +175,7 @@ class ResolveUploadTest(TestCase):
         namespace: str = "OTHER_CLIENT_DOCUMENT",
     ) -> MagicMock:
         doc = MagicMock()
-        doc.presigned_key = presigned_key or f"{STORAGE_DIR}/attachments/abc.pdf"
+        doc.presigned_key = presigned_key or "media/attachments/abc.pdf"
         doc.upload_token = upload_token
         doc.filename = filename
         doc.content_type = content_type
@@ -210,10 +216,8 @@ class ResolveUploadTest(TestCase):
         self, mock_validate: MagicMock, mock_s3_exists: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
     ) -> None:
         mock_perm_group.return_value = self.permission_group
-        doc1 = self._make_doc(presigned_key=f"{STORAGE_DIR}/attachments/a.pdf", filename="a.pdf")
-        doc2 = self._make_doc(
-            presigned_key=f"{STORAGE_DIR}/attachments/b.png", filename="b.png", content_type="image/png"
-        )
+        doc1 = self._make_doc(presigned_key="media/attachments/a.pdf", filename="a.pdf")
+        doc2 = self._make_doc(presigned_key="media/attachments/b.png", filename="b.png", content_type="image/png")
 
         result = resolve_upload(
             user=self.user,
@@ -233,8 +237,8 @@ class ResolveUploadTest(TestCase):
         self, mock_validate: MagicMock, mock_s3_exists: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
     ) -> None:
         mock_perm_group.return_value = self.permission_group
-        doc1 = self._make_doc(presigned_key=f"{STORAGE_DIR}/attachments/a.pdf", upload_token="tok-1")
-        doc2 = self._make_doc(presigned_key=f"{STORAGE_DIR}/attachments/b.pdf", upload_token="tok-2")
+        doc1 = self._make_doc(presigned_key="media/attachments/a.pdf", upload_token="tok-1")
+        doc2 = self._make_doc(presigned_key="media/attachments/b.pdf", upload_token="tok-2")
 
         resolve_upload(
             user=self.user,
@@ -245,13 +249,13 @@ class ResolveUploadTest(TestCase):
         self.assertEqual(mock_validate.call_count, 2)
         mock_validate.assert_any_call(
             upload_token="tok-1",
-            key=f"{STORAGE_DIR}/attachments/a.pdf",
+            key="media/attachments/a.pdf",
             user_id=self.user.pk,
             scope=SERVICE_NAME,
         )
         mock_validate.assert_any_call(
             upload_token="tok-2",
-            key=f"{STORAGE_DIR}/attachments/b.pdf",
+            key="media/attachments/b.pdf",
             user_id=self.user.pk,
             scope=SERVICE_NAME,
         )
@@ -358,8 +362,8 @@ class ResolveUploadTest(TestCase):
         mock_perm_group.return_value = self.permission_group
         mock_validate.side_effect = [True, False]
         initial_count = Attachment.objects.count()
-        doc1 = self._make_doc(presigned_key=f"{STORAGE_DIR}/attachments/a.pdf", upload_token="tok-1")
-        doc2 = self._make_doc(presigned_key=f"{STORAGE_DIR}/attachments/b.pdf", upload_token="tok-bad")
+        doc1 = self._make_doc(presigned_key="media/attachments/a.pdf", upload_token="tok-1")
+        doc2 = self._make_doc(presigned_key="media/attachments/b.pdf", upload_token="tok-bad")
 
         with self.assertRaises(ValueError):
             resolve_upload(
@@ -382,8 +386,8 @@ class ResolveUploadTest(TestCase):
         leaves the 1st doc persisted (orphaned). The caller is responsible for atomicity."""
         mock_perm_group.return_value = self.permission_group
         initial_count = Attachment.objects.count()
-        doc1 = self._make_doc(presigned_key=f"{STORAGE_DIR}/attachments/a.pdf", filename="a.pdf")
-        doc2 = self._make_doc(presigned_key=f"{STORAGE_DIR}/attachments/b.pdf", filename="b.pdf")
+        doc1 = self._make_doc(presigned_key="media/attachments/a.pdf", filename="a.pdf")
+        doc2 = self._make_doc(presigned_key="media/attachments/b.pdf", filename="b.pdf")
 
         original_save = Attachment.save
 

@@ -13,14 +13,13 @@ from common.services.s3 import (
     PresignedS3UploadInput,
     generate_s3_presigned_upload_urls,
     s3_key_exists,
+    strip_storage_location,
 )
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from common.services.upload_token import create_upload_token, validate_upload_token
 from django.contrib.contenttypes.models import ContentType
 
-STORAGE_DIR = "media"
-CLIENT_DOCUMENT_RELATIVE_PATH = "attachments"
-S3_CLIENT_DOCUMENT_PREFIX = f"{STORAGE_DIR}/{CLIENT_DOCUMENT_RELATIVE_PATH}"
+UPLOAD_PATH = "attachments"
 SERVICE_NAME = "client_document"
 
 ALLOWED_CONTENT_TYPES = DEFAULT_DOCUMENT_CONTENT_TYPES | DEFAULT_IMAGE_CONTENT_TYPES
@@ -46,7 +45,7 @@ def create_presigned_uploads(
                 "ref_id": upload.ref_id,
                 "filename": upload.filename,
                 "content_type": upload.content_type,
-                "upload_path": S3_CLIENT_DOCUMENT_PREFIX,
+                "upload_path": UPLOAD_PATH,
             }
         )
 
@@ -102,12 +101,10 @@ def resolve_upload(
             raise ValueError(f"File not found in storage for '{doc.filename}'")
 
     # Validations passed — persist attachments.
-    storage_prefix = f"{STORAGE_DIR}/"
     attached: list[Attachment] = []
 
     for doc in docs:
-        # strip "media/"
-        file_path = doc.presigned_key[len(storage_prefix) :]
+        file_path = strip_storage_location(doc.presigned_key)
 
         attachment = Attachment(
             file=file_path,

@@ -22,6 +22,7 @@ class GenerateS3PresignedUploadUrlsTestCase(TestCase):
         storage_patcher = patch("common.services.s3.default_storage", spec=S3Storage)
         self.mock_storage = storage_patcher.start()
         self.mock_storage.bucket_name = TEST_BUCKET
+        self.mock_storage.location = "media"
 
         self.mock_client = MagicMock()
         self.mock_storage.connection.meta.client = self.mock_client
@@ -49,7 +50,7 @@ class GenerateS3PresignedUploadUrlsTestCase(TestCase):
         upload = result["uploads"][0]
         self.assertEqual(upload["ref_id"], "ref-1")
         self.assertIn(f"https://s3.amazonaws.com/{TEST_BUCKET}", upload["url"])
-        self.assertTrue(upload["key"].startswith("attachments/"))
+        self.assertTrue(upload["key"].startswith("media/attachments/"))
         self.assertTrue(upload["key"].endswith(".jpg"))
         self.assertIn("key", upload["fields"])
 
@@ -115,7 +116,7 @@ class GenerateS3PresignedUploadUrlsTestCase(TestCase):
         conditions = call_kwargs["Conditions"]
         starts_with_conditions = [c for c in conditions if isinstance(c, list) and c[0] == "starts-with"]
         self.assertEqual(len(starts_with_conditions), 1)
-        self.assertEqual(starts_with_conditions[0], ["starts-with", "$key", "attachments/docs/"])
+        self.assertEqual(starts_with_conditions[0], ["starts-with", "$key", "media/attachments/docs/"])
 
     def test_missing_fields_key_raises(self) -> None:
         self.mock_client.generate_presigned_post.side_effect = None
@@ -155,6 +156,7 @@ class GenerateS3PresignedUploadUrlsLocalDevTestCase(TestCase):
     def test_uses_storage_client_when_available(self, mock_storage: MagicMock) -> None:
         mock_client = MagicMock()
         mock_storage.bucket_name = TEST_BUCKET
+        mock_storage.location = "media"
         mock_storage.get_external_client.return_value = mock_client
         mock_client.generate_presigned_post.side_effect = lambda **kwargs: {
             "url": f"http://localhost:9000/{kwargs['Bucket']}",

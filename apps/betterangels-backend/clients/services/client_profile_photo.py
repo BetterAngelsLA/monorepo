@@ -2,12 +2,16 @@ from accounts.models import User
 from clients.models import ClientProfile
 from clients.types import GenerateClientProfilePhotoUploadInput
 from common.constants import DEFAULT_IMAGE_CONTENT_TYPES
-from common.services.s3 import DEFAULT_UPLOAD_EXPIRATION_SECONDS, generate_s3_presigned_upload_urls, s3_key_exists
+from common.services.s3 import (
+    DEFAULT_UPLOAD_EXPIRATION_SECONDS,
+    generate_s3_presigned_upload_urls,
+    s3_key_exists,
+    strip_storage_location,
+)
 from common.services.types import AuthorizedPresignedUpload
 from common.services.upload_token import create_upload_token, validate_upload_token
 
-STORAGE_DIR = "media"
-CLIENT_PROFILE_PHOTO_PATH = f"{STORAGE_DIR}/client_profile_photos"
+UPLOAD_PATH = "client_profile_photos"
 SERVICE_NAME = "client_profile_photo"
 
 ALLOWED_CONTENT_TYPES = DEFAULT_IMAGE_CONTENT_TYPES
@@ -31,7 +35,7 @@ def create_presigned_upload(
                 "ref_id": upload.ref_id,
                 "filename": upload.filename,
                 "content_type": upload.content_type,
-                "upload_path": CLIENT_PROFILE_PHOTO_PATH,
+                "upload_path": UPLOAD_PATH,
             }
         ]
     )
@@ -72,10 +76,7 @@ def resolve_upload(
     if not s3_key_exists(key=presigned_key):
         raise ValueError("File not found in storage")
 
-    storage_prefix = f"{STORAGE_DIR}/"
-
-    # strip "media/"
-    profile_photo_path = presigned_key[len(storage_prefix) :]
+    profile_photo_path = strip_storage_location(presigned_key)
 
     client_profile.profile_photo = profile_photo_path
     client_profile.save(update_fields=["profile_photo"])

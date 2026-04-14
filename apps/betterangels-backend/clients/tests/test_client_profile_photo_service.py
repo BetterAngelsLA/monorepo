@@ -3,9 +3,8 @@ from unittest.mock import MagicMock, patch
 
 from clients.services.client_profile_photo import (
     ALLOWED_CONTENT_TYPES,
-    CLIENT_PROFILE_PHOTO_PATH,
     SERVICE_NAME,
-    STORAGE_DIR,
+    UPLOAD_PATH,
     _validate_content_type,
     create_presigned_upload,
     resolve_upload,
@@ -77,7 +76,7 @@ class CreatePresignedUploadTest(TestCase):
                     "ref_id": "ref-123",
                     "filename": "photo.jpg",
                     "content_type": "image/jpeg",
-                    "upload_path": CLIENT_PROFILE_PHOTO_PATH,
+                    "upload_path": UPLOAD_PATH,
                 }
             ]
         )
@@ -110,8 +109,15 @@ class ResolveUploadTest(TestCase):
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
         self.client_profile: Any = baker.make("clients.ClientProfile")
-        self.presigned_key = f"{STORAGE_DIR}/client_profile_photos/abc.jpg"
+        self.presigned_key = "media/client_profile_photos/abc.jpg"
         self.upload_token = "valid-token"
+
+        storage_location_patcher = patch(
+            "clients.services.client_profile_photo.strip_storage_location",
+            side_effect=lambda key: key.removeprefix("media/"),
+        )
+        storage_location_patcher.start()
+        self.addCleanup(storage_location_patcher.stop)
 
     @patch("clients.services.client_profile_photo.s3_key_exists", return_value=True)
     @patch("clients.services.client_profile_photo.validate_upload_token", return_value=True)

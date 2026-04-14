@@ -12,6 +12,26 @@ DEFAULT_UPLOAD_EXPIRATION_SECONDS = 300
 DEFAULT_MAX_FILE_SIZE = 10_000_000
 
 
+def get_storage_location() -> str:
+    """Return the S3 key prefix configured on default_storage (e.g. 'media')."""
+    storage = default_storage
+    if not isinstance(storage, S3Storage):
+        return ""
+    return (storage.location or "").strip("/")
+
+
+def strip_storage_location(key: str) -> str:
+    """Strip the storage location prefix from a full S3 key.
+
+    Converts e.g. "media/attachments/abc.pdf" → "attachments/abc.pdf"
+    so the result can be used as a Django FileField name.
+    """
+    location = get_storage_location()
+    if not location:
+        return key
+    return key.removeprefix(f"{location}/")
+
+
 class PresignedS3UploadInput(TypedDict):
     ref_id: str
     filename: str
@@ -170,17 +190,22 @@ def generate_s3_presigned_upload_urls(
     uploads: list[PresignedS3UploadInput],
 ) -> PresignedS3UploadBatchResult:
     s3_client, bucket_name = _get_s3_client_and_bucket(external=True)
+    storage_location = get_storage_location()
 
     results: list[PresignedS3UploadResult] = []
 
     for upload in uploads:
+        upload_path = upload["upload_path"]
+        if storage_location:
+            upload_path = f"{storage_location}/{upload_path}"
+
         result = _generate_presigned_post_with_client(
             s3_client=s3_client,
             bucket_name=bucket_name,
             ref_id=upload["ref_id"],
             filename=upload["filename"],
             content_type=upload["content_type"],
-            upload_path=upload["upload_path"],
+            upload_path=upload_path,
             expires_in=upload.get("expires_in"),
             max_file_size=upload.get("max_file_size"),
         )

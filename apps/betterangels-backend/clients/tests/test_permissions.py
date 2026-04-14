@@ -423,7 +423,10 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self._handle_user_login(user_label)
         with patch("clients.services.client_document.validate_upload_token", return_value=True), patch(
             "clients.services.client_document.assign_object_permissions"
-        ), patch("clients.services.client_document.s3_key_exists", return_value=True):
+        ), patch("clients.services.client_document.s3_key_exists", return_value=True), patch(
+            "clients.services.client_document.strip_storage_location",
+            side_effect=lambda key: key.removeprefix("media/"),
+        ):
             response = self._resolve_client_document_uploads_fixture(
                 self.client_profile_1["id"],
                 [

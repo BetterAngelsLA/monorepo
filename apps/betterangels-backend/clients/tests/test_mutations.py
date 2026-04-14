@@ -533,6 +533,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def test_resolve_client_profile_photo_upload(self) -> None:
         with patch("clients.services.client_profile_photo.validate_upload_token", return_value=True), patch(
             "clients.services.client_profile_photo.s3_key_exists", return_value=True
+        ), patch(
+            "clients.services.client_profile_photo.strip_storage_location",
+            side_effect=lambda key: key.removeprefix("media/"),
         ):
             expected_query_count = 8
             with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -1010,6 +1013,9 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         with patch("clients.services.client_document.validate_upload_token", return_value=True), patch(
             "clients.services.client_document.s3_key_exists", return_value=True
+        ), patch(
+            "clients.services.client_document.strip_storage_location",
+            side_effect=lambda key: key.removeprefix("media/"),
         ):
             expected_query_count = 35
             with self.assertNumQueriesWithoutCache(expected_query_count):
