@@ -399,6 +399,7 @@ class ContactInfoInline(admin.StackedInline):
     fields = [
         ("contact_name", "contact_number"),
         ("contact_title", "contact_email"),
+        ("is_claimant",),
     ]
     verbose_name = "Additional Contact - PRIVATE"
     verbose_name_plural = "Additional Contacts - PRIVATE"
@@ -868,6 +869,25 @@ class PhotoCountFilter(admin.ListFilter):
         return queryset
 
 
+class HasClaimantFilter(admin.SimpleListFilter):
+    title = "has claimant"
+    parameter_name = "has_claimant"
+
+    def lookups(self, request: HttpRequest, model_admin: admin.ModelAdmin) -> list[tuple[str, str]]:
+        return [
+            ("yes", "Yes"),
+            ("no", "No"),
+        ]
+
+    def queryset(self, request: HttpRequest, queryset: QuerySet) -> QuerySet:
+        value = self.value()
+        if value == "yes":
+            return queryset.filter(additional_contacts__is_claimant=True).distinct()
+        if value == "no":
+            return queryset.exclude(additional_contacts__is_claimant=True).distinct()
+        return queryset
+
+
 @admin.register(Shelter)
 class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
@@ -1048,6 +1068,8 @@ class ShelterAdmin(ImportExportModelAdmin):
         "overall_rating",
         # Better Angels Administration
         "status",
+        # Contacts
+        HasClaimantFilter,
         # Photo Counts
         PhotoCountFilter,
     )
