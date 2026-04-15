@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 @strawberry.enum
 class DemographicChoices(models.TextChoices):
     ALL = "all", _("All")
+    COUPLES = "couples", _("Couples")
     SINGLE_MEN = "single_men", _("Single Men")
     SINGLE_WOMEN = "single_women", _("Single Women")
     TAY_TEEN = "tay_teen", _("TAY/Teen")

@@ -1,3 +1,4 @@
+import { useQuery } from '@apollo/client/react';
 import { Checkbox, ExpandableContainer } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
@@ -5,6 +6,7 @@ import { useEffect } from 'react';
 import { shelterPropertyFiltersAtom } from '../../atoms';
 import { TShelterPropertyFilters } from '../ShelterSearch';
 import { FilterSelector } from './FilterSelector';
+import { ShelterMaxStayDocument } from './__generated__/shelterMaxStay.generated';
 import {
   demographicFilter,
   parkingFilter,
@@ -24,6 +26,9 @@ export function ShelterFilters(props: IProps) {
   const { onChange, className } = props;
 
   const [filters, setFilters] = useAtom(shelterPropertyFiltersAtom);
+
+  const { data: maxStayData } = useQuery(ShelterMaxStayDocument);
+  const maxStayMax = maxStayData?.shelterMaxStay ?? undefined;
 
   const parentCss = ['pb-24', className];
 
@@ -50,6 +55,27 @@ export function ShelterFilters(props: IProps) {
     setFilters((prev) => ({
       ...prev,
       isAccessCenter: checked,
+    }));
+  }
+
+  function onMaxStayDaysChange(days: string) {
+    const parsed = parseInt(days, 10);
+    setFilters((prev) => ({
+      ...prev,
+      maxStay: {
+        days: isNaN(parsed) ? 0 : parsed,
+        includeNull: prev.maxStay?.includeNull ?? false,
+      },
+    }));
+  }
+
+  function onMaxStayIncludeNullChange(checked: boolean) {
+    setFilters((prev) => ({
+      ...prev,
+      maxStay: {
+        days: prev.maxStay?.days ?? 0,
+        includeNull: checked,
+      },
     }));
   }
 
@@ -126,6 +152,31 @@ export function ShelterFilters(props: IProps) {
           values={filters[parkingFilter.name]}
           {...parkingFilter}
         />
+
+        <div className="mt-8">
+          <div className="flex justify-between items-center">Max Stay</div>
+          <div className="mt-6 flex flex-col gap-2">
+            <input
+              type="number"
+              min={1}
+              max={maxStayMax}
+              value={filters.maxStay?.days || ''}
+              onChange={(e) => onMaxStayDaysChange(e.target.value)}
+              placeholder={
+                maxStayMax
+                  ? `Enter number between 1 and ${maxStayMax}`
+                  : 'Enter number'
+              }
+              className="w-full border border-neutral-90 rounded-lg px-3 py-2 text-sm bg-white"
+            />
+            <Checkbox
+              className="w-full flex flex-row justify-end items-center gap-2 border-0 bg-white"
+              label="Include unknown"
+              checked={!!filters.maxStay?.includeNull}
+              onChange={onMaxStayIncludeNullChange}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
