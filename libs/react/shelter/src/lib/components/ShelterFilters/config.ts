@@ -59,9 +59,8 @@ export function getFilterLabel(
       return enumDisplayDemographics[value as DemographicChoices] || null;
     case 'entryRequirements':
       return (
-        enumDisplayEntryRequirementChoices[
-          value as EntryRequirementChoices
-        ] || null
+        enumDisplayEntryRequirementChoices[value as EntryRequirementChoices] ||
+        null
       );
     case 'pets':
       return enumDisplayPetChoices[value as PetChoices] || null;
@@ -117,10 +116,15 @@ export const demographicFilter: TFilterConfig = {
 };
 
 const entryRequirementOptions = [
+  EntryRequirementChoices.Background,
+  EntryRequirementChoices.HomelessVerification,
+  EntryRequirementChoices.InSpaOnly,
   EntryRequirementChoices.MedicaidOrMedicare,
   EntryRequirementChoices.PhotoId,
   EntryRequirementChoices.Referral,
   EntryRequirementChoices.Reservation,
+  EntryRequirementChoices.VehicleRegistration,
+  EntryRequirementChoices.WalkUps,
 ];
 const entryRequirementOptionList: TShelterFilterOption[] =
   entryRequirementOptions.map((option) => {
