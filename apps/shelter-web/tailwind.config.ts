@@ -41,6 +41,7 @@ const config = {
         'success-90': 'var(--color-success-90)',
         'primary-dark': 'var(--color-primary-dark)',
         'dark-blue': 'var(--color-dark-blue)',
+        'white-60': 'var(--color-white-60)',
       },
       keyframes: {
         slideInUp: {

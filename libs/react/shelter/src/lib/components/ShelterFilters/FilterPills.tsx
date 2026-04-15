@@ -122,11 +122,11 @@ export function FilterPills(props: IProps) {
             <span>{pill.label}</span>
             <button
               type="button"
-              className="flex shrink-0 items-center justify-center rounded-full p-0.5 text-neutral-50 hover:bg-primary-90 hover:text-neutral-20"
+              className="flex shrink-0 items-center justify-center rounded-full p-1 text-neutral-50 hover:bg-primary-90 hover:text-neutral-20"
               aria-label={`Remove ${pill.label} filter`}
               onClick={() => onClearPill(pill)}
             >
-              <CloseIcon className="w-2.5 h-2.5" />
+              <CloseIcon className="w-3 h-3 bg-white-60 rounded-full p-0.5 text-primary-20" />
             </button>
           </div>
         );
