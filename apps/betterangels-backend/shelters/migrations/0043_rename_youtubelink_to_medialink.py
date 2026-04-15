@@ -7,6 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("shelters", "0042_add_youtube_link"),
+        ("shelters", "0042_bed_room_room_accessibility_room_demographics_and_more"),
     ]
 
     operations = [
