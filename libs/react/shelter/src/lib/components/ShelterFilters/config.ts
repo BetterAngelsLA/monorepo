@@ -57,8 +57,20 @@ export function getFilterLabel(
       return 'Max stay';
     case 'demographics':
       return enumDisplayDemographics[value as DemographicChoices] || null;
+    case 'entryRequirements':
+      return (
+        enumDisplayEntryRequirementChoices[
+          value as EntryRequirementChoices
+        ] || null
+      );
     case 'pets':
       return enumDisplayPetChoices[value as PetChoices] || null;
+    case 'referralRequirement':
+      return (
+        enumDisplayReferralRequirementChoices[
+          value as ReferralRequirementChoices
+        ] || null
+      );
     case 'specialSituationRestrictions':
       return (
         enumDisplaySpecialSituationRestrictionChoices[
