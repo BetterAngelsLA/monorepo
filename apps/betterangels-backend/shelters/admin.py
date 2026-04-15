@@ -881,10 +881,11 @@ class HasClaimantFilter(admin.SimpleListFilter):
 
     def queryset(self, request: HttpRequest, queryset: QuerySet) -> QuerySet:
         value = self.value()
+        claimant_exists = models.Exists(ContactInfo.objects.filter(shelter=OuterRef("pk"), is_claimant=True))
         if value == "yes":
-            return queryset.filter(additional_contacts__is_claimant=True).distinct()
+            return queryset.filter(claimant_exists)
         if value == "no":
-            return queryset.exclude(additional_contacts__is_claimant=True).distinct()
+            return queryset.exclude(claimant_exists)
         return queryset
 
 
