@@ -100,6 +100,7 @@ export type AdminShelterType = {
   interiorPhotos: Array<ShelterPhotoType>;
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
+  mediaLinks: Array<MediaLinkType>;
   name: Scalars['String']['output'];
   onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
   organization?: Maybe<OrganizationType>;
@@ -129,7 +130,6 @@ export type AdminShelterType = {
   updatedAt: Scalars['DateTime']['output'];
   visitorsAllowed?: Maybe<Scalars['Boolean']['output']>;
   website?: Maybe<Scalars['String']['output']>;
-  youtubeLinks: Array<YouTubeLinkType>;
 };
 
 export type AdminShelterTypeOffsetPaginated = {
@@ -1385,6 +1385,14 @@ export enum MaritalStatusEnum {
   Widowed = 'WIDOWED'
 }
 
+export type MediaLinkType = {
+  __typename?: 'MediaLinkType';
+  id: Scalars['ID']['output'];
+  mediaType: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+};
+
 export enum MedicalNeedChoices {
   Dialysis = 'DIALYSIS',
   Dmh = 'DMH',
@@ -2639,6 +2647,7 @@ export type ShelterType = {
   interiorPhotos: Array<ShelterPhotoType>;
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
+  mediaLinks: Array<MediaLinkType>;
   name: Scalars['String']['output'];
   onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
   organization?: Maybe<OrganizationType>;
@@ -2668,7 +2677,6 @@ export type ShelterType = {
   updatedAt: Scalars['DateTime']['output'];
   visitorsAllowed?: Maybe<Scalars['Boolean']['output']>;
   website?: Maybe<Scalars['String']['output']>;
-  youtubeLinks: Array<YouTubeLinkType>;
 };
 
 export type ShelterTypeOffsetPaginated = {
@@ -3034,10 +3042,3 @@ export enum VeteranStatusEnum {
   PreferNotToSay = 'PREFER_NOT_TO_SAY',
   Yes = 'YES'
 }
-
-export type YouTubeLinkType = {
-  __typename?: 'YouTubeLinkType';
-  id: Scalars['ID']['output'];
-  title: Scalars['String']['output'];
-  url: Scalars['String']['output'];
-};

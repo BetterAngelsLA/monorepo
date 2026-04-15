@@ -35,7 +35,7 @@ export function GalleryPage(props: TProps) {
   }
 
   const combinedPhotos = [...shelter.exteriorPhotos, ...shelter.interiorPhotos];
-  const youtubeVideos = (shelter.youtubeLinks || [])
+  const youtubeVideos = (shelter.mediaLinks || [])
     .map((link) => {
       const videoId = extractYouTubeVideoId(link.url);
       return videoId ? { videoId, title: link.title || '' } : null;

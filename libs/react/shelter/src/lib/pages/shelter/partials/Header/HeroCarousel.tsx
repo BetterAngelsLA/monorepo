@@ -15,7 +15,7 @@ export function HeroCarousel(props: TProps) {
     ...(shelter.interiorPhotos || []),
   ];
 
-  const youtubeVideos = (shelter.youtubeLinks || [])
+  const youtubeVideos = (shelter.mediaLinks || [])
     .map((link) => {
       const videoId = extractYouTubeVideoId(link.url);
       return videoId ? { videoId, title: link.title || undefined } : null;

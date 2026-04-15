@@ -41,7 +41,16 @@ class Video(BaseModel):
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="videos")
 
 
-class YouTubeLink(BaseModel):
+class MediaLinkTypeChoices(models.TextChoices):
+    YOUTUBE = "youtube", "YouTube"
+
+
+class MediaLink(BaseModel):
     url = models.URLField(max_length=255)
     title = models.CharField(max_length=255, blank=True)
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="youtube_links")
+    media_type = models.CharField(
+        max_length=50,
+        choices=MediaLinkTypeChoices.choices,
+        default=MediaLinkTypeChoices.YOUTUBE,
+    )
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="media_links")

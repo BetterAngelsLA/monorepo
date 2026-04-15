@@ -127,10 +127,11 @@ query ViewShelter($id: ID!) {
       name
     }
     updatedAt
-    youtubeLinks {
+    mediaLinks {
       id
       url
       title
+      mediaType
     }
   }
 }

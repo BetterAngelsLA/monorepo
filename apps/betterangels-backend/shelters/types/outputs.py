@@ -54,11 +54,12 @@ class ShelterPhotoType:
     file: TransformableImageType
 
 
-@strawberry_django.type(models.YouTubeLink)
-class YouTubeLinkType:
+@strawberry_django.type(models.MediaLink)
+class MediaLinkType:
     id: ID
     url: str
     title: str
+    media_type: str
 
 
 @strawberry.type
@@ -125,7 +126,7 @@ class ShelterTypeMixin:
     updated_at: auto
     visitors_allowed: auto
     website: auto
-    youtube_links: List[YouTubeLinkType]
+    media_links: List[MediaLinkType]
 
     _exterior_photos: Optional[List[ShelterPhotoType]] = None
     _interior_photos: Optional[List[ShelterPhotoType]] = None

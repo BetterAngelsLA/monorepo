@@ -80,7 +80,7 @@ export function ShelterPage({ id }: { id: string }) {
     !!shelter.funders?.length;
   const hasPhotos =
     !!shelter.interiorPhotos?.length || !!shelter.exteriorPhotos?.length;
-  const hasMedia = hasPhotos || !!shelter.youtubeLinks?.length;
+  const hasMedia = hasPhotos || !!shelter.mediaLinks?.length;
 
   return (
     <div className="w-full">
