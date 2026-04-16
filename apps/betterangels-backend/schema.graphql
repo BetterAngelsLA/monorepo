@@ -125,6 +125,7 @@ type AdminShelterType {
   updatedAt: DateTime!
   visitorsAllowed: Boolean
   website: String
+  mediaLinks: [MediaLinkType!]!
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
@@ -1383,6 +1384,13 @@ input MaxStayInput {
   includeNull: Boolean = false
 }
 
+type MediaLinkType {
+  id: ID!
+  url: String!
+  title: String!
+  mediaType: String!
+}
+
 enum MedicalNeedChoices {
   ERC
   DMH
@@ -2182,6 +2190,7 @@ type ShelterType {
   updatedAt: DateTime!
   visitorsAllowed: Boolean
   website: String
+  mediaLinks: [MediaLinkType!]!
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String

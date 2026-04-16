@@ -15,15 +15,9 @@ export function ImageSlide(props: TProps) {
     altText = 'carousel image',
   } = props;
 
-  const parentCss = ['flex-none', 'w-full', className];
+  const parentCss = ['flex-none', 'w-full', 'h-full', className];
 
-  const imageCss = [
-    'block',
-    'w-full',
-    'object-cover',
-    'aspect-4/3',
-    imgClassName,
-  ];
+  const imageCss = ['block', 'w-full', 'h-full', 'object-cover', imgClassName];
 
   return (
     <div className={mergeCss(parentCss)}>
