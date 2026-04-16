@@ -34,36 +34,34 @@ export function Restrictions({
     <Card title="Restrictions">
       <div className="flex flex-col gap-2">
         {shelter.maxStay && (
-          <div className="flex gap-1">
-            <strong className="shrink-0 whitespace-nowrap">Max Stay:</strong>
+          <div className="grid grid-cols-[auto_1fr] gap-x-1">
+            <strong className="whitespace-nowrap">Max Stay:</strong>
             <span>{shelter.maxStay} days</span>
           </div>
         )}
 
         {shelter.exitPolicy?.length > 0 && (
-          <div className="flex gap-1">
-            <strong className="shrink-0 whitespace-nowrap">Exit Policy:</strong>
+          <div className="grid grid-cols-[auto_1fr] gap-x-1">
+            <strong className="whitespace-nowrap">Exit Policy:</strong>
             <span>{exitPolicyDisplay.join('; ')}</span>
           </div>
         )}
 
-        <div className="flex gap-1">
-          <strong className="shrink-0 whitespace-nowrap">Curfew:</strong>
+        <div className="grid grid-cols-[auto_1fr] gap-x-1">
+          <strong className="whitespace-nowrap">Curfew:</strong>
           <span>{hasCurfew ? formatCurfewTime(shelter.curfew) : 'No'}</span>
         </div>
 
         {shelter.visitorsAllowed != null && (
-          <div className="flex gap-1">
-            <strong className="shrink-0 whitespace-nowrap">Visitors:</strong>
+          <div className="grid grid-cols-[auto_1fr] gap-x-1">
+            <strong className="whitespace-nowrap">Visitors:</strong>
             <span>{shelter.visitorsAllowed ? 'Allowed' : 'Not Allowed'}</span>
           </div>
         )}
 
         {shelter.emergencySurge != null && (
-          <div className="flex gap-1">
-            <strong className="shrink-0 whitespace-nowrap">
-              Emergency Surge:
-            </strong>
+          <div className="grid grid-cols-[auto_1fr] gap-x-1">
+            <strong className="whitespace-nowrap">Emergency Surge:</strong>
             <span>{shelter.emergencySurge ? 'Yes' : 'No'}</span>
           </div>
         )}
