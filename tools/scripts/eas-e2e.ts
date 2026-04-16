@@ -137,7 +137,7 @@ if (githubRepository && githubStatusSha) {
 // 5. Trigger EAS workflow with build IDs + update group
 console.log('\nTriggering EAS Maestro workflow...');
 run(
-  `eas workflow:run .eas/workflows/e2e-test.yml ` +
+  `yarn eas workflow:run .eas/workflows/e2e-test.yml ` +
     `-F android_build_id=${androidBuildId} ` +
     `-F ios_build_id=${iosBuildId} ` +
     `-F update_group_id=${groupId} ` +
