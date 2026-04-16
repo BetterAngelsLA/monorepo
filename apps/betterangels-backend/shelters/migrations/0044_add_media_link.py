@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0042_bed_room_room_accessibility_room_demographics_and_more"),
+        ("shelters", "0043_contactinfo_is_claimant"),
     ]
 
     operations = [
