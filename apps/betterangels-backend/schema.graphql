@@ -857,14 +857,15 @@ type DjangoModelType {
 }
 
 enum EntryRequirementChoices {
+  BACKGROUND
+  HOMELESS_VERIFICATION
   MEDICAID_OR_MEDICARE
   PHOTO_ID
   REFERRAL
   RESERVATION
-  BACKGROUND
-  HOMELESS_VERIFICATION
-  WALK_UPS
   VEHICLE_REGISTRATION
+  WALK_UPS
+  IN_SPA_ONLY
 }
 
 type EntryRequirementType {
@@ -2121,6 +2122,8 @@ type ShelterProgramType {
 input ShelterPropertyInput {
   pets: [PetChoices!] = null
   demographics: [DemographicChoices!] = null
+  entryRequirements: [EntryRequirementChoices!] = null
+  referralRequirement: [ReferralRequirementChoices!] = null
   specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
   shelterTypes: [ShelterChoices!] = null
   roomStyles: [RoomStyleChoices!] = null

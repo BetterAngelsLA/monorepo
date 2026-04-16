@@ -878,6 +878,7 @@ export type DjangoModelType = {
 export enum EntryRequirementChoices {
   Background = 'BACKGROUND',
   HomelessVerification = 'HOMELESS_VERIFICATION',
+  InSpaOnly = 'IN_SPA_ONLY',
   MedicaidOrMedicare = 'MEDICAID_OR_MEDICARE',
   PhotoId = 'PHOTO_ID',
   Referral = 'REFERRAL',
@@ -2624,8 +2625,10 @@ export type ShelterProgramType = {
 
 export type ShelterPropertyInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
+  entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
   parking?: InputMaybe<Array<ParkingChoices>>;
   pets?: InputMaybe<Array<PetChoices>>;
+  referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;

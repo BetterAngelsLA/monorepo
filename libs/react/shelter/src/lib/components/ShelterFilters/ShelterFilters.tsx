@@ -9,8 +9,10 @@ import { FilterSelector } from './FilterSelector';
 import { ShelterMaxStayDocument } from './__generated__/shelterMaxStay.generated';
 import {
   demographicFilter,
+  entryRequirementFilter,
   parkingFilter,
   petsFilter,
+  referralRequirementFilter,
   roomStyleFilter,
   shelterTypeFilter,
   specialSituationFilter,
@@ -117,40 +119,47 @@ export function ShelterFilters(props: IProps) {
           values={filters[demographicFilter.name]}
           {...demographicFilter}
         />
-
         <FilterSelector
           className="mt-8"
           onChange={onFilterChange}
-          values={filters[specialSituationFilter.name]}
-          {...specialSituationFilter}
+          values={filters[entryRequirementFilter.name]}
+          {...entryRequirementFilter}
         />
-
         <FilterSelector
           className="mt-8"
           onChange={onFilterChange}
-          values={filters[shelterTypeFilter.name]}
-          {...shelterTypeFilter}
+          values={filters[parkingFilter.name]}
+          {...parkingFilter}
         />
-
-        <FilterSelector
-          className="mt-8"
-          onChange={onFilterChange}
-          values={filters[roomStyleFilter.name]}
-          {...roomStyleFilter}
-        />
-
         <FilterSelector
           className="mt-8"
           onChange={onFilterChange}
           values={filters[petsFilter.name]}
           {...petsFilter}
         />
-
         <FilterSelector
           className="mt-8"
           onChange={onFilterChange}
-          values={filters[parkingFilter.name]}
-          {...parkingFilter}
+          values={filters[referralRequirementFilter.name]}
+          {...referralRequirementFilter}
+        />
+        <FilterSelector
+          className="mt-8"
+          onChange={onFilterChange}
+          values={filters[roomStyleFilter.name]}
+          {...roomStyleFilter}
+        />
+        <FilterSelector
+          className="mt-8"
+          onChange={onFilterChange}
+          values={filters[specialSituationFilter.name]}
+          {...specialSituationFilter}
+        />
+        <FilterSelector
+          className="mt-8"
+          onChange={onFilterChange}
+          values={filters[shelterTypeFilter.name]}
+          {...shelterTypeFilter}
         />
 
         <div className="mt-8">
@@ -172,7 +181,11 @@ export function ShelterFilters(props: IProps) {
             <Checkbox
               className="w-full flex flex-row justify-end items-center gap-2 border-0 bg-white"
               label="Include unknown"
-              checked={!!filters.maxStay?.includeNull}
+              disabled={!filters.maxStay?.days}
+              checked={
+                !!filters.maxStay?.includeNull &&
+                (filters.maxStay?.days ?? 0) > 0
+              }
               onChange={onMaxStayIncludeNullChange}
             />
           </div>
