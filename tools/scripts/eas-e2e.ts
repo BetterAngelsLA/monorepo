@@ -51,6 +51,12 @@ const projectDir = resolveProjectDir(project);
 // 1. Setup env and compute fingerprint (env vars are identical across profiles)
 const fingerprint = setupEnvAndFingerprint(projectDir, androidProfile);
 
+// DEBUG: log the .env content to verify EXPO_PUBLIC_* values in the EAS Update bundle
+const envContent = fs.readFileSync(path.join(projectDir, '.env'), 'utf-8');
+console.log('\n=== DEBUG: .env written for EAS Update ===');
+console.log(envContent);
+console.log('===========================================\n');
+
 // 2. Find or trigger builds for both platforms
 console.log(`\nChecking for builds with runtime version: ${fingerprint}`);
 
@@ -141,6 +147,8 @@ run(
     `-F android_build_id=${androidBuildId} ` +
     `-F ios_build_id=${iosBuildId} ` +
     `-F update_group_id=${groupId} ` +
+    `-F MAESTRO_BA_USER_EMAIL=${process.env.MAESTRO_BA_USER_EMAIL} ` +
+    `-F MAESTRO_BA_USER_PASSWORD=${process.env.MAESTRO_BA_USER_PASSWORD} ` +
     `--non-interactive`,
   { cwd: projectDir }
 );
