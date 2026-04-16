@@ -1,6 +1,7 @@
 import { useQuery } from '@apollo/client/react';
+import { VideoEmbed } from '@monorepo/react/components';
 import { ArrowLeftIcon } from '@monorepo/react/icons';
-import { extractYouTubeVideoId } from '@monorepo/react/shared';
+import { mapMediaLinksToVideos } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ViewShelterDocument } from '../shelter/__generated__/shelter.generated';
@@ -21,7 +22,7 @@ export function GalleryPage(props: TProps) {
   } | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<{
     videoId: string;
-    title: string;
+    title?: string;
   } | null>(null);
 
   if (loading) {
@@ -35,12 +36,7 @@ export function GalleryPage(props: TProps) {
   }
 
   const combinedPhotos = [...shelter.exteriorPhotos, ...shelter.interiorPhotos];
-  const youtubeVideos = (shelter.mediaLinks || [])
-    .map((link) => {
-      const videoId = extractYouTubeVideoId(link.url);
-      return videoId ? { videoId, title: link.title || '' } : null;
-    })
-    .filter((v): v is NonNullable<typeof v> => v !== null);
+  const youtubeVideos = mapMediaLinksToVideos(shelter.mediaLinks || []);
 
   return (
     <>
@@ -68,9 +64,9 @@ export function GalleryPage(props: TProps) {
             />
           </div>
         ))}
-        {youtubeVideos.map((video, index) => (
+        {youtubeVideos.map((video) => (
           <div
-            key={`yt-${index}`}
+            key={`yt-${video.videoId}`}
             className="aspect-square overflow-hidden cursor-pointer relative"
             onClick={() => setSelectedVideo(video)}
           >
@@ -141,12 +137,9 @@ export function GalleryPage(props: TProps) {
               onClick={(e) => e.stopPropagation()}
               className="w-[90vw] max-w-md"
             >
-              <iframe
-                className="w-full aspect-video"
+              <VideoEmbed
                 src={`https://www.youtube-nocookie.com/embed/${selectedVideo.videoId}`}
                 title={selectedVideo.title || 'YouTube video'}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
               />
             </div>
           </div>

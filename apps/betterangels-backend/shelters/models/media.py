@@ -4,7 +4,9 @@ from typing import Optional
 
 from admin_async_upload.models import AsyncFileField
 from common.models import BaseModel
+from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
+from django.core.validators import RegexValidator
 from django.db import models
 
 from .shelter import Shelter
@@ -45,6 +47,16 @@ class MediaLinkTypeChoices(models.TextChoices):
     YOUTUBE = "youtube", "YouTube"
 
 
+YOUTUBE_URL_VALIDATOR = RegexValidator(
+    regex=r"(?:youtube\.com/(?:watch\?.*v=|embed/|shorts/)|youtu\.be/)[\w-]{11}",
+    message="Enter a valid YouTube URL.",
+)
+
+MEDIA_TYPE_VALIDATORS: dict[str, RegexValidator] = {
+    MediaLinkTypeChoices.YOUTUBE: YOUTUBE_URL_VALIDATOR,
+}
+
+
 class MediaLink(BaseModel):
     url = models.URLField(max_length=255)
     title = models.CharField(max_length=255, blank=True)
@@ -54,3 +66,12 @@ class MediaLink(BaseModel):
         default=MediaLinkTypeChoices.YOUTUBE,
     )
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="media_links")
+
+    def clean(self) -> None:
+        super().clean()
+        validator = MEDIA_TYPE_VALIDATORS.get(self.media_type)
+        if validator:
+            try:
+                validator(self.url)
+            except ValidationError:
+                raise ValidationError({"url": validator.message})

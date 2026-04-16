@@ -69,9 +69,9 @@ export function ImageCarousel(props: TProps) {
         {imageUrls.map((src, i) => (
           <ImageSlide key={i} imageSrc={src} imgClassName={imageClassName} />
         ))}
-        {youtubeVideos.map((video, i) => (
+        {youtubeVideos.map((video) => (
           <YouTubeSlide
-            key={`yt-${i}`}
+            key={`yt-${video.videoId}`}
             videoId={video.videoId}
             title={video.title}
             onPrev={() => emblaApi?.scrollPrev()}
