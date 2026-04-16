@@ -153,5 +153,6 @@
       "unitTestRunner": "vitest",
       "e2eTestRunner": "playwright"
     }
-  }
+  },
+  "analytics": false
 }

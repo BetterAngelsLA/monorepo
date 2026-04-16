@@ -185,6 +185,7 @@ class Shelter(BaseModel):
 
 class Bed(BaseModel):
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="beds")
+    room = models.ForeignKey("Room", on_delete=models.SET_NULL, blank=True, null=True, related_name="beds")
     bed_name = models.CharField(max_length=255, blank=True, null=True)
     status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
     status_notes = models.TextField(blank=True, null=True)
@@ -221,6 +222,13 @@ class Room(BaseModel):
     status = TextChoicesField(choices_enum=RoomStatusChoices, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     amenities = models.TextField(blank=True, null=True)
+    demographics = models.ManyToManyField(Demographic, blank=True)
+    accessibility = models.ManyToManyField(Accessibility, blank=True)
+    funders = models.ManyToManyField(Funder, blank=True)
+    pets = models.ManyToManyField(Pet, blank=True)
+    storage = models.BooleanField(default=False, blank=True)
+    maintenance_flag = models.BooleanField(default=False, blank=True)
+    occupants = models.ManyToManyField("clients.ClientProfile", blank=True, related_name="occupied_rooms")
     medical_respite = models.BooleanField(default=False, blank=True)
     last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
 
@@ -250,6 +258,7 @@ class ContactInfo(models.Model):
     contact_number = PhoneNumberField(verbose_name="Contact Number")
     contact_email = models.EmailField(blank=True, null=True)
     contact_title = models.CharField(max_length=255, blank=True, null=True)
+    is_claimant = models.BooleanField(default=False, db_index=True)
 
     def __str__(self) -> str:
         return f"{self.contact_name} - {self.contact_number}"

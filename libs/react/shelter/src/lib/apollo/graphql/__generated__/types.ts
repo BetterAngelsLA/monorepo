@@ -185,6 +185,7 @@ export type BedType = {
   medicalNeeds?: Maybe<MedicalNeedChoices>;
   occupantId?: Maybe<Scalars['ID']['output']>;
   pets: Array<PetType>;
+  room?: Maybe<RoomType>;
   shelter: ShelterType;
   status?: Maybe<BedStatusChoices>;
   statusNotes?: Maybe<Scalars['String']['output']>;
@@ -478,6 +479,7 @@ export type CreateBedInput = {
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
   medicalNeeds?: InputMaybe<MedicalNeedChoices>;
   pets?: InputMaybe<Array<PetChoices>>;
+  roomId?: InputMaybe<Scalars['ID']['input']>;
   shelterId: Scalars['ID']['input'];
   status?: InputMaybe<BedStatusChoices>;
   statusNotes?: InputMaybe<Scalars['String']['input']>;
@@ -660,15 +662,22 @@ export type CreateProfileDataImportInput = {
 };
 
 export type CreateRoomInput = {
+  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   amenities?: InputMaybe<Scalars['String']['input']>;
+  demographics?: InputMaybe<Array<DemographicChoices>>;
+  funders?: InputMaybe<Array<FunderChoices>>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
+  maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
   medicalRespite?: InputMaybe<Scalars['Boolean']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
+  occupants?: InputMaybe<Array<Scalars['ID']['input']>>;
+  pets?: InputMaybe<Array<PetChoices>>;
   roomIdentifier: Scalars['String']['input'];
   roomType?: InputMaybe<RoomStyleChoices>;
   roomTypeOther?: InputMaybe<Scalars['String']['input']>;
   shelterId: Scalars['ID']['input'];
   status?: InputMaybe<RoomStatusChoices>;
+  storage?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type CreateRoomPayload = OperationInfo | RoomType;
@@ -820,6 +829,7 @@ export type DeletedObjectType = {
 
 export enum DemographicChoices {
   All = 'ALL',
+  Couples = 'COUPLES',
   Families = 'FAMILIES',
   LgbtqPlus = 'LGBTQ_PLUS',
   Other = 'OTHER',
@@ -868,6 +878,7 @@ export type DjangoModelType = {
 export enum EntryRequirementChoices {
   Background = 'BACKGROUND',
   HomelessVerification = 'HOMELESS_VERIFICATION',
+  InSpaOnly = 'IN_SPA_ONLY',
   MedicaidOrMedicare = 'MEDICAID_OR_MEDICARE',
   PhotoId = 'PHOTO_ID',
   Referral = 'REFERRAL',
@@ -1383,6 +1394,11 @@ export enum MaritalStatusEnum {
   Single = 'SINGLE',
   Widowed = 'WIDOWED'
 }
+
+export type MaxStayInput = {
+  days: Scalars['Int']['input'];
+  includeNull?: InputMaybe<Scalars['Boolean']['input']>;
+};
 
 export enum MedicalNeedChoices {
   Dialysis = 'DIALYSIS',
@@ -2079,6 +2095,7 @@ export type Query = {
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
+  shelterMaxStay?: Maybe<Scalars['Int']['output']>;
   shelterServiceCategories: ServiceCategoryTypeOffsetPaginated;
   shelters: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
@@ -2382,16 +2399,24 @@ export type RoomStyleType = {
 
 export type RoomType = {
   __typename?: 'RoomType';
+  accessibility: Array<AccessibilityType>;
   amenities?: Maybe<Scalars['String']['output']>;
+  beds: Array<BedType>;
+  demographics: Array<DemographicType>;
+  funders: Array<FunderType>;
   id: Scalars['ID']['output'];
   lastCleanedInspected?: Maybe<Scalars['DateTime']['output']>;
+  maintenanceFlag: Scalars['Boolean']['output'];
   medicalRespite: Scalars['Boolean']['output'];
   notes?: Maybe<Scalars['String']['output']>;
+  occupantIds: Array<Scalars['ID']['output']>;
+  pets: Array<PetType>;
   roomIdentifier: Scalars['String']['output'];
   roomType?: Maybe<RoomStyleChoices>;
   roomTypeOther?: Maybe<Scalars['String']['output']>;
   shelter: ShelterType;
   status?: Maybe<RoomStatusChoices>;
+  storage: Scalars['Boolean']['output'];
 };
 
 export enum SpaChoices {
@@ -2542,6 +2567,7 @@ export type ShelterFilter = {
   geolocation?: InputMaybe<GeolocationInput>;
   isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
   mapBounds?: InputMaybe<MapBoundsInput>;
+  maxStay?: InputMaybe<MaxStayInput>;
   name?: InputMaybe<Scalars['String']['input']>;
   openNow?: InputMaybe<Scalars['Boolean']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -2599,8 +2625,10 @@ export type ShelterProgramType = {
 
 export type ShelterPropertyInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
+  entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
   parking?: InputMaybe<Array<ParkingChoices>>;
   pets?: InputMaybe<Array<PetChoices>>;
+  referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
