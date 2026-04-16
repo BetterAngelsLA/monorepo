@@ -86,6 +86,9 @@ export default {
           ios: {
             deploymentTarget: '16.0',
           },
+          android: {
+             ...(IS_PRODUCTION ? {} : { usesCleartextTraffic: true }),
+          },
         },
       ],
       [
