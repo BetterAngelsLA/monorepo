@@ -56,27 +56,6 @@ const DEMOGRAPHIC_LABELS: Record<DemographicChoices, string> = {
   [DemographicChoices.Other]: 'Other',
 };
 
-const SPECIAL_SITUATION_LABELS: Record<
-  SpecialSituationRestrictionChoices,
-  string
-> = {
-  ...enumDisplaySpecialSituationRestrictionChoices,
-  [SpecialSituationRestrictionChoices.JusticeSystems]:
-    'Persons Exiting Justice Systems',
-};
-
-const ROOM_STYLE_LABELS: Record<RoomStyleChoices, string> = {
-  [RoomStyleChoices.Congregate]: 'Congregate (Open)',
-  [RoomStyleChoices.CubicleHighWalls]: 'Cubicle (High Walls)',
-  [RoomStyleChoices.CubicleLowWalls]: 'Cubicle (Low Walls)',
-  [RoomStyleChoices.HighBunk]: 'High Bunk',
-  [RoomStyleChoices.LowBunk]: 'Low Bunk',
-  [RoomStyleChoices.MotelRoom]: 'Motel Room',
-  [RoomStyleChoices.Other]: 'Other',
-  [RoomStyleChoices.SharedRooms]: 'Shared Rooms',
-  [RoomStyleChoices.SingleRoom]: 'Single Room',
-};
-
 const EXIT_POLICY_LABELS: Record<ExitPolicyChoices, string> = {
   [ExitPolicyChoices.Mia]: 'Exit after 72 hours of being MIA',
   [ExitPolicyChoices.Violence]: 'Exit due to violence to self and others',
@@ -95,6 +74,18 @@ const REFERRAL_REQUIREMENT_LABELS: Record<ReferralRequirementChoices, string> =
     [ReferralRequirementChoices.SameDayIntake]: 'Same Day Intake',
   };
 
+const ROOM_STYLE_LABELS: Record<RoomStyleChoices, string> = {
+  [RoomStyleChoices.Congregate]: 'Congregate (Open)',
+  [RoomStyleChoices.CubicleHighWalls]: 'Cubicle (High Walls)',
+  [RoomStyleChoices.CubicleLowWalls]: 'Cubicle (Low Walls)',
+  [RoomStyleChoices.HighBunk]: 'High Bunk',
+  [RoomStyleChoices.LowBunk]: 'Low Bunk',
+  [RoomStyleChoices.MotelRoom]: 'Motel Room',
+  [RoomStyleChoices.Other]: 'Other',
+  [RoomStyleChoices.SharedRooms]: 'Shared Rooms',
+  [RoomStyleChoices.SingleRoom]: 'Single Room',
+};
+
 const SPA_LABELS: Record<SpaChoices, string> = {
   [SpaChoices.One]: '1 – Antelope Valley',
   [SpaChoices.Two]: '2 – San Fernando',
@@ -104,6 +95,15 @@ const SPA_LABELS: Record<SpaChoices, string> = {
   [SpaChoices.Six]: '6 – South',
   [SpaChoices.Seven]: '7 – East',
   [SpaChoices.Eight]: '8 – South Bay/Harbor',
+};
+
+const SPECIAL_SITUATION_LABELS: Record<
+  SpecialSituationRestrictionChoices,
+  string
+> = {
+  ...enumDisplaySpecialSituationRestrictionChoices,
+  [SpecialSituationRestrictionChoices.JusticeSystems]:
+    'Persons Exiting Justice Systems',
 };
 
 const STATUS_LABELS: Record<StatusChoices, string> = {
@@ -117,39 +117,33 @@ const STATUS_LABELS: Record<StatusChoices, string> = {
 // Exported option arrays
 // ---------------------------------------------------------------------------
 
+export const ACCESSIBILITY_OPTIONS = toOptions(enumDisplayAccessibilityChoices);
+export const BOOLEAN_OPTIONS = [
+  { value: null, label: 'Unknown' },
+  { value: true, label: 'Yes' },
+  { value: false, label: 'No' },
+] as const;
+
+export const CITY_COUNCIL_DISTRICT_OPTIONS = [
+  { value: null, label: 'None' },
+  ...Array.from({ length: 15 }, (_, i) => ({
+    value: i + 1,
+    label: `${i + 1}`,
+  })),
+] as const;
+
 export const DEMOGRAPHICS_OPTIONS = toOptions(DEMOGRAPHIC_LABELS, [
   DemographicChoices.Other,
-]);
-export const SPECIAL_SITUATION_OPTIONS = toOptions(SPECIAL_SITUATION_LABELS);
-export const SHELTER_TYPES_OPTIONS = toOptions(enumDisplayShelterChoices, [
-  ShelterChoices.Other,
-]);
-export const ROOM_STYLES_OPTIONS = toOptions(ROOM_STYLE_LABELS, [
-  RoomStyleChoices.Other,
-]);
-export const ACCESSIBILITY_OPTIONS = toOptions(enumDisplayAccessibilityChoices);
-export const STORAGE_OPTIONS = toOptions(enumDisplayStorageChoices);
-export const PETS_OPTIONS = toOptions(enumDisplayPetChoices);
-export const PARKING_OPTIONS = toOptions(enumDisplayParkingChoices);
-export const EXIT_POLICY_OPTIONS = toOptions(EXIT_POLICY_LABELS, [
-  ExitPolicyChoices.Other,
 ]);
 export const ENTRY_REQUIREMENTS_OPTIONS = toOptions(
   enumDisplayEntryRequirementChoices
 );
-export const REFERRAL_REQUIREMENT_OPTIONS = toOptions(
-  REFERRAL_REQUIREMENT_LABELS
-);
-export const SPA_OPTIONS = toOptions(SPA_LABELS);
-export const SHELTER_PROGRAMS_OPTIONS = toOptions(
-  enumDisplayShelterProgramChoices,
-  [ShelterProgramChoices.Other]
-);
+export const EXIT_POLICY_OPTIONS = toOptions(EXIT_POLICY_LABELS, [
+  ExitPolicyChoices.Other,
+]);
 export const FUNDERS_OPTIONS = toOptions(enumDisplayFunderChoices, [
   FunderChoices.Other,
 ]);
-export const STATUS_OPTIONS = toOptions(STATUS_LABELS);
-
 export const LA_CITIES_OPTIONS = [
   { value: 'Los Angeles', label: 'Los Angeles' },
   { value: 'Pasadena', label: 'Pasadena' },
@@ -167,25 +161,6 @@ export const LA_CITIES_OPTIONS = [
   { value: 'Compton', label: 'Compton' },
 ] as const;
 
-export const BOOLEAN_OPTIONS = [
-  { value: null, label: 'Unknown' },
-  { value: true, label: 'Yes' },
-  { value: false, label: 'No' },
-] as const;
-
-export const CITY_COUNCIL_DISTRICT_OPTIONS = [
-  { value: null, label: 'None' },
-  ...Array.from({ length: 15 }, (_, i) => ({
-    value: i + 1,
-    label: `${i + 1}`,
-  })),
-] as const;
-
-export const SUPERVISORIAL_DISTRICT_OPTIONS = [
-  { value: null, label: 'None' },
-  ...Array.from({ length: 5 }, (_, i) => ({ value: i + 1, label: `${i + 1}` })),
-] as const;
-
 export const OVERALL_RATING_OPTIONS = [
   { value: null, label: 'None' },
   { value: 1, label: '1' },
@@ -193,4 +168,28 @@ export const OVERALL_RATING_OPTIONS = [
   { value: 3, label: '3' },
   { value: 4, label: '4' },
   { value: 5, label: '5' },
+] as const;
+
+export const PARKING_OPTIONS = toOptions(enumDisplayParkingChoices);
+export const PETS_OPTIONS = toOptions(enumDisplayPetChoices);
+export const REFERRAL_REQUIREMENT_OPTIONS = toOptions(
+  REFERRAL_REQUIREMENT_LABELS
+);
+export const ROOM_STYLES_OPTIONS = toOptions(ROOM_STYLE_LABELS, [
+  RoomStyleChoices.Other,
+]);
+export const SHELTER_PROGRAMS_OPTIONS = toOptions(
+  enumDisplayShelterProgramChoices,
+  [ShelterProgramChoices.Other]
+);
+export const SHELTER_TYPES_OPTIONS = toOptions(enumDisplayShelterChoices, [
+  ShelterChoices.Other,
+]);
+export const SPA_OPTIONS = toOptions(SPA_LABELS);
+export const SPECIAL_SITUATION_OPTIONS = toOptions(SPECIAL_SITUATION_LABELS);
+export const STATUS_OPTIONS = toOptions(STATUS_LABELS);
+export const STORAGE_OPTIONS = toOptions(enumDisplayStorageChoices);
+export const SUPERVISORIAL_DISTRICT_OPTIONS = [
+  { value: null, label: 'None' },
+  ...Array.from({ length: 5 }, (_, i) => ({ value: i + 1, label: `${i + 1}` })),
 ] as const;

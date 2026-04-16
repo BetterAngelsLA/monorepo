@@ -131,7 +131,11 @@ export function ShelterSearch(props: TProps) {
         </div>
       </div>
 
-      <FilterPills className="mt-2" filters={filters} />
+      <FilterPills
+        className="mt-2"
+        filters={filters}
+        onPillClear={setQueryFilters}
+      />
       <SheltersDisplay
         className="mt-8"
         mapBoundsFilter={mapBoundsFilter}
