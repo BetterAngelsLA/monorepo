@@ -30,6 +30,7 @@ query ClientProfile($id: ID!) {
       pronounsOther
       race
       residenceAddress
+      unhousedStartDate
       veteranStatus
       displayCaseManager
       displayGender

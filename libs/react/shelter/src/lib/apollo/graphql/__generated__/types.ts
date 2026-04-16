@@ -77,6 +77,7 @@ export type AdminShelterType = {
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
   bedFees?: Maybe<Scalars['String']['output']>;
+  bedsByStatus: BedsByStatusType;
   cities: Array<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
   curfew?: Maybe<Scalars['Time']['output']>;
@@ -184,6 +185,7 @@ export type BedType = {
   medicalNeeds?: Maybe<MedicalNeedChoices>;
   occupantId?: Maybe<Scalars['ID']['output']>;
   pets: Array<PetType>;
+  room?: Maybe<RoomType>;
   shelter: ShelterType;
   status?: Maybe<BedStatusChoices>;
   statusNotes?: Maybe<Scalars['String']['output']>;
@@ -196,6 +198,14 @@ export enum BedTypeChoices {
   Rollaway = 'ROLLAWAY',
   Twin = 'TWIN'
 }
+
+export type BedsByStatusType = {
+  __typename?: 'BedsByStatusType';
+  available: Scalars['Int']['output'];
+  occupied: Scalars['Int']['output'];
+  outOfService: Scalars['Int']['output'];
+  reserved: Scalars['Int']['output'];
+};
 
 export type CityType = {
   __typename?: 'CityType';
@@ -469,6 +479,7 @@ export type CreateBedInput = {
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
   medicalNeeds?: InputMaybe<MedicalNeedChoices>;
   pets?: InputMaybe<Array<PetChoices>>;
+  roomId?: InputMaybe<Scalars['ID']['input']>;
   shelterId: Scalars['ID']['input'];
   status?: InputMaybe<BedStatusChoices>;
   statusNotes?: InputMaybe<Scalars['String']['input']>;
@@ -651,15 +662,22 @@ export type CreateProfileDataImportInput = {
 };
 
 export type CreateRoomInput = {
+  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   amenities?: InputMaybe<Scalars['String']['input']>;
+  demographics?: InputMaybe<Array<DemographicChoices>>;
+  funders?: InputMaybe<Array<FunderChoices>>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
+  maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
   medicalRespite?: InputMaybe<Scalars['Boolean']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
+  occupants?: InputMaybe<Array<Scalars['ID']['input']>>;
+  pets?: InputMaybe<Array<PetChoices>>;
   roomIdentifier: Scalars['String']['input'];
   roomType?: InputMaybe<RoomStyleChoices>;
   roomTypeOther?: InputMaybe<Scalars['String']['input']>;
   shelterId: Scalars['ID']['input'];
   status?: InputMaybe<RoomStatusChoices>;
+  storage?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type CreateRoomPayload = OperationInfo | RoomType;
@@ -811,6 +829,7 @@ export type DeletedObjectType = {
 
 export enum DemographicChoices {
   All = 'ALL',
+  Couples = 'COUPLES',
   Families = 'FAMILIES',
   LgbtqPlus = 'LGBTQ_PLUS',
   Other = 'OTHER',
@@ -1374,6 +1393,11 @@ export enum MaritalStatusEnum {
   Single = 'SINGLE',
   Widowed = 'WIDOWED'
 }
+
+export type MaxStayInput = {
+  days: Scalars['Int']['input'];
+  includeNull?: InputMaybe<Scalars['Boolean']['input']>;
+};
 
 export enum MedicalNeedChoices {
   Dialysis = 'DIALYSIS',
@@ -2070,6 +2094,7 @@ export type Query = {
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
+  shelterMaxStay?: Maybe<Scalars['Int']['output']>;
   shelterServiceCategories: ServiceCategoryTypeOffsetPaginated;
   shelters: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
@@ -2373,16 +2398,24 @@ export type RoomStyleType = {
 
 export type RoomType = {
   __typename?: 'RoomType';
+  accessibility: Array<AccessibilityType>;
   amenities?: Maybe<Scalars['String']['output']>;
+  beds: Array<BedType>;
+  demographics: Array<DemographicType>;
+  funders: Array<FunderType>;
   id: Scalars['ID']['output'];
   lastCleanedInspected?: Maybe<Scalars['DateTime']['output']>;
+  maintenanceFlag: Scalars['Boolean']['output'];
   medicalRespite: Scalars['Boolean']['output'];
   notes?: Maybe<Scalars['String']['output']>;
+  occupantIds: Array<Scalars['ID']['output']>;
+  pets: Array<PetType>;
   roomIdentifier: Scalars['String']['output'];
   roomType?: Maybe<RoomStyleChoices>;
   roomTypeOther?: Maybe<Scalars['String']['output']>;
   shelter: ShelterType;
   status?: Maybe<RoomStatusChoices>;
+  storage: Scalars['Boolean']['output'];
 };
 
 export enum SpaChoices {
@@ -2449,6 +2482,7 @@ export enum SelahTeamEnum {
   LaRiverOutreach = 'LA_RIVER_OUTREACH',
   LosFelizOutreach = 'LOS_FELIZ_OUTREACH',
   NortheastHollywoodOutreach = 'NORTHEAST_HOLLYWOOD_OUTREACH',
+  SelahStaff = 'SELAH_STAFF',
   SilverLakeOutreach = 'SILVER_LAKE_OUTREACH',
   SlccOnSite = 'SLCC_ON_SITE',
   SundaySocialAtwaterOnSite = 'SUNDAY_SOCIAL_ATWATER_ON_SITE',
@@ -2514,6 +2548,7 @@ export type ServiceType = {
 };
 
 export enum ShelterChoices {
+  AccessCenter = 'ACCESS_CENTER',
   Building = 'BUILDING',
   Church = 'CHURCH',
   HotelMotel = 'HOTEL_MOTEL',
@@ -2529,7 +2564,9 @@ export type ShelterFilter = {
   NOT?: InputMaybe<ShelterFilter>;
   OR?: InputMaybe<ShelterFilter>;
   geolocation?: InputMaybe<GeolocationInput>;
+  isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
   mapBounds?: InputMaybe<MapBoundsInput>;
+  maxStay?: InputMaybe<MaxStayInput>;
   name?: InputMaybe<Scalars['String']['input']>;
   openNow?: InputMaybe<Scalars['Boolean']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -2557,7 +2594,7 @@ export type ShelterOrder = {
 export type ShelterPhotoType = {
   __typename?: 'ShelterPhotoType';
   createdAt: Scalars['DateTime']['output'];
-  file: DjangoFileType;
+  file: DjangoImageType;
   id: Scalars['ID']['output'];
 };
 
@@ -2603,6 +2640,7 @@ export type ShelterType = {
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
   bedFees?: Maybe<Scalars['String']['output']>;
+  bedsByStatus: BedsByStatusType;
   cities: Array<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
   curfew?: Maybe<Scalars['Time']['output']>;
@@ -2729,6 +2767,7 @@ export enum StatusChoices {
 export enum StorageChoices {
   AmnestyLockers = 'AMNESTY_LOCKERS',
   NoStorage = 'NO_STORAGE',
+  PersonalBin = 'PERSONAL_BIN',
   SharedStorage = 'SHARED_STORAGE',
   StandardLockers = 'STANDARD_LOCKERS',
   UnitStorage = 'UNIT_STORAGE'

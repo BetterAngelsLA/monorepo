@@ -129,6 +129,7 @@ type AdminShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
+  bedsByStatus: BedsByStatusType!
 }
 
 type AdminShelterTypeOffsetPaginated {
@@ -173,6 +174,7 @@ enum BedStatusChoices {
 type BedType {
   id: ID!
   shelter: ShelterType!
+  room: RoomType
   bedName: String
   status: BedStatusChoices
   statusNotes: String
@@ -195,6 +197,13 @@ enum BedTypeChoices {
   BUNK
   ROLLAWAY
   OTHER
+}
+
+type BedsByStatusType {
+  available: Int!
+  occupied: Int!
+  reserved: Int!
+  outOfService: Int!
 }
 
 type CityType {
@@ -456,6 +465,7 @@ type ContactInfoType {
 
 input CreateBedInput {
   shelterId: ID!
+  roomId: ID = null
   status: BedStatusChoices = null
   bedName: String = null
   statusNotes: String = null
@@ -655,6 +665,13 @@ input CreateRoomInput {
   status: RoomStatusChoices = null
   notes: String = null
   amenities: String = null
+  demographics: [DemographicChoices!] = null
+  accessibility: [AccessibilityChoices!] = null
+  funders: [FunderChoices!] = null
+  pets: [PetChoices!] = null
+  storage: Boolean = null
+  maintenanceFlag: Boolean = null
+  occupants: [ID!] = null
   medicalRespite: Boolean = false
   lastCleanedInspected: DateTime = null
 }
@@ -803,6 +820,7 @@ type DeletedObjectType {
 
 enum DemographicChoices {
   ALL
+  COUPLES
   SINGLE_MEN
   SINGLE_WOMEN
   TAY_TEEN
@@ -1360,6 +1378,11 @@ enum MaritalStatusEnum {
   WIDOWED
 }
 
+input MaxStayInput {
+  days: Int!
+  includeNull: Boolean = false
+}
+
 enum MedicalNeedChoices {
   ERC
   DMH
@@ -1779,6 +1802,7 @@ type Query {
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
+  shelterMaxStay: Int
 }
 
 enum RaceEnum {
@@ -1886,8 +1910,16 @@ type RoomType {
   status: RoomStatusChoices
   notes: String
   amenities: String
+  demographics: [DemographicType!]!
+  accessibility: [AccessibilityType!]!
+  funders: [FunderType!]!
+  pets: [PetType!]!
+  storage: Boolean!
+  maintenanceFlag: Boolean!
   medicalRespite: Boolean!
   lastCleanedInspected: DateTime
+  beds: [BedType!]!
+  occupantIds: [ID!]!
 }
 
 enum SPAChoices {
@@ -1951,6 +1983,7 @@ enum SelahTeamEnum {
   LA_RIVER_OUTREACH
   LOS_FELIZ_OUTREACH
   NORTHEAST_HOLLYWOOD_OUTREACH
+  SELAH_STAFF
   SILVER_LAKE_OUTREACH
   SLCC_ON_SITE
   SUNDAY_SOCIAL_ATWATER_ON_SITE
@@ -2014,6 +2047,7 @@ type ServiceType {
 }
 
 enum ShelterChoices {
+  ACCESS_CENTER
   BUILDING
   CHURCH
   HOTEL_MOTEL
@@ -2028,6 +2062,8 @@ input ShelterFilter {
   OR: ShelterFilter
   NOT: ShelterFilter
   DISTINCT: Boolean
+  isAccessCenter: Boolean
+  maxStay: MaxStayInput
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
@@ -2056,7 +2092,7 @@ input ShelterOrder {
 type ShelterPhotoType {
   id: ID!
   createdAt: DateTime!
-  file: DjangoFileType!
+  file: DjangoImageType!
 }
 
 enum ShelterProgramChoices {
@@ -2150,6 +2186,7 @@ type ShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
+  bedsByStatus: BedsByStatusType!
 }
 
 type ShelterTypeOffsetPaginated {
@@ -2226,6 +2263,7 @@ enum StorageChoices {
   AMNESTY_LOCKERS
   STANDARD_LOCKERS
   SHARED_STORAGE
+  PERSONAL_BIN
   NO_STORAGE
 }
 

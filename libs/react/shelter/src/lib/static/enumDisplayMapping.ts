@@ -28,6 +28,7 @@ export const enumDisplayDemographics: { [key in DemographicChoices]: string } =
   {
     [DemographicChoices.All]: 'All',
     [DemographicChoices.Families]: 'Families',
+    [DemographicChoices.Couples]: 'Couples',
     [DemographicChoices.LgbtqPlus]: 'LGBTQ+',
     [DemographicChoices.Other]: 'Others',
     [DemographicChoices.Seniors]: 'Seniors',
@@ -119,6 +120,7 @@ export const enumDisplayRoomStyles: { [key in RoomStyleChoices]: string } = {
 export const enumDisplayShelterChoices: {
   [key in ShelterChoices]: string;
 } = {
+  [ShelterChoices.AccessCenter]: 'Access Center / Day Center',
   [ShelterChoices.Building]: 'Building',
   [ShelterChoices.Church]: 'Church',
   [ShelterChoices.HotelMotel]: 'Hotel/Motel',
@@ -178,6 +180,7 @@ export const enumDisplayStorageChoices: { [key in StorageChoices]: string } = {
   [StorageChoices.SharedStorage]: 'Shared Storage',
   [StorageChoices.StandardLockers]: 'Standard Lockers',
   [StorageChoices.UnitStorage]: 'Unit-level Storage',
+  [StorageChoices.PersonalBin]: 'Personal Storage Bin',
 };
 
 /*

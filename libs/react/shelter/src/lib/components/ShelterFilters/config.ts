@@ -29,7 +29,10 @@ export type TShelterFilterOption = {
   value: TFilterOptionType;
 };
 
-type TSelectableFilterName = Exclude<keyof TShelterPropertyFilters, 'openNow'>;
+type TSelectableFilterName = Exclude<
+  keyof TShelterPropertyFilters,
+  'openNow' | 'isAccessCenter' | 'maxStay'
+>;
 
 export type TFilterConfig = {
   name: TSelectableFilterName;
@@ -44,6 +47,8 @@ export function getFilterLabel(
   switch (category) {
     case 'openNow':
       return 'Open now';
+    case 'maxStay':
+      return 'Max stay';
     case 'demographics':
       return enumDisplayDemographics[value as DemographicChoices] || null;
     case 'pets':
@@ -71,6 +76,7 @@ const demographicOptions = [
   DemographicChoices.SingleWomen,
   DemographicChoices.TayTeen,
   DemographicChoices.Seniors,
+  DemographicChoices.Couples,
   DemographicChoices.Families,
   DemographicChoices.SingleMoms,
   DemographicChoices.LgbtqPlus,
@@ -196,8 +202,9 @@ const parkingOptions = [
   ParkingChoices.Automobile,
   ParkingChoices.Bicycle,
   ParkingChoices.Motorcycle,
-  ParkingChoices.NoParking,
   ParkingChoices.Rv,
+  ParkingChoices.Street,
+  ParkingChoices.NoParking,
 ];
 
 const parkingOptionsList: TShelterFilterOption[] = parkingOptions.map(

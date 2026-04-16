@@ -11,9 +11,10 @@ from shelters.enums import (
     ParkingChoices,
     PetChoices,
     ScheduleTypeChoices,
+    ShelterChoices,
     StatusChoices,
 )
-from shelters.models import Parking, Pet, Shelter
+from shelters.models import Parking, Pet, Shelter, ShelterType
 from shelters.models.schedule import Schedule
 from shelters.tests.baker_recipes import shelter_recipe
 from unittest_parametrize import parametrize
@@ -292,6 +293,63 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             self.assertTrue(
                 any(e in msg for msg in error_messages), f"Expected to find {e!r} in one of {error_messages!r}"
             )
+
+    def test_shelter_is_access_center_filter(self) -> None:
+        access_center, _ = ShelterType.objects.get_or_create(name=ShelterChoices.ACCESS_CENTER)
+        shelters = shelter_recipe.make(status=StatusChoices.APPROVED, shelter_types=[access_center], _quantity=2)
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+        filters: dict[str, Any] = {"isAccessCenter": True}
+
+        expected_query_count = 2
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        shelter_ids = {str(shelter.id) for shelter in shelters}
+        result_ids = {s["id"] for s in response["data"]["shelters"]["results"]}
+        self.assertEqual(shelter_ids, result_ids)
+
+    @parametrize(
+        "days, include_null, expected_result_count",
+        [
+            (3, True, 2),
+            (3, False, 1),
+            (7, True, 1),
+            (7, False, 0),
+        ],
+    )
+    def test_shelter_max_stay_filter(self, days: int, include_null: bool, expected_result_count: int) -> None:
+        shelter_recipe.make(max_stay=None, status=StatusChoices.APPROVED)
+        shelter_recipe.make(max_stay=0, status=StatusChoices.APPROVED)
+        shelter_recipe.make(max_stay=3, status=StatusChoices.APPROVED)
+        shelter_recipe.make(max_stay=7, status=StatusChoices.PENDING)
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {"maxStay": {"days": days, "includeNull": include_null}}
+
+        response = self.execute_graphql(query, variables={"filters": filters})
+
+        self.assertEqual(response["data"]["shelters"]["totalCount"], expected_result_count)
 
     @parametrize(
         "property_filters, expected_result_count",

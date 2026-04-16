@@ -15,6 +15,7 @@ export function mapClientToPersonalInfoSchema(
     livingSituation,
     preferredLanguage,
     californiaId,
+    unhousedStartDate,
   } = client;
 
   const mappedBirthDate =
@@ -27,5 +28,6 @@ export function mapClientToPersonalInfoSchema(
     livingSituation: livingSituation ?? emptyState.livingSituation,
     preferredLanguage: preferredLanguage ?? emptyState.preferredLanguage,
     californiaId: californiaId ?? emptyState.californiaId,
+    unhousedStartDate: unhousedStartDate ?? emptyState.unhousedStartDate,
   };
 }
