@@ -6,6 +6,7 @@ import {
   enumDisplayExitPolicyChoices,
 } from '../../../static';
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
+import { InlineList } from '../common';
 
 function formatCurfewTime(curfew: string): string {
   const parsedTime = parse(curfew.trim(), 'HH:mm:ss', new Date());
@@ -34,35 +35,32 @@ export function Restrictions({
     <Card title="Restrictions">
       <div className="flex flex-col gap-2">
         {shelter.maxStay && (
-          <div className="grid grid-cols-[auto_1fr] gap-x-1">
-            <strong className="whitespace-nowrap">Max Stay:</strong>
-            <span>{shelter.maxStay} days</span>
+          <div className="flex gap-1">
+            <strong>Max Stay:</strong>
+            {shelter.maxStay} days
           </div>
         )}
 
         {shelter.exitPolicy?.length > 0 && (
-          <div className="grid grid-cols-[auto_1fr] gap-x-1">
-            <strong className="whitespace-nowrap">Exit Policy:</strong>
-            <span>{exitPolicyDisplay.join('; ')}</span>
-          </div>
+          <InlineList title="Exit Policy:" items={exitPolicyDisplay} />
         )}
 
-        <div className="grid grid-cols-[auto_1fr] gap-x-1">
-          <strong className="whitespace-nowrap">Curfew:</strong>
-          <span>{hasCurfew ? formatCurfewTime(shelter.curfew) : 'No'}</span>
+        <div className="flex gap-1">
+          <strong>Curfew:</strong>
+          {hasCurfew ? formatCurfewTime(shelter.curfew) : 'No'}
         </div>
 
         {shelter.visitorsAllowed != null && (
-          <div className="grid grid-cols-[auto_1fr] gap-x-1">
-            <strong className="whitespace-nowrap">Visitors:</strong>
-            <span>{shelter.visitorsAllowed ? 'Allowed' : 'Not Allowed'}</span>
+          <div className="flex gap-1">
+            <strong>Visitors:</strong>
+            {shelter.visitorsAllowed ? 'Allowed' : 'Not Allowed'}
           </div>
         )}
 
         {shelter.emergencySurge != null && (
-          <div className="grid grid-cols-[auto_1fr] gap-x-1">
-            <strong className="whitespace-nowrap">Emergency Surge:</strong>
-            <span>{shelter.emergencySurge ? 'Yes' : 'No'}</span>
+          <div className="flex gap-1">
+            <strong>Emergency Surge:</strong>
+            {shelter.emergencySurge ? 'Yes' : 'No'}
           </div>
         )}
       </div>
