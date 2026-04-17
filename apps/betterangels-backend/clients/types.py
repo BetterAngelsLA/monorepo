@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 from functools import reduce
 from operator import and_, or_
@@ -133,15 +134,27 @@ class ClientProfileFilter:
         if value is None:
             return queryset, Q()
 
-        search_terms = value.split()
+        digits_only = re.sub(r"\D", "", value)
+        is_numeric_input = len(digits_only) > 0 and digits_only == value.replace(" ", "").replace("-", "")
 
-        searchable_fields = [
-            "california_id",
-            "first_name",
-            "last_name",
-            "middle_name",
-            "nickname",
-        ]
+        if is_numeric_input:
+            search_terms = [digits_only]
+            searchable_fields = [
+                "california_id",
+                "ssn",
+            ]
+        else:
+            search_terms = value.split()
+            searchable_fields = [
+                "california_id",
+                "first_name",
+                "last_name",
+                "middle_name",
+                "nickname",
+            ]
+
+        if not search_terms:
+            return queryset, Q()
 
         # Build queries for direct fields
         direct_queries = [

@@ -21,7 +21,7 @@ from clients.enums import (
     SocialMediaEnum,
     VeteranStatusEnum,
 )
-from common.constants import CALIFORNIA_ID_REGEX
+from common.constants import CALIFORNIA_ID_REGEX, SSN_REGEX
 from common.models import Attachment, BaseModel, PhoneNumber
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
@@ -149,6 +149,13 @@ class ClientProfile(AbstractClientProfile):
     nickname = models.CharField(max_length=50, blank=True, null=True)
     profile_photo = models.ImageField(upload_to=get_client_profile_photo_file_path, blank=True, null=True)
     race = TextChoicesField(choices_enum=RaceEnum, blank=True, null=True)
+    ssn = models.CharField(
+        max_length=9,
+        blank=True,
+        null=True,
+        db_index=True,
+        validators=[RegexValidator(regex=SSN_REGEX, message="SSN must be exactly 9 digits")],
+    )
     veteran_status = TextChoicesField(choices_enum=VeteranStatusEnum, blank=True, null=True)
 
     @model_property
