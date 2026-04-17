@@ -11,7 +11,7 @@ from test_utils.mixins import GraphQLTestCaseMixin
 from waffle.testutils import override_switch
 
 
-@override_settings(IS_LOCAL_DEV=True)
+@override_settings(IS_LOCAL_DEV=True, STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
 @override_switch(IMGPROXY_SWITCH, active=True)
 class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTestCaseMixin, TestCase):
     """Regression tests for the hero_image resolver.

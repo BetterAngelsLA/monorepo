@@ -20,6 +20,7 @@ from clients.enums import (
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 from django.utils import timezone
 
 
@@ -133,6 +134,7 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
         return self.execute_graphql(mutation, {"data": variables})
 
 
+@override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
 class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -468,6 +470,153 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "clientProfileId": client_profile_id,
             },
             files={"photo": photo},
+        )
+
+    def _generate_client_document_uploads_fixture(
+        self,
+        client_profile_id: str,
+        uploads: list[Dict[str, str]],
+    ) -> Dict[str, Any]:
+        return self.execute_graphql(
+            """
+            mutation GenerateClientDocumentUploads($data: GenerateClientDocumentUploadsInput!) {
+                generateClientDocumentUploads(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on AuthorizedPresignedS3UploadsType {
+                        uploads {
+                            refId
+                            url
+                            fields
+                            presignedKey
+                            uploadToken
+                        }
+                    }
+                }
+            }
+            """,
+            variables={
+                "data": {
+                    "clientProfileId": client_profile_id,
+                    "uploads": uploads,
+                },
+            },
+        )
+
+    def _resolve_client_document_uploads_fixture(
+        self,
+        client_profile_id: str,
+        documents: list[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        return self.execute_graphql(
+            """
+            mutation ResolveClientDocumentUploads($data: ResolveClientDocumentUploadsInput!) {
+                resolveClientDocumentUploads(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ClientDocumentUploadsType {
+                        documents {
+                            id
+                            file {
+                                name
+                            }
+                            originalFilename
+                            namespace
+                            mimeType
+                        }
+                    }
+                }
+            }
+            """,
+            variables={
+                "data": {
+                    "clientProfileId": client_profile_id,
+                    "documents": documents,
+                },
+            },
+        )
+
+    def _generate_client_profile_photo_upload_fixture(
+        self,
+        client_profile_id: str,
+        ref_id: str,
+        filename: str,
+        content_type: str,
+    ) -> Dict[str, Any]:
+        return self.execute_graphql(
+            """
+            mutation GenerateClientProfilePhotoUpload($data: GenerateClientProfilePhotoUploadInput!) {
+                generateClientProfilePhotoUpload(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on AuthorizedPresignedS3UploadType {
+                        refId
+                        url
+                        fields
+                        presignedKey
+                        uploadToken
+                    }
+                }
+            }
+            """,
+            variables={
+                "data": {
+                    "clientProfileId": client_profile_id,
+                    "refId": ref_id,
+                    "filename": filename,
+                    "contentType": content_type,
+                },
+            },
+        )
+
+    def _resolve_client_profile_photo_upload_fixture(
+        self,
+        client_profile_id: str,
+        presigned_key: str,
+        upload_token: str,
+    ) -> Dict[str, Any]:
+        return self.execute_graphql(
+            """
+            mutation ResolveClientProfilePhotoUpload($data: ResolveClientProfilePhotoUploadInput!) {
+                resolveClientProfilePhotoUpload(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ClientProfileType {
+                        id
+                        profilePhoto {
+                            url
+                        }
+                    }
+                }
+            }
+            """,
+            variables={
+                "data": {
+                    "clientProfileId": client_profile_id,
+                    "presignedKey": presigned_key,
+                    "uploadToken": upload_token,
+                },
+            },
         )
 
 
