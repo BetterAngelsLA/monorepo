@@ -1,15 +1,18 @@
 import { useQuery } from '@apollo/client/react';
+import { operatorPath, reservationPathSegment } from '@monorepo/react/shelter';
 import { BookCheck, Filter, Search, Settings2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons';
-import { ShelterTable } from '../../components/ShelterTable';
+import {
+  ShelterTable,
+  type ShelterRowObject,
+} from '../../components/ShelterTable';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
 import { useActiveOrg } from '../../providers/activeOrg';
-import { operatorPath, reservationPathSegment } from '@monorepo/react/shelter';
 import type { Shelter } from '../../types/shelter';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -102,9 +105,12 @@ export function Dashboard() {
   const totalCount = activeData?.adminShelters?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  const handleRowClick = useCallback(() => {
-    // TODO: navigate to shelter detail page
-  }, []);
+  const handleRowClick = useCallback(
+    (row: ShelterRowObject) => {
+      navigate(`shelter/${row.id}`);
+    },
+    [navigate]
+  );
 
   return (
     <>
