@@ -12,7 +12,7 @@ import SingleDocUploads from './SingleDocUploads';
 import { Docs, ITab, IUploadModalProps } from './types';
 
 export default function UploadModal(props: IUploadModalProps) {
-  const { client } = props;
+  const { client, closeModal, onUploadSuccess, onUploadError } = props;
 
   const [tab, setTab] = React.useState<undefined | ITab>();
   const [docs, setDocs] = React.useState<Docs>({
@@ -32,6 +32,9 @@ export default function UploadModal(props: IUploadModalProps) {
     client,
     docs,
     setDocs,
+    closeModal,
+    onUploadSuccess,
+    onUploadError,
   };
 
   const TABS = {
@@ -133,13 +136,14 @@ export default function UploadModal(props: IUploadModalProps) {
         item.namespace === ClientDocumentNamespaceEnum.DriversLicenseBack
     )?.file as ReactNativeFile | undefined;
 
-    setDocs({
+    setDocs((prev) => ({
+      ...prev,
       DriversLicenseFront,
       DriversLicenseBack,
       SocialSecurityCard,
       PhotoId,
       BirthCertificate,
-    });
+    }));
   }, [client]);
 
   return (
