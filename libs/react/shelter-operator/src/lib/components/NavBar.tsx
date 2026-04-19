@@ -1,5 +1,5 @@
 import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
-import { operatorPath } from '@monorepo/react/shelter';
+import { createShelterPath, operatorPath } from '@monorepo/react/shelter';
 import { Plus, UserCog } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
@@ -33,6 +33,10 @@ export function NavBar() {
   const isDashboardPage =
     location.pathname === operatorPath ||
     location.pathname === `${operatorPath}/`;
+
+  const isCreateShelterPage =
+    location.pathname === createShelterPath ||
+    location.pathname === `${createShelterPath}/`;
 
   const breadcrumbs = useBreadcrumbs();
   const showCreateButton = isDashboardPage;
@@ -84,12 +88,21 @@ export function NavBar() {
                     }
                   >
                     {item}
+                    {isCreateShelterPage ? (
+                      <span>
+                        {' '}
+                        / <span className="text-black">Shelter Creation</span>
+                      </span>
+                    ) : (
+                      ''
+                    )}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
             <p className="truncate text-xl font-medium text-[#5A616B] md:text-2xl">
+              {}
               {displayTitle}
             </p>
           )}

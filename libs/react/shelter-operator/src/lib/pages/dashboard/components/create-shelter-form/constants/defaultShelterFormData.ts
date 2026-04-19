@@ -13,7 +13,9 @@ export const createEmptyShelterFormData = (): ShelterFormData => ({
   email: '',
   phone: '',
   website: '',
+  facebook: '',
   instagram: '',
+  otherSocialMedia: '',
 
   // Schedules
   schedules: [],

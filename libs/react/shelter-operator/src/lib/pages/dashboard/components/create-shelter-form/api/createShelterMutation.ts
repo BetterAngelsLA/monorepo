@@ -141,7 +141,7 @@ export const buildCreateShelterInput = (
     email: sanitizeString(formData.email),
     phone: sanitizeString(formData.phone),
     website: urlOrUndefined(formData.website),
-    instagram: sanitizeString(formData.instagram),
+    instagram: sanitizeString(formData.instagram || formData.facebook),
     otherRules: sanitizeString(formData.otherRules),
     otherServices: sanitizeString(formData.otherServices),
     entryInfo: sanitizeString(formData.entryInfo),

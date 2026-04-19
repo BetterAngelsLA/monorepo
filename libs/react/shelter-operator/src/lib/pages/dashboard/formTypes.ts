@@ -57,7 +57,9 @@ export interface ShelterFormData {
   email: string;
   phone: string;
   website: string;
+  facebook: string;
   instagram: string;
+  otherSocialMedia: string;
 
   // Schedules (operating hours, intake hours, etc.)
   schedules: ScheduleFormEntry[];

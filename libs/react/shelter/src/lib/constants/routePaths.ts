@@ -5,6 +5,7 @@ export const shelterGalleryPath = '/shelter/:id/gallery';
 export const shelterVideoPath = '/video';
 export const aboutUsPath = 'https://www.betterangels.la/about/our-mission';
 export const operatorPath = '/operator';
+export const createShelterPath = '/operator/dashboard/create';
 export const reservationPathSegment = 'reservation';
 export const reservationAddProfileSegment = 'add-profile';
 export const reservationSelectShelterSegment = 'select-shelter';
