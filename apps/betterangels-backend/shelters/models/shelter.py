@@ -258,6 +258,7 @@ class ContactInfo(models.Model):
     contact_number = PhoneNumberField(verbose_name="Contact Number")
     contact_email = models.EmailField(blank=True, null=True)
     contact_title = models.CharField(max_length=255, blank=True, null=True)
+    is_claimant = models.BooleanField(default=False, db_index=True)
 
     def __str__(self) -> str:
         return f"{self.contact_name} - {self.contact_number}"

@@ -820,6 +820,7 @@ type DeletedObjectType {
 
 enum DemographicChoices {
   ALL
+  COUPLES
   SINGLE_MEN
   SINGLE_WOMEN
   TAY_TEEN
@@ -856,14 +857,15 @@ type DjangoModelType {
 }
 
 enum EntryRequirementChoices {
+  BACKGROUND
+  HOMELESS_VERIFICATION
   MEDICAID_OR_MEDICARE
   PHOTO_ID
   REFERRAL
   RESERVATION
-  BACKGROUND
-  HOMELESS_VERIFICATION
-  WALK_UPS
   VEHICLE_REGISTRATION
+  WALK_UPS
+  IN_SPA_ONLY
 }
 
 type EntryRequirementType {
@@ -1377,6 +1379,11 @@ enum MaritalStatusEnum {
   WIDOWED
 }
 
+input MaxStayInput {
+  days: Int!
+  includeNull: Boolean = false
+}
+
 enum MedicalNeedChoices {
   ERC
   DMH
@@ -1796,6 +1803,7 @@ type Query {
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
+  shelterMaxStay: Int
 }
 
 enum RaceEnum {
@@ -2056,6 +2064,7 @@ input ShelterFilter {
   NOT: ShelterFilter
   DISTINCT: Boolean
   isAccessCenter: Boolean
+  maxStay: MaxStayInput
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
@@ -2113,6 +2122,8 @@ type ShelterProgramType {
 input ShelterPropertyInput {
   pets: [PetChoices!] = null
   demographics: [DemographicChoices!] = null
+  entryRequirements: [EntryRequirementChoices!] = null
+  referralRequirement: [ReferralRequirementChoices!] = null
   specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
   shelterTypes: [ShelterChoices!] = null
   roomStyles: [RoomStyleChoices!] = null

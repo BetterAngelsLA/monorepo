@@ -829,6 +829,7 @@ export type DeletedObjectType = {
 
 export enum DemographicChoices {
   All = 'ALL',
+  Couples = 'COUPLES',
   Families = 'FAMILIES',
   LgbtqPlus = 'LGBTQ_PLUS',
   Other = 'OTHER',
@@ -877,6 +878,7 @@ export type DjangoModelType = {
 export enum EntryRequirementChoices {
   Background = 'BACKGROUND',
   HomelessVerification = 'HOMELESS_VERIFICATION',
+  InSpaOnly = 'IN_SPA_ONLY',
   MedicaidOrMedicare = 'MEDICAID_OR_MEDICARE',
   PhotoId = 'PHOTO_ID',
   Referral = 'REFERRAL',
@@ -1392,6 +1394,11 @@ export enum MaritalStatusEnum {
   Single = 'SINGLE',
   Widowed = 'WIDOWED'
 }
+
+export type MaxStayInput = {
+  days: Scalars['Int']['input'];
+  includeNull?: InputMaybe<Scalars['Boolean']['input']>;
+};
 
 export enum MedicalNeedChoices {
   Dialysis = 'DIALYSIS',
@@ -2088,6 +2095,7 @@ export type Query = {
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
+  shelterMaxStay?: Maybe<Scalars['Int']['output']>;
   shelterServiceCategories: ServiceCategoryTypeOffsetPaginated;
   shelters: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
@@ -2559,6 +2567,7 @@ export type ShelterFilter = {
   geolocation?: InputMaybe<GeolocationInput>;
   isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
   mapBounds?: InputMaybe<MapBoundsInput>;
+  maxStay?: InputMaybe<MaxStayInput>;
   name?: InputMaybe<Scalars['String']['input']>;
   openNow?: InputMaybe<Scalars['Boolean']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -2616,8 +2625,10 @@ export type ShelterProgramType = {
 
 export type ShelterPropertyInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
+  entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
   parking?: InputMaybe<Array<ParkingChoices>>;
   pets?: InputMaybe<Array<PetChoices>>;
+  referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;

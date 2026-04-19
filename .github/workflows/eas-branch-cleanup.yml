@@ -40,7 +40,7 @@ jobs:
       - name: 🔧 Setup EAS
         uses: expo/expo-github-action@v8
         with:
-          eas-version: latest
+          eas-version: 18.5.0
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: ️ Delete EAS Branches for Affected Projects
