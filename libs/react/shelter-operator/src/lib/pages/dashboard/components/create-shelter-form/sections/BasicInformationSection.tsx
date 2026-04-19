@@ -1,17 +1,15 @@
-import { ScheduleTypeChoices } from '@monorepo/react/shelter';
+import { AdvancedMarker, Map as GoogleMap } from '@vis.gl/react-google-maps';
+import { PenLine } from 'lucide-react';
 import { memo } from 'react';
-import { FieldWrapper } from '../../../../../components/form/FieldWrapper';
+import { Dropdown } from '../../../../../components/base-ui/dropdown';
+import { Input } from '../../../../../components/base-ui/input/Input';
 import { FormSection } from '../../../../../components/form/FormSection';
-import { SelectField } from '../../../../../components/form/SelectField';
-import { TextField } from '../../../../../components/form/TextField';
-import { INPUT_CLASS } from '../../../../../components/form/styles';
 import { useActiveOrg } from '../../../../../providers/activeOrg';
 import type { SectionProps } from '../types';
 
-const OPERATING_HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => {
-  const value = `${String(hour).padStart(2, '0')}:00`;
-  return { value, label: value };
-});
+const DEFAULT_CENTER = { lat: 34.04499, lng: -118.251601 };
+const DEFAULT_ZOOM = 10;
+const SELECTED_ZOOM = 15;
 
 export const BasicInformationSection = memo(function BasicInformationSection({
   data,
@@ -19,206 +17,178 @@ export const BasicInformationSection = memo(function BasicInformationSection({
   errors,
 }: SectionProps) {
   const { activeOrg } = useActiveOrg();
-  const operatingScheduleIndex = data.schedules.findIndex(
-    (entry) =>
-      entry.scheduleType === ScheduleTypeChoices.Operating && !entry.isException
-  );
-  const operatingSchedule =
-    operatingScheduleIndex >= 0 ? data.schedules[operatingScheduleIndex] : null;
 
-  const handleOperatingHoursChange = (
-    field: 'startTime' | 'endTime',
-    value: string
-  ) => {
-    const baseEntry = operatingSchedule ?? {
-      scheduleType: ScheduleTypeChoices.Operating,
-      days: [],
-      startTime: '',
-      endTime: '',
-      startDate: '',
-      endDate: '',
-      condition: '',
-      isException: false,
-    };
+  const location = data.location;
+  const hasLocation = Boolean(location?.latitude && location?.longitude);
+  const mapCenter = hasLocation
+    ? { lat: location?.latitude as number, lng: location?.longitude as number }
+    : DEFAULT_CENTER;
 
-    const nextEntry = { ...baseEntry, [field]: value };
-    const nextSchedules = [...data.schedules];
-
-    if (operatingScheduleIndex >= 0) {
-      nextSchedules[operatingScheduleIndex] = nextEntry;
-    } else {
-      nextSchedules.unshift(nextEntry);
-    }
-
-    onChange('schedules', nextSchedules);
+  const updateLocation = (nextLocation: {
+    place?: string;
+    latitude?: number;
+    longitude?: number;
+  }) => {
+    onChange('location', {
+      place: nextLocation.place ?? location?.place ?? '',
+      latitude: nextLocation.latitude ?? location?.latitude,
+      longitude: nextLocation.longitude ?? location?.longitude,
+    });
   };
-
-  const operatingStartTime = operatingSchedule?.startTime?.slice(0, 5) ?? '';
-  const operatingEndTime = operatingSchedule?.endTime?.slice(0, 5) ?? '';
 
   return (
     <FormSection
       title="Basic Information"
       className="rounded-none border-0 bg-transparent p-0"
-      contentClassName="space-y-5"
+      contentClassName="space-y-6"
       titleClassName="text-4xl leading-tight"
     >
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <TextField
-          id="shelter-name"
-          name="name"
-          label="Shelter Name"
-          value={data.name}
-          onChange={(value) => onChange('name', value)}
-          placeholder="Enter your shelter name"
-          required
-          error={errors.name}
-        />
+      <Input
+        id="shelter-name"
+        label="Shelter Name"
+        value={data.name}
+        onChange={(event) => onChange('name', event.target.value)}
+        placeholder="Enter your shelter name"
+        required
+        error={errors.name}
+      />
 
-        <SelectField<string>
-          id="shelter-organization"
-          name="organization"
-          label="Organization"
-          value={activeOrg?.id ?? ''}
-          options={
-            activeOrg
-              ? [{ value: activeOrg.id, label: activeOrg.name }]
-              : [{ value: '', label: 'Select your organization' }]
-          }
-          onChange={(value) => onChange('organization', value)}
-          placeholder="Select your organization"
-          required
-          error={errors.organization}
-        />
-      </div>
+      <Dropdown
+        label="Organization"
+        placeholder="Please select"
+        options={
+          activeOrg ? [{ value: activeOrg.id, label: activeOrg.name }] : []
+        }
+        value={
+          activeOrg ? { value: activeOrg.id, label: activeOrg.name } : null
+        }
+        onChange={(value) => onChange('organization', value?.value ?? '')}
+        required
+      />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
-        <FieldWrapper
-          label="Address"
-          htmlFor="shelter-address"
-          error={errors.location}
-          required
-        >
-          <input
-            id="shelter-address"
-            name="address"
-            type="text"
-            value={data.location?.place ?? ''}
-            placeholder="Enter your address"
-            onChange={(event) =>
-              onChange('location', {
-                place: event.target.value,
-                latitude: data.location?.latitude,
-                longitude: data.location?.longitude,
-              })
-            }
-            className={INPUT_CLASS}
-            aria-invalid={errors.location ? 'true' : undefined}
-            required
-          />
-        </FieldWrapper>
+      <Input
+        id="shelter-address"
+        label="Address"
+        value={data.location?.place ?? ''}
+        onChange={(event) => updateLocation({ place: event.target.value })}
+        placeholder="Enter your address"
+        required
+        error={errors.location}
+      />
 
-        <FieldWrapper label="Operating Hours" htmlFor="operating-start-time">
-          <div className="flex items-center gap-2">
-            <select
-              id="operating-start-time"
-              className={INPUT_CLASS}
-              value={operatingStartTime}
-              onChange={(event) =>
-                handleOperatingHoursChange('startTime', event.target.value)
-              }
-            >
-              <option value="">00:00</option>
-              {OPERATING_HOUR_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <span className="shrink-0 text-sm text-gray-500">to</span>
-            <select
-              id="operating-end-time"
-              className={INPUT_CLASS}
-              value={operatingEndTime}
-              onChange={(event) =>
-                handleOperatingHoursChange('endTime', event.target.value)
-              }
-            >
-              <option value="">00:00</option>
-              {OPERATING_HOUR_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </FieldWrapper>
+      <div className="overflow-hidden rounded-[18px] border border-gray-200">
+        <div className="h-[210px] w-full overflow-hidden md:h-[250px]">
+          <GoogleMap
+            mapId="SHELTER_LOCATION_MAP"
+            className="h-full w-full"
+            center={mapCenter}
+            zoom={hasLocation ? SELECTED_ZOOM : DEFAULT_ZOOM}
+            disableDefaultUI
+            gestureHandling="greedy"
+          >
+            {hasLocation ? (
+              <AdvancedMarker position={mapCenter} zIndex={99} />
+            ) : null}
+          </GoogleMap>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <TextField
+        <Input
+          id="shelter-latitude"
+          label="Latitude"
+          type="number"
+          inputMode="decimal"
+          step="any"
+          placeholder="0°"
+          value={location?.latitude ?? ''}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            updateLocation({
+              latitude: nextValue === '' ? undefined : Number(nextValue),
+            });
+          }}
+        />
+
+        <Input
+          id="shelter-longitude"
+          label="Longitude"
+          type="number"
+          inputMode="decimal"
+          step="any"
+          placeholder="0°"
+          value={location?.longitude ?? ''}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            updateLocation({
+              longitude: nextValue === '' ? undefined : Number(nextValue),
+            });
+          }}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Input
           id="shelter-email"
-          name="email"
           label="Email"
-          type="email"
           value={data.email}
-          onChange={(value) => onChange('email', value)}
+          onChange={(event) => onChange('email', event.target.value)}
+          type="email"
           placeholder="email@gmail.com"
           error={errors.email}
         />
-        <TextField
+        <Input
           id="shelter-phone"
-          name="phone"
           label="Phone Number"
-          type="tel"
           value={data.phone}
-          onChange={(value) => onChange('phone', value)}
+          onChange={(event) => onChange('phone', event.target.value)}
+          type="tel"
           placeholder="123-456-7890"
           error={errors.phone}
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <TextField
-          id="shelter-website"
-          name="website"
-          label="Website"
-          type="url"
-          value={data.website}
-          onChange={(value) => onChange('website', value)}
-          placeholder="Enter your website"
-          error={errors.website}
-        />
+      <Input
+        id="shelter-website"
+        label="Website"
+        value={data.website}
+        onChange={(event) => onChange('website', event.target.value)}
+        type="url"
+        placeholder="Enter your website"
+        error={errors.website}
+      />
 
-        <TextField
-          id="shelter-facebook"
-          name="facebook"
-          label="Facebook"
-          value={data.facebook}
-          onChange={(value) => onChange('facebook', value)}
-          placeholder="Enter your username"
-        />
-      </div>
+      <Input
+        id="shelter-facebook"
+        label="Facebook"
+        value={data.facebook}
+        onChange={(event) => onChange('facebook', event.target.value)}
+        placeholder="Enter your username"
+      />
+      <Input
+        id="shelter-instagram"
+        label="Instagram"
+        value={data.instagram}
+        onChange={(event) => onChange('instagram', event.target.value)}
+        placeholder="Enter your username"
+      />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <TextField
-          id="shelter-instagram"
-          name="instagram"
-          label="Instagram"
-          value={data.instagram}
-          onChange={(value) => onChange('instagram', value)}
-          placeholder="Enter your username"
-        />
+      <Input
+        id="shelter-other-social"
+        label="Other Social Media"
+        value={data.otherSocialMedia}
+        onChange={(event) => onChange('otherSocialMedia', event.target.value)}
+        placeholder="Enter your username"
+      />
 
-        <TextField
-          id="shelter-other-social"
-          name="other-social-media"
-          label="Other Social Media"
-          value={data.otherSocialMedia}
-          onChange={(value) => onChange('otherSocialMedia', value)}
-          placeholder="Enter your username"
-        />
-      </div>
+      <Input
+        id="operating-hours"
+        label="Operating Hours"
+        value="00:00 AM - 00:00 AM"
+        readOnly
+        inputClassName="cursor-default"
+        rightAdornment={<PenLine className="h-4 w-4" aria-hidden="true" />}
+      />
     </FormSection>
   );
 });

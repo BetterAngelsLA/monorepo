@@ -47,6 +47,7 @@ export const Input = forwardRef<
     dataType,
     variant = 'default',
     rows,
+    type,
     required = false,
     disabled = false,
     className,
@@ -161,6 +162,7 @@ export const Input = forwardRef<
             {...inputProps}
             ref={ref as React.Ref<HTMLInputElement>}
             id={inputId}
+            type={type}
             value={value}
             disabled={disabled}
             required={required}

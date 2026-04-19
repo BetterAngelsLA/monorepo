@@ -1,4 +1,5 @@
 import type {
+  HTMLInputTypeAttribute,
   InputHTMLAttributes,
   ReactNode,
   TextareaHTMLAttributes,
@@ -22,6 +23,7 @@ export interface InputProps
   error?: string;
   dataType?: InputDataType;
   variant?: InputVariant;
+  type?: HTMLInputTypeAttribute;
   className?: string;
   containerClassName?: string;
   inputClassName?: string;
