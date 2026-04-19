@@ -1,3 +1,4 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { ChevronDown } from 'lucide-react';
 import {
   useCallback,
@@ -8,7 +9,6 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { mergeCss } from '@monorepo/react/shared';
 import { Text } from '../text/text';
 import { DropdownChips } from './DropdownChips';
 import { DropdownMenu } from './DropdownMenu';
@@ -35,6 +35,7 @@ export function Dropdown<T extends string | number = string | number>(
     className,
     onOtherTextChange,
   } = props as DropdownInternalProps<T>;
+  const supportsOtherOption = typeof onOtherTextChange === 'function';
 
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,8 +85,14 @@ export function Dropdown<T extends string | number = string | number>(
   const hasSelection = selectedValues.length > 0;
 
   const otherSelected = useMemo(
-    () => selectedValues.some((v) => String(v.value) === '__dropdown_other__'),
-    [selectedValues]
+    () =>
+      supportsOtherOption &&
+      selectedValues.some(
+        (v) =>
+          String(v.value) === '__dropdown_other__' ||
+          v.label.trim().toLowerCase() === 'other'
+      ),
+    [selectedValues, supportsOtherOption]
   );
 
   const prevOtherSelectedRef = useRef(otherSelected);
@@ -114,17 +121,35 @@ export function Dropdown<T extends string | number = string | number>(
     [options]
   );
 
+  const hasExplicitOtherOption = useMemo(
+    () =>
+      menuOptionsWithoutOther.some(
+        (option) => option.label.trim().toLowerCase() === 'other'
+      ),
+    [menuOptionsWithoutOther]
+  );
+
   const filteredOptions = useMemo(() => {
     const query = searchQuery.toLowerCase();
     const main = menuOptionsWithoutOther.filter((o) =>
       o.label.toLowerCase().includes(query)
     );
+
+    if (!supportsOtherOption || hasExplicitOtherOption) {
+      return main;
+    }
+
     const otherOption: DropdownOption<T> = {
       label: 'Other',
       value: '__dropdown_other__' as T,
     };
     return [...main, otherOption];
-  }, [menuOptionsWithoutOther, searchQuery]);
+  }, [
+    menuOptionsWithoutOther,
+    searchQuery,
+    supportsOtherOption,
+    hasExplicitOtherOption,
+  ]);
 
   // ── Callbacks ──────────────────────────────────────────────────────────
 
@@ -213,7 +238,10 @@ export function Dropdown<T extends string | number = string | number>(
 
   return (
     <div
-      className={mergeCss(['relative flex w-full flex-col gap-1 font-sans', className])}
+      className={mergeCss([
+        'relative flex w-full flex-col gap-1 font-sans',
+        className,
+      ])}
     >
       {label && (
         <label id={labelId} className="text-sm text-gray-900">

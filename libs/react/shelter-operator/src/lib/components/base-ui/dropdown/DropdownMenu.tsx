@@ -1,6 +1,6 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { Check, Search } from 'lucide-react';
 import type { RefObject } from 'react';
-import { mergeCss } from '@monorepo/react/shared';
 import { Button } from '../buttons/buttons';
 import { Text } from '../text/text';
 import { Z_BACKDROP, Z_MENU } from './constants';
@@ -8,7 +8,7 @@ import type { DropdownOption } from './types';
 
 interface DropdownMenuProps<T extends string | number> {
   menuId: string;
-  menuPos: { top: number; left: number; width: number };
+  menuPos: { top: number; left: number; width: number; maxHeight: number };
   isSearchable: boolean;
   isMulti: boolean;
   hasSelection: boolean;
@@ -60,6 +60,7 @@ export function DropdownMenu<T extends string | number>({
           top: menuPos.top,
           left: menuPos.left,
           width: menuPos.width,
+          maxHeight: menuPos.maxHeight,
           zIndex: Z_MENU,
         }}
         className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white font-sans shadow-lg"
@@ -83,7 +84,7 @@ export function DropdownMenu<T extends string | number>({
         <div
           ref={listRef}
           role="listbox"
-          className="max-h-352 space-y-1 overflow-y-auto px-2 py-2"
+          className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-2 py-2"
         >
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option, index) => {

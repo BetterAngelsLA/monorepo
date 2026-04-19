@@ -5,7 +5,11 @@ interface MenuPosition {
   top: number;
   left: number;
   width: number;
+  maxHeight: number;
 }
+
+const VIEWPORT_PADDING = 12;
+const MIN_MENU_HEIGHT = 220;
 
 /**
  * Keeps a portal-rendered menu aligned below an anchor element using
@@ -24,7 +28,12 @@ export function usePortalPosition(
   onClose: () => void,
   menuRef: RefObject<HTMLElement | null>
 ): MenuPosition {
-  const [pos, setPos] = useState<MenuPosition>({ top: 0, left: 0, width: 0 });
+  const [pos, setPos] = useState<MenuPosition>({
+    top: 0,
+    left: 0,
+    width: 0,
+    maxHeight: MIN_MENU_HEIGHT,
+  });
 
   useLayoutEffect(() => {
     if (!isOpen || !triggerRef.current) return;
@@ -32,10 +41,34 @@ export function usePortalPosition(
 
     const measure = () => {
       const rect = el.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const preferredTop = rect.bottom + MENU_GAP;
+      const availableBelow = viewportHeight - preferredTop - VIEWPORT_PADDING;
+      const availableAbove = rect.top - MENU_GAP - VIEWPORT_PADDING;
+
+      const canOpenAbove =
+        availableBelow < MIN_MENU_HEIGHT && availableAbove > availableBelow;
+
+      const maxHeight = Math.max(
+        120,
+        canOpenAbove ? availableAbove : availableBelow
+      );
+
+      const top = canOpenAbove
+        ? Math.max(VIEWPORT_PADDING, rect.top - MENU_GAP - maxHeight)
+        : Math.max(
+            VIEWPORT_PADDING,
+            Math.min(
+              preferredTop,
+              viewportHeight - VIEWPORT_PADDING - maxHeight
+            )
+          );
+
       setPos({
-        top: rect.bottom + MENU_GAP,
+        top,
         left: rect.left,
         width: rect.width,
+        maxHeight,
       });
     };
 

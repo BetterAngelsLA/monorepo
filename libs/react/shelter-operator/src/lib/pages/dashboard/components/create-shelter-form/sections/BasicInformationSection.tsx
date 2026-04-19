@@ -50,9 +50,9 @@ export const BasicInformationSection = memo(function BasicInformationSection({
         value={data.name}
         onChange={(event) => onChange('name', event.target.value)}
         placeholder="Enter your shelter name"
-        required
         error={errors.name}
         isTouched={isTouched}
+        required
       />
 
       <Dropdown
@@ -74,9 +74,9 @@ export const BasicInformationSection = memo(function BasicInformationSection({
         value={data.location?.place ?? ''}
         onChange={(event) => updateLocation({ place: event.target.value })}
         placeholder="Enter your address"
-        required
         error={errors.location}
         isTouched={isTouched}
+        required
       />
 
       <div className="overflow-hidden rounded-[18px] border border-gray-200">
@@ -137,21 +137,21 @@ export const BasicInformationSection = memo(function BasicInformationSection({
           value={data.email}
           onChange={(event) => onChange('email', event.target.value)}
           type="email"
-          required
           placeholder="email@gmail.com"
           error={errors.email}
           isTouched={isTouched}
+          required
         />
         <Input
           id="shelter-phone"
           label="Phone Number"
-          required
           value={data.phone}
           onChange={(event) => onChange('phone', event.target.value)}
           type="tel"
           placeholder="123-456-7890"
           error={errors.phone}
           isTouched={isTouched}
+          required
         />
       </div>
 
@@ -159,12 +159,12 @@ export const BasicInformationSection = memo(function BasicInformationSection({
         id="shelter-website"
         label="Website"
         value={data.website}
-        required
         onChange={(event) => onChange('website', event.target.value)}
         type="url"
         placeholder="Enter your website"
         error={errors.website}
         isTouched={isTouched}
+        required
       />
 
       <Input

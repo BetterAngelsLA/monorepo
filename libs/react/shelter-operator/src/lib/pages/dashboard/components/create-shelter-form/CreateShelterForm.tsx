@@ -51,7 +51,6 @@ export function CreateShelterForm() {
   const selectedOrganizationId = activeOrg?.id ?? '';
   const { formData, updateField, resetForm } = useCreateShelterForm();
   const [currentStep, setCurrentStep] = useState(0);
-  const [touchedSteps, setTouchedSteps] = useState<Record<number, boolean>>({});
   const [errors, setErrors] = useState<FormErrors>({});
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [createShelter, { loading: isSubmitting }] = useMutation<
@@ -119,25 +118,6 @@ export function CreateShelterForm() {
   };
 
   const handleNextStep = () => {
-    if (currentStep === 0) {
-      const isBasicInfoValid =
-        Boolean(formData.name.trim()) &&
-        Boolean(selectedOrganizationId) &&
-        Boolean(formData.location?.place?.trim()) &&
-        Boolean(formData.email.trim()) &&
-        Boolean(formData.phone.trim()) &&
-        Boolean(formData.website.trim());
-
-      if (!isBasicInfoValid) {
-        setTouchedSteps(
-          Object.fromEntries(
-            CREATE_SHELTER_STEPS.map((_, index) => [index, true])
-          ) as Record<number, boolean>
-        );
-        return;
-      }
-    }
-
     setCurrentStep((prev) =>
       Math.min(prev + 1, CREATE_SHELTER_STEPS.length - 1)
     );
@@ -155,7 +135,6 @@ export function CreateShelterForm() {
             data={formData}
             onChange={handleFieldChange}
             errors={errors}
-            isTouched={touchedSteps[0] ?? false}
           />
         );
       case 1:
