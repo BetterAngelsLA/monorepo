@@ -1,9 +1,9 @@
 import { useMutation } from '@apollo/client/react';
-import { Button } from '@monorepo/react/components';
 import { APIProvider } from '@vis.gl/react-google-maps';
-import { ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { FormEvent, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../../../../components/base-ui/buttons';
 import {
   WizardProgressBar,
   type WizardStep,
@@ -51,6 +51,7 @@ export function CreateShelterForm() {
   const selectedOrganizationId = activeOrg?.id ?? '';
   const { formData, updateField, resetForm } = useCreateShelterForm();
   const [currentStep, setCurrentStep] = useState(0);
+  const [touchedSteps, setTouchedSteps] = useState<Record<number, boolean>>({});
   const [errors, setErrors] = useState<FormErrors>({});
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [createShelter, { loading: isSubmitting }] = useMutation<
@@ -118,6 +119,25 @@ export function CreateShelterForm() {
   };
 
   const handleNextStep = () => {
+    if (currentStep === 0) {
+      const isBasicInfoValid =
+        Boolean(formData.name.trim()) &&
+        Boolean(selectedOrganizationId) &&
+        Boolean(formData.location?.place?.trim()) &&
+        Boolean(formData.email.trim()) &&
+        Boolean(formData.phone.trim()) &&
+        Boolean(formData.website.trim());
+
+      if (!isBasicInfoValid) {
+        setTouchedSteps(
+          Object.fromEntries(
+            CREATE_SHELTER_STEPS.map((_, index) => [index, true])
+          ) as Record<number, boolean>
+        );
+        return;
+      }
+    }
+
     setCurrentStep((prev) =>
       Math.min(prev + 1, CREATE_SHELTER_STEPS.length - 1)
     );
@@ -135,6 +155,7 @@ export function CreateShelterForm() {
             data={formData}
             onChange={handleFieldChange}
             errors={errors}
+            isTouched={touchedSteps[0] ?? false}
           />
         );
       case 1:
@@ -218,8 +239,8 @@ export function CreateShelterForm() {
     <APIProvider
       apiKey={import.meta.env.VITE_SHELTER_GOOGLE_MAPS_API_KEY as string}
     >
-      <div className="min-h-screen bg-white px-4 py-6 md:px-6 md:py-8">
-        <div className="px-6 pt-5 md:px-8">
+      <div className="min-h-screen bg-white px-48">
+        <div className="px-6 md:px-8">
           <WizardProgressBar
             steps={CREATE_SHELTER_STEPS}
             currentStep={currentStep}
@@ -238,19 +259,18 @@ export function CreateShelterForm() {
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-10 px-6 pb-8 pt-4 md:px-8"
+          className="space-y-10 px-6 pb-8 md:px-8"
           data-testid="create-shelter-form"
         >
           {renderCurrentStep()}
 
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex justify-end gap-4">
             {currentStep > 0 ? (
               <Button
-                size="xl"
                 type="button"
+                variant="primary"
+                leftIcon={<ChevronLeft />}
                 onClick={handlePreviousStep}
-                disabled={isSubmitting}
-                className="h-auto! border border-gray-300! bg-white! px-6 py-2.5 text-gray-700! hover:bg-gray-50! disabled:opacity-50"
               >
                 Back
               </Button>
@@ -260,21 +280,18 @@ export function CreateShelterForm() {
 
             {!isLastStep ? (
               <Button
-                size="xl"
                 type="button"
+                variant="primary"
+                rightIcon={<ChevronRight />}
                 onClick={handleNextStep}
-                className="h-auto! rounded-full! bg-[#3b82f6]! px-6 py-2.5 text-white! hover:bg-[#2f74e8]!"
               >
-                <span className="inline-flex items-center gap-2">
-                  Save and Continue
-                  <ChevronRight size={16} />
-                </span>
+                Next
               </Button>
             ) : (
               <Button
-                size="xl"
                 type="submit"
-                className="h-auto! bg-green-600! px-6 py-2.5 text-white! hover:bg-green-700! transition-colors disabled:opacity-50"
+                variant="primary"
+                color="blue"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'Submitting…' : 'Create Shelter'}

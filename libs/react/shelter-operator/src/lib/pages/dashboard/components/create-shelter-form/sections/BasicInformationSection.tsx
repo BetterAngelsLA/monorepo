@@ -15,6 +15,7 @@ export const BasicInformationSection = memo(function BasicInformationSection({
   data,
   onChange,
   errors,
+  isTouched,
 }: SectionProps) {
   const { activeOrg } = useActiveOrg();
 
@@ -40,8 +41,8 @@ export const BasicInformationSection = memo(function BasicInformationSection({
     <FormSection
       title="Basic Information"
       className="rounded-none border-0 bg-transparent p-0"
-      contentClassName="space-y-6"
-      titleClassName="text-4xl leading-tight"
+      contentClassName="space-y-6 py-6"
+      titleClassName=""
     >
       <Input
         id="shelter-name"
@@ -51,6 +52,7 @@ export const BasicInformationSection = memo(function BasicInformationSection({
         placeholder="Enter your shelter name"
         required
         error={errors.name}
+        isTouched={isTouched}
       />
 
       <Dropdown
@@ -74,6 +76,7 @@ export const BasicInformationSection = memo(function BasicInformationSection({
         placeholder="Enter your address"
         required
         error={errors.location}
+        isTouched={isTouched}
       />
 
       <div className="overflow-hidden rounded-[18px] border border-gray-200">
@@ -134,17 +137,21 @@ export const BasicInformationSection = memo(function BasicInformationSection({
           value={data.email}
           onChange={(event) => onChange('email', event.target.value)}
           type="email"
+          required
           placeholder="email@gmail.com"
           error={errors.email}
+          isTouched={isTouched}
         />
         <Input
           id="shelter-phone"
           label="Phone Number"
+          required
           value={data.phone}
           onChange={(event) => onChange('phone', event.target.value)}
           type="tel"
           placeholder="123-456-7890"
           error={errors.phone}
+          isTouched={isTouched}
         />
       </div>
 
@@ -152,10 +159,12 @@ export const BasicInformationSection = memo(function BasicInformationSection({
         id="shelter-website"
         label="Website"
         value={data.website}
+        required
         onChange={(event) => onChange('website', event.target.value)}
         type="url"
         placeholder="Enter your website"
         error={errors.website}
+        isTouched={isTouched}
       />
 
       <Input

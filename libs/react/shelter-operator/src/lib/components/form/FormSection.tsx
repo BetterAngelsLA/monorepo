@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
-import { SECTION_CLASS, SECTION_TITLE_CLASS } from './styles';
+import { Text } from '../base-ui/text/text';
+import { SECTION_CLASS } from './styles';
 
 interface FormSectionProps {
   title: string;
@@ -19,7 +20,9 @@ export function FormSection({
 }: FormSectionProps) {
   return (
     <section className={clsx(SECTION_CLASS, className)}>
-      <h2 className={clsx(SECTION_TITLE_CLASS, titleClassName)}>{title}</h2>
+      <Text variant="header-lg" className={clsx('titleClassName')}>
+        {title}
+      </Text>
       <div className={clsx('space-y-4', contentClassName)}>{children}</div>
     </section>
   );
