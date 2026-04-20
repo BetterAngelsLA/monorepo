@@ -114,7 +114,7 @@ export function ClientContactForm(props: TProps) {
               error={!!errors.email}
               errorMessage={(errors.email?.message as string) || undefined}
               rules={{
-                validate: (value: string) => {
+                validate: (value) => {
                   if (value && !Regex.email.test(value)) {
                     return 'Enter a valid email address';
                   }
