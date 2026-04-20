@@ -11,12 +11,13 @@ Raises ``django.core.exceptions.ValidationError`` on invalid data — callers
 
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models, transaction
+from django.utils.text import slugify
 from organizations.models import Organization
 from places import Places
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
-from shelters.models import Bed, Room, Schedule, Shelter
+from shelters.models import Bed, Room, Schedule, Service, ServiceCategory, Shelter
 from shelters.selectors import shelter_get
 
 if TYPE_CHECKING:
@@ -27,9 +28,16 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 
-def _get_m2m_field_names(model: type[models.Model]) -> list[str]:
-    """Return the names of every ``ManyToManyField`` on *model*."""
-    return [field.name for field in model._meta.many_to_many]
+def _get_m2m_field_names(model: type[models.Model]) -> set[str]:
+    """Return set of ``ManyToManyField`` names on *model*."""
+    return {field.name for field in model._meta.many_to_many}
+
+
+# Pre-compute M2M field names once at module level.
+_SHELTER_M2M_FIELDS = _get_m2m_field_names(Shelter)
+_BED_M2M_FIELDS = _get_m2m_field_names(Bed)
+_ROOM_M2M_FIELDS = _get_m2m_field_names(Room)
+_COMMON_M2M_FIELDS = (_SHELTER_M2M_FIELDS & _BED_M2M_FIELDS) | (_SHELTER_M2M_FIELDS & _ROOM_M2M_FIELDS)
 
 
 def _set_m2m_from_enums(instance: models.Model, data: Dict[str, List[Any]]) -> None:
@@ -66,9 +74,9 @@ def _parse_location(data: Any) -> Any:
 
 def _prepare_shelter_data(
     data: Dict[str, Any],
-    m2m_field_names: list[str],
+    m2m_field_names: set[str],
 ) -> tuple[Dict[str, Any], Dict[str, List[Any]], List[Dict[str, Any]]]:
-    """Separate M2M data and schedules from scalar fields and transform custom types.
+    """Separate M2M data and schedules from scalar fields.
 
     Transforms:
     - ``location`` dict → ``Places`` instance
@@ -97,10 +105,6 @@ def _prepare_shelter_data(
             del data["status"]
 
     return data, m2m_data, schedules_data
-
-
-# Pre-compute M2M field names once at module level.
-_SHELTER_M2M_FIELDS = _get_m2m_field_names(Shelter)
 
 
 def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) -> None:
@@ -145,6 +149,82 @@ def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) ->
     Schedule.objects.bulk_create(objs)
 
 
+def resolve_pending_service_entries(entries: list[tuple[int, str]]) -> list[Service]:
+    """Resolve validated ``(category_id, display_name)`` pairs into Service objects.
+
+    For each entry, reuses an existing ``is_other`` service with a matching
+    display name (case-insensitive) or creates a new one.
+
+    Shared by the GraphQL mutation layer and the Django admin form.
+
+    Raises ``ValidationError`` if any *category_id* is unknown.
+    """
+    if not entries:
+        return []
+
+    category_ids = {cid for cid, _ in entries}
+    categories = {
+        cat.id: cat for cat in ServiceCategory.objects.filter(pk__in=category_ids).prefetch_related("services")
+    }
+
+    unknown = category_ids - set(categories)
+    if unknown:
+        raise ValidationError(f"Unknown service category: {next(iter(unknown))}.")
+
+    other_by_category: dict[int, dict[str, Service]] = {}
+    names_by_category: dict[int, set[str]] = {}
+    next_priority: dict[int, int] = {}
+
+    for cid, cat in categories.items():
+        others: dict[str, Service] = {}
+        names: set[str] = set()
+        max_pri = -1
+        for svc in cat.services.all():
+            names.add(svc.name.casefold())
+            if svc.priority > max_pri:
+                max_pri = svc.priority
+            if svc.is_other:
+                others[svc.display_name.casefold()] = svc
+        other_by_category[cid] = others
+        names_by_category[cid] = names
+        next_priority[cid] = max_pri + 1
+
+    resolved: list[Service] = []
+    seen_ids: set[int] = set()
+    for cid, display_name in entries:
+        normalized = display_name.casefold()
+        existing = other_by_category.get(cid, {}).get(normalized)
+        if existing is not None:
+            if existing.pk not in seen_ids:
+                resolved.append(existing)
+                seen_ids.add(existing.pk)
+            continue
+
+        category = categories[cid]
+        base_name = slugify(display_name).replace("-", "_") or f"service_{cid}"
+        service_name = base_name
+        suffix = 2
+        while service_name.casefold() in names_by_category[cid]:
+            service_name = f"{base_name}_{suffix}"
+            suffix += 1
+
+        created = Service.objects.create(
+            category=category,
+            name=service_name,
+            display_name=display_name,
+            is_other=True,
+            priority=next_priority[cid],
+        )
+        next_priority[cid] += 1
+        names_by_category[cid].add(service_name.casefold())
+        other_by_category.setdefault(cid, {})[normalized] = created
+        if created.pk not in seen_ids:
+            resolved.append(created)
+            seen_ids.add(created.pk)
+
+    return resolved
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -170,17 +250,63 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
 
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
 
+    # ``services`` is a unified list — split into existing PKs and pending entries.
+    raw_services: List[Any] = m2m_data.pop("services", [])
+    service_pks: list[Any] = []
+    pending_entries: list[tuple[int, str]] = []
+    seen_pending: set[tuple[int, str]] = set()
+
+    for entry in raw_services:
+        if isinstance(entry, dict):
+            svc_id = entry.get("id")
+            cat_id = entry.get("category_id")
+            display = str(entry.get("display_name") or "").strip()
+            if svc_id:
+                service_pks.append(svc_id)
+            elif cat_id and display:
+                try:
+                    norm_cat = int(cat_id)
+                except (TypeError, ValueError) as exc:
+                    raise ValidationError("Invalid new service entry.") from exc
+                key = (norm_cat, display.casefold())
+                if key not in seen_pending:
+                    seen_pending.add(key)
+                    pending_entries.append((norm_cat, display))
+            else:
+                raise ValidationError("Each service must have either 'id' or 'categoryId' + 'displayName'.")
+        else:
+            service_pks.append(entry)
+
     shelter = Shelter(**scalar_data)
     shelter.full_clean()
     shelter.save()
 
     _set_m2m_from_enums(shelter, m2m_data)
+    if service_pks:
+        shelter.services.set(Service.objects.filter(pk__in=service_pks))
+    pending_service_objects = resolve_pending_service_entries(pending_entries)
+    if pending_service_objects:
+        shelter.services.add(*pending_service_objects)
     _create_schedules(shelter, schedules_data)
 
     return shelter
 
 
-_BED_M2M_FIELDS = _get_m2m_field_names(Bed)
+def _validate_subset_attributes(shelter: Shelter, m2m_data: Dict[str, List[Any]]) -> None:
+    """Ensure room/bed attributes are a strict subset of the shelter's attributes."""
+    for field_name in _COMMON_M2M_FIELDS:
+        if field_name not in m2m_data:
+            continue
+        provided_values = [getattr(v, "value", v) for v in m2m_data[field_name]]
+        if not provided_values:
+            continue
+
+        shelter_allowed = set(getattr(shelter, field_name).values_list("name", flat=True))
+        invalid = set(provided_values) - shelter_allowed
+        if invalid:
+            raise ValidationError(
+                {field_name: f"The following {field_name} are not supported by the shelter: {', '.join(invalid)}"}
+            )
 
 
 @transaction.atomic
@@ -206,6 +332,8 @@ def bed_create(*, user: "User", data: Dict[str, Any]) -> Bed:
         k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and data[k] is not None
     }
 
+    _validate_subset_attributes(shelter, m2m_data)
+
     # Drop None values so model defaults apply
     scalar_data = {k: v for k, v in data.items() if v is not None}
 
@@ -229,13 +357,27 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
         does not belong to its organization.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    data = {**data}
+    data = dict(data)
     shelter_id = data.pop("shelter_id")
     try:
         shelter = shelter_get(user=user, shelter_id=shelter_id)
     except Shelter.DoesNotExist:
         raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
-    room = Room(shelter=shelter, **data)
+
+    m2m_data: Dict[str, List[Any]] = {
+        k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and data[k] is not None
+    }
+
+    _validate_subset_attributes(shelter, m2m_data)
+    raw_occupants = m2m_data.pop("occupants", [])
+
+    # Drop None values so model defaults apply
+    scalar_data = {k: v for k, v in data.items() if v is not None}
+
+    room = Room(shelter=shelter, **scalar_data)
     room.full_clean()
     room.save()
+    _set_m2m_from_enums(room, m2m_data)
+    if raw_occupants:
+        room.occupants.set(raw_occupants)
     return room

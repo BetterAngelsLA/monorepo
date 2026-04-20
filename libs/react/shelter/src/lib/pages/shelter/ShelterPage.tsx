@@ -12,14 +12,16 @@ import {
   GeneralInfo,
   Header,
   OperatingHours,
-  OtherServices,
   ReportUpdateButton,
   Restrictions,
   RoomStyles,
+  Services,
   ShelterDetail,
   ShelterTypes,
   SpecialSituationRestrictions,
 } from './partials';
+import { hasWysiwygContent } from './utils';
+
 export function ShelterPage({ id }: { id: string }) {
   const { loading, data } = useQuery(ViewShelterDocument, {
     variables: {
@@ -37,24 +39,20 @@ export function ShelterPage({ id }: { id: string }) {
     return null;
   }
 
-  function containsNonWhitespaceValue(value?: string | null | undefined) {
-    // Rich text (CKEditor5) fields aren't empty when empty.
-    // By default, they contain a non-breaking space char.
-    return !!value && value !== '<p>&nbsp;</p>';
-  }
-
   const hasGeneralInfo =
-    !!shelter.totalBeds ||
     !!shelter.website ||
     !!shelter.phone ||
     !!shelter.email ||
     !!shelter.location?.place;
-  const hasDescription = containsNonWhitespaceValue(shelter.description);
+  const hasServices =
+    !!shelter.services?.length || hasWysiwygContent(shelter.otherServices);
+  const hasDescription = hasWysiwygContent(shelter.description);
   const hasEntryRequirements =
     !!shelter.entryRequirements?.length ||
-    containsNonWhitespaceValue(shelter.entryInfo) ||
-    containsNonWhitespaceValue(shelter.bedFees) ||
-    containsNonWhitespaceValue(shelter.programFees);
+    !!shelter.referralRequirement?.length ||
+    hasWysiwygContent(shelter.entryInfo) ||
+    hasWysiwygContent(shelter.bedFees) ||
+    hasWysiwygContent(shelter.programFees);
   const hasSpecialRestrictions = !!shelter.specialSituationRestrictions?.length;
   const hasShelterTypes =
     !!shelter.shelterTypes?.length || !!shelter.shelterTypesOther;
@@ -67,9 +65,12 @@ export function ShelterPage({ id }: { id: string }) {
   const hasRestrictions =
     !!shelter.maxStay ||
     !!shelter.curfew ||
-    !!shelter.onSiteSecurity ||
-    containsNonWhitespaceValue(shelter.otherRules);
-  const hasOtherServices = containsNonWhitespaceValue(shelter.otherServices);
+    !!shelter.exitPolicy?.length ||
+    shelter.visitorsAllowed != null ||
+    shelter.emergencySurge != null ||
+    shelter.onSiteSecurity != null ||
+    hasWysiwygContent(shelter.otherRules);
+
   const hasEcosystemInfo =
     !!shelter.cities?.length ||
     !!shelter.spa?.length ||
@@ -104,6 +105,7 @@ export function ShelterPage({ id }: { id: string }) {
           Last Updated Date: {format(shelter.updatedAt, 'M/d/yy')}
         </div>
         {hasGeneralInfo && <GeneralInfo shelter={shelter} />}
+        {hasServices && <Services shelter={shelter} />}
         {hasDescription && (
           <Card title="Description">
             <WysiwygSection content={shelter.description} />
@@ -117,7 +119,6 @@ export function ShelterPage({ id }: { id: string }) {
         {hasRoomStyles && <RoomStyles shelter={shelter} />}
         {hasDetail && <ShelterDetail shelter={shelter} />}
         {hasRestrictions && <Restrictions shelter={shelter} />}
-        {hasOtherServices && <OtherServices shelter={shelter} />}
         {hasEcosystemInfo && <EcosystemInfo shelter={shelter} />}
         <div className="my-4 flex justify-center">
           <ReportUpdateButton />

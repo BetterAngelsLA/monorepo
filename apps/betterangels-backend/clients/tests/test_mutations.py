@@ -18,13 +18,7 @@ from clients.enums import (
     SocialMediaEnum,
     VeteranStatusEnum,
 )
-from clients.models import (
-    ClientContact,
-    ClientHouseholdMember,
-    ClientProfile,
-    HmisProfile,
-    SocialMediaProfile,
-)
+from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile, SocialMediaProfile
 from clients.tests.utils import (
     ClientContactBaseTestCase,
     ClientHouseholdMemberBaseTestCase,
@@ -108,6 +102,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "residenceGeolocation": self.residence_geolocation,
             "socialMediaProfiles": social_media_profile,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+            "unhousedStartDate": "2026-01-01",
             "veteranStatus": VeteranStatusEnum.YES.name,
         }
         response = self._create_client_profile_fixture(variables)
@@ -228,6 +223,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "residenceGeolocation": [-118, 34],
             "socialMediaProfiles": social_media_profiles,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+            "unhousedStartDate": "2025-01-01",
             "veteranStatus": VeteranStatusEnum.YES.name,
         }
         response = self._update_client_profile_fixture(variables)
@@ -452,7 +448,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile["id"]}
 
-        expected_query_count = 18
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 

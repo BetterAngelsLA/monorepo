@@ -9,23 +9,33 @@ query ViewShelters(
       id
       name
       heroImage
-      exteriorPhotos {
-        file {
-          url
-          name
-        }
-      }
-      interiorPhotos {
-        file {
-          url
-          name
-        }
-      }
       distanceInMiles
       location {
         latitude
         longitude
         place
+      }
+      shelterTypes {
+        name
+      }
+    }
+  }
+}
+
+query ShelterServiceCategories {
+  shelterServiceCategories {
+    totalCount
+    results {
+      id
+      name
+      displayName
+      priority
+      services {
+        id
+        name
+        displayName
+        isOther
+        priority
       }
     }
   }

@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 @strawberry.enum
 class DemographicChoices(models.TextChoices):
     ALL = "all", _("All")
+    COUPLES = "couples", _("Couples")
     SINGLE_MEN = "single_men", _("Single Men")
     SINGLE_WOMEN = "single_women", _("Single Women")
     TAY_TEEN = "tay_teen", _("TAY/Teen")
@@ -33,6 +34,7 @@ class SpecialSituationRestrictionChoices(models.TextChoices):
 
 @strawberry.enum
 class ShelterChoices(models.TextChoices):
+    ACCESS_CENTER = "access_center", _("Access Center / Day Center")
     BUILDING = "building", _("Building")
     CHURCH = "church", _("Church")
     HOTEL_MOTEL = "hotel_motel", _("Hotel/Motel")
@@ -70,6 +72,7 @@ class StorageChoices(models.TextChoices):
     AMNESTY_LOCKERS = "amnesty_lockers", _("Amnesty Lockers")
     STANDARD_LOCKERS = "standard_lockers", _("Standard Lockers")
     SHARED_STORAGE = "shared_storage", _("Shared Storage")
+    PERSONAL_BIN = "personal_bin", _("Personal Storage Bin")
     NO_STORAGE = "no_storage", _("No Storage")
 
 
@@ -94,56 +97,18 @@ class ParkingChoices(models.TextChoices):
     NO_PARKING = "no_parking", _("No Parking")
 
 
-# Services Offered
-@strawberry.enum
-class ImmediateNeedChoices(models.TextChoices):
-    CLOTHING = "clothing", _("Clothing")
-    FOOD = "food", _("Food")
-    SHOWERS = "showers", _("Showers")
-
-
-@strawberry.enum
-class GeneralServiceChoices(models.TextChoices):
-    CASE_MANAGEMENT = "case_management", _("Case Management")
-    CHILDCARE = "childcare", _("Childcare")
-    COMPUTER_ACCESS = "computer_access", _("Computer Access")
-    EMPLOYMENT_SERVICES = "employment_services", _("Employment Services")
-    FINANCIAL_LITERACY_ASSISTANCE = "financial_literacy_assistance", _("Financial Literacy/Assistance")
-    HOUSING_NAVIGATION = "housing_navigation", _("Housing Navigation")
-    LEGAL_ASSISTANCE = "legal_assistance", _("Legal Assistance")
-    MAIL = "mail", _("Mail")
-    PHONE = "phone", _("Phone")
-    TRANSPORTATION = "transportation", _("Transportation")
-    LAUNDRY = "laundry", _("Laundry Services")
-    TLS = "tls", _("TLS (Time Limited Subsidies)")
-
-
-@strawberry.enum
-class HealthServiceChoices(models.TextChoices):
-    DENTAL = "dental", _("Dental")
-    MEDICAL = "medical", _("Medical")
-    MENTAL_HEALTH = "mental_health", _("Mental Health")
-    SUBSTANCE_USE_TREATMENT = "substance_use_treatment", _("Substance Use Treatment")
-
-
-@strawberry.enum
-class TrainingServiceChoices(models.TextChoices):
-    JOB_TRAINING = "job_training", _("Job Training")
-    LIFE_SKILLS_TRAINING = "life_skills_training", _("Life Skills Training")
-    TUTORING = "tutoring", _("Tutoring")
-
-
 # Entry Requirements
 @strawberry.enum
 class EntryRequirementChoices(models.TextChoices):
+    BACKGROUND = "background", _("Background Check")
+    HOMELESS_VERIFICATION = "homeless_verification", _("Homeless Verification/Observation")
     MEDICAID_OR_MEDICARE = "medicaid_or_medicare", _("Medicaid or Medicare")
     PHOTO_ID = "photo_id", _("Photo ID")
     REFERRAL = "referral", _("Referral")
     RESERVATION = "reservation", _("Reservation")
-    BACKGROUND = "background", _("Background Check")
-    HOMELESS_VERIFICATION = "homeless_verification", _("Homeless Verification/Observation")
-    WALK_UPS = "walk_ups", _("Walk-Ups")
     VEHICLE_REGISTRATION = "vehicle_registration", _("Vehicle Registration/Insurance")
+    WALK_UPS = "walk_ups", _("Walk-Ups")
+    IN_SPA_ONLY = "in_spa_only", _("In-SPA Only")
 
 
 # Ecosystem Information
@@ -210,13 +175,6 @@ class ExitPolicyChoices(models.TextChoices):
     VIOLENCE = "violence", _("Exit due to violence to self or others")
     MITIGATION = "mitigation", _("30 Days Mitigation plan prior to exits")
     OTHER = "other", _("Other")
-
-
-@strawberry.enum
-class MealServiceChoices(models.TextChoices):
-    BREAKFAST = "breakfast", _("Breakfast")
-    LUNCH = "lunch", _("Lunch")
-    DINNER = "dinner", _("Dinner")
 
 
 @strawberry.enum

@@ -1,6 +1,6 @@
 import { openInMaps } from '@monorepo/react/components';
 import {
-  CallRegularIcon,
+  CallOutlinedIcon,
   LocationIcon,
   ShareIcon,
 } from '@monorepo/react/icons';
@@ -43,11 +43,17 @@ export function Actions({ location, phone, shelterName }: TProps) {
   };
 
   return (
-    <div className="flex items-center py-4 justify-between text-xs px-11 border-neutral-90 border-t border-b mt-4 -mx-4">
-      <a href={phone ? `tel:${phone}` : undefined}>
-        <div className={`flex flex-col items-center ${!phone && 'opacity-50'}`}>
-          <CallRegularIcon className="w-6 h-6 fill-primary-20" />
-          <span>Call</span>
+    <div className="flex p-1 items-center justify-between text-xs border-neutral-90 border-t border-b mt-4 -mx-4">
+      <a className="flex-1 group" href={phone ? `tel:${phone}` : undefined}>
+        <div
+          className={`flex py-3 ${
+            !phone && 'bg-neutral-99'
+          } flex-col rounded-sm items-center active:bg-neutral-98 ${
+            !phone && 'text-neutral-90'
+          }`}
+        >
+          <CallOutlinedIcon className="w-6 h-6 fill-primary-20" />
+          <span className="group-active:font-bold">Call</span>
         </div>
       </a>
 
@@ -56,15 +62,22 @@ export function Actions({ location, phone, shelterName }: TProps) {
         onClick={() =>
           openInMaps(location?.latitude, location?.longitude, location?.place)
         }
-        className={`flex flex-col items-center ${!location && 'opacity-50'}`}
+        className={`flex flex-1 flex-col ${
+          !location && 'text-neutral-99'
+        } active:bg-neutral-98 items-center py-3 group rounded-sm ${
+          !location && 'text-neutral-90'
+        }`}
       >
         <LocationIcon className="w-6 h-6 fill-primary-20" />
-        <span>Directions</span>
+        <span className="group-active:font-bold">Directions</span>
       </button>
 
-      <button onClick={handleShare} className="flex flex-col items-center">
+      <button
+        onClick={handleShare}
+        className={`flex flex-1 active:bg-neutral-90 flex-col items-center py-3 group rounded-sm`}
+      >
         <ShareIcon className="w-6 h-6 fill-primary-20" />
-        <span>Share</span>
+        <span className="group-active:font-bold">Share</span>
       </button>
     </div>
   );

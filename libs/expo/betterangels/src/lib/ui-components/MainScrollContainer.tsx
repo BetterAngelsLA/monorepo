@@ -1,7 +1,10 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNode, forwardRef } from 'react';
+import { type Ref, type ReactNode, forwardRef } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import {
+  KeyboardAwareScrollView,
+  KeyboardAwareScrollViewRef,
+} from 'react-native-keyboard-controller';
 
 // used to offset view scroll on keyboard show, accounting for toolbar height
 const iOSToolbarHeightApprox = 44;
@@ -44,7 +47,7 @@ const MainScrollContainer = forwardRef<ScrollView, IMainScrollContainerProps>(
         style={{ flex: 1 }}
       >
         <ViewContainer
-          ref={ref}
+          ref={ref as Ref<KeyboardAwareScrollViewRef>}
           keyboardShouldPersistTaps="handled"
           style={{ flex: 1, backgroundColor: bg }}
           contentContainerStyle={{

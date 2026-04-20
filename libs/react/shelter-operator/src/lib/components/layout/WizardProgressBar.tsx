@@ -1,9 +1,10 @@
 import { Check } from 'lucide-react';
 import { memo } from 'react';
-import { Button } from '../base-ui/buttons';
+import { Button } from '../base-ui/buttons/buttons';
 
 export interface WizardStep {
   label: string;
+  pathSegment?: string;
 }
 
 export interface WizardProgressBarProps {
@@ -55,7 +56,7 @@ export const WizardProgressBar = memo(
             ].join(' ');
 
             const labelClasses = [
-              'text-xs transition-colors duration-300 leading-tight text-center w-max max-w-36',
+              'text-xs transition-colors duration-300 leading-tight text-center w-max',
               state === 'completed' || state === 'active'
                 ? 'text-[#008CEE]'
                 : 'text-gray-400',

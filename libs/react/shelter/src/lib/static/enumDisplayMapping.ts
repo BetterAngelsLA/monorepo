@@ -2,10 +2,11 @@ import {
   AccessibilityChoices,
   DemographicChoices,
   EntryRequirementChoices,
+  ExitPolicyChoices,
   FunderChoices,
-  GeneralServiceChoices,
   ParkingChoices,
   PetChoices,
+  ReferralRequirementChoices,
   RoomStyleChoices,
   ShelterChoices,
   ShelterProgramChoices,
@@ -14,10 +15,20 @@ import {
   StorageChoices,
 } from '../apollo';
 
+export const enumDisplayAccessibilityChoices: {
+  [key in AccessibilityChoices]: string;
+} = {
+  [AccessibilityChoices.AdaRooms]: 'ADA Rooms Available',
+  [AccessibilityChoices.MedicalEquipmentPermitted]:
+    'Medical Equipment Permitted',
+  [AccessibilityChoices.WheelchairAccessible]: 'Wheelchair Accessible',
+};
+
 export const enumDisplayDemographics: { [key in DemographicChoices]: string } =
   {
     [DemographicChoices.All]: 'All',
     [DemographicChoices.Families]: 'Families',
+    [DemographicChoices.Couples]: 'Couples',
     [DemographicChoices.LgbtqPlus]: 'LGBTQ+',
     [DemographicChoices.Other]: 'Others',
     [DemographicChoices.Seniors]: 'Seniors',
@@ -28,30 +39,13 @@ export const enumDisplayDemographics: { [key in DemographicChoices]: string } =
     [DemographicChoices.TayTeen]: 'TAY/Teen',
   };
 
-export const enumDisplayGeneralServiceChoices: {
-  [key in GeneralServiceChoices]: string;
-} = {
-  [GeneralServiceChoices.CaseManagement]: 'Case Management',
-  [GeneralServiceChoices.Childcare]: 'Childcare',
-  [GeneralServiceChoices.ComputerAccess]: 'Computer Access',
-  [GeneralServiceChoices.EmploymentServices]: 'Employment Services',
-  [GeneralServiceChoices.FinancialLiteracyAssistance]:
-    'Financial Literacy Assistance',
-  [GeneralServiceChoices.HousingNavigation]: 'Housing Navigation',
-  [GeneralServiceChoices.LegalAssistance]: 'Legal Assistance',
-  [GeneralServiceChoices.Laundry]: 'Laundry Services',
-  [GeneralServiceChoices.Mail]: 'Mail',
-  [GeneralServiceChoices.Phone]: 'Phone',
-  [GeneralServiceChoices.Tls]: 'TLS (Time Limited Subsidies)',
-  [GeneralServiceChoices.Transportation]: 'Transportation',
-};
-
 export const enumDisplayEntryRequirementChoices: {
   [key in EntryRequirementChoices]: string;
 } = {
   [EntryRequirementChoices.Background]: 'Background Check',
   [EntryRequirementChoices.HomelessVerification]:
     'Homeless Verification/Observation',
+  [EntryRequirementChoices.InSpaOnly]: 'In-SPA Only',
   [EntryRequirementChoices.MedicaidOrMedicare]: 'Medicaid or Medicare',
   [EntryRequirementChoices.PhotoId]: 'Photo ID',
   [EntryRequirementChoices.Referral]: 'Referral',
@@ -61,28 +55,55 @@ export const enumDisplayEntryRequirementChoices: {
   [EntryRequirementChoices.WalkUps]: 'Walk-Ups',
 };
 
-export const enumDisplaySpecialSituationRestrictionChoices: {
-  [key in SpecialSituationRestrictionChoices]: string;
+export const enumDisplayExitPolicyChoices: {
+  [key in ExitPolicyChoices]: string;
 } = {
-  [SpecialSituationRestrictionChoices.DomesticViolence]: 'Domestic Violence',
-  [SpecialSituationRestrictionChoices.HarmReduction]: 'Harm Reduction',
-  [SpecialSituationRestrictionChoices.HivAids]: 'HIV/AIDS',
-  [SpecialSituationRestrictionChoices.HumanTrafficking]: 'Human Trafficking',
-  [SpecialSituationRestrictionChoices.JusticeSystems]: 'Justice Systems',
-  [SpecialSituationRestrictionChoices.None]: 'None',
-  [SpecialSituationRestrictionChoices.Veterans]: 'Veterans',
+  [ExitPolicyChoices.Mia]: 'Exit after 72 hours of being MIA',
+  [ExitPolicyChoices.Violence]: 'Exit due to violence to self and others',
+  [ExitPolicyChoices.Mitigation]:
+    '30 Days Mitigation plan to post someone who exits',
+  [ExitPolicyChoices.Other]: 'Other',
 };
 
-export const enumDisplayShelterChoices: {
-  [key in ShelterChoices]: string;
+export const enumDisplayFunderChoices: { [key in FunderChoices]: string } = {
+  [FunderChoices.CityOfLosAngeles]: 'City of Los Angeles',
+  [FunderChoices.Dhs]: 'DHS',
+  [FunderChoices.Dmh]: 'DMH',
+  [FunderChoices.FederalFunding]: 'Federal Funding',
+  [FunderChoices.Hopwa]: 'HOPWA',
+  [FunderChoices.Lahsa]: 'LAHSA',
+  [FunderChoices.Other]: 'Other',
+  [FunderChoices.Private]: 'Private',
+};
+
+export const enumDisplayParkingChoices: { [key in ParkingChoices]: string } = {
+  [ParkingChoices.Automobile]: 'Automobile',
+  [ParkingChoices.Bicycle]: 'Bicycle',
+  [ParkingChoices.Motorcycle]: 'Motorcycle',
+  [ParkingChoices.NoParking]: 'No Parking',
+  [ParkingChoices.Rv]: 'RV',
+  [ParkingChoices.Street]: 'Street Parking',
+};
+
+export const enumDisplayPetChoices: { [key in PetChoices]: string } = {
+  [PetChoices.Cats]: 'Cats',
+  [PetChoices.DogsOver_25Lbs]: 'Dogs (> 25 lbs)',
+  [PetChoices.DogsUnder_25Lbs]: 'Dogs (< 25 lbs)',
+  [PetChoices.Exotics]: 'Exotics',
+  [PetChoices.NoPetsAllowed]: 'No Pets Allowed',
+  [PetChoices.PetArea]: 'Pet Area',
+  [PetChoices.ServiceAnimals]: 'Service Animals',
+};
+
+export const enumDisplayReferralRequirementChoices: {
+  [key in ReferralRequirementChoices]: string;
 } = {
-  [ShelterChoices.Building]: 'Building',
-  [ShelterChoices.Church]: 'Church',
-  [ShelterChoices.HotelMotel]: 'Hotel/Motel',
-  [ShelterChoices.Other]: 'Other',
-  [ShelterChoices.SafeParking]: 'Safe Parking',
-  [ShelterChoices.SingleFamilyHouse]: 'Single Family House',
-  [ShelterChoices.TinyHomes]: 'Tiny Homes',
+  [ReferralRequirementChoices.ReferralMatched]: 'Matched Referral',
+  [ReferralRequirementChoices.ReferralNonmatched]: 'Non-Matched Referral',
+  [ReferralRequirementChoices.ServiceProviderSubmission]:
+    'Service Provider Submission',
+  [ReferralRequirementChoices.SelfReferral]: 'Self Referral Option',
+  [ReferralRequirementChoices.SameDayIntake]: 'Same Day Intake',
 };
 
 export const enumDisplayRoomStyles: { [key in RoomStyleChoices]: string } = {
@@ -97,51 +118,17 @@ export const enumDisplayRoomStyles: { [key in RoomStyleChoices]: string } = {
   [RoomStyleChoices.SingleRoom]: 'Single Room',
 };
 
-export const enumDisplayAccessibilityChoices: {
-  [key in AccessibilityChoices]: string;
+export const enumDisplayShelterChoices: {
+  [key in ShelterChoices]: string;
 } = {
-  [AccessibilityChoices.AdaRooms]: 'ADA Rooms Available',
-  [AccessibilityChoices.MedicalEquipmentPermitted]:
-    'Medical Equipment Permitted',
-  [AccessibilityChoices.WheelchairAccessible]: 'Wheelchair Accessible',
-};
-
-export const enumDisplayStorageChoices: { [key in StorageChoices]: string } = {
-  [StorageChoices.AmnestyLockers]: 'Amnesty Lockers',
-  [StorageChoices.NoStorage]: 'No Storage',
-  [StorageChoices.SharedStorage]: 'Shared Storage',
-  [StorageChoices.StandardLockers]: 'Standard Lockers',
-  [StorageChoices.UnitStorage]: 'Unit-level Storage',
-};
-
-export const enumDisplayPetChoices: { [key in PetChoices]: string } = {
-  [PetChoices.Cats]: 'Cats',
-  [PetChoices.DogsOver_25Lbs]: 'Dogs (> 25 lbs)',
-  [PetChoices.DogsUnder_25Lbs]: 'Dogs (< 25 lbs)',
-  [PetChoices.Exotics]: 'Exotics',
-  [PetChoices.NoPetsAllowed]: 'No Pets Allowed',
-  [PetChoices.PetArea]: 'Pet Area',
-  [PetChoices.ServiceAnimals]: 'Service Animals',
-};
-
-export const enumDisplayParkingChoices: { [key in ParkingChoices]: string } = {
-  [ParkingChoices.Automobile]: 'Automobile',
-  [ParkingChoices.Bicycle]: 'Bicycle',
-  [ParkingChoices.Motorcycle]: 'Motorcycle',
-  [ParkingChoices.NoParking]: 'No Parking',
-  [ParkingChoices.Rv]: 'RV',
-  [ParkingChoices.Street]: 'Street Parking',
-};
-
-export const enumDisplaySpaChoices: { [key in SpaChoices]: string } = {
-  [SpaChoices.Eight]: '8',
-  [SpaChoices.Five]: '5',
-  [SpaChoices.Four]: '4',
-  [SpaChoices.One]: '1',
-  [SpaChoices.Seven]: '7',
-  [SpaChoices.Six]: '6',
-  [SpaChoices.Three]: '3',
-  [SpaChoices.Two]: '2',
+  [ShelterChoices.AccessCenter]: 'Access Center / Day Center',
+  [ShelterChoices.Building]: 'Building',
+  [ShelterChoices.Church]: 'Church',
+  [ShelterChoices.HotelMotel]: 'Hotel/Motel',
+  [ShelterChoices.Other]: 'Other',
+  [ShelterChoices.SafeParking]: 'Safe Parking',
+  [ShelterChoices.SingleFamilyHouse]: 'Single Family House',
+  [ShelterChoices.TinyHomes]: 'Tiny Homes',
 };
 
 export const enumDisplayShelterProgramChoices: {
@@ -165,22 +152,42 @@ export const enumDisplayShelterProgramChoices: {
   [ShelterProgramChoices.WinterShelter]: 'Winter Shelter',
 };
 
-export const enumDisplayFunderChoices: { [key in FunderChoices]: string } = {
-  [FunderChoices.CityOfLosAngeles]: 'City of Los Angeles',
-  [FunderChoices.Dhs]: 'DHS',
-  [FunderChoices.Dmh]: 'DMH',
-  [FunderChoices.FederalFunding]: 'Federal Funding',
-  [FunderChoices.Hopwa]: 'HOPWA',
-  [FunderChoices.Lahsa]: 'LAHSA',
-  [FunderChoices.Other]: 'Other',
-  [FunderChoices.Private]: 'Private',
+export const enumDisplaySpaChoices: { [key in SpaChoices]: string } = {
+  [SpaChoices.Eight]: '8',
+  [SpaChoices.Five]: '5',
+  [SpaChoices.Four]: '4',
+  [SpaChoices.One]: '1',
+  [SpaChoices.Seven]: '7',
+  [SpaChoices.Six]: '6',
+  [SpaChoices.Three]: '3',
+  [SpaChoices.Two]: '2',
 };
 
-/**
+export const enumDisplaySpecialSituationRestrictionChoices: {
+  [key in SpecialSituationRestrictionChoices]: string;
+} = {
+  [SpecialSituationRestrictionChoices.DomesticViolence]: 'Domestic Violence',
+  [SpecialSituationRestrictionChoices.HarmReduction]: 'Harm Reduction',
+  [SpecialSituationRestrictionChoices.HivAids]: 'HIV/AIDS',
+  [SpecialSituationRestrictionChoices.HumanTrafficking]: 'Human Trafficking',
+  [SpecialSituationRestrictionChoices.JusticeSystems]: 'Justice Systems',
+  [SpecialSituationRestrictionChoices.None]: 'None',
+  [SpecialSituationRestrictionChoices.Veterans]: 'Veterans',
+};
+
+export const enumDisplayStorageChoices: { [key in StorageChoices]: string } = {
+  [StorageChoices.AmnestyLockers]: 'Amnesty Lockers',
+  [StorageChoices.NoStorage]: 'No Storage',
+  [StorageChoices.SharedStorage]: 'Shared Storage',
+  [StorageChoices.StandardLockers]: 'Standard Lockers',
+  [StorageChoices.UnitStorage]: 'Unit-level Storage',
+  [StorageChoices.PersonalBin]: 'Personal Storage Bin',
+};
+
+/*
  * Must match CITY_COUNCIL_DISTRICT_CHOICES in apps/betterangels-backend/shelters/enums.py
  */
 export const CITY_COUNCIL_DISTRICT_UNINCORPORATED = 0;
-
 export function formatCityCouncilDistrict(
   district: number | null | undefined
 ): string {

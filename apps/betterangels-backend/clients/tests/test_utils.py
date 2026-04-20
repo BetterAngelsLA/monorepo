@@ -1,6 +1,5 @@
 from typing import Any, Optional
 
-import strawberry
 from clients.enums import ClientDocumentNamespaceEnum, ErrorCodeEnum, HmisAgencyEnum
 from clients.schema import (
     validate_california_id,
@@ -25,7 +24,6 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         "name, expected_result",
         [
-            (strawberry.UNSET, False),
             (None, False),
             ("", False),
             (" ", False),
@@ -36,34 +34,28 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(value_exists(name), expected_result)
 
     @parametrize(
-        "first_name, middle_name, last_name, nickname, operation, should_return_error",
+        "fields, operation, should_return_error",
         [
-            (strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, "nick", "create", False),
-            (strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, "create", True),
-            (None, None, None, None, "create", True),
-            (" ", " ", " ", " ", "create", True),
-            ("", None, " ", strawberry.UNSET, "create", True),
-            (strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, "update", False),
-            (None, None, None, None, "update", True),
-            (" ", " ", " ", " ", "update", True),
-            ("", None, " ", strawberry.UNSET, "update", False),
+            ({"nickname": "nick"}, "create", False),
+            ({}, "create", True),
+            ({"first_name": None, "last_name": None, "middle_name": None, "nickname": None}, "create", True),
+            ({"first_name": " ", "last_name": " ", "middle_name": " ", "nickname": " "}, "create", True),
+            ({"first_name": "", "last_name": None, "middle_name": " "}, "create", True),
+            ({}, "update", False),
+            ({"first_name": None, "last_name": None, "middle_name": None, "nickname": None}, "update", True),
+            ({"first_name": " ", "last_name": " ", "middle_name": " ", "nickname": " "}, "update", True),
+            ({"first_name": "", "last_name": None, "middle_name": " "}, "update", False),
         ],
     )
     def test_validate_name(
         self,
-        first_name: Optional[str],
-        middle_name: Optional[str],
-        last_name: Optional[str],
-        nickname: Optional[str],
+        fields: dict[str, Any],
         operation: str,
         should_return_error: bool,
     ) -> None:
         data = {
             "id": self.client_profile_1["id"] if operation == "update" else None,
-            "first_name": first_name,
-            "last_name": last_name,
-            "middle_name": middle_name,
-            "nickname": nickname,
+            **fields,
         }
 
         errors = validate_name(data)
@@ -76,7 +68,6 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         "email, expected_error_code",
         [
-            (strawberry.UNSET, strawberry.UNSET),
             (None, None),
             ("", None),
             ("valid_email@example.co", None),
@@ -102,7 +93,6 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         "california_id, expected_error_code",
         [
-            (strawberry.UNSET, strawberry.UNSET),
             (None, None),
             ("", None),
             ("V9753100", None),
@@ -134,29 +124,31 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
 
         errors = validate_california_id(
             self.client_profile_1["californiaId"],
-            strawberry.UNSET,
+            None,
         )
         self.assertEqual(len(errors), 1)
         self.assertEqual(errors[0]["field"], "californiaId")
         self.assertEqual(errors[0]["errorCode"], ErrorCodeEnum.CA_ID_IN_USE.name)
 
     @parametrize(
-        "phone_numbers, expected_locations, expected_error_count",
+        "phone_number_dicts, expected_locations, expected_error_count",
         [
-            ([strawberry.UNSET, None, "", " "], ["3__number"], 1),
-            (["2125551212", "2125551213", "2125551214"], None, 0),
-            (["2005551212", "2125551212", "212555121"], ["0__number", "2__number"], 2),
-            (["2125551212"], None, 0),
+            ([{}, {"number": None}, {"number": ""}, {"number": " "}], ["3__number"], 1),
+            ([{"number": "2125551212"}, {"number": "2125551213"}, {"number": "2125551214"}], None, 0),
+            (
+                [{"number": "2005551212"}, {"number": "2125551212"}, {"number": "212555121"}],
+                ["0__number", "2__number"],
+                2,
+            ),
+            ([{"number": "2125551212"}], None, 0),
         ],
     )
     def test_validate_phone_numbers(
         self,
-        phone_numbers: list[str],
+        phone_number_dicts: list[dict[str, str]],
         expected_locations: Optional[list[str]],
         expected_error_count: int,
     ) -> None:
-        phone_number_dicts = [{"number": phone_number} for phone_number in phone_numbers]
-
         errors = validate_phone_numbers(phone_number_dicts)
         self.assertEqual(len(errors), expected_error_count)
         if expected_error_count:
@@ -175,7 +167,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
                     {"agency": HmisAgencyEnum.LAHSA, "hmis_id": None},
                     {"agency": HmisAgencyEnum.LAHSA, "hmis_id": "hMIsidlahsa1"},
                     {"agency": HmisAgencyEnum.PASADENA, "hmis_id": "4li12324"},
-                    {"agency": HmisAgencyEnum.PASADENA, "hmis_id": strawberry.UNSET},
+                    {"agency": HmisAgencyEnum.PASADENA},
                     {"agency": HmisAgencyEnum.PASADENA, "hmis_id": " "},
                 ],
                 ["0__hmisId", "1__hmisId", "3__hmisId", "4__hmisId"],
@@ -205,11 +197,11 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
                 self.assertEqual(error["errorCode"], expected_error_code)
 
     @parametrize(
-        "contacts, expected_locations, expected_error_count",
+        "contact_dicts, expected_locations, expected_error_count",
         [
             (
                 [
-                    {"phone_number": strawberry.UNSET},
+                    {},
                     {"phone_number": None},
                     {"phone_number": ""},
                     {"phone_number": " "},
@@ -236,12 +228,10 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
     )
     def test_validate_contacts(
         self,
-        contacts: list[dict[str, str]],
+        contact_dicts: list[dict[str, str]],
         expected_locations: Optional[list[str]],
         expected_error_count: int,
     ) -> None:
-        contact_dicts = [{"phone_number": c["phone_number"]} for c in contacts]
-
         errors = validate_contacts(contact_dicts)
         self.assertEqual(len(errors), expected_error_count)
         if expected_error_count:

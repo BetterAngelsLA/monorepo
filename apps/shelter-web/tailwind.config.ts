@@ -49,6 +49,7 @@ const config = {
         'tags-purple': 'var(--color-tags-purple)',
         'tags-pink': 'var(--color-tags-pink)',
         'tags-blue': 'var(--color-tags-blue)',
+        'white-60': 'var(--color-white-60)',
       },
       keyframes: {
         slideInUp: {

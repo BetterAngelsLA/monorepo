@@ -1,32 +1,26 @@
 /**
  * BottomSheetBase
  *
- * Presentation-layer wrapper around `@gorhom/bottom-sheet`.
+ * Pure presentation layer for BottomSheet rendering.
  *
  * Responsibilities:
  * - Receives fully resolved `BottomSheetOptions`
- * - Maps wrapper-level options to Gorhom props
- * - Controls:
- *     - Handle visibility
- *     - Backdrop behavior
- *     - Scroll container selection
- *     - Header rendering
- *     - Container selection (`containerComponent`)
- * - Applies design-system styling (radius, padding, elevation)
+ * - Maps options → Gorhom props
+ * - Renders:
+ *     - backdrop
+ *     - handle
+ *     - header
+ *     - content container
  *
  * This component does NOT:
- * - Resolve variants
- * - Merge defaults
- * - Manage stacking
- * - Control lifecycle
+ * - manage state
+ * - resolve options
+ * - control stacking or lifecycle
  *
- * All configuration resolution happens upstream in:
- *   `resolveBottomSheetOptions`
- *
- * All lifecycle and stacking logic happens in:
- *   `BottomSheetModalProvider`
- *
- * This component is intentionally "dumb" and render-focused.
+ * Upstream:
+ * - API + usage: `useBottomSheet`
+ * - Lifecycle + stacking: `BottomSheetModalProvider`
+ * - Option resolution: `resolveBottomSheetOptions`
  */
 
 import {

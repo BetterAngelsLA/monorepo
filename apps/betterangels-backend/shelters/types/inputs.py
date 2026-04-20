@@ -17,10 +17,6 @@ from shelters.enums import (
     EntryRequirementChoices,
     ExitPolicyChoices,
     FunderChoices,
-    GeneralServiceChoices,
-    HealthServiceChoices,
-    ImmediateNeedChoices,
-    MealServiceChoices,
     MedicalNeedChoices,
     ParkingChoices,
     PetChoices,
@@ -35,7 +31,6 @@ from shelters.enums import (
     SPAChoices,
     SpecialSituationRestrictionChoices,
     StorageChoices,
-    TrainingServiceChoices,
 )
 from strawberry import ID, auto
 
@@ -59,6 +54,15 @@ class ScheduleInput:
     is_exception: bool = False
 
 
+@strawberry.input
+class ServiceInput:
+    """Either pick an existing service by ID, or create a new one by category + name."""
+
+    id: Optional[ID] = None
+    category_id: Optional[ID] = None
+    display_name: Optional[str] = None
+
+
 @strawberry_django.input(models.Shelter)
 class CreateShelterInput:
     # Required scalars — derived from model via auto
@@ -75,11 +79,6 @@ class CreateShelterInput:
     storage: List[StorageChoices]
     pets: List[PetChoices]
     parking: List[ParkingChoices]
-    immediate_needs: List[ImmediateNeedChoices]
-    general_services: List[GeneralServiceChoices]
-    health_services: List[HealthServiceChoices]
-    training_services: List[TrainingServiceChoices]
-    meal_services: List[MealServiceChoices]
     entry_requirements: List[EntryRequirementChoices]
     referral_requirement: List[ReferralRequirementChoices]
     exit_policy: List[ExitPolicyChoices]
@@ -92,6 +91,7 @@ class CreateShelterInput:
     organization: ID
     location: Optional[ShelterLocationInput] = None
     schedules: Optional[List[ScheduleInput]] = None
+    services: Optional[List[ServiceInput]] = None
 
     # Optional scalars — all model fields below have null=True, blank=True.
     # Using auto where strawberry-django can resolve the type; explicit types
@@ -129,6 +129,7 @@ class CreateShelterInput:
 @strawberry.input
 class CreateBedInput:
     shelter_id: ID
+    room_id: Optional[ID] = None
     status: Optional[BedStatusChoices] = None
     bed_name: Optional[str] = None
     status_notes: Optional[str] = None
@@ -154,5 +155,12 @@ class CreateRoomInput:
     status: Optional[RoomStatusChoices] = None
     notes: Optional[str] = None
     amenities: Optional[str] = None
+    demographics: Optional[List[DemographicChoices]] = None
+    accessibility: Optional[List[AccessibilityChoices]] = None
+    funders: Optional[List[FunderChoices]] = None
+    pets: Optional[List[PetChoices]] = None
+    storage: Optional[bool] = None
+    maintenance_flag: Optional[bool] = None
+    occupants: Optional[List[ID]] = None
     medical_respite: Optional[bool] = False
     last_cleaned_inspected: Optional[datetime] = None
