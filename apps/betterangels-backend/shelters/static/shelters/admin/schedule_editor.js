@@ -42,15 +42,6 @@
     { value: 'meal_service', label: 'Meal Service' },
     { value: 'staff_availability', label: 'Staff Availability' },
   ];
-  var CONDITION_LABELS = {
-    heat: 'Heat',
-    fire: 'Fire',
-    rain_severe_weather: 'Rain / Severe Weather',
-    wind: 'Wind',
-    air_quality_smoke: 'Air Quality / Smoke',
-    public_health_emergency: 'Public Health Emergency',
-    emergency_evacuation: 'Emergency Evacuation',
-  };
   var CONDITION_OPTIONS = [
     { value: '', label: '(none)' },
     { value: 'heat', label: 'Heat' },
@@ -125,29 +116,7 @@
     }
   }
 
-  function fmtTime(val) {
-    if (!val) return '';
-    var parts = val.split(':');
-    var h = parseInt(parts[0], 10),
-      m = parts[1];
-    var ampm = h >= 12 ? 'PM' : 'AM';
-    if (h === 0) h = 12;
-    else if (h > 12) h -= 12;
-    return h + ':' + m + ' ' + ampm;
-  }
-
-  function fmtTimeRange(start, end) {
-    if (!start || !end) return '';
-    if (
-      (start === '00:00' || start === '00:00:00') &&
-      (end === '00:00' || end === '00:00:00')
-    )
-      return '24 Hours';
-    return fmtTime(start) + ' \u2013 ' + fmtTime(end);
-  }
-
   /* ── Inline form management ────────────────────────── */
-  var skipNextObserver = false;
 
   function addNewInlineForm(opts) {
     var emptyForm = document.getElementById(PREFIX + '-empty');
@@ -171,7 +140,6 @@
         n.setAttribute('for', n.getAttribute('for').replace(regex, repl));
     }
 
-    skipNextObserver = true;
     emptyForm.parentNode.insertBefore(clone, emptyForm);
     totalEl.value = idx + 1;
 
@@ -209,10 +177,53 @@
     return clone;
   }
 
+  function reindexNewForms() {
+    // Re-number all dynamic (new) inline forms so indices are contiguous.
+    // Saved forms (has_original) occupy indices 0..N-1 and never change.
+    var allForms = schedGroup.querySelectorAll(
+      '.inline-related:not(.empty-form)'
+    );
+    var totalEl = document.getElementById('id_' + PREFIX + '-TOTAL_FORMS');
+    var idx = 0;
+    // Count all forms (saved keep their index, new ones get re-numbered)
+    for (var i = 0; i < allForms.length; i++) {
+      var formDiv = allForms[i];
+      var oldIdx = formDiv.id.replace(PREFIX + '-', '');
+      if (String(oldIdx) === String(idx)) {
+        idx++;
+        continue;
+      }
+      // Need to re-index this form from oldIdx -> idx
+      var oldPfx = PREFIX + '-' + oldIdx;
+      var newPfx = PREFIX + '-' + idx;
+      formDiv.id = newPfx;
+      var nodes = formDiv.querySelectorAll('*');
+      for (var n = 0; n < nodes.length; n++) {
+        var node = nodes[n];
+        if (node.id) node.id = node.id.replace(oldPfx, newPfx);
+        if (node.name) node.name = node.name.replace(oldPfx, newPfx);
+        if (node.getAttribute('for'))
+          node.setAttribute(
+            'for',
+            node.getAttribute('for').replace(oldPfx, newPfx)
+          );
+      }
+      idx++;
+    }
+    if (totalEl) totalEl.value = idx;
+  }
+
   function markFormDeleted(formDiv) {
     var pfx = PREFIX + '-' + (formDiv.id || '').replace(PREFIX + '-', '');
     var del = document.getElementById('id_' + pfx + '-DELETE');
-    if (del) del.checked = true;
+    if (del) {
+      // Saved form: check Django's DELETE checkbox
+      del.checked = true;
+    } else {
+      // New (unsaved) form: remove from DOM and re-index remaining forms
+      formDiv.parentNode.removeChild(formDiv);
+      reindexNewForms();
+    }
   }
 
   /* ── Shared row-building helpers ────────────────────── */
@@ -253,12 +264,14 @@
     return { box: box, startInput: sInput, endInput: eInput };
   }
 
-  function buildRemoveBtn(formDiv, row) {
+  function buildRemoveBtn(formDivs, row) {
+    // formDivs: single element or array of elements to mark deleted
+    var arr = Array.isArray(formDivs) ? formDivs : [formDivs];
     var btn = el('button', 'sched-row__remove', '\u00d7');
     btn.type = 'button';
-    btn.title = 'Remove';
+    btn.title = 'Delete';
     btn.addEventListener('click', function () {
-      markFormDeleted(formDiv);
+      for (var i = 0; i < arr.length; i++) markFormDeleted(arr[i]);
       row.parentNode.removeChild(row);
     });
     return btn;
@@ -276,6 +289,59 @@
       sel.appendChild(opt);
     }
     return sel;
+  }
+
+  function buildExceptionFields(formDiv, fields) {
+    var exFields = el('div', 'sched-exception-fields');
+
+    var sdInput = document.createElement('input');
+    sdInput.type = 'date';
+    sdInput.value = fields.startDate || '';
+    sdInput.addEventListener(
+      'change',
+      (function (fd) {
+        return function (e) {
+          setHiddenField(fd, 'start_date', e.target.value);
+        };
+      })(formDiv)
+    );
+    exFields.appendChild(sdInput);
+
+    exFields.appendChild(el('span', 'sched-exception-fields__sep', '\u2013'));
+
+    var edInput = document.createElement('input');
+    edInput.type = 'date';
+    edInput.value = fields.endDate || '';
+    edInput.addEventListener(
+      'change',
+      (function (fd) {
+        return function (e) {
+          setHiddenField(fd, 'end_date', e.target.value);
+        };
+      })(formDiv)
+    );
+    exFields.appendChild(edInput);
+
+    var condSelect = document.createElement('select');
+    for (var ci = 0; ci < CONDITION_OPTIONS.length; ci++) {
+      var cOpt = document.createElement('option');
+      cOpt.value = CONDITION_OPTIONS[ci].value;
+      cOpt.textContent = CONDITION_OPTIONS[ci].label;
+      if (CONDITION_OPTIONS[ci].value === (fields.condition || ''))
+        cOpt.selected = true;
+      condSelect.appendChild(cOpt);
+    }
+    condSelect.addEventListener(
+      'change',
+      (function (fd) {
+        return function (e) {
+          setHiddenField(fd, 'condition', e.target.value);
+        };
+      })(formDiv)
+    );
+    exFields.appendChild(condSelect);
+
+    return exFields;
   }
 
   /* ── Build flat rows ───────────────────────────────────
@@ -367,7 +433,6 @@
 
           if (!wasChecked) {
             // Add day
-            skipNextObserver = true;
             addNewInlineForm({
               schedType: firstFields.schedType,
               startTime: firstFields.startTime,
@@ -408,19 +473,10 @@
       row.appendChild(time.box);
 
       // Delete button — marks ALL entries in group as deleted
-      var delBtn = (function (groupData, rowEl) {
-        var btn = el('button', 'sched-row__remove', '\u00d7');
-        btn.type = 'button';
-        btn.title = 'Delete';
-        btn.addEventListener('click', function () {
-          for (var di = 0; di < groupData.entries.length; di++) {
-            markFormDeleted(groupData.entries[di].formDiv);
-          }
-          rowEl.parentNode.removeChild(rowEl);
-        });
-        return btn;
-      })(g, row);
-      row.appendChild(delBtn);
+      var groupFormDivs = g.entries.map(function (e) {
+        return e.formDiv;
+      });
+      row.appendChild(buildRemoveBtn(groupFormDivs, row));
 
       anchor.parentNode.insertBefore(row, anchor);
     }
@@ -428,6 +484,7 @@
     // ─── Saved exception rows ──────────────────────────
     for (var sei = 0; sei < savedExceptions.length; sei++) {
       var ex = savedExceptions[sei].fields;
+      var exFd = savedExceptions[sei].formDiv;
       var exRow = el('div', 'sched-row sched-row--exception');
 
       exRow.appendChild(
@@ -438,49 +495,22 @@
         )
       );
 
-      var info = el('div', 'sched-exception-info');
-      var sd = ex.startDate || '';
-      var ed = ex.endDate || '';
-      var dateStr =
-        sd && ed && sd === ed
-          ? sd
-          : sd && ed
-          ? sd + ' \u2013 ' + ed
-          : sd || ed || '(no dates)';
-      info.appendChild(el('span', 'sched-exception-info__dates', dateStr));
+      // Editable date/condition fields
+      exRow.appendChild(buildExceptionFields(exFd, ex));
 
-      var detail =
-        ex.startTime && ex.endTime
-          ? 'Closed ' + fmtTimeRange(ex.startTime, ex.endTime)
-          : 'Closed all day';
-      info.appendChild(
-        el('span', 'sched-exception-info__detail', '\u2014 ' + detail)
-      );
+      // Editable time inputs
+      var exTime = buildTimeInputs(ex.startTime, ex.endTime);
+      var exTimeSync = (function (fd, si, ei) {
+        return function () {
+          setHiddenField(fd, 'start_time', si.value);
+          setHiddenField(fd, 'end_time', ei.value);
+        };
+      })(exFd, exTime.startInput, exTime.endInput);
+      exTime.startInput.addEventListener('change', exTimeSync);
+      exTime.endInput.addEventListener('change', exTimeSync);
+      exRow.appendChild(exTime.box);
 
-      if (ex.condition) {
-        info.appendChild(
-          el(
-            'span',
-            'sched-exception-info__tag',
-            CONDITION_LABELS[ex.condition] || ex.condition
-          )
-        );
-      }
-
-      exRow.appendChild(info);
-
-      // Delete button for saved exception
-      var exDelBtn = (function (fd, rowEl) {
-        var btn = el('button', 'sched-row__remove', '\u00d7');
-        btn.type = 'button';
-        btn.title = 'Delete';
-        btn.addEventListener('click', function () {
-          markFormDeleted(fd);
-          rowEl.parentNode.removeChild(rowEl);
-        });
-        return btn;
-      })(savedExceptions[sei].formDiv, exRow);
-      exRow.appendChild(exDelBtn);
+      exRow.appendChild(buildRemoveBtn(exFd, exRow));
 
       anchor.parentNode.insertBefore(exRow, anchor);
     }
@@ -489,7 +519,6 @@
     for (var ni = 0; ni < newNormal.length; ni++) {
       var nf = newNormal[ni];
       var nRow = el('div', 'sched-row sched-row--new');
-      nRow.dataset.formId = nf.formDiv.id;
 
       // Type select
       var typeSelect = buildTypeSelect(nf.fields.schedType);
@@ -555,7 +584,6 @@
     for (var nxi = 0; nxi < newExceptions.length; nxi++) {
       var nxf = newExceptions[nxi];
       var nxRow = el('div', 'sched-row sched-row--new sched-row--exception');
-      nxRow.dataset.formId = nxf.formDiv.id;
 
       // Type select
       var nxTypeSelect = buildTypeSelect(nxf.fields.schedType);
@@ -568,57 +596,7 @@
       nxRow.appendChild(nxTypeSelect);
 
       // Exception fields: dates + condition
-      var exFields = el('div', 'sched-exception-fields');
-
-      var sdInput = document.createElement('input');
-      sdInput.type = 'date';
-      sdInput.value = nxf.fields.startDate || '';
-      sdInput.addEventListener(
-        'change',
-        (function (fd) {
-          return function (e) {
-            setHiddenField(fd, 'start_date', e.target.value);
-          };
-        })(nxf.formDiv)
-      );
-      exFields.appendChild(sdInput);
-
-      exFields.appendChild(el('span', 'sched-exception-fields__sep', '\u2013'));
-
-      var edInput = document.createElement('input');
-      edInput.type = 'date';
-      edInput.value = nxf.fields.endDate || '';
-      edInput.addEventListener(
-        'change',
-        (function (fd) {
-          return function (e) {
-            setHiddenField(fd, 'end_date', e.target.value);
-          };
-        })(nxf.formDiv)
-      );
-      exFields.appendChild(edInput);
-
-      // Condition select
-      var condSelect = document.createElement('select');
-      for (var nxci = 0; nxci < CONDITION_OPTIONS.length; nxci++) {
-        var cOpt = document.createElement('option');
-        cOpt.value = CONDITION_OPTIONS[nxci].value;
-        cOpt.textContent = CONDITION_OPTIONS[nxci].label;
-        if (CONDITION_OPTIONS[nxci].value === nxf.fields.condition)
-          cOpt.selected = true;
-        condSelect.appendChild(cOpt);
-      }
-      condSelect.addEventListener(
-        'change',
-        (function (fd) {
-          return function (e) {
-            setHiddenField(fd, 'condition', e.target.value);
-          };
-        })(nxf.formDiv)
-      );
-      exFields.appendChild(condSelect);
-
-      nxRow.appendChild(exFields);
+      nxRow.appendChild(buildExceptionFields(nxf.formDiv, nxf.fields));
 
       // Time inputs
       var nxTime = buildTimeInputs(nxf.fields.startTime, nxf.fields.endTime);
@@ -639,10 +617,6 @@
     }
 
     // ─── Add buttons ───────────────────────────────────
-    // Hide Django's default "Add another" link
-    var addRow = schedGroup.querySelector('.add-row');
-    if (addRow) addRow.style.display = 'none';
-
     var btnRow = el('div', 'sched-add-buttons');
 
     var addBtn = el('button', 'sched-add-btn', '+ Add Schedule');
@@ -665,7 +639,7 @@
     });
     btnRow.appendChild(addExBtn);
 
-    var insertPoint = addRow || schedGroup.querySelector('.empty-form') || null;
+    var insertPoint = schedGroup.querySelector('.add-row, .empty-form');
     if (insertPoint) {
       insertPoint.parentNode.insertBefore(btnRow, insertPoint);
     } else {
@@ -674,29 +648,27 @@
   }
 
   /* ── Master update ─────────────────────────────────── */
-  var updating = false;
   var observer = null;
 
-  function fullUpdate() {
-    if (updating) return;
-    updating = true;
+  function pauseObserver() {
     if (observer) observer.disconnect();
+  }
 
-    buildRows();
-
+  function resumeObserver() {
     if (observer && schedGroup) {
       observer.observe(schedGroup, { childList: true, subtree: true });
     }
-    updating = false;
+  }
+
+  function fullUpdate() {
+    pauseObserver();
+    buildRows();
+    resumeObserver();
   }
 
   fullUpdate();
 
   observer = new MutationObserver(function (mutations) {
-    if (skipNextObserver) {
-      skipNextObserver = false;
-      return;
-    }
     var dominated = false;
     for (var m = 0; m < mutations.length; m++) {
       for (var n = 0; n < mutations[m].addedNodes.length; n++) {
@@ -712,5 +684,5 @@
     }
     if (dominated) fullUpdate();
   });
-  observer.observe(schedGroup, { childList: true, subtree: true });
+  resumeObserver();
 })();

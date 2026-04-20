@@ -94,9 +94,7 @@
   flex: 1;
   min-width: 0;
 }
-.day-pill,
-.aligned .day-pill,
-.inline-group .aligned .day-pill {
+.day-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -140,10 +138,8 @@
   pointer-events: none;
   line-height: 1;
 }
-/* Kill Django admin label overrides */
+/* Kill Django admin label::after colon */
 .day-pill::after,
-.aligned .day-pill::after,
-.aligned .day-pill:not(.vCheckboxLabel)::after,
 label.day-pill.required::after {
   content: none !important;
   display: none !important;
@@ -181,12 +177,14 @@ label.day-pill.required::after {
   flex-shrink: 0;
   width: 24px;
   height: 24px;
+  padding: 0 0 2px;
   border: none;
   border-radius: 50%;
   background: transparent;
   color: #94a3b8;
   font-size: 1.1rem;
-  line-height: 1;
+  line-height: 24px;
+  text-align: center;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -210,29 +208,8 @@ label.day-pill.required::after {
   background: #fef3c7;
   color: #92400e;
 }
-.sched-exception-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  font-size: 0.82rem;
-  color: #78350f;
-}
-.sched-exception-info__dates {
-  font-weight: 600;
-}
-.sched-exception-info__detail {
-  color: #92400e;
-}
-.sched-exception-info__tag {
-  font-size: 0.68rem;
-  background: #fef3c7;
-  color: #92400e;
-  padding: 1px 6px;
-  border-radius: 3px;
-}
 
-/* ── New exception date/condition inputs ─────────────────── */
+/* ── Exception date/condition inputs ─────────────────────── */
 .sched-exception-fields {
   display: flex;
   align-items: center;
@@ -240,8 +217,7 @@ label.day-pill.required::after {
   flex: 1;
   flex-wrap: wrap;
 }
-.sched-exception-fields input[type='date'],
-.sched-exception-fields input[type='time'] {
+.sched-exception-fields input[type='date'] {
   font-size: 0.82rem;
   padding: 4px 8px;
   border: 1px solid #cbd5e1;
