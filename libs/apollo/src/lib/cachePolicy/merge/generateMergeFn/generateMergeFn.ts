@@ -68,7 +68,8 @@
  * • This function is usually called from `generateFieldPolicy`.
  */
 
-import type { FieldFunctionOptions, FieldMergeFunction } from '@apollo/client';
+import type { FieldMergeFunction } from '@apollo/client';
+import type { FieldMergeFunctionOptions } from '@apollo/client/cache';
 import { MergeModeEnum } from '../../constants';
 import type { TPaginationVariables } from '../../types';
 import { mergeArrayPayload, mergeObjectPayload } from '../mergeFunctions';
@@ -81,7 +82,7 @@ export function generateMergeFn<TItem = unknown, TVars = unknown>(
 ): FieldMergeFunction<
   unknown,
   unknown,
-  FieldFunctionOptions<Record<string, unknown>, Record<string, unknown>>
+  FieldMergeFunctionOptions<Record<string, unknown>, Record<string, unknown>>
 > {
   const resolvedMergeOpts = mergeOptions ?? {
     mode: MergeModeEnum.Object,
@@ -96,7 +97,10 @@ export function generateMergeFn<TItem = unknown, TVars = unknown>(
     ) as FieldMergeFunction<
       unknown,
       unknown,
-      FieldFunctionOptions<Record<string, unknown>, Record<string, unknown>>
+      FieldMergeFunctionOptions<
+        Record<string, unknown>,
+        Record<string, unknown>
+      >
     >;
   }
 

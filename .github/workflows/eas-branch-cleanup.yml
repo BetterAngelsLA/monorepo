@@ -37,13 +37,9 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
-      - name: 🔧 Setup EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: 18.5.0
-          token: ${{ secrets.EXPO_TOKEN }}
-
       - name: ️ Delete EAS Branches for Affected Projects
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           BRANCH_NAME='${{ github.head_ref || github.ref_name }}'
           affected=$(yarn nx show projects --affected --withTarget eas-update)
