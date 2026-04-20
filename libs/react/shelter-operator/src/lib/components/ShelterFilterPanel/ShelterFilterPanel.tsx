@@ -4,12 +4,13 @@ import {
   FilterSection,
 } from '@monorepo/react/components';
 import { useAtom } from 'jotai';
-import { Funnel, Search } from 'lucide-react';
+import { Filter, Search } from 'lucide-react';
 import { useState } from 'react';
 import {
   operatorShelterFiltersAtom,
   TOperatorShelterFilters,
 } from '../../atoms/shelterFiltersAtom';
+import { Button } from '../base-ui/buttons';
 import { filterGroups } from './filterConfig';
 
 export function ShelterFilterPanel() {
@@ -37,11 +38,15 @@ export function ShelterFilterPanel() {
 
   return (
     <FilterDropdown
+      position="dropdown-end"
       title={
-        <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-neutral-90 text-sm cursor-pointer select-none transition-colors text-neutral-warm-70">
-          <Funnel size={16} />
+        <Button
+          variant="primary"
+          leftIcon={<Filter size={20} />}
+          rightIcon={false}
+        >
           Filter
-        </span>
+        </Button>
       }
     >
       <div className="relative mb-3">

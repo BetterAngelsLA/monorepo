@@ -4,7 +4,7 @@ import { BookCheck, Filter, Search, Settings2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
-import { ShelterFilterPanel } from '../../components/ShelterFilterPanel';
+import { ShelterFilterPanel } from '../../components/ShelterFilterPanel/ShelterFilterPanel';
 import { Button } from '../../components/base-ui/buttons';
 import { ShelterTable } from '../../components/ShelterTable';
 import {
@@ -164,62 +164,21 @@ export function Dashboard() {
 
           {/* SEARCH BAR + FILTERING */}
 
-<<<<<<< HEAD
-      {/* Search bar + Filter */}
-      <form className="w-full flex items-center gap-2 my-4">
-        <input
-          type="text"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search shelters"
-          className="px-6 py-2 rounded-3xl border border-gray-300 outline-hidden shadow-xs my-4"
-        />
-        <ShelterFilterPanel />
-      </form>
+          <div className="flex w-full items-center justify-between mb-4">
+            <div className="text-sm text-gray-600">
+              {totalCount} Results
+            </div>
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <ShelterFilterPanel />
 
-      <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
-        {totalCount} Results
-      </div>
-
-      {/* TABLE */}
-      <div className="bg-white rounded-2xl shadow-xs overflow-hidden w-full">
-        {/* HEADER */}
-        <div className="grid grid-cols-[1fr_1.5fr_0.5fr] items-center px-6 py-3 text-xs font-semibold uppercase tracking-wider text-gray-700 bg-gray-50 border-b border-gray-200">
-          <div>Shelter Name</div>
-          <div>Address</div>
-          <div className="text-right">Capacity (beds)</div>
-        </div>
-
-        {/* ROWS */}
-        {loading && (
-          <div className="px-6 py-8 text-center text-sm text-gray-500">
-            Loading shelters…
-          </div>
-        )}
-        {!loading && shelters.length === 0 && (
-          <div className="px-6 py-8 text-center text-sm text-gray-500">
-            No shelters yet.{' '}
-            <Link
-              to="/operator/dashboard/create"
-              className="text-blue-600 hover:underline"
-=======
-          <div className="ml-auto flex flex-wrap items-center gap-2">
-            <Button
-              variant="primary"
-              leftIcon={<Filter size={20} />}
-              rightIcon={false}
->>>>>>> main
-            >
-              Filter
-            </Button>
-
-            <Button
-              variant="primary"
-              leftIcon={<Settings2 size={20} />}
-              rightIcon={false}
-            >
-              Sort
-            </Button>
+              <Button
+                variant="primary"
+                leftIcon={<Settings2 size={20} />}
+                rightIcon={false}
+              >
+                Sort
+              </Button>
+            </div>
           </div>
         </form>
 
