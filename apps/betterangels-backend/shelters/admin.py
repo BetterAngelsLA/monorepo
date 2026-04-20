@@ -1210,7 +1210,8 @@ class ShelterAdmin(ImportExportModelAdmin):
     ) -> None:
         """Fan out multi-day schedule entries into individual Schedule rows."""
         if not isinstance(formset, forms.models.BaseInlineFormSet) or formset.model is not Schedule:
-            return super().save_formset(request, form, formset, change)
+            super().save_formset(request, form, formset, change)
+            return
 
         instances = formset.save(commit=False)
 
@@ -1238,7 +1239,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                     Schedule.objects.create(
                         shelter=instance.shelter,
                         schedule_type=instance.schedule_type,
-                        day=day_val,
+                        day=DayOfWeekChoices(day_val),
                         start_time=instance.start_time,
                         end_time=instance.end_time,
                         start_date=instance.start_date,
