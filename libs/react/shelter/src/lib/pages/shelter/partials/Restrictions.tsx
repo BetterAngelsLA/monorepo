@@ -6,6 +6,7 @@ import {
   enumDisplayExitPolicyChoices,
 } from '../../../static';
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
+import { InlineList } from '../common';
 
 function formatCurfewTime(curfew: string): string {
   const parsedTime = parse(curfew.trim(), 'HH:mm:ss', new Date());
@@ -41,10 +42,7 @@ export function Restrictions({
         )}
 
         {shelter.exitPolicy?.length > 0 && (
-          <div className="flex gap-1">
-            <strong>Exit Policy:</strong>
-            {exitPolicyDisplay.join('; ')}
-          </div>
+          <InlineList title="Exit Policy:" items={exitPolicyDisplay} />
         )}
 
         <div className="flex gap-1">
