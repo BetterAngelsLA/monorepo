@@ -1,0 +1,293 @@
+/* ── Schedule Editor ─────────────────────────────────────────
+   Flat-row layout for shelter schedule inlines.
+   Every entry (saved or new) is one row:
+   [type badge/select] [day pills] [start – end]
+   Django inline forms are hidden; rows sync values to them.
+   ──────────────────────────────────────────────────────────── */
+
+/* ── Hide ALL raw Django inline forms + default "Add another" link ── */
+#schedules-group .inline-related:not(.empty-form) {
+  display: none !important;
+}
+#schedules-group .add-row {
+  display: none !important;
+}
+
+/* ── Timezone label ──────────────────────────────────────── */
+.tz-label {
+  font-size: 0.75rem;
+  font-weight: normal;
+  color: #888;
+  margin-left: 0.5em;
+}
+
+/* ── Schedule row — the ONE reusable unit ────────────────── */
+.sched-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin: 0 0 6px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: box-shadow 0.15s;
+}
+.sched-row:hover {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+.sched-row--new {
+  border-left: 3px solid #3b82f6;
+}
+
+/* ── Type badge (saved entries) ──────────────────────────── */
+.sched-type-badge {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.sched-type-badge--operating {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.sched-type-badge--intake {
+  background: #dcfce7;
+  color: #166534;
+}
+.sched-type-badge--meal_service {
+  background: #fef9c3;
+  color: #854d0e;
+}
+.sched-type-badge--staff_availability {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+/* ── Type select (new entries) ───────────────────────────── */
+.sched-type-select {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #f8fafc;
+  cursor: pointer;
+}
+.sched-type-select:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+/* ── Day pills ───────────────────────────────────────────── */
+.sched-pills {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+.day-pill,
+.aligned .day-pill,
+.inline-group .aligned .day-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-width: 36px;
+  height: 32px;
+  padding: 0 9px;
+  border: 2px solid #cbd5e1;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #fff;
+  user-select: none;
+  float: none;
+  margin: 0;
+  width: auto;
+  transition: all 0.15s ease;
+}
+.day-pill:hover {
+  border-color: #93c5fd;
+  color: #3b82f6;
+  background: #eff6ff;
+}
+.day-pill--checked,
+.day-pill--checked:hover {
+  background: #3b82f6 !important;
+  color: #fff !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
+}
+.day-pill__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.day-pill__label {
+  pointer-events: none;
+  line-height: 1;
+}
+/* Kill Django admin label overrides */
+.day-pill::after,
+.aligned .day-pill::after,
+.aligned .day-pill:not(.vCheckboxLabel)::after,
+label.day-pill.required::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* ── Time input pair ─────────────────────────────────────── */
+.sched-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sched-time input[type='time'] {
+  font-size: 0.82rem;
+  padding: 4px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #f8fafc;
+  width: 120px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.sched-time input[type='time']:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+.sched-time__sep {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+/* ── Remove button ───────────────────────────────────────── */
+.sched-row__remove {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.sched-row__remove:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+/* ── Exception row (same flat row, warm tones) ───────────── */
+.sched-row--exception {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+.sched-row--exception.sched-row--new {
+  border-left-color: #f59e0b;
+}
+.sched-row--exception .sched-type-badge {
+  background: #fef3c7;
+  color: #92400e;
+}
+.sched-exception-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  font-size: 0.82rem;
+  color: #78350f;
+}
+.sched-exception-info__dates {
+  font-weight: 600;
+}
+.sched-exception-info__detail {
+  color: #92400e;
+}
+.sched-exception-info__tag {
+  font-size: 0.68rem;
+  background: #fef3c7;
+  color: #92400e;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+/* ── New exception date/condition inputs ─────────────────── */
+.sched-exception-fields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+.sched-exception-fields input[type='date'],
+.sched-exception-fields input[type='time'] {
+  font-size: 0.82rem;
+  padding: 4px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+.sched-exception-fields select {
+  font-size: 0.78rem;
+  padding: 4px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+.sched-exception-fields__sep {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+/* ── Add buttons row ─────────────────────────────────────── */
+.sched-add-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.sched-add-btn {
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sched-add-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+.sched-add-btn--exception {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+.sched-add-btn--exception:hover {
+  background: #fef3c7;
+  border-color: #f59e0b;
+}
