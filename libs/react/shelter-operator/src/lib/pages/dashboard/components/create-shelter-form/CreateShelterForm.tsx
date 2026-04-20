@@ -1,7 +1,7 @@
 import { useMutation } from '@apollo/client/react';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { FormEvent, useCallback, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../../components/base-ui/buttons';
 import {
@@ -56,6 +56,11 @@ export function CreateShelterForm() {
     CreateShelterMutationResult,
     CreateShelterMutationVariables
   >(CREATE_SHELTER_MUTATION);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [currentStep]);
 
   const handleFieldChange = useCallback(
     <K extends keyof ShelterFormData>(field: K, value: ShelterFormData[K]) => {

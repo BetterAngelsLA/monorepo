@@ -77,6 +77,13 @@ export const createEmptyShelterFormData = (): ShelterFormData => ({
   overallRating: null,
   subjectiveReview: '',
 
+  // Additional Information
+  coverImage: [],
+  exteriorPhotos: [],
+  interiorPhotos: [],
+  videos: [],
+  agreementForm: [],
+
   // Administration
   status: StatusChoices.Draft,
 });

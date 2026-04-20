@@ -6,7 +6,11 @@ import {
   type ScheduleInput,
   type ServiceInput,
 } from '@monorepo/react/shelter';
-import type { ScheduleFormEntry, ShelterFormData } from '../../../formTypes';
+import type {
+  ScheduleFormEntry,
+  ShelterFileUpload,
+  ShelterFormData,
+} from '../../../formTypes';
 import { sanitizeString } from '../utils/formUtils';
 
 export { CreateShelterDocument as CREATE_SHELTER_MUTATION };
@@ -96,6 +100,42 @@ const buildScheduleInputs = (
       })
     );
   return mapped.length ? mapped : undefined;
+};
+
+const toShelterFileUploads = (files: readonly File[]): ShelterFileUpload[] =>
+  files.map((file) => ({
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    file,
+  }));
+
+export interface ProcessedShelterFileUploads {
+  coverImage?: ShelterFileUpload;
+  exteriorPhotos: ShelterFileUpload[];
+  interiorPhotos: ShelterFileUpload[];
+  videos: ShelterFileUpload[];
+  agreementForm?: ShelterFileUpload;
+}
+
+/**
+ * Build upload-ready file buckets from form state.
+ * Note: file fields are staged client-side until the backend exposes
+ * shelter file upload inputs on CreateShelterInput.
+ */
+export const buildShelterFileUploads = (
+  formData: ShelterFormData
+): ProcessedShelterFileUploads => {
+  const coverImages = toShelterFileUploads(formData.coverImage);
+  const agreementForms = toShelterFileUploads(formData.agreementForm);
+
+  return {
+    coverImage: coverImages[0],
+    exteriorPhotos: toShelterFileUploads(formData.exteriorPhotos),
+    interiorPhotos: toShelterFileUploads(formData.interiorPhotos),
+    videos: toShelterFileUploads(formData.videos),
+    agreementForm: agreementForms[0],
+  };
 };
 
 // ---------------------------------------------------------------------------

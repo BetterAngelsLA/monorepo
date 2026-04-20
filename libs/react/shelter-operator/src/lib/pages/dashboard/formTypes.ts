@@ -45,6 +45,13 @@ export interface ScheduleFormEntry {
   isException: boolean;
 }
 
+export interface ShelterFileUpload {
+  name: string;
+  size: number;
+  type: string;
+  file: File;
+}
+
 // ---------------------------------------------------------------------------
 // Form state — camelCase, structured, no dead fields
 // ---------------------------------------------------------------------------
@@ -120,6 +127,13 @@ export interface ShelterFormData {
   // Better Angels Review
   overallRating: number | null;
   subjectiveReview: string;
+
+  // Additional Information (client-side upload staging)
+  coverImage: File[];
+  exteriorPhotos: File[];
+  interiorPhotos: File[];
+  videos: File[];
+  agreementForm: File[];
 
   // Administration
   status: StatusChoices;
