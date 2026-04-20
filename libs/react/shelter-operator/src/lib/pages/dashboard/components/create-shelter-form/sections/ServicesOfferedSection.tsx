@@ -4,8 +4,8 @@ import {
   type ShelterServiceCategoriesQuery,
 } from '@monorepo/react/shelter';
 import { memo } from 'react';
+import { Input } from '../../../../../components/base-ui/input/Input';
 import { FormSection } from '../../../../../components/form/FormSection';
-import { TextAreaField } from '../../../../../components/form/TextAreaField';
 import { ServiceAutocomplete } from '../components/ServiceAutocomplete';
 import type { SectionProps } from '../types';
 
@@ -44,6 +44,7 @@ const removePendingDuplicates = (
 export const ServicesOfferedSection = memo(function ServicesOfferedSection({
   data,
   onChange,
+  isTouched,
 }: SectionProps) {
   const {
     data: queryData,
@@ -151,7 +152,12 @@ export const ServicesOfferedSection = memo(function ServicesOfferedSection({
   };
 
   return (
-    <FormSection title="Services Offered">
+    <FormSection
+      title="Services Offered"
+      className="rounded-none border-0 bg-transparent p-0"
+      contentClassName="space-y-6 py-6"
+      titleClassName=""
+    >
       {loading && (
         <p className="text-sm text-gray-600">Loading service catalog…</p>
       )}
@@ -165,14 +171,14 @@ export const ServicesOfferedSection = memo(function ServicesOfferedSection({
         </p>
       )}
 
-      <TextAreaField
+      <Input
         id="other-services"
-        name="otherServices"
+        variant="paragraph"
         label="Additional Service Notes"
-        helperText="Use this field for service details that do not belong in a category-specific custom service entry."
+        placeholder="Describe here"
         value={data.otherServices}
-        onChange={(value) => onChange('otherServices', value)}
-        rows={3}
+        onChange={(event) => onChange('otherServices', event.target.value)}
+        isTouched={isTouched}
       />
     </FormSection>
   );

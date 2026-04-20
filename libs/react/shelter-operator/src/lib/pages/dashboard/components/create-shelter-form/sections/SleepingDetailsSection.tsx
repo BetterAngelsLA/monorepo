@@ -1,56 +1,97 @@
 import { RoomStyleChoices } from '@monorepo/react/shelter';
 import { memo } from 'react';
-import { ROOM_STYLES_OPTIONS } from '../../../formOptions';
-import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
+import { Dropdown } from '../../../../../components/base-ui/dropdown/Dropdown';
+import { Input } from '../../../../../components/base-ui/input/Input';
 import { FormSection } from '../../../../../components/form/FormSection';
-import { NumberField } from '../../../../../components/form/NumberField';
-import { TextAreaField } from '../../../../../components/form/TextAreaField';
-import { TextField } from '../../../../../components/form/TextField';
+import { ROOM_STYLES_OPTIONS } from '../../../formOptions';
 import type { SectionProps } from '../types';
+
+const DROPDOWN_OTHER_VALUE = '__dropdown_other__';
+
+const selectedOptions = <T extends string>(
+  options: { value: T; label: string }[],
+  values: T[]
+) => options.filter((option) => values.includes(option.value));
+
+const toValues = <T extends string>(
+  values: Array<{ value: string; label: string }> | null,
+  mappedOtherValue?: T
+) => {
+  const next = new Set<T>();
+
+  (values ?? []).forEach((option) => {
+    if (option.value === DROPDOWN_OTHER_VALUE) {
+      if (mappedOtherValue) {
+        next.add(mappedOtherValue);
+      }
+      return;
+    }
+    next.add(option.value as T);
+  });
+
+  return Array.from(next);
+};
 
 export const SleepingDetailsSection = memo(function SleepingDetailsSection({
   data,
   onChange,
   errors,
+  isTouched,
 }: SectionProps) {
   return (
-    <FormSection title="Sleeping Details">
-      <NumberField
+    <FormSection
+      title="Sleeping Details"
+      className="rounded-none border-0 bg-transparent p-0"
+      contentClassName="space-y-6 py-6"
+      titleClassName=""
+    >
+      <Input
         id="total-beds"
-        name="totalBeds"
         label="Total Beds"
-        value={data.totalBeds}
-        onChange={(value) => onChange('totalBeds', value)}
+        type="number"
+        inputMode="numeric"
+        value={data.totalBeds ?? ''}
+        onChange={(event) => {
+          const nextValue = event.target.value;
+          onChange('totalBeds', nextValue === '' ? null : Number(nextValue));
+        }}
         min={0}
         error={errors.totalBeds}
+        isTouched={isTouched}
       />
-      <CheckboxGroup
-        name="room-styles"
+
+      <Dropdown
         label="Room Styles"
+        placeholder="Please select"
         options={ROOM_STYLES_OPTIONS}
-        values={data.roomStyles}
+        value={selectedOptions(ROOM_STYLES_OPTIONS, data.roomStyles)}
         onChange={(values) => {
-          onChange('roomStyles', values);
-          if (!values.includes(RoomStyleChoices.Other) && data.roomStylesOther) {
+          const nextValues = toValues<RoomStyleChoices>(
+            values,
+            RoomStyleChoices.Other
+          );
+          onChange('roomStyles', nextValues);
+
+          if (
+            !nextValues.includes(RoomStyleChoices.Other) &&
+            data.roomStylesOther
+          ) {
             onChange('roomStylesOther', '');
           }
         }}
+        onOtherTextChange={(text) => onChange('roomStylesOther', text)}
+        isMulti
       />
-      {data.roomStyles.includes(RoomStyleChoices.Other) ? (
-        <TextField
-          id="room-styles-other"
-          name="roomStylesOther"
-          label="Other Room Styles"
-          value={data.roomStylesOther}
-          onChange={(value) => onChange('roomStylesOther', value)}
-        />
-      ) : null}
-      <TextAreaField
+
+      <Input
         id="sleeping-notes"
-        name="addNotesSleepingDetails"
+        variant="paragraph"
         label="Additional Notes"
+        placeholder="Additional Notes"
         value={data.addNotesSleepingDetails}
-        onChange={(value) => onChange('addNotesSleepingDetails', value)}
+        onChange={(event) =>
+          onChange('addNotesSleepingDetails', event.target.value)
+        }
         rows={3}
       />
     </FormSection>

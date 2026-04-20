@@ -22,9 +22,8 @@ import {
   type FormErrors,
 } from './constants/validation';
 import { useCreateShelterForm } from './hooks/useCreateShelterForm';
-import { AdministrationSection } from './sections/AdministrationSection';
+import { AdditionalInformationSection } from './sections/AdditionalInformationSection';
 import { BasicInformationSection } from './sections/BasicInformationSection';
-import { BetterAngelsReviewSection } from './sections/BetterAngelsReviewSection';
 import { EcosystemInformationSection } from './sections/EcosystemInformationSection';
 import { EntryRequirementsSection } from './sections/EntryRequirementsSection';
 import { PoliciesSection } from './sections/PoliciesSection';
@@ -196,18 +195,11 @@ export function CreateShelterForm() {
       case 8:
       default:
         return (
-          <>
-            <BetterAngelsReviewSection
-              data={formData}
-              onChange={handleFieldChange}
-              errors={errors}
-            />
-            <AdministrationSection
-              data={formData}
-              onChange={handleFieldChange}
-              errors={errors}
-            />
-          </>
+          <AdditionalInformationSection
+            data={formData}
+            onChange={handleFieldChange}
+            errors={errors}
+          />
         );
     }
   };

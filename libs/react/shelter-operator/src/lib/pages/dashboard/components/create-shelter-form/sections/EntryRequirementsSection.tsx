@@ -3,56 +3,83 @@ import {
   ENTRY_REQUIREMENTS_OPTIONS,
   REFERRAL_REQUIREMENT_OPTIONS,
 } from '../../../formOptions';
-import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
+import { Dropdown } from '../../../../../components/base-ui/dropdown/Dropdown';
+import { Input } from '../../../../../components/base-ui/input/Input';
 import { FormSection } from '../../../../../components/form/FormSection';
-import { TextAreaField } from '../../../../../components/form/TextAreaField';
-import { TextField } from '../../../../../components/form/TextField';
 import type { SectionProps } from '../types';
+
+const selectedOptions = <T extends string>(
+  options: { value: T; label: string }[],
+  values: T[]
+) => options.filter((option) => values.includes(option.value));
+
+const toValues = <T extends string>(
+  values: Array<{ value: string; label: string }> | null
+) => (values ?? []).map((option) => option.value as T);
 
 export const EntryRequirementsSection = memo(function EntryRequirementsSection({
   data,
   onChange,
   errors,
+  isTouched,
 }: SectionProps) {
   return (
-    <FormSection title="Entry Requirements">
-      <CheckboxGroup
-        name="entry-requirements"
+    <FormSection
+      title="Entry Requirements"
+      className="rounded-none border-0 bg-transparent p-0"
+      contentClassName="space-y-6 py-6"
+      titleClassName=""
+    >
+      <Dropdown
         label="Entry Requirements"
         options={ENTRY_REQUIREMENTS_OPTIONS}
-        values={data.entryRequirements}
-        onChange={(values) => onChange('entryRequirements', values)}
+        placeholder="Please select"
+        value={selectedOptions(
+          ENTRY_REQUIREMENTS_OPTIONS,
+          data.entryRequirements
+        )}
+        onChange={(values) => onChange('entryRequirements', toValues(values))}
         error={errors.entryRequirements}
+        isMulti
       />
-      <CheckboxGroup
-        name="referral-requirement"
+
+      <Dropdown
         label="Referral Requirement"
         options={REFERRAL_REQUIREMENT_OPTIONS}
-        values={data.referralRequirement}
-        onChange={(values) => onChange('referralRequirement', values)}
+        placeholder="Please select"
+        value={selectedOptions(
+          REFERRAL_REQUIREMENT_OPTIONS,
+          data.referralRequirement
+        )}
+        onChange={(values) => onChange('referralRequirement', toValues(values))}
         error={errors.referralRequirement}
+        isMulti
       />
-      <TextField
+
+      <Input
         id="bed-fees"
-        name="bedFees"
         label="Bed Fees"
+        placeholder="Enter amount"
         value={data.bedFees}
-        onChange={(value) => onChange('bedFees', value)}
+        onChange={(event) => onChange('bedFees', event.target.value)}
       />
-      <TextField
+
+      <Input
         id="program-fees"
-        name="programFees"
         label="Program Fees"
+        placeholder="Enter amount"
         value={data.programFees}
-        onChange={(value) => onChange('programFees', value)}
+        onChange={(event) => onChange('programFees', event.target.value)}
       />
-      <TextAreaField
+
+      <Input
         id="entry-info"
-        name="entryInfo"
+        variant="paragraph"
         label="Entry Information"
+        placeholder="Describe here"
         value={data.entryInfo}
-        onChange={(value) => onChange('entryInfo', value)}
-        rows={3}
+        onChange={(event) => onChange('entryInfo', event.target.value)}
+        isTouched={isTouched}
       />
     </FormSection>
   );
