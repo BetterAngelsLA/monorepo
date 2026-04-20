@@ -63,6 +63,10 @@ services:
       # Listen on all interfaces so the host can reach the container (default can be 127.0.0.1)
       - IMGPROXY_BIND=0.0.0.0:8080
       - IMGPROXY_ENABLE_DEBUG_HEADERS=true
+      # Allow imgproxy to fetch images from MinIO via s3:// URLs
+      - IMGPROXY_USE_S3=true
+      - IMGPROXY_S3_ENDPOINT=http://minio:9000
+      - IMGPROXY_S3_REGION=us-west-2
 
 volumes:
   node_modules:
