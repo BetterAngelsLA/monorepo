@@ -1,23 +1,23 @@
 import { useQuery } from '@apollo/client/react';
+import { operatorPath, reservationPathSegment } from '@monorepo/react/shelter';
 import { useAtomValue } from 'jotai';
-import { BookCheck, Filter, Search, Settings2 } from 'lucide-react';
+import { BookCheck, Search, Settings2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import type {
+  DemographicChoices,
+  ShelterChoices,
+  SpecialSituationRestrictionChoices,
+} from '../../apollo/graphql/__generated__/types';
 import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
-import { ShelterFilterPanel } from '../../components/ShelterFilterPanel/ShelterFilterPanel';
 import { Button } from '../../components/base-ui/buttons';
+import { ShelterFilterPanel } from '../../components/ShelterFilterPanel/ShelterFilterPanel';
 import { ShelterTable } from '../../components/ShelterTable';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
 import { useActiveOrg } from '../../providers/activeOrg';
-import type {
-  DemographicChoices,
-  ShelterChoices,
-  SpecialSituationRestrictionChoices,
-} from '../../apollo/graphql/__generated__/types';
-import { operatorPath, reservationPathSegment } from '@monorepo/react/shelter';
 import type { Shelter } from '../../types/shelter';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -79,10 +79,10 @@ export function Dashboard() {
     const demographics = selectedFilters.demographics?.length
       ? (selectedFilters.demographics as DemographicChoices[])
       : undefined;
-    const specialSituationRestrictions =
-      selectedFilters.specialSituationRestrictions?.length
-        ? (selectedFilters.specialSituationRestrictions as SpecialSituationRestrictionChoices[])
-        : undefined;
+    const specialSituationRestrictions = selectedFilters
+      .specialSituationRestrictions?.length
+      ? (selectedFilters.specialSituationRestrictions as SpecialSituationRestrictionChoices[])
+      : undefined;
     const shelterTypes = selectedFilters.shelterTypes?.length
       ? (selectedFilters.shelterTypes as ShelterChoices[])
       : undefined;
@@ -165,9 +165,7 @@ export function Dashboard() {
           {/* SEARCH BAR + FILTERING */}
 
           <div className="flex w-full items-center justify-between mb-4">
-            <div className="text-sm text-gray-600">
-              {totalCount} Results
-            </div>
+            <div className="text-sm text-gray-600">{totalCount} Results</div>
             <div className="ml-auto flex flex-wrap items-center gap-2">
               <ShelterFilterPanel />
 
