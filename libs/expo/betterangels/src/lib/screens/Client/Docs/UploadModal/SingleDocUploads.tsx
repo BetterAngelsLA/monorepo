@@ -3,7 +3,7 @@ import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { UploadIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { MediaPicker, TextBold } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import { useSnackbar } from '../../../../hooks';
@@ -16,7 +16,17 @@ import UploadsPreview from './UploadsPreview';
 import { ISingleDocUploadsProps } from './types';
 
 export default function SingleDocUploads(props: ISingleDocUploadsProps) {
-  const { setTab, client, setDocs, docs, title, docType } = props;
+  const {
+    setTab,
+    client,
+    setDocs,
+    docs,
+    title,
+    docType,
+    closeModal,
+    onUploadSuccess,
+    onUploadError,
+  } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { showSnackbar } = useSnackbar();
   const [createDocument, { loading }] = useMutation(
@@ -32,6 +42,10 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
       ],
     }
   );
+
+  useEffect(() => {
+    setIsModalVisible(true);
+  }, []);
 
   const uploadDocument = async () => {
     const document = docs?.[docType];
@@ -56,8 +70,14 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
           },
         },
       });
+
+      onUploadSuccess?.('File uploaded successfully.');
+      closeModal();
     } catch (err) {
       console.error(`error uploading ${docType} forms: `, err);
+
+      onUploadError?.('Upload failed. Please try again.');
+      closeModal();
 
       showSnackbar({
         message: `Sorry, there was an error updating the file.`,

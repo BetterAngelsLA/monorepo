@@ -19,6 +19,8 @@ export interface IUploadModalProps {
   topSection?: React.ReactNode;
   opacity?: number;
   client: ClientProfileQuery | undefined;
+  onUploadSuccess?: (message: string) => void;
+  onUploadError?: (message: string) => void;
 }
 
 export interface IIdDocUploadsProps {
@@ -35,20 +37,26 @@ export interface IIdDocUploadsProps {
 }
 
 export interface IMultipleDocUploadsProps {
+  closeModal: () => void;
   setTab: (tab: ITab) => void;
   client: ClientProfileQuery | undefined;
   docs: Docs;
   setDocs: Dispatch<SetStateAction<Docs>>;
   title: string;
+  onUploadSuccess?: (message: string) => void;
+  onUploadError?: (message: string) => void;
   docType: 'ConsentForm' | 'HmisForm' | 'IncomeForm' | 'OtherClientDocument';
 }
 
 export interface ISingleDocUploadsProps {
+  closeModal: () => void;
   setTab: (tab: ITab) => void;
   client: ClientProfileQuery | undefined;
   docs: Docs;
   setDocs: Dispatch<SetStateAction<Docs>>;
   title: string;
+  onUploadSuccess?: (message: string) => void;
+  onUploadError?: (message: string) => void;
   docType:
     | 'DriversLicenseFront'
     | 'DriversLicenseBack'
