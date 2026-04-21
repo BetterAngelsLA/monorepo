@@ -25,12 +25,7 @@ django.setup()
 from django.contrib.contenttypes.models import ContentType  # noqa: E402
 from shelters.enums import StatusChoices  # noqa: E402
 from shelters.models import ExteriorPhoto, InteriorPhoto, Shelter  # noqa: E402
-from shelters.tests.baker_recipes import (  # noqa: E402
-    fix_other_fields,
-    make_schedules,
-    shelter_contact_recipe,
-    shelter_recipe,
-)
+from shelters.tests.baker_recipes import make_complete_shelters, shelter_contact_recipe  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -83,26 +78,13 @@ def main() -> None:
             Shelter.objects.all().delete()
 
         print(f"Generating {num_shelters} shelters...")
-        shelters = shelter_recipe.make(
+        shelters = make_complete_shelters(
             _quantity=num_shelters,
             _fill_optional=True,
             status=StatusChoices.APPROVED,
             hero_image_content_type=None,
             hero_image_object_id=None,
         )
-
-        # ---- Per-shelter field tweaks ----
-        name_max_length = Shelter._meta.get_field("name").max_length or 255
-        long_name = ("VeryLongShelterName" * 25)[:name_max_length]
-
-        for shelter in shelters:
-            # ~15 % of shelters get an unbreakable long name
-            if random.random() < 0.15:
-                shelter.name = long_name
-                shelter.save(update_fields=["name"])
-
-            # Only set _other text when "other" is actually selected
-            fix_other_fields(shelter)
 
         # ---- Images (1–10 per shelter) ----
         image_path = Path(__file__).with_name("shelter_seed_image.png")
@@ -115,13 +97,6 @@ def main() -> None:
         for shelter in shelters:
             for _ in range(random.randint(1, 3)):
                 shelter_contact_recipe.make(shelter=shelter)
-
-        # ---- Schedules (varied per shelter) ----
-        for idx, shelter in enumerate(shelters):
-            make_schedules(
-                shelter,
-                force_monday_exception=(idx == 0),
-            )
 
         print(f"Successfully created {num_shelters} shelters with all required fields.")
 

@@ -304,3 +304,17 @@ def make_schedules(shelter: Shelter, *, force_monday_exception: bool = False) ->
             start_date=None,
             end_date=None,
         )
+
+
+def make_complete_shelters(**kwargs: Any) -> list[Shelter]:
+    """Create shelters with fix_other_fields and schedules applied.
+
+    Accepts the same keyword arguments as ``shelter_recipe.make()``.
+    Always returns a list, even when ``_quantity`` is 1.
+    """
+    result = shelter_recipe.make(**kwargs)
+    shelters = result if isinstance(result, list) else [result]
+    for idx, shelter in enumerate(shelters):
+        fix_other_fields(shelter)
+        make_schedules(shelter, force_monday_exception=(idx == 0))
+    return shelters
