@@ -78,6 +78,14 @@ env = environ.Env(
     IMGPROXY_PATH_PREFIX=(str, ""),
     IMGPROXY_LOCAL_URL=(str, "http://localhost:8080"),
     IMGPROXY_LOCAL_MEDIA_URL=(str, "http://better-angels:8000/media/"),
+    CHEAPEST_TEXTING_API_KEY=(str, ""),
+    CHEAPEST_TEXTING_BASE_URL=(str, "https://api.app.cheapesttexting.com/public_api/v1"),
+    CHEAPEST_TEXTING_CAMPAIGN_ID=(int, 0),
+    CHEAPEST_TEXTING_TRUNK_NUMBER=(int, 0),
+    TWILIO_ACCOUNT_SID=(str, ""),
+    TWILIO_AUTH_TOKEN=(str, ""),
+    TWILIO_FROM_NUMBER=(str, ""),
+    SIMPLE_TEXTING_API_TOKEN=(str, ""),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -140,6 +148,7 @@ INSTALLED_APPS = [
     "common",
     "hmis",
     "legal",
+    "sms",
     "notes",
     "proxy",
     "reports",
@@ -421,6 +430,16 @@ HMIS_API_KEY = env("HMIS_API_KEY")
 HMIS_TOKEN_KEY = env("HMIS_TOKEN_KEY")
 HMIS_HOST = env("HMIS_HOST")
 HMIS_REST_URL = env("HMIS_REST_URL")
+
+# SMS / Messaging
+CHEAPEST_TEXTING_API_KEY = env("CHEAPEST_TEXTING_API_KEY")
+CHEAPEST_TEXTING_BASE_URL = env("CHEAPEST_TEXTING_BASE_URL")
+CHEAPEST_TEXTING_CAMPAIGN_ID = env("CHEAPEST_TEXTING_CAMPAIGN_ID")
+CHEAPEST_TEXTING_TRUNK_NUMBER = env("CHEAPEST_TEXTING_TRUNK_NUMBER")
+TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN")
+TWILIO_FROM_NUMBER = env("TWILIO_FROM_NUMBER")
+SIMPLE_TEXTING_API_TOKEN = env("SIMPLE_TEXTING_API_TOKEN")
 
 # Logging Configuration
 # https://django-structlog.readthedocs.io/en/latest/getting_started.html
