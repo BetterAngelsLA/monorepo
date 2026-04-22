@@ -55,6 +55,15 @@ def _get_image_source_url(file: object) -> Optional[str]:
     if not storage or not name:
         return None
 
+    # When the storage backend exposes an S3 bucket, use an s3:// URL so imgproxy
+    # fetches directly from the bucket (works for both production S3 and local MinIO).
+    try:
+        bucket = storage.bucket_name
+        key = f"{storage.location}/{name}" if storage.location else name
+        return f"s3://{bucket}/{key}"
+    except AttributeError:
+        pass
+
     if settings.IS_LOCAL_DEV:
         if url := getattr(file, "url", None):
             # file.url builds an absolute URL using MEDIA_URL. Locally, this points at localhost:8000.
@@ -62,14 +71,7 @@ def _get_image_source_url(file: object) -> Optional[str]:
             # localhost, so we swap the internal service hostname (e.g. "better-angels:8000").
             return cast(str, url.replace(settings.MEDIA_URL, settings.IMGPROXY_LOCAL_MEDIA_URL))
 
-        return None
-
-    try:
-        key = f"{storage.location}/{name}" if storage.location else name
-        return f"s3://{storage.bucket_name}/{key}"
-
-    except AttributeError:
-        return None
+    return None
 
 
 def _encode_source_url(url: str) -> str:

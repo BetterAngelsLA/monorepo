@@ -182,6 +182,48 @@ POST_OFFICE_EMAIL_BACKEND=django_ses.SESBackend
 
 Sending & Receiving: With the above configuration, any emails sent from the application will now be dispatched through Amazon SES.
 
+### Local File Storage (MinIO)
+
+We use [MinIO](https://min.io/) as a local S3-compatible object store so that file uploads work the same way locally as they do in production (where we use AWS S3). MinIO runs automatically as part of the Docker Compose stack — no extra setup is required.
+
+#### How It Works
+
+- **MinIO** provides an S3-compatible API on port `9000` and an admin console on port `9001`.
+- When `IS_LOCAL_DEV=True` (set in `.compose/local.shared.env`), Django uses the `LocalS3Storage` backend (`common/storage.py`) instead of the production `S3Storage`. This backend signs read URLs with the public MinIO endpoint (`localhost:9000`) so your browser/device can access files, while Django itself talks to MinIO over the Docker network (`minio:9000`).
+- The `minio-setup` service automatically creates the `betterangels-local` bucket on first startup.
+
+#### MinIO Admin Console
+
+You can browse uploaded files and manage buckets via the MinIO web console:
+
+- **URL:** [http://localhost:9001](http://localhost:9001)
+- **Username:** `admin`
+- **Password:** `password`
+
+#### Environment Variables
+
+All MinIO-related environment variables are committed in `.compose/local.shared.env` and applied automatically:
+
+| Variable                         | Value                   | Purpose                                                 |
+| -------------------------------- | ----------------------- | ------------------------------------------------------- |
+| `AWS_S3_STORAGE_BUCKET_NAME`     | `betterangels-local`    | Local bucket name                                       |
+| `LOCAL_S3_INTERNAL_ENDPOINT_URL` | `http://minio:9000`     | Docker-internal MinIO endpoint (used by Django)         |
+| `LOCAL_S3_PUBLIC_ENDPOINT_URL`   | `http://localhost:9000` | Browser-reachable MinIO endpoint (used for signed URLs) |
+| `AWS_ACCESS_KEY_ID`              | `admin`                 | MinIO root user                                         |
+| `AWS_SECRET_ACCESS_KEY`          | `password`              | MinIO root password                                     |
+
+You do **not** need to add any MinIO variables to your `.env.local` unless you want to override the defaults (e.g., to point at a real AWS bucket).
+
+#### Android Emulator Access
+
+If you are running the Android emulator, you need to forward port `9000` so the emulator can reach MinIO on `localhost`:
+
+```bash
+adb reverse tcp:9000 tcp:9000
+```
+
+See the [Frontend Development Guide](frontend_readme.md#starting-android) for the full list of `adb reverse` commands.
+
 ### Integrating Django PG History
 
 [Django PG History](https://django-pghistory.readthedocs.io/en/3.0.0/) is used in this project to track changes to model instances over time. The `django-pghistory` should already be added into the project's setting. If you're developing a new model or want to add historical tracking to an existing model, follow these steps:

@@ -163,6 +163,20 @@ export type AuthResponse = {
   status_code: Scalars['String']['output'];
 };
 
+export type AuthorizedPresignedS3UploadType = {
+  __typename?: 'AuthorizedPresignedS3UploadType';
+  fields: Scalars['JSON']['output'];
+  presignedKey: Scalars['String']['output'];
+  refId: Scalars['String']['output'];
+  uploadToken: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+};
+
+export type AuthorizedPresignedS3UploadsType = {
+  __typename?: 'AuthorizedPresignedS3UploadsType';
+  uploads: Array<AuthorizedPresignedS3UploadType>;
+};
+
 export enum BedStatusChoices {
   Available = 'AVAILABLE',
   Occupied = 'OCCUPIED',
@@ -254,6 +268,14 @@ export type ClientDocumentFilter = {
   documentGroups?: InputMaybe<Array<ClientDocumentGroupEnum>>;
 };
 
+export type ClientDocumentFromUploadsInput = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  namespace: ClientDocumentNamespaceEnum;
+  presignedKey: Scalars['String']['input'];
+  uploadToken: Scalars['String']['input'];
+};
+
 export enum ClientDocumentGroupEnum {
   DocReady = 'DOC_READY',
   Forms = 'FORMS',
@@ -293,6 +315,17 @@ export type ClientDocumentTypeOffsetPaginated = {
   results: Array<ClientDocumentType>;
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
+};
+
+export type ClientDocumentUploadsInputItem = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  refId: Scalars['String']['input'];
+};
+
+export type ClientDocumentUploadsType = {
+  __typename?: 'ClientDocumentUploadsType';
+  documents: Array<ClientDocumentType>;
 };
 
 export type ClientHouseholdMemberInput = {
@@ -953,6 +986,22 @@ export enum GenderEnum {
   TransMale = 'TRANS_MALE'
 }
 
+export type GenerateClientDocumentUploadsInput = {
+  clientProfileId: Scalars['ID']['input'];
+  uploads: Array<ClientDocumentUploadsInputItem>;
+};
+
+export type GenerateClientDocumentUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo;
+
+export type GenerateClientProfilePhotoUploadInput = {
+  clientProfileId: Scalars['ID']['input'];
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  refId: Scalars['String']['input'];
+};
+
+export type GenerateClientProfilePhotoUploadPayload = AuthorizedPresignedS3UploadType | OperationInfo;
+
 export type GeolocationInput = {
   latitude: Scalars['Float']['input'];
   longitude: Scalars['Float']['input'];
@@ -1439,6 +1488,8 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
+  generateClientDocumentUploads: GenerateClientDocumentUploadsPayload;
+  generateClientProfilePhotoUpload: GenerateClientProfilePhotoUploadPayload;
   hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
@@ -1446,6 +1497,8 @@ export type Mutation = {
   logout: Scalars['Boolean']['output'];
   removeHmisNoteServiceRequest: RemoveHmisNoteServiceRequestPayload;
   removeOrganizationMember: RemoveOrganizationMemberPayload;
+  resolveClientDocumentUploads: ResolveClientDocumentUploadsPayload;
+  resolveClientProfilePhotoUpload: ResolveClientProfilePhotoUploadPayload;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
   updateClientDocument: UpdateClientDocumentPayload;
@@ -1611,6 +1664,16 @@ export type MutationDeleteTaskArgs = {
 };
 
 
+export type MutationGenerateClientDocumentUploadsArgs = {
+  data: GenerateClientDocumentUploadsInput;
+};
+
+
+export type MutationGenerateClientProfilePhotoUploadArgs = {
+  data: GenerateClientProfilePhotoUploadInput;
+};
+
+
 export type MutationHmisLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
@@ -1639,6 +1702,16 @@ export type MutationRemoveHmisNoteServiceRequestArgs = {
 
 export type MutationRemoveOrganizationMemberArgs = {
   data: RemoveOrganizationMemberInput;
+};
+
+
+export type MutationResolveClientDocumentUploadsArgs = {
+  data: ResolveClientDocumentUploadsInput;
+};
+
+
+export type MutationResolveClientProfilePhotoUploadArgs = {
+  data: ResolveClientProfilePhotoUploadInput;
 };
 
 
@@ -2366,6 +2439,21 @@ export type ReportSummaryType = {
   uniqueClients: Scalars['Int']['output'];
   uniqueClientsByDate: Array<DateCountType>;
 };
+
+export type ResolveClientDocumentUploadsInput = {
+  clientProfileId: Scalars['ID']['input'];
+  documents: Array<ClientDocumentFromUploadsInput>;
+};
+
+export type ResolveClientDocumentUploadsPayload = ClientDocumentUploadsType | OperationInfo;
+
+export type ResolveClientProfilePhotoUploadInput = {
+  clientProfileId: Scalars['ID']['input'];
+  presignedKey: Scalars['String']['input'];
+  uploadToken: Scalars['String']['input'];
+};
+
+export type ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo;
 
 export type RevertNoteInput = {
   id: Scalars['ID']['input'];

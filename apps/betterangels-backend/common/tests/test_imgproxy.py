@@ -172,7 +172,21 @@ class GetImageSourceUrlTest(ParametrizedTestCase, TestCase):
         self.assertEqual(_get_image_source_url(file), "s3://my-bucket/photo.jpg")
 
     @override_settings(IS_LOCAL_DEV=True)
-    def test_local_dev_with_source_base_url(self) -> None:
+    def test_local_dev_s3_storage_uses_s3_url(self) -> None:
+        """When local dev storage has bucket_name, prefer s3:// over file.url."""
+        file = SimpleNamespace(
+            name="photo.jpg",
+            storage=SimpleNamespace(bucket_name="betterangels-local", location="media"),
+            url="http://localhost:9000/betterangels-local/media/photo.jpg?X-Amz-Signature=abc",
+        )
+        self.assertEqual(
+            _get_image_source_url(file),
+            "s3://betterangels-local/media/photo.jpg",
+        )
+
+    @override_settings(IS_LOCAL_DEV=True)
+    def test_local_dev_non_s3_storage_uses_file_url(self) -> None:
+        """When local dev storage has no bucket_name, fall back to file.url rewrite."""
         file = SimpleNamespace(
             name="photo.jpg",
             storage=SimpleNamespace(),
