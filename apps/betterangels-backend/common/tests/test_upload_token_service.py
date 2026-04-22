@@ -1,27 +1,8 @@
-from unittest.mock import patch
-
-from common.services.upload_token import (
-    TTL_GRACE_PERIOD_SECONDS,
-    UPLOAD_TOKEN_PREFIX,
-    create_upload_token,
-    validate_upload_token,
-)
-from django.core.cache import cache
-from django.test import SimpleTestCase, override_settings
-
-LOC_MEM = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "upload-token-tests",
-    }
-}
+from common.services.upload_token import TTL_GRACE_PERIOD_SECONDS, _signer, create_upload_token, validate_upload_token
+from django.test import SimpleTestCase
 
 
-@override_settings(CACHES=LOC_MEM)
 class CreateUploadTokenTests(SimpleTestCase):
-    def setUp(self) -> None:
-        cache.clear()
-
     def test_returns_token_string(self) -> None:
         token = create_upload_token(
             key="uploads/photo.jpg",
@@ -32,56 +13,38 @@ class CreateUploadTokenTests(SimpleTestCase):
         self.assertIsInstance(token, str)
         self.assertTrue(len(token) > 0)
 
-    def test_stores_payload_in_cache(self) -> None:
+    def test_token_contains_expected_payload(self) -> None:
         token = create_upload_token(
             key="uploads/photo.jpg",
             user_id=42,
             scope="avatar",
             expires_in_seconds=600,
         )
-        cache_key = f"{UPLOAD_TOKEN_PREFIX}{token}"
-        stored = cache.get(cache_key)
+        payload = _signer.unsign_object(token)
 
-        self.assertIsNotNone(stored)
-        self.assertEqual(stored["key"], "uploads/photo.jpg")
-        self.assertEqual(stored["user_id"], 42)
-        self.assertEqual(stored["scope"], "avatar")
+        self.assertEqual(payload["key"], "uploads/photo.jpg")
+        self.assertEqual(payload["user_id"], 42)
+        self.assertEqual(payload["scope"], "avatar")
+        self.assertEqual(payload["max_age"], 600 + TTL_GRACE_PERIOD_SECONDS)
 
-    def test_cache_ttl_includes_grace_period(self) -> None:
-        expires_in = 300
-        with patch.object(cache, "set", wraps=cache.set) as mock_set:
-            create_upload_token(
-                key="uploads/photo.jpg",
-                user_id=1,
-                scope="attachment",
-                expires_in_seconds=expires_in,
-            )
-            mock_set.assert_called_once()
-            _, kwargs = mock_set.call_args
-            if "timeout" in kwargs:
-                self.assertEqual(kwargs["timeout"], expires_in + TTL_GRACE_PERIOD_SECONDS)
-            else:
-                # timeout passed as positional arg
-                args = mock_set.call_args[0]
-                self.assertEqual(args[2], expires_in + TTL_GRACE_PERIOD_SECONDS)
-
-    def test_generates_unique_tokens(self) -> None:
-        tokens = {
-            create_upload_token(
-                key="uploads/photo.jpg",
-                user_id=1,
-                scope="attachment",
-                expires_in_seconds=300,
-            )
-            for _ in range(20)
-        }
-        self.assertEqual(len(tokens), 20)
+    def test_generates_different_tokens_for_different_inputs(self) -> None:
+        token1 = create_upload_token(
+            key="uploads/photo1.jpg",
+            user_id=1,
+            scope="attachment",
+            expires_in_seconds=300,
+        )
+        token2 = create_upload_token(
+            key="uploads/photo2.jpg",
+            user_id=1,
+            scope="attachment",
+            expires_in_seconds=300,
+        )
+        self.assertNotEqual(token1, token2)
 
 
-@override_settings(CACHES=LOC_MEM)
 class ValidateUploadTokenTests(SimpleTestCase):
     def setUp(self) -> None:
-        cache.clear()
         self.key = "uploads/photo.jpg"
         self.user_id = 42
         self.scope = "attachment"
@@ -101,26 +64,28 @@ class ValidateUploadTokenTests(SimpleTestCase):
         )
         self.assertTrue(result)
 
-    def test_token_is_consumed_after_use(self) -> None:
-        first_result = validate_upload_token(
-            upload_token=self.token,
-            key=self.key,
-            user_id=self.user_id,
-            scope=self.scope,
-        )
-        self.assertTrue(first_result)
-
-        repeat_result = validate_upload_token(
-            upload_token=self.token,
-            key=self.key,
-            user_id=self.user_id,
-            scope=self.scope,
-        )
-        self.assertFalse(repeat_result)
+    def test_token_can_be_validated_multiple_times(self) -> None:
+        for _ in range(3):
+            result = validate_upload_token(
+                upload_token=self.token,
+                key=self.key,
+                user_id=self.user_id,
+                scope=self.scope,
+            )
+            self.assertTrue(result)
 
     def test_invalid_token(self) -> None:
         result = validate_upload_token(
             upload_token="nonexistent-token",
+            key=self.key,
+            user_id=self.user_id,
+            scope=self.scope,
+        )
+        self.assertFalse(result)
+
+    def test_tampered_token(self) -> None:
+        result = validate_upload_token(
+            upload_token=self.token + "tampered",
             key=self.key,
             user_id=self.user_id,
             scope=self.scope,
@@ -154,48 +119,19 @@ class ValidateUploadTokenTests(SimpleTestCase):
         )
         self.assertFalse(result)
 
-    def test_wrong_key_does_not_consume_token(self) -> None:
-        validate_upload_token(
-            upload_token=self.token,
-            key="uploads/wrong.jpg",
-            user_id=self.user_id,
-            scope=self.scope,
-        )
-        # Token should still be valid with correct params
-        result = validate_upload_token(
-            upload_token=self.token,
+    def test_expired_token(self) -> None:
+        # Create a token with max_age=0 (immediately expired)
+        token = create_upload_token(
             key=self.key,
             user_id=self.user_id,
             scope=self.scope,
+            expires_in_seconds=-TTL_GRACE_PERIOD_SECONDS,
         )
-        self.assertTrue(result)
 
-    def test_wrong_user_id_does_not_consume_token(self) -> None:
-        validate_upload_token(
-            upload_token=self.token,
-            key=self.key,
-            user_id=999,
-            scope=self.scope,
-        )
         result = validate_upload_token(
-            upload_token=self.token,
+            upload_token=token,
             key=self.key,
             user_id=self.user_id,
             scope=self.scope,
         )
-        self.assertTrue(result)
-
-    def test_wrong_scope_does_not_consume_token(self) -> None:
-        validate_upload_token(
-            upload_token=self.token,
-            key=self.key,
-            user_id=self.user_id,
-            scope="wrong-scope",
-        )
-        result = validate_upload_token(
-            upload_token=self.token,
-            key=self.key,
-            user_id=self.user_id,
-            scope=self.scope,
-        )
-        self.assertTrue(result)
+        self.assertFalse(result)

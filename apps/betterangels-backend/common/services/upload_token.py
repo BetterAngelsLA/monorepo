@@ -1,9 +1,8 @@
-import secrets
+from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
 
-from django.core.cache import cache
-
-UPLOAD_TOKEN_PREFIX = "upload_tkn:"
 TTL_GRACE_PERIOD_SECONDS = 180  # 3 minutes
+
+_signer = TimestampSigner(salt="upload-token")
 
 
 def create_upload_token(
@@ -14,26 +13,16 @@ def create_upload_token(
     expires_in_seconds: int,
 ) -> str:
     """
-    Generate a random signature token, store it in Redis/Valkey cache
-    mapped to the expected S3 key and user ID, and return the token.
+    Create an HMAC-signed token embedding the expected S3 key, user ID and scope.
 
-    TTL is set to the presigned URL expiration plus a grace period.
+    The token is stateless — no cache/Valkey storage is needed.
+    max_age is embedded in the payload so validation is self-contained.
     """
-    ttl = expires_in_seconds + TTL_GRACE_PERIOD_SECONDS
-    token = secrets.token_urlsafe(32)
-    cache_key = f"{UPLOAD_TOKEN_PREFIX}{token}"
-
-    cache.set(
-        cache_key,
-        {
-            "key": key,
-            "user_id": user_id,
-            "scope": scope,
-        },
-        timeout=ttl,
+    max_age = expires_in_seconds + TTL_GRACE_PERIOD_SECONDS
+    return _signer.sign_object(
+        {"key": key, "user_id": user_id, "scope": scope, "max_age": max_age},
+        compress=True,
     )
-
-    return token
 
 
 def validate_upload_token(
@@ -44,25 +33,30 @@ def validate_upload_token(
     scope: str,
 ) -> bool:
     """
-    Validate that the upload_token maps to the expected S3 key, user and scope.
-    Consumes the token on successful validation (single-use).
+    Validate that the signed upload_token contains the expected S3 key,
+    user ID and scope, and has not expired.
     """
-    cache_key = f"{UPLOAD_TOKEN_PREFIX}{upload_token}"
-    stored = cache.get(cache_key)
-
-    if stored is None:
+    try:
+        payload = _signer.unsign_object(upload_token)
+    except BadSignature:
         return False
 
-    if stored["key"] != key:
+    if payload.get("key") != key:
         return False
 
-    if stored["user_id"] != user_id:
+    if payload.get("user_id") != user_id:
         return False
 
-    if stored.get("scope") != scope:
+    if payload.get("scope") != scope:
         return False
 
-    # delete token after usage
-    cache.delete(cache_key)
+    # Call unsign with max_age to compare the token's
+    # embedded creation timestamp against it
+    max_age = payload.get("max_age")
+    if max_age is not None:
+        try:
+            _signer.unsign(upload_token, max_age=max_age)
+        except SignatureExpired:
+            return False
 
     return True
