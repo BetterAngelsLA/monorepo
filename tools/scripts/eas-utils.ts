@@ -60,11 +60,17 @@ export function run(
 ): string {
   const cwd = opts?.cwd ?? process.cwd();
   if (!opts?.silent) console.log(`> ${cmd}`);
-  return execSync(cmd, {
-    cwd,
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'pipe'],
-  }).trim();
+  try {
+    return execSync(cmd, {
+      cwd,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
+  } catch (error: any) {
+    if (error.stderr) console.error(error.stderr);
+    if (error.stdout) console.error(error.stdout);
+    throw error;
+  }
 }
 
 /**

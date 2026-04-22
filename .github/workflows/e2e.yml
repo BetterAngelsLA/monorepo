@@ -116,12 +116,6 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
-      - name: 🔧 Setup EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: 18.5.0
-          token: ${{ secrets.EXPO_TOKEN }}
-
       - name: 🧪 Run E2E orchestration
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}

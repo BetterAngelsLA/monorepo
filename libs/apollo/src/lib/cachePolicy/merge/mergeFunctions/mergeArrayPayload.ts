@@ -1,4 +1,5 @@
-import type { FieldFunctionOptions, FieldMergeFunction } from '@apollo/client';
+import type { FieldMergeFunction } from '@apollo/client';
+import type { FieldMergeFunctionOptions } from '@apollo/client/cache';
 import type { ResolveMergePagination } from '../types';
 
 export function mergeArrayPayload<TItem = unknown, TVars = unknown>(
@@ -6,7 +7,7 @@ export function mergeArrayPayload<TItem = unknown, TVars = unknown>(
 ): FieldMergeFunction<
   readonly TItem[] | undefined,
   readonly TItem[] | undefined,
-  FieldFunctionOptions<Record<string, unknown>, Record<string, unknown>>
+  FieldMergeFunctionOptions<Record<string, unknown>, Record<string, unknown>>
 > {
   return (existing, incoming, options) => {
     const { offset = 0 } =
