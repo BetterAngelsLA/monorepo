@@ -22,21 +22,12 @@
         ],
         "metadata": {
           "images": ["${ECR_REGISTRY}/${APP_NAME}"],
-          "tags": ["${DOCKER_TAG}"]
+          "tags": ["${DOCKER_TAG}", "latest"]
         }
       },
       "configurations": {
         "preview": {
           "push": false
-        }
-      }
-    },
-    "deploy": {
-      "command": "tools/deploy/imgproxy_lambda_deploy.sh",
-      "configurations": {
-        "production": {},
-        "preview": {
-          "command": "echo 'Skipping deploy'"
         }
       }
     }
