@@ -8,6 +8,9 @@ class _AssertionsProto(Protocol):
     def assertEqual(self, a: Any, b: Any, msg: str | None = None) -> None:
         pass
 
+    def assertIn(self, member: Any, container: Any, msg: str | None = None) -> None:
+        pass
+
     def assertIsInstance(self, obj: Any, cls: type, msg: str | None = None) -> None:
         pass
 
@@ -36,3 +39,24 @@ class GraphQLAssertionsMixin:
         self.assertEqual(error.get("message"), expected_message)
         self.assertEqual(error.get("extensions", {}).get("code"), expected_code)
         self.assertEqual(error.get("extensions", {}).get("http", {}).get("status"), expected_status)
+
+    def assertGraphQLError(
+        self: _AssertionsProto,
+        response: dict[str, Any],
+        message: str,
+        *,
+        num_errors: int = 1,
+        error_index: int = 0,
+        exact: bool = False,
+    ) -> None:
+        errors = response.get("errors", [])
+
+        self.assertIsInstance(errors, list)
+        self.assertEqual(len(errors), num_errors)
+
+        error = errors[error_index]
+
+        if exact:
+            self.assertEqual(error.get("message"), message)
+        else:
+            self.assertIn(message, error.get("message", ""))

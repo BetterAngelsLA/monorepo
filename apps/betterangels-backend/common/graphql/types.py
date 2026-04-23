@@ -12,6 +12,7 @@ from django.db.models import Q
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
 from phonenumber_field.phonenumber import PhoneNumber as DjangoPhoneNumberUtil
 from strawberry import ID, Info, auto
+from strawberry.scalars import JSON
 from strawberry.types.field import StrawberryField
 from strawberry.types.scalar import ScalarDefinition
 
@@ -242,3 +243,26 @@ class FeatureControlData:
 @strawberry.type
 class DeletedObjectType:
     id: int
+
+
+@strawberry.type
+class PresignedS3UploadType:
+    ref_id: str
+    url: str
+    fields: JSON
+    presigned_key: str
+
+
+@strawberry.type
+class PresignedS3UploadsType:
+    uploads: list[PresignedS3UploadType]
+
+
+@strawberry.type
+class AuthorizedPresignedS3UploadType(PresignedS3UploadType):
+    upload_token: str
+
+
+@strawberry.type
+class AuthorizedPresignedS3UploadsType:
+    uploads: list[AuthorizedPresignedS3UploadType]

@@ -1,4 +1,3 @@
-import datetime
 import os
 import random
 import sys
@@ -9,10 +8,11 @@ from pathlib import Path
 Usage:
     python seed_shelters.py <number_of_shelters> [--clear]
 
-This script creates approved shelters with placeholder exterior photos,
-random contacts, multiple schedule types, and a small set of operating
-exceptions so the shelter detail UI and Open Now filtering have predictable
-demo coverage.
+This script creates approved shelters with all required fields populated,
+randomized multi-select values, 1–10 photos (exterior + interior), varied
+schedules, contacts, and proper handling of "_other" text fields.  It is
+designed to exercise as many field combinations as possible so local and dev
+environments surface realistic UI coverage.
 """
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "betterangels_backend.settings")
@@ -22,19 +22,40 @@ from django.db import transaction  # noqa: E402
 
 django.setup()
 
-from shelters.enums import (  # noqa: E402
-    DayOfWeekChoices,
-    ScheduleTypeChoices,
-    StatusChoices,
-)
-from shelters.models import ExteriorPhoto, Shelter  # noqa: E402
-from shelters.models.schedule import Schedule  # noqa: E402
-from shelters.tests.baker_recipes import (  # noqa: E402
-    shelter_contact_recipe,
-    shelter_recipe,
-)
+from django.contrib.contenttypes.models import ContentType  # noqa: E402
+from shelters.enums import StatusChoices  # noqa: E402
+from shelters.models import ExteriorPhoto, InteriorPhoto, Shelter  # noqa: E402
+from shelters.tests.baker_recipes import make_complete_shelters, shelter_contact_recipe  # noqa: E402
 
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+def _add_images(shelter: Shelter, django_file: File, total: int) -> None:
+    """Create a mix of exterior and interior photos; set the hero image."""
+    num_exterior = random.randint(1, total)
+    num_interior = total - num_exterior
+
+    first_exterior = None
+    for _ in range(num_exterior):
+        photo = ExteriorPhoto.objects.create(file=django_file, shelter=shelter)
+        if first_exterior is None:
+            first_exterior = photo
+
+    for _ in range(num_interior):
+        InteriorPhoto.objects.create(file=django_file, shelter=shelter)
+
+    # Set hero image to the first exterior photo.
+    if first_exterior:
+        ct = ContentType.objects.get_for_model(ExteriorPhoto)
+        shelter.hero_image_content_type = ct
+        shelter.hero_image_object_id = first_exterior.pk
+        shelter.save(update_fields=["hero_image_content_type", "hero_image_object_id"])
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 def main() -> None:
     if len(sys.argv) not in {2, 3}:
         print("Usage: python seed_shelters.py <number_of_shelters> [--clear]")
@@ -57,7 +78,7 @@ def main() -> None:
             Shelter.objects.all().delete()
 
         print(f"Generating {num_shelters} shelters...")
-        shelters = shelter_recipe.make(
+        shelters = make_complete_shelters(
             _quantity=num_shelters,
             _fill_optional=True,
             status=StatusChoices.APPROVED,
@@ -65,138 +86,19 @@ def main() -> None:
             hero_image_object_id=None,
         )
 
-        # Give ~15% of shelters a long unbroken name to exercise the
-        # break-all CSS safeguard in ShelterCard without exceeding the model
-        # field limit.
-        name_max_length = Shelter._meta.get_field("name").max_length or 255
-        long_name = ("VeryLongShelterName" * 25)[:name_max_length]
-        for shelter in shelters:
-            if random.random() < 0.15:
-                shelter.name = long_name
-                shelter.save(update_fields=["name"])
-
+        # ---- Images (1–10 per shelter) ----
         image_path = Path(__file__).with_name("shelter_seed_image.png")
         with image_path.open("rb") as image_file:
             django_file = File(image_file)
             for shelter in shelters:
-                rand = random.random()
-                if rand < 0.3:
-                    num_photos = 0
-                elif rand < 0.8:
-                    num_photos = random.randint(1, 2)
-                else:
-                    num_photos = random.randint(3, 5)
+                _add_images(shelter, django_file, total=random.randint(1, 10))
 
-                for _ in range(num_photos):
-                    ExteriorPhoto.objects.create(file=django_file, shelter=shelter)
-
-        # add contacts
+        # ---- Contacts (1–3 per shelter) ----
         for shelter in shelters:
-            for _ in range(random.randint(0, 3)):
+            for _ in range(random.randint(1, 3)):
                 shelter_contact_recipe.make(shelter=shelter)
 
-        # Add a representative mix of schedule types so seeded shelters exercise
-        # the multi-pill hours UI in the detail modal.
-        for shelter in shelters:
-            # Operating hours: daily with a longer weekday window.
-            for day in DayOfWeekChoices:
-                is_weekend = day in {DayOfWeekChoices.SATURDAY, DayOfWeekChoices.SUNDAY}
-                Schedule.objects.create(
-                    **{
-                        "shelter": shelter,
-                        "schedule_type": ScheduleTypeChoices.OPERATING,
-                        "day": day,
-                        "start_time": datetime.time(9, 0) if is_weekend else datetime.time(8, 0),
-                        "end_time": datetime.time(16, 0) if is_weekend else datetime.time(18, 0),
-                        "is_exception": False,
-                    }
-                )
-
-            # Intake hours: weekdays only.
-            for day in [
-                DayOfWeekChoices.MONDAY,
-                DayOfWeekChoices.TUESDAY,
-                DayOfWeekChoices.WEDNESDAY,
-                DayOfWeekChoices.THURSDAY,
-                DayOfWeekChoices.FRIDAY,
-            ]:
-                Schedule.objects.create(
-                    **{
-                        "shelter": shelter,
-                        "schedule_type": ScheduleTypeChoices.INTAKE,
-                        "day": day,
-                        "start_time": datetime.time(10, 0),
-                        "end_time": datetime.time(14, 0),
-                        "is_exception": False,
-                    }
-                )
-
-            # Meal service: breakfast and dinner every day.
-            for day in DayOfWeekChoices:
-                Schedule.objects.create(
-                    **{
-                        "shelter": shelter,
-                        "schedule_type": ScheduleTypeChoices.MEAL_SERVICE,
-                        "day": day,
-                        "start_time": datetime.time(7, 30),
-                        "end_time": datetime.time(8, 30),
-                        "is_exception": False,
-                    }
-                )
-                Schedule.objects.create(
-                    **{
-                        "shelter": shelter,
-                        "schedule_type": ScheduleTypeChoices.MEAL_SERVICE,
-                        "day": day,
-                        "start_time": datetime.time(17, 30),
-                        "end_time": datetime.time(18, 30),
-                        "is_exception": False,
-                    }
-                )
-
-            # Staff availability: weekday business hours.
-            for day in [
-                DayOfWeekChoices.MONDAY,
-                DayOfWeekChoices.TUESDAY,
-                DayOfWeekChoices.WEDNESDAY,
-                DayOfWeekChoices.THURSDAY,
-                DayOfWeekChoices.FRIDAY,
-            ]:
-                Schedule.objects.create(
-                    **{
-                        "shelter": shelter,
-                        "schedule_type": ScheduleTypeChoices.STAFF_AVAILABILITY,
-                        "day": day,
-                        "start_time": datetime.time(8, 30),
-                        "end_time": datetime.time(17, 0),
-                        "is_exception": False,
-                    }
-                )
-
-            # Add full-day operating exceptions for 1–2 unique days.
-            # Keep the first shelter's exception on Monday so demo data always
-            # includes at least one predictable "closed by exception" shelter
-            # for the Open Now filter and operating-hours UI.
-            if shelter is shelters[0]:
-                exception_days = [DayOfWeekChoices.MONDAY]
-            else:
-                exception_days = random.sample(
-                    list(DayOfWeekChoices),
-                    k=random.randint(1, 2),
-                )
-            for day in exception_days:
-                Schedule.objects.create(
-                    **{
-                        "shelter": shelter,
-                        "schedule_type": ScheduleTypeChoices.OPERATING,
-                        "day": day,
-                        "start_time": None,
-                        "end_time": None,
-                        "is_exception": True,
-                        "start_date": None,
-                        "end_date": None,
-                    }
-                )
+        print(f"Successfully created {num_shelters} shelters with all required fields.")
 
 
 if __name__ == "__main__":
