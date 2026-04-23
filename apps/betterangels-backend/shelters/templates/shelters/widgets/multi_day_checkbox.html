@@ -1,0 +1,12 @@
+<div class="multi-day-checkbox" id="{{ widget.attrs.id }}">
+    {% for day in widget.days %}
+        <label class="day-pill{% if day.checked %} day-pill--checked{% endif %}">
+            <input type="checkbox"
+                   name="{{ widget.name }}"
+                   value="{{ day.value }}"
+                   {% if day.checked %}checked{% endif %}
+                   class="day-pill__input">
+            <span class="day-pill__label">{{ day.abbrev }}</span>
+        </label>
+    {% endfor %}
+</div>
