@@ -1,7 +1,7 @@
-import { ReactElement, ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 
 export type FilterDropdownProps = {
-  title: string | ReactElement;
+  title: ReactNode;
   children: ReactNode;
   className?: string;
   position?: 'dropdown-start' | 'dropdown-end' | 'dropdown-center';
