@@ -30,12 +30,20 @@ export function PersonalInfoCardHmis(props: TProps) {
     californiaId,
     preferredLanguage,
     livingSituation,
+    unhousedStartDate,
   } = client || {};
 
   const formattedDob =
     birthDate &&
     formatDateStatic({
       date: birthDate,
+      inputFormat: 'yyyy-MM-dd',
+    });
+
+  const formattedUnhousedStartDate =
+    unhousedStartDate &&
+    formatDateStatic({
+      date: unhousedStartDate,
       inputFormat: 'yyyy-MM-dd',
     });
 
@@ -63,6 +71,10 @@ export function PersonalInfoCardHmis(props: TProps) {
     {
       header: ['Living Situation'],
       rows: [[livingSituation && enumDisplayLivingSituation[livingSituation]]],
+    },
+    {
+      header: ['Approximate Date Homelessness Started'],
+      rows: [[unhousedStartDate && formattedUnhousedStartDate]],
     },
   ];
 

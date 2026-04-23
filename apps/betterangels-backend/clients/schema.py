@@ -6,13 +6,7 @@ import strawberry_django
 from accounts.models import User
 from accounts.utils import get_user_permission_group
 from clients.enums import ErrorCodeEnum
-from clients.models import (
-    ClientContact,
-    ClientProfile,
-    ClientProfileDataImport,
-    ClientProfileImportRecord,
-    HmisProfile,
-)
+from clients.models import ClientContact, ClientProfile, ClientProfileDataImport, ClientProfileImportRecord, HmisProfile
 from clients.permissions import (
     ClientContactPermissions,
     ClientHouseholdMemberPermissions,
@@ -21,8 +15,14 @@ from clients.permissions import (
     HmisProfilePermissions,
     SocialMediaProfilePermissions,
 )
+from clients.services import client_document, client_profile_photo
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
-from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.graphql.types import (
+    AuthorizedPresignedS3UploadsType,
+    AuthorizedPresignedS3UploadType,
+    DeleteDjangoObjectInput,
+    DeletedObjectType,
+)
 from common.models import Attachment, PhoneNumber
 from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated, assign_object_permissions
@@ -33,6 +33,7 @@ from django.db import transaction
 from django.db.models import ForeignKey, Prefetch
 from graphql import GraphQLError
 from phonenumber_field.validators import validate_international_phonenumber
+from strawberry.scalars import JSON
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
@@ -46,6 +47,7 @@ from .types import (
     ClientContactInput,
     ClientContactType,
     ClientDocumentType,
+    ClientDocumentUploadsType,
     ClientHouseholdMemberInput,
     ClientHouseholdMemberType,
     ClientProfileDataImportType,
@@ -56,9 +58,13 @@ from .types import (
     CreateClientDocumentInput,
     CreateClientProfileInput,
     CreateProfileDataImportInput,
+    GenerateClientDocumentUploadsInput,
+    GenerateClientProfilePhotoUploadInput,
     HmisProfileInput,
     HmisProfileType,
     ImportClientProfileInput,
+    ResolveClientDocumentUploadsInput,
+    ResolveClientProfilePhotoUploadInput,
     SocialMediaProfileInput,
     SocialMediaProfileType,
     UpdateClientDocumentInput,
@@ -86,7 +92,7 @@ def _format_graphql_error(error: Exception) -> str:
 
 
 def value_exists(value: Optional[str]) -> bool:
-    return value is not strawberry.UNSET and value is not None and value.strip() != ""
+    return value is not None and value.strip() != ""
 
 
 def _payload_has_name(data: dict) -> bool:
@@ -113,10 +119,10 @@ def validate_name(
 
     if client_profile:
         if (
-            (client_profile.first_name and data.get("first_name") is strawberry.UNSET)
-            or (client_profile.last_name and data.get("last_name") is strawberry.UNSET)
-            or (client_profile.middle_name and data.get("middle_name") is strawberry.UNSET)
-            or (client_profile.nickname and data.get("nickname") is strawberry.UNSET)
+            (client_profile.first_name and "first_name" not in data)
+            or (client_profile.last_name and "last_name" not in data)
+            or (client_profile.middle_name and "middle_name" not in data)
+            or (client_profile.nickname and "nickname" not in data)
         ):
             return []
 
@@ -127,7 +133,7 @@ def validate_email(
     email: Optional[str],
     client_profile_id: Optional[str] = None,
 ) -> list[dict[str, Any]]:
-    if email in [strawberry.UNSET, None, ""]:
+    if not email:
         return []
 
     email: str
@@ -146,7 +152,7 @@ def validate_email(
 def validate_california_id(
     california_id: Optional[str], client_profile_id: Optional[str] = None
 ) -> list[dict[str, Any]]:
-    if california_id in [strawberry.UNSET, None, ""]:
+    if not california_id:
         return []
 
     california_id: str
@@ -473,10 +479,7 @@ class Mutation:
 
             for related_cls in related_classes:
                 related_name = related_cls.name
-                if (
-                    related_name in client_profile_data.keys()
-                    and client_profile_data[related_name] is not strawberry.UNSET
-                ):
+                if related_name in client_profile_data:
                     upsert_or_delete_client_related_object(
                         info,
                         related_cls,
@@ -643,6 +646,110 @@ class Mutation:
                 client_profile.save(update_fields=["profile_photo"])
             except ClientProfile.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this client.")
+
+            return cast(ClientProfileType, client_profile)
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
+    def generate_client_document_uploads(
+        self,
+        info: Info,
+        data: GenerateClientDocumentUploadsInput,
+    ) -> AuthorizedPresignedS3UploadsType:
+        user = cast(User, get_current_user(info))
+
+        _ = filter_for_user(
+            ClientProfile.objects.all(),
+            user,
+            [ClientProfilePermissions.CHANGE],
+        ).get(id=data.client_profile_id)
+
+        presigned_uploads = client_document.create_presigned_uploads(user=user, uploads=data.uploads)
+
+        return AuthorizedPresignedS3UploadsType(
+            uploads=[
+                AuthorizedPresignedS3UploadType(
+                    ref_id=item["ref_id"],
+                    url=item["url"],
+                    fields=cast(JSON, item["fields"]),
+                    presigned_key=item["presigned_key"],
+                    upload_token=item["upload_token"],
+                )
+                for item in presigned_uploads["uploads"]
+            ]
+        )
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
+    def resolve_client_document_uploads(
+        self, info: Info, data: ResolveClientDocumentUploadsInput
+    ) -> ClientDocumentUploadsType:
+        user = cast(User, get_current_user(info))
+
+        client_profile = filter_for_user(
+            ClientProfile.objects.all(),
+            user,
+            [ClientProfilePermissions.CHANGE],
+        ).get(id=data.client_profile_id)
+
+        documents = client_document.resolve_upload(
+            user=user,
+            client_profile=client_profile,
+            documents=data.documents,
+        )
+
+        return ClientDocumentUploadsType(documents=cast(list[ClientDocumentType], documents))
+
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated], extensions=[HasPerm(perms=[ClientProfilePermissions.CHANGE])]
+    )
+    def generate_client_profile_photo_upload(
+        self,
+        info: Info,
+        data: GenerateClientProfilePhotoUploadInput,
+    ) -> AuthorizedPresignedS3UploadType:
+        user = cast(User, get_current_user(info))
+
+        _ = filter_for_user(
+            ClientProfile.objects.all(),
+            user,
+            [ClientProfilePermissions.CHANGE],
+        ).get(id=data.client_profile_id)
+
+        result = client_profile_photo.create_presigned_upload(
+            user=user,
+            upload=data,
+        )
+
+        return AuthorizedPresignedS3UploadType(
+            ref_id=result["ref_id"],
+            url=result["url"],
+            fields=cast(JSON, result["fields"]),
+            presigned_key=result["presigned_key"],
+            upload_token=result["upload_token"],
+        )
+
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])]
+    )
+    def resolve_client_profile_photo_upload(
+        self,
+        info: Info,
+        data: ResolveClientProfilePhotoUploadInput,
+    ) -> ClientProfileType:
+        with transaction.atomic():
+            user = cast(User, get_current_user(info))
+
+            client_profile = filter_for_user(
+                ClientProfile.objects.all(),
+                user,
+                [ClientProfilePermissions.CHANGE],
+            ).get(id=data.client_profile_id)
+
+            client_profile = client_profile_photo.resolve_upload(
+                user=user,
+                client_profile=client_profile,
+                presigned_key=data.presigned_key,
+                upload_token=data.upload_token,
+            )
 
             return cast(ClientProfileType, client_profile)
 

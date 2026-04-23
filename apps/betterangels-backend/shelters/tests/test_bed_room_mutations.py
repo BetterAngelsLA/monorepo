@@ -23,6 +23,9 @@ class BedMutationTestCase(GraphQLBaseTestCase, TestCase):
                     ... on BedType {
                         id
                         status
+                        room {
+                            id
+                        }
                         shelter {
                             id
                         }
@@ -42,9 +45,46 @@ class BedMutationTestCase(GraphQLBaseTestCase, TestCase):
         self.assertIsNone(response.get("errors"))
         data = response["data"]["createBed"]
         self.assertEqual(data["status"], BedStatusChoices.AVAILABLE.name)
+        self.assertIsNone(data["room"])
         self.assertEqual(data["shelter"]["id"], str(shelter.pk))
-
         self.assertTrue(Bed.objects.filter(pk=data["id"]).exists())
+
+    def test_create_bed_with_room(self) -> None:
+        shelter = shelter_recipe.make(organization=self.org_1)
+        room = Room.objects.create(shelter=shelter, room_identifier="Room-A1")
+        mutation = """
+            mutation CreateBed($data: CreateBedInput!) {
+                createBed(data: $data) {
+                    ... on BedType {
+                        id
+                        status
+                        room {
+                            id
+                        }
+                        shelter {
+                            id
+                        }
+                    }
+                }
+            }
+        """
+        variables = {
+            "data": {
+                "shelterId": shelter.pk,
+                "roomId": room.pk,
+                "status": BedStatusChoices.AVAILABLE.name,
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        data = response["data"]["createBed"]
+        self.assertEqual(data["status"], BedStatusChoices.AVAILABLE.name)
+        self.assertEqual(data["room"]["id"], str(room.pk))
+        self.assertEqual(data["shelter"]["id"], str(shelter.pk))
+        bed = Bed.objects.get(pk=data["id"])
+        self.assertEqual(bed.room_id, room.pk)
 
     def test_create_bed_shelter_not_found(self) -> None:
         mutation = """

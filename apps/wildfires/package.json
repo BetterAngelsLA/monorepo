@@ -37,7 +37,13 @@
     "apollo-link-rest": "*",
     "apollo-upload-client": "*",
     "embla-carousel-react": "*",
-    "validator": "*"
+    "validator": "*",
+    "vitest": "*",
+    "graphql": "*",
+    "use-deep-compare-effect": "*",
+    "haversine-distance": "*",
+    "sanitize-html": "*",
+    "@tailwindcss/postcss": "*"
   },
   "devDependencies": {}
 }
