@@ -1,12 +1,17 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { AlertCircle } from 'lucide-react';
+import type {
+  FocusEvent,
+  InputHTMLAttributes,
+  TextareaHTMLAttributes,
+} from 'react';
 import { forwardRef, useId, useState } from 'react';
 import { Text } from '../text/text';
 import type { InputDataType, InputProps } from './types';
 
 const validationPatterns: Record<InputDataType, RegExp> = {
   email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  'phone number': /^[\d\s\-+()]*\d[\d\s\-+()]*$/,
+  'phone-number': /^[\d\s\-+()]*\d[\d\s\-+()]*$/,
   number: /^-?\d+(\.\d+)?$/,
   time: /^([01]\d|2[0-3]):([0-5]\d)$/,
   string: /^.+$/, // Any non-empty string
@@ -102,14 +107,14 @@ export const Input = forwardRef<
   const shouldShowError = hasError && isTouched && !isFocused;
 
   const handleFocus = (
-    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setIsFocused(true);
     externalOnFocus?.(e);
   };
 
   const handleBlur = (
-    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setIsFocused(false);
     setInternalTouched(true);
@@ -151,7 +156,7 @@ export const Input = forwardRef<
       >
         {isParagraph ? (
           <textarea
-            {...inputProps}
+            {...(inputProps as TextareaHTMLAttributes<HTMLTextAreaElement>)}
             ref={ref as React.Ref<HTMLTextAreaElement>}
             id={inputId}
             rows={paragraphRows}
@@ -169,7 +174,7 @@ export const Input = forwardRef<
           />
         ) : (
           <input
-            {...inputProps}
+            {...(inputProps as InputHTMLAttributes<HTMLInputElement>)}
             ref={ref as React.Ref<HTMLInputElement>}
             id={inputId}
             value={value}

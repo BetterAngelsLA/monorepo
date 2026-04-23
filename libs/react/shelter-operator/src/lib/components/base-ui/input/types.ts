@@ -1,4 +1,5 @@
 import type {
+  FocusEvent,
   InputHTMLAttributes,
   ReactNode,
   TextareaHTMLAttributes,
@@ -8,31 +9,39 @@ export type InputDataType =
   | 'string'
   | 'number'
   | 'email'
-  | 'phone number'
+  | 'phone-number'
   | 'time';
 export type InputVariant = 'default' | 'paragraph';
 
-export interface InputProps
-  extends Omit<
-    InputHTMLAttributes<HTMLInputElement> &
-      TextareaHTMLAttributes<HTMLTextAreaElement>,
-    'size' | 'className' | 'type' | 'onBlur' | 'children'
-  > {
+type NativeAttrsOmit =
+  | 'size'
+  | 'className'
+  | 'type'
+  | 'onBlur'
+  | 'children'
+  | 'rows';
+
+type SharedCustomProps = {
   label?: string;
   error?: string;
   dataType?: InputDataType;
-  variant?: InputVariant;
   className?: string;
   containerClassName?: string;
   inputClassName?: string;
   isActive?: boolean;
   showErrorIcon?: boolean;
   isTouched?: boolean;
-  onFocus?: (
-    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => void;
-  onBlur?: (
-    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => void;
+  /** Only applied when `variant` is `"paragraph"`. */
+  rows?: number;
+  onFocus?: (e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onBlur?: (e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   rightAdornment?: ReactNode;
-}
+};
+
+export type InputProps =
+  | (SharedCustomProps & {
+      variant?: 'default';
+    } & Omit<InputHTMLAttributes<HTMLInputElement>, NativeAttrsOmit>)
+  | (SharedCustomProps & {
+      variant: 'paragraph';
+    } & Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, NativeAttrsOmit>);
