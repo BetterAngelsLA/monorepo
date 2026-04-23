@@ -5,8 +5,9 @@
  *   1. Setup env and compute fingerprint (same as deploy pipeline)
  *   2. Ensure preview builds exist for this fingerprint (trigger if missing)
  *   3. Publish an EAS Update for the branch
- *   4. Trigger the EAS workflow with fingerprint + update group
- *      (EAS workflow uses get-build with wait_for_in_progress to wait for builds)
+ *   4. Trigger the EAS workflow with build IDs, update group, and build filter
+ *      params (the workflow uses get-build with wait_for_in_progress to wait
+ *      for builds to complete before running Maestro tests)
  *
  * Usage:
  *   npx ts-node tools/scripts/eas-e2e.ts --project betterangels
@@ -134,13 +135,16 @@ if (githubRepository && githubStatusSha) {
   );
 }
 
-// 5. Trigger EAS workflow with build IDs + update group
+// 5. Trigger EAS workflow with build IDs + update group + filter params for wait
 console.log('\nTriggering EAS Maestro workflow...');
 run(
   `npx eas workflow:run .eas/workflows/e2e-test.yml ` +
     `-F android_build_id=${androidBuildId} ` +
     `-F ios_build_id=${iosBuildId} ` +
     `-F update_group_id=${groupId} ` +
+    `-F runtime_version=${fingerprint} ` +
+    `-F android_profile=${androidProfile} ` +
+    `-F ios_profile=${iosProfile} ` +
     `--non-interactive`,
   { cwd: projectDir }
 );

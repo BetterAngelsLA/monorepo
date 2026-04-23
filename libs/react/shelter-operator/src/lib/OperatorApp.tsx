@@ -8,8 +8,8 @@ import {
   useUser,
 } from '@monorepo/react/shelter';
 import { Route, Routes } from 'react-router-dom';
+import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
 import { OperatorLayout } from './components/layout/OperatorLayout';
-import { ShelterDashboardPage } from './ShelterDashboardPage';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import { CreateShelterForm } from './pages/dashboard/components/create-shelter-form';
 import { AddProfilePage } from './pages/reservation/AddProfilePage';
@@ -32,22 +32,58 @@ export function OperatorApp() {
           <Route element={<OperatorLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard/create" element={<CreateShelterForm />} />
-            <Route path="shelter/:id" element={<ShelterDashboardPage />} />
-            <Route path={`${reservationPathSegment}/*`} element={<ReservationPage />}>
-              <Route path={reservationAddProfileSegment} element={<AddProfilePage />} />
-              <Route path={reservationSelectShelterSegment} element={<SelectShelterPage />} />
-              <Route path={reservationSelectRoomSegment} element={<SelectRoomPage />} />
-              <Route path={reservationCheckInByDateSegment} element={<CheckInByDate />} />
-              <Route path={reservationConfirmationSegment} element={<ConfirmationPage />} />
+            <Route path="shelter/:id">
+              <Route index element={<ShelterDashboardPage tab="overview" />} />
+              <Route path="rooms" element={<ShelterDashboardPage tab="rooms" />} />
+              <Route path="beds" element={<ShelterDashboardPage tab="beds" />} />
+              <Route path="occupancy" element={<ShelterDashboardPage tab="occupancy" />} />
+              <Route path="label" element={<ShelterDashboardPage tab="label" />} />
+            </Route>
+            <Route
+              path={`${reservationPathSegment}/*`}
+              element={<ReservationPage />}
+            >
+              <Route
+                path={reservationAddProfileSegment}
+                element={<AddProfilePage />}
+              />
+              <Route
+                path={reservationSelectShelterSegment}
+                element={<SelectShelterPage />}
+              />
+              <Route
+                path={reservationSelectRoomSegment}
+                element={<SelectRoomPage />}
+              />
+              <Route
+                path={reservationCheckInByDateSegment}
+                element={<CheckInByDate />}
+              />
+              <Route
+                path={reservationConfirmationSegment}
+                element={<ConfirmationPage />}
+              />
             </Route>
             <Route
               path={`shelter/:shelterId/${reservationPathSegment}/*`}
               element={<ReservationPage />}
             >
-              <Route path={reservationAddProfileSegment} element={<AddProfilePage />} />
-              <Route path={reservationSelectRoomSegment} element={<SelectRoomPage />} />
-              <Route path={reservationCheckInByDateSegment} element={<CheckInByDate />} />
-              <Route path={reservationConfirmationSegment} element={<ConfirmationPage />} />
+              <Route
+                path={reservationAddProfileSegment}
+                element={<AddProfilePage />}
+              />
+              <Route
+                path={reservationSelectRoomSegment}
+                element={<SelectRoomPage />}
+              />
+              <Route
+                path={reservationCheckInByDateSegment}
+                element={<CheckInByDate />}
+              />
+              <Route
+                path={reservationConfirmationSegment}
+                element={<ConfirmationPage />}
+              />
             </Route>
           </Route>
         </Routes>
