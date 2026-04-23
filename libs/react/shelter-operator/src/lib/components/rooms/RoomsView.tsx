@@ -2,11 +2,12 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import {
   RoomStatusChoices,
+  ShelterType,
   type RoomType,
 } from '../../apollo/graphql/__generated__/types';
 import { Button } from '../base-ui/buttons';
-import { EditRoomModal } from './EditRoomModal';
 import { RoomTable, type RoomRowObject } from '../RoomTable';
+import { EditRoomModal } from './EditRoomModal';
 
 export function RoomsView() {
   const rows: RoomType[] = [
@@ -17,7 +18,7 @@ export function RoomsView() {
       amenities: 'Women Only, Shared, Overflow',
       __typename: 'RoomType',
       medicalRespite: false,
-      shelter: {} as any,
+      shelter: {} as ShelterType,
     } as RoomType,
     {
       id: 'room-2',
@@ -26,7 +27,7 @@ export function RoomsView() {
       amenities: 'Women Only, Shared, Medical',
       __typename: 'RoomType',
       medicalRespite: false,
-      shelter: {} as any,
+      shelter: {} as ShelterType,
     } as RoomType,
     {
       id: 'room-3',
@@ -35,35 +36,35 @@ export function RoomsView() {
       amenities: 'Women Only, Shared, Repair',
       __typename: 'RoomType',
       medicalRespite: false,
-      shelter: {} as any,
+      shelter: {} as ShelterType,
     } as RoomType,
     {
       id: 'room-4',
       roomIdentifier: 'Room Name',
-      shelter: {} as any,
+      shelter: {} as ShelterType,
       __typename: 'RoomType',
       medicalRespite: false,
       amenities: '',
       status: RoomStatusChoices.Reserved,
-    },
+    } as RoomType,
     {
       id: 'room-5',
       roomIdentifier: 'Room Name',
-      shelter: {} as any,
+      shelter: {} as ShelterType,
       __typename: 'RoomType',
       medicalRespite: false,
       amenities: '',
       status: RoomStatusChoices.Available,
-    },
+    } as RoomType,
     {
       id: 'room-6',
       roomIdentifier: 'Room Name',
-      shelter: {} as any,
+      shelter: {} as ShelterType,
       __typename: 'RoomType',
       medicalRespite: false,
       amenities: '',
       status: RoomStatusChoices.Available,
-    },
+    } as RoomType,
   ];
 
   const [selectedRoom, setSelectedRoom] = useState<RoomType | null>(null);
