@@ -4,8 +4,8 @@
 # GitHub Actions handles orchestration (fingerprint computation, build triggering,
 # update publishing) where GitHub Secrets and NX monorepo tooling are available.
 #
-# Build IDs are passed directly. If a build is still in progress, Maestro will
-# wait for it to complete before running tests.
+# get-build jobs with wait_for_in_progress gate the Maestro tests,
+# ensuring builds have finished before tests begin.
 #
 # GitHub commit status is posted at the start (pending) and end (success/failure)
 # using metadata from .env written by eas-e2e.ts.
@@ -36,6 +36,18 @@ on:
       MAESTRO_BA_USER_PASSWORD:
         type: string
         required: true
+      runtime_version:
+        type: string
+        required: true
+        description: 'Runtime version (fingerprint hash) for the builds'
+      android_profile:
+        type: string
+        required: true
+        description: 'EAS build profile used for Android'
+      ios_profile:
+        type: string
+        required: true
+        description: 'EAS build profile used for iOS'
 
 jobs:
   set_pending_github_status:
@@ -97,8 +109,26 @@ jobs:
 
           echo "Posted pending status ${GITHUB_STATUS_CONTEXT} for ${GITHUB_REPOSITORY}@${GITHUB_STATUS_SHA}"
 
-  maestro_android_test:
+  wait_android_build:
     needs: [set_pending_github_status]
+    type: get-build
+    params:
+      platform: android
+      profile: ${{ inputs.android_profile }}
+      runtime_version: ${{ inputs.runtime_version }}
+      wait_for_in_progress: true
+
+  wait_ios_build:
+    needs: [set_pending_github_status]
+    type: get-build
+    params:
+      platform: ios
+      profile: ${{ inputs.ios_profile }}
+      runtime_version: ${{ inputs.runtime_version }}
+      wait_for_in_progress: true
+
+  maestro_android_test:
+    needs: [wait_android_build]
     type: maestro
     env:
       MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=android%26disableOnboarding%3D1
@@ -109,7 +139,7 @@ jobs:
       flow_path: ['.maestro/tests/']
 
   maestro_ios_test:
-    needs: [set_pending_github_status]
+    needs: [wait_ios_build]
     type: maestro
     env:
       MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=ios%26disableOnboarding%3D1
@@ -120,7 +150,13 @@ jobs:
       flow_path: ['.maestro/tests/']
 
   set_final_github_status:
-    after: [maestro_android_test, maestro_ios_test]
+    after:
+      [
+        wait_android_build,
+        wait_ios_build,
+        maestro_android_test,
+        maestro_ios_test,
+      ]
     env:
       IOS_STATUS: ${{ after.maestro_ios_test.status }}
       ANDROID_STATUS: ${{ after.maestro_android_test.status }}
