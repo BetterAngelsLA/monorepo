@@ -126,24 +126,21 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
               setIsModalVisible(true);
             }}
             accessibilityRole="button"
-            style={{ alignItems: 'center' }}
+            style={({ pressed }) => [{
+              alignItems: 'center',
+              flexDirection: 'row',
+              gap: Spacings.xs,
+              justifyContent: 'center',
+              borderWidth: 1,
+              borderColor: Colors.NEUTRAL_LIGHT,
+              borderRadius: Radiuses.xs,
+              height: 66,
+              width: 139,
+              backgroundColor: pressed ? Colors.GRAY_PRESSED : 'transparent',
+            }]}
           >
-            <View
-              style={{
-                flexDirection: 'row',
-                gap: Spacings.xs,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: 1,
-                borderColor: Colors.NEUTRAL_LIGHT,
-                borderRadius: Radiuses.xs,
-                height: 66,
-                width: 139,
-              }}
-            >
-              <UploadIcon size="lg" />
-              <TextBold size="sm">Upload</TextBold>
-            </View>
+            <UploadIcon size="lg" />
+            <TextBold size="sm">Upload</TextBold>
           </Pressable>
         </View>
 

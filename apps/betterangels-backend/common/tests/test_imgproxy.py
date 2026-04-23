@@ -54,10 +54,23 @@ class IsImgproxyEnabledTest(ParametrizedTestCase, TestCase):
 # _resolve_imgproxy_ops
 # ---------------------------------------------------------------------------
 class ResolveImgproxyOpsTest(TestCase):
-    def test_returns_processing_when_provided(self) -> None:
-        self.assertIsNone(_resolve_imgproxy_ops(None, None))
-        self.assertEqual(_resolve_imgproxy_ops(None, "rs:fill:100:100/f:jpg"), "rs:fill:100:100/f:jpg")
-        self.assertEqual(_resolve_imgproxy_ops(ImagePresetEnum.ORIGINAL, None), "rs:force:0:0")
+    def test_resolve_imgproxy_ops(self) -> None:
+        self.assertEqual(
+            _resolve_imgproxy_ops(None, None, "s3://bucket/photo.HEIC"),
+            "rs:force:0:0/f:jpg",
+        )
+        self.assertEqual(
+            _resolve_imgproxy_ops(None, "rs:fill:100:100", "s3://bucket/photo.jpg"),
+            "rs:fill:100:100",
+        )
+        self.assertEqual(
+            _resolve_imgproxy_ops(ImagePresetEnum.ORIGINAL, None, "s3://bucket/photo.jpg"),
+            "rs:force:0:0",
+        )
+        self.assertEqual(
+            _resolve_imgproxy_ops(ImagePresetEnum.ORIGINAL, None, "s3://bucket/photo.HEIC"),
+            "rs:force:0:0/f:jpg",
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -159,7 +172,21 @@ class GetImageSourceUrlTest(ParametrizedTestCase, TestCase):
         self.assertEqual(_get_image_source_url(file), "s3://my-bucket/photo.jpg")
 
     @override_settings(IS_LOCAL_DEV=True)
-    def test_local_dev_with_source_base_url(self) -> None:
+    def test_local_dev_s3_storage_uses_s3_url(self) -> None:
+        """When local dev storage has bucket_name, prefer s3:// over file.url."""
+        file = SimpleNamespace(
+            name="photo.jpg",
+            storage=SimpleNamespace(bucket_name="betterangels-local", location="media"),
+            url="http://localhost:9000/betterangels-local/media/photo.jpg?X-Amz-Signature=abc",
+        )
+        self.assertEqual(
+            _get_image_source_url(file),
+            "s3://betterangels-local/media/photo.jpg",
+        )
+
+    @override_settings(IS_LOCAL_DEV=True)
+    def test_local_dev_non_s3_storage_uses_file_url(self) -> None:
+        """When local dev storage has no bucket_name, fall back to file.url rewrite."""
         file = SimpleNamespace(
             name="photo.jpg",
             storage=SimpleNamespace(),
@@ -272,31 +299,24 @@ class BuildImgproxyUrlTest(TestCase):
         self.assertFalse(parsed_url.path.startswith("//imgproxy/"))
         self.assertIn("rs:fill:100:100", parsed_url.path)
 
-    def test_returns_none_when_no_preset_or_processing(self) -> None:
+    @override_settings(IS_LOCAL_DEV=True, IMGPROXY_LOCAL_URL="http://localhost:8080")
+    def test_returns_original_when_no_preset_or_processing(self) -> None:
         file = _make_file()
-        with override_settings(
-            IS_LOCAL_DEV=True,
-            IMGPROXY_LOCAL_URL="http://localhost:8080",
-        ):
-            url = build_imgproxy_url(file, None, None)
-        self.assertIsNone(url)
+        url = build_imgproxy_url(file, None, None)
 
+        assert url
+        self.assertIn("rs:force:0:0", url)
+
+    @override_settings(IS_LOCAL_DEV=True, IMGPROXY_LOCAL_URL="http://localhost:8080")
     def test_returns_none_when_no_source_url(self) -> None:
         file = SimpleNamespace(name="x", storage=None)
-        with override_settings(
-            IS_LOCAL_DEV=True,
-            IMGPROXY_LOCAL_URL="http://localhost:8080",
-        ):
-            url = build_imgproxy_url(file, ImagePresetEnum.SM, None)
-        self.assertIsNone(url)
+        self.assertIsNone(build_imgproxy_url(file, ImagePresetEnum.SM, None))
 
+    @override_settings(IS_LOCAL_DEV=True, IMGPROXY_LOCAL_URL="http://localhost:8080")
     def test_processing_takes_precedence_over_preset(self) -> None:
         file = _make_file()
-        with override_settings(
-            IS_LOCAL_DEV=True,
-            IMGPROXY_LOCAL_URL="http://localhost:8080",
-        ):
-            url = build_imgproxy_url(file, ImagePresetEnum.SM, "rs:fit:999:999")
+        url = build_imgproxy_url(file, ImagePresetEnum.SM, "rs:fit:999:999")
+
         assert url
         self.assertIn("rs:fit:999:999", url)
         self.assertNotIn("rs:fill:100:100", url)
@@ -316,10 +336,7 @@ def _image_url_resolver(
     return cast(str, getattr(root, "url", ""))
 
 
-@override_settings(
-    IMGPROXY_KEY=TEST_KEY,
-    IMGPROXY_SALT=TEST_SALT,
-)
+@override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT)
 class TransformableImageTypeUrlTest(TestCase):
     def _make_file(self, name: str = "photo.jpg", url: str = "https://cdn/photo.jpg") -> SimpleNamespace:
         return SimpleNamespace(
@@ -364,7 +381,7 @@ class TransformableImageTypeUrlTest(TestCase):
         file = self._make_file(url="https://cdn/photo.jpg")
         url = _image_url_resolver(file)
         assert url
-        self.assertEqual(url, "https://cdn/photo.jpg")
+        self.assertIn("rs:force:0:0", url)
 
     @override_settings(IS_LOCAL_DEV=True)
     @override_switch(IMGPROXY_SWITCH, active=True)

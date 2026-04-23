@@ -71,7 +71,8 @@
  * 8. Return the fully merged object to Apollo.
  */
 
-import type { FieldFunctionOptions, FieldMergeFunction } from '@apollo/client';
+import type { FieldMergeFunction } from '@apollo/client';
+import type { FieldMergeFunctionOptions } from '@apollo/client/cache';
 import { deepCloneWeak, writeAtPath } from '../../../utils';
 import {
   DEFAULT_QUERY_ID_KEY,
@@ -105,7 +106,7 @@ export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
 ): FieldMergeFunction<
   unknown,
   unknown,
-  FieldFunctionOptions<Record<string, unknown>, Record<string, unknown>>
+  FieldMergeFunctionOptions<Record<string, unknown>, Record<string, unknown>>
 > {
   const {
     resolvePaginationFn,

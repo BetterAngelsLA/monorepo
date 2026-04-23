@@ -9,14 +9,7 @@ interface IParams extends PropsWithChildren {
 export function HorizontalLayout(props: IParams): ReactElement {
   const { className, children } = props;
 
-  const parentCss = [
-    'w-full',
-    'flex',
-    'flex-col',
-    'items-center',
-    'px-4',
-    className,
-  ];
+  const parentCss = ['w-full', 'flex', 'flex-col', 'items-center', 'px-4', className];
 
   return (
     <div className={mergeCss(parentCss)}>

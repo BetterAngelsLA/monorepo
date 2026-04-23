@@ -15,13 +15,13 @@ from django.db.models import Q, QuerySet
 from shelters import models
 from shelters.enums import (
     DemographicChoices,
+    EntryRequirementChoices,
     ParkingChoices,
     PetChoices,
+    ReferralRequirementChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
-)
-from shelters.enums import ShelterChoices as ShelterTypeChoices
-from shelters.enums import (
+    ShelterChoices,
     SPAChoices,
     SpecialSituationRestrictionChoices,
 )
@@ -55,11 +55,19 @@ class MapBoundsInput:
 class ShelterPropertyInput:
     pets: Optional[List[PetChoices]] = None
     demographics: Optional[List[DemographicChoices]] = None
+    entry_requirements: Optional[List[EntryRequirementChoices]] = None
+    referral_requirement: Optional[List[ReferralRequirementChoices]] = None
     special_situation_restrictions: Optional[List[SpecialSituationRestrictionChoices]] = None
-    shelter_types: Optional[List[ShelterTypeChoices]] = None
+    shelter_types: Optional[List[ShelterChoices]] = None
     room_styles: Optional[List[RoomStyleChoices]] = None
     parking: Optional[List[ParkingChoices]] = None
     spa: Optional[List[SPAChoices]] = None
+
+
+@strawberry.input
+class MaxStayInput:
+    days: int
+    include_null: Optional[bool] = False
 
 
 @strawberry_django.filter_type(models.Shelter)
@@ -69,7 +77,18 @@ class ShelterFilter:
         if not value:
             return Q()
 
-        return Q(**{f"{prefix}shelter_types__name__exact": ShelterTypeChoices.ACCESS_CENTER})
+        return Q(**{f"{prefix}shelter_types__name__exact": ShelterChoices.ACCESS_CENTER})
+
+    @strawberry_django.filter_field
+    def max_stay(self, info: Info, value: Optional[MaxStayInput], prefix: str) -> Q:
+        if not value:
+            return Q()
+
+        conditions = Q(**{f"{prefix}max_stay__gte": value.days})
+        if value.include_null:
+            conditions |= Q(**{f"{prefix}max_stay__isnull": value.include_null})
+
+        return conditions
 
     @strawberry_django.filter_field
     def name(self, info: Info, value: Optional[str], prefix: str) -> Q:

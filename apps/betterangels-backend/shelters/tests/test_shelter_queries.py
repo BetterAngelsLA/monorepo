@@ -1,8 +1,11 @@
 import datetime
-from unittest.mock import ANY
+from unittest.mock import ANY, Mock, patch
 
+import waffle
 from accounts.tests.baker_recipes import organization_recipe
+from common.imgproxy import IMGPROXY_SWITCH
 from common.tests.utils import GraphQLBaseTestCase
+from django.test import override_settings
 from model_bakery.recipe import seq
 from places import Places
 from shelters.enums import (
@@ -46,14 +49,22 @@ from shelters.models import (
 )
 from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
 from shelters.tests.graphql_helpers import ShelterGraphQLFixtureMixin
+from waffle.testutils import override_switch
 
 
+@override_settings(IS_LOCAL_DEV=True, STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
+@override_switch(IMGPROXY_SWITCH, active=True)
 class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.setup_shelter_graphql_fixtures()
+        waffle.switch_is_active(IMGPROXY_SWITCH)
 
-    def test_shelter_query(self) -> None:
+    @patch("common.graphql.types.build_imgproxy_url")
+    def test_shelter_query(self, mock_build_imgproxy_url: Mock) -> None:
+        mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
+            file, "url", None
+        )
         shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
         shelter_organization = organization_recipe.make()
         service_category, _ = ServiceCategory.objects.get_or_create(
@@ -139,7 +150,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         interior_photo = InteriorPhoto.objects.create(shelter=shelter, file=self.file)
 
         query = f"""
-            query ViewShelter($id: ID!) {{
+            query ($id: ID!) {{
                 shelter(pk: $id) {{
                     {self.shelter_fields}
                     exteriorPhotos {{
@@ -147,7 +158,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
                         createdAt
                         file {{
                             name
-                            url
+                            url (preset: ORIGINAL)
                         }}
                     }}
                     interiorPhotos {{
@@ -314,7 +325,12 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             ],
         )
 
-    def test_shelters_query(self) -> None:
+    @patch("shelters.types.outputs.build_imgproxy_url")
+    def test_shelters_query(self, mock_build_imgproxy_url: Mock) -> None:
+        mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
+            file, "url", None
+        )
+
         shelter_count = 2
         shelters = shelter_recipe.make(_quantity=shelter_count, status=StatusChoices.APPROVED)
 
@@ -353,3 +369,34 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         self.assertEqual(Shelter.objects.count(), shelter_count + 1)
         self.assertEqual(shelters[0]["heroImage"], exterior_photo_0.file.url)
         self.assertEqual(shelters[1]["heroImage"], interior_photo_1.file.url)
+
+
+class ShelterMaxStayQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
+    def test_shelter_max_stay_query(self) -> None:
+        shelter_recipe.make(max_stay=None, status=StatusChoices.APPROVED)
+        shelter_recipe.make(max_stay=0, status=StatusChoices.APPROVED)
+        shelter_recipe.make(max_stay=3, status=StatusChoices.APPROVED)
+        shelter_recipe.make(max_stay=7, status=StatusChoices.PENDING)
+
+        query = """
+            query { shelterMaxStay }
+        """
+
+        with self.assertNumQueriesWithoutCache(1):
+            response = self.execute_graphql(query)
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["shelterMaxStay"], 3)
+
+    def test_shelter_max_stay_query_null_when_all_max_stay_null(self) -> None:
+        shelter_recipe.make(max_stay=None, status=StatusChoices.APPROVED)
+
+        query = """
+            query { shelterMaxStay }
+        """
+
+        with self.assertNumQueriesWithoutCache(1):
+            response = self.execute_graphql(query)
+
+        self.assertIsNone(response.get("errors"))
+        self.assertIsNone(response["data"]["shelterMaxStay"])

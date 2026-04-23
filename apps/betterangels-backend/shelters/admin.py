@@ -1,5 +1,6 @@
 import json
 import logging
+from collections.abc import Iterator
 from typing import Any, Optional, Tuple, Type, TypeVar, Union, cast
 from urllib.parse import quote
 
@@ -17,8 +18,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.db import models, transaction
-from django.db.models import F, OuterRef, QuerySet, Subquery
-from django.db.models.functions import Cast, JSONObject
+from django.db.models import Count, F, OuterRef, QuerySet, Subquery, Value
+from django.db.models.functions import Cast, Coalesce, JSONObject
 from django.forms import BaseFormSet, TimeInput
 from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import redirect
@@ -38,6 +39,7 @@ from shelters.permissions import ShelterFieldPermissions
 
 from .enums import (
     AccessibilityChoices,
+    DayOfWeekChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
@@ -81,6 +83,7 @@ from .models import (
     Video,
     get_fields_with_other_option,
 )
+from .widgets import MultiDayCheckboxWidget
 
 T = TypeVar("T", bound=models.Model)
 logger = logging.getLogger(__name__)
@@ -398,6 +401,7 @@ class ContactInfoInline(admin.StackedInline):
     fields = [
         ("contact_name", "contact_number"),
         ("contact_title", "contact_email"),
+        ("is_claimant",),
     ]
     verbose_name = "Additional Contact - PRIVATE"
     verbose_name_plural = "Additional Contacts - PRIVATE"
@@ -466,6 +470,13 @@ class VideoInline(admin.TabularInline):
 
 
 class ScheduleForm(forms.ModelForm):
+    days = forms.MultipleChoiceField(
+        choices=DayOfWeekChoices.choices,
+        required=False,
+        label="Days",
+        help_text="Select one or more days. Used for new entries only.",
+    )
+
     class Meta:
         model = Schedule
         fields = "__all__"
@@ -483,6 +494,21 @@ class ScheduleForm(forms.ModelForm):
             ),
         }
 
+    class Media:
+        css = {"all": ("shelters/admin/schedule_editor.css",)}
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            # Existing entry: keep the normal day dropdown, hide days checkboxes
+            if "days" in self.fields:
+                self.fields["days"].widget = forms.HiddenInput()
+        else:
+            # New entry: use multi-day checkboxes, hide the single day dropdown
+            self.fields["days"].widget = MultiDayCheckboxWidget()
+            self.fields["day"].widget = forms.HiddenInput()
+            self.fields["day"].required = False
+
 
 class ScheduleInline(admin.StackedInline):
     model = Schedule
@@ -499,6 +525,7 @@ class ScheduleInline(admin.StackedInline):
                 "fields": (
                     "is_exception",
                     "schedule_type",
+                    "days",
                     "day",
                     ("start_time", "end_time"),
                     ("start_date", "end_date"),
@@ -800,6 +827,93 @@ class ShelterResource(resources.ModelResource):
         return bool(super().skip_row(instance, original, row, import_validation_errors))
 
 
+class PhotoCountFilter(admin.ListFilter):
+    """Combined filter for interior, exterior, and total photo counts with free-form min/max inputs."""
+
+    title = "photo counts"
+    template = "admin/photo_count_filter.html"
+
+    PARAMS = (
+        ("interior_min", "interior_max"),
+        ("exterior_min", "exterior_max"),
+        ("total_min", "total_max"),
+    )
+    FILTER_FIELDS = (
+        ("interior_photo_count", "Interior"),
+        ("exterior_photo_count", "Exterior"),
+        ("total_photo_count", "Total"),
+    )
+
+    def __init__(
+        self,
+        request: HttpRequest,
+        params: dict[str, Any],
+        model: type[models.Model],
+        model_admin: admin.ModelAdmin,
+    ) -> None:
+        super().__init__(request, params, model, model_admin)
+        for param in self.expected_parameters():
+            if param in params:
+                value_list = params.pop(param)
+                self.used_parameters[param] = value_list[-1] if value_list else ""  # type: ignore[assignment]
+
+    def choices(self, changelist: Any) -> Iterator[dict[str, Any]]:  # type: ignore[override]
+        fields = []
+        for (min_p, max_p), (_field, label) in zip(self.PARAMS, self.FILTER_FIELDS):
+            fields.append(
+                {
+                    "label": label,
+                    "min_param": min_p,
+                    "max_param": max_p,
+                    "min_value": self.used_parameters.get(min_p, ""),
+                    "max_value": self.used_parameters.get(max_p, ""),
+                }
+            )
+        yield {"fields": fields, "all_params": set(self.expected_parameters())}
+
+    def expected_parameters(self) -> list[str | None]:
+        return [p for pair in self.PARAMS for p in pair]
+
+    def has_output(self) -> bool:
+        return True
+
+    def queryset(self, request: HttpRequest, queryset: QuerySet) -> QuerySet:
+        for (min_p, max_p), (count_field, _label) in zip(self.PARAMS, self.FILTER_FIELDS):
+            min_val = self.used_parameters.get(min_p)
+            max_val = self.used_parameters.get(max_p)
+            if min_val is not None and min_val != "":
+                try:
+                    queryset = queryset.filter(**{f"{count_field}__gte": int(str(min_val))})
+                except (ValueError, TypeError):
+                    pass
+            if max_val is not None and max_val != "":
+                try:
+                    queryset = queryset.filter(**{f"{count_field}__lte": int(str(max_val))})
+                except (ValueError, TypeError):
+                    pass
+        return queryset
+
+
+class HasClaimantFilter(admin.SimpleListFilter):
+    title = "has claimant"
+    parameter_name = "has_claimant"
+
+    def lookups(self, request: HttpRequest, model_admin: admin.ModelAdmin) -> list[tuple[str, str]]:
+        return [
+            ("yes", "Yes"),
+            ("no", "No"),
+        ]
+
+    def queryset(self, request: HttpRequest, queryset: QuerySet) -> QuerySet:
+        value = self.value()
+        claimant_exists = models.Exists(ContactInfo.objects.filter(shelter=OuterRef("pk"), is_claimant=True))
+        if value == "yes":
+            return queryset.filter(claimant_exists)
+        if value == "no":
+            return queryset.exclude(claimant_exists)
+        return queryset
+
+
 @admin.register(Shelter)
 class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
@@ -940,6 +1054,9 @@ class ShelterAdmin(ImportExportModelAdmin):
         "website",
         "total_beds",
         "max_stay",
+        "interior_photo_count",
+        "exterior_photo_count",
+        "total_photo_count",
         "status",
         "declined_ba_visit",
         "updated_at",
@@ -977,6 +1094,10 @@ class ShelterAdmin(ImportExportModelAdmin):
         "overall_rating",
         # Better Angels Administration
         "status",
+        # Contacts
+        HasClaimantFilter,
+        # Photo Counts
+        PhotoCountFilter,
     )
     search_fields = ("name", "organization__name", "description", "subjective_review")
     resource_class = ShelterResource
@@ -1056,11 +1177,81 @@ class ShelterAdmin(ImportExportModelAdmin):
             )
         )
 
+        interior_count = Subquery(
+            InteriorPhoto.objects.filter(shelter=OuterRef("pk"))
+            .order_by()
+            .values("shelter")
+            .annotate(c=Count("pk"))
+            .values("c")
+        )
+        exterior_count = Subquery(
+            ExteriorPhoto.objects.filter(shelter=OuterRef("pk"))
+            .order_by()
+            .values("shelter")
+            .annotate(c=Count("pk"))
+            .values("c")
+        )
+
         return qs.annotate(
             last_event=Subquery(
                 scoped_events.filter(pgh_obj_id=Cast(OuterRef("pk"), output_field=models.TextField())).values("obj")[:1]
-            )
+            ),
+            interior_photo_count=Coalesce(interior_count, Value(0)),
+            exterior_photo_count=Coalesce(exterior_count, Value(0)),
+            total_photo_count=F("interior_photo_count") + F("exterior_photo_count"),
         )
+
+    def save_formset(
+        self,
+        request: HttpRequest,
+        form: ShelterForm,
+        formset: BaseFormSet,
+        change: bool,
+    ) -> None:
+        """Fan out multi-day schedule entries into individual Schedule rows."""
+        if not isinstance(formset, forms.models.BaseInlineFormSet) or formset.model is not Schedule:
+            super().save_formset(request, form, formset, change)
+            return
+
+        instances = formset.save(commit=False)
+
+        # Handle deletions
+        for obj in formset.deleted_objects:
+            obj.delete()
+
+        # Build a map from form instance to cleaned_data for new forms
+        new_form_data: dict[int, list[str]] = {}
+        for form_instance in formset.forms:
+            if form_instance in formset.deleted_forms:
+                continue
+            if not form_instance.cleaned_data:
+                continue
+            instance = form_instance.instance
+            days = form_instance.cleaned_data.get("days", [])
+            if days and not instance.pk:
+                new_form_data[id(instance)] = days
+
+        for instance in instances:
+            days = new_form_data.get(id(instance), [])
+            if days:
+                # New entry with multiple days selected: create one row per day
+                for day_val in days:
+                    Schedule.objects.create(
+                        shelter=instance.shelter,
+                        schedule_type=instance.schedule_type,
+                        day=DayOfWeekChoices(day_val),
+                        start_time=instance.start_time,
+                        end_time=instance.end_time,
+                        start_date=instance.start_date,
+                        end_date=instance.end_date,
+                        condition=instance.condition,
+                        demographic=instance.demographic,
+                        is_exception=instance.is_exception,
+                    )
+            else:
+                instance.save()
+
+        formset.save_m2m()
 
     def save_related(
         self,
@@ -1096,6 +1287,18 @@ class ShelterAdmin(ImportExportModelAdmin):
             return mark_safe(f'<img src="{url}" style="max-height: 200px;" />')
 
         return "No hero image selected"
+
+    @admin.display(ordering="interior_photo_count", description="Interior Photos")
+    def interior_photo_count(self, obj: Shelter) -> int:
+        return getattr(obj, "interior_photo_count", 0)
+
+    @admin.display(ordering="exterior_photo_count", description="Exterior Photos")
+    def exterior_photo_count(self, obj: Shelter) -> int:
+        return getattr(obj, "exterior_photo_count", 0)
+
+    @admin.display(ordering="total_photo_count", description="Total Photos")
+    def total_photo_count(self, obj: Shelter) -> int:
+        return getattr(obj, "total_photo_count", 0)
 
     def updated_by(self, obj: Shelter) -> str:
         data = getattr(obj, "last_event", None) or {}

@@ -60,11 +60,17 @@ export function run(
 ): string {
   const cwd = opts?.cwd ?? process.cwd();
   if (!opts?.silent) console.log(`> ${cmd}`);
-  return execSync(cmd, {
-    cwd,
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'pipe'],
-  }).trim();
+  try {
+    return execSync(cmd, {
+      cwd,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
+  } catch (error: any) {
+    if (error.stderr) console.error(error.stderr);
+    if (error.stdout) console.error(error.stdout);
+    throw error;
+  }
 }
 
 /**
@@ -137,7 +143,20 @@ export function setupEnvAndFingerprint(
   const envPath = path.join(projectDir, '.env');
   const envMap = new Map<string, string>();
 
-  // Load non-secret env vars from eas.json build profile
+  // Collect EXPO_PUBLIC_* and MAESTRO_* from process.env first (may include
+  // values from the committed .env loaded by NX, or CI secrets).
+  for (const [key, value] of Object.entries(process.env)) {
+    if (
+      (key.startsWith('EXPO_PUBLIC_') || key.startsWith('MAESTRO_')) &&
+      value
+    ) {
+      envMap.set(key, value);
+    }
+  }
+
+  // Then apply eas.json build profile env vars, which take precedence.
+  // This ensures profile-specific values (e.g., production API URL) override
+  // any stale values that NX loaded from the committed .env file.
   const easJsonPath = path.join(projectDir, 'eas.json');
   if (fs.existsSync(easJsonPath)) {
     const easConfig = JSON.parse(fs.readFileSync(easJsonPath, 'utf-8'));
@@ -149,14 +168,11 @@ export function setupEnvAndFingerprint(
     }
   }
 
-  // Collect EXPO_PUBLIC_* and MAESTRO_* secrets from env (CI values override profile defaults)
-  for (const [key, value] of Object.entries(process.env)) {
-    if ((key.startsWith('EXPO_PUBLIC') || key.startsWith('MAESTRO_')) && value) {
-      envMap.set(key, value);
-    }
-  }
-
-  const envLines = Array.from(envMap, ([k, v]) => `${k}=${v}`);
+  // Write .env (without RUNTIME_VERSION) so fingerprint includes env var values.
+  const envLines: string[] = [];
+  envMap.forEach((v, k) => {
+    envLines.push(`${k}=${v}`);
+  });
   fs.writeFileSync(envPath, envLines.join('\n') + '\n');
 
   // Compute fingerprint — this hash becomes the runtimeVersion.
@@ -168,9 +184,12 @@ export function setupEnvAndFingerprint(
   const hash = JSON.parse(fingerprintJson).hash as string;
   console.log(`Runtime version (fingerprint): ${hash}`);
 
-  // Write to .env so dotenv.config() in app.config.js picks it up
+  // Append RUNTIME_VERSION to .env and propagate everything to process.env.
   fs.appendFileSync(envPath, `RUNTIME_VERSION=${hash}\n`);
-  process.env.RUNTIME_VERSION = hash;
+  envMap.set('RUNTIME_VERSION', hash);
+  envMap.forEach((value, key) => {
+    process.env[key] = value;
+  });
 
   return hash;
 }

@@ -28,6 +28,7 @@ export const enumDisplayDemographics: { [key in DemographicChoices]: string } =
   {
     [DemographicChoices.All]: 'All',
     [DemographicChoices.Families]: 'Families',
+    [DemographicChoices.Couples]: 'Couples',
     [DemographicChoices.LgbtqPlus]: 'LGBTQ+',
     [DemographicChoices.Other]: 'Others',
     [DemographicChoices.Seniors]: 'Seniors',
@@ -44,6 +45,7 @@ export const enumDisplayEntryRequirementChoices: {
   [EntryRequirementChoices.Background]: 'Background Check',
   [EntryRequirementChoices.HomelessVerification]:
     'Homeless Verification/Observation',
+  [EntryRequirementChoices.InSpaOnly]: 'In-SPA Only',
   [EntryRequirementChoices.MedicaidOrMedicare]: 'Medicaid or Medicare',
   [EntryRequirementChoices.PhotoId]: 'Photo ID',
   [EntryRequirementChoices.Referral]: 'Referral',

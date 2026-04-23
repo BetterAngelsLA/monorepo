@@ -163,6 +163,20 @@ export type AuthResponse = {
   status_code: Scalars['String']['output'];
 };
 
+export type AuthorizedPresignedS3UploadType = {
+  __typename?: 'AuthorizedPresignedS3UploadType';
+  fields: Scalars['JSON']['output'];
+  presignedKey: Scalars['String']['output'];
+  refId: Scalars['String']['output'];
+  uploadToken: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+};
+
+export type AuthorizedPresignedS3UploadsType = {
+  __typename?: 'AuthorizedPresignedS3UploadsType';
+  uploads: Array<AuthorizedPresignedS3UploadType>;
+};
+
 export enum BedStatusChoices {
   Available = 'AVAILABLE',
   Occupied = 'OCCUPIED',
@@ -185,6 +199,7 @@ export type BedType = {
   medicalNeeds?: Maybe<MedicalNeedChoices>;
   occupantId?: Maybe<Scalars['ID']['output']>;
   pets: Array<PetType>;
+  room?: Maybe<RoomType>;
   shelter: ShelterType;
   status?: Maybe<BedStatusChoices>;
   statusNotes?: Maybe<Scalars['String']['output']>;
@@ -253,6 +268,14 @@ export type ClientDocumentFilter = {
   documentGroups?: InputMaybe<Array<ClientDocumentGroupEnum>>;
 };
 
+export type ClientDocumentFromUploadsInput = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  namespace: ClientDocumentNamespaceEnum;
+  presignedKey: Scalars['String']['input'];
+  uploadToken: Scalars['String']['input'];
+};
+
 export enum ClientDocumentGroupEnum {
   DocReady = 'DOC_READY',
   Forms = 'FORMS',
@@ -292,6 +315,17 @@ export type ClientDocumentTypeOffsetPaginated = {
   results: Array<ClientDocumentType>;
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
+};
+
+export type ClientDocumentUploadsInputItem = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  refId: Scalars['String']['input'];
+};
+
+export type ClientDocumentUploadsType = {
+  __typename?: 'ClientDocumentUploadsType';
+  documents: Array<ClientDocumentType>;
 };
 
 export type ClientHouseholdMemberInput = {
@@ -478,6 +512,7 @@ export type CreateBedInput = {
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
   medicalNeeds?: InputMaybe<MedicalNeedChoices>;
   pets?: InputMaybe<Array<PetChoices>>;
+  roomId?: InputMaybe<Scalars['ID']['input']>;
   shelterId: Scalars['ID']['input'];
   status?: InputMaybe<BedStatusChoices>;
   statusNotes?: InputMaybe<Scalars['String']['input']>;
@@ -660,15 +695,22 @@ export type CreateProfileDataImportInput = {
 };
 
 export type CreateRoomInput = {
+  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   amenities?: InputMaybe<Scalars['String']['input']>;
+  demographics?: InputMaybe<Array<DemographicChoices>>;
+  funders?: InputMaybe<Array<FunderChoices>>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
+  maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
   medicalRespite?: InputMaybe<Scalars['Boolean']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
+  occupants?: InputMaybe<Array<Scalars['ID']['input']>>;
+  pets?: InputMaybe<Array<PetChoices>>;
   roomIdentifier: Scalars['String']['input'];
   roomType?: InputMaybe<RoomStyleChoices>;
   roomTypeOther?: InputMaybe<Scalars['String']['input']>;
   shelterId: Scalars['ID']['input'];
   status?: InputMaybe<RoomStatusChoices>;
+  storage?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type CreateRoomPayload = OperationInfo | RoomType;
@@ -820,6 +862,7 @@ export type DeletedObjectType = {
 
 export enum DemographicChoices {
   All = 'ALL',
+  Couples = 'COUPLES',
   Families = 'FAMILIES',
   LgbtqPlus = 'LGBTQ_PLUS',
   Other = 'OTHER',
@@ -868,6 +911,7 @@ export type DjangoModelType = {
 export enum EntryRequirementChoices {
   Background = 'BACKGROUND',
   HomelessVerification = 'HOMELESS_VERIFICATION',
+  InSpaOnly = 'IN_SPA_ONLY',
   MedicaidOrMedicare = 'MEDICAID_OR_MEDICARE',
   PhotoId = 'PHOTO_ID',
   Referral = 'REFERRAL',
@@ -941,6 +985,22 @@ export enum GenderEnum {
   TransFemale = 'TRANS_FEMALE',
   TransMale = 'TRANS_MALE'
 }
+
+export type GenerateClientDocumentUploadsInput = {
+  clientProfileId: Scalars['ID']['input'];
+  uploads: Array<ClientDocumentUploadsInputItem>;
+};
+
+export type GenerateClientDocumentUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo;
+
+export type GenerateClientProfilePhotoUploadInput = {
+  clientProfileId: Scalars['ID']['input'];
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  refId: Scalars['String']['input'];
+};
+
+export type GenerateClientProfilePhotoUploadPayload = AuthorizedPresignedS3UploadType | OperationInfo;
 
 export type GeolocationInput = {
   latitude: Scalars['Float']['input'];
@@ -1384,6 +1444,11 @@ export enum MaritalStatusEnum {
   Widowed = 'WIDOWED'
 }
 
+export type MaxStayInput = {
+  days: Scalars['Int']['input'];
+  includeNull?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export enum MedicalNeedChoices {
   Dialysis = 'DIALYSIS',
   Dmh = 'DMH',
@@ -1423,6 +1488,8 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
+  generateClientDocumentUploads: GenerateClientDocumentUploadsPayload;
+  generateClientProfilePhotoUpload: GenerateClientProfilePhotoUploadPayload;
   hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
@@ -1430,6 +1497,8 @@ export type Mutation = {
   logout: Scalars['Boolean']['output'];
   removeHmisNoteServiceRequest: RemoveHmisNoteServiceRequestPayload;
   removeOrganizationMember: RemoveOrganizationMemberPayload;
+  resolveClientDocumentUploads: ResolveClientDocumentUploadsPayload;
+  resolveClientProfilePhotoUpload: ResolveClientProfilePhotoUploadPayload;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
   updateClientDocument: UpdateClientDocumentPayload;
@@ -1595,6 +1664,16 @@ export type MutationDeleteTaskArgs = {
 };
 
 
+export type MutationGenerateClientDocumentUploadsArgs = {
+  data: GenerateClientDocumentUploadsInput;
+};
+
+
+export type MutationGenerateClientProfilePhotoUploadArgs = {
+  data: GenerateClientProfilePhotoUploadInput;
+};
+
+
 export type MutationHmisLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
@@ -1623,6 +1702,16 @@ export type MutationRemoveHmisNoteServiceRequestArgs = {
 
 export type MutationRemoveOrganizationMemberArgs = {
   data: RemoveOrganizationMemberInput;
+};
+
+
+export type MutationResolveClientDocumentUploadsArgs = {
+  data: ResolveClientDocumentUploadsInput;
+};
+
+
+export type MutationResolveClientProfilePhotoUploadArgs = {
+  data: ResolveClientProfilePhotoUploadInput;
 };
 
 
@@ -2079,6 +2168,7 @@ export type Query = {
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
+  shelterMaxStay?: Maybe<Scalars['Int']['output']>;
   shelterServiceCategories: ServiceCategoryTypeOffsetPaginated;
   shelters: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
@@ -2350,6 +2440,21 @@ export type ReportSummaryType = {
   uniqueClientsByDate: Array<DateCountType>;
 };
 
+export type ResolveClientDocumentUploadsInput = {
+  clientProfileId: Scalars['ID']['input'];
+  documents: Array<ClientDocumentFromUploadsInput>;
+};
+
+export type ResolveClientDocumentUploadsPayload = ClientDocumentUploadsType | OperationInfo;
+
+export type ResolveClientProfilePhotoUploadInput = {
+  clientProfileId: Scalars['ID']['input'];
+  presignedKey: Scalars['String']['input'];
+  uploadToken: Scalars['String']['input'];
+};
+
+export type ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo;
+
 export type RevertNoteInput = {
   id: Scalars['ID']['input'];
   revertBeforeTimestamp: Scalars['DateTime']['input'];
@@ -2382,16 +2487,24 @@ export type RoomStyleType = {
 
 export type RoomType = {
   __typename?: 'RoomType';
+  accessibility: Array<AccessibilityType>;
   amenities?: Maybe<Scalars['String']['output']>;
+  beds: Array<BedType>;
+  demographics: Array<DemographicType>;
+  funders: Array<FunderType>;
   id: Scalars['ID']['output'];
   lastCleanedInspected?: Maybe<Scalars['DateTime']['output']>;
+  maintenanceFlag: Scalars['Boolean']['output'];
   medicalRespite: Scalars['Boolean']['output'];
   notes?: Maybe<Scalars['String']['output']>;
+  occupantIds: Array<Scalars['ID']['output']>;
+  pets: Array<PetType>;
   roomIdentifier: Scalars['String']['output'];
   roomType?: Maybe<RoomStyleChoices>;
   roomTypeOther?: Maybe<Scalars['String']['output']>;
   shelter: ShelterType;
   status?: Maybe<RoomStatusChoices>;
+  storage: Scalars['Boolean']['output'];
 };
 
 export enum SpaChoices {
@@ -2542,6 +2655,7 @@ export type ShelterFilter = {
   geolocation?: InputMaybe<GeolocationInput>;
   isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
   mapBounds?: InputMaybe<MapBoundsInput>;
+  maxStay?: InputMaybe<MaxStayInput>;
   name?: InputMaybe<Scalars['String']['input']>;
   openNow?: InputMaybe<Scalars['Boolean']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -2569,7 +2683,7 @@ export type ShelterOrder = {
 export type ShelterPhotoType = {
   __typename?: 'ShelterPhotoType';
   createdAt: Scalars['DateTime']['output'];
-  file: DjangoFileType;
+  file: DjangoImageType;
   id: Scalars['ID']['output'];
 };
 
@@ -2599,8 +2713,10 @@ export type ShelterProgramType = {
 
 export type ShelterPropertyInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
+  entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
   parking?: InputMaybe<Array<ParkingChoices>>;
   pets?: InputMaybe<Array<PetChoices>>;
+  referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
   spa?: InputMaybe<Array<SpaChoices>>;

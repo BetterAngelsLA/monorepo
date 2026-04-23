@@ -1,7 +1,8 @@
-import { useInfiniteScrollQuery } from '@monorepo/apollo';
+import { useQuery } from '@apollo/client/react';
 import { InfiniteList } from '@monorepo/react/components';
 import { useAtom } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { MaxStayInput } from '../../apollo';
 import { sheltersAtom } from '../../atoms';
 import {
   ViewSheltersDocument,
@@ -46,7 +47,7 @@ export function SheltersDisplay(props: TProps) {
     }
 
     if (propertyFilters) {
-      const { openNow, isAccessCenter, ...propertyOnlyFilters } =
+      const { openNow, isAccessCenter, maxStay, ...propertyOnlyFilters } =
         propertyFilters;
 
       if (openNow) {
@@ -59,6 +60,12 @@ export function SheltersDisplay(props: TProps) {
         vars = vars || {};
         vars.filters = vars.filters || {};
         vars.filters.isAccessCenter = true;
+      }
+
+      if (isMaxStayFilterSpecified(maxStay)) {
+        vars = vars || {};
+        vars.filters = vars.filters || {};
+        vars.filters.maxStay = maxStayToGraphQLInput(maxStay);
       }
 
       const prunedFilters = pruneFilters(propertyOnlyFilters);
@@ -80,17 +87,19 @@ export function SheltersDisplay(props: TProps) {
     return vars;
   }, [mapBoundsFilter, nameFilter, propertyFilters]);
 
-  const { items, total, loadMore, loading, loadingMore, hasMore, error } =
-    useInfiniteScrollQuery<
-      TShelter,
-      ViewSheltersQuery,
-      ViewSheltersQueryVariables
-    >({
-      document: ViewSheltersDocument,
-      queryFieldName: 'shelters',
-      variables: queryVariables,
-      pageSize: 25,
-    });
+  const { data, loading, error } = useQuery<
+    ViewSheltersQuery,
+    ViewSheltersQueryVariables
+  >(ViewSheltersDocument, {
+    variables: {
+      ...queryVariables,
+      pagination: { limit: 5000, offset: 0 },
+    },
+    skip: !queryVariables,
+  });
+
+  const shelters = useMemo(() => data?.shelters.results ?? [], [data]);
+  const total = data?.shelters.totalCount;
 
   const prevLoadingRef = useRef(loading);
   const lastPinFitRequestHandledRef = useRef(0);
@@ -120,7 +129,7 @@ export function SheltersDisplay(props: TProps) {
         return;
       }
       lastPinFitRequestHandledRef.current = nameSearchPinFitRequestId;
-      onShelterPinsReadyForMapFit(shelterListToPinLatLng(items ?? []));
+      onShelterPinsReadyForMapFit(shelterListToPinLatLng(shelters ?? []));
     };
 
     if (loadingJustFinished) {
@@ -133,11 +142,16 @@ export function SheltersDisplay(props: TProps) {
     });
 
     return () => cancelAnimationFrame(raf);
-  }, [loading, nameSearchPinFitRequestId, items, onShelterPinsReadyForMapFit]);
+  }, [
+    loading,
+    nameSearchPinFitRequestId,
+    shelters,
+    onShelterPinsReadyForMapFit,
+  ]);
 
   useEffect(() => {
-    setSheltersData(items || []);
-  }, [items, setSheltersData]);
+    setSheltersData(shelters);
+  }, [shelters, setSheltersData]);
 
   const renderListHeader = useCallback(
     (visible: number, total: number | undefined) => {
@@ -166,13 +180,11 @@ export function SheltersDisplay(props: TProps) {
   return (
     <div className={className}>
       <InfiniteList<TShelter>
-        data={items}
+        data={shelters}
         totalItems={total}
         loading={loading}
-        loadingMore={loadingMore}
         error={error}
-        hasMore={hasMore}
-        loadMore={loadMore}
+        hasMore={false}
         itemGap={24}
         renderResultsHeader={renderListHeader}
         renderItem={(shelter) => <ShelterCard shelter={shelter} />}
@@ -197,6 +209,25 @@ function shelterListToPinLatLng(shelters: TShelter[]): TLatLng[] {
   }
 
   return pins;
+}
+
+function isMaxStayFilterSpecified(
+  maxStay: TShelterPropertyFilters['maxStay']
+): maxStay is NonNullable<TShelterPropertyFilters['maxStay']> {
+  if (maxStay == null) {
+    return false;
+  }
+
+  return maxStay.days > 0 || maxStay.includeNull;
+}
+
+function maxStayToGraphQLInput(
+  maxStay: NonNullable<TShelterPropertyFilters['maxStay']>
+): MaxStayInput {
+  return {
+    days: maxStay.days,
+    includeNull: maxStay.includeNull,
+  };
 }
 
 function pruneFilters(
