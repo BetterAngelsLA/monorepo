@@ -7,7 +7,7 @@ import {
   reservationSelectRoomSegment,
   reservationSelectShelterSegment,
 } from '@monorepo/react/shelter';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import { WizardLayout } from '../../components/layout/WizardLayout';
@@ -36,9 +36,17 @@ export function ReservationPage() {
       roomId: null,
       bedId: null,
       startDate: null,
+      reservationLayoutStyle: 'congregate',
     },
     mode: 'onTouched',
   });
+
+  const { setValue } = methods;
+  useEffect(() => {
+    if (shelterId) {
+      setValue('shelterId', shelterId);
+    }
+  }, [shelterId, setValue]);
 
   const steps = useMemo(() => {
     if (isShelterLevel) {
