@@ -21,6 +21,7 @@ class TwilioProvider(MessageSender, PhoneValidator):
         self.account_sid: str = settings.TWILIO_ACCOUNT_SID
         self.auth_token: str = settings.TWILIO_AUTH_TOKEN
         self.from_number: str = settings.TWILIO_FROM_NUMBER
+        self.messaging_service_sid: str = settings.TWILIO_MESSAGING_SERVICE_SID
         self.client = TwilioClient(self.account_sid, self.auth_token)
 
     # ─── Phone Validation ────────────────────────────────────────────
@@ -61,11 +62,12 @@ class TwilioProvider(MessageSender, PhoneValidator):
 
     def send_message(self, to: str, body: str) -> SendResult:
         try:
-            message = self.client.messages.create(
-                body=body,
-                from_=self.from_number,
-                to=to,
-            )
+            params: dict[str, str] = {"body": body, "to": to}
+            if self.messaging_service_sid:
+                params["messaging_service_sid"] = self.messaging_service_sid
+            else:
+                params["from_"] = self.from_number
+            message = self.client.messages.create(**params)
             return SendResult(success=True, provider_message_id=message.sid)
         except Exception as e:
             raise ProviderError(
