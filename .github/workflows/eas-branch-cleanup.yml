@@ -50,6 +50,6 @@ jobs:
           for project in $affected; do
             echo "Deleting EAS branch for project: $project"
             cd apps/$project
-            eas branch:delete --non-interactive "$BRANCH_NAME"
+            npx eas branch:delete --non-interactive "$BRANCH_NAME"
             cd -
           done
