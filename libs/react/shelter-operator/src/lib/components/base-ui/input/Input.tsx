@@ -12,12 +12,23 @@ const validationPatterns: Record<InputDataType, RegExp> = {
   string: /^.+$/, // Any non-empty string
 };
 
+const normalizeValue = (
+  value: string | number | readonly string[] | undefined
+): string => {
+  if (value === undefined) return '';
+  if (Array.isArray(value)) {
+    // For multi-value inputs, treat concatenated trimmed values as the content
+    return value.join('').trim();
+  }
+  return String(value).trim();
+};
+
 const isValueValid = (
   value: string | number | readonly string[] | undefined,
   dataType?: InputDataType
 ): boolean => {
   if (!dataType || !value) return true; // No validation if no dataType or empty value
-  const stringValue = String(value).trim();
+  const stringValue = normalizeValue(value);
   if (!stringValue) return false; // Empty value is invalid
   const pattern = validationPatterns[dataType];
   return pattern.test(stringValue);
@@ -74,7 +85,7 @@ export const Input = forwardRef<
   const messageId = `${inputId}-message`;
 
   // Determine if there's a required validation error
-  const isRequiredError = required && !value;
+  const isRequiredError = required && !normalizeValue(value);
 
   // Check if value fails dataType validation
   const isDataTypeError = value && dataType && !isValueValid(value, dataType);
