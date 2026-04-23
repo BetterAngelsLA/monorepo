@@ -1,5 +1,9 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { Row, type RowCell, type RowClickHandler } from './Row';
+import {
+  TableRow,
+  type TableRowCell,
+  type TableRowClickHandler,
+} from './TableRow';
 
 export type TableColumn<TItem> = {
   key: string;
@@ -15,24 +19,32 @@ type TableProps<TItem, TRowObject = TItem> = {
   rows: TItem[];
   getRowKey: (item: TItem, index: number) => string;
   getRowObject?: (item: TItem, index: number) => TRowObject;
-  onRowClick?: RowClickHandler<TRowObject>;
+  getRowSlot?: (rowObject: TRowObject, item: TItem, index: number) => ReactNode;
+  trailingHeader?: ReactNode;
+  trailingColumnWidth?: string;
+  onRowClick?: TableRowClickHandler<TRowObject>;
   onDelete?: (rowObject: TRowObject, rowIndex: number) => void;
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
   wrapperClassName?: string;
   headerClassName?: string;
+  headerInsetClassName?: string;
   rowClassName?: string;
+  rowInsetClassName?: string;
   tableStyle?: CSSProperties;
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
 };
 
-export function Table<TItem, TRowObject = TItem>({
+const TableBase = <TItem, TRowObject = TItem>({
   columns,
   rows,
   getRowKey,
   getRowObject,
+  getRowSlot,
+  trailingHeader,
+  trailingColumnWidth = '80px',
   onRowClick,
   onDelete,
   loading = false,
@@ -40,16 +52,20 @@ export function Table<TItem, TRowObject = TItem>({
   emptyState,
   wrapperClassName = '',
   headerClassName = '',
+  headerInsetClassName = '',
   rowClassName = '',
+  rowInsetClassName = '',
   tableStyle,
   headerStyle,
   rowStyle,
-}: TableProps<TItem, TRowObject>) {
+}: TableProps<TItem, TRowObject>) => {
   const dataTemplateColumns = columns
     .map((column) => column.width ?? '1fr')
     .join(' ');
-  const templateColumns = onDelete
-    ? `${dataTemplateColumns} 56px`
+  const hasTrailingColumn =
+    !!onDelete || !!getRowSlot || !!trailingHeader;
+  const templateColumns = hasTrailingColumn
+    ? `${dataTemplateColumns} ${trailingColumnWidth}`
     : dataTemplateColumns;
 
   return (
@@ -68,6 +84,7 @@ export function Table<TItem, TRowObject = TItem>({
         className={[
           'grid items-center px-6 pb-2 pt-6 font-medium text-[22px] text-[#747A82]',
           headerClassName,
+          headerInsetClassName,
         ].join(' ')}
         style={{ gridTemplateColumns: templateColumns, ...headerStyle }}
       >
@@ -85,7 +102,11 @@ export function Table<TItem, TRowObject = TItem>({
             {column.label}
           </div>
         ))}
-        {onDelete && <div aria-hidden="true" />}
+        {hasTrailingColumn && (
+          <div aria-hidden="true" className="justify-self-end">
+            {trailingHeader || null}
+          </div>
+        )}
       </div>
 
       {loading && loadingState}
@@ -98,26 +119,38 @@ export function Table<TItem, TRowObject = TItem>({
             ? getRowObject(item, index)
             : (item as unknown as TRowObject);
 
-          const cells: RowCell[] = columns.map((column) => ({
+          const cells: TableRowCell[] = columns.map((column) => ({
             key: column.key,
             content: column.render(item),
             className: column.cellClassName,
           }));
 
+          const rowSlot = getRowSlot?.(rowObject, item, index);
+
           return (
-            <Row
+            <TableRow
               key={getRowKey(item, index)}
               cells={cells}
               rowObject={rowObject}
               rowIndex={index}
+              slot={rowSlot}
               onRowClick={onRowClick}
               onDelete={onDelete}
               templateColumns={templateColumns}
               className={rowClassName}
+              rowInsetClassName={rowInsetClassName}
               style={rowStyle}
             />
           );
         })}
     </div>
   );
-}
+};
+
+type TableComponent = typeof TableBase & {
+  Row: typeof TableRow;
+};
+
+export const Table = Object.assign(TableBase, {
+  Row: TableRow,
+}) as TableComponent;
