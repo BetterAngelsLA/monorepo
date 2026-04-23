@@ -19,7 +19,7 @@ export function ShelterFilterPanel() {
 
   function toggleValue(group: string, value: string) {
     setFilters((prev: TOperatorShelterFilters) => {
-      const current = prev[group] ?? [];
+      const current = prev[group as keyof TOperatorShelterFilters] ?? [];
       const next = current.includes(value)
         ? current.filter((v) => v !== value)
         : [...current, value];
@@ -72,16 +72,15 @@ export function ShelterFilterPanel() {
 
         if (normalizedSearch && visibleOptions.length === 0) return null;
 
-        const groupValues = filters[group.name] ?? [];
+        const groupValues =
+          filters[group.name as keyof TOperatorShelterFilters] ?? [];
 
         return (
           <FilterSection
             key={group.name}
             header={group.header}
             onClear={
-              groupValues.length > 0
-                ? () => clearGroup(group.name)
-                : undefined
+              groupValues.length > 0 ? () => clearGroup(group.name) : undefined
             }
           >
             {visibleOptions.map((opt) => (

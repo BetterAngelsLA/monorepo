@@ -1,6 +1,10 @@
 import { atomWithReset } from 'jotai/utils';
 
-export type TOperatorShelterFilters = Record<string, string[]>;
+export type TOperatorShelterFilters = {
+  demographics: string[];
+  specialSituationRestrictions: string[];
+  shelterTypes: string[];
+};
 
 export const nullOperatorShelterFilters: TOperatorShelterFilters = {
   demographics: [],
