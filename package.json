@@ -85,7 +85,7 @@
     "react-native-keyboard-controller": "1.20.7",
     "react-native-maps": "1.27.2",
     "react-native-mmkv": "^4.1.0",
-    "react-native-nitro-modules": "^0.33.1",
+    "react-native-nitro-modules": "^0.35.0",
     "react-native-open-maps": "^0.4.3",
     "react-native-paper": "^5.12.5",
     "react-native-paper-dates": "^0.22.47",
