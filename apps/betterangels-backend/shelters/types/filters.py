@@ -22,6 +22,7 @@ from shelters.enums import (
     RoomStyleChoices,
     ScheduleTypeChoices,
     ShelterChoices,
+    SPAChoices,
     SpecialSituationRestrictionChoices,
 )
 from shelters.selectors import shelters_open_at
@@ -60,6 +61,7 @@ class ShelterPropertyInput:
     shelter_types: Optional[List[ShelterChoices]] = None
     room_styles: Optional[List[RoomStyleChoices]] = None
     parking: Optional[List[ParkingChoices]] = None
+    spa: Optional[List[SPAChoices]] = None
 
 
 @strawberry.input
