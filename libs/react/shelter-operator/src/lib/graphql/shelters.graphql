@@ -6,7 +6,11 @@ query ViewSheltersByOrganization(
   $properties: ShelterPropertyInput
 ) {
   adminShelters(
-    filters: { organizations: [$organizationId], name: $name, properties: $properties}
+    filters: {
+      organizations: [$organizationId]
+      name: $name
+      properties: $properties
+    }
     ordering: [{ createdAt: DESC }]
     pagination: { offset: $offset, limit: $limit }
   ) {
