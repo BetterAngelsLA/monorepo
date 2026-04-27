@@ -11,7 +11,6 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
 from django_choices_field import TextChoicesField
@@ -172,34 +171,6 @@ class Shelter(BaseModel):
             schedule_type=schedule_type,
         ).exists()
 
-    def clean(self) -> None:
-        """
-        Validate and clean _other fields based on whether 'other' is selected in corresponding M2M fields.
-
-        This provides model-level validation as a second layer of defense.
-        Also automatically cleans orphaned _other values.
-        """
-        super().clean()
-        errors = {}
-
-        for field_name in get_fields_with_other_option():
-            other_field_name = f"{field_name}_other"
-            other_value = getattr(self, other_field_name, None)
-
-            # For new instances, we can't check M2M until after save
-            if self.pk:
-                m2m_field = getattr(self, field_name)
-                has_other = m2m_field.filter(name="other").exists()
-
-                if has_other and not other_value:
-                    errors[other_field_name] = f"This field is required when 'Other' is selected in {field_name}."
-                elif not has_other and other_value:
-                    # Automatically clear orphaned other text to maintain data consistency
-                    setattr(self, other_field_name, None)
-
-        if errors:
-            raise ValidationError(errors)
-
     def save(self, *args: Any, **kwargs: Any) -> None:
         latitude = self.location.latitude if self.location else None
         longitude = self.location.longitude if self.location else None
@@ -214,6 +185,7 @@ class Shelter(BaseModel):
 
 class Bed(BaseModel):
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="beds")
+    room = models.ForeignKey("Room", on_delete=models.SET_NULL, blank=True, null=True, related_name="beds")
     bed_name = models.CharField(max_length=255, blank=True, null=True)
     status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
     status_notes = models.TextField(blank=True, null=True)
@@ -250,6 +222,13 @@ class Room(BaseModel):
     status = TextChoicesField(choices_enum=RoomStatusChoices, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     amenities = models.TextField(blank=True, null=True)
+    demographics = models.ManyToManyField(Demographic, blank=True)
+    accessibility = models.ManyToManyField(Accessibility, blank=True)
+    funders = models.ManyToManyField(Funder, blank=True)
+    pets = models.ManyToManyField(Pet, blank=True)
+    storage = models.BooleanField(default=False, blank=True)
+    maintenance_flag = models.BooleanField(default=False, blank=True)
+    occupants = models.ManyToManyField("clients.ClientProfile", blank=True, related_name="occupied_rooms")
     medical_respite = models.BooleanField(default=False, blank=True)
     last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
 
@@ -279,6 +258,7 @@ class ContactInfo(models.Model):
     contact_number = PhoneNumberField(verbose_name="Contact Number")
     contact_email = models.EmailField(blank=True, null=True)
     contact_title = models.CharField(max_length=255, blank=True, null=True)
+    is_claimant = models.BooleanField(default=False, db_index=True)
 
     def __str__(self) -> str:
         return f"{self.contact_name} - {self.contact_number}"

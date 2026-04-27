@@ -181,7 +181,7 @@ function toUpdateClienProfileInputs(
 
   const updatedInputs: UpdateClientProfileInput = { id };
 
-  // only update dateOfBirth if it was touched/changed
+  // only update dates if touched/changed
   // this prevents clearing dates when the field wasn't intentionally modified
   if ('dateOfBirth' in values && dirtyFields && 'dateOfBirth' in dirtyFields) {
     if (values.dateOfBirth instanceof Date) {
@@ -191,6 +191,19 @@ function toUpdateClienProfileInputs(
     }
   }
 
+  if (
+    'unhousedStartDate' in values &&
+    dirtyFields &&
+    'unhousedStartDate' in dirtyFields
+  ) {
+    if (values.unhousedStartDate instanceof Date) {
+      updatedInputs.unhousedStartDate = toDateOnlyString(
+        values.unhousedStartDate
+      );
+    } else if (values.unhousedStartDate === null) {
+      updatedInputs.unhousedStartDate = null;
+    }
+  }
   // profilePhoto is updated directly within component
   if ('profilePhoto' in values) {
     delete values.profilePhoto;
@@ -201,9 +214,12 @@ function toUpdateClienProfileInputs(
     ...updatedInputs,
   };
 
-  // Always send dateOfBirth as YYYY-MM-DD when present (Date serializes as ISO datetime)
+  // Always send dates as YYYY-MM-DD when present (Date serializes as ISO datetime)
   if (result.dateOfBirth instanceof Date) {
     result.dateOfBirth = toDateOnlyString(result.dateOfBirth);
+  }
+  if (result.unhousedStartDate instanceof Date) {
+    result.unhousedStartDate = toDateOnlyString(result.unhousedStartDate);
   }
 
   return result;

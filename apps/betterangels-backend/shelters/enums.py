@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 @strawberry.enum
 class DemographicChoices(models.TextChoices):
     ALL = "all", _("All")
+    COUPLES = "couples", _("Couples")
     SINGLE_MEN = "single_men", _("Single Men")
     SINGLE_WOMEN = "single_women", _("Single Women")
     TAY_TEEN = "tay_teen", _("TAY/Teen")
@@ -33,6 +34,7 @@ class SpecialSituationRestrictionChoices(models.TextChoices):
 
 @strawberry.enum
 class ShelterChoices(models.TextChoices):
+    ACCESS_CENTER = "access_center", _("Access Center / Day Center")
     BUILDING = "building", _("Building")
     CHURCH = "church", _("Church")
     HOTEL_MOTEL = "hotel_motel", _("Hotel/Motel")
@@ -70,6 +72,7 @@ class StorageChoices(models.TextChoices):
     AMNESTY_LOCKERS = "amnesty_lockers", _("Amnesty Lockers")
     STANDARD_LOCKERS = "standard_lockers", _("Standard Lockers")
     SHARED_STORAGE = "shared_storage", _("Shared Storage")
+    PERSONAL_BIN = "personal_bin", _("Personal Storage Bin")
     NO_STORAGE = "no_storage", _("No Storage")
 
 
@@ -97,14 +100,15 @@ class ParkingChoices(models.TextChoices):
 # Entry Requirements
 @strawberry.enum
 class EntryRequirementChoices(models.TextChoices):
+    BACKGROUND = "background", _("Background Check")
+    HOMELESS_VERIFICATION = "homeless_verification", _("Homeless Verification/Observation")
     MEDICAID_OR_MEDICARE = "medicaid_or_medicare", _("Medicaid or Medicare")
     PHOTO_ID = "photo_id", _("Photo ID")
     REFERRAL = "referral", _("Referral")
     RESERVATION = "reservation", _("Reservation")
-    BACKGROUND = "background", _("Background Check")
-    HOMELESS_VERIFICATION = "homeless_verification", _("Homeless Verification/Observation")
-    WALK_UPS = "walk_ups", _("Walk-Ups")
     VEHICLE_REGISTRATION = "vehicle_registration", _("Vehicle Registration/Insurance")
+    WALK_UPS = "walk_ups", _("Walk-Ups")
+    IN_SPA_ONLY = "in_spa_only", _("In-SPA Only")
 
 
 # Ecosystem Information

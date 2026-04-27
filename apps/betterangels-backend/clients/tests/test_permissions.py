@@ -1,18 +1,9 @@
 from typing import Optional
+from unittest.mock import patch
 
 from accounts.tests.baker_recipes import permission_group_recipe
-from clients.enums import (
-    ClientDocumentNamespaceEnum,
-    GenderEnum,
-    HmisAgencyEnum,
-    LanguageEnum,
-)
-from clients.models import (
-    ClientContact,
-    ClientHouseholdMember,
-    ClientProfile,
-    HmisProfile,
-)
+from clients.enums import ClientDocumentNamespaceEnum, GenderEnum, HmisAgencyEnum, LanguageEnum
+from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile
 from clients.tests.utils import (
     ClientContactBaseTestCase,
     ClientHouseholdMemberBaseTestCase,
@@ -21,7 +12,6 @@ from clients.tests.utils import (
 )
 from common.models import Attachment
 from common.tests.utils import GraphQLBaseTestCase
-from django.test import override_settings
 from unittest_parametrize import parametrize
 
 
@@ -209,7 +199,6 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
                 self.assertGraphQLUnauthenticated(response)
 
 
-@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
 class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -380,6 +369,160 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
                     "message": "You don't have permission to access this app.",
                 },
             )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", True),  # CM in different org should succeed
+            ("non_case_manager_user", False),  # Non-CM user should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_generate_client_document_uploads_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+        with patch(
+            "clients.services.client_document.generate_s3_presigned_upload_urls",
+            return_value={
+                "uploads": [
+                    {
+                        "ref_id": "ref-1",
+                        "key": "media/attachments/test.pdf",
+                        "url": "https://s3.example.com/upload",
+                        "fields": {"Policy": "test"},
+                    }
+                ]
+            },
+        ), patch("clients.services.client_document.create_upload_token", return_value="mock-token"):
+            response = self._generate_client_document_uploads_fixture(
+                self.client_profile_1["id"],
+                [{"refId": "ref-1", "filename": "test.pdf", "contentType": "application/pdf"}],
+            )
+
+        if user_label is None:
+            self.assertGraphQLUnauthenticated(response)
+        else:
+            uploads = response.get("data", {}).get("generateClientDocumentUploads", {}).get("uploads")
+            if should_succeed:
+                self.assertIsNotNone(uploads)
+            else:
+                self.assertIsNone(uploads)
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", True),  # CM in different org should succeed
+            ("non_case_manager_user", False),  # Non-CM user should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_resolve_client_document_uploads_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+        with patch("clients.services.client_document.validate_upload_token", return_value=True), patch(
+            "clients.services.client_document.assign_object_permissions"
+        ), patch("clients.services.client_document.s3_key_exists", return_value=True), patch(
+            "clients.services.client_document.strip_storage_location",
+            side_effect=lambda key: key.removeprefix("media/"),
+        ):
+            response = self._resolve_client_document_uploads_fixture(
+                self.client_profile_1["id"],
+                [
+                    {
+                        "presignedKey": "media/attachments/test.pdf",
+                        "uploadToken": "mock-token",
+                        "filename": "test.pdf",
+                        "contentType": "application/pdf",
+                        "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+                    }
+                ],
+            )
+
+        if user_label is None:
+            self.assertGraphQLUnauthenticated(response)
+        else:
+            documents = response.get("data", {}).get("resolveClientDocumentUploads", {}).get("documents")
+            if should_succeed:
+                self.assertIsNotNone(documents)
+            else:
+                self.assertIsNone(documents)
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", True),  # CM in different org should succeed
+            ("non_case_manager_user", False),  # Non-CM user should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_generate_client_profile_photo_upload_permission(
+        self, user_label: Optional[str], should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+        with patch(
+            "clients.services.client_profile_photo.generate_s3_presigned_upload_urls",
+            return_value={
+                "uploads": [
+                    {
+                        "ref_id": "ref-photo",
+                        "key": "media/client_profile_photos/test.jpg",
+                        "url": "https://s3.example.com/upload",
+                        "fields": {"Policy": "test"},
+                    }
+                ]
+            },
+        ), patch("clients.services.client_profile_photo.create_upload_token", return_value="mock-token"):
+            response = self._generate_client_profile_photo_upload_fixture(
+                client_profile_id=self.client_profile_1["id"],
+                ref_id="ref-photo",
+                filename="test.jpg",
+                content_type="image/jpeg",
+            )
+
+        if user_label is None:
+            self.assertGraphQLUnauthenticated(response)
+        else:
+            presigned_key = response.get("data", {}).get("generateClientProfilePhotoUpload", {}).get("presignedKey")
+            if should_succeed:
+                self.assertIsNotNone(presigned_key)
+            else:
+                self.assertIsNone(presigned_key)
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", True),  # CM in different org should succeed
+            ("non_case_manager_user", False),  # Non-CM user should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_resolve_client_profile_photo_upload_permission(
+        self, user_label: Optional[str], should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+        with patch("clients.services.client_profile_photo.validate_upload_token", return_value=True), patch(
+            "clients.services.client_profile_photo.s3_key_exists", return_value=True
+        ):
+            response = self._resolve_client_profile_photo_upload_fixture(
+                client_profile_id=self.client_profile_1["id"],
+                presigned_key="media/client_profile_photos/test.jpg",
+                upload_token="mock-token",
+            )
+
+        if user_label is None:
+            self.assertGraphQLUnauthenticated(response)
+        else:
+            profile_id = response.get("data", {}).get("resolveClientProfilePhotoUpload", {}).get("id")
+            if should_succeed:
+                self.assertIsNotNone(profile_id)
+            else:
+                self.assertIsNone(profile_id)
 
 
 class ClientContactPermissionTestCase(ClientContactBaseTestCase):

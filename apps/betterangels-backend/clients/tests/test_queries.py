@@ -31,10 +31,7 @@ from clients.tests.utils import (
     HmisProfileBaseTestCase,
     SocialMediaProfileBaseTestCase,
 )
-from clients.types import (
-    CLIENT_DOCUMENT_NAMESPACE_GROUPS,
-    MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS,
-)
+from clients.types import CLIENT_DOCUMENT_NAMESPACE_GROUPS, MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
 from common.enums import ImagePresetEnum
 from common.imgproxy import IMGPROXY_SWITCH
 from django.contrib.contenttypes.models import ContentType
@@ -125,6 +122,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "residenceGeolocation": self.residence_geolocation,
             "socialMediaProfiles": self.client_profile_1["socialMediaProfiles"],
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+            "unhousedStartDate": "2026-01-01",
             "veteranStatus": VeteranStatusEnum.NO.name,
         }
 
@@ -175,7 +173,9 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                     results {{
                         id
                         profilePhoto {{
-                            url (preset: {ImagePresetEnum.MD.name})
+                            urlOriginal: url(preset: {ImagePresetEnum.ORIGINAL.name})
+                            urlMedium: url(preset: {ImagePresetEnum.MD.name})
+                            urlLarge: url(preset: {ImagePresetEnum.LG.name})
                         }}
                     }}
                 }}
@@ -191,8 +191,12 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         client_profiles_data = response["data"]["clientProfiles"]
-        self.assertIn("localhost:8080/", client_profiles_data["results"][0]["profilePhoto"]["url"])
-        self.assertIn("localhost:8080/", client_profiles_data["results"][1]["profilePhoto"]["url"])
+        self.assertIn("localhost:8080/", client_profiles_data["results"][0]["profilePhoto"]["urlOriginal"])
+        self.assertIn("localhost:8080/", client_profiles_data["results"][0]["profilePhoto"]["urlMedium"])
+        self.assertIn("localhost:8080/", client_profiles_data["results"][0]["profilePhoto"]["urlLarge"])
+        self.assertIn("localhost:8080/", client_profiles_data["results"][1]["profilePhoto"]["urlOriginal"])
+        self.assertIn("localhost:8080/", client_profiles_data["results"][1]["profilePhoto"]["urlMedium"])
+        self.assertIn("localhost:8080/", client_profiles_data["results"][1]["profilePhoto"]["urlLarge"])
 
     @parametrize(
         ("sort_order, expected_first_name"),
@@ -648,7 +652,6 @@ class SocialMediaProfileQueryTestCase(SocialMediaProfileBaseTestCase):
         self.assertCountEqual(results, [self.social_media_profile_1, self.social_media_profile_2])
 
 
-@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
 class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()

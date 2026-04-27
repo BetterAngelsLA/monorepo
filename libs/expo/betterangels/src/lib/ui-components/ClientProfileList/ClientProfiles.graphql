@@ -21,10 +21,16 @@ query ClientProfiles(
       firstName
       heightInInches
       lastName
+      livingSituation
       mailingAddress
+      preferredLanguage
       middleName
       nickname
       residenceAddress
+      unhousedStartDate
+      displayPronouns
+      importantNotes
+      physicalDescription
       hmisProfiles {
         id
         agency
@@ -33,6 +39,19 @@ query ClientProfiles(
       profilePhoto {
         name
         url
+      }
+      contacts {
+        id
+        name
+        relationshipToClient
+        phoneNumber
+        email
+        mailingAddress
+      }
+      phoneNumbers {
+        id
+        isPrimary
+        number
       }
     }
   }

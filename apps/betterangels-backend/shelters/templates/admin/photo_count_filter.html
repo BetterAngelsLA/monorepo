@@ -1,0 +1,33 @@
+{% load i18n %}
+<style>
+.photo-count-filter { padding: 5px 10px; }
+.photo-count-filter .filter-row { display: flex; gap: 4px; margin-bottom: 4px; align-items: center; }
+.photo-count-filter .filter-row label { font-size: 0.8em; min-width: 28px; }
+.photo-count-filter input[type="number"] { width: 50px; padding: 3px; box-sizing: border-box; }
+.photo-count-filter .filter-group-label { font-weight: bold; font-size: 0.85em; margin: 6px 0 2px; }
+.photo-count-filter .filter-group-label:first-child { margin-top: 0; }
+.photo-count-filter .filter-submit { margin-top: 8px; }
+.photo-count-filter input[type="submit"] { width: 100%; padding: 4px; }
+</style>
+<h3>{% blocktrans with filter_title=title %} By {{ filter_title }} {% endblocktrans %}</h3>
+{% for choice in choices %}
+<form method="get" class="photo-count-filter">
+  {% for key, value in request.GET.items %}
+    {% if key not in choice.all_params %}
+      <input type="hidden" name="{{ key }}" value="{{ value }}">
+    {% endif %}
+  {% endfor %}
+  {% for field in choice.fields %}
+    <div class="filter-group-label">{{ field.label }}:</div>
+    <div class="filter-row">
+      <label>Min</label>
+      <input type="number" name="{{ field.min_param }}" value="{{ field.min_value }}" min="0">
+      <label>Max</label>
+      <input type="number" name="{{ field.max_param }}" value="{{ field.max_value }}" min="0">
+    </div>
+  {% endfor %}
+  <div class="filter-submit">
+    <input type="submit" value="{% trans "Apply" %}">
+  </div>
+</form>
+{% endfor %}

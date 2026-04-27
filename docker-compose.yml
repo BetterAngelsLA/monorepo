@@ -25,8 +25,36 @@ services:
   valkey:
     image: valkey/valkey:8.0.2
 
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    ports:
+      - '127.0.0.1:9000:9000' # S3 API: IPv4-only so Android Emulator's adb reverse works
+      - '127.0.0.1:9001:9001' # Admin console
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=password
+    command: server /data --console-address ':9001'
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio-setup:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 admin password &&
+      mc mb local/betterangels-local --ignore-existing;
+      "
+
   imgproxy:
-    image: ghcr.io/imgproxy/imgproxy:v3.30.1-arm64
+    image: ghcr.io/imgproxy/imgproxy:v3.30.1
     ports:
       - '127.0.0.1:8080:8080' # Bind host port to IPv4 only so curl localhost hits imgproxy
     env_file:
@@ -35,8 +63,13 @@ services:
       # Listen on all interfaces so the host can reach the container (default can be 127.0.0.1)
       - IMGPROXY_BIND=0.0.0.0:8080
       - IMGPROXY_ENABLE_DEBUG_HEADERS=true
+      # Allow imgproxy to fetch images from MinIO via s3:// URLs
+      - IMGPROXY_USE_S3=true
+      - IMGPROXY_S3_ENDPOINT=http://minio:9000
+      - IMGPROXY_S3_REGION=us-west-2
 
 volumes:
   node_modules:
   pgdata:
+  minio_data:
   venv:

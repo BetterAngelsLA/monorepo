@@ -1,4 +1,47 @@
+# Maestro E2E tests for betterangels.
+#
+# This workflow runs device-based Maestro tests.
+# GitHub Actions handles orchestration (fingerprint computation, build triggering,
+# update publishing) where GitHub Secrets and NX monorepo tooling are available.
+#
+# get-build jobs with wait_for_in_progress gate the Maestro tests,
+# ensuring builds have finished before tests begin.
+#
+# GitHub commit status is posted at the start (pending) and end (success/failure)
+# using metadata from .env written by eas-e2e.ts.
+# If GITHUB_STATUS_TOKEN (EAS secret, PAT with repo:status scope) is not set,
+# status posting is skipped — tests still run.
+#
+# Triggered via: eas workflow:run (from GitHub Actions)
 name: e2e-test
+
+on:
+  workflow_dispatch:
+    inputs:
+      android_build_id:
+        type: string
+        required: true
+        description: 'EAS Build ID for Android'
+      ios_build_id:
+        type: string
+        required: true
+        description: 'EAS Build ID for iOS'
+      update_group_id:
+        type: string
+        required: true
+        description: 'EAS Update group ID'
+      runtime_version:
+        type: string
+        required: true
+        description: 'Runtime version (fingerprint hash) for the builds'
+      android_profile:
+        type: string
+        required: true
+        description: 'EAS build profile used for Android'
+      ios_profile:
+        type: string
+        required: true
+        description: 'EAS build profile used for iOS'
 
 jobs:
   set_pending_github_status:
@@ -6,9 +49,8 @@ jobs:
       EAS_WORKFLOW_URL: ${{ workflow.url }}
     steps:
       - id: set_pending_status
-
         run: |
-          set -euo pipefail
+          set -uo pipefail
 
           WORK_DIR="/home/expo/workingdir/temporary-custom-build/apps/betterangels"
           GITHUB_REPOSITORY="$(grep '^GITHUB_REPOSITORY=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
@@ -20,12 +62,12 @@ jobs:
           GITHUB_STATUS_TOKEN="${GITHUB_STATUS_TOKEN:-$(grep '^GITHUB_STATUS_TOKEN=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)}"
 
           if [ -z "${GITHUB_REPOSITORY:-}" ] || [ -z "${GITHUB_STATUS_SHA:-}" ] || [ -z "${GITHUB_STATUS_CONTEXT:-}" ]; then
-            echo "Missing GITHUB_REPOSITORY / GITHUB_STATUS_SHA / GITHUB_STATUS_CONTEXT; cannot post commit status."
-            exit 1
+            echo "⚠️  Missing GITHUB_REPOSITORY / GITHUB_STATUS_SHA / GITHUB_STATUS_CONTEXT; skipping commit status."
+            exit 0
           fi
           if [ -z "${GITHUB_STATUS_TOKEN:-}" ]; then
-            echo "Missing GITHUB_STATUS_TOKEN; cannot post commit status."
-            exit 1
+            echo "⚠️  Missing GITHUB_STATUS_TOKEN; skipping commit status."
+            exit 0
           fi
 
           TARGET_URL=""
@@ -49,9 +91,6 @@ jobs:
           PY
           )"
 
-          echo "TARGET_URL=${TARGET_URL}"
-          echo "BODY=${BODY}"
-
           curl --fail-with-body -sS \
             -X POST \
             -H "Accept: application/vnd.github+json" \
@@ -59,63 +98,49 @@ jobs:
             -H "Authorization: Bearer ${GITHUB_STATUS_TOKEN}" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_STATUS_SHA}" \
             -d "${BODY}" \
-            >/dev/null
+            >/dev/null \
+            || { echo "⚠️  Failed to post pending status (curl error); continuing."; exit 0; }
 
           echo "Posted pending status ${GITHUB_STATUS_CONTEXT} for ${GITHUB_REPOSITORY}@${GITHUB_STATUS_SHA}"
 
-  get_vars:
-    outputs:
-      runtime_version: ${{ steps.set_vars.outputs.runtime_version }}
-      group_id: ${{ steps.set_vars.outputs.group_id }}
-      project_id: ${{ steps.set_vars.outputs.project_id }}
-    steps:
-      - id: set_vars
-        run: |
-          WORK_DIR="/home/expo/workingdir/temporary-custom-build/apps/betterangels"
-          GROUP_ID=$(grep '^GROUP_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
-          PROJECT_ID=$(grep '^PROJECT_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
-          RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' ${WORK_DIR}/.env | cut -d '=' -f2-)
-          echo "GROUP_ID=${GROUP_ID}"
-          echo "PROJECT_ID=${PROJECT_ID}"
-          echo "RUNTIME_VERSION=${RUNTIME_VERSION}"
-          set-output group_id "$GROUP_ID"
-          set-output project_id "$PROJECT_ID"
-          set-output runtime_version "$RUNTIME_VERSION"
-
-  get_android_build:
-    needs: [get_vars]
+  wait_android_build:
+    needs: [set_pending_github_status]
     type: get-build
     params:
-      runtime_version: ${{ needs.get_vars.outputs.runtime_version }}
       platform: android
+      profile: ${{ inputs.android_profile }}
+      runtime_version: ${{ inputs.runtime_version }}
+      wait_for_in_progress: true
 
-  get_ios_build:
-    needs: [get_vars]
+  wait_ios_build:
+    needs: [set_pending_github_status]
     type: get-build
     params:
-      runtime_version: ${{ needs.get_vars.outputs.runtime_version }}
       platform: ios
+      profile: ${{ inputs.ios_profile }}
+      runtime_version: ${{ inputs.runtime_version }}
+      wait_for_in_progress: true
 
   maestro_android_test:
-    needs: [get_vars, get_android_build]
+    needs: [wait_android_build]
     type: maestro
     env:
-      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/${{ needs.get_vars.outputs.project_id }}/group/${{ needs.get_vars.outputs.group_id }}?platform=android%26disableOnboarding%3D1
+      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=android%26disableOnboarding%3D1
     params:
-      build_id: ${{ needs.get_android_build.outputs.build_id }}
+      build_id: ${{ inputs.android_build_id }}
       flow_path: ['.maestro/tests/landing.yml']
 
   maestro_ios_test:
-    needs: [get_vars, get_ios_build]
+    needs: [wait_ios_build]
     type: maestro
     env:
-      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/${{ needs.get_vars.outputs.project_id }}/group/${{ needs.get_vars.outputs.group_id }}?platform=ios%26disableOnboarding%3D1
+      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=ios%26disableOnboarding%3D1
     params:
-      build_id: ${{ needs.get_ios_build.outputs.build_id }}
+      build_id: ${{ inputs.ios_build_id }}
       flow_path: ['.maestro/tests/landing.yml']
 
   set_final_github_status:
-    after: [maestro_android_test, maestro_ios_test]
+    after: [wait_android_build, wait_ios_build, maestro_android_test, maestro_ios_test]
     env:
       IOS_STATUS: ${{ after.maestro_ios_test.status }}
       ANDROID_STATUS: ${{ after.maestro_android_test.status }}
@@ -123,7 +148,7 @@ jobs:
     steps:
       - id: set_final_status
         run: |
-          set -euo pipefail
+          set -uo pipefail
 
           WORK_DIR="/home/expo/workingdir/temporary-custom-build/apps/betterangels"
           GITHUB_REPOSITORY="$(grep '^GITHUB_REPOSITORY=' ${WORK_DIR}/.env | cut -d '=' -f2- || true)"
@@ -142,12 +167,12 @@ jobs:
           echo "IOS_STATUS=${IOS_STATUS:-}"
 
           if [ -z "${GITHUB_REPOSITORY:-}" ] || [ -z "${GITHUB_STATUS_SHA:-}" ] || [ -z "${GITHUB_STATUS_CONTEXT:-}" ]; then
-            echo "Missing GITHUB_REPOSITORY / GITHUB_STATUS_SHA / GITHUB_STATUS_CONTEXT; cannot post commit status."
-            exit 1
+            echo "⚠️  Missing GITHUB_REPOSITORY / GITHUB_STATUS_SHA / GITHUB_STATUS_CONTEXT; skipping commit status."
+            exit 0
           fi
           if [ -z "${GITHUB_STATUS_TOKEN:-}" ]; then
-            echo "Missing GITHUB_STATUS_TOKEN; cannot post commit status."
-            exit 1
+            echo "⚠️  Missing GITHUB_STATUS_TOKEN; skipping commit status."
+            exit 0
           fi
 
           if [ "${ANDROID_STATUS}" = "success" ] && [ "${IOS_STATUS}" = "success" ]; then
@@ -160,7 +185,7 @@ jobs:
 
           TARGET_URL=""
           if [ -n "${EAS_ACCOUNT:-}" ] && [ -n "${EAS_PROJECT_SLUG:-}" ]; then
-             TARGET_URL="${EAS_WORKFLOW_URL}"
+            TARGET_URL="${EAS_WORKFLOW_URL}"
           fi
 
           export STATE DESC GITHUB_STATUS_CONTEXT TARGET_URL
@@ -185,6 +210,7 @@ jobs:
             -H "Authorization: Bearer ${GITHUB_STATUS_TOKEN}" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_STATUS_SHA}" \
             -d "${BODY}" \
-            >/dev/null
+            >/dev/null \
+            || { echo "⚠️  Failed to post final status (curl error); continuing."; exit 0; }
 
           echo "Posted ${STATE} status ${GITHUB_STATUS_CONTEXT} for ${GITHUB_REPOSITORY}@${GITHUB_STATUS_SHA}"

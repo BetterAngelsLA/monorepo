@@ -13,21 +13,34 @@ from django.conf import settings
 IMGPROXY_SWITCH = "imgproxy_enabled"
 IMGPROXY_PRESETS: dict[ImagePresetEnum, str] = {
     ImagePresetEnum.ORIGINAL: "rs:force:0:0",
-    ImagePresetEnum.SM: "rs:fill:100:100/f:jpg",
-    ImagePresetEnum.MD: "rs:fill:400:400/f:jpg",
-    ImagePresetEnum.LG: "rs:fill:800:800/f:jpg",
+    ImagePresetEnum.SM: "rs:fill:100:100",
+    ImagePresetEnum.MD: "rs:fill:400:400",
+    ImagePresetEnum.LG: "rs:fill:800:800",
 }
+WEB_IMAGE_EXTENSIONS = frozenset[str]({"jpg", "jpeg", "png", "gif", "webp"})
+
+
+def _handle_format_conversion(ops: str, source_url: str) -> str:
+    ops_specifies_format = any(part.startswith("f:") for part in ops.split("/"))
+    if ops_specifies_format:
+        return ops
+
+    ext = source_url.split(".")[-1].lower()
+    if ext in WEB_IMAGE_EXTENSIONS:
+        return ops
+
+    return f"{ops}/f:jpg"
 
 
 def _resolve_imgproxy_ops(
     preset: Optional[ImagePresetEnum],
     processing_options: Optional[str],
-) -> Optional[str]:
-    if processing_options:
-        return processing_options
-    if preset:
-        return IMGPROXY_PRESETS.get(preset)
-    return None
+    source_url: str,
+) -> str:
+    resolved = processing_options or (IMGPROXY_PRESETS.get(preset) if preset else None)
+    ops = resolved or IMGPROXY_PRESETS[ImagePresetEnum.ORIGINAL]
+
+    return _handle_format_conversion(ops, source_url)
 
 
 def _get_image_source_url(file: object) -> Optional[str]:
@@ -42,6 +55,15 @@ def _get_image_source_url(file: object) -> Optional[str]:
     if not storage or not name:
         return None
 
+    # When the storage backend exposes an S3 bucket, use an s3:// URL so imgproxy
+    # fetches directly from the bucket (works for both production S3 and local MinIO).
+    try:
+        bucket = storage.bucket_name
+        key = f"{storage.location}/{name}" if storage.location else name
+        return f"s3://{bucket}/{key}"
+    except AttributeError:
+        pass
+
     if settings.IS_LOCAL_DEV:
         if url := getattr(file, "url", None):
             # file.url builds an absolute URL using MEDIA_URL. Locally, this points at localhost:8000.
@@ -49,14 +71,7 @@ def _get_image_source_url(file: object) -> Optional[str]:
             # localhost, so we swap the internal service hostname (e.g. "better-angels:8000").
             return cast(str, url.replace(settings.MEDIA_URL, settings.IMGPROXY_LOCAL_MEDIA_URL))
 
-        return None
-
-    try:
-        key = f"{storage.location}/{name}" if storage.location else name
-        return f"s3://{storage.bucket_name}/{key}"
-
-    except AttributeError:
-        return None
+    return None
 
 
 def _encode_source_url(url: str) -> str:
@@ -104,13 +119,11 @@ def build_imgproxy_url(
         The complete imgproxy URL, or None if the URL cannot be built.
     """
 
-    ops = _resolve_imgproxy_ops(preset, processing_options)
-    if not ops:
-        return None
-
     source_url = _get_image_source_url(file)
     if not source_url:
         return None
+
+    ops = _resolve_imgproxy_ops(preset, processing_options, source_url)
 
     signed_imgproxy_path = _build_signed_imgproxy_path(source_url, ops)
 

@@ -318,6 +318,7 @@ class ClientProfileBaseType:
     residence_address: auto
     residence_geolocation: auto
     spoken_languages: Optional[List[LanguageEnum]]
+    unhoused_start_date: auto
     veteran_status: auto
 
 
@@ -412,3 +413,51 @@ class ImportClientProfileInput:
 class UpdateClientDocumentInput:
     id: ID
     original_filename: auto
+
+
+@strawberry.input
+class ClientDocumentUploadsInputItem:
+    ref_id: str
+    filename: str
+    content_type: str
+
+
+@strawberry.input
+class GenerateClientDocumentUploadsInput:
+    client_profile_id: ID
+    uploads: list[ClientDocumentUploadsInputItem]
+
+
+@strawberry.input
+class ClientDocumentFromUploadsInput:
+    presigned_key: str
+    upload_token: str
+    filename: str
+    content_type: str
+    namespace: ClientDocumentNamespaceEnum
+
+
+@strawberry.input
+class ResolveClientDocumentUploadsInput:
+    client_profile_id: ID
+    documents: list[ClientDocumentFromUploadsInput]
+
+
+@strawberry.type
+class ClientDocumentUploadsType:
+    documents: list[ClientDocumentType]
+
+
+@strawberry.input
+class GenerateClientProfilePhotoUploadInput:
+    client_profile_id: ID
+    ref_id: str
+    filename: str
+    content_type: str
+
+
+@strawberry.input
+class ResolveClientProfilePhotoUploadInput:
+    client_profile_id: ID
+    presigned_key: str
+    upload_token: str

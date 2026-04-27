@@ -1,19 +1,26 @@
-import { Control, Controller, RegisterOptions } from 'react-hook-form';
+import {
+  Control,
+  Controller,
+  FieldValues,
+  Path,
+  RegisterOptions,
+} from 'react-hook-form';
 import { IInputProps, Input } from '../Input';
 
-type TRules = Omit<
-  RegisterOptions,
-  'disabled' | 'valueAsNumber' | 'valueAsDate' | 'setValueAs'
->;
-
-interface IControlledInputProps extends IInputProps {
-  name: string;
-  control?: Control<any>;
-  rules?: TRules;
+interface IControlledInputProps<T extends FieldValues = FieldValues>
+  extends IInputProps {
+  name: Path<T>;
+  control?: Control<T>;
+  rules?: Omit<
+    RegisterOptions<T, Path<T>>,
+    'disabled' | 'valueAsNumber' | 'valueAsDate' | 'setValueAs'
+  >;
   onBlur?: () => void;
 }
 
-export function ControlledInput(props: IControlledInputProps) {
+export function ControlledInput<T extends FieldValues = FieldValues>(
+  props: IControlledInputProps<T>
+) {
   const { rules, name, control, ...rest } = props;
 
   const handleBlur = (onBlur: () => void) => {
