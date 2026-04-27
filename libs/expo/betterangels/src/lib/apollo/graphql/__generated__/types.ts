@@ -163,20 +163,6 @@ export type AuthResponse = {
   status_code: Scalars['String']['output'];
 };
 
-export type BedFilter = {
-  AND?: InputMaybe<BedFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<BedFilter>;
-  OR?: InputMaybe<BedFilter>;
-  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
-  bedType?: InputMaybe<Array<BedTypeChoices>>;
-  demographics?: InputMaybe<Array<DemographicChoices>>;
-  funders?: InputMaybe<Array<FunderChoices>>;
-  maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
-  medicalNeeds?: InputMaybe<Array<MedicalNeedChoices>>;
-  pets?: InputMaybe<Array<PetChoices>>;
-  shelterId?: InputMaybe<Scalars['ID']['input']>;
-  status?: InputMaybe<Array<BedStatusChoices>>;
 export type AuthorizedPresignedS3UploadType = {
   __typename?: 'AuthorizedPresignedS3UploadType';
   fields: Scalars['JSON']['output'];
@@ -189,6 +175,16 @@ export type AuthorizedPresignedS3UploadType = {
 export type AuthorizedPresignedS3UploadsType = {
   __typename?: 'AuthorizedPresignedS3UploadsType';
   uploads: Array<AuthorizedPresignedS3UploadType>;
+};
+
+export type BedFilter = {
+  AND?: InputMaybe<BedFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<BedFilter>;
+  OR?: InputMaybe<BedFilter>;
+  bedType?: InputMaybe<Array<BedTypeChoices>>;
+  medicalNeeds?: InputMaybe<Array<MedicalNeedChoices>>;
+  status?: InputMaybe<Array<BedStatusChoices>>;
 };
 
 export enum BedStatusChoices {
@@ -234,6 +230,8 @@ export type BedTypeOffsetPaginated = {
   results: Array<BedType>;
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
+};
+
 export type BedsByStatusType = {
   __typename?: 'BedsByStatusType';
   available: Scalars['Int']['output'];
@@ -2502,8 +2500,10 @@ export type RoomFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<RoomFilter>;
   OR?: InputMaybe<RoomFilter>;
+  amenities?: InputMaybe<Scalars['String']['input']>;
+  medicalRespite?: InputMaybe<Scalars['Boolean']['input']>;
+  numberOfBeds?: InputMaybe<Scalars['Int']['input']>;
   roomType?: InputMaybe<Array<RoomStyleChoices>>;
-  shelterId?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Array<RoomStatusChoices>>;
 };
 
@@ -2550,6 +2550,11 @@ export type RoomType = {
   shelter: ShelterType;
   status?: Maybe<RoomStatusChoices>;
   storage: Scalars['Boolean']['output'];
+};
+
+
+export type RoomTypeBedsArgs = {
+  filters?: InputMaybe<BedFilter>;
 };
 
 export type RoomTypeOffsetPaginated = {
