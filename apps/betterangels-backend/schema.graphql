@@ -123,6 +123,7 @@ type AdminShelterType {
   supervisorialDistrict: Int
   totalBeds: Int
   updatedAt: DateTime!
+  vaccinations: [VaccinationType!]!
   visitorsAllowed: Boolean
   website: String
   ExteriorPhotos: [ShelterPhotoType!]
@@ -721,6 +722,7 @@ input CreateShelterInput {
   parking: [ParkingChoices!]!
   entryRequirements: [EntryRequirementChoices!]!
   referralRequirement: [ReferralRequirementChoices!]!
+  vaccinations: [VaccinationChoices!]!
   exitPolicy: [ExitPolicyChoices!]!
   cities: [String!]!
   spa: [SPAChoices!]!
@@ -2249,6 +2251,7 @@ type ShelterType {
   supervisorialDistrict: Int
   totalBeds: Int
   updatedAt: DateTime!
+  vaccinations: [VaccinationType!]!
   visitorsAllowed: Boolean
   website: String
   ExteriorPhotos: [ShelterPhotoType!]
@@ -2611,6 +2614,16 @@ type UserType {
   isOutreachAuthorized: Boolean
   username: String
   isHmisUser: Boolean
+}
+
+enum VaccinationChoices {
+  TB
+  FLU
+  COVID_19
+}
+
+type VaccinationType {
+  name: VaccinationChoices
 }
 
 enum VeteranStatusEnum {

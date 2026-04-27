@@ -33,6 +33,7 @@ from shelters.types.lookups import (
     SPAType,
     SpecialSituationRestrictionType,
     StorageType,
+    VaccinationType,
 )
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
@@ -116,6 +117,7 @@ class ShelterTypeMixin:
     supervisorial_district: auto
     total_beds: auto
     updated_at: auto
+    vaccinations: List[VaccinationType]
     visitors_allowed: auto
     website: auto
 
