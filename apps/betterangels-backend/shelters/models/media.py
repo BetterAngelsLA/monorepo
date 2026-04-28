@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.validators import RegexValidator
 from django.db import models
+from django_choices_field import TextChoicesField
 
 from .shelter import Shelter
 
@@ -60,9 +61,8 @@ MEDIA_TYPE_VALIDATORS: dict[str, RegexValidator] = {
 class MediaLink(BaseModel):
     url = models.URLField(max_length=255)
     title = models.CharField(max_length=255, blank=True)
-    media_type = models.CharField(
-        max_length=50,
-        choices=MediaLinkTypeChoices.choices,
+    media_type = TextChoicesField(
+        choices_enum=MediaLinkTypeChoices,
         default=MediaLinkTypeChoices.YOUTUBE,
     )
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="media_links")
