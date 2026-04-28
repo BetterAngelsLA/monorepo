@@ -1435,7 +1435,11 @@ type MediaLinkType {
   id: ID!
   url: String!
   title: String!
-  mediaType: String!
+  mediaType: MediaLinkTypeChoices!
+}
+
+enum MediaLinkTypeChoices {
+  YOUTUBE
 }
 
 enum MedicalNeedChoices {

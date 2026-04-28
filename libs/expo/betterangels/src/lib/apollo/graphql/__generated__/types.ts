@@ -1453,10 +1453,14 @@ export type MaxStayInput = {
 export type MediaLinkType = {
   __typename?: 'MediaLinkType';
   id: Scalars['ID']['output'];
-  mediaType: Scalars['String']['output'];
+  mediaType: MediaLinkTypeChoices;
   title: Scalars['String']['output'];
   url: Scalars['String']['output'];
 };
+
+export enum MediaLinkTypeChoices {
+  Youtube = 'YOUTUBE'
+}
 
 export enum MedicalNeedChoices {
   Dialysis = 'DIALYSIS',

@@ -9,6 +9,7 @@ from django.core.files.storage import default_storage
 from django.core.validators import RegexValidator
 from django.db import models
 from django_choices_field import TextChoicesField
+from shelters.enums import MediaLinkTypeChoices
 
 from .shelter import Shelter
 
@@ -42,10 +43,6 @@ class ExteriorPhoto(BaseModel):
 class Video(BaseModel):
     file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="videos")
-
-
-class MediaLinkTypeChoices(models.TextChoices):
-    YOUTUBE = "youtube", "YouTube"
 
 
 YOUTUBE_URL_VALIDATOR = RegexValidator(

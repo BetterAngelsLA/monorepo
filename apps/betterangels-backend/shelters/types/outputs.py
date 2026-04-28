@@ -59,7 +59,7 @@ class MediaLinkType:
     id: ID
     url: str
     title: str
-    media_type: str
+    media_type: auto
 
 
 @strawberry.type
