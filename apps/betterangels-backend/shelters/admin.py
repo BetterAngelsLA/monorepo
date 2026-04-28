@@ -39,6 +39,7 @@ from shelters.permissions import ShelterFieldPermissions
 
 from .enums import (
     AccessibilityChoices,
+    DayOfWeekChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
@@ -83,6 +84,7 @@ from .models import (
     Video,
     get_fields_with_other_option,
 )
+from .widgets import MultiDayCheckboxWidget
 
 T = TypeVar("T", bound=models.Model)
 logger = logging.getLogger(__name__)
@@ -474,6 +476,13 @@ class MediaLinkInline(admin.TabularInline):
 
 
 class ScheduleForm(forms.ModelForm):
+    days = forms.MultipleChoiceField(
+        choices=DayOfWeekChoices.choices,
+        required=False,
+        label="Days",
+        help_text="Select one or more days. Used for new entries only.",
+    )
+
     class Meta:
         model = Schedule
         fields = "__all__"
@@ -491,6 +500,21 @@ class ScheduleForm(forms.ModelForm):
             ),
         }
 
+    class Media:
+        css = {"all": ("shelters/admin/schedule_editor.css",)}
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            # Existing entry: keep the normal day dropdown, hide days checkboxes
+            if "days" in self.fields:
+                self.fields["days"].widget = forms.HiddenInput()
+        else:
+            # New entry: use multi-day checkboxes, hide the single day dropdown
+            self.fields["days"].widget = MultiDayCheckboxWidget()
+            self.fields["day"].widget = forms.HiddenInput()
+            self.fields["day"].required = False
+
 
 class ScheduleInline(admin.StackedInline):
     model = Schedule
@@ -507,6 +531,7 @@ class ScheduleInline(admin.StackedInline):
                 "fields": (
                     "is_exception",
                     "schedule_type",
+                    "days",
                     "day",
                     ("start_time", "end_time"),
                     ("start_date", "end_date"),
@@ -1181,6 +1206,58 @@ class ShelterAdmin(ImportExportModelAdmin):
             exterior_photo_count=Coalesce(exterior_count, Value(0)),
             total_photo_count=F("interior_photo_count") + F("exterior_photo_count"),
         )
+
+    def save_formset(
+        self,
+        request: HttpRequest,
+        form: ShelterForm,
+        formset: BaseFormSet,
+        change: bool,
+    ) -> None:
+        """Fan out multi-day schedule entries into individual Schedule rows."""
+        if not isinstance(formset, forms.models.BaseInlineFormSet) or formset.model is not Schedule:
+            super().save_formset(request, form, formset, change)
+            return
+
+        instances = formset.save(commit=False)
+
+        # Handle deletions
+        for obj in formset.deleted_objects:
+            obj.delete()
+
+        # Build a map from form instance to cleaned_data for new forms
+        new_form_data: dict[int, list[str]] = {}
+        for form_instance in formset.forms:
+            if form_instance in formset.deleted_forms:
+                continue
+            if not form_instance.cleaned_data:
+                continue
+            instance = form_instance.instance
+            days = form_instance.cleaned_data.get("days", [])
+            if days and not instance.pk:
+                new_form_data[id(instance)] = days
+
+        for instance in instances:
+            days = new_form_data.get(id(instance), [])
+            if days:
+                # New entry with multiple days selected: create one row per day
+                for day_val in days:
+                    Schedule.objects.create(
+                        shelter=instance.shelter,
+                        schedule_type=instance.schedule_type,
+                        day=DayOfWeekChoices(day_val),
+                        start_time=instance.start_time,
+                        end_time=instance.end_time,
+                        start_date=instance.start_date,
+                        end_date=instance.end_date,
+                        condition=instance.condition,
+                        demographic=instance.demographic,
+                        is_exception=instance.is_exception,
+                    )
+            else:
+                instance.save()
+
+        formset.save_m2m()
 
     def save_related(
         self,

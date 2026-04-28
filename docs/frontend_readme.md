@@ -135,18 +135,23 @@ Run the following on the host machine—**not in the container**:
 If you're running the Shelter web app (`yarn shelter`) in WSL and want to test it on your phone over your local network, you'll need to configure port forwarding since WSL2 uses a virtual network isolated from your physical network adapters.
 
 1. **Find your Windows machine's IP address** (not the WSL IP). Run in **Windows PowerShell**:
+
    ```powershell
    ipconfig
    ```
+
    Look for your WiFi adapter's IPv4 address (typically `192.168.x.x`)
 
 2. **Configure port forwarding from Windows to WSL**. Run in **PowerShell (as Administrator)**:
+
    ```powershell
    netsh interface portproxy add v4tov4 listenport=8083 listenaddress=0.0.0.0 connectport=8083 connectaddress=<WSL_IP>
    ```
+
    Replace `<WSL_IP>` with your WSL IP address (find it by running `wsl hostname -I` in Windows)
 
 3. **Allow the port through Windows Firewall**. Run in **PowerShell (as Administrator)**:
+
    ```powershell
    New-NetFirewallRule -DisplayName "Vite Dev Server" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8083
    ```
@@ -157,6 +162,7 @@ If you're running the Shelter web app (`yarn shelter`) in WSL and want to test i
    - Replace `<WINDOWS_IP>` with the IP address from step 1
 
 **To remove the port forwarding later:**
+
 ```powershell
 netsh interface portproxy delete v4tov4 listenport=8083 listenaddress=0.0.0.0
 ```
@@ -173,7 +179,13 @@ netsh interface portproxy delete v4tov4 listenport=8083 listenaddress=0.0.0.0
 
    ```
    adb reverse tcp:8000 tcp:8000
+   adb reverse tcp:9000 tcp:9000
+   adb reverse tcp:8080 tcp:8080
    ```
+
+   - `tcp:8000` — Django backend API
+   - `tcp:9000` — MinIO S3 API (local file storage)
+   - `tcp:8080` — imgproxy (image processing)
 
    Note: This might require you to install adb (Android Debug Bridge) [Android SDK Platform-Tools](https://developer.android.com/studio/releases/platform-tools)
 
@@ -325,7 +337,6 @@ Before you begin, ensure you have the following installed on your Windows machin
    This script sets environment variables, configures the WSL network bridge for the emulator, and creates necessary shims for `adb`.
 
    > [!IMPORTANT] Maintenance Note: This script places a shim file inside your Android SDK folder. If you update your Android SDK Platform-Tools via Android Studio, that shim will be deleted. If you suddenly see `adb ENOENT` errors after an update, simply re-run this script to restore the environment.
-
 
    **Troubleshooting**
 

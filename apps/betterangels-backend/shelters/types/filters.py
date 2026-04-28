@@ -13,9 +13,18 @@ from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
 from django.db.models import Q, QuerySet
 from shelters import models
-from shelters.enums import DemographicChoices, ParkingChoices, PetChoices, RoomStyleChoices, ScheduleTypeChoices
-from shelters.enums import ShelterChoices as ShelterTypeChoices
-from shelters.enums import SpecialSituationRestrictionChoices
+from shelters.enums import (
+    DemographicChoices,
+    EntryRequirementChoices,
+    ParkingChoices,
+    PetChoices,
+    ReferralRequirementChoices,
+    RoomStyleChoices,
+    ScheduleTypeChoices,
+    ShelterChoices,
+    SPAChoices,
+    SpecialSituationRestrictionChoices,
+)
 from shelters.selectors import shelters_open_at
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
@@ -46,10 +55,13 @@ class MapBoundsInput:
 class ShelterPropertyInput:
     pets: Optional[List[PetChoices]] = None
     demographics: Optional[List[DemographicChoices]] = None
+    entry_requirements: Optional[List[EntryRequirementChoices]] = None
+    referral_requirement: Optional[List[ReferralRequirementChoices]] = None
     special_situation_restrictions: Optional[List[SpecialSituationRestrictionChoices]] = None
-    shelter_types: Optional[List[ShelterTypeChoices]] = None
+    shelter_types: Optional[List[ShelterChoices]] = None
     room_styles: Optional[List[RoomStyleChoices]] = None
     parking: Optional[List[ParkingChoices]] = None
+    spa: Optional[List[SPAChoices]] = None
 
 
 @strawberry.input
@@ -65,7 +77,7 @@ class ShelterFilter:
         if not value:
             return Q()
 
-        return Q(**{f"{prefix}shelter_types__name__exact": ShelterTypeChoices.ACCESS_CENTER})
+        return Q(**{f"{prefix}shelter_types__name__exact": ShelterChoices.ACCESS_CENTER})
 
     @strawberry_django.filter_field
     def max_stay(self, info: Info, value: Optional[MaxStayInput], prefix: str) -> Q:
