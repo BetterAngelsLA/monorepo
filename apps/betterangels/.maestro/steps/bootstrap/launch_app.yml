@@ -32,6 +32,7 @@ appId: ${MAESTRO_APP_ID}
             - takeScreenshot: error-restart-kill
             - killApp
             - openLink: ${MAESTRO_DEEPLINK}
+
       - runFlow:
           when:
             platform: ios
@@ -46,6 +47,15 @@ appId: ${MAESTRO_APP_ID}
               id: landing-screen
           commands:
             - evalScript: ${output.counter = 999}
+
+      # Dismiss the dev launcher screen if it's showing a recently opened app
+      - runFlow:
+          when:
+            visible: 'BetterAngels (Dev)'
+          commands:
+            - tapOn:
+                text: '.*close.*'
+                optional: true
 
       # otherwise increment counter
       - runFlow:
