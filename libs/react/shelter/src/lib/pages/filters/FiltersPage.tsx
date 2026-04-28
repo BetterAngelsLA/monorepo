@@ -6,9 +6,11 @@ import {
   nullShelterPropertyFilters,
   shelterPropertyFiltersAtom,
 } from '../../atoms';
+import {
+  FiltersActions,
+  ShelterFilters,
+} from '../../components/ShelterFilters';
 import { shelterHomePath } from '../../constants';
-import { FiltersActions } from './FiltersActions';
-import { ShelterFilters } from './ShelterFilters';
 
 export function FiltersPage() {
   const navigate = useNavigate();
