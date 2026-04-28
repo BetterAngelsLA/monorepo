@@ -54,6 +54,7 @@ from .enums import (
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
+    VaccinationChoices,
 )
 from .models import (
     SPA,
@@ -80,6 +81,7 @@ from .models import (
     ShelterType,
     SpecialSituationRestriction,
     Storage,
+    Vaccination,
     Video,
     get_fields_with_other_option,
 )
@@ -228,6 +230,7 @@ class ShelterForm(forms.ModelForm):
 
     # Entry Requirements
     entry_requirements = create_select2_multiple_field(EntryRequirementChoices, "Select entry requirements...")
+    vaccinations = create_select2_multiple_field(VaccinationChoices, "Select vaccinations...")
 
     # Ecosystem Information
     spa = create_select2_multiple_field(SPAChoices, "Select SPA...")
@@ -646,6 +649,11 @@ class ShelterResource(resources.ModelResource):
         attribute="entry_requirements",
         widget=ManyToManyWidget(EntryRequirement, separator=",", field="name"),
     )
+    vaccinations = Field(
+        column_name="vaccinations",
+        attribute="vaccinations",
+        widget=ManyToManyWidget(Vaccination, separator=",", field="name"),
+    )
     storage = Field(
         column_name="storage",
         attribute="storage",
@@ -772,6 +780,7 @@ class ShelterResource(resources.ModelResource):
             "room_styles",
             "funders",
             "entry_requirements",
+            "vaccinations",
             "storage",
             "pets",
             "cities",
@@ -1001,6 +1010,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                 "fields": (
                     "entry_requirements",
                     "referral_requirement",
+                    "vaccinations",
                     "bed_fees",
                     "program_fees",
                     "entry_info",
@@ -1083,6 +1093,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         "services",
         # Entry Requirements
         "entry_requirements",
+        "vaccinations",
         # Ecosystem Information
         "cities",
         "spa",

@@ -42,6 +42,11 @@ class EntryRequirementType:
     name: auto
 
 
+@strawberry_django.type(models.Vaccination)
+class VaccinationType:
+    name: auto
+
+
 @strawberry_django.type(models.ExitPolicy)
 class ExitPolicyType:
     name: auto

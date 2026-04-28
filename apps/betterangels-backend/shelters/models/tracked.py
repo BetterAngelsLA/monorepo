@@ -96,6 +96,16 @@ class TrackedEntryRequirement(Shelter.entry_requirements.through):  # type: igno
 
 
 @pghistory.track(
+    pghistory.InsertEvent("shelter.vaccination.add"),
+    pghistory.DeleteEvent("shelter.vaccination.remove"),
+    obj_field=None,
+)
+class TrackedVaccination(Shelter.vaccinations.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
     pghistory.InsertEvent("shelter.city.add"),
     pghistory.DeleteEvent("shelter.city.remove"),
     obj_field=None,
