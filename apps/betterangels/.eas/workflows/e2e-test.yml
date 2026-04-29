@@ -132,7 +132,13 @@ jobs:
     type: maestro
     env:
       MAESTRO_APP_ID: la.betterangels.dev.app
-      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=android%26disableOnboarding%3D1
+      # The `url=` value (the EAS Update URL) MUST be fully percent-encoded.
+      # Recent expo-dev-client versions stop parsing at the first unencoded
+      # `?` or `&` in the value, which truncates the URL and causes the dev
+      # launcher to show "No development servers found". Encoding map:
+      #   :  -> %3A    /  -> %2F    ?  -> %3F    =  -> %3D
+      # `&` connecting outer params (url, disableOnboarding) stays as `&`.
+      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https%3A%2F%2Fu.expo.dev%2F53171ba4-60ca-40cb-b3e6-b0c2393677b8%2Fgroup%2F${{ inputs.update_group_id }}%3Fplatform%3Dandroid&disableOnboarding=1
       MAESTRO_BA_USER_EMAIL: ${{ inputs.MAESTRO_BA_USER_EMAIL }}
       MAESTRO_BA_USER_PASSWORD: ${{ inputs.MAESTRO_BA_USER_PASSWORD }}
     params:
@@ -144,7 +150,9 @@ jobs:
     type: maestro
     env:
       MAESTRO_APP_ID: la.betterangels.dev.app
-      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=ios%26disableOnboarding%3D1
+      # See comment on maestro_android_test for why the `url=` value is fully
+      # percent-encoded (modern expo-dev-client requires it).
+      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https%3A%2F%2Fu.expo.dev%2F53171ba4-60ca-40cb-b3e6-b0c2393677b8%2Fgroup%2F${{ inputs.update_group_id }}%3Fplatform%3Dios&disableOnboarding=1
       MAESTRO_BA_USER_EMAIL: ${{ inputs.MAESTRO_BA_USER_EMAIL }}
       MAESTRO_BA_USER_PASSWORD: ${{ inputs.MAESTRO_BA_USER_PASSWORD }}
     params:
