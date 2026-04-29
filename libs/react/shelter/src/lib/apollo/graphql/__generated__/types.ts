@@ -100,6 +100,7 @@ export type AdminShelterType = {
   interiorPhotos: Array<ShelterPhotoType>;
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
+  mediaLinks: Array<MediaLinkType>;
   name: Scalars['String']['output'];
   onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
   organization?: Maybe<OrganizationType>;
@@ -1449,6 +1450,18 @@ export type MaxStayInput = {
   includeNull?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
+export type MediaLinkType = {
+  __typename?: 'MediaLinkType';
+  id: Scalars['ID']['output'];
+  mediaType: MediaLinkTypeChoices;
+  title: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+};
+
+export enum MediaLinkTypeChoices {
+  Youtube = 'YOUTUBE'
+}
+
 export enum MedicalNeedChoices {
   Dialysis = 'DIALYSIS',
   Dmh = 'DMH',
@@ -2719,6 +2732,7 @@ export type ShelterPropertyInput = {
   referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
+  spa?: InputMaybe<Array<SpaChoices>>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
 };
 
@@ -2754,6 +2768,7 @@ export type ShelterType = {
   interiorPhotos: Array<ShelterPhotoType>;
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
+  mediaLinks: Array<MediaLinkType>;
   name: Scalars['String']['output'];
   onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
   organization?: Maybe<OrganizationType>;

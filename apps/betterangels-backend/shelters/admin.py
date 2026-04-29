@@ -66,6 +66,7 @@ from .models import (
     ExteriorPhoto,
     Funder,
     InteriorPhoto,
+    MediaLink,
     Parking,
     Pet,
     Reservation,
@@ -467,6 +468,11 @@ class InterPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
 class VideoInline(admin.TabularInline):
     model = Video
     max_num = 0
+
+
+class MediaLinkInline(admin.TabularInline):
+    model = MediaLink
+    extra = 1
 
 
 class ScheduleForm(forms.ModelForm):
@@ -919,7 +925,7 @@ class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
     list_select_related = ("organization",)
 
-    inlines = [ContactInfoInline, ScheduleInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
+    inlines = [ContactInfoInline, ScheduleInline, ExteriorPhotoInline, InterPhotoInline, VideoInline, MediaLinkInline]
     fieldsets = (
         (
             "Basic Information",
