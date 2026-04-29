@@ -96,7 +96,7 @@ class EntryRequirement(models.Model):
 
 
 class Vaccination(models.Model):
-    name = TextChoicesField(choices_enum=VaccinationChoices, unique=True, blank=True, null=True)
+    name = TextChoicesField(choices_enum=VaccinationChoices, unique=True)
 
     def __str__(self) -> str:
         return str(self.name)

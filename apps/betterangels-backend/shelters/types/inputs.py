@@ -82,7 +82,7 @@ class CreateShelterInput:
     parking: List[ParkingChoices]
     entry_requirements: List[EntryRequirementChoices]
     referral_requirement: List[ReferralRequirementChoices]
-    vaccinations: List[VaccinationChoices]
+    vaccination_requirement: List[VaccinationChoices]
     exit_policy: List[ExitPolicyChoices]
     cities: List[str]
     spa: List[SPAChoices]

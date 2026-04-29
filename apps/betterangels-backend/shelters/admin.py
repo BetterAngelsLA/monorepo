@@ -230,7 +230,7 @@ class ShelterForm(forms.ModelForm):
 
     # Entry Requirements
     entry_requirements = create_select2_multiple_field(EntryRequirementChoices, "Select entry requirements...")
-    vaccinations = create_select2_multiple_field(VaccinationChoices, "Select vaccinations...")
+    vaccination_requirement = create_select2_multiple_field(VaccinationChoices, "Select vaccinations...")
 
     # Ecosystem Information
     spa = create_select2_multiple_field(SPAChoices, "Select SPA...")
@@ -649,9 +649,9 @@ class ShelterResource(resources.ModelResource):
         attribute="entry_requirements",
         widget=ManyToManyWidget(EntryRequirement, separator=",", field="name"),
     )
-    vaccinations = Field(
-        column_name="vaccinations",
-        attribute="vaccinations",
+    vaccination_requirement = Field(
+        column_name="vaccination_requirement",
+        attribute="vaccination_requirement",
         widget=ManyToManyWidget(Vaccination, separator=",", field="name"),
     )
     storage = Field(
@@ -780,7 +780,7 @@ class ShelterResource(resources.ModelResource):
             "room_styles",
             "funders",
             "entry_requirements",
-            "vaccinations",
+            "vaccination_requirement",
             "storage",
             "pets",
             "cities",
@@ -1010,7 +1010,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                 "fields": (
                     "entry_requirements",
                     "referral_requirement",
-                    "vaccinations",
+                    "vaccination_requirement",
                     "bed_fees",
                     "program_fees",
                     "entry_info",
@@ -1093,7 +1093,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         "services",
         # Entry Requirements
         "entry_requirements",
-        "vaccinations",
+        "vaccination_requirement",
         # Ecosystem Information
         "cities",
         "spa",

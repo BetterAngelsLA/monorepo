@@ -117,7 +117,7 @@ class ShelterTypeMixin:
     supervisorial_district: auto
     total_beds: auto
     updated_at: auto
-    vaccinations: List[VaccinationType]
+    vaccination_requirement: List[VaccinationType]
     visitors_allowed: auto
     website: auto
 

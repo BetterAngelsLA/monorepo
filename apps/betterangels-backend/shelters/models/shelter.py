@@ -117,7 +117,7 @@ class Shelter(BaseModel):
     entry_info = CKEditor5Field(null=True, blank=True)
     entry_requirements = models.ManyToManyField(EntryRequirement)
     referral_requirement = models.ManyToManyField(ReferralRequirement)
-    vaccinations = models.ManyToManyField(Vaccination)
+    vaccination_requirement = models.ManyToManyField(Vaccination)
     bed_fees = models.CharField(max_length=255, blank=True, null=True)
     program_fees = models.CharField(max_length=255, blank=True, null=True)
 
