@@ -30,7 +30,7 @@ def remove_view_private_shelter_from_caseworker(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0045_shelter_is_private"),
+        ("shelters", "0044_shelter_is_private"),
         ("accounts", "0045_add_view_reports_permission"),
     ]
 
