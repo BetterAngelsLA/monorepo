@@ -49,7 +49,6 @@ from shelters.models import (
 )
 from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
 from shelters.tests.graphql_helpers import ShelterGraphQLFixtureMixin
-from unittest_parametrize import parametrize
 from waffle.testutils import override_switch
 
 
