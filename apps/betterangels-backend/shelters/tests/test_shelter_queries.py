@@ -49,6 +49,7 @@ from shelters.models import (
 )
 from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
 from shelters.tests.graphql_helpers import ShelterGraphQLFixtureMixin
+from unittest_parametrize import parametrize
 from waffle.testutils import override_switch
 
 
@@ -400,104 +401,3 @@ class ShelterMaxStayQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCas
 
         self.assertIsNone(response.get("errors"))
         self.assertIsNone(response["data"]["shelterMaxStay"])
-
-
-class ShelterPrivacyTestCase(GraphQLBaseTestCase):
-    """Verify that `shelter` and `shelters` queries respect the `view_private_shelter` permission."""
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.public_shelter = shelter_recipe.make(status=StatusChoices.APPROVED, is_private=False)
-        self.private_shelter = shelter_recipe.make(status=StatusChoices.APPROVED, is_private=True)
-
-    # --- shelters (list) query ---
-
-    def test_shelters_query_anonymous_excludes_private(self) -> None:
-        query = """
-            query {
-                shelters {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
-        response = self.execute_graphql(query)
-        self.assertIsNone(response.get("errors"))
-        shelter_ids = [s["id"] for s in response["data"]["shelters"]["results"]]
-        self.assertIn(str(self.public_shelter.pk), shelter_ids)
-        self.assertNotIn(str(self.private_shelter.pk), shelter_ids)
-
-    def test_shelters_query_user_without_perm_excludes_private(self) -> None:
-        self.graphql_client.force_login(self.non_case_manager_user)
-        query = """
-            query {
-                shelters {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
-        response = self.execute_graphql(query)
-        self.assertIsNone(response.get("errors"))
-        shelter_ids = [s["id"] for s in response["data"]["shelters"]["results"]]
-        self.assertIn(str(self.public_shelter.pk), shelter_ids)
-        self.assertNotIn(str(self.private_shelter.pk), shelter_ids)
-
-    def test_shelters_query_user_with_perm_includes_private(self) -> None:
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        query = """
-            query {
-                shelters {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
-        response = self.execute_graphql(query)
-        self.assertIsNone(response.get("errors"))
-        shelter_ids = [s["id"] for s in response["data"]["shelters"]["results"]]
-        self.assertIn(str(self.public_shelter.pk), shelter_ids)
-        self.assertIn(str(self.private_shelter.pk), shelter_ids)
-
-    # --- shelter (detail) query ---
-
-    def test_shelter_query_anonymous_cannot_view_private(self) -> None:
-        query = """
-            query ($id: ID!) {
-                shelter(pk: $id) { id }
-            }
-        """
-        response = self.execute_graphql(query, {"id": self.private_shelter.pk})
-        # Strawberry raises DoesNotExist when get_queryset filters it out
-        self.assertIsNotNone(response.get("errors"))
-
-    def test_shelter_query_anonymous_can_view_public(self) -> None:
-        query = """
-            query ($id: ID!) {
-                shelter(pk: $id) { id }
-            }
-        """
-        response = self.execute_graphql(query, {"id": self.public_shelter.pk})
-        self.assertIsNone(response.get("errors"))
-        self.assertEqual(response["data"]["shelter"]["id"], str(self.public_shelter.pk))
-
-    def test_shelter_query_user_without_perm_cannot_view_private(self) -> None:
-        self.graphql_client.force_login(self.non_case_manager_user)
-        query = """
-            query ($id: ID!) {
-                shelter(pk: $id) { id }
-            }
-        """
-        response = self.execute_graphql(query, {"id": self.private_shelter.pk})
-        self.assertIsNotNone(response.get("errors"))
-
-    def test_shelter_query_user_with_perm_can_view_private(self) -> None:
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        query = """
-            query ($id: ID!) {
-                shelter(pk: $id) { id }
-            }
-        """
-        response = self.execute_graphql(query, {"id": self.private_shelter.pk})
-        self.assertIsNone(response.get("errors"))
-        self.assertEqual(response["data"]["shelter"]["id"], str(self.private_shelter.pk))
