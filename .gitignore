@@ -95,3 +95,5 @@ storybook-static
 
 # The canonical schema lives at apps/betterangels-backend/schema.graphql
 /schema.graphql
+
+handbook/principles/team/reference/source-notes.md
