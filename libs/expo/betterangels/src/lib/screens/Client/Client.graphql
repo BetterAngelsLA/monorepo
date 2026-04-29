@@ -111,22 +111,6 @@ query ClientProfile($id: ID!) {
   }
 }
 
-mutation CreateClientDocument($data: CreateClientDocumentInput!) {
-  createClientDocument(data: $data) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-
-    ... on ClientDocumentType {
-      id
-    }
-  }
-}
-
 mutation UpdateClientDocument($data: UpdateClientDocumentInput!) {
   updateClientDocument(data: $data) {
     ... on OperationInfo {
@@ -153,6 +137,22 @@ mutation DeleteClientDocument($id: ID!) {
       }
     }
     ... on ClientDocumentType {
+      id
+    }
+  }
+}
+
+mutation UpdateClientProfilePhoto($data: ClientProfilePhotoInput!) {
+  updateClientProfilePhoto(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on ClientProfileType {
       id
     }
   }
