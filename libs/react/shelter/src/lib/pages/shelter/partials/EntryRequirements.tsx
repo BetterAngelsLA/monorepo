@@ -53,7 +53,7 @@ export function EntryRequirements({
         />
         <InlineList
           title="Vaccinations:"
-          items={shelter?.vaccinations.map(
+          items={shelter?.vaccinationRequirement.map(
             (vaccination) =>
               enumDisplayVaccinationChoices[
                 vaccination.name as VaccinationChoices

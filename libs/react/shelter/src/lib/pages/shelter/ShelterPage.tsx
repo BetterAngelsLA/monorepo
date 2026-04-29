@@ -50,7 +50,7 @@ export function ShelterPage({ id }: { id: string }) {
   const hasEntryRequirements =
     !!shelter.entryRequirements?.length ||
     !!shelter.referralRequirement?.length ||
-    !!shelter.vaccinations?.length ||
+    !!shelter.vaccinationRequirement?.length ||
     hasWysiwygContent(shelter.entryInfo) ||
     hasWysiwygContent(shelter.bedFees) ||
     hasWysiwygContent(shelter.programFees);
