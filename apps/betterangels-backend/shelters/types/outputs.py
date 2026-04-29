@@ -183,7 +183,7 @@ class ShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = get_current_user(info)
-        return shelter_list(queryset, user=user)  # type: ignore[arg-type]
+        return shelter_list(queryset, user=user)
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)

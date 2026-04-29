@@ -176,12 +176,7 @@ class ShelterFilter:
 
         return queryset, Q()
 
-    @strawberry_django.filter_field
-    def is_private(self, info: Info, value: Optional[bool], prefix: str) -> Q:
-        if value is None:
-            return Q()
-
-        return Q(**{f"{prefix}is_private": value})
+    is_private: auto
 
 
 @strawberry_django.order_type(models.Shelter, one_of=False)
