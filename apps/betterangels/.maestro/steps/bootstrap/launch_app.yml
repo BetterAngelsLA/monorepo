@@ -43,7 +43,6 @@ appId: ${MAESTRO_APP_ID}
           when:
             visible: 'Continue'
           commands:
-            - takeScreenshot: dev-onboarding-visible
             - tapOn: 'Continue'
 
       # Expo in-app dev menu overlay (same one Cmd+D opens) is showing on top
@@ -58,7 +57,6 @@ appId: ${MAESTRO_APP_ID}
           when:
             visible: 'Go Home'
           commands:
-            - takeScreenshot: dev-menu-overlay-visible
             - tapOn: 'Go Home'
 
       # EDGE CASE: "Reload" button visible without "Go Home" or "Continue".
@@ -96,16 +94,16 @@ appId: ${MAESTRO_APP_ID}
       # Dev launcher HOME screen appeared (deep link didn't auto-load the bundle).
       # Distinguished from the dev menu overlay by the "Development servers"
       # section header (the menu overlay shows "Go Home" instead).
-      # Tap the running dev server row (e.g. "http://192.168.1.202:8081") to
-      # load the JS bundle. Matched by ":${EXPO_PORT}" so it works for any host
-      # (localhost, LAN IP, host.docker.internal, etc.).
+      # Tap the bundle row by app name — works for both local (Metro URL,
+      # e.g. "http://192.168.1.202:8081") and CI (EAS Update URL on
+      # u.expo.dev) since both render with "BetterAngels (Dev)" as the row
+      # label.
       - runFlow:
           when:
             visible: 'Development servers'
           commands:
-            - takeScreenshot: dev-launcher-home-visible
             - tapOn:
-                text: '.*:${MAESTRO_EXPO_PORT}.*'
+                text: 'BetterAngels \(Dev\)'
                 optional: true
 
       # otherwise increment counter
