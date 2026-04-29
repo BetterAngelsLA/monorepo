@@ -14,10 +14,9 @@ from organizations.models import Organization
 from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices, StatusChoices
 
 if TYPE_CHECKING:
+    from accounts.models import User
     from django.contrib.auth.base_user import AbstractBaseUser
     from django.contrib.auth.models import AnonymousUser
-
-    from accounts.models import User
     from shelters.models import Shelter
 
 
