@@ -47,19 +47,25 @@ appId: ${MAESTRO_APP_ID}
 
       # Expo in-app dev menu overlay (same one Cmd+D opens) is showing on top
       # of the loaded app. Distinguished from the RN error LogBox by the
-      # "Go Home" button. Tap "Go Home" to deterministically transition to
-      # the dev launcher home screen — the "Development servers" handler
-      # below will then load the bundle on the next loop iteration.
-      # (Tapping "Reload" here would just re-run bundle init and could
-      # re-trigger the same overlay; the backdrop close is non-deterministic
-      # across device/OS sizes.)
+      # "Go Home" button.
+      #
+      # In CI (EAS Update builds) the bundle has already loaded successfully
+      # by the time this overlay appears — tapping Reload re-runs the same
+      # working bundle and dismisses the menu. The launcher home is empty in
+      # CI ("no development servers found"), so "Go Home" would dead-end.
+      # In local dev, Reload also works because the dev server stays
+      # connected; if Reload were to loop back into a hard error, the
+      # "Reload" handler below would catch it on the next iteration.
       - runFlow:
           when:
             visible: 'Go Home'
           commands:
-            - tapOn: 'Go Home'
+            - tapOn: 'Reload'
 
       # EDGE CASE: "Reload" button visible without "Go Home" or "Continue".
+      # (Only fires when the dev menu overlay block above didn't match —
+      # Maestro's `when:` doesn't support negative conditions, so we rely
+      # on block ordering to disambiguate.)
       # This is NOT the dev menu overlay (caught above) — it's a hard error
       # screen, typically one of:
       #   - RN LogBox / RedBox: JS error during bundle init or render.
