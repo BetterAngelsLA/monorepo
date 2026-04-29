@@ -1,106 +1,157 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
-import { Colors, Spacings, thumbnailSizes } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import * as React from 'react';
 import { useEffect } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
+import { ClientDocumentUploads } from './ClientDocumentUploads/ClientDocumentUploads';
 import FileUploadTab from './FileUploadTab';
-import MultipleDocUploads from './MultipleDocUploads';
-import SingleDocUploads from './SingleDocUploads';
-import { Docs, ITab, IUploadModalProps } from './types';
+import { DocUploads, ITab, IUploadModalProps } from './types';
 
 export default function UploadModal(props: IUploadModalProps) {
   const { client } = props;
 
   const [tab, setTab] = React.useState<undefined | ITab>();
-  const [docs, setDocs] = React.useState<Docs>({
-    DriversLicenseFront: undefined,
-    DriversLicenseBack: undefined,
-    BirthCertificate: undefined,
-    PhotoId: undefined,
-    SocialSecurityCard: undefined,
+  const [docs, setDocs] = React.useState<DocUploads>({
+    BirthCertificate: [],
     ConsentForm: [],
+    DriversLicenseBack: [],
+    DriversLicenseFront: [],
     HmisForm: [],
     IncomeForm: [],
     OtherClientDocument: [],
+    OtherDocReady: [],
+    OtherForm: [],
+    PhotoId: [],
+    SocialSecurityCard: [],
   });
 
-  const docProps = {
-    setTab,
-    client,
-    docs,
-    setDocs,
+  const closeTab = () => setTab(undefined);
+
+  const handleFilesChange = (docType: keyof DocUploads) => {
+    return (files: ReactNativeFile[]) => {
+      setDocs((prev) => ({ ...prev, [docType]: files }));
+    };
   };
+
+  const clientProfileId = client?.clientProfile.id;
 
   const TABS = {
     DriversLicenseFront: (
-      <SingleDocUploads
-        thumbnailSize={thumbnailSizes.PhotoId}
-        docType="DriversLicenseFront"
+      <ClientDocumentUploads
+        namespace={ClientDocumentNamespaceEnum.DriversLicenseFront}
+        clientProfileId={clientProfileId}
+        files={docs.DriversLicenseFront}
+        onFilesChange={handleFilesChange('DriversLicenseFront')}
+        onClose={closeTab}
         title="Upload CA ID or CA Driver's License - Front"
-        {...docProps}
       />
     ),
     DriversLicenseBack: (
-      <SingleDocUploads
-        thumbnailSize={thumbnailSizes.PhotoId}
-        docType="DriversLicenseBack"
+      <ClientDocumentUploads
+        namespace={ClientDocumentNamespaceEnum.DriversLicenseBack}
+        clientProfileId={clientProfileId}
+        files={docs.DriversLicenseBack}
+        onFilesChange={handleFilesChange('DriversLicenseBack')}
+        onClose={closeTab}
         title="Upload CA ID or CA Driver's License - Back"
-        {...docProps}
       />
     ),
     BirthCertificate: (
-      <SingleDocUploads
-        thumbnailSize={thumbnailSizes.BirthCertificate}
-        docType="BirthCertificate"
+      <ClientDocumentUploads
+        namespace={ClientDocumentNamespaceEnum.BirthCertificate}
+        clientProfileId={clientProfileId}
+        files={docs.BirthCertificate}
+        onFilesChange={handleFilesChange('BirthCertificate')}
+        onClose={closeTab}
         title="Upload Birth Certificate"
-        {...docProps}
       />
     ),
     PhotoId: (
-      <SingleDocUploads
-        thumbnailSize={thumbnailSizes.PhotoId}
-        docType="PhotoId"
+      <ClientDocumentUploads
+        namespace={ClientDocumentNamespaceEnum.PhotoId}
+        clientProfileId={clientProfileId}
+        files={docs.PhotoId}
+        onFilesChange={handleFilesChange('PhotoId')}
+        onClose={closeTab}
         title="Upload Photo ID"
-        {...docProps}
       />
     ),
     SocialSecurityCard: (
-      <SingleDocUploads
-        thumbnailSize={thumbnailSizes.SocialSecurityCard}
-        docType="SocialSecurityCard"
+      <ClientDocumentUploads
+        namespace={ClientDocumentNamespaceEnum.SocialSecurityCard}
+        clientProfileId={clientProfileId}
+        files={docs.SocialSecurityCard}
+        onFilesChange={handleFilesChange('SocialSecurityCard')}
+        onClose={closeTab}
         title="Upload Social Security Card"
-        {...docProps}
       />
     ),
     ConsentForm: (
-      <MultipleDocUploads
-        docType="ConsentForm"
+      <ClientDocumentUploads
+        allowMultiple
+        namespace={ClientDocumentNamespaceEnum.ConsentForm}
+        clientProfileId={clientProfileId}
+        files={docs.ConsentForm}
+        onFilesChange={handleFilesChange('ConsentForm')}
+        onClose={closeTab}
         title="Upload Consent Forms"
-        {...docProps}
       />
     ),
     HmisForm: (
-      <MultipleDocUploads
-        docType="HmisForm"
+      <ClientDocumentUploads
+        allowMultiple
+        namespace={ClientDocumentNamespaceEnum.HmisForm}
+        clientProfileId={clientProfileId}
+        files={docs.HmisForm}
+        onFilesChange={handleFilesChange('HmisForm')}
+        onClose={closeTab}
         title="Upload HMIS Form"
-        {...docProps}
       />
     ),
     IncomeForm: (
-      <MultipleDocUploads
-        docType="IncomeForm"
+      <ClientDocumentUploads
+        namespace={ClientDocumentNamespaceEnum.IncomeForm}
+        allowMultiple
+        clientProfileId={clientProfileId}
+        files={docs.IncomeForm}
+        onFilesChange={handleFilesChange('IncomeForm')}
+        onClose={closeTab}
         title="Upload Income Forms (pay stubs)"
-        {...docProps}
       />
     ),
     OtherClientDocument: (
-      <MultipleDocUploads
-        docType="OtherClientDocument"
+      <ClientDocumentUploads
+        allowMultiple
+        namespace={ClientDocumentNamespaceEnum.OtherClientDocument}
+        clientProfileId={clientProfileId}
+        files={docs.OtherClientDocument}
+        onFilesChange={handleFilesChange('OtherClientDocument')}
+        onClose={closeTab}
         title="Upload Other Documents"
-        {...docProps}
+      />
+    ),
+    OtherDocReady: (
+      <ClientDocumentUploads
+        namespace={ClientDocumentNamespaceEnum.OtherDocReady}
+        clientProfileId={clientProfileId}
+        files={docs.OtherDocReady}
+        onFilesChange={handleFilesChange('OtherDocReady')}
+        onClose={closeTab}
+        title="Upload Other Doc-Ready"
+      />
+    ),
+    OtherForm: (
+      <ClientDocumentUploads
+        allowMultiple
+        namespace={ClientDocumentNamespaceEnum.OtherForm}
+        clientProfileId={clientProfileId}
+        files={docs.OtherForm}
+        onFilesChange={handleFilesChange('OtherForm')}
+        onClose={closeTab}
+        title="Upload Other Forms"
       />
     ),
   };
@@ -110,36 +161,27 @@ export default function UploadModal(props: IUploadModalProps) {
   const topOffset = insets.top;
 
   useEffect(() => {
-    const PhotoId = client?.clientProfile.docReadyDocuments?.find(
-      (item) => item.namespace === ClientDocumentNamespaceEnum.PhotoId
-    )?.file as ReactNativeFile | undefined;
+    const findDoc = (namespace: ClientDocumentNamespaceEnum) => {
+      const file = client?.clientProfile.docReadyDocuments?.find(
+        (item) => item.namespace === namespace
+      )?.file as ReactNativeFile | undefined;
+      return file ? [file] : [];
+    };
 
-    const DriversLicenseFront = client?.clientProfile.docReadyDocuments?.find(
-      (item) =>
-        item.namespace === ClientDocumentNamespaceEnum.DriversLicenseFront
-    )?.file as ReactNativeFile | undefined;
-
-    const SocialSecurityCard = client?.clientProfile.docReadyDocuments?.find(
-      (item) =>
-        item.namespace === ClientDocumentNamespaceEnum.SocialSecurityCard
-    )?.file as ReactNativeFile | undefined;
-
-    const BirthCertificate = client?.clientProfile.docReadyDocuments?.find(
-      (item) => item.namespace === ClientDocumentNamespaceEnum.BirthCertificate
-    )?.file as ReactNativeFile | undefined;
-
-    const DriversLicenseBack = client?.clientProfile.docReadyDocuments?.find(
-      (item) =>
-        item.namespace === ClientDocumentNamespaceEnum.DriversLicenseBack
-    )?.file as ReactNativeFile | undefined;
-
-    setDocs({
-      DriversLicenseFront,
-      DriversLicenseBack,
-      SocialSecurityCard,
-      PhotoId,
-      BirthCertificate,
-    });
+    setDocs((prev) => ({
+      ...prev,
+      DriversLicenseFront: findDoc(
+        ClientDocumentNamespaceEnum.DriversLicenseFront
+      ),
+      DriversLicenseBack: findDoc(
+        ClientDocumentNamespaceEnum.DriversLicenseBack
+      ),
+      SocialSecurityCard: findDoc(
+        ClientDocumentNamespaceEnum.SocialSecurityCard
+      ),
+      BirthCertificate: findDoc(ClientDocumentNamespaceEnum.BirthCertificate),
+      PhotoId: findDoc(ClientDocumentNamespaceEnum.PhotoId),
+    }));
   }, [client]);
 
   return (
@@ -204,18 +246,21 @@ export default function UploadModal(props: IUploadModalProps) {
               setTab={setTab}
               tabKey="ConsentForm"
               title="Consent Forms"
+              allowMultiple
             />
             <FileUploadTab
               docs={docs}
               setTab={setTab}
               tabKey="HmisForm"
               title="HMIS Forms"
+              allowMultiple
             />
             <FileUploadTab
               docs={docs}
               setTab={setTab}
               tabKey="IncomeForm"
               title="Income Forms (pay stubs)"
+              allowMultiple
             />
           </View>
 
@@ -226,6 +271,7 @@ export default function UploadModal(props: IUploadModalProps) {
               setTab={setTab}
               tabKey="OtherClientDocument"
               title="Other Documents"
+              allowMultiple
             />
           </View>
         </ScrollView>

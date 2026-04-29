@@ -2,19 +2,19 @@ import { CheckIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Button } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
-import { Docs, ITab } from './types';
+import { DocUploads, ITab } from './types';
 
 export interface IFileUploadTabProps {
-  docs: Docs;
+  docs: DocUploads;
   setTab: (tabKey: ITab) => void;
-  tabKey: keyof Docs;
+  tabKey: keyof DocUploads;
   title: string;
+  allowMultiple?: boolean;
 }
 
 const FileUploadTab = (props: IFileUploadTabProps) => {
-  const { docs, setTab, tabKey, title } = props;
-  const isMultiUpload = Array.isArray(docs[tabKey as keyof Docs]);
-  const disabled = !isMultiUpload && !!docs[tabKey as keyof Docs];
+  const { docs, setTab, tabKey, title, allowMultiple = false } = props;
+  const disabled = !allowMultiple && docs[tabKey].length > 0;
 
   return (
     <View
@@ -40,7 +40,7 @@ const FileUploadTab = (props: IFileUploadTabProps) => {
       <Button
         disabled={disabled}
         containerStyle={{ flex: 1 }}
-        onPress={() => setTab(tabKey as keyof Docs)}
+        onPress={() => setTab(tabKey)}
         height="md"
         align="flex-start"
         weight="regular"

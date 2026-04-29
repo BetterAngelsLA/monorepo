@@ -12,8 +12,10 @@ import {
   MainModal,
   MainModalActionBtn,
 } from '../../../ui-components/MainModal';
-import { UpdateClientProfilePhotoDocument } from '../../ClientProfileForms/ClientProfileForm/PersonalInfoForm/ProfilePhotoField/__generated__/updateClientProfilePhoto.generated';
-import { ClientProfileDocument } from '../__generated__/Client.generated';
+import {
+  ClientProfileDocument,
+  UpdateClientProfilePhotoDocument,
+} from '../__generated__/Client.generated';
 
 interface IProfilePhotoModalProps {
   closeModal: () => void;
