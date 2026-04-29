@@ -24,6 +24,7 @@ export { toGoogleLatLng } from './Map/utils/toGoogleLatLng';
 export { toMapBounds } from './Map/utils/toMapBounds';
 export { default as Pill } from './Pill';
 export { default as PillContainer } from './PillContainer';
+export * from './VideoEmbed';
 export * from './SearchInput';
 export * from './SearchList';
 export * from './Sidebar';
