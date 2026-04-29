@@ -98,6 +98,7 @@ export type AdminShelterType = {
   id: Scalars['ID']['output'];
   instagram?: Maybe<Scalars['String']['output']>;
   interiorPhotos: Array<ShelterPhotoType>;
+  isPrivate: Scalars['Boolean']['output'];
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
   mediaLinks: Array<MediaLinkType>;
@@ -736,6 +737,7 @@ export type CreateShelterInput = {
   funders: Array<FunderChoices>;
   fundersOther?: InputMaybe<Scalars['String']['input']>;
   instagram?: InputMaybe<Scalars['String']['input']>;
+  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<ShelterLocationInput>;
   maxStay?: InputMaybe<Scalars['Int']['input']>;
   name: Scalars['String']['input'];
@@ -2667,6 +2669,7 @@ export type ShelterFilter = {
   OR?: InputMaybe<ShelterFilter>;
   geolocation?: InputMaybe<GeolocationInput>;
   isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
+  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   mapBounds?: InputMaybe<MapBoundsInput>;
   maxStay?: InputMaybe<MaxStayInput>;
   name?: InputMaybe<Scalars['String']['input']>;
@@ -2766,6 +2769,7 @@ export type ShelterType = {
   id: Scalars['ID']['output'];
   instagram?: Maybe<Scalars['String']['output']>;
   interiorPhotos: Array<ShelterPhotoType>;
+  isPrivate: Scalars['Boolean']['output'];
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
   mediaLinks: Array<MediaLinkType>;
