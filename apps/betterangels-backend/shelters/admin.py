@@ -1043,6 +1043,7 @@ class ShelterAdmin(ImportExportModelAdmin):
             {
                 "fields": (
                     "status",
+                    "is_private",
                     # "contact_info",
                     "updated_at",
                     "updated_by",
@@ -1100,6 +1101,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         "overall_rating",
         # Better Angels Administration
         "status",
+        "is_private",
         # Contacts
         HasClaimantFilter,
         # Photo Counts

@@ -117,6 +117,7 @@ type AdminShelterType {
   shelterTypesOther: String
   spa: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
   subjectiveReview: String
@@ -759,6 +760,7 @@ input CreateShelterInput {
   cityCouncilDistrict: Int = null
   supervisorialDistrict: Int = null
   overallRating: Int = null
+  isPrivate: Boolean
 }
 
 union CreateShelterPayload = ShelterType | OperationInfo
@@ -2136,6 +2138,7 @@ enum ShelterChoices {
 }
 
 input ShelterFilter {
+  isPrivate: Boolean
   AND: ShelterFilter
   OR: ShelterFilter
   NOT: ShelterFilter
@@ -2255,6 +2258,7 @@ type ShelterType {
   shelterTypesOther: String
   spa: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
   subjectiveReview: String
