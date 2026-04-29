@@ -15,12 +15,21 @@ from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices, StatusChoices
 
 if TYPE_CHECKING:
     from accounts.models import User
+    from django.contrib.auth.models import AnonymousUser
     from shelters.models import Shelter
 
 
-def shelter_list(queryset: "QuerySet[Shelter]") -> "QuerySet[Shelter]":
-    """Filter to shelters approved for public display."""
-    return queryset.filter(status=StatusChoices.APPROVED)
+def shelter_list(queryset: "QuerySet[Shelter]", *, user: "User | AnonymousUser | None" = None) -> "QuerySet[Shelter]":
+    """Filter to shelters approved for public display.
+
+    If the user has the ``view_private_shelter`` permission (granted via the
+    Caseworker group template), private shelters are included.  Otherwise only
+    public (``is_private=False``) shelters are returned.
+    """
+    queryset = queryset.filter(status=StatusChoices.APPROVED)
+    if user and user.is_authenticated and user.has_perm("shelters.view_private_shelter"):
+        return queryset
+    return queryset.filter(is_private=False)
 
 
 def admin_shelter_list(queryset: "QuerySet[Shelter]", *, user: "User") -> "QuerySet[Shelter]":

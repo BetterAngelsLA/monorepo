@@ -1,0 +1,24 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Dismisses the expo-dev-menu bottom sheet if it's visible.
+# The dev menu shows "BetterAngels (Dev)" in the header and contains
+# a "Reload" button that can interfere with other checks.
+# Uses tapOn "Close" (Android contentDescription) with swipe-down fallback (iOS).
+
+- runFlow:
+    when:
+      visible: 'BetterAngels (Dev)'
+      notVisible:
+        id: landing-screen
+    commands:
+      - tapOn:
+          text: 'Close'
+          optional: true
+      - swipe:
+          direction: DOWN
+          duration: 400
+      # Wait for dismiss animation to complete
+      - extendedWaitUntil:
+          notVisible: 'BetterAngels (Dev)'
+          timeout: 1000
+          optional: true

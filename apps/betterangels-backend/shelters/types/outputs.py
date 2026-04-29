@@ -110,6 +110,7 @@ class ShelterTypeMixin:
     shelter_types_other: auto
     spa: List[SPAType]
     special_situation_restrictions: List[SpecialSituationRestrictionType]
+    is_private: auto
     status: auto
     storage: List[StorageType]
     subjective_review: Optional[str]
@@ -181,7 +182,8 @@ class ShelterTypeMixin:
 class ShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
-        return shelter_list(queryset)
+        user = get_current_user(info)
+        return shelter_list(queryset, user=user)  # type: ignore[arg-type]
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)

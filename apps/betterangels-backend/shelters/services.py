@@ -104,6 +104,9 @@ def _prepare_shelter_data(
         else:
             del data["status"]
 
+    if "is_private" in data and data["is_private"] is None:
+        del data["is_private"]
+
     return data, m2m_data, schedules_data
 
 
