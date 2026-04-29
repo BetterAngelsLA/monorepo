@@ -31,8 +31,8 @@ services:
       - '127.0.0.1:9000:9000' # S3 API: IPv4-only so Android Emulator's adb reverse works
       - '127.0.0.1:9001:9001' # Admin console
     environment:
-      - MINIO_ROOT_USER=admin
-      - MINIO_ROOT_PASSWORD=password
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
     command: server /data --console-address ':9001'
     volumes:
       - minio_data:/data
@@ -49,7 +49,7 @@ services:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-      mc alias set local http://minio:9000 admin password &&
+      mc alias set local http://minio:9000 minioadmin minioadmin &&
       mc mb local/betterangels-local --ignore-existing;
       "
 
