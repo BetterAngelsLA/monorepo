@@ -30,6 +30,7 @@ export { default as InstagramIcon } from './components/instagramIcon';
 export { default as LightBulbIcon } from './components/lightBulbIcon';
 export { default as ListIcon } from './components/listIcon';
 export { default as LocationIcon } from './components/locationIcon';
+export { default as LockIcon } from './components/lockIcon';
 export { default as MapPinIcon } from './components/mapPinIcon';
 export { default as MenuIcon } from './components/menuIcon';
 export { default as PlusIcon } from './components/plusIcon';

@@ -16,7 +16,7 @@ export function MainLayout(props: IParams): ReactElement {
   const parentCss = [
     'w-full',
     'max-w-screen',
-    'overflow-x-hidden',
+    'overflow-x-clip',
     'flex',
     'flex-col',
     'items-center',
@@ -26,7 +26,7 @@ export function MainLayout(props: IParams): ReactElement {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <HorizontalLayout className="bg-steel-blue">
+      <HorizontalLayout className="bg-steel-blue relative z-50">
         <Header />
       </HorizontalLayout>
       <HorizontalLayout className="pb-6">

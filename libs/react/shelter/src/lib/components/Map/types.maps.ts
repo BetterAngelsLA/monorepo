@@ -21,6 +21,7 @@ export type TMarker = {
   label?: string;
   onClick?: ((e: google.maps.MapMouseEvent) => void) | undefined;
   type?: 'primary' | 'secondary' | 'purple';
+  isPrivate?: boolean;
 };
 
 export type TMapGestureHandling = 'cooperative' | 'greedy' | 'none' | 'auto';
