@@ -54,7 +54,7 @@ from .enums import (
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
-    VaccinationChoices,
+    VaccinationRequirementChoices,
 )
 from .models import (
     SPA,
@@ -81,7 +81,7 @@ from .models import (
     ShelterType,
     SpecialSituationRestriction,
     Storage,
-    Vaccination,
+    VaccinationRequirement,
     Video,
     get_fields_with_other_option,
 )
@@ -230,7 +230,7 @@ class ShelterForm(forms.ModelForm):
 
     # Entry Requirements
     entry_requirements = create_select2_multiple_field(EntryRequirementChoices, "Select entry requirements...")
-    vaccination_requirement = create_select2_multiple_field(VaccinationChoices, "Select vaccinations...")
+    vaccination_requirement = create_select2_multiple_field(VaccinationRequirementChoices, "Select vaccinations...")
 
     # Ecosystem Information
     spa = create_select2_multiple_field(SPAChoices, "Select SPA...")
@@ -652,7 +652,7 @@ class ShelterResource(resources.ModelResource):
     vaccination_requirement = Field(
         column_name="vaccination_requirement",
         attribute="vaccination_requirement",
-        widget=ManyToManyWidget(Vaccination, separator=",", field="name"),
+        widget=ManyToManyWidget(VaccinationRequirement, separator=",", field="name"),
     )
     storage = Field(
         column_name="storage",

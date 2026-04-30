@@ -112,7 +112,7 @@ class EntryRequirementChoices(models.TextChoices):
 
 
 @strawberry.enum
-class VaccinationChoices(models.TextChoices):
+class VaccinationRequirementChoices(models.TextChoices):
     TB = "tb", _("TB")
     FLU = "flu", _("Flu")
     COVID_19 = "covid_19", _("COVID-19")

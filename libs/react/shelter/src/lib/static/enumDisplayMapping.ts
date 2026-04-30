@@ -13,7 +13,7 @@ import {
   SpaChoices,
   SpecialSituationRestrictionChoices,
   StorageChoices,
-  VaccinationChoices,
+  VaccinationRequirementChoices,
 } from '../apollo';
 
 export const enumDisplayAccessibilityChoices: {
@@ -185,12 +185,12 @@ export const enumDisplayStorageChoices: { [key in StorageChoices]: string } = {
   [StorageChoices.PersonalBin]: 'Personal Storage Bin',
 };
 
-export const enumDisplayVaccinationChoices: {
-  [key in VaccinationChoices]: string;
+export const enumDisplayVaccinationRequirementChoices: {
+  [key in VaccinationRequirementChoices]: string;
 } = {
-  [VaccinationChoices.Tb]: 'TB',
-  [VaccinationChoices.Flu]: 'Flu',
-  [VaccinationChoices.Covid_19]: 'COVID-19',
+  [VaccinationRequirementChoices.Tb]: 'TB',
+  [VaccinationRequirementChoices.Flu]: 'Flu',
+  [VaccinationRequirementChoices.Covid_19]: 'COVID-19',
 };
 
 /*

@@ -24,7 +24,7 @@ from shelters.enums import (
     SPAChoices,
     SpecialSituationRestrictionChoices,
     StorageChoices,
-    VaccinationChoices,
+    VaccinationRequirementChoices,
 )
 
 
@@ -95,8 +95,8 @@ class EntryRequirement(models.Model):
         return str(self.name)
 
 
-class Vaccination(models.Model):
-    name = TextChoicesField(choices_enum=VaccinationChoices, unique=True)
+class VaccinationRequirement(models.Model):
+    name = TextChoicesField(choices_enum=VaccinationRequirementChoices, unique=True)
 
     def __str__(self) -> str:
         return str(self.name)

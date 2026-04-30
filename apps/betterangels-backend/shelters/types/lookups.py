@@ -42,8 +42,8 @@ class EntryRequirementType:
     name: auto
 
 
-@strawberry_django.type(models.Vaccination)
-class VaccinationType:
+@strawberry_django.type(models.VaccinationRequirement)
+class VaccinationRequirementType:
     name: auto
 
 
