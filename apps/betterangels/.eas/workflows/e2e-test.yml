@@ -130,10 +130,6 @@ jobs:
   maestro_android_test:
     needs: [wait_android_build]
     type: maestro
-    # Larger worker (4 CPU / 32 GB RAM vs default 4 / 16) to reduce
-    # flakiness from emulator/host resource pressure.
-    # See https://docs.expo.dev/eas/workflows/syntax/#jobsjob_idruns_on
-    image: linux-large-nested-virtualization
     env:
       MAESTRO_APP_ID: la.betterangels.dev.app
       # The `url=` value (the EAS Update URL) MUST be fully percent-encoded.
@@ -148,14 +144,19 @@ jobs:
     params:
       build_id: ${{ inputs.android_build_id }}
       flow_path: ['.maestro/tests/']
+      # Auto-retry failed flows once before declaring the run a failure.
+      retries: 2
+      # Split flows across N parallel workers. Each shard gets its own
+      # fresh emulator + worker, halving per-device load. Tune up to the
+      # number of independent flow files in .maestro/tests/.
+      shards: 2
+      # Capture a screen recording per flow as a job artifact for debugging
+      # flaky failures.
+      record_screen: true
 
   maestro_ios_test:
     needs: [wait_ios_build]
     type: maestro
-    # Larger macOS worker (10 CPU / 40 GB RAM vs default 5 / 20) to reduce
-    # flakiness from simulator/host resource pressure.
-    # See https://docs.expo.dev/eas/workflows/syntax/#jobsjob_idruns_on
-    image: macos-large
     env:
       MAESTRO_APP_ID: la.betterangels.dev.app
       # See comment on maestro_android_test for why the `url=` value is fully
@@ -166,6 +167,10 @@ jobs:
     params:
       build_id: ${{ inputs.ios_build_id }}
       flow_path: ['.maestro/tests/']
+      # See comments on maestro_android_test.params.
+      retries: 2
+      shards: 2
+      record_screen: true
 
   set_final_github_status:
     after:
