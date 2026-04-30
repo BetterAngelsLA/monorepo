@@ -10,6 +10,7 @@ query ViewShelters(
       name
       heroImage
       distanceInMiles
+      isPrivate
       location {
         latitude
         longitude

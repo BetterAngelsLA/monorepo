@@ -1,3 +1,4 @@
+import { LockIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { ReactNode } from 'react';
@@ -17,6 +18,7 @@ export type TShelter = {
   name: string;
   heroImage?: string | null;
   distanceInMiles?: number | null;
+  isPrivate?: boolean | null;
   location?: TShelterLocation | null;
   shelterTypes?: Array<{
     name?: string | null;
@@ -33,7 +35,7 @@ type TShelterCard = {
 
 export function ShelterCard(props: TShelterCard) {
   const {
-    shelter: { id, name, heroImage, distanceInMiles, location },
+    shelter: { id, name, heroImage, distanceInMiles, isPrivate, location },
     originCoordinates,
     className,
     footer,
@@ -80,6 +82,15 @@ export function ShelterCard(props: TShelterCard) {
           <div className="font-semibold md:text-lg leading-4.5 tracking-[.03125rem] wrap-anywhere hyphens-auto">
             {name}
           </div>
+
+          {isPrivate && (
+            <div className="flex items-center gap-1 mt-1">
+              <LockIcon className="w-3.5 h-3.5 text-primary-60" />
+              <span className="text-xs text-primary-60 font-medium">
+                Private
+              </span>
+            </div>
+          )}
 
           {formattedAddress && (
             <div className="text-sm md:text-sm mt-2 flex items-start">

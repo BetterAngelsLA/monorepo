@@ -1,4 +1,9 @@
-import { ArrowLeftIcon, BedIcon, UsersIcon } from '@monorepo/react/icons';
+import {
+  ArrowLeftIcon,
+  BedIcon,
+  LockIcon,
+  UsersIcon,
+} from '@monorepo/react/icons';
 import { Link } from 'react-router-dom';
 import { DemographicChoices } from '../../../../apollo';
 import {
@@ -33,6 +38,14 @@ export function Header({ shelter }: { shelter: ViewShelterQuery['shelter'] }) {
       <HeroCarousel className="-mx-4 mb-4" shelter={shelter} />
       <div className="mb-4">
         <h1 className="font-medium text-xl mb-2">{shelter.name}</h1>
+        {shelter.isPrivate && (
+          <div className="flex items-center gap-1.5 mb-2">
+            <LockIcon className="w-4 h-4 text-primary-60" />
+            <span className="text-sm text-primary-60 font-medium">
+              Private shelter
+            </span>
+          </div>
+        )}
         {shelter.organization && (
           <p className="text-sm mb-4">{'By ' + shelter.organization.name}</p>
         )}

@@ -142,6 +142,7 @@ export function HomePage() {
           )
             ? 'purple'
             : 'secondary',
+          isPrivate: shelter.isPrivate,
         } as TMarker;
       });
 

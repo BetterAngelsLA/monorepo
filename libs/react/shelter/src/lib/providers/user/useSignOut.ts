@@ -1,20 +1,18 @@
 import { useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
 import { LogoutDocument } from './__generated__/logout.generated';
-import { useUser } from './useUser';
 
 export function useSignOut() {
-  const { setUser } = useUser();
   const [logout, { loading, error }] = useMutation(LogoutDocument);
 
   const signOut = useCallback(async () => {
     try {
       await logout();
-      setUser(undefined);
+      window.location.href = '/';
     } catch (err) {
       console.error(err);
     }
-  }, [logout, setUser]);
+  }, [logout]);
 
   return { signOut, loading, error };
 }
