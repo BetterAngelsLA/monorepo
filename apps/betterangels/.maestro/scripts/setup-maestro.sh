@@ -119,17 +119,6 @@ if [[ -z "${MAESTRO_DEEPLINK:-}" ]]; then
     fi
   fi
 
-  # URL-encode the dev server URL. Recent expo-dev-client versions require
-  # the `url=` query param to be percent-encoded; an unencoded `http://host:port`
-  # is silently ignored and the dev launcher home screen ("recently opened")
-  # is shown instead, which breaks automated launches.
-  # Hardcoded encoding: `:` -> %3A, `/` -> %2F (no other reserved chars expected
-  # in a host:port URL).
-
-  # ENCODED_URL="http%3A%2F%2F${HOST}%3A${EXPO_PORT}"
-  # # MAESTRO_DEEPLINK="exp+betterangels://expo-development-client/?url=${ENCODED_URL}&disableOnboarding=1"
-  # MAESTRO_DEEPLINK="exp+betterangels://expo-development-client/?url=${ENCODED_URL}"
-
   MAESTRO_DEEPLINK="exp+betterangels://expo-development-client/?url=http://${HOST}:${EXPO_PORT}&disableOnboarding=1"
 
   echo "🔗 Auto-detected MAESTRO_DEEPLINK: $MAESTRO_DEEPLINK"

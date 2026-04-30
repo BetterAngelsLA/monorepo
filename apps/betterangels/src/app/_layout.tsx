@@ -32,24 +32,24 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl, googlePlacesApiKey } from '../../config';
 import AppRoutesStack from './AppRoutesStack';
 
-// Disable the expo-dev-menu floating action button (the "tools" FAB in the
-// top-right) so it doesn't overlap the in-app `nav-menu-btn` during e2e
-// runs on fresh installs. `requireOptionalNativeModule` returns undefined
-// in production builds (where expo-dev-menu isn't bundled), so the optional
-// chain makes this a no-op there. The setting is persisted in the dev-menu
-// preferences store after the first call. See:
-// https://stackoverflow.com/a/79908585
+// iOS-only: hide the expo-dev-menu floating "Tools" FAB so it doesn't
+// overlap the in-app `nav-menu-btn` during e2e on fresh installs.
+// expo-dev-menu only exposes `DevMenuPreferences` to JS on iOS,
+// returning null.
+// this change is primarily for e2e tests, and unless can have a solution
+// for Android then will need to be handled differently.
 
-const DevMenuPreferences = requireOptionalNativeModule<{
-  setPreferencesAsync: (prefs: {
-    showFloatingActionButton?: boolean;
-  }) => Promise<void>;
-}>('DevMenuPreferences');
+if (__DEV__) {
+  const DevMenuPreferences = requireOptionalNativeModule<{
+    setPreferencesAsync: (prefs: {
+      showFloatingActionButton?: boolean;
+    }) => Promise<void>;
+  }>('DevMenuPreferences');
 
-DevMenuPreferences?.setPreferencesAsync({
-  // showFloatingActionButton: true,
-  showFloatingActionButton: false,
-});
+  DevMenuPreferences?.setPreferencesAsync({
+    showFloatingActionButton: false,
+  });
+}
 
 const isDevEnv = process.env['NODE_ENV'] === 'development';
 

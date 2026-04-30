@@ -45,18 +45,10 @@ appId: ${MAESTRO_APP_ID}
           commands:
             - tapOn: 'Continue'
 
-      # Expo in-app dev menu overlay (same one Cmd+D opens) is showing on top
-      # of the loaded app. Distinguished from the RN error LogBox by the
-      # "Go Home" button.
-      #
-      # Dismiss strategy: tap the X close button at the top-right of the menu
-      # sheet. The icon has no visible text but exposes "Close" as its
-      # accessibility label, which Maestro's `text:` matcher checks. This is
-      # safer than tapping Reload (could re-trigger the menu) or Go Home
-      # (dead-ends on "no development servers found" in CI).
+      # Dismiss the dev launcher screen if it's showing a recently opened app
       - runFlow:
           when:
-            visible: 'Go Home'
+            visible: 'BetterAngels (Dev)'
           commands:
             - tapOn:
                 text: 'Close'
@@ -96,21 +88,6 @@ appId: ${MAESTRO_APP_ID}
               id: landing-screen
           commands:
             - evalScript: ${output.counter = 999}
-
-      # Dev launcher HOME screen appeared (deep link didn't auto-load the bundle).
-      # Distinguished from the dev menu overlay by the "Development servers"
-      # section header (the menu overlay shows "Go Home" instead).
-      # Tap the bundle row by app name — works for both local (Metro URL,
-      # e.g. "http://192.168.1.202:8081") and CI (EAS Update URL on
-      # u.expo.dev) since both render with "BetterAngels (Dev)" as the row
-      # label.
-      - runFlow:
-          when:
-            visible: 'Development servers'
-          commands:
-            - tapOn:
-                text: 'BetterAngels \(Dev\)'
-                optional: true
 
       # otherwise increment counter
       - runFlow:

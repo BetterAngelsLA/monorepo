@@ -132,45 +132,28 @@ jobs:
     type: maestro
     env:
       MAESTRO_APP_ID: la.betterangels.dev.app
-      # The `url=` value (the EAS Update URL) MUST be fully percent-encoded.
-      # Recent expo-dev-client versions stop parsing at the first unencoded
-      # `?` or `&` in the value, which truncates the URL and causes the dev
-      # launcher to show "No development servers found". Encoding map:
-      #   :  -> %3A    /  -> %2F    ?  -> %3F    =  -> %3D
-      # `&` connecting outer params (url, disableOnboarding) stays as `&`.
-      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https%3A%2F%2Fu.expo.dev%2F53171ba4-60ca-40cb-b3e6-b0c2393677b8%2Fgroup%2F${{ inputs.update_group_id }}%3Fplatform%3Dandroid&disableOnboarding=1
+      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=android%26disableOnboarding%3D1
       MAESTRO_BA_USER_EMAIL: ${{ inputs.MAESTRO_BA_USER_EMAIL }}
       MAESTRO_BA_USER_PASSWORD: ${{ inputs.MAESTRO_BA_USER_PASSWORD }}
     params:
       build_id: ${{ inputs.android_build_id }}
       flow_path: ['.maestro/tests/']
-      # Auto-retry failed flows once before declaring the run a failure.
       retries: 2
-      # Split flows across N parallel workers. Each shard gets its own
-      # fresh emulator + worker, halving per-device load. Tune up to the
-      # number of independent flow files in .maestro/tests/.
-      # shards: 2
-      # Capture a screen recording per flow as a job artifact for debugging
-      # flaky failures.
-      record_screen: true
+      # record_screen: true
 
   maestro_ios_test:
     needs: [wait_ios_build]
     type: maestro
     env:
       MAESTRO_APP_ID: la.betterangels.dev.app
-      # See comment on maestro_android_test for why the `url=` value is fully
-      # percent-encoded (modern expo-dev-client requires it).
-      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https%3A%2F%2Fu.expo.dev%2F53171ba4-60ca-40cb-b3e6-b0c2393677b8%2Fgroup%2F${{ inputs.update_group_id }}%3Fplatform%3Dios&disableOnboarding=1
+      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=ios%26disableOnboarding%3D1
       MAESTRO_BA_USER_EMAIL: ${{ inputs.MAESTRO_BA_USER_EMAIL }}
       MAESTRO_BA_USER_PASSWORD: ${{ inputs.MAESTRO_BA_USER_PASSWORD }}
     params:
       build_id: ${{ inputs.ios_build_id }}
       flow_path: ['.maestro/tests/']
-      # See comments on maestro_android_test.params.
       retries: 2
-      # shards: 2
-      record_screen: true
+      # record_screen: true
 
   set_final_github_status:
     after:
