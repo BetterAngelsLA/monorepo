@@ -114,6 +114,10 @@ class ShelterPermissions(models.TextChoices):
     VIEW = "shelters.view_shelter", _("Can view shelter")
 
 
+class ShelterPrivacyPermissions(models.TextChoices):
+    VIEW_PRIVATE = "shelters.view_private_shelter", _("Can view private shelters")
+
+
 class ShelterFieldPermissions(models.TextChoices):
     CHANGE_IS_REVIEWED = "shelters.change_shelter_is_reviewed", _("Can change shelter is reviewed")
 

@@ -7,9 +7,9 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextMedium, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { enumDisplayLanguage } from '../../../static/enumDisplayMapping';
+import { ClientProfilePhotoUploader } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { ClientCaseManager } from './ClientCaseManager';
-import { ProfilePhotoUploader } from './ProfilePhotoUploader';
 
 interface IClientHeaderProps {
   client: ClientProfileQuery['clientProfile'] | undefined;
@@ -34,7 +34,7 @@ export function ClientHeader(props: IClientHeaderProps) {
           marginBottom: Spacings.xxs,
         }}
       >
-        <ProfilePhotoUploader
+        <ClientProfilePhotoUploader
           clientId={client?.id ?? ''}
           imageUrl={client?.profilePhoto?.url}
         />

@@ -1,11 +1,13 @@
 import {
   privacyPolicyPath,
   shelterDetailsPath,
+  shelterFiltersPath,
   shelterGalleryPath,
   shelterHomePath,
   shelterVideoPath,
 } from '@monorepo/react/shelter';
 import { Route } from 'react-router-dom';
+import { FiltersRoute } from '../routes/filters.route';
 import { GalleryRoute } from '../routes/gallery.route';
 import { HomeRoute } from '../routes/home.route';
 import { PolicyRoute } from '../routes/policy.route';
@@ -19,6 +21,11 @@ export function buildShelterRoutes() {
         key={shelterHomePath}
         path={shelterHomePath}
         element={<HomeRoute />}
+      />
+      <Route
+        key={shelterFiltersPath}
+        path={shelterFiltersPath}
+        element={<FiltersRoute />}
       />
       <Route
         key={shelterDetailsPath}

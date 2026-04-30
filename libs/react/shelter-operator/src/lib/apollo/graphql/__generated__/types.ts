@@ -98,8 +98,10 @@ export type AdminShelterType = {
   id: Scalars['ID']['output'];
   instagram?: Maybe<Scalars['String']['output']>;
   interiorPhotos: Array<ShelterPhotoType>;
+  isPrivate: Scalars['Boolean']['output'];
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
+  mediaLinks: Array<MediaLinkType>;
   name: Scalars['String']['output'];
   onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
   organization?: Maybe<OrganizationType>;
@@ -735,6 +737,7 @@ export type CreateShelterInput = {
   funders: Array<FunderChoices>;
   fundersOther?: InputMaybe<Scalars['String']['input']>;
   instagram?: InputMaybe<Scalars['String']['input']>;
+  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<ShelterLocationInput>;
   maxStay?: InputMaybe<Scalars['Int']['input']>;
   name: Scalars['String']['input'];
@@ -1448,6 +1451,18 @@ export type MaxStayInput = {
   days: Scalars['Int']['input'];
   includeNull?: InputMaybe<Scalars['Boolean']['input']>;
 };
+
+export type MediaLinkType = {
+  __typename?: 'MediaLinkType';
+  id: Scalars['ID']['output'];
+  mediaType: MediaLinkTypeChoices;
+  title: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+};
+
+export enum MediaLinkTypeChoices {
+  Youtube = 'YOUTUBE'
+}
 
 export enum MedicalNeedChoices {
   Dialysis = 'DIALYSIS',
@@ -2654,6 +2669,7 @@ export type ShelterFilter = {
   OR?: InputMaybe<ShelterFilter>;
   geolocation?: InputMaybe<GeolocationInput>;
   isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
+  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   mapBounds?: InputMaybe<MapBoundsInput>;
   maxStay?: InputMaybe<MaxStayInput>;
   name?: InputMaybe<Scalars['String']['input']>;
@@ -2753,8 +2769,10 @@ export type ShelterType = {
   id: Scalars['ID']['output'];
   instagram?: Maybe<Scalars['String']['output']>;
   interiorPhotos: Array<ShelterPhotoType>;
+  isPrivate: Scalars['Boolean']['output'];
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
+  mediaLinks: Array<MediaLinkType>;
   name: Scalars['String']['output'];
   onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
   organization?: Maybe<OrganizationType>;
