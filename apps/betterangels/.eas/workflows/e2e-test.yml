@@ -130,6 +130,10 @@ jobs:
   maestro_android_test:
     needs: [wait_android_build]
     type: maestro
+    # Larger worker (4 CPU / 32 GB RAM vs default 4 / 16) to reduce
+    # flakiness from emulator/host resource pressure.
+    # See https://docs.expo.dev/eas/workflows/syntax/#jobsjob_idruns_on
+    image: linux-large-nested-virtualization
     env:
       MAESTRO_APP_ID: la.betterangels.dev.app
       # The `url=` value (the EAS Update URL) MUST be fully percent-encoded.
@@ -148,6 +152,10 @@ jobs:
   maestro_ios_test:
     needs: [wait_ios_build]
     type: maestro
+    # Larger macOS worker (10 CPU / 40 GB RAM vs default 5 / 20) to reduce
+    # flakiness from simulator/host resource pressure.
+    # See https://docs.expo.dev/eas/workflows/syntax/#jobsjob_idruns_on
+    image: macos-large
     env:
       MAESTRO_APP_ID: la.betterangels.dev.app
       # See comment on maestro_android_test for why the `url=` value is fully
