@@ -70,27 +70,29 @@ export function ShelterCard(props: TShelterCard) {
   return (
     <div className={mergeCss(parentCss)} onClick={onNavigate}>
       <div className={mergeCss(bodyCss)}>
-        <div className="w-full md:w-96 md:mr-4 md:shrink-0">
+        <div className="relative w-full md:w-96 md:mr-4 md:shrink-0">
           <ShelterCardHero
             className="w-full"
             imageUrl={heroImage}
             shelterName={name}
           />
+          {isPrivate && (
+            <div
+              className="absolute top-2 left-2 flex items-center gap-1 bg-white/90 rounded-[20px] px-2.5 py-1"
+              title="Only visible to verified case managers"
+            >
+              <LockIcon className="w-3.5 h-3.5 text-primary-60" />
+              <span className="text-xs text-primary-20 font-medium">
+                Private
+              </span>
+            </div>
+          )}
         </div>
 
         <div className={mergeCss(contentCss)}>
           <div className="font-semibold md:text-lg leading-4.5 tracking-[.03125rem] wrap-anywhere hyphens-auto">
             {name}
           </div>
-
-          {isPrivate && (
-            <div className="flex items-center gap-1 mt-1">
-              <LockIcon className="w-3.5 h-3.5 text-primary-60" />
-              <span className="text-xs text-primary-60 font-medium">
-                Private
-              </span>
-            </div>
-          )}
 
           {formattedAddress && (
             <div className="text-sm md:text-sm mt-2 flex items-start">
