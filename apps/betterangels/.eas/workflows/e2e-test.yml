@@ -145,7 +145,7 @@ jobs:
       build_id: ${{ inputs.android_build_id }}
       flow_path: ['.maestro/tests/']
       # Auto-retry failed flows once before declaring the run a failure.
-      # retries: 2
+      retries: 2
       # Split flows across N parallel workers. Each shard gets its own
       # fresh emulator + worker, halving per-device load. Tune up to the
       # number of independent flow files in .maestro/tests/.
@@ -168,7 +168,7 @@ jobs:
       build_id: ${{ inputs.ios_build_id }}
       flow_path: ['.maestro/tests/']
       # See comments on maestro_android_test.params.
-      # retries: 2
+      retries: 2
       # shards: 2
       record_screen: true
 
