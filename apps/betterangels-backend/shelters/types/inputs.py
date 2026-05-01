@@ -26,7 +26,12 @@ from shelters.enums import (
     ScheduleTypeChoices,
 )
 from shelters.enums import ShelterChoices as ShelterTypeChoices
-from shelters.enums import ShelterProgramChoices, SPAChoices, SpecialSituationRestrictionChoices, StorageChoices
+from shelters.enums import (
+    ShelterProgramChoices,
+    SPAChoices,
+    SpecialSituationRestrictionChoices,
+    StorageChoices,
+)
 from strawberry import ID, Maybe, auto
 
 
