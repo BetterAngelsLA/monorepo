@@ -408,8 +408,8 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
     def test_shelter_spa_filter(self) -> None:
         spa_one = SPA.objects.get_or_create(name=SPAChoices.ONE)[0]
 
-        shelter_in_spa = shelter_recipe.make(spa=[spa_one], status=StatusChoices.APPROVED)
-        shelter_not_in_spa = shelter_recipe.make(spa=[], status=StatusChoices.APPROVED)
+        shelter_in_spa = shelter_recipe.make(spas_served=[spa_one], status=StatusChoices.APPROVED)
+        shelter_not_in_spa = shelter_recipe.make(spas_served=[], status=StatusChoices.APPROVED)
 
         query = """
             query ViewShelters($filters: ShelterFilter) {
@@ -422,7 +422,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             }
         """
 
-        filters: dict[str, Any] = {"properties": {"spa": [SPAChoices.ONE.name]}}
+        filters: dict[str, Any] = {"properties": {"spasServed": [SPAChoices.ONE.name]}}
 
         expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):

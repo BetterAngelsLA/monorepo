@@ -58,8 +58,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "citiesServed": [],
+                "spasServed": [],
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -125,8 +125,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "citiesServed": [],
+                "spasServed": [],
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -168,7 +168,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                         accessibility {
                             name
                         }
-                        cities {
+                        citiesServed {
                             name
                         }
                     }
@@ -193,8 +193,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "cities": ["LOS_ANGELES"],
-                "spa": [],
+                "citiesServed": ["LOS_ANGELES"],
+                "spasServed": [],
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -210,7 +210,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         self.assertEqual(len(shelter["demographics"]), 2)
         self.assertEqual(len(shelter["shelterTypes"]), 1)
         self.assertEqual(len(shelter["accessibility"]), 1)
-        self.assertEqual(len(shelter["cities"]), 1)
+        self.assertEqual(len(shelter["citiesServed"]), 1)
 
         pet_names = [pet["name"] for pet in shelter["pets"]]
         self.assertIn("DOGS_UNDER_25_LBS", pet_names)
@@ -256,8 +256,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "citiesServed": [],
+                "spasServed": [],
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -338,8 +338,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "citiesServed": [],
+                "spasServed": [],
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -406,8 +406,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "citiesServed": [],
+                "spasServed": [],
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -454,8 +454,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "citiesServed": [],
+                "spasServed": [],
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -506,8 +506,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "citiesServed": [],
+                "spasServed": [],
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -552,8 +552,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "citiesServed": [],
+                "spasServed": [],
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -598,8 +598,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "citiesServed": [],
+                "spasServed": [],
                 "shelterPrograms": [],
                 "funders": [],
             }

@@ -17,7 +17,7 @@ from django.utils.text import slugify
 from organizations.models import Organization
 from places import Places
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
-from shelters.models import Bed, Room, Schedule, Service, ServiceCategory, Shelter
+from shelters.models import SPA, Bed, City, Room, Schedule, Service, ServiceCategory, Shelter
 from shelters.selectors import shelter_get
 
 if TYPE_CHECKING:

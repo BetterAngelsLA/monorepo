@@ -26,12 +26,7 @@ from shelters.enums import (
     ScheduleTypeChoices,
 )
 from shelters.enums import ShelterChoices as ShelterTypeChoices
-from shelters.enums import (
-    ShelterProgramChoices,
-    SPAChoices,
-    SpecialSituationRestrictionChoices,
-    StorageChoices,
-)
+from shelters.enums import ShelterProgramChoices, SpecialSituationRestrictionChoices, StorageChoices
 from strawberry import ID, Maybe, auto
 
 
@@ -82,8 +77,6 @@ class CreateShelterInput:
     entry_requirements: List[EntryRequirementChoices]
     referral_requirement: List[ReferralRequirementChoices]
     exit_policy: List[ExitPolicyChoices]
-    cities: List[str]
-    spa: List[SPAChoices]
     shelter_programs: List[ShelterProgramChoices]
     funders: List[FunderChoices]
 
@@ -125,6 +118,11 @@ class CreateShelterInput:
     supervisorial_district: auto = None
     overall_rating: auto = None
     is_private: Maybe[bool]
+
+    # FK lookups to single City / SPA. Use the same choice/name representation
+    # as their M2M counterparts (cities_served / spas_served) for consistency.
+    city_id: Optional[ID] = None
+    spa_id: Optional[ID] = None
 
 
 @strawberry.input

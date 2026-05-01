@@ -1,5 +1,6 @@
 import type {
   AccessibilityChoices,
+  CityType,
   ConditionChoices,
   DayOfWeekChoices,
   DemographicChoices,
@@ -13,7 +14,7 @@ import type {
   ScheduleTypeChoices,
   ShelterChoices,
   ShelterProgramChoices,
-  SpaChoices,
+  SpaType,
   SpecialSituationRestrictionChoices,
   StatusChoices,
   StorageChoices,
@@ -106,8 +107,8 @@ export interface ShelterFormData {
   entryInfo: string;
 
   // Ecosystem Information
-  cities: string[];
-  spa: SpaChoices[];
+  city: CityType | null;
+  spa: SpaType | null;
   cityCouncilDistrict: number | null;
   supervisorialDistrict: number | null;
   shelterPrograms: ShelterProgramChoices[];

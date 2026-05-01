@@ -46,7 +46,12 @@ query ViewShelter($id: ID!) {
       contactName
       contactNumber
     }
-    cities {
+    city {
+      id
+      name
+    }
+    citiesServed {
+      id
       name
     }
     demographics {
@@ -119,6 +124,9 @@ query ViewShelter($id: ID!) {
       name
     }
     spa {
+      name
+    }
+    spasServed {
       name
     }
     specialSituationRestrictions {

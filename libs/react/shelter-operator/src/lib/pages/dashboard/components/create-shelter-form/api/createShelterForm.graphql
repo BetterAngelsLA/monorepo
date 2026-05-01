@@ -1,0 +1,17 @@
+query ShelterCities {
+  shelterCities {
+    results {
+      id
+      name
+    }
+  }
+}
+
+query ShelterSpas {
+  shelterSpas {
+    results {
+      id
+      name
+    }
+  }
+}

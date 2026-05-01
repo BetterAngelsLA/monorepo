@@ -60,10 +60,12 @@ export const createEmptyShelterFormData = (): ShelterFormData => ({
   bedFees: '',
   programFees: '',
   entryInfo: '',
+  citiesServed: [],
+  spasServed: [],
 
   // Ecosystem Information
-  cities: [],
-  spa: [],
+  city: null,
+  spa: null,
   cityCouncilDistrict: null,
   supervisorialDistrict: null,
   shelterPrograms: [],

@@ -101,16 +101,19 @@ class related_m2m_unique(related):
         return related_objs
 
 
-def make_cities() -> list[City]:
-    """Create random city objects for testing."""
-    quantity = random.randint(1, 3)
-    cities = []
-    city_names = ["Los Angeles", "Santa Monica", "Pasadena", "Long Beach", "Glendale", "Burbank"]
-    for _ in range(quantity):
-        city_name = random.choice(city_names)
-        city, _ = City.objects.get_or_create(name=city_name)
-        cities.append(city)
-    return cities
+CITY_NAMES = ["Los Angeles", "Santa Monica", "Pasadena", "Long Beach", "Glendale", "Burbank"]
+
+
+def get_or_create_city() -> City:
+    """Return a random ``City`` reusing existing rows to respect the unique-name constraint."""
+    city, _ = City.objects.get_or_create(name=random.choice(CITY_NAMES))
+    return city
+
+
+def get_or_create_spa() -> SPA:
+    """Return a random ``City`` reusing existing rows to respect the unique-name constraint."""
+    spa, _ = SPA.objects.get_or_create(name=random.choice(list(SPAChoices)))
+    return spa
 
 
 def make_services() -> list[Service]:
@@ -164,7 +167,8 @@ shelter_recipe = Recipe(
     total_beds=lambda: round(random.randint(20, 200), -1),
     website=seq("shelter", suffix=".com"),  # type: ignore
     accessibility=related_m2m_unique(Accessibility, AccessibilityChoices, min_quantity=1),
-    cities=make_cities,
+    city=get_or_create_city,
+    cities_served=related_m2m_unique(City, CITY_NAMES, min_quantity=1),
     demographics=related_m2m_unique(Demographic, DemographicChoices, min_quantity=1),
     entry_requirements=related_m2m_unique(EntryRequirement, EntryRequirementChoices, min_quantity=1),
     funders=related_m2m_unique(Funder, FunderChoices, min_quantity=1),
@@ -174,7 +178,8 @@ shelter_recipe = Recipe(
     services=make_services,
     shelter_programs=related_m2m_unique(ShelterProgram, ShelterProgramChoices, min_quantity=1),
     shelter_types=related_m2m_unique(ShelterType, ShelterTypeChoices, min_quantity=1),
-    spa=related_m2m_unique(SPA, SPAChoices, min_quantity=1),
+    spa=get_or_create_spa,
+    spas_served=related_m2m_unique(SPA, SPAChoices, min_quantity=1),
     special_situation_restrictions=related_m2m_unique(
         SpecialSituationRestriction, SpecialSituationRestrictionChoices, min_quantity=1
     ),
