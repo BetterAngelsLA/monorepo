@@ -2,7 +2,7 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, ignore_warnings
-from shelters.models import Bed, Room, Service, ServiceCategory, Shelter
+from shelters.models import Bed, City, Room, Service, ServiceCategory, Shelter
 from unittest_parametrize import ParametrizedTestCase
 
 
@@ -58,8 +58,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "citiesServed": [],
-                "spasServed": [],
+                "cityId": None,
+                "spa": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -125,8 +125,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "citiesServed": [],
-                "spasServed": [],
+                "cityId": None,
+                "spa": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -150,6 +150,9 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
 
     def test_create_shelter_with_many_to_many_fields(self) -> None:
         """Test creating a shelter with many-to-many relationships"""
+        city = City.objects.first()
+        assert city
+
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
@@ -168,7 +171,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                         accessibility {
                             name
                         }
-                        citiesServed {
+                        city {
+                            id
                             name
                         }
                     }
@@ -193,8 +197,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "citiesServed": ["LOS_ANGELES"],
-                "spasServed": [],
+                "cityId": str(city.pk),
+                "spa": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -210,7 +214,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         self.assertEqual(len(shelter["demographics"]), 2)
         self.assertEqual(len(shelter["shelterTypes"]), 1)
         self.assertEqual(len(shelter["accessibility"]), 1)
-        self.assertEqual(len(shelter["citiesServed"]), 1)
+        self.assertEqual(shelter["city"]["id"], str(city.pk))
 
         pet_names = [pet["name"] for pet in shelter["pets"]]
         self.assertIn("DOGS_UNDER_25_LBS", pet_names)
@@ -256,8 +260,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "citiesServed": [],
-                "spasServed": [],
+                "cityId": None,
+                "spa": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -338,8 +342,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "citiesServed": [],
-                "spasServed": [],
+                "cityId": None,
+                "spa": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -406,8 +410,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "citiesServed": [],
-                "spasServed": [],
+                "cityId": None,
+                "spa": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -454,8 +458,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "citiesServed": [],
-                "spasServed": [],
+                "cityId": None,
+                "spa": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -506,8 +510,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "citiesServed": [],
-                "spasServed": [],
+                "cityId": None,
+                "spa": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -552,8 +556,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "citiesServed": [],
-                "spasServed": [],
+                "cityId": None,
+                "spa": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -598,8 +602,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "entryRequirements": [],
                 "referralRequirement": [],
                 "exitPolicy": [],
-                "citiesServed": [],
-                "spasServed": [],
+                "cityId": None,
+                "spa": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
