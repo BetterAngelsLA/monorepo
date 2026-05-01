@@ -51,6 +51,7 @@ export default function LoginForm() {
     <View style={styles.container}>
       <BasicInput
         label="Email"
+        testID="ba-email-input"
         value={email}
         onChangeText={(text) => {
           setEmail(text);
@@ -72,6 +73,7 @@ export default function LoginForm() {
           {isPasswordLogin && (
             <BasicInput
               label="Password"
+              testID="ba-password-input"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -92,6 +94,7 @@ export default function LoginForm() {
             variant="primary"
             accessibilityHint="Sign in to your account"
             title="Sign In"
+            testID="ba-login-submit"
             icon={
               loggingIn || sendingCode ? (
                 <Loading size="small" color="white" />

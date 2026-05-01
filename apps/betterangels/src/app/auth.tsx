@@ -1,12 +1,12 @@
 import { AuthContainer, useUser } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Button } from '@monorepo/expo/shared/ui-components';
+import CookieManager from '@preeternal/react-native-cookie-manager';
 import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
 import * as Updates from 'expo-updates';
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import CookieManager from '@preeternal/react-native-cookie-manager';
 
 import Logo from './assets/images/logo.svg';
 
@@ -33,7 +33,7 @@ export default function Auth() {
 
   return (
     <AuthContainer header={<Logo width={216} height={33} />}>
-      <View style={styles.buttonStack}>
+      <View style={styles.buttonStack} testID="landing-screen">
         <Text style={styles.heading}>Choose an account:</Text>
 
         <Button

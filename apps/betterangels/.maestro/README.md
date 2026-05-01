@@ -268,38 +268,46 @@ CI tests run via EAS Workflows. See `.eas/workflows/e2e-test.yml` for the pipeli
 
 ### Test IDs
 
-Add a `testID` prop to React Native components so Maestro can reliably select them.
+Sometimes we need to add a `testID` prop to React Native components so Maestro can reliably select them.
 
-Guidelines:
+#### Naming:
 
+- Use `kebab-case` format.
 - Use clear, stable names.
-- Avoid relying on screen coordinates whenever possible.
-- IDs should be:
-  - **specific enough** to be unique within the screen
-  - **generic enough** to make sense when used in reusable components
+- **specific enough** to be unique within their visible context
+- **generic enough** to make sense when used in reusable components
 
-Example:
+#### Common suffixes:
 
-    <TextInput testID="email-input" />
+| Suffix    | Usage             | Example          |
+| --------- | ----------------- | ---------------- |
+| `-screen` | Screen containers | `tasks-screen`   |
+| `-btn`    | Buttons           | `nav-menu-btn`   |
+| `-input`  | Text inputs       | `ba-email-input` |
 
-Naming convention examples:
+#### Use IDs to:
 
-    email-input
-    password-input
-    login-button
-    submit-button
+- locate interactive elements (buttons, inputs, screens)
+- detect app state (auth status, loading states)
 
-Avoid coordinate-based selectors such as:
+#### Do `not` use IDs to:
 
+- verify displayed text — use `assertVisible: 'Tasks'` instead
+- check dynamic content — use text matchers or regex
+
+#### Prefer ID-based selectors over coordinate-based ones:
+
+    # Good
+    - tapOn:
+        id: email-input
+
+    # Avoid — fragile across screen sizes
     - tapOn:
         point: "50%,62%"
 
-These are fragile and may break when layouts or screen sizes change.
-
-Prefer selectors like:
-
-    - tapOn:
-        id: email-input
+App-state IDs (`authorized-root`, `unauthorized-root`, `authorized-pending`)
+are used by test steps to detect auth state. Do not rename or remove them
+without updating the corresponding Maestro steps.
 
 ---
 

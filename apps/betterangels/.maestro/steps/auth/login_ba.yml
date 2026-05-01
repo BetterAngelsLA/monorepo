@@ -1,0 +1,56 @@
+appId: ${MAESTRO_APP_ID}
+---
+# for a succesfull `login` flow, the following are required:
+#   1. user exists in the database
+#   2. user has first and last name
+#   3. user has accepted terms of service (hasAcceptedTos) and privacy policy (hasAcceptedPrivacyPolicy)
+#       - otherwise the flow will prompt other screens after login
+
+# If we landed on the landing page, open the login screen
+- runFlow:
+    when:
+      visible:
+        id: landing-screen
+    commands:
+      - tapOn:
+          id: better-angels-login
+
+# Ensure the login form is visible
+- assertVisible:
+    id: sign-in-screen
+
+- tapOn:
+    id: 'ba-email-input'
+- inputText: ${MAESTRO_BA_USER_EMAIL}
+
+# Password field becomes visible once email ending with @example.com
+# is entered. This UI transition can destabilize tests and cause failures
+# that seem random. Extra pressKey and assertVisible commands
+# are meant help stabilize the tests.
+- pressKey: Enter
+
+- assertVisible:
+    id: ba-password-input
+
+- tapOn:
+    id: 'ba-password-input'
+- inputText: ${MAESTRO_BA_USER_PASSWORD}
+
+# Press Enter and scroll down until Submit button is visible.
+# Sometimes a visible keyboard may interfere with a tap/click.
+# `hideKeyboard` is brittle; An alternative is to tapOn
+# some safe area (a header etc...) to dismiss the keybaord.
+- pressKey: Enter
+
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: ba-login-submit
+    direction: DOWN
+
+- tapOn:
+    id: 'ba-login-submit'
+
+- assertVisible:
+    id: clients-screen
