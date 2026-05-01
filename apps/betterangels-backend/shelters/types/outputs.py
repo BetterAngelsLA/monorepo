@@ -79,7 +79,6 @@ class ShelterTypeMixin:
     add_notes_shelter_details: Optional[str]
     bed_fees: Optional[str]
     city: Optional[CityType]
-    cities_served: List[CityType]
     city_council_district: auto
     curfew: auto
     demographics: List[DemographicType]
@@ -118,7 +117,6 @@ class ShelterTypeMixin:
     shelter_types: List[ShelterTypeType]
     shelter_types_other: auto
     spa: Optional[SPAType]
-    spas_served: List[SPAType]
     special_situation_restrictions: List[SpecialSituationRestrictionType]
     is_private: auto
     status: auto

@@ -770,7 +770,7 @@ export type CreateShelterInput = {
   shelterProgramsOther?: InputMaybe<Scalars['String']['input']>;
   shelterTypes: Array<ShelterChoices>;
   shelterTypesOther?: InputMaybe<Scalars['String']['input']>;
-  spaId?: InputMaybe<Scalars['ID']['input']>;
+  spa?: InputMaybe<SpaChoices>;
   specialSituationRestrictions: Array<SpecialSituationRestrictionChoices>;
   status?: InputMaybe<StatusChoices>;
   storage: Array<StorageChoices>;
@@ -2768,7 +2768,7 @@ export type ShelterPropertyInput = {
   referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
-  spa?: InputMaybe<Array<Scalars['ID']['input']>>;
+  spa?: InputMaybe<Array<SpaChoices>>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
 };
 

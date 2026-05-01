@@ -14,7 +14,7 @@ import type {
   ScheduleTypeChoices,
   ShelterChoices,
   ShelterProgramChoices,
-  SpaType,
+  SpaChoices,
   SpecialSituationRestrictionChoices,
   StatusChoices,
   StorageChoices,
@@ -108,7 +108,7 @@ export interface ShelterFormData {
 
   // Ecosystem Information
   city: CityType | null;
-  spa: SpaType | null;
+  spa: SpaChoices | null;
   cityCouncilDistrict: number | null;
   supervisorialDistrict: number | null;
   shelterPrograms: ShelterProgramChoices[];

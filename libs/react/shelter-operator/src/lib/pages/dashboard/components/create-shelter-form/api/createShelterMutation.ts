@@ -133,7 +133,7 @@ export const buildCreateShelterInput = (
     referralRequirement: compactEnumValues(formData.referralRequirement),
     exitPolicy: compactEnumValues(formData.exitPolicy),
     cityId: formData.city ? formData.city?.id : undefined,
-    spaId: formData.spa ? formData.spa?.id : undefined,
+    spa: formData.spa ?? undefined,
     shelterPrograms: compactEnumValues(formData.shelterPrograms),
     funders: compactEnumValues(formData.funders),
 

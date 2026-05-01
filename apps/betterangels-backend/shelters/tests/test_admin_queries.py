@@ -364,8 +364,8 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
     @parametrize(
         "properties, expected_count",
         [
-            ({"spa": 1}, 2),
-            ({"spa": 2}, 1),
+            ({"spa": SPAChoices.ONE.name}, 2),
+            ({"spa": SPAChoices.TWO.name}, 1),
         ],
     )
     def test_spa_filter(self, properties: dict[str, Any], expected_count: int) -> None:

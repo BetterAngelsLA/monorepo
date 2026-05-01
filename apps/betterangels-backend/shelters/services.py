@@ -17,7 +17,7 @@ from django.utils.text import slugify
 from organizations.models import Organization
 from places import Places
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
-from shelters.models import SPA, Bed, City, Room, Schedule, Service, ServiceCategory, Shelter
+from shelters.models import Bed, Room, Schedule, Service, ServiceCategory, Shelter
 from shelters.selectors import shelter_get
 
 if TYPE_CHECKING:
@@ -39,6 +39,10 @@ _BED_M2M_FIELDS = _get_m2m_field_names(Bed)
 _ROOM_M2M_FIELDS = _get_m2m_field_names(Room)
 _COMMON_M2M_FIELDS = (_SHELTER_M2M_FIELDS & _BED_M2M_FIELDS) | (_SHELTER_M2M_FIELDS & _ROOM_M2M_FIELDS)
 
+# FK fields whose target is an enum-backed lookup table (single unique ``name``
+# column).  Inputs arrive as enum values and are resolved via ``get_or_create``.
+_SHELTER_FK_ENUM_FIELDS: set[str] = {"spa"}
+
 
 def _set_m2m_from_enums(instance: models.Model, data: Dict[str, List[Any]]) -> None:
     """Set M2M relationships from enum / string values using ``get_or_create``.
@@ -59,6 +63,29 @@ def _set_m2m_from_enums(instance: models.Model, data: Dict[str, List[Any]]) -> N
         getattr(instance, field_name).set(instances)
 
 
+def _set_fks_from_enums(instance: models.Model, data: Dict[str, Any]) -> None:
+    """Set FK relationships from enum / string / int values using ``get_or_create``.
+
+    FK analog of :func:`_set_m2m_from_enums` for the *enum-backed lookup-table*
+    pattern where each FK target model has a single ``name`` field
+    (``TextChoicesField`` / ``IntegerChoicesField`` with ``unique=True``).
+    Enum values are extracted via ``getattr(v, "value", v)`` so both enum
+    instances and raw values are supported.
+
+    Writes to the FK's ``attname`` (e.g. ``spa_id``) directly, so this is safe
+    to call on an unsaved instance prior to ``full_clean()`` — the FK is then
+    part of the initial INSERT.  A ``None`` value clears the FK.
+    """
+    for field_name, value in data.items():
+        field: Any = instance._meta.get_field(field_name)
+        if value is None:
+            setattr(instance, field.attname, None)
+            continue
+
+        related, _ = field.related_model.objects.get_or_create(name=getattr(value, "value", value))
+        setattr(instance, field.attname, related.pk)
+
+
 def _parse_location(data: Any) -> Any:
     """Convert a ``ShelterLocationInput`` dict to a ``Places`` object."""
     if not data:
@@ -75,18 +102,22 @@ def _parse_location(data: Any) -> Any:
 def _prepare_shelter_data(
     data: Dict[str, Any],
     m2m_field_names: set[str],
-) -> tuple[Dict[str, Any], Dict[str, List[Any]], List[Dict[str, Any]]]:
-    """Separate M2M data and schedules from scalar fields.
+    fk_enum_field_names: set[str],
+) -> tuple[Dict[str, Any], Dict[str, List[Any]], Dict[str, Any], List[Dict[str, Any]]]:
+    """Separate M2M / FK-enum data and schedules from scalar fields.
 
     Transforms:
     - ``location`` dict → ``Places`` instance
     - ``organization`` ID → ``organization_id`` FK column
     - ``status`` enum → raw string value
     - ``schedules`` list extracted for bulk creation after shelter save
+    - FK-enum fields (e.g. ``spa``) extracted for resolution via
+      :func:`_set_fks_from_enums` against the unsaved instance
 
-    Returns ``(scalar_data, m2m_data, schedules_data)``.
+    Returns ``(scalar_data, m2m_data, fk_enum_data, schedules_data)``.
     """
     m2m_data: Dict[str, List[Any]] = {k: data.pop(k) for k in list(data) if k in m2m_field_names}
+    fk_enum_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in fk_enum_field_names}
 
     # Extract schedules before model creation
     schedules_data: List[Dict[str, Any]] = data.pop("schedules", None) or []
@@ -98,8 +129,6 @@ def _prepare_shelter_data(
         data["organization_id"] = org
     if city := data.pop("city", None):
         data["city_id"] = city
-    if spa := data.pop("spa", None):
-        data["spa_id"] = spa
     if org := data.pop("organization", None):
         data["organization_id"] = org
 
@@ -110,7 +139,7 @@ def _prepare_shelter_data(
         else:
             del data["status"]
 
-    return data, m2m_data, schedules_data
+    return data, m2m_data, fk_enum_data, schedules_data
 
 
 def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) -> None:
@@ -254,7 +283,9 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     if not Organization.objects.filter(pk=org_id, users=user).exists():
         raise PermissionError("You do not have permission to create a shelter for this organization.")
 
-    scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
+    scalar_data, m2m_data, fk_enum_data, schedules_data = _prepare_shelter_data(
+        data, _SHELTER_M2M_FIELDS, _SHELTER_FK_ENUM_FIELDS
+    )
 
     # ``services`` is a unified list — split into existing PKs and pending entries.
     raw_services: List[Any] = m2m_data.pop("services", []) or []
@@ -284,6 +315,7 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
             service_pks.append(entry)
 
     shelter = Shelter(**scalar_data)
+    _set_fks_from_enums(shelter, fk_enum_data)
     shelter.full_clean()
     shelter.save()
 

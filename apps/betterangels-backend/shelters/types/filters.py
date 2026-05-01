@@ -61,7 +61,7 @@ class ShelterPropertyInput:
     shelter_types: Optional[List[ShelterChoices]] = None
     room_styles: Optional[List[RoomStyleChoices]] = None
     parking: Optional[List[ParkingChoices]] = None
-    spa: Optional[List[ID]] = None
+    spa: Optional[List[SPAChoices]] = None
 
 
 @strawberry.input

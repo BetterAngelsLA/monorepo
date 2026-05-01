@@ -120,6 +120,9 @@ class SPA(models.Model):
     def __str__(self) -> str:
         return str(self.name)
 
+    class Meta:
+        ordering = ["name"]
+
 
 class ShelterProgram(models.Model):
     name = TextChoicesField(choices_enum=ShelterProgramChoices, unique=True, blank=True, null=True)

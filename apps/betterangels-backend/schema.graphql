@@ -78,7 +78,6 @@ type AdminShelterType {
   addNotesShelterDetails: String
   bedFees: String
   city: CityType
-  citiesServed: [CityType!]!
   cityCouncilDistrict: Int
   curfew: Time
   demographics: [DemographicType!]!
@@ -117,7 +116,6 @@ type AdminShelterType {
   shelterTypes: [ShelterTypeType!]!
   shelterTypesOther: String
   spa: SPAType
-  spasServed: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
   isPrivate: Boolean!
   status: StatusChoices!
@@ -772,7 +770,7 @@ input CreateShelterInput {
   overallRating: Int = null
   isPrivate: Boolean
   cityId: ID = null
-  spaId: ID = null
+  spa: SPAChoices = null
 }
 
 union CreateShelterPayload = ShelterType | OperationInfo
@@ -2233,7 +2231,7 @@ input ShelterPropertyInput {
   shelterTypes: [ShelterChoices!] = null
   roomStyles: [RoomStyleChoices!] = null
   parking: [ParkingChoices!] = null
-  spa: [ID!] = null
+  spa: [SPAChoices!] = null
 }
 
 type ShelterType {
@@ -2244,7 +2242,6 @@ type ShelterType {
   addNotesShelterDetails: String
   bedFees: String
   city: CityType
-  citiesServed: [CityType!]!
   cityCouncilDistrict: Int
   curfew: Time
   demographics: [DemographicType!]!
@@ -2283,7 +2280,6 @@ type ShelterType {
   shelterTypes: [ShelterTypeType!]!
   shelterTypesOther: String
   spa: SPAType
-  spasServed: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
   isPrivate: Boolean!
   status: StatusChoices!

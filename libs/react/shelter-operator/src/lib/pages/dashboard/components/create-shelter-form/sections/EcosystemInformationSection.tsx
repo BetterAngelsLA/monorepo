@@ -1,5 +1,9 @@
 import { useQuery } from '@apollo/client/react';
-import { FunderChoices, ShelterProgramChoices } from '@monorepo/react/shelter';
+import {
+  enumDisplaySpaChoices,
+  FunderChoices,
+  ShelterProgramChoices,
+} from '@monorepo/react/shelter';
 import { memo } from 'react';
 import { Dropdown } from '../../../../../components/base-ui/dropdown';
 import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
@@ -9,6 +13,7 @@ import {
   CITY_COUNCIL_DISTRICT_OPTIONS,
   FUNDERS_OPTIONS,
   SHELTER_PROGRAMS_OPTIONS,
+  SPA_OPTIONS,
   SUPERVISORIAL_DISTRICT_OPTIONS,
 } from '../../../formOptions';
 import {
@@ -18,7 +23,6 @@ import {
   ShelterSpasQuery,
 } from '../api/__generated__/createShelterForm.generated';
 import type { SectionProps } from '../types';
-
 export const EcosystemInformationSection = memo(
   function EcosystemInformationSection({ data, onChange }: SectionProps) {
     const { data: shelterCities } = useQuery<ShelterCitiesQuery>(
@@ -52,37 +56,14 @@ export const EcosystemInformationSection = memo(
         <Dropdown
           label="SPA (Service Planning Area)"
           placeholder="Select a SPA"
-          options={shelterSpas.shelterSpas.results.map((o) => ({
-            label: o.name,
-            value: o.id,
-          }))}
-          value={data.spa ? { label: data.spa.name, value: data.spa.id } : null}
-          onChange={(option) => {
-            onChange(
-              'spa',
-              option ? { id: option.value, name: option.label } : null
-            );
-          }}
-        />
-        {/* <Dropdown
-          label="SPA (Service Planning Area)"
-          placeholder="Select a SPA"
-          options={SPA_OPTIONS.map((o) => ({
-            label: o.label,
-            value: o.value,
-          }))}
+          options={SPA_OPTIONS}
           value={
             data.spa
-              ? {
-                  label:
-                    SPA_OPTIONS.find((o) => o.value === data.spa)?.label ??
-                    String(data.spa),
-                  value: data.spa,
-                }
+              ? { label: enumDisplaySpaChoices[data.spa], value: data.spa }
               : null
           }
           onChange={(option) => onChange('spa', option ? option.value : null)}
-        /> */}
+        />
         <Dropdown
           label="City Council District"
           placeholder="Select a district"

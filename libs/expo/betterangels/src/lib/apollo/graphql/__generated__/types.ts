@@ -78,7 +78,6 @@ export type AdminShelterType = {
   additionalContacts: Array<ContactInfoType>;
   bedFees?: Maybe<Scalars['String']['output']>;
   bedsByStatus: BedsByStatusType;
-  citiesServed: Array<CityType>;
   city?: Maybe<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
   curfew?: Maybe<Scalars['Time']['output']>;
@@ -123,7 +122,6 @@ export type AdminShelterType = {
   shelterTypes: Array<ShelterTypeType>;
   shelterTypesOther?: Maybe<Scalars['String']['output']>;
   spa?: Maybe<SpaType>;
-  spasServed: Array<SpaType>;
   specialSituationRestrictions: Array<SpecialSituationRestrictionType>;
   status: StatusChoices;
   storage: Array<StorageType>;
@@ -770,7 +768,7 @@ export type CreateShelterInput = {
   shelterProgramsOther?: InputMaybe<Scalars['String']['input']>;
   shelterTypes: Array<ShelterChoices>;
   shelterTypesOther?: InputMaybe<Scalars['String']['input']>;
-  spaId?: InputMaybe<Scalars['ID']['input']>;
+  spa?: InputMaybe<SpaChoices>;
   specialSituationRestrictions: Array<SpecialSituationRestrictionChoices>;
   status?: InputMaybe<StatusChoices>;
   storage: Array<StorageChoices>;
@@ -2768,7 +2766,7 @@ export type ShelterPropertyInput = {
   referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
-  spa?: InputMaybe<Array<Scalars['ID']['input']>>;
+  spa?: InputMaybe<Array<SpaChoices>>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
 };
 
@@ -2782,7 +2780,6 @@ export type ShelterType = {
   additionalContacts: Array<ContactInfoType>;
   bedFees?: Maybe<Scalars['String']['output']>;
   bedsByStatus: BedsByStatusType;
-  citiesServed: Array<CityType>;
   city?: Maybe<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
   curfew?: Maybe<Scalars['Time']['output']>;
@@ -2827,7 +2824,6 @@ export type ShelterType = {
   shelterTypes: Array<ShelterTypeType>;
   shelterTypesOther?: Maybe<Scalars['String']['output']>;
   spa?: Maybe<SpaType>;
-  spasServed: Array<SpaType>;
   specialSituationRestrictions: Array<SpecialSituationRestrictionType>;
   status: StatusChoices;
   storage: Array<StorageType>;
