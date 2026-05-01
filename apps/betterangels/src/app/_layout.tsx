@@ -34,6 +34,8 @@ import AppRoutesStack from './AppRoutesStack';
 
 // Hide the expo-dev-menu floating "Tools" FAB during dev/e2e (iOS only;
 // Android has no equivalent JS API). See helper for details.
+// TODO: Remove once on SDK 56+ — expo-dev-launcher gains a build-time
+// plugin option to hide the FAB on both platforms (PR expo/expo#44251).
 hideDevMenuFabInDev();
 
 const isDevEnv = process.env['NODE_ENV'] === 'development';
