@@ -32,8 +32,9 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl, googlePlacesApiKey } from '../../config';
 import AppRoutesStack from './AppRoutesStack';
 
-// Hide the expo-dev-menu floating "Tools" FAB during dev/e2e (iOS only;
-// Android has no equivalent JS API). See helper for details.
+// Hide the expo-dev-menu floating "Tools" FAB on iOS dev clients
+// (overlaps `nav-menu-btn`). No-op in production / store builds and on
+// Android. See helper for details.
 // TODO: Remove once on SDK 56+ — expo-dev-launcher gains a build-time
 // plugin option to hide the FAB on both platforms (PR expo/expo#44251).
 hideDevMenuFabInDev();
