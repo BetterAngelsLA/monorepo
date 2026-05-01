@@ -22,7 +22,7 @@ import {
   BottomSheetModalProvider,
   GooglePlacesProvider,
 } from '@monorepo/expo/shared/ui-components';
-import { hideDevMenuFabInDev } from '@monorepo/expo/shared/utils';
+import { hideDevMenuFab } from '@monorepo/expo/shared/utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -37,7 +37,7 @@ import AppRoutesStack from './AppRoutesStack';
 // Android. See helper for details.
 // TODO: Remove once on SDK 56+ — expo-dev-launcher gains a build-time
 // plugin option to hide the FAB on both platforms (PR expo/expo#44251).
-hideDevMenuFabInDev();
+hideDevMenuFab();
 
 const isDevEnv = process.env['NODE_ENV'] === 'development';
 

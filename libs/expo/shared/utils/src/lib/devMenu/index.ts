@@ -1,1 +1,1 @@
-export * from './hideDevMenuFabInDev';
+export * from './hideDevMenuFab';
