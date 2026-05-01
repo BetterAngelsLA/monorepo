@@ -309,7 +309,7 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
                     ]
                 ],
                 shelter_types=[ShelterType.objects.get_or_create(name=ShelterTypeChoices.BUILDING)[0]],
-                spa=[spa_one],
+                spa=spa_one,
             )
         # Shelter C: FAMILIES, HIV_AIDS, TINY_HOMES, SPA TWO
         shelter_recipe.make(
@@ -319,7 +319,7 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
                 SpecialSituationRestriction.objects.get_or_create(name=SpecialSituationRestrictionChoices.HIV_AIDS)[0]
             ],
             shelter_types=[ShelterType.objects.get_or_create(name=ShelterTypeChoices.TINY_HOMES)[0]],
-            spa=[spa_two],
+            spa=spa_two,
         )
 
     def _query(self, properties: dict[str, Any]) -> list[dict[Any, Any]]:
@@ -364,8 +364,8 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
     @parametrize(
         "properties, expected_count",
         [
-            ({"spa": [SPAChoices.ONE.name]}, 2),
-            ({"spa": [SPAChoices.TWO.name]}, 1),
+            ({"spa": SPAChoices.ONE.name}, 2),
+            ({"spa": SPAChoices.TWO.name}, 1),
         ],
     )
     def test_spa_filter(self, properties: dict[str, Any], expected_count: int) -> None:

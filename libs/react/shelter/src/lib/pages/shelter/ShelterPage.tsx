@@ -72,8 +72,8 @@ export function ShelterPage({ id }: { id: string }) {
     hasWysiwygContent(shelter.otherRules);
 
   const hasEcosystemInfo =
-    !!shelter.cities?.length ||
-    !!shelter.spa?.length ||
+    !!shelter.city != null ||
+    !!shelter.spa != null ||
     !!shelter.cityCouncilDistrict ||
     !!shelter.supervisorialDistrict ||
     !!shelter.shelterPrograms?.length ||

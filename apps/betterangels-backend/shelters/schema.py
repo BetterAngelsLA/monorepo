@@ -12,12 +12,14 @@ from shelters.services import bed_create, room_create, shelter_create
 from shelters.types import (
     AdminShelterType,
     BedType,
+    CityType,
     CreateBedInput,
     CreateRoomInput,
     CreateShelterInput,
     RoomType,
     ServiceCategoryType,
     ShelterType,
+    SPAType,
 )
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -36,6 +38,13 @@ class Query:
     shelters: OffsetPaginated[ShelterType] = strawberry_django.offset_paginated()
 
     shelter_service_categories: OffsetPaginated[ServiceCategoryType] = strawberry_django.offset_paginated(
+        permission_classes=[IsAuthenticated],
+    )
+
+    shelter_cities: OffsetPaginated[CityType] = strawberry_django.offset_paginated(
+        permission_classes=[IsAuthenticated],
+    )
+    shelter_spas: OffsetPaginated[SPAType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
     )
 

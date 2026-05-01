@@ -110,7 +110,8 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             website="shelter.com",
             location=shelter_location,
             accessibility=[Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)[0]],
-            cities=[
+            city=City.objects.get_or_create(name="Agoura Hills")[0],
+            cities_served=[
                 City.objects.get_or_create(
                     name="Agoura Hills",
                 )[0]
@@ -128,7 +129,8 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             room_styles=[RoomStyle.objects.get_or_create(name=RoomStyleChoices.CONGREGATE)[0]],
             shelter_programs=[ShelterProgram.objects.get_or_create(name=ShelterProgramChoices.BRIDGE_HOME)[0]],
             shelter_types=[ShelterType.objects.get_or_create(name=ShelterChoices.BUILDING)[0]],
-            spa=[SPA.objects.get_or_create(name=SPAChoices.ONE)[0]],
+            spa=SPA.objects.get_or_create(name=SPAChoices.ONE)[0],
+            spas_served=[SPA.objects.get_or_create(name=SPAChoices.ONE)[0]],
             special_situation_restrictions=[
                 SpecialSituationRestriction.objects.get_or_create(
                     name=SpecialSituationRestrictionChoices.NONE,
@@ -212,7 +214,8 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             "totalBeds": 1,
             "website": "shelter.com",
             "accessibility": [{"name": AccessibilityChoices.WHEELCHAIR_ACCESSIBLE.name}],
-            "cities": [{"name": "Agoura Hills"}],
+            "city": {"id": ANY, "name": "Agoura Hills"},
+            "citiesServed": [{"id": ANY, "name": "Agoura Hills"}],
             "demographics": [{"name": DemographicChoices.ALL.name}],
             "entryRequirements": [{"name": EntryRequirementChoices.PHOTO_ID.name}],
             "funders": [{"name": FunderChoices.CITY_OF_LOS_ANGELES.name}],
@@ -232,7 +235,8 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             ],
             "shelterPrograms": [{"name": ShelterProgramChoices.BRIDGE_HOME.name}],
             "shelterTypes": [{"name": ShelterChoices.BUILDING.name}],
-            "spa": [{"name": SPAChoices.ONE.name}],
+            "spa": {"name": SPAChoices.ONE.name},
+            "spasServed": [{"name": SPAChoices.ONE.name}],
             "specialSituationRestrictions": [{"name": SpecialSituationRestrictionChoices.NONE.name}],
             "storage": [{"name": StorageChoices.AMNESTY_LOCKERS.name}],
             "visitorsAllowed": True,
