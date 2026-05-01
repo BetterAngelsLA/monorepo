@@ -138,7 +138,7 @@ jobs:
     params:
       build_id: ${{ inputs.android_build_id }}
       flow_path: ['.maestro/tests/']
-      retries: 3
+      retries: 2
       record_screen: true
 
   maestro_ios_test:
@@ -152,7 +152,7 @@ jobs:
     params:
       build_id: ${{ inputs.ios_build_id }}
       flow_path: ['.maestro/tests/']
-      retries: 3
+      retries: 2
       record_screen: true
 
   set_final_github_status:

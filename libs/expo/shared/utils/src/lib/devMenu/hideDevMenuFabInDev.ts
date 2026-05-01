@@ -1,4 +1,5 @@
-import { NativeModules, Platform } from 'react-native';
+import { requireOptionalNativeModule } from 'expo-modules-core';
+import { Platform } from 'react-native';
 
 type DevMenuPreferencesModule = {
   setPreferencesAsync: (prefs: {
@@ -12,23 +13,27 @@ type DevMenuPreferencesModule = {
  *
  * Behavior:
  *   - iOS dev clients (local Metro OR EAS Update bundle): hides the FAB
- *     via `DevMenuPreferences` JS module.
- *   - Android (any): no-op. expo-dev-menu does not expose
- *     `DevMenuPreferences` to JS on Android.
+ *     via the `DevMenuPreferences` Expo module.
+ *   - Android (any): no-op. expo-dev-menu does not register
+ *     `DevMenuPreferences` on Android.
  *   - iOS production / store builds: no-op. expo-dev-menu isn't linked,
- *     so the native module is absent from `NativeModules`.
+ *     so the module is absent from the Expo modules registry.
  *
- * Notes:
+ * Implementation notes:
+ *   - `DevMenuPreferences` is an *Expo Module* (extends `Module` from
+ *     `ExpoModulesCore` — see `node_modules/expo-dev-menu/ios/Modules/
+ *     DevMenuPreferences.swift`). It is NOT registered on React
+ *     Native's legacy `NativeModules` bridge, so `NativeModules.
+ *     DevMenuPreferences` is always `undefined`. The correct lookup is
+ *     `requireOptionalNativeModule` from `expo-modules-core`, which
+ *     reads from the Expo modules registry and returns `null` when the
+ *     module isn't linked (production builds) — that's our explicit
+ *     no-op gate.
  *   - We do NOT gate on `__DEV__`. Metro inlines `__DEV__` based on the
  *     bundle's build mode, not the host app: EAS Update bundles consumed
  *     by the e2e CI dev client are produced with `dev: false` even
  *     though they run inside a dev client that includes expo-dev-menu
  *     natively. Gating on `__DEV__` would skip this in CI.
- *   - We deliberately avoid `requireOptionalNativeModule` from
- *     `expo-modules-core` — its semantics are sparsely documented and
- *     have changed across Expo versions. Reading directly from
- *     `NativeModules` is plain React Native API and the absence check
- *     is explicit.
  *
  * Call once at app startup, before any UI renders.
  */
@@ -37,11 +42,10 @@ export function hideDevMenuFabInDev(): void {
     return;
   }
 
-  // Explicit absence check: in production / store builds, expo-dev-menu
-  // is not linked and `NativeModules.DevMenuPreferences` is undefined.
-  const devMenuPreferences = (NativeModules as Record<string, unknown>)[
-    'DevMenuPreferences'
-  ] as DevMenuPreferencesModule | undefined;
+  // Returns null in production / store builds where expo-dev-menu is
+  // not linked.
+  const devMenuPreferences =
+    requireOptionalNativeModule<DevMenuPreferencesModule>('DevMenuPreferences');
 
   if (
     !devMenuPreferences ||
