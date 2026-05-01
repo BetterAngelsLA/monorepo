@@ -22,8 +22,8 @@ import {
   BottomSheetModalProvider,
   GooglePlacesProvider,
 } from '@monorepo/expo/shared/ui-components';
+import { hideDevMenuFabInDev } from '@monorepo/expo/shared/utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { requireOptionalNativeModule } from 'expo-modules-core';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet } from 'react-native';
@@ -32,24 +32,9 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl, googlePlacesApiKey } from '../../config';
 import AppRoutesStack from './AppRoutesStack';
 
-// iOS-only: hide the expo-dev-menu floating "Tools" FAB so it doesn't
-// overlap the in-app `nav-menu-btn` during e2e on fresh installs.
-// expo-dev-menu only exposes `DevMenuPreferences` to JS on iOS,
-// returning null.
-// this change is primarily for e2e tests, and unless can have a solution
-// for Android then will need to be handled differently.
-
-if (__DEV__) {
-  const DevMenuPreferences = requireOptionalNativeModule<{
-    setPreferencesAsync: (prefs: {
-      showFloatingActionButton?: boolean;
-    }) => Promise<void>;
-  }>('DevMenuPreferences');
-
-  DevMenuPreferences?.setPreferencesAsync({
-    showFloatingActionButton: false,
-  });
-}
+// Hide the expo-dev-menu floating "Tools" FAB during dev/e2e (iOS only;
+// Android has no equivalent JS API). See helper for details.
+hideDevMenuFabInDev();
 
 const isDevEnv = process.env['NODE_ENV'] === 'development';
 
