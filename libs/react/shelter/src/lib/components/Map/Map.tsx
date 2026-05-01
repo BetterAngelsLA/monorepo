@@ -1,6 +1,6 @@
 /// <reference types="google.maps" />
 import { CurrentLocationDot } from '@monorepo/react/components';
-import { MapPinIcon } from '@monorepo/react/icons';
+import { LockIcon, MapPinIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import {
   AdvancedMarker,
@@ -117,7 +117,14 @@ export function Map(props: TMap) {
           zIndex={99}
           onClick={marker.onClick}
         >
-          <MapPinIcon className="h-10" type={marker.type} />
+          <div className="relative">
+            <MapPinIcon className="h-10" type={marker.type} />
+            {marker.isPrivate && (
+              <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
+                <LockIcon className="w-3 h-3 text-primary-60" />
+              </div>
+            )}
+          </div>
         </AdvancedMarker>
       ))}
 
