@@ -78,9 +78,11 @@ Includes:
 
 ### Persona
 
-A **type** of User, defined by role or behavior. Personas are how we make
-[Focus over Coverage](../principles.md) decisions: naming a single Persona
-is the test of whether a feature is targeted enough.
+A **type** of User, defined by role or behavior. Personas are how we
+satisfy the **Focus** decision check in
+[Evidence over Assumptions](../principles-list/evidence-over-assumptions.md):
+naming a single Persona is the test of whether a feature is targeted
+enough.
 
 Current personas include (non-exhaustive):
 
@@ -97,19 +99,19 @@ This distinction matters because two principles depend on it pulling in
 opposite directions, and they only stay consistent if the terms are
 kept separate:
 
-- **Persona = role** (Caseworker, Volunteer, Admin, Client).
-  [#6 Focus over Coverage](../principles-list/06-focus-over-coverage.md)
+- **Persona = role** (Caseworker, Volunteer, Admin, Client). The Focus
+  check in [Evidence over Assumptions](../principles-list/evidence-over-assumptions.md)
   says narrow the role.
 - **Customer = organization** (a nonprofit org, a CoC, an internal pillar).
-  [#8 Scalable Solutions](../principles-list/08-scalable-solutions-over-individual-customers-needs.md)
+  [Scalable Solutions](../principles-list/scalable-solutions-over-individual-customers-needs.md)
   says don't narrow the organization.
 
 A correctly scoped feature targets **one Persona across many Customers** —
 not one Customer's specific Persona. "Caseworkers at any shelter" is
-right. "A specific nonprofit org's caseworkers" is single-Customer work and triggers #8.
+right. "A specific nonprofit org's caseworkers" is single-Customer work and triggers Scalable Solutions.
 
 When the only available pilot Customer is also the only Customer with
-that Persona, this is a known tension — see #8's open questions on
+that Persona, this is a known tension — see [Scalable Solutions](../principles-list/scalable-solutions-over-individual-customers-needs.md)' open questions on
 pilot methodology.
 
 ---
