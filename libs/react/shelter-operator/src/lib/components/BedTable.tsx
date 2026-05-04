@@ -20,6 +20,7 @@ export type BedRowObject = {
   bedId: string;
   bedName: string;
   status?: BedType['status'];
+  roomId: string;
   roomAssignment: string;
 };
 
@@ -42,6 +43,7 @@ export type ReservationTableRow = FlatBedRow | MotelRoomRow;
 
 type FlatBedRow = {
   bed: BedType;
+  roomId: string;
   roomAssignment: string;
   flatIndex: number;
 };
@@ -64,6 +66,7 @@ function flattenRooms(rooms: BedRoomForList[]): FlatBedRow[] {
     for (const bed of room.beds) {
       out.push({
         bed,
+        roomId: room.id,
         roomAssignment: room.roomLabel,
         flatIndex: flatIndex++,
       });
@@ -246,11 +249,16 @@ type BedTableProps = {
   trailingColumnWidth?: string;
 };
 
-function toRowObject(bed: BedType, roomAssignment: string): BedRowObject {
+function toRowObject(
+  bed: BedType,
+  roomId: string,
+  roomAssignment: string
+): BedRowObject {
   return {
     bedId: bed.id,
     bedName: bed.bedName ?? '',
     status: bed.status,
+    roomId,
     roomAssignment,
   };
 }
@@ -259,6 +267,7 @@ function motelRowToRowObject(room: BedRoomForList): BedRowObject {
   return {
     bedId: room.id,
     bedName: room.roomLabel,
+    roomId: room.id,
     roomAssignment: room.roomLabel,
   };
 }
@@ -576,7 +585,7 @@ export function BedTable({
         getRowObject={(row) =>
           isMotelRoomRow(row)
             ? motelRowToRowObject(row.room)
-            : toRowObject(row.bed, row.roomAssignment)
+            : toRowObject(row.bed, row.roomId, row.roomAssignment)
         }
         onRowClick={onRowClick}
         {...sharedTableProps}
@@ -589,7 +598,9 @@ export function BedTable({
       columns={defaultColumns}
       rows={flatBedRows}
       getRowKey={getRowKeyFlat ?? ((row) => row.bed.id)}
-      getRowObject={(row) => toRowObject(row.bed, row.roomAssignment)}
+      getRowObject={(row) =>
+        toRowObject(row.bed, row.roomId, row.roomAssignment)
+      }
       getRowSlot={
         hasActionSlot
           ? (rowObject, _item, rowIndex) => (

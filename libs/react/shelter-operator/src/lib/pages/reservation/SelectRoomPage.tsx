@@ -199,9 +199,10 @@ export function SelectRoomPage() {
   };
 
   const handleBedClick = (rowObject: BedRowObject) => {
-    setValue('roomId', rowObject.roomAssignment);
     const key = rowObject.bedId;
-    setValue('bedId', selectedBedId === key ? null : key);
+    const nextBedId = selectedBedId === key ? null : key;
+    setValue('bedId', nextBedId);
+    setValue('roomId', nextBedId ? rowObject.roomId : null);
   };
 
   return (
