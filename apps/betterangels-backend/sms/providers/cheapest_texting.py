@@ -3,7 +3,7 @@ CheapestTexting SMS provider.
 
 API docs: https://api.app.cheapesttexting.com/public_api/v1/docs/
 Base URL: https://api.app.cheapesttexting.com/public_api/v1
-Auth: Bearer token via API_KEY header.
+Auth: API key sent in the `X-API-KEY` request header.
 
 Key concepts:
 - "Campaigns" are keyword-based subscriber groups (e.g. keyword "JOIN").
@@ -77,7 +77,7 @@ class CheapestTextingProvider(MessageSender, ContactManager, SubscriptionManager
 
         self.client = httpx.Client(
             base_url=self.base_url,
-            headers={"Authorization": f"Bearer {self.api_key}"},
+            headers={"X-API-KEY": self.api_key},
             timeout=30.0,
         )
 
@@ -121,6 +121,16 @@ class CheapestTextingProvider(MessageSender, ContactManager, SubscriptionManager
 
     def remove_contact(self, phone_number: str) -> None:
         self._request("POST", f"/contacts/{phone_number}/remove/", json={})
+
+    # ─── Campaigns ───────────────────────────────────────────────────
+    # GET /campaigns/{id}/ — fetch a single campaign by ID
+
+    def get_campaign(self, campaign_id: int | None = None) -> dict:
+        """Return the raw campaign JSON for the given ID (defaults to the configured campaign)."""
+        cid = campaign_id if campaign_id is not None else self.campaign_id
+        response = self._request("GET", f"/campaigns/{cid}/")
+        data: dict = response.json()
+        return data
 
     # ─── Subscription Management ─────────────────────────────────────
     # POST /campaigns/{campaign_pk}/contacts/{phone}/add/  — subscribe
