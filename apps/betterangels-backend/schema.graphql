@@ -183,9 +183,9 @@ input BedFilter {
   OR: BedFilter
   NOT: BedFilter
   DISTINCT: Boolean
-  status: [BedStatusChoices!]
   bedType: [BedTypeChoices!]
   medicalNeeds: [MedicalNeedChoices!]
+  status: [BedStatusChoices!]
 }
 
 enum BedStatusChoices {
@@ -1982,14 +1982,14 @@ input RevertNoteInput {
 union RevertNotePayload = NoteType | OperationInfo
 
 input RoomFilter {
+  medicalRespite: Boolean
   AND: RoomFilter
   OR: RoomFilter
   NOT: RoomFilter
   DISTINCT: Boolean
-  status: [RoomStatusChoices!]
-  roomType: [RoomStyleChoices!]
   amenities: String
-  medicalRespite: Boolean
+  roomType: [RoomStyleChoices!]
+  status: [RoomStatusChoices!]
   numberOfBeds: Int
 }
 

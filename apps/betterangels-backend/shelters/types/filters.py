@@ -9,7 +9,13 @@ from zoneinfo import ZoneInfo
 import strawberry
 import strawberry_django
 from accounts.models import User
-from common.graphql.types import LatitudeScalar, LongitudeScalar
+from common.graphql.types import (
+    LatitudeScalar,
+    LongitudeScalar,
+    make_icontains_filter,
+    make_in_filter,
+    make_m2m_name_in_filter,
+)
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
@@ -98,12 +104,7 @@ class ShelterFilter:
 
         return conditions
 
-    @strawberry_django.filter_field
-    def name(self, info: Info, value: Optional[str], prefix: str) -> Q:
-        if not value:
-            return Q()
-
-        return Q(**{f"{prefix}name__icontains": value})
+    name = make_icontains_filter("name")
 
     @strawberry_django.filter_field
     def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
@@ -194,99 +195,28 @@ class ShelterOrder:
 
 
 class CommonBedRoomFilterMixin:
-    @strawberry_django.filter_field
-    def shelter_id(self, info: Info, value: Optional[ID], prefix: str) -> Q:
-        if value is None:
-            return Q()
-        return Q(**{f"{prefix}shelter_id": value})
-
-    @strawberry_django.filter_field
-    def demographics(
-        self, queryset: QuerySet, value: Optional[List[DemographicChoices]], prefix: str
-    ) -> Tuple[QuerySet, Q]:
-        if not value:
-            return queryset, Q()
-        return queryset.filter(**{f"{prefix}demographics__name__in": value}).distinct(), Q()
-
-    @strawberry_django.filter_field
-    def accessibility(
-        self, queryset: QuerySet, value: Optional[List[AccessibilityChoices]], prefix: str
-    ) -> Tuple[QuerySet, Q]:
-        if not value:
-            return queryset, Q()
-        return queryset.filter(**{f"{prefix}accessibility__name__in": value}).distinct(), Q()
-
-    @strawberry_django.filter_field
-    def funders(self, queryset: QuerySet, value: Optional[List[FunderChoices]], prefix: str) -> Tuple[QuerySet, Q]:
-        if not value:
-            return queryset, Q()
-        return queryset.filter(**{f"{prefix}funders__name__in": value}).distinct(), Q()
-
-    @strawberry_django.filter_field
-    def pets(self, queryset: QuerySet, value: Optional[List[PetChoices]], prefix: str) -> Tuple[QuerySet, Q]:
-        if not value:
-            return queryset, Q()
-        return queryset.filter(**{f"{prefix}pets__name__in": value}).distinct(), Q()
-
-    @strawberry_django.filter_field
-    def storage(self, info: Info, value: Optional[bool], prefix: str) -> Q:
-        if value is None:
-            return Q()
-        return Q(**{f"{prefix}storage": value})
-
-    @strawberry_django.filter_field
-    def maintenance_flag(self, info: Info, value: Optional[bool], prefix: str) -> Q:
-        if value is None:
-            return Q()
-        return Q(**{f"{prefix}maintenance_flag": value})
+    accessibility = make_m2m_name_in_filter("accessibility", AccessibilityChoices)
+    demographics = make_m2m_name_in_filter("demographics", DemographicChoices)
+    funders = make_m2m_name_in_filter("funders", FunderChoices)
+    maintenance_flag: Optional[bool]
+    pets = make_m2m_name_in_filter("pets", PetChoices)
+    shelter_id: Optional[ID]
+    storage: Optional[bool]
 
 
 @strawberry_django.filter_type(models.Bed)
 class BedFilter(CommonBedRoomFilterMixin):
-    @strawberry_django.filter_field
-    def status(self, info: Info, value: Optional[List[BedStatusChoices]], prefix: str) -> Q:
-        if not value:
-            return Q()
-        return Q(**{f"{prefix}status__in": value})
-
-    @strawberry_django.filter_field
-    def bed_type(self, info: Info, value: Optional[List[BedTypeChoices]], prefix: str) -> Q:
-        if not value:
-            return Q()
-        return Q(**{f"{prefix}bed_type__in": value})
-
-    @strawberry_django.filter_field
-    def medical_needs(self, info: Info, value: Optional[List[MedicalNeedChoices]], prefix: str) -> Q:
-        if not value:
-            return Q()
-        return Q(**{f"{prefix}medical_needs__in": value})
+    bed_type = make_in_filter("bed_type", BedTypeChoices)
+    medical_needs = make_in_filter("medical_needs", MedicalNeedChoices)
+    status = make_in_filter("status", BedStatusChoices)
 
 
 @strawberry_django.filter_type(models.Room)
 class RoomFilter(CommonBedRoomFilterMixin):
-    @strawberry_django.filter_field
-    def status(self, info: Info, value: Optional[List[RoomStatusChoices]], prefix: str) -> Q:
-        if not value:
-            return Q()
-        return Q(**{f"{prefix}status__in": value})
-
-    @strawberry_django.filter_field
-    def room_type(self, info: Info, value: Optional[List[RoomStyleChoices]], prefix: str) -> Q:
-        if not value:
-            return Q()
-        return Q(**{f"{prefix}room_type__in": value})
-
-    @strawberry_django.filter_field
-    def amenities(self, info: Info, value: Optional[str], prefix: str) -> Q:
-        if not value:
-            return Q()
-        return Q(**{f"{prefix}amenities__icontains": value})
-
-    @strawberry_django.filter_field
-    def medical_respite(self, info: Info, value: Optional[bool], prefix: str) -> Q:
-        if value is None:
-            return Q()
-        return Q(**{f"{prefix}medical_respite": value})
+    amenities = make_icontains_filter("amenities")
+    medical_respite: Optional[bool]
+    room_type = make_in_filter("room_type", RoomStyleChoices)
+    status = make_in_filter("status", RoomStatusChoices)
 
     @strawberry_django.filter_field
     def number_of_beds(self, queryset: QuerySet, value: Optional[int], prefix: str) -> Tuple[QuerySet, Q]:
