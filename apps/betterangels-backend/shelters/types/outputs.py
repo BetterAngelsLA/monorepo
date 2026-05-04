@@ -12,7 +12,14 @@ from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.imgproxy import build_imgproxy_url
 from django.db.models import Count, Prefetch, Q, QuerySet
 from shelters import models
-from shelters.enums import BedStatusChoices, BedTypeChoices, MedicalNeedChoices, RoomStatusChoices, RoomStyleChoices
+from shelters.enums import (
+    BedStatusChoices,
+    BedTypeChoices,
+    MedicalNeedChoices,
+    RoomStatusChoices,
+    RoomStyleChoices,
+    ShelterPhotoTypeChoices,
+)
 from shelters.selectors import admin_shelter_list, shelter_list
 from shelters.types.lookups import (
     AccessibilityType,
@@ -90,11 +97,9 @@ class ShelterTypeMixin:
     exit_policy: List[ExitPolicyType]
     exit_policy_other: auto
     emergency_surge: auto
-    exterior_photos: List[ShelterPhotoType]
     funders: List[FunderType]
     funders_other: auto
     instagram: auto
-    interior_photos: List[ShelterPhotoType]
     location: Optional[ShelterLocationType]
     max_stay: auto
     name: auto
@@ -129,8 +134,32 @@ class ShelterTypeMixin:
     website: auto
     media_links: List[MediaLinkType]
 
-    _exterior_photos: Optional[List[ShelterPhotoType]] = None
-    _interior_photos: Optional[List[ShelterPhotoType]] = None
+    _exterior_photos: Optional[List[models.ShelterPhoto]] = None
+    _interior_photos: Optional[List[models.ShelterPhoto]] = None
+
+    @strawberry_django.field(
+        prefetch_related=[
+            lambda x: Prefetch(
+                "photos",
+                queryset=models.ShelterPhoto.objects.filter(type=ShelterPhotoTypeChoices.EXTERIOR),
+                to_attr="_exterior_photos",
+            ),
+        ],
+    )
+    def exterior_photos(self, root: models.Shelter) -> List[ShelterPhotoType]:
+        return cast(List[ShelterPhotoType], getattr(root, "_exterior_photos", []) or [])
+
+    @strawberry_django.field(
+        prefetch_related=[
+            lambda x: Prefetch(
+                "photos",
+                queryset=models.ShelterPhoto.objects.filter(type=ShelterPhotoTypeChoices.INTERIOR),
+                to_attr="_interior_photos",
+            ),
+        ],
+    )
+    def interior_photos(self, root: models.Shelter) -> List[ShelterPhotoType]:
+        return cast(List[ShelterPhotoType], getattr(root, "_interior_photos", []) or [])
 
     # NOTE: This is a temporary workaround because Shelter specced without a hero image.
     # Will remove once we add a hero_image field to the Shelter model.
@@ -138,13 +167,13 @@ class ShelterTypeMixin:
         only=["hero_image_content_type_id", "hero_image_object_id"],
         prefetch_related=[
             lambda x: Prefetch(
-                "exterior_photos",
-                queryset=models.ExteriorPhoto.objects.filter(),
+                "photos",
+                queryset=models.ShelterPhoto.objects.filter(type=ShelterPhotoTypeChoices.EXTERIOR),
                 to_attr="_exterior_photos",
             ),
             lambda x: Prefetch(
-                "interior_photos",
-                queryset=models.InteriorPhoto.objects.filter(),
+                "photos",
+                queryset=models.ShelterPhoto.objects.filter(type=ShelterPhotoTypeChoices.INTERIOR),
                 to_attr="_interior_photos",
             ),
         ],
@@ -155,8 +184,8 @@ class ShelterTypeMixin:
                 None,
                 chain(
                     [getattr(root, "hero_image", None)],
-                    self._exterior_photos or [],
-                    self._interior_photos or [],
+                    getattr(root, "_exterior_photos", None) or [],
+                    getattr(root, "_interior_photos", None) or [],
                 ),
             ),
             None,

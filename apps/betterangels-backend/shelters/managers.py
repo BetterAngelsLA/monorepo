@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Case, OuterRef, QuerySet, Subquery, When
 from django.db.models.functions import Coalesce
-from shelters.enums import ScheduleTypeChoices
+from shelters.enums import ScheduleTypeChoices, ShelterPhotoTypeChoices
 from shelters.selectors import admin_shelter_list, shelter_list, shelters_open_at
 
 if TYPE_CHECKING:
@@ -30,33 +30,21 @@ class ShelterQuerySet(QuerySet["Shelter"]):
         of the hero image resolved entirely in SQL.
 
         Priority:
-        1. The explicitly chosen hero image (GFK → ExteriorPhoto or
-           InteriorPhoto).
+        1. The explicitly chosen hero image (GFK → ``ShelterPhoto``).
         2. First exterior photo (by pk).
         3. First interior photo (by pk).
         """
-        from shelters.models import ExteriorPhoto, InteriorPhoto
+        from shelters.models import ShelterPhoto
 
-        exterior_ct = ContentType.objects.get_for_model(ExteriorPhoto)
-        interior_ct = ContentType.objects.get_for_model(InteriorPhoto)
+        shelter_photo_ct = ContentType.objects.get_for_model(ShelterPhoto)
 
-        # GFK target: resolve hero_image_object_id against the correct
-        # photo table based on hero_image_content_type.
+        # GFK target: resolve hero_image_object_id against the unified
+        # ShelterPhoto table when the GFK points there.
         gfk_file = Case(
             When(
-                hero_image_content_type=exterior_ct,
+                hero_image_content_type=shelter_photo_ct,
                 then=Subquery(
-                    ExteriorPhoto.objects.filter(
-                        pk=OuterRef("hero_image_object_id"),
-                    ).values(
-                        "file"
-                    )[:1]
-                ),
-            ),
-            When(
-                hero_image_content_type=interior_ct,
-                then=Subquery(
-                    InteriorPhoto.objects.filter(
+                    ShelterPhoto.objects.filter(
                         pk=OuterRef("hero_image_object_id"),
                     ).values(
                         "file"
@@ -65,17 +53,19 @@ class ShelterQuerySet(QuerySet["Shelter"]):
             ),
         )
 
-        # Fallback: first photo by pk
+        # Fallback: first photo of the desired type, by pk.
         first_exterior = Subquery(
-            ExteriorPhoto.objects.filter(
+            ShelterPhoto.objects.filter(
                 shelter=OuterRef("pk"),
+                type=ShelterPhotoTypeChoices.EXTERIOR,
             )
             .order_by("pk")
             .values("file")[:1]
         )
         first_interior = Subquery(
-            InteriorPhoto.objects.filter(
+            ShelterPhoto.objects.filter(
                 shelter=OuterRef("pk"),
+                type=ShelterPhotoTypeChoices.INTERIOR,
             )
             .order_by("pk")
             .values("file")[:1]

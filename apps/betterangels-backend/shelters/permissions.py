@@ -58,13 +58,6 @@ class EntryRequirementPermissions(models.TextChoices):
     VIEW = "shelters.view_entryrequirement", _("Can view entry requirement")
 
 
-class ExteriorPhotoPermissions(models.TextChoices):
-    ADD = "shelters.add_exteriorphoto", _("Can add exterior photo")
-    CHANGE = "shelters.change_exteriorphoto", _("Can change exterior photo")
-    DELETE = "shelters.delete_exteriorphoto", _("Can delete exterior photo")
-    VIEW = "shelters.view_exteriorphoto", _("Can view exterior photo")
-
-
 class FunderPermissions(models.TextChoices):
     ADD = "shelters.add_funder", _("Can add funder")
     CHANGE = "shelters.change_funder", _("Can change funder")
@@ -72,11 +65,11 @@ class FunderPermissions(models.TextChoices):
     VIEW = "shelters.view_funder", _("Can view funder")
 
 
-class InteriorPhotoPermissions(models.TextChoices):
-    ADD = "shelters.add_interiorphoto", _("Can add interior photo")
-    CHANGE = "shelters.change_interiorphoto", _("Can change interior photo")
-    DELETE = "shelters.delete_interiorphoto", _("Can delete interior photo")
-    VIEW = "shelters.view_interiorphoto", _("Can view interior photo")
+class ShelterPhotoPermissions(models.TextChoices):
+    ADD = "shelters.add_shelterphoto", _("Can add shelter photo")
+    CHANGE = "shelters.change_shelterphoto", _("Can change shelter photo")
+    DELETE = "shelters.delete_shelterphoto", _("Can delete shelter photo")
+    VIEW = "shelters.view_shelterphoto", _("Can view shelter photo")
 
 
 class ParkingPermissions(models.TextChoices):

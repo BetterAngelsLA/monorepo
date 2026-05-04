@@ -50,6 +50,7 @@ from .enums import (
     RoomStyleChoices,
     ShelterChoices,
     ShelterProgramChoices,
+    ShelterPhotoTypeChoices,
     SPAChoices,
     SpecialSituationRestrictionChoices,
     StatusChoices,
@@ -63,9 +64,9 @@ from .models import (
     ContactInfo,
     Demographic,
     EntryRequirement,
-    ExteriorPhoto,
+    ExteriorShelterPhoto,
     Funder,
-    InteriorPhoto,
+    InteriorShelterPhoto,
     MediaLink,
     Parking,
     Pet,
@@ -77,6 +78,7 @@ from .models import (
     Service,
     ServiceCategory,
     Shelter,
+    ShelterPhoto,
     ShelterProgram,
     ShelterType,
     SpecialSituationRestriction,
@@ -416,21 +418,25 @@ class PhotoForm(forms.ModelForm):
     )
 
     class Meta:
-        fields = "__all__"
+        # ``type`` is set automatically by the proxy model's ``save`` and
+        # therefore must not be exposed in (or required by) the inline form.
+        exclude = ("type",)
 
 
 class ExteriorPhotoForm(PhotoForm):
     class Meta(PhotoForm.Meta):
-        model = ExteriorPhoto
+        model = ExteriorShelterPhoto
 
 
 class InteriorPhotoForm(PhotoForm):
     class Meta(PhotoForm.Meta):
-        model = InteriorPhoto
+        model = InteriorShelterPhoto
 
 
 class PhotoInlineImgproxyMixin:
     """Mixin for photo inlines: adds a readonly thumbnail column via imgproxy when enabled."""
+
+    photo_type: ShelterPhotoTypeChoices
 
     def get_readonly_fields(self, request: HttpRequest, obj: Optional[models.Model] = None) -> tuple[str, ...]:
         return ("photo_preview",)
@@ -438,8 +444,14 @@ class PhotoInlineImgproxyMixin:
     def get_fields(self, request: HttpRequest, obj: Optional[models.Model] = None) -> tuple[str, ...]:
         return ("photo_preview", "file", "make_hero_image")
 
+    def get_queryset(self, request: HttpRequest) -> QuerySet[ShelterPhoto]:
+        # Each inline only shows photos of its configured type. Without this
+        # filter, both inlines would surface every ShelterPhoto attached to
+        # the shelter, regardless of interior/exterior.
+        return super().get_queryset(request).filter(type=self.photo_type)  # type: ignore[misc]
+
     @admin.display(description="Preview")
-    def photo_preview(self, obj: Union[ExteriorPhoto, InteriorPhoto]) -> str:
+    def photo_preview(self, obj: ShelterPhoto) -> str:
         if not obj or not obj.file or not obj.file.name:
             return "—"
         if is_imgproxy_enabled():
@@ -454,15 +466,21 @@ class PhotoInlineImgproxyMixin:
 
 
 class ExteriorPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
-    model = ExteriorPhoto
+    model = ExteriorShelterPhoto
     form = ExteriorPhotoForm
+    photo_type = ShelterPhotoTypeChoices.EXTERIOR
     max_num = 0
+    verbose_name = "Exterior Photo"
+    verbose_name_plural = "Exterior Photos"
 
 
 class InterPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
-    model = InteriorPhoto
+    model = InteriorShelterPhoto
     form = InteriorPhotoForm
+    photo_type = ShelterPhotoTypeChoices.INTERIOR
     max_num = 0
+    verbose_name = "Interior Photo"
+    verbose_name_plural = "Interior Photos"
 
 
 class VideoInline(admin.TabularInline):
@@ -1186,14 +1204,14 @@ class ShelterAdmin(ImportExportModelAdmin):
         )
 
         interior_count = Subquery(
-            InteriorPhoto.objects.filter(shelter=OuterRef("pk"))
+            ShelterPhoto.objects.filter(shelter=OuterRef("pk"), type=ShelterPhotoTypeChoices.INTERIOR)
             .order_by()
             .values("shelter")
             .annotate(c=Count("pk"))
             .values("c")
         )
         exterior_count = Subquery(
-            ExteriorPhoto.objects.filter(shelter=OuterRef("pk"))
+            ShelterPhoto.objects.filter(shelter=OuterRef("pk"), type=ShelterPhotoTypeChoices.EXTERIOR)
             .order_by()
             .values("shelter")
             .annotate(c=Count("pk"))
@@ -1344,7 +1362,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         return ContentFile(original_file.read(), name=new_name)
 
     def _clone_objects_with_files(
-        self, queryset: QuerySet[Union[ExteriorPhoto, InteriorPhoto, Video]], copy: Shelter
+        self, queryset: QuerySet[Union[ShelterPhoto, Video]], copy: Shelter
     ) -> None:
         """Clone objects with shelter and file fields, duplicating files."""
         for obj in queryset:
@@ -1357,7 +1375,7 @@ class ShelterAdmin(ImportExportModelAdmin):
 
     def _clone_related_photos_and_videos(self, original: Shelter, copy: Shelter) -> None:
         """Clone photos and videos with file duplication and metadata preservation."""
-        for model_class in (ExteriorPhoto, InteriorPhoto, Video):
+        for model_class in (ShelterPhoto, Video):
             self._clone_objects_with_files(model_class.objects.filter(shelter=original), copy)
 
     def _clone_related_contacts(self, original: Shelter, copy: Shelter) -> None:

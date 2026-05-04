@@ -1,6 +1,6 @@
 """Media models — photos and videos attached to shelters."""
 
-from typing import Optional
+from typing import Any, Optional
 
 from admin_async_upload.models import AsyncFileField
 from common.models import BaseModel
@@ -9,7 +9,7 @@ from django.core.files.storage import default_storage
 from django.core.validators import RegexValidator
 from django.db import models
 from django_choices_field import TextChoicesField
-from shelters.enums import MediaLinkTypeChoices
+from shelters.enums import MediaLinkTypeChoices, ShelterPhotoTypeChoices
 
 from .shelter import Shelter
 
@@ -30,14 +30,48 @@ def upload_path(instance: Optional[Shelter], filename: str) -> str:
     return default_storage.get_available_name(file_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
 
 
-class InteriorPhoto(BaseModel):
+class ShelterPhoto(BaseModel):
     file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="interior_photos")
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="photos")
+    type = TextChoicesField(choices_enum=ShelterPhotoTypeChoices)
+
+    objects = models.Manager()
 
 
-class ExteriorPhoto(BaseModel):
-    file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="exterior_photos")
+class InteriorShelterPhoto(ShelterPhoto):
+    """Proxy for ``ShelterPhoto`` rows whose type is ``INTERIOR``.
+
+    Used by the admin to surface interior photos as their own inline section.
+    Saving an instance of this proxy automatically tags it as interior.
+    Inline filtering by type happens in the admin via ``get_queryset``.
+    """
+
+    class Meta:
+        proxy = True
+        verbose_name = "Interior Photo"
+        verbose_name_plural = "Interior Photos"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.type = ShelterPhotoTypeChoices.INTERIOR
+        super().save(*args, **kwargs)
+
+
+class ExteriorShelterPhoto(ShelterPhoto):
+    """Proxy for ``ShelterPhoto`` rows whose type is ``EXTERIOR``.
+
+    Used by the admin to surface exterior photos as their own inline section.
+    Saving an instance of this proxy automatically tags it as exterior.
+    Inline filtering by type happens in the admin via ``get_queryset``.
+    """
+
+    class Meta:
+        proxy = True
+        verbose_name = "Exterior Photo"
+        verbose_name_plural = "Exterior Photos"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.type = ShelterPhotoTypeChoices.EXTERIOR
+        super().save(*args, **kwargs)
 
 
 class Video(BaseModel):
