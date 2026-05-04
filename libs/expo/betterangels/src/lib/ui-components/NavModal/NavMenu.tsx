@@ -37,6 +37,7 @@ export function NavMenu(props: INavModalProps) {
 
   return (
     <View
+      testID="nav-menu"
       style={{
         flex: 1,
         paddingHorizontal: Spacings.md,

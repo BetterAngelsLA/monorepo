@@ -1,0 +1,16 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Wait for auth check to settle (authorized-pending indicates auth transition state)
+- extendedWaitUntil:
+    notVisible:
+      id: authorized-pending
+    timeout: 10000
+
+- runFlow:
+    when:
+      visible:
+        id: unauthorized-root
+    file: login_ba.yml
+
+- assertVisible:
+    id: authorized-root
