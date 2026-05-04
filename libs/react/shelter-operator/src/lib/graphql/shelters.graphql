@@ -40,13 +40,7 @@ query ViewSheltersByOrganization(
       city {
         name
       }
-      citiesServed {
-        name
-      }
       spa {
-        name
-      }
-      spasServed {
         name
       }
     }

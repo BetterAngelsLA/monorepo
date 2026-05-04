@@ -50,10 +50,6 @@ query ViewShelter($id: ID!) {
       id
       name
     }
-    citiesServed {
-      id
-      name
-    }
     demographics {
       name
     }
@@ -124,9 +120,6 @@ query ViewShelter($id: ID!) {
       name
     }
     spa {
-      name
-    }
-    spasServed {
       name
     }
     specialSituationRestrictions {
