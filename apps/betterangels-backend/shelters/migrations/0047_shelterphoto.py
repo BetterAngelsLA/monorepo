@@ -9,6 +9,69 @@ import shelters.models.media
 from django.db import migrations, models
 
 
+def migrate_shelter_photos_and_hero(apps, schema_editor):
+    """Copy legacy photos into ``ShelterPhoto`` and remap ``hero_image`` from GFK to FK.
+
+    Must run while ``hero_image_content_type`` / ``hero_image_object_id`` still exist
+    so each shelter's hero pick can be mapped to the new ``ShelterPhoto`` row created
+    from the corresponding ``InteriorPhoto`` or ``ExteriorPhoto`` row.
+    """
+    ContentType = apps.get_model("contenttypes", "ContentType")
+    ExteriorPhoto = apps.get_model("shelters", "ExteriorPhoto")
+    InteriorPhoto = apps.get_model("shelters", "InteriorPhoto")
+    ShelterPhoto = apps.get_model("shelters", "ShelterPhoto")
+    Shelter = apps.get_model("shelters", "Shelter")
+    ShelterEvent = apps.get_model("shelters", "ShelterEvent")
+
+    interior_ct = ContentType.objects.get(app_label="shelters", model="interiorphoto")
+    exterior_ct = ContentType.objects.get(app_label="shelters", model="exteriorphoto")
+
+    interior_map: dict[int, int] = {}
+    for ip in InteriorPhoto.objects.all().iterator():
+        row = ShelterPhoto.objects.create(
+            shelter_id=ip.shelter_id,
+            file=ip.file,
+            type="interior",
+        )
+        ShelterPhoto.objects.filter(pk=row.pk).update(created_at=ip.created_at, updated_at=ip.updated_at)
+        interior_map[ip.pk] = row.pk
+
+    exterior_map: dict[int, int] = {}
+    for ep in ExteriorPhoto.objects.all().iterator():
+        row = ShelterPhoto.objects.create(
+            shelter_id=ep.shelter_id,
+            file=ep.file,
+            type="exterior",
+        )
+        ShelterPhoto.objects.filter(pk=row.pk).update(created_at=ep.created_at, updated_at=ep.updated_at)
+        exterior_map[ep.pk] = row.pk
+
+    def resolve_hero_shelterphoto_id(content_type_id: int | None, object_id: int | None) -> int | None:
+        if content_type_id is None or object_id is None:
+            return None
+        if content_type_id == interior_ct.pk:
+            return interior_map.get(object_id)
+        if content_type_id == exterior_ct.pk:
+            return exterior_map.get(object_id)
+        return None
+
+    for shelter in Shelter.objects.exclude(hero_image_object_id__isnull=True).iterator():
+        new_pk = resolve_hero_shelterphoto_id(
+            shelter.hero_image_content_type_id,
+            shelter.hero_image_object_id,
+        )
+        if new_pk:
+            Shelter.objects.filter(pk=shelter.pk).update(hero_image_id=new_pk)
+
+    for event in ShelterEvent.objects.exclude(hero_image_object_id__isnull=True).iterator():
+        new_pk = resolve_hero_shelterphoto_id(
+            event.hero_image_content_type_id,
+            event.hero_image_object_id,
+        )
+        if new_pk:
+            ShelterEvent.objects.filter(pgh_id=event.pgh_id).update(hero_image_id=new_pk)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -34,6 +97,62 @@ class Migration(migrations.Migration):
                 "abstract": False,
             },
         ),
+        migrations.AddField(
+            model_name="shelterphoto",
+            name="shelter",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, related_name="photos", to="shelters.shelter"
+            ),
+        ),
+        migrations.CreateModel(
+            name="ExteriorShelterPhoto",
+            fields=[],
+            options={
+                "verbose_name": "Exterior Photo",
+                "verbose_name_plural": "Exterior Photos",
+                "proxy": True,
+                "indexes": [],
+                "constraints": [],
+            },
+            bases=("shelters.shelterphoto",),
+        ),
+        migrations.CreateModel(
+            name="InteriorShelterPhoto",
+            fields=[],
+            options={
+                "verbose_name": "Interior Photo",
+                "verbose_name_plural": "Interior Photos",
+                "proxy": True,
+                "indexes": [],
+                "constraints": [],
+            },
+            bases=("shelters.shelterphoto",),
+        ),
+        migrations.AddField(
+            model_name="shelter",
+            name="hero_image",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="+",
+                to="shelters.shelterphoto",
+            ),
+        ),
+        migrations.AddField(
+            model_name="shelterevent",
+            name="hero_image",
+            field=models.ForeignKey(
+                blank=True,
+                db_constraint=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="+",
+                related_query_name="+",
+                to="shelters.shelterphoto",
+            ),
+        ),
+        migrations.RunPython(migrate_shelter_photos_and_hero, migrations.RunPython.noop),
         pgtrigger.migrations.RemoveTrigger(
             model_name="shelter",
             name="shelter_add_insert",
@@ -103,61 +222,6 @@ class Migration(migrations.Migration):
                     table="shelters_shelter",
                     when="AFTER",
                 ),
-            ),
-        ),
-        migrations.AddField(
-            model_name="shelterphoto",
-            name="shelter",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, related_name="photos", to="shelters.shelter"
-            ),
-        ),
-        migrations.CreateModel(
-            name="ExteriorShelterPhoto",
-            fields=[],
-            options={
-                "verbose_name": "Exterior Photo",
-                "verbose_name_plural": "Exterior Photos",
-                "proxy": True,
-                "indexes": [],
-                "constraints": [],
-            },
-            bases=("shelters.shelterphoto",),
-        ),
-        migrations.CreateModel(
-            name="InteriorShelterPhoto",
-            fields=[],
-            options={
-                "verbose_name": "Interior Photo",
-                "verbose_name_plural": "Interior Photos",
-                "proxy": True,
-                "indexes": [],
-                "constraints": [],
-            },
-            bases=("shelters.shelterphoto",),
-        ),
-        migrations.AddField(
-            model_name="shelter",
-            name="hero_image",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="+",
-                to="shelters.shelterphoto",
-            ),
-        ),
-        migrations.AddField(
-            model_name="shelterevent",
-            name="hero_image",
-            field=models.ForeignKey(
-                blank=True,
-                db_constraint=False,
-                null=True,
-                on_delete=django.db.models.deletion.DO_NOTHING,
-                related_name="+",
-                related_query_name="+",
-                to="shelters.shelterphoto",
             ),
         ),
     ]
