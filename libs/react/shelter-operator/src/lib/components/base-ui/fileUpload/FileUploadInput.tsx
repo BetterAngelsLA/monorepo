@@ -79,14 +79,12 @@ export function FileUploadInput({
         accept={accept}
         multiple={multiple}
         disabled={disabled}
+        aria-invalid={shouldShowError}
+        aria-describedby={shouldShowError ? messageId : undefined}
         onChange={(event) => onChange(toFileArray(event.target.files))}
       />
 
       <div
-        role="button"
-        tabIndex={disabled ? -1 : 0}
-        aria-describedby={shouldShowError ? messageId : undefined}
-        aria-disabled={disabled}
         className={mergeCss([
           'rounded-[2rem] border-2 border-dashed px-6 py-10 text-center transition-colors',
           shouldShowError
@@ -97,13 +95,6 @@ export function FileUploadInput({
           disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
         ])}
         onClick={openPicker}
-        onKeyDown={(event) => {
-          if (disabled) return;
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            openPicker();
-          }
-        }}
         onDragOver={(event) => {
           if (disabled) return;
           event.preventDefault();

@@ -1,6 +1,6 @@
 import type { Meta } from '@storybook/react';
 import { Search as SearchIcon } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Input } from './Input';
 
 const meta: Meta<typeof Input> = {
@@ -56,7 +56,7 @@ export const WithError = () => {
     <div className={storyWrapperClass}>
       <Input
         label="Phone Number"
-        dataType="phone number"
+        dataType="phone-number"
         required
         placeholder="(555) 123-4567"
         value={value}

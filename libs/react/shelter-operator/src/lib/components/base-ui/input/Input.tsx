@@ -28,26 +28,44 @@ const normalizeValue = (
   return String(value).trim();
 };
 
+/** True when the value is non-empty for validation (treats `0` as present, unlike `!value`). */
+const hasContentForDataTypeCheck = (
+  value: string | number | readonly string[] | undefined
+): boolean => {
+  if (value === undefined) return false;
+  if (typeof value === 'number') return true;
+  return normalizeValue(value) !== '';
+};
+
+const dataTypeLabels: Partial<Record<InputDataType, string>> = {
+  'phone-number': 'phone number',
+  email: 'email',
+  number: 'number',
+  time: 'time',
+  string: 'value',
+};
+
 const isValueValid = (
   value: string | number | readonly string[] | undefined,
   dataType?: InputDataType
 ): boolean => {
-  if (!dataType || !value) return true; // No validation if no dataType or empty value
+  if (!dataType || !hasContentForDataTypeCheck(value)) return true;
   const stringValue = normalizeValue(value);
-  if (!stringValue) return false; // Empty value is invalid
+  if (!stringValue) return false;
   const pattern = validationPatterns[dataType];
   return pattern.test(stringValue);
 };
 
 const getDefaultErrorMessage = (
-  dataType?: string,
+  dataType?: InputDataType,
   isRequiredError?: boolean
 ): string | undefined => {
   if (isRequiredError) {
     return 'This field is required';
   }
   if (dataType) {
-    return `Please enter a valid ${dataType}`;
+    const label = dataTypeLabels[dataType] ?? dataType;
+    return `Please enter a valid ${label}`;
   }
   return undefined;
 };
@@ -93,7 +111,11 @@ export const Input = forwardRef<
   const isRequiredError = required && !normalizeValue(value);
 
   // Check if value fails dataType validation
-  const isDataTypeError = value && dataType && !isValueValid(value, dataType);
+  const isDataTypeError = Boolean(
+    dataType &&
+      hasContentForDataTypeCheck(value) &&
+      !isValueValid(value, dataType)
+  );
 
   // Generate error message: use custom error if provided, otherwise auto-generate
   let displayError = error;
