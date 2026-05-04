@@ -3,18 +3,27 @@ import useEmblaCarousel from 'embla-carousel-react';
 import { useEffect, useState } from 'react';
 import { ImageSlide } from './ImageSlide';
 import { SlideCounter } from './SlideCounter';
+import { YouTubeSlide } from './YouTubeSlide';
+
+export type TYouTubeVideo = {
+  videoId: string;
+  title?: string;
+};
 
 export type TProps = {
   imageUrls: string[];
+  youtubeVideos?: TYouTubeVideo[];
   className?: string;
   imageClassName?: string;
 };
 
 export function ImageCarousel(props: TProps) {
-  const { imageUrls, className, imageClassName } = props;
+  const { imageUrls, youtubeVideos = [], className, imageClassName } = props;
 
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel();
+
+  const totalSlides = imageUrls.length + youtubeVideos.length;
 
   useEffect(() => {
     if (!emblaApi) {
@@ -22,7 +31,7 @@ export function ImageCarousel(props: TProps) {
     }
 
     emblaApi.reInit();
-  }, [emblaApi, imageUrls]);
+  }, [emblaApi, imageUrls, youtubeVideos]);
 
   useEffect(() => {
     if (!emblaApi) {
@@ -43,7 +52,12 @@ export function ImageCarousel(props: TProps) {
   }, [emblaApi]);
 
   const parentCss = ['overflow-hidden', 'relative', className];
-  const slideContainerCss = ['flex', 'touch-pan-x', '[touch-action:pan-x]'];
+  const slideContainerCss = [
+    'flex',
+    'h-full',
+    'touch-pan-x',
+    '[touch-action:pan-x]',
+  ];
 
   return (
     <div
@@ -55,9 +69,18 @@ export function ImageCarousel(props: TProps) {
         {imageUrls.map((src, i) => (
           <ImageSlide key={i} imageSrc={src} imgClassName={imageClassName} />
         ))}
+        {youtubeVideos.map((video) => (
+          <YouTubeSlide
+            key={`yt-${video.videoId}`}
+            videoId={video.videoId}
+            title={video.title}
+            onPrev={() => emblaApi?.scrollPrev()}
+            onNext={() => emblaApi?.scrollNext()}
+          />
+        ))}
       </div>
 
-      <SlideCounter total={imageUrls.length} current={currentSlideIndex + 1} />
+      <SlideCounter total={totalSlides} current={currentSlideIndex + 1} />
     </div>
   );
 }

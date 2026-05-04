@@ -98,8 +98,10 @@ export type AdminShelterType = {
   id: Scalars['ID']['output'];
   instagram?: Maybe<Scalars['String']['output']>;
   interiorPhotos: Array<ShelterPhotoType>;
+  isPrivate: Scalars['Boolean']['output'];
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
+  mediaLinks: Array<MediaLinkType>;
   name: Scalars['String']['output'];
   onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
   organization?: Maybe<OrganizationType>;
@@ -177,6 +179,16 @@ export type AuthorizedPresignedS3UploadsType = {
   uploads: Array<AuthorizedPresignedS3UploadType>;
 };
 
+export type BedFilter = {
+  AND?: InputMaybe<BedFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<BedFilter>;
+  OR?: InputMaybe<BedFilter>;
+  bedType?: InputMaybe<Array<BedTypeChoices>>;
+  medicalNeeds?: InputMaybe<Array<MedicalNeedChoices>>;
+  status?: InputMaybe<Array<BedStatusChoices>>;
+};
+
 export enum BedStatusChoices {
   Available = 'AVAILABLE',
   Occupied = 'OCCUPIED',
@@ -212,6 +224,15 @@ export enum BedTypeChoices {
   Rollaway = 'ROLLAWAY',
   Twin = 'TWIN'
 }
+
+export type BedTypeOffsetPaginated = {
+  __typename?: 'BedTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<BedType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
 
 export type BedsByStatusType = {
   __typename?: 'BedsByStatusType';
@@ -735,6 +756,7 @@ export type CreateShelterInput = {
   funders: Array<FunderChoices>;
   fundersOther?: InputMaybe<Scalars['String']['input']>;
   instagram?: InputMaybe<Scalars['String']['input']>;
+  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<ShelterLocationInput>;
   maxStay?: InputMaybe<Scalars['Int']['input']>;
   name: Scalars['String']['input'];
@@ -1449,6 +1471,18 @@ export type MaxStayInput = {
   includeNull?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
+export type MediaLinkType = {
+  __typename?: 'MediaLinkType';
+  id: Scalars['ID']['output'];
+  mediaType: MediaLinkTypeChoices;
+  title: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+};
+
+export enum MediaLinkTypeChoices {
+  Youtube = 'YOUTUBE'
+}
+
 export enum MedicalNeedChoices {
   Dialysis = 'DIALYSIS',
   Dmh = 'DMH',
@@ -2140,6 +2174,7 @@ export enum PronounEnum {
 export type Query = {
   __typename?: 'Query';
   adminShelters: AdminShelterTypeOffsetPaginated;
+  beds: BedTypeOffsetPaginated;
   bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
   caseworkerOrganizations: OrganizationTypeOffsetPaginated;
   clientContact: ClientContactType;
@@ -2165,6 +2200,7 @@ export type Query = {
   organizationMember: OrganizationMemberType;
   organizationMembers: OrganizationMemberTypeOffsetPaginated;
   reportSummary: ReportSummaryType;
+  rooms: RoomTypeOffsetPaginated;
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
@@ -2181,6 +2217,12 @@ export type Query = {
 export type QueryAdminSheltersArgs = {
   filters?: InputMaybe<ShelterFilter>;
   ordering?: Array<ShelterOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryBedsArgs = {
+  filters?: InputMaybe<BedFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2318,6 +2360,12 @@ export type QueryReportSummaryArgs = {
   endDate?: InputMaybe<Scalars['Date']['input']>;
   organizationId?: InputMaybe<Scalars['ID']['input']>;
   startDate?: InputMaybe<Scalars['Date']['input']>;
+};
+
+
+export type QueryRoomsArgs = {
+  filters?: InputMaybe<RoomFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -2462,6 +2510,18 @@ export type RevertNoteInput = {
 
 export type RevertNotePayload = NoteType | OperationInfo;
 
+export type RoomFilter = {
+  AND?: InputMaybe<RoomFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<RoomFilter>;
+  OR?: InputMaybe<RoomFilter>;
+  amenities?: InputMaybe<Scalars['String']['input']>;
+  medicalRespite?: InputMaybe<Scalars['Boolean']['input']>;
+  numberOfBeds?: InputMaybe<Scalars['Int']['input']>;
+  roomType?: InputMaybe<Array<RoomStyleChoices>>;
+  status?: InputMaybe<Array<RoomStatusChoices>>;
+};
+
 export enum RoomStatusChoices {
   Available = 'AVAILABLE',
   NeedsMaintenance = 'NEEDS_MAINTENANCE',
@@ -2505,6 +2565,20 @@ export type RoomType = {
   shelter: ShelterType;
   status?: Maybe<RoomStatusChoices>;
   storage: Scalars['Boolean']['output'];
+};
+
+
+export type RoomTypeBedsArgs = {
+  filters?: InputMaybe<BedFilter>;
+};
+
+export type RoomTypeOffsetPaginated = {
+  __typename?: 'RoomTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<RoomType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export enum SpaChoices {
@@ -2654,6 +2728,7 @@ export type ShelterFilter = {
   OR?: InputMaybe<ShelterFilter>;
   geolocation?: InputMaybe<GeolocationInput>;
   isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
+  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   mapBounds?: InputMaybe<MapBoundsInput>;
   maxStay?: InputMaybe<MaxStayInput>;
   name?: InputMaybe<Scalars['String']['input']>;
@@ -2719,6 +2794,7 @@ export type ShelterPropertyInput = {
   referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
+  spa?: InputMaybe<Array<SpaChoices>>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
 };
 
@@ -2752,8 +2828,10 @@ export type ShelterType = {
   id: Scalars['ID']['output'];
   instagram?: Maybe<Scalars['String']['output']>;
   interiorPhotos: Array<ShelterPhotoType>;
+  isPrivate: Scalars['Boolean']['output'];
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
+  mediaLinks: Array<MediaLinkType>;
   name: Scalars['String']['output'];
   onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
   organization?: Maybe<OrganizationType>;

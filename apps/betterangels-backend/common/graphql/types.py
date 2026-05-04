@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Any, Mapping, NewType, Optional, cast
+from typing import Any, Mapping, NewType, Optional, Tuple, cast
 
 import strawberry
 import strawberry_django
@@ -8,7 +8,7 @@ from common.constants import PHONE_NUMBER_REGEX
 from common.enums import ImagePresetEnum
 from common.imgproxy import build_imgproxy_url, is_imgproxy_enabled
 from common.models import Address, Attachment, Location, PhoneNumber
-from django.db.models import Q
+from django.db.models import Q, QuerySet, Subquery
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
 from phonenumber_field.phonenumber import PhoneNumber as DjangoPhoneNumberUtil
 from strawberry import ID, Info, auto
@@ -26,6 +26,32 @@ def make_in_filter(field_name: str, value_type: Any) -> StrawberryField:
         normalized_value = [value_type[v.name] if not isinstance(v, str) else v for v in value]
 
         return Q(**{f"{prefix}{field_name}__in": normalized_value})
+
+    return _filter
+
+
+def make_icontains_filter(field_name: str) -> StrawberryField:
+    @strawberry_django.filter_field
+    def _filter(info: Info, value: Optional[str], prefix: str) -> Q:
+        if not value:
+            return Q()
+
+        return Q(**{f"{prefix}{field_name}__icontains": value})
+
+    return _filter
+
+
+def make_m2m_in_filter(related_object: str, field_name: str, value_type: Any) -> StrawberryField:
+    """Filter rows whose M2M ``related_object`` relates to any lookup row with ``field_name`` in the given values."""
+
+    @strawberry_django.filter_field
+    def _filter(self: Any, queryset: QuerySet[Any], value: Optional[list[Any]], prefix: str) -> Tuple[QuerySet[Any], Q]:
+        if not value:
+            return queryset, Q()
+
+        lookup = f"{prefix}{related_object}__{field_name}__in"
+        matching_pks = queryset.filter(**{lookup: value}).values("pk")
+        return queryset.filter(pk__in=Subquery(matching_pks)), Q()
 
     return _filter
 

@@ -45,7 +45,15 @@ export function SignIn({ onSuccessRedirect, description }: SignInProps) {
         <h1 className="font-bold text-2xl mb-2">Sign In</h1>
         <p className="mb-10">{description}</p>
         {step === 'initial' && (
-          <>
+          <form
+            className="flex flex-col"
+            onSubmit={(e) => {
+              e.preventDefault();
+              isPasswordLogin
+                ? handlePasswordLogin(email, password)
+                : handleSendCode(email);
+            }}
+          >
             <Input
               className="mb-4"
               inputClassname="input-xl"
@@ -77,23 +85,25 @@ export function SignIn({ onSuccessRedirect, description }: SignInProps) {
             )}
 
             <button
+              type="submit"
               className="btn btn-primary btn-xl"
-              onClick={() =>
-                isPasswordLogin
-                  ? handlePasswordLogin(email, password)
-                  : handleSendCode(email)
-              }
               disabled={
                 loading || !isValidEmail || (isPasswordLogin && !password)
               }
             >
               Sign In
             </button>
-          </>
+          </form>
         )}
 
         {step === 'otp' && (
-          <>
+          <form
+            className="flex flex-col"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleConfirmCode(otp);
+            }}
+          >
             <Input
               className="mb-4"
               inputClassname="input-xl"
@@ -111,13 +121,13 @@ export function SignIn({ onSuccessRedirect, description }: SignInProps) {
             )}
 
             <button
+              type="submit"
               className="btn btn-primary btn-xl"
-              onClick={() => handleConfirmCode(otp)}
               disabled={loading || !otp.trim()}
             >
               Confirm OTP
             </button>
-          </>
+          </form>
         )}
         <p className="mt-10">
           By continuing, you agree to our{' '}

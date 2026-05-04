@@ -117,6 +117,7 @@ type AdminShelterType {
   shelterTypesOther: String
   spa: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
   subjectiveReview: String
@@ -125,6 +126,7 @@ type AdminShelterType {
   updatedAt: DateTime!
   visitorsAllowed: Boolean
   website: String
+  mediaLinks: [MediaLinkType!]!
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
@@ -176,6 +178,16 @@ type AuthorizedPresignedS3UploadsType {
   uploads: [AuthorizedPresignedS3UploadType!]!
 }
 
+input BedFilter {
+  AND: BedFilter
+  OR: BedFilter
+  NOT: BedFilter
+  DISTINCT: Boolean
+  bedType: [BedTypeChoices!]
+  medicalNeeds: [MedicalNeedChoices!]
+  status: [BedStatusChoices!]
+}
+
 enum BedStatusChoices {
   AVAILABLE
   OCCUPIED
@@ -209,6 +221,16 @@ enum BedTypeChoices {
   BUNK
   ROLLAWAY
   OTHER
+}
+
+type BedTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [BedType!]!
 }
 
 type BedsByStatusType {
@@ -758,6 +780,7 @@ input CreateShelterInput {
   cityCouncilDistrict: Int = null
   supervisorialDistrict: Int = null
   overallRating: Int = null
+  isPrivate: Boolean
 }
 
 union CreateShelterPayload = ShelterType | OperationInfo
@@ -1430,6 +1453,17 @@ input MaxStayInput {
   includeNull: Boolean = false
 }
 
+type MediaLinkType {
+  id: ID!
+  url: String!
+  title: String!
+  mediaType: MediaLinkTypeChoices!
+}
+
+enum MediaLinkTypeChoices {
+  YOUTUBE
+}
+
 enum MedicalNeedChoices {
   ERC
   DMH
@@ -1852,6 +1886,8 @@ type Query {
   adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
+  beds(pagination: OffsetPaginationInput, filters: BedFilter): BedTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
+  rooms(pagination: OffsetPaginationInput, filters: RoomFilter): RoomTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
   shelterMaxStay: Int
 }
@@ -1945,6 +1981,18 @@ input RevertNoteInput {
 
 union RevertNotePayload = NoteType | OperationInfo
 
+input RoomFilter {
+  medicalRespite: Boolean
+  AND: RoomFilter
+  OR: RoomFilter
+  NOT: RoomFilter
+  DISTINCT: Boolean
+  amenities: String
+  roomType: [RoomStyleChoices!]
+  status: [RoomStatusChoices!]
+  numberOfBeds: Int
+}
+
 enum RoomStatusChoices {
   AVAILABLE
   RESERVED
@@ -1984,8 +2032,18 @@ type RoomType {
   maintenanceFlag: Boolean!
   medicalRespite: Boolean!
   lastCleanedInspected: DateTime
-  beds: [BedType!]!
+  beds(filters: BedFilter): [BedType!]!
   occupantIds: [ID!]!
+}
+
+type RoomTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [RoomType!]!
 }
 
 enum SPAChoices {
@@ -2124,6 +2182,7 @@ enum ShelterChoices {
 }
 
 input ShelterFilter {
+  isPrivate: Boolean
   AND: ShelterFilter
   OR: ShelterFilter
   NOT: ShelterFilter
@@ -2193,6 +2252,7 @@ input ShelterPropertyInput {
   shelterTypes: [ShelterChoices!] = null
   roomStyles: [RoomStyleChoices!] = null
   parking: [ParkingChoices!] = null
+  spa: [SPAChoices!] = null
 }
 
 type ShelterType {
@@ -2242,6 +2302,7 @@ type ShelterType {
   shelterTypesOther: String
   spa: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
   subjectiveReview: String
@@ -2250,6 +2311,7 @@ type ShelterType {
   updatedAt: DateTime!
   visitorsAllowed: Boolean
   website: String
+  mediaLinks: [MediaLinkType!]!
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String

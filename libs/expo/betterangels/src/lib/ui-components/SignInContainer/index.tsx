@@ -4,7 +4,7 @@ import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useFeatureControls } from '@monorepo/react/shared';
 import { Link, router } from 'expo-router';
 import { ReactNode, useEffect } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useUser } from '../../hooks';
 
@@ -51,38 +51,40 @@ export default function SignInContainer({
       extraKeyboardSpace={20}
       keyboardShouldPersistTaps="handled"
     >
-      <TextBold mb="xs" size="xl">
-        Welcome!
-      </TextBold>
-      <TextRegular size="sm" mb="xl">
-        Log in for Better Angels and start making a difference in the LA
-        community.
-      </TextRegular>
-      {children}
-      {termsOfServiceUrl && privacyPolicyUrl ? (
-        <Text style={styles.legalWrapper}>
-          <TextRegular
-            textAlign="center"
-            color={Colors.PRIMARY_EXTRA_DARK}
-            size="xs"
-          >
-            By continuing, you agree to our{' '}
-            <Link
-              style={{ textDecorationLine: 'underline' }}
-              href={termsOfServiceUrl}
+      <View testID="sign-in-screen">
+        <TextBold mb="xs" size="xl">
+          Welcome!
+        </TextBold>
+        <TextRegular size="sm" mb="xl">
+          Log in for Better Angels and start making a difference in the LA
+          community.
+        </TextRegular>
+        {children}
+        {termsOfServiceUrl && privacyPolicyUrl ? (
+          <Text style={styles.legalWrapper}>
+            <TextRegular
+              textAlign="center"
+              color={Colors.PRIMARY_EXTRA_DARK}
+              size="xs"
             >
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link
-              style={{ textDecorationLine: 'underline' }}
-              href={privacyPolicyUrl}
-            >
-              Privacy Policy.
-            </Link>
-          </TextRegular>
-        </Text>
-      ) : null}
+              By continuing, you agree to our{' '}
+              <Link
+                style={{ textDecorationLine: 'underline' }}
+                href={termsOfServiceUrl}
+              >
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link
+                style={{ textDecorationLine: 'underline' }}
+                href={privacyPolicyUrl}
+              >
+                Privacy Policy.
+              </Link>
+            </TextRegular>
+          </Text>
+        ) : null}
+      </View>
     </KeyboardAwareScrollView>
   );
 }

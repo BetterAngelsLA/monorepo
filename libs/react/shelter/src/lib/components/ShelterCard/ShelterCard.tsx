@@ -1,3 +1,4 @@
+import { LockIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { ReactNode } from 'react';
@@ -17,6 +18,7 @@ export type TShelter = {
   name: string;
   heroImage?: string | null;
   distanceInMiles?: number | null;
+  isPrivate?: boolean | null;
   location?: TShelterLocation | null;
   shelterTypes?: Array<{
     name?: string | null;
@@ -33,7 +35,7 @@ type TShelterCard = {
 
 export function ShelterCard(props: TShelterCard) {
   const {
-    shelter: { id, name, heroImage, distanceInMiles, location },
+    shelter: { id, name, heroImage, distanceInMiles, isPrivate, location },
     originCoordinates,
     className,
     footer,
@@ -68,12 +70,23 @@ export function ShelterCard(props: TShelterCard) {
   return (
     <div className={mergeCss(parentCss)} onClick={onNavigate}>
       <div className={mergeCss(bodyCss)}>
-        <div className="w-full md:w-96 md:mr-4 md:shrink-0">
+        <div className="relative w-full md:w-96 md:mr-4 md:shrink-0">
           <ShelterCardHero
             className="w-full"
             imageUrl={heroImage}
             shelterName={name}
           />
+          {isPrivate && (
+            <div
+              className="absolute top-2 left-2 flex items-center gap-1 bg-white/90 rounded-[20px] p-1.5 md:px-2.5 md:py-1"
+              title="Only visible to verified case managers"
+            >
+              <LockIcon className="w-3.5 h-3.5 text-primary-60" />
+              <span className="hidden md:inline text-xs text-primary-20 font-medium">
+                Private
+              </span>
+            </div>
+          )}
         </div>
 
         <div className={mergeCss(contentCss)}>

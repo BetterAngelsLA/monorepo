@@ -37,7 +37,7 @@ from shelters.types.lookups import (
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
-from .filters import ShelterFilter, ShelterOrder
+from .filters import BedFilter, RoomFilter, ShelterFilter, ShelterOrder
 
 
 @strawberry.type
@@ -52,6 +52,14 @@ class ShelterPhotoType:
     id: ID
     created_at: datetime
     file: TransformableImageType
+
+
+@strawberry_django.type(models.MediaLink)
+class MediaLinkType:
+    id: ID
+    url: str
+    title: str
+    media_type: auto
 
 
 @strawberry.type
@@ -110,6 +118,7 @@ class ShelterTypeMixin:
     shelter_types_other: auto
     spa: List[SPAType]
     special_situation_restrictions: List[SpecialSituationRestrictionType]
+    is_private: auto
     status: auto
     storage: List[StorageType]
     subjective_review: Optional[str]
@@ -118,6 +127,7 @@ class ShelterTypeMixin:
     updated_at: auto
     visitors_allowed: auto
     website: auto
+    media_links: List[MediaLinkType]
 
     _exterior_photos: Optional[List[ShelterPhotoType]] = None
     _interior_photos: Optional[List[ShelterPhotoType]] = None
@@ -181,7 +191,8 @@ class ShelterTypeMixin:
 class ShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
-        return shelter_list(queryset)
+        user = get_current_user(info)
+        return shelter_list(queryset, user=user)
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
@@ -192,8 +203,13 @@ class AdminShelterType(ShelterTypeMixin):
         return admin_shelter_list(queryset, user=user)
 
 
-@strawberry_django.type(models.Bed)
+@strawberry_django.type(models.Bed, filters=BedFilter)
 class BedType:
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Bed]:
+        user = cast(User, get_current_user(info))
+        return queryset.filter(shelter__in=admin_shelter_list(models.Shelter.objects.all(), user=user))
+
     id: ID
     shelter: "ShelterType"
     room: Optional["RoomType"]
@@ -214,8 +230,13 @@ class BedType:
     fees: Optional[int]
 
 
-@strawberry_django.type(models.Room)
+@strawberry_django.type(models.Room, filters=RoomFilter)
 class RoomType:
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Room]:
+        user = cast(User, get_current_user(info))
+        return queryset.filter(shelter__in=admin_shelter_list(models.Shelter.objects.all(), user=user))
+
     id: ID
     shelter: "ShelterType"
     room_identifier: auto

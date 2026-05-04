@@ -2,18 +2,28 @@ import { MenuIcon } from '@monorepo/react/icons';
 import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { Link } from 'react-router-dom';
-import { aboutUsPath, operatorPath, shelterHomePath } from '../../constants';
+import {
+  aboutUsPath,
+  operatorPath,
+  shelterHomePath,
+  signInPath,
+} from '../../constants';
 import { FeatureFlags } from '../../constants/featureFlags';
+import { useSignOut, useUser } from '../../providers';
 import { FlyoutAnimationEnum, flyoutAtom } from '../Flyout';
 import { MenuMobile } from './MenuMobile';
 
 export function MenuBtnMobile() {
   const [_flyout, setFlyout] = useAtom(flyoutAtom);
   const showOperator = useFeatureFlagActive(FeatureFlags.SHELTER_OPERATOR_APP);
+  const { user } = useUser();
+  const { signOut } = useSignOut();
 
   function onClick() {
     setFlyout({
-      content: <MenuMobile showOperator={showOperator} />,
+      content: (
+        <MenuMobile showOperator={showOperator} user={user} signOut={signOut} />
+      ),
       closeOnClick: true,
       animation: FlyoutAnimationEnum.FLYOUT_LEFT,
     });
@@ -36,6 +46,15 @@ export function MenuBtnMobile() {
             Operator
           </Link>
         ) : null}
+        {user ? (
+          <button aria-label="sign out" onClick={signOut}>
+            Sign Out
+          </button>
+        ) : (
+          <Link aria-label="sign in" to={signInPath}>
+            Sign In
+          </Link>
+        )}
       </div>
     </div>
   );

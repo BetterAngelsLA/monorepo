@@ -7,14 +7,18 @@ import {
   operatorPath,
   shelterHomePath,
   shelterVideoPath,
+  signInPath,
 } from '../../constants';
+import { TUser } from '../../providers';
 import { flyoutAtom } from '../Flyout';
 
 type MenuMobileProps = {
   showOperator: boolean;
+  user: TUser | undefined;
+  signOut: () => Promise<void>;
 };
 
-export function MenuMobile({ showOperator }: MenuMobileProps) {
+export function MenuMobile({ showOperator, user, signOut }: MenuMobileProps) {
   const [_flyout, setFlyout] = useAtom(flyoutAtom);
 
   function onFlyoutClose() {
@@ -92,7 +96,7 @@ export function MenuMobile({ showOperator }: MenuMobileProps) {
         </div>
 
         {showOperator ? (
-          <div>
+          <div className={mergeCss(borderCss)}>
             <Link
               aria-label="navigate to operator dashboard"
               to={operatorPath}
@@ -102,6 +106,30 @@ export function MenuMobile({ showOperator }: MenuMobileProps) {
             </Link>
           </div>
         ) : null}
+
+        <div className={mergeCss(borderCss)}>
+          {user ? (
+            <button
+              aria-label="sign out"
+              onClick={() => {
+                setFlyout(null);
+                signOut();
+              }}
+              className={mergeCss(hoverBtnCss)}
+            >
+              Sign Out
+            </button>
+          ) : (
+            <Link
+              aria-label="sign in"
+              to={signInPath}
+              onClick={() => setFlyout(null)}
+              className={mergeCss(hoverBtnCss)}
+            >
+              Sign In
+            </Link>
+          )}
+        </div>
       </div>
     </>
   );

@@ -22,6 +22,7 @@ import {
   BottomSheetModalProvider,
   GooglePlacesProvider,
 } from '@monorepo/expo/shared/ui-components';
+import { hideDevMenuFab } from '@monorepo/expo/shared/utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -30,6 +31,13 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl, googlePlacesApiKey } from '../../config';
 import AppRoutesStack from './AppRoutesStack';
+
+// Hide the expo-dev-menu floating "Tools" FAB on iOS dev clients
+// (overlaps `nav-menu-btn`). No-op in production / store builds and on
+// Android. See helper for details.
+// TODO: Remove once on SDK 56+ — expo-dev-launcher gains a build-time
+// plugin option to hide the FAB on both platforms (PR expo/expo#44251).
+hideDevMenuFab();
 
 const isDevEnv = process.env['NODE_ENV'] === 'development';
 
