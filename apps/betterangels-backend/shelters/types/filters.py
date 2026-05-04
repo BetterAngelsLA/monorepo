@@ -14,7 +14,7 @@ from common.graphql.types import (
     LongitudeScalar,
     make_icontains_filter,
     make_in_filter,
-    make_m2m_name_in_filter,
+    make_m2m_in_filter,
 )
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
@@ -195,11 +195,11 @@ class ShelterOrder:
 
 
 class CommonBedRoomFilterMixin:
-    accessibility = make_m2m_name_in_filter("accessibility", AccessibilityChoices)
-    demographics = make_m2m_name_in_filter("demographics", DemographicChoices)
-    funders = make_m2m_name_in_filter("funders", FunderChoices)
+    accessibility = make_m2m_in_filter("accessibility", "name", AccessibilityChoices)
+    demographics = make_m2m_in_filter("demographics", "name", DemographicChoices)
+    funders = make_m2m_in_filter("funders", "name", FunderChoices)
     maintenance_flag: Optional[bool]
-    pets = make_m2m_name_in_filter("pets", PetChoices)
+    pets = make_m2m_in_filter("pets", "name", PetChoices)
     shelter_id: Optional[ID]
     storage: Optional[bool]
 

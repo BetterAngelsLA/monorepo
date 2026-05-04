@@ -8,7 +8,7 @@ from common.constants import PHONE_NUMBER_REGEX
 from common.enums import ImagePresetEnum
 from common.imgproxy import build_imgproxy_url, is_imgproxy_enabled
 from common.models import Address, Attachment, Location, PhoneNumber
-from django.db.models import Q, QuerySet
+from django.db.models import Q, QuerySet, Subquery
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
 from phonenumber_field.phonenumber import PhoneNumber as DjangoPhoneNumberUtil
 from strawberry import ID, Info, auto
@@ -41,18 +41,17 @@ def make_icontains_filter(field_name: str) -> StrawberryField:
     return _filter
 
 
-def make_m2m_name_in_filter(related_field: str, value_type: Any) -> StrawberryField:
-    """Filter rows whose M2M ``related_field`` relates to any lookup row with ``name`` in the given values."""
+def make_m2m_in_filter(related_object: str, field_name: str, value_type: Any) -> StrawberryField:
+    """Filter rows whose M2M ``related_object`` relates to any lookup row with ``field_name`` in the given values."""
 
     @strawberry_django.filter_field
     def _filter(self: Any, queryset: QuerySet[Any], value: Optional[list[Any]], prefix: str) -> Tuple[QuerySet[Any], Q]:
         if not value:
             return queryset, Q()
 
-        return (
-            queryset.filter(**{f"{prefix}{related_field}__name__in": value}).distinct(),
-            Q(),
-        )
+        lookup = f"{prefix}{related_object}__{field_name}__in"
+        matching_pks = queryset.filter(**{lookup: value}).values("pk")
+        return queryset.filter(pk__in=Subquery(matching_pks)), Q()
 
     return _filter
 
