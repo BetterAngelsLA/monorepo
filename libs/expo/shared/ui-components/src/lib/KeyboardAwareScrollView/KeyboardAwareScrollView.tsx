@@ -1,7 +1,10 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode, forwardRef } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
-import { KeyboardAwareScrollView as RNKeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { StyleSheet } from 'react-native';
+import {
+  KeyboardAwareScrollView as RNKeyboardAwareScrollView,
+  KeyboardAwareScrollViewRef,
+} from 'react-native-keyboard-controller';
 
 interface IKeyboardAwareScrollView {
   children: ReactNode;
@@ -10,7 +13,7 @@ interface IKeyboardAwareScrollView {
 }
 
 export const KeyboardAwareScrollView = forwardRef<
-  ScrollView,
+  KeyboardAwareScrollViewRef,
   IKeyboardAwareScrollView
 >((props: IKeyboardAwareScrollView, ref) => {
   const { children, bottomOffset = 50, extraKeyboardSpace = 20 } = props;

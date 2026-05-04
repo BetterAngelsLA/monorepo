@@ -1,7 +1,5 @@
 import { Button } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
-import { useResetAtom } from 'jotai/utils';
-import { shelterPropertyFiltersAtom } from '../../atoms';
 
 type IProps = {
   className?: string;
@@ -11,8 +9,6 @@ type IProps = {
 
 export function FiltersActions(props: IProps) {
   const { onDone, onReset, className } = props;
-
-  const resetFilters = useResetAtom(shelterPropertyFiltersAtom);
 
   const parentCss = [
     'flex',
@@ -24,8 +20,6 @@ export function FiltersActions(props: IProps) {
   ];
 
   function handleReset() {
-    resetFilters();
-
     if (onReset) {
       onReset();
     }

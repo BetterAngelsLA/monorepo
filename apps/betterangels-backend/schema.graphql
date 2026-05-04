@@ -117,6 +117,7 @@ type AdminShelterType {
   shelterTypesOther: String
   spa: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
   subjectiveReview: String
@@ -125,6 +126,7 @@ type AdminShelterType {
   updatedAt: DateTime!
   visitorsAllowed: Boolean
   website: String
+  mediaLinks: [MediaLinkType!]!
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
@@ -162,6 +164,18 @@ enum AttachmentType {
 
 type AuthResponse {
   status_code: String!
+}
+
+type AuthorizedPresignedS3UploadType {
+  refId: String!
+  url: String!
+  fields: JSON!
+  presignedKey: String!
+  uploadToken: String!
+}
+
+type AuthorizedPresignedS3UploadsType {
+  uploads: [AuthorizedPresignedS3UploadType!]!
 }
 
 enum BedStatusChoices {
@@ -252,6 +266,14 @@ input ClientDocumentFilter {
   documentGroups: [ClientDocumentGroupEnum!]
 }
 
+input ClientDocumentFromUploadsInput {
+  presignedKey: String!
+  uploadToken: String!
+  filename: String!
+  contentType: String!
+  namespace: ClientDocumentNamespaceEnum!
+}
+
 enum ClientDocumentGroupEnum {
   DOC_READY
   FORMS
@@ -291,6 +313,16 @@ type ClientDocumentTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [ClientDocumentType!]!
+}
+
+input ClientDocumentUploadsInputItem {
+  refId: String!
+  filename: String!
+  contentType: String!
+}
+
+type ClientDocumentUploadsType {
+  documents: [ClientDocumentType!]!
 }
 
 input ClientHouseholdMemberInput {
@@ -728,6 +760,7 @@ input CreateShelterInput {
   cityCouncilDistrict: Int = null
   supervisorialDistrict: Int = null
   overallRating: Int = null
+  isPrivate: Boolean
 }
 
 union CreateShelterPayload = ShelterType | OperationInfo
@@ -820,6 +853,7 @@ type DeletedObjectType {
 
 enum DemographicChoices {
   ALL
+  COUPLES
   SINGLE_MEN
   SINGLE_WOMEN
   TAY_TEEN
@@ -856,14 +890,15 @@ type DjangoModelType {
 }
 
 enum EntryRequirementChoices {
+  BACKGROUND
+  HOMELESS_VERIFICATION
   MEDICAID_OR_MEDICARE
   PHOTO_ID
   REFERRAL
   RESERVATION
-  BACKGROUND
-  HOMELESS_VERIFICATION
-  WALK_UPS
   VEHICLE_REGISTRATION
+  WALK_UPS
+  IN_SPA_ONLY
 }
 
 type EntryRequirementType {
@@ -926,6 +961,22 @@ enum GenderEnum {
   OTHER
   PREFER_NOT_TO_SAY
 }
+
+input GenerateClientDocumentUploadsInput {
+  clientProfileId: ID!
+  uploads: [ClientDocumentUploadsInputItem!]!
+}
+
+union GenerateClientDocumentUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo
+
+input GenerateClientProfilePhotoUploadInput {
+  clientProfileId: ID!
+  refId: String!
+  filename: String!
+  contentType: String!
+}
+
+union GenerateClientProfilePhotoUploadPayload = AuthorizedPresignedS3UploadType | OperationInfo
 
 input GeolocationInput {
   latitude: Float!
@@ -1377,6 +1428,22 @@ enum MaritalStatusEnum {
   WIDOWED
 }
 
+input MaxStayInput {
+  days: Int!
+  includeNull: Boolean = false
+}
+
+type MediaLinkType {
+  id: ID!
+  url: String!
+  title: String!
+  mediaType: MediaLinkTypeChoices!
+}
+
+enum MediaLinkTypeChoices {
+  YOUTUBE
+}
+
 enum MedicalNeedChoices {
   ERC
   DMH
@@ -1411,6 +1478,10 @@ type Mutation {
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  resolveClientDocumentUploads(data: ResolveClientDocumentUploadsInput!): ResolveClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  generateClientProfilePhotoUpload(data: GenerateClientProfilePhotoUploadInput!): GenerateClientProfilePhotoUploadPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  resolveClientProfilePhotoUpload(data: ResolveClientProfilePhotoUploadInput!): ResolveClientProfilePhotoUploadPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError! @hmisDirective
@@ -1796,6 +1867,7 @@ type Query {
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
+  shelterMaxStay: Int
 }
 
 enum RaceEnum {
@@ -1864,6 +1936,21 @@ type ReportSummaryType {
   topProvidedServices: [NameCountType!]!
   topRequestedServices: [NameCountType!]!
 }
+
+input ResolveClientDocumentUploadsInput {
+  clientProfileId: ID!
+  documents: [ClientDocumentFromUploadsInput!]!
+}
+
+union ResolveClientDocumentUploadsPayload = ClientDocumentUploadsType | OperationInfo
+
+input ResolveClientProfilePhotoUploadInput {
+  clientProfileId: ID!
+  presignedKey: String!
+  uploadToken: String!
+}
+
+union ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo
 
 input RevertNoteInput {
   id: ID!
@@ -2051,11 +2138,13 @@ enum ShelterChoices {
 }
 
 input ShelterFilter {
+  isPrivate: Boolean
   AND: ShelterFilter
   OR: ShelterFilter
   NOT: ShelterFilter
   DISTINCT: Boolean
   isAccessCenter: Boolean
+  maxStay: MaxStayInput
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
@@ -2113,10 +2202,13 @@ type ShelterProgramType {
 input ShelterPropertyInput {
   pets: [PetChoices!] = null
   demographics: [DemographicChoices!] = null
+  entryRequirements: [EntryRequirementChoices!] = null
+  referralRequirement: [ReferralRequirementChoices!] = null
   specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
   shelterTypes: [ShelterChoices!] = null
   roomStyles: [RoomStyleChoices!] = null
   parking: [ParkingChoices!] = null
+  spa: [SPAChoices!] = null
 }
 
 type ShelterType {
@@ -2166,6 +2258,7 @@ type ShelterType {
   shelterTypesOther: String
   spa: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
   subjectiveReview: String
@@ -2174,6 +2267,7 @@ type ShelterType {
   updatedAt: DateTime!
   visitorsAllowed: Boolean
   website: String
+  mediaLinks: [MediaLinkType!]!
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String

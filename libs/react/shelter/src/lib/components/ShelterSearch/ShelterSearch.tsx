@@ -1,15 +1,15 @@
 import { FilterIcon, LocationIcon, SearchIcon } from '@monorepo/react/icons';
 import { useAtom } from 'jotai';
 import { useResetAtom } from 'jotai/utils';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { shelterPropertyFiltersAtom } from '../../atoms';
+import { shelterFiltersPath } from '../../constants';
 import { AddressAutocomplete, TPlaceResult } from '../AddressAutocomplete';
 import { Input } from '../Input';
 import { TLatLng, TMapBounds } from '../Map';
-import { ModalAnimationEnum, modalAtom } from '../Modal';
-import { FilterPills, FiltersActions, ShelterFilters } from '../ShelterFilters';
+import { FilterPills } from '../ShelterFilters';
 import { SheltersDisplay } from './SheltersDisplay';
-import { TShelterPropertyFilters } from './types';
 
 type TProps = {
   locationSearchInputKey?: number;
@@ -29,10 +29,7 @@ export function ShelterSearch(props: TProps) {
     onNameSearch,
     setLocation,
   } = props;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_modal, setModal] = useAtom(modalAtom);
-  const [queryFilters, setQueryFilters] = useState<TShelterPropertyFilters>();
-  const [submitQueryTs, setSubmitQueryTs] = useState<number>();
+  const navigate = useNavigate();
   const [filters] = useAtom(shelterPropertyFiltersAtom);
   const [nameFilter, setNameFilter] = useState<string>();
   const resetFilters = useResetAtom(shelterPropertyFiltersAtom);
@@ -58,27 +55,8 @@ export function ShelterSearch(props: TProps) {
     });
   }
 
-  useEffect(() => {
-    if (submitQueryTs === undefined) {
-      return;
-    }
-
-    setQueryFilters(filters);
-  }, [submitQueryTs, filters]);
-
-  function onSubmitFilters() {
-    setSubmitQueryTs(Date.now());
-    setModal(null);
-  }
-
   function onFilterClick() {
-    setModal({
-      content: <ShelterFilters className="w-full" />,
-      animation: ModalAnimationEnum.SLIDE_UP,
-      type: 'fullscreen',
-      footer: <FiltersActions className="pb-8" onDone={onSubmitFilters} />,
-      onClose: resetFilters,
-    });
+    navigate(shelterFiltersPath);
   }
 
   function onNameSearchChange(value: string) {
@@ -90,7 +68,6 @@ export function ShelterSearch(props: TProps) {
 
   function onSearchClick() {
     // Name search ignores any previously-selected property filters.
-    setQueryFilters(undefined);
     resetFilters();
     setNameFilter(nameSearchValue.trim());
     onNameSearch();
@@ -135,7 +112,7 @@ export function ShelterSearch(props: TProps) {
       <SheltersDisplay
         className="mt-8"
         mapBoundsFilter={mapBoundsFilter}
-        propertyFilters={queryFilters}
+        propertyFilters={filters}
         nameFilter={nameFilter}
         nameSearchPinFitRequestId={nameSearchPinFitRequestId}
         onShelterPinsReadyForMapFit={onShelterPinsReadyForMapFit}

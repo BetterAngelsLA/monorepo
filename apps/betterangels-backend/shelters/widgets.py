@@ -8,6 +8,35 @@ from django.db import models
 from django.forms.utils import flatatt
 from django.utils.translation import gettext_lazy as _
 
+from .enums import DayOfWeekChoices
+
+DAY_ABBREVS: list[tuple[str, str]] = [
+    (DayOfWeekChoices.MONDAY, "M"),
+    (DayOfWeekChoices.TUESDAY, "T"),
+    (DayOfWeekChoices.WEDNESDAY, "W"),
+    (DayOfWeekChoices.THURSDAY, "Th"),
+    (DayOfWeekChoices.FRIDAY, "F"),
+    (DayOfWeekChoices.SATURDAY, "Sa"),
+    (DayOfWeekChoices.SUNDAY, "Su"),
+]
+
+
+class MultiDayCheckboxWidget(forms.Widget):
+    """Renders 7 day-of-week checkboxes as a horizontal pill row."""
+
+    template_name = "shelters/widgets/multi_day_checkbox.html"
+
+    def get_context(self, name: str, value: Any, attrs: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        context = super().get_context(name, value, attrs)
+        selected = set(value) if value else set()
+        context["widget"]["days"] = [
+            {"value": val, "abbrev": abbrev, "checked": val in selected} for val, abbrev in DAY_ABBREVS
+        ]
+        return context
+
+    def value_from_datadict(self, data: Any, files: Any, name: str) -> list[str]:
+        return data.getlist(name) if hasattr(data, "getlist") else []
+
 
 class LatLongWidget(forms.MultiWidget):
     def __init__(self, attrs: Optional[dict] = None) -> None:

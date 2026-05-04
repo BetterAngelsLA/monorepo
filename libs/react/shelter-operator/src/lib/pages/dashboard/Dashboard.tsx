@@ -1,15 +1,26 @@
 import { useQuery } from '@apollo/client/react';
-import { BookCheck, Filter, Search, Settings2 } from 'lucide-react';
+import { operatorPath, reservationPathSegment } from '@monorepo/react/shelter';
+import { useAtomValue } from 'jotai';
+import { BookCheck, Search, Settings2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import type {
+  DemographicChoices,
+  ShelterChoices,
+  SpecialSituationRestrictionChoices,
+} from '../../apollo/graphql/__generated__/types';
+import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 import { Button } from '../../components/base-ui/buttons';
-import { ShelterTable } from '../../components/ShelterTable';
+import { ShelterFilterPanel } from '../../components/ShelterFilterPanel/ShelterFilterPanel';
+import {
+  ShelterTable,
+  type ShelterRowObject,
+} from '../../components/ShelterTable';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
 import { useActiveOrg } from '../../providers/activeOrg';
-import { operatorPath, reservationPathSegment } from '@monorepo/react/shelter';
 import type { Shelter } from '../../types/shelter';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -44,10 +55,17 @@ export function Dashboard() {
   const { activeOrg } = useActiveOrg();
   const selectedOrganizationId = activeOrg?.id ?? '';
 
+  const selectedFilters = useAtomValue(operatorShelterFiltersAtom);
+
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [selectedFilters]);
 
   // Debounce: only update the query variable after the user stops typing
   useEffect(() => {
@@ -59,6 +77,23 @@ export function Dashboard() {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
   }, [searchInput]);
+
+  const propertyFilters = useMemo(() => {
+    const demographics = selectedFilters.demographics?.length
+      ? (selectedFilters.demographics as DemographicChoices[])
+      : undefined;
+    const specialSituationRestrictions = selectedFilters
+      .specialSituationRestrictions?.length
+      ? (selectedFilters.specialSituationRestrictions as SpecialSituationRestrictionChoices[])
+      : undefined;
+    const shelterTypes = selectedFilters.shelterTypes?.length
+      ? (selectedFilters.shelterTypes as ShelterChoices[])
+      : undefined;
+    if (!demographics && !specialSituationRestrictions && !shelterTypes) {
+      return undefined;
+    }
+    return { demographics, specialSituationRestrictions, shelterTypes };
+  }, [selectedFilters]);
 
   // Reset page when organization changes
   useEffect(() => {
@@ -73,6 +108,7 @@ export function Dashboard() {
         name: debouncedSearch || undefined,
         offset: (page - 1) * PAGE_SIZE,
         limit: PAGE_SIZE,
+        properties: propertyFilters,
       },
       skip: !selectedOrganizationId,
       fetchPolicy: 'cache-and-network',
@@ -87,24 +123,28 @@ export function Dashboard() {
       ViewSheltersByOrganizationQuery['adminShelters']['results'][number]
     >;
     return (
-      activeData?.adminShelters?.results?.map((s: ShelterResult) => ({
-        id: String(s.id),
-        name: s.name ?? null,
-        address: s.location?.place ?? null,
-        totalBeds: s.totalBeds ?? null,
-        // TODO: need to add available beds and tags to the GraphQL query
-        availableBeds: null,
-        tags: null,
-      })) ?? []
+      activeData?.adminShelters?.results
+        ?.filter((s): s is ShelterResult => s != null)
+        .map((s) => ({
+          id: String(s.id),
+          name: s.name ?? null,
+          address: s.location?.place ?? null,
+          totalBeds: s.totalBeds ?? null,
+          availableBeds: null,
+          tags: null,
+        })) ?? []
     );
   }, [activeData?.adminShelters?.results]);
 
   const totalCount = activeData?.adminShelters?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  const handleRowClick = useCallback(() => {
-    // TODO: navigate to shelter detail page
-  }, []);
+  const handleRowClick = useCallback(
+    (row: ShelterRowObject) => {
+      navigate(`shelter/${row.id}`);
+    },
+    [navigate]
+  );
 
   return (
     <>
@@ -130,22 +170,19 @@ export function Dashboard() {
 
           {/* SEARCH BAR + FILTERING */}
 
-          <div className="ml-auto flex flex-wrap items-center gap-2">
-            <Button
-              variant="primary"
-              leftIcon={<Filter size={20} />}
-              rightIcon={false}
-            >
-              Filter
-            </Button>
+          <div className="flex w-full items-center justify-between mb-4">
+            <div className="text-sm text-gray-600">{totalCount} Results</div>
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <ShelterFilterPanel />
 
-            <Button
-              variant="primary"
-              leftIcon={<Settings2 size={20} />}
-              rightIcon={false}
-            >
-              Sort
-            </Button>
+              <Button
+                variant="primary"
+                leftIcon={<Settings2 size={20} />}
+                rightIcon={false}
+              >
+                Sort
+              </Button>
+            </div>
           </div>
         </form>
 

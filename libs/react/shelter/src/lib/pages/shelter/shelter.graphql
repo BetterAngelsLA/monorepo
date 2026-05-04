@@ -10,6 +10,7 @@ query ViewShelter($id: ID!) {
     heroImage
     id
     instagram
+    isPrivate
     maxStay
     name
     onSiteSecurity
@@ -127,5 +128,11 @@ query ViewShelter($id: ID!) {
       name
     }
     updatedAt
+    mediaLinks {
+      id
+      url
+      title
+      mediaType
+    }
   }
 }

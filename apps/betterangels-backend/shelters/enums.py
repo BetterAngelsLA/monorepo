@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 @strawberry.enum
 class DemographicChoices(models.TextChoices):
     ALL = "all", _("All")
+    COUPLES = "couples", _("Couples")
     SINGLE_MEN = "single_men", _("Single Men")
     SINGLE_WOMEN = "single_women", _("Single Women")
     TAY_TEEN = "tay_teen", _("TAY/Teen")
@@ -99,14 +100,15 @@ class ParkingChoices(models.TextChoices):
 # Entry Requirements
 @strawberry.enum
 class EntryRequirementChoices(models.TextChoices):
+    BACKGROUND = "background", _("Background Check")
+    HOMELESS_VERIFICATION = "homeless_verification", _("Homeless Verification/Observation")
     MEDICAID_OR_MEDICARE = "medicaid_or_medicare", _("Medicaid or Medicare")
     PHOTO_ID = "photo_id", _("Photo ID")
     REFERRAL = "referral", _("Referral")
     RESERVATION = "reservation", _("Reservation")
-    BACKGROUND = "background", _("Background Check")
-    HOMELESS_VERIFICATION = "homeless_verification", _("Homeless Verification/Observation")
-    WALK_UPS = "walk_ups", _("Walk-Ups")
     VEHICLE_REGISTRATION = "vehicle_registration", _("Vehicle Registration/Insurance")
+    WALK_UPS = "walk_ups", _("Walk-Ups")
+    IN_SPA_ONLY = "in_spa_only", _("In-SPA Only")
 
 
 # Ecosystem Information
@@ -258,3 +260,8 @@ class ConditionChoices(models.TextChoices):
     AIR_QUALITY_SMOKE = "air_quality_smoke", _("Air Quality / Smoke")
     PUBLIC_HEALTH_EMERGENCY = "public_health_emergency", _("Public Health Emergency")
     EMERGENCY_EVACUATION = "emergency_evacuation", _("Emergency Evacuation")
+
+
+@strawberry.enum
+class MediaLinkTypeChoices(models.TextChoices):
+    YOUTUBE = "youtube", _("YouTube")

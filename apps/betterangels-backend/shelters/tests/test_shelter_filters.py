@@ -12,9 +12,10 @@ from shelters.enums import (
     PetChoices,
     ScheduleTypeChoices,
     ShelterChoices,
+    SPAChoices,
     StatusChoices,
 )
-from shelters.models import Parking, Pet, Shelter, ShelterType
+from shelters.models import SPA, Parking, Pet, Shelter, ShelterType
 from shelters.models.schedule import Schedule
 from shelters.tests.baker_recipes import shelter_recipe
 from unittest_parametrize import parametrize
@@ -320,6 +321,38 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(shelter_ids, result_ids)
 
     @parametrize(
+        "days, include_null, expected_result_count",
+        [
+            (3, True, 2),
+            (3, False, 1),
+            (7, True, 1),
+            (7, False, 0),
+        ],
+    )
+    def test_shelter_max_stay_filter(self, days: int, include_null: bool, expected_result_count: int) -> None:
+        shelter_recipe.make(max_stay=None, status=StatusChoices.APPROVED)
+        shelter_recipe.make(max_stay=0, status=StatusChoices.APPROVED)
+        shelter_recipe.make(max_stay=3, status=StatusChoices.APPROVED)
+        shelter_recipe.make(max_stay=7, status=StatusChoices.PENDING)
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {"maxStay": {"days": days, "includeNull": include_null}}
+
+        response = self.execute_graphql(query, variables={"filters": filters})
+
+        self.assertEqual(response["data"]["shelters"]["totalCount"], expected_result_count)
+
+    @parametrize(
         "property_filters, expected_result_count",
         [
             ({"pets": [PetChoices.CATS.name]}, 2),
@@ -371,6 +404,35 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         results = response["data"]["shelters"]["results"]
 
         self.assertEqual(len(results), expected_result_count)
+
+    def test_shelter_spa_filter(self) -> None:
+        spa_one = SPA.objects.get_or_create(name=SPAChoices.ONE)[0]
+
+        shelter_in_spa = shelter_recipe.make(spa=[spa_one], status=StatusChoices.APPROVED)
+        shelter_not_in_spa = shelter_recipe.make(spa=[], status=StatusChoices.APPROVED)
+
+        query = """
+            query ViewShelters($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {"properties": {"spa": [SPAChoices.ONE.name]}}
+
+        expected_query_count = 2
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        results = response["data"]["shelters"]["results"]
+        result_ids = {r["id"] for r in results}
+
+        self.assertIn(str(shelter_in_spa.pk), result_ids)
+        self.assertNotIn(str(shelter_not_in_spa.pk), result_ids)
 
     def test_shelter_open_now_filter(self) -> None:
         open_shelter = shelter_recipe.make(status=StatusChoices.APPROVED)

@@ -30,7 +30,7 @@ from shelters.enums import (
     StatusChoices,
 )
 from shelters.managers import AdminShelterManager, ShelterManager
-from shelters.permissions import ShelterFieldPermissions
+from shelters.permissions import ShelterFieldPermissions, ShelterPrivacyPermissions
 from shelters.selectors import shelters_open_at
 
 from .lookups import (
@@ -149,10 +149,15 @@ class Shelter(BaseModel):
 
     # Better Angels Admin
     status = TextChoicesField(choices_enum=StatusChoices, default=StatusChoices.DRAFT)
+    is_private = models.BooleanField(
+        default=False,
+        verbose_name="Private Shelter",
+        help_text="Private shelters are only visible to verified case workers with the appropriate permission.",
+    )
 
     class Meta:
-        indexes = [models.Index(fields=["status"])]
-        permissions = permission_enums_to_django_meta_permissions([ShelterFieldPermissions])
+        indexes = [models.Index(fields=["status", "is_private"])]
+        permissions = permission_enums_to_django_meta_permissions([ShelterFieldPermissions, ShelterPrivacyPermissions])
 
     def __str__(self) -> str:
         return self.name
@@ -258,6 +263,7 @@ class ContactInfo(models.Model):
     contact_number = PhoneNumberField(verbose_name="Contact Number")
     contact_email = models.EmailField(blank=True, null=True)
     contact_title = models.CharField(max_length=255, blank=True, null=True)
+    is_claimant = models.BooleanField(default=False, db_index=True)
 
     def __str__(self) -> str:
         return f"{self.contact_name} - {self.contact_number}"

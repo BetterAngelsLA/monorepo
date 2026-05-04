@@ -52,7 +52,7 @@ from shelters.tests.graphql_helpers import ShelterGraphQLFixtureMixin
 from waffle.testutils import override_switch
 
 
-@override_settings(IS_LOCAL_DEV=True)
+@override_settings(IS_LOCAL_DEV=True, STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
 @override_switch(IMGPROXY_SWITCH, active=True)
 class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
     def setUp(self) -> None:
@@ -369,3 +369,34 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         self.assertEqual(Shelter.objects.count(), shelter_count + 1)
         self.assertEqual(shelters[0]["heroImage"], exterior_photo_0.file.url)
         self.assertEqual(shelters[1]["heroImage"], interior_photo_1.file.url)
+
+
+class ShelterMaxStayQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
+    def test_shelter_max_stay_query(self) -> None:
+        shelter_recipe.make(max_stay=None, status=StatusChoices.APPROVED)
+        shelter_recipe.make(max_stay=0, status=StatusChoices.APPROVED)
+        shelter_recipe.make(max_stay=3, status=StatusChoices.APPROVED)
+        shelter_recipe.make(max_stay=7, status=StatusChoices.PENDING)
+
+        query = """
+            query { shelterMaxStay }
+        """
+
+        with self.assertNumQueriesWithoutCache(1):
+            response = self.execute_graphql(query)
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["shelterMaxStay"], 3)
+
+    def test_shelter_max_stay_query_null_when_all_max_stay_null(self) -> None:
+        shelter_recipe.make(max_stay=None, status=StatusChoices.APPROVED)
+
+        query = """
+            query { shelterMaxStay }
+        """
+
+        with self.assertNumQueriesWithoutCache(1):
+            response = self.execute_graphql(query)
+
+        self.assertIsNone(response.get("errors"))
+        self.assertIsNone(response["data"]["shelterMaxStay"])

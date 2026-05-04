@@ -84,6 +84,11 @@ class TestProcessScheduledReportsTask:
 class TestSendScheduledReportTask:
     """Tests for the send_scheduled_report Celery task orchestration."""
 
+    @pytest.fixture(autouse=True)
+    def _use_in_memory_storage(self, settings):  # type: ignore[no-untyped-def]
+        """Use in-memory storage so email attachments don't hit S3."""
+        settings.STORAGES = {"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}}
+
     def test_report_not_found(self) -> None:
         """Test task with non-existent report ID."""
         result = send_scheduled_report.apply(args=(99999,)).get()
@@ -193,14 +198,20 @@ class TestSendScheduledReportTask:
         )
 
         with time_machine.travel("2025-01-15 00:00:00", tick=False):
-            # We mock generation again
-            with patch("reports.tasks.generate_report_data") as mock_gen:
+            with (
+                patch("reports.tasks.generate_report_data") as mock_gen,
+                patch("reports.tasks.send_report_email") as mock_send_email,
+            ):
                 mock_gen.return_value = ("a.csv", "data", {})
 
                 result = send_scheduled_report.apply(args=(report.pk,)).get()
 
         assert result["subject"] == "Subject 12/2024"
 
-        email = Email.objects.latest("id")
-        assert email.subject == "Subject 12/2024"
-        assert email.message == "Body 12/2024"
+        # Verify send_report_email received correctly formatted template values
+        mock_send_email.assert_called_once()
+        call_args = mock_send_email.call_args
+        assert call_args.kwargs["subject"] == "Subject 12/2024"
+        # month and year are positional args [3] and [4]
+        assert call_args.args[3] == "12"
+        assert call_args.args[4] == "2024"

@@ -17,6 +17,7 @@ export function Header(props: IParams): ReactElement {
     'justify-between',
     'h-[42px]',
     'text-white',
+    'overflow-visible',
   ].join(' ');
 
   return (

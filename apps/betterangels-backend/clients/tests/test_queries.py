@@ -31,10 +31,7 @@ from clients.tests.utils import (
     HmisProfileBaseTestCase,
     SocialMediaProfileBaseTestCase,
 )
-from clients.types import (
-    CLIENT_DOCUMENT_NAMESPACE_GROUPS,
-    MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS,
-)
+from clients.types import CLIENT_DOCUMENT_NAMESPACE_GROUPS, MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
 from common.enums import ImagePresetEnum
 from common.imgproxy import IMGPROXY_SWITCH
 from django.contrib.contenttypes.models import ContentType
@@ -655,7 +652,6 @@ class SocialMediaProfileQueryTestCase(SocialMediaProfileBaseTestCase):
         self.assertCountEqual(results, [self.social_media_profile_1, self.social_media_profile_2])
 
 
-@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
 class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()

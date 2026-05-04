@@ -3,9 +3,14 @@ query ViewSheltersByOrganization(
   $name: String
   $offset: Int
   $limit: Int
+  $properties: ShelterPropertyInput
 ) {
   adminShelters(
-    filters: { organizations: [$organizationId], name: $name }
+    filters: {
+      organizations: [$organizationId]
+      name: $name
+      properties: $properties
+    }
     ordering: [{ createdAt: DESC }]
     pagination: { offset: $offset, limit: $limit }
   ) {
