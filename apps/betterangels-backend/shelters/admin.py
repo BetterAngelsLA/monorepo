@@ -14,7 +14,6 @@ from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.db import models, transaction
@@ -1290,14 +1289,11 @@ class ShelterAdmin(ImportExportModelAdmin):
         form.save_pending_service_entries()
 
         if form.cleaned_data.get("clear_hero_image"):
-            form.instance.hero_image_content_type = None
-            form.instance.hero_image_object_id = None
+            form.instance.hero_image = None
             form.instance.save()
 
         if hero := self._get_selected_hero(formsets):
-            ct = ContentType.objects.get_for_model(hero)
-            form.instance.hero_image_content_type = ct
-            form.instance.hero_image_object_id = hero.pk
+            form.instance.hero_image = hero
             form.instance.save()
 
     @admin.display(description="Current Hero Image")

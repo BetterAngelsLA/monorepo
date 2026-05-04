@@ -7,8 +7,6 @@ from typing import Any
 import pghistory
 from common.models import BaseModel
 from common.permissions.utils import permission_enums_to_django_meta_permissions
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.db import models
@@ -72,10 +70,14 @@ class Shelter(BaseModel):
     website = models.URLField(blank=True, null=True)
     instagram = models.URLField(blank=True, null=True)
 
-    # Hero Image
-    hero_image_content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True)
-    hero_image_object_id = models.PositiveIntegerField(null=True, blank=True)
-    hero_image = GenericForeignKey("hero_image_content_type", "hero_image_object_id")
+    # Hero Image (explicit pick from this shelter's gallery photos)
+    hero_image = models.ForeignKey(
+        "ShelterPhoto",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
 
     # Summary Information
     description = CKEditor5Field()

@@ -1,9 +1,8 @@
 import datetime
 from typing import TYPE_CHECKING
 
-from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models import Case, OuterRef, QuerySet, Subquery, When
+from django.db.models import OuterRef, QuerySet, Subquery
 from django.db.models.functions import Coalesce
 from shelters.enums import ScheduleTypeChoices, ShelterPhotoTypeChoices
 from shelters.selectors import admin_shelter_list, shelter_list, shelters_open_at
@@ -30,30 +29,16 @@ class ShelterQuerySet(QuerySet["Shelter"]):
         of the hero image resolved entirely in SQL.
 
         Priority:
-        1. The explicitly chosen hero image (GFK → ``ShelterPhoto``).
+        1. The explicitly chosen hero image (FK → ``ShelterPhoto``).
         2. First exterior photo (by pk).
         3. First interior photo (by pk).
         """
         from shelters.models import ShelterPhoto
 
-        shelter_photo_ct = ContentType.objects.get_for_model(ShelterPhoto)
-
-        # GFK target: resolve hero_image_object_id against the unified
-        # ShelterPhoto table when the GFK points there.
-        gfk_file = Case(
-            When(
-                hero_image_content_type=shelter_photo_ct,
-                then=Subquery(
-                    ShelterPhoto.objects.filter(
-                        pk=OuterRef("hero_image_object_id"),
-                    ).values(
-                        "file"
-                    )[:1]
-                ),
-            ),
+        hero_fk_file = Subquery(
+            ShelterPhoto.objects.filter(pk=OuterRef("hero_image_id")).values("file")[:1]
         )
 
-        # Fallback: first photo of the desired type, by pk.
         first_exterior = Subquery(
             ShelterPhoto.objects.filter(
                 shelter=OuterRef("pk"),
@@ -71,8 +56,7 @@ class ShelterQuerySet(QuerySet["Shelter"]):
             .values("file")[:1]
         )
 
-        # Coalesce: GFK target → first exterior → first interior
-        hero_file = Coalesce(gfk_file, first_exterior, first_interior)
+        hero_file = Coalesce(hero_fk_file, first_exterior, first_interior)
 
         return self.annotate(_hero_image_file=hero_file)
 

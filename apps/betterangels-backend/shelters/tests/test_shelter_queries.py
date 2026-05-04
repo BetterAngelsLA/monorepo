@@ -24,6 +24,7 @@ from shelters.enums import (
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
+    ShelterPhotoTypeChoices,
 )
 from shelters.models import (
     SPA,
@@ -32,9 +33,7 @@ from shelters.models import (
     Demographic,
     EntryRequirement,
     ExitPolicy,
-    ExteriorPhoto,
     Funder,
-    InteriorPhoto,
     Parking,
     Pet,
     ReferralRequirement,
@@ -42,6 +41,7 @@ from shelters.models import (
     Service,
     ServiceCategory,
     Shelter,
+    ShelterPhoto,
     ShelterProgram,
     ShelterType,
     SpecialSituationRestriction,
@@ -146,8 +146,12 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         )
         shelter.additional_contacts.set(shelter_contacts)
 
-        exterior_photo = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
-        interior_photo = InteriorPhoto.objects.create(shelter=shelter, file=self.file)
+        exterior_photo = ShelterPhoto.objects.create(
+            shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR
+        )
+        interior_photo = ShelterPhoto.objects.create(
+            shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.INTERIOR
+        )
 
         query = f"""
             query ($id: ID!) {{
@@ -337,9 +341,15 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         # create shelter in draft state that should not be included in query results
         shelter_recipe.make(status=StatusChoices.DRAFT)
 
-        exterior_photo_0 = ExteriorPhoto.objects.create(shelter=shelters[0], file=self.file)
-        InteriorPhoto.objects.create(shelter=shelters[0], file=self.file)
-        interior_photo_1 = InteriorPhoto.objects.create(shelter=shelters[1], file=self.file)
+        exterior_photo_0 = ShelterPhoto.objects.create(
+            shelter=shelters[0], file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR
+        )
+        ShelterPhoto.objects.create(
+            shelter=shelters[0], file=self.file, type=ShelterPhotoTypeChoices.INTERIOR
+        )
+        interior_photo_1 = ShelterPhoto.objects.create(
+            shelter=shelters[1], file=self.file, type=ShelterPhotoTypeChoices.INTERIOR
+        )
 
         query = f"""
             query ($offset: Int, $limit: Int, $ordering: [ShelterOrder!]! = []) {{

@@ -99,6 +99,7 @@ class ShelterTypeMixin:
     emergency_surge: auto
     funders: List[FunderType]
     funders_other: auto
+    hero_image: Optional[ShelterPhotoType]
     instagram: auto
     location: Optional[ShelterLocationType]
     max_stay: auto
@@ -123,6 +124,7 @@ class ShelterTypeMixin:
     shelter_types_other: auto
     spa: List[SPAType]
     special_situation_restrictions: List[SpecialSituationRestrictionType]
+    photos: List[ShelterPhotoType]
     is_private: auto
     status: auto
     storage: List[StorageType]
@@ -133,64 +135,6 @@ class ShelterTypeMixin:
     visitors_allowed: auto
     website: auto
     media_links: List[MediaLinkType]
-
-    _exterior_photos: Optional[List[models.ShelterPhoto]] = None
-    _interior_photos: Optional[List[models.ShelterPhoto]] = None
-
-    @strawberry_django.field(
-        prefetch_related=[
-            lambda x: Prefetch(
-                "photos",
-                queryset=models.ShelterPhoto.objects.filter(type=ShelterPhotoTypeChoices.EXTERIOR),
-                to_attr="_exterior_photos",
-            ),
-        ],
-    )
-    def exterior_photos(self, root: models.Shelter) -> List[ShelterPhotoType]:
-        return cast(List[ShelterPhotoType], getattr(root, "_exterior_photos", []) or [])
-
-    @strawberry_django.field(
-        prefetch_related=[
-            lambda x: Prefetch(
-                "photos",
-                queryset=models.ShelterPhoto.objects.filter(type=ShelterPhotoTypeChoices.INTERIOR),
-                to_attr="_interior_photos",
-            ),
-        ],
-    )
-    def interior_photos(self, root: models.Shelter) -> List[ShelterPhotoType]:
-        return cast(List[ShelterPhotoType], getattr(root, "_interior_photos", []) or [])
-
-    # NOTE: This is a temporary workaround because Shelter specced without a hero image.
-    # Will remove once we add a hero_image field to the Shelter model.
-    @strawberry_django.field(
-        only=["hero_image_content_type_id", "hero_image_object_id"],
-        prefetch_related=[
-            lambda x: Prefetch(
-                "photos",
-                queryset=models.ShelterPhoto.objects.filter(type=ShelterPhotoTypeChoices.EXTERIOR),
-                to_attr="_exterior_photos",
-            ),
-            lambda x: Prefetch(
-                "photos",
-                queryset=models.ShelterPhoto.objects.filter(type=ShelterPhotoTypeChoices.INTERIOR),
-                to_attr="_interior_photos",
-            ),
-        ],
-    )
-    def hero_image(self, root: models.Shelter) -> Optional[str]:
-        photo = next(
-            filter(
-                None,
-                chain(
-                    [getattr(root, "hero_image", None)],
-                    getattr(root, "_exterior_photos", None) or [],
-                    getattr(root, "_interior_photos", None) or [],
-                ),
-            ),
-            None,
-        )
-        return build_imgproxy_url(photo.file, preset=None, processing_options=None) if photo else None
 
     @strawberry_django.field
     def distance_in_miles(self, root: models.Shelter) -> Optional[float]:
