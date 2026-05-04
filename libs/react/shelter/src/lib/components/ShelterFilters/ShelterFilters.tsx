@@ -1,9 +1,6 @@
 import { useQuery } from '@apollo/client/react';
 import { Checkbox, ExpandableContainer } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
-import { useAtom } from 'jotai';
-import { useEffect } from 'react';
-import { shelterPropertyFiltersAtom } from '../../atoms';
 import { TShelterPropertyFilters } from '../ShelterSearch';
 import { FilterSelector } from './FilterSelector';
 import { ShelterMaxStayDocument } from './__generated__/shelterMaxStay.generated';
@@ -21,13 +18,12 @@ import {
 
 type IProps = {
   className?: string;
-  onChange?: (filters: TShelterPropertyFilters) => void;
+  filters: TShelterPropertyFilters;
+  onFiltersChange: (filters: TShelterPropertyFilters) => void;
 };
 
 export function ShelterFilters(props: IProps) {
-  const { onChange, className } = props;
-
-  const [filters, setFilters] = useAtom(shelterPropertyFiltersAtom);
+  const { className, filters, onFiltersChange } = props;
 
   const { data: maxStayData } = useQuery(ShelterMaxStayDocument);
   const maxStayMax = maxStayData?.shelterMaxStay ?? undefined;
@@ -38,52 +34,46 @@ export function ShelterFilters(props: IProps) {
     filterName: TFilterConfig['name'],
     selected: string[]
   ) {
-    setFilters((prev) => {
-      return {
-        ...prev,
-        [filterName]: selected,
-      };
+    onFiltersChange({
+      ...filters,
+      [filterName]: selected,
     });
   }
 
   function onOpenNowChange(checked: boolean) {
-    setFilters((prev) => ({
-      ...prev,
+    onFiltersChange({
+      ...filters,
       openNow: checked,
-    }));
+    });
   }
 
   function onIsAccessCenterChange(checked: boolean) {
-    setFilters((prev) => ({
-      ...prev,
+    onFiltersChange({
+      ...filters,
       isAccessCenter: checked,
-    }));
+    });
   }
 
   function onMaxStayDaysChange(days: string) {
     const parsed = parseInt(days, 10);
-    setFilters((prev) => ({
-      ...prev,
+    onFiltersChange({
+      ...filters,
       maxStay: {
         days: isNaN(parsed) ? 0 : parsed,
-        includeNull: prev.maxStay?.includeNull ?? false,
+        includeNull: filters.maxStay?.includeNull ?? false,
       },
-    }));
+    });
   }
 
   function onMaxStayIncludeNullChange(checked: boolean) {
-    setFilters((prev) => ({
-      ...prev,
+    onFiltersChange({
+      ...filters,
       maxStay: {
-        days: prev.maxStay?.days ?? 0,
+        days: filters.maxStay?.days ?? 0,
         includeNull: checked,
       },
-    }));
+    });
   }
-
-  useEffect(() => {
-    onChange && onChange(filters);
-  }, [filters, onChange]);
 
   return (
     <div className={mergeCss(parentCss)}>

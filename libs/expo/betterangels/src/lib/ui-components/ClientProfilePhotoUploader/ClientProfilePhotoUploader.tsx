@@ -1,43 +1,38 @@
-import { useMutation } from '@apollo/client/react';
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { WFEdit } from '@monorepo/expo/shared/icons';
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, MediaPicker } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { useSnackbar } from '../../../hooks';
-import { UpdateClientProfilePhotoDocument } from '../../ClientProfileForms/ClientProfileForm/PersonalInfoForm/ProfilePhotoField/__generated__/updateClientProfilePhoto.generated';
-import { ClientProfileDocument } from '../__generated__/Client.generated';
-import { ProfilePhotoModal } from './ProfilePhotoModal';
+import { useSnackbar } from '../../hooks';
+import { ProfilePhotoModal } from '../../screens/Client/ClientHeader/ProfilePhotoModal';
+import { useClientProfilePhotoUpload } from './useClientProfilePhotoUpload';
 
-interface Props {
+type TProps = {
   clientId: string;
   imageUrl?: string;
-}
+};
 
 type ModalType = 'picker' | 'profile' | null;
 
-export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
-  const [modalType, setModalType] = useState<ModalType>(null);
-  const { showSnackbar } = useSnackbar();
+export function ClientProfilePhotoUploader(props: TProps) {
+  const { clientId, imageUrl } = props;
 
-  const [updatePhoto, { loading }] = useMutation(
-    UpdateClientProfilePhotoDocument,
-    {
-      refetchQueries: [
-        { query: ClientProfileDocument, variables: { id: clientId } },
-      ],
-    }
-  );
+  const [modalType, setModalType] = useState<ModalType>(null);
+  const { uploadPhoto, loading } = useClientProfilePhotoUpload();
+  const { showSnackbar } = useSnackbar();
 
   const handleUpload = async (file: ReactNativeFile) => {
     try {
-      await updatePhoto({
-        variables: { data: { clientProfile: clientId, photo: file } },
+      await uploadPhoto({
+        clientProfileId: clientId,
+        file,
       });
-    } catch {
+    } catch (err) {
+      console.error(`[ClientProfilePhotoUploader]: ${err}`);
+
       showSnackbar({
-        message: 'Error uploading profile photo.',
+        message: 'Sorry, something went wrong. Please try again.',
         type: 'error',
       });
     } finally {

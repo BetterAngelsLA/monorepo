@@ -117,6 +117,7 @@ type AdminShelterType {
   shelterTypesOther: String
   spa: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
   subjectiveReview: String
@@ -125,6 +126,7 @@ type AdminShelterType {
   updatedAt: DateTime!
   visitorsAllowed: Boolean
   website: String
+  mediaLinks: [MediaLinkType!]!
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
@@ -778,6 +780,7 @@ input CreateShelterInput {
   cityCouncilDistrict: Int = null
   supervisorialDistrict: Int = null
   overallRating: Int = null
+  isPrivate: Boolean
 }
 
 union CreateShelterPayload = ShelterType | OperationInfo
@@ -1448,6 +1451,17 @@ enum MaritalStatusEnum {
 input MaxStayInput {
   days: Int!
   includeNull: Boolean = false
+}
+
+type MediaLinkType {
+  id: ID!
+  url: String!
+  title: String!
+  mediaType: MediaLinkTypeChoices!
+}
+
+enum MediaLinkTypeChoices {
+  YOUTUBE
 }
 
 enum MedicalNeedChoices {
@@ -2168,6 +2182,7 @@ enum ShelterChoices {
 }
 
 input ShelterFilter {
+  isPrivate: Boolean
   AND: ShelterFilter
   OR: ShelterFilter
   NOT: ShelterFilter
@@ -2287,6 +2302,7 @@ type ShelterType {
   shelterTypesOther: String
   spa: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
   subjectiveReview: String
@@ -2295,6 +2311,7 @@ type ShelterType {
   updatedAt: DateTime!
   visitorsAllowed: Boolean
   website: String
+  mediaLinks: [MediaLinkType!]!
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String

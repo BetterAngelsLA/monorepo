@@ -184,6 +184,8 @@ class ShelterFilter:
 
         return queryset, Q()
 
+    is_private: auto
+
 
 @strawberry_django.order_type(models.Shelter, one_of=False)
 class ShelterOrder:

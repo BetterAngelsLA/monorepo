@@ -54,6 +54,14 @@ class ShelterPhotoType:
     file: TransformableImageType
 
 
+@strawberry_django.type(models.MediaLink)
+class MediaLinkType:
+    id: ID
+    url: str
+    title: str
+    media_type: auto
+
+
 @strawberry.type
 class BedsByStatusType:
     available: int = 0
@@ -110,6 +118,7 @@ class ShelterTypeMixin:
     shelter_types_other: auto
     spa: List[SPAType]
     special_situation_restrictions: List[SpecialSituationRestrictionType]
+    is_private: auto
     status: auto
     storage: List[StorageType]
     subjective_review: Optional[str]
@@ -118,6 +127,7 @@ class ShelterTypeMixin:
     updated_at: auto
     visitors_allowed: auto
     website: auto
+    media_links: List[MediaLinkType]
 
     _exterior_photos: Optional[List[ShelterPhotoType]] = None
     _interior_photos: Optional[List[ShelterPhotoType]] = None
@@ -181,7 +191,8 @@ class ShelterTypeMixin:
 class ShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
-        return shelter_list(queryset)
+        user = get_current_user(info)
+        return shelter_list(queryset, user=user)
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)

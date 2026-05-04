@@ -9,12 +9,12 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
+  formatDateStatic,
   PressablePanel,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
-import { format } from 'date-fns';
 import { router } from 'expo-router';
 import { Linking, View } from 'react-native';
 import { TaskStatusEnum } from '../../apollo';
@@ -75,7 +75,11 @@ export default function ClientSummaryGeneral(
           flex={3}
           title={
             client.dateOfBirth
-              ? format(new Date(client.dateOfBirth), 'MM/dd/yy')
+              ? formatDateStatic({
+                  date: client.dateOfBirth,
+                  inputFormat: 'yyyy-MM-dd',
+                  outputFormat: 'MM/dd/yyyy',
+                })
               : 'N/A'
           }
           subtitle="DOB"

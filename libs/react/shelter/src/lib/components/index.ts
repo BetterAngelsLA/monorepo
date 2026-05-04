@@ -1,6 +1,7 @@
 export * from './Flyout';
 export * from './ImagePlaceholder';
 export * from './Input';
+export * from './LoginBanner';
 export * from './Map';
 export * from './Modal';
 export * from './NavBar';
