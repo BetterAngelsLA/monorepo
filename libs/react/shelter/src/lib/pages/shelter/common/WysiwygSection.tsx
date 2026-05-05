@@ -1,5 +1,6 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { WysiwygContainer } from '../../../components';
+import { hasWysiwygContent } from '../utils';
 
 type TProps = {
   content?: string | null;
@@ -12,7 +13,7 @@ type TProps = {
 export function WysiwygSection(props: TProps) {
   const { title, content, className, titleClassName, contentClassName } = props;
 
-  if (!content?.length) {
+  if (!hasWysiwygContent(content)) {
     return null;
   }
 
