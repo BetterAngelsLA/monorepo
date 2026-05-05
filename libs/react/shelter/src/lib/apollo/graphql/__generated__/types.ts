@@ -91,7 +91,7 @@ export type AdminShelterType = {
   exitPolicyOther?: Maybe<Scalars['String']['output']>;
   funders: Array<FunderType>;
   fundersOther?: Maybe<Scalars['String']['output']>;
-  heroImage?: Maybe<ShelterPhotoType>;
+  heroImage?: Maybe<ShelterHeroImageType>;
   id: Scalars['ID']['output'];
   instagram?: Maybe<Scalars['String']['output']>;
   isPrivate: Scalars['Boolean']['output'];
@@ -128,6 +128,12 @@ export type AdminShelterType = {
   updatedAt: Scalars['DateTime']['output'];
   visitorsAllowed?: Maybe<Scalars['Boolean']['output']>;
   website?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type AdminShelterTypeHeroImageArgs = {
+  preset?: InputMaybe<ImagePresetEnum>;
+  processingOptions?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type AdminShelterTypeOffsetPaginated = {
@@ -2734,6 +2740,12 @@ export type ShelterFilter = {
   properties?: InputMaybe<ShelterPropertyInput>;
 };
 
+export type ShelterHeroImageType = {
+  __typename?: 'ShelterHeroImageType';
+  id: Scalars['ID']['output'];
+  url: Scalars['String']['output'];
+};
+
 export type ShelterLocationInput = {
   latitude?: InputMaybe<Scalars['Float']['input']>;
   longitude?: InputMaybe<Scalars['Float']['input']>;
@@ -2824,7 +2836,7 @@ export type ShelterType = {
   exitPolicyOther?: Maybe<Scalars['String']['output']>;
   funders: Array<FunderType>;
   fundersOther?: Maybe<Scalars['String']['output']>;
-  heroImage?: Maybe<ShelterPhotoType>;
+  heroImage?: Maybe<ShelterHeroImageType>;
   id: Scalars['ID']['output'];
   instagram?: Maybe<Scalars['String']['output']>;
   isPrivate: Scalars['Boolean']['output'];
@@ -2861,6 +2873,12 @@ export type ShelterType = {
   updatedAt: Scalars['DateTime']['output'];
   visitorsAllowed?: Maybe<Scalars['Boolean']['output']>;
   website?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type ShelterTypeHeroImageArgs = {
+  preset?: InputMaybe<ImagePresetEnum>;
+  processingOptions?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ShelterTypeOffsetPaginated = {

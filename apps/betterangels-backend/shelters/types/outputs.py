@@ -8,6 +8,7 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.types import OrganizationType
+from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.imgproxy import build_imgproxy_url
 from django.db.models import Count, Prefetch, Q, QuerySet
@@ -62,6 +63,12 @@ class ShelterPhotoType:
     file: TransformableImageType
 
 
+@strawberry.type
+class ShelterHeroImageType:
+    id: ID
+    url: str
+
+
 @strawberry_django.type(models.MediaLink)
 class MediaLinkType:
     id: ID
@@ -100,7 +107,6 @@ class ShelterTypeMixin:
     emergency_surge: auto
     funders: List[FunderType]
     funders_other: auto
-    hero_image: Optional[ShelterPhotoType]
     instagram: auto
     location: Optional[ShelterLocationType]
     max_stay: auto
@@ -136,6 +142,22 @@ class ShelterTypeMixin:
     visitors_allowed: auto
     website: auto
     media_links: List[MediaLinkType]
+
+    @strawberry_django.field
+    def hero_image(
+        self,
+        root: models.Shelter,
+        preset: Optional[ImagePresetEnum] = None,
+        processing_options: Optional[str] = None,
+    ) -> Optional[ShelterHeroImageType]:
+        photo = _get_hero_image(root)
+        if not photo:
+            return None
+
+        if imgproxy_url := build_imgproxy_url(photo.file, preset, processing_options):
+            return ShelterHeroImageType(id=ID(str(photo.id)), url=imgproxy_url)
+
+        return None
 
     @strawberry_django.field
     def distance_in_miles(self, root: models.Shelter) -> Optional[float]:
@@ -175,6 +197,17 @@ class AdminShelterType(ShelterTypeMixin):
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
         return admin_shelter_list(queryset, user=user)
+
+
+def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
+    if shelter.hero_image_id:
+        return shelter.hero_image
+
+    exterior_photo = shelter.photos.filter(type=ShelterPhotoTypeChoices.EXTERIOR).order_by("created_at", "pk").first()
+    if exterior_photo:
+        return exterior_photo
+
+    return shelter.photos.filter(type=ShelterPhotoTypeChoices.INTERIOR).order_by("created_at", "pk").first()
 
 
 @strawberry_django.type(models.Bed, filters=BedFilter)

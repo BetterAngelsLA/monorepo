@@ -91,7 +91,6 @@ type AdminShelterType {
   emergencySurge: Boolean
   funders: [FunderType!]!
   fundersOther: String
-  heroImage: ShelterPhotoType
   instagram: String
   location: ShelterLocationType
   maxStay: Int
@@ -127,6 +126,7 @@ type AdminShelterType {
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
+  heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
   bedsByStatus: BedsByStatusType!
 }
@@ -2194,6 +2194,11 @@ input ShelterFilter {
   geolocation: GeolocationInput
 }
 
+type ShelterHeroImageType {
+  id: ID!
+  url: String!
+}
+
 input ShelterLocationInput {
   place: String!
   latitude: Float = null
@@ -2279,7 +2284,6 @@ type ShelterType {
   emergencySurge: Boolean
   funders: [FunderType!]!
   fundersOther: String
-  heroImage: ShelterPhotoType
   instagram: String
   location: ShelterLocationType
   maxStay: Int
@@ -2315,6 +2319,7 @@ type ShelterType {
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
+  heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
   bedsByStatus: BedsByStatusType!
 }

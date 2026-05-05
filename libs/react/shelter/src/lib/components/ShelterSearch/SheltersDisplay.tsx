@@ -10,11 +10,23 @@ import {
   ViewSheltersQueryVariables,
 } from '../../pages';
 import { TLatLng, TMapBounds } from '../Map';
-import { ShelterCard } from '../ShelterCard';
+import { ShelterCard, TShelter } from '../ShelterCard';
 import { ResultsSource } from './ResultsSource';
 import { TShelterPropertyFilters } from './types';
 
-type TShelter = ViewSheltersQuery['shelters']['results'][number];
+type TViewShelter = ViewSheltersQuery['shelters']['results'][number];
+
+function viewShelterToCardShelter(shelter: TViewShelter): TShelter {
+  return {
+    id: shelter.id,
+    name: shelter.name,
+    distanceInMiles: shelter.distanceInMiles,
+    isPrivate: shelter.isPrivate,
+    location: shelter.location,
+    shelterTypes: shelter.shelterTypes,
+    heroImage: shelter.heroImage?.file.url ?? null,
+  };
+}
 type TProps = {
   className?: string;
   mapBoundsFilter?: TMapBounds | null;
@@ -99,6 +111,10 @@ export function SheltersDisplay(props: TProps) {
   });
 
   const shelters = useMemo(() => data?.shelters.results ?? [], [data]);
+  const sheltersForList = useMemo(
+    () => shelters.map(viewShelterToCardShelter),
+    [shelters]
+  );
   const total = data?.shelters.totalCount;
 
   const prevLoadingRef = useRef(loading);
@@ -129,7 +145,7 @@ export function SheltersDisplay(props: TProps) {
         return;
       }
       lastPinFitRequestHandledRef.current = nameSearchPinFitRequestId;
-      onShelterPinsReadyForMapFit(shelterListToPinLatLng(shelters ?? []));
+      onShelterPinsReadyForMapFit(shelterListToPinLatLng(sheltersForList));
     };
 
     if (loadingJustFinished) {
@@ -145,13 +161,13 @@ export function SheltersDisplay(props: TProps) {
   }, [
     loading,
     nameSearchPinFitRequestId,
-    shelters,
+    sheltersForList,
     onShelterPinsReadyForMapFit,
   ]);
 
   useEffect(() => {
-    setSheltersData(shelters);
-  }, [shelters, setSheltersData]);
+    setSheltersData(sheltersForList);
+  }, [sheltersForList, setSheltersData]);
 
   const renderListHeader = useCallback(
     (visible: number, total: number | undefined) => {
@@ -180,7 +196,7 @@ export function SheltersDisplay(props: TProps) {
   return (
     <div className={className}>
       <InfiniteList<TShelter>
-        data={shelters}
+        data={sheltersForList}
         totalItems={total}
         loading={loading}
         error={error}

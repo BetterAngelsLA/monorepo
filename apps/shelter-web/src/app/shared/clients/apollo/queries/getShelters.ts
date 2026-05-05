@@ -11,13 +11,12 @@ export const GET_SHELTERS_QUERY = gql`
       results {
         id
         name
-        heroImage {
-          file {
-            name
-            url
-          }
+        heroImage(processingOptions: "rs:fit:800:800/g:sm/q:80/sm:1/pr:1") {
+          id
+          url
         }
         photos {
+          id
           type
           file {
             url
