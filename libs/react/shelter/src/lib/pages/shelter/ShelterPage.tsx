@@ -78,8 +78,7 @@ export function ShelterPage({ id }: { id: string }) {
     !!shelter.supervisorialDistrict ||
     !!shelter.shelterPrograms?.length ||
     !!shelter.funders?.length;
-  const hasPhotos =
-    !!shelter.interiorPhotos?.length || !!shelter.exteriorPhotos?.length;
+  const hasPhotos = !!shelter.photos?.length;
   const hasMedia = hasPhotos || !!shelter.mediaLinks?.length;
 
   return (

@@ -1,5 +1,6 @@
 import { ImageCarousel } from '@monorepo/react/components';
 import { mapMediaLinksToVideos, mergeCss } from '@monorepo/react/shared';
+import { ShelterPhotoTypeChoices } from '../../../../apollo/graphql/__generated__/types';
 import { ImagePlaceholder } from '../../../../components';
 import { ViewShelterQuery } from '../../__generated__/shelter.generated';
 
@@ -10,25 +11,30 @@ type TProps = {
 
 export function HeroCarousel(props: TProps) {
   const { shelter, className } = props;
-  const images = [
-    ...(shelter.exteriorPhotos || []),
-    ...(shelter.interiorPhotos || []),
-  ];
+  const heroImage = shelter.heroImage;
+  const heroId = heroImage?.id;
+
+  const exteriorPhotos = shelter.photos.filter(
+    (p) => p.type === ShelterPhotoTypeChoices.Exterior && p.id !== heroId,
+  );
+  const interiorPhotos = shelter.photos.filter(
+    (p) => p.type === ShelterPhotoTypeChoices.Interior && p.id !== heroId,
+  );
+
+  const imageUrls = [
+    ...(heroImage?.file.url ? [heroImage.file.url] : []),
+    ...exteriorPhotos.map((p) => p.file.url),
+    ...interiorPhotos.map((p) => p.file.url),
+  ].filter((u): u is string => Boolean(u));
 
   const youtubeVideos = mapMediaLinksToVideos(shelter.mediaLinks || []);
 
   const parentCss = ['bg-white', 'h-[200px]', className];
   const placeholderCss = ['h-[250px]', className];
 
-  if (!images.length && !youtubeVideos.length) {
+  if (!imageUrls.length && !youtubeVideos.length) {
     return <ImagePlaceholder className={mergeCss(placeholderCss)} />;
   }
-
-  const rest = images
-    .map((i) => i.file?.url)
-    .filter((u) => u !== shelter.heroImage);
-
-  const imageUrls = shelter.heroImage ? [shelter.heroImage, ...rest] : rest;
 
   return (
     <ImageCarousel
