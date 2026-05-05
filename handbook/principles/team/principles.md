@@ -63,7 +63,6 @@ context that should be defined.
 ## Active contexts
 
 - [Outreach App — Customer Acquisition](./context/product/outreach-app__customer-acquisition.md)
-- [Shelter-directory — External Dependency](./context/product/shelter-directory__external-dependency.md)
 - [Shelter-operator — Customer Acquisition](./context/product/shelter-operator__customer-acquisition.md)
 
 For the full index (including retired contexts), see [context/](./context/).

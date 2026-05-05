@@ -1,16 +1,20 @@
 Context (Definition)
 
+Most decisions are made by principles alone. A context is only needed when
+two principles conflict — it names our current focus so we know which
+principle wins.
+
 Purpose
 
 Principles define how we make tradeoffs. They are durable and apply across the
 whole team. But principles will sometimes point in different directions, and
 when they do, we need a way to decide which one wins.
 
-Context is that decision. It names what we're focused on right now and why —
-the conditions we're operating under and the goals that matter most in this
-phase — and makes clear which principles should take priority while that
-focus holds. Context is temporary and grounded in real, observable signals:
-when the situation changes, the context changes with it.
+Context enables that decision. It names what we're focused on right now and
+why — the conditions we're operating under and the goals that matter most
+in this phase — and makes clear which principles should take priority while
+that focus holds. Context is temporary and grounded in real, observable
+signals: when the situation changes, the context changes with it.
 
 Example: "Ship fast" and "Build for scale" are both principles. A product in
 Customer Acquisition mode — where the goal is landing the first cohort of
@@ -18,15 +22,18 @@ partner orgs — elevates "Ship fast," because we need to learn what those orgs
 actually need before investing in scale. Once we have a validated set of
 customers, the context shifts and the balance does too.
 
-Goal
+Required Output
 
-The operative output of a context is the Principle Tradeoffs it produces —
+The output of a context is the Principle Tradeoffs it produces —
 which principles take priority and which yield when they conflict. Everything
 else in the schema (Situation Type, Justification) supports that output. A
 context that doesn't produce clear tradeoffs hasn't done its job.
 
 Rules
 
+- Context does not override or invalidate principles. It only determines
+  which principle takes precedence when two principles conflict. Every
+  principle remains in effect under every context.
 - Multiple contexts may be active at the same time, but they must not conflict.
   If two active contexts would elevate principles that point opposite directions,
   one must be resolved or retired before the other is added.
@@ -52,8 +59,8 @@ Each context has:
 
 - Situation Type (what kind of situation this is)
 
-  - Situation Type is not itself a constraint; it categorizes the situation
-    so the rest of the context makes sense.
+  - Situation Type identifies the dominant driver of the context —
+    lifecycle stage, external constraint, or internal initiative.
   - One of:
     - Product Phase — where the product is in its lifecycle
       - Customer Acquisition — we need more organizations adopting the product
@@ -84,6 +91,12 @@ Each context has:
   - Takes lower priority: which principles temporarily yield when they
     conflict with the above. They still apply — they just lose the
     tiebreak under this context.
+  - Only list principles whose standard application changes under this
+    context — either elevated above their default, or yielding when they
+    normally would not. If a principle's normal application is unchanged,
+    don't list it. Listing every principle dilutes the signal and risks
+    implying the unlisted ones don't apply. The unlisted principles are
+    still in full effect.
 
 - Justification
 

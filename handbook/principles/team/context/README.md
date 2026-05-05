@@ -47,5 +47,4 @@ Org-level
 Product-level
 
 - [Outreach App — Customer Acquisition](product/outreach-app__customer-acquisition.md)
-- [Shelter-directory — External Dependency](product/shelter-directory__external-dependency.md)
 - [Shelter-operator — Customer Acquisition](product/shelter-operator__customer-acquisition.md)
