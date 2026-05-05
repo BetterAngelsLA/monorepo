@@ -26,7 +26,7 @@ export function YouTubeSlide(props: TProps) {
   if (onClick) {
     return (
       <div
-        className={mergeCss([...parentCss, 'cursor-pointer'])}
+        className={mergeCss([parentCss, 'cursor-pointer'])}
         onClick={onClick}
       >
         <img
