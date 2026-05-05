@@ -45,8 +45,10 @@ export function FileUploadInput({
   const shouldShowError = Boolean(error && isTouched);
   const selectedFiles = value ?? [];
 
-  const toFileArray = (fileList: FileList | null) =>
-    fileList ? Array.from(fileList) : [];
+  const normalizeFiles = (fileList: FileList | null) => {
+    const files = fileList ? Array.from(fileList) : [];
+    return multiple ? files : files.slice(0, 1);
+  };
 
   const openPicker = () => {
     if (disabled) return;
@@ -81,7 +83,7 @@ export function FileUploadInput({
         disabled={disabled}
         aria-invalid={shouldShowError}
         aria-describedby={shouldShowError ? messageId : undefined}
-        onChange={(event) => onChange(toFileArray(event.target.files))}
+        onChange={(event) => onChange(normalizeFiles(event.target.files))}
       />
 
       <div
@@ -100,12 +102,16 @@ export function FileUploadInput({
           event.preventDefault();
           setIsDragging(true);
         }}
-        onDragLeave={() => setIsDragging(false)}
+        onDragLeave={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+            setIsDragging(false);
+          }
+        }}
         onDrop={(event) => {
           if (disabled) return;
           event.preventDefault();
           setIsDragging(false);
-          onChange(toFileArray(event.dataTransfer.files));
+          onChange(normalizeFiles(event.dataTransfer.files));
         }}
       >
         <div className="mx-auto flex max-w-xl flex-col items-center gap-1">
