@@ -7,9 +7,38 @@ import pgtrigger.compiler
 import pgtrigger.migrations
 import shelters.models.media
 from django.db import migrations, models
+from shelters.utils import assign_permissions_to_group_in_migration, remove_permissions_from_group_in_migration
 
 
-def migrate_shelter_photos_and_hero(apps, schema_editor):
+def remove_deprecated_shelter_group_permissions(apps, schema_editor):
+    from shelters.deprecated.deprecated_permissions import InteriorPhotoPermissions, ExteriorPhotoPermissions
+
+    ExteriorPhoto = apps.get_model("shelters", "ExteriorPhoto")
+    InteriorPhoto = apps.get_model("shelters", "InteriorPhoto")
+
+    permission_map = {
+        ExteriorPhoto: [ExteriorPhotoPermissions],
+        InteriorPhoto: [InteriorPhotoPermissions],
+    }
+
+    remove_permissions_from_group_in_migration(apps, "Shelter Data Entry", permission_map)
+    remove_permissions_from_group_in_migration(apps, "Shelter Administration", permission_map)
+
+
+def assign_shelter_group_permissions(apps, schema_editor):
+    from shelters.permissions import ShelterPhotoPermissions
+
+    ShelterPhoto = apps.get_model("shelters", "ShelterPhoto")
+
+    permission_map = {
+        ShelterPhoto: [ShelterPhotoPermissions],
+    }
+
+    assign_permissions_to_group_in_migration(apps, "Shelter Data Entry", permission_map)
+    assign_permissions_to_group_in_migration(apps, "Shelter Administration", permission_map)
+
+
+def migrate_shelter_photos(apps, schema_editor):
     """Copy legacy photos into ``ShelterPhoto`` and remap ``hero_image`` from GFK to FK.
 
     Must run while ``hero_image_content_type`` / ``hero_image_object_id`` still exist
@@ -152,7 +181,8 @@ class Migration(migrations.Migration):
                 to="shelters.shelterphoto",
             ),
         ),
-        migrations.RunPython(migrate_shelter_photos_and_hero, migrations.RunPython.noop),
+        migrations.RunPython(remove_deprecated_shelter_group_permissions, migrations.RunPython.noop),
+        migrations.RunPython(migrate_shelter_photos, migrations.RunPython.noop),
         pgtrigger.migrations.RemoveTrigger(
             model_name="shelter",
             name="shelter_add_insert",
