@@ -15,14 +15,14 @@ export function HeroCarousel(props: TProps) {
   const heroId = heroImage?.id;
 
   const exteriorPhotos = shelter.photos.filter(
-    (p) => p.type === ShelterPhotoTypeChoices.Exterior && p.id !== heroId,
+    (p) => p.type === ShelterPhotoTypeChoices.Exterior && p.id !== heroId
   );
   const interiorPhotos = shelter.photos.filter(
-    (p) => p.type === ShelterPhotoTypeChoices.Interior && p.id !== heroId,
+    (p) => p.type === ShelterPhotoTypeChoices.Interior && p.id !== heroId
   );
 
   const imageUrls = [
-    ...(heroImage?.file.url ? [heroImage.file.url] : []),
+    ...(heroImage?.url ? [heroImage.url] : []),
     ...exteriorPhotos.map((p) => p.file.url),
     ...interiorPhotos.map((p) => p.file.url),
   ].filter((u): u is string => Boolean(u));

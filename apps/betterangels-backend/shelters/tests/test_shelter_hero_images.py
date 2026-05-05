@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 from common.imgproxy import IMGPROXY_SWITCH
 from django.test import TestCase, override_settings
 from shelters.enums import ShelterPhotoTypeChoices, StatusChoices
-from shelters.models import Shelter, ShelterPhoto
+from shelters.models import ShelterPhoto
 from shelters.tests.baker_recipes import shelter_recipe
 from shelters.tests.graphql_helpers import ShelterGraphQLFixtureMixin
 from test_utils.mixins import GraphQLTestCaseMixin
@@ -60,9 +60,7 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
             file, "url", None
         )
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
-        exterior = ShelterPhoto.objects.create(
-            shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR
-        )
+        exterior = ShelterPhoto.objects.create(shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR)
 
         response = self.execute_graphql(self.HERO_IMAGE_QUERY)
         results = response["data"]["shelters"]["results"]
@@ -76,9 +74,7 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
             file, "url", None
         )
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
-        interior = ShelterPhoto.objects.create(
-            shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.INTERIOR
-        )
+        interior = ShelterPhoto.objects.create(shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.INTERIOR)
 
         response = self.execute_graphql(self.HERO_IMAGE_QUERY)
         results = response["data"]["shelters"]["results"]
@@ -106,9 +102,7 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
             file, "url", None
         )
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
-        hero = ShelterPhoto.objects.create(
-            shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR
-        )
+        hero = ShelterPhoto.objects.create(shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR)
         shelter.hero_image = hero
         shelter.save(update_fields=["hero_image"])
         hero.delete()
@@ -134,9 +128,7 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
             file, "url", None
         )
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
-        exterior = ShelterPhoto.objects.create(
-            shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR
-        )
+        exterior = ShelterPhoto.objects.create(shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR)
         self.assertIsNone(shelter.hero_image_id)
 
         response = self.execute_graphql(self.HERO_IMAGE_QUERY)
@@ -153,9 +145,7 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         )
 
         s1 = shelter_recipe.make(status=StatusChoices.APPROVED)
-        p1 = ShelterPhoto.objects.create(
-            shelter=s1, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR
-        )
+        p1 = ShelterPhoto.objects.create(shelter=s1, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR)
         s1.hero_image = p1
         s1.save(update_fields=["hero_image"])
 

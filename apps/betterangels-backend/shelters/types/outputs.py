@@ -1,7 +1,6 @@
 """Output types for shelter queries and mutations."""
 
 from datetime import datetime
-from itertools import chain
 from typing import List, Optional, cast
 
 import strawberry
@@ -11,7 +10,7 @@ from accounts.types import OrganizationType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.imgproxy import build_imgproxy_url
-from django.db.models import Count, Prefetch, Q, QuerySet
+from django.db.models import Count, Q, QuerySet
 from shelters import models
 from shelters.enums import (
     BedStatusChoices,
@@ -203,11 +202,21 @@ def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
     if shelter.hero_image_id:
         return shelter.hero_image
 
-    exterior_photo = shelter.photos.filter(type=ShelterPhotoTypeChoices.EXTERIOR).order_by("created_at", "pk").first()
-    if exterior_photo:
+    if (
+        exterior_photo := shelter.photos.filter(type=ShelterPhotoTypeChoices.EXTERIOR)
+        .order_by("created_at", "pk")
+        .first()
+    ):
         return exterior_photo
 
-    return shelter.photos.filter(type=ShelterPhotoTypeChoices.INTERIOR).order_by("created_at", "pk").first()
+    if (
+        interior_photo := shelter.photos.filter(type=ShelterPhotoTypeChoices.INTERIOR)
+        .order_by("created_at", "pk")
+        .first()
+    ):
+        return interior_photo
+
+    return None
 
 
 @strawberry_django.type(models.Bed, filters=BedFilter)

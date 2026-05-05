@@ -35,12 +35,6 @@ export function GalleryPage(props: TProps) {
     return null;
   }
 
-  const heroImage = shelter.heroImage;
-  const heroId = heroImage?.id;
-  const photos = [
-    ...(heroImage ? [heroImage] : []),
-    ...shelter.photos.filter((p) => p.id !== heroId),
-  ];
   const youtubeVideos = mapMediaLinksToVideos(shelter.mediaLinks || []);
 
   return (
@@ -55,7 +49,7 @@ export function GalleryPage(props: TProps) {
         <h2 className="font-semibold text-white">{shelter.name} photos</h2>
       </div>
       <div className="grid grid-cols-2 gap-1 px-4 py-4">
-        {photos.map((item, index) => (
+        {shelter.photos.map((item, index) => (
           <div
             key={index}
             className="aspect-square overflow-hidden"

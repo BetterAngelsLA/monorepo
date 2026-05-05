@@ -48,8 +48,8 @@ from .enums import (
     ReferralRequirementChoices,
     RoomStyleChoices,
     ShelterChoices,
-    ShelterProgramChoices,
     ShelterPhotoTypeChoices,
+    ShelterProgramChoices,
     SPAChoices,
     SpecialSituationRestrictionChoices,
     StatusChoices,
@@ -432,7 +432,7 @@ class InteriorPhotoForm(PhotoForm):
         model = InteriorShelterPhoto
 
 
-class PhotoInlineImgproxyMixin:
+class PhotoInlineImgproxyMixin(admin.TabularInline):
     """Mixin for photo inlines: adds a readonly thumbnail column via imgproxy when enabled."""
 
     photo_type: ShelterPhotoTypeChoices
@@ -447,7 +447,9 @@ class PhotoInlineImgproxyMixin:
         # Each inline only shows photos of its configured type. Without this
         # filter, both inlines would surface every ShelterPhoto attached to
         # the shelter, regardless of interior/exterior.
-        return super().get_queryset(request).filter(type=self.photo_type)  # type: ignore[misc]
+        qs = super().get_queryset(request).filter(type=self.photo_type)
+
+        return cast(QuerySet[ShelterPhoto], qs)
 
     @admin.display(description="Preview")
     def photo_preview(self, obj: ShelterPhoto) -> str:
@@ -1357,9 +1359,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         original_file.seek(0)
         return ContentFile(original_file.read(), name=new_name)
 
-    def _clone_objects_with_files(
-        self, queryset: QuerySet[Union[ShelterPhoto, Video]], copy: Shelter
-    ) -> None:
+    def _clone_objects_with_files(self, queryset: QuerySet[Union[ShelterPhoto, Video]], copy: Shelter) -> None:
         """Clone objects with shelter and file fields, duplicating files."""
         for obj in queryset:
             obj.pk = None

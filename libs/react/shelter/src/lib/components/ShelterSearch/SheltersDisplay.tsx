@@ -24,7 +24,7 @@ function viewShelterToCardShelter(shelter: TViewShelter): TShelter {
     isPrivate: shelter.isPrivate,
     location: shelter.location,
     shelterTypes: shelter.shelterTypes,
-    heroImage: shelter.heroImage?.file.url ?? null,
+    heroImage: shelter.heroImage?.url ?? null,
   };
 }
 type TProps = {
