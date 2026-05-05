@@ -1311,6 +1311,7 @@ input IDFilterLookup {
 
 enum ImagePresetEnum {
   ORIGINAL
+  SHELTER_HERO
   SM
   MD
   LG

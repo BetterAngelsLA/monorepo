@@ -1345,6 +1345,7 @@ export enum ImagePresetEnum {
   Lg = 'LG',
   Md = 'MD',
   Original = 'ORIGINAL',
+  ShelterHero = 'SHELTER_HERO',
   Sm = 'SM'
 }
 

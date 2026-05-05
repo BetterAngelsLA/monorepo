@@ -33,6 +33,7 @@ class SelahTeamEnum(models.TextChoices):
 @strawberry.enum
 class ImagePresetEnum(models.TextChoices):
     ORIGINAL = "original", _("Original")
+    SHELTER_HERO = "shelter_hero", _("Shelter Hero")
     SM = "sm", _("Small")
     MD = "md", _("Medium")
     LG = "lg", _("Large")
