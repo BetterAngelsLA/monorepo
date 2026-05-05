@@ -1,42 +1,44 @@
 import { hasWysiwygContent } from './hasWysiwygContent';
 
+type NameItem = { name?: string | null };
+
 export type ShelterData = {
   website?: string | null;
-  phone?: unknown;
+  phone?: string | null;
   email?: string | null;
   location?: { place?: string | null } | null;
-  services?: unknown[] | null;
+  services?: { id: string }[] | null;
   otherServices?: string | null;
   description?: string | null;
-  entryRequirements?: unknown[];
-  referralRequirement?: unknown[];
+  entryRequirements?: NameItem[];
+  referralRequirement?: NameItem[];
   entryInfo?: string | null;
   bedFees?: string | null;
   programFees?: string | null;
-  specialSituationRestrictions?: unknown[];
-  shelterTypes?: unknown[];
+  specialSituationRestrictions?: NameItem[];
+  shelterTypes?: NameItem[];
   shelterTypesOther?: string | null;
-  roomStyles?: unknown[];
-  accessibility?: unknown[];
-  storage?: unknown[];
-  pets?: unknown[];
-  parking?: unknown[];
+  roomStyles?: NameItem[];
+  accessibility?: NameItem[];
+  storage?: NameItem[];
+  pets?: NameItem[];
+  parking?: NameItem[];
   maxStay?: number | null;
-  curfew?: unknown;
-  exitPolicy?: unknown[];
+  curfew?: string | null;
+  exitPolicy?: NameItem[];
   visitorsAllowed?: boolean | null;
   emergencySurge?: boolean | null;
   onSiteSecurity?: boolean | null;
   otherRules?: string | null;
-  cities?: unknown[];
-  spa?: unknown[];
+  cities?: NameItem[];
+  spa?: NameItem[];
   cityCouncilDistrict?: number | null;
   supervisorialDistrict?: number | null;
-  shelterPrograms?: unknown[];
-  funders?: unknown[];
-  interiorPhotos?: unknown[];
-  exteriorPhotos?: unknown[];
-  mediaLinks?: unknown[];
+  shelterPrograms?: NameItem[];
+  funders?: NameItem[];
+  interiorPhotos?: { file: { url: string } }[];
+  exteriorPhotos?: { file: { url: string } }[];
+  mediaLinks?: { id: string }[];
 };
 
 export type ShelterVisibility = {
@@ -55,6 +57,7 @@ export type ShelterVisibility = {
 
 export type RestrictionsFieldVisibility = {
   maxStay: boolean;
+  curfew: boolean;
   exitPolicy: boolean;
   visitorsAllowed: boolean;
   emergencySurge: boolean;
@@ -113,6 +116,7 @@ export function getRestrictionsFieldVisibility(
 ): RestrictionsFieldVisibility {
   return {
     maxStay: !!shelter.maxStay,
+    curfew: true,
     exitPolicy: !!shelter.exitPolicy?.length,
     visitorsAllowed: shelter.visitorsAllowed != null,
     emergencySurge: shelter.emergencySurge != null,

@@ -25,7 +25,6 @@ export function Restrictions({
 }: {
   shelter: ViewShelterQuery['shelter'];
 }) {
-  const hasCurfew = Boolean(shelter.curfew);
   const fieldVisibility = getRestrictionsFieldVisibility(shelter);
   const exitPolicyDisplay = displayListWithOther(
     shelter.exitPolicy as readonly { name?: ExitPolicyChoices.Other | null }[],
@@ -48,10 +47,12 @@ export function Restrictions({
           <InlineList title="Exit Policy:" items={exitPolicyDisplay} />
         )}
 
-        <div className="flex gap-1">
-          <strong>Curfew:</strong>
-          {hasCurfew ? formatCurfewTime(shelter.curfew) : 'No'}
-        </div>
+        {fieldVisibility.curfew && (
+          <div className="flex gap-1">
+            <strong>Curfew:</strong>
+            {shelter.curfew ? formatCurfewTime(shelter.curfew) : 'No'}
+          </div>
+        )}
 
         {fieldVisibility.visitorsAllowed && (
           <div className="flex gap-1">

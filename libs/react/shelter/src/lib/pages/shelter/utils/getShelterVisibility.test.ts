@@ -176,13 +176,13 @@ describe('getShelterVisibility', () => {
 
     it('is visible when interiorPhotos has items', () => {
       const result = getShelterVisibility(
-        makeShelter({ interiorPhotos: [{}] })
+        makeShelter({ interiorPhotos: [{ file: { url: 'http://example.com/photo.jpg' } }] })
       );
       expect(result.media).toBe(true);
     });
 
     it('is visible when mediaLinks has items', () => {
-      const result = getShelterVisibility(makeShelter({ mediaLinks: [{}] }));
+      const result = getShelterVisibility(makeShelter({ mediaLinks: [{ id: '1' }] }));
       expect(result.media).toBe(true);
     });
   });
@@ -194,6 +194,7 @@ describe('getRestrictionsFieldVisibility', () => {
 
     expect(result).toEqual({
       maxStay: false,
+      curfew: true,
       exitPolicy: false,
       visitorsAllowed: false,
       emergencySurge: false,
@@ -212,6 +213,13 @@ describe('getRestrictionsFieldVisibility', () => {
       makeShelter({ maxStay: null })
     );
     expect(result.maxStay).toBe(false);
+  });
+
+  it('always shows curfew (renders "No" when empty)', () => {
+    const result = getRestrictionsFieldVisibility(
+      makeShelter({ curfew: null })
+    );
+    expect(result.curfew).toBe(true);
   });
 
   it('shows exitPolicy when array has items', () => {
