@@ -35,9 +35,7 @@ def remove_permissions_from_group_in_migration(apps, group_name, permission_map)
         for perm_enum in perm_enums:
             for perm in perm_enum:
                 try:
-                    permission = Permission.objects.get(
-                        codename=perm.value.split(".")[1], content_type=content_type
-                    )
+                    permission = Permission.objects.get(codename=perm.value.split(".")[1], content_type=content_type)
                     group.permissions.remove(permission)
                 except Permission.DoesNotExist:
                     print(f"Permission {perm.value} not found for content type {content_type}")

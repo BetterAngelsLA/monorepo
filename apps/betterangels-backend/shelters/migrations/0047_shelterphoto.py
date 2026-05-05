@@ -183,6 +183,7 @@ class Migration(migrations.Migration):
         ),
         migrations.RunPython(remove_deprecated_shelter_group_permissions, migrations.RunPython.noop),
         migrations.RunPython(migrate_shelter_photos, migrations.RunPython.noop),
+        migrations.RunPython(assign_shelter_group_permissions, migrations.RunPython.noop),
         pgtrigger.migrations.RemoveTrigger(
             model_name="shelter",
             name="shelter_add_insert",
