@@ -254,4 +254,10 @@ class Migration(migrations.Migration):
                 ),
             ),
         ),
+        migrations.DeleteModel(
+            name="ExteriorPhoto",
+        ),
+        migrations.DeleteModel(
+            name="InteriorPhoto",
+        ),
     ]
