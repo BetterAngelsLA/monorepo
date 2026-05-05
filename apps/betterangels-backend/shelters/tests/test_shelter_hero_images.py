@@ -25,7 +25,10 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
                 totalCount
                 results {
                     id
-                    heroImage
+                    heroImage {
+                        id
+                        url
+                    }
                 }
             }
         }
@@ -37,7 +40,7 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
 
     @patch("shelters.types.outputs.build_imgproxy_url")
     def test_hero_image_returns_explicit_fk_url_when_set(self, mock_build_imgproxy_url: Mock) -> None:
-        """``heroImage`` should use the URL of ``Shelter.hero_image`` when set."""
+        """``heroImage`` should use the ID of the ``ShelterPhoto`` when set."""
         mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
             file, "url", None
         )
@@ -50,8 +53,8 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
 
                 response = self.execute_graphql(self.HERO_IMAGE_QUERY)
                 results = response["data"]["shelters"]["results"]
-                hero_images = {r["id"]: r["heroImage"] for r in results}
-                self.assertIn(photo.file.name, hero_images[str(shelter.pk)])
+                hero_images = {r["id"]: r["heroImage"]["id"] for r in results}
+                self.assertEqual(str(photo.pk), hero_images[str(shelter.pk)])
 
     @patch("shelters.types.outputs.build_imgproxy_url")
     def test_hero_image_falls_back_to_exterior_photo(self, mock_build_imgproxy_url: Mock) -> None:
@@ -65,7 +68,7 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         response = self.execute_graphql(self.HERO_IMAGE_QUERY)
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["heroImage"], exterior.file.url)
+        self.assertEqual(results[0]["heroImage"]["id"], str(exterior.pk))
 
     @patch("shelters.types.outputs.build_imgproxy_url")
     def test_hero_image_falls_back_to_interior_photo(self, mock_build_imgproxy_url: Mock) -> None:
@@ -79,7 +82,7 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         response = self.execute_graphql(self.HERO_IMAGE_QUERY)
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["heroImage"], interior.file.url)
+        self.assertEqual(results[0]["heroImage"]["id"], str(interior.pk))
 
     @patch("shelters.types.outputs.build_imgproxy_url")
     def test_hero_image_returns_none_when_no_photos(self, mock_build_imgproxy_url: Mock) -> None:
@@ -119,7 +122,7 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         self.assertNotIn("errors", response)
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["heroImage"], fallback.file.url)
+        self.assertEqual(results[0]["heroImage"]["id"], str(fallback.pk))
 
     @patch("shelters.types.outputs.build_imgproxy_url")
     def test_hero_image_with_null_hero_fk_uses_exterior(self, mock_build_imgproxy_url: Mock) -> None:
@@ -135,7 +138,7 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         self.assertNotIn("errors", response)
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["heroImage"], exterior.file.url)
+        self.assertEqual(results[0]["heroImage"]["id"], str(exterior.pk))
 
     @patch("shelters.types.outputs.build_imgproxy_url")
     def test_hero_image_multiple_shelters_mixed_states(self, mock_build_imgproxy_url: Mock) -> None:
@@ -172,7 +175,7 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 3)
 
-        hero_images = {int(r["id"]): r["heroImage"] for r in results}
-        self.assertIn(p1.file.name, hero_images[s1.pk])
+        hero_images = {int(r["id"]): r["heroImage"]["id"] if r["heroImage"] else None for r in results}
+        self.assertEqual(hero_images[s1.pk], str(p1.pk))
         self.assertIsNone(hero_images[s2.pk])
-        self.assertEqual(hero_images[s3.pk], fallback.file.url)
+        self.assertEqual(hero_images[s3.pk], str(fallback.pk))

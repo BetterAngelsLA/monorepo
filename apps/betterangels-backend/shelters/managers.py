@@ -35,9 +35,7 @@ class ShelterQuerySet(QuerySet["Shelter"]):
         """
         from shelters.models import ShelterPhoto
 
-        hero_fk_file = Subquery(
-            ShelterPhoto.objects.filter(pk=OuterRef("hero_image_id")).values("file")[:1]
-        )
+        hero_fk_file = Subquery(ShelterPhoto.objects.filter(pk=OuterRef("hero_image_id")).values("file")[:1])
 
         first_exterior = Subquery(
             ShelterPhoto.objects.filter(

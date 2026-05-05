@@ -37,9 +37,7 @@ def _add_images(shelter: Shelter, django_file: File, total: int) -> None:
 
     first_exterior = None
     for _ in range(num_exterior):
-        photo = ShelterPhoto.objects.create(
-            file=django_file, shelter=shelter, type=ShelterPhotoTypeChoices.EXTERIOR
-        )
+        photo = ShelterPhoto.objects.create(file=django_file, shelter=shelter, type=ShelterPhotoTypeChoices.EXTERIOR)
         if first_exterior is None:
             first_exterior = photo
 

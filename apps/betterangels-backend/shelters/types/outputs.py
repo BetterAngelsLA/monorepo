@@ -10,7 +10,7 @@ from accounts.types import OrganizationType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.imgproxy import build_imgproxy_url
-from django.db.models import Count, Q, QuerySet
+from django.db.models import Count, Prefetch, Q, QuerySet
 from shelters import models
 from shelters.enums import (
     BedStatusChoices,
@@ -45,6 +45,11 @@ from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
 from .filters import BedFilter, RoomFilter, ShelterFilter, ShelterOrder
+
+_SHELTER_PHOTOS_HERO_PREFETCH = Prefetch(
+    "photos",
+    queryset=models.ShelterPhoto.objects.order_by("created_at", "pk"),
+)
 
 
 @strawberry.type
@@ -142,7 +147,24 @@ class ShelterTypeMixin:
     website: auto
     media_links: List[MediaLinkType]
 
-    @strawberry_django.field
+    _exterior_photos: Optional[List[ShelterPhotoType]] = None
+    _interior_photos: Optional[List[ShelterPhotoType]] = None
+
+    @strawberry_django.field(
+        only=["hero_image"],
+        prefetch_related=[
+            lambda x: Prefetch(
+                "photos",
+                queryset=models.ShelterPhoto.objects.filter(type=ShelterPhotoTypeChoices.EXTERIOR).order_by("pk"),
+                to_attr="_exterior_photos",
+            ),
+            lambda x: Prefetch(
+                "photos",
+                queryset=models.ShelterPhoto.objects.filter(type=ShelterPhotoTypeChoices.INTERIOR).order_by("pk"),
+                to_attr="_interior_photos",
+            ),
+        ],
+    )
     def hero_image(
         self,
         root: models.Shelter,
@@ -202,21 +224,10 @@ def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
     if shelter.hero_image_id:
         return shelter.hero_image
 
-    if (
-        exterior_photo := shelter.photos.filter(type=ShelterPhotoTypeChoices.EXTERIOR)
-        .order_by("created_at", "pk")
-        .first()
-    ):
-        return exterior_photo
-
-    if (
-        interior_photo := shelter.photos.filter(type=ShelterPhotoTypeChoices.INTERIOR)
-        .order_by("created_at", "pk")
-        .first()
-    ):
-        return interior_photo
-
-    return None
+    else:
+        return next(iter(getattr(shelter, "_exterior_photos", [])), None) or next(
+            iter(getattr(shelter, "_interior_photos", [])), None
+        )
 
 
 @strawberry_django.type(models.Bed, filters=BedFilter)
