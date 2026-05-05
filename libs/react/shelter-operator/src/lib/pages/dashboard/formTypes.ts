@@ -17,6 +17,7 @@ import type {
   SpecialSituationRestrictionChoices,
   StatusChoices,
   StorageChoices,
+  VaccinationRequirementChoices,
 } from '@monorepo/react/shelter';
 
 // ---------------------------------------------------------------------------
@@ -101,6 +102,7 @@ export interface ShelterFormData {
   // Entry Requirements
   entryRequirements: EntryRequirementChoices[];
   referralRequirement: ReferralRequirementChoices[];
+  vaccinationRequirement: VaccinationRequirementChoices[];
   bedFees: string;
   programFees: string;
   entryInfo: string;

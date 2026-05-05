@@ -57,6 +57,7 @@ export const createEmptyShelterFormData = (): ShelterFormData => ({
   // Entry Requirements
   entryRequirements: [],
   referralRequirement: [],
+  vaccinationRequirement: [],
   bedFees: '',
   programFees: '',
   entryInfo: '',
