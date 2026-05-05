@@ -57,6 +57,7 @@ class ShelterLocationType:
 @strawberry.type
 class ShelterPhotoType:
     id: ID
+    type: ShelterPhotoTypeChoices
     created_at: datetime
     file: TransformableImageType
 

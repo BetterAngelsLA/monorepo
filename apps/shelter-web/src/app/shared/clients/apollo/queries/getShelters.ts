@@ -11,14 +11,14 @@ export const GET_SHELTERS_QUERY = gql`
       results {
         id
         name
-        heroImage
-        exteriorPhotos {
+        heroImage {
           file {
-            url
             name
+            url
           }
         }
-        interiorPhotos {
+        photos {
+          type
           file {
             url
             name

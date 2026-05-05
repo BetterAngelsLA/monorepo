@@ -8,7 +8,12 @@ query ViewShelters(
     results {
       id
       name
-      heroImage
+      heroImage {
+        file {
+          name
+          url
+        }
+      }
       distanceInMiles
       isPrivate
       location {

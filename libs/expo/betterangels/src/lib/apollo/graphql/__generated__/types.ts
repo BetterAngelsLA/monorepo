@@ -70,8 +70,6 @@ export type AddressType = {
 
 export type AdminShelterType = {
   __typename?: 'AdminShelterType';
-  ExteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
-  InteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
   accessibility: Array<AccessibilityType>;
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
@@ -91,13 +89,11 @@ export type AdminShelterType = {
   entryRequirements: Array<EntryRequirementType>;
   exitPolicy: Array<ExitPolicyType>;
   exitPolicyOther?: Maybe<Scalars['String']['output']>;
-  exteriorPhotos: Array<ShelterPhotoType>;
   funders: Array<FunderType>;
   fundersOther?: Maybe<Scalars['String']['output']>;
-  heroImage?: Maybe<Scalars['String']['output']>;
+  heroImage?: Maybe<ShelterPhotoType>;
   id: Scalars['ID']['output'];
   instagram?: Maybe<Scalars['String']['output']>;
-  interiorPhotos: Array<ShelterPhotoType>;
   isPrivate: Scalars['Boolean']['output'];
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
@@ -111,6 +107,7 @@ export type AdminShelterType = {
   parking: Array<ParkingType>;
   pets: Array<PetType>;
   phone?: Maybe<Scalars['PhoneNumber']['output']>;
+  photos: Array<ShelterPhotoType>;
   programFees?: Maybe<Scalars['String']['output']>;
   referralRequirement: Array<ReferralRequirementType>;
   roomStyles: Array<RoomStyleType>;
@@ -2760,7 +2757,13 @@ export type ShelterPhotoType = {
   createdAt: Scalars['DateTime']['output'];
   file: DjangoImageType;
   id: Scalars['ID']['output'];
+  type: ShelterPhotoTypeChoices;
 };
+
+export enum ShelterPhotoTypeChoices {
+  Exterior = 'EXTERIOR',
+  Interior = 'INTERIOR'
+}
 
 export enum ShelterProgramChoices {
   BridgeHome = 'BRIDGE_HOME',
@@ -2800,8 +2803,6 @@ export type ShelterPropertyInput = {
 
 export type ShelterType = {
   __typename?: 'ShelterType';
-  ExteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
-  InteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
   accessibility: Array<AccessibilityType>;
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
@@ -2821,13 +2822,11 @@ export type ShelterType = {
   entryRequirements: Array<EntryRequirementType>;
   exitPolicy: Array<ExitPolicyType>;
   exitPolicyOther?: Maybe<Scalars['String']['output']>;
-  exteriorPhotos: Array<ShelterPhotoType>;
   funders: Array<FunderType>;
   fundersOther?: Maybe<Scalars['String']['output']>;
-  heroImage?: Maybe<Scalars['String']['output']>;
+  heroImage?: Maybe<ShelterPhotoType>;
   id: Scalars['ID']['output'];
   instagram?: Maybe<Scalars['String']['output']>;
-  interiorPhotos: Array<ShelterPhotoType>;
   isPrivate: Scalars['Boolean']['output'];
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
@@ -2841,6 +2840,7 @@ export type ShelterType = {
   parking: Array<ParkingType>;
   pets: Array<PetType>;
   phone?: Maybe<Scalars['PhoneNumber']['output']>;
+  photos: Array<ShelterPhotoType>;
   programFees?: Maybe<Scalars['String']['output']>;
   referralRequirement: Array<ReferralRequirementType>;
   roomStyles: Array<RoomStyleType>;

@@ -7,7 +7,12 @@ query ViewShelter($id: ID!) {
     description
     email
     entryInfo
-    heroImage
+    heroImage {
+      file {
+        name
+        url
+      }
+    }
     id
     instagram
     isPrivate
@@ -55,7 +60,8 @@ query ViewShelter($id: ID!) {
     entryRequirements {
       name
     }
-    exteriorPhotos {
+    photos {
+      type
       file {
         name
         url
@@ -63,12 +69,6 @@ query ViewShelter($id: ID!) {
     }
     funders {
       name
-    }
-    interiorPhotos {
-      file {
-        name
-        url
-      }
     }
     location {
       latitude

@@ -89,11 +89,10 @@ type AdminShelterType {
   exitPolicy: [ExitPolicyType!]!
   exitPolicyOther: String
   emergencySurge: Boolean
-  exteriorPhotos: [ShelterPhotoType!]!
   funders: [FunderType!]!
   fundersOther: String
+  heroImage: ShelterPhotoType
   instagram: String
-  interiorPhotos: [ShelterPhotoType!]!
   location: ShelterLocationType
   maxStay: Int
   name: String!
@@ -117,6 +116,7 @@ type AdminShelterType {
   shelterTypesOther: String
   spa: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  photos: [ShelterPhotoType!]!
   isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
@@ -127,9 +127,6 @@ type AdminShelterType {
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
-  ExteriorPhotos: [ShelterPhotoType!]
-  InteriorPhotos: [ShelterPhotoType!]
-  heroImage: String
   distanceInMiles: Float
   bedsByStatus: BedsByStatusType!
 }
@@ -2216,8 +2213,14 @@ input ShelterOrder {
 
 type ShelterPhotoType {
   id: ID!
+  type: ShelterPhotoTypeChoices!
   createdAt: DateTime!
   file: DjangoImageType!
+}
+
+enum ShelterPhotoTypeChoices {
+  INTERIOR
+  EXTERIOR
 }
 
 enum ShelterProgramChoices {
@@ -2274,11 +2277,10 @@ type ShelterType {
   exitPolicy: [ExitPolicyType!]!
   exitPolicyOther: String
   emergencySurge: Boolean
-  exteriorPhotos: [ShelterPhotoType!]!
   funders: [FunderType!]!
   fundersOther: String
+  heroImage: ShelterPhotoType
   instagram: String
-  interiorPhotos: [ShelterPhotoType!]!
   location: ShelterLocationType
   maxStay: Int
   name: String!
@@ -2302,6 +2304,7 @@ type ShelterType {
   shelterTypesOther: String
   spa: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  photos: [ShelterPhotoType!]!
   isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
@@ -2312,9 +2315,6 @@ type ShelterType {
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
-  ExteriorPhotos: [ShelterPhotoType!]
-  InteriorPhotos: [ShelterPhotoType!]
-  heroImage: String
   distanceInMiles: Float
   bedsByStatus: BedsByStatusType!
 }
