@@ -171,12 +171,9 @@ class ShelterTypeMixin:
         preset: Optional[ImagePresetEnum] = None,
         processing_options: Optional[str] = None,
     ) -> Optional[ShelterHeroImageType]:
-        photo = _get_hero_image(root)
-        if not photo:
-            return None
-
-        if imgproxy_url := build_imgproxy_url(photo.file, preset, processing_options):
-            return ShelterHeroImageType(id=ID(str(photo.id)), url=imgproxy_url)
+        if photo := _get_hero_image(root):
+            if imgproxy_url := build_imgproxy_url(photo.file, preset, processing_options):
+                return ShelterHeroImageType(id=ID(str(photo.id)), url=imgproxy_url)
 
         return None
 

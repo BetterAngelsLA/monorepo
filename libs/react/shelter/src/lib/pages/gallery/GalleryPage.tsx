@@ -4,8 +4,8 @@ import { ArrowLeftIcon } from '@monorepo/react/icons';
 import { mapMediaLinksToVideos } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ShelterPhotoTypeChoices } from '../../apollo';
 import { ViewShelterDocument } from '../shelter/__generated__/shelter.generated';
-
 type TProps = {
   id: string;
 };
@@ -36,7 +36,14 @@ export function GalleryPage(props: TProps) {
   }
 
   const youtubeVideos = mapMediaLinksToVideos(shelter.mediaLinks || []);
-
+  const photos = [
+    ...shelter.photos.filter(
+      (photo) => photo.type === ShelterPhotoTypeChoices.Exterior
+    ),
+    ...shelter.photos.filter(
+      (photo) => photo.type === ShelterPhotoTypeChoices.Interior
+    ),
+  ];
   return (
     <>
       <div className="bg-steel-blue -mx-4 flex items-center gap-8 py-2">
@@ -49,7 +56,7 @@ export function GalleryPage(props: TProps) {
         <h2 className="font-semibold text-white">{shelter.name} photos</h2>
       </div>
       <div className="grid grid-cols-2 gap-1 px-4 py-4">
-        {shelter.photos.map((item, index) => (
+        {photos.map((item, index) => (
           <div
             key={index}
             className="aspect-square overflow-hidden"
