@@ -46,11 +46,6 @@ from strawberry_django.auth.utils import get_current_user
 
 from .filters import BedFilter, RoomFilter, ShelterFilter, ShelterOrder
 
-_SHELTER_PHOTOS_HERO_PREFETCH = Prefetch(
-    "photos",
-    queryset=models.ShelterPhoto.objects.order_by("created_at", "pk"),
-)
-
 
 @strawberry.type
 class ShelterLocationType:
