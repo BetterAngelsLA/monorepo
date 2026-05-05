@@ -2,6 +2,7 @@ import { useQuery } from '@apollo/client/react';
 import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
 import { GraphQLFormattedError } from 'graphql';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { View } from 'react-native';
 import { useAppState } from '../../hooks';
 import UserContext, { TUser } from './UserContext';
 import {
@@ -36,6 +37,7 @@ type UserResponse = {
 
 export default function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<TUser | undefined>();
+  const [isSettled, setIsSettled] = useState(false);
 
   const { appBecameActive } = useAppState();
   const { data, loading, error, refetch } = useQuery(CurrentUserDocument, {
@@ -50,7 +52,10 @@ export default function UserProvider({ children }: UserProviderProps) {
 
     const userValue = invalidate ? undefined : parseUser(res.data?.currentUser);
 
+    // Batch both updates: React 18 flushes them in the same render,
+    // eliminating the flash of unauthorized-root between loading=false and user being set.
     setUser(userValue);
+    setIsSettled(true);
   }, []);
 
   useEffect(() => {
@@ -90,6 +95,19 @@ export default function UserProvider({ children }: UserProviderProps) {
   );
 
   return (
-    <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>
+    <UserContext.Provider value={contextValue}>
+      <View
+        testID={
+          !isSettled
+            ? 'authorized-pending'
+            : user
+            ? 'authorized-root'
+            : 'unauthorized-root'
+        }
+        style={{ flex: 1 }}
+      >
+        {children}
+      </View>
+    </UserContext.Provider>
   );
 }

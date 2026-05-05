@@ -7,7 +7,7 @@
         "EAS_NO_FROZEN_LOCKFILE": "1",
         "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_APP_ENV": "development",
-        "EXPO_PUBLIC_DEMO_API_URL": "http://localhost:8000",
+        "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "INFO"
       },
       "channel": "development",
@@ -23,7 +23,7 @@
         "EAS_NO_FROZEN_LOCKFILE": "1",
         "EXPO_PUBLIC_APP_ENV": "development",
         "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
-        "EXPO_PUBLIC_DEMO_API_URL": "http://localhost:8000",
+        "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "INFO"
       },
       "node": "22.21.1"

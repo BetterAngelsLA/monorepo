@@ -53,7 +53,7 @@ export default function Tasks() {
   });
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="tasks-screen">
       <SearchBar
         style={styles.searchRow}
         value={search}

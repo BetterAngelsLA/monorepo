@@ -1,10 +1,11 @@
-export { default as hexToRGBA } from './HexToRGBA';
 export * from './array';
 export * from './auth';
 export * from './date';
 export * from './debugUtils';
+export * from './devMenu';
 export * from './file';
 export * from './format';
+export { default as hexToRGBA } from './HexToRGBA';
 export * from './html';
 export * from './image';
 export { showOpenSettingsAlert } from './showOpenSettingsAlert';

@@ -1,3 +1,5 @@
+from django.db.models import Count
+
 """Filter and ordering types for shelter queries."""
 
 import datetime
@@ -7,18 +9,30 @@ from zoneinfo import ZoneInfo
 import strawberry
 import strawberry_django
 from accounts.models import User
-from common.graphql.types import LatitudeScalar, LongitudeScalar
+from common.graphql.types import (
+    LatitudeScalar,
+    LongitudeScalar,
+    make_icontains_filter,
+    make_in_filter,
+    make_m2m_in_filter,
+)
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
 from django.db.models import Q, QuerySet
 from shelters import models
 from shelters.enums import (
+    AccessibilityChoices,
+    BedStatusChoices,
+    BedTypeChoices,
     DemographicChoices,
     EntryRequirementChoices,
+    FunderChoices,
+    MedicalNeedChoices,
     ParkingChoices,
     PetChoices,
     ReferralRequirementChoices,
+    RoomStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
     ShelterChoices,
@@ -90,12 +104,7 @@ class ShelterFilter:
 
         return conditions
 
-    @strawberry_django.filter_field
-    def name(self, info: Info, value: Optional[str], prefix: str) -> Q:
-        if not value:
-            return Q()
-
-        return Q(**{f"{prefix}name__icontains": value})
+    name = make_icontains_filter("name")
 
     @strawberry_django.filter_field
     def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
@@ -183,3 +192,34 @@ class ShelterFilter:
 class ShelterOrder:
     name: auto
     created_at: auto
+
+
+class CommonBedRoomFilterMixin:
+    accessibility = make_m2m_in_filter("accessibility", "name", AccessibilityChoices)
+    demographics = make_m2m_in_filter("demographics", "name", DemographicChoices)
+    funders = make_m2m_in_filter("funders", "name", FunderChoices)
+    maintenance_flag: Optional[bool]
+    pets = make_m2m_in_filter("pets", "name", PetChoices)
+    shelter_id: Optional[ID]
+    storage: Optional[bool]
+
+
+@strawberry_django.filter_type(models.Bed)
+class BedFilter(CommonBedRoomFilterMixin):
+    bed_type = make_in_filter("bed_type", BedTypeChoices)
+    medical_needs = make_in_filter("medical_needs", MedicalNeedChoices)
+    status = make_in_filter("status", BedStatusChoices)
+
+
+@strawberry_django.filter_type(models.Room)
+class RoomFilter(CommonBedRoomFilterMixin):
+    amenities = make_icontains_filter("amenities")
+    medical_respite: Optional[bool]
+    room_type = make_in_filter("room_type", RoomStyleChoices)
+    status = make_in_filter("status", RoomStatusChoices)
+
+    @strawberry_django.filter_field
+    def number_of_beds(self, queryset: QuerySet, value: Optional[int], prefix: str) -> Tuple[QuerySet, Q]:
+        if value is None:
+            return queryset, Q()
+        return queryset.annotate(num_beds=Count("beds")).filter(num_beds=value), Q()

@@ -113,7 +113,18 @@ export function useAllauthLogin({
           }
         );
 
-        const data = await res.json();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let data: any;
+        try {
+          data = await res.json();
+        } catch (parseError) {
+          console.error(
+            'Confirm code: failed to parse response as JSON',
+            parseError
+          );
+          setErrorMsg('Unexpected server response. Please try again.');
+          return;
+        }
 
         // Success (200) or already authenticated (409)
         if ((res.ok && data?.meta?.is_authenticated) || res.status === 409) {
@@ -146,7 +157,15 @@ export function useAllauthLogin({
           }),
         });
 
-        const data = await res.json();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let data: any;
+        try {
+          data = await res.json();
+        } catch (parseError) {
+          console.error('Login: failed to parse response as JSON', parseError);
+          setErrorMsg('Unexpected server response. Please try again.');
+          return;
+        }
 
         if (res.ok && data?.meta?.is_authenticated) {
           await onLoginSuccess();

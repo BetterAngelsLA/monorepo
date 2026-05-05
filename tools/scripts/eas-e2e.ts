@@ -104,6 +104,13 @@ if (!androidBuildId || !iosBuildId) {
 // 3. Publish update
 console.log(`\nPublishing update on branch: ${branch}`);
 
+// Inline EXPO_PUBLIC_E2E_MODE=1 into the published bundle so e2e-only
+// runtime tweaks (e.g. hiding the expo-dev-menu "Tools" FAB) activate.
+// EXPO_PUBLIC_* values are read by Metro from process.env at bundle
+// time and statically inlined; the child `eas update` process inherits
+// this env, which propagates to the bundler it spawns.
+process.env['EXPO_PUBLIC_E2E_MODE'] = '1';
+
 const updates = runJson<Array<{ group: string; platform: string }>>(
   `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --interactive false`
 );
@@ -142,6 +149,8 @@ run(
     `-F android_build_id=${androidBuildId} ` +
     `-F ios_build_id=${iosBuildId} ` +
     `-F update_group_id=${groupId} ` +
+    `-F MAESTRO_BA_USER_EMAIL=${process.env.MAESTRO_BA_USER_EMAIL} ` +
+    `-F MAESTRO_BA_USER_PASSWORD=${process.env.MAESTRO_BA_USER_PASSWORD} ` +
     `-F runtime_version=${fingerprint} ` +
     `-F android_profile=${androidProfile} ` +
     `-F ios_profile=${iosProfile} ` +

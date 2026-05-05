@@ -8,6 +8,7 @@ import { sheltersAtom } from '../../atoms';
 import {
   DEFAULT_BOUNDS_MILES,
   LA_COUNTY_CENTER,
+  LoginBanner,
   MILES_TO_DEGREES_AT_EQUATOR,
   Map,
   ModalAnimationEnum,
@@ -23,6 +24,7 @@ import {
 } from '../../components';
 import { SHELTERS_MAP_ID } from '../../constants';
 import { MaxWLayout } from '../../layout';
+import { useUser } from '../../providers';
 
 const FOOTER_STYLE = [
   'font-semibold',
@@ -77,6 +79,7 @@ function symmetricBoundsAroundPinCentroid(
 }
 
 export function HomePage() {
+  const { user } = useUser();
   const [location, setLocation] = useState<TLatLng | null>(null);
   const [userLocation, setUserLocation] = useState<TLatLng | null>(null);
   const [_modal, setModal] = useAtom(modalAtom);
@@ -139,6 +142,7 @@ export function HomePage() {
           )
             ? 'purple'
             : 'secondary',
+          isPrivate: shelter.isPrivate,
         } as TMarker;
       });
 
@@ -238,7 +242,8 @@ export function HomePage() {
 
   return (
     <>
-      <MaxWLayout className="-mx-4">
+      <MaxWLayout className="-mx-4 relative">
+        {!user && <LoginBanner />}
         <Map
           defaultCenter={defaultCenter}
           className="h-[70vh] md:h-80"
