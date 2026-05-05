@@ -18,6 +18,8 @@ export interface IUploadModalProps {
   bottomSection?: React.ReactNode;
   topSection?: React.ReactNode;
   opacity?: number;
+  onUploadSuccess?: () => void;
+  onUploadError?: () => void;
   client: ClientProfileQuery | undefined;
 }
 

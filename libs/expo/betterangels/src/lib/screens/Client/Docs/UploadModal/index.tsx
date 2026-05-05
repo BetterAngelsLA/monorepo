@@ -11,7 +11,7 @@ import FileUploadTab from './FileUploadTab';
 import { DocUploads, ITab, IUploadModalProps } from './types';
 
 export default function UploadModal(props: IUploadModalProps) {
-  const { client } = props;
+  const { client, closeModal, onUploadSuccess, onUploadError } = props;
 
   const [tab, setTab] = React.useState<undefined | ITab>();
   const [docs, setDocs] = React.useState<DocUploads>({
@@ -46,6 +46,14 @@ export default function UploadModal(props: IUploadModalProps) {
         files={docs.DriversLicenseFront}
         onFilesChange={handleFilesChange('DriversLicenseFront')}
         onClose={closeTab}
+        onUploadSuccess={() => {
+          closeModal();
+          onUploadSuccess?.();
+        }}
+        onUploadError={() => {
+          closeModal();
+          onUploadError?.();
+        }}
         title="Upload CA ID or CA Driver's License - Front"
       />
     ),
@@ -56,6 +64,14 @@ export default function UploadModal(props: IUploadModalProps) {
         files={docs.DriversLicenseBack}
         onFilesChange={handleFilesChange('DriversLicenseBack')}
         onClose={closeTab}
+        onUploadSuccess={() => {
+          closeModal();
+          onUploadSuccess?.();
+        }}
+        onUploadError={() => {
+          closeModal();
+          onUploadError?.();
+        }}
         title="Upload CA ID or CA Driver's License - Back"
       />
     ),
@@ -66,6 +82,14 @@ export default function UploadModal(props: IUploadModalProps) {
         files={docs.BirthCertificate}
         onFilesChange={handleFilesChange('BirthCertificate')}
         onClose={closeTab}
+        onUploadSuccess={() => {
+          closeModal();
+          onUploadSuccess?.();
+        }}
+        onUploadError={() => {
+          closeModal();
+          onUploadError?.();
+        }}
         title="Upload Birth Certificate"
       />
     ),
@@ -76,6 +100,14 @@ export default function UploadModal(props: IUploadModalProps) {
         files={docs.PhotoId}
         onFilesChange={handleFilesChange('PhotoId')}
         onClose={closeTab}
+        onUploadSuccess={() => {
+          closeModal();
+          onUploadSuccess?.();
+        }}
+        onUploadError={() => {
+          closeModal();
+          onUploadError?.();
+        }}
         title="Upload Photo ID"
       />
     ),
@@ -86,6 +118,14 @@ export default function UploadModal(props: IUploadModalProps) {
         files={docs.SocialSecurityCard}
         onFilesChange={handleFilesChange('SocialSecurityCard')}
         onClose={closeTab}
+        onUploadSuccess={() => {
+          closeModal();
+          onUploadSuccess?.();
+        }}
+        onUploadError={() => {
+          closeModal();
+          onUploadError?.();
+        }}
         title="Upload Social Security Card"
       />
     ),
@@ -97,6 +137,14 @@ export default function UploadModal(props: IUploadModalProps) {
         files={docs.ConsentForm}
         onFilesChange={handleFilesChange('ConsentForm')}
         onClose={closeTab}
+        onUploadSuccess={() => {
+          closeModal();
+          onUploadSuccess?.();
+        }}
+        onUploadError={() => {
+          closeModal();
+          onUploadError?.();
+        }}
         title="Upload Consent Forms"
       />
     ),
@@ -108,6 +156,14 @@ export default function UploadModal(props: IUploadModalProps) {
         files={docs.HmisForm}
         onFilesChange={handleFilesChange('HmisForm')}
         onClose={closeTab}
+        onUploadSuccess={() => {
+          closeModal();
+          onUploadSuccess?.();
+        }}
+        onUploadError={() => {
+          closeModal();
+          onUploadError?.();
+        }}
         title="Upload HMIS Form"
       />
     ),
@@ -119,6 +175,14 @@ export default function UploadModal(props: IUploadModalProps) {
         files={docs.IncomeForm}
         onFilesChange={handleFilesChange('IncomeForm')}
         onClose={closeTab}
+        onUploadSuccess={() => {
+          closeModal();
+          onUploadSuccess?.();
+        }}
+        onUploadError={() => {
+          closeModal();
+          onUploadError?.();
+        }}
         title="Upload Income Forms (pay stubs)"
       />
     ),
@@ -130,6 +194,14 @@ export default function UploadModal(props: IUploadModalProps) {
         files={docs.OtherClientDocument}
         onFilesChange={handleFilesChange('OtherClientDocument')}
         onClose={closeTab}
+        onUploadSuccess={() => {
+          closeModal();
+          onUploadSuccess?.();
+        }}
+        onUploadError={() => {
+          closeModal();
+          onUploadError?.();
+        }}
         title="Upload Other Documents"
       />
     ),
@@ -140,6 +212,14 @@ export default function UploadModal(props: IUploadModalProps) {
         files={docs.OtherDocReady}
         onFilesChange={handleFilesChange('OtherDocReady')}
         onClose={closeTab}
+        onUploadSuccess={() => {
+          closeModal();
+          onUploadSuccess?.();
+        }}
+        onUploadError={() => {
+          closeModal();
+          onUploadError?.();
+        }}
         title="Upload Other Doc-Ready"
       />
     ),
@@ -151,6 +231,14 @@ export default function UploadModal(props: IUploadModalProps) {
         files={docs.OtherForm}
         onFilesChange={handleFilesChange('OtherForm')}
         onClose={closeTab}
+        onUploadSuccess={() => {
+          closeModal();
+          onUploadSuccess?.();
+        }}
+        onUploadError={() => {
+          closeModal();
+          onUploadError?.();
+        }}
         title="Upload Other Forms"
       />
     ),

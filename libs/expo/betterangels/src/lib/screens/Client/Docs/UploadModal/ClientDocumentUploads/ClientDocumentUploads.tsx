@@ -1,13 +1,10 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
-import { UploadIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { MediaPicker, TextBold } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Colors } from '@monorepo/expo/shared/static';
+import { MediaPicker } from '@monorepo/expo/shared/ui-components';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
 import { useSnackbar } from '../../../../../hooks';
-import { UploadSection } from '../UploadSection';
-import UploadsPreview from '../UploadsPreview';
 import { useClientDocumentUpload } from './useClientDocumentUpload';
 
 export interface IClientDocUploadsProps {
@@ -15,6 +12,8 @@ export interface IClientDocUploadsProps {
   files: ReactNativeFile[];
   onFilesChange: (files: ReactNativeFile[]) => void;
   onClose: () => void;
+  onUploadSuccess?: () => void;
+  onUploadError?: () => void;
   namespace: ClientDocumentNamespaceEnum;
   title: string;
   allowMultiple?: boolean;
@@ -26,6 +25,8 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
     files,
     onFilesChange,
     onClose,
+    onUploadSuccess,
+    onUploadError,
     namespace,
     title,
     allowMultiple = false,
@@ -36,6 +37,47 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [processing, setProcessing] = useState(false);
+
+  useEffect(() => {
+    setIsModalVisible(true);
+  }, []);
+
+  const handleMediaPickerClose = () => {
+    setIsModalVisible(false);
+
+    setTimeout(() => {
+      onClose();
+    }, 250);
+  };
+
+  const uploadSelectedFiles = async (selectedFiles: ReactNativeFile[]) => {
+    if (!clientProfileId || !selectedFiles.length) {
+      return;
+    }
+
+    try {
+      setProcessing(true);
+
+      await uploadDocuments({
+        clientProfileId,
+        documents: selectedFiles,
+        namespace,
+      });
+
+      onUploadSuccess?.();
+    } catch (err) {
+      console.error(`[ClientDocumentUploads error:] ${err}`);
+
+      onUploadError?.();
+
+      showSnackbar({
+        message: `Sorry, there was an error with the file upload.`,
+        type: 'error',
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   const handleUpload = async () => {
     if (!clientProfileId) {
@@ -51,9 +93,11 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
         namespace,
       });
 
-      onClose();
+      onUploadSuccess?.();
     } catch (err) {
       console.error(`[ClientDocumentUploads error:] ${err}`);
+
+      onUploadError?.();
 
       showSnackbar({
         message: `Sorry, there was an error with the file upload.`,
@@ -79,78 +123,46 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
   });
 
   return (
-    <>
-      <UploadSection
-        loading={processing}
-        disabled={!files.length || !allDocsValid}
-        title={title}
-        onSubmit={handleUpload}
-        onCancel={() => {
-          onFilesChange([]);
-          onClose();
-        }}
-      >
+    <View style={{ flex: 1 }}>
+      {processing ? (
         <View
           style={{
-            padding: Spacings.sm,
-            paddingBottom: Spacings.lg,
-            marginBottom: Spacings.sm,
-            flexDirection: 'row',
+            flex: 1,
             alignItems: 'center',
             justifyContent: 'center',
-            borderBottomColor: Colors.NEUTRAL_LIGHT,
-            borderBottomWidth: 1,
+            backgroundColor: Colors.WHITE,
           }}
         >
-          <Pressable
-            onPress={() => {
-              setIsModalVisible(true);
-            }}
-            accessibilityRole="button"
-            style={{ alignItems: 'center' }}
-          >
-            <View
-              style={{
-                flexDirection: 'row',
-                gap: Spacings.xs,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: 1,
-                borderColor: Colors.NEUTRAL_LIGHT,
-                borderRadius: Radiuses.xs,
-                height: 66,
-                width: 139,
-              }}
-            >
-              <UploadIcon size="lg" />
-              <TextBold size="sm">Upload</TextBold>
-            </View>
-          </Pressable>
-        </View>
-
-        {files.length > 0 && (
-          <UploadsPreview
-            files={files}
-            onRemoveFile={onRemoveFile}
-            onFilenameChange={onFilenameChange}
-            documentType={namespace}
+          <ActivityIndicator
+            size="large"
+            color={Colors.PRIMARY}
+            style={{ transform: [{ translateY: -40 }] }}
           />
-        )}
-      </UploadSection>
+        </View>
+      ) : (
+        <View style={{ flex: 1 }} />
+      )}
 
       <MediaPicker
         allowMultiple={allowMultiple}
         isOpen={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
+        onClose={handleMediaPickerClose}
+        onSelectionComplete={() => setIsModalVisible(false)}
         onCameraCapture={(file) => {
-          onFilesChange(allowMultiple ? [...files, file] : [file]);
+          const selectedFiles = allowMultiple ? [...files, file] : [file];
+
+          onFilesChange(selectedFiles);
+          uploadSelectedFiles(selectedFiles);
         }}
         onFilesSelected={(newFiles) => {
-          onFilesChange(
-            allowMultiple ? [...files, ...newFiles] : [newFiles[0]]
-          );
+          const selectedFiles = allowMultiple
+            ? [...files, ...newFiles]
+            : [newFiles[0]];
+
+          onFilesChange(selectedFiles);
+          uploadSelectedFiles(selectedFiles);
         }}
       />
-    </>
+    </View>
   );
 }
