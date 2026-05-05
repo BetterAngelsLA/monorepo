@@ -267,3 +267,8 @@ class ConditionChoices(models.TextChoices):
     AIR_QUALITY_SMOKE = "air_quality_smoke", _("Air Quality / Smoke")
     PUBLIC_HEALTH_EMERGENCY = "public_health_emergency", _("Public Health Emergency")
     EMERGENCY_EVACUATION = "emergency_evacuation", _("Emergency Evacuation")
+
+
+@strawberry.enum
+class MediaLinkTypeChoices(models.TextChoices):
+    YOUTUBE = "youtube", _("YouTube")

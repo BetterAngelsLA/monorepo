@@ -33,7 +33,7 @@ from shelters.enums import (
     StorageChoices,
     VaccinationRequirementChoices,
 )
-from strawberry import ID, auto
+from strawberry import ID, Maybe, auto
 
 
 @strawberry.input
@@ -126,6 +126,7 @@ class CreateShelterInput:
     city_council_district: auto = None
     supervisorial_district: auto = None
     overall_rating: auto = None
+    is_private: Maybe[bool]
 
 
 @strawberry.input

@@ -50,6 +50,13 @@ jobs:
           for project in $affected; do
             echo "Deleting EAS branch for project: $project"
             cd apps/$project
-            npx eas branch:delete --non-interactive "$BRANCH_NAME"
+            output=$(npx eas branch:delete --non-interactive "$BRANCH_NAME" 2>&1) || {
+              if echo "$output" | grep -q "Could not find branch"; then
+                echo "Branch $BRANCH_NAME does not exist on $project, skipping."
+              else
+                echo "$output" >&2
+                exit 1
+              fi
+            }
             cd -
           done

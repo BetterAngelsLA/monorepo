@@ -81,12 +81,13 @@ export function ShelterPage({ id }: { id: string }) {
     !!shelter.funders?.length;
   const hasPhotos =
     !!shelter.interiorPhotos?.length || !!shelter.exteriorPhotos?.length;
+  const hasMedia = hasPhotos || !!shelter.mediaLinks?.length;
 
   return (
     <div className="w-full">
       <Header shelter={shelter} />
       <OperatingHours schedules={shelter.schedules} />
-      {hasPhotos && (
+      {hasMedia && (
         <Button
           onClick={() => navigate(`/shelter/${id}/gallery`)}
           variant="secondary"

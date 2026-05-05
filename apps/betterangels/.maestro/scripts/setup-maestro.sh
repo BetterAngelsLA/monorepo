@@ -120,6 +120,7 @@ if [[ -z "${MAESTRO_DEEPLINK:-}" ]]; then
   fi
 
   MAESTRO_DEEPLINK="exp+betterangels://expo-development-client/?url=http://${HOST}:${EXPO_PORT}&disableOnboarding=1"
+
   echo "🔗 Auto-detected MAESTRO_DEEPLINK: $MAESTRO_DEEPLINK"
 fi
 
