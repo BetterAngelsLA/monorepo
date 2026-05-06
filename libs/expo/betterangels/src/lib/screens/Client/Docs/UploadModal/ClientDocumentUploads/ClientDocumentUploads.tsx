@@ -28,7 +28,6 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
     onUploadSuccess,
     onUploadError,
     namespace,
-    title,
     allowMultiple = false,
   } = props;
 
@@ -79,48 +78,50 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
     }
   };
 
-  const handleUpload = async () => {
-    if (!clientProfileId) {
-      return;
-    }
+  /****  Functions not needed since screen is intended to be blank ****/
 
-    try {
-      setProcessing(true);
+  // const handleUpload = async () => {
+  //   if (!clientProfileId) {
+  //     return;
+  //   }
 
-      await uploadDocuments({
-        clientProfileId,
-        documents: files,
-        namespace,
-      });
+  //   try {
+  //     setProcessing(true);
 
-      onUploadSuccess?.();
-    } catch (err) {
-      console.error(`[ClientDocumentUploads error:] ${err}`);
+  //     await uploadDocuments({
+  //       clientProfileId,
+  //       documents: files,
+  //       namespace,
+  //     });
 
-      onUploadError?.();
+  //     onUploadSuccess?.();
+  //   } catch (err) {
+  //     console.error(`[ClientDocumentUploads error:] ${err}`);
 
-      showSnackbar({
-        message: `Sorry, there was an error with the file upload.`,
-        type: 'error',
-      });
-    } finally {
-      setProcessing(false);
-    }
-  };
+  //     onUploadError?.();
 
-  const onRemoveFile = (index: number) => {
-    onFilesChange(files.filter((_, i) => i !== index));
-  };
+  //     showSnackbar({
+  //       message: `Sorry, there was an error with the file upload.`,
+  //       type: 'error',
+  //     });
+  //   } finally {
+  //     setProcessing(false);
+  //   }
+  // };
 
-  const onFilenameChange = (index: number, value: string) => {
-    onFilesChange(
-      files.map((file, i) => (i === index ? { ...file, name: value } : file))
-    );
-  };
+  // const onRemoveFile = (index: number) => {
+  //   onFilesChange(files.filter((_, i) => i !== index));
+  // };
 
-  const allDocsValid = files.every((file) => {
-    return !!file.name && !!file.type && !!file.uri;
-  });
+  // const onFilenameChange = (index: number, value: string) => {
+  //   onFilesChange(
+  //     files.map((file, i) => (i === index ? { ...file, name: value } : file))
+  //   );
+  // };
+
+  // const allDocsValid = files.every((file) => {
+  //   return !!file.name && !!file.type && !!file.uri;
+  // });
 
   return (
     <View style={{ flex: 1 }}>
