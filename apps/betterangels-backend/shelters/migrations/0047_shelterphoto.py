@@ -55,25 +55,33 @@ def migrate_shelter_photos(apps, schema_editor):
     interior_ct = ContentType.objects.get(app_label="shelters", model="interiorphoto")
     exterior_ct = ContentType.objects.get(app_label="shelters", model="exteriorphoto")
 
-    interior_map: dict[int, int] = {}
-    for ip in InteriorPhoto.objects.all().iterator():
-        row = ShelterPhoto.objects.create(
-            shelter_id=ip.shelter_id,
-            file=ip.file,
-            type="interior",
-        )
-        ShelterPhoto.objects.filter(pk=row.pk).update(created_at=ip.created_at, updated_at=ip.updated_at)
-        interior_map[ip.pk] = row.pk
+    BATCH_SIZE = 1000
 
+    # Migrate interior photos
+    interior_map: dict[int, int] = {}
+    interior_rows = []
+    interior_source = list(InteriorPhoto.objects.all().iterator())
+    for ip in interior_source:
+        interior_rows.append(ShelterPhoto(shelter_id=ip.shelter_id, file=ip.file, type="interior"))
+    created_interior = ShelterPhoto.objects.bulk_create(interior_rows, batch_size=BATCH_SIZE)
+    for ip, new_row in zip(interior_source, created_interior):
+        interior_map[ip.pk] = new_row.pk
+    # Preserve original timestamps
+    for ip, new_row in zip(interior_source, created_interior):
+        ShelterPhoto.objects.filter(pk=new_row.pk).update(created_at=ip.created_at, updated_at=ip.updated_at)
+
+    # Migrate exterior photos
     exterior_map: dict[int, int] = {}
-    for ep in ExteriorPhoto.objects.all().iterator():
-        row = ShelterPhoto.objects.create(
-            shelter_id=ep.shelter_id,
-            file=ep.file,
-            type="exterior",
-        )
-        ShelterPhoto.objects.filter(pk=row.pk).update(created_at=ep.created_at, updated_at=ep.updated_at)
-        exterior_map[ep.pk] = row.pk
+    exterior_rows = []
+    exterior_source = list(ExteriorPhoto.objects.all().iterator())
+    for ep in exterior_source:
+        exterior_rows.append(ShelterPhoto(shelter_id=ep.shelter_id, file=ep.file, type="exterior"))
+    created_exterior = ShelterPhoto.objects.bulk_create(exterior_rows, batch_size=BATCH_SIZE)
+    for ep, new_row in zip(exterior_source, created_exterior):
+        exterior_map[ep.pk] = new_row.pk
+    # Preserve original timestamps
+    for ep, new_row in zip(exterior_source, created_exterior):
+        ShelterPhoto.objects.filter(pk=new_row.pk).update(created_at=ep.created_at, updated_at=ep.updated_at)
 
     def resolve_hero_shelterphoto_id(content_type_id: int | None, object_id: int | None) -> int | None:
         if content_type_id is None or object_id is None:

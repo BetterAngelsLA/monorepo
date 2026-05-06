@@ -1,5 +1,3 @@
-from django.db.models import Count
-
 """Filter and ordering types for shelter queries."""
 
 import datetime
@@ -19,7 +17,7 @@ from common.graphql.types import (
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Q, QuerySet
+from django.db.models import Count, Q, QuerySet
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,

@@ -142,21 +142,15 @@ class ShelterTypeMixin:
     website: auto
     media_links: List[MediaLinkType]
 
-    _exterior_photos: Optional[List[ShelterPhotoType]] = None
-    _interior_photos: Optional[List[ShelterPhotoType]] = None
+    _hero_photos: Optional[List[ShelterPhotoType]] = None
 
     @strawberry_django.field(
         only=["hero_image"],
         prefetch_related=[
             lambda x: Prefetch(
                 "photos",
-                queryset=models.ShelterPhoto.objects.filter(type=ShelterPhotoTypeChoices.EXTERIOR).order_by("pk"),
-                to_attr="_exterior_photos",
-            ),
-            lambda x: Prefetch(
-                "photos",
-                queryset=models.ShelterPhoto.objects.filter(type=ShelterPhotoTypeChoices.INTERIOR).order_by("pk"),
-                to_attr="_interior_photos",
+                queryset=models.ShelterPhoto.objects.order_by("pk"),
+                to_attr="_hero_photos",
             ),
         ],
     )
@@ -215,11 +209,10 @@ class AdminShelterType(ShelterTypeMixin):
 def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
     if shelter.hero_image_id:
         return shelter.hero_image
-
-    else:
-        return next(iter(getattr(shelter, "_exterior_photos", [])), None) or next(
-            iter(getattr(shelter, "_interior_photos", [])), None
-        )
+    photos = getattr(shelter, "_hero_photos", [])
+    return next((p for p in photos if p.type == ShelterPhotoTypeChoices.EXTERIOR), None) or next(
+        (p for p in photos if p.type == ShelterPhotoTypeChoices.INTERIOR), None
+    )
 
 
 @strawberry_django.type(models.Bed, filters=BedFilter)

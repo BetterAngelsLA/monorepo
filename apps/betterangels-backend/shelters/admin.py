@@ -466,7 +466,7 @@ class PhotoInlineImgproxyMixin(admin.TabularInline):
         return format_html('<img src="{}" alt="" style="max-height: 200px;" />', url)
 
 
-class ExteriorPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
+class ExteriorPhotoInline(PhotoInlineImgproxyMixin):
     model = ExteriorShelterPhoto
     form = ExteriorPhotoForm
     photo_type = ShelterPhotoTypeChoices.EXTERIOR
@@ -475,7 +475,7 @@ class ExteriorPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
     verbose_name_plural = "Exterior Photos"
 
 
-class InterPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
+class InteriorPhotoInline(PhotoInlineImgproxyMixin):
     model = InteriorShelterPhoto
     form = InteriorPhotoForm
     photo_type = ShelterPhotoTypeChoices.INTERIOR
@@ -944,7 +944,14 @@ class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
     list_select_related = ("organization",)
 
-    inlines = [ContactInfoInline, ScheduleInline, ExteriorPhotoInline, InterPhotoInline, VideoInline, MediaLinkInline]
+    inlines = [
+        ContactInfoInline,
+        ScheduleInline,
+        ExteriorPhotoInline,
+        InteriorPhotoInline,
+        VideoInline,
+        MediaLinkInline,
+    ]
     fieldsets = (
         (
             "Basic Information",

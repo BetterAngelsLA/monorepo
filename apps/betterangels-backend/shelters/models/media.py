@@ -37,6 +37,9 @@ class ShelterPhoto(BaseModel):
 
     objects = models.Manager()
 
+    class Meta:
+        indexes = [models.Index(fields=["shelter", "type"])]
+
 
 class InteriorShelterPhoto(ShelterPhoto):
     """Proxy for ``ShelterPhoto`` rows whose type is ``INTERIOR``.

@@ -362,7 +362,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             }}
         """
 
-        expected_query_count = 21
+        expected_query_count = 20
 
         variables = {"ordering": {"name": "ASC"}}
 

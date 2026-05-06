@@ -45,12 +45,15 @@ def make_m2m_in_filter(related_object: str, field_name: str, value_type: Any) ->
     """Filter rows whose M2M ``related_object`` relates to any lookup row with ``field_name`` in the given values."""
 
     @strawberry_django.filter_field
-    def _filter(self: Any, queryset: QuerySet[Any], value: Optional[list[Any]], prefix: str) -> Tuple[QuerySet[Any], Q]:
+    def _filter(
+        self: Any, queryset: QuerySet[Any], value: Optional[list[value_type]], prefix: str
+    ) -> Tuple[QuerySet[Any], Q]:
         if not value:
             return queryset, Q()
 
+        normalized_value = [value_type[v.name] if not isinstance(v, str) else v for v in value]
         lookup = f"{prefix}{related_object}__{field_name}__in"
-        matching_pks = queryset.filter(**{lookup: value}).values("pk")
+        matching_pks = queryset.filter(**{lookup: normalized_value}).values("pk")
         return queryset.filter(pk__in=Subquery(matching_pks)), Q()
 
     return _filter
