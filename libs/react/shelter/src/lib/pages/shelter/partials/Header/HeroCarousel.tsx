@@ -5,6 +5,7 @@ import {
 } from '@monorepo/react/components';
 import { mapMediaLinksToVideos, mergeCss } from '@monorepo/react/shared';
 import { useState } from 'react';
+import { groupBy } from 'remeda';
 import { ShelterPhotoTypeChoices } from '../../../../apollo/graphql/__generated__/types';
 import { ImagePlaceholder, MediaLightbox } from '../../../../components';
 import { ViewShelterQuery } from '../../__generated__/shelter.generated';
@@ -19,17 +20,17 @@ export function HeroCarousel(props: TProps) {
   const heroImage = shelter.heroImage;
   const heroId = heroImage?.id;
 
-  const exteriorPhotos = shelter.photos.filter(
-    (p) => p.type === ShelterPhotoTypeChoices.Exterior && p.id !== heroId
-  );
-  const interiorPhotos = shelter.photos.filter(
-    (p) => p.type === ShelterPhotoTypeChoices.Interior && p.id !== heroId
-  );
+  const nonHeroPhotos = shelter.photos.filter((p) => p.id !== heroId);
+  const photosByType = groupBy(nonHeroPhotos, (p) => p.type);
 
   const imageUrls = [
     ...(heroImage?.url ? [heroImage.url] : []),
-    ...exteriorPhotos.map((p) => p.file.url),
-    ...interiorPhotos.map((p) => p.file.url),
+    ...(photosByType[ShelterPhotoTypeChoices.Exterior] ?? []).map(
+      (p) => p.file.url
+    ),
+    ...(photosByType[ShelterPhotoTypeChoices.Interior] ?? []).map(
+      (p) => p.file.url
+    ),
   ].filter((u): u is string => Boolean(u));
 
   const youtubeVideos = mapMediaLinksToVideos(shelter.mediaLinks || []);

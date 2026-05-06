@@ -4,6 +4,7 @@ import { ArrowLeftIcon } from '@monorepo/react/icons';
 import { mapMediaLinksToVideos } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { groupBy } from 'remeda';
 import { ShelterPhotoTypeChoices } from '../../apollo';
 import { MediaLightbox } from '../../components';
 import { ViewShelterDocument } from '../shelter/__generated__/shelter.generated';
@@ -37,13 +38,10 @@ export function GalleryPage(props: TProps) {
   }
 
   const youtubeVideos = mapMediaLinksToVideos(shelter.mediaLinks || []);
+  const photosByType = groupBy(shelter.photos, (p) => p.type);
   const photos = [
-    ...shelter.photos.filter(
-      (photo) => photo.type === ShelterPhotoTypeChoices.Exterior
-    ),
-    ...shelter.photos.filter(
-      (photo) => photo.type === ShelterPhotoTypeChoices.Interior
-    ),
+    ...(photosByType[ShelterPhotoTypeChoices.Exterior] ?? []),
+    ...(photosByType[ShelterPhotoTypeChoices.Interior] ?? []),
   ];
   return (
     <>

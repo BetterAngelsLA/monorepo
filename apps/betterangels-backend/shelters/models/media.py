@@ -35,8 +35,6 @@ class ShelterPhoto(BaseModel):
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="photos")
     type = TextChoicesField(choices_enum=ShelterPhotoTypeChoices)
 
-    objects = models.Manager()
-
     class Meta:
         indexes = [models.Index(fields=["shelter", "type"])]
 
