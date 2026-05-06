@@ -422,19 +422,11 @@ class PhotoForm(forms.ModelForm):
         exclude = ("type",)
 
 
-class ExteriorPhotoForm(PhotoForm):
-    class Meta(PhotoForm.Meta):
-        model = ExteriorShelterPhoto
+class BaseShelterPhotoInline(admin.TabularInline):
+    """Base inline for shelter photo sections with imgproxy thumbnail preview."""
 
-
-class InteriorPhotoForm(PhotoForm):
-    class Meta(PhotoForm.Meta):
-        model = InteriorShelterPhoto
-
-
-class PhotoInlineImgproxyMixin(admin.TabularInline):
-    """Mixin for photo inlines: adds a readonly thumbnail column via imgproxy when enabled."""
-
+    form = PhotoForm
+    max_num = 0
     photo_type: ShelterPhotoTypeChoices
 
     def get_readonly_fields(self, request: HttpRequest, obj: Optional[models.Model] = None) -> tuple[str, ...]:
@@ -444,12 +436,7 @@ class PhotoInlineImgproxyMixin(admin.TabularInline):
         return ("photo_preview", "file", "make_hero_image")
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[ShelterPhoto]:
-        # Each inline only shows photos of its configured type. Without this
-        # filter, both inlines would surface every ShelterPhoto attached to
-        # the shelter, regardless of interior/exterior.
-        qs = super().get_queryset(request).filter(type=self.photo_type)
-
-        return cast(QuerySet[ShelterPhoto], qs)
+        return super().get_queryset(request).filter(type=self.photo_type)
 
     @admin.display(description="Preview")
     def photo_preview(self, obj: ShelterPhoto) -> str:
@@ -466,22 +453,14 @@ class PhotoInlineImgproxyMixin(admin.TabularInline):
         return format_html('<img src="{}" alt="" style="max-height: 200px;" />', url)
 
 
-class ExteriorPhotoInline(PhotoInlineImgproxyMixin):
+class ExteriorPhotoInline(BaseShelterPhotoInline):
     model = ExteriorShelterPhoto
-    form = ExteriorPhotoForm
     photo_type = ShelterPhotoTypeChoices.EXTERIOR
-    max_num = 0
-    verbose_name = "Exterior Photo"
-    verbose_name_plural = "Exterior Photos"
 
 
-class InteriorPhotoInline(PhotoInlineImgproxyMixin):
+class InteriorPhotoInline(BaseShelterPhotoInline):
     model = InteriorShelterPhoto
-    form = InteriorPhotoForm
     photo_type = ShelterPhotoTypeChoices.INTERIOR
-    max_num = 0
-    verbose_name = "Interior Photo"
-    verbose_name_plural = "Interior Photos"
 
 
 class VideoInline(admin.TabularInline):
