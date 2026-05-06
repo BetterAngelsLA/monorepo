@@ -39,49 +39,6 @@ export function ShelterPage({ id }: { id: string }) {
     return null;
   }
 
-  const hasGeneralInfo =
-    !!shelter.website ||
-    !!shelter.phone ||
-    !!shelter.email ||
-    !!shelter.location?.place;
-  const hasServices =
-    !!shelter.services?.length || hasWysiwygContent(shelter.otherServices);
-  const hasDescription = hasWysiwygContent(shelter.description);
-  const hasEntryRequirements =
-    !!shelter.entryRequirements?.length ||
-    !!shelter.referralRequirement?.length ||
-    !!shelter.vaccinationRequirement?.length ||
-    hasWysiwygContent(shelter.entryInfo) ||
-    hasWysiwygContent(shelter.bedFees) ||
-    hasWysiwygContent(shelter.programFees);
-  const hasSpecialRestrictions = !!shelter.specialSituationRestrictions?.length;
-  const hasShelterTypes =
-    !!shelter.shelterTypes?.length || !!shelter.shelterTypesOther;
-  const hasRoomStyles = !!shelter.roomStyles?.length;
-  const hasDetail =
-    !!shelter.accessibility?.length ||
-    !!shelter.storage?.length ||
-    !!shelter.pets?.length ||
-    !!shelter.parking?.length;
-  const hasRestrictions =
-    !!shelter.maxStay ||
-    !!shelter.curfew ||
-    !!shelter.exitPolicy?.length ||
-    shelter.visitorsAllowed != null ||
-    shelter.emergencySurge != null ||
-    shelter.onSiteSecurity != null ||
-    hasWysiwygContent(shelter.otherRules);
-
-  const hasEcosystemInfo =
-    !!shelter.cities?.length ||
-    !!shelter.spa?.length ||
-    !!shelter.cityCouncilDistrict ||
-    !!shelter.supervisorialDistrict ||
-    !!shelter.shelterPrograms?.length ||
-    !!shelter.funders?.length;
-  const hasPhotos =
-    !!shelter.interiorPhotos?.length || !!shelter.exteriorPhotos?.length;
-  const hasMedia = hasPhotos || !!shelter.mediaLinks?.length;
   const visibility = getShelterVisibility(shelter);
 
   return (
