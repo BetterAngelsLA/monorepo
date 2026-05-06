@@ -87,6 +87,10 @@ env = environ.Env(
     TWILIO_FROM_NUMBER=(str, ""),
     TWILIO_MESSAGING_SERVICE_SID=(str, ""),
     SIMPLE_TEXTING_API_TOKEN=(str, ""),
+    EZ_TEXTING_APP_KEY=(str, ""),
+    EZ_TEXTING_APP_SECRET=(str, ""),
+    EZ_TEXTING_BASE_URL=(str, "https://a.eztexting.com/v1"),
+    EZ_TEXTING_GROUP_ID=(str, ""),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -442,6 +446,10 @@ TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN")
 TWILIO_FROM_NUMBER = env("TWILIO_FROM_NUMBER")
 TWILIO_MESSAGING_SERVICE_SID = env("TWILIO_MESSAGING_SERVICE_SID")
 SIMPLE_TEXTING_API_TOKEN = env("SIMPLE_TEXTING_API_TOKEN")
+EZ_TEXTING_APP_KEY = env("EZ_TEXTING_APP_KEY")
+EZ_TEXTING_APP_SECRET = env("EZ_TEXTING_APP_SECRET")
+EZ_TEXTING_BASE_URL = env("EZ_TEXTING_BASE_URL")
+EZ_TEXTING_GROUP_ID = env("EZ_TEXTING_GROUP_ID")
 
 # Logging Configuration
 # https://django-structlog.readthedocs.io/en/latest/getting_started.html
