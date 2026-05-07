@@ -126,8 +126,7 @@ type AdminShelterType {
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
-  ExteriorPhotos: [ShelterPhotoType!]
-  InteriorPhotos: [ShelterPhotoType!]
+  HeroPhotos: [ShelterPhotoType!]
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
   bedsByStatus: BedsByStatusType!
@@ -2322,8 +2321,7 @@ type ShelterType {
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
-  ExteriorPhotos: [ShelterPhotoType!]
-  InteriorPhotos: [ShelterPhotoType!]
+  HeroPhotos: [ShelterPhotoType!]
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
   bedsByStatus: BedsByStatusType!
