@@ -20,6 +20,7 @@ export interface IUploadModalProps {
   opacity?: number;
   onUploadSuccess?: () => void;
   onUploadError?: () => void;
+  onUploadStart?: () => void;
   client: ClientProfileQuery | undefined;
 }
 

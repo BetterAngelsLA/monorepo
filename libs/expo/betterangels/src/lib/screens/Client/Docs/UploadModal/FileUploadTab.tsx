@@ -6,14 +6,15 @@ import { DocUploads, ITab } from './types';
 
 export interface IFileUploadTabProps {
   docs: DocUploads;
-  setTab: (tabKey: ITab) => void;
+  setTab?: (tabKey: ITab) => void;
   tabKey: keyof DocUploads;
   title: string;
   allowMultiple?: boolean;
+  onPress?: () => void;
 }
 
 const FileUploadTab = (props: IFileUploadTabProps) => {
-  const { docs, setTab, tabKey, title, allowMultiple = false } = props;
+  const { docs, setTab, tabKey, title, allowMultiple = false, onPress } = props;
   const disabled = !allowMultiple && docs[tabKey].length > 0;
 
   return (
@@ -40,7 +41,14 @@ const FileUploadTab = (props: IFileUploadTabProps) => {
       <Button
         disabled={disabled}
         containerStyle={{ flex: 1 }}
-        onPress={() => setTab(tabKey)}
+        onPress={() => {
+          if (onPress) {
+            onPress();
+            return;
+          }
+
+          setTab?.(tabKey);
+        }}
         height="md"
         align="flex-start"
         weight="regular"

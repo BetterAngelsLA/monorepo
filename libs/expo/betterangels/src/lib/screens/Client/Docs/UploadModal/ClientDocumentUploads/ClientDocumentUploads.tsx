@@ -1,10 +1,13 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
-import { Colors } from '@monorepo/expo/shared/static';
-import { MediaPicker } from '@monorepo/expo/shared/ui-components';
+import { UploadIcon } from '@monorepo/expo/shared/icons';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { MediaPicker, TextBold } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
 import { useSnackbar } from '../../../../../hooks';
+import { UploadSection } from '../UploadSection';
+import UploadsPreview from '../UploadsPreview';
 import { useClientDocumentUpload } from './useClientDocumentUpload';
 
 export interface IClientDocUploadsProps {
@@ -28,6 +31,7 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
     onUploadSuccess,
     onUploadError,
     namespace,
+    title,
     allowMultiple = false,
   } = props;
 
@@ -50,9 +54,7 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
   };
 
   const uploadSelectedFiles = async (selectedFiles: ReactNativeFile[]) => {
-    if (!clientProfileId || !selectedFiles.length) {
-      return;
-    }
+    if (!clientProfileId || !selectedFiles.length) return;
 
     try {
       setProcessing(true);
@@ -78,71 +80,102 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
     }
   };
 
-  /****  Functions not needed since screen is intended to be blank ****/
+  const handleUpload = async () => {
+    if (!clientProfileId) return;
 
-  // const handleUpload = async () => {
-  //   if (!clientProfileId) {
-  //     return;
-  //   }
+    await uploadSelectedFiles(files);
+  };
 
-  //   try {
-  //     setProcessing(true);
+  const onRemoveFile = (index: number) => {
+    onFilesChange(files.filter((_, i) => i !== index));
+  };
 
-  //     await uploadDocuments({
-  //       clientProfileId,
-  //       documents: files,
-  //       namespace,
-  //     });
+  const onFilenameChange = (index: number, value: string) => {
+    onFilesChange(
+      files.map((file, i) => (i === index ? { ...file, name: value } : file))
+    );
+  };
 
-  //     onUploadSuccess?.();
-  //   } catch (err) {
-  //     console.error(`[ClientDocumentUploads error:] ${err}`);
+  const allDocsValid = files.every((file) => {
+    return !!file.name && !!file.type && !!file.uri;
+  });
 
-  //     onUploadError?.();
-
-  //     showSnackbar({
-  //       message: `Sorry, there was an error with the file upload.`,
-  //       type: 'error',
-  //     });
-  //   } finally {
-  //     setProcessing(false);
-  //   }
-  // };
-
-  // const onRemoveFile = (index: number) => {
-  //   onFilesChange(files.filter((_, i) => i !== index));
-  // };
-
-  // const onFilenameChange = (index: number, value: string) => {
-  //   onFilesChange(
-  //     files.map((file, i) => (i === index ? { ...file, name: value } : file))
-  //   );
-  // };
-
-  // const allDocsValid = files.every((file) => {
-  //   return !!file.name && !!file.type && !!file.uri;
-  // });
+  if (processing) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: Colors.WHITE,
+        }}
+      >
+        <ActivityIndicator
+          size="large"
+          color={Colors.PRIMARY}
+          style={{ transform: [{ translateY: -40 }] }}
+        />
+      </View>
+    );
+  }
 
   return (
-    <View style={{ flex: 1 }}>
-      {processing ? (
+    <>
+      <UploadSection
+        loading={processing}
+        disabled={!files.length || !allDocsValid}
+        title={title}
+        onSubmit={handleUpload}
+        onCancel={() => {
+          onFilesChange([]);
+          onClose();
+        }}
+      >
         <View
           style={{
-            flex: 1,
+            padding: Spacings.sm,
+            paddingBottom: Spacings.lg,
+            marginBottom: Spacings.sm,
+            flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: Colors.WHITE,
+            borderBottomColor: Colors.NEUTRAL_LIGHT,
+            borderBottomWidth: 1,
           }}
         >
-          <ActivityIndicator
-            size="large"
-            color={Colors.PRIMARY}
-            style={{ transform: [{ translateY: -40 }] }}
-          />
+          <Pressable
+            onPress={() => setIsModalVisible(true)}
+            accessibilityRole="button"
+            style={{ alignItems: 'center' }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: Spacings.xs,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 1,
+                borderColor: Colors.NEUTRAL_LIGHT,
+                borderRadius: Radiuses.xs,
+                height: 66,
+                width: 139,
+              }}
+            >
+              <UploadIcon size="lg" />
+              <TextBold size="sm">Upload</TextBold>
+            </View>
+          </Pressable>
         </View>
-      ) : (
-        <View style={{ flex: 1 }} />
-      )}
+
+        {files.length > 0 && (
+          <UploadsPreview
+            files={files}
+            onRemoveFile={onRemoveFile}
+            onFilenameChange={onFilenameChange}
+            documentType={namespace}
+          />
+        )}
+      </UploadSection>
 
       <MediaPicker
         allowMultiple={allowMultiple}
@@ -164,6 +197,6 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
           uploadSelectedFiles(selectedFiles);
         }}
       />
-    </View>
+    </>
   );
 }

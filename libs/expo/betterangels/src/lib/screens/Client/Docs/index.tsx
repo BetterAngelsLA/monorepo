@@ -7,7 +7,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentType } from '../../../apollo';
 import { useModalScreen } from '../../../providers';
@@ -20,6 +20,7 @@ export default function Docs({
 }: {
   client: ClientProfileQuery | undefined;
 }) {
+  const [isUploading, setIsUploading] = useState(false);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const { showModalScreen } = useModalScreen();
   const insets = useSafeAreaInsets();
@@ -59,7 +60,9 @@ export default function Docs({
         >
           <TextMedium size="lg">Doc Library</TextMedium>
           <IconButton
-            onPress={() =>
+            onPress={() => {
+              setBanner(null);
+
               showModalScreen({
                 presentation: 'fullScreenModal',
                 title: 'Upload Files',
@@ -67,22 +70,25 @@ export default function Docs({
                   <UploadModal
                     client={client}
                     closeModal={close}
-                    onUploadSuccess={() =>
+                    onUploadStart={() => setIsUploading(true)}
+                    onUploadSuccess={() => {
+                      setIsUploading(false);
                       setBanner({
                         type: 'success',
                         message: 'File uploaded successfully.',
-                      })
-                    }
-                    onUploadError={() =>
+                      });
+                    }}
+                    onUploadError={() => {
+                      setIsUploading(false);
                       setBanner({
                         type: 'error',
                         message: 'Upload failed. Please try again.',
-                      })
-                    }
+                      });
+                    }}
                   />
                 ),
-              })
-            }
+              });
+            }}
             variant="secondary"
             borderColor={Colors.WHITE}
             accessibilityLabel={'add document'}
@@ -143,6 +149,26 @@ export default function Docs({
           )}
         </View>
       </ScrollView>
+
+      {isUploading && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: Colors.WHITE,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <ActivityIndicator
+            size="large"
+            style={{ transform: [{ translateY: -40 }] }}
+          />
+        </View>
+      )}
 
       {banner && (
         <View
