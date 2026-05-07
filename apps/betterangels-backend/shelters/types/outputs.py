@@ -146,6 +146,7 @@ class ShelterTypeMixin:
 
     @strawberry_django.field(
         only=["hero_image"],
+        select_related=["hero_image"],
         prefetch_related=[
             lambda x: Prefetch(
                 "photos",
