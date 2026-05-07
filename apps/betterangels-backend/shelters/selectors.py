@@ -51,20 +51,9 @@ def shelter_get(*, user: "User", shelter_id: int | str) -> "Shelter":
         ``Shelter.DoesNotExist`` when the shelter is not found or the user
         does not belong to its organization.
     """
-    from django.db.models import Prefetch
-    from shelters.models import Shelter, ShelterPhoto
+    from shelters.models import Shelter
 
-    return (
-        admin_shelter_list(Shelter.objects.all(), user=user)
-        .select_related("organization", "hero_image")
-        .prefetch_related(
-            Prefetch(
-                "photos",
-                queryset=ShelterPhoto.objects.order_by("created_at", "pk"),
-            )
-        )
-        .get(pk=shelter_id)
-    )
+    return admin_shelter_list(Shelter.objects.all(), user=user).get(pk=shelter_id)
 
 
 def shelters_open_at(
