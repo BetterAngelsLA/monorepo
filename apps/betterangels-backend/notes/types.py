@@ -3,7 +3,6 @@ from typing import List, Optional
 
 import strawberry
 import strawberry_django
-from accounts.groups import GroupTemplateNames
 from accounts.models import PermissionGroup, User
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
@@ -328,12 +327,10 @@ class InteractionAuthorType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet[User], info: Info) -> QuerySet[User]:
         # TODO: Make unit test for this function
-        authorized_permission_groups = [template.value for template in GroupTemplateNames]
-
-        # Subquery to check if the user has any related permission group in an authorized group
+        # Subquery to check if the user has any related permission group with a template
         permission_group_exists = PermissionGroup.objects.filter(
             organization__users=OuterRef("pk"),  # Matches `User` to `Organization`
-            template__name__in=authorized_permission_groups,
+            template__isnull=False,
         )
 
         # Use Exists to avoid duplicate users without `distinct()`

@@ -174,7 +174,6 @@ class RegisterShelterOperatorInput:
     email: str
     first_name: str
     last_name: str
-    password: str
     organization_name: str
 
 
@@ -183,4 +182,3 @@ class AcceptShelterInviteInput:
     invite_id: ID
     first_name: Optional[str] = None
     last_name: Optional[str] = None
-    password: str

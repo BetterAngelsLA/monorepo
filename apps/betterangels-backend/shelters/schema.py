@@ -5,7 +5,6 @@ import strawberry_django
 from accounts.models import User
 from accounts.types import AuthResponse
 from common.permissions.utils import IsAuthenticated
-from django.contrib import auth
 from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Shelter
@@ -85,27 +84,31 @@ class Mutation:
 
     @strawberry.mutation
     def register_shelter_operator(self, info: Info, data: RegisterShelterOperatorInput) -> AuthResponse:
-        """Register a new shelter operator: creates user, organization, and assigns ownership."""
-        user, _organization = shelter_operator_register(
+        """Register a new shelter operator: creates user, organization, and assigns ownership.
+
+        The user is created without a password. After this mutation succeeds,
+        the client should use the allauth login-by-code flow to authenticate.
+        """
+        shelter_operator_register(
             email=data.email,
-            password=data.password,
             first_name=data.first_name,
             last_name=data.last_name,
             organization_name=data.organization_name,
         )
 
-        auth.login(info.context.request, user)
         return AuthResponse(status_code="200")
 
     @strawberry.mutation
     def accept_shelter_invite(self, info: Info, data: AcceptShelterInviteInput) -> AuthResponse:
-        """Accept an invitation to join a shelter organization by setting a password."""
-        user = shelter_invite_accept(
+        """Accept an invitation to join a shelter organization.
+
+        The user is activated without a password. After this mutation succeeds,
+        the client should use the allauth login-by-code flow to authenticate.
+        """
+        shelter_invite_accept(
             invite_id=data.invite_id,
-            password=data.password,
             first_name=data.first_name,
             last_name=data.last_name,
         )
 
-        auth.login(info.context.request, user)
         return AuthResponse(status_code="200")

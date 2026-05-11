@@ -31,6 +31,7 @@ from django.utils.text import slugify
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 from places import Places
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
+from shelters.groups import SHELTER_OPERATOR
 from shelters.models import Bed, Room, Schedule, Service, ServiceCategory, Shelter
 from shelters.selectors import shelter_get
 
@@ -402,12 +403,14 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
 def shelter_operator_register(
     *,
     email: str,
-    password: str,
     first_name: str,
     last_name: str,
     organization_name: str,
 ) -> tuple[User, Organization]:
     """Register a new shelter operator: create user, org, and assign ownership.
+
+    The user is created without a password.  Authentication is handled
+    via allauth login-by-code (OTP sent to email).
 
     Returns the created (user, organization) tuple.
     """
@@ -415,9 +418,6 @@ def shelter_operator_register(
 
     if User.objects.filter(email=email).exists():
         raise ValidationError("A user with this email already exists.")
-
-    if not password or len(password) < 8:
-        raise ValidationError("Password must be at least 8 characters.")
 
     organization_name = organization_name.strip()
     if not organization_name:
@@ -427,11 +427,12 @@ def shelter_operator_register(
         user = User.objects.create_user(
             username=str(uuid.uuid4()),
             email=email,
-            password=password,
             first_name=first_name.strip(),
             last_name=last_name.strip(),
             is_active=True,
         )
+        user.set_unusable_password()
+        user.save(update_fields=["password"])
 
         organization = Organization.objects.create(name=organization_name)
 
@@ -452,7 +453,7 @@ def shelter_operator_register(
         )
 
         # Assign shelter operator + org superuser permission groups
-        for template_name in [GroupTemplateNames.SHELTER_OPERATOR, GroupTemplateNames.ORG_SUPERUSER]:
+        for template_name in [SHELTER_OPERATOR, GroupTemplateNames.ORG_SUPERUSER]:
             template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_name)
             perm_group, _ = PermissionGroup.objects.get_or_create(
                 organization=organization,
@@ -468,11 +469,13 @@ def shelter_operator_register(
 def shelter_invite_accept(
     *,
     invite_id: int,
-    password: str,
     first_name: str | None = None,
     last_name: str | None = None,
 ) -> User:
-    """Accept an invitation to join a shelter organization by setting a password.
+    """Accept an invitation to join a shelter organization.
+
+    The user is activated without a password.  Authentication is handled
+    via allauth login-by-code (OTP sent to email).
 
     Returns the activated user.
     """
@@ -484,9 +487,6 @@ def shelter_invite_accept(
     if invitation.accepted:
         raise ValidationError("This invitation has already been accepted.")
 
-    if not password or len(password) < 8:
-        raise ValidationError("Password must be at least 8 characters.")
-
     user = invitation.invitee
 
     with transaction.atomic():
@@ -494,7 +494,6 @@ def shelter_invite_accept(
             user.first_name = first_name.strip()
         if last_name:
             user.last_name = last_name.strip()
-        user.set_password(password)
         user.save()
 
         invitation.accepted = True
@@ -502,7 +501,7 @@ def shelter_invite_accept(
 
         # Ensure the user has shelter operator permissions for this org
         template, _ = PermissionGroupTemplate.objects.get_or_create(
-            name=GroupTemplateNames.SHELTER_OPERATOR,
+            name=SHELTER_OPERATOR,
         )
         perm_group, _ = PermissionGroup.objects.get_or_create(
             organization=invitation.organization,

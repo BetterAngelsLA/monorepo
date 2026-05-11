@@ -18,9 +18,6 @@ class UserOrganizationPermissions(models.TextChoices):
     CHANGE_ORG_MEMBER_ROLE = "organizations.change_org_member_role", _("Can change organization member role")
     REMOVE_ORG_MEMBER = "organizations.remove_org_member", _("Can remove organization member")
     VIEW_ORG_MEMBERS = "organizations.view_org_members", _("Can view organization members")
-    VIEW_REPORTS = "organizations.view_reports", _("Can view reports")
-    MANAGE_SHELTER = "organizations.manage_shelter", _("Can manage shelters")
-    MANAGE_SHELTER_BEDS = "organizations.manage_shelter_beds", _("Can manage shelter beds and rooms")
 
 
 def get_user_permitted_orgs(

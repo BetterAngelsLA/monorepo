@@ -1,14 +1,14 @@
 """
-Org-type registry — allows domain apps to register their configuration
-without accounts needing to import from them.
+Org-type configuration — a plain mapping from OrgType to its defaults.
 
-Each app calls ``register_org_type()`` in its ``AppConfig.ready()`` to declare:
+Each entry declares:
   - which permission-group templates to create for new orgs of that type
   - which template is the default member role
   - which email templates to use for invitations
 
-This keeps shelter/outreach knowledge out of accounts while letting accounts
-remain the single authority for org-type infrastructure.
+Shelter-specific constants are imported here so the configuration lives in
+one place.  The dependency direction (accounts → shelters.groups for a
+constant) is acceptable because this is static data, not runtime logic.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 
 from accounts.enums import OrgType
 from accounts.groups import GroupTemplateNames
+from shelters.groups import SHELTER_OPERATOR
 
 
 @dataclass(frozen=True)
@@ -28,31 +29,44 @@ class OrgTypeConfig:
     invite_templates: dict[str, str] = field(default_factory=dict)
 
 
-# Private mutable registry — populated at startup via register_org_type().
-_registry: dict[str, OrgTypeConfig] = {}
-
-
-def register_org_type(org_type: str, config: OrgTypeConfig) -> None:
-    """Register configuration for an org type.  Called from AppConfig.ready()."""
-    _registry[org_type] = config
+ORG_TYPE_CONFIGS: dict[str, OrgTypeConfig] = {
+    OrgType.OUTREACH: OrgTypeConfig(
+        templates=[
+            GroupTemplateNames.CASEWORKER,
+            GroupTemplateNames.ORG_ADMIN,
+            GroupTemplateNames.ORG_SUPERUSER,
+        ],
+        member_role=GroupTemplateNames.CASEWORKER,
+        invite_templates={
+            "html": "account/email/email_invite_organization.html",
+            "txt": "account/messages/email_invite_organization.txt",
+        },
+    ),
+    OrgType.SHELTER: OrgTypeConfig(
+        templates=[
+            SHELTER_OPERATOR,
+            GroupTemplateNames.ORG_ADMIN,
+            GroupTemplateNames.ORG_SUPERUSER,
+        ],
+        member_role=SHELTER_OPERATOR,
+        invite_templates={
+            "html": "account/email/shelter_operator_invite.html",
+            "txt": "account/messages/shelter_operator_invite.txt",
+        },
+    ),
+}
 
 
 def get_org_type_config(org_type: str) -> OrgTypeConfig:
     """Return the config for *org_type*, falling back to OUTREACH."""
-    return _registry.get(org_type, _registry[OrgType.OUTREACH])
-
-
-def get_all_configs() -> dict[str, OrgTypeConfig]:
-    """Return the full registry (read-only snapshot)."""
-    return dict(_registry)
+    return ORG_TYPE_CONFIGS.get(org_type, ORG_TYPE_CONFIGS[OrgType.OUTREACH])
 
 
 def get_invite_templates(org_type: str) -> dict[str, str]:
     """Return invite email template paths for *org_type*."""
-    cfg = get_org_type_config(org_type)
-    return cfg.invite_templates
+    return get_org_type_config(org_type).invite_templates
 
 
-def is_registered_member_role(template_name: str) -> bool:
-    """Return True if *template_name* is the primary member template for any registered org type."""
-    return any(cfg.member_role == template_name for cfg in _registry.values())
+def is_default_member_role(template_name: str) -> bool:
+    """Return True if *template_name* is the primary member template for any org type."""
+    return any(cfg.member_role == template_name for cfg in ORG_TYPE_CONFIGS.values())

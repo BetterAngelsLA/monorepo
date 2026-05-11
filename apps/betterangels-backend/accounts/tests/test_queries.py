@@ -189,7 +189,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     UserOrganizationPermissions.ADD_ORG_MEMBER.name,
                     UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
                     UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
-                    UserOrganizationPermissions.VIEW_REPORTS.name,
                 ],
             ),
             (
@@ -200,7 +199,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
                     UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
                     UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
-                    UserOrganizationPermissions.VIEW_REPORTS.name,
                 ],
             ),
         ],
