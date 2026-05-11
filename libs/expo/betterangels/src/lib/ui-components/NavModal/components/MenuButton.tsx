@@ -14,6 +14,7 @@ export function MenuButton(props: TProps) {
       onPress={onPress}
       accessibilityRole="button"
       accessibilityHint="opens main navigation modal"
+      testID="nav-menu-btn"
     >
       <BarsIcon size={'xl'} color={Colors.WHITE} />
     </Pressable>

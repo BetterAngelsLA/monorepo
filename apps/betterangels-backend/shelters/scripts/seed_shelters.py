@@ -22,9 +22,8 @@ from django.db import transaction  # noqa: E402
 
 django.setup()
 
-from django.contrib.contenttypes.models import ContentType  # noqa: E402
-from shelters.enums import StatusChoices  # noqa: E402
-from shelters.models import ExteriorPhoto, InteriorPhoto, Shelter  # noqa: E402
+from shelters.enums import ShelterPhotoTypeChoices, StatusChoices  # noqa: E402
+from shelters.models import Shelter, ShelterPhoto  # noqa: E402
 from shelters.tests.baker_recipes import make_complete_shelters, shelter_contact_recipe  # noqa: E402
 
 
@@ -38,19 +37,17 @@ def _add_images(shelter: Shelter, django_file: File, total: int) -> None:
 
     first_exterior = None
     for _ in range(num_exterior):
-        photo = ExteriorPhoto.objects.create(file=django_file, shelter=shelter)
+        photo = ShelterPhoto.objects.create(file=django_file, shelter=shelter, type=ShelterPhotoTypeChoices.EXTERIOR)
         if first_exterior is None:
             first_exterior = photo
 
     for _ in range(num_interior):
-        InteriorPhoto.objects.create(file=django_file, shelter=shelter)
+        ShelterPhoto.objects.create(file=django_file, shelter=shelter, type=ShelterPhotoTypeChoices.INTERIOR)
 
     # Set hero image to the first exterior photo.
     if first_exterior:
-        ct = ContentType.objects.get_for_model(ExteriorPhoto)
-        shelter.hero_image_content_type = ct
-        shelter.hero_image_object_id = first_exterior.pk
-        shelter.save(update_fields=["hero_image_content_type", "hero_image_object_id"])
+        shelter.hero_image = first_exterior
+        shelter.save(update_fields=["hero_image"])
 
 
 # ---------------------------------------------------------------------------
@@ -82,8 +79,7 @@ def main() -> None:
             _quantity=num_shelters,
             _fill_optional=True,
             status=StatusChoices.APPROVED,
-            hero_image_content_type=None,
-            hero_image_object_id=None,
+            hero_image=None,
         )
 
         # ---- Images (1–10 per shelter) ----

@@ -20,7 +20,7 @@ import {
   ShelterTypes,
   SpecialSituationRestrictions,
 } from './partials';
-import { hasWysiwygContent } from './utils';
+import { getShelterVisibility } from './utils';
 
 export function ShelterPage({ id }: { id: string }) {
   const { loading, data } = useQuery(ViewShelterDocument, {
@@ -39,54 +39,13 @@ export function ShelterPage({ id }: { id: string }) {
     return null;
   }
 
-  const hasGeneralInfo =
-    !!shelter.website ||
-    !!shelter.phone ||
-    !!shelter.email ||
-    !!shelter.location?.place;
-  const hasServices =
-    !!shelter.services?.length || hasWysiwygContent(shelter.otherServices);
-  const hasDescription = hasWysiwygContent(shelter.description);
-  const hasEntryRequirements =
-    !!shelter.entryRequirements?.length ||
-    !!shelter.referralRequirement?.length ||
-    hasWysiwygContent(shelter.entryInfo) ||
-    hasWysiwygContent(shelter.bedFees) ||
-    hasWysiwygContent(shelter.programFees);
-  const hasSpecialRestrictions = !!shelter.specialSituationRestrictions?.length;
-  const hasShelterTypes =
-    !!shelter.shelterTypes?.length || !!shelter.shelterTypesOther;
-  const hasRoomStyles = !!shelter.roomStyles?.length;
-  const hasDetail =
-    !!shelter.accessibility?.length ||
-    !!shelter.storage?.length ||
-    !!shelter.pets?.length ||
-    !!shelter.parking?.length;
-  const hasRestrictions =
-    !!shelter.maxStay ||
-    !!shelter.curfew ||
-    !!shelter.exitPolicy?.length ||
-    shelter.visitorsAllowed != null ||
-    shelter.emergencySurge != null ||
-    shelter.onSiteSecurity != null ||
-    hasWysiwygContent(shelter.otherRules);
-
-  const hasEcosystemInfo =
-    !!shelter.city != null ||
-    !!shelter.spa != null ||
-    !!shelter.cityCouncilDistrict ||
-    !!shelter.supervisorialDistrict ||
-    !!shelter.shelterPrograms?.length ||
-    !!shelter.funders?.length;
-  const hasPhotos =
-    !!shelter.interiorPhotos?.length || !!shelter.exteriorPhotos?.length;
-  const hasMedia = hasPhotos || !!shelter.mediaLinks?.length;
+  const visibility = getShelterVisibility(shelter);
 
   return (
     <div className="w-full">
       <Header shelter={shelter} />
       <OperatingHours schedules={shelter.schedules} />
-      {hasMedia && (
+      {visibility.media && (
         <Button
           onClick={() => navigate(`/shelter/${id}/gallery`)}
           variant="secondary"
@@ -105,22 +64,24 @@ export function ShelterPage({ id }: { id: string }) {
         <div className="text-sm text-gray-400 text-right">
           Last Updated Date: {format(shelter.updatedAt, 'M/d/yy')}
         </div>
-        {hasGeneralInfo && <GeneralInfo shelter={shelter} />}
-        {hasServices && <Services shelter={shelter} />}
-        {hasDescription && (
+        {visibility.generalInfo && <GeneralInfo shelter={shelter} />}
+        {visibility.services && <Services shelter={shelter} />}
+        {visibility.description && (
           <Card title="Description">
             <WysiwygSection content={shelter.description} />
           </Card>
         )}
-        {hasEntryRequirements && <EntryRequirements shelter={shelter} />}
-        {hasSpecialRestrictions && (
+        {visibility.entryRequirements && (
+          <EntryRequirements shelter={shelter} />
+        )}
+        {visibility.specialRestrictions && (
           <SpecialSituationRestrictions shelter={shelter} />
         )}
-        {hasShelterTypes && <ShelterTypes shelter={shelter} />}
-        {hasRoomStyles && <RoomStyles shelter={shelter} />}
-        {hasDetail && <ShelterDetail shelter={shelter} />}
-        {hasRestrictions && <Restrictions shelter={shelter} />}
-        {hasEcosystemInfo && <EcosystemInfo shelter={shelter} />}
+        {visibility.shelterTypes && <ShelterTypes shelter={shelter} />}
+        {visibility.roomStyles && <RoomStyles shelter={shelter} />}
+        {visibility.shelterDetail && <ShelterDetail shelter={shelter} />}
+        {visibility.restrictions && <Restrictions shelter={shelter} />}
+        {visibility.ecosystemInfo && <EcosystemInfo shelter={shelter} />}
         <div className="my-4 flex justify-center">
           <ReportUpdateButton />
         </div>

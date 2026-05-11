@@ -1,1 +1,1 @@
-export { ImageCarousel } from './ImageCarousel';
+export { ImageCarousel, type TYouTubeVideo } from './ImageCarousel';

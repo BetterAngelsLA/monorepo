@@ -19,8 +19,16 @@ from .lookups import (  # noqa: F401
     ShelterType,
     SpecialSituationRestriction,
     Storage,
+    VaccinationRequirement,
 )
-from .media import ExteriorPhoto, InteriorPhoto, MediaLink, Video, upload_path  # noqa: F401
+from .media import (  # noqa: F401
+    ExteriorShelterPhoto,
+    InteriorShelterPhoto,
+    MediaLink,
+    ShelterPhoto,
+    Video,
+    upload_path,
+)
 from .reservation import Reservation, ReservationClient  # noqa: F401
 from .schedule import Schedule  # noqa: F401
 from .service import Service, ServiceCategory  # noqa: F401
@@ -39,4 +47,5 @@ from .tracked import (  # noqa: F401
     TrackedSPA,
     TrackedSpecialSituationRestriction,
     TrackedStorage,
+    TrackedVaccinationRequirement,
 )

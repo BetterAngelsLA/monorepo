@@ -14,7 +14,6 @@ from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.db import models, transaction
@@ -49,11 +48,13 @@ from .enums import (
     ReferralRequirementChoices,
     RoomStyleChoices,
     ShelterChoices,
+    ShelterPhotoTypeChoices,
     ShelterProgramChoices,
     SPAChoices,
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
+    VaccinationRequirementChoices,
 )
 from .models import (
     SPA,
@@ -63,9 +64,9 @@ from .models import (
     ContactInfo,
     Demographic,
     EntryRequirement,
-    ExteriorPhoto,
+    ExteriorShelterPhoto,
     Funder,
-    InteriorPhoto,
+    InteriorShelterPhoto,
     MediaLink,
     Parking,
     Pet,
@@ -77,10 +78,12 @@ from .models import (
     Service,
     ServiceCategory,
     Shelter,
+    ShelterPhoto,
     ShelterProgram,
     ShelterType,
     SpecialSituationRestriction,
     Storage,
+    VaccinationRequirement,
     Video,
     get_fields_with_other_option,
 )
@@ -229,6 +232,7 @@ class ShelterForm(forms.ModelForm):
 
     # Entry Requirements
     entry_requirements = create_select2_multiple_field(EntryRequirementChoices, "Select entry requirements...")
+    vaccination_requirement = create_select2_multiple_field(VaccinationRequirementChoices, "Select vaccinations...")
 
     # Ecosystem Information
     spas_served = create_select2_multiple_field(SPAChoices, "Select SPAs served...", label="SPAs Served")
@@ -416,21 +420,17 @@ class PhotoForm(forms.ModelForm):
     )
 
     class Meta:
-        fields = "__all__"
+        # ``type`` is set automatically by the proxy model's ``save`` and
+        # therefore must not be exposed in (or required by) the inline form.
+        exclude = ("type",)
 
 
-class ExteriorPhotoForm(PhotoForm):
-    class Meta(PhotoForm.Meta):
-        model = ExteriorPhoto
+class BaseShelterPhotoInline(admin.TabularInline):
+    """Base inline for shelter photo sections with imgproxy thumbnail preview."""
 
-
-class InteriorPhotoForm(PhotoForm):
-    class Meta(PhotoForm.Meta):
-        model = InteriorPhoto
-
-
-class PhotoInlineImgproxyMixin:
-    """Mixin for photo inlines: adds a readonly thumbnail column via imgproxy when enabled."""
+    form = PhotoForm
+    max_num = 0
+    photo_type: ShelterPhotoTypeChoices
 
     def get_readonly_fields(self, request: HttpRequest, obj: Optional[models.Model] = None) -> tuple[str, ...]:
         return ("photo_preview",)
@@ -438,8 +438,11 @@ class PhotoInlineImgproxyMixin:
     def get_fields(self, request: HttpRequest, obj: Optional[models.Model] = None) -> tuple[str, ...]:
         return ("photo_preview", "file", "make_hero_image")
 
+    def get_queryset(self, request: HttpRequest) -> QuerySet[ShelterPhoto]:
+        return super().get_queryset(request).filter(type=self.photo_type)
+
     @admin.display(description="Preview")
-    def photo_preview(self, obj: Union[ExteriorPhoto, InteriorPhoto]) -> str:
+    def photo_preview(self, obj: ShelterPhoto) -> str:
         if not obj or not obj.file or not obj.file.name:
             return "—"
         if is_imgproxy_enabled():
@@ -453,16 +456,14 @@ class PhotoInlineImgproxyMixin:
         return format_html('<img src="{}" alt="" style="max-height: 200px;" />', url)
 
 
-class ExteriorPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
-    model = ExteriorPhoto
-    form = ExteriorPhotoForm
-    max_num = 0
+class ExteriorPhotoInline(BaseShelterPhotoInline):
+    model = ExteriorShelterPhoto
+    photo_type = ShelterPhotoTypeChoices.EXTERIOR
 
 
-class InterPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
-    model = InteriorPhoto
-    form = InteriorPhotoForm
-    max_num = 0
+class InteriorPhotoInline(BaseShelterPhotoInline):
+    model = InteriorShelterPhoto
+    photo_type = ShelterPhotoTypeChoices.INTERIOR
 
 
 class VideoInline(admin.TabularInline):
@@ -658,6 +659,11 @@ class ShelterResource(resources.ModelResource):
         attribute="entry_requirements",
         widget=ManyToManyWidget(EntryRequirement, separator=",", field="name"),
     )
+    vaccination_requirement = Field(
+        column_name="vaccination_requirement",
+        attribute="vaccination_requirement",
+        widget=ManyToManyWidget(VaccinationRequirement, separator=",", field="name"),
+    )
     storage = Field(
         column_name="storage",
         attribute="storage",
@@ -784,6 +790,7 @@ class ShelterResource(resources.ModelResource):
             "room_styles",
             "funders",
             "entry_requirements",
+            "vaccination_requirement",
             "storage",
             "pets",
             "cities_served",
@@ -931,7 +938,14 @@ class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
     list_select_related = ("organization",)
 
-    inlines = [ContactInfoInline, ScheduleInline, ExteriorPhotoInline, InterPhotoInline, VideoInline, MediaLinkInline]
+    inlines = [
+        ContactInfoInline,
+        ScheduleInline,
+        ExteriorPhotoInline,
+        InteriorPhotoInline,
+        VideoInline,
+        MediaLinkInline,
+    ]
     fieldsets = (
         (
             "Basic Information",
@@ -1013,6 +1027,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                 "fields": (
                     "entry_requirements",
                     "referral_requirement",
+                    "vaccination_requirement",
                     "bed_fees",
                     "program_fees",
                     "entry_info",
@@ -1098,6 +1113,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         "services",
         # Entry Requirements
         "entry_requirements",
+        "vaccination_requirement",
         # Ecosystem Information
         "city",
         "cities_served",
@@ -1196,14 +1212,14 @@ class ShelterAdmin(ImportExportModelAdmin):
         )
 
         interior_count = Subquery(
-            InteriorPhoto.objects.filter(shelter=OuterRef("pk"))
+            ShelterPhoto.objects.filter(shelter=OuterRef("pk"), type=ShelterPhotoTypeChoices.INTERIOR)
             .order_by()
             .values("shelter")
             .annotate(c=Count("pk"))
             .values("c")
         )
         exterior_count = Subquery(
-            ExteriorPhoto.objects.filter(shelter=OuterRef("pk"))
+            ShelterPhoto.objects.filter(shelter=OuterRef("pk"), type=ShelterPhotoTypeChoices.EXTERIOR)
             .order_by()
             .values("shelter")
             .annotate(c=Count("pk"))
@@ -1282,14 +1298,11 @@ class ShelterAdmin(ImportExportModelAdmin):
         form.save_pending_service_entries()
 
         if form.cleaned_data.get("clear_hero_image"):
-            form.instance.hero_image_content_type = None
-            form.instance.hero_image_object_id = None
+            form.instance.hero_image = None
             form.instance.save()
 
         if hero := self._get_selected_hero(formsets):
-            ct = ContentType.objects.get_for_model(hero)
-            form.instance.hero_image_content_type = ct
-            form.instance.hero_image_object_id = hero.pk
+            form.instance.hero_image = hero
             form.instance.save()
 
     @admin.display(description="Current Hero Image")
@@ -1353,9 +1366,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         original_file.seek(0)
         return ContentFile(original_file.read(), name=new_name)
 
-    def _clone_objects_with_files(
-        self, queryset: QuerySet[Union[ExteriorPhoto, InteriorPhoto, Video]], copy: Shelter
-    ) -> None:
+    def _clone_objects_with_files(self, queryset: QuerySet[Union[ShelterPhoto, Video]], copy: Shelter) -> None:
         """Clone objects with shelter and file fields, duplicating files."""
         for obj in queryset:
             obj.pk = None
@@ -1367,7 +1378,7 @@ class ShelterAdmin(ImportExportModelAdmin):
 
     def _clone_related_photos_and_videos(self, original: Shelter, copy: Shelter) -> None:
         """Clone photos and videos with file duplication and metadata preservation."""
-        for model_class in (ExteriorPhoto, InteriorPhoto, Video):
+        for model_class in (ShelterPhoto, Video):
             self._clone_objects_with_files(model_class.objects.filter(shelter=original), copy)
 
     def _clone_related_contacts(self, original: Shelter, copy: Shelter) -> None:

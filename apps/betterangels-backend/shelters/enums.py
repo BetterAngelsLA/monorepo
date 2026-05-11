@@ -111,6 +111,13 @@ class EntryRequirementChoices(models.TextChoices):
     IN_SPA_ONLY = "in_spa_only", _("In-SPA Only")
 
 
+@strawberry.enum
+class VaccinationRequirementChoices(models.TextChoices):
+    TB = "tb", _("TB")
+    FLU = "flu", _("Flu")
+    COVID_19 = "covid_19", _("COVID-19")
+
+
 # Ecosystem Information
 CITY_COUNCIL_DISTRICT_CHOICES = [(0, "Unincorporated")] + [(i, str(i)) for i in range(1, 16)]
 SUPERVISORIAL_DISTRICT_CHOICES = [(i, str(i)) for i in range(1, 6)]
@@ -265,3 +272,9 @@ class ConditionChoices(models.TextChoices):
 @strawberry.enum
 class MediaLinkTypeChoices(models.TextChoices):
     YOUTUBE = "youtube", _("YouTube")
+
+
+@strawberry.enum
+class ShelterPhotoTypeChoices(models.TextChoices):
+    INTERIOR = "interior", _("Interior")
+    EXTERIOR = "exterior", _("Exterior")

@@ -89,11 +89,9 @@ type AdminShelterType {
   exitPolicy: [ExitPolicyType!]!
   exitPolicyOther: String
   emergencySurge: Boolean
-  exteriorPhotos: [ShelterPhotoType!]!
   funders: [FunderType!]!
   fundersOther: String
   instagram: String
-  interiorPhotos: [ShelterPhotoType!]!
   location: ShelterLocationType
   maxStay: Int
   name: String!
@@ -117,6 +115,7 @@ type AdminShelterType {
   shelterTypesOther: String
   spa: SPAType
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  photos: [ShelterPhotoType!]!
   isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
@@ -124,12 +123,12 @@ type AdminShelterType {
   supervisorialDistrict: Int
   totalBeds: Int
   updatedAt: DateTime!
+  vaccinationRequirement: [VaccinationRequirementType!]!
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
-  ExteriorPhotos: [ShelterPhotoType!]
-  InteriorPhotos: [ShelterPhotoType!]
-  heroImage: String
+  HeroPhotos: [ShelterPhotoType!]
+  heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
   bedsByStatus: BedsByStatusType!
 }
@@ -178,6 +177,16 @@ type AuthorizedPresignedS3UploadsType {
   uploads: [AuthorizedPresignedS3UploadType!]!
 }
 
+input BedFilter {
+  AND: BedFilter
+  OR: BedFilter
+  NOT: BedFilter
+  DISTINCT: Boolean
+  bedType: [BedTypeChoices!]
+  medicalNeeds: [MedicalNeedChoices!]
+  status: [BedStatusChoices!]
+}
+
 enum BedStatusChoices {
   AVAILABLE
   OCCUPIED
@@ -211,6 +220,16 @@ enum BedTypeChoices {
   BUNK
   ROLLAWAY
   OTHER
+}
+
+type BedTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [BedType!]!
 }
 
 type BedsByStatusType {
@@ -733,6 +752,7 @@ input CreateShelterInput {
   parking: [ParkingChoices!]!
   entryRequirements: [EntryRequirementChoices!]!
   referralRequirement: [ReferralRequirementChoices!]!
+  vaccinationRequirement: [VaccinationRequirementChoices!]!
   exitPolicy: [ExitPolicyChoices!]!
   shelterPrograms: [ShelterProgramChoices!]!
   funders: [FunderChoices!]!
@@ -1302,6 +1322,7 @@ input IDFilterLookup {
 
 enum ImagePresetEnum {
   ORIGINAL
+  SHELTER_HERO
   SM
   MD
   LG
@@ -1876,6 +1897,8 @@ type Query {
   adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
+  beds(pagination: OffsetPaginationInput, filters: BedFilter): BedTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
+  rooms(pagination: OffsetPaginationInput, filters: RoomFilter): RoomTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
   shelterCities(pagination: OffsetPaginationInput): CityTypeOffsetPaginated!
   shelterSpas(pagination: OffsetPaginationInput): SPATypeOffsetPaginated!
@@ -1971,6 +1994,18 @@ input RevertNoteInput {
 
 union RevertNotePayload = NoteType | OperationInfo
 
+input RoomFilter {
+  medicalRespite: Boolean
+  AND: RoomFilter
+  OR: RoomFilter
+  NOT: RoomFilter
+  DISTINCT: Boolean
+  amenities: String
+  roomType: [RoomStyleChoices!]
+  status: [RoomStatusChoices!]
+  numberOfBeds: Int
+}
+
 enum RoomStatusChoices {
   AVAILABLE
   RESERVED
@@ -2010,8 +2045,18 @@ type RoomType {
   maintenanceFlag: Boolean!
   medicalRespite: Boolean!
   lastCleanedInspected: DateTime
-  beds: [BedType!]!
+  beds(filters: BedFilter): [BedType!]!
   occupantIds: [ID!]!
+}
+
+type RoomTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [RoomType!]!
 }
 
 enum SPAChoices {
@@ -2176,6 +2221,11 @@ input ShelterFilter {
   geolocation: GeolocationInput
 }
 
+type ShelterHeroImageType {
+  id: ID!
+  url: String!
+}
+
 input ShelterLocationInput {
   place: String!
   latitude: Float = null
@@ -2195,8 +2245,14 @@ input ShelterOrder {
 
 type ShelterPhotoType {
   id: ID!
+  type: ShelterPhotoTypeChoices!
   createdAt: DateTime!
   file: DjangoImageType!
+}
+
+enum ShelterPhotoTypeChoices {
+  INTERIOR
+  EXTERIOR
 }
 
 enum ShelterProgramChoices {
@@ -2253,11 +2309,9 @@ type ShelterType {
   exitPolicy: [ExitPolicyType!]!
   exitPolicyOther: String
   emergencySurge: Boolean
-  exteriorPhotos: [ShelterPhotoType!]!
   funders: [FunderType!]!
   fundersOther: String
   instagram: String
-  interiorPhotos: [ShelterPhotoType!]!
   location: ShelterLocationType
   maxStay: Int
   name: String!
@@ -2281,6 +2335,7 @@ type ShelterType {
   shelterTypesOther: String
   spa: SPAType
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  photos: [ShelterPhotoType!]!
   isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
@@ -2288,12 +2343,12 @@ type ShelterType {
   supervisorialDistrict: Int
   totalBeds: Int
   updatedAt: DateTime!
+  vaccinationRequirement: [VaccinationRequirementType!]!
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
-  ExteriorPhotos: [ShelterPhotoType!]
-  InteriorPhotos: [ShelterPhotoType!]
-  heroImage: String
+  HeroPhotos: [ShelterPhotoType!]
+  heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
   bedsByStatus: BedsByStatusType!
 }
@@ -2651,6 +2706,16 @@ type UserType {
   isOutreachAuthorized: Boolean
   username: String
   isHmisUser: Boolean
+}
+
+enum VaccinationRequirementChoices {
+  TB
+  FLU
+  COVID_19
+}
+
+type VaccinationRequirementType {
+  name: VaccinationRequirementChoices!
 }
 
 enum VeteranStatusEnum {

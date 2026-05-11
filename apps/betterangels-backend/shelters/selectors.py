@@ -53,7 +53,7 @@ def shelter_get(*, user: "User", shelter_id: int | str) -> "Shelter":
     """
     from shelters.models import Shelter
 
-    return admin_shelter_list(Shelter.objects.all(), user=user).select_related("organization").get(pk=shelter_id)
+    return admin_shelter_list(Shelter.objects.all(), user=user).get(pk=shelter_id)
 
 
 def shelters_open_at(

@@ -1,3 +1,4 @@
+import { mergeCss } from '@monorepo/react/shared';
 import type { CSSProperties, ReactNode } from 'react';
 import {
   TableRow,
@@ -62,8 +63,7 @@ const TableBase = <TItem, TRowObject = TItem>({
   const dataTemplateColumns = columns
     .map((column) => column.width ?? '1fr')
     .join(' ');
-  const hasTrailingColumn =
-    !!onDelete || !!getRowSlot || !!trailingHeader;
+  const hasTrailingColumn = !!onDelete || !!getRowSlot || !!trailingHeader;
   const templateColumns = hasTrailingColumn
     ? `${dataTemplateColumns} ${trailingColumnWidth}`
     : dataTemplateColumns;
@@ -71,12 +71,10 @@ const TableBase = <TItem, TRowObject = TItem>({
   return (
     <div
       role="table"
-      className={[
+      className={mergeCss([
         'bg-white rounded-2xl overflow-hidden w-full',
         wrapperClassName,
-      ]
-        .join(' ')
-        .trim()}
+      ])}
       style={tableStyle}
     >
       <div

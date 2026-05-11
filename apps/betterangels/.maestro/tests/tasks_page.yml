@@ -1,0 +1,11 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: ../steps/start_test.yml
+
+- runFlow:
+    file: ../steps/app_menu/navigate_via_menu.yml
+    env:
+      MENU_ITEM: 'Tasks'
+
+- assertVisible:
+    id: tasks-screen
