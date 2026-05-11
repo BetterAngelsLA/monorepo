@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0048_copy_cities_and_spa_to_served"),
+        ("shelters", "0052_copy_cities_and_spa_to_served"),
     ]
 
     operations = [

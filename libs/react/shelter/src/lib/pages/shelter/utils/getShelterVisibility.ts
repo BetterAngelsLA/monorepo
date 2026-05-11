@@ -105,7 +105,7 @@ export function getShelterVisibility(shelter: ShelterData): ShelterVisibility {
       !!shelter.shelterPrograms?.length ||
       !!shelter.funders?.length,
     media:
-      !!shelter.interiorPhotos?.length ||
+      !!shelter.photos?.length ||
       !!shelter.exteriorPhotos?.length ||
       !!shelter.mediaLinks?.length,
   };

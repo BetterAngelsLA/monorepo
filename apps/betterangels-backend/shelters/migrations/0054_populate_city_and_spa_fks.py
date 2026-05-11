@@ -41,7 +41,7 @@ def reverse_populate(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0049_shelter_city_spa_fks"),
+        ("shelters", "0053_shelter_city_spa_fks"),
     ]
 
     operations = [
