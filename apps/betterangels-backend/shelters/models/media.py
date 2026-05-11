@@ -30,16 +30,6 @@ def upload_path(instance: Optional[Shelter], filename: str) -> str:
     return default_storage.get_available_name(file_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
 
 
-class InteriorPhoto(BaseModel):
-    file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="interior_photos")
-
-
-class ExteriorPhoto(BaseModel):
-    file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="exterior_photos")
-
-
 class ShelterPhoto(BaseModel):
     file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="photos")
