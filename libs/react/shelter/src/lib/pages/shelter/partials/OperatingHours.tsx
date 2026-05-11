@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { ScheduleTypeChoices, ShelterType } from '../../../apollo';
 import { ModalAnimationEnum, modalAtom } from '../../../components/Modal';
 import {
+  AggregateStatus,
   EffectiveWindow,
+  getAggregateStatus,
   getOperatingStatus,
   getWeeklySchedule,
   OperatingStatus,
@@ -79,20 +81,31 @@ function StatusLine({ status }: { status: OperatingStatus }) {
       <span className={toneFontWeight} style={{ color: toneColor }}>
         {status.statusText}
       </span>
-      {status.detailText ? (
-        <span className="font-normal text-neutral-20">{status.detailText}</span>
-      ) : null}
     </div>
+  );
+}
+
+function AggregateStatusText({ status }: { status: AggregateStatus }) {
+  const colorMap = {
+    open: '#23CE6B',
+    closed: '#CB0808',
+    partial: '#D4A017',
+  };
+  return (
+    <span
+      className="font-bold text-sm"
+      style={{ color: colorMap[status.tone] }}
+    >
+      {status.statusText}
+    </span>
   );
 }
 
 function OperatingHoursDialog({
   schedules,
-  status,
   scheduleTypes,
 }: {
   schedules: Schedule[];
-  status: OperatingStatus;
   scheduleTypes: ScheduleTypeChoices[];
 }) {
   const [selectedType, setSelectedType] = useState<ScheduleTypeChoices>(
@@ -104,16 +117,13 @@ function OperatingHoursDialog({
     [schedules, selectedType]
   );
 
+  const selectedStatus = useMemo(() => {
+    const typed = schedules.filter((s) => s.scheduleType === selectedType);
+    return getOperatingStatus(typed, new Date(), selectedType);
+  }, [schedules, selectedType]);
+
   return (
     <div className="w-full">
-      <div className="mb-6 pb-4">
-        <div className="mb-3 flex items-center gap-2">
-          <ClockIcon />
-          <h3 className="text-lg font-semibold text-neutral-20">Schedule</h3>
-        </div>
-        <StatusLine status={status} />
-      </div>
-
       {scheduleTypes.length > 1 ? (
         <div className="mb-4 flex flex-wrap gap-2">
           {scheduleTypes.map((scheduleType) => {
@@ -136,23 +146,30 @@ function OperatingHoursDialog({
         </div>
       ) : null}
 
+      <div className="mb-4">
+        <StatusLine status={selectedStatus} />
+      </div>
+
       <section className="flex h-[420px] flex-col rounded-xl px-0 py-3">
         <div className="flex flex-1 flex-col overflow-y-auto pr-0.5">
           {selectedWeek.map((day, index) => {
-            const previousDay = selectedWeek[index - 1];
-            const showDivider =
-              index > 0 && !day.isToday && !previousDay?.isToday;
+            const last = index === selectedWeek.length - 1;
+            const first = index === 0;
 
             return (
               <div
                 key={`${selectedType}-${day.date.toISOString()}`}
-                className={showDivider ? 'border-t border-neutral-90/80' : ''}
+                className={[
+                  'overflow-hidden border-b border-l border-r border-neutral-90/80',
+                  last && 'rounded-bl-lg rounded-br-lg',
+                  first && 'rounded-tl-lg rounded-tr-lg border-t',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
               >
                 <div
                   className={
-                    day.isToday
-                      ? 'rounded-lg bg-primary-95 px-3 py-3'
-                      : 'px-3 py-3'
+                    day.isToday ? 'bg-primary-95 px-3 py-3' : 'px-3 py-3'
                   }
                 >
                   <div className="grid grid-cols-[9rem_minmax(0,1fr)] items-start gap-4 text-sm">
@@ -235,23 +252,15 @@ export function OperatingHours({
     ];
   }, [entries]);
 
-  const operatingSchedules = useMemo(
-    () =>
-      entries.filter(
-        (entry) => entry.scheduleType === ScheduleTypeChoices.Operating
-      ),
-    [entries]
-  );
-
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
   }, []);
 
-  const status = useMemo(
-    () => getOperatingStatus(operatingSchedules, now),
-    [operatingSchedules, now]
+  const aggregateStatus = useMemo(
+    () => getAggregateStatus(entries, scheduleTypes, now),
+    [entries, scheduleTypes, now]
   );
 
   const [_modal, setModal] = useAtom(modalAtom);
@@ -261,7 +270,6 @@ export function OperatingHours({
       content: (
         <OperatingHoursDialog
           schedules={entries}
-          status={status}
           scheduleTypes={scheduleTypes}
         />
       ),
@@ -273,18 +281,14 @@ export function OperatingHours({
 
   return (
     <section className="my-6 w-full">
-      <div className="flex items-center justify-between gap-4 w-full">
-        <div className="flex items-center gap-2">
-          <ClockIcon />
-          <span className="text-lg font-semibold text-neutral-20">
-            Schedule
-          </span>
-        </div>
+      <div className="flex items-center gap-2 w-full">
+        <ClockIcon />
+        <AggregateStatusText status={aggregateStatus} />
         <button
           type="button"
           onClick={openHoursDialog}
           aria-haspopup="dialog"
-          className="flex flex-row items-center gap-2 px-2 py-1 bg-[#F4F6FD] rounded text-[12px] font-normal leading-[21px] text-[#052B73] transition-colors hover:bg-blue-100"
+          className="flex flex-row items-center gap-2 px-2 py-1 bg-[#F4F6FD] rounded text-[12px] font-normal leading-[21px] text-[#052B73] transition-colors hover:bg-blue-100 ml-auto"
           style={{ fontFamily: 'Poppins, sans-serif' }}
         >
           More Hours
@@ -303,9 +307,6 @@ export function OperatingHours({
             />
           </svg>
         </button>
-      </div>
-      <div className="mt-2">
-        <StatusLine status={status} />
       </div>
     </section>
   );
