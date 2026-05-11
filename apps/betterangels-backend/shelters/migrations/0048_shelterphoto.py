@@ -10,21 +10,6 @@ from django.db import migrations, models
 from shelters.utils import assign_permissions_to_group_in_migration, remove_permissions_from_group_in_migration
 
 
-def remove_deprecated_shelter_group_permissions(apps, schema_editor):
-    from shelters.deprecated.deprecated_permissions import InteriorPhotoPermissions, ExteriorPhotoPermissions
-
-    ExteriorPhoto = apps.get_model("shelters", "ExteriorPhoto")
-    InteriorPhoto = apps.get_model("shelters", "InteriorPhoto")
-
-    permission_map = {
-        ExteriorPhoto: [ExteriorPhotoPermissions],
-        InteriorPhoto: [InteriorPhotoPermissions],
-    }
-
-    remove_permissions_from_group_in_migration(apps, "Shelter Data Entry", permission_map)
-    remove_permissions_from_group_in_migration(apps, "Shelter Administration", permission_map)
-
-
 def assign_shelter_group_permissions(apps, schema_editor):
     from shelters.permissions import ShelterPhotoPermissions
 
@@ -189,7 +174,6 @@ class Migration(migrations.Migration):
                 to="shelters.shelterphoto",
             ),
         ),
-        migrations.RunPython(remove_deprecated_shelter_group_permissions, migrations.RunPython.noop),
         migrations.RunPython(migrate_shelter_photos, migrations.RunPython.noop),
         migrations.RunPython(assign_shelter_group_permissions, migrations.RunPython.noop),
         pgtrigger.migrations.RemoveTrigger(
@@ -262,11 +246,5 @@ class Migration(migrations.Migration):
                     when="AFTER",
                 ),
             ),
-        ),
-        migrations.DeleteModel(
-            name="ExteriorPhoto",
-        ),
-        migrations.DeleteModel(
-            name="InteriorPhoto",
         ),
     ]
