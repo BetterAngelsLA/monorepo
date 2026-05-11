@@ -55,6 +55,9 @@ query ViewShelter($id: ID!) {
     entryRequirements {
       name
     }
+    vaccinationRequirement {
+      name
+    }
     exteriorPhotos {
       file {
         name

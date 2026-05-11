@@ -131,6 +131,7 @@ export const buildCreateShelterInput = (
     ),
     entryRequirements: compactEnumValues(formData.entryRequirements),
     referralRequirement: compactEnumValues(formData.referralRequirement),
+    vaccinationRequirement: compactEnumValues(formData.vaccinationRequirement),
     exitPolicy: compactEnumValues(formData.exitPolicy),
     cities: compactEnumValues(formData.cities),
     spa: compactEnumValues(formData.spa),

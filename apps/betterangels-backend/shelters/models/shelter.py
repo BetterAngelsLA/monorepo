@@ -49,6 +49,7 @@ from .lookups import (
     ShelterType,
     SpecialSituationRestriction,
     Storage,
+    VaccinationRequirement,
 )
 from .service import Service
 
@@ -116,6 +117,7 @@ class Shelter(BaseModel):
     entry_info = CKEditor5Field(null=True, blank=True)
     entry_requirements = models.ManyToManyField(EntryRequirement)
     referral_requirement = models.ManyToManyField(ReferralRequirement)
+    vaccination_requirement = models.ManyToManyField(VaccinationRequirement)
     bed_fees = models.CharField(max_length=255, blank=True, null=True)
     program_fees = models.CharField(max_length=255, blank=True, null=True)
 
