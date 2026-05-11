@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0046_add_view_private_shelter_to_caseworker"),
+        ("shelters", "0050_remove_old_shelter_models"),
     ]
 
     operations = [
