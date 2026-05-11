@@ -129,7 +129,7 @@ class CreateShelterInput:
     # FK lookups to single City / SPA. Use the same choice/name representation
     # as their M2M counterparts (cities_served / spas_served) for consistency.
     city_id: Optional[ID] = None
-    spa: Optional[SPAChoices] = None
+    spa: Optional[ID] = None
 
 
 @strawberry.input
