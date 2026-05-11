@@ -3,6 +3,7 @@
 from django.db import migrations
 from shelters.utils import remove_permissions_from_group_in_migration
 
+
 def remove_deprecated_shelter_group_permissions(apps, schema_editor):
     from shelters.deprecated.deprecated_permissions import InteriorPhotoPermissions, ExteriorPhotoPermissions
 
@@ -16,6 +17,7 @@ def remove_deprecated_shelter_group_permissions(apps, schema_editor):
 
     remove_permissions_from_group_in_migration(apps, "Shelter Data Entry", permission_map)
     remove_permissions_from_group_in_migration(apps, "Shelter Administration", permission_map)
+
 
 class Migration(migrations.Migration):
 
