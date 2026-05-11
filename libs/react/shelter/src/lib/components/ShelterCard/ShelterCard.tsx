@@ -1,9 +1,9 @@
-import { LockIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TLatLng } from '../Map';
+import { PrivateBadge } from '../PrivateBadge';
 import { DistanceAway } from './DistanceAway';
 import { ShelterCardHero } from './ShelterCardHero';
 
@@ -76,17 +76,7 @@ export function ShelterCard(props: TShelterCard) {
             imageUrl={heroImage}
             shelterName={name}
           />
-          {isPrivate && (
-            <div
-              className="absolute top-2 left-2 flex items-center gap-1 bg-white/90 rounded-[20px] p-1.5 md:px-2.5 md:py-1"
-              title="Only visible to verified case managers"
-            >
-              <LockIcon className="w-3.5 h-3.5 text-primary-60" />
-              <span className="hidden md:inline text-xs text-primary-20 font-medium">
-                Private
-              </span>
-            </div>
-          )}
+          {isPrivate && <PrivateBadge />}
         </div>
 
         <div className={mergeCss(contentCss)}>

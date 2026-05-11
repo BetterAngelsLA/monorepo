@@ -272,3 +272,9 @@ class ConditionChoices(models.TextChoices):
 @strawberry.enum
 class MediaLinkTypeChoices(models.TextChoices):
     YOUTUBE = "youtube", _("YouTube")
+
+
+@strawberry.enum
+class ShelterPhotoTypeChoices(models.TextChoices):
+    INTERIOR = "interior", _("Interior")
+    EXTERIOR = "exterior", _("Exterior")

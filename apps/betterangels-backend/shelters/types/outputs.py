@@ -1,18 +1,25 @@
 """Output types for shelter queries and mutations."""
 
 from datetime import datetime
-from itertools import chain
 from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.types import OrganizationType
+from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.imgproxy import build_imgproxy_url
 from django.db.models import Count, Prefetch, Q, QuerySet
 from shelters import models
-from shelters.enums import BedStatusChoices, BedTypeChoices, MedicalNeedChoices, RoomStatusChoices, RoomStyleChoices
+from shelters.enums import (
+    BedStatusChoices,
+    BedTypeChoices,
+    MedicalNeedChoices,
+    RoomStatusChoices,
+    RoomStyleChoices,
+    ShelterPhotoTypeChoices,
+)
 from shelters.selectors import admin_shelter_list, shelter_list
 from shelters.types.lookups import (
     AccessibilityType,
@@ -51,8 +58,15 @@ class ShelterLocationType:
 @strawberry.type
 class ShelterPhotoType:
     id: ID
+    type: ShelterPhotoTypeChoices
     created_at: datetime
     file: TransformableImageType
+
+
+@strawberry.type
+class ShelterHeroImageType:
+    id: ID
+    url: str
 
 
 @strawberry_django.type(models.MediaLink)
@@ -91,11 +105,9 @@ class ShelterTypeMixin:
     exit_policy: List[ExitPolicyType]
     exit_policy_other: auto
     emergency_surge: auto
-    exterior_photos: List[ShelterPhotoType]
     funders: List[FunderType]
     funders_other: auto
     instagram: auto
-    interior_photos: List[ShelterPhotoType]
     location: Optional[ShelterLocationType]
     max_stay: auto
     name: auto
@@ -119,6 +131,7 @@ class ShelterTypeMixin:
     shelter_types_other: auto
     spa: List[SPAType]
     special_situation_restrictions: List[SpecialSituationRestrictionType]
+    photos: List[ShelterPhotoType]
     is_private: auto
     status: auto
     storage: List[StorageType]
@@ -131,39 +144,30 @@ class ShelterTypeMixin:
     website: auto
     media_links: List[MediaLinkType]
 
-    _exterior_photos: Optional[List[ShelterPhotoType]] = None
-    _interior_photos: Optional[List[ShelterPhotoType]] = None
+    _hero_photos: Optional[List[ShelterPhotoType]] = None
 
-    # NOTE: This is a temporary workaround because Shelter specced without a hero image.
-    # Will remove once we add a hero_image field to the Shelter model.
     @strawberry_django.field(
-        only=["hero_image_content_type_id", "hero_image_object_id"],
+        only=["hero_image"],
+        select_related=["hero_image"],
         prefetch_related=[
             lambda x: Prefetch(
-                "exterior_photos",
-                queryset=models.ExteriorPhoto.objects.filter(),
-                to_attr="_exterior_photos",
-            ),
-            lambda x: Prefetch(
-                "interior_photos",
-                queryset=models.InteriorPhoto.objects.filter(),
-                to_attr="_interior_photos",
+                "photos",
+                queryset=models.ShelterPhoto.objects.order_by("pk"),
+                to_attr="_hero_photos",
             ),
         ],
     )
-    def hero_image(self, root: models.Shelter) -> Optional[str]:
-        photo = next(
-            filter(
-                None,
-                chain(
-                    [getattr(root, "hero_image", None)],
-                    self._exterior_photos or [],
-                    self._interior_photos or [],
-                ),
-            ),
-            None,
-        )
-        return build_imgproxy_url(photo.file, preset=None, processing_options=None) if photo else None
+    def hero_image(
+        self,
+        root: models.Shelter,
+        preset: Optional[ImagePresetEnum] = None,
+        processing_options: Optional[str] = None,
+    ) -> Optional[ShelterHeroImageType]:
+        if photo := _get_hero_image(root):
+            if imgproxy_url := build_imgproxy_url(photo.file, preset, processing_options):
+                return ShelterHeroImageType(id=ID(str(photo.id)), url=imgproxy_url)
+
+        return None
 
     @strawberry_django.field
     def distance_in_miles(self, root: models.Shelter) -> Optional[float]:
@@ -203,6 +207,15 @@ class AdminShelterType(ShelterTypeMixin):
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
         return admin_shelter_list(queryset, user=user)
+
+
+def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
+    if shelter.hero_image_id:
+        return shelter.hero_image
+    photos = getattr(shelter, "_hero_photos", [])
+    return next((p for p in photos if p.type == ShelterPhotoTypeChoices.EXTERIOR), None) or next(
+        (p for p in photos if p.type == ShelterPhotoTypeChoices.INTERIOR), None
+    )
 
 
 @strawberry_django.type(models.Bed, filters=BedFilter)
