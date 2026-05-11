@@ -36,8 +36,7 @@ export type ShelterData = {
   supervisorialDistrict?: number | null;
   shelterPrograms?: NameItem[];
   funders?: NameItem[];
-  interiorPhotos?: { file: { url: string } }[];
-  exteriorPhotos?: { file: { url: string } }[];
+  photos?: { file: { url: string } }[];
   mediaLinks?: { id: string }[];
 };
 
@@ -104,10 +103,7 @@ export function getShelterVisibility(shelter: ShelterData): ShelterVisibility {
       !!shelter.supervisorialDistrict ||
       !!shelter.shelterPrograms?.length ||
       !!shelter.funders?.length,
-    media:
-      !!shelter.interiorPhotos?.length ||
-      !!shelter.exteriorPhotos?.length ||
-      !!shelter.mediaLinks?.length,
+    media: !!shelter.photos?.length || !!shelter.mediaLinks?.length,
   };
 }
 
