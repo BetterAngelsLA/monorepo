@@ -2,41 +2,48 @@ from functools import cached_property
 from typing import Union
 
 import waffle
-from accounts.enums import OrgRoleEnum
+from accounts.enums import OrgRoleEnum, OrgType
 from accounts.groups import GroupTemplateNames
+from accounts.registry import get_org_type_config, is_registered_member_role
 from django.apps.registry import Apps
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
 from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
 
-from .models import PermissionGroup, PermissionGroupTemplate, User
+from .models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
 
 
 def remove_organization_permission_group(organization: Organization) -> None:
     Group.objects.filter(permissiongroup__organization=organization).delete()
 
 
+def _get_org_type(organization: Organization) -> str:
+    """Return the OrgType for an organization, defaulting to OUTREACH."""
+    try:
+        return organization.profile.org_type  # type: ignore[union-attr]
+    except OrganizationProfile.DoesNotExist:
+        return OrgType.OUTREACH
+
+
+def is_org_type_default_template(template_name: str) -> bool:
+    """Return True if *template_name* is the primary member template for any registered org type."""
+    return is_registered_member_role(template_name)
+
+
 def add_default_org_permissions_to_user(user: User, organization: Organization) -> None:
-    caseworker_permission_group, _ = PermissionGroupTemplate.objects.get_or_create(
-        # TODO: This is a hack for MVP. Not all orgs will default to caseworkers
-        # we will want to have a default template selected for orgs on the org model.
-        name=GroupTemplateNames.CASEWORKER
-    )
-    org_caseworker_group, _ = PermissionGroup.objects.get_or_create(
-        organization=organization, template=caseworker_permission_group
-    )
-    user.groups.add(org_caseworker_group.group)
+    org_type = _get_org_type(organization)
+    cfg = get_org_type_config(org_type)
+    member_template, _ = PermissionGroupTemplate.objects.get_or_create(name=cfg.member_role)
+    member_group, _ = PermissionGroup.objects.get_or_create(organization=organization, template=member_template)
+    user.groups.add(member_group.group)
 
 
 def create_default_org_permission_groups(organization: Organization) -> None:
-    default_templates = [
-        GroupTemplateNames.CASEWORKER,
-        GroupTemplateNames.ORG_ADMIN,
-        GroupTemplateNames.ORG_SUPERUSER,
-    ]
+    org_type = _get_org_type(organization)
+    cfg = get_org_type_config(org_type)
 
-    for temp in default_templates:
+    for temp in cfg.templates:
         template, _ = PermissionGroupTemplate.objects.get_or_create(name=temp)
         PermissionGroup.objects.get_or_create(organization=organization, template=template)
 
@@ -66,17 +73,17 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
 
 
 def get_outreach_authorized_users() -> QuerySet[User]:
-    # TODO: Make unit test for this function
-    authorized_permission_groups = [template.value for template in GroupTemplateNames]
-
-    # Subquery to check if the user has any related permission group in an authorized group
-    permission_group_exists = PermissionGroup.objects.filter(
-        organization__users=OuterRef("pk"),  # Matches `User` to `Organization`
-        template__name__in=authorized_permission_groups,
+    # Users are outreach-authorized if they belong to a permission group for
+    # any org that is not a shelter org.  Orgs without a profile are treated
+    # as outreach (legacy default).
+    outreach_group_exists = PermissionGroup.objects.filter(
+        organization__users=OuterRef("pk"),
+        group__user=OuterRef("pk"),
+    ).exclude(
+        organization__profile__org_type=OrgType.SHELTER,
     )
 
-    # Use Exists to avoid duplicate users without `distinct()`
-    return User.objects.filter(Exists(permission_group_exists))
+    return User.objects.filter(Exists(outreach_group_exists))
 
 
 class OrgPermissionManager:

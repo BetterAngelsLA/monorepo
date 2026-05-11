@@ -1,0 +1,16 @@
+Subject: You've been invited to join {{ organization_name }} on Better Angels
+
+You've been invited to join {{ organization_name }} on Better Angels!
+
+{{ invited_by_name }} has invited you to join "{{ organization_name }}" on the Better Angels Shelter Operator Portal.
+
+To accept your invitation:
+
+1. Click here to set up your account: {{ accept_url }}
+2. Create a password for your account.
+3. Start managing shelters with your team.
+
+Together, we can solve homelessness.
+
+Best,
+Better Angels Team

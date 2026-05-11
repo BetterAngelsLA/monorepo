@@ -1,6 +1,7 @@
 from typing import Any, Dict, Iterable, Tuple
 
 import pghistory
+from accounts.enums import OrgType
 from accounts.groups import GroupTemplateNames
 from accounts.managers import UserManager
 from django.contrib.auth.models import (
@@ -73,19 +74,18 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @model_property
     def is_outreach_authorized(self: "User") -> bool:
-        user_organizations = self.organizations_organization.all()
-
-        if not user_organizations:
-            return False
-
-        # TODO: This is a temporary approach while we have just one permission group.
-        # Once this list grows, we'll need to create an actual list of authorized groups.
-        authorized_permission_groups = [template.value for template in GroupTemplateNames]
-
-        # TODO: we can actually make this a permission check vs having to check if they are in a permission group.
-        return PermissionGroup.objects.filter(
-            organization__in=user_organizations, template__name__in=authorized_permission_groups
-        ).exists()
+        # Authorized if user is in a permission group for any org that is not a shelter org.
+        # Orgs without an OrganizationProfile are treated as outreach (legacy default).
+        return (
+            PermissionGroup.objects.filter(
+                organization__users=self,
+                group__user=self,
+            )
+            .exclude(
+                organization__profile__org_type=OrgType.SHELTER,
+            )
+            .exists()
+        )
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.email:
@@ -197,3 +197,21 @@ class PermissionGroup(models.Model):
             self.group.permissions.set(permissions_to_apply)
 
         super().save(*args, **kwargs)
+
+
+class OrganizationProfile(models.Model):
+    organization = models.OneToOneField(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="profile",
+    )
+    org_type = models.CharField(
+        max_length=20,
+        choices=OrgType.choices,
+        default=OrgType.OUTREACH,
+    )
+
+    objects = models.Manager()
+
+    def __str__(self) -> str:
+        return f"{self.organization.name} ({self.get_org_type_display()})"

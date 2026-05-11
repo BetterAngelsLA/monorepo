@@ -43,8 +43,8 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         ("organization_count, is_outreach_authorized, expected_query_count"),
         [
             (0, False, 3),
-            (1, True, 4),
-            (2, True, 4),
+            (1, True, 3),
+            (2, True, 3),
         ],
     )
     def test_logged_in_user_query(

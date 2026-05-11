@@ -9,19 +9,30 @@ Raises ``django.core.exceptions.ValidationError`` on invalid data — callers
 (API / schema layer) are responsible for translating to their own error format.
 """
 
-from typing import TYPE_CHECKING, Any, Dict, List
+import uuid
+from typing import Any, Dict, List
 
+from accounts.enums import OrgType
+from accounts.groups import GroupTemplateNames
+from accounts.models import (
+    ExtendedOrganizationInvitation,
+    OrganizationProfile,
+    PermissionGroup,
+    PermissionGroupTemplate,
+    User,
+)
+from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.mail import EmailMultiAlternatives
 from django.db import models, transaction
+from django.template.loader import render_to_string
 from django.utils.text import slugify
-from organizations.models import Organization
+from organizations.models import Organization, OrganizationOwner, OrganizationUser
 from places import Places
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
 from shelters.models import Bed, Room, Schedule, Service, ServiceCategory, Shelter
 from shelters.selectors import shelter_get
-
-if TYPE_CHECKING:
-    from accounts.models import User
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -381,3 +392,139 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
     if raw_occupants:
         room.occupants.set(raw_occupants)
     return room
+
+
+# ---------------------------------------------------------------------------
+# Shelter operator registration / invitation
+# ---------------------------------------------------------------------------
+
+
+def shelter_operator_register(
+    *,
+    email: str,
+    password: str,
+    first_name: str,
+    last_name: str,
+    organization_name: str,
+) -> tuple[User, Organization]:
+    """Register a new shelter operator: create user, org, and assign ownership.
+
+    Returns the created (user, organization) tuple.
+    """
+    email = email.strip().lower()
+
+    if User.objects.filter(email=email).exists():
+        raise ValidationError("A user with this email already exists.")
+
+    if not password or len(password) < 8:
+        raise ValidationError("Password must be at least 8 characters.")
+
+    organization_name = organization_name.strip()
+    if not organization_name:
+        raise ValidationError("Organization name is required.")
+
+    with transaction.atomic():
+        user = User.objects.create_user(
+            username=str(uuid.uuid4()),
+            email=email,
+            password=password,
+            first_name=first_name.strip(),
+            last_name=last_name.strip(),
+            is_active=True,
+        )
+
+        organization = Organization.objects.create(name=organization_name)
+
+        OrganizationProfile.objects.create(
+            organization=organization,
+            org_type=OrgType.SHELTER,
+        )
+
+        org_user = OrganizationUser.objects.create(
+            user=user,
+            organization=organization,
+            is_admin=True,
+        )
+
+        OrganizationOwner.objects.create(
+            organization=organization,
+            organization_user=org_user,
+        )
+
+        # Assign shelter operator + org superuser permission groups
+        for template_name in [GroupTemplateNames.SHELTER_OPERATOR, GroupTemplateNames.ORG_SUPERUSER]:
+            template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_name)
+            perm_group, _ = PermissionGroup.objects.get_or_create(
+                organization=organization,
+                template=template,
+            )
+            user.groups.add(perm_group.group)
+
+    _send_shelter_welcome_email(user=user, organization=organization)
+
+    return user, organization
+
+
+def shelter_invite_accept(
+    *,
+    invite_id: int,
+    password: str,
+    first_name: str | None = None,
+    last_name: str | None = None,
+) -> User:
+    """Accept an invitation to join a shelter organization by setting a password.
+
+    Returns the activated user.
+    """
+    try:
+        invitation = ExtendedOrganizationInvitation.objects.select_related("invitee", "organization").get(pk=invite_id)
+    except ExtendedOrganizationInvitation.DoesNotExist:
+        raise ValidationError("Invalid invitation.")
+
+    if invitation.accepted:
+        raise ValidationError("This invitation has already been accepted.")
+
+    if not password or len(password) < 8:
+        raise ValidationError("Password must be at least 8 characters.")
+
+    user = invitation.invitee
+
+    with transaction.atomic():
+        if first_name:
+            user.first_name = first_name.strip()
+        if last_name:
+            user.last_name = last_name.strip()
+        user.set_password(password)
+        user.save()
+
+        invitation.accepted = True
+        invitation.save()
+
+        # Ensure the user has shelter operator permissions for this org
+        template, _ = PermissionGroupTemplate.objects.get_or_create(
+            name=GroupTemplateNames.SHELTER_OPERATOR,
+        )
+        perm_group, _ = PermissionGroup.objects.get_or_create(
+            organization=invitation.organization,
+            template=template,
+        )
+        user.groups.add(perm_group.group)
+
+    return user
+
+
+def _send_shelter_welcome_email(*, user: User, organization: Organization) -> None:
+    """Send the welcome email to a newly registered shelter operator."""
+    site = Site.objects.get(pk=settings.SITE_ID)
+    portal_url = f"https://{site.domain}/operator"
+    context = {
+        "organization_name": organization.name,
+        "portal_url": portal_url,
+        "login_email": user.email,
+    }
+    text_body = render_to_string("account/messages/shelter_operator_welcome.txt", context)
+    html_body = render_to_string("account/email/shelter_operator_welcome.html", context)
+    subject = "Welcome to the Better Angels Shelter Operator Portal!"
+    msg = EmailMultiAlternatives(subject, text_body, settings.DEFAULT_FROM_EMAIL, [user.email])
+    msg.attach_alternative(html_body, "text/html")
+    msg.send()

@@ -167,3 +167,20 @@ class CreateRoomInput:
     occupants: Optional[List[ID]] = None
     medical_respite: Optional[bool] = False
     last_cleaned_inspected: Optional[datetime] = None
+
+
+@strawberry.input
+class RegisterShelterOperatorInput:
+    email: str
+    first_name: str
+    last_name: str
+    password: str
+    organization_name: str
+
+
+@strawberry.input
+class AcceptShelterInviteInput:
+    invite_id: ID
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    password: str

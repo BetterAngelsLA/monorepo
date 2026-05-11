@@ -5,3 +5,4 @@ class GroupTemplateNames(StrEnum):
     CASEWORKER = "Caseworker"
     ORG_ADMIN = "Organization Admin"
     ORG_SUPERUSER = "Organization Superuser"
+    SHELTER_OPERATOR = "Shelter Operator"
