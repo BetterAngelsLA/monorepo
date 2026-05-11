@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0047_shelterphoto"),
+        ("shelters", "0048_shelterphoto"),
     ]
 
     operations = [

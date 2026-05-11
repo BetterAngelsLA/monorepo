@@ -112,7 +112,7 @@ def migrate_shelter_photos(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0046_add_view_private_shelter_to_caseworker"),
+        ("shelters", "0047_merge_20260505_1635"),
     ]
 
     operations = [

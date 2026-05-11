@@ -31,6 +31,7 @@ from shelters.enums import (
     SPAChoices,
     SpecialSituationRestrictionChoices,
     StorageChoices,
+    VaccinationRequirementChoices,
 )
 from strawberry import ID, Maybe, auto
 
@@ -81,6 +82,7 @@ class CreateShelterInput:
     parking: List[ParkingChoices]
     entry_requirements: List[EntryRequirementChoices]
     referral_requirement: List[ReferralRequirementChoices]
+    vaccination_requirement: List[VaccinationRequirementChoices]
     exit_policy: List[ExitPolicyChoices]
     cities: List[str]
     spa: List[SPAChoices]

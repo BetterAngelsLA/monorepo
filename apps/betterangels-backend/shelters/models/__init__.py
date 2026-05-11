@@ -19,6 +19,7 @@ from .lookups import (  # noqa: F401
     ShelterType,
     SpecialSituationRestriction,
     Storage,
+    VaccinationRequirement,
 )
 from .media import (  # noqa: F401
     ExteriorShelterPhoto,
@@ -46,4 +47,5 @@ from .tracked import (  # noqa: F401
     TrackedSPA,
     TrackedSpecialSituationRestriction,
     TrackedStorage,
+    TrackedVaccinationRequirement,
 )

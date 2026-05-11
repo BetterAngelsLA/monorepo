@@ -66,6 +66,9 @@ query ViewShelter($id: ID!) {
         url
       }
     }
+    vaccinationRequirement {
+      name
+    }
     funders {
       name
     }

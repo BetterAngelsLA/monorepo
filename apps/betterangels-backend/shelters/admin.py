@@ -54,6 +54,7 @@ from .enums import (
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
+    VaccinationRequirementChoices,
 )
 from .models import (
     SPA,
@@ -82,6 +83,7 @@ from .models import (
     ShelterType,
     SpecialSituationRestriction,
     Storage,
+    VaccinationRequirement,
     Video,
     get_fields_with_other_option,
 )
@@ -230,6 +232,7 @@ class ShelterForm(forms.ModelForm):
 
     # Entry Requirements
     entry_requirements = create_select2_multiple_field(EntryRequirementChoices, "Select entry requirements...")
+    vaccination_requirement = create_select2_multiple_field(VaccinationRequirementChoices, "Select vaccinations...")
 
     # Ecosystem Information
     spa = create_select2_multiple_field(SPAChoices, "Select SPA...")
@@ -650,6 +653,11 @@ class ShelterResource(resources.ModelResource):
         attribute="entry_requirements",
         widget=ManyToManyWidget(EntryRequirement, separator=",", field="name"),
     )
+    vaccination_requirement = Field(
+        column_name="vaccination_requirement",
+        attribute="vaccination_requirement",
+        widget=ManyToManyWidget(VaccinationRequirement, separator=",", field="name"),
+    )
     storage = Field(
         column_name="storage",
         attribute="storage",
@@ -776,6 +784,7 @@ class ShelterResource(resources.ModelResource):
             "room_styles",
             "funders",
             "entry_requirements",
+            "vaccination_requirement",
             "storage",
             "pets",
             "cities",
@@ -1012,6 +1021,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                 "fields": (
                     "entry_requirements",
                     "referral_requirement",
+                    "vaccination_requirement",
                     "bed_fees",
                     "program_fees",
                     "entry_info",
@@ -1095,6 +1105,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         "services",
         # Entry Requirements
         "entry_requirements",
+        "vaccination_requirement",
         # Ecosystem Information
         "cities",
         "spa",

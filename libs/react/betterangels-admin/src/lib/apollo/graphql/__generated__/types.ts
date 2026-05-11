@@ -127,6 +127,7 @@ export type AdminShelterType = {
   supervisorialDistrict?: Maybe<Scalars['Int']['output']>;
   totalBeds?: Maybe<Scalars['Int']['output']>;
   updatedAt: Scalars['DateTime']['output'];
+  vaccinationRequirement: Array<VaccinationRequirementType>;
   visitorsAllowed?: Maybe<Scalars['Boolean']['output']>;
   website?: Maybe<Scalars['String']['output']>;
 };
@@ -789,6 +790,7 @@ export type CreateShelterInput = {
   subjectiveReview?: InputMaybe<Scalars['String']['input']>;
   supervisorialDistrict?: InputMaybe<Scalars['Int']['input']>;
   totalBeds?: InputMaybe<Scalars['Int']['input']>;
+  vaccinationRequirement: Array<VaccinationRequirementChoices>;
   visitorsAllowed?: InputMaybe<Scalars['Boolean']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
 };
@@ -2874,6 +2876,7 @@ export type ShelterType = {
   supervisorialDistrict?: Maybe<Scalars['Int']['output']>;
   totalBeds?: Maybe<Scalars['Int']['output']>;
   updatedAt: Scalars['DateTime']['output'];
+  vaccinationRequirement: Array<VaccinationRequirementType>;
   visitorsAllowed?: Maybe<Scalars['Boolean']['output']>;
   website?: Maybe<Scalars['String']['output']>;
 };
@@ -3239,6 +3242,17 @@ export type UserType = {
 export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   ordering?: Array<OrganizationOrder>;
+};
+
+export enum VaccinationRequirementChoices {
+  Covid_19 = 'COVID_19',
+  Flu = 'FLU',
+  Tb = 'TB'
+}
+
+export type VaccinationRequirementType = {
+  __typename?: 'VaccinationRequirementType';
+  name: VaccinationRequirementChoices;
 };
 
 export enum VeteranStatusEnum {
