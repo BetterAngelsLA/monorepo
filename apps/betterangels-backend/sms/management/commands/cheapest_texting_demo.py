@@ -16,6 +16,11 @@ Once trunk_number and campaign_id are configured:
 
 Inspect a single campaign by ID (only needs API key):
     python manage.py cheapest_texting_demo campaign 28842
+
+List all contacts in the configured campaign (only needs API key + CAMPAIGN_ID):
+    python manage.py cheapest_texting_demo list-contacts
+    python manage.py cheapest_texting_demo list-contacts 28842       # override campaign
+    python manage.py cheapest_texting_demo list-contacts --page-size 200
 """
 
 import json
@@ -44,6 +49,7 @@ class Command(BaseCommand):
                 "campaign",
                 "create-contact",
                 "remove-contact",
+                "list-contacts",
             ],
             help="Action to perform.",
         )
@@ -64,6 +70,12 @@ class Command(BaseCommand):
         parser.add_argument("--first-name", default="", help="First name (create-contact only).")
         parser.add_argument("--last-name", default="", help="Last name (create-contact only).")
         parser.add_argument("--email", default="", help="Email (create-contact only).")
+        parser.add_argument(
+            "--page-size",
+            type=int,
+            default=100,
+            help="Page size for list-contacts (default: 100).",
+        )
 
     def handle(self, *args: Any, **options: Any) -> None:
         action = options["action"]
@@ -76,6 +88,10 @@ class Command(BaseCommand):
 
         if action == "campaign":
             self._campaign(target)
+            return
+
+        if action == "list-contacts":
+            self._list_contacts(target, options["page_size"])
             return
 
         if not target:
@@ -225,3 +241,68 @@ class Command(BaseCommand):
             return
 
         self.stdout.write(json.dumps(r.json(), indent=2, default=str))
+
+    def _list_contacts(self, campaign_id_arg: str | None, page_size: int) -> None:
+        """List all contacts for a campaign via GET /campaigns/{id}/contacts/ (paginated)."""
+        api_key = settings.CHEAPEST_TEXTING_API_KEY
+        base_url = settings.CHEAPEST_TEXTING_BASE_URL
+
+        if not api_key:
+            self.stderr.write(self.style.ERROR("CHEAPEST_TEXTING_API_KEY is not set."))
+            return
+
+        if campaign_id_arg:
+            try:
+                campaign_id = int(campaign_id_arg)
+            except ValueError:
+                self.stderr.write(self.style.ERROR(f"Invalid campaign ID: {campaign_id_arg!r}"))
+                return
+        elif settings.CHEAPEST_TEXTING_CAMPAIGN_ID:
+            campaign_id = settings.CHEAPEST_TEXTING_CAMPAIGN_ID
+        else:
+            self.stderr.write(
+                self.style.ERROR(
+                    "Pass a campaign ID as the second positional argument, "
+                    "or set CHEAPEST_TEXTING_CAMPAIGN_ID in your env."
+                )
+            )
+            return
+
+        client = httpx.Client(
+            base_url=base_url,
+            headers={"X-API-KEY": api_key},
+            timeout=30.0,
+        )
+
+        self.stdout.write(self.style.MIGRATE_HEADING(f"--- GET /campaigns/{campaign_id}/contacts/ ---"))
+
+        contacts: list[dict] = []
+        page = 1
+        while True:
+            try:
+                r = client.get(
+                    f"/campaigns/{campaign_id}/contacts/",
+                    params={"page": page, "page_size": page_size},
+                )
+                r.raise_for_status()
+            except httpx.HTTPError as e:
+                self.stderr.write(self.style.ERROR(f"  Failed on page {page}: {e}"))
+                return
+
+            data = r.json()
+            results = data.get("results") if isinstance(data, dict) else data
+            for c in results or []:
+                contacts.append(c)
+                self.stdout.write(
+                    f"  id={c.get('id')}  phone={c.get('phone')}  "
+                    f"name={(c.get('first_name') or '').strip()} {(c.get('last_name') or '').strip()}  "
+                    f"is_active={c.get('is_active')}"
+                )
+
+            if isinstance(data, dict) and data.get("next"):
+                page += 1
+                continue
+            break
+
+        self.stdout.write("")
+        self.stdout.write(self.style.SUCCESS(f"  Total: {len(contacts)} contact(s) in campaign {campaign_id}."))
