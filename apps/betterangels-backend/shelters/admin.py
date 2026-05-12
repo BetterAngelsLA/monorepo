@@ -1068,6 +1068,7 @@ class ShelterAdmin(ImportExportModelAdmin):
     )
 
     list_display = (
+        "id",
         "name",
         "organization",
         "location",
