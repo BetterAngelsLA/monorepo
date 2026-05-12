@@ -72,6 +72,20 @@ class ShelterPhotoPermissions(models.TextChoices):
     VIEW = "shelters.view_shelterphoto", _("Can view shelter photo")
 
 
+class InteriorShelterPhotoPermissions(models.TextChoices):
+    ADD = "shelters.add_interiorshelterphoto", _("Can add interior shelter photo")
+    CHANGE = "shelters.change_interiorshelterphoto", _("Can change interior shelter photo")
+    DELETE = "shelters.delete_interiorshelterphoto", _("Can delete interior shelter photo")
+    VIEW = "shelters.view_interiorshelterphoto", _("Can view interior shelter photo")
+
+
+class ExteriorShelterPhotoPermissions(models.TextChoices):
+    ADD = "shelters.add_exteriorshelterphoto", _("Can add exterior shelter photo")
+    CHANGE = "shelters.change_exteriorshelterphoto", _("Can change exterior shelter photo")
+    DELETE = "shelters.delete_exteriorshelterphoto", _("Can delete exterior shelter photo")
+    VIEW = "shelters.view_exteriorshelterphoto", _("Can view exterior shelter photo")
+
+
 class ParkingPermissions(models.TextChoices):
     ADD = "shelters.add_parking", _("Can add parking")
     CHANGE = "shelters.change_parking", _("Can change parking")
