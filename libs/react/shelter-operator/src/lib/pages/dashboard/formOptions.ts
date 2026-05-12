@@ -1,14 +1,5 @@
 import {
   DemographicChoices,
-  ExitPolicyChoices,
-  FunderChoices,
-  ReferralRequirementChoices,
-  RoomStyleChoices,
-  ShelterChoices,
-  ShelterProgramChoices,
-  SpaChoices,
-  SpecialSituationRestrictionChoices,
-  StatusChoices,
   enumDisplayAccessibilityChoices,
   enumDisplayDemographics,
   enumDisplayEntryRequirementChoices,
@@ -19,6 +10,18 @@ import {
   enumDisplayShelterProgramChoices,
   enumDisplaySpecialSituationRestrictionChoices,
   enumDisplayStorageChoices,
+  ExitPolicyChoices,
+  FunderChoices,
+  ParkingChoices,
+  PetChoices,
+  ReferralRequirementChoices,
+  RoomStyleChoices,
+  ShelterChoices,
+  ShelterProgramChoices,
+  SpaChoices,
+  SpecialSituationRestrictionChoices,
+  StatusChoices,
+  StorageChoices,
 } from '@monorepo/react/shelter';
 
 // ---------------------------------------------------------------------------
@@ -119,9 +122,9 @@ const STATUS_LABELS: Record<StatusChoices, string> = {
 
 export const ACCESSIBILITY_OPTIONS = toOptions(enumDisplayAccessibilityChoices);
 export const BOOLEAN_OPTIONS = [
-  { value: null, label: 'Unknown' },
   { value: true, label: 'Yes' },
   { value: false, label: 'No' },
+  { value: null, label: 'Unknown' },
 ] as const;
 
 export const CITY_COUNCIL_DISTRICT_OPTIONS = [
@@ -170,8 +173,12 @@ export const OVERALL_RATING_OPTIONS = [
   { value: 5, label: '5' },
 ] as const;
 
-export const PARKING_OPTIONS = toOptions(enumDisplayParkingChoices);
-export const PETS_OPTIONS = toOptions(enumDisplayPetChoices);
+export const PARKING_OPTIONS = toOptions(enumDisplayParkingChoices, [
+  ParkingChoices.NoParking,
+]);
+export const PETS_OPTIONS = toOptions(enumDisplayPetChoices, [
+  PetChoices.NoPetsAllowed,
+]);
 export const REFERRAL_REQUIREMENT_OPTIONS = toOptions(
   REFERRAL_REQUIREMENT_LABELS
 );
@@ -186,9 +193,14 @@ export const SHELTER_TYPES_OPTIONS = toOptions(enumDisplayShelterChoices, [
   ShelterChoices.Other,
 ]);
 export const SPA_OPTIONS = toOptions(SPA_LABELS);
-export const SPECIAL_SITUATION_OPTIONS = toOptions(SPECIAL_SITUATION_LABELS);
+export const SPECIAL_SITUATION_OPTIONS = toOptions(SPECIAL_SITUATION_LABELS, [
+  SpecialSituationRestrictionChoices.None,
+]);
 export const STATUS_OPTIONS = toOptions(STATUS_LABELS);
-export const STORAGE_OPTIONS = toOptions(enumDisplayStorageChoices);
+
+export const STORAGE_OPTIONS = toOptions(enumDisplayStorageChoices, [
+  StorageChoices.NoStorage,
+]);
 export const SUPERVISORIAL_DISTRICT_OPTIONS = [
   { value: null, label: 'None' },
   ...Array.from({ length: 5 }, (_, i) => ({ value: i + 1, label: `${i + 1}` })),
