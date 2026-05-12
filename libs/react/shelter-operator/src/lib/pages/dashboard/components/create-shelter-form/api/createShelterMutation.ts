@@ -134,7 +134,7 @@ export const buildCreateShelterInput = (
     vaccinationRequirement: compactEnumValues(formData.vaccinationRequirement),
     exitPolicy: compactEnumValues(formData.exitPolicy),
     cityId: formData.city ? formData.city?.id : undefined,
-    spa: formData.spa ?? undefined,
+    spaId: formData.spa?.id ?? undefined,
     shelterPrograms: compactEnumValues(formData.shelterPrograms),
     funders: compactEnumValues(formData.funders),
 

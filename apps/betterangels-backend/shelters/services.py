@@ -41,7 +41,8 @@ _COMMON_M2M_FIELDS = (_SHELTER_M2M_FIELDS & _BED_M2M_FIELDS) | (_SHELTER_M2M_FIE
 
 # FK fields whose target is an enum-backed lookup table (single unique ``name``
 # column).  Inputs arrive as enum values and are resolved via ``get_or_create``.
-_SHELTER_FK_ENUM_FIELDS: set[str] = {"spa"}
+# NOTE: spa and city are passed as PKs (spa_id / city_id) so they do NOT belong here.
+_SHELTER_FK_ENUM_FIELDS: set[str] = set()
 
 
 def _set_m2m_from_enums(instance: models.Model, data: Dict[str, List[Any]]) -> None:
@@ -111,7 +112,7 @@ def _prepare_shelter_data(
     - ``organization`` ID → ``organization_id`` FK column
     - ``status`` enum → raw string value
     - ``schedules`` list extracted for bulk creation after shelter save
-    - FK-enum fields (e.g. ``spa``) extracted for resolution via
+    - FK-enum fields extracted for resolution via
       :func:`_set_fks_from_enums` against the unsaved instance
 
     Returns ``(scalar_data, m2m_data, fk_enum_data, schedules_data)``.
@@ -125,10 +126,6 @@ def _prepare_shelter_data(
     if "location" in data:
         data["location"] = _parse_location(data["location"])
 
-    if org := data.pop("organization", None):
-        data["organization_id"] = org
-    if city := data.pop("city", None):
-        data["city_id"] = city
     if org := data.pop("organization", None):
         data["organization_id"] = org
 

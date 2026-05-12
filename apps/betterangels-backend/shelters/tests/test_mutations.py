@@ -62,7 +62,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
                 "cityId": None,
-                "spa": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -130,7 +130,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
                 "cityId": None,
-                "spa": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -203,7 +203,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
                 "cityId": str(city.pk),
-                "spa": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -267,7 +267,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
                 "cityId": None,
-                "spa": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -350,7 +350,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
                 "cityId": None,
-                "spa": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -419,7 +419,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
                 "cityId": None,
-                "spa": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -468,7 +468,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
                 "cityId": None,
-                "spa": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -521,7 +521,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
                 "cityId": None,
-                "spa": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -568,7 +568,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
                 "cityId": None,
-                "spa": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -615,7 +615,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
                 "cityId": None,
-                "spa": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }

@@ -792,7 +792,7 @@ export type CreateShelterInput = {
   shelterProgramsOther?: InputMaybe<Scalars['String']['input']>;
   shelterTypes: Array<ShelterChoices>;
   shelterTypesOther?: InputMaybe<Scalars['String']['input']>;
-  spa?: InputMaybe<Scalars['ID']['input']>;
+  spaId?: InputMaybe<Scalars['ID']['input']>;
   specialSituationRestrictions: Array<SpecialSituationRestrictionChoices>;
   status?: InputMaybe<StatusChoices>;
   storage: Array<StorageChoices>;

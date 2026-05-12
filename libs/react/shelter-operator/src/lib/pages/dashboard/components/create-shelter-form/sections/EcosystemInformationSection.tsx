@@ -13,7 +13,6 @@ import {
   CITY_COUNCIL_DISTRICT_OPTIONS,
   FUNDERS_OPTIONS,
   SHELTER_PROGRAMS_OPTIONS,
-  SPA_OPTIONS,
   SUPERVISORIAL_DISTRICT_OPTIONS,
 } from '../../../formOptions';
 import {
@@ -56,13 +55,35 @@ export const EcosystemInformationSection = memo(
         <Dropdown
           label="SPA (Service Planning Area)"
           placeholder="Select a SPA"
-          options={SPA_OPTIONS}
+          options={(shelterSpas.shelterSpas.results ?? [])
+            .filter((s) => s.name != null)
+            .map((s) => ({
+              label: enumDisplaySpaChoices[s.name!],
+              value: s.id,
+            }))}
           value={
             data.spa
-              ? { label: enumDisplaySpaChoices[data.spa], value: data.spa }
+              ? {
+                  label: data.spa.name
+                    ? enumDisplaySpaChoices[data.spa.name]
+                    : data.spa.id,
+                  value: data.spa.id,
+                }
               : null
           }
-          onChange={(option) => onChange('spa', option ? option.value : null)}
+          onChange={(option) => {
+            if (!option) {
+              onChange('spa', null);
+              return;
+            }
+            const match = shelterSpas.shelterSpas.results.find(
+              (s) => s.id === option.value
+            );
+            onChange(
+              'spa',
+              match ? { id: match.id, name: match.name ?? undefined } : null
+            );
+          }}
         />
         <Dropdown
           label="City Council District"

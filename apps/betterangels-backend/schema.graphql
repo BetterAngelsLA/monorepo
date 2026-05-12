@@ -790,7 +790,7 @@ input CreateShelterInput {
   overallRating: Int = null
   isPrivate: Boolean
   cityId: ID = null
-  spa: ID = null
+  spaId: ID = null
 }
 
 union CreateShelterPayload = ShelterType | OperationInfo

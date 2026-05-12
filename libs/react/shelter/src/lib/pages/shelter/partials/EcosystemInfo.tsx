@@ -4,6 +4,7 @@ import {
   displayListWithOther,
   enumDisplayFunderChoices,
   enumDisplayShelterProgramChoices,
+  enumDisplaySpaChoices,
   formatCityCouncilDistrict,
 } from '../../../static';
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
@@ -42,9 +43,9 @@ export function EcosystemInfo({
             <strong>City:</strong> {shelter.city.name}
           </div>
         )}
-        {shelter.spa && (
+        {shelter.spa?.name && (
           <div className="flex items-center gap-2">
-            <strong>SPA:</strong> {shelter.spa.name}
+            <strong>SPA:</strong> {enumDisplaySpaChoices[shelter.spa.name]}
           </div>
         )}
 

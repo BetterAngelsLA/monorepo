@@ -126,10 +126,9 @@ class CreateShelterInput:
     overall_rating: auto = None
     is_private: Maybe[bool]
 
-    # FK lookups to single City / SPA. Use the same choice/name representation
-    # as their M2M counterparts (cities_served / spas_served) for consistency.
+    # FK lookups to single City / SPA — accept the model PK directly.
     city_id: Optional[ID] = None
-    spa: Optional[ID] = None
+    spa_id: Optional[ID] = None
 
 
 @strawberry.input
