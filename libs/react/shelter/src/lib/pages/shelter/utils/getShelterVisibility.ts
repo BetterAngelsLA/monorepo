@@ -1,4 +1,4 @@
-import { CityType, SpaType } from '../../../apollo';
+import { CityType, SpaChoices } from '../../../apollo';
 import { hasWysiwygContent } from './hasWysiwygContent';
 
 type NameItem = { name?: string | null };
@@ -32,7 +32,7 @@ export type ShelterData = {
   onSiteSecurity?: boolean | null;
   otherRules?: string | null;
   city?: CityType | null;
-  spa?: SpaType | null;
+  spa?: { name?: SpaChoices | null } | null;
   cityCouncilDistrict?: number | null;
   supervisorialDistrict?: number | null;
   shelterPrograms?: NameItem[];
