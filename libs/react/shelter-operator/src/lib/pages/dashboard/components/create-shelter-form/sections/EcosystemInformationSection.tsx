@@ -56,11 +56,15 @@ export const EcosystemInformationSection = memo(
           label="SPA (Service Planning Area)"
           placeholder="Select a SPA"
           options={(shelterSpas.shelterSpas.results ?? [])
-            .filter((s) => s.name != null)
+            .filter(
+              (s): s is typeof s & { name: NonNullable<typeof s.name> } =>
+                s.name != null
+            )
             .map((s) => ({
-              label: enumDisplaySpaChoices[s.name!],
+              label: enumDisplaySpaChoices[s.name],
               value: s.id,
-            }))}
+            }))
+            .sort((a, b) => a.label.localeCompare(b.label))}
           value={
             data.spa
               ? {
