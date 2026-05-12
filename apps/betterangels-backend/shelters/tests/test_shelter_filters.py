@@ -409,7 +409,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         spa_one, _ = SPA.objects.get_or_create(name=SPAChoices.ONE)
 
         shelters_in_spa = shelter_recipe.make(spa=spa_one, status=StatusChoices.APPROVED, _quantity=2)
-        shelter_recipe.make(status=StatusChoices.APPROVED, _quantity=2)
+        shelter_recipe.make(spa=None, status=StatusChoices.APPROVED, _quantity=2)
 
         query = """
             query ($filters: ShelterFilter) {
