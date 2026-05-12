@@ -2219,6 +2219,7 @@ input ShelterFilter {
   openNow: Boolean
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
+  spa: [ID!]
 }
 
 type ShelterHeroImageType {
@@ -2287,7 +2288,6 @@ input ShelterPropertyInput {
   shelterTypes: [ShelterChoices!] = null
   roomStyles: [RoomStyleChoices!] = null
   parking: [ParkingChoices!] = null
-  spa: [SPAChoices!] = null
 }
 
 type ShelterType {

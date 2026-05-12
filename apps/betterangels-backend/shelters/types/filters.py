@@ -34,7 +34,6 @@ from shelters.enums import (
     RoomStyleChoices,
     ScheduleTypeChoices,
     ShelterChoices,
-    SPAChoices,
     SpecialSituationRestrictionChoices,
 )
 from shelters.selectors import shelters_open_at
@@ -73,7 +72,6 @@ class ShelterPropertyInput:
     shelter_types: Optional[List[ShelterChoices]] = None
     room_styles: Optional[List[RoomStyleChoices]] = None
     parking: Optional[List[ParkingChoices]] = None
-    spa: Optional[List[SPAChoices]] = None
 
 
 @strawberry.input
@@ -184,6 +182,13 @@ class ShelterFilter:
         return queryset, Q()
 
     is_private: auto
+
+    @strawberry_django.filter_field
+    def spa(self, queryset: QuerySet, value: Optional[List[ID]], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
+        if not value:
+            return queryset, Q()
+
+        return queryset.filter(spa_id__in=value).select_related("spa"), Q()
 
 
 @strawberry_django.order_type(models.Shelter, one_of=False)

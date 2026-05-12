@@ -6,8 +6,8 @@ from django.contrib.auth.models import Permission
 from django.utils import timezone
 from shelters.enums import BedStatusChoices, DemographicChoices, PetChoices
 from shelters.enums import ShelterChoices as ShelterTypeChoices
-from shelters.enums import SPAChoices, SpecialSituationRestrictionChoices
-from shelters.models import SPA, Bed, Demographic, Pet, ShelterType, SpecialSituationRestriction
+from shelters.enums import SpecialSituationRestrictionChoices
+from shelters.models import Bed, Demographic, Pet, ShelterType, SpecialSituationRestriction
 from shelters.permissions import ShelterPermissions
 from shelters.tests.baker_recipes import shelter_recipe
 from unittest_parametrize import ParametrizedTestCase, parametrize
@@ -295,9 +295,6 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         self.org_1_case_manager_1.user_permissions.add(perm)
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-        spa_one = SPA.objects.get_or_create(name=SPAChoices.ONE)[0]
-        spa_two = SPA.objects.get_or_create(name=SPAChoices.TWO)[0]
-
         # Shelters A & B: SINGLE_MEN, VETERANS, BUILDING, SPA ONE
         for _ in range(2):
             shelter_recipe.make(
@@ -309,7 +306,6 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
                     ]
                 ],
                 shelter_types=[ShelterType.objects.get_or_create(name=ShelterTypeChoices.BUILDING)[0]],
-                spa=spa_one,
             )
         # Shelter C: FAMILIES, HIV_AIDS, TINY_HOMES, SPA TWO
         shelter_recipe.make(
@@ -319,7 +315,6 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
                 SpecialSituationRestriction.objects.get_or_create(name=SpecialSituationRestrictionChoices.HIV_AIDS)[0]
             ],
             shelter_types=[ShelterType.objects.get_or_create(name=ShelterTypeChoices.TINY_HOMES)[0]],
-            spa=spa_two,
         )
 
     def _query(self, properties: dict[str, Any]) -> list[dict[Any, Any]]:
@@ -359,16 +354,6 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         ],
     )
     def test_shelter_types_filter(self, properties: dict[str, Any], expected_count: int) -> None:
-        self.assertEqual(len(self._query(properties)), expected_count)
-
-    @parametrize(
-        "properties, expected_count",
-        [
-            ({"spa": SPAChoices.ONE.name}, 2),
-            ({"spa": SPAChoices.TWO.name}, 1),
-        ],
-    )
-    def test_spa_filter(self, properties: dict[str, Any], expected_count: int) -> None:
         self.assertEqual(len(self._query(properties)), expected_count)
 
     def test_combined_properties_filter(self) -> None:
