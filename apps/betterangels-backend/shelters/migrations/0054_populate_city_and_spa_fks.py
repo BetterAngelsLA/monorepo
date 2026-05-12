@@ -46,4 +46,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(populate_city_and_spa_fks, reverse_populate),
+        migrations.AlterModelOptions(
+            name="spa",
+            options={"ordering": ["name"]},
+        ),
     ]
