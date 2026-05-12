@@ -60,3 +60,6 @@ requests = "^2.32.5"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = ["faker (>=40.15.0,<41.0.0)"]
