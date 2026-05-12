@@ -28,7 +28,6 @@ from shelters.enums import (
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import (
     ShelterProgramChoices,
-    SPAChoices,
     SpecialSituationRestrictionChoices,
     StorageChoices,
     VaccinationRequirementChoices,
