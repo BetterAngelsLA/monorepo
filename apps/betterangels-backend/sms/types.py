@@ -1,3 +1,12 @@
+"""
+Provider-agnostic DTOs passed across the capability interfaces.
+
+These dataclasses are the lingua franca between calling code and any
+provider implementation. Providers translate their vendor responses
+into these types so swapping a provider doesn't require changes
+upstream.
+"""
+
 from dataclasses import dataclass, field
 
 from sms.enums import PhoneType

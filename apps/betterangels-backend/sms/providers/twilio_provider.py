@@ -4,6 +4,29 @@ Twilio SMS provider.
 Uses the official Twilio Python SDK.
 Docs: https://www.twilio.com/docs/sms
 Lookup: https://www.twilio.com/docs/lookup/v2-api
+
+Settings (Django settings / env vars):
+    TWILIO_ACCOUNT_SID: str  [REQUIRED]
+        Account SID for your Twilio account. Find it on the Twilio Console
+        dashboard at https://console.twilio.com.
+
+    TWILIO_AUTH_TOKEN: str  [REQUIRED]
+        Auth Token paired with the Account SID. Same location as the SID
+        on the Twilio Console dashboard. Used together as HTTP Basic
+        credentials by the Twilio SDK.
+
+    TWILIO_FROM_NUMBER: str  [REQUIRED if TWILIO_MESSAGING_SERVICE_SID is not set]
+        A Twilio-provisioned phone number (E.164 format, e.g. "+13105551234")
+        to use as the sender. Used when no messaging service SID is
+        configured. Find your numbers under Phone Numbers → Manage → Active
+        Numbers in the Twilio Console.
+
+    TWILIO_MESSAGING_SERVICE_SID: str  [optional]
+        SID of a Twilio Messaging Service (starts with "MG..."). When set,
+        messages are sent via the messaging service instead of a single
+        from-number, enabling features like sender pools, sticky sender,
+        and geo-routing. Find it under Messaging → Services in the Twilio
+        Console.
 """
 
 from django.conf import settings

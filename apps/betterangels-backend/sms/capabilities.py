@@ -1,3 +1,24 @@
+"""
+Provider capability interfaces (segregated ABCs).
+
+SMS providers differ widely in what they support: Twilio offers phone
+number lookup but no real "subscriber" concept; EZ Texting manages
+contacts/groups/blocks but has no lookup API; a local dev provider can
+fake everything. To avoid a single fat interface that forces every
+provider to stub out methods it can't implement, each capability is its
+own small ABC:
+
+    MessageSender        — send a 1:1 SMS
+    ContactManager       — CRUD contacts on the provider
+    SubscriptionManager  — opt-in / opt-out / status
+    PhoneValidator       — real-time "is this number real?" lookup
+
+Provider classes mix in only the capabilities they support. Calling code
+should type-hint the specific capability it depends on (e.g.
+`def notify(sender: MessageSender, ...)`), not a god-interface, which
+keeps the dependency surface honest and makes mocking trivial.
+"""
+
 from abc import ABC, abstractmethod
 
 from sms.enums import SubscriptionStatus

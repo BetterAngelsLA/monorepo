@@ -1,3 +1,13 @@
+"""
+Exception hierarchy for the sms app.
+
+All provider-raised errors derive from `SmsError` so callers can catch a
+single base class regardless of which provider is wired up. Providers
+should wrap vendor SDK exceptions in `ProviderError` (with `provider`
+and, where available, HTTP `status_code`) rather than leaking SDK types.
+"""
+
+
 class SmsError(Exception):
     """Base exception for the sms app."""
 

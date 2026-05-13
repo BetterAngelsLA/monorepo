@@ -3,8 +3,12 @@ EZ Texting SMS provider.
 
 API docs: https://developers.eztexting.com/
 Base URL: https://a.eztexting.com/v1
-Auth: HTTP Basic Authentication using App Key (username) and App Secret (password).
-      OAuth2 bearer tokens are also supported by the API but not used here.
+Auth: HTTP Basic Authentication using the same username/password pair used
+      to sign in to the EZ Texting web portal. The API docs refer to these
+      as "appKey" (username) and "appSecret" (password), but they are not
+      separate API credentials — they are your portal login. OAuth2 bearer
+      tokens are also supported by the API but not used here.
+      See https://developers.eztexting.com/docs/authentication for more.
 
 Key concepts:
 - "Contacts" are identified by phone number; create/update share a single
@@ -20,12 +24,14 @@ Key concepts:
 
 Settings (Django settings / env vars):
     EZ_TEXTING_APP_KEY: str  [REQUIRED]
-        App Key (username) issued by EZ Texting. Find this in the dashboard
-        under Settings → API.
+        The username (typically the email address) used to sign in to the
+        EZ Texting web portal at https://app.eztexting.com. Sent as the
+        username half of the HTTP Basic Authentication credentials.
 
     EZ_TEXTING_APP_SECRET: str  [REQUIRED]
-        App Secret (password) paired with the App Key. Same location in the
-        dashboard. Sent together with the App Key as HTTP Basic credentials.
+        The password paired with EZ_TEXTING_APP_KEY — i.e. the same
+        password used to sign in to the EZ Texting web portal. Sent as
+        the password half of the HTTP Basic Authentication credentials.
 
     EZ_TEXTING_BASE_URL: str  [optional]
         Base URL for the API. Defaults to "https://a.eztexting.com/v1".
@@ -59,11 +65,13 @@ class EzTextingProvider(MessageSender, ContactManager, SubscriptionManager):
 
         if not self.app_key:
             raise ValueError(
-                "EZ_TEXTING_APP_KEY is required. " "Find it in the EZ Texting dashboard under Settings → API."
+                "EZ_TEXTING_APP_KEY is required. "
+                "This is the username (typically email) used to sign in to the EZ Texting web portal."
             )
         if not self.app_secret:
             raise ValueError(
-                "EZ_TEXTING_APP_SECRET is required. " "Find it in the EZ Texting dashboard under Settings → API."
+                "EZ_TEXTING_APP_SECRET is required. "
+                "This is the password used to sign in to the EZ Texting web portal."
             )
 
         self.client = httpx.Client(

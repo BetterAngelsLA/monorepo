@@ -10,14 +10,14 @@ import logging
 from pathlib import Path
 
 from django.conf import settings
+from sms.capabilities import ContactManager, MessageSender, PhoneValidator, SubscriptionManager
 from sms.enums import PhoneType, SubscriptionStatus
-from sms.interface import SmsInterface
 from sms.types import Contact, PhoneValidationResult, SendResult
 
 logger = logging.getLogger(__name__)
 
 
-class LocalProvider(SmsInterface):
+class LocalProvider(MessageSender, ContactManager, SubscriptionManager, PhoneValidator):
     """
     Development-only provider that logs all operations.
     Implements all interfaces so every code path can be exercised locally.
