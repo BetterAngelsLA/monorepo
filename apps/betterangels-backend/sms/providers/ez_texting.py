@@ -72,9 +72,13 @@ class EzTextingProvider(MessageSender, ContactManager, SubscriptionManager):
             headers={"Accept": "application/json"},
             timeout=30.0,
         )
+        # Every raw response made through this provider — useful for
+        # debugging / demo output. Not part of the public capability surface.
+        self.responses: list[httpx.Response] = []
 
     def _request(self, method: str, path: str, **kwargs) -> httpx.Response:  # type: ignore[no-untyped-def]
         response = self.client.request(method, path, **kwargs)
+        self.responses.append(response)
         if not response.is_success:
             raise ProviderError(
                 provider=PROVIDER_NAME,
@@ -175,3 +179,84 @@ class EzTextingProvider(MessageSender, ContactManager, SubscriptionManager):
                 return SubscriptionStatus.NOT_FOUND
             raise
         return SubscriptionStatus.SUBSCRIBED
+
+    def get_contact(self, phone_number: str) -> dict | None:
+        """Return the raw contact record (incl. group memberships), or None if not found."""
+        phone = self._normalize_phone(phone_number)
+        try:
+            response = self._request("GET", f"/contacts/{phone}")
+        except ProviderError as e:
+            if e.status_code == 404:
+                return None
+            raise
+        return response.json() if response.content else {}
+
+    # ─── Contact Group (Campaign) Management ─────────────────────────
+    # A "contact group" in EZ Texting is a named list of contacts. In our
+    # domain this maps to a "campaign" (e.g. an outreach event in a
+    # specific neighborhood). Group IDs are returned by the API and
+    # should be persisted on the campaign/event model — not in settings.
+    #
+    # POST   /v1/contact-groups                       — Create group
+    # GET    /v1/contact-groups                       — List groups
+    # GET    /v1/contact-groups/{id}                  — Get group
+    # DELETE /v1/contact-groups/{id}                  — Delete group
+    # POST   /v1/contact-groups/{id}/contacts         — Add members
+    #         ?phoneNumbers=...&phoneNumbers=...      (query string)
+    # DELETE /v1/contact-groups/{id}/contacts         — Remove members
+    #         ?phoneNumbers=...                       (query string)
+
+    def create_group(self, name: str) -> str:
+        """Create a new contact group. Returns the new group's id."""
+        response = self._request("POST", "/contact-groups", json={"name": name})
+        data = response.json() if response.content else {}
+        return str(data.get("id", ""))
+
+    def delete_group(self, group_id: str) -> None:
+        self._request("DELETE", f"/contact-groups/{group_id}")
+
+    def list_groups(self) -> list[dict]:
+        response = self._request("GET", "/contact-groups")
+        data = response.json() if response.content else {}
+        if isinstance(data, list):
+            return list(data)
+        if isinstance(data, dict):
+            # EZ Texting's paginated responses nest items under one of these
+            # keys depending on the endpoint. Try them in order.
+            for key in ("data", "items", "content", "entries", "results", "groups"):
+                value = data.get(key)
+                if isinstance(value, list):
+                    return list(value)
+        return []
+
+    def get_group(self, group_id: str) -> dict:
+        response = self._request("GET", f"/contact-groups/{group_id}")
+        return response.json() if response.content else {}
+
+    def add_contact_to_group(self, phone_number: str, group_id: str) -> None:
+        self._request(
+            "POST",
+            f"/contact-groups/{group_id}/contacts",
+            params={"phoneNumbers": self._normalize_phone(phone_number)},
+        )
+
+    def remove_contact_from_group(self, phone_number: str, group_id: str) -> None:
+        self._request(
+            "DELETE",
+            f"/contact-groups/{group_id}/contacts",
+            params={"phoneNumbers": self._normalize_phone(phone_number)},
+        )
+
+    def send_to_group(self, group_id: str, body: str) -> SendResult:
+        """Send a message to every contact in the given group."""
+        payload: dict = {
+            "message": body,
+            "groupIds": [group_id],
+            "messageType": "SMS",
+        }
+        response = self._request("POST", "/messages", json=payload)
+        data = response.json() if response.content else {}
+        return SendResult(
+            success=True,
+            provider_message_id=str(data.get("id", "")),
+        )
