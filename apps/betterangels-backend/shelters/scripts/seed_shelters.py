@@ -3,6 +3,11 @@ import random
 import sys
 from pathlib import Path
 
+import django
+from django.core.files import File
+from django.db import transaction
+from faker import Faker
+
 """Seed shelters with representative demo data.
 
 Usage:
@@ -16,15 +21,74 @@ environments surface realistic UI coverage.
 """
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "betterangels_backend.settings")
-import django  # noqa: E402
-from django.core.files import File  # noqa: E402
-from django.db import transaction  # noqa: E402
-
 django.setup()
 
 from shelters.enums import ShelterPhotoTypeChoices, StatusChoices  # noqa: E402
 from shelters.models import Shelter, ShelterPhoto  # noqa: E402
 from shelters.tests.baker_recipes import make_complete_shelters, shelter_contact_recipe  # noqa: E402
+
+fake = Faker()
+
+# Maximum allowed length for a generated shelter name (excludes the " id-N" suffix)
+SHELTER_NAME_MAX_LENGTH = 80
+
+# Probability that a generated name targets the "long" bucket (>70 chars). Long
+# names are rare in production but must be prominent in dev so UI can handle them.
+LONG_NAME_PROBABILITY = 0.10
+
+# Suffixes that make a randomly generated name read like a real shelter.
+_SHELTER_SUFFIXES = [
+    "Shelter",
+    "House",
+    "Refuge",
+    "Mission",
+    "Sanctuary",
+    "Center",
+    "Haven",
+    "Outreach",
+    "Lodge",
+    "Place",
+]
+
+# Qualifiers paired with a person's last name to mimic real shelter naming patterns.
+_NAME_QUALIFIERS = ["Memorial", "Family", "Community", "Foundation"]
+
+
+def generate_shelter_name() -> str:
+    """Return a plausible shelter name with controlled length variability.
+
+    Names are built as ``<last-name>[ & <last-name>...] <qualifier> <suffix>``,
+    which mirrors real partnership/coalition shelter naming. A small fraction
+    (see :data:`LONG_NAME_PROBABILITY`) intentionally targets the long bucket
+    (>70 chars, up to :data:`SHELTER_NAME_MAX_LENGTH`) so dev/UI workflows must
+    handle extreme cases. The rest are normal-length (~15-50 chars).
+    """
+    if random.random() < LONG_NAME_PROBABILITY:
+        target = random.randint(71, SHELTER_NAME_MAX_LENGTH)
+    else:
+        target = random.randint(15, 50)
+
+    qualifier = random.choice(_NAME_QUALIFIERS)
+    suffix = random.choice(_SHELTER_SUFFIXES)
+    joiner = random.choice([" & ", " - "])
+    tail = f" {qualifier} {suffix}"
+
+    # Keep chaining last names while the projected total stays within target.
+    last_names: list[str] = [fake.last_name()]
+
+    while True:
+        candidate = fake.last_name()
+        projected = len(joiner.join(last_names + [candidate])) + len(tail)
+        if projected > target:
+            break
+        last_names.append(candidate)
+
+    name = f"{joiner.join(last_names)}{tail}"
+    # Defensive cap: never exceed the hard limit, even if a single last name is huge.
+    if len(name) > SHELTER_NAME_MAX_LENGTH:
+        name = name[:SHELTER_NAME_MAX_LENGTH].rsplit(" ", 1)[0]
+
+    return name
 
 
 # ---------------------------------------------------------------------------
@@ -81,6 +145,13 @@ def main() -> None:
             status=StatusChoices.APPROVED,
             hero_image=None,
         )
+
+        # ---- Generate human readable shelter name name with a DB ID suffix
+        # Prefix length is randomized to surface UI breakage on unusually short/long names.
+        for shelter in shelters:
+            shelter.name = f"{generate_shelter_name()} (id-{shelter.id})"
+
+        Shelter.objects.bulk_update(shelters, ["name"])
 
         # ---- Images (1–10 per shelter) ----
         image_path = Path(__file__).with_name("shelter_seed_image.png")
