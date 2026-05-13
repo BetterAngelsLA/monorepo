@@ -124,9 +124,23 @@ class Shelter(BaseModel):
     program_fees = models.CharField(max_length=255, blank=True, null=True)
 
     # Ecosystem Information
-    cities = models.ManyToManyField(City)
+    city = models.ForeignKey(
+        City,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shelters",
+    )
+    cities_served = models.ManyToManyField(City, related_name="serving_shelters")
 
-    spa = models.ManyToManyField(SPA)
+    spa = models.ForeignKey(
+        SPA,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shelters",
+    )
+    spas_served = models.ManyToManyField(SPA, related_name="serving_shelters")
     city_council_district = models.PositiveSmallIntegerField(
         choices=CITY_COUNCIL_DISTRICT_CHOICES,
         null=True,

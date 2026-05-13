@@ -77,7 +77,7 @@ type AdminShelterType {
   addNotesSleepingDetails: String
   addNotesShelterDetails: String
   bedFees: String
-  cities: [CityType!]!
+  city: CityType
   cityCouncilDistrict: Int
   curfew: Time
   demographics: [DemographicType!]!
@@ -113,7 +113,7 @@ type AdminShelterType {
   shelterProgramsOther: String
   shelterTypes: [ShelterTypeType!]!
   shelterTypesOther: String
-  spa: [SPAType!]!
+  spa: SPAType
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
   photos: [ShelterPhotoType!]!
   isPrivate: Boolean!
@@ -242,6 +242,16 @@ type BedsByStatusType {
 type CityType {
   id: ID!
   name: String!
+}
+
+type CityTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [CityType!]!
 }
 
 input ClientContactInput {
@@ -744,8 +754,6 @@ input CreateShelterInput {
   referralRequirement: [ReferralRequirementChoices!]!
   vaccinationRequirement: [VaccinationRequirementChoices!]!
   exitPolicy: [ExitPolicyChoices!]!
-  cities: [String!]!
-  spa: [SPAChoices!]!
   shelterPrograms: [ShelterProgramChoices!]!
   funders: [FunderChoices!]!
   organization: ID!
@@ -781,6 +789,8 @@ input CreateShelterInput {
   supervisorialDistrict: Int = null
   overallRating: Int = null
   isPrivate: Boolean
+  cityId: ID = null
+  spaId: ID = null
 }
 
 union CreateShelterPayload = ShelterType | OperationInfo
@@ -1890,6 +1900,8 @@ type Query {
   beds(pagination: OffsetPaginationInput, filters: BedFilter): BedTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
   rooms(pagination: OffsetPaginationInput, filters: RoomFilter): RoomTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
+  shelterCities(pagination: OffsetPaginationInput): CityTypeOffsetPaginated!
+  shelterSpas(pagination: OffsetPaginationInput): SPATypeOffsetPaginated!
   shelterMaxStay: Int
 }
 
@@ -2059,7 +2071,18 @@ enum SPAChoices {
 }
 
 type SPAType {
+  id: ID!
   name: SPAChoices
+}
+
+type SPATypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [SPAType!]!
 }
 
 type SampleType {
@@ -2196,6 +2219,7 @@ input ShelterFilter {
   openNow: Boolean
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
+  spa: [ID!]
 }
 
 type ShelterHeroImageType {
@@ -2264,7 +2288,6 @@ input ShelterPropertyInput {
   shelterTypes: [ShelterChoices!] = null
   roomStyles: [RoomStyleChoices!] = null
   parking: [ParkingChoices!] = null
-  spa: [SPAChoices!] = null
 }
 
 type ShelterType {
@@ -2274,7 +2297,7 @@ type ShelterType {
   addNotesSleepingDetails: String
   addNotesShelterDetails: String
   bedFees: String
-  cities: [CityType!]!
+  city: CityType
   cityCouncilDistrict: Int
   curfew: Time
   demographics: [DemographicType!]!
@@ -2310,7 +2333,7 @@ type ShelterType {
   shelterProgramsOther: String
   shelterTypes: [ShelterTypeType!]!
   shelterTypesOther: String
-  spa: [SPAType!]!
+  spa: SPAType
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
   photos: [ShelterPhotoType!]!
   isPrivate: Boolean!

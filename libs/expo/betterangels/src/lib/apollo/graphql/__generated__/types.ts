@@ -77,7 +77,7 @@ export type AdminShelterType = {
   additionalContacts: Array<ContactInfoType>;
   bedFees?: Maybe<Scalars['String']['output']>;
   bedsByStatus: BedsByStatusType;
-  cities: Array<CityType>;
+  city?: Maybe<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
   curfew?: Maybe<Scalars['Time']['output']>;
   demographics: Array<DemographicType>;
@@ -119,7 +119,7 @@ export type AdminShelterType = {
   shelterProgramsOther?: Maybe<Scalars['String']['output']>;
   shelterTypes: Array<ShelterTypeType>;
   shelterTypesOther?: Maybe<Scalars['String']['output']>;
-  spa: Array<SpaType>;
+  spa?: Maybe<SpaType>;
   specialSituationRestrictions: Array<SpecialSituationRestrictionType>;
   status: StatusChoices;
   storage: Array<StorageType>;
@@ -251,6 +251,15 @@ export type CityType = {
   __typename?: 'CityType';
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+};
+
+export type CityTypeOffsetPaginated = {
+  __typename?: 'CityTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<CityType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export type ClientContactInput = {
@@ -746,8 +755,8 @@ export type CreateShelterInput = {
   addNotesShelterDetails?: InputMaybe<Scalars['String']['input']>;
   addNotesSleepingDetails?: InputMaybe<Scalars['String']['input']>;
   bedFees?: InputMaybe<Scalars['String']['input']>;
-  cities: Array<Scalars['String']['input']>;
   cityCouncilDistrict?: InputMaybe<Scalars['Int']['input']>;
+  cityId?: InputMaybe<Scalars['ID']['input']>;
   curfew?: InputMaybe<Scalars['Time']['input']>;
   demographics: Array<DemographicChoices>;
   demographicsOther?: InputMaybe<Scalars['String']['input']>;
@@ -783,7 +792,7 @@ export type CreateShelterInput = {
   shelterProgramsOther?: InputMaybe<Scalars['String']['input']>;
   shelterTypes: Array<ShelterChoices>;
   shelterTypesOther?: InputMaybe<Scalars['String']['input']>;
-  spa: Array<SpaChoices>;
+  spaId?: InputMaybe<Scalars['ID']['input']>;
   specialSituationRestrictions: Array<SpecialSituationRestrictionChoices>;
   status?: InputMaybe<StatusChoices>;
   storage: Array<StorageChoices>;
@@ -2211,8 +2220,10 @@ export type Query = {
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
   services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
+  shelterCities: CityTypeOffsetPaginated;
   shelterMaxStay?: Maybe<Scalars['Int']['output']>;
   shelterServiceCategories: ServiceCategoryTypeOffsetPaginated;
+  shelterSpas: SpaTypeOffsetPaginated;
   shelters: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
@@ -2393,7 +2404,17 @@ export type QueryShelterArgs = {
 };
 
 
+export type QueryShelterCitiesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryShelterServiceCategoriesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryShelterSpasArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2601,7 +2622,17 @@ export enum SpaChoices {
 
 export type SpaType = {
   __typename?: 'SPAType';
+  id: Scalars['ID']['output'];
   name?: Maybe<SpaChoices>;
+};
+
+export type SpaTypeOffsetPaginated = {
+  __typename?: 'SPATypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<SpaType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export type SampleType = {
@@ -2742,6 +2773,7 @@ export type ShelterFilter = {
   openNow?: InputMaybe<Scalars['Boolean']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   properties?: InputMaybe<ShelterPropertyInput>;
+  spa?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
 export type ShelterHeroImageType = {
@@ -2813,7 +2845,6 @@ export type ShelterPropertyInput = {
   referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
-  spa?: InputMaybe<Array<SpaChoices>>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
 };
 
@@ -2826,7 +2857,7 @@ export type ShelterType = {
   additionalContacts: Array<ContactInfoType>;
   bedFees?: Maybe<Scalars['String']['output']>;
   bedsByStatus: BedsByStatusType;
-  cities: Array<CityType>;
+  city?: Maybe<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
   curfew?: Maybe<Scalars['Time']['output']>;
   demographics: Array<DemographicType>;
@@ -2868,7 +2899,7 @@ export type ShelterType = {
   shelterProgramsOther?: Maybe<Scalars['String']['output']>;
   shelterTypes: Array<ShelterTypeType>;
   shelterTypesOther?: Maybe<Scalars['String']['output']>;
-  spa: Array<SpaType>;
+  spa?: Maybe<SpaType>;
   specialSituationRestrictions: Array<SpecialSituationRestrictionType>;
   status: StatusChoices;
   storage: Array<StorageType>;

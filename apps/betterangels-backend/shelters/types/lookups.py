@@ -122,6 +122,7 @@ class ShelterTypeType:
 
 @strawberry_django.type(models.SPA)
 class SPAType:
+    id: auto
     name: auto
 
 

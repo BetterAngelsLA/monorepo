@@ -154,14 +154,14 @@ export const enumDisplayShelterProgramChoices: {
 };
 
 export const enumDisplaySpaChoices: { [key in SpaChoices]: string } = {
-  [SpaChoices.Eight]: '8',
-  [SpaChoices.Five]: '5',
-  [SpaChoices.Four]: '4',
-  [SpaChoices.One]: '1',
-  [SpaChoices.Seven]: '7',
-  [SpaChoices.Six]: '6',
-  [SpaChoices.Three]: '3',
-  [SpaChoices.Two]: '2',
+  [SpaChoices.One]: '1 - Antelope Valley',
+  [SpaChoices.Two]: '2 - San Fernando',
+  [SpaChoices.Three]: '3 - San Gabriel',
+  [SpaChoices.Four]: '4 - Metro',
+  [SpaChoices.Five]: '5 - West',
+  [SpaChoices.Six]: '6 - South',
+  [SpaChoices.Seven]: '7 - East',
+  [SpaChoices.Eight]: '8 - South Bay/Harbor',
 };
 
 export const enumDisplaySpecialSituationRestrictionChoices: {

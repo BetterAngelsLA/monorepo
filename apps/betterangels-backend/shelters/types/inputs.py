@@ -28,7 +28,6 @@ from shelters.enums import (
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import (
     ShelterProgramChoices,
-    SPAChoices,
     SpecialSituationRestrictionChoices,
     StorageChoices,
     VaccinationRequirementChoices,
@@ -84,8 +83,6 @@ class CreateShelterInput:
     referral_requirement: List[ReferralRequirementChoices]
     vaccination_requirement: List[VaccinationRequirementChoices]
     exit_policy: List[ExitPolicyChoices]
-    cities: List[str]
-    spa: List[SPAChoices]
     shelter_programs: List[ShelterProgramChoices]
     funders: List[FunderChoices]
 
@@ -127,6 +124,10 @@ class CreateShelterInput:
     supervisorial_district: auto = None
     overall_rating: auto = None
     is_private: Maybe[bool]
+
+    # FK lookups to single City / SPA — accept the model PK directly.
+    city_id: Optional[ID] = None
+    spa_id: Optional[ID] = None
 
 
 @strawberry.input

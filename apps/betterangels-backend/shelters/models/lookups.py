@@ -125,6 +125,9 @@ class City(BaseModel):
 class SPA(models.Model):
     name = IntegerChoicesField(choices_enum=SPAChoices, unique=True, blank=True, null=True)
 
+    class Meta:
+        ordering = ["name"]
+
     def __str__(self) -> str:
         return str(self.name)
 

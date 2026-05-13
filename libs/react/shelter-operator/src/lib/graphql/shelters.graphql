@@ -37,6 +37,9 @@ query ViewSheltersByOrganization(
       shelterTypes {
         name
       }
+      city {
+        name
+      }
       spa {
         name
       }

@@ -43,7 +43,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         ]
 
         query = """
-            query ViewShelters($filters: ShelterFilter) {
+            query ($filters: ShelterFilter) {
                 shelters(filters: $filters) {
                     totalCount
                     results {
@@ -384,7 +384,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         )
 
         query = """
-            query ViewShelters($filters: ShelterFilter) {
+            query ($filters: ShelterFilter) {
                 shelters(filters: $filters) {
                     totalCount
                     results {
@@ -406,13 +406,13 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(len(results), expected_result_count)
 
     def test_shelter_spa_filter(self) -> None:
-        spa_one = SPA.objects.get_or_create(name=SPAChoices.ONE)[0]
+        spa_one, _ = SPA.objects.get_or_create(name=SPAChoices.ONE)
 
-        shelter_in_spa = shelter_recipe.make(spa=[spa_one], status=StatusChoices.APPROVED)
-        shelter_not_in_spa = shelter_recipe.make(spa=[], status=StatusChoices.APPROVED)
+        shelters_in_spa = shelter_recipe.make(spa=spa_one, status=StatusChoices.APPROVED, _quantity=2)
+        shelter_recipe.make(spa=None, status=StatusChoices.APPROVED, _quantity=2)
 
         query = """
-            query ViewShelters($filters: ShelterFilter) {
+            query ($filters: ShelterFilter) {
                 shelters(filters: $filters) {
                     totalCount
                     results {
@@ -422,7 +422,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             }
         """
 
-        filters: dict[str, Any] = {"properties": {"spa": [SPAChoices.ONE.name]}}
+        filters: dict[str, Any] = {"spa": [str(spa_one.pk)]}
 
         expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -431,8 +431,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         results = response["data"]["shelters"]["results"]
         result_ids = {r["id"] for r in results}
 
-        self.assertIn(str(shelter_in_spa.pk), result_ids)
-        self.assertNotIn(str(shelter_not_in_spa.pk), result_ids)
+        self.assertEqual(result_ids, {str(shelter.id) for shelter in shelters_in_spa})
 
     def test_shelter_open_now_filter(self) -> None:
         open_shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
@@ -464,7 +463,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         )
 
         query = """
-            query ViewShelters($filters: ShelterFilter) {
+            query ($filters: ShelterFilter) {
                 shelters(filters: $filters) {
                     totalCount
                     results {
@@ -529,7 +528,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         )
 
         query = """
-            query ViewShelters($filters: ShelterFilter) {
+            query ($filters: ShelterFilter) {
                 shelters(filters: $filters) {
                     totalCount
                     results { id }
@@ -598,7 +597,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         )
 
         query = """
-            query ViewShelters($filters: ShelterFilter) {
+            query ($filters: ShelterFilter) {
                 shelters(filters: $filters) {
                     totalCount
                     results { id }
@@ -648,7 +647,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         )
 
         query = """
-            query ViewShelters($filters: ShelterFilter) {
+            query ($filters: ShelterFilter) {
                 shelters(filters: $filters) {
                     totalCount
                     results { id }
@@ -721,7 +720,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         )
 
         query = """
-            query ViewShelters($filters: ShelterFilter) {
+            query ($filters: ShelterFilter) {
                 shelters(filters: $filters) {
                     totalCount
                     results { id }

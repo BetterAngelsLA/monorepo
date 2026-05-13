@@ -1,9 +1,5 @@
 import { Card } from '@monorepo/react/components';
-import {
-  FunderChoices,
-  ShelterProgramChoices,
-  SpaChoices,
-} from '../../../apollo';
+import { FunderChoices, ShelterProgramChoices } from '../../../apollo';
 import {
   displayListWithOther,
   enumDisplayFunderChoices,
@@ -42,14 +38,16 @@ export function EcosystemInfo({
   return (
     <Card title="Ecosystem Information">
       <div className="flex flex-col gap-2">
-        <InlineList title="City:" items={shelter?.cities.map((i) => i.name)} />
-
-        <InlineList
-          title="SPA:"
-          items={shelter?.spa.map(
-            (i) => enumDisplaySpaChoices[i.name as SpaChoices]
-          )}
-        />
+        {shelter.city && (
+          <div className="flex items-center gap-2">
+            <strong>City:</strong> {shelter.city.name}
+          </div>
+        )}
+        {shelter.spa?.name && (
+          <div className="flex items-center gap-2">
+            <strong>SPA:</strong> {enumDisplaySpaChoices[shelter.spa.name]}
+          </div>
+        )}
 
         {cityCouncilDistrict && (
           <div className="flex items-center gap-2">

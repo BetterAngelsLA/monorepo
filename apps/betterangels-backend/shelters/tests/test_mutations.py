@@ -1,8 +1,10 @@
+from typing import Any
+
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, ignore_warnings
-from shelters.models import Bed, Room, Service, ServiceCategory, Shelter
+from shelters.models import Bed, City, Room, Service, ServiceCategory, Shelter
 from unittest_parametrize import ParametrizedTestCase
 
 
@@ -41,7 +43,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             }
         """
 
-        variables = {
+        variables: dict[str, Any] = {
             "data": {
                 "name": "Test Shelter",
                 "description": "A test shelter for unit testing",
@@ -59,8 +61,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "referralRequirement": [],
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "cityId": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -101,7 +103,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             }
         """
 
-        variables = {
+        variables: dict[str, Any] = {
             "data": {
                 "name": "Full Featured Shelter",
                 "description": "A shelter with all the bells and whistles",
@@ -127,8 +129,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "referralRequirement": [],
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "cityId": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -152,6 +154,9 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
 
     def test_create_shelter_with_many_to_many_fields(self) -> None:
         """Test creating a shelter with many-to-many relationships"""
+        city = City.objects.first()
+        assert city
+
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
@@ -170,7 +175,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                         accessibility {
                             name
                         }
-                        cities {
+                        city {
+                            id
                             name
                         }
                     }
@@ -178,7 +184,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             }
         """
 
-        variables = {
+        variables: dict[str, Any] = {
             "data": {
                 "name": "Pet Friendly Shelter",
                 "description": "A shelter that welcomes pets",
@@ -196,8 +202,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "referralRequirement": [],
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
-                "cities": ["LOS_ANGELES"],
-                "spa": [],
+                "cityId": str(city.pk),
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -213,7 +219,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         self.assertEqual(len(shelter["demographics"]), 2)
         self.assertEqual(len(shelter["shelterTypes"]), 1)
         self.assertEqual(len(shelter["accessibility"]), 1)
-        self.assertEqual(len(shelter["cities"]), 1)
+        self.assertEqual(shelter["city"]["id"], str(city.pk))
 
         pet_names = [pet["name"] for pet in shelter["pets"]]
         self.assertIn("DOGS_UNDER_25_LBS", pet_names)
@@ -237,7 +243,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             }
         """
 
-        variables = {
+        variables: dict[str, Any] = {
             "data": {
                 "name": "Downtown Shelter",
                 "description": "Located in downtown LA",
@@ -260,8 +266,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "referralRequirement": [],
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "cityId": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -320,7 +326,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             priority=1,
         )
 
-        variables = {
+        variables: dict[str, Any] = {
             "data": {
                 "name": "Shelter With Custom Services",
                 "description": "A shelter with official and custom services",
@@ -343,8 +349,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "referralRequirement": [],
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "cityId": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -394,7 +400,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             }
         """
 
-        variables = {
+        variables: dict[str, Any] = {
             "data": {
                 "name": "Incomplete Shelter",
                 "organization": str(self.org_1.pk),
@@ -412,8 +418,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "referralRequirement": [],
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "cityId": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -441,7 +447,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             }
         """
 
-        variables = {
+        variables: dict[str, Any] = {
             "data": {
                 "name": "Reviewed Shelter",
                 "description": "A well-reviewed shelter",
@@ -461,8 +467,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "referralRequirement": [],
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "cityId": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -495,7 +501,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             }
         """
 
-        variables = {
+        variables: dict[str, Any] = {
             "data": {
                 "name": "Invalid Email Shelter",
                 "description": "Should fail model validation",
@@ -514,8 +520,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "referralRequirement": [],
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "cityId": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -543,7 +549,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             }
         """
 
-        variables = {
+        variables: dict[str, Any] = {
             "data": {
                 "name": "Persistent Shelter",
                 "description": "This should be in the database",
@@ -561,8 +567,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "referralRequirement": [],
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "cityId": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -590,7 +596,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             }
         """
 
-        variables = {
+        variables: dict[str, Any] = {
             "data": {
                 "name": "Wrong Org Shelter",
                 "description": "Should be rejected",
@@ -608,8 +614,8 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "referralRequirement": [],
                 "vaccinationRequirement": [],
                 "exitPolicy": [],
-                "cities": [],
-                "spa": [],
+                "cityId": None,
+                "spaId": None,
                 "shelterPrograms": [],
                 "funders": [],
             }
@@ -648,7 +654,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             }
         """
 
-        variables = {
+        variables: dict[str, Any] = {
             "data": {
                 "shelterId": str(other_org_shelter.pk),
                 "status": "AVAILABLE",
@@ -690,7 +696,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             }
         """
 
-        variables = {
+        variables: dict[str, Any] = {
             "data": {
                 "shelterId": str(other_org_shelter.pk),
                 "roomIdentifier": "Room 101",
