@@ -18,6 +18,8 @@ from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
 from .models import (
+    OrganizationProfile,
+    OrgType,
     User,
 )
 
@@ -104,3 +106,43 @@ def organization_remove_member(
         org_user.delete()
 
     return user_id
+
+
+def create_organization(*, name: str, presets: list[str]) -> Organization:
+    """Create an organization with the given presets applied.
+
+    Each preset key must exist in settings.ORG_TYPE_PRESETS. The org gets:
+    - An OrganizationProfile with the corresponding OrgType(s)
+    - PermissionGroupTemplates & PermissionGroups for each preset's templates
+
+    Returns the created Organization.
+    """
+    from .models import PermissionGroup, PermissionGroupTemplate
+
+    # Validate presets
+    for preset_key in presets:
+        if preset_key not in settings.ORG_TYPE_PRESETS:
+            raise ValidationError(f"Unknown preset: {preset_key}")
+
+    with transaction.atomic():
+        organization = Organization.objects.create(name=name)
+        # ensure_organization_profile signal creates the profile,
+        # but we need to attach org_types
+        profile = organization.profile
+        for preset_key in presets:
+            org_type, _ = OrgType.objects.get_or_create(
+                key=preset_key,
+                defaults={"label": settings.ORG_TYPE_PRESETS[preset_key]["label"]},
+            )
+            profile.org_types.add(org_type)
+
+        # Create permission groups from all presets' templates
+        template_names: set[str] = set()
+        for preset_key in presets:
+            template_names.update(settings.ORG_TYPE_PRESETS[preset_key]["templates"])
+
+        for temp_name in template_names:
+            template, _ = PermissionGroupTemplate.objects.get_or_create(name=temp_name)
+            PermissionGroup.objects.get_or_create(organization=organization, template=template)
+
+    return organization

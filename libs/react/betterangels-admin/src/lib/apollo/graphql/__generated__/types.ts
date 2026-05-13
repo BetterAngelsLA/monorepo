@@ -34,6 +34,12 @@ export type Scalars = {
   Upload: { input: any; output: any; }
 };
 
+export type AcceptShelterInviteInput = {
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  inviteId: Scalars['ID']['input'];
+  lastName?: InputMaybe<Scalars['String']['input']>;
+};
+
 export enum AccessibilityChoices {
   AdaRooms = 'ADA_ROOMS',
   MedicalEquipmentPermitted = 'MEDICAL_EQUIPMENT_PERMITTED',
@@ -823,7 +829,6 @@ export type CurrentUserType = {
   hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
   isHmisUser?: Maybe<Scalars['Boolean']['output']>;
-  isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
   organizationsOrganization?: Maybe<Array<CurrentUserOrganizationType>>;
@@ -1494,6 +1499,7 @@ export enum MedicalNeedChoices {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  acceptShelterInvite: AuthResponse;
   addOrganizationMember: AddOrganizationMemberPayload;
   createBed: CreateBedPayload;
   createClientContact: CreateClientContactPayload;
@@ -1531,6 +1537,7 @@ export type Mutation = {
   importNote: ImportNotePayload;
   login: AuthResponse;
   logout: Scalars['Boolean']['output'];
+  registerShelterOperator: AuthResponse;
   removeHmisNoteServiceRequest: RemoveHmisNoteServiceRequestPayload;
   removeOrganizationMember: RemoveOrganizationMemberPayload;
   resolveClientDocumentUploads: ResolveClientDocumentUploadsPayload;
@@ -1551,6 +1558,11 @@ export type Mutation = {
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
   updateUserProfile: UpdateUserProfilePayload;
+};
+
+
+export type MutationAcceptShelterInviteArgs = {
+  data: AcceptShelterInviteInput;
 };
 
 
@@ -1728,6 +1740,11 @@ export type MutationImportNoteArgs = {
 
 export type MutationLoginArgs = {
   input: LoginInput;
+};
+
+
+export type MutationRegisterShelterOperatorArgs = {
+  data: RegisterShelterOperatorInput;
 };
 
 
@@ -2442,6 +2459,13 @@ export enum ReferralRequirementChoices {
 export type ReferralRequirementType = {
   __typename?: 'ReferralRequirementType';
   name?: Maybe<ReferralRequirementChoices>;
+};
+
+export type RegisterShelterOperatorInput = {
+  email: Scalars['String']['input'];
+  firstName: Scalars['String']['input'];
+  lastName: Scalars['String']['input'];
+  organizationName: Scalars['String']['input'];
 };
 
 export enum RelationshipTypeEnum {
@@ -3198,8 +3222,7 @@ export enum UserOrganizationPermissions {
   AddOrgMember = 'ADD_ORG_MEMBER',
   ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
   RemoveOrgMember = 'REMOVE_ORG_MEMBER',
-  ViewOrgMembers = 'VIEW_ORG_MEMBERS',
-  ViewReports = 'VIEW_REPORTS'
+  ViewOrgMembers = 'VIEW_ORG_MEMBERS'
 }
 
 export type UserType = {
@@ -3210,7 +3233,6 @@ export type UserType = {
   hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
   isHmisUser?: Maybe<Scalars['Boolean']['output']>;
-  isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
   organizationsOrganization?: Maybe<Array<OrganizationType>>;

@@ -1,7 +1,12 @@
 import { TOrganization } from '@monorepo/react/shared';
 import { createContext, Dispatch, SetStateAction } from 'react';
+import { UserOrganizationPermissions } from '../../apollo/graphql/__generated__/types';
 
 export type { TOrganization };
+
+export type TOrganizationWithPermissions = TOrganization & {
+  userPermissions?: UserOrganizationPermissions[] | null;
+};
 
 export type TUser = {
   id: string;
@@ -9,8 +14,7 @@ export type TUser = {
   firstName?: string;
   lastName?: string;
   email?: string | null;
-  organizations: TOrganization[] | null;
-  isOutreachAuthorized?: boolean;
+  organizations: TOrganizationWithPermissions[] | null;
   hasAcceptedTos?: boolean;
   hasAcceptedPrivacyPolicy?: boolean;
   isHmisUser?: boolean;

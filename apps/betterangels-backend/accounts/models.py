@@ -3,7 +3,6 @@ from typing import Any, Dict, Iterable, Tuple
 import pghistory
 from accounts.groups import GroupTemplateNames
 from accounts.managers import UserManager
-from django.conf import settings
 from django.contrib.auth.models import (
     AbstractBaseUser,
     Group,
@@ -71,15 +70,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     def full_name(self: "User") -> str:
         name_parts = filter(None, [self.first_name, self.middle_name, self.last_name])
         return " ".join(name_parts).strip()
-
-    @model_property
-    def is_outreach_authorized(self: "User") -> bool:
-        # Authorized if user is in a permission group for an outreach org.
-        return PermissionGroup.objects.filter(
-            organization__users=self,
-            group__user=self,
-            organization__profile__org_type=settings.DEFAULT_ORG_TYPE,
-        ).exists()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.email:
@@ -193,19 +183,32 @@ class PermissionGroup(models.Model):
         super().save(*args, **kwargs)
 
 
+class OrgType(models.Model):
+    """Lookup table for organization types (e.g. outreach, shelter)."""
+
+    key = models.CharField(max_length=50, unique=True)
+    label = models.CharField(max_length=100)
+
+    objects = models.Manager()
+
+    def __str__(self) -> str:
+        return self.label
+
+
 class OrganizationProfile(models.Model):
     organization = models.OneToOneField(
         Organization,
         on_delete=models.CASCADE,
         related_name="profile",
     )
-    org_type = models.CharField(
-        max_length=20,
-        choices=[(k, v["label"]) for k, v in settings.ORG_TYPE_CONFIGS.items()],
-        default=settings.DEFAULT_ORG_TYPE,
+    org_types = models.ManyToManyField(
+        OrgType,
+        blank=True,
+        related_name="organization_profiles",
     )
 
     objects = models.Manager()
 
     def __str__(self) -> str:
-        return f"{self.organization.name} ({self.get_org_type_display()})"
+        types = ", ".join(t.label for t in self.org_types.all())
+        return f"{self.organization.name} ({types or 'no type'})"

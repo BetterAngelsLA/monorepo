@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Optional
 
-from accounts.org_types import get_invite_templates
+from accounts.org_types import get_invite_templates_for_role
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.core.mail import EmailMultiAlternatives
@@ -37,22 +37,19 @@ class CustomInvitations(InvitationBackend):
         self.send_invitation(user, sender, **kwargs)
         return user
 
-    def _get_templates_for_org(self, organization: Organization | None) -> dict[str, str]:
-        """Return email template paths based on the organization's type."""
-        if organization is None:
-            return get_invite_templates(settings.DEFAULT_ORG_TYPE)
-        try:
-            org_type = organization.profile.org_type  # type: ignore[union-attr]
-        except Exception:
-            org_type = settings.DEFAULT_ORG_TYPE
-        return get_invite_templates(org_type)
+    def _get_templates_for_role(self, role_name: str | None) -> dict[str, str]:
+        """Return email template paths based on the invited role."""
+        if role_name is None:
+            return get_invite_templates_for_role("default")
+        return get_invite_templates_for_role(role_name)
 
     def send_invitation(self, user: User, sender: Optional[AbstractBaseUser] = None, **kwargs: Any) -> int:
         if not user.email:
             raise ValueError("Cannot send invitation to a user without an email address")
 
         organization = kwargs.get("organization")
-        templates = self._get_templates_for_org(organization)
+        role_name = kwargs.get("role_name")
+        templates = self._get_templates_for_role(role_name)
 
         invitation = kwargs.get("invitation")
         domain = kwargs.get("domain")

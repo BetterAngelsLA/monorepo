@@ -23,7 +23,6 @@ const parseUser = (user?: CurrentUserQuery['currentUser']): TUser | undefined =>
         lastName: user.lastName ?? undefined,
         email: user.email,
         organizations: user.organizations ?? null,
-        isOutreachAuthorized: user.isOutreachAuthorized ?? false,
         hasAcceptedTos: user.hasAcceptedTos ?? false,
         hasAcceptedPrivacyPolicy: user.hasAcceptedPrivacyPolicy ?? false,
         isHmisUser: user.isHmisUser ?? undefined,

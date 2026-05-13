@@ -21,7 +21,6 @@ class CurrentUserGraphQLBaseTestCase(GraphQLBaseTestCase):
             email
             hasAcceptedTos
             hasAcceptedPrivacyPolicy
-            isOutreachAuthorized
             organizations: organizationsOrganization {
                 id
                 name

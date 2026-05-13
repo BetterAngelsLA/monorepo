@@ -4,7 +4,7 @@ import strawberry
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-# Org type key for shelter organizations (matches the key in settings.ORG_TYPE_CONFIGS).
+# Org type key for shelter organizations (matches the key in settings.ORG_TYPE_PRESETS).
 ORG_TYPE_SHELTER = "shelter"
 
 

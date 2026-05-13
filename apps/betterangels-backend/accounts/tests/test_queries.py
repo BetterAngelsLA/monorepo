@@ -40,17 +40,16 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
-        ("organization_count, is_outreach_authorized, expected_query_count"),
+        ("organization_count, expected_query_count"),
         [
-            (0, False, 3),
-            (1, True, 3),
-            (2, True, 3),
+            (0, 2),
+            (1, 2),
+            (2, 2),
         ],
     )
     def test_logged_in_user_query(
         self,
         organization_count: int,
-        is_outreach_authorized: bool,
         expected_query_count: int,
     ) -> None:
         """
@@ -87,7 +86,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     hasAcceptedTos
                     hasAcceptedPrivacyPolicy
                     isHmisUser
-                    isOutreachAuthorized
                     organizations: organizationsOrganization {
                         id
                         name
@@ -128,10 +126,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         self.assertEqual(
             response["data"]["currentUser"]["middleName"],
             user.middle_name,
-        )
-        self.assertEqual(
-            response["data"]["currentUser"]["isOutreachAuthorized"],
-            is_outreach_authorized,
         )
         self.assertFalse(response["data"]["currentUser"]["isHmisUser"])
         self.assertEqual(

@@ -142,7 +142,6 @@ class UserType(UserBaseType):
     organizations_organization: Optional[List[OrganizationType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
-    is_outreach_authorized: Optional[bool]
     username: Optional[str]
 
     @strawberry_django.field
@@ -159,7 +158,6 @@ class CurrentUserType(UserBaseType):
     organizations_organization: Optional[List[CurrentUserOrganizationType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
-    is_outreach_authorized: Optional[bool]
     username: Optional[str]
 
     @strawberry_django.field

@@ -15,11 +15,11 @@ from typing import Any, Dict, List
 from accounts.groups import GroupTemplateNames
 from accounts.models import (
     ExtendedOrganizationInvitation,
-    OrganizationProfile,
     PermissionGroup,
     PermissionGroupTemplate,
     User,
 )
+from accounts.services import create_organization
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -29,7 +29,7 @@ from django.template.loader import render_to_string
 from django.utils.text import slugify
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 from places import Places
-from shelters.enums import ORG_TYPE_SHELTER, ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
+from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
 from shelters.groups import SHELTER_OPERATOR
 from shelters.models import Bed, Room, Schedule, Service, ServiceCategory, Shelter
 from shelters.selectors import shelter_get
@@ -433,12 +433,7 @@ def shelter_operator_register(
         user.set_unusable_password()
         user.save(update_fields=["password"])
 
-        organization = Organization.objects.create(name=organization_name)
-
-        OrganizationProfile.objects.update_or_create(
-            organization=organization,
-            defaults={"org_type": ORG_TYPE_SHELTER},
-        )
+        organization = create_organization(name=organization_name, presets=["shelter"])
 
         org_user = OrganizationUser.objects.create(
             user=user,

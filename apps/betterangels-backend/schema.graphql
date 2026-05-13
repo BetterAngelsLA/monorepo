@@ -38,6 +38,12 @@ directive @hmisDirective on FIELD_DEFINITION
 
 directive @isHmisAuthenticated on FIELD_DEFINITION
 
+input AcceptShelterInviteInput {
+  inviteId: ID!
+  firstName: String = null
+  lastName: String = null
+}
+
 enum AccessibilityChoices {
   MEDICAL_EQUIPMENT_PERMITTED
   WHEELCHAIR_ACCESSIBLE
@@ -817,7 +823,6 @@ type CurrentUserType {
   organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): [CurrentUserOrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
-  isOutreachAuthorized: Boolean
   username: String
   isHmisUser: Boolean
 }
@@ -1531,6 +1536,8 @@ type Mutation {
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
+  registerShelterOperator(data: RegisterShelterOperatorInput!): AuthResponse!
+  acceptShelterInvite(data: AcceptShelterInviteInput!): AuthResponse!
 }
 
 type NameCountType {
@@ -1914,6 +1921,13 @@ enum ReferralRequirementChoices {
 
 type ReferralRequirementType {
   name: ReferralRequirementChoices
+}
+
+input RegisterShelterOperatorInput {
+  email: String!
+  firstName: String!
+  lastName: String!
+  organizationName: String!
 }
 
 enum RelationshipTypeEnum {
@@ -2660,7 +2674,6 @@ enum UserOrganizationPermissions {
   CHANGE_ORG_MEMBER_ROLE
   REMOVE_ORG_MEMBER
   VIEW_ORG_MEMBERS
-  VIEW_REPORTS
 }
 
 type UserType {
@@ -2672,7 +2685,6 @@ type UserType {
   organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = []): [OrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
-  isOutreachAuthorized: Boolean
   username: String
   isHmisUser: Boolean
 }

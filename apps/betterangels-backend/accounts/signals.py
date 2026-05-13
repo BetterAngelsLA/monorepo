@@ -14,7 +14,7 @@ from django.db.models.signals import post_delete, post_migrate, post_save, pre_d
 from django.dispatch import receiver
 from organizations.models import Organization, OrganizationUser
 
-from .models import PermissionGroup, PermissionGroupTemplate, User
+from .models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
 
 logger = logging.getLogger(__name__)
 
@@ -39,12 +39,11 @@ def create_test_agent(sender: Any, **kwargs: Any) -> None:
 @receiver(post_migrate)
 def create_test_organization(sender: Any, **kwargs: Any) -> None:
     if settings.IS_LOCAL_DEV and not Organization.objects.filter(name="test_org").exists():
-        from accounts.models import OrganizationProfile
+        from accounts.services import create_organization
 
         test_usernames = ["admin", "agent"]
         test_users = User.objects.filter(username__in=test_usernames)
-        test_org = Organization.objects.create(name="test_org")
-        OrganizationProfile.objects.get_or_create(organization=test_org)
+        test_org = create_organization(name="test_org", presets=["outreach"])
         for test_user in test_users:
             test_org.add_user(test_user)
 
@@ -57,18 +56,8 @@ def handle_organization_removed(sender: Any, instance: Organization, **kwargs: A
 
 @receiver(post_save, sender=Organization)
 def ensure_organization_profile(sender: Any, instance: Organization, created: bool, **kwargs: Any) -> None:
-    """Guarantee every Organization has an OrganizationProfile.
-
-    Defaults to ``settings.DEFAULT_ORG_TYPE``.  Domain apps that need a
-    different type (e.g. shelters) create the profile explicitly *before*
-    this signal runs, so ``get_or_create`` is a no-op in that case.
-    """
-    from accounts.models import OrganizationProfile
-
-    OrganizationProfile.objects.get_or_create(
-        organization=instance,
-        defaults={"org_type": settings.DEFAULT_ORG_TYPE},
-    )
+    """Guarantee every Organization has an OrganizationProfile."""
+    OrganizationProfile.objects.get_or_create(organization=instance)
 
 
 @receiver(post_save, sender=OrganizationUser)
