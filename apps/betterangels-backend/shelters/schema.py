@@ -3,18 +3,27 @@ from typing import Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
+from accounts.types import AuthResponse
 from common.permissions.utils import IsAuthenticated
 from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Shelter
 from shelters.permissions import BedPermissions, RoomPermissions, ShelterPermissions
-from shelters.services import bed_create, room_create, shelter_create
+from shelters.services import (
+    bed_create,
+    room_create,
+    shelter_create,
+    shelter_invite_accept,
+    shelter_operator_register,
+)
 from shelters.types import (
+    AcceptShelterInviteInput,
     AdminShelterType,
     BedType,
     CreateBedInput,
     CreateRoomInput,
     CreateShelterInput,
+    RegisterShelterOperatorInput,
     RoomType,
     ServiceCategoryType,
     ShelterType,
@@ -72,3 +81,34 @@ class Mutation:
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
         return cast(RoomType, room_create(user=user, data=clean))
+
+    @strawberry.mutation
+    def register_shelter_operator(self, info: Info, data: RegisterShelterOperatorInput) -> AuthResponse:
+        """Register a new shelter operator: creates user, organization, and assigns ownership.
+
+        The user is created without a password. After this mutation succeeds,
+        the client should use the allauth login-by-code flow to authenticate.
+        """
+        shelter_operator_register(
+            email=data.email,
+            first_name=data.first_name,
+            last_name=data.last_name,
+            organization_name=data.organization_name,
+        )
+
+        return AuthResponse(status_code="200")
+
+    @strawberry.mutation
+    def accept_shelter_invite(self, info: Info, data: AcceptShelterInviteInput) -> AuthResponse:
+        """Accept an invitation to join a shelter organization.
+
+        The user is activated without a password. After this mutation succeeds,
+        the client should use the allauth login-by-code flow to authenticate.
+        """
+        shelter_invite_accept(
+            invite_id=data.invite_id,
+            first_name=data.first_name,
+            last_name=data.last_name,
+        )
+
+        return AuthResponse(status_code="200")

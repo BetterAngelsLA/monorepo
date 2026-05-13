@@ -2,6 +2,13 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
+# Organization-level permissions (on the Organization content type).
+# Created in accounts/migrations/0046_add_shelter_operator_template.
+class ShelterOrgPermissions(models.TextChoices):
+    MANAGE_SHELTER = "organizations.manage_shelter", _("Can manage shelters")
+    MANAGE_SHELTER_BEDS = "organizations.manage_shelter_beds", _("Can manage shelter beds and rooms")
+
+
 class AccessibilityPermissions(models.TextChoices):
     ADD = "shelters.add_accessibility", _("Can add accessibility")
     CHANGE = "shelters.change_accessibility", _("Can change accessibility")

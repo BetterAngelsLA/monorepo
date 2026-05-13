@@ -1,0 +1,17 @@
+Subject: Welcome to the Better Angels Shelter Operator Portal!
+
+Welcome to the Better Angels Shelter Operator Portal!
+
+Your organization "{{ organization_name }}" has been created successfully.
+
+Getting started is easy:
+
+1. Log in to the Shelter Operator Portal at {{ portal_url }}
+2. Use your email {{ login_email }} and the password you set during registration.
+3. Create your first shelter from the dashboard.
+4. Invite team members to help manage your shelters.
+
+Together, we can solve homelessness.
+
+Best,
+Better Angels Team

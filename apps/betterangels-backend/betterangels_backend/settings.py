@@ -518,3 +518,28 @@ PHONENUMBER_DEFAULT_REGION = "US"
 # https://django-phonenumber-field.readthedocs.io/en/latest/reference.html#phone-number-format-choices
 PHONENUMBER_DB_FORMAT = "INTERNATIONAL"
 PHONENUMBER_DEFAULT_FORMAT = "INTERNATIONAL"
+
+# Org-type configuration — the single source of truth for org types.
+# Each app references its own key; accounts never imports from domain apps.
+DEFAULT_ORG_TYPE = "outreach"
+
+ORG_TYPE_CONFIGS = {
+    "outreach": {
+        "label": "Outreach",
+        "templates": ["Caseworker", "Organization Admin", "Organization Superuser"],
+        "member_role": "Caseworker",
+        "invite_templates": {
+            "html": "account/email/email_invite_organization.html",
+            "txt": "account/messages/email_invite_organization.txt",
+        },
+    },
+    "shelter": {
+        "label": "Shelter",
+        "templates": ["Shelter Operator", "Organization Admin", "Organization Superuser"],
+        "member_role": "Shelter Operator",
+        "invite_templates": {
+            "html": "account/email/shelter_operator_invite.html",
+            "txt": "account/messages/shelter_operator_invite.txt",
+        },
+    },
+}

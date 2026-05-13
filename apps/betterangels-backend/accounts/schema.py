@@ -1,5 +1,4 @@
 import logging
-import uuid
 from typing import Optional, Union, cast
 
 import strawberry
@@ -7,17 +6,18 @@ import strawberry_django
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
+from accounts.services import (
+    organization_add_member,
+    organization_remove_member,
+)
 from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
-from django.conf import settings
 from django.contrib import auth
-from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
 from notes.permissions import NotePermissions
-from organizations.backends import invitation_backend
-from organizations.models import Organization, OrganizationOwner, OrganizationUser
+from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
@@ -207,33 +207,13 @@ class Mutation:
         if organization is None:
             raise PermissionDenied("You do not have permission to add members.")
 
-        with transaction.atomic():
-            user, created = User.objects.get_or_create(
-                email=data.email,
-                defaults={"username": str(uuid.uuid4()), "is_active": True},
-            )
-            if created:
-                user.first_name = data.first_name
-                user.last_name = data.last_name
-                user.middle_name = data.middle_name
-                user.set_unusable_password()
-                user.save()
-
-            try:
-                OrganizationUser.objects.create(user=user, organization=organization)
-            except Exception:
-                raise ValidationError(f"{data.first_name} {data.last_name} is already a member of {organization.name}.")
-
-            invitation_backend().create_organization_invite(
-                organization=organization, invited_by_user=current_user, invitee_user=user
-            )
-
-        site = Site.objects.get(pk=settings.SITE_ID)
-        invitation_backend().send_invitation(
-            user=user,
-            sender=current_user,
+        user = organization_add_member(
             organization=organization,
-            domain=site,
+            email=data.email,
+            first_name=data.first_name,
+            last_name=data.last_name,
+            middle_name=data.middle_name,
+            invited_by=current_user,
         )
 
         return cast(OrganizationMemberType, user)
@@ -248,7 +228,6 @@ class Mutation:
         data: RemoveOrganizationMemberInput,
     ) -> DeletedObjectType:
         current_user = cast(User, get_current_user(info))
-        user_id = int(data.id)
 
         organization = get_user_permitted_org(
             current_user,
@@ -258,24 +237,10 @@ class Mutation:
         if organization is None:
             raise PermissionDenied("You do not have permission to remove members.")
 
-        try:
-            org_user = OrganizationUser.objects.get(
-                organization=organization,
-                user_id=user_id,
-            )
-        except OrganizationUser.DoesNotExist:
-            raise ValidationError("User is not a member of this organization.")
-
-        if OrganizationOwner.objects.filter(
+        removed_id = organization_remove_member(
             organization=organization,
-            organization_user=org_user,
-        ).exists():
-            raise ValidationError("You cannot remove the organization owner. Transfer ownership first.")
+            user_id=int(data.id),
+            removed_by=current_user,
+        )
 
-        if user_id == current_user.pk:
-            raise ValidationError("You cannot remove yourself from the organization.")
-
-        with transaction.atomic():
-            org_user.delete()
-
-        return DeletedObjectType(id=user_id)
+        return DeletedObjectType(id=removed_id)

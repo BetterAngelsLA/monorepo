@@ -43,8 +43,8 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         ("organization_count, is_outreach_authorized, expected_query_count"),
         [
             (0, False, 3),
-            (1, True, 4),
-            (2, True, 4),
+            (1, True, 3),
+            (2, True, 3),
         ],
     )
     def test_logged_in_user_query(
@@ -189,7 +189,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     UserOrganizationPermissions.ADD_ORG_MEMBER.name,
                     UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
                     UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
-                    UserOrganizationPermissions.VIEW_REPORTS.name,
                 ],
             ),
             (
@@ -200,7 +199,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
                     UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
                     UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
-                    UserOrganizationPermissions.VIEW_REPORTS.name,
                 ],
             ),
         ],
