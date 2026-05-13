@@ -55,6 +55,22 @@ def handle_organization_removed(sender: Any, instance: Organization, **kwargs: A
     logger.info(f"Organization {instance.name} was removed.")
 
 
+@receiver(post_save, sender=Organization)
+def ensure_organization_profile(sender: Any, instance: Organization, created: bool, **kwargs: Any) -> None:
+    """Guarantee every Organization has an OrganizationProfile.
+
+    Defaults to ``settings.DEFAULT_ORG_TYPE``.  Domain apps that need a
+    different type (e.g. shelters) create the profile explicitly *before*
+    this signal runs, so ``get_or_create`` is a no-op in that case.
+    """
+    from accounts.models import OrganizationProfile
+
+    OrganizationProfile.objects.get_or_create(
+        organization=instance,
+        defaults={"org_type": settings.DEFAULT_ORG_TYPE},
+    )
+
+
 @receiver(post_save, sender=OrganizationUser)
 def handle_organization_user_added(sender: Any, instance: OrganizationUser, created: bool, **kwargs: Any) -> None:
     user: User = instance.user

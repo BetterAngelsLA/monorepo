@@ -6,8 +6,3 @@ class OrgRoleEnum(models.TextChoices):
     MEMBER = "member", _("Member")
     ADMIN = "admin", _("Admin")
     SUPERUSER = "superuser", _("Superuser")
-
-
-class OrgType(models.TextChoices):
-    OUTREACH = "outreach", _("Outreach")
-    SHELTER = "shelter", _("Shelter")

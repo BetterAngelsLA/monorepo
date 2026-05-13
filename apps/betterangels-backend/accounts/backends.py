@@ -1,8 +1,8 @@
 import uuid
 from typing import Any, Optional
 
-from accounts.enums import OrgType
-from accounts.registry import get_invite_templates
+from accounts.org_types import get_invite_templates
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
@@ -40,11 +40,11 @@ class CustomInvitations(InvitationBackend):
     def _get_templates_for_org(self, organization: Organization | None) -> dict[str, str]:
         """Return email template paths based on the organization's type."""
         if organization is None:
-            return get_invite_templates(OrgType.OUTREACH)
+            return get_invite_templates(settings.DEFAULT_ORG_TYPE)
         try:
             org_type = organization.profile.org_type  # type: ignore[union-attr]
         except Exception:
-            org_type = OrgType.OUTREACH
+            org_type = settings.DEFAULT_ORG_TYPE
         return get_invite_templates(org_type)
 
     def send_invitation(self, user: User, sender: Optional[AbstractBaseUser] = None, **kwargs: Any) -> int:

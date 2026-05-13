@@ -12,7 +12,6 @@ Raises ``django.core.exceptions.ValidationError`` on invalid data — callers
 import uuid
 from typing import Any, Dict, List
 
-from accounts.enums import OrgType
 from accounts.groups import GroupTemplateNames
 from accounts.models import (
     ExtendedOrganizationInvitation,
@@ -30,7 +29,7 @@ from django.template.loader import render_to_string
 from django.utils.text import slugify
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 from places import Places
-from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
+from shelters.enums import ORG_TYPE_SHELTER, ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
 from shelters.groups import SHELTER_OPERATOR
 from shelters.models import Bed, Room, Schedule, Service, ServiceCategory, Shelter
 from shelters.selectors import shelter_get
@@ -436,9 +435,9 @@ def shelter_operator_register(
 
         organization = Organization.objects.create(name=organization_name)
 
-        OrganizationProfile.objects.create(
+        OrganizationProfile.objects.update_or_create(
             organization=organization,
-            org_type=OrgType.SHELTER,
+            defaults={"org_type": ORG_TYPE_SHELTER},
         )
 
         org_user = OrganizationUser.objects.create(

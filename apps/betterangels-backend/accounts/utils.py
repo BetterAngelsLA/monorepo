@@ -2,10 +2,11 @@ from functools import cached_property
 from typing import Union
 
 import waffle
-from accounts.enums import OrgRoleEnum, OrgType
+from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
-from accounts.registry import get_org_type_config, is_default_member_role
+from accounts.org_types import get_org_type_config, is_default_member_role
 from django.apps.registry import Apps
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
 from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
@@ -19,11 +20,11 @@ def remove_organization_permission_group(organization: Organization) -> None:
 
 
 def _get_org_type(organization: Organization) -> str:
-    """Return the OrgType for an organization, defaulting to OUTREACH."""
+    """Return the org_type for an organization, defaulting to DEFAULT_ORG_TYPE."""
     try:
         return organization.profile.org_type  # type: ignore[union-attr]
     except OrganizationProfile.DoesNotExist:
-        return OrgType.OUTREACH
+        return settings.DEFAULT_ORG_TYPE
 
 
 def is_org_type_default_template(template_name: str) -> bool:
@@ -34,7 +35,7 @@ def is_org_type_default_template(template_name: str) -> bool:
 def add_default_org_permissions_to_user(user: User, organization: Organization) -> None:
     org_type = _get_org_type(organization)
     cfg = get_org_type_config(org_type)
-    member_template, _ = PermissionGroupTemplate.objects.get_or_create(name=cfg.member_role)
+    member_template, _ = PermissionGroupTemplate.objects.get_or_create(name=cfg["member_role"])
     member_group, _ = PermissionGroup.objects.get_or_create(organization=organization, template=member_template)
     user.groups.add(member_group.group)
 
@@ -43,7 +44,7 @@ def create_default_org_permission_groups(organization: Organization) -> None:
     org_type = _get_org_type(organization)
     cfg = get_org_type_config(org_type)
 
-    for temp in cfg.templates:
+    for temp in cfg["templates"]:
         template, _ = PermissionGroupTemplate.objects.get_or_create(name=temp)
         PermissionGroup.objects.get_or_create(organization=organization, template=template)
 
@@ -73,14 +74,12 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
 
 
 def get_outreach_authorized_users() -> QuerySet[User]:
-    # Users are outreach-authorized if they belong to a permission group for
-    # any org that is not a shelter org.  Orgs without a profile are treated
-    # as outreach (legacy default).
+    # Users are outreach-authorized if they belong to a permission group
+    # for an outreach org.
     outreach_group_exists = PermissionGroup.objects.filter(
         organization__users=OuterRef("pk"),
         group__user=OuterRef("pk"),
-    ).exclude(
-        organization__profile__org_type=OrgType.SHELTER,
+        organization__profile__org_type=settings.DEFAULT_ORG_TYPE,
     )
 
     return User.objects.filter(Exists(outreach_group_exists))

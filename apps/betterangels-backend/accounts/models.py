@@ -1,9 +1,9 @@
 from typing import Any, Dict, Iterable, Tuple
 
 import pghistory
-from accounts.enums import OrgType
 from accounts.groups import GroupTemplateNames
 from accounts.managers import UserManager
+from django.conf import settings
 from django.contrib.auth.models import (
     AbstractBaseUser,
     Group,
@@ -74,18 +74,12 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @model_property
     def is_outreach_authorized(self: "User") -> bool:
-        # Authorized if user is in a permission group for any org that is not a shelter org.
-        # Orgs without an OrganizationProfile are treated as outreach (legacy default).
-        return (
-            PermissionGroup.objects.filter(
-                organization__users=self,
-                group__user=self,
-            )
-            .exclude(
-                organization__profile__org_type=OrgType.SHELTER,
-            )
-            .exists()
-        )
+        # Authorized if user is in a permission group for an outreach org.
+        return PermissionGroup.objects.filter(
+            organization__users=self,
+            group__user=self,
+            organization__profile__org_type=settings.DEFAULT_ORG_TYPE,
+        ).exists()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.email:
@@ -207,8 +201,8 @@ class OrganizationProfile(models.Model):
     )
     org_type = models.CharField(
         max_length=20,
-        choices=OrgType.choices,
-        default=OrgType.OUTREACH,
+        choices=[(k, v["label"]) for k, v in settings.ORG_TYPE_CONFIGS.items()],
+        default=settings.DEFAULT_ORG_TYPE,
     )
 
     objects = models.Manager()
