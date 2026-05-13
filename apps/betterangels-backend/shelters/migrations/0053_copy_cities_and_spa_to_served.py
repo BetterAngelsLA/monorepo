@@ -54,7 +54,7 @@ def reverse_copy(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0051_add_cities_served_and_spas_served"),
+        ("shelters", "0052_add_cities_served_and_spas_served"),
     ]
 
     operations = [

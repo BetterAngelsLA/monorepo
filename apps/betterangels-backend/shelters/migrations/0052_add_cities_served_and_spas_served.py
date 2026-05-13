@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0050_remove_old_shelter_models"),
+        ("shelters", "0051_proxy_photo_model_permissions"),
     ]
 
     operations = [
