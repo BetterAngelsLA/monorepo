@@ -43,6 +43,7 @@ from shelters.models import (
     Schedule,
     Service,
     Shelter,
+    ShelterAvailability,
     ShelterProgram,
     ShelterType,
     SpecialSituationRestriction,
@@ -186,6 +187,15 @@ shelter_recipe = Recipe(
     storage=related_m2m_unique(Storage, StorageChoices, min_quantity=1),
     exit_policy=related_m2m_unique(ExitPolicy, ExitPolicyChoices, min_quantity=1),
     referral_requirement=related_m2m_unique(ReferralRequirement, ReferralRequirementChoices, min_quantity=1),
+)
+
+
+shelter_availability_recipe = Recipe(
+    ShelterAvailability,
+    shelter=foreign_key(shelter_recipe),
+    non_restrictive_beds=lambda: random.randint(0, 50),
+    restrictive_beds=lambda: random.randint(0, 20),
+    restriction_notes=seq("restriction note "),  # type: ignore
 )
 
 
