@@ -1,6 +1,5 @@
 from typing import Optional
 
-import strawberry
 import strawberry_django
 from accounts.types import UserType
 from clients.types import ClientProfileType
@@ -37,7 +36,7 @@ class ReferralType:
     updated_at: auto
 
 
-@strawberry_django.input(models.Referral, partial=True)
+@strawberry_django.input(models.Referral)
 class CreateReferralInput:
     client_profile: ID
     shelter: ID

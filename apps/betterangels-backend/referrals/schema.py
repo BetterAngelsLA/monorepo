@@ -7,7 +7,6 @@ from accounts.utils import get_user_permission_group
 from clients.models import ClientProfile
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.graphql.utils import strip_unset
 from common.permissions.utils import IsAuthenticated
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
@@ -24,7 +23,6 @@ from strawberry_django.utils.query import filter_for_user
 
 from .types import (
     CreateReferralInput,
-    ReferralOrder,
     ReferralType,
     UpdateReferralInput,
 )
@@ -44,7 +42,6 @@ class Query:
     def referrals(
         self,
         info: Info,
-        ordering: Optional[list[ReferralOrder]] = None,
     ) -> OffsetPaginated[ReferralType]:
         current_user = get_current_user(info)
         return Referral.objects.filter(created_by=current_user)
@@ -59,7 +56,7 @@ class Mutation:
     def create_referral(self, info: Info, data: CreateReferralInput) -> ReferralType:
         current_user = cast(User, get_current_user(info))
         permission_group = get_user_permission_group(current_user)
-        referral_data = strip_unset(asdict(data))
+        referral_data = asdict(data)
         client_profile = ClientProfile.objects.get(pk=str(referral_data.pop("client_profile")))
         shelter = Shelter.objects.get(pk=str(referral_data.pop("shelter")))
         referral = referral_create(
@@ -77,7 +74,7 @@ class Mutation:
     )
     def update_referral(self, info: Info, data: UpdateReferralInput) -> ReferralType:
         qs: QuerySet[Referral] = info.context.qs
-        clean = strip_unset(asdict(data))
+        clean = asdict(data)
         referral = qs.get(pk=data.id)
         referral = referral_update(referral=referral, data=clean)
         return cast(ReferralType, referral)
