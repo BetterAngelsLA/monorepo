@@ -118,6 +118,7 @@ class TaskType:
 
 @strawberry_django.input(models.Task, partial=True)
 class CreateTaskInput:
+    organization_id: Optional[ID] = None
     client_profile: Optional[ID]
     hmis_client_profile: Optional[ID]
     description: auto

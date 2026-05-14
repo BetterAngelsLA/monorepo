@@ -16,7 +16,6 @@ from django.contrib import auth
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
-from notes.permissions import NotePermissions
 from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -32,8 +31,6 @@ from .types import (
     OrganizationMemberFilter,
     OrganizationMemberOrdering,
     OrganizationMemberType,
-    OrganizationOrder,
-    OrganizationType,
     OrgInvitationInput,
     RemoveOrganizationMemberInput,
     UpdateUserInput,
@@ -73,17 +70,6 @@ class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
     def current_user(self, info: Info) -> CurrentUserType:
         return get_current_user(info)  # type: ignore
-
-    @strawberry_django.offset_paginated(
-        OffsetPaginated[OrganizationType],
-        permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(NotePermissions.ADD)],
-    )
-    def caseworker_organizations(self, ordering: Optional[list[OrganizationOrder]] = None) -> QuerySet[Organization]:
-        queryset: QuerySet[Organization] = Organization.objects.filter(
-            permission_groups__name__icontains=GroupTemplateNames.CASEWORKER
-        )
-        return queryset
 
     @strawberry_django.field(
         permission_classes=[IsAuthenticated], extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)]

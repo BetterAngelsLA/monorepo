@@ -12,6 +12,7 @@ from django.contrib.auth import get_user_model
 from django.test import ignore_warnings, override_settings
 from hmis.tests.test_mutations import LOGIN_MUTATION
 from model_bakery import baker
+from notes.groups import CASEWORKER
 from organizations.models import Organization, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
@@ -264,7 +265,7 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
 
         caseworker_orgs = response["data"]["caseworkerOrganizations"]["results"]
         expected_caseworker_org_ids = list(
-            Organization.objects.filter(permission_groups__name__icontains=GroupTemplateNames.CASEWORKER).values_list(
+            Organization.objects.filter(permission_groups__template__name=CASEWORKER).values_list(
                 "id", flat=True
             )
         )

@@ -2,6 +2,7 @@ import { useMutation } from '@apollo/client/react';
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { uploadFileToS3WithPresignedPost } from '@monorepo/expo/shared/services';
 import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
+import { useUserOrganizationPreference } from '../../../../../state';
 import { ClientProfileDocument } from '../../../__generated__/Client.generated';
 import {
   GenerateClientDocumentUploadsDocument,
@@ -11,6 +12,7 @@ import {
 export function useClientDocumentUpload() {
   const [createUploads] = useMutation(GenerateClientDocumentUploadsDocument);
   const [resolveUploads] = useMutation(ResolveClientDocumentUploadsDocument);
+  const [organizationId] = useUserOrganizationPreference();
 
   async function uploadDocuments({
     clientProfileId,
@@ -108,6 +110,7 @@ export function useClientDocumentUpload() {
         data: {
           clientProfileId,
           documents: documentsToSave,
+          ...(organizationId && { organizationId }),
         },
       },
       refetchQueries: [

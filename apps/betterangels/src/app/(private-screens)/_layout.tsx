@@ -263,6 +263,12 @@ export default function PrivateLayout() {
         })}
       />
       <Stack.Screen
+        name="settings/organization/index"
+        options={getDefaultStackNavOptions({
+          title: 'Select Default Organization',
+        })}
+      />
+      <Stack.Screen
         name="settings/location/index"
         options={getDefaultStackNavOptions({
           title: 'Select Default Location',

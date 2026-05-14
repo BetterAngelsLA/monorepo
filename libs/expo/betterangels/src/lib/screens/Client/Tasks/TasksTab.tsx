@@ -12,6 +12,7 @@ import { StyleSheet, View } from 'react-native';
 import { TaskStatusEnum, TaskType, toTaskFilter } from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
+import { useUserOrganizationPreference } from '../../../state';
 import { enumDisplayTaskStatus, pagePaddingHorizontal } from '../../../static';
 import {
   ModelFilters,
@@ -48,6 +49,7 @@ export function TasksTab(props: TProps) {
 
   const [createTask] = useMutation(CreateTaskDocument);
   const { showSnackbar } = useSnackbar();
+  const [organizationId] = useUserOrganizationPreference();
   const { showModalScreen } = useModalScreen();
 
   const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
@@ -78,6 +80,7 @@ export function TasksTab(props: TProps) {
             status: task.status,
             team: task.team || null,
             clientProfile: client.clientProfile.id,
+            ...(organizationId && { organizationId }),
           },
         },
       });

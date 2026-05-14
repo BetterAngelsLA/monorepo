@@ -9,6 +9,7 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Group
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
+from notes.groups import CASEWORKER
 from organizations.models import OrganizationInvitation, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase
 
@@ -208,7 +209,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
         group = Group.objects.get(
             permissiongroup__organization=self.org,
-            permissiongroup__template__name=GroupTemplateNames.CASEWORKER,
+            permissiongroup__template__name=CASEWORKER,
         )
         self.assertIn(group, new_user.groups.all())
 

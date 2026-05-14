@@ -83,6 +83,7 @@ class ClientDocumentType(AttachmentInterface):
 
 @strawberry_django.input(Attachment)
 class CreateClientDocumentInput:
+    organization_id: Optional[ID] = None
     client_profile: ID
     file: Upload
     namespace: ClientDocumentNamespaceEnum
@@ -439,6 +440,7 @@ class ClientDocumentFromUploadsInput:
 
 @strawberry.input
 class ResolveClientDocumentUploadsInput:
+    organization_id: Optional[ID] = None
     client_profile_id: ID
     documents: list[ClientDocumentFromUploadsInput]
 

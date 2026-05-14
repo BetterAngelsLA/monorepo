@@ -7,7 +7,7 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "betterangels_backend.settings")
 django.setup()
 
-from accounts.groups import GroupTemplateNames
+from notes.groups import CASEWORKER
 from common.models import Attachment
 from common.permissions.enums import AttachmentPermissions
 from django.contrib.auth.models import Group
@@ -25,7 +25,7 @@ def grant_missing_perms(dry_run: bool = True) -> None:
         org = Organization.objects.get(name=ORG_NAME)
         group = Group.objects.get(
             permissiongroup__organization=org,
-            permissiongroup__template__name=GroupTemplateNames.CASEWORKER,
+            permissiongroup__template__name=CASEWORKER,
         )
         uploader_ids = org.users.values_list("id", flat=True)
         docs = (

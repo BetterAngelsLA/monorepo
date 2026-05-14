@@ -13,6 +13,7 @@ import {
 import { useSnackbar } from '../../hooks';
 import { CreateNoteDocument } from '../../ui-components/CreateClientInteraction';
 import { InteractionsDocument } from '../../ui-components/InteractionList';
+import { useUserOrganizationPreference } from '../../state';
 import NoteForm from './NoteForm';
 import {
   NOTE_FORM_EMPTY_STATE,
@@ -52,6 +53,7 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
 
   const [updateNote, { error: updateError }] = useMutation(UpdateNoteDocument);
   const [createNote] = useMutation(CreateNoteDocument);
+  const [organizationId] = useUserOrganizationPreference();
 
   const methods = useForm<TNoteFormInputs>({
     resolver: zodResolver(NoteFormSchema),
@@ -125,6 +127,7 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
             data: {
               clientProfile: clientProfileId,
               ...payload,
+              ...(organizationId && { organizationId }),
             },
           },
         });

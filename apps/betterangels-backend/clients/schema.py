@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_user_permission_group
+from accounts.utils import get_permission_group_for_org, get_user_permission_group
 from clients.enums import ErrorCodeEnum
 from clients.models import ClientContact, ClientProfile, ClientProfileDataImport, ClientProfileImportRecord, HmisProfile
 from clients.permissions import (
@@ -600,7 +600,13 @@ class Mutation:
                 [ClientProfilePermissions.CHANGE],
             ).get(id=data.client_profile)
 
-            permission_group = get_user_permission_group(user)
+            if data.organization_id:
+                from organizations.models import Organization
+
+                organization = Organization.objects.get(id=data.organization_id)
+                permission_group = get_permission_group_for_org(user, organization)
+            else:
+                permission_group = get_user_permission_group(user)
 
             content_type = ContentType.objects.get_for_model(ClientProfile)
             client_document = Attachment.objects.create(
@@ -690,10 +696,17 @@ class Mutation:
             [ClientProfilePermissions.CHANGE],
         ).get(id=data.client_profile_id)
 
+        organization = None
+        if data.organization_id:
+            from organizations.models import Organization
+
+            organization = Organization.objects.get(id=data.organization_id)
+
         documents = client_document.resolve_upload(
             user=user,
             client_profile=client_profile,
             documents=data.documents,
+            organization=organization,
         )
 
         return ClientDocumentUploadsType(documents=cast(list[ClientDocumentType], documents))

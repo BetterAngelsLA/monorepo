@@ -1,9 +1,10 @@
-from typing import cast
+from typing import Optional, cast
 
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_user_permission_group
+from accounts.types import OrganizationOrder, OrganizationType
+from accounts.utils import get_member_permission_group, get_permission_group_for_org, get_user_permission_group
 from clients.models import ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
@@ -11,7 +12,9 @@ from common.graphql.utils import get_object_or_permission_error
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
 from django.db.models import QuerySet
+from notes.groups import CASEWORKER
 from notes.models import Note, NoteDataImport, NoteImportRecord, ServiceRequest
+from organizations.models import Organization
 from notes.permissions import (
     NoteImportRecordPermissions,
     NotePermissions,
@@ -77,6 +80,16 @@ class Query:
         extensions=[HasPerm(NotePermissions.ADD)],
     )
 
+    @strawberry_django.offset_paginated(
+        OffsetPaginated[OrganizationType],
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(NotePermissions.ADD)],
+    )
+    def caseworker_organizations(self, ordering: Optional[list[OrganizationOrder]] = None) -> QuerySet[Organization]:
+        return Organization.objects.filter(
+            permission_groups__template__name=CASEWORKER
+        )
+
 
 @strawberry.type
 class Mutation:
@@ -89,7 +102,12 @@ class Mutation:
         callers that only send core note fields.
         """
         user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(user)
+
+        if data.organization_id:
+            organization = Organization.objects.get(id=data.organization_id)
+            permission_group = get_permission_group_for_org(user, organization)
+        else:
+            permission_group = get_user_permission_group(user)
 
         location_dict = asdict(data.location) if data.location else None
         provided_list = [asdict(s) for s in data.provided_services] if data.provided_services else None
@@ -122,12 +140,12 @@ class Mutation:
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
         user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(user)
 
         qs: QuerySet[Note] = info.context.qs
         clean = asdict(data)
 
         note = get_object_or_permission_error(qs, data.id)
+        permission_group = get_member_permission_group(note.organization_id)
         note = note_update(
             note=note,
             data=clean,
@@ -183,12 +201,12 @@ class Mutation:
     )
     def create_note_service_request(self, info: Info, data: CreateNoteServiceRequestInput) -> ServiceRequestType:
         user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(user)
 
         qs: QuerySet[Note] = info.context.qs
         note = get_object_or_permission_error(
             qs, str(data.note_id), error_message="You do not have permission to modify this note."
         )
+        permission_group = get_member_permission_group(note.organization_id)
 
         service_requests = note_service_request_create(
             user=user,
@@ -275,7 +293,12 @@ class Mutation:
 
         import_job = NoteDataImport.objects.get(id=data.import_job_id)
         user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(user)
+
+        if data.organization_id:
+            organization = Organization.objects.get(id=data.organization_id)
+            permission_group = get_permission_group_for_org(user, organization)
+        else:
+            permission_group = get_user_permission_group(user)
         try:
             with transaction.atomic():
                 note = note_create(

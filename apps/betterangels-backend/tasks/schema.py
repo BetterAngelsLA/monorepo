@@ -3,7 +3,7 @@ from typing import Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_user_permission_group
+from accounts.utils import get_permission_group_for_org, get_user_permission_group
 from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
@@ -13,6 +13,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from hmis.models import HmisClientProfile, HmisNote
 from notes.models import Note
+from organizations.models import Organization
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -48,9 +49,15 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(TaskPermissions.ADD)])
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         current_user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(current_user)
 
         task_data = asdict(data)
+        organization_id = task_data.pop("organization_id", None)
+
+        if organization_id:
+            organization = Organization.objects.get(id=organization_id)
+            permission_group = get_permission_group_for_org(current_user, organization)
+        else:
+            permission_group = get_user_permission_group(current_user)
 
         # Resolve FK references
         note = None

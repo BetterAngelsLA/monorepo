@@ -1,3 +1,4 @@
+import logging
 from functools import cached_property
 from typing import Union
 
@@ -12,6 +13,8 @@ from django.db import transaction
 from organizations.models import Organization
 
 from .models import OrganizationProfile, OrgType, PermissionGroup, PermissionGroupTemplate, User
+
+logger = logging.getLogger(__name__)
 
 
 def remove_organization_permission_group(organization: Organization) -> None:
@@ -86,16 +89,70 @@ def remove_org_group_permissions_from_user(user: User, organization: Organizatio
     user.groups.remove(*groups)
 
 
+def get_permission_group_for_org(
+    user: Union[AbstractBaseUser, AnonymousUser], organization: Organization
+) -> PermissionGroup:
+    """Return the user's member permission group for the given organization.
+
+    Derives the correct role from the organization's type preset configuration.
+    Validates that the user actually belongs to the group.
+    """
+    member_role = _get_member_role_for_org(organization)
+    permission_group = (
+        PermissionGroup.objects.select_related("organization", "group")
+        .filter(
+            organization=organization,
+            template__name=member_role,
+        )
+        .first()
+    )
+
+    if not (permission_group and permission_group.group):
+        raise PermissionError("Organization does not have the expected permission group")
+
+    if not user.groups.filter(id=permission_group.group_id).exists():
+        raise PermissionError("User is not a member of this organization's permission group")
+
+    return permission_group
+
+
+def get_member_permission_group(organization_id: int) -> PermissionGroup:
+    """Return the member permission group for an organization by ID.
+
+    Use this when user access has already been verified (e.g., by PermissionedQuerySet)
+    and you just need the group for assigning object permissions.
+    Single query — does not re-verify membership.
+    """
+    permission_group = (
+        PermissionGroup.objects.select_related("organization", "group")
+        .filter(organization_id=organization_id)
+        .exclude(template__name__in=[GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER])
+        .first()
+    )
+
+    if not (permission_group and permission_group.group):
+        raise PermissionError("Organization does not have a member permission group")
+
+    return permission_group
+
+
 def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> PermissionGroup:
-    # WARNING: Temporary workaround for organization selection
-    # TODO: Update once organization selection is implemented. Currently selects
-    # the first organization with a default Caseworker role for the user.
+    """DEPRECATED: Legacy fallback for resolvers that don't yet receive organization_id.
+
+    Selects the first organization where the user has a member role.
+    Use get_permission_group_for_org() with an explicit organization instead.
+    """
+    logger.warning(
+        "get_user_permission_group() is deprecated. Pass organization_id explicitly.",
+        stacklevel=2,
+    )
+    # Find the first permission group for this user that is a member role (not admin/superuser)
     permission_group = (
         PermissionGroup.objects.select_related("organization", "group")
         .filter(
             organization__users=user.pk,
-            name=GroupTemplateNames.CASEWORKER,
         )
+        .exclude(template__name__in=[GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER])
         .first()
     )
 

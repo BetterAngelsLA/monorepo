@@ -2,6 +2,7 @@ from accounts.groups import GroupTemplateNames
 from accounts.models import PermissionGroup, User
 from django.test import TestCase
 from model_bakery import baker
+from notes.groups import CASEWORKER
 
 from .baker_recipes import organization_recipe
 
@@ -28,7 +29,7 @@ class OrgSignalTestCase(TestCase):
 
         org_perm_group_names = [pg.name for pg in org_1_perm_groups]
         expected_names = [
-            GroupTemplateNames.CASEWORKER,
+            CASEWORKER,
             GroupTemplateNames.ORG_ADMIN,
             GroupTemplateNames.ORG_SUPERUSER,
         ]

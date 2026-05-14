@@ -274,6 +274,9 @@ class CreateNoteInput:
     with callers that only send core note fields.
     """
 
+    # Organization selection
+    organization_id: Optional[ID] = None
+
     # Core note fields
     purpose: Optional[str] = None
     team: Optional[SelahTeamEnum] = None
@@ -361,6 +364,7 @@ class CreateNoteDataImportInput:
 
 @strawberry_django.input(models.NoteImportRecord)
 class ImportNoteInput:
+    organization_id: Optional[ID] = None
     import_job_id: auto
     source_id: auto
     source_name: auto
