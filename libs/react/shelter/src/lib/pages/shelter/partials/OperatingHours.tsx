@@ -89,7 +89,7 @@ function AggregateStatusText({ status }: { status: AggregateStatus }) {
   const colorMap = {
     open: '#23CE6B',
     closed: '#CB0808',
-    partial: '#D4A017',
+    partial: '#ED6700',
   };
   return (
     <span
@@ -288,7 +288,7 @@ export function OperatingHours({
           type="button"
           onClick={openHoursDialog}
           aria-haspopup="dialog"
-          className="flex flex-row items-center gap-2 px-2 py-1 bg-[#F4F6FD] rounded text-[12px] font-normal leading-[21px] text-[#052B73] transition-colors hover:bg-blue-100 ml-auto"
+          className="flex flex-row items-center gap-2 px-2 py-1 bg-[#F4F6FD] rounded text-[12px] font-normal leading-[21px] text-[#052B73] transition-colors hover:bg-blue-100"
           style={{ fontFamily: 'Poppins, sans-serif' }}
         >
           More Hours
