@@ -5,7 +5,6 @@ import { MediaPicker, TextBold } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
-import { useSnackbar } from '../../../../../hooks';
 import { UploadSection } from '../UploadSection';
 import UploadsPreview from '../UploadsPreview';
 import { useClientDocumentUpload } from './useClientDocumentUpload';
@@ -36,7 +35,6 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
   } = props;
 
   const { uploadDocuments } = useClientDocumentUpload();
-  const { showSnackbar } = useSnackbar();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -70,11 +68,6 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
       console.error(`[ClientDocumentUploads error:] ${err}`);
 
       onUploadError?.();
-
-      showSnackbar({
-        message: `Sorry, there was an error with the file upload.`,
-        type: 'error',
-      });
     } finally {
       setProcessing(false);
     }
@@ -183,18 +176,16 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
         onClose={handleMediaPickerClose}
         onSelectionComplete={() => setIsModalVisible(false)}
         onCameraCapture={(file) => {
-          const selectedFiles = allowMultiple ? [...files, file] : [file];
-
-          onFilesChange(selectedFiles);
-          uploadSelectedFiles(selectedFiles);
+          const updatedFiles = allowMultiple ? [...files, file] : [file];
+          onFilesChange(updatedFiles);
+          uploadSelectedFiles([file]);
         }}
         onFilesSelected={(newFiles) => {
-          const selectedFiles = allowMultiple
+          const updatedFiles = allowMultiple
             ? [...files, ...newFiles]
             : [newFiles[0]];
-
-          onFilesChange(selectedFiles);
-          uploadSelectedFiles(selectedFiles);
+          onFilesChange(updatedFiles);
+          uploadSelectedFiles(newFiles);
         }}
       />
     </>

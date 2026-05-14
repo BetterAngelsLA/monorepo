@@ -1,15 +1,10 @@
 import { NoFilesYet, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  IconButton,
-  TextBold,
-  TextMedium,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
+import { IconButton, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator, ScrollView, View } from 'react-native';
 import { ClientDocumentType } from '../../../apollo';
+import { useSnackbar } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import Documents from './Documents';
@@ -23,11 +18,7 @@ export default function Docs({
   const [isUploading, setIsUploading] = useState(false);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const { showModalScreen } = useModalScreen();
-  const insets = useSafeAreaInsets();
-  const [banner, setBanner] = useState<{
-    type: 'success' | 'error';
-    message: string;
-  } | null>(null);
+  const { showSnackbar } = useSnackbar();
 
   const props = {
     expanded,
@@ -61,8 +52,6 @@ export default function Docs({
           <TextMedium size="lg">Doc Library</TextMedium>
           <IconButton
             onPress={() => {
-              setBanner(null);
-
               showModalScreen({
                 presentation: 'fullScreenModal',
                 title: 'Upload Files',
@@ -73,16 +62,18 @@ export default function Docs({
                     onUploadStart={() => setIsUploading(true)}
                     onUploadSuccess={() => {
                       setIsUploading(false);
-                      setBanner({
-                        type: 'success',
+
+                      showSnackbar({
                         message: 'File uploaded successfully.',
+                        type: 'success',
                       });
                     }}
                     onUploadError={() => {
                       setIsUploading(false);
-                      setBanner({
-                        type: 'error',
+
+                      showSnackbar({
                         message: 'Upload failed. Please try again.',
+                        type: 'error',
                       });
                     }}
                   />
@@ -167,43 +158,6 @@ export default function Docs({
             size="large"
             style={{ transform: [{ translateY: -40 }] }}
           />
-        </View>
-      )}
-
-      {banner && (
-        <View
-          style={{
-            position: 'absolute',
-            left: 30,
-            right: 16,
-            bottom: insets.bottom + 16,
-          }}
-        >
-          <View
-            style={{
-              width: 350,
-              backgroundColor:
-                banner.type === 'success' ? '#EAF8EE' : '#FFF4F4',
-              borderColor: banner.type === 'success' ? '#22C55E' : '#FF3B30',
-              borderWidth: 1,
-              borderRadius: 4,
-              paddingHorizontal: 20,
-              paddingVertical: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <TextRegular size="sm">{banner.message}</TextRegular>
-
-            <Pressable
-              accessibilityLabel="Successful Banner"
-              accessibilityHint="File Has Been Uploaded Successfully"
-              onPress={() => setBanner(null)}
-            >
-              <TextBold size="sm">Close</TextBold>
-            </Pressable>
-          </View>
         </View>
       )}
     </View>
