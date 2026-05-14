@@ -78,6 +78,7 @@ from .models import (
     Service,
     ServiceCategory,
     Shelter,
+    ShelterAvailability,
     ShelterPhoto,
     ShelterProgram,
     ShelterType,
@@ -1571,3 +1572,39 @@ class ReservationAdmin(admin.ModelAdmin):
             {"fields": ("notes",)},
         ),
     )
+
+
+@admin.register(ShelterAvailability)
+class ShelterAvailabilityAdmin(admin.ModelAdmin):
+    list_display = ("shelter", "non_restrictive_beds", "restrictive_beds", "updated_by", "updated_at", "created_at")
+    list_filter = ("updated_at",)
+    search_fields = ("shelter__name",)
+    autocomplete_fields = ["shelter", "updated_by"]
+    readonly_fields = ("created_at", "updated_at")
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "shelter",
+                    "non_restrictive_beds",
+                    "restrictive_beds",
+                    "restriction_notes",
+                ),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": (
+                    "updated_by",
+                    "created_at",
+                    "updated_at",
+                ),
+            },
+        ),
+    )
+
+    def save_model(self, request: HttpRequest, obj: ShelterAvailability, form: Any, change: bool) -> None:
+        obj.updated_by = request.user  # type: ignore[assignment]
+        super().save_model(request, obj, form, change)
