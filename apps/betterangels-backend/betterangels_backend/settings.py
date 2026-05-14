@@ -144,6 +144,7 @@ INSTALLED_APPS = [
     "proxy",
     "reports",
     "shelters",
+    "referrals",
     "tasks",
     # Must be at the end
     "django_cleanup.apps.CleanupConfig",
