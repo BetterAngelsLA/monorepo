@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Sequence, Tuple, Type
 
 import strawberry
@@ -7,6 +9,66 @@ from django.db.models import Model, TextChoices
 from django.utils.encoding import force_str
 from guardian.shortcuts import assign_perm
 from strawberry_django.auth.utils import get_current_user
+
+
+class Permissions:
+    """Descriptor for type-safe model permissions.
+
+    Uses Django's ``contribute_to_class`` pattern (same as ``Manager`` and
+    ``Field``).  Place on an abstract base model so every concrete subclass
+    gets a ``perms`` attribute with typed CRUD permission constants derived
+    from ``_meta``.
+
+    For custom (non-CRUD) permissions, pass keyword arguments::
+
+        perms = Permissions(
+            VIEW_PRIVATE=("view_private_shelter", "Can view private shelters"),
+        )
+
+    Custom permissions are auto-registered in ``Meta.permissions`` so Django
+    creates them in the database.
+
+    Usage::
+
+        class Shelter(BaseModel):
+            perms = Permissions(
+                VIEW_PRIVATE=("view_private_shelter", "Can view private shelters"),
+            )
+
+        Shelter.perms.VIEW          # "shelters.view_shelter"   (auto CRUD)
+        Shelter.perms.VIEW_PRIVATE  # "shelters.view_private_shelter" (custom)
+    """
+
+    def __init__(self, **custom: tuple[str, str]) -> None:
+        self._custom = custom  # {ENUM_NAME: (codename, description)}
+        self._cache: dict[type, type[TextChoices]] = {}
+
+    def contribute_to_class(self, model: type, name: str) -> None:
+        setattr(model, name, self)
+        if model._meta.abstract or not self._custom:
+            return
+        existing = list(model._meta.permissions)
+        for codename, description in self._custom.values():
+            existing.append((codename, description))
+        model._meta.permissions = existing
+
+    def __get__(self, obj: Any, model: type | None = None) -> type[TextChoices] | Permissions:
+        if model is None or model._meta.abstract:
+            return self
+        if model not in self._cache:
+            self._cache[model] = self._build_enum(model)
+        return self._cache[model]
+
+    def _build_enum(self, model: type) -> type[TextChoices]:
+        app = model._meta.app_label
+        model_name = model._meta.model_name
+        choices: dict[str, str] = {
+            action.upper(): f"{app}.{action}_{model_name}"
+            for action in model._meta.default_permissions
+        }
+        for enum_name, (codename, _description) in self._custom.items():
+            choices[enum_name] = f"{app}.{codename}"
+        return TextChoices(f"{model.__name__}Perms", choices)
 
 
 def permission_enums_to_django_meta_permissions(

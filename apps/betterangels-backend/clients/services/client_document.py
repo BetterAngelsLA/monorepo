@@ -6,7 +6,6 @@ from clients.models import ClientProfile
 from clients.types import ClientDocumentFromUploadsInput, ClientDocumentUploadsInputItem
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
 from common.models import Attachment
-from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import assign_object_permissions
 from common.services.s3 import (
     DEFAULT_UPLOAD_EXPIRATION_SECONDS,
@@ -124,8 +123,8 @@ def resolve_upload(
                 permission_group.group,
                 attachment,
                 [
-                    AttachmentPermissions.DELETE,
-                    AttachmentPermissions.CHANGE,
+                    Attachment.perms.DELETE,
+                    Attachment.perms.CHANGE,
                 ],
             )
 

@@ -7,8 +7,7 @@ from django.utils import timezone
 from shelters.enums import BedStatusChoices, DemographicChoices, PetChoices
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import SPAChoices, SpecialSituationRestrictionChoices
-from shelters.models import SPA, Bed, Demographic, Pet, ShelterType, SpecialSituationRestriction
-from shelters.permissions import ShelterPermissions
+from shelters.models import SPA, Bed, Demographic, Pet, Shelter, ShelterType, SpecialSituationRestriction
 from shelters.tests.baker_recipes import shelter_recipe
 from unittest_parametrize import ParametrizedTestCase, parametrize
 

@@ -35,7 +35,7 @@ from import_export.results import RowResult
 from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from organizations.models import Organization
 from pghistory.models import MiddlewareEvents
-from shelters.permissions import ShelterFieldPermissions
+
 
 from .enums import (
     AccessibilityChoices,
@@ -1163,7 +1163,7 @@ class ShelterAdmin(ImportExportModelAdmin):
     ) -> Union[list[str], Tuple[str, ...]]:
         readonly_fields = super().get_readonly_fields(request, obj)
         readonly_fields = (*readonly_fields, "updated_at", "updated_by")
-        if not request.user.has_perm(ShelterFieldPermissions.CHANGE_IS_REVIEWED):
+        if not request.user.has_perm(Shelter.perms.CHANGE_IS_REVIEWED):
             readonly_fields = (*readonly_fields, "is_reviewed")
 
         all_permissions = request.user.get_all_permissions()

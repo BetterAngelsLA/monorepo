@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 
 import common.enums
 import common.files
-from common.permissions.enums import AttachmentPermissions
+from common.models import Attachment as AttachmentModel
 
 
 class LocationPermissions(models.TextChoices):
@@ -24,7 +24,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
 
     Attachment = apps.get_model("common", "Attachment")
     AttachmentContentType = ContentType.objects.get_for_model(Attachment)
-    ATTACHMENT_PERM_MAP = {perm.split(".")[1]: perm.label for perm in AttachmentPermissions}
+    ATTACHMENT_PERM_MAP = {perm.split(".")[1]: perm.label for perm in AttachmentModel.perms}
 
     for codename, name in ATTACHMENT_PERM_MAP.items():
         cur_perm = Permission.objects.using(db_alias).create(

@@ -5,6 +5,7 @@ Each wraps a TextChoicesField / IntegerChoicesField with ``unique=True``.
 """
 
 from common.models import BaseModel
+from common.permissions.utils import Permissions
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.db.models.functions import Lower
@@ -30,6 +31,7 @@ from shelters.enums import (
 
 # Summary Info
 class Demographic(models.Model):
+    perms = Permissions()
     name = TextChoicesField(choices_enum=DemographicChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
@@ -37,6 +39,7 @@ class Demographic(models.Model):
 
 
 class SpecialSituationRestriction(models.Model):
+    perms = Permissions()
     name = TextChoicesField(choices_enum=SpecialSituationRestrictionChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
@@ -44,6 +47,7 @@ class SpecialSituationRestriction(models.Model):
 
 
 class ShelterType(models.Model):
+    perms = Permissions()
     name = TextChoicesField(choices_enum=ShelterChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
@@ -52,6 +56,7 @@ class ShelterType(models.Model):
 
 # Sleeping Details
 class RoomStyle(models.Model):
+    perms = Permissions()
     name = TextChoicesField(choices_enum=RoomStyleChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
@@ -60,6 +65,7 @@ class RoomStyle(models.Model):
 
 # Shelter Details
 class Accessibility(models.Model):
+    perms = Permissions()
     name = TextChoicesField(choices_enum=AccessibilityChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
@@ -67,6 +73,7 @@ class Accessibility(models.Model):
 
 
 class Storage(models.Model):
+    perms = Permissions()
     name = TextChoicesField(choices_enum=StorageChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
@@ -74,6 +81,7 @@ class Storage(models.Model):
 
 
 class Pet(models.Model):
+    perms = Permissions()
     name = TextChoicesField(choices_enum=PetChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
@@ -81,6 +89,7 @@ class Pet(models.Model):
 
 
 class Parking(models.Model):
+    perms = Permissions()
     name = TextChoicesField(choices_enum=ParkingChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
@@ -89,6 +98,7 @@ class Parking(models.Model):
 
 # Entry Requirements
 class EntryRequirement(models.Model):
+    perms = Permissions()
     name = TextChoicesField(choices_enum=EntryRequirementChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
@@ -96,6 +106,7 @@ class EntryRequirement(models.Model):
 
 
 class VaccinationRequirement(models.Model):
+    perms = Permissions()
     name = TextChoicesField(choices_enum=VaccinationRequirementChoices, unique=True)
 
     def __str__(self) -> str:
@@ -123,6 +134,7 @@ class City(BaseModel):
 
 
 class SPA(models.Model):
+    perms = Permissions()
     name = IntegerChoicesField(choices_enum=SPAChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
@@ -130,6 +142,7 @@ class SPA(models.Model):
 
 
 class ShelterProgram(models.Model):
+    perms = Permissions()
     name = TextChoicesField(choices_enum=ShelterProgramChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
@@ -137,6 +150,7 @@ class ShelterProgram(models.Model):
 
 
 class Funder(models.Model):
+    perms = Permissions()
     name = TextChoicesField(choices_enum=FunderChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
@@ -144,6 +158,7 @@ class Funder(models.Model):
 
 
 class ExitPolicy(models.Model):
+    perms = Permissions()
     name = TextChoicesField(choices_enum=ExitPolicyChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
@@ -151,6 +166,7 @@ class ExitPolicy(models.Model):
 
 
 class ReferralRequirement(models.Model):
+    perms = Permissions()
     name = TextChoicesField(choices_enum=ReferralRequirementChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:

@@ -10,7 +10,7 @@ from clients.services.client_document import (
     resolve_upload,
 )
 from common.models import Attachment
-from common.permissions.enums import AttachmentPermissions
+from common.models import Attachment
 from common.services.s3 import DEFAULT_UPLOAD_EXPIRATION_SECONDS
 from django.test import TestCase
 from model_bakery import baker
@@ -279,7 +279,7 @@ class ResolveUploadTest(TestCase):
         mock_assign.assert_called_once_with(
             self.permission_group.group,
             result[0],
-            [AttachmentPermissions.DELETE, AttachmentPermissions.CHANGE],
+            [Attachment.perms.DELETE, Attachment.perms.CHANGE],
         )
 
     @patch("clients.services.client_document.assign_object_permissions")

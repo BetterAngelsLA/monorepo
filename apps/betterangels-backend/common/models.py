@@ -5,6 +5,7 @@ from urllib.parse import unquote
 import magic
 from common.enums import AttachmentType
 from common.files.utils import canonicalise_filename, get_unique_file_path, infer_attachment_type
+from common.permissions.utils import Permissions
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
@@ -18,6 +19,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class BaseModel(models.Model):
+    perms = Permissions()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

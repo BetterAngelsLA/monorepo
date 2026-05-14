@@ -24,7 +24,6 @@ from common.graphql.types import (
     DeletedObjectType,
 )
 from common.models import Attachment, PhoneNumber
-from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated, assign_object_permissions
 from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
@@ -347,11 +346,11 @@ class Query:
 
     client_document: ClientDocumentType = strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
+        extensions=[HasRetvalPerm(Attachment.perms.VIEW)],
     )
 
     @strawberry_django.offset_paginated(
-        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)]
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(Attachment.perms.VIEW)]
     )
     def client_documents(self, info: Info, client_id: str) -> OffsetPaginated[ClientDocumentType]:
         content_type = ContentType.objects.get_for_model(ClientProfile)
@@ -590,7 +589,7 @@ class Mutation:
         extensions=[HasRetvalPerm(perms=SocialMediaProfilePermissions.DELETE)],
     )
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Attachment.perms.ADD)])
     def create_client_document(self, info: Info, data: CreateClientDocumentInput) -> ClientDocumentType:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
@@ -612,8 +611,8 @@ class Mutation:
             )
 
             permissions = [
-                AttachmentPermissions.DELETE,
-                AttachmentPermissions.CHANGE,
+                Attachment.perms.DELETE,
+                Attachment.perms.CHANGE,
             ]
             assign_object_permissions(permission_group.group, client_document, permissions)
 
@@ -623,7 +622,7 @@ class Mutation:
         DeleteDjangoObjectInput,
         permission_classes=[IsAuthenticated],
         extensions=[
-            HasRetvalPerm(perms=AttachmentPermissions.DELETE),
+            HasRetvalPerm(perms=Attachment.perms.DELETE),
         ],
     )
 
@@ -649,7 +648,7 @@ class Mutation:
 
             return cast(ClientProfileType, client_profile)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Attachment.perms.ADD)])
     def generate_client_document_uploads(
         self,
         info: Info,
@@ -678,7 +677,7 @@ class Mutation:
             ]
         )
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Attachment.perms.ADD)])
     def resolve_client_document_uploads(
         self, info: Info, data: ResolveClientDocumentUploadsInput
     ) -> ClientDocumentUploadsType:
@@ -812,5 +811,5 @@ class Mutation:
     update_client_document: ClientDocumentType = mutations.update(
         UpdateClientDocumentInput,
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=AttachmentPermissions.CHANGE)],
+        extensions=[HasRetvalPerm(perms=Attachment.perms.CHANGE)],
     )

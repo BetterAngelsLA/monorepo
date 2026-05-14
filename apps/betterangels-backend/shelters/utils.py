@@ -13,7 +13,9 @@ def assign_permissions_to_group_in_migration(apps, group_name, permission_map):
             for perm in perm_enum:
                 try:
                     permission, _ = Permission.objects.get_or_create(
-                        codename=perm.value.split(".")[1], content_type=content_type, name=perm.label
+                        codename=perm.value.split(".")[1],
+                        content_type=content_type,
+                        defaults={"name": perm.label},
                     )
                     group.permissions.add(permission)
                 except Permission.DoesNotExist:
