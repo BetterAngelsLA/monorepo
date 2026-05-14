@@ -119,6 +119,37 @@ export interface OperatingStatus {
   detailText: string;
 }
 
+export interface AggregateStatus {
+  tone: 'open' | 'closed' | 'partial';
+  statusText: 'Open Now' | 'Closed' | 'Partially Open';
+}
+
+export function getAggregateStatus(
+  schedules: Schedule[],
+  scheduleTypes: ScheduleTypeChoices[],
+  now: Date = new Date()
+): AggregateStatus {
+  if (scheduleTypes.length === 0) {
+    return { tone: 'closed', statusText: 'Closed' };
+  }
+
+  const statuses = scheduleTypes.map((type) => {
+    const typed = schedules.filter((s) => s.scheduleType === type);
+    return getOperatingStatus(typed, now, type);
+  });
+
+  const anyOpen = statuses.some((s) => s.tone === 'open');
+  const anyClosed = statuses.some((s) => s.tone === 'closed');
+
+  if (anyOpen && !anyClosed) {
+    return { tone: 'open', statusText: 'Open Now' };
+  }
+  if (anyClosed && !anyOpen) {
+    return { tone: 'closed', statusText: 'Closed' };
+  }
+  return { tone: 'partial', statusText: 'Partially Open' };
+}
+
 function getEffectiveTimeWindows(
   schedules: Schedule[],
   date: Date,
