@@ -8,6 +8,8 @@ from hmis.schema import Mutation as HmisMutation
 from hmis.schema import Query as HmisQuery
 from notes.schema import Mutation as NotesMutation
 from notes.schema import Query as NotesQuery
+from referrals.schema import Mutation as ReferralsMutation
+from referrals.schema import Query as ReferralsQuery
 from reports.schema import Query as ReportsQuery
 from shelters.schema import Mutation as SheltersMutation
 from shelters.schema import Query as SheltersQuery
@@ -18,12 +20,12 @@ from strawberry_django.optimizer import DjangoOptimizerExtension
 from tasks.schema import Mutation as TasksMutation
 from tasks.schema import Query as TasksQuery
 
-# Schema Stiching
+# Schema Stitching
 # https://github.com/strawberry-graphql/strawberry/issues/566#issuecomment-1346660629
-queries = (AccountsQuery, ClientsQuery, CommonQuery, HmisQuery, NotesQuery, ReportsQuery, TasksQuery, SheltersQuery)
+queries = (AccountsQuery, ClientsQuery, CommonQuery, HmisQuery, NotesQuery, ReportsQuery, TasksQuery, SheltersQuery, ReferralsQuery)
 Query = merge_types("Query", queries)
 
-mutations = (AccountsMutation, ClientsMutation, HmisMutation, NotesMutation, TasksMutation, SheltersMutation)
+mutations = (AccountsMutation, ClientsMutation, HmisMutation, NotesMutation, TasksMutation, SheltersMutation, ReferralsMutation)
 Mutation = merge_types("Mutation", mutations)
 
 schema = Schema(
