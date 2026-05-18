@@ -325,9 +325,14 @@ class ShelterForm(forms.ModelForm):
         """
         cleaned_data = super().clean() or {}
 
-        # Process only ManyToMany fields where the related model uses TextChoices
+        # Process only ManyToMany fields backed by MultipleChoiceField (enum tags).
+        # Skip ModelMultipleChoiceField (e.g. spas_served, cities_served, services).
         for field in self._meta.model._meta.get_fields():
             if not isinstance(field, models.ManyToManyField) or not isinstance(field.related_model, type):
+                continue
+
+            form_field = self.fields.get(field.name)
+            if form_field is None or isinstance(form_field, forms.ModelMultipleChoiceField):
                 continue
 
             model_class = field.related_model

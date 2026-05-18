@@ -1,7 +1,10 @@
+from unittest.mock import patch
+
 from django.http import QueryDict
 from django.test import TestCase
 from shelters.admin import GroupedServiceWidget, ShelterForm
-from shelters.models import Service, ServiceCategory, Shelter
+from shelters.deprecated.deprecated_enums import SPAChoices
+from shelters.models import SPA, Service, ServiceCategory, Shelter
 
 
 class GroupedServiceWidgetTestCase(TestCase):
@@ -12,6 +15,22 @@ class GroupedServiceWidgetTestCase(TestCase):
         values = GroupedServiceWidget().value_from_datadict(data, {}, "services")
 
         self.assertEqual(values, ["1", "2"])
+
+
+class ShelterFormSpasServedTestCase(TestCase):
+    def test_clean_preserves_spas_served_model_instances(self) -> None:
+        spa = SPA.objects.create(
+            name=SPAChoices.SEVEN,
+            short_name="7",
+            long_name="7 - East",
+        )
+        form = ShelterForm()
+        base_cleaned = {"spas_served": [spa]}
+
+        with patch("django.forms.ModelForm.clean", return_value=base_cleaned.copy()):
+            result = form.clean()
+
+        self.assertEqual(result["spas_served"], [spa])
 
 
 class ShelterFormPendingServicesTestCase(TestCase):
