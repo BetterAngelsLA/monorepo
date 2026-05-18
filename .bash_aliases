@@ -17,6 +17,7 @@ alias ynx-test-be="yarn nx test betterangels-backend"
 alias ynx-test-fe="yarn nx test betterangels"
 alias ynx-typecheck="yarn nx affected -t typecheck"
 alias ynx-validate-schema="yarn nx run-many -t validate-graphql-schema"
+alias ynx-splus="yarn nx run betterangels-backend:shell-plus"
 
 alias ynx-precommit="ynx-lint && ynx-typecheck && ynx-validate-schema && ynx-check-migrations"
 
