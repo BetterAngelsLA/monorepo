@@ -127,7 +127,7 @@ class SPAType:
 
     @strawberry_django.field(only=["long_name"])
     def name(self, root: models.SPA) -> str:
-        return root.long_name if root.long_name else str(self.id)
+        return root.long_name
 
 
 @strawberry_django.type(models.SpecialSituationRestriction)
