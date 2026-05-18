@@ -34,10 +34,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelOptions(
-            name="spa",
-            options={"ordering": ["short_name"]},
-        ),
         migrations.AddField(
             model_name="spa",
             name="created_at",
@@ -60,4 +56,18 @@ class Migration(migrations.Migration):
             field=models.DateTimeField(auto_now=True),
         ),
         migrations.RunPython(populate_spa_name_fields, migrations.RunPython.noop),
+        migrations.AlterField(
+            model_name="spa",
+            name="long_name",
+            field=models.CharField(db_index=True, max_length=255, unique=True),
+        ),
+        migrations.AlterField(
+            model_name="spa",
+            name="short_name",
+            field=models.CharField(db_index=True, max_length=10, unique=True),
+        ),
+        migrations.AlterModelOptions(
+            name="spa",
+            options={"ordering": ["short_name"]},
+        ),
     ]

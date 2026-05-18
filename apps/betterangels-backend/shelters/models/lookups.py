@@ -124,14 +124,14 @@ class City(BaseModel):
 
 class SPA(BaseModel):
     name = IntegerChoicesField(choices_enum=SPAChoices, unique=True, blank=True, null=True)
-    short_name = models.CharField(max_length=10, unique=True, db_index=True, null=True)
-    long_name = models.CharField(max_length=255, unique=True, db_index=True, null=True)
+    short_name = models.CharField(max_length=10, unique=True, db_index=True)
+    long_name = models.CharField(max_length=255, unique=True, db_index=True)
 
     class Meta:
         ordering = ["short_name"]
 
     def __str__(self) -> str:
-        return self.long_name or str(self.pk)
+        return self.long_name
 
 
 class ShelterProgram(models.Model):
