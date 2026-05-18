@@ -122,8 +122,12 @@ class ShelterTypeType:
 
 @strawberry_django.type(models.SPA)
 class SPAType:
-    id: auto
-    name: auto
+    id: ID
+    short_name: auto
+
+    @strawberry_django.field(only=["long_name"])
+    def name(self, root: models.SPA) -> str:
+        return root.long_name if root.long_name else str(self.id)
 
 
 @strawberry_django.type(models.SpecialSituationRestriction)

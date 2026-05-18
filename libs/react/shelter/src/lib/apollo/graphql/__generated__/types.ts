@@ -2609,21 +2609,11 @@ export type RoomTypeOffsetPaginated = {
   totalCount: Scalars['Int']['output'];
 };
 
-export enum SpaChoices {
-  Eight = 'EIGHT',
-  Five = 'FIVE',
-  Four = 'FOUR',
-  One = 'ONE',
-  Seven = 'SEVEN',
-  Six = 'SIX',
-  Three = 'THREE',
-  Two = 'TWO'
-}
-
 export type SpaType = {
   __typename?: 'SPAType';
   id: Scalars['ID']['output'];
-  name?: Maybe<SpaChoices>;
+  name: Scalars['String']['output'];
+  shortName?: Maybe<Scalars['String']['output']>;
 };
 
 export type SpaTypeOffsetPaginated = {

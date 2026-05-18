@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models import UniqueConstraint
 from django.db.models.functions import Lower
 from django_choices_field import IntegerChoicesField, TextChoicesField
+from shelters.deprecated.deprecated_enums import SPAChoices
 from shelters.enums import (
     AccessibilityChoices,
     DemographicChoices,
@@ -21,7 +22,6 @@ from shelters.enums import (
     RoomStyleChoices,
     ShelterChoices,
     ShelterProgramChoices,
-    SPAChoices,
     SpecialSituationRestrictionChoices,
     StorageChoices,
     VaccinationRequirementChoices,
@@ -122,14 +122,16 @@ class City(BaseModel):
         return self.name
 
 
-class SPA(models.Model):
+class SPA(BaseModel):
     name = IntegerChoicesField(choices_enum=SPAChoices, unique=True, blank=True, null=True)
+    short_name = models.CharField(max_length=10, unique=True, db_index=True, null=True)
+    long_name = models.CharField(max_length=255, unique=True, db_index=True, null=True)
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["short_name"]
 
     def __str__(self) -> str:
-        return str(self.name)
+        return self.long_name or str(self.pk)
 
 
 class ShelterProgram(models.Model):

@@ -50,7 +50,6 @@ from .enums import (
     ShelterChoices,
     ShelterPhotoTypeChoices,
     ShelterProgramChoices,
-    SPAChoices,
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
@@ -235,7 +234,17 @@ class ShelterForm(forms.ModelForm):
     vaccination_requirement = create_select2_multiple_field(VaccinationRequirementChoices, "Select vaccinations...")
 
     # Ecosystem Information
-    spas_served = create_select2_multiple_field(SPAChoices, "Select SPAs served...", label="SPAs Served")
+    spas_served = forms.ModelMultipleChoiceField(
+        queryset=SPA.objects.all(),
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select SPAs served...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+        label="SPAs Served",
+    )
     shelter_programs = create_select2_multiple_field(ShelterProgramChoices, "Select shelter programs...")
     shelter_programs_other = create_other_text_field()
     funders = create_select2_multiple_field(FunderChoices, "Select funders...")
@@ -600,9 +609,9 @@ class ShelterResource(resources.ModelResource):
     spas_served = Field(
         column_name="spas_served",
         attribute="spas_served",
-        widget=ManyToManyWidget(SPA, separator=",", field="name"),
+        widget=ManyToManyWidget(SPA, separator=",", field="short_name"),
     )
-    spa = Field(column_name="spa", attribute="spa", widget=ForeignKeyWidget(SPA, "name"))
+    spa = Field(column_name="spa", attribute="spa", widget=ForeignKeyWidget(SPA, "short_name"))
     city = Field(column_name="city", attribute="city", widget=ForeignKeyWidget(City, "name"))
     demographics = Field(
         column_name="demographics",
@@ -689,16 +698,19 @@ class ShelterResource(resources.ModelResource):
             raise ValidationError(f"Row {self.count}: Bad {col_of_choice} value")
 
     def process_spas_served_import(self, row: Any, spas_served_row: str) -> None:
-        spa_names = [v.strip() for v in spas_served_row.split(",")]
-        spa_choices = {i for i in range(1, len(SPAChoices.choices) + 1)}
-        for spa_name in spa_names:
+        spa_short_names = [v.strip() for v in spas_served_row.split(",")]
+        available_spas = SPA.objects.all().values_list("short_name", flat=True)
+        spas_served: list[str] = []
+        for name in spa_short_names:
             try:
-                if int(spa_name) in spa_choices:
-                    sp, createdSpa = SPA.objects.get_or_create(name=spa_name)
+                if str(name) in available_spas:
+                    sp, _ = SPA.objects.get_or_create(short_name=name)
+                    spas_served.append(str(sp.pk))
                 else:
                     raise ValueError
             except ValueError:
                 self.skip_or_raise(row, "spas_served")
+        row["spas_served"] = ",".join(spas_served)
 
     def process_address_import(self, row: Any, address_row: str) -> None:
         addy_data = requests.get(
