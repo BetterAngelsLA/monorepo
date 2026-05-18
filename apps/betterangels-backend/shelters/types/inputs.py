@@ -126,8 +126,8 @@ class CreateShelterInput:
     is_private: Maybe[bool]
 
     # FK lookups to single City / SPA — accept the model PK directly.
-    city_id: Maybe[ID]
-    spa_id: Maybe[ID]
+    city_id: Maybe[ID | None]
+    spa_id: Maybe[ID | None]
 
 
 @strawberry.input
