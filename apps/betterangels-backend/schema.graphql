@@ -2061,7 +2061,7 @@ type RoomTypeOffsetPaginated {
 
 type SPAType {
   id: ID!
-  shortName: String
+  shortName: String!
   name: String!
 }
 

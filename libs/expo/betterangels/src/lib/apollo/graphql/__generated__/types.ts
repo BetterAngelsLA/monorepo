@@ -2613,7 +2613,7 @@ export type SpaType = {
   __typename?: 'SPAType';
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-  shortName?: Maybe<Scalars['String']['output']>;
+  shortName: Scalars['String']['output'];
 };
 
 export type SpaTypeOffsetPaginated = {
