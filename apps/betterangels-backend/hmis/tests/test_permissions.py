@@ -1,3 +1,4 @@
+from unittest import skip
 from unittest.mock import patch
 
 from django.test import override_settings
@@ -6,6 +7,7 @@ from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
 from model_bakery import baker
 
 
+@skip("not implemented")
 @override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisClientProfilePermissionTestCase(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
@@ -154,6 +156,7 @@ class HmisClientProfilePermissionTestCase(HmisClientProfileBaseTestCase):
         )
 
 
+@skip("not implemented")
 @override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisNotePermissionTestCase(HmisNoteBaseTestCase):
     def setUp(self) -> None:

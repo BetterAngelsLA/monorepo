@@ -53,7 +53,7 @@ class Migration(migrations.Migration):
                             (7, "7 - East"),
                             (8, "8 - South Bay/Harbor"),
                         ],
-                        choices_enum=shelters.enums.SPAChoices,
+                        choices_enum=shelters.deprecated.deprecated_enums.SPAChoices,
                         null=True,
                         unique=True,
                     ),
