@@ -1,10 +1,7 @@
-from unittest.mock import patch
-
 from django.http import QueryDict
 from django.test import TestCase
 from shelters.admin import GroupedServiceWidget, ShelterForm
 from shelters.models import Service, ServiceCategory, Shelter
-from shelters.tests.baker_recipes import get_random_spa
 
 
 class GroupedServiceWidgetTestCase(TestCase):
