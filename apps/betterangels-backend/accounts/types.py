@@ -10,7 +10,7 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import CharField, F, Q, QuerySet, Value
 from django.db.models.functions import Concat
 from organizations.models import Organization
-from strawberry import ID, Info, auto
+from strawberry import ID, Info, Maybe, auto
 from strawberry_django.auth.utils import get_current_user
 
 from .models import User
@@ -229,8 +229,8 @@ class OrgInvitationInput:
 
 @strawberry.input
 class UpdateUserProfileInput:
-    first_name: Optional[NonEmptyString] = strawberry.UNSET
-    last_name: Optional[NonEmptyString] = strawberry.UNSET
+    first_name: Maybe[NonEmptyString | None]
+    last_name: Maybe[NonEmptyString | None]
 
 
 @strawberry.input

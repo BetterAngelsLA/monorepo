@@ -259,11 +259,14 @@ class Mutation:
                 f"Source ID {data.source_id} with source name '{data.source_name}' has already been imported successfully."
             )
 
-        note_input = strawberry.asdict(data.note)
+        note_input = data.note
+        client_profile_id: str | None = (
+            str(note_input.client_profile) if note_input.client_profile is not None else None
+        )
 
-        # Pop out the parentId so it doesn't get passed to CreateNoteInput.
-        parent_id = note_input.pop("parentId", None)
-        if parent_id:
+        # Legacy import payloads may send parentId instead of clientProfile.
+        parent_id = strawberry.asdict(note_input).get("parentId")
+        if parent_id and client_profile_id is None:
             cp_record = ClientProfileImportRecord.objects.filter(
                 source_id=parent_id,
                 source_name="SELAH",
@@ -271,7 +274,7 @@ class Mutation:
             ).first()
             if cp_record is None or cp_record.client_profile is None:
                 raise Exception(f"Client lookup failed for parentId '{parent_id}'")
-            note_input["client"] = str(cp_record.client_profile.id)
+            client_profile_id = str(cp_record.client_profile.id)
 
         import_job = NoteDataImport.objects.get(id=data.import_job_id)
         user = cast(User, get_current_user(info))
@@ -281,23 +284,13 @@ class Mutation:
                 note = note_create(
                     user=user,
                     permission_group=permission_group,
-                    purpose=data.note.purpose if data.note.purpose is not strawberry.UNSET else None,
-                    team=data.note.team if data.note.team is not strawberry.UNSET else None,
-                    public_details=data.note.public_details if data.note.public_details is not strawberry.UNSET else "",
-                    private_details=(
-                        data.note.private_details if data.note.private_details is not strawberry.UNSET else ""
-                    ),
-                    client_profile_id=(
-                        str(data.note.client_profile)
-                        if data.note.client_profile and data.note.client_profile is not strawberry.UNSET
-                        else None
-                    ),
-                    is_submitted=(
-                        bool(data.note.is_submitted) if data.note.is_submitted is not strawberry.UNSET else False
-                    ),
-                    interacted_at=(
-                        data.note.interacted_at if data.note.interacted_at is not strawberry.UNSET else None
-                    ),
+                    purpose=note_input.purpose,
+                    team=note_input.team,
+                    public_details=note_input.public_details or "",
+                    private_details=note_input.private_details or "",
+                    client_profile_id=client_profile_id,
+                    is_submitted=bool(note_input.is_submitted),
+                    interacted_at=note_input.interacted_at,
                 )
                 record = NoteImportRecord.objects.create(
                     import_job=import_job,

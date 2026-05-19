@@ -8,26 +8,11 @@ from accounts.models import PermissionGroup, User
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
 from common.enums import SelahTeamEnum
-from common.graphql.types import (
-    LocationInput,
-    LocationType,
-    NonBlankString,
-    make_in_filter,
-)
-from django.db.models import (
-    BooleanField,
-    Case,
-    Exists,
-    F,
-    OuterRef,
-    Q,
-    QuerySet,
-    Value,
-    When,
-)
+from common.graphql.types import LocationInput, LocationType, NonBlankString, make_in_filter
+from django.db.models import BooleanField, Case, Exists, F, OuterRef, Q, QuerySet, Value, When
 from notes.enums import ServiceRequestTypeEnum
 from notes.permissions import NotePermissions, PrivateDetailsPermissions
-from strawberry import ID, Info, auto
+from strawberry import ID, Info, Maybe, auto
 from strawberry_django.utils.query import filter_for_user
 from tasks.types import TaskType
 
@@ -101,7 +86,7 @@ class CreateNoteServiceRequestInput:
 @strawberry_django.input(models.ServiceRequest, partial=True)
 class UpdateServiceRequestInput:
     id: ID
-    service_other: Optional[str]
+    service_other: Maybe[str | None]
     status: auto
     due_by: auto
 
@@ -236,23 +221,23 @@ class CreateNoteTaskInput:
 class UpdateNoteInput:
     """
     Input for updating a note with all nested relations.
-    Fields set to UNSET are left unchanged. Nested relation fields
-    use replace-all semantics (existing items are removed, new ones created).
+    Omitted fields are left unchanged. Nested relation fields use replace-all
+    semantics when provided (existing items are removed, new ones created).
     """
 
     id: ID
     purpose: Optional[NonBlankString] = strawberry.UNSET
-    team: Optional[SelahTeamEnum] = strawberry.UNSET
-    public_details: Optional[str] = strawberry.UNSET
-    private_details: Optional[str] = strawberry.UNSET
-    is_submitted: Optional[bool] = strawberry.UNSET
-    interacted_at: Optional[datetime] = strawberry.UNSET
+    team: Maybe[SelahTeamEnum | None]
+    public_details: Maybe[str | None]
+    private_details: Maybe[str | None]
+    is_submitted: Maybe[bool]
+    interacted_at: Maybe[datetime | None]
 
     # Nested relations (replace-all when provided)
-    location: Optional[LocationInput] = strawberry.UNSET
-    provided_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET
-    requested_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET
-    tasks: Optional[List[CreateNoteTaskInput]] = strawberry.UNSET
+    location: Maybe[LocationInput | None]
+    provided_services: Maybe[List[CreateNoteServiceInput] | None]
+    requested_services: Maybe[List[CreateNoteServiceInput] | None]
+    tasks: Maybe[List[CreateNoteTaskInput] | None]
 
 
 @strawberry_django.input(models.Note)

@@ -237,8 +237,8 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     Validates that *user* belongs to the target organization before
     creating anything.
 
-    Accepts a plain dict (e.g. from ``strawberry.asdict(data)`` with
-    ``UNSET`` keys already removed).
+    Accepts a plain dict (e.g. from ``strawberry.asdict(data)`` with omitted
+    ``Maybe`` fields already removed).
 
     Raises:
         ``PermissionError`` when the user is not a member of the org.

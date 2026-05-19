@@ -239,7 +239,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(note.tasks.count(), 0)
 
     def test_update_note_omitted_relations_unchanged(self) -> None:
-        """Test that omitting nested relations (UNSET) leaves existing ones untouched."""
+        """Test that omitting nested relations leaves existing ones untouched."""
         bag_svc = OrganizationService.objects.get(label="Bag(s)")
 
         # First: add a provided service
