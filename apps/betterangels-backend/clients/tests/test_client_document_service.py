@@ -10,7 +10,6 @@ from clients.services.client_document import (
     resolve_upload,
 )
 from common.models import Attachment
-from common.models import Attachment
 from common.services.s3 import DEFAULT_UPLOAD_EXPIRATION_SECONDS
 from django.test import TestCase
 from model_bakery import baker
