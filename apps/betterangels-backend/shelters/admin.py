@@ -35,7 +35,6 @@ from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from organizations.models import Organization
 from pghistory.models import MiddlewareEvents
 
-
 from .enums import (
     AccessibilityChoices,
     DayOfWeekChoices,
