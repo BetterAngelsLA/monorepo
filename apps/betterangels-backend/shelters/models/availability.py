@@ -2,7 +2,6 @@
 
 import pghistory
 from common.models import BaseModel
-from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -36,13 +35,6 @@ class ShelterAvailability(BaseModel):
         blank=True,
         default="",
         help_text="Global restriction note for this availability record.",
-    )
-    updated_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="shelter_availability_updates",
     )
 
     class Meta:

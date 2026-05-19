@@ -1,17 +1,12 @@
-from django.contrib.auth import get_user_model
 from django.test import TestCase
-from model_bakery import baker
 from pghistory.models import Events
 from shelters.models import Shelter, ShelterAvailability
 from shelters.tests.baker_recipes import shelter_availability_recipe
-
-User = get_user_model()
 
 
 class ShelterAvailabilityModelTestCase(TestCase):
     def setUp(self) -> None:
         self.shelter = Shelter.objects.create(name="Test Shelter")
-        self.user = baker.make(User)
 
     def test_create_availability(self) -> None:
         availability = ShelterAvailability.objects.create(
@@ -19,13 +14,11 @@ class ShelterAvailabilityModelTestCase(TestCase):
             non_restricted_beds=10,
             restricted_beds=5,
             restriction_notes="Women only wing",
-            updated_by=self.user,
         )
         self.assertEqual(availability.shelter, self.shelter)
         self.assertEqual(availability.non_restricted_beds, 10)
         self.assertEqual(availability.restricted_beds, 5)
         self.assertEqual(availability.restriction_notes, "Women only wing")
-        self.assertEqual(availability.updated_by, self.user)
         self.assertIsNotNone(availability.created_at)
         self.assertIsNotNone(availability.updated_at)
 
@@ -42,22 +35,12 @@ class ShelterAvailabilityModelTestCase(TestCase):
         self.assertEqual(availability.non_restricted_beds, 0)
         self.assertEqual(availability.restricted_beds, 0)
         self.assertEqual(availability.restriction_notes, "")
-        self.assertIsNone(availability.updated_by)
 
     def test_cascade_delete_with_shelter(self) -> None:
         ShelterAvailability.objects.create(shelter=self.shelter, non_restricted_beds=5)
         self.assertEqual(ShelterAvailability.objects.count(), 1)
         self.shelter.delete()
         self.assertEqual(ShelterAvailability.objects.count(), 0)
-
-    def test_updated_by_set_null_on_user_delete(self) -> None:
-        availability = ShelterAvailability.objects.create(
-            shelter=self.shelter,
-            updated_by=self.user,
-        )
-        self.user.delete()
-        availability.refresh_from_db()
-        self.assertIsNone(availability.updated_by)
 
     def test_pghistory_tracks_insert(self) -> None:
         ShelterAvailability.objects.create(
