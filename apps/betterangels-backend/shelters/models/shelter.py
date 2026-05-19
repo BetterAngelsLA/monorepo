@@ -6,7 +6,7 @@ from typing import Any
 
 import pghistory
 from common.models import BaseModel
-from common.permissions.utils import Permissions
+from common.permissions.utils import PermissionSet, perm
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
@@ -59,10 +59,10 @@ from .service import Service
     pghistory.DeleteEvent("shelter.remove"),
 )
 class Shelter(BaseModel):
-    perms = Permissions(
-        CHANGE_IS_REVIEWED=("change_shelter_is_reviewed", "Can change shelter is reviewed"),
-        VIEW_PRIVATE=("view_private_shelter", "Can view private shelters"),
-    )
+    class perms(PermissionSet):
+        CHANGE_IS_REVIEWED = perm("change_shelter_is_reviewed", "Can change shelter is reviewed")
+        VIEW_PRIVATE = perm("view_private_shelter", "Can view private shelters")
+
     objects: ShelterManager = ShelterManager()
     admin_objects: AdminShelterManager = AdminShelterManager()
 
@@ -262,7 +262,9 @@ class Room(BaseModel):
     pghistory.DeleteEvent("shelter.contact_info.remove"),
 )
 class ContactInfo(models.Model):
-    perms = Permissions()
+    class perms(PermissionSet):
+        pass
+
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="additional_contacts")
     contact_name = models.CharField(max_length=255, verbose_name="Contact Name")
     contact_number = PhoneNumberField(verbose_name="Contact Number")

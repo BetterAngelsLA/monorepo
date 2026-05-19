@@ -33,7 +33,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         self._create_shelters()
 
     def _add_shelter_view_permission(self) -> None:
-        app_label, codename = ShelterPermissions.VIEW.value.split(".")
+        app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
         self.org_1_case_manager_1.user_permissions.add(perm)
         self.org_1_case_manager_2.user_permissions.add(perm)
@@ -289,7 +289,7 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
     def setUp(self) -> None:
         super().setUp()
-        app_label, codename = ShelterPermissions.VIEW.value.split(".")
+        app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
         self.org_1_case_manager_1.user_permissions.add(perm)
         self.graphql_client.force_login(self.org_1_case_manager_1)

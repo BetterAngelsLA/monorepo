@@ -9,12 +9,20 @@ from django.utils.translation import gettext_lazy as _
 
 import common.enums
 import common.files
-from common.models import Attachment as AttachmentModel
 
 
 class LocationPermissions(models.TextChoices):
     VIEW = "common.view_location", _("Can view location")
     ADD = "common.add_location", _("Can add location")
+
+
+# Hardcoded to decouple from model code (previously generated from AttachmentModel.perms)
+ATTACHMENT_PERM_MAP = {
+    "add_attachment": "Can add attachment",
+    "change_attachment": "Can change attachment",
+    "delete_attachment": "Can delete attachment",
+    "view_attachment": "Can view attachment",
+}
 
 
 def create_permissions_if_not_exist(apps, schema_editor):
@@ -24,7 +32,6 @@ def create_permissions_if_not_exist(apps, schema_editor):
 
     Attachment = apps.get_model("common", "Attachment")
     AttachmentContentType = ContentType.objects.get_for_model(Attachment)
-    ATTACHMENT_PERM_MAP = {perm.split(".")[1]: perm.label for perm in AttachmentModel.perms}
 
     for codename, name in ATTACHMENT_PERM_MAP.items():
         cur_perm = Permission.objects.using(db_alias).create(
