@@ -241,7 +241,6 @@ class Migration(migrations.Migration):
 
     replaces = [
         ("shelters", "0001_initial"),
-        ("shelters", "0001_squashed"),
         ("shelters", "0002_shelter_organization_alter_population_title_and_more"),
         ("shelters", "0003_accessibility_careerservice_city_entryrequirement_and_more"),
         ("shelters", "0004_shelter_security"),
