@@ -87,8 +87,9 @@ class ShelterAvailabilityModelTestCase(TestCase):
         self.assertEqual(events.count(), 1)
 
     def test_ordering_by_updated_at_desc(self) -> None:
+        shelter2 = Shelter.objects.create(name="Test Shelter 2")
         a1 = ShelterAvailability.objects.create(shelter=self.shelter, non_restricted_beds=1)
-        a2 = ShelterAvailability.objects.create(shelter=self.shelter, non_restricted_beds=2)
+        a2 = ShelterAvailability.objects.create(shelter=shelter2, non_restricted_beds=2)
         # Re-save a1 to make it the most recently updated
         a1.non_restricted_beds = 3
         a1.save()
@@ -96,10 +97,10 @@ class ShelterAvailabilityModelTestCase(TestCase):
         self.assertEqual(results[0].pk, a1.pk)
         self.assertEqual(results[1].pk, a2.pk)
 
-    def test_related_name_from_shelter(self) -> None:
-        ShelterAvailability.objects.create(shelter=self.shelter, non_restricted_beds=5)
-        ShelterAvailability.objects.create(shelter=self.shelter, non_restricted_beds=10)
-        self.assertEqual(ShelterAvailability.objects.filter(shelter=self.shelter).count(), 2)
+    def test_one_to_one_relationship(self) -> None:
+        availability = ShelterAvailability.objects.create(shelter=self.shelter, non_restricted_beds=5)
+        self.assertEqual(ShelterAvailability.objects.filter(shelter=self.shelter).count(), 1)
+        self.assertEqual(availability.shelter, self.shelter)
 
     def test_recipe_creates_valid_instance(self) -> None:
         availability = shelter_availability_recipe.make(shelter=self.shelter)

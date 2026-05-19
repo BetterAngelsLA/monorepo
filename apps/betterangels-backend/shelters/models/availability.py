@@ -17,10 +17,10 @@ from .shelter import Shelter
 class ShelterAvailability(BaseModel):
     objects: models.Manager["ShelterAvailability"] = models.Manager()
 
-    shelter = models.ForeignKey(
+    shelter = models.OneToOneField(
         Shelter,
         on_delete=models.CASCADE,
-        related_name="availabilities",
+        related_name="availability",
     )
     non_restricted_beds = models.PositiveIntegerField(
         default=0,
