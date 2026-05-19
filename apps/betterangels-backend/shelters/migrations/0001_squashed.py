@@ -14,17 +14,20 @@ import shelters.models.media
 from django.conf import settings
 from django.db import migrations, models
 
-
 # ---------------------------------------------------------------------------
 # Service catalog seeding
 # ---------------------------------------------------------------------------
 SEED_DATA = [
     (
-        "immediate_need", "Immediate Needs", 0,
+        "immediate_need",
+        "Immediate Needs",
+        0,
         [("clothing", "Clothing", 0), ("food", "Food", 1), ("showers", "Showers", 2)],
     ),
     (
-        "general", "General Services", 1,
+        "general",
+        "General Services",
+        1,
         [
             ("case_management", "Case Management", 0),
             ("childcare", "Childcare", 1),
@@ -41,7 +44,9 @@ SEED_DATA = [
         ],
     ),
     (
-        "health", "Health Services", 2,
+        "health",
+        "Health Services",
+        2,
         [
             ("dental", "Dental", 0),
             ("medical", "Medical", 1),
@@ -50,7 +55,9 @@ SEED_DATA = [
         ],
     ),
     (
-        "training", "Training Services", 3,
+        "training",
+        "Training Services",
+        3,
         [
             ("job_training", "Job Training", 0),
             ("life_skills_training", "Life Skills Training", 1),
@@ -58,7 +65,9 @@ SEED_DATA = [
         ],
     ),
     (
-        "meal", "Meal Services", 4,
+        "meal",
+        "Meal Services",
+        4,
         [("breakfast", "Breakfast", 0), ("lunch", "Lunch", 1), ("dinner", "Dinner", 2)],
     ),
 ]
@@ -127,31 +136,59 @@ def create_shelter_groups(apps, schema_editor):
     InteriorPhoto = apps.get_model("shelters", "InteriorPhoto")
 
     shared_models = [
-        Accessibility, City, ContactInfo, Demographic, EntryRequirement,
-        ExitPolicy, Funder, MediaLink,
-        Parking, Pet, ReferralRequirement, RoomStyle, Schedule,
-        Service, ServiceCategory, ShelterProgram, ShelterType, SPA,
-        SpecialSituationRestriction, Storage, Video,
+        Accessibility,
+        City,
+        ContactInfo,
+        Demographic,
+        EntryRequirement,
+        ExitPolicy,
+        Funder,
+        MediaLink,
+        Parking,
+        Pet,
+        ReferralRequirement,
+        RoomStyle,
+        Schedule,
+        Service,
+        ServiceCategory,
+        ShelterProgram,
+        ShelterType,
+        SPA,
+        SpecialSituationRestriction,
+        Storage,
+        Video,
     ]
 
     shared_permission_map = {model: [model.perms] for model in shared_models}
     shared_permission_map[Address] = [Address.perms]
     # Hardcoded permissions for removed models
-    shared_permission_map[ExteriorPhoto] = [[
-        "shelters.add_exteriorphoto", "shelters.change_exteriorphoto",
-        "shelters.delete_exteriorphoto", "shelters.view_exteriorphoto",
-    ]]
-    shared_permission_map[InteriorPhoto] = [[
-        "shelters.add_interiorphoto", "shelters.change_interiorphoto",
-        "shelters.delete_interiorphoto", "shelters.view_interiorphoto",
-    ]]
+    shared_permission_map[ExteriorPhoto] = [
+        [
+            "shelters.add_exteriorphoto",
+            "shelters.change_exteriorphoto",
+            "shelters.delete_exteriorphoto",
+            "shelters.view_exteriorphoto",
+        ]
+    ]
+    shared_permission_map[InteriorPhoto] = [
+        [
+            "shelters.add_interiorphoto",
+            "shelters.change_interiorphoto",
+            "shelters.delete_interiorphoto",
+            "shelters.view_interiorphoto",
+        ]
+    ]
 
     # Shelter Data Entry: CRUD only (no custom perms)
     data_entry_permission_map = dict(shared_permission_map)
-    data_entry_permission_map[Shelter] = [[
-        Shelter.perms.ADD, Shelter.perms.CHANGE,
-        Shelter.perms.DELETE, Shelter.perms.VIEW,
-    ]]
+    data_entry_permission_map[Shelter] = [
+        [
+            Shelter.perms.ADD,
+            Shelter.perms.CHANGE,
+            Shelter.perms.DELETE,
+            Shelter.perms.VIEW,
+        ]
+    ]
     assign_permissions_to_group_in_migration(apps, "Shelter Data Entry", data_entry_permission_map)
 
     # Shelter Administration: CRUD + custom perms
