@@ -1576,7 +1576,7 @@ class ReservationAdmin(admin.ModelAdmin):
 
 @admin.register(ShelterAvailability)
 class ShelterAvailabilityAdmin(admin.ModelAdmin):
-    list_display = ("shelter", "non_restrictive_beds", "restrictive_beds", "updated_by", "updated_at", "created_at")
+    list_display = ("shelter", "non_restricted_beds", "restricted_beds", "updated_by", "updated_at", "created_at")
     list_filter = ("updated_at",)
     search_fields = ("shelter__name",)
     autocomplete_fields = ["shelter", "updated_by"]
@@ -1587,8 +1587,8 @@ class ShelterAvailabilityAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "shelter",
-                    "non_restrictive_beds",
-                    "restrictive_beds",
+                    "non_restricted_beds",
+                    "restricted_beds",
                     "restriction_notes",
                 ),
             },

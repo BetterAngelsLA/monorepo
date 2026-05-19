@@ -23,15 +23,15 @@ class ShelterAvailability(BaseModel):
         on_delete=models.CASCADE,
         related_name="availabilities",
     )
-    non_restrictive_beds = models.PositiveIntegerField(
+    non_restricted_beds = models.PositiveIntegerField(
         default=0,
         validators=[MinValueValidator(0)],
-        help_text="Number of non-restrictive beds available.",
+        help_text="Number of non-restricted beds available.",
     )
-    restrictive_beds = models.PositiveIntegerField(
+    restricted_beds = models.PositiveIntegerField(
         default=0,
         validators=[MinValueValidator(0)],
-        help_text="Number of restrictive beds available.",
+        help_text="Number of restricted beds available.",
     )
     restriction_notes = models.TextField(
         blank=True,
@@ -52,16 +52,14 @@ class ShelterAvailability(BaseModel):
         ordering = ["-updated_at"]
 
     def __str__(self) -> str:
-        return (
-            f"{self.shelter.name} — {self.non_restrictive_beds} non-restrictive / {self.restrictive_beds} restrictive"
-        )
+        return f"{self.shelter.name} — {self.non_restricted_beds} non-restricted / {self.restricted_beds} restricted"
 
     def clean(self) -> None:
         super().clean()
         errors: dict[str, list[ValidationError]] = {}
-        if self.non_restrictive_beds < 0:
-            errors["non_restrictive_beds"] = [ValidationError("Bed count cannot be negative.")]
-        if self.restrictive_beds < 0:
-            errors["restrictive_beds"] = [ValidationError("Bed count cannot be negative.")]
+        if self.non_restricted_beds < 0:
+            errors["non_restricted_beds"] = [ValidationError("Bed count cannot be negative.")]
+        if self.restricted_beds < 0:
+            errors["restricted_beds"] = [ValidationError("Bed count cannot be negative.")]
         if errors:
             raise ValidationError(errors)

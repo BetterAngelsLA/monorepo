@@ -193,8 +193,8 @@ shelter_recipe = Recipe(
 shelter_availability_recipe = Recipe(
     ShelterAvailability,
     shelter=foreign_key(shelter_recipe),
-    non_restrictive_beds=lambda: random.randint(0, 50),
-    restrictive_beds=lambda: random.randint(0, 20),
+    non_restricted_beds=lambda: random.randint(0, 50),
+    restricted_beds=lambda: random.randint(0, 20),
     restriction_notes=seq("restriction note "),  # type: ignore
 )
 
