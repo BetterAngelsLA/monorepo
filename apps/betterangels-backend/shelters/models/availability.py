@@ -3,7 +3,6 @@
 import pghistory
 from common.models import BaseModel
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -53,13 +52,3 @@ class ShelterAvailability(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.shelter.name} — {self.non_restricted_beds} non-restricted / {self.restricted_beds} restricted"
-
-    def clean(self) -> None:
-        super().clean()
-        errors: dict[str, list[ValidationError]] = {}
-        if self.non_restricted_beds < 0:
-            errors["non_restricted_beds"] = [ValidationError("Bed count cannot be negative.")]
-        if self.restricted_beds < 0:
-            errors["restricted_beds"] = [ValidationError("Bed count cannot be negative.")]
-        if errors:
-            raise ValidationError(errors)

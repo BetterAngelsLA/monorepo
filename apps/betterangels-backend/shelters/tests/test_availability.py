@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
 from django.test import TestCase
 from model_bakery import baker
 from pghistory.models import Events
@@ -44,26 +43,6 @@ class ShelterAvailabilityModelTestCase(TestCase):
         self.assertEqual(availability.restricted_beds, 0)
         self.assertEqual(availability.restriction_notes, "")
         self.assertIsNone(availability.updated_by)
-
-    def test_clean_rejects_negative_non_restricted_beds(self) -> None:
-        availability = ShelterAvailability(
-            shelter=self.shelter,
-            non_restricted_beds=-1,
-            restricted_beds=0,
-        )
-        with self.assertRaises(ValidationError) as ctx:
-            availability.clean()
-        self.assertIn("non_restricted_beds", ctx.exception.message_dict)
-
-    def test_clean_rejects_negative_restricted_beds(self) -> None:
-        availability = ShelterAvailability(
-            shelter=self.shelter,
-            non_restricted_beds=0,
-            restricted_beds=-1,
-        )
-        with self.assertRaises(ValidationError) as ctx:
-            availability.clean()
-        self.assertIn("restricted_beds", ctx.exception.message_dict)
 
     def test_cascade_delete_with_shelter(self) -> None:
         ShelterAvailability.objects.create(shelter=self.shelter, non_restricted_beds=5)
