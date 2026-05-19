@@ -12,7 +12,7 @@ from shelters.services import (
     bed_create,
     room_create,
     shelter_create,
-    shelter_operator_register,
+    shelter_organization_create,
 )
 from shelters.types import (
     AdminShelterType,
@@ -21,7 +21,7 @@ from shelters.types import (
     CreateBedInput,
     CreateRoomInput,
     CreateShelterInput,
-    RegisterShelterOperatorInput,
+    CreateShelterOrganizationInput,
     RoomType,
     ServiceCategoryType,
     ShelterType,
@@ -88,17 +88,12 @@ class Mutation:
         clean = strawberry.asdict(data)
         return cast(RoomType, room_create(user=user, data=clean))
 
-    @strawberry.mutation
-    def register_shelter_operator(self, info: Info, data: RegisterShelterOperatorInput) -> AuthResponse:
-        """Register a new shelter operator: creates user, organization, and assigns ownership.
-
-        The user is created without a password. After this mutation succeeds,
-        the client should use the allauth login-by-code flow to authenticate.
-        """
-        shelter_operator_register(
-            email=data.email,
-            first_name=data.first_name,
-            last_name=data.last_name,
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def create_shelter_organization(self, info: Info, data: CreateShelterOrganizationInput) -> AuthResponse:
+        """Create a new shelter organization and assign the current user as owner."""
+        user = cast(User, get_current_user(info))
+        shelter_organization_create(
+            user=user,
             organization_name=data.organization_name,
         )
 

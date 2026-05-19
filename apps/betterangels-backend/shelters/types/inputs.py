@@ -171,8 +171,5 @@ class CreateRoomInput:
 
 
 @strawberry.input
-class RegisterShelterOperatorInput:
-    email: str
-    first_name: str
-    last_name: str
+class CreateShelterOrganizationInput:
     organization_name: str

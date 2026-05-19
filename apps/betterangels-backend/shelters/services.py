@@ -9,7 +9,6 @@ Raises ``django.core.exceptions.ValidationError`` on invalid data — callers
 (API / schema layer) are responsible for translating to their own error format.
 """
 
-import uuid
 from typing import Any, Dict, List
 
 from accounts.groups import GroupTemplateNames
@@ -398,40 +397,22 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
 # ---------------------------------------------------------------------------
 
 
-def shelter_operator_register(
+def shelter_organization_create(
     *,
-    email: str,
-    first_name: str,
-    last_name: str,
+    user: User,
     organization_name: str,
-) -> tuple[User, Organization]:
-    """Register a new shelter operator: create user, org, and assign ownership.
+) -> Organization:
+    """Create a new shelter organization and assign the user as owner.
 
-    The user is created without a password.  Authentication is handled
-    via allauth login-by-code (OTP sent to email).
+    The user must already be authenticated.
 
-    Returns the created (user, organization) tuple.
+    Returns the created organization.
     """
-    email = email.strip().lower()
-
-    if User.objects.filter(email=email).exists():
-        raise ValidationError("A user with this email already exists.")
-
     organization_name = organization_name.strip()
     if not organization_name:
         raise ValidationError("Organization name is required.")
 
     with transaction.atomic():
-        user = User.objects.create_user(
-            username=str(uuid.uuid4()),
-            email=email,
-            first_name=first_name.strip(),
-            last_name=last_name.strip(),
-            is_active=True,
-        )
-        user.set_unusable_password()
-        user.save(update_fields=["password"])
-
         organization = create_organization(name=organization_name, presets=["shelter"])
 
         org_user = OrganizationUser.objects.create(
@@ -456,7 +437,7 @@ def shelter_operator_register(
 
     _send_shelter_welcome_email(user=user, organization=organization)
 
-    return user, organization
+    return organization
 
 
 def _send_shelter_welcome_email(*, user: User, organization: Organization) -> None:
