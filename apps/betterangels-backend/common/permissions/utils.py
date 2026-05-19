@@ -6,7 +6,6 @@ import strawberry
 from common.errors import UnauthenticatedGQLError
 from django.contrib.auth.models import Group
 from django.db.models import Model, TextChoices
-from django.db.models.base import ModelBase
 from django.utils.encoding import force_str
 from guardian.shortcuts import assign_perm
 from strawberry_django.auth.utils import get_current_user
