@@ -39,7 +39,7 @@ SHELTER_FIELDS = """
     visitorsAllowed
     website
     accessibility {name}
-    cities {name}
+    city {id name}
     demographics {name}
     entryRequirements {name}
     exitPolicy {name}
@@ -58,7 +58,7 @@ SHELTER_FIELDS = """
     }
     shelterPrograms {name}
     shelterTypes {name}
-    spa {name}
+    spa { id name shortName}
     specialSituationRestrictions {name}
     storage {name}
     additionalContacts {

@@ -251,7 +251,7 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
 
     # ``services`` is a unified list — split into existing PKs and pending entries.
-    raw_services: List[Any] = m2m_data.pop("services", [])
+    raw_services: List[Any] = m2m_data.pop("services", []) or []
     service_pks: list[Any] = []
     pending_entries: list[tuple[int, str]] = []
     seen_pending: set[tuple[int, str]] = set()

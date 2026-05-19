@@ -6,6 +6,7 @@ export * from './Map';
 export * from './MediaLightbox';
 export * from './Modal';
 export * from './NavBar';
+export * from './PrivateBadge';
 export * from './ShelterCard';
 export * from './ShelterFilters';
 export * from './ShelterSearch';

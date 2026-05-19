@@ -101,9 +101,7 @@ def create_shelter_groups(apps, schema_editor):
         Demographic,
         EntryRequirement,
         ExitPolicy,
-        ExteriorPhoto,
         Funder,
-        InteriorPhoto,
         MediaLink,
         Parking,
         Pet,
@@ -123,9 +121,14 @@ def create_shelter_groups(apps, schema_editor):
 
     from common.models import Address
 
+    # ExteriorPhoto and InteriorPhoto were removed in later migrations (0050),
+    # so we use apps.get_model and hardcode their permissions.
+    ExteriorPhoto = apps.get_model("shelters", "ExteriorPhoto")
+    InteriorPhoto = apps.get_model("shelters", "InteriorPhoto")
+
     shared_models = [
         Accessibility, City, ContactInfo, Demographic, EntryRequirement,
-        ExitPolicy, ExteriorPhoto, Funder, InteriorPhoto, MediaLink,
+        ExitPolicy, Funder, MediaLink,
         Parking, Pet, ReferralRequirement, RoomStyle, Schedule,
         Service, ServiceCategory, ShelterProgram, ShelterType, SPA,
         SpecialSituationRestriction, Storage, Video,
@@ -133,6 +136,15 @@ def create_shelter_groups(apps, schema_editor):
 
     shared_permission_map = {model: [model.perms] for model in shared_models}
     shared_permission_map[Address] = [Address.perms]
+    # Hardcoded permissions for removed models
+    shared_permission_map[ExteriorPhoto] = [[
+        "shelters.add_exteriorphoto", "shelters.change_exteriorphoto",
+        "shelters.delete_exteriorphoto", "shelters.view_exteriorphoto",
+    ]]
+    shared_permission_map[InteriorPhoto] = [[
+        "shelters.add_interiorphoto", "shelters.change_interiorphoto",
+        "shelters.delete_interiorphoto", "shelters.view_interiorphoto",
+    ]]
 
     # Shelter Data Entry: CRUD only (no custom perms)
     data_entry_permission_map = dict(shared_permission_map)

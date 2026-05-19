@@ -1,10 +1,9 @@
 from unittest.mock import Mock, patch
 
 from common.imgproxy import IMGPROXY_SWITCH
-from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, override_settings
-from shelters.enums import StatusChoices
-from shelters.models import ExteriorPhoto, InteriorPhoto, Shelter
+from shelters.enums import ShelterPhotoTypeChoices, StatusChoices
+from shelters.models import ShelterPhoto
 from shelters.tests.baker_recipes import shelter_recipe
 from shelters.tests.graphql_helpers import ShelterGraphQLFixtureMixin
 from test_utils.mixins import GraphQLTestCaseMixin
@@ -14,14 +13,10 @@ from waffle.testutils import override_switch
 @override_settings(IS_LOCAL_DEV=True, STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
 @override_switch(IMGPROXY_SWITCH, active=True)
 class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTestCaseMixin, TestCase):
-    """Regression tests for the hero_image resolver.
+    """Regression tests for the ``heroImage`` GraphQL field.
 
-    The original implementation used ``self.hero_image`` which called the
-    *resolver method* recursively rather than accessing the model's
-    ``GenericForeignKey``.  Additionally, a broken ``GenericForeignKey``
-    (e.g. content-type pointing to a deleted model) would cause an
-    unhandled ``AttributeError`` (``'NoneType' object has no attribute
-    '_base_manager'``), crashing the entire shelters query.
+    The resolver uses the shelter's ``hero_image`` foreign key when set, then
+    falls back to the first exterior photo, then the first interior photo.
     """
 
     HERO_IMAGE_QUERY = """
@@ -30,7 +25,10 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
                 totalCount
                 results {
                     id
-                    heroImage
+                    heroImage {
+                        id
+                        url
+                    }
                 }
             }
         }
@@ -41,62 +39,54 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         self.setup_shelter_graphql_fixtures()
 
     @patch("shelters.types.outputs.build_imgproxy_url")
-    def test_hero_image_returns_gfk_url_when_set(self, mock_build_imgproxy_url: Mock) -> None:
-        """hero_image should return the GFK photo URL when ``hero_image``
-        points to a valid ExteriorPhoto or InteriorPhoto."""
+    def test_hero_image_returns_explicit_fk_url_when_set(self, mock_build_imgproxy_url: Mock) -> None:
+        """``heroImage`` should use the ID of the ``ShelterPhoto`` when set."""
         mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
             file, "url", None
         )
-        for photo_model in (ExteriorPhoto, InteriorPhoto):
-            with self.subTest(photo_model=photo_model.__name__):
+        for ptype in (ShelterPhotoTypeChoices.EXTERIOR, ShelterPhotoTypeChoices.INTERIOR):
+            with self.subTest(photo_type=ptype):
                 shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
-                photo = photo_model.objects.create(shelter=shelter, file=self.file)
-
-                ct = ContentType.objects.get_for_model(photo_model)
-                Shelter.objects.filter(pk=shelter.pk).update(
-                    hero_image_content_type=ct,
-                    hero_image_object_id=photo.pk,
-                )
+                photo = ShelterPhoto.objects.create(shelter=shelter, file=self.file, type=ptype)
+                shelter.hero_image = photo
+                shelter.save(update_fields=["hero_image"])
 
                 response = self.execute_graphql(self.HERO_IMAGE_QUERY)
                 results = response["data"]["shelters"]["results"]
-                hero_images = {r["id"]: r["heroImage"] for r in results}
-                self.assertIn(photo.file.name, hero_images[str(shelter.pk)])
+                hero_images = {r["id"]: r["heroImage"]["id"] for r in results}
+                self.assertEqual(str(photo.pk), hero_images[str(shelter.pk)])
 
     @patch("shelters.types.outputs.build_imgproxy_url")
     def test_hero_image_falls_back_to_exterior_photo(self, mock_build_imgproxy_url: Mock) -> None:
-        """When no GFK hero_image is set, fall back to the first exterior
-        photo."""
+        """When ``hero_image`` is unset, use the first exterior photo."""
         mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
             file, "url", None
         )
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
-        exterior = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
+        exterior = ShelterPhoto.objects.create(shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR)
 
         response = self.execute_graphql(self.HERO_IMAGE_QUERY)
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["heroImage"], exterior.file.url)
+        self.assertEqual(results[0]["heroImage"]["id"], str(exterior.pk))
 
     @patch("shelters.types.outputs.build_imgproxy_url")
     def test_hero_image_falls_back_to_interior_photo(self, mock_build_imgproxy_url: Mock) -> None:
-        """When no GFK hero_image or exterior photo exists, fall back to an
-        interior photo."""
+        """When there is no hero FK and no exterior photos, use the first interior photo."""
         mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
             file, "url", None
         )
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
-        interior = InteriorPhoto.objects.create(shelter=shelter, file=self.file)
+        interior = ShelterPhoto.objects.create(shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.INTERIOR)
 
         response = self.execute_graphql(self.HERO_IMAGE_QUERY)
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["heroImage"], interior.file.url)
+        self.assertEqual(results[0]["heroImage"]["id"], str(interior.pk))
 
     @patch("shelters.types.outputs.build_imgproxy_url")
     def test_hero_image_returns_none_when_no_photos(self, mock_build_imgproxy_url: Mock) -> None:
-        """heroImage should be None when neither GFK nor fallback photos
-        exist."""
+        """``heroImage`` is None when there is no hero FK and no gallery photos."""
         mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
             file, "url", None
         )
@@ -108,118 +98,76 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         self.assertIsNone(results[0]["heroImage"])
 
     @patch("shelters.types.outputs.build_imgproxy_url")
-    def test_hero_image_with_orphaned_gfk_object_id(self, mock_build_imgproxy_url: Mock) -> None:
-        """Regression: when hero_image_content_type/object_id point to a
-        deleted object, the resolver must not crash."""
+    def test_hero_image_after_hero_photo_deleted_uses_fallback(self, mock_build_imgproxy_url: Mock) -> None:
+        """If the explicit hero ``ShelterPhoto`` is deleted, ``hero_image`` is cleared (SET_NULL) and
+        the resolver falls back to remaining photos."""
         mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
             file, "url", None
         )
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
-        photo = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
+        hero = ShelterPhoto.objects.create(shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR)
+        shelter.hero_image = hero
+        shelter.save(update_fields=["hero_image"])
+        hero.delete()
+        shelter.refresh_from_db()
+        self.assertIsNone(shelter.hero_image_id)
 
-        ct = ContentType.objects.get_for_model(ExteriorPhoto)
-        Shelter.objects.filter(pk=shelter.pk).update(
-            hero_image_content_type=ct,
-            hero_image_object_id=photo.pk,
-        )
-        # Delete the photo so the GFK points to a non-existent object
-        photo.delete()
-
-        # Create a fallback photo
-        fallback = InteriorPhoto.objects.create(
+        fallback = ShelterPhoto.objects.create(
             shelter=shelter,
             file=self.make_test_image_file(name="fallback.jpg"),
+            type=ShelterPhotoTypeChoices.INTERIOR,
         )
 
         response = self.execute_graphql(self.HERO_IMAGE_QUERY)
         self.assertNotIn("errors", response)
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
-        # Should fall back to the interior photo
-        self.assertEqual(results[0]["heroImage"], fallback.file.url)
+        self.assertEqual(results[0]["heroImage"]["id"], str(fallback.pk))
 
     @patch("shelters.types.outputs.build_imgproxy_url")
-    def test_hero_image_with_mismatched_content_type(self, mock_build_imgproxy_url: Mock) -> None:
-        """Regression: when hero_image_content_type points to a valid
-        ContentType but the object_id does not exist for that model,
-        the resolver must not crash."""
+    def test_hero_image_with_null_hero_fk_uses_exterior(self, mock_build_imgproxy_url: Mock) -> None:
+        """When ``hero_image`` is null, the first exterior photo is used."""
         mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
             file, "url", None
         )
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
-        exterior = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
-
-        # Point to InteriorPhoto content type but with the ExteriorPhoto's pk
-        # (which doesn't exist in interior_photo table)
-        ct = ContentType.objects.get_for_model(InteriorPhoto)
-        Shelter.objects.filter(pk=shelter.pk).update(
-            hero_image_content_type=ct,
-            hero_image_object_id=99999,
-        )
+        exterior = ShelterPhoto.objects.create(shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR)
+        self.assertIsNone(shelter.hero_image_id)
 
         response = self.execute_graphql(self.HERO_IMAGE_QUERY)
         self.assertNotIn("errors", response)
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 1)
-        # GFK returns None (object doesn't exist), should fall back
-        self.assertEqual(results[0]["heroImage"], exterior.file.url)
-
-    @patch("shelters.types.outputs.build_imgproxy_url")
-    def test_hero_image_with_null_gfk_fields(self, mock_build_imgproxy_url: Mock) -> None:
-        """When hero_image_content_type and hero_image_object_id are both
-        None, the GFK returns None and fallback kicks in."""
-        mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
-            file, "url", None
-        )
-        shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
-        exterior = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
-
-        # Explicitly null out both GFK fields
-        Shelter.objects.filter(pk=shelter.pk).update(
-            hero_image_content_type=None,
-            hero_image_object_id=None,
-        )
-
-        response = self.execute_graphql(self.HERO_IMAGE_QUERY)
-        self.assertNotIn("errors", response)
-        results = response["data"]["shelters"]["results"]
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["heroImage"], exterior.file.url)
+        self.assertEqual(results[0]["heroImage"]["id"], str(exterior.pk))
 
     @patch("shelters.types.outputs.build_imgproxy_url")
     def test_hero_image_multiple_shelters_mixed_states(self, mock_build_imgproxy_url: Mock) -> None:
-        """Multiple shelters with different hero_image states should all
-        resolve without errors and return the correct heroImage per shelter."""
+        """Multiple shelters with different hero states resolve without errors."""
         mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
             file, "url", None
         )
-        ct = ContentType.objects.get_for_model(ExteriorPhoto)
 
-        # Shelter 1: Valid GFK → explicit hero image
         s1 = shelter_recipe.make(status=StatusChoices.APPROVED)
-        p1 = ExteriorPhoto.objects.create(shelter=s1, file=self.file)
-        Shelter.objects.filter(pk=s1.pk).update(
-            hero_image_content_type=ct,
-            hero_image_object_id=p1.pk,
-        )
+        p1 = ShelterPhoto.objects.create(shelter=s1, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR)
+        s1.hero_image = p1
+        s1.save(update_fields=["hero_image"])
 
-        # Shelter 2: No photos at all → None
         s2 = shelter_recipe.make(status=StatusChoices.APPROVED)
 
-        # Shelter 3: Orphaned GFK (deleted object) with interior fallback
         s3 = shelter_recipe.make(status=StatusChoices.APPROVED)
-        orphan_photo = ExteriorPhoto.objects.create(
+        orphan = ShelterPhoto.objects.create(
             shelter=s3,
             file=self.make_test_image_file(name="orphan.jpg"),
+            type=ShelterPhotoTypeChoices.EXTERIOR,
         )
-        Shelter.objects.filter(pk=s3.pk).update(
-            hero_image_content_type=ct,
-            hero_image_object_id=orphan_photo.pk,
-        )
-        orphan_photo.delete()
-        fallback = InteriorPhoto.objects.create(
+        s3.hero_image = orphan
+        s3.save(update_fields=["hero_image"])
+        orphan.delete()
+        s3.refresh_from_db()
+        fallback = ShelterPhoto.objects.create(
             shelter=s3,
             file=self.make_test_image_file(name="fallback3.jpg"),
+            type=ShelterPhotoTypeChoices.INTERIOR,
         )
 
         response = self.execute_graphql(self.HERO_IMAGE_QUERY)
@@ -227,33 +175,7 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         results = response["data"]["shelters"]["results"]
         self.assertEqual(len(results), 3)
 
-        hero_images = {int(r["id"]): r["heroImage"] for r in results}
-        self.assertIn(p1.file.name, hero_images[s1.pk])
+        hero_images = {int(r["id"]): r["heroImage"]["id"] if r["heroImage"] else None for r in results}
+        self.assertEqual(hero_images[s1.pk], str(p1.pk))
         self.assertIsNone(hero_images[s2.pk])
-        self.assertEqual(hero_images[s3.pk], fallback.file.url)
-
-    @patch("shelters.types.outputs.build_imgproxy_url")
-    def test_hero_image_with_stale_content_type(self, mock_build_imgproxy_url: Mock) -> None:
-        """Regression: when hero_image_content_type points to a ContentType
-        whose model_class() returns None (e.g. the model was removed), the
-        resolver must not crash with "'NoneType' object has no attribute
-        '_base_manager'"."""
-        mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
-            file, "url", None
-        )
-        shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
-        fallback = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
-
-        # Create a ContentType that doesn't map to any installed model
-        stale_ct = ContentType.objects.create(app_label="deleted_app", model="deletedmodel")
-        Shelter.objects.filter(pk=shelter.pk).update(
-            hero_image_content_type=stale_ct,
-            hero_image_object_id=1,
-        )
-
-        response = self.execute_graphql(self.HERO_IMAGE_QUERY)
-        self.assertNotIn("errors", response)
-        results = response["data"]["shelters"]["results"]
-        self.assertEqual(len(results), 1)
-        # Should fall back to the exterior photo
-        self.assertEqual(results[0]["heroImage"], fallback.file.url)
+        self.assertEqual(hero_images[s3.pk], str(fallback.pk))

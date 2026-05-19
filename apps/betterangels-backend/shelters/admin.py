@@ -14,7 +14,6 @@ from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.db import models, transaction
@@ -49,8 +48,8 @@ from .enums import (
     ReferralRequirementChoices,
     RoomStyleChoices,
     ShelterChoices,
+    ShelterPhotoTypeChoices,
     ShelterProgramChoices,
-    SPAChoices,
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
@@ -64,9 +63,9 @@ from .models import (
     ContactInfo,
     Demographic,
     EntryRequirement,
-    ExteriorPhoto,
+    ExteriorShelterPhoto,
     Funder,
-    InteriorPhoto,
+    InteriorShelterPhoto,
     MediaLink,
     Parking,
     Pet,
@@ -78,6 +77,7 @@ from .models import (
     Service,
     ServiceCategory,
     Shelter,
+    ShelterPhoto,
     ShelterProgram,
     ShelterType,
     SpecialSituationRestriction,
@@ -234,22 +234,32 @@ class ShelterForm(forms.ModelForm):
     vaccination_requirement = create_select2_multiple_field(VaccinationRequirementChoices, "Select vaccinations...")
 
     # Ecosystem Information
-    spa = create_select2_multiple_field(SPAChoices, "Select SPA...")
+    spas_served = forms.ModelMultipleChoiceField(
+        queryset=SPA.objects.all(),
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select SPAs served...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+        label="SPAs Served",
+    )
     shelter_programs = create_select2_multiple_field(ShelterProgramChoices, "Select shelter programs...")
     shelter_programs_other = create_other_text_field()
     funders = create_select2_multiple_field(FunderChoices, "Select funders...")
     funders_other = create_other_text_field()
 
-    # Cities field with Select2 widget for inline display
-    cities = forms.ModelMultipleChoiceField(
+    cities_served = forms.ModelMultipleChoiceField(
         queryset=City.objects.all(),
         widget=Select2MultipleWidget(
             attrs={
-                "data-placeholder": "Select cities...",
+                "data-placeholder": "Select cities served...",
                 "data-allow-clear": "true",
             }
         ),
         required=False,
+        label="Cities Served",
     )
 
     exit_policy = create_select2_multiple_field(ExitPolicyChoices, "Select exit policies...")
@@ -315,9 +325,14 @@ class ShelterForm(forms.ModelForm):
         """
         cleaned_data = super().clean() or {}
 
-        # Process only ManyToMany fields where the related model uses TextChoices
+        # Process only ManyToMany fields backed by MultipleChoiceField (enum tags).
+        # Skip ModelMultipleChoiceField (e.g. spas_served, cities_served, services).
         for field in self._meta.model._meta.get_fields():
             if not isinstance(field, models.ManyToManyField) or not isinstance(field.related_model, type):
+                continue
+
+            form_field = self.fields.get(field.name)
+            if form_field is None or isinstance(form_field, forms.ModelMultipleChoiceField):
                 continue
 
             model_class = field.related_model
@@ -419,21 +434,17 @@ class PhotoForm(forms.ModelForm):
     )
 
     class Meta:
-        fields = "__all__"
+        # ``type`` is set automatically by the proxy model's ``save`` and
+        # therefore must not be exposed in (or required by) the inline form.
+        exclude = ("type",)
 
 
-class ExteriorPhotoForm(PhotoForm):
-    class Meta(PhotoForm.Meta):
-        model = ExteriorPhoto
+class BaseShelterPhotoInline(admin.TabularInline):
+    """Base inline for shelter photo sections with imgproxy thumbnail preview."""
 
-
-class InteriorPhotoForm(PhotoForm):
-    class Meta(PhotoForm.Meta):
-        model = InteriorPhoto
-
-
-class PhotoInlineImgproxyMixin:
-    """Mixin for photo inlines: adds a readonly thumbnail column via imgproxy when enabled."""
+    form = PhotoForm
+    max_num = 0
+    photo_type: ShelterPhotoTypeChoices
 
     def get_readonly_fields(self, request: HttpRequest, obj: Optional[models.Model] = None) -> tuple[str, ...]:
         return ("photo_preview",)
@@ -441,8 +452,11 @@ class PhotoInlineImgproxyMixin:
     def get_fields(self, request: HttpRequest, obj: Optional[models.Model] = None) -> tuple[str, ...]:
         return ("photo_preview", "file", "make_hero_image")
 
+    def get_queryset(self, request: HttpRequest) -> QuerySet[ShelterPhoto]:
+        return super().get_queryset(request).filter(type=self.photo_type)
+
     @admin.display(description="Preview")
-    def photo_preview(self, obj: Union[ExteriorPhoto, InteriorPhoto]) -> str:
+    def photo_preview(self, obj: ShelterPhoto) -> str:
         if not obj or not obj.file or not obj.file.name:
             return "—"
         if is_imgproxy_enabled():
@@ -456,16 +470,14 @@ class PhotoInlineImgproxyMixin:
         return format_html('<img src="{}" alt="" style="max-height: 200px;" />', url)
 
 
-class ExteriorPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
-    model = ExteriorPhoto
-    form = ExteriorPhotoForm
-    max_num = 0
+class ExteriorPhotoInline(BaseShelterPhotoInline):
+    model = ExteriorShelterPhoto
+    photo_type = ShelterPhotoTypeChoices.EXTERIOR
 
 
-class InterPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
-    model = InteriorPhoto
-    form = InteriorPhotoForm
-    max_num = 0
+class InteriorPhotoInline(BaseShelterPhotoInline):
+    model = InteriorShelterPhoto
+    photo_type = ShelterPhotoTypeChoices.INTERIOR
 
 
 class VideoInline(admin.TabularInline):
@@ -599,7 +611,13 @@ class ShelterResource(resources.ModelResource):
     organization = Field(
         column_name="organization", attribute="organization", widget=ForeignKeyWidget(Organization, "name")
     )
-    spa = Field(column_name="spa", attribute="spa", widget=ManyToManyWidget(SPA, separator=",", field="name"))
+    spas_served = Field(
+        column_name="spas_served",
+        attribute="spas_served",
+        widget=ManyToManyWidget(SPA, separator=",", field="short_name"),
+    )
+    spa = Field(column_name="spa", attribute="spa", widget=ForeignKeyWidget(SPA, "short_name"))
+    city = Field(column_name="city", attribute="city", widget=ForeignKeyWidget(City, "name"))
     demographics = Field(
         column_name="demographics",
         attribute="demographics",
@@ -640,10 +658,10 @@ class ShelterResource(resources.ModelResource):
         attribute="parking",
         widget=ManyToManyWidget(Parking, separator=",", field="name"),
     )
-    cities = Field(
-        column_name="cities",
-        attribute="cities",
-        widget=ManyToManyWidget(City, separator=",", field="display_name"),
+    cities_served = Field(
+        column_name="cities_served",
+        attribute="cities_served",
+        widget=ManyToManyWidget(City, separator=",", field="name"),
     )
     funders = Field(
         column_name="funders",
@@ -684,17 +702,20 @@ class ShelterResource(resources.ModelResource):
         else:
             raise ValidationError(f"Row {self.count}: Bad {col_of_choice} value")
 
-    def process_spa_import(self, row: Any, spa_row: str) -> None:
-        spa_names = [v.strip() for v in spa_row.split(",")]
-        spa_choices = {i for i in range(1, len(SPAChoices.choices) + 1)}
-        for spa_name in spa_names:
+    def process_spas_served_import(self, row: Any, spas_served_row: str) -> None:
+        spa_short_names = [v.strip() for v in spas_served_row.split(",")]
+        available_spas = SPA.objects.all().values_list("short_name", flat=True)
+        spas_served: list[str] = []
+        for name in spa_short_names:
             try:
-                if int(spa_name) in spa_choices:
-                    sp, createdSpa = SPA.objects.get_or_create(name=spa_name)
+                if str(name) in available_spas:
+                    sp, _ = SPA.objects.get_or_create(short_name=name)
+                    spas_served.append(str(sp.pk))
                 else:
                     raise ValueError
             except ValueError:
-                self.skip_or_raise(row, "spa")
+                self.skip_or_raise(row, "spas_served")
+        row["spas_served"] = ",".join(spas_served)
 
     def process_address_import(self, row: Any, address_row: str) -> None:
         addy_data = requests.get(
@@ -789,7 +810,7 @@ class ShelterResource(resources.ModelResource):
             "vaccination_requirement",
             "storage",
             "pets",
-            "cities",
+            "cities_served",
             "accessibility",
             "parking",
         ]  # in this case, the many to many fields
@@ -802,8 +823,8 @@ class ShelterResource(resources.ModelResource):
             # Gets existing object or makes it if one doesn't exist
             if rowInDict["status"] and rowInDict["status"] not in [j for _, j in StatusChoices.choices]:
                 self.skip_or_raise(row, "status")
-            if rowInDict["spa"]:
-                self.process_spa_import(row, rowInDict["spa"])
+            if rowInDict.get("spas_served"):
+                self.process_spas_served_import(row, rowInDict["spas_served"])
             # Same idea as the handling for SPA, but uses existing get_or_create_address method in Location class to handle Address creation
             if rowInDict["location"]:
                 self.process_address_import(row, rowInDict["location"])
@@ -934,7 +955,14 @@ class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
     list_select_related = ("organization",)
 
-    inlines = [ContactInfoInline, ScheduleInline, ExteriorPhotoInline, InterPhotoInline, VideoInline, MediaLinkInline]
+    inlines = [
+        ContactInfoInline,
+        ScheduleInline,
+        ExteriorPhotoInline,
+        InteriorPhotoInline,
+        VideoInline,
+        MediaLinkInline,
+    ]
     fieldsets = (
         (
             "Basic Information",
@@ -1027,8 +1055,10 @@ class ShelterAdmin(ImportExportModelAdmin):
             "Ecosystem Information",
             {
                 "fields": (
-                    "cities",
+                    "city",
+                    "cities_served",
                     "spa",
+                    "spas_served",
                     "city_council_district",
                     "supervisorial_district",
                     "shelter_programs",
@@ -1063,6 +1093,7 @@ class ShelterAdmin(ImportExportModelAdmin):
     )
 
     list_display = (
+        "id",
         "name",
         "organization",
         "location",
@@ -1102,8 +1133,10 @@ class ShelterAdmin(ImportExportModelAdmin):
         "entry_requirements",
         "vaccination_requirement",
         # Ecosystem Information
-        "cities",
+        "city",
+        "cities_served",
         "spa",
+        "spas_served",
         "city_council_district",
         "supervisorial_district",
         "shelter_programs",
@@ -1197,14 +1230,14 @@ class ShelterAdmin(ImportExportModelAdmin):
         )
 
         interior_count = Subquery(
-            InteriorPhoto.objects.filter(shelter=OuterRef("pk"))
+            ShelterPhoto.objects.filter(shelter=OuterRef("pk"), type=ShelterPhotoTypeChoices.INTERIOR)
             .order_by()
             .values("shelter")
             .annotate(c=Count("pk"))
             .values("c")
         )
         exterior_count = Subquery(
-            ExteriorPhoto.objects.filter(shelter=OuterRef("pk"))
+            ShelterPhoto.objects.filter(shelter=OuterRef("pk"), type=ShelterPhotoTypeChoices.EXTERIOR)
             .order_by()
             .values("shelter")
             .annotate(c=Count("pk"))
@@ -1283,14 +1316,11 @@ class ShelterAdmin(ImportExportModelAdmin):
         form.save_pending_service_entries()
 
         if form.cleaned_data.get("clear_hero_image"):
-            form.instance.hero_image_content_type = None
-            form.instance.hero_image_object_id = None
+            form.instance.hero_image = None
             form.instance.save()
 
         if hero := self._get_selected_hero(formsets):
-            ct = ContentType.objects.get_for_model(hero)
-            form.instance.hero_image_content_type = ct
-            form.instance.hero_image_object_id = hero.pk
+            form.instance.hero_image = hero
             form.instance.save()
 
     @admin.display(description="Current Hero Image")
@@ -1354,9 +1384,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         original_file.seek(0)
         return ContentFile(original_file.read(), name=new_name)
 
-    def _clone_objects_with_files(
-        self, queryset: QuerySet[Union[ExteriorPhoto, InteriorPhoto, Video]], copy: Shelter
-    ) -> None:
+    def _clone_objects_with_files(self, queryset: QuerySet[Union[ShelterPhoto, Video]], copy: Shelter) -> None:
         """Clone objects with shelter and file fields, duplicating files."""
         for obj in queryset:
             obj.pk = None
@@ -1368,7 +1396,7 @@ class ShelterAdmin(ImportExportModelAdmin):
 
     def _clone_related_photos_and_videos(self, original: Shelter, copy: Shelter) -> None:
         """Clone photos and videos with file duplication and metadata preservation."""
-        for model_class in (ExteriorPhoto, InteriorPhoto, Video):
+        for model_class in (ShelterPhoto, Video):
             self._clone_objects_with_files(model_class.objects.filter(shelter=original), copy)
 
     def _clone_related_contacts(self, original: Shelter, copy: Shelter) -> None:

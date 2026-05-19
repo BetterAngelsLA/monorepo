@@ -11,14 +11,13 @@ export const GET_SHELTERS_QUERY = gql`
       results {
         id
         name
-        heroImage
-        exteriorPhotos {
-          file {
-            url
-            name
-          }
+        heroImage(preset: SHELTER_HERO) {
+          id
+          url
         }
-        interiorPhotos {
+        photos {
+          id
+          type
           file {
             url
             name

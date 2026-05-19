@@ -41,8 +41,7 @@ const shelter: TShelter = {
   heroImage: null,
   distanceInMiles: null,
   location: null,
-  exteriorPhotos: [],
-  interiorPhotos: [],
+  photos: [],
 };
 
 describe('ShelterCard – long-name overflow regression', () => {

@@ -124,18 +124,6 @@ SUPERVISORIAL_DISTRICT_CHOICES = [(i, str(i)) for i in range(1, 6)]
 
 
 @strawberry.enum
-class SPAChoices(models.IntegerChoices):
-    ONE = 1, _("1 - Antelope Valley")
-    TWO = 2, _("2 - San Fernando")
-    THREE = 3, _("3 - San Gabriel")
-    FOUR = 4, _("4 - Metro")
-    FIVE = 5, _("5 - West")
-    SIX = 6, _("6 - South")
-    SEVEN = 7, _("7 - East")
-    EIGHT = 8, _("8 - South Bay/Harbor")
-
-
-@strawberry.enum
 class ShelterProgramChoices(models.TextChoices):
     BRIDGE_HOME = "bridge_home", _("Bridge Home")
     CRISIS_HOUSING = "crisis_housing", _("Crisis Housing")
@@ -272,3 +260,9 @@ class ConditionChoices(models.TextChoices):
 @strawberry.enum
 class MediaLinkTypeChoices(models.TextChoices):
     YOUTUBE = "youtube", _("YouTube")
+
+
+@strawberry.enum
+class ShelterPhotoTypeChoices(models.TextChoices):
+    INTERIOR = "interior", _("Interior")
+    EXTERIOR = "exterior", _("Exterior")

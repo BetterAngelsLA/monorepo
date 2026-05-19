@@ -7,8 +7,6 @@ from typing import Any
 import pghistory
 from common.models import BaseModel
 from common.permissions.utils import PermissionSet, perm
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.db import models
@@ -76,10 +74,14 @@ class Shelter(BaseModel):
     website = models.URLField(blank=True, null=True)
     instagram = models.URLField(blank=True, null=True)
 
-    # Hero Image
-    hero_image_content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True)
-    hero_image_object_id = models.PositiveIntegerField(null=True, blank=True)
-    hero_image = GenericForeignKey("hero_image_content_type", "hero_image_object_id")
+    # Hero Image (explicit pick from this shelter's gallery photos)
+    hero_image = models.ForeignKey(
+        "ShelterPhoto",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
 
     # Summary Information
     description = CKEditor5Field()
@@ -125,9 +127,23 @@ class Shelter(BaseModel):
     program_fees = models.CharField(max_length=255, blank=True, null=True)
 
     # Ecosystem Information
-    cities = models.ManyToManyField(City)
+    city = models.ForeignKey(
+        City,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shelters",
+    )
+    cities_served = models.ManyToManyField(City, related_name="serving_shelters")
 
-    spa = models.ManyToManyField(SPA)
+    spa = models.ForeignKey(
+        SPA,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shelters",
+    )
+    spas_served = models.ManyToManyField(SPA, related_name="serving_shelters")
     city_council_district = models.PositiveSmallIntegerField(
         choices=CITY_COUNCIL_DISTRICT_CHOICES,
         null=True,

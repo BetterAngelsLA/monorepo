@@ -10,7 +10,6 @@ import {
   RoomStyleChoices,
   ShelterChoices,
   ShelterProgramChoices,
-  SpaChoices,
   SpecialSituationRestrictionChoices,
   StorageChoices,
   VaccinationRequirementChoices,
@@ -151,17 +150,6 @@ export const enumDisplayShelterProgramChoices: {
   [ShelterProgramChoices.TinyHomeVillage]: 'Tiny Home Village',
   [ShelterProgramChoices.TransitionalHousing]: 'Transitional Housing',
   [ShelterProgramChoices.WinterShelter]: 'Winter Shelter',
-};
-
-export const enumDisplaySpaChoices: { [key in SpaChoices]: string } = {
-  [SpaChoices.Eight]: '8',
-  [SpaChoices.Five]: '5',
-  [SpaChoices.Four]: '4',
-  [SpaChoices.One]: '1',
-  [SpaChoices.Seven]: '7',
-  [SpaChoices.Six]: '6',
-  [SpaChoices.Three]: '3',
-  [SpaChoices.Two]: '2',
 };
 
 export const enumDisplaySpecialSituationRestrictionChoices: {
