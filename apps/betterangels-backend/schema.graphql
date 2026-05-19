@@ -38,12 +38,6 @@ directive @hmisDirective on FIELD_DEFINITION
 
 directive @isHmisAuthenticated on FIELD_DEFINITION
 
-input AcceptShelterInviteInput {
-  inviteId: ID!
-  firstName: String = null
-  lastName: String = null
-}
-
 enum AccessibilityChoices {
   MEDICAL_EQUIPMENT_PERMITTED
   WHEELCHAIR_ACCESSIBLE
@@ -1551,7 +1545,6 @@ type Mutation {
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
   registerShelterOperator(data: RegisterShelterOperatorInput!): AuthResponse!
-  acceptShelterInvite(data: AcceptShelterInviteInput!): AuthResponse!
 }
 
 type NameCountType {

@@ -1,7 +1,8 @@
 import { useQuery } from '@apollo/client/react';
 import { SingleSelect } from '@monorepo/expo/shared/ui-components';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { View, ViewStyle } from 'react-native';
+import { Ordering } from '../../../apollo/graphql/__generated__/types';
 import { useSnackbar } from '../../../hooks';
 import { useUserOrganizationPreference } from '../../../state';
 import { FilterOrganizationsDocument } from '../../Filters/FilterOrganizations/__generated__/filterOrganizations.generated';
@@ -17,10 +18,13 @@ export function UserOrganizationPreferenceSelect(props: TProps) {
   const { showSnackbar } = useSnackbar();
 
   const { data } = useQuery(FilterOrganizationsDocument, {
-    variables: { ordering: [{ name: 'ASC' as any }] },
+    variables: { ordering: [{ name: Ordering.Asc }] },
   });
 
-  const organizations = data?.caseworkerOrganizations?.results ?? [];
+  const organizations = useMemo(
+    () => data?.caseworkerOrganizations?.results ?? [],
+    [data?.caseworkerOrganizations?.results]
+  );
 
   // Auto-select if user belongs to exactly one organization
   useEffect(() => {
@@ -50,7 +54,9 @@ export function UserOrganizationPreferenceSelect(props: TProps) {
         }))}
         selectedValue={organizationId ?? undefined}
         onChange={(value) => {
-          handleSelect(value);
+          if (value) {
+            handleSelect(value);
+          }
         }}
       />
     </View>

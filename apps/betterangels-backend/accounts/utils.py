@@ -11,7 +11,7 @@ from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
 from django.db import transaction
 from organizations.models import Organization
 
-from .models import OrganizationProfile, OrgType, PermissionGroup, PermissionGroupTemplate, User
+from .models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
 
 logger = logging.getLogger(__name__)
 

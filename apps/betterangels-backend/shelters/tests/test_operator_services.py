@@ -3,7 +3,7 @@ from unittest.mock import patch
 from accounts.models import PermissionGroup, PermissionGroupTemplate, User
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from organizations.models import Organization, OrganizationOwner, OrganizationUser
+from organizations.models import OrganizationOwner, OrganizationUser
 from shelters.groups import SHELTER_OPERATOR
 from shelters.services import shelter_operator_register
 

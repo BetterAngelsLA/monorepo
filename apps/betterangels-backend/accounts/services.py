@@ -18,7 +18,6 @@ from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
 from .models import (
-    OrganizationProfile,
     OrgType,
     User,
 )

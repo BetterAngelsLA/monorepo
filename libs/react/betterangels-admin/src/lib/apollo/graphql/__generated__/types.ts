@@ -34,12 +34,6 @@ export type Scalars = {
   Upload: { input: any; output: any; }
 };
 
-export type AcceptShelterInviteInput = {
-  firstName?: InputMaybe<Scalars['String']['input']>;
-  inviteId: Scalars['ID']['input'];
-  lastName?: InputMaybe<Scalars['String']['input']>;
-};
-
 export enum AccessibilityChoices {
   AdaRooms = 'ADA_ROOMS',
   MedicalEquipmentPermitted = 'MEDICAL_EQUIPMENT_PERMITTED',
@@ -1518,7 +1512,6 @@ export enum MedicalNeedChoices {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  acceptShelterInvite: AuthResponse;
   addOrganizationMember: AddOrganizationMemberPayload;
   createBed: CreateBedPayload;
   createClientContact: CreateClientContactPayload;
@@ -1577,11 +1570,6 @@ export type Mutation = {
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
   updateUserProfile: UpdateUserProfilePayload;
-};
-
-
-export type MutationAcceptShelterInviteArgs = {
-  data: AcceptShelterInviteInput;
 };
 
 

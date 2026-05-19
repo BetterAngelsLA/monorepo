@@ -2,7 +2,6 @@ import uuid
 from typing import Any, Optional
 
 from accounts.org_types import get_invite_templates_for_role
-from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
