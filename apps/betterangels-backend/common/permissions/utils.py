@@ -6,6 +6,7 @@ import strawberry
 from common.errors import UnauthenticatedGQLError
 from django.contrib.auth.models import Group
 from django.db.models import Model, TextChoices
+from django.db.models.base import ModelBase
 from django.utils.encoding import force_str
 from guardian.shortcuts import assign_perm
 from strawberry_django.auth.utils import get_current_user
@@ -42,9 +43,10 @@ class PermissionSet:
     CHANGE: str
     DELETE: str
     VIEW: str
+    _perm_labels: dict[str, str]
 
     @classmethod
-    def contribute_to_class(cls, model: type, name: str) -> None:
+    def contribute_to_class(cls, model: type[Model], name: str) -> None:
         if model._meta.abstract:
             setattr(model, name, cls)
             return
@@ -81,7 +83,7 @@ class PermissionSet:
         setattr(model, name, cls)
 
 
-def _auto_create_perms(sender: type, **kwargs: Any) -> None:
+def _auto_create_perms(sender: type[Model], **kwargs: Any) -> None:
     """Initialize PermissionSet on concrete models when class_prepared fires.
 
     Handles two cases:

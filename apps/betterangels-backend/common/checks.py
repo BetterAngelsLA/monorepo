@@ -1,8 +1,10 @@
+from typing import Any
+
 from django.core.checks import Error, Tags, register
 
 
 @register(Tags.models)
-def check_perms_not_overridden_by_field(app_configs, **kwargs):
+def check_perms_not_overridden_by_field(app_configs: Any, **kwargs: Any) -> list[Error]:
     """Ensure no model defines a database field named 'perms'.
 
     The ``PermissionSet`` inner class uses 'perms' as a class-level attribute.
