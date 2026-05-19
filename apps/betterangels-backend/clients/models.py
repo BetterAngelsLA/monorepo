@@ -212,7 +212,7 @@ class ClientProfile(AbstractClientProfile):
         return " ".join(name_parts).strip()
 
     def __str__(self: "ClientProfile") -> str:
-        return f"{self.full_name if self.full_name else self.pk}"
+        return f"{self.full_name} ({self.pk})" if self.full_name else str(self.pk)
 
     class Meta:
         ordering = ["first_name"]

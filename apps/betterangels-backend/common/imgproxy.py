@@ -13,6 +13,7 @@ from django.conf import settings
 IMGPROXY_SWITCH = "imgproxy_enabled"
 IMGPROXY_PRESETS: dict[ImagePresetEnum, str] = {
     ImagePresetEnum.ORIGINAL: "rs:force:0:0",
+    ImagePresetEnum.SHELTER_HERO: "rs:fit:800:800/g:ce/q:80/sm:1",
     ImagePresetEnum.SM: "rs:fill:100:100",
     ImagePresetEnum.MD: "rs:fill:400:400",
     ImagePresetEnum.LG: "rs:fill:800:800",

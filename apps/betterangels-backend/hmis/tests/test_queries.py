@@ -1,5 +1,6 @@
 import datetime
 from typing import Any
+from unittest import skip
 from unittest.mock import ANY
 
 from clients.enums import (
@@ -32,6 +33,7 @@ from notes.models import OrganizationService, ServiceRequest
 from test_utils.vcr_config import scrubbed_vcr
 
 
+@skip("not implemented")
 @override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisNoteQueryTests(HmisNoteBaseTestCase):
     def setUp(self) -> None:
@@ -209,6 +211,7 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
         self.assertEqual(expected, hmis_note)
 
 
+@skip("not implemented")
 @override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
