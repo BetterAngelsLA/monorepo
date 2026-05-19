@@ -14,7 +14,6 @@ from typing import Any, Dict, List
 
 from accounts.groups import GroupTemplateNames
 from accounts.models import (
-    ExtendedOrganizationInvitation,
     PermissionGroup,
     PermissionGroupTemplate,
     User,
@@ -458,52 +457,6 @@ def shelter_operator_register(
     _send_shelter_welcome_email(user=user, organization=organization)
 
     return user, organization
-
-
-def shelter_invite_accept(
-    *,
-    invite_id: int,
-    first_name: str | None = None,
-    last_name: str | None = None,
-) -> User:
-    """Accept an invitation to join a shelter organization.
-
-    The user is activated without a password.  Authentication is handled
-    via allauth login-by-code (OTP sent to email).
-
-    Returns the activated user.
-    """
-    try:
-        invitation = ExtendedOrganizationInvitation.objects.select_related("invitee", "organization").get(pk=invite_id)
-    except ExtendedOrganizationInvitation.DoesNotExist:
-        raise ValidationError("Invalid invitation.")
-
-    if invitation.accepted:
-        raise ValidationError("This invitation has already been accepted.")
-
-    user = invitation.invitee
-
-    with transaction.atomic():
-        if first_name:
-            user.first_name = first_name.strip()
-        if last_name:
-            user.last_name = last_name.strip()
-        user.save()
-
-        invitation.accepted = True
-        invitation.save()
-
-        # Ensure the user has shelter operator permissions for this org
-        template, _ = PermissionGroupTemplate.objects.get_or_create(
-            name=SHELTER_OPERATOR,
-        )
-        perm_group, _ = PermissionGroup.objects.get_or_create(
-            organization=invitation.organization,
-            template=template,
-        )
-        user.groups.add(perm_group.group)
-
-    return user
 
 
 def _send_shelter_welcome_email(*, user: User, organization: Organization) -> None:

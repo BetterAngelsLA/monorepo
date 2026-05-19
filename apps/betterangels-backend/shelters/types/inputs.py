@@ -176,10 +176,3 @@ class RegisterShelterOperatorInput:
     first_name: str
     last_name: str
     organization_name: str
-
-
-@strawberry.input
-class AcceptShelterInviteInput:
-    invite_id: ID
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None

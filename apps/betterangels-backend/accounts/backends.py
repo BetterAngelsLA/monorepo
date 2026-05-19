@@ -55,7 +55,7 @@ class CustomInvitations(InvitationBackend):
         domain = kwargs.get("domain")
         accept_url = ""
         if invitation and domain:
-            accept_url = f"https://{domain.domain}/operator/accept-invite/{invitation.pk}"
+            accept_url = f"https://{domain.domain}/operator/accept-invite/{invitation.guid}"
 
         context = {
             "invitee_email": user.email,

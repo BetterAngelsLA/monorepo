@@ -10,7 +10,6 @@ from shelters.types.filters import (
     ShelterPropertyInput,
 )
 from shelters.types.inputs import (
-    AcceptShelterInviteInput,
     CreateBedInput,
     CreateRoomInput,
     CreateShelterInput,
@@ -76,7 +75,6 @@ __all__ = [
     "ShelterOrder",
     "ShelterPropertyInput",
     # inputs
-    "AcceptShelterInviteInput",
     "CreateBedInput",
     "CreateRoomInput",
     "CreateShelterInput",

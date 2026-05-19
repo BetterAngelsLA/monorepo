@@ -3,8 +3,6 @@ from typing import Any
 
 from accounts.utils import (
     add_default_org_permissions_to_user,
-    create_default_org_permission_groups,
-    is_org_type_default_template,
     remove_org_group_permissions_from_user,
     remove_organization_permission_group,
 )
@@ -14,7 +12,7 @@ from django.db.models.signals import post_delete, post_migrate, post_save, pre_d
 from django.dispatch import receiver
 from organizations.models import Organization, OrganizationUser
 
-from .models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
+from .models import PermissionGroupTemplate, User
 
 logger = logging.getLogger(__name__)
 
@@ -54,12 +52,6 @@ def handle_organization_removed(sender: Any, instance: Organization, **kwargs: A
     logger.info(f"Organization {instance.name} was removed.")
 
 
-@receiver(post_save, sender=Organization)
-def ensure_organization_profile(sender: Any, instance: Organization, created: bool, **kwargs: Any) -> None:
-    """Guarantee every Organization has an OrganizationProfile."""
-    OrganizationProfile.objects.get_or_create(organization=instance)
-
-
 @receiver(post_save, sender=OrganizationUser)
 def handle_organization_user_added(sender: Any, instance: OrganizationUser, created: bool, **kwargs: Any) -> None:
     user: User = instance.user
@@ -67,18 +59,6 @@ def handle_organization_user_added(sender: Any, instance: OrganizationUser, crea
     if created:
         add_default_org_permissions_to_user(user, organization)
     logger.info(f"User {user.username} was added to organization {organization.name}.")
-
-
-@receiver(post_save, sender=PermissionGroup)
-def handle_default_perm_group_created(sender: Any, instance: PermissionGroup, created: bool, **kwargs: Any) -> None:
-    """Creates the remaining default permission groups for an organization.
-
-    When the primary member-role PermissionGroup for any org type (e.g.
-    Caseworker for outreach, Shelter Operator for shelter) is created, this
-    signal ensures the companion Admin and Superuser groups are also created.
-    """
-    if created and instance.template and is_org_type_default_template(instance.template.name):
-        create_default_org_permission_groups(instance.organization)
 
 
 @receiver(post_delete, sender=OrganizationUser)

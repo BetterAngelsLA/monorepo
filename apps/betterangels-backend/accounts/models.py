@@ -3,6 +3,7 @@ from typing import Any, Dict, Iterable, Tuple
 import pghistory
 from accounts.groups import GroupTemplateNames
 from accounts.managers import UserManager
+from annoying.fields import AutoOneToOneField
 from django.contrib.auth.models import (
     AbstractBaseUser,
     Group,
@@ -196,7 +197,7 @@ class OrgType(models.Model):
 
 
 class OrganizationProfile(models.Model):
-    organization = models.OneToOneField(
+    organization = AutoOneToOneField(
         Organization,
         on_delete=models.CASCADE,
         related_name="profile",

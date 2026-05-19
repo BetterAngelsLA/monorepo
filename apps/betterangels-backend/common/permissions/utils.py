@@ -85,9 +85,7 @@ class PermissionSet:
     def codenames(cls) -> list[str]:
         """Return all permission codenames (without the app label prefix)."""
         return [
-            v.split(".")[1]
-            for k, v in vars(cls).items()
-            if not k.startswith("_") and isinstance(v, str) and "." in v
+            v.split(".")[1] for k, v in vars(cls).items() if not k.startswith("_") and isinstance(v, str) and "." in v
         ]
 
 

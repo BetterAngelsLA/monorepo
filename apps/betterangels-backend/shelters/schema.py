@@ -12,11 +12,9 @@ from shelters.services import (
     bed_create,
     room_create,
     shelter_create,
-    shelter_invite_accept,
     shelter_operator_register,
 )
 from shelters.types import (
-    AcceptShelterInviteInput,
     AdminShelterType,
     BedType,
     CityType,
@@ -102,21 +100,6 @@ class Mutation:
             first_name=data.first_name,
             last_name=data.last_name,
             organization_name=data.organization_name,
-        )
-
-        return AuthResponse(status_code="200")
-
-    @strawberry.mutation
-    def accept_shelter_invite(self, info: Info, data: AcceptShelterInviteInput) -> AuthResponse:
-        """Accept an invitation to join a shelter organization.
-
-        The user is activated without a password. After this mutation succeeds,
-        the client should use the allauth login-by-code flow to authenticate.
-        """
-        shelter_invite_accept(
-            invite_id=data.invite_id,
-            first_name=data.first_name,
-            last_name=data.last_name,
         )
 
         return AuthResponse(status_code="200")

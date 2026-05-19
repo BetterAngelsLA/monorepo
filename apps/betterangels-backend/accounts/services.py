@@ -126,8 +126,7 @@ def create_organization(*, name: str, presets: list[str]) -> Organization:
 
     with transaction.atomic():
         organization = Organization.objects.create(name=name)
-        # ensure_organization_profile signal creates the profile,
-        # but we need to attach org_types
+        # AutoOneToOneField auto-creates the profile on access
         profile = organization.profile
         for preset_key in presets:
             org_type, _ = OrgType.objects.get_or_create(

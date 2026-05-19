@@ -10,11 +10,6 @@ from __future__ import annotations
 from django.conf import settings
 
 
-def get_preset_config(preset_key: str) -> dict:
-    """Return the preset config dict for *preset_key*. Raises KeyError if not found."""
-    return settings.ORG_TYPE_PRESETS[preset_key]
-
-
 def get_invite_templates_for_role(role_name: str) -> dict[str, str]:
     """Return invite email template paths for a given role name.
 

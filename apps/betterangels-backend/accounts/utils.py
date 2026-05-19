@@ -5,7 +5,6 @@ from typing import Union
 import waffle
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
-from accounts.org_types import is_member_role
 from django.apps.registry import Apps
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
@@ -62,11 +61,6 @@ def _get_templates_for_org(organization: Organization) -> list[str]:
         templates.update(first_preset["templates"])
 
     return list(templates)
-
-
-def is_org_type_default_template(template_name: str) -> bool:
-    """Return True if *template_name* is the primary member template for any preset."""
-    return is_member_role(template_name)
 
 
 def add_default_org_permissions_to_user(user: User, organization: Organization) -> None:

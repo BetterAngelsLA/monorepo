@@ -117,6 +117,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.headless",
+    "annoying",
     "corsheaders",
     "django_ckeditor_5",
     "django_structlog",
