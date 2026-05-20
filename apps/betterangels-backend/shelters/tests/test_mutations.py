@@ -154,7 +154,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
 
     def test_create_shelter_with_many_to_many_fields(self) -> None:
         """Test creating a shelter with many-to-many relationships"""
-        city = City.objects.first()
+        city, _ = City.objects.get_or_create(name="Los Angeles")
         assert city
 
         mutation = """
