@@ -76,7 +76,7 @@ SEED_DATA = [
 ]
 
 
-def seed_catalog(apps, schema_editor):
+def seed_services(apps, schema_editor):
     ServiceCategory = apps.get_model("shelters", "ServiceCategory")
     Service = apps.get_model("shelters", "Service")
     for cat_name, cat_display, cat_order, services in SEED_DATA:
@@ -96,7 +96,7 @@ def seed_catalog(apps, schema_editor):
             )
 
 
-def unseed_catalog(apps, schema_editor):
+def unseed_services(apps, schema_editor):
     ServiceCategory = apps.get_model("shelters", "ServiceCategory")
     ServiceCategory.objects.filter(name__in=[c[0] for c in SEED_DATA]).delete()
 
@@ -221,6 +221,24 @@ def remove_view_private_shelter_from_caseworker(apps, schema_editor):
     caseworker_template = PermissionGroupTemplate.objects.get(name="Caseworker")
     perm = Permission.objects.get(codename="view_private_shelter", content_type=shelter_ct)
     caseworker_template.permissions.remove(perm)
+
+
+# ---------------------------------------------------------------------------
+# City seeding
+# ---------------------------------------------------------------------------
+def seed_cities(apps, schema_editor):
+    City = apps.get_model("shelters", "City")
+    from shelters.deprecated.deprecated_enums import CityChoices
+
+    for choice in CityChoices:
+        City.objects.get_or_create(name=choice.value)
+
+
+def unseed_cities(apps, schema_editor):
+    City = apps.get_model("shelters", "City")
+    from shelters.deprecated.deprecated_enums import CityChoices
+
+    City.objects.filter(name__in=[choice.value for choice in CityChoices]).delete()
 
 
 # ---------------------------------------------------------------------------
@@ -3069,7 +3087,8 @@ class Migration(migrations.Migration):
                 ),
             ),
         ),
-        migrations.RunPython(seed_catalog, unseed_catalog),
+        migrations.RunPython(seed_services, unseed_services),
+        migrations.RunPython(seed_cities, unseed_cities),
         migrations.RunPython(create_shelter_groups, remove_shelter_groups),
         migrations.RunPython(add_view_private_shelter_to_caseworker, remove_view_private_shelter_from_caseworker),
         migrations.RunPython(seed_spas, migrations.RunPython.noop),
