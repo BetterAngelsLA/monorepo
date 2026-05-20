@@ -1580,7 +1580,7 @@ class ShelterAvailabilityAdmin(admin.ModelAdmin):
     list_filter = ("updated_at",)
     search_fields = ("shelter__name",)
     autocomplete_fields = ["shelter"]
-    readonly_fields = ("created_at", "updated_at", "updated_by")
+    readonly_fields = ("created_at", "updated_at")
     fieldsets = (
         (
             None,
