@@ -1,28 +1,20 @@
-import {
-  operatorPath,
-  reservationAddProfileSegment,
-  reservationCheckInByDateSegment,
-  reservationConfirmationSegment,
-  reservationPathSegment,
-  reservationSelectRoomSegment,
-  reservationSelectShelterSegment,
-} from '@monorepo/react/shelter';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import { WizardLayout } from '../../components/layout/WizardLayout';
 import type { WizardStep } from '../../components/layout/WizardProgressBar';
+import { paths, reservationSegments } from '../../routing';
 import { ReservationFormData } from './types';
 
 const ALL_STEPS: WizardStep[] = [
-  { label: 'Add Profile', pathSegment: reservationAddProfileSegment },
-  { label: 'Select Shelter', pathSegment: reservationSelectShelterSegment },
-  { label: 'Select Room / Bed', pathSegment: reservationSelectRoomSegment },
+  { label: 'Add Profile', pathSegment: reservationSegments.addProfile },
+  { label: 'Select Shelter', pathSegment: reservationSegments.selectShelter },
+  { label: 'Select Room / Bed', pathSegment: reservationSegments.selectRoom },
   {
     label: 'Select Check-in By Date',
-    pathSegment: reservationCheckInByDateSegment,
+    pathSegment: reservationSegments.checkInByDate,
   },
-  { label: 'Confirmation', pathSegment: reservationConfirmationSegment },
+  { label: 'Confirmation', pathSegment: reservationSegments.confirmation },
 ];
 
 export function ReservationPage() {
@@ -55,10 +47,10 @@ export function ReservationPage() {
     return ALL_STEPS;
   }, [isShelterLevel]);
 
-  const paths = useMemo(() => {
+  const stepPaths = useMemo(() => {
     const base = isShelterLevel
-      ? `${operatorPath}/shelter/${shelterId}/${reservationPathSegment}`
-      : `${operatorPath}/${reservationPathSegment}`;
+      ? paths.shelterReservation.replace(':shelterId', shelterId as string)
+      : paths.reservation;
 
     return steps.map((step) => `${base}/${step.pathSegment}`);
   }, [isShelterLevel, shelterId, steps]);
@@ -66,7 +58,7 @@ export function ReservationPage() {
   return (
     <WizardLayout<ReservationFormData>
       steps={steps}
-      stepPaths={paths}
+      stepPaths={stepPaths}
       methods={methods}
       navigationConfig={{
         showNavigation: true,
