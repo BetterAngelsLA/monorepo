@@ -22,10 +22,28 @@ from tasks.schema import Query as TasksQuery
 
 # Schema Stitching
 # https://github.com/strawberry-graphql/strawberry/issues/566#issuecomment-1346660629
-queries = (AccountsQuery, ClientsQuery, CommonQuery, HmisQuery, NotesQuery, ReportsQuery, TasksQuery, SheltersQuery, ReferralsQuery)
+queries = (
+    AccountsQuery,
+    ClientsQuery,
+    CommonQuery,
+    HmisQuery,
+    NotesQuery,
+    ReportsQuery,
+    TasksQuery,
+    SheltersQuery,
+    ReferralsQuery,
+)
 Query = merge_types("Query", queries)
 
-mutations = (AccountsMutation, ClientsMutation, HmisMutation, NotesMutation, TasksMutation, SheltersMutation, ReferralsMutation)
+mutations = (
+    AccountsMutation,
+    ClientsMutation,
+    HmisMutation,
+    NotesMutation,
+    TasksMutation,
+    SheltersMutation,
+    ReferralsMutation,
+)
 Mutation = merge_types("Mutation", mutations)
 
 schema = Schema(
