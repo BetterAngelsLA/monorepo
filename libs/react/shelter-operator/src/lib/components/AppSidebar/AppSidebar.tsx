@@ -7,7 +7,7 @@ import { Divider, Sidebar } from '@monorepo/react/components';
 import { UsersIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { operatorPath } from '@monorepo/react/shelter';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import {
   isShelterManageRoute,
@@ -26,27 +26,8 @@ export function AppSidebar(props: IProps) {
   const { className } = props;
 
   const [isOpen, setIsOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const { shelterId } = useParams<{ shelterId: string }>();
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setDropdownOpen(false);
-      }
-    }
-
-    if (dropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [dropdownOpen]);
 
   const parentCss = ['bg-[#FAFAFA]', className];
 
@@ -76,7 +57,7 @@ export function AppSidebar(props: IProps) {
         {isShelterRoute(location.pathname) && shelterId && (
           <>
             <Divider
-              className="mt py-4"
+              className="py-4"
               label={isOpen ? 'shelter management' : ''}
             />
 
