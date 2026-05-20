@@ -729,6 +729,14 @@ export type CreateProfileDataImportInput = {
   sourceFile: Scalars['String']['input'];
 };
 
+export type CreateReferralInput = {
+  clientProfile: Scalars['ID']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  shelter: Scalars['ID']['input'];
+};
+
+export type CreateReferralPayload = OperationInfo | ReferralType;
+
 export type CreateRoomInput = {
   accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   amenities?: InputMaybe<Scalars['String']['input']>;
@@ -885,6 +893,8 @@ export type DeleteHmisNotePayload = DeletedObjectType | OperationInfo;
 export type DeleteHmisProfilePayload = HmisProfileType | OperationInfo;
 
 export type DeleteNotePayload = NoteType | OperationInfo;
+
+export type DeleteReferralPayload = DeletedObjectType | OperationInfo;
 
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
 
@@ -1523,6 +1533,7 @@ export type Mutation = {
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
+  createReferral: CreateReferralPayload;
   createRoom: CreateRoomPayload;
   createShelter: CreateShelterPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
@@ -1535,6 +1546,7 @@ export type Mutation = {
   deleteHmisNote: DeleteHmisNotePayload;
   deleteHmisProfile: DeleteHmisProfilePayload;
   deleteNote: DeleteNotePayload;
+  deleteReferral: DeleteReferralPayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
@@ -1562,6 +1574,7 @@ export type Mutation = {
   updateHmisProfile: UpdateHmisProfilePayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
+  updateReferral: UpdateReferralPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
   updateUserProfile: UpdateUserProfilePayload;
@@ -1644,6 +1657,11 @@ export type MutationCreateNoteServiceRequestArgs = {
 };
 
 
+export type MutationCreateReferralArgs = {
+  data: CreateReferralInput;
+};
+
+
 export type MutationCreateRoomArgs = {
   data: CreateRoomInput;
 };
@@ -1695,6 +1713,11 @@ export type MutationDeleteHmisProfileArgs = {
 
 
 export type MutationDeleteNoteArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteReferralArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -1827,6 +1850,11 @@ export type MutationUpdateNoteArgs = {
 
 export type MutationUpdateNoteLocationArgs = {
   data: UpdateNoteLocationInput;
+};
+
+
+export type MutationUpdateReferralArgs = {
+  data: UpdateReferralInput;
 };
 
 
@@ -2215,6 +2243,8 @@ export type Query = {
   notes: NoteTypeOffsetPaginated;
   organizationMember: OrganizationMemberType;
   organizationMembers: OrganizationMemberTypeOffsetPaginated;
+  referral: ReferralType;
+  referrals: ReferralTypeOffsetPaginated;
   reportSummary: ReportSummaryType;
   rooms: RoomTypeOffsetPaginated;
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
@@ -2374,6 +2404,18 @@ export type QueryOrganizationMembersArgs = {
 };
 
 
+export type QueryReferralArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryReferralsArgs = {
+  filters?: InputMaybe<ReferralFilter>;
+  ordering?: Array<ReferralOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryReportSummaryArgs = {
   endDate?: InputMaybe<Scalars['Date']['input']>;
   organizationId?: InputMaybe<Scalars['ID']['input']>;
@@ -2457,6 +2499,23 @@ export enum RaceEnum {
   WhiteCaucasian = 'WHITE_CAUCASIAN'
 }
 
+export type ReferralFilter = {
+  AND?: InputMaybe<ReferralFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ReferralFilter>;
+  OR?: InputMaybe<ReferralFilter>;
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
+  createdBy?: InputMaybe<Scalars['ID']['input']>;
+  status?: InputMaybe<ReferralStatusEnum>;
+};
+
+export type ReferralOrder = {
+  createdAt?: InputMaybe<Ordering>;
+  id?: InputMaybe<Ordering>;
+  status?: InputMaybe<Ordering>;
+  updatedAt?: InputMaybe<Ordering>;
+};
+
 export enum ReferralRequirementChoices {
   ReferralMatched = 'REFERRAL_MATCHED',
   ReferralNonmatched = 'REFERRAL_NONMATCHED',
@@ -2468,6 +2527,33 @@ export enum ReferralRequirementChoices {
 export type ReferralRequirementType = {
   __typename?: 'ReferralRequirementType';
   name?: Maybe<ReferralRequirementChoices>;
+};
+
+export enum ReferralStatusEnum {
+  Accepted = 'ACCEPTED',
+  Declined = 'DECLINED',
+  Pending = 'PENDING'
+}
+
+export type ReferralType = {
+  __typename?: 'ReferralType';
+  clientProfile?: Maybe<ClientProfileType>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy?: Maybe<UserType>;
+  id: Scalars['ID']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  shelter?: Maybe<DjangoModelType>;
+  status?: Maybe<ReferralStatusEnum>;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type ReferralTypeOffsetPaginated = {
+  __typename?: 'ReferralTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<ReferralType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export enum RelationshipTypeEnum {
@@ -3215,6 +3301,14 @@ export type UpdateNoteLocationInput = {
 export type UpdateNoteLocationPayload = NoteType | OperationInfo;
 
 export type UpdateNotePayload = NoteType | OperationInfo;
+
+export type UpdateReferralInput = {
+  id: Scalars['ID']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<ReferralStatusEnum>;
+};
+
+export type UpdateReferralPayload = OperationInfo | ReferralType;
 
 export type UpdateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
