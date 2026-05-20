@@ -145,7 +145,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("accounts", "0045_add_view_reports_permission"),
-        ("shelters", "0001_initial"),
+        ("shelters", "0001_squashed_initial"),
     ]
 
     operations = [
