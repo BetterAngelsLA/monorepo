@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from accounts.models import PermissionGroup, PermissionGroupTemplate, User
 from django.core.exceptions import ValidationError
@@ -11,7 +11,7 @@ from shelters.services import shelter_organization_create
 class ShelterOrganizationCreateTestCase(TestCase):
     """Tests for shelter_organization_create service."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.user = User.objects.create_user(
             username="testuser",
             email="operator@example.com",
@@ -21,7 +21,7 @@ class ShelterOrganizationCreateTestCase(TestCase):
         )
 
     @patch("shelters.services._send_shelter_welcome_email")
-    def test_creates_organization(self, mock_email):
+    def test_creates_organization(self, mock_email: MagicMock) -> None:
         org = shelter_organization_create(
             user=self.user,
             organization_name="Safe Haven Shelter",
@@ -30,7 +30,7 @@ class ShelterOrganizationCreateTestCase(TestCase):
         self.assertEqual(org.name, "Safe Haven Shelter")
 
     @patch("shelters.services._send_shelter_welcome_email")
-    def test_user_is_org_owner(self, mock_email):
+    def test_user_is_org_owner(self, mock_email: MagicMock) -> None:
         org = shelter_organization_create(
             user=self.user,
             organization_name="My Shelter",
@@ -41,7 +41,7 @@ class ShelterOrganizationCreateTestCase(TestCase):
         self.assertTrue(OrganizationOwner.objects.filter(organization=org, organization_user=org_user).exists())
 
     @patch("shelters.services._send_shelter_welcome_email")
-    def test_user_gets_shelter_operator_group(self, mock_email):
+    def test_user_gets_shelter_operator_group(self, mock_email: MagicMock) -> None:
         org = shelter_organization_create(
             user=self.user,
             organization_name="Org",
@@ -52,7 +52,7 @@ class ShelterOrganizationCreateTestCase(TestCase):
         self.assertTrue(self.user.groups.filter(pk=perm_group.group_id).exists())
 
     @patch("shelters.services._send_shelter_welcome_email")
-    def test_sends_welcome_email(self, mock_email):
+    def test_sends_welcome_email(self, mock_email: MagicMock) -> None:
         shelter_organization_create(
             user=self.user,
             organization_name="Org",
@@ -61,7 +61,7 @@ class ShelterOrganizationCreateTestCase(TestCase):
         mock_email.assert_called_once()
 
     @patch("shelters.services._send_shelter_welcome_email")
-    def test_empty_org_name_raises(self, mock_email):
+    def test_empty_org_name_raises(self, mock_email: MagicMock) -> None:
         with self.assertRaises(ValidationError) as ctx:
             shelter_organization_create(
                 user=self.user,

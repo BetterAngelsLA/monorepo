@@ -3,7 +3,7 @@ from typing import Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_permission_group_for_org, get_user_permission_group
+from accounts.utils import get_permission_group_for_org
 from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
@@ -57,7 +57,7 @@ class Mutation:
             organization = Organization.objects.get(id=organization_id)
             permission_group = get_permission_group_for_org(current_user, organization)
         else:
-            permission_group = get_user_permission_group(current_user)
+            permission_group = get_permission_group_for_org(current_user)
 
         # Resolve FK references
         note = None

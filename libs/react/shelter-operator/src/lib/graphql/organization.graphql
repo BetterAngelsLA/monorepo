@@ -1,0 +1,15 @@
+mutation CreateShelterOrganization($data: CreateShelterOrganizationInput!) {
+  createShelterOrganization(data: $data) {
+    ... on OrganizationType {
+      id
+      name
+    }
+    ... on OperationInfo {
+      messages {
+        field
+        kind
+        message
+      }
+    }
+  }
+}

@@ -4,7 +4,7 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.types import OrganizationOrder, OrganizationType
-from accounts.utils import get_member_permission_group, get_permission_group_for_org, get_user_permission_group
+from accounts.utils import get_member_permission_group, get_permission_group_for_org
 from clients.models import ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
@@ -14,7 +14,6 @@ from django.db import transaction
 from django.db.models import QuerySet
 from notes.groups import CASEWORKER
 from notes.models import Note, NoteDataImport, NoteImportRecord, ServiceRequest
-from organizations.models import Organization
 from notes.permissions import (
     NoteImportRecordPermissions,
     NotePermissions,
@@ -28,6 +27,7 @@ from notes.services import (
     service_request_delete,
 )
 from notes.utils import NoteReverter
+from organizations.models import Organization
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django import mutations
@@ -86,9 +86,8 @@ class Query:
         extensions=[HasPerm(NotePermissions.ADD)],
     )
     def caseworker_organizations(self, ordering: Optional[list[OrganizationOrder]] = None) -> QuerySet[Organization]:
-        return Organization.objects.filter(
-            permission_groups__template__name=CASEWORKER
-        )
+        qs: QuerySet[Organization] = Organization.objects.filter(permission_groups__template__name=CASEWORKER)
+        return qs
 
 
 @strawberry.type
@@ -103,11 +102,8 @@ class Mutation:
         """
         user = cast(User, get_current_user(info))
 
-        if data.organization_id:
-            organization = Organization.objects.get(id=data.organization_id)
-            permission_group = get_permission_group_for_org(user, organization)
-        else:
-            permission_group = get_user_permission_group(user)
+        organization = Organization.objects.get(id=data.organization_id) if data.organization_id else None
+        permission_group = get_permission_group_for_org(user, organization)
 
         location_dict = asdict(data.location) if data.location else None
         provided_list = [asdict(s) for s in data.provided_services] if data.provided_services else None
@@ -294,11 +290,8 @@ class Mutation:
         import_job = NoteDataImport.objects.get(id=data.import_job_id)
         user = cast(User, get_current_user(info))
 
-        if data.organization_id:
-            organization = Organization.objects.get(id=data.organization_id)
-            permission_group = get_permission_group_for_org(user, organization)
-        else:
-            permission_group = get_user_permission_group(user)
+        organization = Organization.objects.get(id=data.organization_id) if data.organization_id else None
+        permission_group = get_permission_group_for_org(user, organization)
         try:
             with transaction.atomic():
                 note = note_create(

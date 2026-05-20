@@ -452,6 +452,6 @@ def _send_shelter_welcome_email(*, user: User, organization: Organization) -> No
     text_body = render_to_string("account/messages/shelter_operator_welcome.txt", context)
     html_body = render_to_string("account/email/shelter_operator_welcome.html", context)
     subject = "Welcome to the Better Angels Shelter Operator Portal!"
-    msg = EmailMultiAlternatives(subject, text_body, settings.DEFAULT_FROM_EMAIL, [user.email])
+    msg = EmailMultiAlternatives(subject, text_body, settings.DEFAULT_FROM_EMAIL, [str(user.email)])
     msg.attach_alternative(html_body, "text/html")
     msg.send()

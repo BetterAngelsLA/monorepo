@@ -1,9 +1,13 @@
-from typing import Any, Dict, Iterable, cast
+from typing import TYPE_CHECKING, Any, Dict, Iterable, cast
 
 import strawberry
 import strawberry_django
 from accounts.types import CurrentUserType
-from accounts.utils import get_permission_group_for_org, get_user_permission_group
+from accounts.utils import get_permission_group_for_org
+
+if TYPE_CHECKING:
+    from accounts.models import User as UserType
+
 from betterangels_backend import settings
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
@@ -378,7 +382,7 @@ class Mutation:
         self, info: Info, data: CreateHmisNoteServiceRequestInput
     ) -> ServiceRequestType:
         with transaction.atomic():
-            user = get_current_user(info)
+            user = cast("UserType", get_current_user(info))
 
             service_request_data = asdict(data)
             organization_id = service_request_data.pop("organization_id", None)
@@ -386,13 +390,10 @@ class Mutation:
             hmis_note_id = str(service_request_data.pop("hmis_note_id"))
             hmis_note = HmisNote.objects.get(pk=hmis_note_id)
 
-            if organization_id:
-                from organizations.models import Organization
+            from organizations.models import Organization
 
-                organization = Organization.objects.get(id=organization_id)
-                permission_group = get_permission_group_for_org(user, organization)
-            else:
-                permission_group = get_user_permission_group(user)
+            organization = Organization.objects.get(id=organization_id) if organization_id else None
+            permission_group = get_permission_group_for_org(user, organization)
 
             service_args = get_service_args(service_request_data, permission_group.organization)
 

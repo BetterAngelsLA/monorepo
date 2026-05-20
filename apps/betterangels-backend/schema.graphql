@@ -161,10 +161,6 @@ enum AttachmentType {
   UNKNOWN
 }
 
-type AuthResponse {
-  status_code: String!
-}
-
 type AuthorizedPresignedS3UploadType {
   refId: String!
   url: String!
@@ -795,6 +791,12 @@ input CreateShelterInput {
   cityId: ID
   spaId: ID
 }
+
+input CreateShelterOrganizationInput {
+  organizationName: String!
+}
+
+union CreateShelterOrganizationPayload = OrganizationType | OperationInfo
 
 union CreateShelterPayload = ShelterType | OperationInfo
 
@@ -1441,11 +1443,6 @@ type LocationType {
   pointOfInterest: String
 }
 
-input LoginInput {
-  username: String!
-  password: String!
-}
-
 scalar LongitudeScalar
 
 input MapBoundsInput {
@@ -1488,7 +1485,6 @@ enum MedicalNeedChoices {
 
 type Mutation {
   logout: Boolean!
-  login(input: LoginInput!): AuthResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   updateUserProfile(data: UpdateUserProfileInput!): UpdateUserProfilePayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
@@ -1544,7 +1540,7 @@ type Mutation {
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
-  registerShelterOperator(data: RegisterShelterOperatorInput!): AuthResponse!
+  createShelterOrganization(data: CreateShelterOrganizationInput!): CreateShelterOrganizationPayload!
 }
 
 type NameCountType {
@@ -1930,13 +1926,6 @@ enum ReferralRequirementChoices {
 
 type ReferralRequirementType {
   name: ReferralRequirementChoices
-}
-
-input RegisterShelterOperatorInput {
-  email: String!
-  firstName: String!
-  lastName: String!
-  organizationName: String!
 }
 
 enum RelationshipTypeEnum {
@@ -2694,6 +2683,7 @@ enum UserOrganizationPermissions {
   CHANGE_ORG_MEMBER_ROLE
   REMOVE_ORG_MEMBER
   VIEW_ORG_MEMBERS
+  VIEW_REPORTS
 }
 
 type UserType {

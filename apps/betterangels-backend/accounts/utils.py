@@ -1,19 +1,16 @@
-import logging
 from functools import cached_property
-from typing import Union
+from typing import Optional
 
 import waffle
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from django.apps.registry import Apps
 from django.conf import settings
-from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
+from django.contrib.auth.models import Group
 from django.db import transaction
 from organizations.models import Organization
 
 from .models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
-
-logger = logging.getLogger(__name__)
 
 
 def remove_organization_permission_group(organization: Organization) -> None:
@@ -35,11 +32,11 @@ def _get_member_role_for_org(organization: Organization) -> str:
     # Find the first preset that matches one of the org's types
     for key in org_type_keys:
         if key in settings.ORG_TYPE_PRESETS:
-            return settings.ORG_TYPE_PRESETS[key]["member_role"]
+            return str(settings.ORG_TYPE_PRESETS[key]["member_role"])
 
     # Fallback: first preset
     first_preset = next(iter(settings.ORG_TYPE_PRESETS.values()))
-    return first_preset["member_role"]
+    return str(first_preset["member_role"])
 
 
 def _get_templates_for_org(organization: Organization) -> list[str]:
@@ -83,29 +80,46 @@ def remove_org_group_permissions_from_user(user: User, organization: Organizatio
     user.groups.remove(*groups)
 
 
-def get_permission_group_for_org(
-    user: Union[AbstractBaseUser, AnonymousUser], organization: Organization
-) -> PermissionGroup:
+def get_permission_group_for_org(user: User, organization: Optional[Organization] = None) -> PermissionGroup:
     """Return the user's member permission group for the given organization.
 
-    Derives the correct role from the organization's type preset configuration.
-    Validates that the user actually belongs to the group.
+    If *organization* is provided, derives the correct role from the org's type
+    preset configuration and validates that the user belongs to the group.
+
+    If *organization* is ``None``, falls back to the first organization where
+    the user has a member role.
     """
-    member_role = _get_member_role_for_org(organization)
+    if organization:
+        member_role = _get_member_role_for_org(organization)
+        permission_group = (
+            PermissionGroup.objects.select_related("organization", "group")
+            .filter(
+                organization=organization,
+                template__name=member_role,
+            )
+            .first()
+        )
+
+        if not (permission_group and permission_group.group):
+            raise PermissionError("Organization does not have the expected permission group")
+
+        if not hasattr(user, "groups") or not user.groups.filter(id=permission_group.group_id).exists():
+            raise PermissionError("User is not a member of this organization's permission group")
+
+        return permission_group
+
+    # TODO: Remove this fallback once all clients pass organization_id explicitly.
+    # This is unsafe for users in multiple orgs — it picks the first match which may
+    # assign object-level permissions to the wrong org's group.
     permission_group = (
         PermissionGroup.objects.select_related("organization", "group")
-        .filter(
-            organization=organization,
-            template__name=member_role,
-        )
+        .filter(organization__users=user.pk)
+        .exclude(template__name__in=[GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER])
         .first()
     )
 
     if not (permission_group and permission_group.group):
-        raise PermissionError("Organization does not have the expected permission group")
-
-    if not user.groups.filter(id=permission_group.group_id).exists():
-        raise PermissionError("User is not a member of this organization's permission group")
+        raise PermissionError("User lacks proper organization or permissions")
 
     return permission_group
 
@@ -126,32 +140,6 @@ def get_member_permission_group(organization_id: int) -> PermissionGroup:
 
     if not (permission_group and permission_group.group):
         raise PermissionError("Organization does not have a member permission group")
-
-    return permission_group
-
-
-def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> PermissionGroup:
-    """DEPRECATED: Legacy fallback for resolvers that don't yet receive organization_id.
-
-    Selects the first organization where the user has a member role.
-    Use get_permission_group_for_org() with an explicit organization instead.
-    """
-    logger.warning(
-        "get_user_permission_group() is deprecated. Pass organization_id explicitly.",
-        stacklevel=2,
-    )
-    # Find the first permission group for this user that is a member role (not admin/superuser)
-    permission_group = (
-        PermissionGroup.objects.select_related("organization", "group")
-        .filter(
-            organization__users=user.pk,
-        )
-        .exclude(template__name__in=[GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER])
-        .first()
-    )
-
-    if not (permission_group and permission_group.group):
-        raise PermissionError("User lacks proper organization or permissions")
 
     return permission_group
 

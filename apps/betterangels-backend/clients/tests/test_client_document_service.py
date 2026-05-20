@@ -182,7 +182,7 @@ class ResolveUploadTest(TestCase):
         return doc
 
     @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.get_permission_group_for_org")
     @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
     def test_creates_attachment(
@@ -208,7 +208,7 @@ class ResolveUploadTest(TestCase):
         self.assertEqual(attachment.uploaded_by, self.user)
 
     @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.get_permission_group_for_org")
     @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
     def test_creates_multiple_attachments(
@@ -229,7 +229,7 @@ class ResolveUploadTest(TestCase):
         self.assertEqual(result[1].file.name, "attachments/b.png")
 
     @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.get_permission_group_for_org")
     @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
     def test_validates_each_token(
@@ -260,7 +260,7 @@ class ResolveUploadTest(TestCase):
         )
 
     @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.get_permission_group_for_org")
     @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
     def test_assigns_permissions_per_attachment(
@@ -282,7 +282,7 @@ class ResolveUploadTest(TestCase):
         )
 
     @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.get_permission_group_for_org")
     @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
     def test_rejects_invalid_content_type(
@@ -299,7 +299,7 @@ class ResolveUploadTest(TestCase):
             )
 
     @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.get_permission_group_for_org")
     @patch("clients.services.client_document.validate_upload_token", return_value=False)
     def test_raises_on_invalid_token(
         self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
@@ -315,7 +315,7 @@ class ResolveUploadTest(TestCase):
             )
 
     @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.get_permission_group_for_org")
     @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
     def test_strips_storage_dir_prefix(
@@ -333,7 +333,7 @@ class ResolveUploadTest(TestCase):
         self.assertEqual(result[0].file.name, "some_path/file.txt")
 
     @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.get_permission_group_for_org")
     @patch("clients.services.client_document.validate_upload_token", return_value=False)
     def test_does_not_create_attachment_on_invalid_token(
         self, mock_validate: MagicMock, mock_perm_group: MagicMock, mock_assign: MagicMock
@@ -352,7 +352,7 @@ class ResolveUploadTest(TestCase):
         self.assertEqual(Attachment.objects.count(), initial_count)
 
     @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.get_permission_group_for_org")
     @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token")
     def test_no_attachments_created_when_batch_validation_fails(
@@ -375,7 +375,7 @@ class ResolveUploadTest(TestCase):
         self.assertEqual(Attachment.objects.count(), initial_count)
 
     @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.get_permission_group_for_org")
     @patch("clients.services.client_document.s3_key_exists", return_value=True)
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
     def test_save_error_on_second_doc_rolls_back_first(
@@ -411,7 +411,7 @@ class ResolveUploadTest(TestCase):
         self.assertEqual(Attachment.objects.count(), initial_count)
 
     @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.get_user_permission_group")
+    @patch("clients.services.client_document.get_permission_group_for_org")
     @patch("clients.services.client_document.s3_key_exists", return_value=False)
     @patch("clients.services.client_document.validate_upload_token", return_value=True)
     def test_raises_when_file_not_in_s3(

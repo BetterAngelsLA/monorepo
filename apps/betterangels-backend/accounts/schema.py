@@ -24,9 +24,7 @@ from strawberry_django.permissions import HasPerm
 
 from .models import PermissionGroup, User
 from .types import (
-    AuthResponse,
     CurrentUserType,
-    LoginInput,
     OrganizationMemberFilter,
     OrganizationMemberOrdering,
     OrganizationMemberType,
@@ -133,11 +131,6 @@ class Mutation:
         auth.logout(info.context.request)
         return ret
 
-    @strawberry.mutation
-    def login(self, input: LoginInput) -> AuthResponse:
-        # The is a stub and logic is handled client-side by Apollo
-        return AuthResponse(status_code="")
-
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_current_user(self, info: Info, data: UpdateUserInput) -> Union[UserType, CurrentUserType]:
         user = cast(User, get_current_user(info))
@@ -198,7 +191,7 @@ class Mutation:
             first_name=data.first_name,
             last_name=data.last_name,
             middle_name=data.middle_name,
-            invited_by=current_user,
+            invited_by=cast(User, current_user),
         )
 
         return cast(OrganizationMemberType, user)

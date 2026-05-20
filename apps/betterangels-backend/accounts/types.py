@@ -16,25 +16,6 @@ from strawberry_django.auth.utils import get_current_user
 from .models import User
 
 
-@strawberry.input
-class AuthInput:
-    code: Optional[str] = strawberry.field(name="code")
-    code_verifier: Optional[str] = strawberry.field(name="code_verifier")
-    id_token: Optional[str] = strawberry.field(name="id_token")
-    redirect_uri: Optional[str] = strawberry.field(name="redirect_uri")
-
-
-@strawberry.type
-class AuthResponse:
-    status_code: str = strawberry.field(name="status_code")
-
-
-@strawberry.input
-class LoginInput:
-    username: str
-    password: str
-
-
 @strawberry_django.order_type(Organization, one_of=False)
 class OrganizationOrder:
     name: auto

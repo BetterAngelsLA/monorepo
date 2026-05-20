@@ -1,7 +1,7 @@
 from typing import Iterable, Optional
 
 from accounts.models import User
-from accounts.utils import get_permission_group_for_org, get_user_permission_group
+from accounts.utils import get_permission_group_for_org
 from clients.models import ClientProfile
 from clients.types import ClientDocumentFromUploadsInput, ClientDocumentUploadsInputItem
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
@@ -17,8 +17,8 @@ from common.services.s3 import (
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from common.services.upload_token import create_upload_token, validate_upload_token
 from django.contrib.contenttypes.models import ContentType
-from organizations.models import Organization
 from django.db import transaction
+from organizations.models import Organization
 
 UPLOAD_PATH = "attachments"
 SERVICE_NAME = "client_document"
@@ -82,10 +82,7 @@ def resolve_upload(
     documents: Iterable[ClientDocumentFromUploadsInput],
     organization: Optional[Organization] = None,
 ) -> list[Attachment]:
-    if organization:
-        permission_group = get_permission_group_for_org(user, organization)
-    else:
-        permission_group = get_user_permission_group(user)
+    permission_group = get_permission_group_for_org(user, organization)
     content_type = ContentType.objects.get_for_model(ClientProfile)
 
     # Validate the entire batch before any DB writes.

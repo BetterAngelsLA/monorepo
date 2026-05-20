@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from accounts.org_types import get_invite_templates_for_role
 from django.contrib.auth.models import AbstractBaseUser
@@ -59,7 +59,7 @@ class CustomInvitations(InvitationBackend):
         context = {
             "invitee_email": user.email,
             "organization_name": organization.name if organization else "",
-            "invited_by_name": sender.full_name if sender else "",
+            "invited_by_name": cast(User, sender).full_name if sender else "",
             "accept_url": accept_url,
             **demo_email_context(user.email),
             **kwargs,

@@ -18,11 +18,8 @@ const parseUser = (
     return undefined;
   }
   const userOrganization = user.organizations?.[0];
-  if (!userOrganization) {
-    return undefined;
-  }
 
-  const userPermissions = userOrganization.userPermissions ?? [];
+  const userPermissions = userOrganization?.userPermissions ?? [];
   const permissionMap: Record<UserOrganizationPermissions, string> = {
     [UserOrganizationPermissions.AccessOrgPortal]: 'canAccessOrgPortal',
     [UserOrganizationPermissions.AddOrgMember]: 'canAddOrgMember',

@@ -3,7 +3,7 @@ from typing import Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.types import AuthResponse
+from accounts.types import OrganizationType
 from common.permissions.utils import IsAuthenticated
 from django.db.models import Max
 from shelters.enums import StatusChoices
@@ -89,12 +89,12 @@ class Mutation:
         return cast(RoomType, room_create(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def create_shelter_organization(self, info: Info, data: CreateShelterOrganizationInput) -> AuthResponse:
+    def create_shelter_organization(self, info: Info, data: CreateShelterOrganizationInput) -> OrganizationType:
         """Create a new shelter organization and assign the current user as owner."""
         user = cast(User, get_current_user(info))
-        shelter_organization_create(
+        organization = shelter_organization_create(
             user=user,
             organization_name=data.organization_name,
         )
 
-        return AuthResponse(status_code="200")
+        return cast(OrganizationType, organization)
