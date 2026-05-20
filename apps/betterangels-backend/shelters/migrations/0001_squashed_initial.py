@@ -231,14 +231,14 @@ def seed_cities(apps, schema_editor):
     from shelters.deprecated.deprecated_enums import CityChoices
 
     for choice in CityChoices:
-        City.objects.get_or_create(name=choice.value)
+        City.objects.get_or_create(name=choice.label)
 
 
 def unseed_cities(apps, schema_editor):
     City = apps.get_model("shelters", "City")
     from shelters.deprecated.deprecated_enums import CityChoices
 
-    City.objects.filter(name__in=[choice.value for choice in CityChoices]).delete()
+    City.objects.filter(name__in=[choice.label for choice in CityChoices]).delete()
 
 
 # ---------------------------------------------------------------------------
