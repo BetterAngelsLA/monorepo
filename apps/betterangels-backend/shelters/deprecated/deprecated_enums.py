@@ -40,6 +40,17 @@ class SleepingChoices(models.TextChoices):
     SINGLE_ROOM = "single_room", _("Single Room")
 
 
+class SPAChoices(models.IntegerChoices):
+    ONE = 1, _("1 - Antelope Valley")
+    TWO = 2, _("2 - San Fernando")
+    THREE = 3, _("3 - San Gabriel")
+    FOUR = 4, _("4 - Metro")
+    FIVE = 5, _("5 - West")
+    SIX = 6, _("6 - South")
+    SEVEN = 7, _("7 - East")
+    EIGHT = 8, _("8 - South Bay/Harbor")
+
+
 class CityChoices(models.TextChoices):
     """DEPRECATED: Kept only for historical migrations. City is now a user-editable string field."""
 

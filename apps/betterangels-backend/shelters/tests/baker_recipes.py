@@ -23,7 +23,6 @@ from shelters.enums import (
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import (
     ShelterProgramChoices,
-    SPAChoices,
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
@@ -111,10 +110,17 @@ def get_or_create_city() -> City:
     return city
 
 
-def get_or_create_spa() -> SPA:
-    """Return a random ``City`` reusing existing rows to respect the unique-name constraint."""
-    spa, _ = SPA.objects.get_or_create(name=random.choice(list(SPAChoices)))
-    return spa
+def get_random_spa() -> SPA:
+    """Return a random SPA."""
+    return random.choice(list(SPA.objects.all()))
+
+
+def make_spas() -> list[SPA]:
+    all_spas = list(SPA.objects.all())
+    if not all_spas:
+        return []
+    quantity = random.randint(1, min(len(all_spas), 5))
+    return random.sample(all_spas, quantity)
 
 
 def make_services() -> list[Service]:
@@ -179,8 +185,8 @@ shelter_recipe = Recipe(
     services=make_services,
     shelter_programs=related_m2m_unique(ShelterProgram, ShelterProgramChoices, min_quantity=1),
     shelter_types=related_m2m_unique(ShelterType, ShelterTypeChoices, min_quantity=1),
-    spa=get_or_create_spa,
-    spas_served=related_m2m_unique(SPA, SPAChoices, min_quantity=1),
+    spa=get_random_spa,
+    spas_served=make_spas,
     special_situation_restrictions=related_m2m_unique(
         SpecialSituationRestriction, SpecialSituationRestrictionChoices, min_quantity=1
     ),

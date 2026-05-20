@@ -14,16 +14,13 @@ import type {
   ScheduleTypeChoices,
   ShelterChoices,
   ShelterProgramChoices,
-  SpaChoices,
+  SpaType,
   SpecialSituationRestrictionChoices,
   StatusChoices,
   StorageChoices,
   VaccinationRequirementChoices,
 } from '@monorepo/react/shelter';
 
-export type SpaFormValue = { id: string; name?: SpaChoices | null };
-
-// ---------------------------------------------------------------------------
 // Structured sub-types (replace comma-delimited strings)
 // ---------------------------------------------------------------------------
 
@@ -112,7 +109,7 @@ export interface ShelterFormData {
 
   // Ecosystem Information
   city: CityType | null;
-  spa: SpaFormValue | null;
+  spa: SpaType | null;
   cityCouncilDistrict: number | null;
   supervisorialDistrict: number | null;
   shelterPrograms: ShelterProgramChoices[];

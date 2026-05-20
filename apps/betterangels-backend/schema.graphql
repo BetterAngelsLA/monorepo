@@ -789,8 +789,8 @@ input CreateShelterInput {
   supervisorialDistrict: Int = null
   overallRating: Int = null
   isPrivate: Boolean
-  cityId: ID = null
-  spaId: ID = null
+  cityId: ID
+  spaId: ID
 }
 
 union CreateShelterPayload = ShelterType | OperationInfo
@@ -2059,20 +2059,10 @@ type RoomTypeOffsetPaginated {
   results: [RoomType!]!
 }
 
-enum SPAChoices {
-  ONE
-  TWO
-  THREE
-  FOUR
-  FIVE
-  SIX
-  SEVEN
-  EIGHT
-}
-
 type SPAType {
   id: ID!
-  name: SPAChoices
+  shortName: String
+  name: String!
 }
 
 type SPATypeOffsetPaginated {

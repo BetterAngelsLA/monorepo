@@ -41,6 +41,7 @@ query ViewSheltersByOrganization(
         name
       }
       spa {
+        id
         name
       }
     }

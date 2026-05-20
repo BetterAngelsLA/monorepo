@@ -58,7 +58,7 @@ SHELTER_FIELDS = """
     }
     shelterPrograms {name}
     shelterTypes {name}
-    spa {name}
+    spa { id name shortName}
     specialSituationRestrictions {name}
     storage {name}
     additionalContacts {
