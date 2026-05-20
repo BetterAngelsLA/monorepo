@@ -29,8 +29,10 @@ def shelter_list(
     Caseworker group template), private shelters are included.  Otherwise only
     public (``is_private=False``) shelters are returned.
     """
+    from shelters.models import Shelter
+
     queryset = queryset.filter(status=StatusChoices.APPROVED)
-    if user and user.is_authenticated and hasattr(user, "has_perm") and user.has_perm("shelters.view_private_shelter"):
+    if user and user.is_authenticated and hasattr(user, "has_perm") and user.has_perm(Shelter.perms.VIEW_PRIVATE):
         return queryset
     return queryset.filter(is_private=False)
 
