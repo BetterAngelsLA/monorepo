@@ -718,6 +718,14 @@ input CreateProfileDataImportInput {
   notes: String
 }
 
+input CreateReferralInput {
+  clientProfile: ID!
+  shelter: ID!
+  notes: String
+}
+
+union CreateReferralPayload = ReferralType | OperationInfo
+
 input CreateRoomInput {
   shelterId: ID!
   roomIdentifier: String!
@@ -870,6 +878,8 @@ union DeleteHmisNotePayload = DeletedObjectType | OperationInfo
 union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
 
 union DeleteNotePayload = NoteType | OperationInfo
+
+union DeleteReferralPayload = DeletedObjectType | OperationInfo
 
 union DeleteServiceRequestPayload = DeletedObjectType | OperationInfo
 
@@ -1540,6 +1550,9 @@ type Mutation {
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
+  createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
+  updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
+  deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
 }
 
 type NameCountType {
@@ -1903,6 +1916,8 @@ type Query {
   shelterCities(pagination: OffsetPaginationInput): CityTypeOffsetPaginated!
   shelterSpas(pagination: OffsetPaginationInput): SPATypeOffsetPaginated!
   shelterMaxStay: Int
+  referral(pk: ID!): ReferralType! @hasRetvalPerm(permissions: [{app: "referrals", permission: "view_referral"}], any: true)
+  referrals(filters: ReferralFilter, ordering: [ReferralOrder!]! = [], pagination: OffsetPaginationInput): ReferralTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "referrals", permission: "view_referral"}], any: true)
 }
 
 enum RaceEnum {
@@ -1915,6 +1930,23 @@ enum RaceEnum {
   OTHER
 }
 
+input ReferralFilter {
+  clientProfile: ID
+  createdBy: ID
+  status: ReferralStatusEnum
+  AND: ReferralFilter
+  OR: ReferralFilter
+  NOT: ReferralFilter
+  DISTINCT: Boolean
+}
+
+input ReferralOrder {
+  id: Ordering
+  createdAt: Ordering
+  updatedAt: Ordering
+  status: Ordering
+}
+
 enum ReferralRequirementChoices {
   REFERRAL_MATCHED
   REFERRAL_NONMATCHED
@@ -1925,6 +1957,33 @@ enum ReferralRequirementChoices {
 
 type ReferralRequirementType {
   name: ReferralRequirementChoices
+}
+
+enum ReferralStatusEnum {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+type ReferralType {
+  id: ID!
+  clientProfile: ClientProfileType
+  shelter: DjangoModelType
+  createdAt: DateTime!
+  createdBy: UserType
+  status: ReferralStatusEnum
+  notes: String
+  updatedAt: DateTime!
+}
+
+type ReferralTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [ReferralType!]!
 }
 
 enum RelationshipTypeEnum {
@@ -2652,6 +2711,14 @@ input UpdateNoteLocationInput {
 union UpdateNoteLocationPayload = NoteType | OperationInfo
 
 union UpdateNotePayload = NoteType | OperationInfo
+
+input UpdateReferralInput {
+  id: ID!
+  status: ReferralStatusEnum
+  notes: String
+}
+
+union UpdateReferralPayload = ReferralType | OperationInfo
 
 union UpdateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
