@@ -13,10 +13,9 @@ from accounts.services import (
 from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.contrib import auth
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
-from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers

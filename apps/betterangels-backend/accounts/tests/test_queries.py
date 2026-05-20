@@ -3,7 +3,6 @@ from unittest.mock import ANY, patch
 
 import time_machine
 from accounts.enums import OrgRoleEnum
-from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from accounts.permissions import UserOrganizationPermissions
 from accounts.utils import OrgPermissionManager
@@ -265,9 +264,7 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
 
         caseworker_orgs = response["data"]["caseworkerOrganizations"]["results"]
         expected_caseworker_org_ids = list(
-            Organization.objects.filter(permission_groups__template__name=CASEWORKER).values_list(
-                "id", flat=True
-            )
+            Organization.objects.filter(permission_groups__template__name=CASEWORKER).values_list("id", flat=True)
         )
         actual_caseworker_org_ids = [int(org["id"]) for org in caseworker_orgs]
 

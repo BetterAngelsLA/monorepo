@@ -1,7 +1,6 @@
 from unittest.mock import ANY, patch
 
 from accounts.enums import OrgRoleEnum
-from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from accounts.tests.utils import CurrentUserGraphQLBaseTestCase
 from accounts.utils import OrgPermissionManager
