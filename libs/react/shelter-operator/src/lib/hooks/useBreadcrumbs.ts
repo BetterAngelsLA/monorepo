@@ -1,14 +1,15 @@
 import { useQuery } from '@apollo/client/react';
-import { reservationPathSegment, useUser } from '@monorepo/react/shelter';
+import { useUser } from '@monorepo/react/shelter';
 import { useLocation, useParams } from 'react-router-dom';
 import { GetShelterNameDocument } from '../graphql/__generated__/shelters.generated';
+import { paths } from '../routing';
 
 export function useBreadcrumbs(): string[] {
   const location = useLocation();
-  const params = useParams<{ id?: string; shelterId?: string }>();
+  const params = useParams<{ shelterId?: string }>();
   const { user } = useUser();
 
-  const shelterId = params.shelterId || params.id;
+  const shelterId = params.shelterId;
   const isShelterPage =
     !!shelterId && location.pathname.includes(`/shelter/${shelterId}`);
 
@@ -17,9 +18,7 @@ export function useBreadcrumbs(): string[] {
     skip: !isShelterPage || !shelterId,
   });
 
-  const isReservationPage = location.pathname.includes(
-    `/${reservationPathSegment}`
-  );
+  const isReservationPage = location.pathname.includes(paths.reservation);
 
   const organizationName = user?.organization?.name;
   const shelterName = shelterData?.shelter?.name;
