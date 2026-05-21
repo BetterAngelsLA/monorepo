@@ -3,7 +3,8 @@ import { ReactNode, useEffect, useState } from 'react';
 import { SidebarContent } from './SidebarContent';
 import { SidebarHeader } from './SidebarHeader';
 import { SidebarLink } from './SidebarLink';
-import { SidebarToggleBtn } from './SidebarToggleBtn';
+import { SidebarNestedLinks } from './SidebarNestedLinks';
+import { SidebarToggleBtn } from './shared/SidebarToggleBtn';
 
 type TProps = {
   children?: ReactNode;
@@ -73,3 +74,4 @@ export function Sidebar(props: TProps) {
 Sidebar.Header = SidebarHeader;
 Sidebar.Content = SidebarContent;
 Sidebar.Link = SidebarLink;
+Sidebar.NestedLinks = SidebarNestedLinks;
