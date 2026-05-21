@@ -7,11 +7,11 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "betterangels_backend.settings")
 django.setup()
 
-from notes.groups import CASEWORKER
 from common.models import Attachment
 from django.contrib.auth.models import Group
 from django.db import transaction
 from guardian.shortcuts import assign_perm
+from notes.groups import CASEWORKER
 from organizations.models import Organization
 
 ORG_NAME = "SELAH Neighborhood Coalition"

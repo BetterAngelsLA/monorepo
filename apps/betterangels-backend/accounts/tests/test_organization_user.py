@@ -33,9 +33,7 @@ class OrganizationUserTestCase(TestCase):
             user=self.user,
             organization=self.organization1,
         )
-        self.assertTrue(
-            self.user.groups.filter(name=f"{self.organization1.name}_{CASEWORKER}").exists()
-        )
+        self.assertTrue(self.user.groups.filter(name=f"{self.organization1.name}_{CASEWORKER}").exists())
 
     def test_user_with_multiple_organizations_retains_access(self) -> None:
         baker.make(
@@ -51,9 +49,5 @@ class OrganizationUserTestCase(TestCase):
 
         self.user.organizations_organizationuser.get(organization=self.organization1).delete()
 
-        self.assertFalse(
-            self.user.groups.filter(name=f"{self.organization1.name}_{CASEWORKER}").exists()
-        )
-        self.assertTrue(
-            self.user.groups.filter(name=f"{self.organization2.name}_{CASEWORKER}").exists()
-        )
+        self.assertFalse(self.user.groups.filter(name=f"{self.organization1.name}_{CASEWORKER}").exists())
+        self.assertTrue(self.user.groups.filter(name=f"{self.organization2.name}_{CASEWORKER}").exists())

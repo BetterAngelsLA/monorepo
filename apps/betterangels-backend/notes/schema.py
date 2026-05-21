@@ -14,7 +14,6 @@ from django.db import transaction
 from django.db.models import QuerySet
 from notes.groups import CASEWORKER
 from notes.models import Note, NoteDataImport, NoteImportRecord, ServiceRequest
-from organizations.models import Organization
 from notes.permissions import (
     NoteImportRecordPermissions,
     NotePermissions,
@@ -28,6 +27,7 @@ from notes.services import (
     service_request_delete,
 )
 from notes.utils import NoteReverter
+from organizations.models import Organization
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django import mutations
@@ -86,9 +86,7 @@ class Query:
         extensions=[HasPerm(NotePermissions.ADD)],
     )
     def caseworker_organizations(self, ordering: Optional[list[OrganizationOrder]] = None) -> QuerySet[Organization]:
-        return Organization.objects.filter(
-            permission_groups__template__name=CASEWORKER
-        )
+        return Organization.objects.filter(permission_groups__template__name=CASEWORKER)
 
 
 @strawberry.type

@@ -17,8 +17,8 @@ from common.services.s3 import (
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from common.services.upload_token import create_upload_token, validate_upload_token
 from django.contrib.contenttypes.models import ContentType
-from organizations.models import Organization
 from django.db import transaction
+from organizations.models import Organization
 
 UPLOAD_PATH = "attachments"
 SERVICE_NAME = "client_document"
