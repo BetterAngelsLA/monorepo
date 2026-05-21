@@ -165,11 +165,6 @@ export enum AttachmentType {
   Video = 'VIDEO'
 }
 
-export type AuthResponse = {
-  __typename?: 'AuthResponse';
-  status_code: Scalars['String']['output'];
-};
-
 export type AuthorizedPresignedS3UploadType = {
   __typename?: 'AuthorizedPresignedS3UploadType';
   fields: Scalars['JSON']['output'];
@@ -1472,11 +1467,6 @@ export type LocationType = {
   pointOfInterest?: Maybe<Scalars['String']['output']>;
 };
 
-export type LoginInput = {
-  password: Scalars['String']['input'];
-  username: Scalars['String']['input'];
-};
-
 export type MapBoundsInput = {
   eastLng: Scalars['LongitudeScalar']['input'];
   northLat: Scalars['LatitudeScalar']['input'];
@@ -1554,7 +1544,6 @@ export type Mutation = {
   hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
-  login: AuthResponse;
   logout: Scalars['Boolean']['output'];
   removeHmisNoteServiceRequest: RemoveHmisNoteServiceRequestPayload;
   removeOrganizationMember: RemoveOrganizationMemberPayload;
@@ -1753,11 +1742,6 @@ export type MutationImportClientProfileArgs = {
 
 export type MutationImportNoteArgs = {
   data: ImportNoteInput;
-};
-
-
-export type MutationLoginArgs = {
-  input: LoginInput;
 };
 
 
@@ -3257,7 +3241,8 @@ export enum UserOrganizationPermissions {
   AddOrgMember = 'ADD_ORG_MEMBER',
   ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
   RemoveOrgMember = 'REMOVE_ORG_MEMBER',
-  ViewOrgMembers = 'VIEW_ORG_MEMBERS'
+  ViewOrgMembers = 'VIEW_ORG_MEMBERS',
+  ViewReports = 'VIEW_REPORTS'
 }
 
 export type UserType = {
