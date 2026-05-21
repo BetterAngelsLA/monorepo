@@ -195,16 +195,6 @@ shelter_recipe = Recipe(
     referral_requirement=related_m2m_unique(ReferralRequirement, ReferralRequirementChoices, min_quantity=1),
 )
 
-
-shelter_availability_recipe = Recipe(
-    ShelterAvailability,
-    shelter=foreign_key(shelter_recipe),
-    non_restricted_beds=lambda: random.randint(0, 50),
-    restricted_beds=lambda: random.randint(0, 20),
-    restriction_notes=seq("restriction note "),  # type: ignore
-)
-
-
 # Fields that have corresponding ``<field>_other`` char fields.
 FIELDS_WITH_OTHER = [
     "demographics",
