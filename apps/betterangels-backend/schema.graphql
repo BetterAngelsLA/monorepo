@@ -796,6 +796,12 @@ input CreateShelterInput {
   spaId: ID
 }
 
+input CreateShelterOrganizationInput {
+  organizationName: String!
+}
+
+union CreateShelterOrganizationPayload = OrganizationType | OperationInfo
+
 union CreateShelterPayload = ShelterType | OperationInfo
 
 union CreateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
@@ -1544,7 +1550,7 @@ type Mutation {
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
-  registerShelterOperator(data: RegisterShelterOperatorInput!): AuthResponse!
+  createShelterOrganization(data: CreateShelterOrganizationInput!): CreateShelterOrganizationPayload!
 }
 
 type NameCountType {
@@ -1930,13 +1936,6 @@ enum ReferralRequirementChoices {
 
 type ReferralRequirementType {
   name: ReferralRequirementChoices
-}
-
-input RegisterShelterOperatorInput {
-  email: String!
-  firstName: String!
-  lastName: String!
-  organizationName: String!
 }
 
 enum RelationshipTypeEnum {

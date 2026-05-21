@@ -807,6 +807,12 @@ export type CreateShelterInput = {
   website?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CreateShelterOrganizationInput = {
+  organizationName: Scalars['String']['input'];
+};
+
+export type CreateShelterOrganizationPayload = OperationInfo | OrganizationType;
+
 export type CreateShelterPayload = OperationInfo | ShelterType;
 
 export type CreateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
@@ -1529,6 +1535,7 @@ export type Mutation = {
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
   createRoom: CreateRoomPayload;
   createShelter: CreateShelterPayload;
+  createShelterOrganization: CreateShelterOrganizationPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
   createTask: CreateTaskPayload;
   deleteClientContact: DeleteClientContactPayload;
@@ -1549,7 +1556,6 @@ export type Mutation = {
   importNote: ImportNotePayload;
   login: AuthResponse;
   logout: Scalars['Boolean']['output'];
-  registerShelterOperator: AuthResponse;
   removeHmisNoteServiceRequest: RemoveHmisNoteServiceRequestPayload;
   removeOrganizationMember: RemoveOrganizationMemberPayload;
   resolveClientDocumentUploads: ResolveClientDocumentUploadsPayload;
@@ -1659,6 +1665,11 @@ export type MutationCreateShelterArgs = {
 };
 
 
+export type MutationCreateShelterOrganizationArgs = {
+  data: CreateShelterOrganizationInput;
+};
+
+
 export type MutationCreateSocialMediaProfileArgs = {
   data: SocialMediaProfileInput;
 };
@@ -1747,11 +1758,6 @@ export type MutationImportNoteArgs = {
 
 export type MutationLoginArgs = {
   input: LoginInput;
-};
-
-
-export type MutationRegisterShelterOperatorArgs = {
-  data: RegisterShelterOperatorInput;
 };
 
 
@@ -2478,13 +2484,6 @@ export enum ReferralRequirementChoices {
 export type ReferralRequirementType = {
   __typename?: 'ReferralRequirementType';
   name?: Maybe<ReferralRequirementChoices>;
-};
-
-export type RegisterShelterOperatorInput = {
-  email: Scalars['String']['input'];
-  firstName: Scalars['String']['input'];
-  lastName: Scalars['String']['input'];
-  organizationName: Scalars['String']['input'];
 };
 
 export enum RelationshipTypeEnum {
