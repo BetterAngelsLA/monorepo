@@ -5,6 +5,7 @@ export function SignInRoute() {
     <SignIn
       onSuccessRedirect={shelterHomePath}
       description="Sign in with your Better Angels account to access privately shared shelters."
+      allowSignUp
     />
   );
 }

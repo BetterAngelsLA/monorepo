@@ -21,9 +21,11 @@ interface UseAllauthLoginReturn {
   sendingCode: boolean;
   confirmingCode: boolean;
   loggingIn: boolean;
+  resending: boolean;
   handleSendCode: (email: string) => Promise<void>;
   handleConfirmCode: (code: string) => Promise<void>;
   handlePasswordLogin: (email: string, password: string) => Promise<void>;
+  handleResendCode: () => Promise<void>;
   resetStep: () => void;
   clearError: () => void;
 }
@@ -58,6 +60,7 @@ export function useAllauthLogin({
   const [sendingCode, setSendingCode] = useState(false);
   const [confirmingCode, setConfirmingCode] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const loading = sendingCode || confirmingCode || loggingIn;
 
@@ -182,6 +185,30 @@ export function useAllauthLogin({
     [fetchClient, onLoginSuccess]
   );
 
+  const handleResendCode = useCallback(async () => {
+    setResending(true);
+    setErrorMsg('');
+
+    try {
+      const res = await fetchClient('/_allauth/browser/v1/auth/code/resend', {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          setErrorMsg('Too many requests. Please wait before trying again.');
+        } else {
+          setErrorMsg('Unable to resend code. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Resend code error:', error);
+      setErrorMsg('Network error. Please try again.');
+    } finally {
+      setResending(false);
+    }
+  }, [fetchClient]);
+
   return {
     step,
     errorMsg,
@@ -189,9 +216,11 @@ export function useAllauthLogin({
     sendingCode,
     confirmingCode,
     loggingIn,
+    resending,
     handleSendCode,
     handleConfirmCode,
     handlePasswordLogin,
+    handleResendCode,
     resetStep,
     clearError,
   };

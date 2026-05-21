@@ -12,12 +12,14 @@ interface UseAllauthSignupReturn {
   step: SignupStep;
   errorMsg: string;
   loading: boolean;
+  resending: boolean;
   handleSignup: (data: {
     email: string;
     firstName: string;
     lastName: string;
   }) => Promise<void>;
   handleConfirmCode: (code: string) => Promise<void>;
+  handleResendCode: () => Promise<void>;
   resetStep: () => void;
   clearError: () => void;
 }
@@ -27,8 +29,8 @@ interface UseAllauthSignupReturn {
  *
  * Flow:
  * 1. User submits email + first_name + last_name → POST /_allauth/browser/v1/auth/signup
- * 2. Backend creates user, sends OTP code
- * 3. User confirms OTP → POST /_allauth/browser/v1/auth/code/confirm
+ * 2. Backend creates user, sends verification code via email
+ * 3. User confirms code → POST /_allauth/browser/v1/auth/email/verify
  * 4. User is authenticated
  */
 export function useAllauthSignup({
@@ -38,6 +40,7 @@ export function useAllauthSignup({
   const [step, setStep] = useState<SignupStep>('form');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const clearError = useCallback(() => setErrorMsg(''), []);
   const resetStep = useCallback(() => {
@@ -60,14 +63,30 @@ export function useAllauthSignup({
           }),
         });
 
-        if (res.ok || res.status === 401) {
+        if (res.ok) {
+          // 200 means already authenticated (e.g. verification not required)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let body: any;
+          try {
+            body = await res.json();
+          } catch {
+            // fall through
+          }
+          if (body?.meta?.is_authenticated) {
+            await onSignupSuccess();
+          } else {
+            setStep('otp');
+          }
+        } else if (res.status === 401) {
           // 401 means "pending verification" — code was sent
           setStep('otp');
+        } else if (res.status === 409) {
+          // 409 means already logged in — treat as success
+          await onSignupSuccess();
         } else {
           let msg = 'Unable to create account. Please try again.';
           try {
             const body = await res.json();
-            // allauth returns errors in body.form.errors or body.errors
             const formErrors = body?.form?.errors;
             const fieldErrors = body?.form?.fields;
             if (formErrors?.length) {
@@ -91,7 +110,7 @@ export function useAllauthSignup({
         setLoading(false);
       }
     },
-    [fetchClient]
+    [fetchClient, onSignupSuccess]
   );
 
   const handleConfirmCode = useCallback(
@@ -101,10 +120,10 @@ export function useAllauthSignup({
 
       try {
         const res = await fetchClient(
-          '/_allauth/browser/v1/auth/code/confirm',
+          '/_allauth/browser/v1/auth/email/verify',
           {
             method: 'POST',
-            body: JSON.stringify({ code: code.trim() }),
+            body: JSON.stringify({ key: code.trim() }),
           }
         );
 
@@ -119,6 +138,10 @@ export function useAllauthSignup({
 
         if ((res.ok && data?.meta?.is_authenticated) || res.status === 409) {
           await onSignupSuccess();
+        } else if (res.status === 401 && !data?.meta?.is_authenticated) {
+          // Email verified but not yet authenticated (e.g. LOGIN_ON_EMAIL_CONFIRMATION=False)
+          // Still consider this a success — the verification worked
+          await onSignupSuccess();
         } else {
           setErrorMsg('Invalid code. Please try again.');
         }
@@ -132,12 +155,39 @@ export function useAllauthSignup({
     [fetchClient, onSignupSuccess]
   );
 
+  const handleResendCode = useCallback(async () => {
+    setResending(true);
+    setErrorMsg('');
+
+    try {
+      const res = await fetchClient(
+        '/_allauth/browser/v1/auth/email/verify/resend',
+        { method: 'POST' }
+      );
+
+      if (!res.ok && res.status !== 200) {
+        if (res.status === 429) {
+          setErrorMsg('Too many requests. Please wait before trying again.');
+        } else {
+          setErrorMsg('Unable to resend code. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Resend code error:', error);
+      setErrorMsg('Network error. Please try again.');
+    } finally {
+      setResending(false);
+    }
+  }, [fetchClient]);
+
   return {
     step,
     errorMsg,
     loading,
+    resending,
     handleSignup,
     handleConfirmCode,
+    handleResendCode,
     resetStep,
     clearError,
   };

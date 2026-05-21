@@ -1,7 +1,15 @@
-import { Input, Regex, useAllauthLogin } from '@monorepo/react/shared';
-import { useState } from 'react';
+import {
+  Regex,
+  useAllauthLogin,
+  useAllauthSignup,
+} from '@monorepo/react/shared';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApiConfig, useUser } from '../../providers';
+import { AuthForm } from './AuthForm';
+import { LegalFooter } from './LegalFooter';
+import { ModeToggle } from './ModeToggle';
+import { OtpForm } from './OtpForm';
 import './SignIn.css';
 
 export interface SignInProps {
@@ -9,137 +17,148 @@ export interface SignInProps {
   onSuccessRedirect: string;
   /** Welcome message description */
   description: string;
+  /** Allow toggling to a sign-up form. Defaults to false. */
+  allowSignUp?: boolean;
 }
 
-export function SignIn({ onSuccessRedirect, description }: SignInProps) {
+export function SignIn({
+  onSuccessRedirect,
+  description,
+  allowSignUp = false,
+}: SignInProps) {
   const { fetchClient, apiUrl } = useApiConfig();
   const { refetchUser } = useUser();
   const navigate = useNavigate();
 
+  const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
 
-  const {
-    step,
-    errorMsg,
-    loading,
-    handleSendCode,
-    handleConfirmCode,
-    handlePasswordLogin,
-    resetStep,
-  } = useAllauthLogin({
-    fetchClient,
-    onLoginSuccess: async () => {
-      await refetchUser();
-      navigate(onSuccessRedirect);
-    },
-  });
+  const onSuccess = useCallback(async () => {
+    await refetchUser();
+    navigate(onSuccessRedirect);
+  }, [refetchUser, navigate, onSuccessRedirect]);
+
+  const login = useAllauthLogin({ fetchClient, onLoginSuccess: onSuccess });
+  const signup = useAllauthSignup({ fetchClient, onSignupSuccess: onSuccess });
 
   const isPasswordLogin = email.endsWith('@example.com');
   const isValidEmail = Regex.email.test(email);
+  const isSignUp = mode === 'sign-up';
+  const step = isSignUp ? signup.step : login.step;
+  const errorMsg = isSignUp ? signup.errorMsg : login.errorMsg;
+  const loading = isSignUp ? signup.loading : login.loading;
+
+  const handleToggleMode = useCallback(() => {
+    setMode((m) => (m === 'sign-in' ? 'sign-up' : 'sign-in'));
+    setOtp('');
+    login.resetStep();
+    signup.resetStep();
+    login.clearError();
+    signup.clearError();
+  }, [login, signup]);
+
+  const handleEmailChange = useCallback(
+    (value: string) => {
+      setEmail(value);
+      setOtp('');
+      if (isSignUp) {
+        signup.resetStep();
+      } else {
+        login.resetStep();
+      }
+    },
+    [isSignUp, login, signup]
+  );
+
+  const handleAuthSubmit = useCallback(() => {
+    if (isSignUp) {
+      signup.handleSignup({ email, firstName, lastName });
+    } else if (isPasswordLogin) {
+      login.handlePasswordLogin(email, password);
+    } else {
+      login.handleSendCode(email);
+    }
+  }, [
+    isSignUp,
+    signup,
+    login,
+    email,
+    firstName,
+    lastName,
+    password,
+    isPasswordLogin,
+  ]);
+
+  const handleOtpSubmit = useCallback(() => {
+    if (isSignUp) {
+      signup.handleConfirmCode(otp);
+    } else {
+      login.handleConfirmCode(otp);
+    }
+  }, [isSignUp, signup, login, otp]);
+
+  const handleResendCode = useCallback(() => {
+    if (isSignUp) {
+      return signup.handleResendCode();
+    } else {
+      return login.handleResendCode();
+    }
+  }, [isSignUp, signup, login]);
+
+  const resending = isSignUp ? signup.resending : login.resending;
+
+  const showInitialForm =
+    (isSignUp && step === 'form') || (!isSignUp && step === 'initial');
+  const showOtp = step === 'otp';
 
   return (
     <div className="bg-neutral-99 flex min-h-screen items-center justify-center">
       <div className="rounded-3xl p-10 flex flex-col bg-white shadow-md w-[460px]">
-        <h1 className="font-bold text-2xl mb-2">Sign In</h1>
+        <h1 className="font-bold text-2xl mb-2">
+          {isSignUp ? 'Create Account' : 'Sign In'}
+        </h1>
         <p className="mb-10">{description}</p>
-        {step === 'initial' && (
-          <form
-            className="flex flex-col"
-            onSubmit={(e) => {
-              e.preventDefault();
-              isPasswordLogin
-                ? handlePasswordLogin(email, password)
-                : handleSendCode(email);
-            }}
-          >
-            <Input
-              className="mb-4"
-              inputClassname="input-xl"
-              label="Email Address"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setOtp('');
-                resetStep();
-              }}
-              autoCapitalize="none"
-              placeholder="you@example.com"
-            />
 
-            {isPasswordLogin && (
-              <Input
-                className="mb-4"
-                inputClassname="input-xl"
-                label="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                type="password"
-                placeholder="Password"
-              />
-            )}
-
-            {!!errorMsg && (
-              <p className="text-alert-60 text-sm mb-4">{errorMsg}</p>
-            )}
-
-            <button
-              type="submit"
-              className="btn btn-primary btn-xl"
-              disabled={
-                loading || !isValidEmail || (isPasswordLogin && !password)
-              }
-            >
-              Sign In
-            </button>
-          </form>
+        {showInitialForm && (
+          <AuthForm
+            isSignUp={isSignUp}
+            email={email}
+            onEmailChange={handleEmailChange}
+            firstName={firstName}
+            onFirstNameChange={setFirstName}
+            lastName={lastName}
+            onLastNameChange={setLastName}
+            password={password}
+            onPasswordChange={setPassword}
+            isPasswordLogin={isPasswordLogin}
+            isValidEmail={isValidEmail}
+            loading={loading}
+            errorMsg={errorMsg}
+            onSubmit={handleAuthSubmit}
+          />
         )}
 
-        {step === 'otp' && (
-          <form
-            className="flex flex-col"
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleConfirmCode(otp);
-            }}
-          >
-            <Input
-              className="mb-4"
-              inputClassname="input-xl"
-              label="OTP Code"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              autoCapitalize="none"
-              placeholder="Enter OTP"
-            />
-
-            <p>Check your email for the access code.</p>
-
-            {!!errorMsg && (
-              <p className="text-alert-60 text-sm mb-4">{errorMsg}</p>
-            )}
-
-            <button
-              type="submit"
-              className="btn btn-primary btn-xl"
-              disabled={loading || !otp.trim()}
-            >
-              Confirm OTP
-            </button>
-          </form>
+        {showOtp && (
+          <OtpForm
+            otp={otp}
+            onOtpChange={setOtp}
+            loading={loading}
+            resending={resending}
+            errorMsg={errorMsg}
+            onSubmit={handleOtpSubmit}
+            onResend={handleResendCode}
+          />
         )}
-        <p className="mt-10">
-          By continuing, you agree to our{' '}
-          <a href={`${apiUrl}/legal/terms-of-service`} className="underline">
-            Terms of Service
-          </a>{' '}
-          and{' '}
-          <a href={`${apiUrl}/legal/privacy-policy`} className="underline">
-            Privacy Policy
-          </a>
-          .
-        </p>
+
+        {allowSignUp && !showOtp && (
+          <ModeToggle isSignUp={isSignUp} onToggle={handleToggleMode} />
+        )}
+
+        <LegalFooter apiUrl={apiUrl} />
       </div>
     </div>
   );

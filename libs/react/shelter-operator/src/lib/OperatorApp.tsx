@@ -19,8 +19,6 @@ import { ConfirmationPage } from './pages/reservation/ConfirmationPage';
 import { ReservationPage } from './pages/reservation/ReservationPage';
 import { SelectRoomPage } from './pages/reservation/SelectRoomPage';
 import { SelectShelterPage } from './pages/reservation/SelectShelterPage';
-import { SignIn } from './pages/signIn';
-import { SignUp } from './pages/signUp';
 import { ActiveOrgProvider, OperatorAuthProvider } from './providers';
 
 export function OperatorApp() {
@@ -31,8 +29,6 @@ export function OperatorApp() {
     <ActiveOrgProvider organizations={user?.organizations ?? []}>
       <OperatorAuthProvider>
         <Routes>
-          <Route path="sign-in" element={<SignIn />} />
-          <Route path="sign-up" element={<SignUp />} />
           <Route
             path="onboarding"
             element={
