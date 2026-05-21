@@ -19,6 +19,7 @@ class ReportOrgPermissions(models.TextChoices):
 # Single permission — if you have VIEW_REPORTS on an org, you can see its reports.
 REPORT_PERMISSION = ReportOrgPermissions.VIEW_REPORTS
 
+
 class HasReportAccess(BasePermission):
     """
     DRF permission that checks the user belongs to an organization
