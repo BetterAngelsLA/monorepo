@@ -6,8 +6,8 @@ from django.db import migrations
 def create_availability_for_existing_shelters(apps, schema_editor):
     Shelter = apps.get_model("shelters", "Shelter")
     ShelterAvailability = apps.get_model("shelters", "ShelterAvailability")
-    shelters_without = Shelter.objects.exclude(pk__in=ShelterAvailability.objects.values_list("shelter_id", flat=True))
-    ShelterAvailability.objects.bulk_create([ShelterAvailability(shelter=shelter) for shelter in shelters_without])
+    missing_shelter_ids = Shelter.objects.filter(availability__isnull=True).values_list("id", flat=True)
+    ShelterAvailability.objects.bulk_create([ShelterAvailability(shelter_id=id) for id in missing_shelter_ids])
 
 
 class Migration(migrations.Migration):
