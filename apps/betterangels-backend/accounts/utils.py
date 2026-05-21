@@ -1,6 +1,6 @@
 import logging
 from functools import cached_property
-from typing import Union
+from typing import Union, cast
 
 import waffle
 from accounts.enums import OrgRoleEnum
@@ -35,11 +35,11 @@ def _get_member_role_for_org(organization: Organization) -> str:
     # Find the first preset that matches one of the org's types
     for key in org_type_keys:
         if key in settings.ORG_TYPE_PRESETS:
-            return settings.ORG_TYPE_PRESETS[key]["member_role"]
+            return cast(str, settings.ORG_TYPE_PRESETS[key]["member_role"])
 
     # Fallback: first preset
     first_preset = next(iter(settings.ORG_TYPE_PRESETS.values()))
-    return first_preset["member_role"]
+    return cast(str, first_preset["member_role"])
 
 
 def _get_templates_for_org(organization: Organization) -> list[str]:
@@ -104,7 +104,7 @@ def get_permission_group_for_org(
     if not (permission_group and permission_group.group):
         raise PermissionError("Organization does not have the expected permission group")
 
-    if not user.groups.filter(id=permission_group.group_id).exists():
+    if not hasattr(user, "groups") or not user.groups.filter(id=permission_group.group_id).exists():  # type: ignore[union-attr]
         raise PermissionError("User is not a member of this organization's permission group")
 
     return permission_group

@@ -198,7 +198,7 @@ class Mutation:
             first_name=data.first_name,
             last_name=data.last_name,
             middle_name=data.middle_name,
-            invited_by=current_user,
+            invited_by=cast(User, current_user),
         )
 
         return cast(OrganizationMemberType, user)

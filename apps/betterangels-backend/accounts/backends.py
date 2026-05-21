@@ -42,7 +42,7 @@ class CustomInvitations(InvitationBackend):
             return get_invite_templates_for_role("default")
         return get_invite_templates_for_role(role_name)
 
-    def send_invitation(self, user: User, sender: Optional[AbstractBaseUser] = None, **kwargs: Any) -> int:
+    def send_invitation(self, user: User, sender: Optional["User"] = None, **kwargs: Any) -> int:
         if not user.email:
             raise ValueError("Cannot send invitation to a user without an email address")
 

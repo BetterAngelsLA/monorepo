@@ -85,8 +85,8 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(NotePermissions.ADD)],
     )
-    def caseworker_organizations(self, ordering: Optional[list[OrganizationOrder]] = None) -> QuerySet[Organization]:
-        return Organization.objects.filter(permission_groups__template__name=CASEWORKER)
+    def caseworker_organizations(self, ordering: Optional[list[OrganizationOrder]] = None) -> "QuerySet[Organization]":
+        return Organization.objects.filter(permission_groups__template__name=CASEWORKER).all()  # type: ignore[no-any-return]
 
 
 @strawberry.type

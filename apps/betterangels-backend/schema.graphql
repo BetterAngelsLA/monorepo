@@ -2686,6 +2686,7 @@ enum UserOrganizationPermissions {
   CHANGE_ORG_MEMBER_ROLE
   REMOVE_ORG_MEMBER
   VIEW_ORG_MEMBERS
+  VIEW_REPORTS
 }
 
 type UserType {
