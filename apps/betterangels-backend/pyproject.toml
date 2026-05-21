@@ -30,6 +30,7 @@ celery-redbeat = "^2.3.3"
 celery = { extras = ["redis"], version = "^5.6.2" }
 django-ses = "^4.6.0"
 hiredis = "^3.3.0"
+django-annoying = "^0.10.8"
 django-organizations = "^2.5.0"
 strawberry-graphql-django = "^0.79.1"
 django-guardian = "^3.0.3"

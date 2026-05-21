@@ -38,6 +38,12 @@ directive @hmisDirective on FIELD_DEFINITION
 
 directive @isHmisAuthenticated on FIELD_DEFINITION
 
+input AcceptShelterInviteInput {
+  inviteId: ID!
+  firstName: String = null
+  lastName: String = null
+}
+
 enum AccessibilityChoices {
   MEDICAL_EQUIPMENT_PERMITTED
   WHEELCHAIR_ACCESSIBLE
@@ -86,12 +92,12 @@ type AdminShelterType {
   email: String
   entryInfo: String
   entryRequirements: [EntryRequirementType!]!
+  exitPolicy: [ExitPolicyType!]!
+  exitPolicyOther: String
+  emergencySurge: Boolean
   exteriorPhotos: [ShelterPhotoType!]!
   funders: [FunderType!]!
   fundersOther: String
-  generalServices: [GeneralServiceType!]!
-  healthServices: [HealthServiceType!]!
-  immediateNeeds: [ImmediateNeedType!]!
   instagram: String
   interiorPhotos: [ShelterPhotoType!]!
   location: ShelterLocationType
@@ -106,26 +112,33 @@ type AdminShelterType {
   pets: [PetType!]!
   phone: PhoneNumber
   programFees: String
+  referralRequirement: [ReferralRequirementType!]!
   roomStyles: [RoomStyleType!]!
   roomStylesOther: String
   schedules: [ScheduleType!]!
+  services: [ServiceType!]!
   shelterPrograms: [ShelterProgramType!]!
   shelterProgramsOther: String
   shelterTypes: [ShelterTypeType!]!
   shelterTypesOther: String
   spa: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
   subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
-  trainingServices: [TrainingServiceType!]!
+  updatedAt: DateTime!
+  vaccinationRequirement: [VaccinationRequirementType!]!
+  visitorsAllowed: Boolean
   website: String
+  mediaLinks: [MediaLinkType!]!
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
+  bedsByStatus: BedsByStatusType!
 }
 
 type AdminShelterTypeOffsetPaginated {
@@ -160,15 +173,78 @@ type AuthResponse {
   status_code: String!
 }
 
+type AuthorizedPresignedS3UploadType {
+  refId: String!
+  url: String!
+  fields: JSON!
+  presignedKey: String!
+  uploadToken: String!
+}
+
+type AuthorizedPresignedS3UploadsType {
+  uploads: [AuthorizedPresignedS3UploadType!]!
+}
+
+input BedFilter {
+  AND: BedFilter
+  OR: BedFilter
+  NOT: BedFilter
+  DISTINCT: Boolean
+  bedType: [BedTypeChoices!]
+  medicalNeeds: [MedicalNeedChoices!]
+  status: [BedStatusChoices!]
+}
+
 enum BedStatusChoices {
   AVAILABLE
+  OCCUPIED
   RESERVED
+  OUT_OF_SERVICE
 }
 
 type BedType {
   id: ID!
   shelter: ShelterType!
+  room: RoomType
+  bedName: String
   status: BedStatusChoices
+  statusNotes: String
+  occupantId: ID
+  bedType: BedTypeChoices
+  demographics: [DemographicType!]!
+  accessibility: [AccessibilityType!]!
+  funders: [FunderType!]!
+  pets: [PetType!]!
+  storage: Boolean!
+  maintenanceFlag: Boolean!
+  lastCleanedInspected: DateTime
+  medicalNeeds: MedicalNeedChoices
+  b7: Boolean!
+  fees: Int
+}
+
+enum BedTypeChoices {
+  TWIN
+  BUNK
+  ROLLAWAY
+  OTHER
+}
+
+type BedTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [BedType!]!
+}
+
+type BedsByStatusType {
+  available: Int!
+  occupied: Int!
+  reserved: Int!
+  outOfService: Int!
 }
 
 type CityType {
@@ -217,6 +293,14 @@ input ClientDocumentFilter {
   documentGroups: [ClientDocumentGroupEnum!]
 }
 
+input ClientDocumentFromUploadsInput {
+  presignedKey: String!
+  uploadToken: String!
+  filename: String!
+  contentType: String!
+  namespace: ClientDocumentNamespaceEnum!
+}
+
 enum ClientDocumentGroupEnum {
   DOC_READY
   FORMS
@@ -256,6 +340,16 @@ type ClientDocumentTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [ClientDocumentType!]!
+}
+
+input ClientDocumentUploadsInputItem {
+  refId: String!
+  filename: String!
+  contentType: String!
+}
+
+type ClientDocumentUploadsType {
+  documents: [ClientDocumentType!]!
 }
 
 input ClientHouseholdMemberInput {
@@ -378,6 +472,7 @@ type ClientProfileType {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactType!]
@@ -429,7 +524,21 @@ type ContactInfoType {
 
 input CreateBedInput {
   shelterId: ID!
-  status: BedStatusChoices!
+  roomId: ID = null
+  status: BedStatusChoices = null
+  bedName: String = null
+  statusNotes: String = null
+  bedType: BedTypeChoices = null
+  demographics: [DemographicChoices!] = null
+  accessibility: [AccessibilityChoices!] = null
+  funders: [FunderChoices!] = null
+  pets: [PetChoices!] = null
+  storage: Boolean = null
+  maintenanceFlag: Boolean = null
+  lastCleanedInspected: DateTime = null
+  medicalNeeds: MedicalNeedChoices = null
+  b7: Boolean = null
+  fees: Int = null
 }
 
 union CreateBedPayload = BedType | OperationInfo
@@ -480,6 +589,7 @@ input CreateClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
@@ -529,6 +639,7 @@ input CreateHmisClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
 }
 
 union CreateHmisClientProfilePayload = HmisClientProfileType | OperationInfo
@@ -605,14 +716,26 @@ input CreateProfileDataImportInput {
   notes: String
 }
 
-input CreateServiceRequestInput {
-  serviceId: ID
-  status: ServiceRequestStatusEnum!
-  serviceOther: String
-  clientProfile: ID
+input CreateRoomInput {
+  shelterId: ID!
+  roomIdentifier: String!
+  roomType: RoomStyleChoices = null
+  roomTypeOther: String = null
+  status: RoomStatusChoices = null
+  notes: String = null
+  amenities: String = null
+  demographics: [DemographicChoices!] = null
+  accessibility: [AccessibilityChoices!] = null
+  funders: [FunderChoices!] = null
+  pets: [PetChoices!] = null
+  storage: Boolean = null
+  maintenanceFlag: Boolean = null
+  occupants: [ID!] = null
+  medicalRespite: Boolean = false
+  lastCleanedInspected: DateTime = null
 }
 
-union CreateServiceRequestPayload = ServiceRequestType | OperationInfo
+union CreateRoomPayload = RoomType | OperationInfo
 
 input CreateShelterInput {
   name: String!
@@ -625,13 +748,9 @@ input CreateShelterInput {
   storage: [StorageChoices!]!
   pets: [PetChoices!]!
   parking: [ParkingChoices!]!
-  immediateNeeds: [ImmediateNeedChoices!]!
-  generalServices: [GeneralServiceChoices!]!
-  healthServices: [HealthServiceChoices!]!
-  trainingServices: [TrainingServiceChoices!]!
-  mealServices: [MealServiceChoices!]!
   entryRequirements: [EntryRequirementChoices!]!
   referralRequirement: [ReferralRequirementChoices!]!
+  vaccinationRequirement: [VaccinationRequirementChoices!]!
   exitPolicy: [ExitPolicyChoices!]!
   cities: [String!]!
   spa: [SPAChoices!]!
@@ -640,6 +759,7 @@ input CreateShelterInput {
   organization: ID!
   location: ShelterLocationInput = null
   schedules: [ScheduleInput!] = null
+  services: [ServiceInput!] = null
   email: String = null
   phone: PhoneNumber = null
   website: String = null
@@ -668,6 +788,7 @@ input CreateShelterInput {
   cityCouncilDistrict: Int = null
   supervisorialDistrict: Int = null
   overallRating: Int = null
+  isPrivate: Boolean
 }
 
 union CreateShelterPayload = ShelterType | OperationInfo
@@ -702,7 +823,6 @@ type CurrentUserType {
   organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): [CurrentUserOrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
-  isOutreachAuthorized: Boolean
   username: String
   isHmisUser: Boolean
 }
@@ -760,6 +880,7 @@ type DeletedObjectType {
 
 enum DemographicChoices {
   ALL
+  COUPLES
   SINGLE_MEN
   SINGLE_WOMEN
   TAY_TEEN
@@ -786,9 +907,9 @@ type DjangoImageType {
   name: String!
   path: String!
   size: Int!
-  url: String!
   width: Int!
   height: Int!
+  url(preset: ImagePresetEnum = null, processingOptions: String = null): String!
 }
 
 type DjangoModelType {
@@ -796,14 +917,15 @@ type DjangoModelType {
 }
 
 enum EntryRequirementChoices {
+  BACKGROUND
+  HOMELESS_VERIFICATION
   MEDICAID_OR_MEDICARE
   PHOTO_ID
   REFERRAL
   RESERVATION
-  BACKGROUND
-  HOMELESS_VERIFICATION
-  WALK_UPS
   VEHICLE_REGISTRATION
+  WALK_UPS
+  IN_SPA_ONLY
 }
 
 type EntryRequirementType {
@@ -815,6 +937,10 @@ enum ExitPolicyChoices {
   VIOLENCE
   MITIGATION
   OTHER
+}
+
+type ExitPolicyType {
+  name: ExitPolicyChoices
 }
 
 enum EyeColorEnum {
@@ -863,24 +989,21 @@ enum GenderEnum {
   PREFER_NOT_TO_SAY
 }
 
-enum GeneralServiceChoices {
-  CASE_MANAGEMENT
-  CHILDCARE
-  COMPUTER_ACCESS
-  EMPLOYMENT_SERVICES
-  FINANCIAL_LITERACY_ASSISTANCE
-  HOUSING_NAVIGATION
-  LEGAL_ASSISTANCE
-  MAIL
-  PHONE
-  TRANSPORTATION
-  LAUNDRY
-  TLS
+input GenerateClientDocumentUploadsInput {
+  clientProfileId: ID!
+  uploads: [ClientDocumentUploadsInputItem!]!
 }
 
-type GeneralServiceType {
-  name: GeneralServiceChoices
+union GenerateClientDocumentUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo
+
+input GenerateClientProfilePhotoUploadInput {
+  clientProfileId: ID!
+  refId: String!
+  filename: String!
+  contentType: String!
 }
+
+union GenerateClientProfilePhotoUploadPayload = AuthorizedPresignedS3UploadType | OperationInfo
 
 input GeolocationInput {
   latitude: Float!
@@ -897,17 +1020,6 @@ enum HairColorEnum {
   WHITE
   BALD
   OTHER
-}
-
-enum HealthServiceChoices {
-  DENTAL
-  MEDICAL
-  MENTAL_HEALTH
-  SUBSTANCE_USE_TREATMENT
-}
-
-type HealthServiceType {
-  name: HealthServiceChoices
 }
 
 enum HmisAgencyEnum {
@@ -973,6 +1085,7 @@ type HmisClientProfileType {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   id: ID!
   hmisId: String
   personalId: String
@@ -1204,14 +1317,11 @@ input IDFilterLookup {
   iRegex: ID
 }
 
-enum ImmediateNeedChoices {
-  CLOTHING
-  FOOD
-  SHOWERS
-}
-
-type ImmediateNeedType {
-  name: ImmediateNeedChoices
+enum ImagePresetEnum {
+  ORIGINAL
+  SM
+  MD
+  LG
 }
 
 input ImportClientProfileInput {
@@ -1345,10 +1455,27 @@ enum MaritalStatusEnum {
   WIDOWED
 }
 
-enum MealServiceChoices {
-  BREAKFAST
-  LUNCH
-  DINNER
+input MaxStayInput {
+  days: Int!
+  includeNull: Boolean = false
+}
+
+type MediaLinkType {
+  id: ID!
+  url: String!
+  title: String!
+  mediaType: MediaLinkTypeChoices!
+}
+
+enum MediaLinkTypeChoices {
+  YOUTUBE
+}
+
+enum MedicalNeedChoices {
+  ERC
+  DMH
+  OXYGEN
+  DIALYSIS
 }
 
 type Mutation {
@@ -1378,6 +1505,10 @@ type Mutation {
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  resolveClientDocumentUploads(data: ResolveClientDocumentUploadsInput!): ResolveClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  generateClientProfilePhotoUpload(data: GenerateClientProfilePhotoUploadInput!): GenerateClientProfilePhotoUploadPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  resolveClientProfilePhotoUpload(data: ResolveClientProfilePhotoUploadInput!): ResolveClientProfilePhotoUploadPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError! @hmisDirective
@@ -1395,10 +1526,7 @@ type Mutation {
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
-  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_servicerequest"}], any: true)
-  removeNoteServiceRequest(data: RemoveNoteServiceRequestInput!): RemoveNoteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "delete_servicerequest"}], any: true)
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
@@ -1407,6 +1535,9 @@ type Mutation {
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
+  createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
+  registerShelterOperator(data: RegisterShelterOperatorInput!): AuthResponse!
+  acceptShelterInvite(data: AcceptShelterInviteInput!): AuthResponse!
 }
 
 type NameCountType {
@@ -1667,6 +1798,7 @@ enum ParkingChoices {
   MOTORCYCLE
   AUTOMOBILE
   RV
+  STREET
   NO_PARKING
 }
 
@@ -1763,6 +1895,10 @@ type Query {
   adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
+  beds(pagination: OffsetPaginationInput, filters: BedFilter): BedTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
+  rooms(pagination: OffsetPaginationInput, filters: RoomFilter): RoomTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
+  shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
+  shelterMaxStay: Int
 }
 
 enum RaceEnum {
@@ -1781,6 +1917,17 @@ enum ReferralRequirementChoices {
   SERVICE_PROVIDER_SUBMISSION
   SELF_REFERRAL
   SAME_DAY_INTAKE
+}
+
+type ReferralRequirementType {
+  name: ReferralRequirementChoices
+}
+
+input RegisterShelterOperatorInput {
+  email: String!
+  firstName: String!
+  lastName: String!
+  organizationName: String!
 }
 
 enum RelationshipTypeEnum {
@@ -1808,14 +1955,6 @@ input RemoveHmisNoteServiceRequestInput {
 
 union RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo
 
-input RemoveNoteServiceRequestInput {
-  serviceRequestId: ID!
-  noteId: ID!
-  serviceRequestType: ServiceRequestTypeEnum!
-}
-
-union RemoveNoteServiceRequestPayload = NoteType | OperationInfo
-
 input RemoveOrganizationMemberInput {
   id: ID!
   organizationId: ID!
@@ -1836,12 +1975,45 @@ type ReportSummaryType {
   topRequestedServices: [NameCountType!]!
 }
 
+input ResolveClientDocumentUploadsInput {
+  clientProfileId: ID!
+  documents: [ClientDocumentFromUploadsInput!]!
+}
+
+union ResolveClientDocumentUploadsPayload = ClientDocumentUploadsType | OperationInfo
+
+input ResolveClientProfilePhotoUploadInput {
+  clientProfileId: ID!
+  presignedKey: String!
+  uploadToken: String!
+}
+
+union ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo
+
 input RevertNoteInput {
   id: ID!
   revertBeforeTimestamp: DateTime!
 }
 
 union RevertNotePayload = NoteType | OperationInfo
+
+input RoomFilter {
+  medicalRespite: Boolean
+  AND: RoomFilter
+  OR: RoomFilter
+  NOT: RoomFilter
+  DISTINCT: Boolean
+  amenities: String
+  roomType: [RoomStyleChoices!]
+  status: [RoomStatusChoices!]
+  numberOfBeds: Int
+}
+
+enum RoomStatusChoices {
+  AVAILABLE
+  RESERVED
+  NEEDS_MAINTENANCE
+}
 
 enum RoomStyleChoices {
   CONGREGATE
@@ -1857,6 +2029,37 @@ enum RoomStyleChoices {
 
 type RoomStyleType {
   name: RoomStyleChoices
+}
+
+type RoomType {
+  id: ID!
+  shelter: ShelterType!
+  roomIdentifier: String!
+  roomType: RoomStyleChoices
+  roomTypeOther: String
+  status: RoomStatusChoices
+  notes: String
+  amenities: String
+  demographics: [DemographicType!]!
+  accessibility: [AccessibilityType!]!
+  funders: [FunderType!]!
+  pets: [PetType!]!
+  storage: Boolean!
+  maintenanceFlag: Boolean!
+  medicalRespite: Boolean!
+  lastCleanedInspected: DateTime
+  beds(filters: BedFilter): [BedType!]!
+  occupantIds: [ID!]!
+}
+
+type RoomTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [RoomType!]!
 }
 
 enum SPAChoices {
@@ -1920,12 +2123,37 @@ enum SelahTeamEnum {
   LA_RIVER_OUTREACH
   LOS_FELIZ_OUTREACH
   NORTHEAST_HOLLYWOOD_OUTREACH
+  SELAH_STAFF
   SILVER_LAKE_OUTREACH
   SLCC_ON_SITE
   SUNDAY_SOCIAL_ATWATER_ON_SITE
   SUNDAY_SOCIAL_ATWATER_OUTREACH
   WDI_ON_SITE
   WDI_OUTREACH
+}
+
+type ServiceCategoryType {
+  id: ID!
+  name: String!
+  displayName: String!
+  priority: Int!
+  services: [ServiceType!]!
+}
+
+type ServiceCategoryTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [ServiceCategoryType!]!
+}
+
+input ServiceInput {
+  id: ID = null
+  categoryId: ID = null
+  displayName: String = null
 }
 
 enum ServiceRequestStatusEnum {
@@ -1949,7 +2177,17 @@ enum ServiceRequestTypeEnum {
   REQUESTED
 }
 
+type ServiceType {
+  id: ID!
+  category: ServiceCategoryType!
+  name: String!
+  displayName: String!
+  isOther: Boolean!
+  priority: Int!
+}
+
 enum ShelterChoices {
+  ACCESS_CENTER
   BUILDING
   CHURCH
   HOTEL_MOTEL
@@ -1960,10 +2198,13 @@ enum ShelterChoices {
 }
 
 input ShelterFilter {
+  isPrivate: Boolean
   AND: ShelterFilter
   OR: ShelterFilter
   NOT: ShelterFilter
   DISTINCT: Boolean
+  isAccessCenter: Boolean
+  maxStay: MaxStayInput
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
@@ -1992,7 +2233,7 @@ input ShelterOrder {
 type ShelterPhotoType {
   id: ID!
   createdAt: DateTime!
-  file: DjangoFileType!
+  file: DjangoImageType!
 }
 
 enum ShelterProgramChoices {
@@ -2021,10 +2262,13 @@ type ShelterProgramType {
 input ShelterPropertyInput {
   pets: [PetChoices!] = null
   demographics: [DemographicChoices!] = null
+  entryRequirements: [EntryRequirementChoices!] = null
+  referralRequirement: [ReferralRequirementChoices!] = null
   specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
   shelterTypes: [ShelterChoices!] = null
   roomStyles: [RoomStyleChoices!] = null
   parking: [ParkingChoices!] = null
+  spa: [SPAChoices!] = null
 }
 
 type ShelterType {
@@ -2043,12 +2287,12 @@ type ShelterType {
   email: String
   entryInfo: String
   entryRequirements: [EntryRequirementType!]!
+  exitPolicy: [ExitPolicyType!]!
+  exitPolicyOther: String
+  emergencySurge: Boolean
   exteriorPhotos: [ShelterPhotoType!]!
   funders: [FunderType!]!
   fundersOther: String
-  generalServices: [GeneralServiceType!]!
-  healthServices: [HealthServiceType!]!
-  immediateNeeds: [ImmediateNeedType!]!
   instagram: String
   interiorPhotos: [ShelterPhotoType!]!
   location: ShelterLocationType
@@ -2063,26 +2307,33 @@ type ShelterType {
   pets: [PetType!]!
   phone: PhoneNumber
   programFees: String
+  referralRequirement: [ReferralRequirementType!]!
   roomStyles: [RoomStyleType!]!
   roomStylesOther: String
   schedules: [ScheduleType!]!
+  services: [ServiceType!]!
   shelterPrograms: [ShelterProgramType!]!
   shelterProgramsOther: String
   shelterTypes: [ShelterTypeType!]!
   shelterTypesOther: String
   spa: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
   subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
-  trainingServices: [TrainingServiceType!]!
+  updatedAt: DateTime!
+  vaccinationRequirement: [VaccinationRequirementType!]!
+  visitorsAllowed: Boolean
   website: String
+  mediaLinks: [MediaLinkType!]!
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
+  bedsByStatus: BedsByStatusType!
 }
 
 type ShelterTypeOffsetPaginated {
@@ -2155,9 +2406,11 @@ enum StatusChoices {
 }
 
 enum StorageChoices {
+  UNIT_STORAGE
   AMNESTY_LOCKERS
   STANDARD_LOCKERS
   SHARED_STORAGE
+  PERSONAL_BIN
   NO_STORAGE
 }
 
@@ -2234,16 +2487,6 @@ type TaskTypeOffsetPaginated {
 """Time (isoformat)"""
 scalar Time
 
-enum TrainingServiceChoices {
-  JOB_TRAINING
-  LIFE_SKILLS_TRAINING
-  TUTORING
-}
-
-type TrainingServiceType {
-  name: TrainingServiceChoices
-}
-
 scalar UUID
 
 union UpdateClientContactPayload = ClientContactType | OperationInfo
@@ -2289,6 +2532,7 @@ input UpdateClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactInput!]
@@ -2343,6 +2587,7 @@ input UpdateHmisClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  unhousedStartDate: Date
   id: ID!
   phoneNumbers: [PhoneNumberInput!]
 }
@@ -2376,6 +2621,10 @@ input UpdateNoteInput {
   privateDetails: String
   isSubmitted: Boolean
   interactedAt: DateTime
+  location: LocationInput
+  providedServices: [CreateNoteServiceInput!]
+  requestedServices: [CreateNoteServiceInput!]
+  tasks: [CreateNoteTaskInput!]
 }
 
 input UpdateNoteLocationInput {
@@ -2386,15 +2635,6 @@ input UpdateNoteLocationInput {
 union UpdateNoteLocationPayload = NoteType | OperationInfo
 
 union UpdateNotePayload = NoteType | OperationInfo
-
-input UpdateServiceRequestInput {
-  id: ID!
-  serviceOther: String
-  status: ServiceRequestStatusEnum
-  dueBy: DateTime
-}
-
-union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
 
 union UpdateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
@@ -2434,7 +2674,6 @@ enum UserOrganizationPermissions {
   CHANGE_ORG_MEMBER_ROLE
   REMOVE_ORG_MEMBER
   VIEW_ORG_MEMBERS
-  VIEW_REPORTS
 }
 
 type UserType {
@@ -2446,9 +2685,18 @@ type UserType {
   organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = []): [OrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
-  isOutreachAuthorized: Boolean
   username: String
   isHmisUser: Boolean
+}
+
+enum VaccinationRequirementChoices {
+  TB
+  FLU
+  COVID_19
+}
+
+type VaccinationRequirementType {
+  name: VaccinationRequirementChoices!
 }
 
 enum VeteranStatusEnum {

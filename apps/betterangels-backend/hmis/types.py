@@ -253,6 +253,7 @@ class HmisNoteType:
 
 @strawberry_django.input(ServiceRequest)
 class CreateHmisNoteServiceRequestInput:
+    organization_id: Optional[ID] = None
     hmis_note_id: ID
     service_id: Optional[ID]
     service_other: Optional[str]

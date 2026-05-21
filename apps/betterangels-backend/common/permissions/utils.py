@@ -81,6 +81,13 @@ class PermissionSet:
         cls._perm_labels = labels
         setattr(model, name, cls)
 
+    @classmethod
+    def codenames(cls) -> list[str]:
+        """Return all permission codenames (without the app label prefix)."""
+        return [
+            v.split(".")[1] for k, v in vars(cls).items() if not k.startswith("_") and isinstance(v, str) and "." in v
+        ]
+
 
 def _auto_create_perms(sender: type[Model], **kwargs: Any) -> None:
     """Initialize PermissionSet on concrete models when class_prepared fires.

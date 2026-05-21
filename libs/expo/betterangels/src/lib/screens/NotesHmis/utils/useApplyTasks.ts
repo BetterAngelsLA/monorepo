@@ -1,5 +1,6 @@
 import { useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
+import { useUserOrganizationPreference } from '../../../state';
 import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
 import { DeleteTaskDocument } from '../../../ui-components/TaskForm/__generated__/deleteTask.generated';
 import { UpdateTaskDocument } from '../../../ui-components/TaskForm/__generated__/updateTask.generated';
@@ -10,6 +11,7 @@ export function useApplyTasks() {
   const [createTask] = useMutation(CreateTaskDocument);
   const [updateTask] = useMutation(UpdateTaskDocument);
   const [deleteTask] = useMutation(DeleteTaskDocument);
+  const [organizationId] = useUserOrganizationPreference();
 
   const applyTasks = useCallback(
     async (
@@ -29,6 +31,7 @@ export function useApplyTasks() {
               status: s.status,
               hmisClientProfile: hmisClientProfileId,
               hmisNote: hmisNoteId,
+              ...(organizationId && { organizationId }),
             },
           },
         });

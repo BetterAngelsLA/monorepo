@@ -3,7 +3,6 @@ from unittest.mock import ANY, patch
 
 import time_machine
 from accounts.enums import OrgRoleEnum
-from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from accounts.permissions import UserOrganizationPermissions
 from accounts.utils import OrgPermissionManager
@@ -12,6 +11,7 @@ from django.contrib.auth import get_user_model
 from django.test import ignore_warnings, override_settings
 from hmis.tests.test_mutations import LOGIN_MUTATION
 from model_bakery import baker
+from notes.groups import CASEWORKER
 from organizations.models import Organization, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
@@ -40,17 +40,16 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
-        ("organization_count, is_outreach_authorized, expected_query_count"),
+        ("organization_count, expected_query_count"),
         [
-            (0, False, 3),
-            (1, True, 4),
-            (2, True, 4),
+            (0, 2),
+            (1, 2),
+            (2, 2),
         ],
     )
     def test_logged_in_user_query(
         self,
         organization_count: int,
-        is_outreach_authorized: bool,
         expected_query_count: int,
     ) -> None:
         """
@@ -87,7 +86,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     hasAcceptedTos
                     hasAcceptedPrivacyPolicy
                     isHmisUser
-                    isOutreachAuthorized
                     organizations: organizationsOrganization {
                         id
                         name
@@ -128,10 +126,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         self.assertEqual(
             response["data"]["currentUser"]["middleName"],
             user.middle_name,
-        )
-        self.assertEqual(
-            response["data"]["currentUser"]["isOutreachAuthorized"],
-            is_outreach_authorized,
         )
         self.assertFalse(response["data"]["currentUser"]["isHmisUser"])
         self.assertEqual(
@@ -189,7 +183,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     UserOrganizationPermissions.ADD_ORG_MEMBER.name,
                     UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
                     UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
-                    UserOrganizationPermissions.VIEW_REPORTS.name,
                 ],
             ),
             (
@@ -200,7 +193,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
                     UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
                     UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
-                    UserOrganizationPermissions.VIEW_REPORTS.name,
                 ],
             ),
         ],
@@ -272,9 +264,7 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
 
         caseworker_orgs = response["data"]["caseworkerOrganizations"]["results"]
         expected_caseworker_org_ids = list(
-            Organization.objects.filter(permission_groups__name__icontains=GroupTemplateNames.CASEWORKER).values_list(
-                "id", flat=True
-            )
+            Organization.objects.filter(permission_groups__template__name=CASEWORKER).values_list("id", flat=True)
         )
         actual_caseworker_org_ids = [int(org["id"]) for org in caseworker_orgs]
 

@@ -3,6 +3,7 @@ import {
   GroupsIcon,
   InfoIcon,
   LocationDotIcon,
+  SitemapSolidIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { StyleSheet, View } from 'react-native';
@@ -14,6 +15,11 @@ export function AppSettings() {
       <View style={styles.pageCard}>
         <NavButton title="About" Icon={InfoIcon} route="settings/about" />
         <NavButton title="Team" Icon={GroupsIcon} route="settings/team" />
+        <NavButton
+          title="Organization"
+          Icon={SitemapSolidIcon}
+          route="settings/organization"
+        />
         <NavButton
           title="Location"
           Icon={LocationDotIcon}

@@ -548,6 +548,7 @@ union CreateBedPayload = BedType | OperationInfo
 union CreateClientContactPayload = ClientContactType | OperationInfo
 
 input CreateClientDocumentInput {
+  organizationId: ID = null
   clientProfile: ID!
   file: Upload!
   namespace: ClientDocumentNamespaceEnum!
@@ -659,6 +660,7 @@ input CreateHmisNoteInput {
 union CreateHmisNotePayload = HmisNoteType | OperationInfo
 
 input CreateHmisNoteServiceRequestInput {
+  organizationId: ID = null
   hmisNoteId: ID!
   serviceId: ID
   serviceOther: String
@@ -677,6 +679,7 @@ input CreateNoteDataImportInput {
 union CreateNoteDataImportPayload = NoteDataImportType | OperationInfo
 
 input CreateNoteInput {
+  organizationId: ID = null
   purpose: String = null
   team: SelahTeamEnum = null
   publicDetails: String = ""
@@ -798,6 +801,7 @@ union CreateShelterPayload = ShelterType | OperationInfo
 union CreateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 input CreateTaskInput {
+  organizationId: ID = null
   clientProfile: ID
   hmisClientProfile: ID
   description: String
@@ -825,7 +829,6 @@ type CurrentUserType {
   organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): [CurrentUserOrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
-  isOutreachAuthorized: Boolean
   username: String
   isHmisUser: Boolean
 }
@@ -1349,6 +1352,7 @@ input ImportNoteDataInput {
 }
 
 input ImportNoteInput {
+  organizationId: ID = null
   importJobId: UUID!
   sourceId: String!
   sourceName: String!
@@ -1864,7 +1868,6 @@ enum PronounEnum {
 
 type Query {
   currentUser: CurrentUserType!
-  caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
@@ -1891,6 +1894,7 @@ type Query {
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   reportSummary(organizationId: ID = null, startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
@@ -1973,6 +1977,7 @@ type ReportSummaryType {
 }
 
 input ResolveClientDocumentUploadsInput {
+  organizationId: ID = null
   clientProfileId: ID!
   documents: [ClientDocumentFromUploadsInput!]!
 }
@@ -2681,7 +2686,6 @@ enum UserOrganizationPermissions {
   CHANGE_ORG_MEMBER_ROLE
   REMOVE_ORG_MEMBER
   VIEW_ORG_MEMBERS
-  VIEW_REPORTS
 }
 
 type UserType {
@@ -2693,7 +2697,6 @@ type UserType {
   organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = []): [OrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
-  isOutreachAuthorized: Boolean
   username: String
   isHmisUser: Boolean
 }

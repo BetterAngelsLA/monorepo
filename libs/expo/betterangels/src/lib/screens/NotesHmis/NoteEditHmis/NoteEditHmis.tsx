@@ -16,6 +16,7 @@ import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/ex
 import { applyManualFormErrors } from '../../../errors';
 import { normalizeService } from '../../../helpers';
 import { useSnackbar } from '../../../hooks';
+import { useUserOrganizationPreference } from '../../../state';
 import { InteractionListHmisDocument } from '../../../ui-components/InteractionListHmis/__generated__/interactionListHmis.generated';
 import {
   DEFAULT_PAGINATION_LIMIT,
@@ -56,6 +57,7 @@ export function NoteEditHmis(props: TProps) {
   const { id, clientId } = props;
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const [organizationId] = useUserOrganizationPreference();
 
   const [updateHmisNoteMutation] = useMutation(UpdateNoteHmisDocument);
   const [updateHmisNoteLocation] = useMutation(UpdateNoteLocationHmisDocument);
@@ -110,6 +112,7 @@ export function NoteEditHmis(props: TProps) {
             hmisNoteId: id,
             serviceRequestType: type,
             serviceId: s.serviceId!,
+            ...(organizationId && { organizationId }),
           },
         },
       });
@@ -136,6 +139,7 @@ export function NoteEditHmis(props: TProps) {
             hmisNoteId: id,
             serviceRequestType: type,
             serviceOther: o.serviceOther!.trim(),
+            ...(organizationId && { organizationId }),
           },
         },
       });

@@ -1,7 +1,6 @@
 from unittest.mock import ANY, patch
 
 from accounts.enums import OrgRoleEnum
-from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from accounts.tests.utils import CurrentUserGraphQLBaseTestCase
 from accounts.utils import OrgPermissionManager
@@ -9,6 +8,7 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Group
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
+from notes.groups import CASEWORKER
 from organizations.models import OrganizationInvitation, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase
 
@@ -55,7 +55,6 @@ class CurrentUserGraphQLTests(CurrentUserGraphQLBaseTestCase, TestCase):
         user = response["data"]["updateCurrentUser"]
         expected_user = {
             **variables,
-            "isOutreachAuthorized": True,
             "organizations": [
                 {"id": str(self.user_organization.pk), "name": self.user_organization.name},
             ],
@@ -192,7 +191,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         }
 
         with patch("accounts.backends.CustomInvitations.send_invitation") as mock_send_invitation:
-            with self.assertNumQueriesWithoutCache(20):
+            with self.assertNumQueriesWithoutCache(22):
                 response = self.execute_graphql(mutation, {"data": variables})
 
             mock_send_invitation.assert_called_once()
@@ -209,7 +208,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
         group = Group.objects.get(
             permissiongroup__organization=self.org,
-            permissiongroup__template__name=GroupTemplateNames.CASEWORKER,
+            permissiongroup__template__name=CASEWORKER,
         )
         self.assertIn(group, new_user.groups.all())
 

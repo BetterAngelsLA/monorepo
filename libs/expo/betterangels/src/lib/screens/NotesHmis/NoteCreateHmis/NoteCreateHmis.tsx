@@ -10,6 +10,7 @@ import {
 } from '../../../apollo';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
+import { useUserOrganizationPreference } from '../../../state';
 import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import { InteractionListHmisDocument } from '../../../ui-components/InteractionListHmis/__generated__/interactionListHmis.generated';
 import {
@@ -46,6 +47,7 @@ export function NoteCreateHmis(props: TProps) {
   const [updateHmisNoteLocation] = useMutation(UpdateNoteLocationHmisDocument);
   const [deleteService] = useMutation(RemoveServiceRequestHmisDocument);
   const [createServiceRequest] = useMutation(CreateServiceRequestHmisDocument);
+  const [organizationId] = useUserOrganizationPreference();
 
   const { applyTasks } = useApplyTasks();
 
@@ -65,6 +67,7 @@ export function NoteCreateHmis(props: TProps) {
             hmisNoteId: id,
             serviceRequestType: type,
             serviceId: s.serviceId!,
+            ...(organizationId && { organizationId }),
           },
         },
       });
@@ -91,6 +94,7 @@ export function NoteCreateHmis(props: TProps) {
             hmisNoteId: id,
             serviceRequestType: type,
             serviceOther: o.serviceOther!.trim(),
+            ...(organizationId && { organizationId }),
           },
         },
       });

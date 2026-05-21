@@ -12,15 +12,9 @@ def assign_permissions_to_group_in_migration(apps, group_name, permission_map):
         content_type = ContentType.objects.get_for_model(model)
         for source in perm_sources:
             if isinstance(source, type) and issubclass(source, PermissionSet):
-                # PermissionSet class — collect all permission codenames with labels
                 labels = getattr(source, "_perm_labels", {})
-                codenames = [
-                    v.split(".")[1]
-                    for k, v in vars(source).items()
-                    if not k.startswith("_") and isinstance(v, str) and "." in v
-                ]
+                codenames = source.codenames()
             elif isinstance(source, list):
-                # Explicit list of permission strings — derive codenames
                 perms_attr = getattr(model, "perms", None)
                 labels = getattr(perms_attr, "_perm_labels", {}) if perms_attr else {}
                 codenames = [p.split(".")[1] for p in source]
@@ -50,11 +44,7 @@ def remove_permissions_from_group_in_migration(apps, group_name, permission_map)
         content_type = ContentType.objects.get_for_model(model)
         for source in perm_sources:
             if isinstance(source, type) and issubclass(source, PermissionSet):
-                codenames = [
-                    v.split(".")[1]
-                    for k, v in vars(source).items()
-                    if not k.startswith("_") and isinstance(v, str) and "." in v
-                ]
+                codenames = source.codenames()
             elif isinstance(source, list):
                 codenames = [p.split(".")[1] for p in source]
             else:

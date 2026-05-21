@@ -1,7 +1,7 @@
-from accounts.groups import GroupTemplateNames
 from accounts.models import PermissionGroup, PermissionGroupTemplate, User
 from django.test import TestCase
 from model_bakery import baker
+from notes.groups import CASEWORKER
 from organizations.models import OrganizationUser
 
 from .baker_recipes import organization_recipe
@@ -14,7 +14,7 @@ class OrganizationUserTestCase(TestCase):
 
         self.user = baker.make(User)
 
-        self.caseworker_template = PermissionGroupTemplate.objects.get(name=GroupTemplateNames.CASEWORKER)
+        self.caseworker_template = PermissionGroupTemplate.objects.get(name=CASEWORKER)
 
         baker.make(
             PermissionGroup,
@@ -34,7 +34,7 @@ class OrganizationUserTestCase(TestCase):
             organization=self.organization1,
         )
         self.assertTrue(
-            self.user.groups.filter(name=f"{self.organization1.name}_{GroupTemplateNames.CASEWORKER}").exists()
+            self.user.groups.filter(name=f"{self.organization1.name}_{CASEWORKER}").exists()
         )
 
     def test_user_with_multiple_organizations_retains_access(self) -> None:
@@ -52,8 +52,8 @@ class OrganizationUserTestCase(TestCase):
         self.user.organizations_organizationuser.get(organization=self.organization1).delete()
 
         self.assertFalse(
-            self.user.groups.filter(name=f"{self.organization1.name}_{GroupTemplateNames.CASEWORKER}").exists()
+            self.user.groups.filter(name=f"{self.organization1.name}_{CASEWORKER}").exists()
         )
         self.assertTrue(
-            self.user.groups.filter(name=f"{self.organization2.name}_{GroupTemplateNames.CASEWORKER}").exists()
+            self.user.groups.filter(name=f"{self.organization2.name}_{CASEWORKER}").exists()
         )

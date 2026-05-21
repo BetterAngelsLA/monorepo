@@ -6,6 +6,7 @@ import { Link, router } from 'expo-router';
 import { ReactNode, useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { UserOrganizationPermissions } from '../../apollo/graphql/__generated__/types';
 import { useUser } from '../../hooks';
 
 type AuthLayoutProps = {
@@ -35,7 +36,12 @@ export default function SignInContainer({
   useEffect(() => {
     if (user) {
       refetchFeatureFlags();
-      router.replace(user.isOutreachAuthorized ? '/' : '/welcome');
+      const hasOrgPortalAccess = user.organizations?.some((org) =>
+        org.userPermissions?.includes(
+          UserOrganizationPermissions.AccessOrgPortal
+        )
+      );
+      router.replace(hasOrgPortalAccess ? '/' : '/welcome');
     }
   }, [user]);
 

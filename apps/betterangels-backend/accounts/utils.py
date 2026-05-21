@@ -1,3 +1,4 @@
+import logging
 from functools import cached_property
 from typing import Union
 
@@ -5,38 +6,74 @@ import waffle
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from django.apps.registry import Apps
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
 from django.db import transaction
-from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
 
-from .models import PermissionGroup, PermissionGroupTemplate, User
+from .models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
+
+logger = logging.getLogger(__name__)
 
 
 def remove_organization_permission_group(organization: Organization) -> None:
     Group.objects.filter(permissiongroup__organization=organization).delete()
 
 
+def _get_member_role_for_org(organization: Organization) -> str:
+    """Determine the member role for an organization based on its org_types.
+
+    Uses the first matching preset's member_role. Falls back to the first
+    preset in ORG_TYPE_PRESETS if the org has no types assigned.
+    """
+    try:
+        profile = organization.profile
+        org_type_keys = list(profile.org_types.values_list("key", flat=True))
+    except OrganizationProfile.DoesNotExist:
+        org_type_keys = []
+
+    # Find the first preset that matches one of the org's types
+    for key in org_type_keys:
+        if key in settings.ORG_TYPE_PRESETS:
+            return settings.ORG_TYPE_PRESETS[key]["member_role"]
+
+    # Fallback: first preset
+    first_preset = next(iter(settings.ORG_TYPE_PRESETS.values()))
+    return first_preset["member_role"]
+
+
+def _get_templates_for_org(organization: Organization) -> list[str]:
+    """Return all permission group template names that should exist for an org."""
+    try:
+        profile = organization.profile
+        org_type_keys = list(profile.org_types.values_list("key", flat=True))
+    except OrganizationProfile.DoesNotExist:
+        org_type_keys = []
+
+    templates: set[str] = set()
+    for key in org_type_keys:
+        if key in settings.ORG_TYPE_PRESETS:
+            templates.update(settings.ORG_TYPE_PRESETS[key]["templates"])
+
+    if not templates:
+        # Fallback: first preset
+        first_preset = next(iter(settings.ORG_TYPE_PRESETS.values()))
+        templates.update(first_preset["templates"])
+
+    return list(templates)
+
+
 def add_default_org_permissions_to_user(user: User, organization: Organization) -> None:
-    caseworker_permission_group, _ = PermissionGroupTemplate.objects.get_or_create(
-        # TODO: This is a hack for MVP. Not all orgs will default to caseworkers
-        # we will want to have a default template selected for orgs on the org model.
-        name=GroupTemplateNames.CASEWORKER
-    )
-    org_caseworker_group, _ = PermissionGroup.objects.get_or_create(
-        organization=organization, template=caseworker_permission_group
-    )
-    user.groups.add(org_caseworker_group.group)
+    member_role = _get_member_role_for_org(organization)
+    member_template, _ = PermissionGroupTemplate.objects.get_or_create(name=member_role)
+    member_group, _ = PermissionGroup.objects.get_or_create(organization=organization, template=member_template)
+    user.groups.add(member_group.group)
 
 
 def create_default_org_permission_groups(organization: Organization) -> None:
-    default_templates = [
-        GroupTemplateNames.CASEWORKER,
-        GroupTemplateNames.ORG_ADMIN,
-        GroupTemplateNames.ORG_SUPERUSER,
-    ]
+    template_names = _get_templates_for_org(organization)
 
-    for temp in default_templates:
+    for temp in template_names:
         template, _ = PermissionGroupTemplate.objects.get_or_create(name=temp)
         PermissionGroup.objects.get_or_create(organization=organization, template=template)
 
@@ -46,16 +83,70 @@ def remove_org_group_permissions_from_user(user: User, organization: Organizatio
     user.groups.remove(*groups)
 
 
+def get_permission_group_for_org(
+    user: Union[AbstractBaseUser, AnonymousUser], organization: Organization
+) -> PermissionGroup:
+    """Return the user's member permission group for the given organization.
+
+    Derives the correct role from the organization's type preset configuration.
+    Validates that the user actually belongs to the group.
+    """
+    member_role = _get_member_role_for_org(organization)
+    permission_group = (
+        PermissionGroup.objects.select_related("organization", "group")
+        .filter(
+            organization=organization,
+            template__name=member_role,
+        )
+        .first()
+    )
+
+    if not (permission_group and permission_group.group):
+        raise PermissionError("Organization does not have the expected permission group")
+
+    if not user.groups.filter(id=permission_group.group_id).exists():
+        raise PermissionError("User is not a member of this organization's permission group")
+
+    return permission_group
+
+
+def get_member_permission_group(organization_id: int) -> PermissionGroup:
+    """Return the member permission group for an organization by ID.
+
+    Use this when user access has already been verified (e.g., by PermissionedQuerySet)
+    and you just need the group for assigning object permissions.
+    Single query — does not re-verify membership.
+    """
+    permission_group = (
+        PermissionGroup.objects.select_related("organization", "group")
+        .filter(organization_id=organization_id)
+        .exclude(template__name__in=[GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER])
+        .first()
+    )
+
+    if not (permission_group and permission_group.group):
+        raise PermissionError("Organization does not have a member permission group")
+
+    return permission_group
+
+
 def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> PermissionGroup:
-    # WARNING: Temporary workaround for organization selection
-    # TODO: Update once organization selection is implemented. Currently selects
-    # the first organization with a default Caseworker role for the user.
+    """DEPRECATED: Legacy fallback for resolvers that don't yet receive organization_id.
+
+    Selects the first organization where the user has a member role.
+    Use get_permission_group_for_org() with an explicit organization instead.
+    """
+    logger.warning(
+        "get_user_permission_group() is deprecated. Pass organization_id explicitly.",
+        stacklevel=2,
+    )
+    # Find the first permission group for this user that is a member role (not admin/superuser)
     permission_group = (
         PermissionGroup.objects.select_related("organization", "group")
         .filter(
             organization__users=user.pk,
-            name=GroupTemplateNames.CASEWORKER,
         )
+        .exclude(template__name__in=[GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER])
         .first()
     )
 
@@ -63,20 +154,6 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
         raise PermissionError("User lacks proper organization or permissions")
 
     return permission_group
-
-
-def get_outreach_authorized_users() -> QuerySet[User]:
-    # TODO: Make unit test for this function
-    authorized_permission_groups = [template.value for template in GroupTemplateNames]
-
-    # Subquery to check if the user has any related permission group in an authorized group
-    permission_group_exists = PermissionGroup.objects.filter(
-        organization__users=OuterRef("pk"),  # Matches `User` to `Organization`
-        template__name__in=authorized_permission_groups,
-    )
-
-    # Use Exists to avoid duplicate users without `distinct()`
-    return User.objects.filter(Exists(permission_group_exists))
 
 
 class OrgPermissionManager:

@@ -562,6 +562,7 @@ export type CreateClientDocumentInput = {
   clientProfile: Scalars['ID']['input'];
   file: Scalars['Upload']['input'];
   namespace: ClientDocumentNamespaceEnum;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
@@ -671,6 +672,7 @@ export type CreateHmisNotePayload = HmisNoteType | OperationInfo;
 
 export type CreateHmisNoteServiceRequestInput = {
   hmisNoteId: Scalars['ID']['input'];
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
   serviceId?: InputMaybe<Scalars['ID']['input']>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   serviceRequestType: ServiceRequestTypeEnum;
@@ -692,6 +694,7 @@ export type CreateNoteInput = {
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<LocationInput>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   providedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
@@ -814,6 +817,7 @@ export type CreateTaskInput = {
   hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
   hmisNote?: InputMaybe<Scalars['ID']['input']>;
   note?: InputMaybe<Scalars['ID']['input']>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
   summary: Scalars['String']['input'];
   team?: InputMaybe<SelahTeamEnum>;
@@ -836,7 +840,6 @@ export type CurrentUserType = {
   hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
   isHmisUser?: Maybe<Scalars['Boolean']['output']>;
-  isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
   organizationsOrganization?: Maybe<Array<CurrentUserOrganizationType>>;
@@ -1382,6 +1385,7 @@ export type ImportNoteDataInput = {
 export type ImportNoteInput = {
   importJobId: Scalars['UUID']['input'];
   note: ImportNoteDataInput;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
   rawData: Scalars['JSON']['input'];
   sourceId: Scalars['String']['input'];
   sourceName: Scalars['String']['input'];
@@ -2519,6 +2523,7 @@ export type ReportSummaryType = {
 export type ResolveClientDocumentUploadsInput = {
   clientProfileId: Scalars['ID']['input'];
   documents: Array<ClientDocumentFromUploadsInput>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type ResolveClientDocumentUploadsPayload = ClientDocumentUploadsType | OperationInfo;
@@ -3240,8 +3245,7 @@ export enum UserOrganizationPermissions {
   AddOrgMember = 'ADD_ORG_MEMBER',
   ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
   RemoveOrgMember = 'REMOVE_ORG_MEMBER',
-  ViewOrgMembers = 'VIEW_ORG_MEMBERS',
-  ViewReports = 'VIEW_REPORTS'
+  ViewOrgMembers = 'VIEW_ORG_MEMBERS'
 }
 
 export type UserType = {
@@ -3252,7 +3256,6 @@ export type UserType = {
   hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
   isHmisUser?: Maybe<Scalars['Boolean']['output']>;
-  isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
   organizationsOrganization?: Maybe<Array<OrganizationType>>;
