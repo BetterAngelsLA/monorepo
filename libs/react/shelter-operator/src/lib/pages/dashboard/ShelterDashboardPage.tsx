@@ -5,6 +5,7 @@ import { Button } from '../../components/base-ui/buttons/buttons';
 import { Text } from '../../components/base-ui/text/text';
 import { RoomsView } from '../../components/rooms/RoomsView';
 import { GetShelterNameDocument } from '../../graphql/__generated__/shelters.generated';
+import { shelterManageRoute } from '../../routing';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
 
 type ShelterTab = 'overview' | 'rooms' | 'beds' | 'occupancy' | 'label';
@@ -26,12 +27,12 @@ const TAB_ITEMS: SliderTabItem[] = [
 ];
 
 export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
-  const { id } = useParams();
-  const shelterId = id ?? '';
+  const { shelterId } = useParams();
+  const id = shelterId ?? '';
 
   const { data: shelterData } = useQuery(GetShelterNameDocument, {
-    variables: { id: shelterId },
-    skip: !shelterId,
+    variables: { id },
+    skip: !id,
   });
 
   if (!id) return null;
@@ -79,7 +80,7 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
 
       <SliderTabs
         activePathSuffix={TAB_CONFIG[tab].pathSuffix}
-        basePath={`/operator/shelter/${shelterId}`}
+        basePath={shelterManageRoute(shelterId ?? '')}
         items={TAB_ITEMS}
       />
 

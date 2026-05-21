@@ -1,4 +1,5 @@
 import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
+import { mergeCss } from '@monorepo/react/shared';
 import { operatorPath } from '@monorepo/react/shelter';
 import { Plus, UserCog } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -6,6 +7,7 @@ import { useCallback, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useBreadcrumbs } from '../hooks/useBreadcrumbs';
 import { useActiveOrg } from '../providers/activeOrg';
+import { paths } from '../routing';
 import { Button } from './base-ui/buttons';
 import { Dropdown } from './base-ui/dropdown';
 
@@ -24,7 +26,13 @@ function NavBarActions({ children }: { children?: ReactNode }) {
   );
 }
 
-export function NavBar() {
+type TNavProps = {
+  className?: string;
+};
+
+export function NavBar(props: TNavProps) {
+  const { className } = props;
+
   const { activeOrg, organizations, setActiveOrgId } = useActiveOrg();
   const location = useLocation();
   const navigate = useNavigate();
@@ -61,8 +69,10 @@ export function NavBar() {
     [setActiveOrgId]
   );
 
+  const parentCss = ['bg-[#FAFAFA]', 'px-5', 'py-3', className];
+
   return (
-    <div className="mb-6 bg-[#FAFAFA] px-5 py-3">
+    <div className={mergeCss(parentCss)}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3 md:gap-4">
           <Link to={operatorPath} className="shrink-0">
@@ -113,7 +123,7 @@ export function NavBar() {
               variant="primary"
               leftIcon={<Plus size={20} />}
               rightIcon={false}
-              onClick={() => navigate(`${operatorPath}/dashboard/create`)}
+              onClick={() => navigate(paths.dashboardCreate)}
             >
               Create Shelter
             </Button>

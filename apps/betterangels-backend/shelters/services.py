@@ -14,7 +14,6 @@ from typing import Any, Dict, List
 from accounts.groups import GroupTemplateNames
 from accounts.models import (
     PermissionGroup,
-    PermissionGroupTemplate,
     User,
 )
 from accounts.services import create_organization
@@ -426,13 +425,12 @@ def shelter_organization_create(
             organization_user=org_user,
         )
 
-        # Assign shelter operator + org superuser permission groups
-        for template_name in [SHELTER_OPERATOR, GroupTemplateNames.ORG_SUPERUSER]:
-            template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_name)
-            perm_group, _ = PermissionGroup.objects.get_or_create(
-                organization=organization,
-                template=template,
-            )
+        # Assign shelter operator + org superuser permission groups (already created by create_organization)
+        perm_groups = PermissionGroup.objects.filter(
+            organization=organization,
+            template__name__in=[SHELTER_OPERATOR, GroupTemplateNames.ORG_SUPERUSER],
+        )
+        for perm_group in perm_groups:
             user.groups.add(perm_group.group)
 
     _send_shelter_welcome_email(user=user, organization=organization)

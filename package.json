@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@ant-design/charts": "^2.6.7",
+    "@ant-design/icons": "6.x",
     "@ant-design/plots": "^2.6.8",
     "@apollo/client": "^4.0.9",
     "@config-plugins/react-native-blob-util": "^9.0.0",

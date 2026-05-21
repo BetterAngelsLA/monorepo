@@ -1,5 +1,6 @@
 import { useMutation } from '@apollo/client/react';
 import { Button } from '@monorepo/react/components';
+import { operatorPath } from '@monorepo/react/shelter';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import { FormEvent, useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -93,7 +94,7 @@ export function CreateShelterForm() {
 
       resetForm();
       setErrors({});
-      navigate('/operator');
+      navigate(operatorPath);
     } catch {
       setSubmissionError('A network error occurred. Please try again.');
     }
@@ -105,7 +106,7 @@ export function CreateShelterForm() {
     >
       <div className="space-y-6 p-8">
         <Link
-          to="/operator"
+          to={operatorPath}
           className="inline-block border border-gray-300 rounded-md px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
         >
           Back to Dashboard
