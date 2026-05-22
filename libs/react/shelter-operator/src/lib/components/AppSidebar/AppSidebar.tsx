@@ -20,14 +20,20 @@ type IProps = {
 export function AppSidebar(props: IProps) {
   const { className } = props;
 
-  const [isOpen, setIsOpen] = useState(false);
+  const initialOpenState = true;
+
+  const [isOpen, setIsOpen] = useState(initialOpenState);
   const location = useLocation();
   const { shelterId } = useParams<{ shelterId: string }>();
 
   const parentCss = ['bg-[#FAFAFA]', className];
 
   return (
-    <Sidebar className={mergeCss(parentCss)} onOpenChange={setIsOpen}>
+    <Sidebar
+      className={mergeCss(parentCss)}
+      onOpenChange={setIsOpen}
+      initialOpen={initialOpenState}
+    >
       <Sidebar.Content className="pt-6">
         <Sidebar.Link
           to={operatorPath}
