@@ -1,4 +1,5 @@
 import { generatePath, matchPath } from 'react-router-dom';
+import { TShelterProfileSegment } from './types';
 
 const OPERATOR_BASE = '/operator';
 
@@ -23,6 +24,13 @@ export const paths = {
 } as const;
 
 // ─── SEGMENTS ────────────────────────────────────────────────────────────────
+export const shelterProfileSegments = {
+  basic: 'basic-info',
+  operatingHours: 'operating-hours',
+  policies: 'policies',
+  details: 'details',
+  services: 'services',
+} as const;
 
 export const manageSegments = {
   rooms: 'rooms',
@@ -45,8 +53,13 @@ export function shelterManageRoute(shelterId: string): string {
   return generatePath(paths.shelterManage, { shelterId });
 }
 
-export function shelterProfileRoute(shelterId: string): string {
-  return generatePath(paths.shelterProfile, { shelterId });
+export function shelterProfileRoute(
+  shelterId: string,
+  segment?: TShelterProfileSegment
+): string {
+  const base = generatePath(paths.shelterProfile, { shelterId });
+
+  return segment ? `${base}/${segment}` : base;
 }
 
 export function isShelterRoute(path: string, strict?: boolean): boolean {
@@ -63,9 +76,17 @@ export function isShelterManageRoute(path: string, strict?: boolean): boolean {
   return Boolean(matchPath(`${paths.shelterManage}/*`, path));
 }
 
-export function isShelterProfileRoute(path: string, strict?: boolean): boolean {
-  if (strict) {
+export function isShelterProfileRoute(
+  path: string,
+  match?: TShelterProfileSegment | true
+): boolean {
+  if (match === true) {
     return Boolean(matchPath(paths.shelterProfile, path));
   }
+
+  if (match) {
+    return Boolean(matchPath(`${paths.shelterProfile}/${match}`, path));
+  }
+
   return Boolean(matchPath(`${paths.shelterProfile}/*`, path));
 }
