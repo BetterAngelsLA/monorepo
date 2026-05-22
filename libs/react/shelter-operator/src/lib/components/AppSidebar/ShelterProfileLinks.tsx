@@ -1,6 +1,10 @@
 import { FileSearchOutlined } from '@ant-design/icons';
 import { Sidebar } from '@monorepo/react/components';
-import { isShelterProfileRoute, shelterProfileRoute } from '../../routing';
+import {
+  isShelterProfileRoute,
+  shelterProfileRoute,
+  shelterProfileSegments,
+} from '../../routing';
 
 type IProps = {
   className?: string;
@@ -18,27 +22,73 @@ export function ShelterProfileLinks(props: IProps) {
     <Sidebar.NestedLinks
       className={className}
       label="Shelter Profile"
-      isActive={isProfileActive}
+      isActive={false} // style only child links as active/inactive
       collapsed={!isOpen}
       defaultExpanded={isProfileActive}
       icon={(color: string) => (
         <FileSearchOutlined className="w-4" style={{ color: color }} />
       )}
     >
-      <Sidebar.Link
-        to={`${shelterProfileRoute(shelterId)}/details`}
-        isActive={pathname.endsWith('/details')}
-        collapsed={!isOpen}
-      >
-        Details
-      </Sidebar.Link>
-      <Sidebar.Link
-        to={`${shelterProfileRoute(shelterId)}/services`}
-        isActive={pathname.endsWith('/services')}
-        collapsed={!isOpen}
-      >
-        Services
-      </Sidebar.Link>
+      <Sidebar.Content>
+        <Sidebar.Link
+          to={shelterProfileRoute(shelterId, shelterProfileSegments.basic)}
+          isActive={isShelterProfileRoute(
+            pathname,
+            shelterProfileSegments.basic
+          )}
+          collapsed={!isOpen}
+          replace
+        >
+          Basic Info
+        </Sidebar.Link>
+        <Sidebar.Link
+          to={shelterProfileRoute(
+            shelterId,
+            shelterProfileSegments.operatingHours
+          )}
+          isActive={isShelterProfileRoute(
+            pathname,
+            shelterProfileSegments.operatingHours
+          )}
+          collapsed={!isOpen}
+          replace
+        >
+          Operating Hours
+        </Sidebar.Link>
+        <Sidebar.Link
+          to={shelterProfileRoute(shelterId, shelterProfileSegments.policies)}
+          isActive={isShelterProfileRoute(
+            pathname,
+            shelterProfileSegments.policies
+          )}
+          collapsed={!isOpen}
+          replace
+        >
+          Policies
+        </Sidebar.Link>
+        <Sidebar.Link
+          to={shelterProfileRoute(shelterId, shelterProfileSegments.details)}
+          isActive={isShelterProfileRoute(
+            pathname,
+            shelterProfileSegments.details
+          )}
+          collapsed={!isOpen}
+          replace
+        >
+          Details
+        </Sidebar.Link>
+        <Sidebar.Link
+          to={shelterProfileRoute(shelterId, shelterProfileSegments.services)}
+          isActive={isShelterProfileRoute(
+            pathname,
+            shelterProfileSegments.services
+          )}
+          collapsed={!isOpen}
+          replace
+        >
+          Services
+        </Sidebar.Link>
+      </Sidebar.Content>
     </Sidebar.NestedLinks>
   );
 }

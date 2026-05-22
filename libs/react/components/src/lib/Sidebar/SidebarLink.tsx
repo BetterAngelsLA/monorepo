@@ -9,13 +9,14 @@ type TProps = {
   children: ReactNode;
   collapsed?: boolean;
   isActive?: boolean;
+  replace?: boolean;
 };
 
 export function SidebarLink(props: TProps) {
-  const { className, to, icon, collapsed, isActive, children } = props;
+  const { className, to, icon, collapsed, isActive, children, replace } = props;
 
   return (
-    <Link to={to}>
+    <Link to={to} replace={replace}>
       <SidebarItemLabel
         className={className}
         icon={icon}
