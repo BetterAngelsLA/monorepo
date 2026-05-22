@@ -12,13 +12,20 @@ type TProps = {
   openClassName?: string;
   closedClassName?: string;
   onOpenChange?: (isOpen: boolean) => void;
+  initialOpen?: boolean;
 };
 
 export function Sidebar(props: TProps) {
-  const { className, openClassName, closedClassName, children, onOpenChange } =
-    props;
+  const {
+    className,
+    openClassName,
+    closedClassName,
+    children,
+    onOpenChange,
+    initialOpen = false,
+  } = props;
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initialOpen);
 
   function toggleOpen() {
     setIsOpen((prev) => !prev);

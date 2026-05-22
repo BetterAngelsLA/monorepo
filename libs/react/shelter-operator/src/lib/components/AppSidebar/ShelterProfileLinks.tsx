@@ -16,15 +16,13 @@ type IProps = {
 export function ShelterProfileLinks(props: IProps) {
   const { className, pathname, shelterId, isOpen } = props;
 
-  const isProfileActive = isShelterProfileRoute(pathname);
-
   return (
     <Sidebar.NestedLinks
       className={className}
       label="Shelter Profile"
       isActive={false} // style only child links as active/inactive
       collapsed={!isOpen}
-      defaultExpanded={isProfileActive}
+      defaultExpanded={true}
       icon={(color: string) => (
         <FileSearchOutlined className="w-4" style={{ color: color }} />
       )}
