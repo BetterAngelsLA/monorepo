@@ -208,6 +208,11 @@ class Shelter(BaseModel):
         super().save(*args, **kwargs)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("bed.add"),
+    pghistory.DeleteEvent("bed.remove"),
+    pghistory.UpdateEvent("bed.status_change", condition=pghistory.AnyChange("status")),
+)
 class Bed(BaseModel):
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="beds")
     room = models.ForeignKey("Room", on_delete=models.SET_NULL, blank=True, null=True, related_name="beds")
