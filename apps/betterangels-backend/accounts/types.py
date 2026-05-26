@@ -1,10 +1,22 @@
 from typing import List, Optional, Tuple
+from enum import Enum
 
 import strawberry
 import strawberry_django
 from accounts.enums import OrgRoleEnum
 from accounts.permissions import UserOrganizationPermissions
 from common.constants import HMIS_SESSION_KEY_NAME
+from reports.permissions import ReportOrgPermissions
+
+
+# Combined GraphQL enum exposing all org-level permissions across apps.
+# Python source-of-truth remains in each app's permissions module.
+OrgPermissionEnum = Enum(
+    "OrgPermissionEnum",
+    {member.name: member.value for member in list(UserOrganizationPermissions) + list(ReportOrgPermissions)},
+    type=str,
+)
+OrgPermissionEnum = strawberry.enum(OrgPermissionEnum, name="OrgPermission")  # type: ignore[misc]
 from common.graphql.types import NonBlankString, NonEmptyString
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import CharField, F, Q, QuerySet, Value
@@ -119,11 +131,12 @@ class CurrentUserOrganizationType(OrganizationType):
 
         return qs
 
-    def resolve_user_permissions(self, info: Info) -> List[UserOrganizationPermissions]:
+    def resolve_user_permissions(self, info: Info) -> List[OrgPermissionEnum]:  # type: ignore[type-arg]
         perms: List[str] = getattr(self, "user_permissions", []) or []
-        return [UserOrganizationPermissions(perm) for perm in perms if perm in UserOrganizationPermissions.values]
+        valid_values = {e.value for e in OrgPermissionEnum}  # type: ignore[var-annotated]
+        return [OrgPermissionEnum(perm) for perm in perms if perm in valid_values]  # type: ignore[misc]
 
-    user_permissions: Optional[List[UserOrganizationPermissions]] = strawberry_django.field(
+    user_permissions: Optional[List[OrgPermissionEnum]] = strawberry_django.field(  # type: ignore[type-arg]
         resolver=resolve_user_permissions
     )
 
