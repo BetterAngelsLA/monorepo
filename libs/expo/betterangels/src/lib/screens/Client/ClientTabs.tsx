@@ -15,6 +15,7 @@ export enum ClientViewTabEnum {
   Interactions = 'Interactions',
   Locations = 'Locations',
   Tasks = 'Tasks',
+  Referrals = 'Referrals',
 }
 
 const orderedTabs: ClientViewTabEnum[] = [
@@ -22,6 +23,7 @@ const orderedTabs: ClientViewTabEnum[] = [
   ClientViewTabEnum.Interactions,
   ClientViewTabEnum.Tasks,
   ClientViewTabEnum.Docs,
+  ClientViewTabEnum.Referrals,
   ClientViewTabEnum.Locations,
 ];
 

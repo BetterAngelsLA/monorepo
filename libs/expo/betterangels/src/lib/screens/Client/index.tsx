@@ -17,6 +17,7 @@ import Docs from './Docs';
 import Interactions from './Interactions';
 import { InteractionLocations } from './Locations';
 import { TasksTab } from './Tasks';
+import { ReferralsTab } from './Referrals/ReferralsTab';
 
 import { useQuery } from '@apollo/client/react';
 import {
@@ -40,6 +41,7 @@ const tabComponents: Record<
     <InteractionLocations clientProfileId={client?.clientProfile.id} />
   ),
   [ClientViewTabEnum.Tasks]: TasksTab as ComponentType<TabComponentProps>,
+  [ClientViewTabEnum.Referrals]: ReferralsTab as ComponentType<TabComponentProps>,
 };
 
 const getTabComponent = (
