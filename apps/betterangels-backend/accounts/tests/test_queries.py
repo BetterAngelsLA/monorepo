@@ -6,6 +6,7 @@ from accounts.enums import OrgRoleEnum
 from accounts.models import User
 from accounts.permissions import UserOrganizationPermissions
 from accounts.utils import OrgPermissionManager
+from reports.permissions import ReportOrgPermissions
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.test import ignore_warnings, override_settings
@@ -183,6 +184,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     UserOrganizationPermissions.ADD_ORG_MEMBER.name,
                     UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
                     UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
+                    ReportOrgPermissions.VIEW_REPORTS.name,
                 ],
             ),
             (
@@ -193,6 +195,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
                     UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
                     UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
+                    ReportOrgPermissions.VIEW_REPORTS.name,
                 ],
             ),
         ],
@@ -353,7 +356,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
             "userId": str(self.org_admin.pk),
         }
 
-        with self.assertNumQueriesWithoutCache(6):
+        with self.assertNumQueriesWithoutCache(5):
             response = self.execute_graphql(query, variables)
 
         expected_member = {
@@ -387,7 +390,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
 
         variables = {"organizationId": str(self.org.pk)}
 
-        with self.assertNumQueriesWithoutCache(7):
+        with self.assertNumQueriesWithoutCache(6):
             response = self.execute_graphql(query, variables)
 
         expected_members = zip(

@@ -1,12 +1,12 @@
 import logging
 from functools import cached_property
-from typing import Union, cast
+from typing import Union
 
 import waffle
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
+from accounts.org_type_registry import get_all_presets
 from django.apps.registry import Apps
-from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
 from django.db import transaction
 from organizations.models import Organization
@@ -24,7 +24,7 @@ def _get_member_role_for_org(organization: Organization) -> str:
     """Determine the member role for an organization based on its org_types.
 
     Uses the first matching preset's member_role. Falls back to the first
-    preset in ORG_TYPE_PRESETS if the org has no types assigned.
+    registered preset if the org has no types assigned.
     """
     try:
         profile = organization.profile
@@ -32,14 +32,16 @@ def _get_member_role_for_org(organization: Organization) -> str:
     except OrganizationProfile.DoesNotExist:
         org_type_keys = []
 
+    presets = get_all_presets()
+
     # Find the first preset that matches one of the org's types
     for key in org_type_keys:
-        if key in settings.ORG_TYPE_PRESETS:
-            return cast(str, settings.ORG_TYPE_PRESETS[key]["member_role"])
+        if key in presets:
+            return presets[key].member_role
 
     # Fallback: first preset
-    first_preset = next(iter(settings.ORG_TYPE_PRESETS.values()))
-    return cast(str, first_preset["member_role"])
+    first_preset = next(iter(presets.values()))
+    return first_preset.member_role
 
 
 def _get_templates_for_org(organization: Organization) -> list[str]:
@@ -50,15 +52,17 @@ def _get_templates_for_org(organization: Organization) -> list[str]:
     except OrganizationProfile.DoesNotExist:
         org_type_keys = []
 
+    presets = get_all_presets()
+
     templates: set[str] = set()
     for key in org_type_keys:
-        if key in settings.ORG_TYPE_PRESETS:
-            templates.update(settings.ORG_TYPE_PRESETS[key]["templates"])
+        if key in presets:
+            templates.update(presets[key].templates)
 
     if not templates:
         # Fallback: first preset
-        first_preset = next(iter(settings.ORG_TYPE_PRESETS.values()))
-        templates.update(first_preset["templates"])
+        first_preset = next(iter(presets.values()))
+        templates.update(first_preset.templates)
 
     return list(templates)
 

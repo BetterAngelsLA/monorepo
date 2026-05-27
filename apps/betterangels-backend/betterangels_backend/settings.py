@@ -519,36 +519,3 @@ PHONENUMBER_DEFAULT_REGION = "US"
 # https://django-phonenumber-field.readthedocs.io/en/latest/reference.html#phone-number-format-choices
 PHONENUMBER_DB_FORMAT = "INTERNATIONAL"
 PHONENUMBER_DEFAULT_FORMAT = "INTERNATIONAL"
-
-from accounts.groups import GroupTemplateNames  # noqa: E402
-from notes.groups import CASEWORKER  # noqa: E402
-from shelters.groups import SHELTER_OPERATOR  # noqa: E402
-
-# Org-type presets — define what permission group templates and invite behavior
-# are applied when creating an organization with a given preset.
-# Accounts is type-agnostic; it only reads keys from this dict.
-ORG_TYPE_PRESETS = {
-    "outreach": {
-        "label": "Outreach",
-        "templates": [CASEWORKER, GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER],
-        "member_role": CASEWORKER,
-    },
-    "shelter": {
-        "label": "Shelter",
-        "templates": [SHELTER_OPERATOR, GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER],
-        "member_role": SHELTER_OPERATOR,
-    },
-}
-
-# Per-role invite email templates — keyed by PermissionGroupTemplate name.
-# Falls back to "default" if the role isn't listed.
-INVITE_TEMPLATES = {
-    "default": {
-        "html": "account/email/email_invite_organization.html",
-        "txt": "account/messages/email_invite_organization.txt",
-    },
-    SHELTER_OPERATOR: {
-        "html": "account/email/shelter_operator_invite.html",
-        "txt": "account/messages/shelter_operator_invite.txt",
-    },
-}

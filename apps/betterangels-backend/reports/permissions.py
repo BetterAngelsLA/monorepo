@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 
 
 class ReportOrgPermissions(models.TextChoices):
-    VIEW_REPORTS = "organizations.view_reports", _("Can view reports")
+    VIEW_REPORTS = "reports.view_reports", _("Can view reports")
 
 
 # Single permission — if you have VIEW_REPORTS on an org, you can see its reports.

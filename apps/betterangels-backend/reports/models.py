@@ -118,6 +118,7 @@ class ScheduledReport(models.Model):
         verbose_name = "Scheduled Report"
         verbose_name_plural = "Scheduled Reports"
         ordering = ["-created_at"]
+        permissions = [("view_reports", "Can view reports")]
 
     def __str__(self) -> str:
         """Return string representation."""

@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from typing import Optional, Sequence, Union, cast
+from typing import Optional, Sequence, Union
 
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.db import models
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.utils.translation import gettext_lazy as _
 from organizations.models import Organization
-from strawberry_django.utils.query import filter_for_user
 
 UserLike = Union[AbstractBaseUser, AnonymousUser]
 
@@ -25,26 +24,42 @@ def get_user_permitted_orgs(
     permissions: Sequence[str],
     *,
     any_perm: bool = True,
-) -> "QuerySet":
-    """Return orgs the user belongs to and has *permissions* on.
+) -> QuerySet[Organization]:
+    """Return orgs where the user's group (linked via PermissionGroup) has the specified permission(s).
 
-    Uses ``filter_for_user`` which checks both standard Django group
-    permissions and guardian object-level permissions.
+    Queries through PermissionGroup → Group → Permission relationships.
+    Works with permissions from any app namespace.
 
     Args:
         any_perm: When *True* (default) the user needs **any** of the
             listed permissions.  Set to *False* to require **all** of them.
     """
+    if not user or getattr(user, "is_anonymous", True):
+        return Organization.objects.none()
 
-    return cast(
-        QuerySet,
-        filter_for_user(
-            Organization.objects.filter(users=user),
-            user,
-            list(permissions),
-            any_perm=any_perm,
-        ),
+    codenames = [p.split(".")[-1] for p in permissions]
+    app_labels = {p.split(".")[0] for p in permissions if "." in p}
+
+    perm_q = Q(
+        permission_groups__group__user=user,
+        permission_groups__group__permissions__codename__in=codenames,
     )
+    if app_labels:
+        perm_q &= Q(
+            permission_groups__group__permissions__content_type__app_label__in=app_labels,
+        )
+
+    qs = Organization.objects.filter(users=user).filter(perm_q).distinct()
+
+    if not any_perm and len(codenames) > 1:
+        # Require ALL permissions — filter orgs that have every codename
+        for codename in codenames:
+            qs = qs.filter(
+                permission_groups__group__user=user,
+                permission_groups__group__permissions__codename=codename,
+            )
+
+    return qs
 
 
 def get_user_permitted_org(

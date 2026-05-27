@@ -10,6 +10,7 @@ Raises ``django.core.exceptions.ValidationError`` on invalid data.
 
 import uuid
 
+from accounts.org_type_registry import get_all_presets, get_preset
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
@@ -110,7 +111,7 @@ def organization_remove_member(
 def create_organization(*, name: str, presets: list[str]) -> Organization:
     """Create an organization with the given presets applied.
 
-    Each preset key must exist in settings.ORG_TYPE_PRESETS. The org gets:
+    Each preset key must be registered in the org-type registry. The org gets:
     - An OrganizationProfile with the corresponding OrgType(s)
     - PermissionGroupTemplates & PermissionGroups for each preset's templates
 
@@ -118,9 +119,11 @@ def create_organization(*, name: str, presets: list[str]) -> Organization:
     """
     from .models import PermissionGroup, PermissionGroupTemplate
 
+    all_presets = get_all_presets()
+
     # Validate presets
     for preset_key in presets:
-        if preset_key not in settings.ORG_TYPE_PRESETS:
+        if preset_key not in all_presets:
             raise ValidationError(f"Unknown preset: {preset_key}")
 
     with transaction.atomic():
@@ -128,16 +131,17 @@ def create_organization(*, name: str, presets: list[str]) -> Organization:
         # AutoOneToOneField auto-creates the profile on access
         profile = organization.profile
         for preset_key in presets:
+            preset = get_preset(preset_key)
             org_type, _ = OrgType.objects.get_or_create(
                 key=preset_key,
-                defaults={"label": settings.ORG_TYPE_PRESETS[preset_key]["label"]},
+                defaults={"label": preset.label},
             )
             profile.org_types.add(org_type)
 
         # Create permission groups from all presets' templates
         template_names: set[str] = set()
         for preset_key in presets:
-            template_names.update(settings.ORG_TYPE_PRESETS[preset_key]["templates"])
+            template_names.update(get_preset(preset_key).templates)
 
         for temp_name in template_names:
             template, _ = PermissionGroupTemplate.objects.get_or_create(name=temp_name)
