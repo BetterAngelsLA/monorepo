@@ -3,6 +3,7 @@ import { BookCheck, Settings } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { BedsView } from '../../components/beds/BedsView';
+import { OverviewView } from '../../components/overview/OverviewView';
 import { Text } from '../../components/base-ui/text/text';
 import { RoomsView } from '../../components/rooms/RoomsView';
 import { GetShelterNameDocument } from '../../graphql/__generated__/shelters.generated';
@@ -86,7 +87,7 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
       />
 
       {tab === 'rooms' && <RoomsView shelterId={id} />}
-      {tab === 'overview' && null}
+      {tab === 'overview' && <OverviewView shelterId={id} />}
       {tab === 'beds' && <BedsView shelterId={id} />}
       {tab === 'occupancy' && null}
       {tab === 'label' && null}

@@ -1,0 +1,24 @@
+query GetAdminShelterOverview($shelterId: ID!) {
+  adminShelter(pk: $shelterId) {
+    id
+    name
+    organization {
+      id
+      name
+    }
+    location {
+      place
+    }
+    bedsByStatus {
+      available
+      occupied
+      reserved
+      outOfService
+    }
+    roomsByStatus {
+      available
+      reserved
+      needsMaintenance
+    }
+  }
+}

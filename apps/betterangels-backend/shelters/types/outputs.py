@@ -1,5 +1,6 @@
 """Output types for shelter queries and mutations."""
 
+import dataclasses
 from datetime import datetime
 from typing import List, Optional, cast
 
@@ -83,6 +84,13 @@ class BedsByStatusType:
     occupied: int = 0
     reserved: int = 0
     out_of_service: int = 0
+
+
+@strawberry.type
+class RoomsByStatusType:
+    available: int = 0
+    reserved: int = 0
+    needs_maintenance: int = 0
 
 
 @strawberry.type
@@ -190,6 +198,22 @@ class ShelterTypeMixin:
             occupied=getattr(root, "_bed_occupied", 0),
             reserved=getattr(root, "_bed_reserved", 0),
             out_of_service=getattr(root, "_bed_out_of_service", 0),
+        )
+
+    @strawberry_django.field(
+        annotate={
+            "_room_available": lambda info: Count("rooms", filter=Q(rooms__status=RoomStatusChoices.AVAILABLE)),
+            "_room_reserved": lambda info: Count("rooms", filter=Q(rooms__status=RoomStatusChoices.RESERVED)),
+            "_room_needs_maintenance": lambda info: Count(
+                "rooms", filter=Q(rooms__status=RoomStatusChoices.NEEDS_MAINTENANCE)
+            ),
+        }
+    )
+    def rooms_by_status(self, root: models.Shelter) -> RoomsByStatusType:
+        return RoomsByStatusType(
+            available=getattr(root, "_room_available", 0),
+            reserved=getattr(root, "_room_reserved", 0),
+            needs_maintenance=getattr(root, "_room_needs_maintenance", 0),
         )
 
 

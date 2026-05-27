@@ -113,6 +113,7 @@ export type AdminShelterType = {
   referralRequirement: Array<ReferralRequirementType>;
   roomStyles: Array<RoomStyleType>;
   roomStylesOther?: Maybe<Scalars['String']['output']>;
+  roomsByStatus: RoomsByStatusType;
   schedules: Array<ScheduleType>;
   services: Array<ServiceType>;
   shelterPrograms: Array<ShelterProgramType>;
@@ -2190,6 +2191,7 @@ export enum PronounEnum {
 
 export type Query = {
   __typename?: 'Query';
+  adminShelter: AdminShelterType;
   adminShelters: AdminShelterTypeOffsetPaginated;
   beds: BedTypeOffsetPaginated;
   bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
@@ -2230,6 +2232,11 @@ export type Query = {
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
   task: TaskType;
   tasks: TaskTypeOffsetPaginated;
+};
+
+
+export type QueryAdminShelterArgs = {
+  pk: Scalars['ID']['input'];
 };
 
 
@@ -2611,6 +2618,13 @@ export type RoomTypeOffsetPaginated = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type RoomsByStatusType = {
+  __typename?: 'RoomsByStatusType';
+  available: Scalars['Int']['output'];
+  needsMaintenance: Scalars['Int']['output'];
+  reserved: Scalars['Int']['output'];
+};
+
 export type SpaType = {
   __typename?: 'SPAType';
   id: Scalars['ID']['output'];
@@ -2885,6 +2899,7 @@ export type ShelterType = {
   referralRequirement: Array<ReferralRequirementType>;
   roomStyles: Array<RoomStyleType>;
   roomStylesOther?: Maybe<Scalars['String']['output']>;
+  roomsByStatus: RoomsByStatusType;
   schedules: Array<ScheduleType>;
   services: Array<ServiceType>;
   shelterPrograms: Array<ShelterProgramType>;
