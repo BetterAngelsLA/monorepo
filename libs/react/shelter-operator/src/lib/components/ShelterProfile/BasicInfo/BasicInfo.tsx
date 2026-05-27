@@ -2,12 +2,7 @@ import { mergeCss } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { useShelter } from '../../../hooks/useShelter';
 import { LocationPicker } from '../../../pages/dashboard/components/create-shelter-form/components/LocationPicker';
-import {
-  DEMOGRAPHICS_OPTIONS,
-  getSelectedOptions,
-} from '../../../pages/dashboard/formOptions';
 import { LocationData } from '../../../pages/dashboard/formTypes';
-import { Dropdown } from '../../base-ui/dropdown';
 import { Input } from '../../base-ui/input';
 import { Switch } from '../../base-ui/switch';
 import { Form } from '../../form/Form';
@@ -121,18 +116,6 @@ export function BasicInfo(props: TProps) {
               onChange={(v) => console.log(v.target.value)}
               disabled={disabled}
               isViewMode={!isEditMode}
-            />
-
-            <Dropdown
-              label="Demographics Served"
-              options={DEMOGRAPHICS_OPTIONS}
-              isMulti={true}
-              isViewMode={!isEditMode}
-              disabled={disabled}
-              onChange={(v) => {
-                console.log(v);
-              }}
-              value={getSelectedOptions(demographics, DEMOGRAPHICS_OPTIONS)}
             />
           </div>
 
