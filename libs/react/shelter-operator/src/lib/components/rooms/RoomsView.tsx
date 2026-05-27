@@ -1,4 +1,3 @@
-import { gql } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -7,45 +6,20 @@ import {
   ShelterType,
   type RoomType,
 } from '../../apollo/graphql/__generated__/types';
+import {
+  GetShelterRoomsDocument,
+  type GetShelterRoomsQuery,
+  type GetShelterRoomsQueryVariables,
+} from './__generated__/rooms.generated';
 import { Button } from '../base-ui/buttons';
 import { RoomTable, type RoomRowObject } from '../RoomTable';
 import { EditRoomModal } from './EditRoomModal';
 
-const GET_SHELTER_ROOMS = gql`
-  query GetShelterRooms($shelterId: ID!) {
-    rooms(filters: { shelterId: $shelterId }) {
-      results {
-        id
-        roomIdentifier
-        status
-        amenities
-        medicalRespite
-      }
-    }
-  }
-`;
-
-type GetShelterRoomsResponse = {
-  rooms: {
-    results: Array<{
-      id: string;
-      roomIdentifier: string;
-      status: RoomStatusChoices | null;
-      amenities: string | null;
-      medicalRespite: boolean;
-    }>;
-  };
-};
-
-type GetShelterRoomsVariables = {
-  shelterId: string;
-};
-
 export function RoomsView({ shelterId }: { shelterId: string }) {
   const { data, loading } = useQuery<
-    GetShelterRoomsResponse,
-    GetShelterRoomsVariables
-  >(GET_SHELTER_ROOMS, {
+    GetShelterRoomsQuery,
+    GetShelterRoomsQueryVariables
+  >(GetShelterRoomsDocument, {
     variables: { shelterId },
     skip: !shelterId,
   });

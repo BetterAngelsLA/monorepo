@@ -1,61 +1,21 @@
-import { gql } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import { useMemo } from 'react';
+import { BedTypeChoices, type BedType } from '../../apollo/graphql/__generated__/types';
 import {
-  BedStatusChoices,
-  BedTypeChoices,
-  type BedType,
-} from '../../apollo/graphql/__generated__/types';
+  GetShelterBedsDocument,
+  type GetShelterBedsQuery,
+  type GetShelterBedsQueryVariables,
+} from './__generated__/beds.generated';
 import { BedTable, type BedRoomForList } from '../BedTable';
-
-const GET_SHELTER_BEDS = gql`
-  query GetShelterBeds($shelterId: ID!) {
-    beds(filters: { shelterId: $shelterId }) {
-      results {
-        id
-        bedName
-        status
-        maintenanceFlag
-        bedType
-        room {
-          id
-          roomIdentifier
-        }
-      }
-    }
-  }
-`;
-
-type BedResult = {
-  id: string;
-  bedName: string | null;
-  status: BedStatusChoices | null;
-  maintenanceFlag: boolean;
-  bedType: BedTypeChoices | null;
-  room: {
-    id: string;
-    roomIdentifier: string;
-  } | null;
-};
-
-type GetShelterBedsResponse = {
-  beds: {
-    results: BedResult[];
-  };
-};
-
-type GetShelterBedsVariables = {
-  shelterId: string;
-};
 
 const UNASSIGNED_ROOM_ID = 'unassigned-room';
 const UNASSIGNED_ROOM_LABEL = 'Unassigned';
 
 export function BedsView({ shelterId }: { shelterId: string }) {
   const { data, loading } = useQuery<
-    GetShelterBedsResponse,
-    GetShelterBedsVariables
-  >(GET_SHELTER_BEDS, {
+    GetShelterBedsQuery,
+    GetShelterBedsQueryVariables
+  >(GetShelterBedsDocument, {
     variables: { shelterId },
     skip: !shelterId,
   });
