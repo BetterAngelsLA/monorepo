@@ -1996,6 +1996,7 @@ union RevertNotePayload = NoteType | OperationInfo
 
 input RoomFilter {
   medicalRespite: Boolean
+  shelterId: ID
   AND: RoomFilter
   OR: RoomFilter
   NOT: RoomFilter

@@ -220,6 +220,7 @@ class RoomFilter(CommonBedRoomFilterMixin):
     medical_respite: Optional[bool]
     room_type = make_in_filter("room_type", RoomStyleChoices)
     status = make_in_filter("status", RoomStatusChoices)
+    shelter_id: Optional[ID]
 
     @strawberry_django.filter_field
     def number_of_beds(self, queryset: QuerySet, value: Optional[int], prefix: str) -> Tuple[QuerySet, Q]:

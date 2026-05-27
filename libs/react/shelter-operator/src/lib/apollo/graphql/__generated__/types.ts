@@ -2547,6 +2547,7 @@ export type RoomFilter = {
   medicalRespite?: InputMaybe<Scalars['Boolean']['input']>;
   numberOfBeds?: InputMaybe<Scalars['Int']['input']>;
   roomType?: InputMaybe<Array<RoomStyleChoices>>;
+  shelterId?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Array<RoomStatusChoices>>;
 };
 
