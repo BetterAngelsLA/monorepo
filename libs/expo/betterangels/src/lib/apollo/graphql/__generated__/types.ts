@@ -840,6 +840,8 @@ export type CurrentUserType = {
   hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
   isHmisUser?: Maybe<Scalars['Boolean']['output']>;
+  /** @deprecated Use caseworkerOrganizations query instead. */
+  isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
   organizationsOrganization?: Maybe<Array<CurrentUserOrganizationType>>;
@@ -2506,6 +2508,10 @@ export type RemoveOrganizationMemberInput = {
 
 export type RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo;
 
+export enum ReportPermission {
+  ViewReports = 'VIEW_REPORTS'
+}
+
 export type ReportSummaryType = {
   __typename?: 'ReportSummaryType';
   endDate: Scalars['String']['output'];
@@ -3240,6 +3246,14 @@ export type UpdateUserProfileInput = {
 
 export type UpdateUserProfilePayload = CurrentUserType | OperationInfo;
 
+export enum UserOrgPermission {
+  AccessOrgPortal = 'ACCESS_ORG_PORTAL',
+  AddOrgMember = 'ADD_ORG_MEMBER',
+  ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
+  RemoveOrgMember = 'REMOVE_ORG_MEMBER',
+  ViewOrgMembers = 'VIEW_ORG_MEMBERS'
+}
+
 export enum UserOrganizationPermissions {
   AccessOrgPortal = 'ACCESS_ORG_PORTAL',
   AddOrgMember = 'ADD_ORG_MEMBER',
@@ -3257,6 +3271,8 @@ export type UserType = {
   hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
   isHmisUser?: Maybe<Scalars['Boolean']['output']>;
+  /** @deprecated Use caseworkerOrganizations query instead. */
+  isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
   organizationsOrganization?: Maybe<Array<OrganizationType>>;

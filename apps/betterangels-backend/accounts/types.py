@@ -18,13 +18,13 @@ from strawberry_django.auth.utils import get_current_user
 
 from .models import User
 
-# Combined GraphQL enum exposing all org-level permissions across apps.
+# Combined GraphQL enum exposing all org-level permissions across apps (backwards compat).
 # Python source-of-truth remains in each app's permissions module.
-OrgPermissionEnum = strawberry.enum(  # type: ignore[misc]
+OrgPermissionEnum = strawberry.enum(  # type: ignore[call-overload]
     Enum(
         "OrgPermissionEnum", {m.name: m.value for m in [*UserOrganizationPermissions, *ReportOrgPermissions]}, type=str
     ),
-    name="OrgPermission",
+    name="UserOrganizationPermissions",
 )
 
 
@@ -131,12 +131,12 @@ class CurrentUserOrganizationType(OrganizationType):
 
         return qs
 
-    def resolve_user_permissions(self, info: Info) -> List[OrgPermissionEnum]:  # type: ignore[type-arg]
+    def resolve_user_permissions(self, info: Info) -> List[OrgPermissionEnum]:  # type: ignore[valid-type]
         perms: List[str] = getattr(self, "user_permissions", []) or []
         valid_values = {e.value for e in OrgPermissionEnum}  # type: ignore[var-annotated]
         return [OrgPermissionEnum(perm) for perm in perms if perm in valid_values]  # type: ignore[misc]
 
-    user_permissions: Optional[List[OrgPermissionEnum]] = strawberry_django.field(  # type: ignore[type-arg]
+    user_permissions: Optional[List[OrgPermissionEnum]] = strawberry_django.field(  # type: ignore[valid-type]
         resolver=resolve_user_permissions
     )
 

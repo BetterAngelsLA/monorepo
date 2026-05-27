@@ -817,7 +817,7 @@ union CreateTaskPayload = TaskType | OperationInfo
 type CurrentUserOrganizationType {
   id: ID!
   name: String!
-  userPermissions: [OrgPermission!]
+  userPermissions: [UserOrganizationPermissions!]
 }
 
 type CurrentUserType {
@@ -1683,15 +1683,6 @@ input OrgInvitationInput {
   organizationId: ID!
 }
 
-enum OrgPermission {
-  ACCESS_ORG_PORTAL
-  ADD_ORG_MEMBER
-  CHANGE_ORG_MEMBER_ROLE
-  REMOVE_ORG_MEMBER
-  VIEW_ORG_MEMBERS
-  VIEW_REPORTS
-}
-
 enum OrgRoleEnum {
   MEMBER
   ADMIN
@@ -1972,6 +1963,10 @@ input RemoveOrganizationMemberInput {
 }
 
 union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo
+
+enum ReportPermission {
+  VIEW_REPORTS
+}
 
 type ReportSummaryType {
   totalNotes: Int!
@@ -2689,6 +2684,23 @@ union UpdateUserProfilePayload = CurrentUserType | OperationInfo
 
 """Represents a file upload."""
 scalar Upload
+
+enum UserOrgPermission {
+  ACCESS_ORG_PORTAL
+  ADD_ORG_MEMBER
+  CHANGE_ORG_MEMBER_ROLE
+  REMOVE_ORG_MEMBER
+  VIEW_ORG_MEMBERS
+}
+
+enum UserOrganizationPermissions {
+  ACCESS_ORG_PORTAL
+  ADD_ORG_MEMBER
+  CHANGE_ORG_MEMBER_ROLE
+  REMOVE_ORG_MEMBER
+  VIEW_ORG_MEMBERS
+  VIEW_REPORTS
+}
 
 type UserType {
   firstName: NonBlankString
