@@ -4,26 +4,28 @@ from typing import List, Optional, Tuple
 import strawberry
 import strawberry_django
 from accounts.enums import OrgRoleEnum
+from accounts.models import PermissionGroup
 from accounts.permissions import UserOrganizationPermissions
 from common.constants import HMIS_SESSION_KEY_NAME
-from reports.permissions import ReportOrgPermissions
-
-# Combined GraphQL enum exposing all org-level permissions across apps.
-# Python source-of-truth remains in each app's permissions module.
-OrgPermissionEnum = strawberry.enum(  # type: ignore[misc]
-    Enum("OrgPermissionEnum", {m.name: m.value for m in [*UserOrganizationPermissions, *ReportOrgPermissions]}, type=str),
-    name="OrgPermission",
-)
-from accounts.models import PermissionGroup
 from common.graphql.types import NonBlankString, NonEmptyString
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import CharField, F, Q, QuerySet, Value
 from django.db.models.functions import Concat
 from organizations.models import Organization
+from reports.permissions import ReportOrgPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
 from .models import User
+
+# Combined GraphQL enum exposing all org-level permissions across apps.
+# Python source-of-truth remains in each app's permissions module.
+OrgPermissionEnum = strawberry.enum(  # type: ignore[misc]
+    Enum(
+        "OrgPermissionEnum", {m.name: m.value for m in [*UserOrganizationPermissions, *ReportOrgPermissions]}, type=str
+    ),
+    name="OrgPermission",
+)
 
 
 @strawberry.input

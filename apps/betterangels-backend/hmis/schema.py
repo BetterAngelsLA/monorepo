@@ -23,7 +23,6 @@ from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
 from notes.models import ServiceRequest
 from notes.types import ServiceRequestType
 from notes.utils.note_utils import get_service_args
-from organizations.models import Organization
 from strawberry import ID, asdict
 from strawberry.permission import BasePermission
 from strawberry.schema_directive import Location as DirectiveLocation

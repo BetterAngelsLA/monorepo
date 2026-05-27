@@ -5,7 +5,7 @@ import time_machine
 from accounts.enums import OrgRoleEnum
 from accounts.models import User
 from accounts.permissions import UserOrganizationPermissions
-from accounts.utils import OrgPermissionManager
+from accounts.utils import OrgPermissionManager, remove_organization_permission_group
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.test import ignore_warnings, override_settings
@@ -41,16 +41,17 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
-        ("organization_count, expected_query_count"),
+        ("organization_count, is_outreach_authorized, expected_query_count"),
         [
-            (0, 2),
-            (1, 2),
-            (2, 2),
+            (0, False, 3),
+            (1, True, 3),
+            (2, True, 3),
         ],
     )
     def test_logged_in_user_query(
         self,
         organization_count: int,
+        is_outreach_authorized: bool,
         expected_query_count: int,
     ) -> None:
         """
@@ -86,6 +87,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     email
                     hasAcceptedTos
                     hasAcceptedPrivacyPolicy
+                    isOutreachAuthorized
                     isHmisUser
                     organizations: organizationsOrganization {
                         id
@@ -129,6 +131,10 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             user.middle_name,
         )
         self.assertFalse(response["data"]["currentUser"]["isHmisUser"])
+        self.assertEqual(
+            response["data"]["currentUser"]["isOutreachAuthorized"],
+            is_outreach_authorized,
+        )
         self.assertEqual(
             response["data"]["currentUser"]["hasAcceptedTos"],
             user.has_accepted_tos,
@@ -235,6 +241,44 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         user_perms = {o["name"]: o["userPermissions"] for o in response["data"]["currentUser"]["organizations"]}
         self.assertCountEqual(user_perms["o1"], expected_permissions)
         self.assertEqual(user_perms["o2"], [])
+
+    @parametrize(
+        "user_is_in_authorized_org, user_is_in_unauthorized_org, should_succeed",
+        [
+            (True, True, True),
+            (True, False, True),
+            (False, True, False),
+        ],
+    )
+    def test_is_outreach_authorized(
+        self,
+        user_is_in_authorized_org: bool,
+        user_is_in_unauthorized_org: bool,
+        should_succeed: bool,
+    ) -> None:
+        authorized_org = organization_recipe.make(name="authorized org")
+        unauthorized_org = organization_recipe.make(name="unauthorized org")
+
+        user = baker.make(User)
+        self.graphql_client.force_login(user)
+
+        if user_is_in_authorized_org:
+            authorized_org.add_user(user)
+
+        if user_is_in_unauthorized_org:
+            unauthorized_org.add_user(user)
+
+        remove_organization_permission_group(unauthorized_org)
+
+        query = """
+            query {
+                currentUser {
+                    isOutreachAuthorized
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+        self.assertEqual(response["data"]["currentUser"]["isOutreachAuthorized"], should_succeed)
 
 
 class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
