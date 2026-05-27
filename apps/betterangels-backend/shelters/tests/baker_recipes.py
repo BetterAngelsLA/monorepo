@@ -42,7 +42,6 @@ from shelters.models import (
     Schedule,
     Service,
     Shelter,
-    ShelterAvailability,
     ShelterProgram,
     ShelterType,
     SpecialSituationRestriction,
