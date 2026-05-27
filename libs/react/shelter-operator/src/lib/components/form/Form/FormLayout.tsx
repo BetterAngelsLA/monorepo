@@ -1,6 +1,7 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { ReactNode } from 'react';
 import { FormActions } from './FormActions';
+import { FormBlock } from './FormBlock';
 import { FormHeader } from './FormHeader';
 
 type TProps = {
@@ -16,5 +17,6 @@ function FormLayout(props: TProps) {
 
 FormLayout.Actions = FormActions;
 FormLayout.Header = FormHeader;
+FormLayout.Block = FormBlock;
 
 export { FormLayout };
