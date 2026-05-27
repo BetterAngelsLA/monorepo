@@ -1,5 +1,6 @@
 import { useUser } from '@monorepo/react/shelter';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { CreateShelterProfile } from './components/ShelterProfile';
 import { OperatorLayout } from './components/layout/OperatorLayout';
 import { UsersPage } from './pages';
 import { Dashboard } from './pages/dashboard/Dashboard';
@@ -40,6 +41,10 @@ export function OperatorApp() {
             <Route
               path={routePath(paths.dashboardCreate)}
               element={<CreateShelterForm />}
+            />
+            <Route
+              path={routePath(paths.shelterCreate)}
+              element={<CreateShelterProfile />}
             />
             <Route path={routePath(paths.shelterProfile)}>
               <Route
