@@ -40,7 +40,7 @@ const variantBaseClasses: Record<ButtonVariant, string> = {
 };
 
 const variantColorDefaults: Record<ButtonVariant, string> = {
-  floating: 'bg-[#008CEE] hover:bg-[#0071C0] text-white',
+  floating: 'bg-[#008CEE] hover:bg-[#0071C0] disabled:bg-[#D3D9E3] text-white',
   'floating-inverse':
     'bg-white hover:bg-[#F4F6FD] disabled:bg-[#D3D9E3] border-[#D3D9E3] text-[#747A82]',
   primary:
@@ -103,7 +103,7 @@ export function Button(props: IButtonProps) {
   const textVariant = variant === 'primary-sm' ? 'body' : 'btn';
 
   const buttonCss = [
-    'focus:outline-hidden inline-flex items-center whitespace-nowrap transition-all cursor-pointer',
+    'focus:outline-hidden inline-flex items-center whitespace-nowrap transition-all cursor-pointer disabled:cursor-not-allowed',
     !isIconOnly && 'h-fit',
     variantBaseClasses[variant],
     colorClass,
