@@ -88,9 +88,7 @@ class Query:
     def caseworker_organizations(
         self, info: Info, ordering: Optional[list[OrganizationOrder]] = None
     ) -> "QuerySet[Organization]":
-        user = get_current_user(info)
         return Organization.objects.filter(  # type: ignore[no-any-return]
-            users=user,
             permission_groups__template__name=CASEWORKER,
         )
 

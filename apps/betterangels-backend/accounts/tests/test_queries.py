@@ -285,8 +285,8 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
     def test_caseworker_organizations_query(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-        # Create an org with a Caseworker template that the user is NOT a member of.
-        # It should NOT appear in results (query is user-scoped).
+        # This recipe creates an organization in the process. Including this here because even though
+        # Caseworker orgs are created elsewhere in the test suite, this test should be self-contained.
         permission_group_recipe.make(name="Caseworker")
 
         non_cw_org = organization_recipe.make()
@@ -310,10 +310,8 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
         response = self.execute_graphql(query, variables=variables)
 
         caseworker_orgs = response["data"]["caseworkerOrganizations"]["results"]
-        # Only returns orgs the user is a member of AND that have a Caseworker template
         expected_caseworker_org_ids = list(
             Organization.objects.filter(
-                users=self.org_1_case_manager_1,
                 permission_groups__template__name=CASEWORKER,
             ).values_list("id", flat=True)
         )
@@ -325,10 +323,10 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
     @parametrize(
         "search_term, expected_orgs",
         [
-            (None, ["org_1"]),
-            ("org_", ["org_1"]),
+            (None, ["org_1", "org_2", "test_org"]),
+            ("org_", ["org_1", "org_2"]),
             ("org_1", ["org_1"]),
-            ("org 2", []),
+            ("org 2", ["org_2"]),
             ("nonexistent org", []),
         ],
     )

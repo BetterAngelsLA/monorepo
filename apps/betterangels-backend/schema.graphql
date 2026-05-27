@@ -831,7 +831,7 @@ type CurrentUserType {
   hasAcceptedPrivacyPolicy: Boolean
   username: String
   isHmisUser: Boolean
-  isOutreachAuthorized: Boolean! @deprecated(reason: "Use caseworkerOrganizations query instead.")
+  isOutreachAuthorized: Boolean @deprecated(reason: "Use caseworkerOrganizations query instead.")
 }
 
 """Date (isoformat)"""
@@ -2701,6 +2701,7 @@ type UserType {
   hasAcceptedPrivacyPolicy: Boolean
   username: String
   isHmisUser: Boolean
+  isOutreachAuthorized: Boolean @deprecated(reason: "Use caseworkerOrganizations query instead.")
 }
 
 enum VaccinationRequirementChoices {
