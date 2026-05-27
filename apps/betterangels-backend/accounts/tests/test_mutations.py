@@ -191,7 +191,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         }
 
         with patch("accounts.backends.CustomInvitations.send_invitation") as mock_send_invitation:
-            with self.assertNumQueriesWithoutCache(21):
+            with self.assertNumQueriesWithoutCache(22):
                 response = self.execute_graphql(mutation, {"data": variables})
 
             mock_send_invitation.assert_called_once()

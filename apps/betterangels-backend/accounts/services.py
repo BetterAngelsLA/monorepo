@@ -11,6 +11,7 @@ Raises ``django.core.exceptions.ValidationError`` on invalid data.
 import uuid
 
 from accounts.org_type_registry import get_all_presets, get_preset
+from accounts.utils import _get_member_role_for_org
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
@@ -64,10 +65,13 @@ def organization_add_member(
         )
 
     site = Site.objects.get(pk=settings.SITE_ID)
+
+    role_name = _get_member_role_for_org(organization)
     invitation_backend().send_invitation(
         user=user,
         sender=invited_by,
         organization=organization,
+        role_name=role_name,
         domain=site,
         invitation=invitation,
     )

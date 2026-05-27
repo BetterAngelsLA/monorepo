@@ -1,7 +1,7 @@
 from typing import Iterable, Optional
 
 from accounts.models import User
-from accounts.utils import get_permission_group_for_org, get_user_permission_group
+from accounts.utils import resolve_permission_group
 from clients.models import ClientProfile
 from clients.types import ClientDocumentFromUploadsInput, ClientDocumentUploadsInputItem
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
@@ -82,10 +82,7 @@ def resolve_upload(
     documents: Iterable[ClientDocumentFromUploadsInput],
     organization: Optional[Organization] = None,
 ) -> list[Attachment]:
-    if organization:
-        permission_group = get_permission_group_for_org(user, organization)
-    else:
-        permission_group = get_user_permission_group(user)
+    permission_group = resolve_permission_group(user, organization.pk if organization else None)
     content_type = ContentType.objects.get_for_model(ClientProfile)
 
     # Validate the entire batch before any DB writes.

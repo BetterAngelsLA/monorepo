@@ -3,7 +3,7 @@ from typing import Any, Dict, Iterable, cast
 import strawberry
 import strawberry_django
 from accounts.types import CurrentUserType
-from accounts.utils import get_permission_group_for_org, get_user_permission_group
+from accounts.utils import resolve_permission_group
 from betterangels_backend import settings
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
@@ -23,6 +23,7 @@ from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
 from notes.models import ServiceRequest
 from notes.types import ServiceRequestType
 from notes.utils.note_utils import get_service_args
+from organizations.models import Organization
 from strawberry import ID, asdict
 from strawberry.permission import BasePermission
 from strawberry.schema_directive import Location as DirectiveLocation
@@ -386,13 +387,7 @@ class Mutation:
             hmis_note_id = str(service_request_data.pop("hmis_note_id"))
             hmis_note = HmisNote.objects.get(pk=hmis_note_id)
 
-            if organization_id:
-                from organizations.models import Organization
-
-                organization = Organization.objects.get(id=organization_id)
-                permission_group = get_permission_group_for_org(user, organization)
-            else:
-                permission_group = get_user_permission_group(user)
+            permission_group = resolve_permission_group(user, organization_id)
 
             service_args = get_service_args(service_request_data, permission_group.organization)
 

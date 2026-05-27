@@ -1,5 +1,5 @@
-from typing import List, Optional, Tuple
 from enum import Enum
+from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
@@ -8,15 +8,13 @@ from accounts.permissions import UserOrganizationPermissions
 from common.constants import HMIS_SESSION_KEY_NAME
 from reports.permissions import ReportOrgPermissions
 
-
 # Combined GraphQL enum exposing all org-level permissions across apps.
 # Python source-of-truth remains in each app's permissions module.
-OrgPermissionEnum = Enum(
-    "OrgPermissionEnum",
-    {member.name: member.value for member in list(UserOrganizationPermissions) + list(ReportOrgPermissions)},
-    type=str,
+OrgPermissionEnum = strawberry.enum(  # type: ignore[misc]
+    Enum("OrgPermissionEnum", {m.name: m.value for m in [*UserOrganizationPermissions, *ReportOrgPermissions]}, type=str),
+    name="OrgPermission",
 )
-OrgPermissionEnum = strawberry.enum(OrgPermissionEnum, name="OrgPermission")  # type: ignore[misc]
+from accounts.models import PermissionGroup
 from common.graphql.types import NonBlankString, NonEmptyString
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import CharField, F, Q, QuerySet, Value
@@ -179,6 +177,22 @@ class CurrentUserType(UserBaseType):
         session = request.session
 
         return bool(session.get(HMIS_SESSION_KEY_NAME, None))
+
+    @strawberry_django.field(deprecation_reason="Use caseworkerOrganizations query instead.")
+    def is_outreach_authorized(self, info: Info) -> bool:
+        """Backwards-compatible field for old mobile clients.
+
+        Returns True if the user belongs to a Caseworker permission group
+        in any organization (i.e., they are an outreach worker).
+        """
+
+        user = get_current_user(info)
+        if not user or not user.is_authenticated:
+            return False
+        return PermissionGroup.objects.filter(
+            group__user=user,
+            template__name="Caseworker",
+        ).exists()
 
 
 @strawberry_django.order_type(User, one_of=False)

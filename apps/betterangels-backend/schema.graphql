@@ -817,7 +817,7 @@ union CreateTaskPayload = TaskType | OperationInfo
 type CurrentUserOrganizationType {
   id: ID!
   name: String!
-  userPermissions: [UserOrganizationPermissions!]
+  userPermissions: [OrgPermission!]
 }
 
 type CurrentUserType {
@@ -831,6 +831,7 @@ type CurrentUserType {
   hasAcceptedPrivacyPolicy: Boolean
   username: String
   isHmisUser: Boolean
+  isOutreachAuthorized: Boolean! @deprecated(reason: "Use caseworkerOrganizations query instead.")
 }
 
 """Date (isoformat)"""
@@ -1680,6 +1681,15 @@ input OrgInvitationInput {
   middleName: String = null
   lastName: String!
   organizationId: ID!
+}
+
+enum OrgPermission {
+  ACCESS_ORG_PORTAL
+  ADD_ORG_MEMBER
+  CHANGE_ORG_MEMBER_ROLE
+  REMOVE_ORG_MEMBER
+  VIEW_ORG_MEMBERS
+  VIEW_REPORTS
 }
 
 enum OrgRoleEnum {
@@ -2679,15 +2689,6 @@ union UpdateUserProfilePayload = CurrentUserType | OperationInfo
 
 """Represents a file upload."""
 scalar Upload
-
-enum UserOrganizationPermissions {
-  ACCESS_ORG_PORTAL
-  ADD_ORG_MEMBER
-  CHANGE_ORG_MEMBER_ROLE
-  REMOVE_ORG_MEMBER
-  VIEW_ORG_MEMBERS
-  VIEW_REPORTS
-}
 
 type UserType {
   firstName: NonBlankString

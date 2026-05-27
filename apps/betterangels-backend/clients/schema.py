@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_permission_group_for_org, get_user_permission_group
+from accounts.utils import resolve_permission_group
 from clients.enums import ErrorCodeEnum
 from clients.models import ClientContact, ClientProfile, ClientProfileDataImport, ClientProfileImportRecord, HmisProfile
 from clients.permissions import (
@@ -31,6 +31,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import ForeignKey, Prefetch
 from graphql import GraphQLError
+from organizations.models import Organization
 from phonenumber_field.validators import validate_international_phonenumber
 from strawberry.scalars import JSON
 from strawberry.types import Info
@@ -599,13 +600,7 @@ class Mutation:
                 [ClientProfilePermissions.CHANGE],
             ).get(id=data.client_profile)
 
-            if data.organization_id:
-                from organizations.models import Organization
-
-                organization = Organization.objects.get(id=data.organization_id)
-                permission_group = get_permission_group_for_org(user, organization)
-            else:
-                permission_group = get_user_permission_group(user)
+            permission_group = resolve_permission_group(user, data.organization_id)
 
             content_type = ContentType.objects.get_for_model(ClientProfile)
             client_document = Attachment.objects.create(
@@ -697,8 +692,6 @@ class Mutation:
 
         organization = None
         if data.organization_id:
-            from organizations.models import Organization
-
             organization = Organization.objects.get(id=data.organization_id)
 
         documents = client_document.resolve_upload(

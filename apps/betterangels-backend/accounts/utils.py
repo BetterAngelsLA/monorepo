@@ -5,7 +5,7 @@ from typing import Union
 import waffle
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
-from accounts.org_type_registry import get_all_presets
+from accounts.org_type_registry import get_all_presets, get_default_preset
 from django.apps.registry import Apps
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
 from django.db import transaction
@@ -21,9 +21,9 @@ def remove_organization_permission_group(organization: Organization) -> None:
 
 
 def _get_member_role_for_org(organization: Organization) -> str:
-    """Determine the member role for an organization based on its org_types.
+    """Determine the default member role for an organization based on its org_types.
 
-    Uses the first matching preset's member_role. Falls back to the first
+    Uses the first matching preset's default_role. Falls back to the first
     registered preset if the org has no types assigned.
     """
     try:
@@ -37,11 +37,10 @@ def _get_member_role_for_org(organization: Organization) -> str:
     # Find the first preset that matches one of the org's types
     for key in org_type_keys:
         if key in presets:
-            return presets[key].member_role
+            return presets[key].default_role
 
-    # Fallback: first preset
-    first_preset = next(iter(presets.values()))
-    return first_preset.member_role
+    # Fallback: use the explicitly registered default preset
+    return get_default_preset().default_role
 
 
 def _get_templates_for_org(organization: Organization) -> list[str]:
@@ -60,9 +59,8 @@ def _get_templates_for_org(organization: Organization) -> list[str]:
             templates.update(presets[key].templates)
 
     if not templates:
-        # Fallback: first preset
-        first_preset = next(iter(presets.values()))
-        templates.update(first_preset.templates)
+        # Fallback: use the explicitly registered default preset
+        templates.update(get_default_preset().templates)
 
     return list(templates)
 
@@ -160,6 +158,25 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
     return permission_group
 
 
+def resolve_permission_group(
+    user: Union[AbstractBaseUser, AnonymousUser],
+    organization_id: object = None,
+) -> PermissionGroup:
+    """Resolve the correct PermissionGroup for a mutation.
+
+    If *organization_id* is provided, validates the user's membership in that org's
+    default role group.  Otherwise falls back to the deprecated first-org heuristic.
+
+    # TODO(SDB-178): Remove fallback once organization_id is required on all mutations.
+    #   At that point, delete get_user_permission_group() entirely and make
+    #   organization_id non-optional.
+    """
+    if organization_id:
+        organization = Organization.objects.get(id=organization_id)
+        return get_permission_group_for_org(user, organization)
+    return get_user_permission_group(user)
+
+
 class OrgPermissionManager:
     """Manage org-specific user permissions."""
 
@@ -202,9 +219,11 @@ class OrgPermissionManager:
 
         if role == OrgRoleEnum.ADMIN:
             user.groups.add(self._org_admin_group.group)
-
-        if role == OrgRoleEnum.SUPERUSER:
+        elif role == OrgRoleEnum.SUPERUSER:
             user.groups.add(self._org_superuser_group.group)
+
+        # Always ensure the user remains in the default member group
+        add_default_org_permissions_to_user(user, self.organization)
 
     def clear_permissions(self, user: User) -> None:
         """Remove both admin and superuser perms."""

@@ -4,7 +4,7 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.types import OrganizationOrder, OrganizationType
-from accounts.utils import get_member_permission_group, get_permission_group_for_org, get_user_permission_group
+from accounts.utils import get_member_permission_group, resolve_permission_group
 from clients.models import ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
@@ -85,8 +85,14 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(NotePermissions.ADD)],
     )
-    def caseworker_organizations(self, ordering: Optional[list[OrganizationOrder]] = None) -> "QuerySet[Organization]":
-        return Organization.objects.filter(permission_groups__template__name=CASEWORKER).all()  # type: ignore[no-any-return]
+    def caseworker_organizations(
+        self, info: Info, ordering: Optional[list[OrganizationOrder]] = None
+    ) -> "QuerySet[Organization]":
+        user = get_current_user(info)
+        return Organization.objects.filter(  # type: ignore[no-any-return]
+            users=user,
+            permission_groups__template__name=CASEWORKER,
+        )
 
 
 @strawberry.type
@@ -100,12 +106,7 @@ class Mutation:
         callers that only send core note fields.
         """
         user = cast(User, get_current_user(info))
-
-        if data.organization_id:
-            organization = Organization.objects.get(id=data.organization_id)
-            permission_group = get_permission_group_for_org(user, organization)
-        else:
-            permission_group = get_user_permission_group(user)
+        permission_group = resolve_permission_group(user, data.organization_id)
 
         location_dict = asdict(data.location) if data.location else None
         provided_list = [asdict(s) for s in data.provided_services] if data.provided_services else None
@@ -291,12 +292,7 @@ class Mutation:
 
         import_job = NoteDataImport.objects.get(id=data.import_job_id)
         user = cast(User, get_current_user(info))
-
-        if data.organization_id:
-            organization = Organization.objects.get(id=data.organization_id)
-            permission_group = get_permission_group_for_org(user, organization)
-        else:
-            permission_group = get_user_permission_group(user)
+        permission_group = resolve_permission_group(user, data.organization_id)
         try:
             with transaction.atomic():
                 note = note_create(

@@ -15,5 +15,6 @@ class NotesConfig(AppConfig):
             "outreach",
             label="Outreach",
             templates=[CASEWORKER, GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER],
-            member_role=CASEWORKER,
+            default_role=CASEWORKER,
+            is_default=True,
         )

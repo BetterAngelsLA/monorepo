@@ -15,7 +15,7 @@ class SheltersConfig(AppConfig):
             "shelter",
             label="Shelter",
             templates=[SHELTER_OPERATOR, GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER],
-            member_role=SHELTER_OPERATOR,
+            default_role=SHELTER_OPERATOR,
         )
         register_invite_template(
             SHELTER_OPERATOR,
