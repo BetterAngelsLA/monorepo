@@ -7,7 +7,7 @@ from django.utils import timezone
 from shelters.enums import BedStatusChoices, DemographicChoices, PetChoices
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import SpecialSituationRestrictionChoices
-from shelters.models import Bed, Demographic, Pet, Shelter, ShelterType, SpecialSituationRestriction
+from shelters.models import Bed, Demographic, Pet, Room, Shelter, ShelterType, SpecialSituationRestriction
 from shelters.tests.baker_recipes import shelter_recipe
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
@@ -65,6 +65,75 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(payload["results"][0]["id"], str(self.org_1_shelter_newer.id))
         self.assertEqual(payload["results"][1]["id"], str(self.org_1_shelter_older.id))
         self.assertEqual(payload["pageInfo"], {"offset": 0, "limit": 10})
+
+    def test_admin_shelters_returns_rooms_on_each_admin_shelter(self) -> None:
+        """`AdminShelterType` includes nested `rooms` (and scoped per shelter)."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        newer_room_1 = Room.objects.create(shelter=self.org_1_shelter_newer, room_identifier="Room-Newer-1")
+        newer_room_2 = Room.objects.create(shelter=self.org_1_shelter_newer, room_identifier="Room-Newer-2")
+        older_room_1 = Room.objects.create(shelter=self.org_1_shelter_older, room_identifier="Room-Older-1")
+
+        # A room for a non-member org should not show up for this admin query.
+        Room.objects.create(shelter=self.org_2_shelter, room_identifier="Room-Org2-1")
+
+        query = """
+            query AdminSheltersWithRooms($orgIds: [ID!], $offset: Int, $limit: Int) {
+                adminShelters(
+                    filters: { organizations: $orgIds }
+                    ordering: [{ createdAt: DESC }]
+                    pagination: { offset: $offset, limit: $limit }
+                ) {
+                    results {
+                        id
+                        rooms {
+                            id
+                            roomIdentifier
+                        }
+                    }
+                }
+            }
+        """
+
+        response = self.execute_graphql(
+            query,
+            variables={"orgIds": [str(self.org_1.id)], "offset": 0, "limit": 10},
+        )
+
+        self.assertIsNone(response.get("errors"))
+
+        results = response["data"]["adminShelters"]["results"]
+        self.assertEqual([r["id"] for r in results], [str(self.org_1_shelter_newer.id), str(self.org_1_shelter_older.id)])
+
+        newer_rooms = {r["id"] for r in results[0]["rooms"]}
+        self.assertSetEqual(newer_rooms, {str(newer_room_1.id), str(newer_room_2.id)})
+
+        older_rooms = {r["id"] for r in results[1]["rooms"]}
+        self.assertSetEqual(older_rooms, {str(older_room_1.id)})
+
+    def test_rooms_field_only_on_admin_shelter_type(self) -> None:
+        """Introspection: `rooms` exists on `AdminShelterType` but not `ShelterType`."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        query = """
+            query {
+                shelterType: __type(name: "ShelterType") {
+                    fields { name }
+                }
+                adminShelterType: __type(name: "AdminShelterType") {
+                    fields { name }
+                }
+            }
+        """
+
+        response = self.execute_graphql(query)
+        self.assertIsNone(response.get("errors"))
+
+        shelter_type_fields = {f["name"] for f in response["data"]["shelterType"]["fields"]}
+        admin_shelter_type_fields = {f["name"] for f in response["data"]["adminShelterType"]["fields"]}
+
+        self.assertIn("rooms", admin_shelter_type_fields)
+        self.assertNotIn("rooms", shelter_type_fields)
 
     def test_admin_shelters_returns_all_accessible_orgs_when_no_filter(self) -> None:
         """Without an org filter, returns shelters for all orgs the user belongs to."""

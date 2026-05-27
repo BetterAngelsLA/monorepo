@@ -84,7 +84,7 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
         items={TAB_ITEMS}
       />
 
-      {tab === 'rooms' && <RoomsView />}
+      {tab === 'rooms' && <RoomsView shelterId={id} />}
       {tab === 'overview' && null}
       {tab === 'beds' && null}
       {tab === 'occupancy' && null}
