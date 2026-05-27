@@ -1,8 +1,7 @@
 """Output types for shelter queries and mutations."""
 
-import dataclasses
 from datetime import datetime
-from typing import List, Optional, cast
+from typing import List, Optional, Type, cast
 
 import strawberry
 import strawberry_django
@@ -11,7 +10,7 @@ from accounts.types import OrganizationType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.imgproxy import build_imgproxy_url
-from django.db.models import Count, Prefetch, Q, QuerySet
+from django.db.models import Count, IntegerField, OuterRef, Prefetch, QuerySet, Subquery
 from shelters import models
 from shelters.enums import (
     BedStatusChoices,
@@ -47,6 +46,26 @@ from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
 from .filters import BedFilter, RoomFilter, ShelterFilter, ShelterOrder
+
+
+def _shelter_status_count_subquery(
+    model: Type[models.Bed] | Type[models.Room],
+    status: BedStatusChoices | RoomStatusChoices,
+) -> Subquery:
+    """Count related beds/rooms per shelter without joining both relations on one queryset."""
+    return Subquery(
+        model.objects.filter(shelter=OuterRef("pk"), status=status)
+        .order_by()
+        .values("shelter")
+        .annotate(c=Count("pk"))
+        .values("c"),
+        output_field=IntegerField(),
+    )
+
+
+def _annotated_count(root: models.Shelter, name: str) -> int:
+    value = getattr(root, name, None)
+    return 0 if value is None else value
 
 
 @strawberry.type
@@ -186,34 +205,36 @@ class ShelterTypeMixin:
 
     @strawberry_django.field(
         annotate={
-            "_bed_available": lambda info: Count("beds", filter=Q(beds__status=BedStatusChoices.AVAILABLE)),
-            "_bed_occupied": lambda info: Count("beds", filter=Q(beds__status=BedStatusChoices.OCCUPIED)),
-            "_bed_reserved": lambda info: Count("beds", filter=Q(beds__status=BedStatusChoices.RESERVED)),
-            "_bed_out_of_service": lambda info: Count("beds", filter=Q(beds__status=BedStatusChoices.OUT_OF_SERVICE)),
+            "_bed_available": lambda info: _shelter_status_count_subquery(models.Bed, BedStatusChoices.AVAILABLE),
+            "_bed_occupied": lambda info: _shelter_status_count_subquery(models.Bed, BedStatusChoices.OCCUPIED),
+            "_bed_reserved": lambda info: _shelter_status_count_subquery(models.Bed, BedStatusChoices.RESERVED),
+            "_bed_out_of_service": lambda info: _shelter_status_count_subquery(
+                models.Bed, BedStatusChoices.OUT_OF_SERVICE
+            ),
         }
     )
     def beds_by_status(self, root: models.Shelter) -> BedsByStatusType:
         return BedsByStatusType(
-            available=getattr(root, "_bed_available", 0),
-            occupied=getattr(root, "_bed_occupied", 0),
-            reserved=getattr(root, "_bed_reserved", 0),
-            out_of_service=getattr(root, "_bed_out_of_service", 0),
+            available=_annotated_count(root, "_bed_available"),
+            occupied=_annotated_count(root, "_bed_occupied"),
+            reserved=_annotated_count(root, "_bed_reserved"),
+            out_of_service=_annotated_count(root, "_bed_out_of_service"),
         )
 
     @strawberry_django.field(
         annotate={
-            "_room_available": lambda info: Count("rooms", filter=Q(rooms__status=RoomStatusChoices.AVAILABLE)),
-            "_room_reserved": lambda info: Count("rooms", filter=Q(rooms__status=RoomStatusChoices.RESERVED)),
-            "_room_needs_maintenance": lambda info: Count(
-                "rooms", filter=Q(rooms__status=RoomStatusChoices.NEEDS_MAINTENANCE)
+            "_room_available": lambda info: _shelter_status_count_subquery(models.Room, RoomStatusChoices.AVAILABLE),
+            "_room_reserved": lambda info: _shelter_status_count_subquery(models.Room, RoomStatusChoices.RESERVED),
+            "_room_needs_maintenance": lambda info: _shelter_status_count_subquery(
+                models.Room, RoomStatusChoices.NEEDS_MAINTENANCE
             ),
         }
     )
     def rooms_by_status(self, root: models.Shelter) -> RoomsByStatusType:
         return RoomsByStatusType(
-            available=getattr(root, "_room_available", 0),
-            reserved=getattr(root, "_room_reserved", 0),
-            needs_maintenance=getattr(root, "_room_needs_maintenance", 0),
+            available=_annotated_count(root, "_room_available"),
+            reserved=_annotated_count(root, "_room_reserved"),
+            needs_maintenance=_annotated_count(root, "_room_needs_maintenance"),
         )
 
 

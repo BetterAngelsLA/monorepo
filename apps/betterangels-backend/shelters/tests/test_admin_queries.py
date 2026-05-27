@@ -4,7 +4,7 @@ from typing import Any, cast
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.utils import timezone
-from shelters.enums import BedStatusChoices, DemographicChoices, PetChoices
+from shelters.enums import BedStatusChoices, DemographicChoices, PetChoices, RoomStatusChoices
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import SpecialSituationRestrictionChoices
 from shelters.models import Bed, Demographic, Pet, Room, Shelter, ShelterType, SpecialSituationRestriction
@@ -103,7 +103,9 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         self.assertIsNone(response.get("errors"))
 
         results = response["data"]["adminShelters"]["results"]
-        self.assertEqual([r["id"] for r in results], [str(self.org_1_shelter_newer.id), str(self.org_1_shelter_older.id)])
+        self.assertEqual(
+            [r["id"] for r in results], [str(self.org_1_shelter_newer.id), str(self.org_1_shelter_older.id)]
+        )
 
         newer_rooms = {r["id"] for r in results[0]["rooms"]}
         self.assertSetEqual(newer_rooms, {str(newer_room_1.id), str(newer_room_2.id)})
@@ -303,6 +305,41 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(
             shelter_data["bedsByStatus"],
             {"available": 2, "occupied": 1, "reserved": 1, "outOfService": 1},
+        )
+
+    def test_admin_shelters_rooms_by_status_with_beds_and_rooms(self) -> None:
+        """Room counts stay correct when beds and rooms are requested together."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        shelter = self.org_1_shelter_newer
+
+        Room.objects.create(shelter=shelter, status=RoomStatusChoices.NEEDS_MAINTENANCE)
+        Bed.objects.create(shelter=shelter, status=BedStatusChoices.RESERVED)
+        Bed.objects.create(shelter=shelter, status=BedStatusChoices.AVAILABLE)
+
+        query = """
+            query AdminShelters($orgIds: [ID!]) {
+                adminShelters(filters: { organizations: $orgIds }) {
+                    results {
+                        id
+                        bedsByStatus {
+                            available
+                            reserved
+                        }
+                        roomsByStatus {
+                            available
+                            reserved
+                            needsMaintenance
+                        }
+                    }
+                }
+            }
+        """
+        response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
+        shelter_data = next(r for r in response["data"]["adminShelters"]["results"] if r["id"] == str(shelter.id))
+        self.assertEqual(shelter_data["bedsByStatus"], {"available": 1, "reserved": 1})
+        self.assertEqual(
+            shelter_data["roomsByStatus"],
+            {"available": 0, "reserved": 0, "needsMaintenance": 1},
         )
 
     def test_admin_shelters_beds_by_status_no_beds(self) -> None:
