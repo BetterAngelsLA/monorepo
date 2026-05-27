@@ -177,7 +177,7 @@ class UserType(UserBaseType):
         if not user or not user.is_authenticated:
             return False
         return PermissionGroup.objects.filter(
-            group__user=user,
+            group__user=user.pk,
             template__name="Caseworker",
         ).exists()
 
@@ -210,7 +210,7 @@ class CurrentUserType(UserBaseType):
         if not user or not user.is_authenticated:
             return False
         return PermissionGroup.objects.filter(
-            group__user=user,
+            group__user=user.pk,
             template__name="Caseworker",
         ).exists()
 

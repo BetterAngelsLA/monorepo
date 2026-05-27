@@ -37,7 +37,7 @@ def get_user_permitted_orgs(
             listed permissions.  Set to *False* to require **all** of them.
     """
     if not user or getattr(user, "is_anonymous", True):
-        return Organization.objects.none()
+        return Organization.objects.none()  # type: ignore[no-any-return]
 
     codenames = [p.split(".")[-1] for p in permissions]
     app_labels = {p.split(".")[0] for p in permissions if "." in p}
@@ -51,7 +51,7 @@ def get_user_permitted_orgs(
             permission_groups__group__permissions__content_type__app_label__in=app_labels,
         )
 
-    qs = Organization.objects.filter(users=user).filter(perm_q).distinct()
+    qs: QuerySet[Organization] = Organization.objects.filter(users=user).filter(perm_q).distinct()
 
     if not any_perm and len(codenames) > 1:
         # Require ALL permissions — filter orgs that have every codename
@@ -67,7 +67,7 @@ def get_user_permitted_orgs(
 def get_user_permitted_org(
     user: UserLike,
     permissions: Sequence[str],
-    org_id: Optional[str] = None,
+    org_id: "Optional[str]" = None,
     *,
     any_perm: bool = True,
 ) -> Optional[Organization]:
