@@ -1,9 +1,11 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { ArrowRight, Pencil, Trash2 } from 'lucide-react';
 import { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Text } from '../text/text';
 
 export type ButtonVariant =
   | 'floating'
+  | 'floating-inverse'
   | 'primary'
   | 'primary-sm'
   | 'trash'
@@ -28,6 +30,8 @@ const ICON_ONLY_VARIANTS = new Set<ButtonVariant>([
 const variantBaseClasses: Record<ButtonVariant, string> = {
   floating:
     'text-[22px] py-3 px-6 rounded-full shadow-lg gap-2 w-fit justify-between',
+  'floating-inverse':
+    'text-[22px] py-3 px-6 rounded-full shadow-lg gap-2 w-fit justify-between',
   primary: 'border py-2 px-4 rounded-full gap-2 w-fit justify-between',
   'primary-sm': 'border py-1 px-3 rounded-full gap-2 w-fit justify-between',
   edit: 'size-10 p-0 rounded-lg justify-center',
@@ -37,6 +41,8 @@ const variantBaseClasses: Record<ButtonVariant, string> = {
 
 const variantColorDefaults: Record<ButtonVariant, string> = {
   floating: 'bg-[#008CEE] hover:bg-[#0071C0] text-white',
+  'floating-inverse':
+    'bg-white hover:bg-[#F4F6FD] disabled:bg-[#D3D9E3] border-[#D3D9E3] text-[#747A82]',
   primary:
     'bg-white hover:bg-[#F4F6FD] disabled:bg-[#D3D9E3] border-[#D3D9E3] text-[#747A82]',
   'primary-sm':
@@ -97,17 +103,15 @@ export function Button(props: IButtonProps) {
   const textVariant = variant === 'primary-sm' ? 'body' : 'btn';
 
   const buttonCss = [
-    'focus:outline-hidden inline-flex items-center whitespace-nowrap transition-all',
-    isIconOnly ? '' : 'h-fit',
+    'focus:outline-hidden inline-flex items-center whitespace-nowrap transition-all cursor-pointer',
+    !isIconOnly && 'h-fit',
     variantBaseClasses[variant],
     colorClass,
     className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  ];
 
   return (
-    <button type={type} className={buttonCss} {...rest} style={style}>
+    <button type={type} className={mergeCss(buttonCss)} {...rest} style={style}>
       {leftIcon && (
         <span className={isIconOnly ? 'flex items-center justify-center' : ''}>
           {leftIcon}

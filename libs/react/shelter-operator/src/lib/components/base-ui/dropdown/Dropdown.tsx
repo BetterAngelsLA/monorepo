@@ -1,3 +1,4 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { ChevronDown } from 'lucide-react';
 import {
   useCallback,
@@ -8,7 +9,6 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { mergeCss } from '@monorepo/react/shared';
 import { Text } from '../text/text';
 import { DropdownChips } from './DropdownChips';
 import { DropdownMenu } from './DropdownMenu';
@@ -30,6 +30,7 @@ export function Dropdown<T extends string | number = string | number>(
     onChange,
     isMulti = false,
     isSearchable = false,
+    isViewMode,
     required = false,
     disabled = false,
     className,
@@ -54,6 +55,8 @@ export function Dropdown<T extends string | number = string | number>(
 
   const menuRef = useRef<HTMLDivElement>(null);
   const menuPos = usePortalPosition(menuAnchorRef, isOpen, close, menuRef);
+
+  const isViewEditMode = typeof isViewMode === 'boolean';
 
   // Scroll focused option into view
   useEffect(() => {
@@ -213,10 +216,19 @@ export function Dropdown<T extends string | number = string | number>(
 
   return (
     <div
-      className={mergeCss(['relative flex w-full flex-col gap-1 font-sans', className])}
+      className={mergeCss([
+        'relative flex w-full flex-col gap-1 font-sans',
+        className,
+      ])}
     >
       {label && (
-        <label id={labelId} className="text-sm text-gray-900">
+        <label
+          id={labelId}
+          className={mergeCss([
+            'text-sm text-gray-900',
+            isViewEditMode && 'pl-5',
+          ])}
+        >
           <Text variant="body" className="text-gray-900">
             {label}
           </Text>
@@ -244,10 +256,13 @@ export function Dropdown<T extends string | number = string | number>(
               ? 'min-h-12 items-start rounded-2xl px-4 py-3'
               : 'h-12 items-center rounded-full px-4 overflow-hidden',
             isOpen ? 'border-[#008CEE]' : 'border-gray-200',
+            isViewMode && 'border-transparent',
             disabled && 'opacity-50 cursor-not-allowed',
           ])}
           onClick={() => {
-            if (!disabled) setIsOpen((o) => !o);
+            if (!disabled && !isViewMode) {
+              setIsOpen((o) => !o);
+            }
           }}
           onKeyDown={handleKeyDown}
         >
@@ -255,6 +270,7 @@ export function Dropdown<T extends string | number = string | number>(
             <DropdownChips
               selectedValues={selectedValues}
               onRemove={handleRemoveChip}
+              isViewMode={isViewMode}
             />
           ) : (
             <span className="text-sm flex-1 truncate">
@@ -269,13 +285,15 @@ export function Dropdown<T extends string | number = string | number>(
               </Text>
             </span>
           )}
-          <ChevronDown
-            className={mergeCss([
-              'w-4 h-4 shrink-0 transition-transform duration-200 text-gray-400 z-10',
-              isOpen && 'rotate-180',
-              isStackedMultiSelect && 'self-start mt-1.5',
-            ])}
-          />
+          {!isViewMode && (
+            <ChevronDown
+              className={mergeCss([
+                'w-4 h-4 shrink-0 transition-transform duration-200 text-gray-400 z-10',
+                isOpen && 'rotate-180',
+                isStackedMultiSelect && 'self-start mt-1.5',
+              ])}
+            />
+          )}
         </div>
 
         {otherSelected && (

@@ -8,6 +8,7 @@ interface DropdownBaseProps<T extends string | number = string | number> {
   placeholder?: string;
   options: DropdownOption<T>[];
   isSearchable?: boolean;
+  isViewMode?: boolean;
   required?: boolean;
   disabled?: boolean;
   className?: string;

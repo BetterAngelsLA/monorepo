@@ -29,6 +29,7 @@ type SharedCustomProps = {
   containerClassName?: string;
   inputClassName?: string;
   isActive?: boolean;
+  isViewMode?: boolean;
   showErrorIcon?: boolean;
   isTouched?: boolean;
   /** Only applied when `variant` is `"paragraph"`. */
