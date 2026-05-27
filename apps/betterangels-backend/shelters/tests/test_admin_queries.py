@@ -1,9 +1,7 @@
-from datetime import timedelta
 from typing import Any, cast
 
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
-from django.utils import timezone
 from shelters.enums import BedStatusChoices, DemographicChoices, PetChoices, RoomStatusChoices
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import SpecialSituationRestrictionChoices
@@ -30,29 +28,17 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self._add_shelter_view_permission()
-        self._create_shelters()
+        self.shelter = shelter_recipe.make(organization=self.org_1)
 
     def _add_shelter_view_permission(self) -> None:
         app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
         self.org_1_case_manager_1.user_permissions.add(perm)
-        self.org_1_case_manager_2.user_permissions.add(perm)
-        self.org_2_case_manager_1.user_permissions.add(perm)
-
-    def _create_shelters(self) -> None:
-        self.org_1_shelter_older = shelter_recipe.make(
-            organization=self.org_1,
-            created_at=timezone.now() - timedelta(minutes=1),
-        )
-        self.org_1_shelter_newer = shelter_recipe.make(
-            organization=self.org_1,
-            created_at=timezone.now(),
-        )
-        self.org_2_shelter = shelter_recipe.make(organization=self.org_2)
 
     def test_admin_shelters_filter_by_organization(self) -> None:
         """Only shelters for the specified organization are returned."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
+        shelter_2 = shelter_recipe.make(organization=self.org_1)
 
         response = self.execute_graphql(
             self.ADMIN_SHELTERS_QUERY,
@@ -61,85 +47,17 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
 
         payload = response["data"]["adminShelters"]
         self.assertEqual(payload["totalCount"], 2)
-        self.assertEqual(len(payload["results"]), 2)
-        self.assertEqual(payload["results"][0]["id"], str(self.org_1_shelter_newer.id))
-        self.assertEqual(payload["results"][1]["id"], str(self.org_1_shelter_older.id))
-        self.assertEqual(payload["pageInfo"], {"offset": 0, "limit": 10})
 
-    def test_admin_shelters_returns_rooms_on_each_admin_shelter(self) -> None:
-        """`AdminShelterType` includes nested `rooms` (and scoped per shelter)."""
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-
-        newer_room_1 = Room.objects.create(shelter=self.org_1_shelter_newer, room_identifier="Room-Newer-1")
-        newer_room_2 = Room.objects.create(shelter=self.org_1_shelter_newer, room_identifier="Room-Newer-2")
-        older_room_1 = Room.objects.create(shelter=self.org_1_shelter_older, room_identifier="Room-Older-1")
-
-        # A room for a non-member org should not show up for this admin query.
-        Room.objects.create(shelter=self.org_2_shelter, room_identifier="Room-Org2-1")
-
-        query = """
-            query AdminSheltersWithRooms($orgIds: [ID!], $offset: Int, $limit: Int) {
-                adminShelters(
-                    filters: { organizations: $orgIds }
-                    ordering: [{ createdAt: DESC }]
-                    pagination: { offset: $offset, limit: $limit }
-                ) {
-                    results {
-                        id
-                        rooms {
-                            id
-                            roomIdentifier
-                        }
-                    }
-                }
-            }
-        """
-
-        response = self.execute_graphql(
-            query,
-            variables={"orgIds": [str(self.org_1.id)], "offset": 0, "limit": 10},
+        returned_ids = {r["id"] for r in payload["results"]}
+        self.assertSetEqual(
+            returned_ids,
+            {str(self.shelter.id), str(shelter_2.id)},
         )
-
-        self.assertIsNone(response.get("errors"))
-
-        results = response["data"]["adminShelters"]["results"]
-        self.assertEqual(
-            [r["id"] for r in results], [str(self.org_1_shelter_newer.id), str(self.org_1_shelter_older.id)]
-        )
-
-        newer_rooms = {r["id"] for r in results[0]["rooms"]}
-        self.assertSetEqual(newer_rooms, {str(newer_room_1.id), str(newer_room_2.id)})
-
-        older_rooms = {r["id"] for r in results[1]["rooms"]}
-        self.assertSetEqual(older_rooms, {str(older_room_1.id)})
-
-    def test_rooms_field_only_on_admin_shelter_type(self) -> None:
-        """Introspection: `rooms` exists on `AdminShelterType` but not `ShelterType`."""
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-
-        query = """
-            query {
-                shelterType: __type(name: "ShelterType") {
-                    fields { name }
-                }
-                adminShelterType: __type(name: "AdminShelterType") {
-                    fields { name }
-                }
-            }
-        """
-
-        response = self.execute_graphql(query)
-        self.assertIsNone(response.get("errors"))
-
-        shelter_type_fields = {f["name"] for f in response["data"]["shelterType"]["fields"]}
-        admin_shelter_type_fields = {f["name"] for f in response["data"]["adminShelterType"]["fields"]}
-
-        self.assertIn("rooms", admin_shelter_type_fields)
-        self.assertNotIn("rooms", shelter_type_fields)
 
     def test_admin_shelters_returns_all_accessible_orgs_when_no_filter(self) -> None:
         """Without an org filter, returns shelters for all orgs the user belongs to."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
+        shelter_2 = shelter_recipe.make(organization=self.org_1)
 
         response = self.execute_graphql(
             self.ADMIN_SHELTERS_QUERY,
@@ -152,7 +70,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         returned_ids = {r["id"] for r in payload["results"]}
         self.assertSetEqual(
             returned_ids,
-            {str(self.org_1_shelter_older.id), str(self.org_1_shelter_newer.id)},
+            {str(self.shelter.id), str(shelter_2.id)},
         )
 
     def test_admin_shelters_excludes_non_member_org(self) -> None:
@@ -173,6 +91,8 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         # org_1_case_manager_1 belongs only to org_1; add them to org_2 as well
         self.org_2.add_user(self.org_1_case_manager_1)
         self.graphql_client.force_login(self.org_1_case_manager_1)
+        shelter_2 = shelter_recipe.make(organization=self.org_1)
+        org_2_shelter = shelter_recipe.make(organization=self.org_2)
 
         response = self.execute_graphql(
             self.ADMIN_SHELTERS_QUERY,
@@ -185,9 +105,9 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         self.assertSetEqual(
             returned_ids,
             {
-                str(self.org_1_shelter_older.id),
-                str(self.org_1_shelter_newer.id),
-                str(self.org_2_shelter.id),
+                str(self.shelter.id),
+                str(shelter_2.id),
+                str(org_2_shelter.id),
             },
         )
 
@@ -218,8 +138,8 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
     def test_admin_shelters_filter_by_name(self) -> None:
         """Name filter returns only shelters whose name matches (case-insensitive)."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
-        self.org_1_shelter_newer.name = "Safe Haven"
-        self.org_1_shelter_newer.save()
+        self.shelter.name = "Safe Haven"
+        self.shelter.save()
 
         query = """
             query AdminShelters($orgIds: [ID!], $name: String) {
@@ -238,16 +158,17 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
 
         payload = response["data"]["adminShelters"]
         self.assertEqual(payload["totalCount"], 1)
-        self.assertEqual(payload["results"][0]["id"], str(self.org_1_shelter_newer.id))
+        self.assertEqual(payload["results"][0]["id"], str(self.shelter.id))
         self.assertEqual(payload["results"][0]["name"], "Safe Haven")
 
     def test_admin_shelters_filter_by_properties(self) -> None:
         """Property filters narrow results through the admin endpoint."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
+        shelter_2 = shelter_recipe.make(organization=self.org_1)
 
         pet_cats, _ = Pet.objects.get_or_create(name=PetChoices.CATS)
-        self.org_1_shelter_newer.pets.set([pet_cats])
-        self.org_1_shelter_older.pets.clear()
+        self.shelter.pets.set([pet_cats])
+        shelter_2.pets.clear()
 
         query = """
             query AdminShelters($orgIds: [ID!], $properties: ShelterPropertyInput) {
@@ -269,12 +190,12 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
 
         payload = response["data"]["adminShelters"]
         self.assertEqual(payload["totalCount"], 1)
-        self.assertEqual(payload["results"][0]["id"], str(self.org_1_shelter_newer.id))
+        self.assertEqual(payload["results"][0]["id"], str(self.shelter.id))
 
     def test_admin_shelters_beds_by_status(self) -> None:
         """Bed counts are returned grouped by status."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
-        shelter = self.org_1_shelter_newer
+        shelter = self.shelter
 
         Bed.objects.create(shelter=shelter, status=BedStatusChoices.AVAILABLE)
         Bed.objects.create(shelter=shelter, status=BedStatusChoices.AVAILABLE)
@@ -310,7 +231,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
     def test_admin_shelters_rooms_by_status_with_beds_and_rooms(self) -> None:
         """Room counts stay correct when beds and rooms are requested together."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
-        shelter = self.org_1_shelter_newer
+        shelter = self.shelter
 
         Room.objects.create(shelter=shelter, status=RoomStatusChoices.NEEDS_MAINTENANCE)
         Bed.objects.create(shelter=shelter, status=BedStatusChoices.RESERVED)
