@@ -191,6 +191,7 @@ export type BedFilter = {
   OR?: InputMaybe<BedFilter>;
   bedType?: InputMaybe<Array<BedTypeChoices>>;
   medicalNeeds?: InputMaybe<Array<MedicalNeedChoices>>;
+  shelterId?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Array<BedStatusChoices>>;
 };
 

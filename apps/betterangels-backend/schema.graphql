@@ -178,6 +178,7 @@ type AuthorizedPresignedS3UploadsType {
 }
 
 input BedFilter {
+  shelterId: ID
   AND: BedFilter
   OR: BedFilter
   NOT: BedFilter
