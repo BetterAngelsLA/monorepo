@@ -6,7 +6,7 @@ from typing import Any
 
 import pghistory
 from common.models import BaseModel
-from common.permissions.utils import permission_enums_to_django_meta_permissions
+from common.permissions.utils import PermissionSet, perm
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.db import models
@@ -28,7 +28,6 @@ from shelters.enums import (
     StatusChoices,
 )
 from shelters.managers import AdminShelterManager, ShelterManager
-from shelters.permissions import ShelterFieldPermissions, ShelterPrivacyPermissions
 from shelters.selectors import shelters_open_at
 
 from .lookups import (
@@ -58,6 +57,10 @@ from .service import Service
     pghistory.DeleteEvent("shelter.remove"),
 )
 class Shelter(BaseModel):
+    class perms(PermissionSet):
+        CHANGE_IS_REVIEWED = perm("change_shelter_is_reviewed", "Can change shelter is reviewed")
+        VIEW_PRIVATE = perm("view_private_shelter", "Can view private shelters")
+
     objects: ShelterManager = ShelterManager()
     admin_objects: AdminShelterManager = AdminShelterManager()
 
@@ -175,7 +178,6 @@ class Shelter(BaseModel):
 
     class Meta:
         indexes = [models.Index(fields=["status", "is_private"])]
-        permissions = permission_enums_to_django_meta_permissions([ShelterFieldPermissions, ShelterPrivacyPermissions])
 
     def __str__(self) -> str:
         return self.name
@@ -276,6 +278,9 @@ class Room(BaseModel):
     pghistory.DeleteEvent("shelter.contact_info.remove"),
 )
 class ContactInfo(models.Model):
+    class perms(PermissionSet):
+        pass
+
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="additional_contacts")
     contact_name = models.CharField(max_length=255, verbose_name="Contact Name")
     contact_number = PhoneNumberField(verbose_name="Contact Number")

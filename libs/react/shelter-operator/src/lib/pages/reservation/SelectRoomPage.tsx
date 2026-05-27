@@ -1,9 +1,5 @@
 import { useQuery } from '@apollo/client/react';
-import {
-  operatorPath,
-  reservationPathSegment,
-  reservationSelectShelterSegment,
-} from '@monorepo/react/shelter';
+import { operatorPath } from '@monorepo/react/shelter';
 import { Pencil } from 'lucide-react';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -20,6 +16,7 @@ import {
 } from '../../components/BedTable';
 import { Button } from '../../components/base-ui/buttons';
 import { GetShelterNameDocument } from '../../graphql/__generated__/shelters.generated';
+import { paths, reservationSegments } from '../../routing';
 import type { ReservationFormData } from './types';
 
 const MOCK_BED_DEFAULTS = {
@@ -115,7 +112,7 @@ function shelterIdFromOperatorPath(pathname: string): string | undefined {
   if (idx === -1) return undefined;
   const tail = pathname.slice(idx + marker.length);
   const first = tail.split('/')[0];
-  if (!first || first === reservationPathSegment) return undefined;
+  if (!first || first === 'reservation') return undefined;
   return first;
 }
 
@@ -194,7 +191,7 @@ export function SelectRoomPage() {
     navigate(
       shelterPk
         ? `${operatorPath}/shelter/${shelterPk}`
-        : `${operatorPath}/${reservationPathSegment}/${reservationSelectShelterSegment}`
+        : `${paths.reservation}/${reservationSegments.selectShelter}`
     );
   };
 
