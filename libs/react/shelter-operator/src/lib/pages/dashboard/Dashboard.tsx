@@ -131,6 +131,7 @@ export function Dashboard() {
           totalBeds: s.totalBeds ?? null,
           availableBeds: null,
           tags: null,
+          status: s.status,
         })) ?? []
     );
   }, [activeData?.adminShelters?.results]);
