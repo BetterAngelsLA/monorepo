@@ -76,6 +76,7 @@ from .models import (
     Service,
     ServiceCategory,
     Shelter,
+    ShelterAvailability,
     ShelterPhoto,
     ShelterProgram,
     ShelterType,
@@ -1587,3 +1588,67 @@ class ReservationAdmin(admin.ModelAdmin):
             {"fields": ("notes",)},
         ),
     )
+
+
+@admin.register(ShelterAvailability)
+class ShelterAvailabilityAdmin(admin.ModelAdmin):
+    list_display = ("shelter", "non_restricted_beds", "restricted_beds", "updated_by", "updated_at", "created_at")
+    list_filter = ("updated_at",)
+    search_fields = ("shelter__name",)
+    autocomplete_fields = ["shelter"]
+    readonly_fields = ("created_at", "updated_at")
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "shelter",
+                    "non_restricted_beds",
+                    "restricted_beds",
+                    "restriction_notes",
+                ),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": (
+                    "updated_by",
+                    "created_at",
+                    "updated_at",
+                ),
+            },
+        ),
+    )
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[ShelterAvailability]:
+        qs: QuerySet[ShelterAvailability] = super().get_queryset(request)
+        scoped_events = (
+            MiddlewareEvents.objects.tracks(qs)
+            .exclude(user__isnull=True)
+            .order_by("pgh_obj_id", "-pgh_created_at")
+            .distinct("pgh_obj_id")
+            .annotate(
+                obj=JSONObject(
+                    user_id=F("user_id"),
+                    first=F("user__first_name"),
+                    last=F("user__last_name"),
+                    username=F("user__username"),
+                )
+            )
+        )
+        return qs.annotate(
+            last_event=Subquery(
+                scoped_events.filter(pgh_obj_id=Cast(OuterRef("pk"), output_field=models.TextField())).values("obj")[:1]
+            ),
+        )
+
+    def updated_by(self, obj: ShelterAvailability) -> str:
+        data = getattr(obj, "last_event", None) or {}
+        uid = data.get("user_id")
+        if not uid:
+            return "No updates yet"
+        name = f'{(data.get("first") or "").strip()} {(data.get("last") or "").strip()}'.strip()
+        label = name or (data.get("username") or f"User {uid}")
+        url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
+        return format_html('<a href="{}">{}</a>', url, label)
