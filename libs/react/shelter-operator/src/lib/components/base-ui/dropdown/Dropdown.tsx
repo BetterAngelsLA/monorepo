@@ -9,6 +9,7 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { Label } from '../label';
 import { Text } from '../text/text';
 import { DropdownChips } from './DropdownChips';
 import { DropdownMenu } from './DropdownMenu';
@@ -222,23 +223,12 @@ export function Dropdown<T extends string | number = string | number>(
       ])}
     >
       {label && (
-        <label
-          id={labelId}
-          className={mergeCss([
-            'text-sm text-gray-900',
-            isViewEditMode && 'pl-5',
-          ])}
-        >
-          <Text variant="body" className="text-gray-900">
-            {label}
-          </Text>
-          {required && (
-            <Text variant="body" className="text-red-500">
-              {' '}
-              *
-            </Text>
-          )}
-        </label>
+        <Label
+          label={label}
+          inputId={labelId}
+          variant={isViewEditMode ? 'offset' : undefined}
+          required={required}
+        />
       )}
 
       <div ref={menuAnchorRef} className="flex w-full flex-col gap-1">

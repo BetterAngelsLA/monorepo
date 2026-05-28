@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { GetShelterQuery } from '../../../graphql/__generated__/getShelter.generated';
 
 const locationSchema = z
   .object({
@@ -30,3 +31,23 @@ export const basicInfoDefaultValues: BasicInfoFormData = {
   website: '',
   isPrivate: false,
 };
+
+type Shelter = GetShelterQuery['shelter'];
+
+export function toBasicInfoFormData(shelter: Shelter): BasicInfoFormData {
+  return {
+    name: shelter.name,
+    description: shelter.description,
+    location: shelter.location
+      ? {
+          place: shelter.location.place,
+          latitude: shelter.location.latitude,
+          longitude: shelter.location.longitude,
+        }
+      : null,
+    email: shelter.email ?? '',
+    phone: shelter.phone ?? '',
+    website: shelter.website ?? '',
+    isPrivate: shelter.isPrivate,
+  };
+}

@@ -1,5 +1,6 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { useId } from 'react';
+import { Label } from '../label';
 import { Text } from '../text/text';
 
 type TProps = {
@@ -8,6 +9,7 @@ type TProps = {
   value: boolean;
   onChange: (value: boolean) => void;
   disabled?: boolean;
+  required?: boolean;
   isViewMode?: boolean;
   trueLabel?: string;
   falseLabel?: string;
@@ -20,6 +22,7 @@ export function Switch(props: TProps) {
     label,
     value,
     onChange,
+    required,
     disabled = false,
     isViewMode = false,
     trueLabel = 'Yes',
@@ -40,14 +43,12 @@ export function Switch(props: TProps) {
   return (
     <div className={mergeCss(['flex flex-col gap-1 font-sans', className])}>
       {label && (
-        <label
-          htmlFor={switchId}
-          className={mergeCss([isViewEditMode && 'pl-5'])}
-        >
-          <Text variant="body" className="text-gray-900">
-            {label}
-          </Text>
-        </label>
+        <Label
+          label={label}
+          inputId={switchId}
+          variant={isViewEditMode ? 'offset' : undefined}
+          required={required}
+        />
       )}
 
       {isViewMode && (

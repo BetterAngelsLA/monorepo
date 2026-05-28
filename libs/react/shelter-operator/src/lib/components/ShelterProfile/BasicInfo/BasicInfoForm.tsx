@@ -13,7 +13,7 @@ import {
 
 type TProps = {
   defaultValues?: Partial<BasicInfoFormData>;
-  onSubmit: (data: BasicInfoFormData) => void;
+  onSubmit?: (data: BasicInfoFormData) => void;
   isViewMode?: boolean;
   onEditClick?: () => void;
   onCancel?: () => void;
@@ -58,10 +58,8 @@ export function BasicInfoForm(props: TProps) {
 
         <form
           className="flex flex-col gap-10 mt-8"
-          onSubmit={handleSubmit(onSubmit)}
+          onSubmit={onSubmit ? handleSubmit(onSubmit) : undefined}
         >
-          {/* <Form.Block columns={2} className="md:grid-cols-[1fr_auto]"> */}
-
           <Form.Block columns={2} className="md:gap-18 md:grid-cols-[1fr_auto]">
             <Controller
               name="name"
@@ -185,11 +183,12 @@ export function BasicInfoForm(props: TProps) {
             />
           </Form.Block>
 
-          {!isViewMode && (
+          {!isViewMode && onSubmit && (
             <Form.Actions
               onPrimaryClick={() => handleSubmit(onSubmit)()}
               onSecondaryClick={handleCancel}
-              disabled={!isValid || disabled}
+              primaryDisabled={disabled || !isValid}
+              secondaryDisabled={disabled}
             />
           )}
         </form>
