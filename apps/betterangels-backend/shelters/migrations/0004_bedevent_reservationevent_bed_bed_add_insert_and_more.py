@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ("clients", "0032_unhoused_start_date"),
         ("pghistory", "0007_auto_20250421_0444"),
-        ("shelters", "0001_squashed_initial"),
+        ("shelters", "0003_populate_shelter_availability"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
