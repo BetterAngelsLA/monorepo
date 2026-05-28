@@ -3,6 +3,7 @@ import { Button } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { ScrollView, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUserTeamPreference } from '../../state';
 import { ClientProfilesQuery } from '../ClientProfileList/__generated__/ClientProfiles.generated';
 import MainScrollContainer from '../MainScrollContainer';
@@ -21,6 +22,7 @@ interface IClientSummaryProps {
 export function ClientSummary(props: IClientSummaryProps) {
   const { client, arrivedFrom } = props;
   const [teamPreference] = useUserTeamPreference();
+  const { bottom: bottomInset } = useSafeAreaInsets();
 
   const handleClientPress = useCallback(
     (id: string) => {
@@ -74,7 +76,8 @@ export function ClientSummary(props: IClientSummaryProps) {
           flexDirection: 'row',
           gap: Spacings.xs,
           width: '100%',
-          paddingVertical: Spacings.sm,
+          paddingTop: Spacings.sm,
+          paddingBottom: bottomInset + Spacings.lg,
           alignItems: 'center',
           paddingHorizontal: Spacings.md,
           backgroundColor: Colors.WHITE,
@@ -89,6 +92,7 @@ export function ClientSummary(props: IClientSummaryProps) {
           <Button
             onPress={handleNavigateToNewNote}
             size="full"
+            fontSize="sm"
             variant="secondary"
             title="Add Interaction"
             accessibilityHint="Add interaction for the client"
@@ -98,6 +102,7 @@ export function ClientSummary(props: IClientSummaryProps) {
           <Button
             onPress={() => handleClientPress(client.id)}
             size="full"
+            fontSize="sm"
             variant="primary"
             title="See Details"
             accessibilityHint="see client details"
