@@ -89,6 +89,14 @@ export function ShelterSearch(props: TProps) {
     onNameSearch();
   }
 
+  function handleDone() {
+    const value = nameSearchValueRef.current.trim();
+    if (value) {
+      onSearchClick(value);
+    }
+    closeModal();
+  }
+
   function openSearchModal() {
     setModal({
       content: (
@@ -102,7 +110,7 @@ export function ShelterSearch(props: TProps) {
       ),
       type: 'fullscreen',
       animation: ModalAnimationEnum.SLIDE_UP,
-      footer: <SearchModalFooter onDone={closeModal} />,
+      footer: <SearchModalFooter onDone={handleDone} />,
     });
   }
 
