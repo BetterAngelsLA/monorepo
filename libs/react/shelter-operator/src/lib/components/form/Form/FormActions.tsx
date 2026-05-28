@@ -9,7 +9,8 @@ type TProps = {
   onSecondaryClick?: () => void;
   secondaryLabel?: string;
   secondaryClassName?: string;
-  disabled?: boolean;
+  primaryDisabled?: boolean;
+  secondaryDisabled?: boolean;
 };
 
 export function FormActions(props: TProps) {
@@ -21,7 +22,8 @@ export function FormActions(props: TProps) {
     secondaryLabel = 'Cancel',
     secondaryClassName,
     className,
-    disabled,
+    primaryDisabled,
+    secondaryDisabled,
   } = props;
 
   const parentCss = ['fixed bottom-6 right-6 text-sm z-20 flex gap-4 p-4'];
@@ -33,7 +35,7 @@ export function FormActions(props: TProps) {
           variant="floating-inverse"
           onClick={onSecondaryClick}
           className={mergeCss([secondaryClassName])}
-          disabled={disabled}
+          disabled={secondaryDisabled}
         >
           {secondaryLabel}
         </Button>
@@ -43,7 +45,7 @@ export function FormActions(props: TProps) {
         variant="floating"
         onClick={onPrimaryClick}
         className={mergeCss([primaryClassName])}
-        disabled={disabled}
+        disabled={primaryDisabled}
       >
         {primaryLabel}
       </Button>

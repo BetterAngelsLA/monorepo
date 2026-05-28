@@ -1,6 +1,7 @@
 import { useMutation } from '@apollo/client/react';
 import {
   CreateShelterDocument,
+  StatusChoices,
   type CreateShelterInput,
   type CreateShelterMutation,
   type CreateShelterMutationVariables,
@@ -13,7 +14,7 @@ import {
   shelterProfileSegments,
 } from '../../../routing/routePaths';
 import { useToast } from '../../base-ui/toast/state/useToast';
-import { BasicInfoForm, type BasicInfoFormData } from '../BasicInfoForm';
+import { BasicInfoForm, type BasicInfoFormData } from '../BasicInfo';
 
 function toCreateInput(
   formData: BasicInfoFormData,
@@ -28,6 +29,7 @@ function toCreateInput(
     website: formData.website?.trim() || undefined,
     isPrivate: formData.isPrivate,
     organization: organizationId,
+    status: StatusChoices.Approved, // TODO: envable query to return DRAFT shelters etc via permissions
     // Required arrays - empty for initial creation (TODO: remove requirement via SDB-209)
     accessibility: [],
     demographics: [],
@@ -71,11 +73,6 @@ export function CreateShelterProfile(props: TProps) {
     setDisabled(true);
 
     const data = toCreateInput(formData, activeOrg.id);
-
-    // console.log();
-    // console.log('| -------------  data  ------------- |');
-    // console.log(data);
-    // console.log();
 
     try {
       const response = await createShelter({ variables: { data } });

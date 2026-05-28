@@ -5,6 +5,7 @@ import { AdvancedMarker, Map as GoogleMap } from '@vis.gl/react-google-maps';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { Button } from '../../../../../components/base-ui/buttons/buttons';
+import { Label } from '../../../../../components/base-ui/label';
 
 interface LocationPickerProps {
   value: {
@@ -66,11 +67,7 @@ export function LocationPicker({
     <div
       className={mergeCss(['flex flex-col gap-4', isViewEditMode && 'pl-5'])}
     >
-      {label && (
-        <label className="block text-sm font-medium text-gray-700">
-          {label}
-        </label>
-      )}
+      {label && <Label label={label} />}
 
       {(!isViewEditMode || !isViewMode) && (
         <AddressAutocomplete

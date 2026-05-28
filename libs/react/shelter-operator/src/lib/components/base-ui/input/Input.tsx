@@ -6,6 +6,7 @@ import type {
   TextareaHTMLAttributes,
 } from 'react';
 import { forwardRef, useId, useState } from 'react';
+import { Label } from '../label';
 import { Text } from '../text/text';
 import type { InputDataType, InputProps } from './types';
 
@@ -153,23 +154,12 @@ export const Input = forwardRef<
       ])}
     >
       {label && (
-        <label
-          htmlFor={inputId}
-          className={mergeCss([
-            'text-sm text-gray-900',
-            isViewEditMode && 'pl-5',
-          ])}
-        >
-          <Text variant="body" className="text-gray-900">
-            {label}
-          </Text>
-          {required && (
-            <Text variant="body" className="text-red-500">
-              {' '}
-              *
-            </Text>
-          )}
-        </label>
+        <Label
+          label={label}
+          inputId={inputId}
+          variant={isViewEditMode ? 'offset' : undefined}
+          required={required}
+        />
       )}
 
       <div
