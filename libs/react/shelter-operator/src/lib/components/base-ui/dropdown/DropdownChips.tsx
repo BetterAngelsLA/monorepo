@@ -5,15 +5,15 @@ import type { DropdownOption } from './types';
 
 interface DropdownChipsProps<T extends string | number> {
   selectedValues: DropdownOption<T>[];
-  onRemove: (option: DropdownOption<T>) => void;
-  isViewMode?: boolean;
+  onRemove?: (option: DropdownOption<T>) => void;
 }
 
 export function DropdownChips<T extends string | number>({
   selectedValues,
   onRemove,
-  isViewMode,
 }: DropdownChipsProps<T>) {
+  const removable = typeof onRemove === 'function';
+
   return (
     <div className="flex min-w-0 flex-1 flex-row flex-wrap content-start items-center gap-1 font-sans">
       {selectedValues.map((v) => (
@@ -21,21 +21,21 @@ export function DropdownChips<T extends string | number>({
           key={v.value}
           className={mergeCss([
             'group inline-flex max-w-full min-w-0 items-center gap-0 rounded-full bg-gray-100 px-3 py-1',
-            !isViewMode && 'transition-[gap] duration-200 hover:gap-1',
+            removable && 'transition-[gap] duration-200 hover:gap-1',
           ])}
         >
           <Text
             variant="tag"
             className={mergeCss([
               'truncate text-gray-600 ',
-              !isViewMode &&
+              removable &&
                 'transition-colors duration-200 group-hover:text-gray-900',
             ])}
           >
             {v.label}
           </Text>
 
-          {!isViewMode && (
+          {removable && (
             <button
               type="button"
               aria-label={`Remove ${v.label}`}

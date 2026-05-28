@@ -259,8 +259,7 @@ export function Dropdown<T extends string | number = string | number>(
           {isMulti && hasSelection ? (
             <DropdownChips
               selectedValues={selectedValues}
-              onRemove={handleRemoveChip}
-              isViewMode={isViewMode}
+              onRemove={isViewMode ? undefined : handleRemoveChip}
             />
           ) : (
             <span className="text-sm flex-1 truncate">
