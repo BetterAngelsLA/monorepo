@@ -240,6 +240,14 @@ export function HomePage() {
     setNameSearchPinFitRequestId((n) => n + 1);
   }
 
+  function onLocationClear() {
+    const center = userLocation || defaultCenter;
+    if (center) {
+      setLocation({ ...center });
+    }
+    setLocationSearchInputKey((k) => k + 1);
+  }
+
   return (
     <>
       <MaxWLayout className="-mx-4 relative">
@@ -263,6 +271,7 @@ export function HomePage() {
         nameSearchPinFitRequestId={nameSearchPinFitRequestId}
         onShelterPinsReadyForMapFit={onShelterPinsReadyForMapFit}
         onNameSearch={onNameSearch}
+        onLocationClear={onLocationClear}
         setLocation={setLocation}
       />
     </>
