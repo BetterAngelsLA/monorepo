@@ -14,6 +14,7 @@ import {
   RequestedProvidedServices,
 } from '../../ui-components';
 import DateAndTime from './DateAndTime';
+import DeleteNote from './DeleteNote';
 import Location from './Location';
 import PublicNote from './PublicNote';
 import Purpose from './Purpose';
@@ -41,6 +42,8 @@ export interface NoteFormProps {
   onSaveDraft: () => void;
   /** Called to submit. */
   onSubmit: () => void;
+  /** Called when user confirms deletion (edit mode only). */
+  onDelete?: () => Promise<void> | void;
 }
 
 export default function NoteForm(props: NoteFormProps) {
@@ -54,6 +57,7 @@ export default function NoteForm(props: NoteFormProps) {
     onCancel,
     onSaveDraft,
     onSubmit,
+    onDelete,
   } = props;
 
   const isEditMode = mode === 'edit';
@@ -157,6 +161,7 @@ export default function NoteForm(props: NoteFormProps) {
           providedServices={noteData?.providedServices}
           requestedServices={noteData?.requestedServices}
         />
+        {onDelete && <DeleteNote onDelete={onDelete} />}
       </MainScrollContainer>
       <BottomActions
         cancel={
