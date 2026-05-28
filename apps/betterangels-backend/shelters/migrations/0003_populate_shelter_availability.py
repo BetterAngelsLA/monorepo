@@ -13,7 +13,7 @@ def create_availability_for_existing_shelters(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0058_add_shelter_availability"),
+        ("shelters", "0002_add_shelter_availability"),
     ]
 
     operations = [

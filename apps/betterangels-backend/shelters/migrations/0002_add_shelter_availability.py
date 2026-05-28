@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("pghistory", "0007_auto_20250421_0444"),
-        ("shelters", "0057_seed_spas"),
+        ("shelters", "0001_squashed_initial"),
     ]
 
     operations = [
