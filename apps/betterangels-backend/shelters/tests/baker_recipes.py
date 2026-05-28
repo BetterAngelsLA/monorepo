@@ -194,7 +194,6 @@ shelter_recipe = Recipe(
     referral_requirement=related_m2m_unique(ReferralRequirement, ReferralRequirementChoices, min_quantity=1),
 )
 
-
 # Fields that have corresponding ``<field>_other`` char fields.
 FIELDS_WITH_OTHER = [
     "demographics",
