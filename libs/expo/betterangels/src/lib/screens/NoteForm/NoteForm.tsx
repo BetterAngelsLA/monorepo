@@ -14,10 +14,10 @@ import {
   RequestedProvidedServices,
 } from '../../ui-components';
 import DateAndTime from './DateAndTime';
-import type { TNoteFormInputs } from './schema';
 import Location from './Location';
 import PublicNote from './PublicNote';
 import Purpose from './Purpose';
+import type { TNoteFormInputs } from './schema';
 import Team from './Team';
 
 // ── Props ───────────────────────────────────────────────────────────────
@@ -152,8 +152,6 @@ export default function NoteForm(props: NoteFormProps) {
           onPublicNoteChange={(v) =>
             setValue('publicNote', v, { shouldDirty: true })
           }
-          expanded={expanded}
-          setExpanded={setExpanded}
           scrollRef={scrollRef}
           purpose={form.purpose}
           providedServices={noteData?.providedServices}
