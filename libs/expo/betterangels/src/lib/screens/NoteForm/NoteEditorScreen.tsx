@@ -6,6 +6,7 @@ import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
+  DeleteNoteDocument,
   SelahTeamEnum,
   UpdateNoteDocument,
   ViewNoteDocument,
@@ -52,6 +53,7 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
 
   const [updateNote, { error: updateError }] = useMutation(UpdateNoteDocument);
   const [createNote] = useMutation(CreateNoteDocument);
+  const [deleteNote] = useMutation(DeleteNoteDocument);
 
   const methods = useForm<TNoteFormInputs>({
     resolver: zodResolver(NoteFormSchema),
@@ -169,6 +171,26 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
 
   const isSubmitted = isCreateMode ? false : !!data?.note.isSubmitted;
 
+  async function handleDeleteNote() {
+    try {
+      await deleteNote({
+        variables: { data: { id: noteId as string } },
+      });
+
+      await apolloClient.refetchQueries({
+        include: [InteractionsDocument],
+      });
+
+      router.dismissTo(clientProfileUrl);
+    } catch (err) {
+      console.error(err);
+      showSnackbar({
+        message: 'Failed to delete interaction.',
+        type: 'error',
+      });
+    }
+  }
+
   return (
     <NoteForm
       form={form}
@@ -180,6 +202,7 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
       onCancel={goBack}
       onSaveDraft={() => saveNote()}
       onSubmit={() => saveNote(true)}
+      onDelete={isCreateMode ? undefined : handleDeleteNote}
     />
   );
 }
