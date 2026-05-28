@@ -1,12 +1,12 @@
 import { useQuery } from '@apollo/client/react';
 import { useMemo } from 'react';
-import { BedTypeChoices, type BedType } from '../../apollo/graphql/__generated__/types';
+import { type BedType } from '../../apollo/graphql/__generated__/types';
+import { BedTable, type BedRoomForList } from '../BedTable';
 import {
   GetShelterBedsDocument,
   type GetShelterBedsQuery,
   type GetShelterBedsQueryVariables,
 } from './__generated__/beds.generated';
-import { BedTable, type BedRoomForList } from '../BedTable';
 
 const UNASSIGNED_ROOM_ID = 'unassigned-room';
 const UNASSIGNED_ROOM_LABEL = 'Unassigned';
@@ -37,7 +37,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         bedName: bed.bedName,
         status: bed.status,
         maintenanceFlag: bed.maintenanceFlag,
-        bedType: bed.bedType ?? BedTypeChoices.Twin,
+        bedType: bed.bedType ?? null,
         __typename: 'BedType',
         accessibility: [],
         b7: false,

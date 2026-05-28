@@ -43,11 +43,7 @@ export function OverviewView({ shelterId }: { shelterId: string }) {
   }
 
   if (error) {
-    return (
-      <div className="mt-6 px-6 text-sm text-red-600">
-        Failed to load shelter overview: {error.message}
-      </div>
-    );
+    throw new Error('Something went wrong. Please try again.');
   }
 
   return (
