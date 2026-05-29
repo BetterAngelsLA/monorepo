@@ -1,9 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
-import { enumDisplayAccessibilityChoices } from '@monorepo/react/shelter';
 import { Controller, useForm } from 'react-hook-form';
-import { Dropdown, toDropdownOptions } from '../../../base-ui/dropdown';
+import { Dropdown } from '../../../base-ui/dropdown';
 import { Form } from '../../../form/Form';
+import { ACCESSIBILITY_OPTIONS, STORAGE_OPTIONS } from '../../constants';
 import {
   detailsDefaultValues,
   DetailsFormData,
@@ -20,11 +20,7 @@ type TProps = {
   className?: string;
 };
 
-const ACCESSIBILITY_OPTIONS = toDropdownOptions(
-  enumDisplayAccessibilityChoices
-);
-
-export function DetailsForm(props: TProps) {
+export function ShelterDetailsForm(props: TProps) {
   const {
     defaultValues,
     onSubmit,
@@ -64,25 +60,47 @@ export function DetailsForm(props: TProps) {
           className="flex flex-col gap-10 mt-8"
           onSubmit={onSubmit ? handleSubmit(onSubmit) : undefined}
         >
-          <Controller
-            name="accessibility"
-            control={control}
-            render={({ field }) => (
-              <Dropdown
-                isMulti={true}
-                value={ACCESSIBILITY_OPTIONS.filter((o) =>
-                  field.value.includes(o.value)
-                )}
-                options={ACCESSIBILITY_OPTIONS}
-                onChange={(options) => {
-                  field.onChange(options ? options.map((o) => o.value) : []);
-                }}
-                label="Accessibility"
-                isViewMode={isViewMode}
-                className="min-w-44"
-              />
-            )}
-          />
+          <Form.Block columns={3}>
+            <Controller
+              name="accessibility"
+              control={control}
+              render={({ field }) => (
+                <Dropdown
+                  isMulti={true}
+                  value={ACCESSIBILITY_OPTIONS.filter((o) =>
+                    field.value.includes(o.value)
+                  )}
+                  options={ACCESSIBILITY_OPTIONS}
+                  onChange={(options) => {
+                    field.onChange(options ? options.map((o) => o.value) : []);
+                  }}
+                  label="Accessibility"
+                  isViewMode={isViewMode}
+                  className="min-w-44"
+                />
+              )}
+            />
+
+            <Controller
+              name="storage"
+              control={control}
+              render={({ field }) => (
+                <Dropdown
+                  isMulti={true}
+                  value={STORAGE_OPTIONS.filter((o) =>
+                    field.value.includes(o.value)
+                  )}
+                  options={STORAGE_OPTIONS}
+                  onChange={(options) => {
+                    field.onChange(options ? options.map((o) => o.value) : []);
+                  }}
+                  label="Storage"
+                  isViewMode={isViewMode}
+                  className="min-w-44"
+                />
+              )}
+            />
+          </Form.Block>
 
           {!isViewMode && onSubmit && (
             <Form.Actions

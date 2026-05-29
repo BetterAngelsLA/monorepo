@@ -1,42 +1,22 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
-import { StatusChoices } from '@monorepo/react/shelter';
+import { enumStatusChoices } from '@monorepo/react/shelter';
 import { Controller, useForm } from 'react-hook-form';
 import { LocationPicker } from '../../../../pages/dashboard/components/create-shelter-form/components/LocationPicker';
 import {
   Dropdown,
   DropdownChip,
-  type DropdownOption,
+  toDropdownValue,
 } from '../../../base-ui/dropdown';
 import { Input } from '../../../base-ui/input';
 import { Switch } from '../../../base-ui/switch';
 import { Form } from '../../../form/Form';
+import { STATUS_COLOR_MAP, STATUS_OPTIONS } from '../../constants';
 import {
   type BasicInfoFormData,
   basicInfoDefaultValues,
   basicInfoFormSchema,
 } from './formSchema';
-
-const STATUS_LABEL_MAP: Record<StatusChoices, string> = {
-  [StatusChoices.Draft]: 'Draft',
-  [StatusChoices.Pending]: 'Pending',
-  [StatusChoices.Approved]: 'Approved',
-  [StatusChoices.Inactive]: 'Inactive',
-};
-
-const STATUS_COLOR_MAP: Record<StatusChoices, string> = {
-  [StatusChoices.Draft]: 'bg-gray-100 text-gray-700',
-  [StatusChoices.Pending]: 'bg-amber-100 text-amber-700',
-  [StatusChoices.Approved]: 'bg-green-100 text-green-700',
-  [StatusChoices.Inactive]: 'bg-red-100 text-red-700',
-};
-
-const STATUS_OPTIONS: DropdownOption[] = Object.values(StatusChoices).map(
-  (v) => ({
-    label: STATUS_LABEL_MAP[v],
-    value: v,
-  })
-);
 
 type TProps = {
   defaultValues?: Partial<BasicInfoFormData>;
@@ -48,7 +28,7 @@ type TProps = {
   className?: string;
 };
 
-export function BasicInfoForm(props: TProps) {
+export function ShelterBasicInfoForm(props: TProps) {
   const {
     defaultValues,
     onSubmit,
@@ -126,10 +106,7 @@ export function BasicInfoForm(props: TProps) {
                 control={control}
                 render={({ field }) => (
                   <Dropdown
-                    value={{
-                      value: field.value,
-                      label: STATUS_LABEL_MAP[field.value],
-                    }}
+                    value={toDropdownValue(field.value, enumStatusChoices)}
                     options={STATUS_OPTIONS}
                     onChange={(option) => {
                       if (option && !Array.isArray(option)) {

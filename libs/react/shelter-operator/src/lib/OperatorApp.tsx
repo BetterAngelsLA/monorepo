@@ -12,8 +12,8 @@ import { ConfirmationPage } from './pages/reservation/ConfirmationPage';
 import { ReservationPage } from './pages/reservation/ReservationPage';
 import { SelectRoomPage } from './pages/reservation/SelectRoomPage';
 import { SelectShelterPage } from './pages/reservation/SelectShelterPage';
-import { BasicInfoPage } from './pages/shelterProfile/BasicInfoPage';
-import { DetailsPage } from './pages/shelterProfile/DetailsPage';
+import { ShelterBasicInfoPage } from './pages/shelterProfile/BasicInfoPage';
+import { ShelterDetailsPage } from './pages/shelterProfile/DetailsPage';
 import { OperatingHoursPage } from './pages/shelterProfile/OperatingHoursPage';
 import { PoliciesPage } from './pages/shelterProfile/PoliciesPage';
 import { ServicesPage } from './pages/shelterProfile/ServicesPage';
@@ -53,7 +53,7 @@ export function OperatorApp() {
               />
               <Route
                 path={shelterProfileSegments.basic}
-                element={<BasicInfoPage />}
+                element={<ShelterBasicInfoPage />}
               />
               <Route
                 path={shelterProfileSegments.operatingHours}
@@ -65,7 +65,7 @@ export function OperatorApp() {
               />
               <Route
                 path={shelterProfileSegments.details}
-                element={<DetailsPage />}
+                element={<ShelterDetailsPage />}
               />
               <Route
                 path={shelterProfileSegments.services}
