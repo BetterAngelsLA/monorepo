@@ -51,34 +51,28 @@ export function Switch(props: TProps) {
         />
       )}
 
-      {isViewMode && (
-        <Text className={mergeCss(['h-12', isViewEditMode && 'pl-5'])}>
-          {value ? trueLabel : falseLabel}
-        </Text>
-      )}
+      <button
+        id={switchId}
+        type="button"
+        role="switch"
+        aria-checked={value}
+        disabled={disabled || isViewMode}
+        onClick={() => onChange(!value)}
+        className={mergeCss([
+          'inline-flex shrink-0 items-stretch rounded-full h-12 w-fit p-1 bg-[#F3F3F9] transition-colors duration-200',
+          disabled || isViewMode
+            ? 'cursor-not-allowed opacity-50'
+            : 'cursor-pointer',
+        ])}
+      >
+        <span className={mergeCss([optionCss, value && selectedOptionCss])}>
+          <Text className={mergeCss([''])}>{trueLabel}</Text>
+        </span>
 
-      {!isViewMode && (
-        <button
-          id={switchId}
-          type="button"
-          role="switch"
-          aria-checked={value}
-          disabled={disabled}
-          onClick={() => onChange(!value)}
-          className={mergeCss([
-            'inline-flex shrink-0 items-stretch rounded-full h-12 w-fit p-1 bg-[#F3F3F9] transition-colors duration-200',
-            disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
-          ])}
-        >
-          <span className={mergeCss([optionCss, value && selectedOptionCss])}>
-            <Text className={mergeCss([''])}>{trueLabel}</Text>
-          </span>
-
-          <span className={mergeCss([optionCss, !value && selectedOptionCss])}>
-            <Text className={mergeCss([''])}>{falseLabel}</Text>
-          </span>
-        </button>
-      )}
+        <span className={mergeCss([optionCss, !value && selectedOptionCss])}>
+          <Text className={mergeCss([''])}>{falseLabel}</Text>
+        </span>
+      </button>
     </div>
   );
 }

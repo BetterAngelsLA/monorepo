@@ -36,6 +36,7 @@ export function Dropdown<T extends string | number = string | number>(
     disabled = false,
     className,
     onOtherTextChange,
+    renderValue,
   } = props as DropdownInternalProps<T>;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -123,12 +124,17 @@ export function Dropdown<T extends string | number = string | number>(
     const main = menuOptionsWithoutOther.filter((o) =>
       o.label.toLowerCase().includes(query)
     );
+
+    if (!onOtherTextChange) {
+      return main;
+    }
+
     const otherOption: DropdownOption<T> = {
       label: 'Other',
       value: '__dropdown_other__' as T,
     };
     return [...main, otherOption];
-  }, [menuOptionsWithoutOther, searchQuery]);
+  }, [menuOptionsWithoutOther, searchQuery, onOtherTextChange]);
 
   // ── Callbacks ──────────────────────────────────────────────────────────
 
@@ -215,6 +221,42 @@ export function Dropdown<T extends string | number = string | number>(
 
   // ── Render ─────────────────────────────────────────────────────────────
 
+  function renderSelectionContent() {
+    if (!hasSelection) {
+      return (
+        <span className="text-sm flex-1 truncate">
+          <Text
+            variant="body"
+            className="text-sm flex-1 truncate text-gray-400"
+          >
+            {placeholder}
+          </Text>
+        </span>
+      );
+    }
+
+    if (renderValue) {
+      return renderValue(selectedValues);
+    }
+
+    if (isMulti) {
+      return (
+        <DropdownChips
+          selectedValues={selectedValues}
+          onRemove={isViewMode ? undefined : handleRemoveChip}
+        />
+      );
+    }
+
+    return (
+      <span className="text-sm flex-1 truncate">
+        <Text variant="body" className="text-sm flex-1 truncate text-gray-900">
+          {selectedValues[0].label}
+        </Text>
+      </span>
+    );
+  }
+
   return (
     <div
       className={mergeCss([
@@ -254,26 +296,10 @@ export function Dropdown<T extends string | number = string | number>(
               setIsOpen((o) => !o);
             }
           }}
-          onKeyDown={handleKeyDown}
+          onKeyDown={isViewMode ? undefined : handleKeyDown}
         >
-          {isMulti && hasSelection ? (
-            <DropdownChips
-              selectedValues={selectedValues}
-              onRemove={isViewMode ? undefined : handleRemoveChip}
-            />
-          ) : (
-            <span className="text-sm flex-1 truncate">
-              <Text
-                variant="body"
-                className={mergeCss([
-                  'text-sm flex-1 truncate',
-                  hasSelection ? 'text-gray-900' : 'text-gray-400',
-                ])}
-              >
-                {hasSelection ? selectedValues[0].label : placeholder}
-              </Text>
-            </span>
-          )}
+          {renderSelectionContent()}
+
           {!isViewMode && (
             <ChevronDown
               className={mergeCss([

@@ -1,3 +1,4 @@
+import { StatusChoices } from '@monorepo/react/shelter';
 import { z } from 'zod';
 import type { GetShelterQuery } from '../../../graphql/__generated__/getShelter.generated';
 
@@ -12,6 +13,7 @@ const locationSchema = z
 
 export const basicInfoFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
+  status: z.enum(StatusChoices).refine(Boolean, 'Status is required'),
   description: z.string().min(1, 'Description is required'),
   location: locationSchema,
   email: z.email('Invalid email address').optional().or(z.literal('')),
@@ -24,6 +26,7 @@ export type BasicInfoFormData = z.infer<typeof basicInfoFormSchema>;
 
 export const basicInfoDefaultValues: BasicInfoFormData = {
   name: '',
+  status: StatusChoices.Draft,
   description: '',
   location: null,
   email: '',
@@ -37,6 +40,7 @@ type Shelter = GetShelterQuery['shelter'];
 export function toBasicInfoFormData(shelter: Shelter): BasicInfoFormData {
   return {
     name: shelter.name,
+    status: shelter.status,
     description: shelter.description,
     location: shelter.location
       ? {

@@ -32,7 +32,7 @@ export function SidebarNestedLinks(props: TProps) {
     setExpanded(defaultExpanded);
   }, [defaultExpanded]);
 
-  const showChildren = alwaysExpanded || expanded;
+  const isOpen = !collapsed && (alwaysExpanded || expanded);
 
   const chevronCss = [
     'h-3',
@@ -68,9 +68,7 @@ export function SidebarNestedLinks(props: TProps) {
         </SidebarItemLabel>
       </button>
 
-      {!collapsed && showChildren && (
-        <div className={mergeCss(childrenCss)}>{children}</div>
-      )}
+      {isOpen && <div className={mergeCss(childrenCss)}>{children}</div>}
     </div>
   );
 }

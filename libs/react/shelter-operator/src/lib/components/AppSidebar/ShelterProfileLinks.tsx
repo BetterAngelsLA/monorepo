@@ -30,10 +30,9 @@ export function ShelterProfileLinks(props: IProps) {
       <Sidebar.Content>
         <Sidebar.Link
           to={shelterProfileRoute(shelterId, shelterProfileSegments.basic)}
-          isActive={isShelterProfileRoute(
-            pathname,
-            shelterProfileSegments.basic
-          )}
+          isActive={isShelterProfileRoute(pathname, {
+            segment: shelterProfileSegments.basic,
+          })}
           collapsed={!isOpen}
           replace
         >
@@ -44,10 +43,9 @@ export function ShelterProfileLinks(props: IProps) {
             shelterId,
             shelterProfileSegments.operatingHours
           )}
-          isActive={isShelterProfileRoute(
-            pathname,
-            shelterProfileSegments.operatingHours
-          )}
+          isActive={isShelterProfileRoute(pathname, {
+            segment: shelterProfileSegments.operatingHours,
+          })}
           collapsed={!isOpen}
           replace
         >
@@ -55,10 +53,9 @@ export function ShelterProfileLinks(props: IProps) {
         </Sidebar.Link>
         <Sidebar.Link
           to={shelterProfileRoute(shelterId, shelterProfileSegments.policies)}
-          isActive={isShelterProfileRoute(
-            pathname,
-            shelterProfileSegments.policies
-          )}
+          isActive={isShelterProfileRoute(pathname, {
+            segment: shelterProfileSegments.policies,
+          })}
           collapsed={!isOpen}
           replace
         >
@@ -66,10 +63,9 @@ export function ShelterProfileLinks(props: IProps) {
         </Sidebar.Link>
         <Sidebar.Link
           to={shelterProfileRoute(shelterId, shelterProfileSegments.details)}
-          isActive={isShelterProfileRoute(
-            pathname,
-            shelterProfileSegments.details
-          )}
+          isActive={isShelterProfileRoute(pathname, {
+            segment: shelterProfileSegments.details,
+          })}
           collapsed={!isOpen}
           replace
         >
@@ -77,10 +73,9 @@ export function ShelterProfileLinks(props: IProps) {
         </Sidebar.Link>
         <Sidebar.Link
           to={shelterProfileRoute(shelterId, shelterProfileSegments.services)}
-          isActive={isShelterProfileRoute(
-            pathname,
-            shelterProfileSegments.services
-          )}
+          isActive={isShelterProfileRoute(pathname, {
+            segment: shelterProfileSegments.services,
+          })}
           collapsed={!isOpen}
           replace
         >

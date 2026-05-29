@@ -67,6 +67,7 @@ export function isShelterRoute(path: string, strict?: boolean): boolean {
   if (strict) {
     return Boolean(matchPath(paths.shelter, path));
   }
+
   return Boolean(matchPath(`${paths.shelter}/*`, path));
 }
 
@@ -74,19 +75,21 @@ export function isShelterManageRoute(path: string, strict?: boolean): boolean {
   if (strict) {
     return Boolean(matchPath(paths.shelterManage, path));
   }
+
   return Boolean(matchPath(`${paths.shelterManage}/*`, path));
 }
 
 export function isShelterProfileRoute(
   path: string,
-  match?: TShelterProfileSegment | true
+  opts?: { strict?: boolean; segment?: TShelterProfileSegment }
 ): boolean {
-  if (match === true) {
-    return Boolean(matchPath(paths.shelterProfile, path));
+  const { strict, segment } = opts ?? {};
+  if (segment) {
+    return Boolean(matchPath(`${paths.shelterProfile}/${segment}`, path));
   }
 
-  if (match) {
-    return Boolean(matchPath(`${paths.shelterProfile}/${match}`, path));
+  if (strict) {
+    return Boolean(matchPath(paths.shelterProfile, path));
   }
 
   return Boolean(matchPath(`${paths.shelterProfile}/*`, path));

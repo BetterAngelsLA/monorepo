@@ -61,7 +61,8 @@ export function LocationPicker({
     [onChange]
   );
 
-  const mapHeightCss = expandable && !mapExpanded ? 'h-[150px]' : 'h-[300px]';
+  const collapsed = !!expandable && !mapExpanded;
+  const mapHeightCss = collapsed ? 'h-[150px]' : 'h-[300px]';
 
   return (
     <div
