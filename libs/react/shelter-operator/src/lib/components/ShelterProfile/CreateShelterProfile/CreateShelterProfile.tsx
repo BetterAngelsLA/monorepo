@@ -1,7 +1,6 @@
 import { useMutation } from '@apollo/client/react';
 import {
   CreateShelterDocument,
-  StatusChoices,
   type CreateShelterInput,
   type CreateShelterMutation,
   type CreateShelterMutationVariables,
@@ -28,8 +27,8 @@ function toCreateInput(
     phone: formData.phone?.trim() || undefined,
     website: formData.website?.trim() || undefined,
     isPrivate: formData.isPrivate,
+    status: formData.status, // TODO: enable query to return DRAFT shelters etc via permissions
     organization: organizationId,
-    status: StatusChoices.Approved, // TODO: enable query to return DRAFT shelters etc via permissions
     // Required arrays - empty for initial creation (TODO: remove requirement via SDB-209)
     accessibility: [],
     demographics: [],
