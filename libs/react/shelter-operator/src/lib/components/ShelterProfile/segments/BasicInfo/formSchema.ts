@@ -1,6 +1,6 @@
 import { StatusChoices } from '@monorepo/react/shelter';
 import { z } from 'zod';
-import type { GetShelterQuery } from '../../../graphql/__generated__/getShelter.generated';
+import type { GetShelterQuery } from '../../../../graphql/__generated__/getShelter.generated';
 
 const locationSchema = z
   .object({

@@ -2,15 +2,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { StatusChoices } from '@monorepo/react/shelter';
 import { Controller, useForm } from 'react-hook-form';
-import { LocationPicker } from '../../../pages/dashboard/components/create-shelter-form/components/LocationPicker';
+import { LocationPicker } from '../../../../pages/dashboard/components/create-shelter-form/components/LocationPicker';
 import {
   Dropdown,
   DropdownChip,
   type DropdownOption,
-} from '../../base-ui/dropdown';
-import { Input } from '../../base-ui/input';
-import { Switch } from '../../base-ui/switch';
-import { Form } from '../../form/Form';
+} from '../../../base-ui/dropdown';
+import { Input } from '../../../base-ui/input';
+import { Switch } from '../../../base-ui/switch';
+import { Form } from '../../../form/Form';
 import {
   type BasicInfoFormData,
   basicInfoDefaultValues,
