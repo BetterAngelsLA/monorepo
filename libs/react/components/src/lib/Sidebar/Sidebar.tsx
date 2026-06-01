@@ -3,7 +3,8 @@ import { ReactNode, useEffect, useState } from 'react';
 import { SidebarContent } from './SidebarContent';
 import { SidebarHeader } from './SidebarHeader';
 import { SidebarLink } from './SidebarLink';
-import { SidebarToggleBtn } from './SidebarToggleBtn';
+import { SidebarNestedLinks } from './SidebarNestedLinks';
+import { SidebarToggleBtn } from './shared/SidebarToggleBtn';
 
 type TProps = {
   children?: ReactNode;
@@ -11,13 +12,20 @@ type TProps = {
   openClassName?: string;
   closedClassName?: string;
   onOpenChange?: (isOpen: boolean) => void;
+  initialOpen?: boolean;
 };
 
 export function Sidebar(props: TProps) {
-  const { className, openClassName, closedClassName, children, onOpenChange } =
-    props;
+  const {
+    className,
+    openClassName,
+    closedClassName,
+    children,
+    onOpenChange,
+    initialOpen = false,
+  } = props;
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initialOpen);
 
   function toggleOpen() {
     setIsOpen((prev) => !prev);
@@ -73,3 +81,4 @@ export function Sidebar(props: TProps) {
 Sidebar.Header = SidebarHeader;
 Sidebar.Content = SidebarContent;
 Sidebar.Link = SidebarLink;
+Sidebar.NestedLinks = SidebarNestedLinks;

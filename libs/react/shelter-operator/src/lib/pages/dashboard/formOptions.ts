@@ -49,6 +49,17 @@ const toOptions = <T extends string>(
   return [...main, ...end].map(([value, label]) => ({ value, label }));
 };
 
+export function getSelectedOptions<T extends string>(
+  values: ReadonlyArray<{ name?: T | null }>,
+  options: ReadonlyArray<{ value: T; label: string }>
+) {
+  const selected = new Set(
+    values.map((v) => v.name).filter((n): n is T => n != null)
+  );
+
+  return options.filter((option) => selected.has(option.value));
+}
+
 // ---------------------------------------------------------------------------
 // Label records (only where shared lib doesn't already export display maps)
 // ---------------------------------------------------------------------------

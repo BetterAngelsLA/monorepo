@@ -1,7 +1,8 @@
 import { useUser } from '@monorepo/react/shelter';
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { CreateShelterProfile } from './components/ShelterProfile';
 import { OperatorLayout } from './components/layout/OperatorLayout';
-import { ShelterProfilePage, UsersPage } from './pages';
+import { UsersPage } from './pages';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
 import { CreateShelterForm } from './pages/dashboard/components/create-shelter-form';
@@ -11,6 +12,11 @@ import { ConfirmationPage } from './pages/reservation/ConfirmationPage';
 import { ReservationPage } from './pages/reservation/ReservationPage';
 import { SelectRoomPage } from './pages/reservation/SelectRoomPage';
 import { SelectShelterPage } from './pages/reservation/SelectShelterPage';
+import { BasicInfoPage } from './pages/shelterProfile/BasicInfoPage';
+import { DetailsPage } from './pages/shelterProfile/DetailsPage';
+import { OperatingHoursPage } from './pages/shelterProfile/OperatingHoursPage';
+import { PoliciesPage } from './pages/shelterProfile/PoliciesPage';
+import { ServicesPage } from './pages/shelterProfile/ServicesPage';
 import { SignIn } from './pages/signIn';
 import { ActiveOrgProvider, OperatorAuthProvider } from './providers';
 import {
@@ -18,6 +24,7 @@ import {
   paths,
   reservationSegments,
   routePath,
+  shelterProfileSegments,
 } from './routing';
 
 export function OperatorApp() {
@@ -36,9 +43,35 @@ export function OperatorApp() {
               element={<CreateShelterForm />}
             />
             <Route
-              path={routePath(paths.shelterProfile)}
-              element={<ShelterProfilePage />}
+              path={routePath(paths.shelterCreate)}
+              element={<CreateShelterProfile />}
             />
+            <Route path={routePath(paths.shelterProfile)}>
+              <Route
+                index
+                element={<Navigate to={shelterProfileSegments.basic} replace />}
+              />
+              <Route
+                path={shelterProfileSegments.basic}
+                element={<BasicInfoPage />}
+              />
+              <Route
+                path={shelterProfileSegments.operatingHours}
+                element={<OperatingHoursPage />}
+              />
+              <Route
+                path={shelterProfileSegments.policies}
+                element={<PoliciesPage />}
+              />
+              <Route
+                path={shelterProfileSegments.details}
+                element={<DetailsPage />}
+              />
+              <Route
+                path={shelterProfileSegments.services}
+                element={<ServicesPage />}
+              />
+            </Route>
             <Route path={routePath(paths.shelterManage)}>
               <Route index element={<ShelterDashboardPage tab="overview" />} />
               <Route

@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { AppSidebar } from '../AppSidebar';
 import { NavBar } from '../NavBar';
+import { ToastContainer } from '../base-ui/toast';
 
 export function OperatorLayout() {
   return (
@@ -13,6 +14,8 @@ export function OperatorLayout() {
         <main className="pt-6 flex-1">
           <Outlet />
         </main>
+
+        <ToastContainer />
       </div>
     </div>
   );

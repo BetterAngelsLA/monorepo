@@ -1,4 +1,4 @@
-export function ShelterProfilePage() {
+export function ShelterProfile() {
   return (
     <div className="p-12">
       <p className="text-xl font-medium">Shelter Profile page</p>
