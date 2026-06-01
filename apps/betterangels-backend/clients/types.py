@@ -23,7 +23,7 @@ from common.graphql.types import (
 from common.models import Attachment
 from django.db.models import Exists, Max, OuterRef, Q, QuerySet
 from django.utils import timezone
-from strawberry import ID, Info, auto
+from strawberry import ID, Info, Maybe, auto
 from strawberry.file_uploads import Upload
 
 from .models import (
@@ -358,11 +358,11 @@ class CreateClientProfileInput(ClientProfileBaseType):
 @strawberry_django.input(ClientProfile, partial=True)
 class UpdateClientProfileInput(ClientProfileBaseType):
     id: ID
-    contacts: Optional[List[ClientContactInput]]
-    hmis_profiles: Optional[List[HmisProfileInput]]
-    household_members: Optional[List[ClientHouseholdMemberInput]]
-    phone_numbers: Optional[List[PhoneNumberInput]]
-    social_media_profiles: Optional[List[SocialMediaProfileInput]]
+    contacts: Maybe[List[ClientContactInput]]
+    hmis_profiles: Maybe[List[HmisProfileInput]]
+    household_members: Maybe[List[ClientHouseholdMemberInput]]
+    phone_numbers: Maybe[List[PhoneNumberInput]]
+    social_media_profiles: Maybe[List[SocialMediaProfileInput]]
 
 
 # Data Import

@@ -34,7 +34,7 @@ from hmis.models import HmisClientProfile, HmisNote
 from notes.enums import ServiceRequestTypeEnum
 from notes.models import ServiceRequest
 from notes.types import ServiceRequestType
-from strawberry import ID, Info, auto
+from strawberry import ID, Info, Maybe, auto
 from tasks.types import TaskType
 
 
@@ -282,13 +282,13 @@ class ProgramEnrollmentType:
     ref_client_program: str
 
 
-@strawberry_django.input(HmisNote)
+@strawberry_django.input(HmisNote, partial=True)
 class UpdateHmisNoteInput:
     id: ID
-    title: Optional[str]
-    note: Optional[str]
-    date: Optional[datetime.date]
-    ref_client_program: Optional[str]
+    title: Maybe[str | None]
+    note: Maybe[str | None]
+    date: Maybe[datetime.date | None]
+    ref_client_program: Maybe[str | None]
 
 
 @strawberry_django.input(HmisNote)

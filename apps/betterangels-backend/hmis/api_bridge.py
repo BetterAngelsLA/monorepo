@@ -541,7 +541,7 @@ class HmisApiBridge:
         note_data = {
             k: (v.strftime(NOTE_DATE_FORMAT) if isinstance(v, datetime.date) else v)
             for k, v in strawberry.asdict(data).items()
-            if v is not UNSET
+            if k != "id"
         }
 
         fields = self._get_field_dot_paths(
