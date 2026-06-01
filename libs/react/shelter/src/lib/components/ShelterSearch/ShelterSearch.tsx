@@ -18,7 +18,7 @@ type TProps = {
   nameSearchPinFitRequestId?: number;
   onShelterPinsReadyForMapFit?: (pinLocations: TLatLng[]) => void;
   onNameSearch: (options?: { preserveMapBounds?: boolean }) => void;
-  setLocation: (location: TLatLng) => void;
+  setLocation: (location: TLatLng, mapBounds?: TMapBounds) => void;
 };
 
 export function ShelterSearch(props: TProps) {
@@ -39,6 +39,10 @@ export function ShelterSearch(props: TProps) {
   const nameSearchValueRef = useRef(nameSearchValue);
   nameSearchValueRef.current = nameSearchValue;
   const locationSelectedInModalRef = useRef(false);
+  const pendingLocationSearchRef = useRef<{
+    location: TLatLng;
+    mapBounds?: TMapBounds;
+  } | null>(null);
 
   const closeModal = useCallback(() => {
     setModal(null);
@@ -64,21 +68,29 @@ export function ShelterSearch(props: TProps) {
     locationSelectedInModalRef.current = false;
   }
 
-  function onSearchLocationSelect(location: TLatLng) {
+  function onSearchLocationSelect(location: TLatLng, mapBounds?: TMapBounds) {
     locationSelectedInModalRef.current = true;
-    setLocation(location);
+    pendingLocationSearchRef.current = { location, mapBounds };
   }
 
   function handleDone() {
+    const pending = pendingLocationSearchRef.current;
+    if (pending) {
+      setLocation(pending.location, pending.mapBounds);
+      pendingLocationSearchRef.current = null;
+    }
+
     const value = nameSearchValueRef.current.trim();
     if (value) {
       onSearchClick(value);
     }
+
     closeModal();
   }
 
   function openSearchModal() {
     locationSelectedInModalRef.current = false;
+    pendingLocationSearchRef.current = null;
     setModal({
       content: (
         <SearchModalContent

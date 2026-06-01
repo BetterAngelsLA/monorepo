@@ -92,6 +92,8 @@ export function HomePage() {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [nameSearchPinFitRequestId, setNameSearchPinFitRequestId] = useState(0);
   const [locationSearchInputKey, setLocationSearchInputKey] = useState(0);
+  const [placeViewportToFit, setPlaceViewportToFit] =
+    useState<TMapBounds | null>(null);
   const map = useMap();
   const hasLocationPermission = useLocationPermission();
 
@@ -116,6 +118,10 @@ export function HomePage() {
     },
     [setModal, shelters]
   );
+
+  const clearPlaceViewportToFit = useCallback(() => {
+    setPlaceViewportToFit(null);
+  }, []);
 
   const onShelterPinsReadyForMapFit = useCallback(
     (pinLocations: TLatLng[]) => {
@@ -235,10 +241,18 @@ export function HomePage() {
     }
   }, [map, hasInitialized, applyMapCenter]);
 
-  function setSearchLocation(location: TLatLng) {
-    setLocation(location);
-    setMapBoundsFilter(mapBoundsFromCenter(location));
+  function setSearchLocation(location: TLatLng, mapBounds?: TMapBounds) {
+    const bounds = mapBounds ?? mapBoundsFromCenter(location);
+    setMapBoundsFilter(bounds);
     setShowSearchButton(false);
+
+    if (mapBounds) {
+      setPlaceViewportToFit(mapBounds);
+      return;
+    }
+
+    setPlaceViewportToFit(null);
+    setLocation(location);
   }
 
   function onNameSearch(options?: { preserveMapBounds?: boolean }) {
@@ -264,6 +278,8 @@ export function HomePage() {
           setShowSearchButton={setShowSearchButton}
           onCenterSelect={onCenterSelect}
           onSearchMapArea={onSearchMapArea}
+          placeViewportToFit={placeViewportToFit}
+          onPlaceViewportFitted={clearPlaceViewportToFit}
         />
       </MaxWLayout>
       <ShelterSearch

@@ -22,7 +22,14 @@ import {
   SearchMapAreaButton,
   ZoomControls,
 } from './controls';
-import { TLatLng, TMapGestureHandling, TMapZoom, TMarker } from './types.maps';
+import { MapPlaceViewportFitter } from './MapPlaceViewportFitter';
+import {
+  TLatLng,
+  TMapBounds,
+  TMapGestureHandling,
+  TMapZoom,
+  TMarker,
+} from './types.maps';
 import { toGoogleLatLng } from './utils/toGoogleLatLng';
 
 type TMap = {
@@ -40,6 +47,9 @@ type TMap = {
   onCenterSelect?: (center: TLatLng) => void;
   onSearchMapArea?: (bounds?: google.maps.LatLngBounds) => void;
   markers?: TMarker[];
+  /** Places API viewport to fit when the user completes a location search. */
+  placeViewportToFit?: TMapBounds | null;
+  onPlaceViewportFitted?: () => void;
 };
 
 export function Map(props: TMap) {
@@ -58,6 +68,8 @@ export function Map(props: TMap) {
     onCenterSelect,
     onSearchMapArea,
     markers = [],
+    placeViewportToFit = null,
+    onPlaceViewportFitted,
   } = props;
   const map = useMap();
 
@@ -105,6 +117,10 @@ export function Map(props: TMap) {
       onIdle={() => setShowSearchButton(true)}
       {...cameraProps}
     >
+      <MapPlaceViewportFitter
+        viewport={placeViewportToFit}
+        onFitted={onPlaceViewportFitted}
+      />
       {userLocationLatLng && (
         <AdvancedMarker position={userLocationLatLng} zIndex={999}>
           <CurrentLocationDot />
