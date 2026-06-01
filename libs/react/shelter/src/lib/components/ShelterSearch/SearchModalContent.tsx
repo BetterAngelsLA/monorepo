@@ -3,14 +3,14 @@ import { LocationIcon, SearchIcon } from '@monorepo/react/icons';
 import { useState } from 'react';
 import { AddressAutocomplete } from '../AddressAutocomplete';
 import { Input } from '../Input';
-import { TLatLng } from '../Map';
+import { TLatLng, TMapBounds } from '../Map';
 
 type TProps = {
   locationSearchInputKey?: number;
   initialNameSearchValue: string;
   onNameSearchChange: (value: string) => void;
   onSearchClick: (value: string) => void;
-  setLocation: (location: TLatLng) => void;
+  setLocation: (location: TLatLng, mapBounds?: TMapBounds) => void;
 };
 
 export function SearchModalContent(props: TProps) {
@@ -57,10 +57,13 @@ export function SearchModalContent(props: TProps) {
         placeholder="Search by location"
         onPlaceSelect={(place) => {
           if (!place?.location) return;
-          setLocation({
-            latitude: place.location.lat,
-            longitude: place.location.lng,
-          });
+          setLocation(
+            {
+              latitude: place.location.lat,
+              longitude: place.location.lng,
+            },
+            place.viewport
+          );
         }}
         leftIcon={<LocationIcon className="text-neutral-70 w-4 h-4" />}
       />
