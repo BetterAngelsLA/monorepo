@@ -4,20 +4,18 @@ import strawberry
 from accounts.models import PermissionGroup, User
 from django.db.models import Exists, OuterRef
 
-from .permissions import ReportOrgPermissions
-
-ReportsPermission = strawberry.enum(ReportOrgPermissions, name="ReportsPermission")
+from .permissions import ReportPermissions
 
 
 @strawberry.type
 class ReportsCapabilities:
-    granted: List[ReportsPermission]
+    granted: List[ReportPermissions]
 
     @classmethod
     def get_annotations(cls, user: User) -> dict:
         """Return DB-level Exists annotations for reports capabilities."""
         annotations = {}
-        for perm in ReportOrgPermissions:
+        for perm in ReportPermissions:
             app_label, codename = perm.value.split(".")
             annotations[f"_perm_{perm.name}"] = Exists(
                 PermissionGroup.objects.filter(
@@ -31,5 +29,5 @@ class ReportsCapabilities:
 
     @classmethod
     def from_instance(cls, instance: object) -> "ReportsCapabilities":
-        granted = [perm for perm in ReportOrgPermissions if getattr(instance, f"_perm_{perm.name}", False)]
+        granted = [perm for perm in ReportPermissions if getattr(instance, f"_perm_{perm.name}", False)]
         return cls(granted=granted)

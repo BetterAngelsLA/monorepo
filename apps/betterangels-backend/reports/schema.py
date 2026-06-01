@@ -9,7 +9,7 @@ from common.permissions.utils import IsAuthenticated
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 
-from .permissions import ReportOrgPermissions
+from .permissions import ReportPermissions
 from .selectors import report_default_date_range, report_summary
 
 
@@ -55,7 +55,7 @@ class Query:
         org = get_user_permitted_org(
             current_user,
             org_id=str(organization_id),
-            permission=ReportOrgPermissions.VIEW_REPORTS,
+            permission=ReportPermissions.VIEW_REPORTS,
         )
         if org is None:
             raise PermissionError("You do not have permission to view reports.")

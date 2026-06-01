@@ -1,6 +1,6 @@
-export * from './graphql/response';
 export {
-  AccountsPermission,
-  ReportsPermission,
-  SheltersPermission,
+  ReportPermissions,
+  ShelterPermissions,
+  UserOrganizationPermissions,
 } from './graphql/__generated__/types';
+export * from './graphql/response';

@@ -11,7 +11,7 @@ from django.core.validators import EmailValidator, MaxValueValidator, MinValueVa
 from django.db import models
 from django.utils import timezone
 
-from .permissions import ReportOrgPermissions
+from .permissions import ReportPermissions
 
 
 def validate_email_list(value: str) -> None:
@@ -121,7 +121,7 @@ class ScheduledReport(models.Model):
         verbose_name = "Scheduled Report"
         verbose_name_plural = "Scheduled Reports"
         ordering = ["-created_at"]
-        permissions = permission_enums_to_django_meta_permissions([ReportOrgPermissions])
+        permissions = permission_enums_to_django_meta_permissions([ReportPermissions])
 
     def __str__(self) -> str:
         """Return string representation."""

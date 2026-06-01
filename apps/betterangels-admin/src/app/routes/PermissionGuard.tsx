@@ -1,24 +1,21 @@
 import {
-  TOrganizationWithPermissions,
+  hasPermission,
+  PermissionEnum,
   useActiveOrg,
 } from '@monorepo/react/betterangels-admin';
 import { Navigate } from 'react-router-dom';
 
 type IProps = {
-  check: (org: TOrganizationWithPermissions) => boolean | undefined | null;
+  permission: PermissionEnum;
   children: React.ReactNode;
 };
 
-export function PermissionGuard({ check, children }: IProps) {
+export function PermissionGuard({ permission, children }: IProps) {
   const { activeOrg } = useActiveOrg();
 
-  if (!activeOrg) {
-    return null;
-  }
-
-  if (!check(activeOrg)) {
+  if (!hasPermission(activeOrg, permission)) {
     return <Navigate to="/" replace />;
   }
 
-  return <>{children}</>;
+  return children;
 }

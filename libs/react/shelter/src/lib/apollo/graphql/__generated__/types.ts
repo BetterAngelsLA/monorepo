@@ -45,12 +45,6 @@ export type AccessibilityType = {
   name?: Maybe<AccessibilityChoices>;
 };
 
-export enum AccountsPermission {
-  AccessPortal = 'ACCESS_PORTAL',
-  ManageMembers = 'MANAGE_MEMBERS',
-  ViewMembers = 'VIEW_MEMBERS'
-}
-
 export enum AdaAccommodationEnum {
   Hearing = 'HEARING',
   Mobility = 'MOBILITY',
@@ -1992,9 +1986,9 @@ export enum Ordering {
 
 export type OrgCapabilities = {
   __typename?: 'OrgCapabilities';
-  accounts: Array<AccountsPermission>;
-  reports: Array<ReportsPermission>;
-  shelters: Array<SheltersPermission>;
+  accounts: Array<UserOrganizationPermissions>;
+  reports: Array<ReportPermissions>;
+  shelters: Array<ShelterPermissions>;
 };
 
 export type OrgInvitationInput = {
@@ -2523,6 +2517,10 @@ export type RemoveOrganizationMemberInput = {
 
 export type RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo;
 
+export enum ReportPermissions {
+  ViewReports = 'VIEW_REPORTS'
+}
+
 export type ReportSummaryType = {
   __typename?: 'ReportSummaryType';
   endDate: Scalars['String']['output'];
@@ -2536,10 +2534,6 @@ export type ReportSummaryType = {
   uniqueClients: Scalars['Int']['output'];
   uniqueClientsByDate: Array<DateCountType>;
 };
-
-export enum ReportsPermission {
-  ViewReports = 'VIEW_REPORTS'
-}
 
 export type ResolveClientDocumentUploadsInput = {
   clientProfileId: Scalars['ID']['input'];
@@ -2823,6 +2817,13 @@ export type ShelterOrder = {
   name?: InputMaybe<Ordering>;
 };
 
+export enum ShelterPermissions {
+  Add = 'ADD',
+  Change = 'CHANGE',
+  Delete = 'DELETE',
+  View = 'VIEW'
+}
+
 export type ShelterPhotoType = {
   __typename?: 'ShelterPhotoType';
   createdAt: Scalars['DateTime']['output'];
@@ -2955,11 +2956,6 @@ export type ShelterTypeType = {
   __typename?: 'ShelterTypeType';
   name?: Maybe<ShelterChoices>;
 };
-
-export enum SheltersPermission {
-  ManageShelters = 'MANAGE_SHELTERS',
-  ViewShelters = 'VIEW_SHELTERS'
-}
 
 export enum SocialMediaEnum {
   Facebook = 'FACEBOOK',
@@ -3273,6 +3269,14 @@ export type UpdateUserProfileInput = {
 };
 
 export type UpdateUserProfilePayload = CurrentUserType | OperationInfo;
+
+export enum UserOrganizationPermissions {
+  AccessOrgPortal = 'ACCESS_ORG_PORTAL',
+  AddOrgMember = 'ADD_ORG_MEMBER',
+  ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
+  RemoveOrgMember = 'REMOVE_ORG_MEMBER',
+  ViewOrgMembers = 'VIEW_ORG_MEMBERS'
+}
 
 export type UserType = {
   __typename?: 'UserType';

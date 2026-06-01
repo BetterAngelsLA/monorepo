@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Optional, Union
 
+import strawberry
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.db import models
 from django.db.models import QuerySet
@@ -11,6 +12,7 @@ from organizations.models import Organization
 UserLike = Union[AbstractBaseUser, AnonymousUser]
 
 
+@strawberry.enum
 class UserOrganizationPermissions(models.TextChoices):
     ACCESS_ORG_PORTAL = "organizations.access_org_portal", _("Can access organization management portal")
     ADD_ORG_MEMBER = "organizations.add_org_member", _("Can add organization member")

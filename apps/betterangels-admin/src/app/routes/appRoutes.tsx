@@ -1,3 +1,7 @@
+import {
+  ReportPermissions,
+  UserOrganizationPermissions,
+} from '@monorepo/react/betterangels-admin';
 import { RouteObject } from 'react-router-dom';
 import Home from '../pages/home';
 import { ReportsPage } from '../pages/reports';
@@ -14,7 +18,7 @@ export const routeChildren: RouteObject[] = [
   {
     path: '/users',
     element: (
-      <PermissionGuard check={(org) => org.capabilities?.accounts?.canViewMembers}>
+      <PermissionGuard permission={UserOrganizationPermissions.ViewOrgMembers}>
         <UsersPage />
       </PermissionGuard>
     ),
@@ -22,7 +26,7 @@ export const routeChildren: RouteObject[] = [
   {
     path: '/reports',
     element: (
-      <PermissionGuard check={(org) => org.capabilities?.reports?.canViewReports}>
+      <PermissionGuard permission={ReportPermissions.ViewReports}>
         <ReportsPage />
       </PermissionGuard>
     ),

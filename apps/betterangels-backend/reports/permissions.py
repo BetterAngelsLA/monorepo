@@ -4,6 +4,7 @@ Reports app DRF permissions.
 Reference: https://github.com/HackSoftware/Django-Styleguide#apis--serializers
 """
 
+import strawberry
 from accounts.permissions import get_user_permitted_org
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -12,7 +13,8 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 
 
-class ReportOrgPermissions(models.TextChoices):
+@strawberry.enum
+class ReportPermissions(models.TextChoices):
     VIEW_REPORTS = "reports.view_reports", _("Can view reports")
 
 
@@ -38,7 +40,7 @@ class HasReportAccess(BasePermission):
         if not org_id:
             return False
 
-        org = get_user_permitted_org(user, org_id=org_id, permission=ReportOrgPermissions.VIEW_REPORTS)
+        org = get_user_permitted_org(user, org_id=org_id, permission=ReportPermissions.VIEW_REPORTS)
         if org is None:
             return False
 

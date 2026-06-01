@@ -48,12 +48,6 @@ type AccessibilityType {
   name: AccessibilityChoices
 }
 
-enum AccountsPermission {
-  ACCESS_PORTAL
-  MANAGE_MEMBERS
-  VIEW_MEMBERS
-}
-
 enum AdaAccommodationEnum {
   HEARING
   MOBILITY
@@ -1679,9 +1673,9 @@ enum Ordering {
 }
 
 type OrgCapabilities {
-  accounts: [AccountsPermission!]!
-  reports: [ReportsPermission!]!
-  shelters: [SheltersPermission!]!
+  accounts: [UserOrganizationPermissions!]!
+  reports: [ReportPermissions!]!
+  shelters: [ShelterPermissions!]!
 }
 
 input OrgInvitationInput {
@@ -1974,6 +1968,10 @@ input RemoveOrganizationMemberInput {
 
 union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo
 
+enum ReportPermissions {
+  VIEW_REPORTS
+}
+
 type ReportSummaryType {
   totalNotes: Int!
   uniqueClients: Int!
@@ -1985,10 +1983,6 @@ type ReportSummaryType {
   uniqueClientsByDate: [DateCountType!]!
   topProvidedServices: [NameCountType!]!
   topRequestedServices: [NameCountType!]!
-}
-
-enum ReportsPermission {
-  VIEW_REPORTS
 }
 
 input ResolveClientDocumentUploadsInput {
@@ -2260,6 +2254,13 @@ input ShelterOrder {
   createdAt: Ordering
 }
 
+enum ShelterPermissions {
+  ADD
+  CHANGE
+  DELETE
+  VIEW
+}
+
 type ShelterPhotoType {
   id: ID!
   type: ShelterPhotoTypeChoices!
@@ -2382,11 +2383,6 @@ type ShelterTypeOffsetPaginated {
 
 type ShelterTypeType {
   name: ShelterChoices
-}
-
-enum SheltersPermission {
-  MANAGE_SHELTERS
-  VIEW_SHELTERS
 }
 
 enum SocialMediaEnum {
@@ -2706,6 +2702,14 @@ union UpdateUserProfilePayload = CurrentUserType | OperationInfo
 
 """Represents a file upload."""
 scalar Upload
+
+enum UserOrganizationPermissions {
+  ACCESS_ORG_PORTAL
+  ADD_ORG_MEMBER
+  CHANGE_ORG_MEMBER_ROLE
+  REMOVE_ORG_MEMBER
+  VIEW_ORG_MEMBERS
+}
 
 type UserType {
   firstName: NonBlankString

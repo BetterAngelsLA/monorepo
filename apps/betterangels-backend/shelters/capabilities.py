@@ -6,12 +6,10 @@ from django.db.models import Exists, OuterRef
 
 from .permissions import ShelterPermissions
 
-SheltersPermission = strawberry.enum(ShelterPermissions, name="SheltersPermission")
-
 
 @strawberry.type
 class SheltersCapabilities:
-    granted: List[SheltersPermission]
+    granted: List[ShelterPermissions]
 
     @classmethod
     def get_annotations(cls, user: User) -> dict:

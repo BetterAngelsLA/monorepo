@@ -6,12 +6,10 @@ from django.db.models import Exists, OuterRef
 from .models import PermissionGroup, User
 from .permissions import UserOrganizationPermissions
 
-AccountsPermission = strawberry.enum(UserOrganizationPermissions, name="AccountsPermission")
-
 
 @strawberry.type
 class AccountsCapabilities:
-    granted: List[AccountsPermission]
+    granted: List[UserOrganizationPermissions]
 
     @classmethod
     def get_annotations(cls, user: User) -> dict:
