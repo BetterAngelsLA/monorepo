@@ -18,6 +18,7 @@ import {
   TMapBounds,
   TMarker,
   TShelter,
+  mapBoundsFromCenter,
   modalAtom,
   toGoogleLatLng,
   toMapBounds,
@@ -234,10 +235,18 @@ export function HomePage() {
     }
   }, [map, hasInitialized, applyMapCenter]);
 
-  function onNameSearch() {
-    setMapBoundsFilter(undefined);
+  function setSearchLocation(location: TLatLng) {
+    setLocation(location);
+    setMapBoundsFilter(mapBoundsFromCenter(location));
     setShowSearchButton(false);
-    setNameSearchPinFitRequestId((n) => n + 1);
+  }
+
+  function onNameSearch(options?: { preserveMapBounds?: boolean }) {
+    if (!options?.preserveMapBounds) {
+      setMapBoundsFilter(undefined);
+      setNameSearchPinFitRequestId((n) => n + 1);
+    }
+    setShowSearchButton(false);
   }
 
   return (
@@ -263,7 +272,7 @@ export function HomePage() {
         nameSearchPinFitRequestId={nameSearchPinFitRequestId}
         onShelterPinsReadyForMapFit={onShelterPinsReadyForMapFit}
         onNameSearch={onNameSearch}
-        setLocation={setLocation}
+        setLocation={setSearchLocation}
       />
     </>
   );
