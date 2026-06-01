@@ -38,9 +38,8 @@ export function ShelterSearch(props: TProps) {
   const setModal = useSetAtom(modalAtom);
   const nameSearchValueRef = useRef(nameSearchValue);
   nameSearchValueRef.current = nameSearchValue;
-  const locationSelectedInModalRef = useRef(false);
-  const pendingLocationSearchRef = useRef<{
-    location: TLatLng;
+  const pendingSelectionRef = useRef<{
+    location?: TLatLng;
     mapBounds?: TMapBounds;
   } | null>(null);
 
@@ -59,38 +58,48 @@ export function ShelterSearch(props: TProps) {
     }
   }
 
-  function onSearchClick(value: string) {
+  function applyNameSearch(
+    value: string,
+    options?: { preserveMapBounds?: boolean }
+  ) {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return;
+    }
+
     resetFilters();
-    setNameFilter(value.trim());
+    setNameFilter(trimmed);
     onNameSearch({
-      preserveMapBounds: locationSelectedInModalRef.current,
+      preserveMapBounds:
+        options?.preserveMapBounds ??
+        !!pendingSelectionRef.current?.location,
     });
-    locationSelectedInModalRef.current = false;
+  }
+
+  function onSearchClick(value: string) {
+    applyNameSearch(value);
   }
 
   function onSearchLocationSelect(location: TLatLng, mapBounds?: TMapBounds) {
-    locationSelectedInModalRef.current = true;
-    pendingLocationSearchRef.current = { location, mapBounds };
+    pendingSelectionRef.current = { location, mapBounds };
   }
 
   function handleDone() {
-    const pending = pendingLocationSearchRef.current;
-    if (pending) {
+    const pending = pendingSelectionRef.current;
+    const preserveMapBounds = !!pending?.location;
+
+    if (pending?.location) {
       setLocation(pending.location, pending.mapBounds);
-      pendingLocationSearchRef.current = null;
     }
 
-    const value = nameSearchValueRef.current.trim();
-    if (value) {
-      onSearchClick(value);
-    }
+    applyNameSearch(nameSearchValueRef.current, { preserveMapBounds });
 
+    pendingSelectionRef.current = null;
     closeModal();
   }
 
   function openSearchModal() {
-    locationSelectedInModalRef.current = false;
-    pendingLocationSearchRef.current = null;
+    pendingSelectionRef.current = null;
     setModal({
       content: (
         <SearchModalContent
