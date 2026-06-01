@@ -1,5 +1,5 @@
 export { ShelterBasicInfoPage } from './BasicInfoPage';
 export { ShelterDetailsPage } from './DetailsPage';
-export { OperatingHoursPage } from './OperatingHoursPage';
+export { ShelterOperatingHoursPage } from './OperatingHoursPage';
 export { ShelterPoliciesPage } from './PoliciesPage';
-export { ServicesPage } from './ServicesPage';
+export { ShelterServicesPage } from './ServicesPage';

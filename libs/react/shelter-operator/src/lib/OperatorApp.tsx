@@ -12,11 +12,13 @@ import { ConfirmationPage } from './pages/reservation/ConfirmationPage';
 import { ReservationPage } from './pages/reservation/ReservationPage';
 import { SelectRoomPage } from './pages/reservation/SelectRoomPage';
 import { SelectShelterPage } from './pages/reservation/SelectShelterPage';
-import { ShelterBasicInfoPage } from './pages/shelterProfile/BasicInfoPage';
-import { ShelterDetailsPage } from './pages/shelterProfile/DetailsPage';
-import { OperatingHoursPage } from './pages/shelterProfile/OperatingHoursPage';
-import { ShelterPoliciesPage } from './pages/shelterProfile/PoliciesPage';
-import { ServicesPage } from './pages/shelterProfile/ServicesPage';
+import {
+  ShelterBasicInfoPage,
+  ShelterDetailsPage,
+  ShelterOperatingHoursPage,
+  ShelterPoliciesPage,
+  ShelterServicesPage,
+} from './pages/shelterProfile';
 import { SignIn } from './pages/signIn';
 import { ActiveOrgProvider, OperatorAuthProvider } from './providers';
 import {
@@ -57,7 +59,7 @@ export function OperatorApp() {
               />
               <Route
                 path={shelterProfileSegments.operatingHours}
-                element={<OperatingHoursPage />}
+                element={<ShelterOperatingHoursPage />}
               />
               <Route
                 path={shelterProfileSegments.policies}
@@ -69,7 +71,7 @@ export function OperatorApp() {
               />
               <Route
                 path={shelterProfileSegments.services}
-                element={<ServicesPage />}
+                element={<ShelterServicesPage />}
               />
             </Route>
             <Route path={routePath(paths.shelterManage)}>
