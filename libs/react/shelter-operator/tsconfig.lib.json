@@ -1,5 +1,10 @@
 {
   "extends": "./tsconfig.json",
+  "references": [
+    {
+      "path": "../shelter/tsconfig.lib.json"
+    }
+  ],
   "compilerOptions": {
     "composite": true,
     "declaration": true,
