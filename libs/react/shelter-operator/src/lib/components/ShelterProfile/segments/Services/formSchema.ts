@@ -2,17 +2,17 @@ import { z } from 'zod';
 import { ShelterProfileType } from '../../types';
 
 export const formSchema = z.object({
-  otherRules: z.string().nullable().optional(),
+  services: z.array(z.string()),
 });
 
 export type ServicesFormData = z.infer<typeof formSchema>;
 
 export const defaultFormValues: ServicesFormData = {
-  otherRules: undefined,
+  services: [],
 };
 
 export function toFormData(shelter: ShelterProfileType): ServicesFormData {
   return {
-    otherRules: shelter.otherRules,
+    services: shelter.services.map((service) => service.id),
   };
 }

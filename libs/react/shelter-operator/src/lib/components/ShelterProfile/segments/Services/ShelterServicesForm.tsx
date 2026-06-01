@@ -1,9 +1,9 @@
-// ShelterServicesForm
-
+import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
-import { Controller, useForm } from 'react-hook-form';
-import { Input } from '../../../base-ui/input';
+import { ShelterServiceCategoriesDocument } from '@monorepo/react/shelter';
+import { Controller, type FieldPathValue, useForm } from 'react-hook-form';
+import { Dropdown, type DropdownOption } from '../../../base-ui/dropdown';
 import { Form } from '../../../form/Form';
 import { defaultFormValues, formSchema, ServicesFormData } from './formSchema';
 
@@ -17,6 +17,23 @@ type TProps = {
   className?: string;
 };
 
+const replaceCategoryServiceSelection = (
+  selectedServiceIds: string[],
+  subsetServiceIds: string[],
+  nextSubsetServiceIds: string[]
+) => {
+  const subsetIds = new Set(subsetServiceIds);
+  const nextSelectedIds = selectedServiceIds.filter((id) => !subsetIds.has(id));
+
+  for (const id of nextSubsetServiceIds) {
+    if (!nextSelectedIds.includes(id)) {
+      nextSelectedIds.push(id);
+    }
+  }
+
+  return nextSelectedIds;
+};
+
 export function ShelterServicesForm(props: TProps) {
   const {
     defaultValues,
@@ -28,10 +45,14 @@ export function ShelterServicesForm(props: TProps) {
     className,
   } = props;
 
+  const { data: queryData } = useQuery(ShelterServiceCategoriesDocument);
+
+  const serviceCategories = queryData?.shelterServiceCategories?.results ?? [];
+
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { isValid },
     reset,
   } = useForm<ServicesFormData>({
     resolver: zodResolver(formSchema),
@@ -53,28 +74,64 @@ export function ShelterServicesForm(props: TProps) {
         />
 
         <form className="flex flex-col gap-10 mt-8">
-          {/* <Form.Block columns={3}></Form.Block> */}
-
           <Controller
-            name="otherRules"
+            name="services"
             control={control}
             render={({ field }) => (
-              <Input
-                label="Other Rules"
-                variant="paragraph"
-                inputClassName="min-h-auto"
-                rows={2}
-                dataType="string"
-                value={field.value ?? ''}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  field.onChange(value === '' ? null : value);
-                }}
-                onBlur={field.onBlur}
-                disabled={disabled}
-                isViewMode={isViewMode}
-                error={errors.otherRules?.message}
-              />
+              <>
+                {serviceCategories.map((category) => {
+                  const officialServices = category.services.filter(
+                    (service) => !service.isOther
+                  );
+
+                  const options: DropdownOption<string>[] =
+                    officialServices.map((service) => ({
+                      value: service.id,
+                      label: service.displayName,
+                    }));
+
+                  const officialServiceIds = officialServices.map(
+                    (service) => service.id
+                  );
+
+                  const selectedByCategory = field.value.filter((serviceId) =>
+                    officialServiceIds.includes(serviceId)
+                  );
+
+                  const selectedOptions = options.filter((option) =>
+                    selectedByCategory.includes(option.value)
+                  );
+
+                  return (
+                    <Form.Block columns={2} key={category.id}>
+                      <Dropdown
+                        label={category.displayName}
+                        isMulti={true}
+                        isSearchable={options.length > 3}
+                        value={selectedOptions}
+                        options={options}
+                        onChange={(nextOptions) => {
+                          const nextSubsetIds = nextOptions
+                            ? nextOptions.map((option) => option.value)
+                            : [];
+
+                          field.onChange(
+                            replaceCategoryServiceSelection(
+                              field.value,
+                              officialServiceIds,
+                              nextSubsetIds
+                            ) as FieldPathValue<ServicesFormData, 'services'>
+                          );
+                        }}
+                        isViewMode={isViewMode}
+                        className="min-w-44"
+                      />
+
+                      <div />
+                    </Form.Block>
+                  );
+                })}
+              </>
             )}
           />
 
