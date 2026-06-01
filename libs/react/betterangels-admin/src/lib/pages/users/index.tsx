@@ -13,7 +13,6 @@ import {
   Ordering,
   OrganizationMemberOrdering,
   OrganizationMemberType,
-  UserOrganizationPermissions,
 } from '../../apollo/graphql/__generated__/types';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { AddUserFormDrawer } from '../../components';
@@ -89,7 +88,7 @@ function useOrganizationMembers(
 
 export default function Users(props: IProps) {
   const { className = '' } = props;
-  const { activeOrg, hasPermission } = useActiveOrg();
+  const { activeOrg } = useActiveOrg();
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
   const [search, setSearch] = useState('');
@@ -216,7 +215,7 @@ export default function Users(props: IProps) {
         <div>
           <SearchInput debounceMs={300} onChange={handleSearchChange} />
         </div>
-        {hasPermission(UserOrganizationPermissions.AddOrgMember) && (
+        {activeOrg?.capabilities?.accounts?.canManageMembers && (
           <button
             onClick={() =>
               showDrawer({
@@ -232,7 +231,7 @@ export default function Users(props: IProps) {
       </div>
 
       <div className={mergeCss(parentCss)}>
-        {hasPermission(UserOrganizationPermissions.ViewOrgMembers) ? (
+        {activeOrg?.capabilities?.accounts?.canViewMembers ? (
           <Table<OrganizationMemberType>
             action={(row) => {
               const isOpen = openMenuRowId === row.id;

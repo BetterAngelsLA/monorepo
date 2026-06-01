@@ -45,6 +45,13 @@ export type AccessibilityType = {
   name?: Maybe<AccessibilityChoices>;
 };
 
+export type AccountsCapabilities = {
+  __typename?: 'AccountsCapabilities';
+  canAccessPortal: Scalars['Boolean']['output'];
+  canManageMembers: Scalars['Boolean']['output'];
+  canViewMembers: Scalars['Boolean']['output'];
+};
+
 export enum AdaAccommodationEnum {
   Hearing = 'HEARING',
   Mobility = 'MOBILITY',
@@ -823,9 +830,9 @@ export type CreateTaskPayload = OperationInfo | TaskType;
 
 export type CurrentUserOrganizationType = {
   __typename?: 'CurrentUserOrganizationType';
+  capabilities: OrgCapabilities;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-  userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
 };
 
 export type CurrentUserType = {
@@ -1982,6 +1989,13 @@ export enum Ordering {
   DescNullsLast = 'DESC_NULLS_LAST'
 }
 
+export type OrgCapabilities = {
+  __typename?: 'OrgCapabilities';
+  accounts: AccountsCapabilities;
+  reports: ReportsCapabilities;
+  shelters: SheltersCapabilities;
+};
+
 export type OrgInvitationInput = {
   email: Scalars['String']['input'];
   firstName: Scalars['String']['input'];
@@ -2376,7 +2390,7 @@ export type QueryOrganizationMembersArgs = {
 
 export type QueryReportSummaryArgs = {
   endDate?: InputMaybe<Scalars['Date']['input']>;
-  organizationId?: InputMaybe<Scalars['ID']['input']>;
+  organizationId: Scalars['ID']['input'];
   startDate?: InputMaybe<Scalars['Date']['input']>;
 };
 
@@ -2514,6 +2528,11 @@ export type ReportSummaryType = {
   totalNotes: Scalars['Int']['output'];
   uniqueClients: Scalars['Int']['output'];
   uniqueClientsByDate: Array<DateCountType>;
+};
+
+export type ReportsCapabilities = {
+  __typename?: 'ReportsCapabilities';
+  canViewReports: Scalars['Boolean']['output'];
 };
 
 export type ResolveClientDocumentUploadsInput = {
@@ -2922,6 +2941,12 @@ export type ShelterTypeType = {
   name?: Maybe<ShelterChoices>;
 };
 
+export type SheltersCapabilities = {
+  __typename?: 'SheltersCapabilities';
+  canManageShelters: Scalars['Boolean']['output'];
+  canViewShelters: Scalars['Boolean']['output'];
+};
+
 export enum SocialMediaEnum {
   Facebook = 'FACEBOOK',
   Instagram = 'INSTAGRAM',
@@ -3234,15 +3259,6 @@ export type UpdateUserProfileInput = {
 };
 
 export type UpdateUserProfilePayload = CurrentUserType | OperationInfo;
-
-export enum UserOrganizationPermissions {
-  AccessOrgPortal = 'ACCESS_ORG_PORTAL',
-  AddOrgMember = 'ADD_ORG_MEMBER',
-  ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
-  RemoveOrgMember = 'REMOVE_ORG_MEMBER',
-  ViewOrgMembers = 'VIEW_ORG_MEMBERS',
-  ViewReports = 'VIEW_REPORTS'
-}
 
 export type UserType = {
   __typename?: 'UserType';

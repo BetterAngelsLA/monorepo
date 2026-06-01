@@ -8,7 +8,16 @@ query currentOrgUser {
     organizations: organizationsOrganization {
       id
       name
-      userPermissions
+      capabilities {
+        accounts {
+          canAccessPortal
+          canManageMembers
+          canViewMembers
+        }
+        reports {
+          canViewReports
+        }
+      }
     }
   }
 }

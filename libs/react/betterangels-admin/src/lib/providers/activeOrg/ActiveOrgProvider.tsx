@@ -1,5 +1,4 @@
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { UserOrganizationPermissions } from '../../apollo/graphql/__generated__/types';
 import ActiveOrgContext, {
   TOrganizationWithPermissions,
 } from './ActiveOrgContext';
@@ -12,17 +11,11 @@ interface ActiveOrgProviderProps {
 }
 
 /**
- * Provides the currently-selected organization **and its permissions**
+ * Provides the currently-selected organization **and its capabilities**
  * to the component tree.
  *
  * Defaults to the first org in the list but persists the user's choice
  * in `localStorage` so it survives page reloads.
- *
- * `hasPermission(perm)` checks the active org's `userPermissions`
- * array and automatically reflects the correct org when the user
- * switches.  Because the check is enum-driven there is nothing to
- * update here when the backend adds new permissions — just re-run
- * codegen.
  */
 export function ActiveOrgProvider({
   children,
@@ -78,15 +71,9 @@ export function ActiveOrgProvider({
     [organizations]
   );
 
-  const hasPermission = useCallback(
-    (perm: UserOrganizationPermissions): boolean =>
-      activeOrg?.userPermissions?.includes(perm) ?? false,
-    [activeOrg]
-  );
-
   const value = useMemo(
-    () => ({ activeOrg, organizations, setActiveOrgId, hasPermission }),
-    [activeOrg, organizations, setActiveOrgId, hasPermission]
+    () => ({ activeOrg, organizations, setActiveOrgId }),
+    [activeOrg, organizations, setActiveOrgId]
   );
 
   return (
