@@ -113,6 +113,7 @@ export type AdminShelterType = {
   referralRequirement: Array<ReferralRequirementType>;
   roomStyles: Array<RoomStyleType>;
   roomStylesOther?: Maybe<Scalars['String']['output']>;
+  roomsByStatus: RoomsByStatusType;
   schedules: Array<ScheduleType>;
   services: Array<ServiceType>;
   shelterPrograms: Array<ShelterProgramType>;
@@ -191,6 +192,7 @@ export type BedFilter = {
   OR?: InputMaybe<BedFilter>;
   bedType?: InputMaybe<Array<BedTypeChoices>>;
   medicalNeeds?: InputMaybe<Array<MedicalNeedChoices>>;
+  shelterId?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Array<BedStatusChoices>>;
 };
 
@@ -2189,6 +2191,7 @@ export enum PronounEnum {
 
 export type Query = {
   __typename?: 'Query';
+  adminShelter: AdminShelterType;
   adminShelters: AdminShelterTypeOffsetPaginated;
   beds: BedTypeOffsetPaginated;
   bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
@@ -2229,6 +2232,11 @@ export type Query = {
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
   task: TaskType;
   tasks: TaskTypeOffsetPaginated;
+};
+
+
+export type QueryAdminShelterArgs = {
+  pk: Scalars['ID']['input'];
 };
 
 
@@ -2547,6 +2555,7 @@ export type RoomFilter = {
   medicalRespite?: InputMaybe<Scalars['Boolean']['input']>;
   numberOfBeds?: InputMaybe<Scalars['Int']['input']>;
   roomType?: InputMaybe<Array<RoomStyleChoices>>;
+  shelterId?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Array<RoomStatusChoices>>;
 };
 
@@ -2607,6 +2616,13 @@ export type RoomTypeOffsetPaginated = {
   results: Array<RoomType>;
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
+};
+
+export type RoomsByStatusType = {
+  __typename?: 'RoomsByStatusType';
+  available: Scalars['Int']['output'];
+  needsMaintenance: Scalars['Int']['output'];
+  reserved: Scalars['Int']['output'];
 };
 
 export type SpaType = {
@@ -2883,6 +2899,7 @@ export type ShelterType = {
   referralRequirement: Array<ReferralRequirementType>;
   roomStyles: Array<RoomStyleType>;
   roomStylesOther?: Maybe<Scalars['String']['output']>;
+  roomsByStatus: RoomsByStatusType;
   schedules: Array<ScheduleType>;
   services: Array<ServiceType>;
   shelterPrograms: Array<ShelterProgramType>;
