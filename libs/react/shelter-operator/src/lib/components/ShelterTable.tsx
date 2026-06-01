@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
-import { Table, type TableColumn } from './Table';
 import type { Shelter } from '../types/shelter';
+import { Table, type TableColumn } from './Table';
 
 export type ShelterRowObject = {
   id: string;
@@ -100,14 +100,6 @@ export function ShelterTable({
         render: (shelter) => shelter.name ?? 'N/A',
       },
       {
-        key: 'address',
-        label: 'Address',
-        width: '1fr',
-        cellClassName:
-          'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
-        render: (shelter) => shelter.address ?? 'N/A',
-      },
-      {
         key: 'capacity',
         label: 'Capacity',
         width: '1.2fr',
@@ -143,6 +135,13 @@ export function ShelterTable({
         width: '0.8fr',
         cellClassName: 'text-gray-600',
         render: (shelter) => renderTags(shelter.tags),
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        width: '0.8fr',
+        cellClassName: 'text-gray-600',
+        render: (shelter) => shelter.status,
       },
     ],
     []
