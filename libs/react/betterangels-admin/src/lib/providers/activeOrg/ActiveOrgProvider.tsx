@@ -2,7 +2,10 @@ import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import ActiveOrgContext, {
   TOrganizationWithPermissions,
 } from './ActiveOrgContext';
-import { hasPermission as hasPermissionFn, PermissionEnum } from './hasPermission';
+import {
+  hasPermission as hasPermissionFn,
+  PermissionEnum,
+} from './hasPermission';
 
 const STORAGE_KEY = 'betterangels_active_org_id';
 

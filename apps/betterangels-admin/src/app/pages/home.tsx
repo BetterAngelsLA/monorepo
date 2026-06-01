@@ -1,5 +1,4 @@
 import {
-  hasPermission,
   PermissionEnum,
   ReportPermissions,
   useActiveOrg,
@@ -13,7 +12,7 @@ const capabilityRoutes: { permission: PermissionEnum; path: string }[] = [
 ];
 
 export default function Home() {
-  const { organizations, activeOrg } = useActiveOrg();
+  const { organizations, activeOrg, hasPermission } = useActiveOrg();
 
   if (organizations.length === 0 || !activeOrg) {
     return (
@@ -22,7 +21,7 @@ export default function Home() {
   }
 
   const firstAllowed = capabilityRoutes.find((r) =>
-    hasPermission(activeOrg, r.permission)
+    hasPermission(r.permission)
   );
 
   if (firstAllowed) return <Navigate to={firstAllowed.path} replace />;
