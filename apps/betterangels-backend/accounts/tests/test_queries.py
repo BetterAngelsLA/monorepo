@@ -5,6 +5,7 @@ import time_machine
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.models import User
+from accounts.permissions import UserOrganizationPermissions
 from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
@@ -183,16 +184,21 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             ),
             (
                 OrgRoleEnum.ADMIN,
-                ["ACCESS_ORG_PORTAL", "ADD_ORG_MEMBER", "REMOVE_ORG_MEMBER", "VIEW_ORG_MEMBERS"],
+                [
+                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
+                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
+                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
+                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
+                ],
             ),
             (
                 OrgRoleEnum.SUPERUSER,
                 [
-                    "ACCESS_ORG_PORTAL",
-                    "ADD_ORG_MEMBER",
-                    "CHANGE_ORG_MEMBER_ROLE",
-                    "REMOVE_ORG_MEMBER",
-                    "VIEW_ORG_MEMBERS",
+                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
+                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
+                    UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
+                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
+                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
                 ],
             ),
         ],
