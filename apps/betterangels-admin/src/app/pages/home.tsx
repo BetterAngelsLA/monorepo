@@ -1,25 +1,25 @@
 import {
-  UserOrganizationPermissions,
+  TOrganizationWithPermissions,
   useActiveOrg,
 } from '@monorepo/react/betterangels-admin';
 import { Navigate } from 'react-router-dom';
 
-const permissionRoutes: {
-  permission: UserOrganizationPermissions;
+const capabilityRoutes: {
+  check: (org: TOrganizationWithPermissions) => boolean | undefined | null;
   path: string;
 }[] = [
   {
-    permission: UserOrganizationPermissions.ViewOrgMembers,
+    check: (org) => org.capabilities?.accounts?.canViewMembers,
     path: '/users',
   },
   {
-    permission: UserOrganizationPermissions.ViewReports,
+    check: (org) => org.capabilities?.reports?.canViewReports,
     path: '/reports',
   },
 ];
 
 export default function Home() {
-  const { hasPermission, organizations, activeOrg } = useActiveOrg();
+  const { organizations, activeOrg } = useActiveOrg();
 
   if (organizations.length === 0 || !activeOrg) {
     return (
@@ -27,9 +27,7 @@ export default function Home() {
     );
   }
 
-  const firstAllowed = permissionRoutes.find((r) =>
-    hasPermission(r.permission)
-  );
+  const firstAllowed = capabilityRoutes.find((r) => r.check(activeOrg));
 
   if (firstAllowed) return <Navigate to={firstAllowed.path} replace />;
 

@@ -35,6 +35,9 @@ class HasReportAccess(BasePermission):
             return False
 
         org_id = request.query_params.get("org_id")
+        if not org_id:
+            return False
+
         org = get_user_permitted_org(user, org_id=org_id, permission=ReportOrgPermissions.VIEW_REPORTS)
         if org is None:
             return False

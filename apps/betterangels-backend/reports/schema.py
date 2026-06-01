@@ -47,14 +47,14 @@ class Query:
     def report_summary(
         self,
         info: Info,
-        organization_id: Optional[strawberry.ID] = None,
+        organization_id: strawberry.ID,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
     ) -> ReportSummaryType:
         current_user = cast(User, get_current_user(info))
         org = get_user_permitted_org(
             current_user,
-            org_id=str(organization_id) if organization_id else None,
+            org_id=str(organization_id),
             permission=ReportOrgPermissions.VIEW_REPORTS,
         )
         if org is None:

@@ -48,6 +48,12 @@ type AccessibilityType {
   name: AccessibilityChoices
 }
 
+type AccountsCapabilities {
+  canAccessPortal: Boolean!
+  canManageMembers: Boolean!
+  canViewMembers: Boolean!
+}
+
 enum AdaAccommodationEnum {
   HEARING
   MOBILITY
@@ -813,7 +819,7 @@ union CreateTaskPayload = TaskType | OperationInfo
 type CurrentUserOrganizationType {
   id: ID!
   name: String!
-  userPermissions: [UserOrganizationPermissions!]
+  capabilities: OrgCapabilities!
 }
 
 type CurrentUserType {
@@ -1670,6 +1676,12 @@ enum Ordering {
   DESC_NULLS_LAST
 }
 
+type OrgCapabilities {
+  accounts: AccountsCapabilities!
+  reports: ReportsCapabilities!
+  shelters: SheltersCapabilities!
+}
+
 input OrgInvitationInput {
   email: String!
   firstName: String!
@@ -1891,7 +1903,7 @@ type Query {
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  reportSummary(organizationId: ID = null, startDate: Date = null, endDate: Date = null): ReportSummaryType!
+  reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
@@ -1970,6 +1982,10 @@ type ReportSummaryType {
   uniqueClientsByDate: [DateCountType!]!
   topProvidedServices: [NameCountType!]!
   topRequestedServices: [NameCountType!]!
+}
+
+type ReportsCapabilities {
+  canViewReports: Boolean!
 }
 
 input ResolveClientDocumentUploadsInput {
@@ -2357,6 +2373,11 @@ type ShelterTypeType {
   name: ShelterChoices
 }
 
+type SheltersCapabilities {
+  canManageShelters: Boolean!
+  canViewShelters: Boolean!
+}
+
 enum SocialMediaEnum {
   FACEBOOK
   INSTAGRAM
@@ -2674,15 +2695,6 @@ union UpdateUserProfilePayload = CurrentUserType | OperationInfo
 
 """Represents a file upload."""
 scalar Upload
-
-enum UserOrganizationPermissions {
-  ACCESS_ORG_PORTAL
-  ADD_ORG_MEMBER
-  CHANGE_ORG_MEMBER_ROLE
-  REMOVE_ORG_MEMBER
-  VIEW_ORG_MEMBERS
-  VIEW_REPORTS
-}
 
 type UserType {
   firstName: NonBlankString

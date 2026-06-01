@@ -1,7 +1,4 @@
-import {
-  UserOrganizationPermissions,
-  useActiveOrg,
-} from '@monorepo/react/betterangels-admin';
+import { useActiveOrg } from '@monorepo/react/betterangels-admin';
 import { BetterAngelsLogoBadge, Sidebar } from '@monorepo/react/components';
 import { BarChartIcon, ChevronUpIcon, UsersIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
@@ -18,7 +15,7 @@ export function AppSidebar(props: IProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { activeOrg, organizations, setActiveOrgId, hasPermission } =
+  const { activeOrg, organizations, setActiveOrgId } =
     useActiveOrg();
   const location = useLocation();
 
@@ -102,7 +99,7 @@ export function AppSidebar(props: IProps) {
         </div>
       </Sidebar.Header>
       <Sidebar.Content>
-        {hasPermission(UserOrganizationPermissions.ViewOrgMembers) && (
+        {activeOrg?.capabilities?.accounts?.canViewMembers && (
           <Sidebar.Link
             to="/users"
             isActive={location.pathname === '/users'}
@@ -112,7 +109,7 @@ export function AppSidebar(props: IProps) {
             Users
           </Sidebar.Link>
         )}
-        {hasPermission(UserOrganizationPermissions.ViewReports) && (
+        {activeOrg?.capabilities?.reports?.canViewReports && (
           <Sidebar.Link
             to="/reports"
             isActive={location.pathname === '/reports'}

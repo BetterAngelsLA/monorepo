@@ -5,7 +5,6 @@ import time_machine
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.models import User
-from accounts.permissions import UserOrganizationPermissions
 from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
@@ -73,7 +72,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             baker.make(OrganizationUser, user=user, organization=organization)
             permission_group_recipe.make(organization=organization)
             expected_organizations.append(
-                {"id": str(organization.pk), "name": organization.name, "userPermissions": ANY}
+                {"id": str(organization.pk), "name": organization.name}
             )
 
         query = """
@@ -91,7 +90,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     organizations: organizationsOrganization {
                         id
                         name
-                        userPermissions
                     }
                 }
             }
@@ -179,32 +177,24 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         self.assertTrue(response["data"]["currentUser"]["isHmisUser"])
 
     @parametrize(
-        ("user_role, expected_permissions"),
+        ("user_role, expected_capabilities"),
         [
-            (OrgRoleEnum.MEMBER, []),
+            (
+                OrgRoleEnum.MEMBER,
+                {"canAccessPortal": False, "canManageMembers": False, "canViewMembers": False},
+            ),
             (
                 OrgRoleEnum.ADMIN,
-                [
-                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
-                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
-                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
-                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
-                ],
+                {"canAccessPortal": True, "canManageMembers": True, "canViewMembers": True},
             ),
             (
                 OrgRoleEnum.SUPERUSER,
-                [
-                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
-                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
-                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
-                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
-                    UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
-                ],
+                {"canAccessPortal": True, "canManageMembers": True, "canViewMembers": True},
             ),
         ],
     )
-    def test_logged_in_user_org_permissions_query(
-        self, user_role: OrgRoleEnum, expected_permissions: list[str]
+    def test_logged_in_user_org_capabilities_query(
+        self, user_role: OrgRoleEnum, expected_capabilities: dict
     ) -> None:
         user = baker.make(User)
         org_1 = organization_recipe.make(name="o1")
@@ -222,7 +212,13 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     firstName
                     organizations: organizationsOrganization {
                         name
-                        userPermissions
+                        capabilities {
+                            accounts {
+                                canAccessPortal
+                                canManageMembers
+                                canViewMembers
+                            }
+                        }
                     }
                 }
             }
@@ -235,9 +231,15 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
-        user_perms = {o["name"]: o["userPermissions"] for o in response["data"]["currentUser"]["organizations"]}
-        self.assertCountEqual(user_perms["o1"], expected_permissions)
-        self.assertEqual(user_perms["o2"], [])
+        org_caps = {
+            o["name"]: o["capabilities"]["accounts"]
+            for o in response["data"]["currentUser"]["organizations"]
+        }
+        self.assertEqual(org_caps["o1"], expected_capabilities)
+        self.assertEqual(
+            org_caps["o2"],
+            {"canAccessPortal": False, "canManageMembers": False, "canViewMembers": False},
+        )
 
 
 class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):

@@ -23,26 +23,22 @@ def get_user_permitted_orgs(
     user: UserLike,
 ) -> "QuerySet[Organization]":
     """Return orgs the user belongs to."""
-    return Organization.objects.filter(users=user)
+    qs: QuerySet[Organization] = Organization.objects.filter(users=user)
+    return qs
 
 
 def get_user_permitted_org(
     user: UserLike,
-    org_id: Optional[str] = None,
+    org_id: str,
     permission: Optional[str] = None,
 ) -> Optional[Organization]:
-    """Return a single org the user belongs to, optionally requiring a permission.
-
-    If *org_id* is given the user must be a member of that specific org.
-    Otherwise falls back to the first org.
+    """Return an org the user belongs to, optionally requiring a permission.
 
     If *permission* is given (e.g. "reports.view_reports"), additionally
     verifies the user holds that permission on the org via PermissionGroups
     — all in a single query.
     """
-    qs = get_user_permitted_orgs(user)
-    if org_id:
-        qs = qs.filter(pk=org_id)
+    qs = get_user_permitted_orgs(user).filter(pk=org_id)
     if permission:
         app_label, codename = permission.split(".")
         qs = qs.filter(
