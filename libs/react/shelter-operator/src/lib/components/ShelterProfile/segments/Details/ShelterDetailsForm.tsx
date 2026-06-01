@@ -2,8 +2,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { Controller, useForm } from 'react-hook-form';
 import { Dropdown } from '../../../base-ui/dropdown';
+import { Input } from '../../../base-ui/input';
 import { Form } from '../../../form/Form';
-import { ACCESSIBILITY_OPTIONS, STORAGE_OPTIONS } from '../../constants';
+import {
+  ACCESSIBILITY_OPTIONS,
+  PARKING_OPTIONS,
+  PETS_OPTIONS,
+  STORAGE_OPTIONS,
+} from '../../constants';
 import {
   detailsDefaultValues,
   DetailsFormData,
@@ -34,8 +40,7 @@ export function ShelterDetailsForm(props: TProps) {
   const {
     control,
     handleSubmit,
-    formState: { isValid },
-    // formState: { errors, isValid },
+    formState: { errors, isValid },
     reset,
   } = useForm<DetailsFormData>({
     resolver: zodResolver(detailsFormSchema),
@@ -66,6 +71,7 @@ export function ShelterDetailsForm(props: TProps) {
               control={control}
               render={({ field }) => (
                 <Dropdown
+                  label="Accessibility"
                   isMulti={true}
                   value={ACCESSIBILITY_OPTIONS.filter((o) =>
                     field.value.includes(o.value)
@@ -74,7 +80,6 @@ export function ShelterDetailsForm(props: TProps) {
                   onChange={(options) => {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
-                  label="Accessibility"
                   isViewMode={isViewMode}
                   className="min-w-44"
                 />
@@ -86,6 +91,7 @@ export function ShelterDetailsForm(props: TProps) {
               control={control}
               render={({ field }) => (
                 <Dropdown
+                  label="Storage"
                   isMulti={true}
                   value={STORAGE_OPTIONS.filter((o) =>
                     field.value.includes(o.value)
@@ -94,13 +100,74 @@ export function ShelterDetailsForm(props: TProps) {
                   onChange={(options) => {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
-                  label="Storage"
+                  isViewMode={isViewMode}
+                  className="min-w-44"
+                />
+              )}
+            />
+
+            <Controller
+              name="pets"
+              control={control}
+              render={({ field }) => (
+                <Dropdown
+                  label="Pets"
+                  isMulti={true}
+                  value={PETS_OPTIONS.filter((o) =>
+                    field.value.includes(o.value)
+                  )}
+                  options={PETS_OPTIONS}
+                  onChange={(options) => {
+                    field.onChange(options ? options.map((o) => o.value) : []);
+                  }}
                   isViewMode={isViewMode}
                   className="min-w-44"
                 />
               )}
             />
           </Form.Block>
+
+          <Form.Block>
+            <Controller
+              name="parking"
+              control={control}
+              render={({ field }) => (
+                <Dropdown
+                  label="Parking"
+                  isMulti={true}
+                  value={PARKING_OPTIONS.filter((o) =>
+                    field.value.includes(o.value)
+                  )}
+                  options={PARKING_OPTIONS}
+                  onChange={(options) => {
+                    field.onChange(options ? options.map((o) => o.value) : []);
+                  }}
+                  isViewMode={isViewMode}
+                  className="min-w-44"
+                />
+              )}
+            />
+          </Form.Block>
+
+          <Controller
+            name="addNotesShelterDetails"
+            control={control}
+            render={({ field }) => (
+              <Input
+                label="Additional Notes"
+                variant="paragraph"
+                inputClassName="min-h-auto"
+                rows={2}
+                dataType="string"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                disabled={disabled}
+                isViewMode={isViewMode}
+                error={errors.addNotesShelterDetails?.message}
+              />
+            )}
+          />
 
           {!isViewMode && onSubmit && (
             <Form.Actions

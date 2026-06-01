@@ -1,7 +1,11 @@
 import {
   enumDisplayAccessibilityChoices,
+  enumDisplayParkingChoices,
+  enumDisplayPetChoices,
   enumDisplayStorageChoices,
   enumStatusChoices,
+  ParkingChoices,
+  PetChoices,
   StatusChoices,
   StorageChoices,
 } from '@monorepo/react/shelter';
@@ -15,6 +19,14 @@ export const STATUS_OPTIONS = toDropdownOptions(enumStatusChoices);
 
 export const STORAGE_OPTIONS = toDropdownOptions(enumDisplayStorageChoices, [
   StorageChoices.NoStorage,
+]);
+
+export const PETS_OPTIONS = toDropdownOptions(enumDisplayPetChoices, [
+  PetChoices.NoPetsAllowed,
+]);
+
+export const PARKING_OPTIONS = toDropdownOptions(enumDisplayParkingChoices, [
+  ParkingChoices.NoParking,
 ]);
 
 export const STATUS_COLOR_MAP: Record<StatusChoices, string> = {
