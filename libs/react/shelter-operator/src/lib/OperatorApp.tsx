@@ -15,7 +15,7 @@ import { SelectShelterPage } from './pages/reservation/SelectShelterPage';
 import { ShelterBasicInfoPage } from './pages/shelterProfile/BasicInfoPage';
 import { ShelterDetailsPage } from './pages/shelterProfile/DetailsPage';
 import { OperatingHoursPage } from './pages/shelterProfile/OperatingHoursPage';
-import { PoliciesPage } from './pages/shelterProfile/PoliciesPage';
+import { ShelterPoliciesPage } from './pages/shelterProfile/PoliciesPage';
 import { ServicesPage } from './pages/shelterProfile/ServicesPage';
 import { SignIn } from './pages/signIn';
 import { ActiveOrgProvider, OperatorAuthProvider } from './providers';
@@ -61,7 +61,7 @@ export function OperatorApp() {
               />
               <Route
                 path={shelterProfileSegments.policies}
-                element={<PoliciesPage />}
+                element={<ShelterPoliciesPage />}
               />
               <Route
                 path={shelterProfileSegments.details}
