@@ -19,6 +19,7 @@ import {
   ShelterPoliciesPage,
   ShelterServicesPage,
 } from './pages/shelterProfile';
+import { EcosystemPage } from './pages/shelterProfile/EcosystemPage';
 import { SignIn } from './pages/signIn';
 import { ActiveOrgProvider, OperatorAuthProvider } from './providers';
 import {
@@ -72,6 +73,10 @@ export function OperatorApp() {
               <Route
                 path={shelterProfileSegments.services}
                 element={<ShelterServicesPage />}
+              />
+              <Route
+                path={shelterProfileSegments.ecosystem}
+                element={<EcosystemPage />}
               />
             </Route>
             <Route path={routePath(paths.shelterManage)}>
