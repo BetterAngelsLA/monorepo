@@ -10,6 +10,8 @@ interface DropdownBaseProps<T extends string | number = string | number> {
   placeholder?: string;
   options: DropdownOption<T>[];
   isSearchable?: boolean;
+  onCreateOption?: (label: string) => void | Promise<void>;
+  createOptionLabel?: (label: string) => string;
   isViewMode?: boolean;
   required?: boolean;
   disabled?: boolean;

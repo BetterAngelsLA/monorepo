@@ -20,6 +20,8 @@ import type {
 } from './types';
 import { usePortalPosition } from './usePortalPosition';
 
+const CREATE_OPTION_VALUE = '__dropdown_create__';
+
 export function Dropdown<T extends string | number = string | number>(
   props: DropdownProps<T>
 ) {
@@ -31,6 +33,8 @@ export function Dropdown<T extends string | number = string | number>(
     onChange,
     isMulti = false,
     isSearchable = false,
+    onCreateOption,
+    createOptionLabel,
     isViewMode,
     required = false,
     disabled = false,
@@ -114,6 +118,28 @@ export function Dropdown<T extends string | number = string | number>(
     [selectedValues]
   );
 
+  const selectedLabelSet = useMemo(
+    () => new Set(selectedValues.map((v) => v.label.trim().toLowerCase())),
+    [selectedValues]
+  );
+
+  const trimmedSearchQuery = searchQuery.trim();
+  const normalizedSearchQuery = trimmedSearchQuery.toLowerCase();
+
+  const hasExactOptionLabel = useMemo(
+    () =>
+      options.some(
+        (option) => option.label.trim().toLowerCase() === normalizedSearchQuery
+      ),
+    [options, normalizedSearchQuery]
+  );
+
+  const showCreateOption =
+    Boolean(onCreateOption) &&
+    Boolean(trimmedSearchQuery) &&
+    !hasExactOptionLabel &&
+    !selectedLabelSet.has(normalizedSearchQuery);
+
   const menuOptionsWithoutOther = useMemo(
     () => options.filter((o) => String(o.value) !== '__dropdown_other__'),
     [options]
@@ -125,16 +151,37 @@ export function Dropdown<T extends string | number = string | number>(
       o.label.toLowerCase().includes(query)
     );
 
-    if (!onOtherTextChange) {
-      return main;
+    const withOther = onOtherTextChange
+      ? [
+          ...main,
+          {
+            label: 'Other',
+            value: '__dropdown_other__' as T,
+          } as DropdownOption<T>,
+        ]
+      : main;
+
+    if (!showCreateOption) {
+      return withOther;
     }
 
-    const otherOption: DropdownOption<T> = {
-      label: 'Other',
-      value: '__dropdown_other__' as T,
-    };
-    return [...main, otherOption];
-  }, [menuOptionsWithoutOther, searchQuery, onOtherTextChange]);
+    return [
+      {
+        label:
+          createOptionLabel?.(trimmedSearchQuery) ??
+          `Add "${trimmedSearchQuery}"`,
+        value: CREATE_OPTION_VALUE as T,
+      },
+      ...withOther,
+    ];
+  }, [
+    menuOptionsWithoutOther,
+    searchQuery,
+    onOtherTextChange,
+    showCreateOption,
+    createOptionLabel,
+    trimmedSearchQuery,
+  ]);
 
   // ── Callbacks ──────────────────────────────────────────────────────────
 
@@ -147,8 +194,23 @@ export function Dropdown<T extends string | number = string | number>(
     [onChange, isMulti]
   );
 
+  const handleCreateOption = useCallback(() => {
+    if (!showCreateOption || !onCreateOption) {
+      return;
+    }
+
+    void onCreateOption(trimmedSearchQuery);
+    setSearchQuery('');
+    setFocusedIndex(-1);
+  }, [showCreateOption, onCreateOption, trimmedSearchQuery]);
+
   const handleOptionClick = useCallback(
     (option: DropdownOption<T>) => {
+      if (String(option.value) === CREATE_OPTION_VALUE) {
+        handleCreateOption();
+        return;
+      }
+
       if (isMulti) {
         const next = selectedSet.has(option.value)
           ? selectedValues.filter((v) => v.value !== option.value)
@@ -159,7 +221,14 @@ export function Dropdown<T extends string | number = string | number>(
         close();
       }
     },
-    [isMulti, selectedSet, selectedValues, emitChange, close]
+    [
+      isMulti,
+      selectedSet,
+      selectedValues,
+      emitChange,
+      close,
+      handleCreateOption,
+    ]
   );
 
   const handleRemoveChip = useCallback(
@@ -202,7 +271,11 @@ export function Dropdown<T extends string | number = string | number>(
             setIsOpen(true);
           } else {
             setFocusedIndex((i) =>
-              i < filteredOptions.length - 1 ? i + 1 : 0
+              filteredOptions.length === 0
+                ? -1
+                : i < filteredOptions.length - 1
+                ? i + 1
+                : 0
             );
           }
           break;
@@ -210,7 +283,11 @@ export function Dropdown<T extends string | number = string | number>(
           e.preventDefault();
           if (isOpen) {
             setFocusedIndex((i) =>
-              i > 0 ? i - 1 : filteredOptions.length - 1
+              filteredOptions.length === 0
+                ? -1
+                : i > 0
+                ? i - 1
+                : filteredOptions.length - 1
             );
           }
           break;

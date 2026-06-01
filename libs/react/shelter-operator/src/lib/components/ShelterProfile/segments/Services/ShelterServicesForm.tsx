@@ -2,9 +2,11 @@ import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { ShelterServiceCategoriesDocument } from '@monorepo/react/shelter';
+import { useCallback, useState } from 'react';
 import { Controller, type FieldPathValue, useForm } from 'react-hook-form';
-import { Dropdown, type DropdownOption } from '../../../base-ui/dropdown';
+import { type DropdownOption } from '../../../base-ui/dropdown';
 import { Form } from '../../../form/Form';
+import ServiceCategoryRow from './ServiceCategoryRow';
 import { defaultFormValues, formSchema, ServicesFormData } from './formSchema';
 
 type TProps = {
@@ -15,23 +17,6 @@ type TProps = {
   onCancel?: () => void;
   disabled?: boolean;
   className?: string;
-};
-
-const replaceCategoryServiceSelection = (
-  selectedServiceIds: string[],
-  subsetServiceIds: string[],
-  nextSubsetServiceIds: string[]
-) => {
-  const subsetIds = new Set(subsetServiceIds);
-  const nextSelectedIds = selectedServiceIds.filter((id) => !subsetIds.has(id));
-
-  for (const id of nextSubsetServiceIds) {
-    if (!nextSelectedIds.includes(id)) {
-      nextSelectedIds.push(id);
-    }
-  }
-
-  return nextSelectedIds;
 };
 
 export function ShelterServicesForm(props: TProps) {
@@ -48,6 +33,8 @@ export function ShelterServicesForm(props: TProps) {
   const { data: queryData } = useQuery(ShelterServiceCategoriesDocument);
 
   const serviceCategories = queryData?.shelterServiceCategories?.results ?? [];
+  const [createdOtherOptionsByCategory, setCreatedOtherOptionsByCategory] =
+    useState<Record<string, DropdownOption<string>[]>>({});
 
   const {
     control,
@@ -63,6 +50,16 @@ export function ShelterServicesForm(props: TProps) {
     reset();
     onCancel?.();
   }
+
+  const setCreatedOtherOptionsForCategory = useCallback(
+    (categoryId: string, nextOptions: DropdownOption<string>[]) => {
+      setCreatedOtherOptionsByCategory((prev) => ({
+        ...prev,
+        [categoryId]: nextOptions,
+      }));
+    },
+    []
+  );
 
   return (
     <div className={mergeCss(['px-6 flex-col flex-1 pb-48', className])}>
@@ -80,55 +77,31 @@ export function ShelterServicesForm(props: TProps) {
             render={({ field }) => (
               <>
                 {serviceCategories.map((category) => {
-                  const officialServices = category.services.filter(
-                    (service) => !service.isOther
-                  );
-
-                  const options: DropdownOption<string>[] =
-                    officialServices.map((service) => ({
-                      value: service.id,
-                      label: service.displayName,
-                    }));
-
-                  const officialServiceIds = officialServices.map(
-                    (service) => service.id
-                  );
-
-                  const selectedByCategory = field.value.filter((serviceId) =>
-                    officialServiceIds.includes(serviceId)
-                  );
-
-                  const selectedOptions = options.filter((option) =>
-                    selectedByCategory.includes(option.value)
-                  );
-
                   return (
-                    <Form.Block columns={2} key={category.id}>
-                      <Dropdown
-                        label={category.displayName}
-                        isMulti={true}
-                        isSearchable={options.length > 3}
-                        value={selectedOptions}
-                        options={options}
-                        onChange={(nextOptions) => {
-                          const nextSubsetIds = nextOptions
-                            ? nextOptions.map((option) => option.value)
-                            : [];
-
-                          field.onChange(
-                            replaceCategoryServiceSelection(
-                              field.value,
-                              officialServiceIds,
-                              nextSubsetIds
-                            ) as FieldPathValue<ServicesFormData, 'services'>
-                          );
-                        }}
-                        isViewMode={isViewMode}
-                        className="min-w-44"
-                      />
-
-                      <div />
-                    </Form.Block>
+                    <ServiceCategoryRow
+                      key={category.id}
+                      category={category}
+                      selectedServiceIds={field.value}
+                      onSelectedServiceIdsChange={(nextServiceIds) => {
+                        field.onChange(
+                          nextServiceIds as FieldPathValue<
+                            ServicesFormData,
+                            'services'
+                          >
+                        );
+                      }}
+                      createdOtherOptions={
+                        createdOtherOptionsByCategory[category.id] ?? []
+                      }
+                      setCreatedOtherOptions={(nextOptions) => {
+                        setCreatedOtherOptionsForCategory(
+                          category.id,
+                          nextOptions
+                        );
+                      }}
+                      isViewMode={isViewMode}
+                      disabled={disabled}
+                    />
                   );
                 })}
               </>
