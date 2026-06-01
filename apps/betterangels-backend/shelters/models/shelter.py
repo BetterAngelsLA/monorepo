@@ -216,27 +216,21 @@ class Shelter(BaseModel):
 class Bed(BaseModel):
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="beds")
     room = models.ForeignKey("Room", on_delete=models.SET_NULL, blank=True, null=True, related_name="beds")
+    accessibility = models.ManyToManyField(Accessibility, blank=True)
+    b7 = models.BooleanField(default=False, blank=True)
+    demographics = models.ManyToManyField(Demographic, blank=True)
+    fees = models.PositiveIntegerField(blank=True, null=True)
+    funders = models.ManyToManyField(Funder, blank=True)
+    last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
+    maintenance_flag = models.BooleanField(default=False, blank=True)
+    medical_needs = models.ManyToManyField(MedicalNeed, blank=True)
     name = models.CharField(max_length=255, blank=True, null=True)
+    occupants = models.ManyToManyField("clients.ClientProfile", blank=True, related_name="occupied_beds")
+    pets = models.ManyToManyField(Pet, blank=True)
     status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
     status_notes = models.TextField(blank=True, null=True)
-    occupant = models.ForeignKey(
-        "clients.ClientProfile",
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name="occupied_beds",
-    )
-    type = TextChoicesField(choices_enum=BedTypeChoices, blank=True, null=True)
-    demographics = models.ManyToManyField(Demographic, blank=True)
-    accessibility = models.ManyToManyField(Accessibility, blank=True)
-    funders = models.ManyToManyField(Funder, blank=True)
-    pets = models.ManyToManyField(Pet, blank=True)
     storage = models.BooleanField(default=False, blank=True)
-    maintenance_flag = models.BooleanField(default=False, blank=True)
-    last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
-    medical_needs = models.ManyToManyField(MedicalNeed, blank=True)
-    b7 = models.BooleanField(default=False, blank=True)
-    fees = models.PositiveIntegerField(blank=True, null=True)
+    type = TextChoicesField(choices_enum=BedTypeChoices, blank=True, null=True)
 
     class Meta:
         indexes = [

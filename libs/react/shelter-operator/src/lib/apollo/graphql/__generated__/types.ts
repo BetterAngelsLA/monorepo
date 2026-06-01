@@ -542,13 +542,13 @@ export type ContactInfoType = {
 export type CreateBedInput = {
   accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   b7?: InputMaybe<Scalars['Boolean']['input']>;
-  bedName?: InputMaybe<Scalars['String']['input']>;
   demographics?: InputMaybe<Array<DemographicChoices>>;
   fees?: InputMaybe<Scalars['Int']['input']>;
   funders?: InputMaybe<Array<FunderChoices>>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
   medicalNeeds?: InputMaybe<Array<MedicalNeedChoices>>;
+  name?: InputMaybe<Scalars['String']['input']>;
   pets?: InputMaybe<Array<PetChoices>>;
   roomId?: InputMaybe<Scalars['ID']['input']>;
   shelterId: Scalars['ID']['input'];
