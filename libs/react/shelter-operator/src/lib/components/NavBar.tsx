@@ -127,14 +127,6 @@ export function NavBar(props: TNavProps) {
               Create Shelter
             </Button>
           )}
-
-          <Button
-            leftIcon={<Plus size={20} />}
-            rightIcon={false}
-            onClick={() => navigate(paths.dashboardCreate)}
-          >
-            helllo
-          </Button>
         </NavBarActions>
       </div>
     </div>

@@ -14,6 +14,7 @@ export const formSchema = z.object({
   visitorsAllowed: z.boolean().nullable().optional(),
   emergencySurge: z.boolean().nullable().optional(),
   exitPolicy: z.array(z.enum(ExitPolicyChoices)),
+  exitPolicyOther: z.string().nullable().optional(),
   otherRules: z.string().nullable().optional(),
 });
 
@@ -25,6 +26,7 @@ export const defaultFormValues: PoliciesFormData = {
   visitorsAllowed: undefined,
   emergencySurge: undefined,
   exitPolicy: [],
+  exitPolicyOther: undefined,
   otherRules: undefined,
 };
 
@@ -36,5 +38,6 @@ export function toFormData(shelter: ShelterProfileType): PoliciesFormData {
     emergencySurge: shelter.emergencySurge,
     otherRules: shelter.otherRules,
     exitPolicy: toDropdownValues(shelter.exitPolicy),
+    exitPolicyOther: shelter.exitPolicyOther,
   };
 }
