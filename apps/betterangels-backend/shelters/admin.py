@@ -1450,8 +1450,8 @@ class ShelterAdmin(ImportExportModelAdmin):
 
 @admin.register(Bed)
 class BedAdmin(admin.ModelAdmin):
-    list_display = ("id", "shelter", "bed_name", "status", "bed_type", "occupant", "created_at", "updated_at")
-    list_filter = ("status", "bed_type", "maintenance_flag")
+    list_display = ("id", "shelter", "name", "status", "type", "occupant", "created_at", "updated_at")
+    list_filter = ("status", "type", "maintenance_flag")
     search_fields = ("shelter__name", "occupant__first_name", "occupant__last_name")
     autocomplete_fields = ["shelter", "occupant"]
     fieldsets = (
@@ -1460,11 +1460,11 @@ class BedAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "shelter",
-                    "bed_name",
+                    "name",
                     "status",
                     "status_notes",
                     "occupant",
-                    "bed_type",
+                    "type",
                 )
             },
         ),

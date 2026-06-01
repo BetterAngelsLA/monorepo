@@ -18,7 +18,7 @@ export type BedRoomForList = {
 
 export type BedRowObject = {
   bedId: string;
-  bedName: string;
+  name: string;
   status?: BedType['status'];
   roomId: string;
   roomAssignment: string;
@@ -256,7 +256,7 @@ function toRowObject(
 ): BedRowObject {
   return {
     bedId: bed.id,
-    bedName: bed.bedName ?? '',
+    name: bed.name ?? '',
     status: bed.status,
     roomId,
     roomAssignment,
@@ -266,7 +266,7 @@ function toRowObject(
 function motelRowToRowObject(room: BedRoomForList): BedRowObject {
   return {
     bedId: room.id,
-    bedName: room.roomLabel,
+    name: room.roomLabel,
     roomId: room.id,
     roomAssignment: room.roomLabel,
   };
@@ -361,7 +361,7 @@ export function BedTable({
           },
         },
         {
-          key: 'bedType',
+          key: 'type',
           label: 'Bed Type',
           width: 'minmax(100px, 0.85fr)',
           headerClassName: '!text-sm !font-medium',
@@ -390,7 +390,7 @@ export function BedTable({
     if (reservationLayoutStyle === 'mixed') {
       return [
         {
-          key: 'bedName',
+          key: 'name',
           label: 'Bed Name',
           width: 'minmax(160px, 1.4fr)',
           headerClassName: '!text-sm !font-medium',
@@ -399,20 +399,20 @@ export function BedTable({
             if (isMotelRoomRow(row)) return null;
             const selected = selectedSet.has(row.bed.id);
             const label = `${row.roomAssignment}, Bed ${
-              row.bed.bedName ?? ''
+              row.bed.name ?? ''
             }`.trim();
             return <ReservationLinkName label={label} selected={selected} />;
           },
         },
         {
-          key: 'bedType',
+          key: 'type',
           label: 'Bed Type',
           width: 'minmax(100px, 0.75fr)',
           headerClassName: '!text-sm !font-medium',
           cellClassName: 'text-sm text-[#1E3342]',
           render: (row) =>
-            !isMotelRoomRow(row) && row.bed.bedType
-              ? BED_TYPE_LABEL[row.bed.bedType] ?? row.bed.bedType
+            !isMotelRoomRow(row) && row.bed.type
+              ? BED_TYPE_LABEL[row.bed.type] ?? row.bed.type
               : 'Bed Type',
         },
         {
@@ -438,7 +438,7 @@ export function BedTable({
     // congregate
     return [
       {
-        key: 'bedName',
+        key: 'name',
         label: 'Bed Name',
         width: 'minmax(120px, 1fr)',
         headerClassName: '!text-sm !font-medium',
@@ -448,21 +448,21 @@ export function BedTable({
           const selected = selectedSet.has(row.bed.id);
           return (
             <ReservationLinkName
-              label={row.bed.bedName ?? ''}
+              label={row.bed.name ?? ''}
               selected={selected}
             />
           );
         },
       },
       {
-        key: 'bedType',
+        key: 'type',
         label: 'Bed Type',
         width: 'minmax(100px, 0.9fr)',
         headerClassName: '!text-sm !font-medium',
         cellClassName: 'text-sm text-[#1E3342]',
         render: (row) =>
-          !isMotelRoomRow(row) && row.bed.bedType
-            ? BED_TYPE_LABEL[row.bed.bedType] ?? row.bed.bedType
+          !isMotelRoomRow(row) && row.bed.type
+            ? BED_TYPE_LABEL[row.bed.type] ?? row.bed.type
             : 'Bed Type',
       },
       {
@@ -497,7 +497,7 @@ export function BedTable({
                 className="peer sr-only"
                 checked={selected}
                 onChange={(e) => toggleOne(bed.id, e.target.checked)}
-                aria-label={`Select ${bed.bedName}`}
+                aria-label={`Select ${bed.name}`}
               />
               <span
                 className={mergeCss([

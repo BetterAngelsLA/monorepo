@@ -186,7 +186,7 @@ input BedFilter {
   OR: BedFilter
   NOT: BedFilter
   DISTINCT: Boolean
-  bedType: [BedTypeChoices!]
+  type: [BedTypeChoices!]
   medicalNeeds: [MedicalNeedChoices!]
   status: [BedStatusChoices!]
 }
@@ -202,21 +202,21 @@ type BedType {
   id: ID!
   shelter: ShelterType!
   room: RoomType
-  bedName: String
+  accessibility: [AccessibilityType!]!
+  b7: Boolean!
+  demographics: [DemographicType!]!
+  fees: Int
+  funders: [FunderType!]!
+  lastCleanedInspected: DateTime
+  maintenanceFlag: Boolean!
+  medicalNeeds: [MedicalNeedType!]!
+  name: String
+  occupantId: ID
+  pets: [PetType!]!
   status: BedStatusChoices
   statusNotes: String
-  occupantId: ID
-  bedType: BedTypeChoices
-  demographics: [DemographicType!]!
-  accessibility: [AccessibilityType!]!
-  funders: [FunderType!]!
-  pets: [PetType!]!
   storage: Boolean!
-  maintenanceFlag: Boolean!
-  lastCleanedInspected: DateTime
-  medicalNeeds: MedicalNeedChoices
-  b7: Boolean!
-  fees: Int
+  type: BedTypeChoices
 }
 
 enum BedTypeChoices {
@@ -531,20 +531,20 @@ type ContactInfoType {
 input CreateBedInput {
   shelterId: ID!
   roomId: ID = null
-  status: BedStatusChoices = null
-  bedName: String = null
-  statusNotes: String = null
-  bedType: BedTypeChoices = null
-  demographics: [DemographicChoices!] = null
   accessibility: [AccessibilityChoices!] = null
-  funders: [FunderChoices!] = null
-  pets: [PetChoices!] = null
-  storage: Boolean = null
-  maintenanceFlag: Boolean = null
-  lastCleanedInspected: DateTime = null
-  medicalNeeds: MedicalNeedChoices = null
   b7: Boolean = null
+  demographics: [DemographicChoices!] = null
   fees: Int = null
+  funders: [FunderChoices!] = null
+  lastCleanedInspected: DateTime = null
+  maintenanceFlag: Boolean = null
+  medicalNeeds: [MedicalNeedChoices!] = null
+  name: String = null
+  pets: [PetChoices!] = null
+  status: BedStatusChoices = null
+  statusNotes: String = null
+  storage: Boolean = null
+  type: BedTypeChoices = null
 }
 
 union CreateBedPayload = BedType | OperationInfo
@@ -1494,6 +1494,10 @@ enum MedicalNeedChoices {
   DMH
   OXYGEN
   DIALYSIS
+}
+
+type MedicalNeedType {
+  name: MedicalNeedChoices
 }
 
 type Mutation {

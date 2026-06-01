@@ -209,8 +209,8 @@ class CommonBedRoomFilterMixin:
 
 @strawberry_django.filter_type(models.Bed)
 class BedFilter(CommonBedRoomFilterMixin):
-    bed_type = make_in_filter("bed_type", BedTypeChoices)
-    medical_needs = make_in_filter("medical_needs", MedicalNeedChoices)
+    type = make_in_filter("type", BedTypeChoices)
+    medical_needs = make_m2m_in_filter("medical_needs", "name", MedicalNeedChoices)
     status = make_in_filter("status", BedStatusChoices)
     shelter_id: Optional[ID]
 

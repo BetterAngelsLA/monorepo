@@ -15,7 +15,6 @@ from shelters import models
 from shelters.enums import (
     BedStatusChoices,
     BedTypeChoices,
-    MedicalNeedChoices,
     RoomStatusChoices,
     RoomStyleChoices,
     ShelterPhotoTypeChoices,
@@ -29,6 +28,7 @@ from shelters.types.lookups import (
     EntryRequirementType,
     ExitPolicyType,
     FunderType,
+    MedicalNeedType,
     ParkingType,
     PetType,
     ReferralRequirementType,
@@ -275,21 +275,21 @@ class BedType:
     id: ID
     shelter: "ShelterType"
     room: Optional["RoomType"]
-    bed_name: Optional[str]
+    accessibility: List[AccessibilityType]
+    b7: bool
+    demographics: List[DemographicType]
+    fees: Optional[int]
+    funders: List[FunderType]
+    last_cleaned_inspected: Optional[datetime]
+    maintenance_flag: bool
+    medical_needs: List[MedicalNeedType]
+    name: Optional[str]
+    occupant_id: Optional[ID]
+    pets: List[PetType]
     status: Optional[BedStatusChoices]
     status_notes: Optional[str]
-    occupant_id: Optional[ID]
-    bed_type: Optional[BedTypeChoices]
-    demographics: List[DemographicType]
-    accessibility: List[AccessibilityType]
-    funders: List[FunderType]
-    pets: List[PetType]
     storage: bool
-    maintenance_flag: bool
-    last_cleaned_inspected: Optional[datetime]
-    medical_needs: Optional[MedicalNeedChoices]
-    b7: bool
-    fees: Optional[int]
+    type: Optional[BedTypeChoices]
 
 
 @strawberry_django.type(models.Room, filters=RoomFilter)
