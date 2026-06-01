@@ -48,10 +48,10 @@ type AccessibilityType {
   name: AccessibilityChoices
 }
 
-type AccountsCapabilities {
-  canAccessPortal: Boolean!
-  canManageMembers: Boolean!
-  canViewMembers: Boolean!
+enum AccountsPermission {
+  ACCESS_PORTAL
+  MANAGE_MEMBERS
+  VIEW_MEMBERS
 }
 
 enum AdaAccommodationEnum {
@@ -1679,9 +1679,9 @@ enum Ordering {
 }
 
 type OrgCapabilities {
-  accounts: AccountsCapabilities!
-  reports: ReportsCapabilities!
-  shelters: SheltersCapabilities!
+  accounts: [AccountsPermission!]!
+  reports: [ReportsPermission!]!
+  shelters: [SheltersPermission!]!
 }
 
 input OrgInvitationInput {
@@ -1987,8 +1987,8 @@ type ReportSummaryType {
   topRequestedServices: [NameCountType!]!
 }
 
-type ReportsCapabilities {
-  canViewReports: Boolean!
+enum ReportsPermission {
+  VIEW_REPORTS
 }
 
 input ResolveClientDocumentUploadsInput {
@@ -2384,9 +2384,9 @@ type ShelterTypeType {
   name: ShelterChoices
 }
 
-type SheltersCapabilities {
-  canManageShelters: Boolean!
-  canViewShelters: Boolean!
+enum SheltersPermission {
+  MANAGE_SHELTERS
+  VIEW_SHELTERS
 }
 
 enum SocialMediaEnum {

@@ -45,12 +45,11 @@ export type AccessibilityType = {
   name?: Maybe<AccessibilityChoices>;
 };
 
-export type AccountsCapabilities = {
-  __typename?: 'AccountsCapabilities';
-  canAccessPortal: Scalars['Boolean']['output'];
-  canManageMembers: Scalars['Boolean']['output'];
-  canViewMembers: Scalars['Boolean']['output'];
-};
+export enum AccountsPermission {
+  AccessPortal = 'ACCESS_PORTAL',
+  ManageMembers = 'MANAGE_MEMBERS',
+  ViewMembers = 'VIEW_MEMBERS'
+}
 
 export enum AdaAccommodationEnum {
   Hearing = 'HEARING',
@@ -1993,9 +1992,9 @@ export enum Ordering {
 
 export type OrgCapabilities = {
   __typename?: 'OrgCapabilities';
-  accounts: AccountsCapabilities;
-  reports: ReportsCapabilities;
-  shelters: SheltersCapabilities;
+  accounts: Array<AccountsPermission>;
+  reports: Array<ReportsPermission>;
+  shelters: Array<SheltersPermission>;
 };
 
 export type OrgInvitationInput = {
@@ -2538,10 +2537,9 @@ export type ReportSummaryType = {
   uniqueClientsByDate: Array<DateCountType>;
 };
 
-export type ReportsCapabilities = {
-  __typename?: 'ReportsCapabilities';
-  canViewReports: Scalars['Boolean']['output'];
-};
+export enum ReportsPermission {
+  ViewReports = 'VIEW_REPORTS'
+}
 
 export type ResolveClientDocumentUploadsInput = {
   clientProfileId: Scalars['ID']['input'];
@@ -2958,11 +2956,10 @@ export type ShelterTypeType = {
   name?: Maybe<ShelterChoices>;
 };
 
-export type SheltersCapabilities = {
-  __typename?: 'SheltersCapabilities';
-  canManageShelters: Scalars['Boolean']['output'];
-  canViewShelters: Scalars['Boolean']['output'];
-};
+export enum SheltersPermission {
+  ManageShelters = 'MANAGE_SHELTERS',
+  ViewShelters = 'VIEW_SHELTERS'
+}
 
 export enum SocialMediaEnum {
   Facebook = 'FACEBOOK',

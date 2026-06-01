@@ -10,12 +10,12 @@ from organizations.models import Organization
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
-from .capabilities import AccountsCapabilities
+from .capabilities import AccountsCapabilities, AccountsPermission
 from .models import User
 
 if TYPE_CHECKING:
-    from reports.capabilities import ReportsCapabilities
-    from shelters.capabilities import SheltersCapabilities
+    from reports.capabilities import ReportsCapabilities, ReportsPermission
+    from shelters.capabilities import SheltersCapabilities, SheltersPermission
 
 
 @strawberry.input
@@ -122,17 +122,17 @@ class CurrentUserOrganizationType(OrganizationType):
         from shelters.capabilities import SheltersCapabilities
 
         return OrgCapabilities(
-            accounts=AccountsCapabilities.from_instance(self),
-            reports=ReportsCapabilities.from_instance(self),
-            shelters=SheltersCapabilities.from_instance(self),
+            accounts=AccountsCapabilities.from_instance(self).granted,
+            reports=ReportsCapabilities.from_instance(self).granted,
+            shelters=SheltersCapabilities.from_instance(self).granted,
         )
 
 
 @strawberry.type
 class OrgCapabilities:
-    accounts: AccountsCapabilities
-    reports: Annotated["ReportsCapabilities", strawberry.lazy("reports.capabilities")]
-    shelters: Annotated["SheltersCapabilities", strawberry.lazy("shelters.capabilities")]
+    accounts: List[AccountsPermission]
+    reports: List[Annotated["ReportsPermission", strawberry.lazy("reports.capabilities")]]
+    shelters: List[Annotated["SheltersPermission", strawberry.lazy("shelters.capabilities")]]
 
 
 @strawberry_django.type(User)

@@ -9,15 +9,8 @@ query currentOrgUser {
       id
       name
       capabilities {
-        accounts {
-          canAccessPortal
-          canManageMembers
-          canViewMembers
-        }
-        shelters {
-          canManageShelters
-          canViewShelters
-        }
+        accounts
+        shelters
       }
     }
   }

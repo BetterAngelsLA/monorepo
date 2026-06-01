@@ -1,35 +1,35 @@
+from typing import List
+
 import strawberry
 from accounts.models import PermissionGroup, User
 from django.db.models import Exists, OuterRef
 
+from .permissions import ShelterPermissions
+
+SheltersPermission = strawberry.enum(ShelterPermissions, name="SheltersPermission")
+
 
 @strawberry.type
 class SheltersCapabilities:
-    can_manage_shelters: bool
-    can_view_shelters: bool
+    granted: List[SheltersPermission]
 
     @classmethod
     def get_annotations(cls, user: User) -> dict:
         """Return DB-level Exists annotations for shelters capabilities."""
-
-        def _has_perm(*codenames: str) -> Exists:
-            return Exists(
+        annotations = {}
+        for perm in ShelterPermissions:
+            app_label, codename = perm.value.split(".")
+            annotations[f"_perm_{perm.name}"] = Exists(
                 PermissionGroup.objects.filter(
                     organization=OuterRef("pk"),
                     group__user=user,
-                    group__permissions__codename__in=codenames,
-                    group__permissions__content_type__app_label="shelters",
+                    group__permissions__codename=codename,
+                    group__permissions__content_type__app_label=app_label,
                 )
             )
-
-        return {
-            "_can_manage_shelters": _has_perm("add_shelter", "change_shelter", "delete_shelter"),
-            "_can_view_shelters": _has_perm("view_shelter"),
-        }
+        return annotations
 
     @classmethod
     def from_instance(cls, instance: object) -> "SheltersCapabilities":
-        return cls(
-            can_manage_shelters=getattr(instance, "_can_manage_shelters", False),
-            can_view_shelters=getattr(instance, "_can_view_shelters", False),
-        )
+        granted = [perm for perm in ShelterPermissions if getattr(instance, f"_perm_{perm.name}", False)]
+        return cls(granted=granted)

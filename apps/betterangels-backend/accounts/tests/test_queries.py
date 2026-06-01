@@ -71,9 +71,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             organization = organization_recipe.make()
             baker.make(OrganizationUser, user=user, organization=organization)
             permission_group_recipe.make(organization=organization)
-            expected_organizations.append(
-                {"id": str(organization.pk), "name": organization.name}
-            )
+            expected_organizations.append({"id": str(organization.pk), "name": organization.name})
 
         query = """
             query {
@@ -181,21 +179,25 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         [
             (
                 OrgRoleEnum.MEMBER,
-                {"canAccessPortal": False, "canManageMembers": False, "canViewMembers": False},
+                [],
             ),
             (
                 OrgRoleEnum.ADMIN,
-                {"canAccessPortal": True, "canManageMembers": True, "canViewMembers": True},
+                ["ACCESS_ORG_PORTAL", "ADD_ORG_MEMBER", "REMOVE_ORG_MEMBER", "VIEW_ORG_MEMBERS"],
             ),
             (
                 OrgRoleEnum.SUPERUSER,
-                {"canAccessPortal": True, "canManageMembers": True, "canViewMembers": True},
+                [
+                    "ACCESS_ORG_PORTAL",
+                    "ADD_ORG_MEMBER",
+                    "CHANGE_ORG_MEMBER_ROLE",
+                    "REMOVE_ORG_MEMBER",
+                    "VIEW_ORG_MEMBERS",
+                ],
             ),
         ],
     )
-    def test_logged_in_user_org_capabilities_query(
-        self, user_role: OrgRoleEnum, expected_capabilities: dict
-    ) -> None:
+    def test_logged_in_user_org_capabilities_query(self, user_role: OrgRoleEnum, expected_capabilities: list) -> None:
         user = baker.make(User)
         org_1 = organization_recipe.make(name="o1")
         org_2 = organization_recipe.make(name="o2")
@@ -213,11 +215,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     organizations: organizationsOrganization {
                         name
                         capabilities {
-                            accounts {
-                                canAccessPortal
-                                canManageMembers
-                                canViewMembers
-                            }
+                            accounts
                         }
                     }
                 }
@@ -232,13 +230,12 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             response = self.execute_graphql(query)
 
         org_caps = {
-            o["name"]: o["capabilities"]["accounts"]
-            for o in response["data"]["currentUser"]["organizations"]
+            o["name"]: sorted(o["capabilities"]["accounts"]) for o in response["data"]["currentUser"]["organizations"]
         }
-        self.assertEqual(org_caps["o1"], expected_capabilities)
+        self.assertEqual(org_caps["o1"], sorted(expected_capabilities))
         self.assertEqual(
             org_caps["o2"],
-            {"canAccessPortal": False, "canManageMembers": False, "canViewMembers": False},
+            [],
         )
 
 
