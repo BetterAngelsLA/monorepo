@@ -1,5 +1,4 @@
 import {
-  hasPermission,
   PermissionEnum,
   useActiveOrg,
 } from '@monorepo/react/betterangels-admin';
@@ -11,9 +10,9 @@ type IProps = {
 };
 
 export function PermissionGuard({ permission, children }: IProps) {
-  const { activeOrg } = useActiveOrg();
+  const { hasPermission } = useActiveOrg();
 
-  if (!hasPermission(activeOrg, permission)) {
+  if (!hasPermission(permission)) {
     return <Navigate to="/" replace />;
   }
 
