@@ -4,11 +4,14 @@ import re
 from typing import Any
 
 from accounts.models import Organization
+from common.permissions.utils import permission_enums_to_django_meta_permissions
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
+
+from .permissions import ReportOrgPermissions
 
 
 def validate_email_list(value: str) -> None:
@@ -118,6 +121,7 @@ class ScheduledReport(models.Model):
         verbose_name = "Scheduled Report"
         verbose_name_plural = "Scheduled Reports"
         ordering = ["-created_at"]
+        permissions = permission_enums_to_django_meta_permissions([ReportOrgPermissions])
 
     def __str__(self) -> str:
         """Return string representation."""

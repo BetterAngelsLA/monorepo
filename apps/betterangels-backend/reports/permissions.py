@@ -4,13 +4,16 @@ Reports app DRF permissions.
 Reference: https://github.com/HackSoftware/Django-Styleguide#apis--serializers
 """
 
-from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
+from accounts.permissions import get_user_permitted_org
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 from rest_framework.permissions import BasePermission
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
-# Single permission — if you have VIEW_REPORTS on an org, you can see its reports.
-REPORT_PERMISSION = UserOrganizationPermissions.VIEW_REPORTS
+
+class ReportOrgPermissions(models.TextChoices):
+    VIEW_REPORTS = "reports.view_reports", _("Can view reports")
 
 
 class HasReportAccess(BasePermission):
@@ -32,7 +35,7 @@ class HasReportAccess(BasePermission):
             return False
 
         org_id = request.query_params.get("org_id")
-        org = get_user_permitted_org(user, [REPORT_PERMISSION], org_id=org_id)
+        org = get_user_permitted_org(user, org_id=org_id, permission=ReportOrgPermissions.VIEW_REPORTS)
         if org is None:
             return False
 

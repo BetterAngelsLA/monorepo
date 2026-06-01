@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from typing import Optional, Sequence, Union, cast
+from typing import Optional, Union
 
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.db import models
 from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 from organizations.models import Organization
-from strawberry_django.utils.query import filter_for_user
 
 UserLike = Union[AbstractBaseUser, AnonymousUser]
 
@@ -18,49 +17,37 @@ class UserOrganizationPermissions(models.TextChoices):
     CHANGE_ORG_MEMBER_ROLE = "organizations.change_org_member_role", _("Can change organization member role")
     REMOVE_ORG_MEMBER = "organizations.remove_org_member", _("Can remove organization member")
     VIEW_ORG_MEMBERS = "organizations.view_org_members", _("Can view organization members")
-    VIEW_REPORTS = "organizations.view_reports", _("Can view reports")
 
 
 def get_user_permitted_orgs(
     user: UserLike,
-    permissions: Sequence[str],
-    *,
-    any_perm: bool = True,
-) -> "QuerySet":
-    """Return orgs the user belongs to and has *permissions* on.
-
-    Uses ``filter_for_user`` which checks both standard Django group
-    permissions and guardian object-level permissions.
-
-    Args:
-        any_perm: When *True* (default) the user needs **any** of the
-            listed permissions.  Set to *False* to require **all** of them.
-    """
-
-    return cast(
-        QuerySet,
-        filter_for_user(
-            Organization.objects.filter(users=user),
-            user,
-            list(permissions),
-            any_perm=any_perm,
-        ),
-    )
+) -> "QuerySet[Organization]":
+    """Return orgs the user belongs to."""
+    return Organization.objects.filter(users=user)
 
 
 def get_user_permitted_org(
     user: UserLike,
-    permissions: Sequence[str],
     org_id: Optional[str] = None,
-    *,
-    any_perm: bool = True,
+    permission: Optional[str] = None,
 ) -> Optional[Organization]:
-    """Return a single org the user has *permissions* on.
+    """Return a single org the user belongs to, optionally requiring a permission.
 
-    If *org_id* is given the user must have permissions on that specific org.
-    Otherwise falls back to the first permitted org.
+    If *org_id* is given the user must be a member of that specific org.
+    Otherwise falls back to the first org.
+
+    If *permission* is given (e.g. "reports.view_reports"), additionally
+    verifies the user holds that permission on the org via PermissionGroups
+    — all in a single query.
     """
-    qs = get_user_permitted_orgs(user, permissions, any_perm=any_perm)
+    qs = get_user_permitted_orgs(user)
     if org_id:
-        return qs.filter(pk=org_id).first()
+        qs = qs.filter(pk=org_id)
+    if permission:
+        app_label, codename = permission.split(".")
+        qs = qs.filter(
+            permission_groups__group__user=user,
+            permission_groups__group__permissions__content_type__app_label=app_label,
+            permission_groups__group__permissions__codename=codename,
+        )
     return qs.first()

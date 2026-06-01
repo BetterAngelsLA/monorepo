@@ -4,15 +4,30 @@ from datetime import datetime
 
 import pytest
 import time_machine
-from accounts.models import User
+from accounts.models import PermissionGroup, PermissionGroupTemplate, User
 from common.tests.utils import GraphQLBaseTestCase
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.test import ignore_warnings
 from django.utils import timezone
-from guardian.shortcuts import assign_perm
 from model_bakery import baker
 from notes.models import Note
 from organizations.models import Organization
+from reports.models import ScheduledReport
 from rest_framework.test import APIClient
+
+
+def grant_view_reports(user: User, org: Organization) -> None:
+    """Grant view_reports permission to a user for an org via PermissionGroup."""
+    ct = ContentType.objects.get_for_model(ScheduledReport)
+    perm, _ = Permission.objects.get_or_create(
+        codename="view_reports", content_type=ct, defaults={"name": "Can view reports"}
+    )
+    template, _ = PermissionGroupTemplate.objects.get_or_create(name="_test_report_viewer")
+    template.permissions.add(perm)
+    pg, _ = PermissionGroup.objects.get_or_create(organization=org, template=template)
+    pg.group.permissions.add(perm)
+    user.groups.add(pg.group)
 
 
 @pytest.fixture
@@ -32,7 +47,7 @@ def user_with_access(org: Organization) -> User:
     user.set_password("testpass")
     user.save()
     org.add_user(user)
-    assign_perm("view_reports", user, org)
+    grant_view_reports(user, org)
     return user
 
 
@@ -236,7 +251,7 @@ class TestExportInteractionDataView:
         user.save()
         org.add_user(user)
         other_org.add_user(user)
-        assign_perm("view_reports", user, org)
+        grant_view_reports(user, org)
         # No permission on other_org
 
         api_client.force_authenticate(user=user)
@@ -251,7 +266,7 @@ class TestExportInteractionDataView:
         user.save()
         org.add_user(user)
         other_org.add_user(user)
-        assign_perm("view_reports", user, org)
+        grant_view_reports(user, org)
         # No permission on other_org
 
         api_client.force_authenticate(user=user)
@@ -306,7 +321,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         user.set_password("testpass")
         user.save()
         org.add_user(user)
-        assign_perm("view_reports", user, org)
+        grant_view_reports(user, org)
         return org, user
 
     def test_unauthenticated_returns_error(self) -> None:
