@@ -137,6 +137,7 @@ type AdminShelterType {
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
   bedsByStatus: BedsByStatusType!
+  roomsByStatus: RoomsByStatusType!
 }
 
 type AdminShelterTypeOffsetPaginated {
@@ -184,6 +185,7 @@ type AuthorizedPresignedS3UploadsType {
 }
 
 input BedFilter {
+  shelterId: ID
   AND: BedFilter
   OR: BedFilter
   NOT: BedFilter
@@ -1906,6 +1908,7 @@ type Query {
   reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
+  adminShelter(pk: ID!): AdminShelterType! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
@@ -2012,6 +2015,7 @@ union RevertNotePayload = NoteType | OperationInfo
 
 input RoomFilter {
   medicalRespite: Boolean
+  shelterId: ID
   AND: RoomFilter
   OR: RoomFilter
   NOT: RoomFilter
@@ -2073,6 +2077,12 @@ type RoomTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [RoomType!]!
+}
+
+type RoomsByStatusType {
+  available: Int!
+  reserved: Int!
+  needsMaintenance: Int!
 }
 
 type SPAType {
@@ -2357,6 +2367,7 @@ type ShelterType {
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
   bedsByStatus: BedsByStatusType!
+  roomsByStatus: RoomsByStatusType!
 }
 
 type ShelterTypeOffsetPaginated {

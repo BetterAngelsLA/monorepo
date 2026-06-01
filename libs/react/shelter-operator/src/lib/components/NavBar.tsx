@@ -120,10 +120,9 @@ export function NavBar(props: TNavProps) {
         <NavBarActions>
           {showCreateButton && (
             <Button
-              variant="primary"
               leftIcon={<Plus size={20} />}
               rightIcon={false}
-              onClick={() => navigate(paths.dashboardCreate)}
+              onClick={() => navigate(paths.shelterCreate)}
             >
               Create Shelter
             </Button>

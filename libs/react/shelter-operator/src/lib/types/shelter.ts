@@ -5,4 +5,5 @@ export type Shelter = {
   totalBeds: number | null;
   availableBeds: number | null;
   tags: string[] | null;
+  status: string;
 };

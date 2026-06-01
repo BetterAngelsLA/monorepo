@@ -28,6 +28,10 @@ from strawberry_django.permissions import HasPerm
 
 @strawberry.type
 class Query:
+    admin_shelter: AdminShelterType = strawberry_django.field(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(Shelter.perms.VIEW)],
+    )
     admin_shelters: OffsetPaginated[AdminShelterType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(Shelter.perms.VIEW)],

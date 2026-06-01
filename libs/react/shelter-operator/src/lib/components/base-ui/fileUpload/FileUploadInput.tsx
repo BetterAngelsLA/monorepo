@@ -1,6 +1,7 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { AlertCircle, FileUp } from 'lucide-react';
 import { useId, useRef, useState } from 'react';
+import { Label } from '../label';
 import { Text } from '../text/text';
 
 export interface FileUploadInputProps {
@@ -18,6 +19,7 @@ export interface FileUploadInputProps {
   disabled?: boolean;
   className?: string;
   isTouched?: boolean;
+  isViewMode?: boolean;
 }
 
 export function FileUploadInput({
@@ -33,6 +35,7 @@ export function FileUploadInput({
   error,
   required = false,
   disabled = false,
+  isViewMode,
   className,
   isTouched,
 }: FileUploadInputProps) {
@@ -44,6 +47,8 @@ export function FileUploadInput({
 
   const shouldShowError = Boolean(error && isTouched);
   const selectedFiles = value ?? [];
+
+  const isViewEditMode = typeof isViewMode === 'boolean';
 
   const normalizeFiles = (fileList: FileList | null) => {
     const files = fileList ? Array.from(fileList) : [];
@@ -60,17 +65,12 @@ export function FileUploadInput({
       className={mergeCss(['relative flex w-full flex-col gap-1', className])}
     >
       {label && (
-        <label htmlFor={inputId} className="text-sm text-gray-900">
-          <Text variant="body" className="text-gray-900">
-            {label}
-          </Text>
-          {required && (
-            <Text variant="body" className="text-red-500">
-              {' '}
-              *
-            </Text>
-          )}
-        </label>
+        <Label
+          label={label}
+          inputId={inputId}
+          variant={isViewEditMode ? 'offset' : undefined}
+          required={required}
+        />
       )}
 
       <input

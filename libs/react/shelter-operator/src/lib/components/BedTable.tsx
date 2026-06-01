@@ -528,7 +528,7 @@ export function BedTable({
         width: '1.1fr',
         cellClassName:
           'font-medium text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap',
-        render: ({ bed }) => bed.bedName || 'N/A',
+        render: ({ bed }) => bed.bedName || bed.id,
       },
       {
         key: 'status',
