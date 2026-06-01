@@ -2,7 +2,7 @@ import { useLocationPermission } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ShelterChoices } from '../../apollo';
 import { sheltersAtom } from '../../atoms';
 import {
@@ -96,6 +96,8 @@ export function HomePage() {
     useState<TMapBounds | null>(null);
   const map = useMap();
   const hasLocationPermission = useLocationPermission();
+  /** Skips one location-effect map sync when viewport fit handles center/zoom. */
+  const skipNextLocationMapSyncRef = useRef(false);
 
   const handleClick = useCallback(
     (markerId: string | null | undefined) => {
@@ -185,6 +187,11 @@ export function HomePage() {
   useEffect(() => {
     if (!map || !location) return;
 
+    if (skipNextLocationMapSyncRef.current) {
+      skipNextLocationMapSyncRef.current = false;
+      return;
+    }
+
     const center = toGoogleLatLng(location);
 
     if (center) {
@@ -245,14 +252,15 @@ export function HomePage() {
     const bounds = mapBounds ?? mapBoundsFromCenter(location);
     setMapBoundsFilter(bounds);
     setShowSearchButton(false);
+    setLocation(location);
 
     if (mapBounds) {
+      skipNextLocationMapSyncRef.current = true;
       setPlaceViewportToFit(mapBounds);
       return;
     }
 
     setPlaceViewportToFit(null);
-    setLocation(location);
   }
 
   function onNameSearch(options?: { preserveMapBounds?: boolean }) {
