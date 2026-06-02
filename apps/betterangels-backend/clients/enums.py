@@ -22,6 +22,11 @@ class AdaAccommodationEnum(models.TextChoices):
     OTHER = "other", _("Other")
 
 
+class AdlCapacityEnum(models.TextChoices):
+    LOW_CAPACITY = "low_capacity", _("Low-capacity")
+    HIGH_CAPACITY = "high_capacity", _("High-capacity")
+
+
 @strawberry.enum
 class ClientDocumentNamespaceEnum(models.TextChoices):
     DRIVERS_LICENSE_FRONT = "drivers_license_front", "Driver's License Front"
@@ -46,6 +51,32 @@ class ClientDocumentGroupEnum(models.TextChoices):
     OTHER = "other", "Other"
 
 
+@strawberry.enum
+class ClientMedicalNeedEnum(models.TextChoices):
+    MEDICAL = "medical", _("Medical")
+    MENTAL_HEALTH = "mental_health", _("Mental Health")
+    SUBSTANCE_USE = "substance_use", _("Recent Substance or Substance Use")
+    COGNITIVE_IMPAIRMENTS = "cognitive_impairments", _("Cognitive Impairments")
+    NONE = "none", _("None")
+
+
+class ClientStatusEnum(models.TextChoices):
+    RESERVED = "reserved", _("Reserved")
+    CHECKED_IN = "checked_in", _("Checked in")
+    CHECKED_OUT = "checked_out", _("Checked out")
+
+
+class DestinationEnum(models.TextChoices):
+    OWN_HOME = "own_home", _("Own home")
+    SHARED_HOME = "shared_home", _("Shared home")
+    ANOTHER_SHELTER = "another_shelter", _("Another Shelter")
+    MEDICAL_FACILITY = "medical_facility", _("Medical Facility")
+    DECEASED = "deceased", _("Deceased")
+    JUSTICE_INVOLVED = "justice_involved", _("Justice Involved")
+    UNKNOWN = "unknown", _("Unknown")
+    OTHER = "other", _("Other")
+
+
 class EyeColorEnum(models.TextChoices):
     BLUE = "blue", _("Blue")
     BROWN = "brown", _("Brown")
@@ -56,8 +87,8 @@ class EyeColorEnum(models.TextChoices):
 
 
 class GenderEnum(models.TextChoices):
-    MALE = "male", _("Male")
-    FEMALE = "female", _("Female")
+    CIS_MALE = "cis_male", _("Cis Male")
+    CIS_FEMALE = "cis_female", _("Cis Female")
     TRANS_MALE = "trans_male", _("Transgender Male")
     TRANS_FEMALE = "trans_female", _("Transgender Female")
     NON_BINARY = "non_binary", _("Non-binary")
@@ -165,6 +196,19 @@ class RelationshipTypeEnum(models.TextChoices):
     SIBLING = "sibling", _("Sibling")
     UNCLE = "uncle", _("Uncle")
     OTHER = "other", _("Other")
+
+
+@strawberry.enum
+class SexualOrientationEnum(models.TextChoices):
+    ASEXUAL = "asexual", _("Asexual")
+    BISEXUAL = "bisexual", _("Bisexual")
+    GAY = "gay", _("Gay")
+    STRAIGHT = "straight", _("Straight")
+    LESBIAN = "lesbian", _("Lesbian")
+    PANSEXUAL = "pansexual", _("Pansexual")
+    QUEER = "queer", _("Queer")
+    OTHER = "other", _("Other")
+    PREFER_NOT_TO_SAY = "prefer_not_to_say", _("Prefer not to say")
 
 
 class SocialMediaEnum(models.TextChoices):
