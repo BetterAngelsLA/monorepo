@@ -36,6 +36,9 @@ export type TShelterSearchPendingLocation = {
 export const shelterSearchPendingLocationAtom =
   atom<TShelterSearchPendingLocation | null>(null);
 
+/** The location last applied to the map from a search submission. */
+export const shelterSearchAppliedLocationAtom = atom<TLatLng | null>(null);
+
 export type TShelterSearchRequest = {
   name: string;
   location: TLatLng | null;

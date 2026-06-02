@@ -7,6 +7,7 @@ import { Outlet } from 'react-router-dom';
 import { ShelterChoices } from '../../apollo';
 import {
   shelterLocationSearchInputAtom,
+  shelterSearchAppliedLocationAtom,
   shelterSearchPendingLocationAtom,
   shelterSearchTriggerAtom,
   sheltersAtom,
@@ -101,6 +102,7 @@ export function HomePage() {
     useState<TMapBounds | null>(null);
   const setSearchTrigger = useSetAtom(shelterSearchTriggerAtom);
   const setPendingLocation = useSetAtom(shelterSearchPendingLocationAtom);
+  const setAppliedLocation = useSetAtom(shelterSearchAppliedLocationAtom);
   const setLocationSearchInput = useSetAtom(shelterLocationSearchInputAtom);
   const map = useMap();
   const hasLocationPermission = useLocationPermission();
@@ -186,6 +188,7 @@ export function HomePage() {
     }
 
     setPendingLocation(null);
+    setAppliedLocation(null);
     setLocationSearchInput('');
     setMapBoundsFilter(toMapBounds(bounds));
     setShowSearchButton(false);

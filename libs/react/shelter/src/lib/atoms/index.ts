@@ -3,6 +3,7 @@ export {
   shelterLocationSearchInputAtom,
   shelterNameSearchAtom,
   shelterNameSearchInputAtom,
+  shelterSearchAppliedLocationAtom,
   shelterSearchPendingLocationAtom,
   shelterSearchRequestAtom,
   shelterSearchTriggerAtom,
