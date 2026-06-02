@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { MaxStayInput } from '../../apollo';
 import {
   shelterSearchTriggerAtom,
-  shelterNameFilterAtom,
+  shelterNameSearchAtom,
   sheltersAtom,
 } from '../../atoms';
 import {
@@ -50,7 +50,7 @@ export function SheltersDisplay(props: TProps) {
   } = props;
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
   const [searchTrigger] = useAtom(shelterSearchTriggerAtom);
-  const nameFilter = useAtomValue(shelterNameFilterAtom);
+  const nameSearch = useAtomValue(shelterNameSearchAtom);
 
   const queryVariables = useMemo<ViewSheltersQueryVariables | undefined>(() => {
     let vars: ViewSheltersQueryVariables | undefined;
@@ -94,17 +94,17 @@ export function SheltersDisplay(props: TProps) {
       }
     }
 
-    if (nameFilter) {
+    if (nameSearch) {
       vars = vars || {};
       vars.filters = vars.filters || {};
-      vars.filters.name = nameFilter;
+      vars.filters.name = nameSearch;
     }
 
     return vars;
-  }, [mapBoundsFilter, nameFilter, propertyFilters]);
+  }, [mapBoundsFilter, nameSearch, propertyFilters]);
 
   // Freeze query variables at the moment searchTrigger changes so that
-  // intermediate filter-state updates (e.g. nameFilter set before the map
+  // intermediate filter-state updates (e.g. name search set before the map
   // settles) never fire a premature query.
   const lastTriggerRef = useRef(-1);
   const activeVarsRef = useRef<ViewSheltersQueryVariables | undefined>(undefined);
@@ -197,7 +197,7 @@ export function SheltersDisplay(props: TProps) {
         <div className="mb-4">
           <div className="text-xl font-semibold">{text}</div>
           <ResultsSource
-            nameFilter={nameFilter}
+            nameFilter={nameSearch}
             mapBoundsFilter={mapBoundsFilter}
             openNowFilter={propertyFilters?.openNow}
             propertyFilters={pruneFilters(propertyFilters)}
@@ -205,7 +205,7 @@ export function SheltersDisplay(props: TProps) {
         </div>
       );
     },
-    [nameFilter, mapBoundsFilter, propertyFilters]
+    [nameSearch, mapBoundsFilter, propertyFilters]
   );
 
   return (

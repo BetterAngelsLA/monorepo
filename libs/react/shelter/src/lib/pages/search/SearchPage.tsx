@@ -4,8 +4,8 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  shelterNameSearchValueAtom,
-  shelterSearchSubmissionAtom,
+  shelterNameSearchInputAtom,
+  shelterSearchRequestAtom,
 } from '../../atoms';
 import { AddressAutocomplete } from '../../components/AddressAutocomplete';
 import { Input } from '../../components/Input';
@@ -14,32 +14,30 @@ import { shelterHomePath } from '../../constants';
 
 export function SearchPage() {
   const navigate = useNavigate();
-  const initialNameValue = useAtomValue(shelterNameSearchValueAtom);
-  const setSubmission = useSetAtom(shelterSearchSubmissionAtom);
+  const initialNameInput = useAtomValue(shelterNameSearchInputAtom);
+  const setSearchRequest = useSetAtom(shelterSearchRequestAtom);
 
-  const [nameValue, setNameValue] = useState(initialNameValue);
-  const [pendingLocation, setPendingLocation] = useState<{
-    location: TLatLng;
-    mapBounds?: TMapBounds;
-  } | null>(null);
+  const [nameInput, setNameInput] = useState(initialNameInput);
+  const [location, setLocation] = useState<TLatLng | null>(null);
+  const [mapBounds, setMapBounds] = useState<TMapBounds | undefined>();
 
   function handleClose() {
     navigate(shelterHomePath);
   }
 
   function submit(name: string) {
-    setSubmission({ nameValue: name, pendingLocation });
+    setSearchRequest({ name, location, mapBounds });
     navigate(shelterHomePath);
   }
 
   function handleDone() {
-    submit(nameValue);
+    submit(nameInput);
   }
 
   function handleSearchKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter') {
       e.preventDefault();
-      submit(nameValue);
+      submit(nameInput);
     }
   }
 
@@ -54,10 +52,10 @@ export function SearchPage() {
         </div>
 
         <Input
-          value={nameValue}
+          value={nameInput}
           placeholder="Search by name"
           className="w-full rounded-b-none border-b-0"
-          onChange={setNameValue}
+          onChange={setNameInput}
           onKeyDown={handleSearchKeyDown}
           leftIcon={<SearchIcon className="text-neutral-70 w-4 h-4" />}
         />
@@ -67,13 +65,11 @@ export function SearchPage() {
           placeholder="Search by location"
           onPlaceSelect={(place) => {
             if (!place?.location) return;
-            setPendingLocation({
-              location: {
-                latitude: place.location.lat,
-                longitude: place.location.lng,
-              },
-              mapBounds: place.viewport,
+            setLocation({
+              latitude: place.location.lat,
+              longitude: place.location.lng,
             });
+            setMapBounds(place.viewport);
           }}
         />
       </div>

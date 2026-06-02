@@ -1,9 +1,9 @@
 export { nullShelterPropertyFilters, shelterPropertyFiltersAtom } from './shelterPropertyFiltersAtom';
 export {
-  shelterNameFilterAtom,
-  shelterNameSearchValueAtom,
-  shelterSearchSubmissionAtom,
+  shelterNameSearchAtom,
+  shelterNameSearchInputAtom,
+  shelterSearchRequestAtom,
   shelterSearchTriggerAtom,
 } from './shelterSearchStateAtom';
-export type { TSearchSubmission } from './shelterSearchStateAtom';
+export type { TShelterSearchRequest } from './shelterSearchStateAtom';
 export { sheltersAtom } from './sheltersAtom';

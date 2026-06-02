@@ -4,10 +4,10 @@ import { useResetAtom } from 'jotai/utils';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  shelterNameFilterAtom,
-  shelterNameSearchValueAtom,
+  shelterNameSearchAtom,
+  shelterNameSearchInputAtom,
   shelterPropertyFiltersAtom,
-  shelterSearchSubmissionAtom,
+  shelterSearchRequestAtom,
 } from '../../atoms';
 import { shelterFiltersPath, shelterSearchPath } from '../../constants';
 import { TLatLng, TMapBounds } from '../Map';
@@ -35,47 +35,45 @@ export function ShelterSearch(props: TProps) {
   } = props;
   const navigate = useNavigate();
   const [filters] = useAtom(shelterPropertyFiltersAtom);
-  const setNameFilter = useSetAtom(shelterNameFilterAtom);
+  const setNameSearch = useSetAtom(shelterNameSearchAtom);
   const resetFilters = useResetAtom(shelterPropertyFiltersAtom);
-  const setNameSearchValue = useSetAtom(shelterNameSearchValueAtom);
-  const [searchSubmission, setSearchSubmission] = useAtom(
-    shelterSearchSubmissionAtom
-  );
+  const setNameSearchInput = useSetAtom(shelterNameSearchInputAtom);
+  const [searchRequest, setSearchRequest] = useAtom(shelterSearchRequestAtom);
 
-  // React to submissions from SearchPage
+  // React to search requests from SearchPage
   useEffect(() => {
-    if (!searchSubmission) return;
+    if (!searchRequest) return;
 
-    const { nameValue, pendingLocation } = searchSubmission;
-    setSearchSubmission(null);
+    const { name, location, mapBounds } = searchRequest;
+    setSearchRequest(null);
 
-    if (pendingLocation?.location) {
-      setLocation(pendingLocation.location, pendingLocation.mapBounds);
+    if (location) {
+      setLocation(location, mapBounds);
     }
 
-    const trimmed = nameValue.trim();
+    const trimmed = name.trim();
     if (trimmed) {
       resetFilters();
-      setNameFilter(trimmed);
-      setNameSearchValue(trimmed);
-      onNameSearch({ preserveMapBounds: !!pendingLocation?.location });
+      setNameSearch(trimmed);
+      setNameSearchInput(trimmed);
+      onNameSearch({ preserveMapBounds: !!location });
     } else {
       // Name cleared: reset name filter and re-fire with current map bounds.
       // If there's also a location, the map's location effect fires its own
       // search; otherwise restore map bounds so results don't stay blank.
-      setNameFilter(undefined);
-      setNameSearchValue('');
-      if (!pendingLocation?.location) {
+      setNameSearch(undefined);
+      setNameSearchInput('');
+      if (!location) {
         onNameSearch({ restoreMapBounds: true });
       }
     }
   }, [
-    searchSubmission,
-    setSearchSubmission,
+    searchRequest,
+    setSearchRequest,
     setLocation,
     resetFilters,
-    setNameFilter,
-    setNameSearchValue,
+    setNameSearch,
+    setNameSearchInput,
     onNameSearch,
   ]);
 
