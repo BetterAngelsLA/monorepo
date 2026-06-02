@@ -59,7 +59,7 @@ export function ShelterEcosystemForm(props: TProps) {
           className="flex flex-col gap-10 mt-8"
           onSubmit={onSubmit ? handleSubmit(onSubmit) : undefined}
         >
-          <Form.Block columns={3}>
+          <Form.Block columns={2}>
             <Controller
               name="city"
               control={control}
@@ -90,25 +90,28 @@ export function ShelterEcosystemForm(props: TProps) {
             />
 
             <Controller
-              name="city"
+              name="citiesServed"
               control={control}
               render={({ field }) => (
                 <Dropdown
-                  label="City"
-                  placeholder="Select a city"
+                  label="Cities Served"
+                  placeholder="Select cities"
                   isSearchable={cities.length > 6}
+                  isMulti={true}
                   options={cities.map((option) => ({
                     label: option.name,
                     value: option.id,
                   }))}
-                  value={
-                    field.value
-                      ? { label: field.value.name, value: field.value.id }
-                      : null
-                  }
-                  onChange={(option) => {
+                  value={field.value.map((option) => ({
+                    label: option.name,
+                    value: option.id,
+                  }))}
+                  onChange={(options) => {
                     field.onChange(
-                      option ? { id: option.value, name: option.label } : null
+                      (options ?? []).map((option) => ({
+                        id: option.value,
+                        name: option.label,
+                      }))
                     );
                   }}
                   isViewMode={isViewMode}
@@ -117,7 +120,8 @@ export function ShelterEcosystemForm(props: TProps) {
                 />
               )}
             />
-
+          </Form.Block>
+          <Form.Block columns={2}>
             <Controller
               name="spa"
               control={control}
@@ -138,6 +142,38 @@ export function ShelterEcosystemForm(props: TProps) {
                   onChange={(option) => {
                     field.onChange(
                       option ? { id: option.value, name: option.label } : null
+                    );
+                  }}
+                  isViewMode={isViewMode}
+                  disabled={disabled}
+                  className="min-w-44"
+                />
+              )}
+            />
+
+            <Controller
+              name="spasServed"
+              control={control}
+              render={({ field }) => (
+                <Dropdown
+                  label="SPAs Served"
+                  placeholder="Select SPAs"
+                  isSearchable={spas.length > 6}
+                  isMulti={true}
+                  options={spas.map((option) => ({
+                    label: option.name,
+                    value: option.id,
+                  }))}
+                  value={field.value.map((option) => ({
+                    label: option.name,
+                    value: option.id,
+                  }))}
+                  onChange={(options) => {
+                    field.onChange(
+                      (options ?? []).map((option) => ({
+                        id: option.value,
+                        name: option.label,
+                      }))
                     );
                   }}
                   isViewMode={isViewMode}

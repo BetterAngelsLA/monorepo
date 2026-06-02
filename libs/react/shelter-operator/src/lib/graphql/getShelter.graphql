@@ -53,6 +53,10 @@ query GetShelter($id: ID!) {
       id
       name
     }
+    citiesServed {
+      id
+      name
+    }
     demographics {
       name
     }
@@ -124,6 +128,11 @@ query GetShelter($id: ID!) {
     spa {
       id
       name
+    }
+    spasServed {
+      id
+      name
+      shortName
     }
     specialSituationRestrictions {
       name
