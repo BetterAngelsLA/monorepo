@@ -1,5 +1,5 @@
 import { SearchIcon } from '@monorepo/react/icons';
-import { TPlacePrediction } from '@monorepo/shared/places';
+import { placeViewportToEdges, TPlacePrediction } from '@monorepo/shared/places';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePlacesClient } from '../../places';
 import { Input } from '../Input';
@@ -83,7 +83,7 @@ export function AddressAutocomplete(props: TProps) {
     async (placeId: string) => {
       try {
         const result = await places.getDetails(placeId, {
-          fields: 'displayName,formattedAddress,location',
+          fields: 'displayName,formattedAddress,location,viewport',
         });
 
         onPlaceSelect({
@@ -93,6 +93,9 @@ export function AddressAutocomplete(props: TProps) {
           location: result.location
             ? { lat: result.location.latitude, lng: result.location.longitude }
             : null,
+          viewport: result.viewport
+            ? placeViewportToEdges(result.viewport)
+            : undefined,
         });
 
         setInputValue(result.formattedAddress || '');
