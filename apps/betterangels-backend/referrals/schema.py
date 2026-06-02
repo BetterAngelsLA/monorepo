@@ -8,7 +8,7 @@ from clients.models import ClientProfile
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import QuerySet
 from referrals.models import Referral
 from referrals.permissions import ReferralPermissions
@@ -58,8 +58,17 @@ class Mutation:
         current_user = cast(User, get_current_user(info))
         permission_group = get_user_permission_group(current_user)
         referral_data = asdict(data)
-        client_profile = ClientProfile.objects.get(pk=str(referral_data.pop("client_profile")))
-        shelter = Shelter.objects.get(pk=str(referral_data.pop("shelter")))
+
+        try:
+            client_profile = ClientProfile.objects.get(pk=str(referral_data.pop("client_profile")))
+        except ClientProfile.DoesNotExist:
+            raise ValidationError({"client_profile": "Client profile not found."})
+
+        try:
+            shelter = Shelter.objects.get(pk=str(referral_data.pop("shelter")))
+        except Shelter.DoesNotExist:
+            raise ValidationError({"shelter": "Shelter not found."})
+
         referral = referral_create(
             user=current_user,
             permission_group=permission_group,

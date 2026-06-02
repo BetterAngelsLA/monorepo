@@ -6,7 +6,6 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { useSnackbar } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
@@ -165,7 +164,9 @@ type ReferralCardProps = {
 
 function ReferralCard({ referral }: ReferralCardProps) {
   const referrerName = referral.createdBy
-    ? `${referral.createdBy.firstName ?? ''} ${referral.createdBy.lastName ?? ''}`.trim()
+    ? `${referral.createdBy.firstName ?? ''} ${
+        referral.createdBy.lastName ?? ''
+      }`.trim()
     : 'Unknown';
 
   const dateStr = referral.createdAt
@@ -176,13 +177,15 @@ function ReferralCard({ referral }: ReferralCardProps) {
     referral.status === 'ACCEPTED'
       ? Colors.SUCCESS
       : referral.status === 'DECLINED'
-        ? Colors.ERROR
-        : Colors.WARNING;
+      ? Colors.ERROR
+      : Colors.WARNING;
 
   return (
     <View style={styles.card}>
       <View style={styles.cardRow}>
-        <TextBold size="sm">{referral.shelter?.name ?? 'Unknown Shelter'}</TextBold>
+        <TextBold size="sm">
+          {referral.shelter?.name ?? 'Unknown Shelter'}
+        </TextBold>
         <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
           <TextRegular size="xs" color={Colors.WHITE}>
             {referral.status ?? 'PENDING'}
