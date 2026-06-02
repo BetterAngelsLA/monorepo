@@ -38,7 +38,7 @@ def referral_create(
     assign_object_permissions(
         permission_group.group,
         referral,
-        [ReferralPermissions.CHANGE, ReferralPermissions.DELETE],
+        [ReferralPermissions.VIEW, ReferralPermissions.CHANGE, ReferralPermissions.DELETE],
     )
     return referral
 
