@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo } from 'react';
 import { Dropdown, type DropdownOption } from '../../../base-ui/dropdown';
 import { Form } from '../../../form/Form';
-import { SEARCHABLE_MIN } from '../../constants';
+import { SEARCHABLE_DROPDOWN_MIN } from '../../constants';
 
 export type ServiceCategory = {
   id: string;
@@ -70,6 +70,7 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
     const officialServices = category.services.filter(
       (service) => !service.isOther
     );
+
     const otherServices = category.services.filter(
       (service) => service.isOther
     );
@@ -101,6 +102,7 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
     const selectedByCategory = selectedServiceIds.filter((serviceId) =>
       nextOfficialServiceIds.includes(serviceId)
     );
+
     const nextSelectedOtherByCategory = selectedServiceIds.filter((serviceId) =>
       nextOtherServiceIds.includes(serviceId)
     );
@@ -201,12 +203,11 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
       <Dropdown
         label={category.displayName}
         isMulti={true}
-        isSearchable={options.length > SEARCHABLE_MIN}
+        isSearchable={options.length > SEARCHABLE_DROPDOWN_MIN}
         value={selectedOptions}
         options={options}
         onChange={handleOfficialChange}
         isViewMode={isViewMode}
-        className="min-w-44"
       />
 
       <Dropdown
@@ -217,7 +218,6 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
         options={otherOptions}
         onChange={handleOtherChange}
         isViewMode={isViewMode}
-        className="min-w-44"
         disabled={disabled}
         placeholder={
           otherOptions.length > 0 ? 'Please select' : 'No custom services'

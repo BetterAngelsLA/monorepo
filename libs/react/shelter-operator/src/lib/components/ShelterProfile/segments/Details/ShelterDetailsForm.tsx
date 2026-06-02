@@ -11,16 +11,12 @@ import {
   DEMOGRAPHICS_OPTIONS,
   PARKING_OPTIONS,
   PETS_OPTIONS,
-  SEARCHABLE_MIN,
-  SHELTER_TYPES_OPTIONS,
+  SEARCHABLE_DROPDOWN_MIN,
+  SHELTER_TYPE_OPTIONS,
   SPECIAL_SITUATION_OPTIONS,
   STORAGE_OPTIONS,
 } from '../../constants';
-import {
-  detailsDefaultValues,
-  DetailsFormData,
-  detailsFormSchema,
-} from './formSchema';
+import { defaultFormValues, DetailsFormData, formSchema } from './formSchema';
 
 type TProps = {
   defaultValues?: Partial<DetailsFormData>;
@@ -49,8 +45,8 @@ export function ShelterDetailsForm(props: TProps) {
     formState: { errors, isValid },
     reset,
   } = useForm<DetailsFormData>({
-    resolver: zodResolver(detailsFormSchema),
-    defaultValues: { ...detailsDefaultValues, ...defaultValues },
+    resolver: zodResolver(formSchema),
+    defaultValues: { ...defaultFormValues, ...defaultValues },
   });
 
   function handleCancel() {
@@ -87,7 +83,6 @@ export function ShelterDetailsForm(props: TProps) {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
                   isViewMode={isViewMode}
-                  className="min-w-44"
                 />
               )}
             />
@@ -107,7 +102,6 @@ export function ShelterDetailsForm(props: TProps) {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
                   isViewMode={isViewMode}
-                  className="min-w-44"
                 />
               )}
             />
@@ -117,14 +111,15 @@ export function ShelterDetailsForm(props: TProps) {
               name="shelterTypes"
               inputName="shelterTypesOther"
               label="Shelter Types"
-              inputLabel="Other Funder"
-              options={SHELTER_TYPES_OPTIONS}
-              isSearchable={SHELTER_TYPES_OPTIONS.length > SEARCHABLE_MIN}
+              inputLabel="Other Shelter Type"
+              options={SHELTER_TYPE_OPTIONS}
+              isSearchable={
+                SHELTER_TYPE_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN
+              }
               triggerValue={ShelterChoices.Other}
               inputError={errors.shelterTypesOther?.message}
               isViewMode={isViewMode}
               disabled={disabled}
-              className="min-w-44"
             />
           </Form.Block>
 
@@ -144,7 +139,6 @@ export function ShelterDetailsForm(props: TProps) {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
                   isViewMode={isViewMode}
-                  className="min-w-44"
                 />
               )}
             />
@@ -164,7 +158,6 @@ export function ShelterDetailsForm(props: TProps) {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
                   isViewMode={isViewMode}
-                  className="min-w-44"
                 />
               )}
             />
@@ -184,7 +177,6 @@ export function ShelterDetailsForm(props: TProps) {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
                   isViewMode={isViewMode}
-                  className="min-w-44"
                 />
               )}
             />
@@ -206,7 +198,6 @@ export function ShelterDetailsForm(props: TProps) {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
                   isViewMode={isViewMode}
-                  className="min-w-44"
                 />
               )}
             />

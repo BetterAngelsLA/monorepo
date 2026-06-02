@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { ShelterServices } from '../../components/ShelterProfile/segments/Services';
+import { ShelterServices } from '../../components/ShelterProfile';
 
 export function ShelterServicesPage() {
   const { shelterId } = useParams<{ shelterId: string }>();

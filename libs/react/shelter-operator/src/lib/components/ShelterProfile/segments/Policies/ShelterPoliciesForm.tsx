@@ -52,7 +52,7 @@ export function ShelterPoliciesForm(props: TProps) {
     <div className={mergeCss(['px-6 flex-col flex-1 pb-48', className])}>
       <Form className="flex-1">
         <Form.Header
-          title="Shelter Details"
+          title="Shelter Policies"
           onEditClick={isViewMode ? onEditClick : undefined}
           className="pl-5"
         />
@@ -73,6 +73,7 @@ export function ShelterPoliciesForm(props: TProps) {
                   min={0}
                   onChange={(event) => {
                     const value = event.target.valueAsNumber;
+
                     field.onChange(Number.isNaN(value) ? null : value);
                   }}
                   onBlur={field.onBlur}
@@ -91,9 +92,14 @@ export function ShelterPoliciesForm(props: TProps) {
                   label="On-Site Security"
                   value={
                     BOOLEAN_OPTIONS_WITH_UNKNOWN.find((option) => {
-                      if (field.value === true) return option.value === 'true';
-                      if (field.value === false)
+                      if (field.value === true) {
+                        return option.value === 'true';
+                      }
+
+                      if (field.value === false) {
                         return option.value === 'false';
+                      }
+
                       return option.value === 'null';
                     }) ?? null
                   }
@@ -101,12 +107,13 @@ export function ShelterPoliciesForm(props: TProps) {
                   onChange={(option) => {
                     if (!option || option.value === 'null') {
                       field.onChange(null);
+
                       return;
                     }
+
                     field.onChange(option.value === 'true');
                   }}
                   isViewMode={isViewMode}
-                  className="min-w-44"
                 />
               )}
             />
@@ -119,9 +126,14 @@ export function ShelterPoliciesForm(props: TProps) {
                   label="Visitors Allowed"
                   value={
                     BOOLEAN_OPTIONS_WITH_UNKNOWN.find((option) => {
-                      if (field.value === true) return option.value === 'true';
-                      if (field.value === false)
+                      if (field.value === true) {
+                        return option.value === 'true';
+                      }
+
+                      if (field.value === false) {
                         return option.value === 'false';
+                      }
+
                       return option.value === 'null';
                     }) ?? null
                   }
@@ -134,7 +146,6 @@ export function ShelterPoliciesForm(props: TProps) {
                     field.onChange(option.value === 'true');
                   }}
                   isViewMode={isViewMode}
-                  className="min-w-44"
                 />
               )}
             />
@@ -146,13 +157,12 @@ export function ShelterPoliciesForm(props: TProps) {
               name="exitPolicy"
               inputName="exitPolicyOther"
               label="Exit Policy"
+              inputLabel="Other Exit Policy"
               options={EXIT_POLICY_OPTIONS}
               triggerValue={ExitPolicyChoices.Other}
-              inputLabel="Other Exit Policy"
               inputError={errors.exitPolicyOther?.message}
               isViewMode={isViewMode}
               disabled={disabled}
-              className="min-w-44"
             />
 
             <Controller
@@ -163,9 +173,14 @@ export function ShelterPoliciesForm(props: TProps) {
                   label="Emergency Surge Options"
                   value={
                     BOOLEAN_OPTIONS_WITH_UNKNOWN.find((option) => {
-                      if (field.value === true) return option.value === 'true';
-                      if (field.value === false)
+                      if (field.value === true) {
+                        return option.value === 'true';
+                      }
+
+                      if (field.value === false) {
                         return option.value === 'false';
+                      }
+
                       return option.value === 'null';
                     }) ?? null
                   }
@@ -173,12 +188,13 @@ export function ShelterPoliciesForm(props: TProps) {
                   onChange={(option) => {
                     if (!option || option.value === 'null') {
                       field.onChange(null);
+
                       return;
                     }
+
                     field.onChange(option.value === 'true');
                   }}
                   isViewMode={isViewMode}
-                  className="min-w-44"
                 />
               )}
             />

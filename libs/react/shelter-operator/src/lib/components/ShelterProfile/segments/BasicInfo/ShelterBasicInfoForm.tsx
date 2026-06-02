@@ -13,9 +13,9 @@ import { Switch } from '../../../base-ui/switch';
 import { Form } from '../../../form/Form';
 import { STATUS_COLOR_MAP, STATUS_OPTIONS } from '../../constants';
 import {
+  defaultFormValues,
+  formSchema,
   type BasicInfoFormData,
-  basicInfoDefaultValues,
-  basicInfoFormSchema,
 } from './formSchema';
 
 type TProps = {
@@ -45,8 +45,8 @@ export function ShelterBasicInfoForm(props: TProps) {
     formState: { errors, isValid },
     reset,
   } = useForm<BasicInfoFormData>({
-    resolver: zodResolver(basicInfoFormSchema),
-    defaultValues: { ...basicInfoDefaultValues, ...defaultValues },
+    resolver: zodResolver(formSchema),
+    defaultValues: { ...defaultFormValues, ...defaultValues },
   });
 
   function handleCancel() {
@@ -209,7 +209,6 @@ export function ShelterBasicInfoForm(props: TProps) {
               render={({ field }) => (
                 <Input
                   label="Website"
-                  //   dataType="string"
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}

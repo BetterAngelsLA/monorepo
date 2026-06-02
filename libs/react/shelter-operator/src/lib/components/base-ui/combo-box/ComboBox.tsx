@@ -168,6 +168,7 @@ function ComboBoxInner<T extends string | number = string | number>(
           value={inputValue ?? ''}
           onChange={(event) => {
             const v = (event.target as HTMLInputElement).value;
+
             onInputChange(v === '' ? null : v);
           }}
           disabled={disabled}

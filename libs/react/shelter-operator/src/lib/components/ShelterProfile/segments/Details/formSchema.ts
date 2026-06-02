@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { toDropdownValues } from '../../../base-ui/dropdown';
 import { ShelterProfileType } from '../../types';
 
-export const detailsFormSchema = z.object({
+export const formSchema = z.object({
   demographics: z.array(z.enum(DemographicChoices)),
   demographicsOther: z.string().nullable().optional(),
   specialSituationRestrictions: z.array(
@@ -26,9 +26,9 @@ export const detailsFormSchema = z.object({
   addNotesShelterDetails: z.string(),
 });
 
-export type DetailsFormData = z.infer<typeof detailsFormSchema>;
+export type DetailsFormData = z.infer<typeof formSchema>;
 
-export const detailsDefaultValues: DetailsFormData = {
+export const defaultFormValues: DetailsFormData = {
   demographics: [],
   demographicsOther: undefined,
   specialSituationRestrictions: [],

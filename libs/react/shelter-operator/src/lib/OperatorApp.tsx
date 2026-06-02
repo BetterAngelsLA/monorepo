@@ -15,11 +15,11 @@ import { SelectShelterPage } from './pages/reservation/SelectShelterPage';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
+  ShelterEcosystemPage,
   ShelterOperatingHoursPage,
   ShelterPoliciesPage,
   ShelterServicesPage,
 } from './pages/shelterProfile';
-import { EcosystemPage } from './pages/shelterProfile/EcosystemPage';
 import { SignIn } from './pages/signIn';
 import { ActiveOrgProvider, OperatorAuthProvider } from './providers';
 import {
@@ -76,7 +76,7 @@ export function OperatorApp() {
               />
               <Route
                 path={shelterProfileSegments.ecosystem}
-                element={<EcosystemPage />}
+                element={<ShelterEcosystemPage />}
               />
             </Route>
             <Route path={routePath(paths.shelterManage)}>

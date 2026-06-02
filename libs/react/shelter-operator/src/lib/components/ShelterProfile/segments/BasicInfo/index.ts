@@ -1,6 +1,6 @@
 export {
-  basicInfoDefaultValues,
-  basicInfoFormSchema,
+  defaultFormValues,
+  formSchema,
   type BasicInfoFormData,
 } from './formSchema';
 export { ShelterBasicInfo } from './ShelterBasicInfo';

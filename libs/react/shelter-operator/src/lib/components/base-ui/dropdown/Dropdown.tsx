@@ -21,6 +21,7 @@ import type {
 import { usePortalPosition } from './usePortalPosition';
 
 const CREATE_OPTION_VALUE = '__dropdown_create__';
+const OTHER_OPTION_VALUE = '__dropdown_other__';
 
 export function Dropdown<T extends string | number = string | number>(
   props: DropdownProps<T>
@@ -93,7 +94,7 @@ export function Dropdown<T extends string | number = string | number>(
   const hasSelection = selectedValues.length > 0;
 
   const otherSelected = useMemo(
-    () => selectedValues.some((v) => String(v.value) === '__dropdown_other__'),
+    () => selectedValues.some((v) => String(v.value) === OTHER_OPTION_VALUE),
     [selectedValues]
   );
 
@@ -141,7 +142,7 @@ export function Dropdown<T extends string | number = string | number>(
     !selectedLabelSet.has(normalizedSearchQuery);
 
   const menuOptionsWithoutOther = useMemo(
-    () => options.filter((o) => String(o.value) !== '__dropdown_other__'),
+    () => options.filter((o) => String(o.value) !== OTHER_OPTION_VALUE),
     [options]
   );
 
@@ -156,7 +157,7 @@ export function Dropdown<T extends string | number = string | number>(
           ...main,
           {
             label: 'Other',
-            value: '__dropdown_other__' as T,
+            value: OTHER_OPTION_VALUE as T,
           } as DropdownOption<T>,
         ]
       : main;

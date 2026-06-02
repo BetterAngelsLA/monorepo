@@ -11,7 +11,7 @@ import {
   FUNDERS_OPTIONS,
   LA_CITY_COUNCIL_DISTRICT_OPTIONS,
   LA_SUPERVISORIAL_DISTRICT_OPTIONS,
-  SEARCHABLE_MIN,
+  SEARCHABLE_DROPDOWN_MIN,
   SHELTER_PROGRAMS_OPTIONS,
 } from '../../constants';
 import { defaultFormValues, EcosystemFormData, formSchema } from './formSchema';
@@ -76,7 +76,7 @@ export function ShelterEcosystemForm(props: TProps) {
                 <Dropdown
                   label="City"
                   placeholder="Select a city"
-                  isSearchable={cities.length > SEARCHABLE_MIN}
+                  isSearchable={cities.length > SEARCHABLE_DROPDOWN_MIN}
                   options={cities.map((option) => ({
                     label: option.name,
                     value: option.id,
@@ -93,7 +93,6 @@ export function ShelterEcosystemForm(props: TProps) {
                   }}
                   isViewMode={isViewMode}
                   disabled={disabled}
-                  className="min-w-44"
                 />
               )}
             />
@@ -105,7 +104,7 @@ export function ShelterEcosystemForm(props: TProps) {
                 <Dropdown
                   label="Cities Served"
                   placeholder="Select cities"
-                  isSearchable={cities.length > SEARCHABLE_MIN}
+                  isSearchable={cities.length > SEARCHABLE_DROPDOWN_MIN}
                   isMulti={true}
                   options={cities.map((option) => ({
                     label: option.name,
@@ -125,7 +124,6 @@ export function ShelterEcosystemForm(props: TProps) {
                   }}
                   isViewMode={isViewMode}
                   disabled={disabled}
-                  className="min-w-44"
                 />
               )}
             />
@@ -139,7 +137,7 @@ export function ShelterEcosystemForm(props: TProps) {
                 <Dropdown
                   label="SPA"
                   placeholder="Select a SPA"
-                  isSearchable={spas.length > SEARCHABLE_MIN}
+                  isSearchable={spas.length > SEARCHABLE_DROPDOWN_MIN}
                   options={spas.map((option) => ({
                     label: option.name,
                     value: option.id,
@@ -156,7 +154,6 @@ export function ShelterEcosystemForm(props: TProps) {
                   }}
                   isViewMode={isViewMode}
                   disabled={disabled}
-                  className="min-w-44"
                 />
               )}
             />
@@ -168,7 +165,7 @@ export function ShelterEcosystemForm(props: TProps) {
                 <Dropdown
                   label="SPAs Served"
                   placeholder="Select SPAs"
-                  isSearchable={spas.length > SEARCHABLE_MIN}
+                  isSearchable={spas.length > SEARCHABLE_DROPDOWN_MIN}
                   isMulti={true}
                   options={spas.map((option) => ({
                     label: option.name,
@@ -188,7 +185,6 @@ export function ShelterEcosystemForm(props: TProps) {
                   }}
                   isViewMode={isViewMode}
                   disabled={disabled}
-                  className="min-w-44"
                 />
               )}
             />
@@ -213,7 +209,6 @@ export function ShelterEcosystemForm(props: TProps) {
                   }}
                   isViewMode={isViewMode}
                   disabled={disabled}
-                  className="min-w-44"
                 />
               )}
             />
@@ -236,7 +231,6 @@ export function ShelterEcosystemForm(props: TProps) {
                   }}
                   isViewMode={isViewMode}
                   disabled={disabled}
-                  className="min-w-44"
                 />
               )}
             />
@@ -250,7 +244,7 @@ export function ShelterEcosystemForm(props: TProps) {
                 <Dropdown
                   label="Shelter Programs"
                   isMulti={true}
-                  isSearchable={cities.length > SEARCHABLE_MIN}
+                  isSearchable={cities.length > SEARCHABLE_DROPDOWN_MIN}
                   value={SHELTER_PROGRAMS_OPTIONS.filter((o) =>
                     field.value.includes(o.value)
                   )}
@@ -259,7 +253,6 @@ export function ShelterEcosystemForm(props: TProps) {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
                   isViewMode={isViewMode}
-                  className="min-w-44"
                 />
               )}
             />
@@ -269,14 +262,13 @@ export function ShelterEcosystemForm(props: TProps) {
               name="funders"
               inputName="fundersOther"
               label="Funders"
-              isSearchable={cities.length > SEARCHABLE_MIN}
+              inputLabel="Other Funder"
+              isSearchable={cities.length > SEARCHABLE_DROPDOWN_MIN}
               options={FUNDERS_OPTIONS}
               triggerValue={FunderChoices.Other}
-              inputLabel="Other Funder"
               inputError={errors.fundersOther?.message}
               isViewMode={isViewMode}
               disabled={disabled}
-              className="min-w-44"
             />
           </Form.Block>
 

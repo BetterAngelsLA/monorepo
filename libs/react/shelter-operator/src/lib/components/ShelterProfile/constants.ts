@@ -23,7 +23,7 @@ import {
 } from '@monorepo/react/shelter';
 import { toDropdownOptions } from '../base-ui/dropdown';
 
-export const SEARCHABLE_MIN = 5;
+export const SEARCHABLE_DROPDOWN_MIN = 5;
 
 export const ACCESSIBILITY_OPTIONS = toDropdownOptions(
   enumDisplayAccessibilityChoices
@@ -40,7 +40,7 @@ export const SPECIAL_SITUATION_OPTIONS = toDropdownOptions(
   [SpecialSituationRestrictionChoices.None]
 );
 
-export const SHELTER_TYPES_OPTIONS = toDropdownOptions(
+export const SHELTER_TYPE_OPTIONS = toDropdownOptions(
   enumDisplayShelterChoices,
   [ShelterChoices.Other]
 );
