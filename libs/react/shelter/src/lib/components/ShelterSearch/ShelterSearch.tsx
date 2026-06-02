@@ -1,9 +1,10 @@
 import { FilterIcon, SearchIcon } from '@monorepo/react/icons';
 import { useAtom, useSetAtom } from 'jotai';
 import { useResetAtom } from 'jotai/utils';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  shelterNameFilterAtom,
   shelterNameSearchValueAtom,
   shelterPropertyFiltersAtom,
   shelterSearchSubmissionAtom,
@@ -17,7 +18,10 @@ type TProps = {
   mapBoundsFilter?: TMapBounds;
   nameSearchPinFitRequestId?: number;
   onShelterPinsReadyForMapFit?: (pinLocations: TLatLng[]) => void;
-  onNameSearch: (options?: { preserveMapBounds?: boolean }) => void;
+  onNameSearch: (options?: {
+    preserveMapBounds?: boolean;
+    restoreMapBounds?: boolean;
+  }) => void;
   setLocation: (location: TLatLng, mapBounds?: TMapBounds) => void;
 };
 
@@ -31,7 +35,7 @@ export function ShelterSearch(props: TProps) {
   } = props;
   const navigate = useNavigate();
   const [filters] = useAtom(shelterPropertyFiltersAtom);
-  const [nameFilter, setNameFilter] = useState<string>();
+  const setNameFilter = useSetAtom(shelterNameFilterAtom);
   const resetFilters = useResetAtom(shelterPropertyFiltersAtom);
   const setNameSearchValue = useSetAtom(shelterNameSearchValueAtom);
   const [searchSubmission, setSearchSubmission] = useAtom(
@@ -55,16 +59,22 @@ export function ShelterSearch(props: TProps) {
       setNameFilter(trimmed);
       setNameSearchValue(trimmed);
       onNameSearch({ preserveMapBounds: !!pendingLocation?.location });
-    } else if (pendingLocation?.location) {
-      // Location only — let the map's location effect handle the search
+    } else {
+      // Name cleared: reset name filter and re-fire with current map bounds.
+      // If there's also a location, the map's location effect fires its own
+      // search; otherwise restore map bounds so results don't stay blank.
       setNameFilter(undefined);
       setNameSearchValue('');
+      if (!pendingLocation?.location) {
+        onNameSearch({ restoreMapBounds: true });
+      }
     }
   }, [
     searchSubmission,
     setSearchSubmission,
     setLocation,
     resetFilters,
+    setNameFilter,
     setNameSearchValue,
     onNameSearch,
   ]);
@@ -99,7 +109,6 @@ export function ShelterSearch(props: TProps) {
         className="mt-8"
         mapBoundsFilter={mapBoundsFilter}
         propertyFilters={filters}
-        nameFilter={nameFilter}
         nameSearchPinFitRequestId={nameSearchPinFitRequestId}
         onShelterPinsReadyForMapFit={onShelterPinsReadyForMapFit}
       />

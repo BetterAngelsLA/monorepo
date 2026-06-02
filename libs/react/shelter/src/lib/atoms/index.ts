@@ -1,6 +1,7 @@
 export { nullShelterPropertyFilters, shelterPropertyFiltersAtom } from './shelterPropertyFiltersAtom';
 export { searchTriggerAtom } from './searchTriggerAtom';
 export {
+  shelterNameFilterAtom,
   shelterNameSearchValueAtom,
   shelterSearchSubmissionAtom,
 } from './shelterSearchStateAtom';

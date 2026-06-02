@@ -1,9 +1,13 @@
 import { useQuery } from '@apollo/client/react';
 import { InfiniteList } from '@monorepo/react/components';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { MaxStayInput } from '../../apollo';
-import { searchTriggerAtom, sheltersAtom } from '../../atoms';
+import {
+  searchTriggerAtom,
+  shelterNameFilterAtom,
+  sheltersAtom,
+} from '../../atoms';
 import {
   ViewSheltersDocument,
   ViewSheltersQuery,
@@ -31,7 +35,6 @@ type TProps = {
   className?: string;
   mapBoundsFilter?: TMapBounds | null;
   propertyFilters?: TShelterPropertyFilters;
-  nameFilter?: string;
   /** Incremented on each name search submit; used to fit the map after fresh query results. */
   nameSearchPinFitRequestId?: number;
   onShelterPinsReadyForMapFit?: (pinLocations: TLatLng[]) => void;
@@ -42,12 +45,12 @@ export function SheltersDisplay(props: TProps) {
     mapBoundsFilter,
     propertyFilters,
     className = '',
-    nameFilter,
     nameSearchPinFitRequestId = 0,
     onShelterPinsReadyForMapFit,
   } = props;
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
   const [searchTrigger] = useAtom(searchTriggerAtom);
+  const nameFilter = useAtomValue(shelterNameFilterAtom);
 
   const queryVariables = useMemo<ViewSheltersQueryVariables | undefined>(() => {
     let vars: ViewSheltersQueryVariables | undefined;
@@ -202,7 +205,7 @@ export function SheltersDisplay(props: TProps) {
         </div>
       );
     },
-    [queryVariables?.filters]
+    [nameFilter, mapBoundsFilter, propertyFilters]
   );
 
   return (

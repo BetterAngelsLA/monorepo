@@ -276,11 +276,26 @@ export function HomePage() {
     setPlaceViewportToFit(null);
   }
 
-  function onNameSearch(options?: { preserveMapBounds?: boolean }) {
+  function onNameSearch(options?: {
+    preserveMapBounds?: boolean;
+    restoreMapBounds?: boolean;
+  }) {
     if (options?.preserveMapBounds) {
       // Name + location: the search will be triggered by onPlaceViewportFitted
       // after the map settles on the actual rendered bounds.
       setShowSearchButton(false);
+      return;
+    }
+
+    if (options?.restoreMapBounds) {
+      // Name cleared: restore the current visible map area as the bounds filter
+      // so results return to the map-area view instead of staying blank.
+      const currentBounds = map?.getBounds();
+      if (currentBounds) {
+        setMapBoundsFilter(toMapBounds(currentBounds));
+      }
+      setShowSearchButton(false);
+      setSearchTrigger((n) => n + 1);
       return;
     }
 
