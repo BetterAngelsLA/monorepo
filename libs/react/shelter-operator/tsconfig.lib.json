@@ -1,13 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "references": [
-    {
-      "path": "../shelter/tsconfig.lib.json"
-    }
-  ],
   "compilerOptions": {
-    "composite": true,
-    "declaration": true,
     "outDir": "../../../dist/out-tsc",
     "types": ["node", "vite/client", "google.maps"]
   },

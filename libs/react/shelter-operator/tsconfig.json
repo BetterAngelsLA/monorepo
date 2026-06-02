@@ -4,8 +4,7 @@
     "allowJs": false,
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "ignoreDeprecations": "6.0" // TODO: FIX by migrating to 7.0 conventions
+    "strict": true
   },
   "files": [],
   "include": [],
