@@ -160,6 +160,7 @@ export function ReferralForm({ onCancel, onSubmit }: TProps) {
           value={notes}
           onChangeText={setNotes}
           accessibilityLabel="referral notes"
+          accessibilityHint="optional notes to include with the referral"
         />
       </ScrollView>
     </View>
