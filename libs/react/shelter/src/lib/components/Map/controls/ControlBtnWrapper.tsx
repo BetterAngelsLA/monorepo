@@ -11,7 +11,7 @@ export function ControlBtnWrapper(props: TProps) {
   const parentCss = [
     'w-10',
     'h-10',
-    'bg-white',
+    'bg-red',
     'border',
     'border-neutral-90',
     'rounded-lg',
@@ -19,5 +19,5 @@ export function ControlBtnWrapper(props: TProps) {
   ];
 
   return <div className={mergeCss(parentCss)}>{children}</div>;
-  
+
 }
