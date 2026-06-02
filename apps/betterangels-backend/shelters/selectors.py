@@ -8,10 +8,12 @@ managers (``managers.py``) and Strawberry ``get_queryset`` hooks
 
 import datetime
 from typing import TYPE_CHECKING
+from dataclasses import dataclass
 
 from django.db.models import Exists, OuterRef, Q, QuerySet
 from organizations.models import Organization
 from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices, StatusChoices
+from client.enums import GenderEnum, RaceEnum, VeteranStatusEnum
 
 if TYPE_CHECKING:
     from accounts.models import User
@@ -19,6 +21,11 @@ if TYPE_CHECKING:
     from django.contrib.auth.models import AnonymousUser
     from shelters.models import Shelter
 
+@dataclass
+class DemographicFilters:
+    gender: str | None = None
+    race: str | None = None
+    veteran_status: str | None = None
 
 def shelter_list(
     queryset: "QuerySet[Shelter]", *, user: "AbstractBaseUser | AnonymousUser | None" = None
