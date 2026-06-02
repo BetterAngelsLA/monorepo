@@ -11,9 +11,49 @@ from shelters.services.utils import (
     _prepare_shelter_data,
     _set_m2m_from_enums,
 )
+from strawberry import UNSET
 
 if TYPE_CHECKING:
     from accounts.models import User
+
+
+def _assert_org_membership(
+    user: "User", org_id: Any, *, message: str = "You do not have permission to perform this action."
+) -> None:
+    if not Organization.objects.filter(pk=org_id, users=user).exists():
+        raise PermissionError(message)
+
+
+def _apply_services(shelter: Shelter, raw_services: List[Any]) -> None:
+    service_pks: list[Any] = []
+    pending_entries: list[tuple[int, str]] = []
+    seen_pending: set[tuple[int, str]] = set()
+
+    for entry in raw_services:
+        if isinstance(entry, dict):
+            svc_id = entry.get("id")
+            cat_id = entry.get("category_id")
+            display = str(entry.get("display_name") or "").strip()
+            if svc_id:
+                service_pks.append(svc_id)
+            elif cat_id and display:
+                try:
+                    norm_cat = int(cat_id)
+                except (TypeError, ValueError) as exc:
+                    raise ValidationError("Invalid new service entry.") from exc
+                key = (norm_cat, display.casefold())
+                if key not in seen_pending:
+                    seen_pending.add(key)
+                    pending_entries.append((norm_cat, display))
+            else:
+                raise ValidationError("Each service must have either 'id' or 'categoryId' + 'displayName'.")
+        else:
+            service_pks.append(entry)
+
+    shelter.services.set(Service.objects.filter(pk__in=service_pks))
+    pending_service_objects = resolve_pending_service_entries(pending_entries)
+    if pending_service_objects:
+        shelter.services.add(*pending_service_objects)
 
 
 def resolve_pending_service_entries(entries: list[tuple[int, str]]) -> list[Service]:
@@ -107,48 +147,61 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     org_id = data.get("organization")
-    if not Organization.objects.filter(pk=org_id, users=user).exists():
-        raise PermissionError("You do not have permission to create a shelter for this organization.")
+    _assert_org_membership(
+        user, org_id, message="You do not have permission to create a shelter for this organization."
+    )
 
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
-
-    # ``services`` is a unified list — split into existing PKs and pending entries.
     raw_services: List[Any] = m2m_data.pop("services", []) or []
-    service_pks: list[Any] = []
-    pending_entries: list[tuple[int, str]] = []
-    seen_pending: set[tuple[int, str]] = set()
-
-    for entry in raw_services:
-        if isinstance(entry, dict):
-            svc_id = entry.get("id")
-            cat_id = entry.get("category_id")
-            display = str(entry.get("display_name") or "").strip()
-            if svc_id:
-                service_pks.append(svc_id)
-            elif cat_id and display:
-                try:
-                    norm_cat = int(cat_id)
-                except (TypeError, ValueError) as exc:
-                    raise ValidationError("Invalid new service entry.") from exc
-                key = (norm_cat, display.casefold())
-                if key not in seen_pending:
-                    seen_pending.add(key)
-                    pending_entries.append((norm_cat, display))
-            else:
-                raise ValidationError("Each service must have either 'id' or 'categoryId' + 'displayName'.")
-        else:
-            service_pks.append(entry)
 
     shelter = Shelter(**scalar_data)
     shelter.full_clean()
     shelter.save()
 
     _set_m2m_from_enums(shelter, m2m_data)
-    if service_pks:
-        shelter.services.set(Service.objects.filter(pk__in=service_pks))
-    pending_service_objects = resolve_pending_service_entries(pending_entries)
-    if pending_service_objects:
-        shelter.services.add(*pending_service_objects)
+    _apply_services(shelter, raw_services)
     _create_schedules(shelter, schedules_data)
+
+    return shelter
+
+
+@transaction.atomic
+def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
+    """Update an existing Shelter with partial data.
+
+    Only fields present in *data* (i.e. not ``UNSET``) are modified.
+    Schedules and services use full-replacement semantics when provided.
+
+    Raises:
+        ``Shelter.DoesNotExist`` when no shelter matches the given ID.
+        ``PermissionError`` when the user is not a member of the shelter's organization.
+        ``django.core.exceptions.ValidationError`` on invalid data.
+    """
+    shelter_id = data.pop("id")
+    data = {k: v for k, v in data.items() if v is not UNSET}
+
+    shelter = Shelter.objects.get(pk=shelter_id)
+
+    _assert_org_membership(user, shelter.organization_id, message="You do not have permission to update this shelter.")
+
+    has_schedules = "schedules" in data
+    has_services = "services" in data
+
+    scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
+    raw_services: List[Any] = m2m_data.pop("services", []) or []
+
+    for k, v in scalar_data.items():
+        setattr(shelter, k, v)
+    shelter.full_clean()
+    shelter.save()
+
+    _set_m2m_from_enums(shelter, m2m_data)
+
+    if has_services:
+        _apply_services(shelter, raw_services)
+
+    if has_schedules:
+        shelter.schedules.all().delete()
+        _create_schedules(shelter, schedules_data)
 
     return shelter

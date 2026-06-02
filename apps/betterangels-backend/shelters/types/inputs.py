@@ -32,7 +32,7 @@ from shelters.enums import (
     StorageChoices,
     VaccinationRequirementChoices,
 )
-from strawberry import ID, Maybe, auto
+from strawberry import ID, UNSET, Maybe, auto
 
 
 @strawberry.input
@@ -128,6 +128,43 @@ class CreateShelterInput:
     # FK lookups to single City / SPA — accept the model PK directly.
     city_id: Maybe[ID | None]
     spa_id: Maybe[ID | None]
+
+
+@strawberry_django.input(models.Shelter, partial=True)
+class UpdateShelterInput:
+    id: ID
+    description: Maybe[str] = UNSET
+    is_private: Maybe[bool] = UNSET
+    city_id: Maybe[ID | None] = UNSET
+    spa_id: Maybe[ID | None] = UNSET
+    phone: Maybe[Optional[PhoneNumberScalar]] = UNSET
+    add_notes_sleeping_details: Maybe[Optional[str]] = UNSET
+    add_notes_shelter_details: Maybe[Optional[str]] = UNSET
+    other_rules: Maybe[Optional[str]] = UNSET
+    other_services: Maybe[Optional[str]] = UNSET
+    entry_info: Maybe[Optional[str]] = UNSET
+    subjective_review: Maybe[Optional[str]] = UNSET
+
+    # M2M enum fields
+    accessibility: Maybe[List[AccessibilityChoices]] = UNSET
+    demographics: Maybe[List[DemographicChoices]] = UNSET
+    special_situation_restrictions: Maybe[List[SpecialSituationRestrictionChoices]] = UNSET
+    shelter_types: Maybe[List[ShelterTypeChoices]] = UNSET
+    room_styles: Maybe[List[RoomStyleChoices]] = UNSET
+    storage: Maybe[List[StorageChoices]] = UNSET
+    pets: Maybe[List[PetChoices]] = UNSET
+    parking: Maybe[List[ParkingChoices]] = UNSET
+    entry_requirements: Maybe[List[EntryRequirementChoices]] = UNSET
+    referral_requirement: Maybe[List[ReferralRequirementChoices]] = UNSET
+    vaccination_requirement: Maybe[List[VaccinationRequirementChoices]] = UNSET
+    exit_policy: Maybe[List[ExitPolicyChoices]] = UNSET
+    shelter_programs: Maybe[List[ShelterProgramChoices]] = UNSET
+    funders: Maybe[List[FunderChoices]] = UNSET
+
+    # Nested input types
+    location: Maybe[Optional[ShelterLocationInput]] = UNSET
+    schedules: Maybe[Optional[List[ScheduleInput]]] = UNSET
+    services: Maybe[Optional[List[ServiceInput]]] = UNSET
 
 
 @strawberry.input
