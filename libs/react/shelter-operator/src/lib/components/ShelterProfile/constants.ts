@@ -6,14 +6,18 @@ import {
   enumDisplayFunderChoices,
   enumDisplayParkingChoices,
   enumDisplayPetChoices,
+  enumDisplayShelterChoices,
   enumDisplayShelterProgramChoices,
+  enumDisplaySpecialSituationRestrictionChoices,
   enumDisplayStorageChoices,
   enumStatusChoices,
   ExitPolicyChoices,
   FunderChoices,
   ParkingChoices,
   PetChoices,
+  ShelterChoices,
   ShelterProgramChoices,
+  SpecialSituationRestrictionChoices,
   StatusChoices,
   StorageChoices,
 } from '@monorepo/react/shelter';
@@ -30,6 +34,16 @@ export const STATUS_OPTIONS = toDropdownOptions(enumStatusChoices);
 export const DEMOGRAPHICS_OPTIONS = toDropdownOptions(enumDisplayDemographics, [
   DemographicChoices.Other,
 ]);
+
+export const SPECIAL_SITUATION_OPTIONS = toDropdownOptions(
+  enumDisplaySpecialSituationRestrictionChoices,
+  [SpecialSituationRestrictionChoices.None]
+);
+
+export const SHELTER_TYPES_OPTIONS = toDropdownOptions(
+  enumDisplayShelterChoices,
+  [ShelterChoices.Other]
+);
 
 export const STORAGE_OPTIONS = toDropdownOptions(enumDisplayStorageChoices, [
   StorageChoices.NoStorage,

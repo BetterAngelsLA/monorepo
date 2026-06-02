@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
+import { ShelterChoices } from '@monorepo/react/shelter';
 import { Controller, useForm } from 'react-hook-form';
+import { ComboBox } from '../../../base-ui/combo-box';
 import { Dropdown } from '../../../base-ui/dropdown';
 import { Input } from '../../../base-ui/input';
 import { Form } from '../../../form/Form';
@@ -9,6 +11,9 @@ import {
   DEMOGRAPHICS_OPTIONS,
   PARKING_OPTIONS,
   PETS_OPTIONS,
+  SEARCHABLE_MIN,
+  SHELTER_TYPES_OPTIONS,
+  SPECIAL_SITUATION_OPTIONS,
   STORAGE_OPTIONS,
 } from '../../constants';
 import {
@@ -67,10 +72,6 @@ export function ShelterDetailsForm(props: TProps) {
           onSubmit={onSubmit ? handleSubmit(onSubmit) : undefined}
         >
           <Form.Block>
-            {/*
-                demographics/demographicsOther combo-box
-                TODO: abstract out combo-box at next occurrence
-            */}
             <Controller
               name="demographics"
               control={control}
@@ -89,6 +90,41 @@ export function ShelterDetailsForm(props: TProps) {
                   className="min-w-44"
                 />
               )}
+            />
+
+            <Controller
+              name="specialSituationRestrictions"
+              control={control}
+              render={({ field }) => (
+                <Dropdown
+                  label="Special Situation Restrictions"
+                  isMulti={true}
+                  value={SPECIAL_SITUATION_OPTIONS.filter((o) =>
+                    field.value.includes(o.value)
+                  )}
+                  options={SPECIAL_SITUATION_OPTIONS}
+                  onChange={(options) => {
+                    field.onChange(options ? options.map((o) => o.value) : []);
+                  }}
+                  isViewMode={isViewMode}
+                  className="min-w-44"
+                />
+              )}
+            />
+
+            <ComboBox
+              control={control}
+              name="shelterTypes"
+              inputName="shelterTypesOther"
+              label="Shelter Types"
+              inputLabel="Other Funder"
+              options={SHELTER_TYPES_OPTIONS}
+              isSearchable={SHELTER_TYPES_OPTIONS.length > SEARCHABLE_MIN}
+              triggerValue={ShelterChoices.Other}
+              inputError={errors.shelterTypesOther?.message}
+              isViewMode={isViewMode}
+              disabled={disabled}
+              className="min-w-44"
             />
           </Form.Block>
 
