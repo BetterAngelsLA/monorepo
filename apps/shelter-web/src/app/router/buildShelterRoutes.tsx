@@ -1,8 +1,10 @@
 import {
   privacyPolicyPath,
   shelterDetailsPath,
+  shelterFiltersPath,
   shelterGalleryPath,
   shelterHomePath,
+  shelterSearchPath,
   shelterVideoPath,
   signInPath,
 } from '@monorepo/react/shelter';
@@ -25,8 +27,8 @@ export function buildShelterRoutes() {
         element={<HomeRoute />}
       >
         {/* Nested so HomePage stays mounted when opening overlays, preserving mapBoundsFilter state */}
-        <Route path="filters" element={<FiltersRoute />} />
-        <Route path="search" element={<SearchRoute />} />
+        <Route path={shelterFiltersPath} element={<FiltersRoute />} />
+        <Route path={shelterSearchPath} element={<SearchRoute />} />
       </Route>
       <Route
         key={shelterDetailsPath}
