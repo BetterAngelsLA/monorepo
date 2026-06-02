@@ -78,7 +78,6 @@ type AdminShelterType {
   addNotesShelterDetails: String
   bedFees: String
   city: CityType
-  citiesServed: [CityType!]!
   cityCouncilDistrict: Int
   curfew: Time
   demographics: [DemographicType!]!
@@ -115,7 +114,6 @@ type AdminShelterType {
   shelterTypes: [ShelterTypeType!]!
   shelterTypesOther: String
   spa: SPAType
-  spasServed: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
   photos: [ShelterPhotoType!]!
   isPrivate: Boolean!
@@ -2300,7 +2298,6 @@ type ShelterType {
   addNotesShelterDetails: String
   bedFees: String
   city: CityType
-  citiesServed: [CityType!]!
   cityCouncilDistrict: Int
   curfew: Time
   demographics: [DemographicType!]!
@@ -2337,7 +2334,6 @@ type ShelterType {
   shelterTypes: [ShelterTypeType!]!
   shelterTypesOther: String
   spa: SPAType
-  spasServed: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
   photos: [ShelterPhotoType!]!
   isPrivate: Boolean!
