@@ -6,7 +6,11 @@ import pghistory
 from betterangels_backend import settings
 from clients.enums import (
     AdaAccommodationEnum,
+    AdlCapacityEnum,
     ClientDocumentNamespaceEnum,
+    ClientMedicalNeedEnum,
+    ClientStatusEnum,
+    DestinationEnum,
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
@@ -18,11 +22,13 @@ from clients.enums import (
     PronounEnum,
     RaceEnum,
     RelationshipTypeEnum,
+    SexualOrientationEnum,
     SocialMediaEnum,
     VeteranStatusEnum,
 )
 from common.constants import CALIFORNIA_ID_REGEX
 from common.models import Attachment, BaseModel, PhoneNumber
+from shelters.enums import FunderChoices, PetChoices
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import PointField
@@ -97,6 +103,8 @@ class AbstractClientProfile(BaseModel):
         base_field=TextChoicesField(choices_enum=AdaAccommodationEnum), blank=True, null=True
     )
     address = models.TextField(blank=True, null=True)
+    adl_capacity = TextChoicesField(choices_enum=AdlCapacityEnum, blank=True, null=True)
+    agency = ArrayField(base_field=TextChoicesField(choices_enum=HmisAgencyEnum), blank=True, null=True)
     california_id = models.CharField(
         max_length=8,
         unique=True,
@@ -106,18 +114,31 @@ class AbstractClientProfile(BaseModel):
             RegexValidator(regex=CALIFORNIA_ID_REGEX, message="California ID must be 1 letter followed by 7 numbers")
         ],
     )
+    criminal_history = models.BooleanField(blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
+    destination = TextChoicesField(choices_enum=DestinationEnum, blank=True, null=True)
     documents = GenericRelation(Attachment)
     email = models.EmailField(unique=True, null=True, blank=True)
     eye_color = TextChoicesField(choices_enum=EyeColorEnum, blank=True, null=True)
     first_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
+    funding_source = ArrayField(base_field=TextChoicesField(choices_enum=FunderChoices), blank=True, null=True)
     hair_color = TextChoicesField(choices_enum=HairColorEnum, blank=True, null=True)
+    harm_reduction = models.BooleanField(blank=True, null=True)
     height_in_inches = models.FloatField(blank=True, null=True)
+    homelessness_notes = models.TextField(blank=True, null=True)
     important_notes = models.TextField(blank=True, null=True)
+    income_annual = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    income_source = models.TextField(blank=True, null=True)
+    justice_involvement_details = models.TextField(blank=True, null=True)
     last_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
     living_situation = TextChoicesField(choices_enum=LivingSituationEnum, blank=True, null=True)
     mailing_address = models.TextField(blank=True, null=True)
     marital_status = TextChoicesField(choices_enum=MaritalStatusEnum, blank=True, null=True)
+    medical_needs = ArrayField(
+        base_field=TextChoicesField(choices_enum=ClientMedicalNeedEnum), blank=True, null=True
+    )
+    medical_notes = models.TextField(blank=True, null=True)
+    pets = ArrayField(base_field=TextChoicesField(choices_enum=PetChoices), blank=True, null=True)
     phone_number = PhoneNumberField(region="US", blank=True, null=True)
     phone_numbers = GenericRelation(PhoneNumber)
     physical_description = models.TextField(blank=True, null=True)
@@ -128,9 +149,16 @@ class AbstractClientProfile(BaseModel):
     preferred_language = TextChoicesField(choices_enum=LanguageEnum, blank=True, null=True)
     pronouns = TextChoicesField(choices_enum=PronounEnum, blank=True, null=True)
     pronouns_other = models.CharField(max_length=100, null=True, blank=True)
+    requires_transportation = models.BooleanField(blank=True, null=True)
     residence_address = models.TextField(blank=True, null=True)
     residence_geolocation = PointField(srid=4326, geography=True, blank=True, null=True)
+    sexual_orientation = ArrayField(
+        base_field=TextChoicesField(choices_enum=SexualOrientationEnum), blank=True, null=True
+    )
+    shelter_unit = models.CharField(max_length=255, blank=True, null=True)
+    social_security_number = models.CharField(max_length=11, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
+    status = TextChoicesField(choices_enum=ClientStatusEnum, blank=True, null=True)
     unhoused_start_date = models.DateField(blank=True, null=True)
 
     class Meta:
@@ -149,6 +177,7 @@ class ClientProfile(AbstractClientProfile):
     nickname = models.CharField(max_length=50, blank=True, null=True)
     profile_photo = models.ImageField(upload_to=get_client_profile_photo_file_path, blank=True, null=True)
     race = TextChoicesField(choices_enum=RaceEnum, blank=True, null=True)
+    spa = models.ManyToManyField("shelters.SPA", blank=True, related_name="client_profiles")
     veteran_status = TextChoicesField(choices_enum=VeteranStatusEnum, blank=True, null=True)
 
     @model_property
