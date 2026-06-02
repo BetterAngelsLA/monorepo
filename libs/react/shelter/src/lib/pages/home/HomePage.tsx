@@ -92,7 +92,6 @@ export function HomePage() {
   const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
   const [hasInitialized, setHasInitialized] = useState(false);
   const [nameSearchPinFitRequestId, setNameSearchPinFitRequestId] = useState(0);
-  const [locationSearchInputKey, setLocationSearchInputKey] = useState(0);
   const [placeViewportToFit, setPlaceViewportToFit] =
     useState<TMapBounds | null>(null);
   const setSearchTrigger = useSetAtom(searchTriggerAtom);
@@ -181,7 +180,6 @@ export function HomePage() {
 
     setMapBoundsFilter(toMapBounds(bounds));
     setShowSearchButton(false);
-    setLocationSearchInputKey((k) => k + 1);
     setSearchTrigger((n) => n + 1);
   }
 
@@ -313,7 +311,6 @@ export function HomePage() {
         />
       </MaxWLayout>
       <ShelterSearch
-        locationSearchInputKey={locationSearchInputKey}
         mapBoundsFilter={mapBoundsFilter}
         nameSearchPinFitRequestId={nameSearchPinFitRequestId}
         onShelterPinsReadyForMapFit={onShelterPinsReadyForMapFit}

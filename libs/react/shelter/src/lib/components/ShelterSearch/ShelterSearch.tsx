@@ -1,19 +1,19 @@
 import { FilterIcon, SearchIcon } from '@monorepo/react/icons';
 import { useAtom, useSetAtom } from 'jotai';
 import { useResetAtom } from 'jotai/utils';
-import { useCallback, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { shelterPropertyFiltersAtom } from '../../atoms';
-import { shelterFiltersPath } from '../../constants';
+import {
+  shelterNameSearchValueAtom,
+  shelterPropertyFiltersAtom,
+  shelterSearchSubmissionAtom,
+} from '../../atoms';
+import { shelterFiltersPath, shelterSearchPath } from '../../constants';
 import { TLatLng, TMapBounds } from '../Map';
-import { ModalAnimationEnum } from '../Modal';
-import { modalAtom } from '../Modal/modalAtom';
 import { FilterPills } from '../ShelterFilters';
-import { SearchModalContent, SearchModalFooter } from './SearchModalContent';
 import { SheltersDisplay } from './SheltersDisplay';
 
 type TProps = {
-  locationSearchInputKey?: number;
   mapBoundsFilter?: TMapBounds;
   nameSearchPinFitRequestId?: number;
   onShelterPinsReadyForMapFit?: (pinLocations: TLatLng[]) => void;
@@ -23,7 +23,6 @@ type TProps = {
 
 export function ShelterSearch(props: TProps) {
   const {
-    locationSearchInputKey = 0,
     mapBoundsFilter,
     nameSearchPinFitRequestId = 0,
     onShelterPinsReadyForMapFit,
@@ -34,86 +33,48 @@ export function ShelterSearch(props: TProps) {
   const [filters] = useAtom(shelterPropertyFiltersAtom);
   const [nameFilter, setNameFilter] = useState<string>();
   const resetFilters = useResetAtom(shelterPropertyFiltersAtom);
-  const [nameSearchValue, setNameSearchValue] = useState('');
-  const setModal = useSetAtom(modalAtom);
-  const nameSearchValueRef = useRef(nameSearchValue);
-  nameSearchValueRef.current = nameSearchValue;
-  const pendingSelectionRef = useRef<{
-    location?: TLatLng;
-    mapBounds?: TMapBounds;
-  } | null>(null);
+  const setNameSearchValue = useSetAtom(shelterNameSearchValueAtom);
+  const [searchSubmission, setSearchSubmission] = useAtom(
+    shelterSearchSubmissionAtom
+  );
 
-  const closeModal = useCallback(() => {
-    setModal(null);
-  }, [setModal]);
+  // React to submissions from SearchPage
+  useEffect(() => {
+    if (!searchSubmission) return;
+
+    const { nameValue, pendingLocation } = searchSubmission;
+    setSearchSubmission(null);
+
+    if (pendingLocation?.location) {
+      setLocation(pendingLocation.location, pendingLocation.mapBounds);
+    }
+
+    const trimmed = nameValue.trim();
+    if (trimmed) {
+      resetFilters();
+      setNameFilter(trimmed);
+      setNameSearchValue(trimmed);
+      onNameSearch({ preserveMapBounds: !!pendingLocation?.location });
+    } else if (pendingLocation?.location) {
+      // Location only — let the map's location effect handle the search
+      setNameFilter(undefined);
+      setNameSearchValue('');
+    }
+  }, [
+    searchSubmission,
+    setSearchSubmission,
+    setLocation,
+    resetFilters,
+    setNameSearchValue,
+    onNameSearch,
+  ]);
 
   function onFilterClick() {
     navigate(shelterFiltersPath);
   }
 
-  function onNameSearchChange(value: string) {
-    setNameSearchValue(value);
-    if (!value.trim()) {
-      setNameFilter(undefined);
-    }
-  }
-
-  function applyNameSearch(
-    value: string,
-    options?: { preserveMapBounds?: boolean }
-  ) {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      return;
-    }
-
-    resetFilters();
-    setNameFilter(trimmed);
-    onNameSearch({
-      preserveMapBounds:
-        options?.preserveMapBounds ??
-        !!pendingSelectionRef.current?.location,
-    });
-  }
-
-  function onSearchClick(value: string) {
-    applyNameSearch(value);
-  }
-
-  function onSearchLocationSelect(location: TLatLng, mapBounds?: TMapBounds) {
-    pendingSelectionRef.current = { location, mapBounds };
-  }
-
-  function handleDone() {
-    const pending = pendingSelectionRef.current;
-    const hasLocation = !!pending?.location;
-
-    if (hasLocation && pending?.location) {
-      setLocation(pending.location, pending.mapBounds);
-    }
-
-    applyNameSearch(nameSearchValueRef.current, { preserveMapBounds: hasLocation });
-
-    pendingSelectionRef.current = null;
-    closeModal();
-  }
-
-  function openSearchModal() {
-    pendingSelectionRef.current = null;
-    setModal({
-      content: (
-        <SearchModalContent
-          locationSearchInputKey={locationSearchInputKey}
-          initialNameSearchValue={nameSearchValueRef.current}
-          onNameSearchChange={onNameSearchChange}
-          onSearchClick={onSearchClick}
-          setLocation={onSearchLocationSelect}
-        />
-      ),
-      type: 'fullscreen',
-      animation: ModalAnimationEnum.SLIDE_UP,
-      footer: <SearchModalFooter onDone={handleDone} />,
-    });
+  function onSearchClick() {
+    navigate(shelterSearchPath);
   }
 
   return (
@@ -121,7 +82,7 @@ export function ShelterSearch(props: TProps) {
       <div className="mt-4 flex flex-col items-center justify-between">
         <div className="flex items-center justify-between w-full">
           <button
-            onClick={openSearchModal}
+            onClick={onSearchClick}
             className="flex text-neutral-70 text-sm items-center border rounded-lg border-neutral-90 p-4 w-full cursor-pointer"
           >
             <SearchIcon className="text-neutral-70 w-4 h-4 mr-4" />

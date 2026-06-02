@@ -11,6 +11,7 @@ import { FiltersRoute } from '../routes/filters.route';
 import { GalleryRoute } from '../routes/gallery.route';
 import { HomeRoute } from '../routes/home.route';
 import { PolicyRoute } from '../routes/policy.route';
+import { SearchRoute } from '../routes/search.route';
 import { ShelterRoute } from '../routes/shelter.route';
 import { SignInRoute } from '../routes/signin.route';
 import { VideoRoute } from '../routes/video.route';
@@ -23,8 +24,9 @@ export function buildShelterRoutes() {
         path={shelterHomePath}
         element={<HomeRoute />}
       >
-        {/* Nested so HomePage stays mounted when opening filters, preserving mapBoundsFilter state */}
+        {/* Nested so HomePage stays mounted when opening overlays, preserving mapBoundsFilter state */}
         <Route path="filters" element={<FiltersRoute />} />
+        <Route path="search" element={<SearchRoute />} />
       </Route>
       <Route
         key={shelterDetailsPath}
