@@ -34,7 +34,6 @@ from import_export.results import RowResult
 from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from organizations.models import Organization
 from pghistory.models import MiddlewareEvents
-from shelters.permissions import ShelterFieldPermissions
 
 from .enums import (
     AccessibilityChoices,
@@ -50,7 +49,6 @@ from .enums import (
     ShelterChoices,
     ShelterPhotoTypeChoices,
     ShelterProgramChoices,
-    SPAChoices,
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
@@ -78,6 +76,7 @@ from .models import (
     Service,
     ServiceCategory,
     Shelter,
+    ShelterAvailability,
     ShelterPhoto,
     ShelterProgram,
     ShelterType,
@@ -235,7 +234,17 @@ class ShelterForm(forms.ModelForm):
     vaccination_requirement = create_select2_multiple_field(VaccinationRequirementChoices, "Select vaccinations...")
 
     # Ecosystem Information
-    spas_served = create_select2_multiple_field(SPAChoices, "Select SPAs served...", label="SPAs Served")
+    spas_served = forms.ModelMultipleChoiceField(
+        queryset=SPA.objects.all(),
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select SPAs served...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+        label="SPAs Served",
+    )
     shelter_programs = create_select2_multiple_field(ShelterProgramChoices, "Select shelter programs...")
     shelter_programs_other = create_other_text_field()
     funders = create_select2_multiple_field(FunderChoices, "Select funders...")
@@ -316,9 +325,14 @@ class ShelterForm(forms.ModelForm):
         """
         cleaned_data = super().clean() or {}
 
-        # Process only ManyToMany fields where the related model uses TextChoices
+        # Process only ManyToMany fields backed by MultipleChoiceField (enum tags).
+        # Skip ModelMultipleChoiceField (e.g. spas_served, cities_served, services).
         for field in self._meta.model._meta.get_fields():
             if not isinstance(field, models.ManyToManyField) or not isinstance(field.related_model, type):
+                continue
+
+            form_field = self.fields.get(field.name)
+            if form_field is None or isinstance(form_field, forms.ModelMultipleChoiceField):
                 continue
 
             model_class = field.related_model
@@ -600,9 +614,9 @@ class ShelterResource(resources.ModelResource):
     spas_served = Field(
         column_name="spas_served",
         attribute="spas_served",
-        widget=ManyToManyWidget(SPA, separator=",", field="name"),
+        widget=ManyToManyWidget(SPA, separator=",", field="short_name"),
     )
-    spa = Field(column_name="spa", attribute="spa", widget=ForeignKeyWidget(SPA, "name"))
+    spa = Field(column_name="spa", attribute="spa", widget=ForeignKeyWidget(SPA, "short_name"))
     city = Field(column_name="city", attribute="city", widget=ForeignKeyWidget(City, "name"))
     demographics = Field(
         column_name="demographics",
@@ -689,16 +703,19 @@ class ShelterResource(resources.ModelResource):
             raise ValidationError(f"Row {self.count}: Bad {col_of_choice} value")
 
     def process_spas_served_import(self, row: Any, spas_served_row: str) -> None:
-        spa_names = [v.strip() for v in spas_served_row.split(",")]
-        spa_choices = {i for i in range(1, len(SPAChoices.choices) + 1)}
-        for spa_name in spa_names:
+        spa_short_names = [v.strip() for v in spas_served_row.split(",")]
+        available_spas = SPA.objects.all().values_list("short_name", flat=True)
+        spas_served: list[str] = []
+        for name in spa_short_names:
             try:
-                if int(spa_name) in spa_choices:
-                    sp, createdSpa = SPA.objects.get_or_create(name=spa_name)
+                if str(name) in available_spas:
+                    sp, _ = SPA.objects.get_or_create(short_name=name)
+                    spas_served.append(str(sp.pk))
                 else:
                     raise ValueError
             except ValueError:
                 self.skip_or_raise(row, "spas_served")
+        row["spas_served"] = ",".join(spas_served)
 
     def process_address_import(self, row: Any, address_row: str) -> None:
         addy_data = requests.get(
@@ -1179,7 +1196,7 @@ class ShelterAdmin(ImportExportModelAdmin):
     ) -> Union[list[str], Tuple[str, ...]]:
         readonly_fields = super().get_readonly_fields(request, obj)
         readonly_fields = (*readonly_fields, "updated_at", "updated_by")
-        if not request.user.has_perm(ShelterFieldPermissions.CHANGE_IS_REVIEWED):
+        if not request.user.has_perm(Shelter.perms.CHANGE_IS_REVIEWED):
             readonly_fields = (*readonly_fields, "is_reviewed")
 
         all_permissions = request.user.get_all_permissions()
@@ -1571,3 +1588,67 @@ class ReservationAdmin(admin.ModelAdmin):
             {"fields": ("notes",)},
         ),
     )
+
+
+@admin.register(ShelterAvailability)
+class ShelterAvailabilityAdmin(admin.ModelAdmin):
+    list_display = ("shelter", "non_restricted_beds", "restricted_beds", "updated_by", "updated_at", "created_at")
+    list_filter = ("updated_at",)
+    search_fields = ("shelter__name",)
+    autocomplete_fields = ["shelter"]
+    readonly_fields = ("created_at", "updated_at")
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "shelter",
+                    "non_restricted_beds",
+                    "restricted_beds",
+                    "restriction_notes",
+                ),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": (
+                    "updated_by",
+                    "created_at",
+                    "updated_at",
+                ),
+            },
+        ),
+    )
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[ShelterAvailability]:
+        qs: QuerySet[ShelterAvailability] = super().get_queryset(request)
+        scoped_events = (
+            MiddlewareEvents.objects.tracks(qs)
+            .exclude(user__isnull=True)
+            .order_by("pgh_obj_id", "-pgh_created_at")
+            .distinct("pgh_obj_id")
+            .annotate(
+                obj=JSONObject(
+                    user_id=F("user_id"),
+                    first=F("user__first_name"),
+                    last=F("user__last_name"),
+                    username=F("user__username"),
+                )
+            )
+        )
+        return qs.annotate(
+            last_event=Subquery(
+                scoped_events.filter(pgh_obj_id=Cast(OuterRef("pk"), output_field=models.TextField())).values("obj")[:1]
+            ),
+        )
+
+    def updated_by(self, obj: ShelterAvailability) -> str:
+        data = getattr(obj, "last_event", None) or {}
+        uid = data.get("user_id")
+        if not uid:
+            return "No updates yet"
+        name = f'{(data.get("first") or "").strip()} {(data.get("last") or "").strip()}'.strip()
+        label = name or (data.get("username") or f"User {uid}")
+        url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
+        return format_html('<a href="{}">{}</a>', url, label)

@@ -21,7 +21,6 @@ from shelters.enums import (
     ShelterChoices,
     ShelterPhotoTypeChoices,
     ShelterProgramChoices,
-    SPAChoices,
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
@@ -129,8 +128,8 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             room_styles=[RoomStyle.objects.get_or_create(name=RoomStyleChoices.CONGREGATE)[0]],
             shelter_programs=[ShelterProgram.objects.get_or_create(name=ShelterProgramChoices.BRIDGE_HOME)[0]],
             shelter_types=[ShelterType.objects.get_or_create(name=ShelterChoices.BUILDING)[0]],
-            spa=SPA.objects.get_or_create(name=SPAChoices.ONE)[0],
-            spas_served=[SPA.objects.get_or_create(name=SPAChoices.ONE)[0]],
+            spa=SPA.objects.get_or_create(short_name="1", long_name="1 - Antelope Valley")[0],
+            spas_served=[SPA.objects.get_or_create(short_name="1", long_name="1 - Antelope Valley")[0]],
             special_situation_restrictions=[
                 SpecialSituationRestriction.objects.get_or_create(
                     name=SpecialSituationRestrictionChoices.NONE,
@@ -172,7 +171,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             }}
         """
         variables = {"id": shelter.pk}
-        expected_query_count = 17
+        expected_query_count = 19
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -212,6 +211,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             "website": "shelter.com",
             "accessibility": [{"name": AccessibilityChoices.WHEELCHAIR_ACCESSIBLE.name}],
             "city": {"id": ANY, "name": "Agoura Hills"},
+            "citiesServed": [{"id": ANY, "name": "Agoura Hills"}],
             "demographics": [{"name": DemographicChoices.ALL.name}],
             "entryRequirements": [{"name": EntryRequirementChoices.PHOTO_ID.name}],
             "funders": [{"name": FunderChoices.CITY_OF_LOS_ANGELES.name}],
@@ -231,7 +231,8 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             ],
             "shelterPrograms": [{"name": ShelterProgramChoices.BRIDGE_HOME.name}],
             "shelterTypes": [{"name": ShelterChoices.BUILDING.name}],
-            "spa": {"name": SPAChoices.ONE.name},
+            "spa": {"id": ANY, "shortName": "1", "name": "1 - Antelope Valley"},
+            "spasServed": [{"id": ANY, "shortName": "1", "name": "1 - Antelope Valley"}],
             "specialSituationRestrictions": [{"name": SpecialSituationRestrictionChoices.NONE.name}],
             "storage": [{"name": StorageChoices.AMNESTY_LOCKERS.name}],
             "visitorsAllowed": True,
@@ -364,7 +365,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             }}
         """
 
-        expected_query_count = 18
+        expected_query_count = 20
 
         variables = {"ordering": {"name": "ASC"}}
 

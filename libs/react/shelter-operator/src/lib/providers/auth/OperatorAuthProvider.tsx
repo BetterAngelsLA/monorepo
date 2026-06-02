@@ -1,6 +1,7 @@
 import { AuthProvider as SharedAuthProvider } from '@monorepo/react/shared';
-import { useUser } from '@monorepo/react/shelter';
+import { operatorPath, useUser } from '@monorepo/react/shelter';
 import { ReactNode } from 'react';
+import { paths } from '../../routing';
 import { routeAccess } from './routeAccess';
 
 export function OperatorAuthProvider({ children }: { children: ReactNode }) {
@@ -12,8 +13,8 @@ export function OperatorAuthProvider({ children }: { children: ReactNode }) {
       isLoading={isLoading}
       config={{
         routeAccess,
-        signInRoute: '/operator/sign-in',
-        defaultAuthenticatedRoute: '/operator',
+        signInRoute: paths.signIn,
+        defaultAuthenticatedRoute: operatorPath,
       }}
     >
       {children}

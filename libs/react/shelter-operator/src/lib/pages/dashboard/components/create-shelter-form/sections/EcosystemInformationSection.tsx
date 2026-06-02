@@ -1,9 +1,5 @@
 import { useQuery } from '@apollo/client/react';
-import {
-  enumDisplaySpaChoices,
-  FunderChoices,
-  ShelterProgramChoices,
-} from '@monorepo/react/shelter';
+import { FunderChoices, ShelterProgramChoices } from '@monorepo/react/shelter';
 import { memo } from 'react';
 import { Dropdown } from '../../../../../components/base-ui/dropdown';
 import { CheckboxGroup } from '../../../../../components/form/CheckboxGroup';
@@ -61,16 +57,14 @@ export const EcosystemInformationSection = memo(
                 s.name != null
             )
             .map((s) => ({
-              label: enumDisplaySpaChoices[s.name],
+              label: s.name,
               value: s.id,
             }))
             .sort((a, b) => a.label.localeCompare(b.label))}
           value={
             data.spa
               ? {
-                  label: data.spa.name
-                    ? enumDisplaySpaChoices[data.spa.name]
-                    : data.spa.id,
+                  label: data.spa.name ?? data.spa.id,
                   value: data.spa.id,
                 }
               : null

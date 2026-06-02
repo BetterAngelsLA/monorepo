@@ -12,7 +12,6 @@ from shelters.enums import (
     PetChoices,
     ScheduleTypeChoices,
     ShelterChoices,
-    SPAChoices,
     StatusChoices,
 )
 from shelters.models import SPA, Parking, Pet, Shelter, ShelterType
@@ -406,7 +405,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(len(results), expected_result_count)
 
     def test_shelter_spa_filter(self) -> None:
-        spa_one, _ = SPA.objects.get_or_create(name=SPAChoices.ONE)
+        spa_one, _ = SPA.objects.get_or_create(short_name="1", long_name="1 - Antelope Valley")
 
         shelters_in_spa = shelter_recipe.make(spa=spa_one, status=StatusChoices.APPROVED, _quantity=2)
         shelter_recipe.make(spa=None, status=StatusChoices.APPROVED, _quantity=2)

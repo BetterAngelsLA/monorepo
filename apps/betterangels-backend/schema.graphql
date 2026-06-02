@@ -78,6 +78,7 @@ type AdminShelterType {
   addNotesShelterDetails: String
   bedFees: String
   city: CityType
+  citiesServed: [CityType!]!
   cityCouncilDistrict: Int
   curfew: Time
   demographics: [DemographicType!]!
@@ -114,6 +115,7 @@ type AdminShelterType {
   shelterTypes: [ShelterTypeType!]!
   shelterTypesOther: String
   spa: SPAType
+  spasServed: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
   photos: [ShelterPhotoType!]!
   isPrivate: Boolean!
@@ -131,6 +133,7 @@ type AdminShelterType {
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
   bedsByStatus: BedsByStatusType!
+  roomsByStatus: RoomsByStatusType!
 }
 
 type AdminShelterTypeOffsetPaginated {
@@ -178,6 +181,7 @@ type AuthorizedPresignedS3UploadsType {
 }
 
 input BedFilter {
+  shelterId: ID
   AND: BedFilter
   OR: BedFilter
   NOT: BedFilter
@@ -797,8 +801,8 @@ input CreateShelterInput {
   supervisorialDistrict: Int = null
   overallRating: Int = null
   isPrivate: Boolean
-  cityId: ID = null
-  spaId: ID = null
+  cityId: ID
+  spaId: ID
 }
 
 union CreateShelterPayload = ShelterType | OperationInfo
@@ -1907,6 +1911,7 @@ type Query {
   reportSummary(organizationId: ID = null, startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
+  adminShelter(pk: ID!): AdminShelterType! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
@@ -2055,6 +2060,7 @@ union RevertNotePayload = NoteType | OperationInfo
 
 input RoomFilter {
   medicalRespite: Boolean
+  shelterId: ID
   AND: RoomFilter
   OR: RoomFilter
   NOT: RoomFilter
@@ -2118,20 +2124,16 @@ type RoomTypeOffsetPaginated {
   results: [RoomType!]!
 }
 
-enum SPAChoices {
-  ONE
-  TWO
-  THREE
-  FOUR
-  FIVE
-  SIX
-  SEVEN
-  EIGHT
+type RoomsByStatusType {
+  available: Int!
+  reserved: Int!
+  needsMaintenance: Int!
 }
 
 type SPAType {
   id: ID!
-  name: SPAChoices
+  shortName: String
+  name: String!
 }
 
 type SPATypeOffsetPaginated {
@@ -2357,6 +2359,7 @@ type ShelterType {
   addNotesShelterDetails: String
   bedFees: String
   city: CityType
+  citiesServed: [CityType!]!
   cityCouncilDistrict: Int
   curfew: Time
   demographics: [DemographicType!]!
@@ -2393,6 +2396,7 @@ type ShelterType {
   shelterTypes: [ShelterTypeType!]!
   shelterTypesOther: String
   spa: SPAType
+  spasServed: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
   photos: [ShelterPhotoType!]!
   isPrivate: Boolean!
@@ -2410,6 +2414,7 @@ type ShelterType {
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
   bedsByStatus: BedsByStatusType!
+  roomsByStatus: RoomsByStatusType!
 }
 
 type ShelterTypeOffsetPaginated {

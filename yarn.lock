@@ -166,10 +166,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ant-design/icons-svg@npm:^4.4.0":
+"@ant-design/icons-svg@npm:^4.4.0, @ant-design/icons-svg@npm:^4.4.2":
   version: 4.4.2
   resolution: "@ant-design/icons-svg@npm:4.4.2"
   checksum: 10/cb926eb6b0386c8364514fd60760a7a467bdef1146f1edd3cdfc28b025a06fc84ceb179dea773ef357de88f33f2c27f10c091d5d1bdec94c28dc02a72aa0ac0b
+  languageName: node
+  linkType: hard
+
+"@ant-design/icons@npm:6.x":
+  version: 6.2.3
+  resolution: "@ant-design/icons@npm:6.2.3"
+  dependencies:
+    "@ant-design/colors": "npm:^8.0.1"
+    "@ant-design/icons-svg": "npm:^4.4.2"
+    "@rc-component/util": "npm:^1.10.1"
+    clsx: "npm:^2.1.1"
+  peerDependencies:
+    react: ">=16.0.0"
+    react-dom: ">=16.0.0"
+  checksum: 10/1afdc7e6456aec8b9733ba78dabd6abc01ac1257cf3b709a0fdfe1b382f867d6ded6f6356d396b3391b5638b2bed1143b3ab93a2dc3a23e984009a06a851affb
   languageName: node
   linkType: hard
 
@@ -5761,6 +5776,7 @@ __metadata:
   resolution: "@monorepo/source@workspace:."
   dependencies:
     "@ant-design/charts": "npm:^2.6.7"
+    "@ant-design/icons": "npm:6.x"
     "@ant-design/plots": "npm:^2.6.8"
     "@apollo/client": "npm:^4.0.9"
     "@babel/core": "npm:^7.28.0"

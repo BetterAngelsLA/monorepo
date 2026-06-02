@@ -6,6 +6,7 @@ import type {
   TextareaHTMLAttributes,
 } from 'react';
 import { forwardRef, useId, useState } from 'react';
+import { Label } from '../label';
 import { Text } from '../text/text';
 import type { InputDataType, InputProps } from './types';
 
@@ -80,6 +81,7 @@ export const Input = forwardRef<
     error,
     dataType,
     variant = 'default',
+    isViewMode,
     rows,
     required = false,
     disabled = false,
@@ -100,6 +102,7 @@ export const Input = forwardRef<
   const [internalTouched, setInternalTouched] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const isTouched = controlledTouched ?? internalTouched;
+  const isViewEditMode = typeof isViewMode === 'boolean';
   const isParagraph = variant === 'paragraph';
   const paragraphRows = rows ?? 3;
 
@@ -151,17 +154,12 @@ export const Input = forwardRef<
       ])}
     >
       {label && (
-        <label htmlFor={inputId} className="text-sm text-gray-900">
-          <Text variant="body" className="text-gray-900">
-            {label}
-          </Text>
-          {required && (
-            <Text variant="body" className="text-red-500">
-              {' '}
-              *
-            </Text>
-          )}
-        </label>
+        <Label
+          label={label}
+          inputId={inputId}
+          variant={isViewEditMode ? 'offset' : undefined}
+          required={required}
+        />
       )}
 
       <div
@@ -169,10 +167,14 @@ export const Input = forwardRef<
           isParagraph
             ? 'relative flex w-full rounded-[20px] border bg-white px-5 py-3 transition-colors duration-200'
             : 'relative flex h-12 w-full items-center rounded-full border bg-white px-5 transition-colors duration-200',
-          shouldShowError ? 'border-red-500' : 'border-gray-200',
-          !shouldShowError && isActive && 'border-gray-500',
-          !shouldShowError && 'focus-within:border-[#008CEE]',
-          disabled && 'cursor-not-allowed opacity-50',
+          isViewMode && 'border-transparent',
+          !isViewMode && shouldShowError && 'border-red-500',
+          !isViewMode && !shouldShowError && isActive && 'border-gray-500',
+          !isViewMode &&
+            !shouldShowError &&
+            !isActive &&
+            'border-gray-200 focus-within:border-[#008CEE]',
+          !isViewMode && disabled && 'cursor-not-allowed opacity-50',
           containerClassName,
         ])}
       >
@@ -183,7 +185,7 @@ export const Input = forwardRef<
             id={inputId}
             rows={paragraphRows}
             value={value}
-            disabled={disabled}
+            disabled={disabled || isViewMode}
             required={required}
             onFocus={handleFocus}
             onBlur={handleBlur}
@@ -200,7 +202,7 @@ export const Input = forwardRef<
             ref={ref as React.Ref<HTMLInputElement>}
             id={inputId}
             value={value}
-            disabled={disabled}
+            disabled={disabled || isViewMode}
             required={required}
             onFocus={handleFocus}
             onBlur={handleBlur}

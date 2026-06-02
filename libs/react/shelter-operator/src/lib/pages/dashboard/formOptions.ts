@@ -18,7 +18,6 @@ import {
   RoomStyleChoices,
   ShelterChoices,
   ShelterProgramChoices,
-  SpaChoices,
   SpecialSituationRestrictionChoices,
   StatusChoices,
   StorageChoices,
@@ -49,6 +48,17 @@ const toOptions = <T extends string>(
   const end = entries.filter(([value]) => tail.has(value));
   return [...main, ...end].map(([value, label]) => ({ value, label }));
 };
+
+export function getSelectedOptions<T extends string>(
+  values: ReadonlyArray<{ name?: T | null }>,
+  options: ReadonlyArray<{ value: T; label: string }>
+) {
+  const selected = new Set(
+    values.map((v) => v.name).filter((n): n is T => n != null)
+  );
+
+  return options.filter((option) => selected.has(option.value));
+}
 
 // ---------------------------------------------------------------------------
 // Label records (only where shared lib doesn't already export display maps)
@@ -87,17 +97,6 @@ const ROOM_STYLE_LABELS: Record<RoomStyleChoices, string> = {
   [RoomStyleChoices.Other]: 'Other',
   [RoomStyleChoices.SharedRooms]: 'Shared Rooms',
   [RoomStyleChoices.SingleRoom]: 'Single Room',
-};
-
-const SPA_LABELS: Record<SpaChoices, string> = {
-  [SpaChoices.One]: '1 – Antelope Valley',
-  [SpaChoices.Two]: '2 – San Fernando',
-  [SpaChoices.Three]: '3 – San Gabriel',
-  [SpaChoices.Four]: '4 – Metro',
-  [SpaChoices.Five]: '5 – West',
-  [SpaChoices.Six]: '6 – South',
-  [SpaChoices.Seven]: '7 – East',
-  [SpaChoices.Eight]: '8 – South Bay/Harbor',
 };
 
 const SPECIAL_SITUATION_LABELS: Record<
@@ -192,7 +191,6 @@ export const SHELTER_PROGRAMS_OPTIONS = toOptions(
 export const SHELTER_TYPES_OPTIONS = toOptions(enumDisplayShelterChoices, [
   ShelterChoices.Other,
 ]);
-export const SPA_OPTIONS = toOptions(SPA_LABELS);
 export const SPECIAL_SITUATION_OPTIONS = toOptions(SPECIAL_SITUATION_LABELS, [
   SpecialSituationRestrictionChoices.None,
 ]);
