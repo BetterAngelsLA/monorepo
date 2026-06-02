@@ -16,6 +16,7 @@ type TProps = {
   onPlaceSelect: (place: TPlaceResult | null) => void;
   countryRestrictions?: ISO3166Alpha2 | ISO3166Alpha2[] | null;
   leftIcon?: React.ReactElement;
+  inputClassname?: string;
 };
 
 export function AddressAutocomplete(props: TProps) {
@@ -25,6 +26,7 @@ export function AddressAutocomplete(props: TProps) {
     placeholder,
     className = '',
     leftIcon,
+    inputClassname = '',
   } = props;
 
   const places = usePlacesClient();
@@ -107,7 +109,7 @@ export function AddressAutocomplete(props: TProps) {
       <Input
         value={inputValue}
         placeholder={placeholder}
-        className="w-full"
+        className={`"w-full ${inputClassname}`}
         onChange={handleInputChange}
         leftIcon={
           leftIcon || <SearchIcon className="text-neutral-70 w-4 h-4" />
