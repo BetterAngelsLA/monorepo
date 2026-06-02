@@ -1,7 +1,6 @@
 import {
   privacyPolicyPath,
   shelterDetailsPath,
-  shelterFiltersPath,
   shelterGalleryPath,
   shelterHomePath,
   shelterVideoPath,
@@ -23,12 +22,10 @@ export function buildShelterRoutes() {
         key={shelterHomePath}
         path={shelterHomePath}
         element={<HomeRoute />}
-      />
-      <Route
-        key={shelterFiltersPath}
-        path={shelterFiltersPath}
-        element={<FiltersRoute />}
-      />
+      >
+        {/* Nested so HomePage stays mounted when opening filters, preserving mapBoundsFilter state */}
+        <Route path="filters" element={<FiltersRoute />} />
+      </Route>
       <Route
         key={shelterDetailsPath}
         path={shelterDetailsPath}

@@ -3,6 +3,7 @@ import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom, useSetAtom } from 'jotai';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Outlet } from 'react-router-dom';
 import { ShelterChoices } from '../../apollo';
 import { searchTriggerAtom, sheltersAtom } from '../../atoms';
 import {
@@ -319,6 +320,7 @@ export function HomePage() {
         onNameSearch={onNameSearch}
         setLocation={setSearchLocation}
       />
+      <Outlet />
     </>
   );
 }
