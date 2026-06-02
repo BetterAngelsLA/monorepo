@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   nullShelterPropertyFilters,
-  searchTriggerAtom,
+  shelterSearchTriggerAtom,
   shelterPropertyFiltersAtom,
 } from '../../atoms';
 import {
@@ -17,7 +17,7 @@ export function FiltersPage() {
   const navigate = useNavigate();
   const [atomFilters, setAtomFilters] = useAtom(shelterPropertyFiltersAtom);
   const [draftFilters, setDraftFilters] = useState(() => atomFilters);
-  const setSearchTrigger = useSetAtom(searchTriggerAtom);
+  const setSearchTrigger = useSetAtom(shelterSearchTriggerAtom);
 
   function handleClose() {
     navigate(shelterHomePath);

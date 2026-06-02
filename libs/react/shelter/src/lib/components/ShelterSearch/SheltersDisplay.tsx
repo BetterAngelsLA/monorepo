@@ -4,7 +4,7 @@ import { useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { MaxStayInput } from '../../apollo';
 import {
-  searchTriggerAtom,
+  shelterSearchTriggerAtom,
   shelterNameFilterAtom,
   sheltersAtom,
 } from '../../atoms';
@@ -49,7 +49,7 @@ export function SheltersDisplay(props: TProps) {
     onShelterPinsReadyForMapFit,
   } = props;
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
-  const [searchTrigger] = useAtom(searchTriggerAtom);
+  const [searchTrigger] = useAtom(shelterSearchTriggerAtom);
   const nameFilter = useAtomValue(shelterNameFilterAtom);
 
   const queryVariables = useMemo<ViewSheltersQueryVariables | undefined>(() => {
