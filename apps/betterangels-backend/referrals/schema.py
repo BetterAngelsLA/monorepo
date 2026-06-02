@@ -45,7 +45,7 @@ class Query:
         info: Info,
     ) -> OffsetPaginated[ReferralType]:
         current_user = get_current_user(info)
-        return referral_list(user=cast(User, current_user))
+        return cast(OffsetPaginated[ReferralType], referral_list(user=cast(User, current_user)))
 
 
 @strawberry.type
@@ -74,7 +74,7 @@ class Mutation:
             permission_group=permission_group,
             client_profile=client_profile,
             shelter=shelter,
-            notes=referral_data.get("notes"),
+            notes=str(referral_data.get("notes")) if referral_data.get("notes") else None,
         )
         return cast(ReferralType, referral)
 

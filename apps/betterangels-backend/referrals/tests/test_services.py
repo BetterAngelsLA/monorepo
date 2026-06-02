@@ -150,7 +150,9 @@ class ReferralListSelectorTests(GraphQLBaseTestCase):
         result = referral_list(user=self.org_1_case_manager_1)
 
         self.assertEqual(result.count(), 1)
-        self.assertEqual(result.first().created_by, self.org_1_case_manager_1)
+        first = result.first()
+        assert first is not None
+        self.assertEqual(first.created_by, self.org_1_case_manager_1)
 
     def test_returns_empty_when_user_has_no_referrals(self) -> None:
         result = referral_list(user=self.org_1_case_manager_1)

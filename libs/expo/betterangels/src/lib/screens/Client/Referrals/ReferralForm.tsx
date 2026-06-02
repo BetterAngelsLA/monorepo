@@ -54,6 +54,7 @@ export function ReferralForm({ onCancel, onSubmit }: TProps) {
         </Pressable>
         <TextBold size="md">Refer to Shelter</TextBold>
         <Button
+          variant="primary"
           size="sm"
           title="Submit"
           onPress={handleSubmit}
