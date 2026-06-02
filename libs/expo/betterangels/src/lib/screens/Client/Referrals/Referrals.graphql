@@ -11,7 +11,8 @@ query ClientReferrals($clientId: ID!) {
         lastName
       }
       shelter {
-        pk
+        id
+        name
       }
     }
     totalCount
@@ -25,7 +26,8 @@ mutation CreateReferral($data: CreateReferralInput!) {
       status
       createdAt
       shelter {
-        pk
+        id
+        name
       }
       createdBy {
         id

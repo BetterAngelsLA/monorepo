@@ -1,5 +1,6 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
+import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { useMemo, useState } from 'react';
 import {
   LayoutChangeEvent,
@@ -8,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { FeatureFlags } from '../../static';
 
 export enum ClientViewTabEnum {
   Profile = 'Profile',
@@ -33,7 +35,15 @@ interface IClientTabsProps {
 }
 
 export default function ClientTabs({ selectedTab, setTab }: IClientTabsProps) {
-  const visibleTabs = orderedTabs;
+  const referralsEnabled = useFeatureFlagActive(FeatureFlags.REFERRALS);
+
+  const visibleTabs = useMemo(
+    () =>
+      orderedTabs.filter(
+        (t) => t !== ClientViewTabEnum.Referrals || referralsEnabled
+      ),
+    [referralsEnabled]
+  );
 
   return (
     <View style={styles.container}>

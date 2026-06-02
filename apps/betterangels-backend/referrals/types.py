@@ -4,6 +4,7 @@ import strawberry_django
 from accounts.types import UserType
 from clients.types import ClientProfileType
 from referrals.enums import ReferralStatusEnum
+from shelters.types import ShelterType
 from strawberry import ID, auto
 
 from . import models
@@ -28,7 +29,7 @@ class ReferralOrder:
 class ReferralType:
     id: ID
     client_profile: Optional[ClientProfileType]
-    shelter: auto
+    shelter: Optional[ShelterType]
     created_at: auto
     created_by: Optional[UserType]
     status: Optional[ReferralStatusEnum]

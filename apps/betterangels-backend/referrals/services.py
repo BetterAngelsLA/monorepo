@@ -9,6 +9,8 @@ from referrals.models import Referral
 from referrals.permissions import ReferralPermissions
 from shelters.models import Shelter
 
+REFERRAL_UPDATE_FIELDS = ("status", "notes")
+
 
 def referral_create(
     *,
@@ -18,15 +20,18 @@ def referral_create(
     shelter: Shelter,
     notes: Optional[str] = None,
 ) -> Referral:
+    referral = Referral(
+        client_profile=client_profile,
+        shelter=shelter,
+        created_by=user,
+        organization=permission_group.organization,
+        status=Referral.Status.PENDING,
+        notes=notes,
+    )
+    referral.full_clean()
+
     try:
-        referral = Referral.objects.create(
-            client_profile=client_profile,
-            shelter=shelter,
-            created_by=user,
-            organization=permission_group.organization,
-            status=Referral.Status.PENDING,
-            notes=notes,
-        )
+        referral.save()
     except IntegrityError as e:
         raise ValidationError(str(e)) from e
 
@@ -40,8 +45,9 @@ def referral_create(
 
 def referral_update(*, referral: Referral, data: Dict[str, Any]) -> Referral:
     for field, value in data.items():
-        if field != "id":
+        if field in REFERRAL_UPDATE_FIELDS and value is not None:
             setattr(referral, field, value)
+    referral.full_clean()
     referral.save()
     return referral
 

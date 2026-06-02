@@ -15,7 +15,10 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SheltersDocument, SheltersQuery } from './__generated__/Referrals.generated';
+import {
+  SheltersDocument,
+  SheltersQuery,
+} from './__generated__/Shelters.generated';
 
 type TProps = {
   onCancel: () => void;
@@ -23,13 +26,17 @@ type TProps = {
 };
 
 export function ReferralForm({ onCancel, onSubmit }: TProps) {
-  const [selectedShelterId, setSelectedShelterId] = useState<string | null>(null);
+  const [selectedShelterId, setSelectedShelterId] = useState<string | null>(
+    null
+  );
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
   const { data, loading, error } = useQuery<SheltersQuery>(SheltersDocument);
 
-  const shelters = data?.shelters.results ?? [];
+  const shelters = (data?.shelters.results ?? []).filter(
+    (s) => s.status === 'APPROVED'
+  );
   const selectedShelter = shelters.find((s) => s.id === selectedShelterId);
 
   async function handleSubmit() {
@@ -93,7 +100,10 @@ export function ReferralForm({ onCancel, onSubmit }: TProps) {
             return (
               <Pressable
                 key={shelter.id}
-                style={[styles.shelterCard, isSelected && styles.shelterCardSelected]}
+                style={[
+                  styles.shelterCard,
+                  isSelected && styles.shelterCardSelected,
+                ]}
                 onPress={() => setSelectedShelterId(shelter.id)}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: isSelected }}

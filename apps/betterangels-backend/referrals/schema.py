@@ -12,6 +12,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from referrals.models import Referral
 from referrals.permissions import ReferralPermissions
+from referrals.selectors import referral_list
 from referrals.services import referral_create, referral_delete, referral_update
 from shelters.models import Shelter
 from strawberry import asdict
@@ -44,7 +45,7 @@ class Query:
         info: Info,
     ) -> OffsetPaginated[ReferralType]:
         current_user = get_current_user(info)
-        return Referral.objects.filter(created_by=current_user)
+        return referral_list(user=cast(User, current_user))
 
 
 @strawberry.type

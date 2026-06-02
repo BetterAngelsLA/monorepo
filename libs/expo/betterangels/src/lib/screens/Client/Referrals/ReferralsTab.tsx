@@ -182,7 +182,7 @@ function ReferralCard({ referral }: ReferralCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.cardRow}>
-        <TextBold size="sm">Shelter ID: {referral.shelter?.pk}</TextBold>
+        <TextBold size="sm">{referral.shelter?.name ?? 'Unknown Shelter'}</TextBold>
         <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
           <TextRegular size="xs" color={Colors.WHITE}>
             {referral.status ?? 'PENDING'}

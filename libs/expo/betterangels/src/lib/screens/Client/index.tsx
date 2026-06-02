@@ -4,10 +4,12 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { ComponentType, ReactElement, useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ClientProfileSectionEnum } from '../../screenRouting';
+import { FeatureFlags } from '../../static';
 import { MainContainer } from '../../ui-components';
 import { ClientHeader } from './ClientHeader';
 import { ClientNavMenu } from './ClientNavMenu/ClientNavMenu';
@@ -16,8 +18,8 @@ import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
 import { InteractionLocations } from './Locations';
-import { TasksTab } from './Tasks';
 import { ReferralsTab } from './Referrals/ReferralsTab';
+import { TasksTab } from './Tasks';
 
 import { useQuery } from '@apollo/client/react';
 import {
@@ -41,7 +43,8 @@ const tabComponents: Record<
     <InteractionLocations clientProfileId={client?.clientProfile.id} />
   ),
   [ClientViewTabEnum.Tasks]: TasksTab as ComponentType<TabComponentProps>,
-  [ClientViewTabEnum.Referrals]: ReferralsTab as ComponentType<TabComponentProps>,
+  [ClientViewTabEnum.Referrals]:
+    ReferralsTab as ComponentType<TabComponentProps>,
 };
 
 const getTabComponent = (
@@ -82,12 +85,14 @@ export default function Client({
 
   const router = useRouter();
   const { newTab } = useLocalSearchParams<{ newTab?: ClientViewTabEnum }>();
+  const referralsEnabled = useFeatureFlagActive(FeatureFlags.REFERRALS);
 
   useEffect(() => {
     if (newTab) {
+      if (newTab === ClientViewTabEnum.Referrals && !referralsEnabled) return;
       setTab(newTab);
     }
-  }, [newTab]);
+  }, [newTab, referralsEnabled]);
 
   if (loading) {
     return (

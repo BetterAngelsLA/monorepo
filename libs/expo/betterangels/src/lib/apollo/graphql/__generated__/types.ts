@@ -2542,7 +2542,7 @@ export type ReferralType = {
   createdBy?: Maybe<UserType>;
   id: Scalars['ID']['output'];
   notes?: Maybe<Scalars['String']['output']>;
-  shelter?: Maybe<DjangoModelType>;
+  shelter?: Maybe<ShelterType>;
   status?: Maybe<ReferralStatusEnum>;
   updatedAt: Scalars['DateTime']['output'];
 };

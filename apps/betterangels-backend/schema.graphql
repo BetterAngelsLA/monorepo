@@ -1968,7 +1968,7 @@ enum ReferralStatusEnum {
 type ReferralType {
   id: ID!
   clientProfile: ClientProfileType
-  shelter: DjangoModelType
+  shelter: ShelterType
   createdAt: DateTime!
   createdBy: UserType
   status: ReferralStatusEnum
