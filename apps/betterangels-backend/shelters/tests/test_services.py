@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from shelters.enums import AccessibilityChoices, DemographicChoices
 from shelters.models import Accessibility, Demographic, Shelter
-from shelters.services import _validate_subset_attributes
+from shelters.services.utils import _validate_subset_attributes
 
 
 class ValidateSubsetAttributesTestCase(TestCase):

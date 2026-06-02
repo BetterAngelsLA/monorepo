@@ -7,7 +7,9 @@ from common.permissions.utils import IsAuthenticated
 from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Room, Shelter
-from shelters.services import bed_create, room_create, shelter_create
+from shelters.services.bed import bed_create
+from shelters.services.room import room_create
+from shelters.services.shelter import shelter_create
 from shelters.types import (
     AdminShelterType,
     BedType,
