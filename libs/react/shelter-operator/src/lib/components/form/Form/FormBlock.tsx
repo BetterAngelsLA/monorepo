@@ -19,7 +19,7 @@ export function FormBlock(props: TProps) {
   return (
     <div
       className={mergeCss([
-        'grid gap-x-6 gap-y-8',
+        'grid gap-x-2 xl:gap-x-8 2xl:gap-x-16 gap-y-8',
         columnsCss[columns],
         className,
       ])}

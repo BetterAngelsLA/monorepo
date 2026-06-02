@@ -1,6 +1,7 @@
 import { memo, useCallback, useMemo } from 'react';
 import { Dropdown, type DropdownOption } from '../../../base-ui/dropdown';
 import { Form } from '../../../form/Form';
+import { SEARCHABLE_MIN } from '../../constants';
 
 export type ServiceCategory = {
   id: string;
@@ -200,7 +201,7 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
       <Dropdown
         label={category.displayName}
         isMulti={true}
-        isSearchable={options.length > 3}
+        isSearchable={options.length > SEARCHABLE_MIN}
         value={selectedOptions}
         options={options}
         onChange={handleOfficialChange}

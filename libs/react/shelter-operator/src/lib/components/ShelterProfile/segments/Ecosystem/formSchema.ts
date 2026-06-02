@@ -1,4 +1,6 @@
+import { FunderChoices, ShelterProgramChoices } from '@monorepo/react/shelter';
 import { z } from 'zod';
+import { toDropdownValues } from '../../../base-ui/dropdown';
 import { ShelterProfileType } from '../../types';
 
 const ecosystemOptionSchema = z.object({
@@ -11,6 +13,11 @@ export const formSchema = z.object({
   spa: ecosystemOptionSchema.nullable().optional(),
   citiesServed: z.array(ecosystemOptionSchema),
   spasServed: z.array(ecosystemOptionSchema),
+  cityCouncilDistrict: z.number().nullable().optional(),
+  supervisorialDistrict: z.number().nullable().optional(),
+  shelterPrograms: z.array(z.enum(ShelterProgramChoices)),
+  funders: z.array(z.enum(FunderChoices)),
+  fundersOther: z.string().nullable().optional(),
 });
 
 export type EcosystemFormData = z.infer<typeof formSchema>;
@@ -20,6 +27,11 @@ export const defaultFormValues: EcosystemFormData = {
   spa: null,
   citiesServed: [],
   spasServed: [],
+  cityCouncilDistrict: null,
+  supervisorialDistrict: null,
+  shelterPrograms: [],
+  funders: [],
+  fundersOther: undefined,
 };
 
 export function toFormData(shelter: ShelterProfileType): EcosystemFormData {
@@ -36,5 +48,10 @@ export function toFormData(shelter: ShelterProfileType): EcosystemFormData {
       id: spa.id,
       name: spa.name,
     })),
+    cityCouncilDistrict: shelter.cityCouncilDistrict,
+    supervisorialDistrict: shelter.supervisorialDistrict,
+    shelterPrograms: toDropdownValues(shelter.shelterPrograms),
+    funders: toDropdownValues(shelter.funders),
+    fundersOther: shelter.fundersOther,
   };
 }

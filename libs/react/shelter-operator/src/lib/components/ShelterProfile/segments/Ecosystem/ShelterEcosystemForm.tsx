@@ -1,10 +1,19 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
-import { Controller, useForm } from 'react-hook-form';
+import { FunderChoices } from '@monorepo/react/shelter';
+import { Controller, useForm, useWatch } from 'react-hook-form';
+import { Input } from '../../../base-ui/input';
 import { useShelterCities } from '../../../../hooks';
 import { useShelterSpas } from '../../../../hooks/useShelterSpas/useShelterSpas';
 import { Dropdown } from '../../../base-ui/dropdown';
 import { Form } from '../../../form/Form';
+import {
+  LA_CITY_COUNCIL_DISTRICT_OPTIONS,
+  LA_SUPERVISORIAL_DISTRICT_OPTIONS,
+  SEARCHABLE_MIN,
+  SHELTER_FUNDERS_OPTIONS,
+  SHELTER_PROGRAMS_OPTIONS,
+} from '../../constants';
 import { defaultFormValues, EcosystemFormData, formSchema } from './formSchema';
 
 type TProps = {
@@ -34,12 +43,16 @@ export function ShelterEcosystemForm(props: TProps) {
   const {
     control,
     handleSubmit,
-    formState: { isValid },
+    setValue,
+    formState: { isValid, errors },
     reset,
   } = useForm<EcosystemFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: { ...defaultFormValues, ...defaultValues },
   });
+
+  const selectedFunders = useWatch({ control, name: 'funders' });
+  const showFundersOther = selectedFunders.includes(FunderChoices.Other);
 
   function handleCancel() {
     reset();
@@ -67,7 +80,7 @@ export function ShelterEcosystemForm(props: TProps) {
                 <Dropdown
                   label="City"
                   placeholder="Select a city"
-                  isSearchable={cities.length > 6}
+                  isSearchable={cities.length > SEARCHABLE_MIN}
                   options={cities.map((option) => ({
                     label: option.name,
                     value: option.id,
@@ -96,7 +109,7 @@ export function ShelterEcosystemForm(props: TProps) {
                 <Dropdown
                   label="Cities Served"
                   placeholder="Select cities"
-                  isSearchable={cities.length > 6}
+                  isSearchable={cities.length > SEARCHABLE_MIN}
                   isMulti={true}
                   options={cities.map((option) => ({
                     label: option.name,
@@ -121,6 +134,7 @@ export function ShelterEcosystemForm(props: TProps) {
               )}
             />
           </Form.Block>
+
           <Form.Block columns={2}>
             <Controller
               name="spa"
@@ -129,7 +143,7 @@ export function ShelterEcosystemForm(props: TProps) {
                 <Dropdown
                   label="SPA"
                   placeholder="Select a SPA"
-                  isSearchable={spas.length > 6}
+                  isSearchable={spas.length > SEARCHABLE_MIN}
                   options={spas.map((option) => ({
                     label: option.name,
                     value: option.id,
@@ -158,7 +172,7 @@ export function ShelterEcosystemForm(props: TProps) {
                 <Dropdown
                   label="SPAs Served"
                   placeholder="Select SPAs"
-                  isSearchable={spas.length > 6}
+                  isSearchable={spas.length > SEARCHABLE_MIN}
                   isMulti={true}
                   options={spas.map((option) => ({
                     label: option.name,
@@ -182,6 +196,134 @@ export function ShelterEcosystemForm(props: TProps) {
                 />
               )}
             />
+          </Form.Block>
+
+          <Form.Block columns={2}>
+            <Controller
+              name="cityCouncilDistrict"
+              control={control}
+              render={({ field }) => (
+                <Dropdown
+                  label="City Council District"
+                  placeholder="Select a district"
+                  value={
+                    LA_CITY_COUNCIL_DISTRICT_OPTIONS.find(
+                      (option) => option.value === field.value
+                    ) ?? null
+                  }
+                  options={LA_CITY_COUNCIL_DISTRICT_OPTIONS}
+                  onChange={(option) => {
+                    field.onChange(option?.value ?? null);
+                  }}
+                  isViewMode={isViewMode}
+                  disabled={disabled}
+                  className="min-w-44"
+                />
+              )}
+            />
+
+            <Controller
+              name="supervisorialDistrict"
+              control={control}
+              render={({ field }) => (
+                <Dropdown
+                  label="Supervisorial District"
+                  placeholder="Select a district"
+                  value={
+                    LA_SUPERVISORIAL_DISTRICT_OPTIONS.find(
+                      (option) => option.value === field.value
+                    ) ?? null
+                  }
+                  options={LA_SUPERVISORIAL_DISTRICT_OPTIONS}
+                  onChange={(option) => {
+                    field.onChange(option?.value ?? null);
+                  }}
+                  isViewMode={isViewMode}
+                  disabled={disabled}
+                  className="min-w-44"
+                />
+              )}
+            />
+          </Form.Block>
+
+          <Form.Block columns={2}>
+            <Controller
+              name="shelterPrograms"
+              control={control}
+              render={({ field }) => (
+                <Dropdown
+                  label="Shelter Programs"
+                  isMulti={true}
+                  isSearchable={cities.length > SEARCHABLE_MIN}
+                  value={SHELTER_PROGRAMS_OPTIONS.filter((o) =>
+                    field.value.includes(o.value)
+                  )}
+                  options={SHELTER_PROGRAMS_OPTIONS}
+                  onChange={(options) => {
+                    field.onChange(options ? options.map((o) => o.value) : []);
+                  }}
+                  isViewMode={isViewMode}
+                  className="min-w-44"
+                />
+              )}
+            />
+
+            {/*
+                funders/fundersOther combo-box
+                TODO: abstract out combo-box at next occurrence
+            */}
+            <div className="flex flex-col gap-4">
+              <Controller
+                name="funders"
+                control={control}
+                render={({ field }) => (
+                  <Dropdown
+                    label="Funders"
+                    isMulti={true}
+                    isSearchable={cities.length > SEARCHABLE_MIN}
+                    value={SHELTER_FUNDERS_OPTIONS.filter((o) =>
+                      field.value.includes(o.value)
+                    )}
+                    options={SHELTER_FUNDERS_OPTIONS}
+                    onChange={(options) => {
+                      const values = options ? options.map((o) => o.value) : [];
+                      field.onChange(values);
+
+                      if (!values.includes(FunderChoices.Other)) {
+                        setValue('fundersOther', null, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
+                      }
+                    }}
+                    isViewMode={isViewMode}
+                    className="min-w-44"
+                  />
+                )}
+              />
+
+              {showFundersOther && (
+                <Controller
+                  name="fundersOther"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      label="Other Funder"
+                      dataType="string"
+                      value={field.value ?? ''}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        field.onChange(value === '' ? null : value);
+                      }}
+                      onBlur={field.onBlur}
+                      disabled={disabled}
+                      isViewMode={isViewMode}
+                      error={errors.fundersOther?.message}
+                    />
+                  )}
+                />
+              )}
+            </div>
           </Form.Block>
 
           {!isViewMode && onSubmit && (

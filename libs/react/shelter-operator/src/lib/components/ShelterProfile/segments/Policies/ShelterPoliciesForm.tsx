@@ -149,7 +149,10 @@ export function ShelterPoliciesForm(props: TProps) {
           </Form.Block>
 
           <Form.Block>
-            {/* exitPolicy/exitPolicyOther combo-box */}
+            {/*
+                exitPolicy/exitPolicyOther combo-box
+                TODO: abstract out combo-box at next occurrence
+            */}
             <div className="flex flex-col gap-4">
               <Controller
                 name="exitPolicy"
