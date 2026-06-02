@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         ("clients", "0031_remove_clientprofile_client_profile_add_insert_and_more"),
         ("organizations", "0006_alter_organization_slug"),
         ("pghistory", "0007_auto_20250421_0444"),
-        ("shelters", "0033_remove_contactinfo_shelter_contact_info_add_insert_and_more"),
+        ("shelters", "0001_squashed_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
