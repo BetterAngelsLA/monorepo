@@ -47,19 +47,18 @@ export const SHELTER_PROGRAMS_OPTIONS = toDropdownOptions(
   [ShelterProgramChoices.Other]
 );
 
-export const SHELTER_FUNDERS_OPTIONS = toDropdownOptions(
-  enumDisplayFunderChoices,
-  [FunderChoices.Other]
-);
-
-export const LA_SUPERVISORIAL_DISTRICT_OPTIONS = [
-  { value: 0, label: 'None' },
-  ...buildNumericOptions(5),
-] as const;
+export const FUNDERS_OPTIONS = toDropdownOptions(enumDisplayFunderChoices, [
+  FunderChoices.Other,
+]);
 
 export const LA_CITY_COUNCIL_DISTRICT_OPTIONS = [
   { value: 0, label: 'None' },
   ...buildNumericOptions(15),
+] as const;
+
+export const LA_SUPERVISORIAL_DISTRICT_OPTIONS = [
+  { value: 0, label: 'None' },
+  ...buildNumericOptions(5),
 ] as const;
 
 export const BOOLEAN_OPTIONS_WITH_UNKNOWN = [
@@ -74,6 +73,8 @@ export const STATUS_COLOR_MAP: Record<StatusChoices, string> = {
   [StatusChoices.Approved]: 'bg-green-100 text-green-700',
   [StatusChoices.Inactive]: 'bg-red-100 text-red-700',
 };
+
+// utils
 
 function buildNumericOptions(maxValue: number) {
   return Array.from({ length: maxValue }, (_, index) => ({

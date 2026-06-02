@@ -2,16 +2,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { FunderChoices } from '@monorepo/react/shelter';
 import { Controller, useForm, useWatch } from 'react-hook-form';
-import { Input } from '../../../base-ui/input';
 import { useShelterCities } from '../../../../hooks';
 import { useShelterSpas } from '../../../../hooks/useShelterSpas/useShelterSpas';
 import { Dropdown } from '../../../base-ui/dropdown';
+import { Input } from '../../../base-ui/input';
 import { Form } from '../../../form/Form';
 import {
+  FUNDERS_OPTIONS,
   LA_CITY_COUNCIL_DISTRICT_OPTIONS,
   LA_SUPERVISORIAL_DISTRICT_OPTIONS,
   SEARCHABLE_MIN,
-  SHELTER_FUNDERS_OPTIONS,
   SHELTER_PROGRAMS_OPTIONS,
 } from '../../constants';
 import { defaultFormValues, EcosystemFormData, formSchema } from './formSchema';
@@ -281,10 +281,10 @@ export function ShelterEcosystemForm(props: TProps) {
                     label="Funders"
                     isMulti={true}
                     isSearchable={cities.length > SEARCHABLE_MIN}
-                    value={SHELTER_FUNDERS_OPTIONS.filter((o) =>
+                    value={FUNDERS_OPTIONS.filter((o) =>
                       field.value.includes(o.value)
                     )}
-                    options={SHELTER_FUNDERS_OPTIONS}
+                    options={FUNDERS_OPTIONS}
                     onChange={(options) => {
                       const values = options ? options.map((o) => o.value) : [];
                       field.onChange(values);
