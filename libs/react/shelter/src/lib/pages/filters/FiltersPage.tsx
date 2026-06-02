@@ -1,9 +1,10 @@
 import { CloseIcon } from '@monorepo/react/icons';
-import { useAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   nullShelterPropertyFilters,
+  searchTriggerAtom,
   shelterPropertyFiltersAtom,
 } from '../../atoms';
 import {
@@ -16,6 +17,7 @@ export function FiltersPage() {
   const navigate = useNavigate();
   const [atomFilters, setAtomFilters] = useAtom(shelterPropertyFiltersAtom);
   const [draftFilters, setDraftFilters] = useState(() => atomFilters);
+  const setSearchTrigger = useSetAtom(searchTriggerAtom);
 
   function handleClose() {
     navigate(shelterHomePath);
@@ -23,6 +25,7 @@ export function FiltersPage() {
 
   function handleDone() {
     setAtomFilters(draftFilters);
+    setSearchTrigger((n) => n + 1);
     navigate(shelterHomePath);
   }
 

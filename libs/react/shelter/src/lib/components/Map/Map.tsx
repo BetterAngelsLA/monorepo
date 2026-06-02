@@ -49,7 +49,7 @@ type TMap = {
   markers?: TMarker[];
   /** Places API viewport to fit when the user completes a location search. */
   placeViewportToFit?: TMapBounds | null;
-  onPlaceViewportFitted?: () => void;
+  onPlaceViewportFitted?: (actualBounds: TMapBounds) => void;
 };
 
 export function Map(props: TMap) {

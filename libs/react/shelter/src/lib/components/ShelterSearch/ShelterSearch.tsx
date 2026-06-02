@@ -86,13 +86,13 @@ export function ShelterSearch(props: TProps) {
 
   function handleDone() {
     const pending = pendingSelectionRef.current;
-    const preserveMapBounds = !!pending?.location;
+    const hasLocation = !!pending?.location;
 
-    if (pending?.location) {
+    if (hasLocation && pending?.location) {
       setLocation(pending.location, pending.mapBounds);
     }
 
-    applyNameSearch(nameSearchValueRef.current, { preserveMapBounds });
+    applyNameSearch(nameSearchValueRef.current, { preserveMapBounds: hasLocation });
 
     pendingSelectionRef.current = null;
     closeModal();

@@ -1,10 +1,10 @@
 import { useLocationPermission } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
-import { useAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ShelterChoices } from '../../apollo';
-import { sheltersAtom } from '../../atoms';
+import { searchTriggerAtom, sheltersAtom } from '../../atoms';
 import {
   DEFAULT_BOUNDS_MILES,
   LA_COUNTY_CENTER,
@@ -94,6 +94,7 @@ export function HomePage() {
   const [locationSearchInputKey, setLocationSearchInputKey] = useState(0);
   const [placeViewportToFit, setPlaceViewportToFit] =
     useState<TMapBounds | null>(null);
+  const setSearchTrigger = useSetAtom(searchTriggerAtom);
   const map = useMap();
   const hasLocationPermission = useLocationPermission();
   /** Skips one location-effect map sync when viewport fit handles center/zoom. */
@@ -121,9 +122,16 @@ export function HomePage() {
     [setModal, shelters]
   );
 
-  const clearPlaceViewportToFit = useCallback(() => {
-    setPlaceViewportToFit(null);
-  }, []);
+  const onPlaceViewportFitted = useCallback(
+    (actualBounds: TMapBounds) => {
+      // Use actual post-fit map bounds (not the Place's viewport) so the query
+      // covers everything visible on screen, then fire the search.
+      setMapBoundsFilter(actualBounds);
+      setPlaceViewportToFit(null);
+      setSearchTrigger((n) => n + 1);
+    },
+    [setSearchTrigger]
+  );
 
   const onShelterPinsReadyForMapFit = useCallback(
     (pinLocations: TLatLng[]) => {
@@ -173,6 +181,7 @@ export function HomePage() {
     setMapBoundsFilter(toMapBounds(bounds));
     setShowSearchButton(false);
     setLocationSearchInputKey((k) => k + 1);
+    setSearchTrigger((n) => n + 1);
   }
 
   const applyMapCenter = useCallback(
@@ -202,20 +211,23 @@ export function HomePage() {
 
     if (bounds) {
       setMapBoundsFilter(toMapBounds(bounds));
-    } else {
-      const listener = map.addListener('idle', () => {
-        const idleBounds = map.getBounds();
-
-        if (idleBounds) {
-          setMapBoundsFilter(toMapBounds(idleBounds));
-        }
-
-        listener.remove();
-      });
-
-      return () => listener.remove();
+      setSearchTrigger((n) => n + 1);
+      return;
     }
-  }, [map, location]);
+
+    const listener = map.addListener('idle', () => {
+      const idleBounds = map.getBounds();
+
+      if (idleBounds) {
+        setMapBoundsFilter(toMapBounds(idleBounds));
+        setSearchTrigger((n) => n + 1);
+      }
+
+      listener.remove();
+    });
+
+    return () => listener.remove();
+  }, [map, location, setSearchTrigger]);
 
   useEffect(() => {
     if (!map || hasInitialized) return;
@@ -249,26 +261,35 @@ export function HomePage() {
   }, [map, hasInitialized, applyMapCenter]);
 
   function setSearchLocation(location: TLatLng, mapBounds?: TMapBounds) {
-    const bounds = mapBounds ?? mapBoundsFromCenter(location);
-    setMapBoundsFilter(bounds);
     setShowSearchButton(false);
     setLocation(location);
 
     if (mapBounds) {
+      // Skip the location useEffect's map-sync so it doesn't overwrite bounds.
+      // onPlaceViewportFitted will set mapBoundsFilter and fire the search
+      // once the map has fully settled (idle) after fitBounds.
       skipNextLocationMapSyncRef.current = true;
       setPlaceViewportToFit(mapBounds);
       return;
     }
 
+    setMapBoundsFilter(mapBoundsFromCenter(location));
     setPlaceViewportToFit(null);
   }
 
   function onNameSearch(options?: { preserveMapBounds?: boolean }) {
-    if (!options?.preserveMapBounds) {
-      setMapBoundsFilter(undefined);
-      setNameSearchPinFitRequestId((n) => n + 1);
+    if (options?.preserveMapBounds) {
+      // Name + location: the search will be triggered by onPlaceViewportFitted
+      // after the map settles on the actual rendered bounds.
+      setShowSearchButton(false);
+      return;
     }
+
+    // Name only: clear any stale map bounds, then fire immediately.
+    setMapBoundsFilter(undefined);
+    setNameSearchPinFitRequestId((n) => n + 1);
     setShowSearchButton(false);
+    setSearchTrigger((n) => n + 1);
   }
 
   return (
@@ -287,7 +308,7 @@ export function HomePage() {
           onCenterSelect={onCenterSelect}
           onSearchMapArea={onSearchMapArea}
           placeViewportToFit={placeViewportToFit}
-          onPlaceViewportFitted={clearPlaceViewportToFit}
+          onPlaceViewportFitted={onPlaceViewportFitted}
         />
       </MaxWLayout>
       <ShelterSearch

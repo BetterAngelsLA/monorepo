@@ -3,15 +3,21 @@ import { useEffect } from 'react';
 import { TMapBounds } from './types.maps';
 import { fitMapToPlaceViewport } from './utils/fitMapToPlaceViewport';
 import { fromMapBounds } from './utils/fromMapBounds';
+import { toMapBounds } from './utils/toMapBounds';
 
 type TProps = {
   /** When set, the map zooms/pans so this viewport is fully visible. */
   viewport: TMapBounds | null;
-  onFitted?: () => void;
+  /**
+   * Called after the map finishes settling (idle) following fitBounds.
+   * Receives the actual rendered bounds, which may be larger than the Place
+   * viewport due to the map element's aspect ratio.
+   */
+  onFitted?: (actualBounds: TMapBounds) => void;
 };
 
 /**
- * Applies a Places viewport to the map via `fitBounds`, per Google’s recommended
+ * Applies a Places viewport to the map via `fitBounds`, per Google's recommended
  * pattern (useMap + geometry.viewport).
  */
 export function MapPlaceViewportFitter(props: TProps) {
@@ -24,7 +30,16 @@ export function MapPlaceViewportFitter(props: TProps) {
     }
 
     fitMapToPlaceViewport(map, fromMapBounds(viewport));
-    onFitted?.();
+
+    const listener = map.addListener('idle', () => {
+      listener.remove();
+      const actual = map.getBounds();
+      if (actual && onFitted) {
+        onFitted(toMapBounds(actual));
+      }
+    });
+
+    return () => listener.remove();
   }, [map, viewport, onFitted]);
 
   return null;

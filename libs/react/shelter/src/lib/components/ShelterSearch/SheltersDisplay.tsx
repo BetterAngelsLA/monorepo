@@ -3,7 +3,7 @@ import { InfiniteList } from '@monorepo/react/components';
 import { useAtom } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { MaxStayInput } from '../../apollo';
-import { sheltersAtom } from '../../atoms';
+import { searchTriggerAtom, sheltersAtom } from '../../atoms';
 import {
   ViewSheltersDocument,
   ViewSheltersQuery,
@@ -47,6 +47,7 @@ export function SheltersDisplay(props: TProps) {
     onShelterPinsReadyForMapFit,
   } = props;
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
+  const [searchTrigger] = useAtom(searchTriggerAtom);
 
   const queryVariables = useMemo<ViewSheltersQueryVariables | undefined>(() => {
     let vars: ViewSheltersQueryVariables | undefined;
@@ -99,15 +100,26 @@ export function SheltersDisplay(props: TProps) {
     return vars;
   }, [mapBoundsFilter, nameFilter, propertyFilters]);
 
+  // Freeze query variables at the moment searchTrigger changes so that
+  // intermediate filter-state updates (e.g. nameFilter set before the map
+  // settles) never fire a premature query.
+  const lastTriggerRef = useRef(-1);
+  const activeVarsRef = useRef<ViewSheltersQueryVariables | undefined>(undefined);
+
+  if (searchTrigger !== lastTriggerRef.current) {
+    lastTriggerRef.current = searchTrigger;
+    activeVarsRef.current = queryVariables;
+  }
+
   const { data, loading, error } = useQuery<
     ViewSheltersQuery,
     ViewSheltersQueryVariables
   >(ViewSheltersDocument, {
     variables: {
-      ...queryVariables,
+      ...activeVarsRef.current,
       pagination: { limit: 5000, offset: 0 },
     },
-    skip: !queryVariables,
+    skip: !activeVarsRef.current,
   });
 
   const shelters = useMemo(() => data?.shelters.results ?? [], [data]);
