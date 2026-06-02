@@ -4,6 +4,7 @@ import { useResetAtom } from 'jotai/utils';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  shelterLocationSearchInputAtom,
   shelterNameSearchAtom,
   shelterNameSearchInputAtom,
   shelterPropertyFiltersAtom,
@@ -38,17 +39,19 @@ export function ShelterSearch(props: TProps) {
   const setNameSearch = useSetAtom(shelterNameSearchAtom);
   const resetFilters = useResetAtom(shelterPropertyFiltersAtom);
   const setNameSearchInput = useSetAtom(shelterNameSearchInputAtom);
+  const setLocationSearchInput = useSetAtom(shelterLocationSearchInputAtom);
   const [searchRequest, setSearchRequest] = useAtom(shelterSearchRequestAtom);
 
   // React to search requests from SearchPage
   useEffect(() => {
     if (!searchRequest) return;
 
-    const { name, location, mapBounds } = searchRequest;
+    const { name, location, mapBounds, displayText } = searchRequest;
     setSearchRequest(null);
 
     if (location) {
       setLocation(location, mapBounds);
+      setLocationSearchInput(displayText ?? '');
     }
 
     const trimmed = name.trim();
@@ -74,6 +77,7 @@ export function ShelterSearch(props: TProps) {
     resetFilters,
     setNameSearch,
     setNameSearchInput,
+    setLocationSearchInput,
     onNameSearch,
   ]);
 

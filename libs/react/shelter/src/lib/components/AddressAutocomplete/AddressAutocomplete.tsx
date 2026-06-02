@@ -13,6 +13,7 @@ const BOUNDS_RADIUS_MILES = 25;
 type TProps = {
   className?: string;
   placeholder?: string;
+  initialValue?: string;
   onPlaceSelect: (place: TPlaceResult | null) => void;
   countryRestrictions?: ISO3166Alpha2 | ISO3166Alpha2[] | null;
   leftIcon?: React.ReactElement;
@@ -24,15 +25,20 @@ export function AddressAutocomplete(props: TProps) {
     onPlaceSelect,
     countryRestrictions = 'us',
     placeholder,
+    initialValue = '',
     className = '',
     leftIcon,
     inputClassname = '',
   } = props;
 
   const places = usePlacesClient();
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState(initialValue);
   const [predictions, setPredictions] = useState<TPlacePrediction[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setInputValue(initialValue);
+  }, [initialValue]);
 
   useEffect(() => {
     return () => {
@@ -71,6 +77,13 @@ export function AddressAutocomplete(props: TProps) {
 
   const handleInputChange = (value: string) => {
     setInputValue(value);
+
+    if (!value.trim()) {
+      onPlaceSelect(null);
+      setPredictions([]);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      return;
+    }
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(
