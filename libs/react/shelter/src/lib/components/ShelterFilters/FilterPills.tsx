@@ -45,7 +45,7 @@ export function FilterPills(props: IProps) {
         pills.push({
           id: 'openNow',
           label: 'Open now',
-          clear: (prev) => ({ ...prev, openNow: false }),
+          clear: (prev) => ({ ...prev, openNow: undefined }),
         });
       }
       continue;
@@ -55,7 +55,7 @@ export function FilterPills(props: IProps) {
         pills.push({
           id: 'isAccessCenter',
           label: 'Shelter is Access Center',
-          clear: (prev) => ({ ...prev, isAccessCenter: false }),
+          clear: (prev) => ({ ...prev, isAccessCenter: undefined }),
         });
       }
       continue;
