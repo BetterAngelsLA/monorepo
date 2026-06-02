@@ -1,7 +1,7 @@
 import { CloseIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useSetAtom } from 'jotai';
-import { shelterPropertyFiltersAtom } from '../../atoms';
+import { searchTriggerAtom, shelterPropertyFiltersAtom } from '../../atoms';
 import { TShelterPropertyFilters } from '../ShelterSearch';
 import { getFilterLabel } from './config';
 
@@ -31,6 +31,7 @@ type IProps = {
 export function FilterPills(props: IProps) {
   const { className, filters, onPillClear } = props;
   const setFilters = useSetAtom(shelterPropertyFiltersAtom);
+  const setSearchTrigger = useSetAtom(searchTriggerAtom);
 
   if (!filters) {
     return null;
@@ -111,6 +112,7 @@ export function FilterPills(props: IProps) {
   function onClearPill(pill: TPill) {
     const next = pill.clear(filters);
     setFilters(next);
+    setSearchTrigger((n) => n + 1);
     onPillClear?.(next);
   }
 
