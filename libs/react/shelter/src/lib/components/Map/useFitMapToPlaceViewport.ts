@@ -5,7 +5,7 @@ import { fitMapToPlaceViewport } from './utils/fitMapToPlaceViewport';
 import { fromMapBounds } from './utils/fromMapBounds';
 import { toMapBounds } from './utils/toMapBounds';
 
-type TProps = {
+type TUseFitMapToPlaceViewportOptions = {
   /** When set, the map zooms/pans so this viewport is fully visible. */
   viewport: TMapBounds | null;
   /**
@@ -20,8 +20,10 @@ type TProps = {
  * Applies a Places viewport to the map via `fitBounds`, per Google's recommended
  * pattern (useMap + geometry.viewport).
  */
-export function MapPlaceViewportFitter(props: TProps) {
-  const { viewport, onFitted } = props;
+export function useFitMapToPlaceViewport(
+  options: TUseFitMapToPlaceViewportOptions
+): void {
+  const { viewport, onFitted } = options;
   const map = useMap();
 
   useEffect(() => {
@@ -41,6 +43,4 @@ export function MapPlaceViewportFitter(props: TProps) {
 
     return () => listener.remove();
   }, [map, viewport, onFitted]);
-
-  return null;
 }

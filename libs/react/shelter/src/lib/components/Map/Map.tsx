@@ -22,7 +22,7 @@ import {
   SearchMapAreaButton,
   ZoomControls,
 } from './controls';
-import { MapPlaceViewportFitter } from './MapPlaceViewportFitter';
+import { useFitMapToPlaceViewport } from './useFitMapToPlaceViewport';
 import {
   TLatLng,
   TMapBounds,
@@ -73,6 +73,11 @@ export function Map(props: TMap) {
   } = props;
   const map = useMap();
 
+  useFitMapToPlaceViewport({
+    viewport: placeViewportToFit,
+    onFitted: onPlaceViewportFitted,
+  });
+
   const [cameraProps, setCameraProps] = useState<MapCameraProps>({
     center: toGoogleLatLng(defaultCenter) as google.maps.LatLngLiteral,
     zoom: defaultZoom,
@@ -117,10 +122,6 @@ export function Map(props: TMap) {
       onIdle={() => setShowSearchButton(true)}
       {...cameraProps}
     >
-      <MapPlaceViewportFitter
-        viewport={placeViewportToFit}
-        onFitted={onPlaceViewportFitted}
-      />
       {userLocationLatLng && (
         <AdvancedMarker position={userLocationLatLng} zIndex={999}>
           <CurrentLocationDot />
