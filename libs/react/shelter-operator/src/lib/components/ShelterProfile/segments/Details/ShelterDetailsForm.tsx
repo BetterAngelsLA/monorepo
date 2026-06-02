@@ -6,6 +6,7 @@ import { Input } from '../../../base-ui/input';
 import { Form } from '../../../form/Form';
 import {
   ACCESSIBILITY_OPTIONS,
+  DEMOGRAPHICS_OPTIONS,
   PARKING_OPTIONS,
   PETS_OPTIONS,
   STORAGE_OPTIONS,
@@ -65,7 +66,33 @@ export function ShelterDetailsForm(props: TProps) {
           className="flex flex-col gap-10 mt-8"
           onSubmit={onSubmit ? handleSubmit(onSubmit) : undefined}
         >
-          <Form.Block columns={3}>
+          <Form.Block>
+            {/*
+                demographics/demographicsOther combo-box
+                TODO: abstract out combo-box at next occurrence
+            */}
+            <Controller
+              name="demographics"
+              control={control}
+              render={({ field }) => (
+                <Dropdown
+                  label="Demographics Served"
+                  isMulti={true}
+                  value={DEMOGRAPHICS_OPTIONS.filter((o) =>
+                    field.value.includes(o.value)
+                  )}
+                  options={DEMOGRAPHICS_OPTIONS}
+                  onChange={(options) => {
+                    field.onChange(options ? options.map((o) => o.value) : []);
+                  }}
+                  isViewMode={isViewMode}
+                  className="min-w-44"
+                />
+              )}
+            />
+          </Form.Block>
+
+          <Form.Block>
             <Controller
               name="accessibility"
               control={control}

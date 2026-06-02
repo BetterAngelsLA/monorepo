@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { ExitPolicyChoices } from '@monorepo/react/shelter';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
+import { ComboBox } from '../../../base-ui/combo-box';
 import { Dropdown } from '../../../base-ui/dropdown';
 import { Input } from '../../../base-ui/input';
 import { Form } from '../../../form/Form';
@@ -35,21 +36,12 @@ export function ShelterPoliciesForm(props: TProps) {
   const {
     control,
     handleSubmit,
-    setValue,
     formState: { errors, isValid },
     reset,
   } = useForm<PoliciesFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: { ...defaultFormValues, ...defaultValues },
   });
-
-  const selectedExitPolicy = useWatch({
-    control,
-    name: 'exitPolicy',
-  });
-  const showExitPolicyOther = selectedExitPolicy.includes(
-    ExitPolicyChoices.Other
-  );
 
   function handleCancel() {
     reset();
@@ -149,61 +141,19 @@ export function ShelterPoliciesForm(props: TProps) {
           </Form.Block>
 
           <Form.Block>
-            {/*
-                exitPolicy/exitPolicyOther combo-box
-                TODO: abstract out combo-box at next occurrence
-            */}
-            <div className="flex flex-col gap-4">
-              <Controller
-                name="exitPolicy"
-                control={control}
-                render={({ field }) => (
-                  <Dropdown
-                    label="Exit Policy"
-                    isMulti={true}
-                    value={EXIT_POLICY_OPTIONS.filter((o) =>
-                      field.value.includes(o.value)
-                    )}
-                    options={EXIT_POLICY_OPTIONS}
-                    onChange={(options) => {
-                      const values = options ? options.map((o) => o.value) : [];
-                      field.onChange(values);
-
-                      if (!values.includes(ExitPolicyChoices.Other)) {
-                        setValue('exitPolicyOther', null, {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-                      }
-                    }}
-                    isViewMode={isViewMode}
-                    className="min-w-44"
-                  />
-                )}
-              />
-
-              {showExitPolicyOther && (
-                <Controller
-                  name="exitPolicyOther"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      label="Other Exit Policy"
-                      dataType="string"
-                      value={field.value ?? ''}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        field.onChange(value === '' ? null : value);
-                      }}
-                      onBlur={field.onBlur}
-                      disabled={disabled}
-                      isViewMode={isViewMode}
-                      error={errors.exitPolicyOther?.message}
-                    />
-                  )}
-                />
-              )}
-            </div>
+            <ComboBox
+              control={control}
+              name="exitPolicy"
+              inputName="exitPolicyOther"
+              label="Exit Policy"
+              options={EXIT_POLICY_OPTIONS}
+              triggerValue={ExitPolicyChoices.Other}
+              inputLabel="Other Exit Policy"
+              inputError={errors.exitPolicyOther?.message}
+              isViewMode={isViewMode}
+              disabled={disabled}
+              className="min-w-44"
+            />
 
             <Controller
               name="emergencySurge"

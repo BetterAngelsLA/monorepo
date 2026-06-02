@@ -1,5 +1,7 @@
 import {
+  DemographicChoices,
   enumDisplayAccessibilityChoices,
+  enumDisplayDemographics,
   enumDisplayExitPolicyChoices,
   enumDisplayFunderChoices,
   enumDisplayParkingChoices,
@@ -24,6 +26,10 @@ export const ACCESSIBILITY_OPTIONS = toDropdownOptions(
 );
 
 export const STATUS_OPTIONS = toDropdownOptions(enumStatusChoices);
+
+export const DEMOGRAPHICS_OPTIONS = toDropdownOptions(enumDisplayDemographics, [
+  DemographicChoices.Other,
+]);
 
 export const STORAGE_OPTIONS = toDropdownOptions(enumDisplayStorageChoices, [
   StorageChoices.NoStorage,

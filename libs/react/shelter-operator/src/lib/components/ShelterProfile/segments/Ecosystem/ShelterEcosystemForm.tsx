@@ -1,11 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { FunderChoices } from '@monorepo/react/shelter';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { useShelterCities } from '../../../../hooks';
 import { useShelterSpas } from '../../../../hooks/useShelterSpas/useShelterSpas';
+import { ComboBox } from '../../../base-ui/combo-box';
 import { Dropdown } from '../../../base-ui/dropdown';
-import { Input } from '../../../base-ui/input';
 import { Form } from '../../../form/Form';
 import {
   FUNDERS_OPTIONS,
@@ -43,16 +43,12 @@ export function ShelterEcosystemForm(props: TProps) {
   const {
     control,
     handleSubmit,
-    setValue,
     formState: { isValid, errors },
     reset,
   } = useForm<EcosystemFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: { ...defaultFormValues, ...defaultValues },
   });
-
-  const selectedFunders = useWatch({ control, name: 'funders' });
-  const showFundersOther = selectedFunders.includes(FunderChoices.Other);
 
   function handleCancel() {
     reset();
@@ -268,62 +264,20 @@ export function ShelterEcosystemForm(props: TProps) {
               )}
             />
 
-            {/*
-                funders/fundersOther combo-box
-                TODO: abstract out combo-box at next occurrence
-            */}
-            <div className="flex flex-col gap-4">
-              <Controller
-                name="funders"
-                control={control}
-                render={({ field }) => (
-                  <Dropdown
-                    label="Funders"
-                    isMulti={true}
-                    isSearchable={cities.length > SEARCHABLE_MIN}
-                    value={FUNDERS_OPTIONS.filter((o) =>
-                      field.value.includes(o.value)
-                    )}
-                    options={FUNDERS_OPTIONS}
-                    onChange={(options) => {
-                      const values = options ? options.map((o) => o.value) : [];
-                      field.onChange(values);
-
-                      if (!values.includes(FunderChoices.Other)) {
-                        setValue('fundersOther', null, {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-                      }
-                    }}
-                    isViewMode={isViewMode}
-                    className="min-w-44"
-                  />
-                )}
-              />
-
-              {showFundersOther && (
-                <Controller
-                  name="fundersOther"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      label="Other Funder"
-                      dataType="string"
-                      value={field.value ?? ''}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        field.onChange(value === '' ? null : value);
-                      }}
-                      onBlur={field.onBlur}
-                      disabled={disabled}
-                      isViewMode={isViewMode}
-                      error={errors.fundersOther?.message}
-                    />
-                  )}
-                />
-              )}
-            </div>
+            <ComboBox
+              control={control}
+              name="funders"
+              inputName="fundersOther"
+              label="Funders"
+              isSearchable={cities.length > SEARCHABLE_MIN}
+              options={FUNDERS_OPTIONS}
+              triggerValue={FunderChoices.Other}
+              inputLabel="Other Funder"
+              inputError={errors.fundersOther?.message}
+              isViewMode={isViewMode}
+              disabled={disabled}
+              className="min-w-44"
+            />
           </Form.Block>
 
           {!isViewMode && onSubmit && (
