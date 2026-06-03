@@ -6,26 +6,21 @@ managers (``managers.py``) and Strawberry ``get_queryset`` hooks
 (``types.py``) delegate here so the filtering logic is defined once.
 """
 
-import datetime
+from datetime import datetime, timedelta
+from time import timezone
 from typing import TYPE_CHECKING
-from dataclasses import dataclass
 
 from django.db.models import Exists, OuterRef, Q, QuerySet
 from organizations.models import Organization
 from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices, StatusChoices
 from client.enums import GenderEnum, RaceEnum, VeteranStatusEnum
+from pghistory.Models import Events
 
 if TYPE_CHECKING:
     from accounts.models import User
     from django.contrib.auth.base_user import AbstractBaseUser
     from django.contrib.auth.models import AnonymousUser
     from shelters.models import Shelter
-
-@dataclass
-class DemographicFilters:
-    gender: str | None = None
-    race: str | None = None
-    veteran_status: str | None = None
 
 def shelter_list(
     queryset: "QuerySet[Shelter]", *, user: "AbstractBaseUser | AnonymousUser | None" = None
@@ -120,3 +115,39 @@ def shelters_open_at(
     )
 
     return queryset.filter(is_open).exclude(has_active_exception)
+
+
+def reservation_status_change_counts(
+        shelter_id: int,
+        start_date: datetime.date,
+        end_date: datetime.date,
+) -> dict[str, int]:
+    """
+      Count how many reservations changed to given statuses for a shelter in a date range (end_date inclusive).
+
+      Each reservation is counted once per status.
+    """
+    now = timezone.now()
+    furthest_date = now.replace(year=now.year-1)
+    if start_date < furthest_date.date() or end_date < furthest_date.date():
+        return {}
+
+    from shelters.models import Reservation
+
+    reservations = Reservation.objects.filter(shelter_id=shelter_id)
+
+    events = (
+        Events.objects.tracks(reservations)
+        .filter(
+            pgh_label="reservation.status_change",
+            pgh_created_at__gte=start_date,
+            pgh_created_at__lt=end_date + timedelta(days=1)
+        )
+    )
+
+    return {
+        "STATUS_TO_CHECK_IN_OVERDUE": events.filter(status="check_in_overdue").values("pgh_obj_id").distinct().count(),
+        "STATUS_TO_CANCELLED": events.filter(status="cancelled").values("pgh_obj_id").distinct().count(),
+        "STATUS_TO_CHECKED_IN": events.filter(status="checked_in").values("pgh_obj_id").distinct().count(),
+        "STATUS_OVERDUE_TO_CHECKED_IN": events.filter(pgh_diff__status__0="check_in_overdue", pgh_diff__status__1="checked_in").values("pgh_obj_id").distinct().count(),
+    }
