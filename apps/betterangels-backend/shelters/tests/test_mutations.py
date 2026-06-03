@@ -300,13 +300,12 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
         )
 
     def test_create_shelter_missing_required_field(self) -> None:
-        """Test that creating a shelter without required fields fails"""
+        """Omitting name (String! in the schema) is caught at the GraphQL validation level."""
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
                     ... on ShelterType {
                         id
-                        name
                     }
                     ... on OperationInfo {
                         messages {
@@ -321,9 +320,8 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
 
         variables: dict[str, Any] = {
             "data": {
-                "name": "Incomplete Shelter",
+                # name intentionally omitted — should fail GraphQL validation
                 "organization": str(self.org_1.pk),
-                # Missing description - should fail
             }
         }
 
@@ -332,7 +330,7 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
         # GraphQL will catch this at the input validation level before the mutation runs
         self.assertIsNotNone(response.get("errors"))
         error_message = str(response["errors"]).lower()
-        self.assertIn("description", error_message)
+        self.assertIn("field 'name'", error_message)
 
     def test_create_shelter_with_rating(self) -> None:
         """Test creating a shelter with rating and review"""
@@ -570,7 +568,12 @@ class UpdateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
                 updateShelter(data: $data) {
                     ... on ShelterType {
                         id
+                        name
+                        status
                         description
+                        email
+                        phone
+                        website
                         isPrivate
                     }
                 }
@@ -579,7 +582,12 @@ class UpdateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
         variables: dict[str, Any] = {
             "data": {
                 "id": str(shelter.pk),
+                "name": "Updated Name",
+                "status": "APPROVED",
                 "description": "Updated description",
+                "email": "contact@shelter.org",
+                "phone": "+13105551234",
+                "website": "https://shelter.org",
                 "isPrivate": True,
             }
         }
@@ -588,7 +596,12 @@ class UpdateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
 
         self.assertIsNone(response.get("errors"))
         result = response["data"]["updateShelter"]
+        self.assertEqual(result["name"], "Updated Name")
+        self.assertEqual(result["status"], "APPROVED")
         self.assertEqual(result["description"], "Updated description")
+        self.assertEqual(result["email"], "contact@shelter.org")
+        self.assertIn(result["phone"], ["+13105551234", "3105551234"])
+        self.assertEqual(result["website"], "https://shelter.org")
         self.assertTrue(result["isPrivate"])
 
     def test_update_shelter_patch_semantics(self) -> None:
@@ -736,3 +749,76 @@ class UpdateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
         result = response["data"]["updateShelter"]
         self.assertEqual(len(result["services"]), 1)
         self.assertEqual(result["services"][0]["displayName"], "Update Test Service")
+
+    def test_update_shelter_invalid_email_returns_operation_info(self) -> None:
+        """An invalid email returns OperationInfo rather than raising an unhandled error."""
+        shelter = Shelter.objects.create(
+            name="Email Test Shelter",
+            organization=self.org_1,
+        )
+
+        mutation = """
+            mutation ($data: UpdateShelterInput!) {
+                updateShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "email": "not-an-email",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["field"], "email")
+        self.assertIn("valid email address", messages[0]["message"])
+
+    def test_update_shelter_nonexistent_id_returns_operation_info(self) -> None:
+        """Updating a shelter that does not exist returns OperationInfo (MUTATIONS_DEFAULT_HANDLE_ERRORS=True)."""
+        mutation = """
+            mutation ($data: UpdateShelterInput!) {
+                updateShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "id": "999999",
+                "description": "Should not work",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "ERROR")
+        self.assertIsNone(messages[0]["field"])
+        self.assertIn("matching query does not exist", messages[0]["message"])
