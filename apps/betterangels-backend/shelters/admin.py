@@ -1508,14 +1508,14 @@ class RoomAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "shelter",
-        "room_identifier",
-        "room_type",
+        "name",
+        "type",
         "status",
         "medical_respite",
         "last_cleaned_inspected",
     )
-    list_filter = ("status", "room_type", "medical_respite")
-    search_fields = ("room_identifier", "shelter__name", "notes")
+    list_filter = ("status", "type", "medical_respite")
+    search_fields = ("name", "shelter__name", "notes")
     autocomplete_fields = ["shelter"]
     fieldsets = (
         (
@@ -1523,9 +1523,9 @@ class RoomAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "shelter",
-                    "room_identifier",
-                    "room_type",
-                    "room_type_other",
+                    "name",
+                    "type",
+                    "type_other",
                     "status",
                 )
             },

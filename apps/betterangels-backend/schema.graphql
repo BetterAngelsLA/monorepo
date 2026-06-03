@@ -200,8 +200,6 @@ enum BedStatusChoices {
 
 type BedType {
   id: ID!
-  shelter: ShelterType!
-  room: RoomType
   accessibility: [AccessibilityType!]!
   b7: Boolean!
   demographics: [DemographicType!]!
@@ -213,6 +211,8 @@ type BedType {
   name: String
   occupantId: ID
   pets: [PetType!]!
+  room: RoomType
+  shelter: ShelterType!
   status: BedStatusChoices
   statusNotes: String
   storage: Boolean!
@@ -2099,22 +2099,22 @@ type RoomStyleType {
 
 type RoomType {
   id: ID!
-  shelter: ShelterType!
-  roomIdentifier: String!
-  roomType: RoomStyleChoices
-  roomTypeOther: String
-  status: RoomStatusChoices
-  notes: String
-  amenities: String
-  demographics: [DemographicType!]!
   accessibility: [AccessibilityType!]!
+  amenities: String
+  beds(filters: BedFilter): [BedType!]!
+  demographics: [DemographicType!]!
   funders: [FunderType!]!
-  pets: [PetType!]!
-  storage: Boolean!
+  lastCleanedInspected: DateTime
   maintenanceFlag: Boolean!
   medicalRespite: Boolean!
-  lastCleanedInspected: DateTime
-  beds(filters: BedFilter): [BedType!]!
+  name: String!
+  notes: String
+  pets: [PetType!]!
+  shelter: ShelterType!
+  status: RoomStatusChoices
+  storage: Boolean!
+  type: RoomStyleChoices
+  typeOther: String
   occupantIds: [ID!]!
 }
 

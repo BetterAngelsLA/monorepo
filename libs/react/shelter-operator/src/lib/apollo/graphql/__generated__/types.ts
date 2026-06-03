@@ -2686,15 +2686,15 @@ export type RoomType = {
   lastCleanedInspected?: Maybe<Scalars['DateTime']['output']>;
   maintenanceFlag: Scalars['Boolean']['output'];
   medicalRespite: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
   notes?: Maybe<Scalars['String']['output']>;
   occupantIds: Array<Scalars['ID']['output']>;
   pets: Array<PetType>;
-  roomIdentifier: Scalars['String']['output'];
-  roomType?: Maybe<RoomStyleChoices>;
-  roomTypeOther?: Maybe<Scalars['String']['output']>;
   shelter: ShelterType;
   status?: Maybe<RoomStatusChoices>;
   storage: Scalars['Boolean']['output'];
+  type?: Maybe<RoomStyleChoices>;
+  typeOther?: Maybe<Scalars['String']['output']>;
 };
 
 

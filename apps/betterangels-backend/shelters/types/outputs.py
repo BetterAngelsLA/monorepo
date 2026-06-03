@@ -273,8 +273,6 @@ class BedType:
         return queryset.filter(shelter__in=admin_shelter_list(models.Shelter.objects.all(), user=user))
 
     id: ID
-    shelter: "ShelterType"
-    room: Optional["RoomType"]
     accessibility: List[AccessibilityType]
     b7: bool
     demographics: List[DemographicType]
@@ -286,6 +284,8 @@ class BedType:
     name: Optional[str]
     occupant_id: Optional[ID]
     pets: List[PetType]
+    room: Optional["RoomType"]
+    shelter: "ShelterType"
     status: Optional[BedStatusChoices]
     status_notes: Optional[str]
     storage: bool
@@ -300,22 +300,22 @@ class RoomType:
         return queryset.filter(shelter__in=admin_shelter_list(models.Shelter.objects.all(), user=user))
 
     id: ID
-    shelter: "ShelterType"
-    room_identifier: auto
-    room_type: Optional[RoomStyleChoices]
-    room_type_other: auto
-    status: Optional[RoomStatusChoices]
-    notes: auto
-    amenities: auto
-    demographics: List[DemographicType]
     accessibility: List[AccessibilityType]
+    amenities: auto
+    beds: List["BedType"]
+    demographics: List[DemographicType]
     funders: List[FunderType]
-    pets: List[PetType]
-    storage: bool
+    last_cleaned_inspected: auto
     maintenance_flag: bool
     medical_respite: auto
-    last_cleaned_inspected: auto
-    beds: List["BedType"]
+    name: auto
+    notes: auto
+    pets: List[PetType]
+    shelter: "ShelterType"
+    status: Optional[RoomStatusChoices]
+    storage: bool
+    type: Optional[RoomStyleChoices]
+    type_other: auto
 
     @strawberry_django.field
     def occupant_ids(self, root: models.Room) -> List[ID]:

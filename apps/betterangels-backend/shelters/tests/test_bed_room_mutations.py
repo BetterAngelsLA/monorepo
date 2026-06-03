@@ -158,9 +158,9 @@ class RoomMutationTestCase(GraphQLBaseTestCase, TestCase):
                 createRoom(data: $data) {
                     ... on RoomType {
                         id
-                        roomIdentifier
-                        roomType
-                        roomTypeOther
+                        name
+                        type
+                        typeOther
                         status
                         notes
                         amenities
@@ -176,9 +176,9 @@ class RoomMutationTestCase(GraphQLBaseTestCase, TestCase):
         variables = {
             "data": {
                 "shelterId": shelter.pk,
-                "roomIdentifier": "Room-101",
-                "roomType": RoomStyleChoices.SINGLE_ROOM.name,
-                "roomTypeOther": None,
+                "name": "Room-101",
+                "type": RoomStyleChoices.SINGLE_ROOM.name,
+                "typeOther": None,
                 "status": RoomStatusChoices.AVAILABLE.name,
                 "notes": "Corner room",
                 "amenities": "WiFi, AC",
@@ -191,8 +191,8 @@ class RoomMutationTestCase(GraphQLBaseTestCase, TestCase):
 
         self.assertIsNone(response.get("errors"))
         data = response["data"]["createRoom"]
-        self.assertEqual(data["roomIdentifier"], "Room-101")
-        self.assertEqual(data["roomType"], RoomStyleChoices.SINGLE_ROOM.name)
+        self.assertEqual(data["name"], "Room-101")
+        self.assertEqual(data["type"], RoomStyleChoices.SINGLE_ROOM.name)
         self.assertEqual(data["status"], RoomStatusChoices.AVAILABLE.name)
         self.assertEqual(data["notes"], "Corner room")
         self.assertEqual(data["amenities"], "WiFi, AC")
@@ -224,7 +224,7 @@ class RoomMutationTestCase(GraphQLBaseTestCase, TestCase):
         variables = {
             "data": {
                 "shelterId": shelter.pk,
-                "roomIdentifier": "Room-101",
+                "name": "Room-101",
             }
         }
 
@@ -254,7 +254,7 @@ class RoomMutationTestCase(GraphQLBaseTestCase, TestCase):
         variables = {
             "data": {
                 "shelterId": 999999,
-                "roomIdentifier": "Room-101",
+                "name": "Room-101",
             }
         }
 
@@ -278,7 +278,7 @@ class RoomMutationTestCase(GraphQLBaseTestCase, TestCase):
         variables = {
             "data": {
                 "shelterId": shelter.pk,
-                "roomIdentifier": "Room-101",
+                "name": "Room-101",
                 "status": "INVALID_STATUS",
             }
         }
