@@ -30,7 +30,7 @@ def report_bed_status_counts(
     Bed.demographics is M2M and pghistory only tracks scalar fields so we cannot
     reconstruct historically accurate demographic membership from BedEvent
     """
-    from shelters.models import BedEvent
+    from shelters.models import BedEvent  # type: ignore[attr-defined]
 
     res = []
     curr = start_date

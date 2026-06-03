@@ -3,7 +3,7 @@ import datetime
 from django.test import TestCase
 from model_bakery import baker
 from shelters.enums import BedStatusChoices
-from shelters.models import Bed, BedEvent
+from shelters.models import Bed, BedEvent  # type: ignore[attr-defined]
 from shelters.selectors import report_bed_status_counts
 from shelters.tests.baker_recipes import shelter_recipe
 
