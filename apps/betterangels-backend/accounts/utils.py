@@ -1,4 +1,3 @@
-import logging
 from functools import cached_property
 from typing import Union
 
@@ -13,23 +12,17 @@ from organizations.models import Organization
 
 from .models import PermissionGroup, PermissionGroupTemplate, User
 
-logger = logging.getLogger(__name__)
-
 
 def remove_organization_permission_group(organization: Organization) -> None:
     Group.objects.filter(permissiongroup__organization=organization).delete()
 
 
-def add_default_org_permissions_to_user(user: User, organization: Organization) -> None:
-    caseworker_permission_group, _ = PermissionGroupTemplate.objects.get_or_create(
-        # TODO: This is a hack for MVP. Not all orgs will default to caseworkers
-        # we will want to have a default template selected for orgs on the org model.
-        name=GroupTemplateNames.CASEWORKER
+def add_user_to_org_group(user: User, organization: Organization, template_name: str) -> None:
+    template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_name)
+    permission_group, _ = PermissionGroup.objects.get_or_create(
+        organization=organization, template=template
     )
-    org_caseworker_group, _ = PermissionGroup.objects.get_or_create(
-        organization=organization, template=caseworker_permission_group
-    )
-    user.groups.add(org_caseworker_group.group)
+    user.groups.add(permission_group.group)
 
 
 def create_default_org_permission_groups(organization: Organization) -> None:
@@ -64,30 +57,6 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
 
     if not (permission_group and permission_group.group):
         raise PermissionError("User lacks proper organization or permissions")
-
-    return permission_group
-
-
-def get_org_permission_group(organization_id: int, template_name: str) -> PermissionGroup:
-    """Get the PermissionGroup for an org + template by name.
-
-    Each domain knows which template owns its objects:
-      - Notes/clients/tasks → "Caseworker"
-      - Shelters → "Shelter Operator"
-
-    Raises PermissionError if the group doesn't exist.
-    """
-    permission_group = (
-        PermissionGroup.objects.select_related("organization", "group")
-        .filter(
-            organization_id=organization_id,
-            template__name=template_name,
-        )
-        .first()
-    )
-
-    if not (permission_group and permission_group.group):
-        raise PermissionError(f"No '{template_name}' permission group for organization {organization_id}")
 
     return permission_group
 

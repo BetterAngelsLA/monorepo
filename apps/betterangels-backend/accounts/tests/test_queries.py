@@ -6,7 +6,7 @@ from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from accounts.permissions import UserOrganizationPermissions
-from accounts.utils import OrgPermissionManager
+from accounts.utils import OrgPermissionManager, add_user_to_org_group, create_default_org_permission_groups
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.test import ignore_warnings, override_settings
@@ -71,7 +71,8 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         for _ in range(organization_count):
             organization = organization_recipe.make()
             baker.make(OrganizationUser, user=user, organization=organization)
-            permission_group_recipe.make(organization=organization)
+            create_default_org_permission_groups(organization)
+            add_user_to_org_group(user, organization, GroupTemplateNames.CASEWORKER)
             expected_organizations.append({"id": str(organization.pk), "name": organization.name})
 
         query = """

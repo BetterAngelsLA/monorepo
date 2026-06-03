@@ -1,5 +1,6 @@
 from accounts.groups import GroupTemplateNames
 from accounts.models import PermissionGroup, PermissionGroupTemplate, User
+from accounts.utils import add_user_to_org_group
 from django.test import TestCase
 from model_bakery import baker
 from organizations.models import OrganizationUser
@@ -27,12 +28,18 @@ class OrganizationUserTestCase(TestCase):
             template=self.caseworker_template,
         )
 
-    def test_add_user_to_organization_with_default_permissions(self) -> None:
+    def test_add_user_to_organization_with_explicit_permissions(self) -> None:
         baker.make(
             OrganizationUser,
             user=self.user,
             organization=self.organization1,
         )
+        # User is NOT auto-assigned to any group
+        self.assertFalse(
+            self.user.groups.filter(name=f"{self.organization1.name}_{GroupTemplateNames.CASEWORKER}").exists()
+        )
+        # Explicit assignment works
+        add_user_to_org_group(self.user, self.organization1, GroupTemplateNames.CASEWORKER)
         self.assertTrue(
             self.user.groups.filter(name=f"{self.organization1.name}_{GroupTemplateNames.CASEWORKER}").exists()
         )
@@ -43,11 +50,13 @@ class OrganizationUserTestCase(TestCase):
             user=self.user,
             organization=self.organization1,
         )
+        add_user_to_org_group(self.user, self.organization1, GroupTemplateNames.CASEWORKER)
         baker.make(
             OrganizationUser,
             user=self.user,
             organization=self.organization2,
         )
+        add_user_to_org_group(self.user, self.organization2, GroupTemplateNames.CASEWORKER)
 
         self.user.organizations_organizationuser.get(organization=self.organization1).delete()
 

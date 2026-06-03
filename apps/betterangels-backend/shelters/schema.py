@@ -1,13 +1,14 @@
-from typing import Optional, cast
+from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
 from accounts.models import User
+from accounts.types import OrganizationType
 from common.permissions.utils import IsAuthenticated
 from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Room, Shelter
-from shelters.services import bed_create, room_create, shelter_create
+from shelters.services import bed_create, room_create, shelter_create, shelter_organization_create
 from shelters.types import (
     AdminShelterType,
     BedType,
@@ -64,6 +65,13 @@ class Query:
     def shelter_max_stay(self, info: Info) -> Optional[int]:
         return Shelter.objects.filter(status=StatusChoices.APPROVED).aggregate(Max("max_stay"))["max_stay__max"] or None
 
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def shelter_organizations(self, info: Info) -> List[OrganizationType]:
+        """Return the current user's organizations that are tagged as shelter orgs."""
+        user = cast(User, get_current_user(info))
+        orgs = user.organizations_organization.filter(profile__org_types__key="shelter")
+        return cast(List[OrganizationType], list(orgs))
+
 
 @strawberry.type
 class Mutation:
@@ -84,3 +92,10 @@ class Mutation:
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
         return cast(RoomType, room_create(user=user, data=clean))
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def create_shelter_organization(self, info: Info, organization_name: str) -> OrganizationType:
+        """Create a new shelter organization and assign the current user as owner."""
+        user = cast(User, get_current_user(info))
+        organization = shelter_organization_create(user=user, organization_name=organization_name)
+        return cast(OrganizationType, organization)

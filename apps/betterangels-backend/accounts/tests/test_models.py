@@ -1,5 +1,10 @@
 from accounts.models import User
-from accounts.utils import remove_organization_permission_group
+from accounts.groups import GroupTemplateNames
+from accounts.utils import (
+    add_user_to_org_group,
+    create_default_org_permission_groups,
+    remove_organization_permission_group,
+)
 from django.test import TestCase
 from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase, parametrize
@@ -44,7 +49,9 @@ class UserModelTestCase(ParametrizedTestCase, TestCase):
         )
 
         if user_is_in_authorized_org:
+            create_default_org_permission_groups(authorized_org)
             authorized_org.add_user(user)
+            add_user_to_org_group(user, authorized_org, GroupTemplateNames.CASEWORKER)
 
         if user_is_in_unauthorized_org:
             unauthorized_org.add_user(user)

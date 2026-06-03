@@ -1,11 +1,13 @@
 from typing import Any, Dict
 
 from accounts.models import User
+from accounts.groups import GroupTemplateNames
+from accounts.utils import add_user_to_org_group, create_default_org_permission_groups
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 from organizations.models import OrganizationUser
 
-from .baker_recipes import organization_recipe, permission_group_recipe
+from .baker_recipes import organization_recipe
 
 
 class CurrentUserGraphQLBaseTestCase(GraphQLBaseTestCase):
@@ -39,8 +41,9 @@ class CurrentUserGraphQLBaseTestCase(GraphQLBaseTestCase):
             has_accepted_privacy_policy=False,
         )
         self.user_organization = organization_recipe.make(name="Twin Peaks Sheriff's Department")
-        permission_group_recipe.make(organization=self.user_organization)
+        create_default_org_permission_groups(self.user_organization)
         baker.make(OrganizationUser, user=self.user, organization=self.user_organization)
+        add_user_to_org_group(self.user, self.user_organization, GroupTemplateNames.CASEWORKER)
 
     def _update_current_user_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_current_user_fixture("update", variables)

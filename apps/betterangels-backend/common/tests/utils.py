@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Optional, Protocol, Tuple, Union
 
 from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
+from accounts.groups import GroupTemplateNames
+from accounts.utils import add_user_to_org_group, create_default_org_permission_groups
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.models import Address, Location
 from django.contrib.contenttypes.models import ContentType
@@ -152,11 +154,15 @@ class GraphQLBaseTestCase(
     def _setup_groups_and_permissions(self) -> None:
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")
-        # A "caseworker" permission group is automatically created for an org when its first user is added
-        # see: apps/betterangels-backend/accounts/signals.py -> handle_organization_user_added
+        # Explicitly create permission groups and assign users
+        create_default_org_permission_groups(self.org_1)
+        create_default_org_permission_groups(self.org_2)
         self.org_1.add_user(self.org_1_case_manager_1)
+        add_user_to_org_group(self.org_1_case_manager_1, self.org_1, GroupTemplateNames.CASEWORKER)
         self.org_1.add_user(self.org_1_case_manager_2)
+        add_user_to_org_group(self.org_1_case_manager_2, self.org_1, GroupTemplateNames.CASEWORKER)
         self.org_2.add_user(self.org_2_case_manager_1)
+        add_user_to_org_group(self.org_2_case_manager_1, self.org_2, GroupTemplateNames.CASEWORKER)
 
     def _setup_hmis_session(self) -> None:
         """

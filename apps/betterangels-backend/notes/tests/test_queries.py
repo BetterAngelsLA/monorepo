@@ -4,6 +4,7 @@ from unittest.mock import ANY
 import time_machine
 from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
+from accounts.utils import create_default_org_permission_groups
 from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
 from deepdiff import DeepDiff
@@ -515,6 +516,7 @@ class InteractionAuthorQueryTestCase(GraphQLBaseTestCase):
         self.non_author = baker.make(User, first_name="Alex", last_name="Johnson")
 
         org = organization_recipe.make(name="author org")
+        create_default_org_permission_groups(org)
         org.add_user(self.author_1)
         org.add_user(self.author_2)
         org.add_user(self.author_3)

@@ -11,12 +11,15 @@ Raises ``django.core.exceptions.ValidationError`` on invalid data — callers
 
 from typing import TYPE_CHECKING, Any, Dict, List
 
+from accounts.groups import GroupTemplateNames
+from accounts.models import OrgType, PermissionGroup, PermissionGroupTemplate
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models, transaction
 from django.utils.text import slugify
-from organizations.models import Organization
+from organizations.models import Organization, OrganizationOwner, OrganizationUser
 from places import Places
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
+from shelters.groups import SHELTER_OPERATOR
 from shelters.models import Bed, Room, Schedule, Service, ServiceCategory, Shelter
 from shelters.selectors import shelter_get
 
@@ -381,3 +384,61 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
     if raw_occupants:
         room.occupants.set(raw_occupants)
     return room
+
+
+# ---------------------------------------------------------------------------
+# Organization creation
+# ---------------------------------------------------------------------------
+
+SHELTER_ORG_TEMPLATES = [
+    SHELTER_OPERATOR,
+    GroupTemplateNames.ORG_ADMIN,
+    GroupTemplateNames.ORG_SUPERUSER,
+]
+
+
+def shelter_organization_create(*, user: "User", organization_name: str) -> Organization:
+    """Create a new shelter organization and assign the user as owner.
+
+    Steps:
+    1. Creates the Organization
+    2. Tags it as "shelter" OrgType via OrganizationProfile
+    3. Creates PermissionGroups (Shelter Operator, OrgAdmin, OrgSuperuser)
+    4. Adds user as org owner with Shelter Operator + OrgSuperuser permissions
+    """
+    organization_name = organization_name.strip()
+    if not organization_name:
+        raise ValidationError("Organization name is required.")
+
+    with transaction.atomic():
+        organization = Organization.objects.create(name=organization_name)
+
+        # Tag as shelter org type
+        shelter_type, _ = OrgType.objects.get_or_create(key="shelter", defaults={"label": "Shelter"})
+        organization.profile.org_types.add(shelter_type)
+
+        # Create permission groups for this org
+        for template_name in SHELTER_ORG_TEMPLATES:
+            template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_name)
+            PermissionGroup.objects.get_or_create(organization=organization, template=template)
+
+        # Make user the org owner
+        org_user = OrganizationUser.objects.create(
+            user=user,
+            organization=organization,
+            is_admin=True,
+        )
+        OrganizationOwner.objects.create(
+            organization=organization,
+            organization_user=org_user,
+        )
+
+        # Assign Shelter Operator + OrgSuperuser groups to the creator
+        perm_groups = PermissionGroup.objects.filter(
+            organization=organization,
+            template__name__in=[SHELTER_OPERATOR, GroupTemplateNames.ORG_SUPERUSER],
+        )
+        for perm_group in perm_groups:
+            user.groups.add(perm_group.group)
+
+    return organization

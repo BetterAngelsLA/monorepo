@@ -7,6 +7,7 @@ import strawberry_django
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
+from accounts.utils import add_user_to_org_group
 from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.conf import settings
@@ -217,6 +218,8 @@ class Mutation:
                 OrganizationUser.objects.create(user=user, organization=organization)
             except Exception:
                 raise ValidationError(f"{data.first_name} {data.last_name} is already a member of {organization.name}.")
+
+            add_user_to_org_group(user, organization, GroupTemplateNames.CASEWORKER)
 
             invitation_backend().create_organization_invite(
                 organization=organization, invited_by_user=current_user, invitee_user=user
