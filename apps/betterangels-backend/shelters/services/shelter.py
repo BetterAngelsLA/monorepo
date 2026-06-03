@@ -179,6 +179,7 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     """
     shelter_id = data.pop("id")
     data = {k: v for k, v in data.items() if v is not UNSET}
+    data.pop("organization", None)  # organization cannot be changed after creation
 
     shelter = Shelter.objects.get(pk=shelter_id)
 
