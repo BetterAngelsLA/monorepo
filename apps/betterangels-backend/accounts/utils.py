@@ -1,3 +1,4 @@
+import logging
 from functools import cached_property
 from typing import Union
 
@@ -11,6 +12,8 @@ from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
 
 from .models import PermissionGroup, PermissionGroupTemplate, User
+
+logger = logging.getLogger(__name__)
 
 
 def remove_organization_permission_group(organization: Organization) -> None:
@@ -61,6 +64,30 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
 
     if not (permission_group and permission_group.group):
         raise PermissionError("User lacks proper organization or permissions")
+
+    return permission_group
+
+
+def get_org_permission_group(organization_id: int, template_name: str) -> PermissionGroup:
+    """Get the PermissionGroup for an org + template by name.
+
+    Each domain knows which template owns its objects:
+      - Notes/clients/tasks → "Caseworker"
+      - Shelters → "Shelter Operator"
+
+    Raises PermissionError if the group doesn't exist.
+    """
+    permission_group = (
+        PermissionGroup.objects.select_related("organization", "group")
+        .filter(
+            organization_id=organization_id,
+            template__name=template_name,
+        )
+        .first()
+    )
+
+    if not (permission_group and permission_group.group):
+        raise PermissionError(f"No '{template_name}' permission group for organization {organization_id}")
 
     return permission_group
 
