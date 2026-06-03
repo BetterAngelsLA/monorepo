@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
-from accounts.models import User
 from accounts.groups import GroupTemplateNames
+from accounts.models import User
 from accounts.utils import add_user_to_org_group, create_default_org_permission_groups
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker

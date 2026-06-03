@@ -2,9 +2,9 @@ import json
 import uuid
 from typing import Any, Dict, List, Optional, Protocol, Tuple, Union
 
+from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
-from accounts.groups import GroupTemplateNames
 from accounts.utils import add_user_to_org_group, create_default_org_permission_groups
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.models import Address, Location

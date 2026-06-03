@@ -19,9 +19,7 @@ def remove_organization_permission_group(organization: Organization) -> None:
 
 def add_user_to_org_group(user: User, organization: Organization, template_name: str) -> None:
     template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_name)
-    permission_group, _ = PermissionGroup.objects.get_or_create(
-        organization=organization, template=template
-    )
+    permission_group, _ = PermissionGroup.objects.get_or_create(organization=organization, template=template)
     user.groups.add(permission_group.group)
 
 
