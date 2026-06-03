@@ -29,6 +29,7 @@ from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import (
     ShelterProgramChoices,
     SpecialSituationRestrictionChoices,
+    StatusChoices,
     StorageChoices,
     VaccinationRequirementChoices,
 )
@@ -133,7 +134,11 @@ class CreateShelterInput:
 @strawberry_django.input(models.Shelter, partial=True)
 class UpdateShelterInput:
     id: ID
+    name: Maybe[str] = UNSET
+    status: Maybe[StatusChoices] = UNSET
     description: Maybe[str] = UNSET
+    email: Maybe[Optional[str]] = UNSET
+    website: Maybe[Optional[str]] = UNSET
     is_private: Maybe[bool] = UNSET
     city_id: Maybe[ID | None] = UNSET
     spa_id: Maybe[ID | None] = UNSET

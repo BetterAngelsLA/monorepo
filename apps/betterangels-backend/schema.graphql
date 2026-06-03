@@ -2728,7 +2728,11 @@ union UpdateReferralPayload = ReferralType | OperationInfo
 
 input UpdateShelterInput {
   id: ID!
+  name: String
+  status: StatusChoices
   description: String
+  email: String
+  website: String
   isPrivate: Boolean
   cityId: ID
   spaId: ID

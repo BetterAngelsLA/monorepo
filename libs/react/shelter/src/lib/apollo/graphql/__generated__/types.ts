@@ -3334,6 +3334,7 @@ export type UpdateShelterInput = {
   cityId?: InputMaybe<Scalars['ID']['input']>;
   demographics?: InputMaybe<Array<DemographicChoices>>;
   description?: InputMaybe<Scalars['String']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
   entryInfo?: InputMaybe<Scalars['String']['input']>;
   entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
   exitPolicy?: InputMaybe<Array<ExitPolicyChoices>>;
@@ -3341,6 +3342,7 @@ export type UpdateShelterInput = {
   id: Scalars['ID']['input'];
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<ShelterLocationInput>;
+  name?: InputMaybe<Scalars['String']['input']>;
   otherRules?: InputMaybe<Scalars['String']['input']>;
   otherServices?: InputMaybe<Scalars['String']['input']>;
   parking?: InputMaybe<Array<ParkingChoices>>;
@@ -3354,9 +3356,11 @@ export type UpdateShelterInput = {
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
   spaId?: InputMaybe<Scalars['ID']['input']>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
+  status?: InputMaybe<StatusChoices>;
   storage?: InputMaybe<Array<StorageChoices>>;
   subjectiveReview?: InputMaybe<Scalars['String']['input']>;
   vaccinationRequirement?: InputMaybe<Array<VaccinationRequirementChoices>>;
+  website?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateShelterPayload = OperationInfo | ShelterType;
