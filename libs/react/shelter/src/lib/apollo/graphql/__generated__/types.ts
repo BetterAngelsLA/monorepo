@@ -192,10 +192,10 @@ export type BedFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<BedFilter>;
   OR?: InputMaybe<BedFilter>;
-  bedType?: InputMaybe<Array<BedTypeChoices>>;
   medicalNeeds?: InputMaybe<Array<MedicalNeedChoices>>;
   shelterId?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Array<BedStatusChoices>>;
+  type?: InputMaybe<Array<BedTypeChoices>>;
 };
 
 export enum BedStatusChoices {
@@ -209,15 +209,14 @@ export type BedType = {
   __typename?: 'BedType';
   accessibility: Array<AccessibilityType>;
   b7: Scalars['Boolean']['output'];
-  bedName?: Maybe<Scalars['String']['output']>;
-  bedType?: Maybe<BedTypeChoices>;
   demographics: Array<DemographicType>;
   fees?: Maybe<Scalars['Int']['output']>;
   funders: Array<FunderType>;
   id: Scalars['ID']['output'];
   lastCleanedInspected?: Maybe<Scalars['DateTime']['output']>;
   maintenanceFlag: Scalars['Boolean']['output'];
-  medicalNeeds?: Maybe<MedicalNeedChoices>;
+  medicalNeeds: Array<MedicalNeedType>;
+  name?: Maybe<Scalars['String']['output']>;
   occupantId?: Maybe<Scalars['ID']['output']>;
   pets: Array<PetType>;
   room?: Maybe<RoomType>;
@@ -225,6 +224,7 @@ export type BedType = {
   status?: Maybe<BedStatusChoices>;
   statusNotes?: Maybe<Scalars['String']['output']>;
   storage: Scalars['Boolean']['output'];
+  type?: Maybe<BedTypeChoices>;
 };
 
 export enum BedTypeChoices {
@@ -542,20 +542,20 @@ export type ContactInfoType = {
 export type CreateBedInput = {
   accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   b7?: InputMaybe<Scalars['Boolean']['input']>;
-  bedName?: InputMaybe<Scalars['String']['input']>;
-  bedType?: InputMaybe<BedTypeChoices>;
   demographics?: InputMaybe<Array<DemographicChoices>>;
   fees?: InputMaybe<Scalars['Int']['input']>;
   funders?: InputMaybe<Array<FunderChoices>>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
-  medicalNeeds?: InputMaybe<MedicalNeedChoices>;
+  medicalNeeds?: InputMaybe<Array<MedicalNeedChoices>>;
+  name?: InputMaybe<Scalars['String']['input']>;
   pets?: InputMaybe<Array<PetChoices>>;
   roomId?: InputMaybe<Scalars['ID']['input']>;
   shelterId: Scalars['ID']['input'];
   status?: InputMaybe<BedStatusChoices>;
   statusNotes?: InputMaybe<Scalars['String']['input']>;
   storage?: InputMaybe<Scalars['Boolean']['input']>;
+  type?: InputMaybe<BedTypeChoices>;
 };
 
 export type CreateBedPayload = BedType | OperationInfo;
@@ -749,15 +749,15 @@ export type CreateRoomInput = {
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
   medicalRespite?: InputMaybe<Scalars['Boolean']['input']>;
+  name: Scalars['String']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
   occupants?: InputMaybe<Array<Scalars['ID']['input']>>;
   pets?: InputMaybe<Array<PetChoices>>;
-  roomIdentifier: Scalars['String']['input'];
-  roomType?: InputMaybe<RoomStyleChoices>;
-  roomTypeOther?: InputMaybe<Scalars['String']['input']>;
   shelterId: Scalars['ID']['input'];
   status?: InputMaybe<RoomStatusChoices>;
   storage?: InputMaybe<Scalars['Boolean']['input']>;
+  type?: InputMaybe<RoomStyleChoices>;
+  typeOther?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateRoomPayload = OperationInfo | RoomType;
@@ -1519,6 +1519,11 @@ export enum MedicalNeedChoices {
   Erc = 'ERC',
   Oxygen = 'OXYGEN'
 }
+
+export type MedicalNeedType = {
+  __typename?: 'MedicalNeedType';
+  name?: Maybe<MedicalNeedChoices>;
+};
 
 export type Mutation = {
   __typename?: 'Mutation';
@@ -2642,9 +2647,9 @@ export type RoomFilter = {
   amenities?: InputMaybe<Scalars['String']['input']>;
   medicalRespite?: InputMaybe<Scalars['Boolean']['input']>;
   numberOfBeds?: InputMaybe<Scalars['Int']['input']>;
-  roomType?: InputMaybe<Array<RoomStyleChoices>>;
   shelterId?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Array<RoomStatusChoices>>;
+  type?: InputMaybe<Array<RoomStyleChoices>>;
 };
 
 export enum RoomStatusChoices {
@@ -2681,15 +2686,15 @@ export type RoomType = {
   lastCleanedInspected?: Maybe<Scalars['DateTime']['output']>;
   maintenanceFlag: Scalars['Boolean']['output'];
   medicalRespite: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
   notes?: Maybe<Scalars['String']['output']>;
   occupantIds: Array<Scalars['ID']['output']>;
   pets: Array<PetType>;
-  roomIdentifier: Scalars['String']['output'];
-  roomType?: Maybe<RoomStyleChoices>;
-  roomTypeOther?: Maybe<Scalars['String']['output']>;
   shelter: ShelterType;
   status?: Maybe<RoomStatusChoices>;
   storage: Scalars['Boolean']['output'];
+  type?: Maybe<RoomStyleChoices>;
+  typeOther?: Maybe<Scalars['String']['output']>;
 };
 
 

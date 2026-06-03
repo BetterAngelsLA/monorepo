@@ -699,7 +699,7 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         variables: dict[str, Any] = {
             "data": {
                 "shelterId": str(other_org_shelter.pk),
-                "roomIdentifier": "Room 101",
+                "name": "Room 101",
             }
         }
 
