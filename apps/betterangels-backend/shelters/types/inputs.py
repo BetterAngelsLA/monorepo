@@ -176,37 +176,37 @@ class UpdateShelterInput:
 class CreateBedInput:
     shelter_id: ID
     room_id: Optional[ID] = None
-    status: Optional[BedStatusChoices] = None
-    bed_name: Optional[str] = None
-    status_notes: Optional[str] = None
-    bed_type: Optional[BedTypeChoices] = None
-    demographics: Optional[List[DemographicChoices]] = None
     accessibility: Optional[List[AccessibilityChoices]] = None
-    funders: Optional[List[FunderChoices]] = None
-    pets: Optional[List[PetChoices]] = None
-    storage: Optional[bool] = None
-    maintenance_flag: Optional[bool] = None
-    last_cleaned_inspected: Optional[datetime] = None
-    medical_needs: Optional[MedicalNeedChoices] = None
     b7: Optional[bool] = None
+    demographics: Optional[List[DemographicChoices]] = None
     fees: Optional[int] = None
+    funders: Optional[List[FunderChoices]] = None
+    last_cleaned_inspected: Optional[datetime] = None
+    maintenance_flag: Optional[bool] = None
+    medical_needs: Optional[List[MedicalNeedChoices]] = None
+    name: Optional[str] = None
+    pets: Optional[List[PetChoices]] = None
+    status: Optional[BedStatusChoices] = None
+    status_notes: Optional[str] = None
+    storage: Optional[bool] = None
+    type: Optional[BedTypeChoices] = None
 
 
 @strawberry.input
 class CreateRoomInput:
     shelter_id: ID
-    room_identifier: str
-    room_type: Optional[RoomStyleChoices] = None
-    room_type_other: Optional[str] = None
-    status: Optional[RoomStatusChoices] = None
-    notes: Optional[str] = None
+    accessibility: Optional[List[AccessibilityChoices]] = None
     amenities: Optional[str] = None
     demographics: Optional[List[DemographicChoices]] = None
-    accessibility: Optional[List[AccessibilityChoices]] = None
     funders: Optional[List[FunderChoices]] = None
-    pets: Optional[List[PetChoices]] = None
-    storage: Optional[bool] = None
-    maintenance_flag: Optional[bool] = None
-    occupants: Optional[List[ID]] = None
-    medical_respite: Optional[bool] = False
     last_cleaned_inspected: Optional[datetime] = None
+    maintenance_flag: Optional[bool] = None
+    medical_respite: Optional[bool] = False
+    name: str
+    notes: Optional[str] = None
+    occupants: Optional[List[ID]] = None
+    pets: Optional[List[PetChoices]] = None
+    status: Optional[RoomStatusChoices] = None
+    storage: Optional[bool] = None
+    type: Optional[RoomStyleChoices] = None
+    type_other: Optional[str] = None

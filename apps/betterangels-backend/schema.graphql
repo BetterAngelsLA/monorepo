@@ -186,7 +186,7 @@ input BedFilter {
   OR: BedFilter
   NOT: BedFilter
   DISTINCT: Boolean
-  bedType: [BedTypeChoices!]
+  type: [BedTypeChoices!]
   medicalNeeds: [MedicalNeedChoices!]
   status: [BedStatusChoices!]
 }
@@ -200,23 +200,23 @@ enum BedStatusChoices {
 
 type BedType {
   id: ID!
-  shelter: ShelterType!
+  accessibility: [AccessibilityType!]!
+  b7: Boolean!
+  demographics: [DemographicType!]!
+  fees: Int
+  funders: [FunderType!]!
+  lastCleanedInspected: DateTime
+  maintenanceFlag: Boolean!
+  medicalNeeds: [MedicalNeedType!]!
+  name: String
+  occupantId: ID
+  pets: [PetType!]!
   room: RoomType
-  bedName: String
+  shelter: ShelterType!
   status: BedStatusChoices
   statusNotes: String
-  occupantId: ID
-  bedType: BedTypeChoices
-  demographics: [DemographicType!]!
-  accessibility: [AccessibilityType!]!
-  funders: [FunderType!]!
-  pets: [PetType!]!
   storage: Boolean!
-  maintenanceFlag: Boolean!
-  lastCleanedInspected: DateTime
-  medicalNeeds: MedicalNeedChoices
-  b7: Boolean!
-  fees: Int
+  type: BedTypeChoices
 }
 
 enum BedTypeChoices {
@@ -531,20 +531,20 @@ type ContactInfoType {
 input CreateBedInput {
   shelterId: ID!
   roomId: ID = null
-  status: BedStatusChoices = null
-  bedName: String = null
-  statusNotes: String = null
-  bedType: BedTypeChoices = null
-  demographics: [DemographicChoices!] = null
   accessibility: [AccessibilityChoices!] = null
-  funders: [FunderChoices!] = null
-  pets: [PetChoices!] = null
-  storage: Boolean = null
-  maintenanceFlag: Boolean = null
-  lastCleanedInspected: DateTime = null
-  medicalNeeds: MedicalNeedChoices = null
   b7: Boolean = null
+  demographics: [DemographicChoices!] = null
   fees: Int = null
+  funders: [FunderChoices!] = null
+  lastCleanedInspected: DateTime = null
+  maintenanceFlag: Boolean = null
+  medicalNeeds: [MedicalNeedChoices!] = null
+  name: String = null
+  pets: [PetChoices!] = null
+  status: BedStatusChoices = null
+  statusNotes: String = null
+  storage: Boolean = null
+  type: BedTypeChoices = null
 }
 
 union CreateBedPayload = BedType | OperationInfo
@@ -732,21 +732,21 @@ union CreateReferralPayload = ReferralType | OperationInfo
 
 input CreateRoomInput {
   shelterId: ID!
-  roomIdentifier: String!
-  roomType: RoomStyleChoices = null
-  roomTypeOther: String = null
-  status: RoomStatusChoices = null
-  notes: String = null
+  accessibility: [AccessibilityChoices!] = null
   amenities: String = null
   demographics: [DemographicChoices!] = null
-  accessibility: [AccessibilityChoices!] = null
   funders: [FunderChoices!] = null
-  pets: [PetChoices!] = null
-  storage: Boolean = null
-  maintenanceFlag: Boolean = null
-  occupants: [ID!] = null
-  medicalRespite: Boolean = false
   lastCleanedInspected: DateTime = null
+  maintenanceFlag: Boolean = null
+  medicalRespite: Boolean = false
+  name: String!
+  notes: String = null
+  occupants: [ID!] = null
+  pets: [PetChoices!] = null
+  status: RoomStatusChoices = null
+  storage: Boolean = null
+  type: RoomStyleChoices = null
+  typeOther: String = null
 }
 
 union CreateRoomPayload = RoomType | OperationInfo
@@ -1496,6 +1496,10 @@ enum MedicalNeedChoices {
   DIALYSIS
 }
 
+type MedicalNeedType {
+  name: MedicalNeedChoices
+}
+
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
@@ -2067,7 +2071,7 @@ input RoomFilter {
   NOT: RoomFilter
   DISTINCT: Boolean
   amenities: String
-  roomType: [RoomStyleChoices!]
+  type: [RoomStyleChoices!]
   status: [RoomStatusChoices!]
   numberOfBeds: Int
 }
@@ -2096,22 +2100,22 @@ type RoomStyleType {
 
 type RoomType {
   id: ID!
-  shelter: ShelterType!
-  roomIdentifier: String!
-  roomType: RoomStyleChoices
-  roomTypeOther: String
-  status: RoomStatusChoices
-  notes: String
-  amenities: String
-  demographics: [DemographicType!]!
   accessibility: [AccessibilityType!]!
+  amenities: String
+  beds(filters: BedFilter): [BedType!]!
+  demographics: [DemographicType!]!
   funders: [FunderType!]!
-  pets: [PetType!]!
-  storage: Boolean!
+  lastCleanedInspected: DateTime
   maintenanceFlag: Boolean!
   medicalRespite: Boolean!
-  lastCleanedInspected: DateTime
-  beds(filters: BedFilter): [BedType!]!
+  name: String!
+  notes: String
+  pets: [PetType!]!
+  shelter: ShelterType!
+  status: RoomStatusChoices
+  storage: Boolean!
+  type: RoomStyleChoices
+  typeOther: String
   occupantIds: [ID!]!
 }
 

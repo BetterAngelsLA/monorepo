@@ -21,7 +21,6 @@ from shelters.enums import (
     SUPERVISORIAL_DISTRICT_CHOICES,
     BedStatusChoices,
     BedTypeChoices,
-    MedicalNeedChoices,
     RoomStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
@@ -38,6 +37,7 @@ from .lookups import (
     EntryRequirement,
     ExitPolicy,
     Funder,
+    MedicalNeed,
     Parking,
     Pet,
     ReferralRequirement,
@@ -214,11 +214,15 @@ class Shelter(BaseModel):
     pghistory.UpdateEvent("bed.status_change", condition=pghistory.AnyChange("status")),
 )
 class Bed(BaseModel):
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="beds")
-    room = models.ForeignKey("Room", on_delete=models.SET_NULL, blank=True, null=True, related_name="beds")
-    bed_name = models.CharField(max_length=255, blank=True, null=True)
-    status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
-    status_notes = models.TextField(blank=True, null=True)
+    accessibility = models.ManyToManyField(Accessibility, blank=True)
+    b7 = models.BooleanField(default=False, blank=True)
+    demographics = models.ManyToManyField(Demographic, blank=True)
+    fees = models.PositiveIntegerField(blank=True, null=True)
+    funders = models.ManyToManyField(Funder, blank=True)
+    last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
+    maintenance_flag = models.BooleanField(default=False, blank=True)
+    medical_needs = models.ManyToManyField(MedicalNeed, blank=True)
+    name = models.CharField(max_length=255, blank=True, null=True)
     occupant = models.ForeignKey(
         "clients.ClientProfile",
         on_delete=models.SET_NULL,
@@ -226,17 +230,13 @@ class Bed(BaseModel):
         null=True,
         related_name="occupied_beds",
     )
-    bed_type = TextChoicesField(choices_enum=BedTypeChoices, blank=True, null=True)
-    demographics = models.ManyToManyField(Demographic, blank=True)
-    accessibility = models.ManyToManyField(Accessibility, blank=True)
-    funders = models.ManyToManyField(Funder, blank=True)
     pets = models.ManyToManyField(Pet, blank=True)
+    room = models.ForeignKey("Room", on_delete=models.SET_NULL, blank=True, null=True, related_name="beds")
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="beds")
+    status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
+    status_notes = models.TextField(blank=True, null=True)
     storage = models.BooleanField(default=False, blank=True)
-    maintenance_flag = models.BooleanField(default=False, blank=True)
-    last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
-    medical_needs = TextChoicesField(choices_enum=MedicalNeedChoices, blank=True, null=True)
-    b7 = models.BooleanField(default=False, blank=True)
-    fees = models.PositiveIntegerField(blank=True, null=True)
+    type = TextChoicesField(choices_enum=BedTypeChoices, blank=True, null=True)
 
     class Meta:
         indexes = [
@@ -245,27 +245,27 @@ class Bed(BaseModel):
 
 
 class Room(BaseModel):
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="rooms")
-    room_identifier = models.CharField(max_length=255)
-    room_type = TextChoicesField(choices_enum=RoomStyleChoices, blank=True, null=True)
-    room_type_other = models.CharField(max_length=255, blank=True, null=True)
-    status = TextChoicesField(choices_enum=RoomStatusChoices, blank=True, null=True)
-    notes = models.TextField(blank=True, null=True)
+    accessibility = models.ManyToManyField(Accessibility, blank=True)
     amenities = models.TextField(blank=True, null=True)
     demographics = models.ManyToManyField(Demographic, blank=True)
-    accessibility = models.ManyToManyField(Accessibility, blank=True)
     funders = models.ManyToManyField(Funder, blank=True)
-    pets = models.ManyToManyField(Pet, blank=True)
-    storage = models.BooleanField(default=False, blank=True)
-    maintenance_flag = models.BooleanField(default=False, blank=True)
-    occupants = models.ManyToManyField("clients.ClientProfile", blank=True, related_name="occupied_rooms")
-    medical_respite = models.BooleanField(default=False, blank=True)
     last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
+    maintenance_flag = models.BooleanField(default=False, blank=True)
+    medical_respite = models.BooleanField(default=False, blank=True)
+    name = models.CharField(max_length=255)
+    notes = models.TextField(blank=True, null=True)
+    occupants = models.ManyToManyField("clients.ClientProfile", blank=True, related_name="occupied_rooms")
+    pets = models.ManyToManyField(Pet, blank=True)
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="rooms")
+    status = TextChoicesField(choices_enum=RoomStatusChoices, blank=True, null=True)
+    storage = models.BooleanField(default=False, blank=True)
+    type = TextChoicesField(choices_enum=RoomStyleChoices, blank=True, null=True)
+    type_other = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         constraints = [
             UniqueConstraint(
-                fields=["shelter", "room_identifier"],
+                fields=["shelter", "name"],
                 name="unique_room_per_shelter",
             )
         ]
@@ -274,7 +274,7 @@ class Room(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.shelter.name} - {self.room_identifier}"
+        return f"{self.shelter.name} - {self.name}"
 
 
 @pghistory.track(

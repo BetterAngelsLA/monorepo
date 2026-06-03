@@ -12,6 +12,7 @@ from .lookups import (  # noqa: F401
     EntryRequirement,
     ExitPolicy,
     Funder,
+    MedicalNeed,
     Parking,
     Pet,
     ReferralRequirement,
