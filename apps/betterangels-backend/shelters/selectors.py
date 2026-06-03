@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 from django.db.models import Exists, OuterRef, Q, QuerySet
 from organizations.models import Organization
 from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices, StatusChoices
-from client.enums import GenderEnum, RaceEnum, VeteranStatusEnum
 from pghistory.Models import Events
 
 if TYPE_CHECKING:
