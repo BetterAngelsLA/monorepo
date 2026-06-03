@@ -7,17 +7,58 @@ managers (``managers.py``) and Strawberry ``get_queryset`` hooks
 """
 
 import datetime
-from typing import TYPE_CHECKING
+from collections import Counter
+from typing import TYPE_CHECKING, Any
 
-from django.db.models import Exists, OuterRef, Q, QuerySet
+from django.db.models import Exists, OuterRef, Q, QuerySet, Subquery
 from organizations.models import Organization
-from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices, StatusChoices
+from shelters.enums import BedStatusChoices, DayOfWeekChoices, ScheduleTypeChoices, StatusChoices
 
 if TYPE_CHECKING:
     from accounts.models import User
     from django.contrib.auth.base_user import AbstractBaseUser
     from django.contrib.auth.models import AnonymousUser
     from shelters.models import Shelter
+
+
+def report_bed_status_counts(
+    *, shelter: "Shelter", start_date: datetime.date, end_date: datetime.date
+) -> list[dict[str, Any]]:
+    """
+    Returns daily bed status counts for each day in the range
+    TODO: Add demographic filtering once pghistory tracks M2M through tables.
+    Bed.demographics is M2M and pghistory only tracks scalar fields so we cannot
+    reconstruct historically accurate demographic membership from BedEvent
+    """
+    from shelters.models import BedEvent
+
+    res = []
+    curr = start_date
+
+    while curr <= end_date:
+        end_of_day = datetime.datetime.combine(curr, datetime.time.max, tzinfo=datetime.timezone.utc)
+
+        latest_event_ids = (
+            BedEvent.objects.filter(shelter_id=shelter.pk, pgh_created_at__lte=end_of_day)
+            .order_by("pgh_obj_id", "-pgh_created_at")
+            .distinct("pgh_obj_id")
+            .values("pgh_id")
+        )
+        snapshot = BedEvent.objects.filter(pgh_id__in=Subquery(latest_event_ids)).exclude(pgh_label="bed.remove")
+        counts = Counter(snapshot.values_list("status", flat=True))
+
+        res.append(
+            {
+                "date": curr.isoformat(),
+                "available": counts.get(BedStatusChoices.AVAILABLE, 0),
+                "occupied": counts.get(BedStatusChoices.OCCUPIED, 0),
+                "reserved": counts.get(BedStatusChoices.RESERVED, 0),
+                "out_of_service": counts.get(BedStatusChoices.OUT_OF_SERVICE, 0),
+            }
+        )
+
+        curr += datetime.timedelta(days=1)
+    return res
 
 
 def shelter_list(
