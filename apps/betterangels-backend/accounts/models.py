@@ -3,6 +3,7 @@ from typing import Any, Dict, Iterable, Tuple
 import pghistory
 from accounts.groups import GroupTemplateNames
 from accounts.managers import UserManager
+from annoying.fields import AutoOneToOneField
 from django.contrib.auth.models import (
     AbstractBaseUser,
     Group,
@@ -197,3 +198,34 @@ class PermissionGroup(models.Model):
             self.group.permissions.set(permissions_to_apply)
 
         super().save(*args, **kwargs)
+
+
+class OrgType(models.Model):
+    """Lookup table for organization types (e.g. outreach, shelter)."""
+
+    key = models.CharField(max_length=50, unique=True)
+    label = models.CharField(max_length=100)
+
+    objects = models.Manager()
+
+    def __str__(self) -> str:
+        return self.label
+
+
+class OrganizationProfile(models.Model):
+    organization = AutoOneToOneField(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="profile",
+    )
+    org_types = models.ManyToManyField(
+        OrgType,
+        blank=True,
+        related_name="organization_profiles",
+    )
+
+    objects = models.Manager()
+
+    def __str__(self) -> str:
+        types = ", ".join(t.label for t in self.org_types.all())
+        return f"{self.organization.name} ({types or 'no type'})"
