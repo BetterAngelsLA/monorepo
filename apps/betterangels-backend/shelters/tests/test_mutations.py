@@ -9,10 +9,9 @@ from unittest_parametrize import ParametrizedTestCase
 
 
 @ignore_warnings(category=UserWarning)
-class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase):
+class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        # Grant the shelter add permission to the case manager
         shelter_content_type = ContentType.objects.get_for_model(Shelter)
         add_shelter_perm = Permission.objects.get(content_type=shelter_content_type, codename="add_shelter")
         self.org_1_case_manager_1.user_permissions.add(add_shelter_perm)
@@ -25,7 +24,6 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
         add_room_perm = Permission.objects.get(content_type=room_content_type, codename="add_room")
         self.org_1_case_manager_1.user_permissions.add(add_room_perm)
 
-        # Use a pre-configured user from GraphQLBaseTestCase that has appropriate permissions
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_create_shelter_minimal_fields(self) -> None:
@@ -48,23 +46,6 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "name": "Test Shelter",
                 "description": "A test shelter for unit testing",
                 "organization": str(self.org_1.pk),
-                "accessibility": [],
-                "demographics": [],
-                "specialSituationRestrictions": [],
-                "shelterTypes": [],
-                "roomStyles": [],
-                "storage": [],
-                "pets": [],
-                "parking": [],
-                "services": [],
-                "entryRequirements": [],
-                "referralRequirement": [],
-                "vaccinationRequirement": [],
-                "exitPolicy": [],
-                "cityId": None,
-                "spaId": None,
-                "shelterPrograms": [],
-                "funders": [],
             }
         }
 
@@ -116,23 +97,6 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "onSiteSecurity": True,
                 "bedFees": "No fee for first 30 days",
                 "programFees": "$5 per day",
-                "accessibility": [],
-                "demographics": [],
-                "specialSituationRestrictions": [],
-                "shelterTypes": [],
-                "roomStyles": [],
-                "storage": [],
-                "pets": [],
-                "parking": [],
-                "services": [],
-                "entryRequirements": [],
-                "referralRequirement": [],
-                "vaccinationRequirement": [],
-                "exitPolicy": [],
-                "cityId": None,
-                "spaId": None,
-                "shelterPrograms": [],
-                "funders": [],
             }
         }
 
@@ -191,21 +155,9 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "organization": str(self.org_1.pk),
                 "accessibility": ["WHEELCHAIR_ACCESSIBLE"],
                 "demographics": ["FAMILIES", "SINGLE_WOMEN"],
-                "specialSituationRestrictions": [],
                 "shelterTypes": ["BUILDING"],
-                "roomStyles": [],
-                "storage": [],
                 "pets": ["DOGS_UNDER_25_LBS", "CATS"],
-                "parking": [],
-                "services": [],
-                "entryRequirements": [],
-                "referralRequirement": [],
-                "vaccinationRequirement": [],
-                "exitPolicy": [],
                 "cityId": str(city.pk),
-                "spaId": None,
-                "shelterPrograms": [],
-                "funders": [],
             }
         }
 
@@ -253,23 +205,6 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                     "latitude": 34.0522,
                     "longitude": -118.2437,
                 },
-                "accessibility": [],
-                "demographics": [],
-                "specialSituationRestrictions": [],
-                "shelterTypes": [],
-                "roomStyles": [],
-                "storage": [],
-                "pets": [],
-                "parking": [],
-                "services": [],
-                "entryRequirements": [],
-                "referralRequirement": [],
-                "vaccinationRequirement": [],
-                "exitPolicy": [],
-                "cityId": None,
-                "spaId": None,
-                "shelterPrograms": [],
-                "funders": [],
             }
         }
 
@@ -331,28 +266,12 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "name": "Shelter With Custom Services",
                 "description": "A shelter with official and custom services",
                 "organization": str(self.org_1.pk),
-                "accessibility": [],
-                "demographics": [],
-                "specialSituationRestrictions": [],
-                "shelterTypes": [],
-                "roomStyles": [],
-                "storage": [],
-                "pets": [],
-                "parking": [],
                 "services": [
                     {"id": str(official.pk)},
                     {"categoryId": str(category.pk), "displayName": "Laundry"},
                     {"categoryId": str(category.pk), "displayName": "Showers"},
                     {"categoryId": str(category.pk), "displayName": "showers"},
                 ],
-                "entryRequirements": [],
-                "referralRequirement": [],
-                "vaccinationRequirement": [],
-                "exitPolicy": [],
-                "cityId": None,
-                "spaId": None,
-                "shelterPrograms": [],
-                "funders": [],
             }
         }
 
@@ -405,23 +324,6 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "name": "Incomplete Shelter",
                 "organization": str(self.org_1.pk),
                 # Missing description - should fail
-                "accessibility": [],
-                "demographics": [],
-                "specialSituationRestrictions": [],
-                "shelterTypes": [],
-                "roomStyles": [],
-                "storage": [],
-                "pets": [],
-                "parking": [],
-                "services": [],
-                "entryRequirements": [],
-                "referralRequirement": [],
-                "vaccinationRequirement": [],
-                "exitPolicy": [],
-                "cityId": None,
-                "spaId": None,
-                "shelterPrograms": [],
-                "funders": [],
             }
         }
 
@@ -454,23 +356,6 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "organization": str(self.org_1.pk),
                 "overallRating": 4,
                 "subjectiveReview": "Clean facilities with helpful staff",
-                "accessibility": [],
-                "demographics": [],
-                "specialSituationRestrictions": [],
-                "shelterTypes": [],
-                "roomStyles": [],
-                "storage": [],
-                "pets": [],
-                "parking": [],
-                "services": [],
-                "entryRequirements": [],
-                "referralRequirement": [],
-                "vaccinationRequirement": [],
-                "exitPolicy": [],
-                "cityId": None,
-                "spaId": None,
-                "shelterPrograms": [],
-                "funders": [],
             }
         }
 
@@ -507,23 +392,6 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "description": "Should fail model validation",
                 "organization": str(self.org_1.pk),
                 "email": "not-an-email",
-                "accessibility": [],
-                "demographics": [],
-                "specialSituationRestrictions": [],
-                "shelterTypes": [],
-                "roomStyles": [],
-                "storage": [],
-                "pets": [],
-                "parking": [],
-                "services": [],
-                "entryRequirements": [],
-                "referralRequirement": [],
-                "vaccinationRequirement": [],
-                "exitPolicy": [],
-                "cityId": None,
-                "spaId": None,
-                "shelterPrograms": [],
-                "funders": [],
             }
         }
 
@@ -554,23 +422,6 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "name": "Persistent Shelter",
                 "description": "This should be in the database",
                 "organization": str(self.org_1.pk),
-                "accessibility": [],
-                "demographics": [],
-                "specialSituationRestrictions": [],
-                "shelterTypes": [],
-                "roomStyles": [],
-                "storage": [],
-                "pets": [],
-                "parking": [],
-                "services": [],
-                "entryRequirements": [],
-                "referralRequirement": [],
-                "vaccinationRequirement": [],
-                "exitPolicy": [],
-                "cityId": None,
-                "spaId": None,
-                "shelterPrograms": [],
-                "funders": [],
             }
         }
 
@@ -601,23 +452,6 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 "name": "Wrong Org Shelter",
                 "description": "Should be rejected",
                 "organization": str(self.org_2.pk),
-                "accessibility": [],
-                "demographics": [],
-                "specialSituationRestrictions": [],
-                "shelterTypes": [],
-                "roomStyles": [],
-                "storage": [],
-                "pets": [],
-                "parking": [],
-                "services": [],
-                "entryRequirements": [],
-                "referralRequirement": [],
-                "vaccinationRequirement": [],
-                "exitPolicy": [],
-                "cityId": None,
-                "spaId": None,
-                "shelterPrograms": [],
-                "funders": [],
             }
         }
 
@@ -712,3 +546,193 @@ class ShelterMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             f"Shelter matching ID {other_org_shelter.pk} could not be found.",
             messages[0]["message"],
         )
+
+
+@ignore_warnings(category=UserWarning)
+class UpdateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        shelter_content_type = ContentType.objects.get_for_model(Shelter)
+        change_shelter_perm = Permission.objects.get(content_type=shelter_content_type, codename="change_shelter")
+        self.org_1_case_manager_1.user_permissions.add(change_shelter_perm)
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_update_shelter_scalar_fields(self) -> None:
+        """Updating scalar fields persists the new values."""
+        shelter = Shelter.objects.create(
+            name="Shelter to Update",
+            organization=self.org_1,
+        )
+
+        mutation = """
+            mutation ($data: UpdateShelterInput!) {
+                updateShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                        description
+                        isPrivate
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "description": "Updated description",
+                "isPrivate": True,
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        result = response["data"]["updateShelter"]
+        self.assertEqual(result["description"], "Updated description")
+        self.assertTrue(result["isPrivate"])
+
+    def test_update_shelter_patch_semantics(self) -> None:
+        """Fields absent from UpdateShelterInput are not overwritten."""
+        shelter = Shelter.objects.create(
+            name="Patch Shelter",
+            is_private=True,
+            organization=self.org_1,
+        )
+
+        mutation = """
+            mutation ($data: UpdateShelterInput!) {
+                updateShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                        description
+                        isPrivate
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "description": "New description",
+                # isPrivate intentionally omitted — should remain True
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        result = response["data"]["updateShelter"]
+        self.assertEqual(result["description"], "New description")
+        self.assertTrue(result["isPrivate"])
+
+    def test_update_shelter_m2m_fields(self) -> None:
+        """Providing M2M enum fields replaces their values on the shelter."""
+        shelter = Shelter.objects.create(
+            name="M2M Shelter",
+            organization=self.org_1,
+        )
+
+        mutation = """
+            mutation ($data: UpdateShelterInput!) {
+                updateShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                        accessibility { name }
+                        demographics { name }
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "accessibility": ["WHEELCHAIR_ACCESSIBLE"],
+                "demographics": ["FAMILIES", "SINGLE_MEN"],
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        result = response["data"]["updateShelter"]
+        accessibility_names = [a["name"] for a in result["accessibility"]]
+        demographic_names = [d["name"] for d in result["demographics"]]
+        self.assertIn("WHEELCHAIR_ACCESSIBLE", accessibility_names)
+        self.assertCountEqual(demographic_names, ["FAMILIES", "SINGLE_MEN"])
+
+    def test_update_shelter_wrong_org_rejected(self) -> None:
+        """A user cannot update a shelter owned by a different organization."""
+        other_shelter = Shelter.objects.create(
+            name="Other Org Shelter",
+            organization=self.org_2,
+        )
+
+        mutation = """
+            mutation ($data: UpdateShelterInput!) {
+                updateShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "id": str(other_shelter.pk),
+                "description": "Unauthorized update",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertIn(
+            "You do not have permission to update this shelter.",
+            response["errors"][0]["message"],
+        )
+
+    def test_update_shelter_services_applied(self) -> None:
+        """Providing services in an update sets the shelter's services."""
+        shelter = Shelter.objects.create(
+            name="Service Shelter",
+            organization=self.org_1,
+        )
+        category, _ = ServiceCategory.objects.get_or_create(
+            name="update_test_category",
+            defaults={"display_name": "Update Test", "priority": 0},
+        )
+        Service.objects.filter(category=category).delete()
+        official = Service.objects.create(
+            category=category,
+            name="update_test_service",
+            display_name="Update Test Service",
+            is_other=False,
+            priority=0,
+        )
+
+        mutation = """
+            mutation ($data: UpdateShelterInput!) {
+                updateShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                        services {
+                            id
+                            displayName
+                        }
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "services": [{"id": str(official.pk)}],
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        result = response["data"]["updateShelter"]
+        self.assertEqual(len(result["services"]), 1)
+        self.assertEqual(result["services"][0]["displayName"], "Update Test Service")
