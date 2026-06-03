@@ -1450,10 +1450,10 @@ class ShelterAdmin(ImportExportModelAdmin):
 
 @admin.register(Bed)
 class BedAdmin(admin.ModelAdmin):
-    list_display = ("id", "shelter", "name", "status", "type", "occupants_display", "created_at", "updated_at")
+    list_display = ("id", "shelter", "name", "status", "type", "occupant", "created_at", "updated_at")
     list_filter = ("status", "type", "maintenance_flag")
-    search_fields = ("shelter__name", "occupants__first_name", "occupants__last_name")
-    autocomplete_fields = ["shelter", "occupants"]
+    search_fields = ("shelter__name", "occupant__first_name", "occupant__last_name")
+    autocomplete_fields = ["shelter", "occupant"]
     fieldsets = (
         (
             "Basic Information",
@@ -1463,7 +1463,7 @@ class BedAdmin(admin.ModelAdmin):
                     "name",
                     "status",
                     "status_notes",
-                    "occupants",
+                    "occupant",
                     "type",
                 )
             },
@@ -1493,14 +1493,6 @@ class BedAdmin(admin.ModelAdmin):
             },
         ),
     )
-
-    def get_queryset(self, request: HttpRequest) -> QuerySet[Bed]:
-        return super().get_queryset(request).prefetch_related("occupants")
-
-    @admin.display(description="Occupants")
-    def occupants_display(self, obj: Bed) -> str:
-        names = [occupant.full_name for occupant in obj.occupants.all() if occupant.full_name]
-        return ", ".join(names) if names else "-"
 
 
 @admin.register(Room)

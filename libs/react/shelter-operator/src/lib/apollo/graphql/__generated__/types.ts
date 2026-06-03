@@ -753,11 +753,11 @@ export type CreateRoomInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
   occupants?: InputMaybe<Array<Scalars['ID']['input']>>;
   pets?: InputMaybe<Array<PetChoices>>;
-  roomType?: InputMaybe<RoomStyleChoices>;
-  roomTypeOther?: InputMaybe<Scalars['String']['input']>;
   shelterId: Scalars['ID']['input'];
   status?: InputMaybe<RoomStatusChoices>;
   storage?: InputMaybe<Scalars['Boolean']['input']>;
+  type?: InputMaybe<RoomStyleChoices>;
+  typeOther?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateRoomPayload = OperationInfo | RoomType;
@@ -2647,9 +2647,9 @@ export type RoomFilter = {
   amenities?: InputMaybe<Scalars['String']['input']>;
   medicalRespite?: InputMaybe<Scalars['Boolean']['input']>;
   numberOfBeds?: InputMaybe<Scalars['Int']['input']>;
-  roomType?: InputMaybe<Array<RoomStyleChoices>>;
   shelterId?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Array<RoomStatusChoices>>;
+  type?: InputMaybe<Array<RoomStyleChoices>>;
 };
 
 export enum RoomStatusChoices {

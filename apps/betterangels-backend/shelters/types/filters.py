@@ -219,7 +219,7 @@ class BedFilter(CommonBedRoomFilterMixin):
 class RoomFilter(CommonBedRoomFilterMixin):
     amenities = make_icontains_filter("amenities")
     medical_respite: Optional[bool]
-    room_type = make_in_filter("room_type", RoomStyleChoices)
+    type = make_in_filter("type", RoomStyleChoices)
     status = make_in_filter("status", RoomStatusChoices)
     shelter_id: Optional[ID]
 

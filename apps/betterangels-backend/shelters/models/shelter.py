@@ -223,7 +223,13 @@ class Bed(BaseModel):
     maintenance_flag = models.BooleanField(default=False, blank=True)
     medical_needs = models.ManyToManyField(MedicalNeed, blank=True)
     name = models.CharField(max_length=255, blank=True, null=True)
-    occupants = models.ManyToManyField("clients.ClientProfile", blank=True, related_name="occupied_beds")
+    occupant = models.ForeignKey(
+        "clients.ClientProfile",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="occupied_beds",
+    )
     pets = models.ManyToManyField(Pet, blank=True)
     room = models.ForeignKey("Room", on_delete=models.SET_NULL, blank=True, null=True, related_name="beds")
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="beds")

@@ -732,21 +732,21 @@ union CreateReferralPayload = ReferralType | OperationInfo
 
 input CreateRoomInput {
   shelterId: ID!
-  name: String!
-  roomType: RoomStyleChoices = null
-  roomTypeOther: String = null
-  status: RoomStatusChoices = null
-  notes: String = null
+  accessibility: [AccessibilityChoices!] = null
   amenities: String = null
   demographics: [DemographicChoices!] = null
-  accessibility: [AccessibilityChoices!] = null
   funders: [FunderChoices!] = null
-  pets: [PetChoices!] = null
-  storage: Boolean = null
-  maintenanceFlag: Boolean = null
-  occupants: [ID!] = null
-  medicalRespite: Boolean = false
   lastCleanedInspected: DateTime = null
+  maintenanceFlag: Boolean = null
+  medicalRespite: Boolean = false
+  name: String!
+  notes: String = null
+  occupants: [ID!] = null
+  pets: [PetChoices!] = null
+  status: RoomStatusChoices = null
+  storage: Boolean = null
+  type: RoomStyleChoices = null
+  typeOther: String = null
 }
 
 union CreateRoomPayload = RoomType | OperationInfo
@@ -2070,7 +2070,7 @@ input RoomFilter {
   NOT: RoomFilter
   DISTINCT: Boolean
   amenities: String
-  roomType: [RoomStyleChoices!]
+  type: [RoomStyleChoices!]
   status: [RoomStatusChoices!]
   numberOfBeds: Int
 }

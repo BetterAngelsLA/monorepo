@@ -153,18 +153,18 @@ class CreateBedInput:
 @strawberry.input
 class CreateRoomInput:
     shelter_id: ID
-    name: str
-    room_type: Optional[RoomStyleChoices] = None
-    room_type_other: Optional[str] = None
-    status: Optional[RoomStatusChoices] = None
-    notes: Optional[str] = None
+    accessibility: Optional[List[AccessibilityChoices]] = None
     amenities: Optional[str] = None
     demographics: Optional[List[DemographicChoices]] = None
-    accessibility: Optional[List[AccessibilityChoices]] = None
     funders: Optional[List[FunderChoices]] = None
-    pets: Optional[List[PetChoices]] = None
-    storage: Optional[bool] = None
-    maintenance_flag: Optional[bool] = None
-    occupants: Optional[List[ID]] = None
-    medical_respite: Optional[bool] = False
     last_cleaned_inspected: Optional[datetime] = None
+    maintenance_flag: Optional[bool] = None
+    medical_respite: Optional[bool] = False
+    name: str
+    notes: Optional[str] = None
+    occupants: Optional[List[ID]] = None
+    pets: Optional[List[PetChoices]] = None
+    status: Optional[RoomStatusChoices] = None
+    storage: Optional[bool] = None
+    type: Optional[RoomStyleChoices] = None
+    type_other: Optional[str] = None
