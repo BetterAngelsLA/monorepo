@@ -1,32 +1,41 @@
 import { Button } from '@monorepo/react/components';
 import { CloseIcon, SearchIcon } from '@monorepo/react/icons';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  shelterLocationSearchInputAtom,
   shelterNameSearchInputAtom,
+  shelterSearchPendingLocationAtom,
   shelterSearchRequestAtom,
 } from '../../atoms';
 import { AddressAutocomplete } from '../../components/AddressAutocomplete';
 import { Input } from '../../components/Input';
-import { TLatLng, TMapBounds } from '../../components/Map';
 import { shelterHomePath } from '../../constants';
 
 export function SearchPage() {
   const navigate = useNavigate();
   const initialNameInput = useAtomValue(shelterNameSearchInputAtom);
+  const locationInput = useAtomValue(shelterLocationSearchInputAtom);
+  const setLocationInput = useSetAtom(shelterLocationSearchInputAtom);
   const setSearchRequest = useSetAtom(shelterSearchRequestAtom);
+  const [pendingLocation, setPendingLocation] = useAtom(
+    shelterSearchPendingLocationAtom
+  );
 
   const [nameInput, setNameInput] = useState(initialNameInput);
-  const [location, setLocation] = useState<TLatLng | null>(null);
-  const [mapBounds, setMapBounds] = useState<TMapBounds | undefined>();
 
   function handleClose() {
     navigate(shelterHomePath);
   }
 
   function submit(name: string) {
-    setSearchRequest({ name, location, mapBounds });
+    setSearchRequest({
+      name,
+      location: pendingLocation?.location ?? null,
+      mapBounds: pendingLocation?.mapBounds,
+      displayText: pendingLocation?.displayText,
+    });
     navigate(shelterHomePath);
   }
 
@@ -63,13 +72,24 @@ export function SearchPage() {
           className="w-full"
           inputClassname="rounded-t-none"
           placeholder="Search by location"
+          initialValue={locationInput}
           onPlaceSelect={(place) => {
-            if (!place?.location) return;
-            setLocation({
-              latitude: place.location.lat,
-              longitude: place.location.lng,
+            if (!place?.location) {
+              setPendingLocation(null);
+              setLocationInput('');
+              return;
+            }
+            const displayText =
+              place.formattedAddress ?? place.displayName ?? '';
+            setPendingLocation({
+              location: {
+                latitude: place.location.lat,
+                longitude: place.location.lng,
+              },
+              mapBounds: place.viewport,
+              displayText,
             });
-            setMapBounds(place.viewport);
+            setLocationInput(displayText);
           }}
         />
       </div>

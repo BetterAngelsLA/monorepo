@@ -5,7 +5,13 @@ import { useAtom, useSetAtom } from 'jotai';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { ShelterChoices } from '../../apollo';
-import { shelterSearchTriggerAtom, sheltersAtom } from '../../atoms';
+import {
+  shelterLocationSearchInputAtom,
+  shelterSearchAppliedLocationAtom,
+  shelterSearchPendingLocationAtom,
+  shelterSearchTriggerAtom,
+  sheltersAtom,
+} from '../../atoms';
 import {
   DEFAULT_BOUNDS_MILES,
   LA_COUNTY_CENTER,
@@ -95,6 +101,9 @@ export function HomePage() {
   const [placeViewportToFit, setPlaceViewportToFit] =
     useState<TMapBounds | null>(null);
   const setSearchTrigger = useSetAtom(shelterSearchTriggerAtom);
+  const setPendingLocation = useSetAtom(shelterSearchPendingLocationAtom);
+  const setAppliedLocation = useSetAtom(shelterSearchAppliedLocationAtom);
+  const setLocationSearchInput = useSetAtom(shelterLocationSearchInputAtom);
   const map = useMap();
   const hasLocationPermission = useLocationPermission();
   /** Skips one location-effect map sync when viewport fit handles center/zoom. */
@@ -178,6 +187,9 @@ export function HomePage() {
       return;
     }
 
+    setPendingLocation(null);
+    setAppliedLocation(null);
+    setLocationSearchInput('');
     setMapBoundsFilter(toMapBounds(bounds));
     setShowSearchButton(false);
     setSearchTrigger((n) => n + 1);
