@@ -14,21 +14,21 @@ This composable model means you never need a single monolithic role — you comb
 
 These templates handle **organization membership management** and are reused across all org types (outreach, shelter, etc.):
 
-| Template | Permissions | Purpose |
-|----------|-------------|---------|
+| Template                   | Permissions                                                                                                              | Purpose                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
 | **Organization Superuser** | `access_org_portal`, `add_org_member`, `remove_org_member`, `view_org_members`, `change_org_member_role`, `view_reports` | Full org management — can promote/demote roles |
-| **Organization Admin** | `access_org_portal`, `add_org_member`, `remove_org_member`, `view_org_members`, `view_reports` | Org management without role changes |
+| **Organization Admin**     | `access_org_portal`, `add_org_member`, `remove_org_member`, `view_org_members`, `view_reports`                           | Org management without role changes            |
 
 ### Outreach
 
-| Template | Permissions | Purpose |
-|----------|-------------|---------|
+| Template       | Permissions                                               | Purpose                                 |
+| -------------- | --------------------------------------------------------- | --------------------------------------- |
 | **Caseworker** | CRUD on notes, clients, tasks, attachments, HMIS profiles | Field work — manage client interactions |
 
 ### Shelter
 
-| Template | Permissions | Purpose |
-|----------|-------------|---------|
+| Template             | Permissions                                                | Purpose                                                              |
+| -------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------- |
 | **Shelter Operator** | CRUD on shelter, bed, room, reservation, reservationclient | Day-to-day shelter operations — manage beds, rooms, and reservations |
 
 ---
@@ -39,19 +39,19 @@ Roles are built by assigning **one or more templates** to a user within an org:
 
 ### Outreach Org Roles
 
-| Role | Templates Assigned |
-|------|-------------------|
-| Caseworker | `Caseworker` |
-| Org Admin | `Organization Admin` + `Caseworker` |
-| Org Owner | `Organization Superuser` + `Caseworker` |
+| Role       | Templates Assigned                      |
+| ---------- | --------------------------------------- |
+| Caseworker | `Caseworker`                            |
+| Org Admin  | `Organization Admin` + `Caseworker`     |
+| Org Owner  | `Organization Superuser` + `Caseworker` |
 
 ### Shelter Org Roles
 
-| Role | Templates Assigned |
-|------|-------------------|
-| Shelter Operator | `Shelter Operator` |
-| Shelter Admin | `Organization Admin` + `Shelter Operator` |
-| Shelter Owner | `Organization Superuser` + `Shelter Operator` |
+| Role             | Templates Assigned                            |
+| ---------------- | --------------------------------------------- |
+| Shelter Operator | `Shelter Operator`                            |
+| Shelter Admin    | `Organization Admin` + `Shelter Operator`     |
+| Shelter Owner    | `Organization Superuser` + `Shelter Operator` |
 
 ---
 

@@ -7,7 +7,6 @@ come from composing with Organization Admin or Organization Superuser templates.
 
 from django.db import migrations
 
-
 # Core models that shelter operators interact with directly
 SHELTER_OPERATOR_MODELS = [
     "shelter",
