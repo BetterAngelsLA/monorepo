@@ -51,7 +51,7 @@ class BedMutationTestCase(GraphQLBaseTestCase, TestCase):
 
     def test_create_bed_with_room(self) -> None:
         shelter = shelter_recipe.make(organization=self.org_1)
-        room = Room.objects.create(shelter=shelter, room_identifier="Room-A1")
+        room = Room.objects.create(shelter=shelter, name="Room-A1")
         mutation = """
             mutation CreateBed($data: CreateBedInput!) {
                 createBed(data: $data) {
@@ -203,7 +203,7 @@ class RoomMutationTestCase(GraphQLBaseTestCase, TestCase):
 
     def test_create_room_duplicate_identifier(self) -> None:
         shelter = shelter_recipe.make(organization=self.org_1)
-        Room.objects.create(shelter=shelter, room_identifier="Room-101")
+        Room.objects.create(shelter=shelter, name="Room-101")
 
         mutation = """
             mutation CreateRoom($data: CreateRoomInput!) {

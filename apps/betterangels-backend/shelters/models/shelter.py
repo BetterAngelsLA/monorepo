@@ -259,7 +259,7 @@ class Room(BaseModel):
     class Meta:
         constraints = [
             UniqueConstraint(
-                fields=["shelter", "room_identifier"],
+                fields=["shelter", "name"],
                 name="unique_room_per_shelter",
             )
         ]
@@ -268,7 +268,7 @@ class Room(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.shelter.name} - {self.room_identifier}"
+        return f"{self.shelter.name} - {self.name}"
 
 
 @pghistory.track(

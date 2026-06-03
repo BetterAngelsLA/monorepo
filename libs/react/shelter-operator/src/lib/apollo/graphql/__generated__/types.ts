@@ -749,10 +749,10 @@ export type CreateRoomInput = {
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
   medicalRespite?: InputMaybe<Scalars['Boolean']['input']>;
+  name: Scalars['String']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
   occupants?: InputMaybe<Array<Scalars['ID']['input']>>;
   pets?: InputMaybe<Array<PetChoices>>;
-  roomIdentifier: Scalars['String']['input'];
   roomType?: InputMaybe<RoomStyleChoices>;
   roomTypeOther?: InputMaybe<Scalars['String']['input']>;
   shelterId: Scalars['ID']['input'];

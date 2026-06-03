@@ -732,7 +732,7 @@ union CreateReferralPayload = ReferralType | OperationInfo
 
 input CreateRoomInput {
   shelterId: ID!
-  roomIdentifier: String!
+  name: String!
   roomType: RoomStyleChoices = null
   roomTypeOther: String = null
   status: RoomStatusChoices = null

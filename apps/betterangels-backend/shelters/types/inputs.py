@@ -153,7 +153,7 @@ class CreateBedInput:
 @strawberry.input
 class CreateRoomInput:
     shelter_id: ID
-    room_identifier: str
+    name: str
     room_type: Optional[RoomStyleChoices] = None
     room_type_other: Optional[str] = None
     status: Optional[RoomStatusChoices] = None
