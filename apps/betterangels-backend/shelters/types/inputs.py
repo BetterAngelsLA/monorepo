@@ -67,24 +67,24 @@ class ServiceInput:
 class CreateShelterInput:
     # Required scalars — derived from model via auto
     name: auto
-    description: str  # CKEditor5Field not supported by auto
+    description: Optional[str] = None  # CKEditor5Field not supported by auto
 
     # M2M enum fields — explicit types because we accept enum values directly
     # (get_or_create by name), not PKs as strawberry-django's ManyToManyInput expects.
-    accessibility: List[AccessibilityChoices]
-    demographics: List[DemographicChoices]
-    special_situation_restrictions: List[SpecialSituationRestrictionChoices]
-    shelter_types: List[ShelterTypeChoices]
-    room_styles: List[RoomStyleChoices]
-    storage: List[StorageChoices]
-    pets: List[PetChoices]
-    parking: List[ParkingChoices]
-    entry_requirements: List[EntryRequirementChoices]
-    referral_requirement: List[ReferralRequirementChoices]
-    vaccination_requirement: List[VaccinationRequirementChoices]
-    exit_policy: List[ExitPolicyChoices]
-    shelter_programs: List[ShelterProgramChoices]
-    funders: List[FunderChoices]
+    accessibility: Optional[List[AccessibilityChoices]] = None
+    demographics: Optional[List[DemographicChoices]] = None
+    special_situation_restrictions: Optional[List[SpecialSituationRestrictionChoices]] = None
+    shelter_types: Optional[List[ShelterTypeChoices]] = None
+    room_styles: Optional[List[RoomStyleChoices]] = None
+    storage: Optional[List[StorageChoices]] = None
+    pets: Optional[List[PetChoices]] = None
+    parking: Optional[List[ParkingChoices]] = None
+    entry_requirements: Optional[List[EntryRequirementChoices]] = None
+    referral_requirement: Optional[List[ReferralRequirementChoices]] = None
+    vaccination_requirement: Optional[List[VaccinationRequirementChoices]] = None
+    exit_policy: Optional[List[ExitPolicyChoices]] = None
+    shelter_programs: Optional[List[ShelterProgramChoices]] = None
+    funders: Optional[List[FunderChoices]] = None
 
     # Custom field types — can't be auto-derived from Django model fields
     organization: ID
