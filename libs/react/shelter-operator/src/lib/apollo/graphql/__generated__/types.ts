@@ -837,7 +837,7 @@ export type CurrentUserOrganizationType = {
   __typename?: 'CurrentUserOrganizationType';
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-  userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
+  permissions: OrgPermissions;
 };
 
 export type CurrentUserType = {
@@ -2033,6 +2033,13 @@ export type OrgInvitationInput = {
   organizationId: Scalars['ID']['input'];
 };
 
+export type OrgPermissions = {
+  __typename?: 'OrgPermissions';
+  accounts: Array<UserOrganizationPermissions>;
+  reports: Array<ReportPermissions>;
+  shelters: Array<ShelterPermissions>;
+};
+
 export enum OrgRoleEnum {
   Admin = 'ADMIN',
   Member = 'MEMBER',
@@ -2439,7 +2446,7 @@ export type QueryReferralsArgs = {
 
 export type QueryReportSummaryArgs = {
   endDate?: InputMaybe<Scalars['Date']['input']>;
-  organizationId?: InputMaybe<Scalars['ID']['input']>;
+  organizationId: Scalars['ID']['input'];
   startDate?: InputMaybe<Scalars['Date']['input']>;
 };
 
@@ -2608,6 +2615,10 @@ export type RemoveOrganizationMemberInput = {
 };
 
 export type RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo;
+
+export enum ReportPermissions {
+  ViewReports = 'VIEW_REPORTS'
+}
 
 export type ReportSummaryType = {
   __typename?: 'ReportSummaryType';
@@ -2904,6 +2915,13 @@ export type ShelterOrder = {
   createdAt?: InputMaybe<Ordering>;
   name?: InputMaybe<Ordering>;
 };
+
+export enum ShelterPermissions {
+  Add = 'ADD',
+  Change = 'CHANGE',
+  Delete = 'DELETE',
+  View = 'VIEW'
+}
 
 export type ShelterPhotoType = {
   __typename?: 'ShelterPhotoType';
@@ -3404,8 +3422,7 @@ export enum UserOrganizationPermissions {
   AddOrgMember = 'ADD_ORG_MEMBER',
   ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
   RemoveOrgMember = 'REMOVE_ORG_MEMBER',
-  ViewOrgMembers = 'VIEW_ORG_MEMBERS',
-  ViewReports = 'VIEW_REPORTS'
+  ViewOrgMembers = 'VIEW_ORG_MEMBERS'
 }
 
 export type UserType = {
