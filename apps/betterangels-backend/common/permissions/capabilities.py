@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import ClassVar, List, Type
+from typing import List, Type
 
 import strawberry
 from accounts.models import PermissionGroup, User
@@ -13,9 +13,9 @@ def _annotation_key(perm: TextChoices) -> str:
     return f"_perm_{app_label}_{codename}"
 
 
-def permission_annotations(user: User, permissions: Type[TextChoices]) -> dict:
+def permission_annotations(user: User, permissions: Type[TextChoices]) -> dict[str, Exists]:
     """Return DB-level Exists annotations for organization permission checks."""
-    annotations = {}
+    annotations: dict[str, Exists] = {}
     for perm in permissions:
         app_label, codename = perm.value.split(".", 1)
         annotations[_annotation_key(perm)] = Exists(
@@ -29,31 +29,43 @@ def permission_annotations(user: User, permissions: Type[TextChoices]) -> dict:
     return annotations
 
 
-def granted_permissions(instance: object, permissions: Type[TextChoices]) -> list:
+def granted_permissions(instance: object, permissions: Type[TextChoices]) -> list[TextChoices]:
     """Return the list of permissions granted on the annotated instance."""
     return [perm for perm in permissions if getattr(instance, _annotation_key(perm), False)]
 
 
-def make_capabilities_type(name: str, permissions_enum):
-    """Create a strawberry GraphQL type for a domain's capabilities.
+class Capabilities:
+    """Parameterized capabilities factory. Use subscript syntax to create types.
 
     Usage:
-        AccountsCapabilities = make_capabilities_type("AccountsCapabilities", UserOrganizationPermissions)
+        AccountsCapabilities = Capabilities[UserOrganizationPermissions]
+
+    The generated class is a strawberry type with:
+      - A ``granted`` field typed to ``List[permissions_enum]``
+      - A ``get_annotations(user)`` classmethod for DB annotation dicts
+      - A ``from_instance(instance)`` classmethod to resolve granted perms
+
+    The GraphQL type name defaults to ``<EnumName>Capabilities``
+    (e.g. ``UserOrganizationPermissionsCapabilities``).
     """
 
-    @strawberry.type(name=name)
-    class _Capabilities:
-        _permissions_enum: ClassVar = permissions_enum
-        granted: List[type(permissions_enum)]  # noqa: UP006
+    def __class_getitem__(cls, permissions_enum: Type[TextChoices]) -> type:
+        name = f"{permissions_enum.__name__}Capabilities"
 
-        @classmethod
-        def get_annotations(cls, user: User) -> dict:
-            return permission_annotations(user, cls._permissions_enum)
+        def get_annotations(klass: type, user: User) -> dict[str, Exists]:
+            return permission_annotations(user, permissions_enum)
 
-        @classmethod
-        def from_instance(cls, instance: object):
-            return cls(granted=granted_permissions(instance, cls._permissions_enum))
+        def from_instance(klass: type, instance: object):
+            return klass(granted=granted_permissions(instance, permissions_enum))
 
-    _Capabilities.__name__ = name
-    _Capabilities.__qualname__ = name
-    return _Capabilities
+        new_cls = type(
+            name,
+            (),
+            {
+                "__annotations__": {"granted": List[permissions_enum]},
+                "get_annotations": classmethod(get_annotations),
+                "from_instance": classmethod(from_instance),
+            },
+        )
+
+        return strawberry.type(new_cls)

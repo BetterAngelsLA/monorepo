@@ -118,11 +118,11 @@ class CurrentUserOrganizationType(OrganizationType):
         return qs
 
     @strawberry_django.field
-    def capabilities(self, info: Info) -> "OrgCapabilities":
+    def permissions(self, info: Info) -> "OrgPermissions":
         from reports.capabilities import ReportsCapabilities
         from shelters.capabilities import SheltersCapabilities
 
-        return OrgCapabilities(
+        return OrgPermissions(
             accounts=AccountsCapabilities.from_instance(self).granted,
             reports=ReportsCapabilities.from_instance(self).granted,
             shelters=SheltersCapabilities.from_instance(self).granted,
@@ -130,7 +130,7 @@ class CurrentUserOrganizationType(OrganizationType):
 
 
 @strawberry.type
-class OrgCapabilities:
+class OrgPermissions:
     accounts: List[UserOrganizationPermissions]
     reports: List[Annotated["ReportPermissions", strawberry.lazy("reports.permissions")]]
     shelters: List[Annotated["ShelterPermissions", strawberry.lazy("shelters.permissions")]]

@@ -1,5 +1,5 @@
-from common.permissions.capabilities import make_capabilities_type
+from common.permissions.capabilities import Capabilities
 
 from .permissions import UserOrganizationPermissions
 
-AccountsCapabilities = make_capabilities_type("AccountsCapabilities", UserOrganizationPermissions)
+AccountsCapabilities = Capabilities[UserOrganizationPermissions]
