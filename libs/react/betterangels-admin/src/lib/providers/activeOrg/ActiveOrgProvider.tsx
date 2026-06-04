@@ -15,13 +15,13 @@ interface ActiveOrgProviderProps {
 }
 
 /**
- * Provides the currently-selected organization **and its capabilities**
+ * Provides the currently-selected organization **and its permissions**
  * to the component tree.
  *
  * Defaults to the first org in the list but persists the user's choice
  * in `localStorage` so it survives page reloads.
  *
- * `hasPermission(perm)` checks the active org's capabilities
+ * `hasPermission(perm)` checks the active org's permissions
  * and automatically reflects the correct org when the user
  * switches.  Because the check is enum-driven there is nothing to
  * update here when the backend adds new permissions — just re-run

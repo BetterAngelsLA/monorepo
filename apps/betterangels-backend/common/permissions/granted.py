@@ -1,10 +1,22 @@
 from __future__ import annotations
 
-from typing import List, Type
+from typing import Any, List, Protocol, Type
 
 import strawberry
 from accounts.models import PermissionGroup, User
 from django.db.models import Exists, OuterRef, TextChoices
+
+
+class GrantedPermissionsType(Protocol):
+    """Protocol describing the type returned by GrantedPermissions()."""
+
+    granted: list[TextChoices]
+
+    @classmethod
+    def get_annotations(cls, user: User) -> dict[str, Exists]: ...
+
+    @classmethod
+    def from_instance(cls, instance: object) -> Any: ...
 
 
 def _annotation_key(perm: TextChoices) -> str:
@@ -34,38 +46,36 @@ def granted_permissions(instance: object, permissions: Type[TextChoices]) -> lis
     return [perm for perm in permissions if getattr(instance, _annotation_key(perm), False)]
 
 
-class Capabilities:
-    """Parameterized capabilities factory. Use subscript syntax to create types.
+def GrantedPermissions(permissions_enum: Type[TextChoices]) -> type[GrantedPermissionsType]:
+    """Create a strawberry type that resolves granted permissions for an enum.
 
     Usage:
-        AccountsCapabilities = Capabilities[UserOrganizationPermissions]
+        AccountsGrantedPermissions = GrantedPermissions(UserOrganizationPermissions)
 
     The generated class is a strawberry type with:
       - A ``granted`` field typed to ``List[permissions_enum]``
       - A ``get_annotations(user)`` classmethod for DB annotation dicts
       - A ``from_instance(instance)`` classmethod to resolve granted perms
 
-    The GraphQL type name defaults to ``<EnumName>Capabilities``
-    (e.g. ``UserOrganizationPermissionsCapabilities``).
+    The GraphQL type name defaults to ``<EnumName>GrantedPermissions``
+    (e.g. ``UserOrganizationPermissionsGrantedPermissions``).
     """
+    name = f"{permissions_enum.__name__}GrantedPermissions"
 
-    def __class_getitem__(cls, permissions_enum: Type[TextChoices]) -> type:
-        name = f"{permissions_enum.__name__}Capabilities"
+    def get_annotations(klass: type, user: User) -> dict[str, Exists]:
+        return permission_annotations(user, permissions_enum)
 
-        def get_annotations(klass: type, user: User) -> dict[str, Exists]:
-            return permission_annotations(user, permissions_enum)
+    def from_instance(klass: type, instance: object) -> Any:
+        return klass(granted=granted_permissions(instance, permissions_enum))
 
-        def from_instance(klass: type, instance: object):
-            return klass(granted=granted_permissions(instance, permissions_enum))
+    new_cls = type(
+        name,
+        (),
+        {
+            "__annotations__": {"granted": List[permissions_enum]},  # type: ignore[valid-type]
+            "get_annotations": classmethod(get_annotations),
+            "from_instance": classmethod(from_instance),
+        },
+    )
 
-        new_cls = type(
-            name,
-            (),
-            {
-                "__annotations__": {"granted": List[permissions_enum]},
-                "get_annotations": classmethod(get_annotations),
-                "from_instance": classmethod(from_instance),
-            },
-        )
-
-        return strawberry.type(new_cls)
+    return strawberry.type(new_cls)
