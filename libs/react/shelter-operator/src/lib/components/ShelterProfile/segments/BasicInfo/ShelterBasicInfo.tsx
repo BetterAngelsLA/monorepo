@@ -48,49 +48,24 @@ export function ShelterBasicInfo(props: TProps) {
       if (result?.__typename === 'ShelterType') {
         setEditMode(false);
 
-        return;
-      }
-
-      // type OperationInfo {
-      //   """List of messages returned by the operation."""
-      //   messages: [OperationMessage!]!
-      // }
-
-      // type OperationMessage {
-      //   """The kind of this message."""
-      //   kind: OperationMessageKind!
-
-      //   """The error message."""
-      //   message: String!
-
-      //   """
-      //   The field that caused the error, or `null` if it isn't associated with any particular field.
-      //   """
-      //   field: String
-
-      //   """The error code, or `null` if no error code was set."""
-      //   code: String
-      // }
-
-      // error
-      if (result?.__typename === 'OperationInfo') {
-        const message = result.messages?.[0]?.message ?? 'An error occurred';
-        console.error('[updateShelter OperationInfo]:', message);
-
         showToast({
-          status: 'error',
-          title: 'Failed to update shelter',
-          description: message,
+          status: 'success',
+          title: 'Shelter updated.',
         });
 
         return;
       }
+
+      // error
+      // TODO: handle specific OperationInfo field errors via SDB-241
+
+      throw new Error('unexpected query error');
     } catch (e) {
-      console.error(`[updateShelter error]: ${e}`);
+      console.error(`[updateShelter error]: ${e}.`);
 
       showToast({
         status: 'error',
-        title: 'Failed to update shelter',
+        title: 'Update failed',
         description: 'An unexpected error occurred.',
       });
     }
