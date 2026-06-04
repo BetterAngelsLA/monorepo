@@ -253,31 +253,31 @@ class TestAsTextChoices:
             assert member.value == value
 
     def test_includes_custom_permissions(self) -> None:
-        from notes.models import Note
+        from shelters.models.shelter import Shelter
 
-        enum = Note.perms.as_text_choices("NotePermissions")
-        assert hasattr(enum, "CHANGE_PRIVATE_DETAILS")
-        member = enum.CHANGE_PRIVATE_DETAILS  # type: ignore[attr-defined]
-        assert member.value == "notes.change_private_details"
+        enum = Shelter.perms.as_text_choices("ShelterPermissions")
+        assert hasattr(enum, "CHANGE_IS_REVIEWED")
+        member = enum.CHANGE_IS_REVIEWED  # type: ignore[attr-defined]
+        assert member.value == "shelters.change_shelter_is_reviewed"
 
     def test_works_with_granted_permissions(self) -> None:
         from accounts.permissions import make_granted_permissions
-        from notes.models import Note
+        from shelters.models.shelter import Shelter
 
-        enum = Note.perms.as_text_choices("NotePermissions")
+        enum = Shelter.perms.as_text_choices("ShelterPermissions")
         CapType = make_granted_permissions(enum)
-        assert CapType.__name__ == "NotePermissionsGrantedPermissions"
+        assert CapType.__name__ == "ShelterPermissionsGrantedPermissions"
 
     def test_custom_name(self) -> None:
-        from notes.models import Note
+        from shelters.models.shelter import Shelter
 
-        enum = Note.perms.as_text_choices("CustomName")
+        enum = Shelter.perms.as_text_choices("CustomName")
         assert enum.__name__ == "CustomName"
 
     def test_repr_uses_label(self) -> None:
-        from notes.models import Note
+        from shelters.models.shelter import Shelter
 
-        enum = Note.perms.as_text_choices("NotePermissions")
+        enum = Shelter.perms.as_text_choices("ShelterPermissions")
         view = enum.VIEW  # type: ignore[attr-defined]
         assert view.label
         assert "Can " in str(view.label)
@@ -301,7 +301,7 @@ class TestAsTextChoicesWithGrantedPermissionsIntegration:
         assert hasattr(CapType, "get_annotations")
         assert hasattr(CapType, "from_instance")
 
-        org = baker.make(Organization)
+        org = baker.make(Organization, name="TestOrg", slug="test-org")
         user = baker.make(User)
         org.add_user(user)
 

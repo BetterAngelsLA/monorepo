@@ -1,26 +1,24 @@
 """Create 'Shelter Operator' PermissionGroupTemplate with shelter CRUD permissions.
 
-This template grants CRUD on the Shelter model via ShelterPermissions enum
-defined in shelters/groups.py.  It does NOT include org-level permissions
-(add/remove members, portal access) — those come from composing with
-Organization Admin or Organization Superuser templates.
+This template grants CRUD on the Shelter, Bed, Room, and Reservation models
+via the permissions defined in shelters/groups.py.  It does NOT include
+org-level permissions (add/remove members, portal access) — those come from
+composing with Organization Admin or Organization Superuser templates.
 """
 
+from common.permissions.utils import ensure_permissions
 from django.db import migrations
 
 
 def create_shelter_operator_template(apps, schema_editor):
     PermissionGroupTemplate = apps.get_model("accounts", "PermissionGroupTemplate")
-    Permission = apps.get_model("auth", "Permission")
 
     from shelters.groups import SHELTER_OPERATOR
 
     template, _ = PermissionGroupTemplate.objects.get_or_create(name=SHELTER_OPERATOR.name)
 
-    for perm in SHELTER_OPERATOR.permissions:
-        app_label, codename = perm.split(".")
-        db_perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        template.permissions.add(db_perm)
+    permissions = ensure_permissions(apps, schema_editor, list(SHELTER_OPERATOR.permissions))
+    template.permissions.add(*permissions)
 
 
 def reverse(apps, schema_editor):
