@@ -50,7 +50,7 @@ export function EditRoomModal({
     <Modal isOpen={isOpen} onClose={onClose} size="sm">
       <ModalHeader onClose={onClose}>
         <Text variant="header-md" className="text-black">
-          {`Edit "${room.roomIdentifier || 'Room'}"`}
+          {`Edit "${room.name || 'Room'}"`}
         </Text>
       </ModalHeader>
 

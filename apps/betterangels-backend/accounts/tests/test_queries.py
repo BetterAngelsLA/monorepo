@@ -176,7 +176,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         self.assertTrue(response["data"]["currentUser"]["isHmisUser"])
 
     @parametrize(
-        ("user_role, expected_capabilities"),
+        ("user_role, expected_permissions"),
         [
             (
                 OrgRoleEnum.MEMBER,
@@ -203,7 +203,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             ),
         ],
     )
-    def test_logged_in_user_org_capabilities_query(self, user_role: OrgRoleEnum, expected_capabilities: list) -> None:
+    def test_logged_in_user_org_permissions_query(self, user_role: OrgRoleEnum, expected_permissions: list) -> None:
         user = baker.make(User)
         org_1 = organization_recipe.make(name="o1")
         org_2 = organization_recipe.make(name="o2")
@@ -220,7 +220,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     firstName
                     organizations: organizationsOrganization {
                         name
-                        capabilities {
+                        permissions {
                             accounts
                         }
                     }
@@ -235,12 +235,12 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
-        org_caps = {
-            o["name"]: sorted(o["capabilities"]["accounts"]) for o in response["data"]["currentUser"]["organizations"]
+        org_perms = {
+            o["name"]: sorted(o["permissions"]["accounts"]) for o in response["data"]["currentUser"]["organizations"]
         }
-        self.assertEqual(org_caps["o1"], sorted(expected_capabilities))
+        self.assertEqual(org_perms["o1"], sorted(expected_permissions))
         self.assertEqual(
-            org_caps["o2"],
+            org_perms["o2"],
             [],
         )
 

@@ -7,7 +7,9 @@ from common.permissions.utils import IsAuthenticated
 from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Room, Shelter
-from shelters.services import bed_create, room_create, shelter_create
+from shelters.services.bed import bed_create
+from shelters.services.room import room_create
+from shelters.services.shelter import shelter_create, shelter_update
 from shelters.types import (
     AdminShelterType,
     BedType,
@@ -19,6 +21,7 @@ from shelters.types import (
     ServiceCategoryType,
     ShelterType,
     SPAType,
+    UpdateShelterInput,
 )
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -72,6 +75,12 @@ class Mutation:
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
         return cast(ShelterType, shelter_create(user=user, data=clean))
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Shelter.perms.CHANGE)])
+    def update_shelter(self, info: Info, data: UpdateShelterInput) -> ShelterType:
+        user = cast(User, get_current_user(info))
+        clean = strawberry.asdict(data)
+        return cast(ShelterType, shelter_update(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Bed.perms.ADD)])
     def create_bed(self, info: Info, data: CreateBedInput) -> BedType:

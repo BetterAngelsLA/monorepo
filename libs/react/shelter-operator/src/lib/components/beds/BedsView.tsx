@@ -25,7 +25,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
 
     for (const bed of data?.beds.results ?? []) {
       const roomId = bed.room?.id ?? UNASSIGNED_ROOM_ID;
-      const roomLabel = bed.room?.roomIdentifier ?? UNASSIGNED_ROOM_LABEL;
+      const roomLabel = bed.room?.name ?? UNASSIGNED_ROOM_LABEL;
       const roomGroup = grouped.get(roomId) ?? {
         id: roomId,
         roomLabel,
@@ -33,20 +33,21 @@ export function BedsView({ shelterId }: { shelterId: string }) {
       };
 
       roomGroup.beds.push({
-        id: bed.id,
-        bedName: bed.bedName,
-        status: bed.status,
-        maintenanceFlag: bed.maintenanceFlag,
-        bedType: bed.bedType ?? null,
         __typename: 'BedType',
+        id: bed.id,
         accessibility: [],
         b7: false,
         demographics: [],
         funders: [],
+        maintenanceFlag: bed.maintenanceFlag,
+        medicalNeeds: [],
+        name: bed.name,
         pets: [],
         shelter: {} as never,
+        status: bed.status,
         storage: false,
-      } as BedType);
+        type: bed.type ?? null,
+      } as unknown as BedType);
 
       grouped.set(roomId, roomGroup);
     }

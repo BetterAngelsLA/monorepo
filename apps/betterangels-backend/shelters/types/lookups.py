@@ -37,6 +37,11 @@ class DemographicType:
     name: auto
 
 
+@strawberry_django.type(models.MedicalNeed)
+class MedicalNeedType:
+    name: auto
+
+
 @strawberry_django.type(models.EntryRequirement)
 class EntryRequirementType:
     name: auto

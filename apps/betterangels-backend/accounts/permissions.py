@@ -5,7 +5,7 @@ from typing import Optional, Union
 import strawberry
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.db import models
-from django.db.models import QuerySet
+from django.db.models import QuerySet, TextChoices
 from django.utils.translation import gettext_lazy as _
 from organizations.models import Organization
 
@@ -32,17 +32,16 @@ def get_user_permitted_orgs(
 def get_user_permitted_org(
     user: UserLike,
     org_id: str,
-    permission: Optional[str] = None,
+    permission: Optional[TextChoices] = None,
 ) -> Optional[Organization]:
     """Return an org the user belongs to, optionally requiring a permission.
 
-    If *permission* is given (e.g. "reports.view_reports"), additionally
-    verifies the user holds that permission on the org via PermissionGroups
-    — all in a single query.
+    *permission* should be a TextChoices enum member whose value is
+    ``"app_label.codename"`` (e.g. ``ReportPermissions.VIEW_REPORTS``).
     """
     qs = get_user_permitted_orgs(user).filter(pk=org_id)
     if permission:
-        app_label, codename = permission.split(".")
+        app_label, codename = permission.value.split(".")
         qs = qs.filter(
             permission_groups__group__user=user,
             permission_groups__group__permissions__content_type__app_label=app_label,

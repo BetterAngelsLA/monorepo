@@ -4,6 +4,7 @@ import pghistory
 from accounts.groups import GroupTemplateNames
 from accounts.managers import UserManager
 from annoying.fields import AutoOneToOneField
+from common.models import BaseModel
 from django.contrib.auth.models import (
     AbstractBaseUser,
     Group,
@@ -11,8 +12,11 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
+from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 from strawberry_django.descriptors import model_property
@@ -200,32 +204,28 @@ class PermissionGroup(models.Model):
         super().save(*args, **kwargs)
 
 
-class OrgType(models.Model):
-    """Lookup table for organization types (e.g. outreach, shelter)."""
-
-    key = models.CharField(max_length=50, unique=True)
-    label = models.CharField(max_length=100)
-
-    objects = models.Manager()
-
-    def __str__(self) -> str:
-        return self.label
+class OrgTypeChoices(models.TextChoices):
+    OUTREACH = "outreach", "Outreach"
+    SHELTER = "shelter", "Shelter"
 
 
-class OrganizationProfile(models.Model):
+class OrganizationProfile(BaseModel):
     organization = AutoOneToOneField(
         Organization,
         on_delete=models.CASCADE,
         related_name="profile",
     )
-    org_types = models.ManyToManyField(
-        OrgType,
+    org_types = ArrayField(
+        base_field=TextChoicesField(choices_enum=OrgTypeChoices),
         blank=True,
-        related_name="organization_profiles",
+        default=list,
     )
 
     objects = models.Manager()
 
+    class Meta:
+        indexes = [GinIndex(fields=["org_types"])]
+
     def __str__(self) -> str:
-        types = ", ".join(t.label for t in self.org_types.all())
+        types = ", ".join(t.label for t in self.org_types)
         return f"{self.organization.name} ({types or 'no type'})"

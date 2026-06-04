@@ -17,6 +17,7 @@ from shelters.enums import (
     EntryRequirementChoices,
     ExitPolicyChoices,
     FunderChoices,
+    MedicalNeedChoices,
     ParkingChoices,
     PetChoices,
     ReferralRequirementChoices,
@@ -200,6 +201,16 @@ class ReferralRequirement(models.Model):
         pass
 
     name = TextChoicesField(choices_enum=ReferralRequirementChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class MedicalNeed(models.Model):
+    class perms(PermissionSet):
+        pass
+
+    name = TextChoicesField(choices_enum=MedicalNeedChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.name)

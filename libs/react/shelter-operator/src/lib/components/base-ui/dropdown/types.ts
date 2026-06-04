@@ -8,8 +8,10 @@ export interface DropdownOption<T extends string | number = string | number> {
 interface DropdownBaseProps<T extends string | number = string | number> {
   label?: string;
   placeholder?: string;
-  options: DropdownOption<T>[];
+  options: ReadonlyArray<DropdownOption<T>>;
   isSearchable?: boolean;
+  onCreateOption?: (label: string) => void | Promise<void>;
+  createOptionLabel?: (label: string) => string;
   isViewMode?: boolean;
   required?: boolean;
   disabled?: boolean;

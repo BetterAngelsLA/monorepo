@@ -401,7 +401,7 @@ class ShelterForm(forms.ModelForm):
         if not self._pending_service_entries:
             return
 
-        from shelters.services import resolve_pending_service_entries
+        from shelters.services.shelter import resolve_pending_service_entries
 
         resolved = resolve_pending_service_entries(self._pending_service_entries)
         if resolved:
@@ -1450,8 +1450,8 @@ class ShelterAdmin(ImportExportModelAdmin):
 
 @admin.register(Bed)
 class BedAdmin(admin.ModelAdmin):
-    list_display = ("id", "shelter", "bed_name", "status", "bed_type", "occupant", "created_at", "updated_at")
-    list_filter = ("status", "bed_type", "maintenance_flag")
+    list_display = ("id", "shelter", "name", "status", "type", "occupant", "created_at", "updated_at")
+    list_filter = ("status", "type", "maintenance_flag")
     search_fields = ("shelter__name", "occupant__first_name", "occupant__last_name")
     autocomplete_fields = ["shelter", "occupant"]
     fieldsets = (
@@ -1460,11 +1460,11 @@ class BedAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "shelter",
-                    "bed_name",
+                    "name",
                     "status",
                     "status_notes",
                     "occupant",
-                    "bed_type",
+                    "type",
                 )
             },
         ),
@@ -1500,14 +1500,14 @@ class RoomAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "shelter",
-        "room_identifier",
-        "room_type",
+        "name",
+        "type",
         "status",
         "medical_respite",
         "last_cleaned_inspected",
     )
-    list_filter = ("status", "room_type", "medical_respite")
-    search_fields = ("room_identifier", "shelter__name", "notes")
+    list_filter = ("status", "type", "medical_respite")
+    search_fields = ("name", "shelter__name", "notes")
     autocomplete_fields = ["shelter"]
     fieldsets = (
         (
@@ -1515,9 +1515,9 @@ class RoomAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "shelter",
-                    "room_identifier",
-                    "room_type",
-                    "room_type_other",
+                    "name",
+                    "type",
+                    "type_other",
                     "status",
                 )
             },

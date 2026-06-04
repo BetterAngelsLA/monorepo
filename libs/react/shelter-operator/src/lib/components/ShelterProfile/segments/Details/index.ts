@@ -1,0 +1,1 @@
+export { ShelterDetails } from './ShelterDetails';

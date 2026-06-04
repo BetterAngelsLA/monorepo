@@ -455,3 +455,26 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         self.assertIsNotNone(data["startDate"])
         self.assertIsNotNone(data["endDate"])
         self.assertIsInstance(data["totalNotes"], int)
+
+    def test_user_targets_org_without_view_reports_gets_error(self) -> None:
+        """User belongs to two orgs but only has view_reports on one; querying the other should fail."""
+        org_with_access = baker.make(Organization, name="Authorized Org")
+        org_without_access = baker.make(Organization, name="Unauthorized Org")
+        user = baker.make(User)
+        user.set_password("testpass")
+        user.save()
+        org_with_access.add_user(user)
+        org_without_access.add_user(user)
+        grant_view_reports(user, org_with_access)
+        # No view_reports on org_without_access
+
+        self.graphql_client.force_login(user)
+        response = self.execute_graphql(
+            REPORT_SUMMARY_QUERY,
+            {
+                "organizationId": str(org_without_access.id),
+                "startDate": "2025-01-01",
+                "endDate": "2025-01-31",
+            },
+        )
+        self.assertTrue(response.get("errors") is not None or response["data"]["reportSummary"] is None)
