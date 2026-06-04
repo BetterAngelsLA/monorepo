@@ -75,6 +75,7 @@ export type AdminShelterType = {
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
+  availability?: Maybe<ShelterAvailabilityType>;
   bedFees?: Maybe<Scalars['String']['output']>;
   bedsByStatus: BedsByStatusType;
   citiesServed: Array<CityType>;
@@ -2853,6 +2854,15 @@ export type ServiceType = {
   priority: Scalars['Int']['output'];
 };
 
+export type ShelterAvailabilityType = {
+  __typename?: 'ShelterAvailabilityType';
+  id: Scalars['ID']['output'];
+  nonRestrictedBeds: Scalars['Int']['output'];
+  restrictedBeds: Scalars['Int']['output'];
+  restrictionNotes: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
 export enum ShelterChoices {
   AccessCenter = 'ACCESS_CENTER',
   Building = 'BUILDING',
@@ -2870,6 +2880,7 @@ export type ShelterFilter = {
   NOT?: InputMaybe<ShelterFilter>;
   OR?: InputMaybe<ShelterFilter>;
   geolocation?: InputMaybe<GeolocationInput>;
+  hasAvailableBeds?: InputMaybe<Scalars['Boolean']['input']>;
   isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   mapBounds?: InputMaybe<MapBoundsInput>;
@@ -2960,6 +2971,7 @@ export type ShelterType = {
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
+  availability?: Maybe<ShelterAvailabilityType>;
   bedFees?: Maybe<Scalars['String']['output']>;
   bedsByStatus: BedsByStatusType;
   citiesServed: Array<CityType>;
