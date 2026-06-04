@@ -457,7 +457,7 @@ class CreateSchedulesServiceTestCase(TestCase):
 
     def test_multi_day_fanout(self) -> None:
         """A single input with days=[MON, TUE, WED] creates 3 Schedule rows."""
-        from shelters.services import _create_schedules
+        from shelters.services.utils import _create_schedules
 
         _create_schedules(
             self.shelter,
@@ -483,7 +483,7 @@ class CreateSchedulesServiceTestCase(TestCase):
 
     def test_empty_days_creates_every_day_row(self) -> None:
         """An empty days list creates a single row with day=None (every day)."""
-        from shelters.services import _create_schedules
+        from shelters.services.utils import _create_schedules
 
         _create_schedules(
             self.shelter,
@@ -503,7 +503,7 @@ class CreateSchedulesServiceTestCase(TestCase):
 
     def test_no_days_key_creates_every_day_row(self) -> None:
         """Omitting the 'days' key entirely creates a single row with day=None."""
-        from shelters.services import _create_schedules
+        from shelters.services.utils import _create_schedules
 
         _create_schedules(
             self.shelter,

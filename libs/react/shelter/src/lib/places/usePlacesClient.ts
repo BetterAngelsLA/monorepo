@@ -91,6 +91,18 @@ export function usePlacesClient() {
               longitude: place.location.lng(),
             }
           : undefined,
+        viewport: place.viewport
+          ? {
+              low: {
+                latitude: place.viewport.getSouthWest().lat(),
+                longitude: place.viewport.getSouthWest().lng(),
+              },
+              high: {
+                latitude: place.viewport.getNorthEast().lat(),
+                longitude: place.viewport.getNorthEast().lng(),
+              },
+            }
+          : undefined,
         addressComponents: place.addressComponents?.map(
           (c): TAddressComponent => ({
             longText: c.longText || '',

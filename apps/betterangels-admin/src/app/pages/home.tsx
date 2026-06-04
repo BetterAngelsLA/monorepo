@@ -6,7 +6,7 @@ import {
 } from '@monorepo/react/betterangels-admin';
 import { Navigate } from 'react-router-dom';
 
-const capabilityRoutes: { permission: PermissionEnum; path: string }[] = [
+const permissionRoutes: { permission: PermissionEnum; path: string }[] = [
   { permission: UserOrganizationPermissions.ViewOrgMembers, path: '/users' },
   { permission: ReportPermissions.ViewReports, path: '/reports' },
 ];
@@ -20,7 +20,7 @@ export default function Home() {
     );
   }
 
-  const firstAllowed = capabilityRoutes.find((r) =>
+  const firstAllowed = permissionRoutes.find((r) =>
     hasPermission(r.permission)
   );
 

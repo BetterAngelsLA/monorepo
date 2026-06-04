@@ -15,7 +15,8 @@ const validationPatterns: Record<InputDataType, RegExp> = {
   'phone-number': /^[\d\s\-+()]*\d[\d\s\-+()]*$/,
   number: /^-?\d+(\.\d+)?$/,
   time: /^([01]\d|2[0-3]):([0-5]\d)$/,
-  string: /^.+$/, // Any non-empty string
+  // Match any non-empty string, including multiline textarea values.
+  string: /[\s\S]+/,
 };
 
 const normalizeValue = (
@@ -44,6 +45,14 @@ const dataTypeLabels: Partial<Record<InputDataType, string>> = {
   number: 'number',
   time: 'time',
   string: 'value',
+};
+
+const inputTypeByDataType: Partial<Record<InputDataType, string>> = {
+  string: 'text',
+  number: 'number',
+  email: 'email',
+  'phone-number': 'tel',
+  time: 'time',
 };
 
 const isValueValid = (
@@ -105,6 +114,7 @@ export const Input = forwardRef<
   const isViewEditMode = typeof isViewMode === 'boolean';
   const isParagraph = variant === 'paragraph';
   const paragraphRows = rows ?? 3;
+  const inputType = inputTypeByDataType[dataType as InputDataType] ?? 'text';
 
   const generatedId = useId();
   const inputId = id ?? generatedId;
@@ -201,6 +211,7 @@ export const Input = forwardRef<
             {...(inputProps as InputHTMLAttributes<HTMLInputElement>)}
             ref={ref as React.Ref<HTMLInputElement>}
             id={inputId}
+            type={inputType}
             value={value}
             disabled={disabled || isViewMode}
             required={required}

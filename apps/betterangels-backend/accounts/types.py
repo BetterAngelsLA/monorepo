@@ -1,22 +1,24 @@
-from typing import TYPE_CHECKING, Annotated, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
 from accounts.enums import OrgRoleEnum
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
+from common.permissions.granted import GrantedPermissions
 from django.db.models import Q, QuerySet
 from organizations.models import Organization
+from reports.permissions import ReportPermissions
+from shelters.permissions import ShelterPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
-from .capabilities import AccountsCapabilities
 from .models import User
 from .permissions import UserOrganizationPermissions
 
-if TYPE_CHECKING:
-    from reports.permissions import ReportPermissions
-    from shelters.permissions import ShelterPermissions
+AccountsGrantedPermissions = GrantedPermissions(UserOrganizationPermissions)
+ReportsGrantedPermissions = GrantedPermissions(ReportPermissions)
+SheltersGrantedPermissions = GrantedPermissions(ShelterPermissions)
 
 
 @strawberry.input
@@ -101,39 +103,33 @@ class CurrentUserOrganizationType(OrganizationType):
         queryset: QuerySet[Organization],
         info: Info,
     ) -> QuerySet[Organization]:
-        from reports.capabilities import ReportsCapabilities
-        from shelters.capabilities import SheltersCapabilities
-
         user = get_current_user(info)
         if not user or not getattr(user, "pk", None):
             return queryset
 
         assert isinstance(user, User)
         qs: QuerySet[Organization] = queryset.filter(users=user).annotate(
-            **AccountsCapabilities.get_annotations(user),
-            **ReportsCapabilities.get_annotations(user),
-            **SheltersCapabilities.get_annotations(user),
+            **AccountsGrantedPermissions.get_annotations(user),
+            **ReportsGrantedPermissions.get_annotations(user),
+            **SheltersGrantedPermissions.get_annotations(user),
         )
 
         return qs
 
     @strawberry_django.field
-    def capabilities(self, info: Info) -> "OrgCapabilities":
-        from reports.capabilities import ReportsCapabilities
-        from shelters.capabilities import SheltersCapabilities
-
-        return OrgCapabilities(
-            accounts=AccountsCapabilities.from_instance(self).granted,
-            reports=ReportsCapabilities.from_instance(self).granted,
-            shelters=SheltersCapabilities.from_instance(self).granted,
+    def permissions(self, info: Info) -> "OrgPermissions":
+        return OrgPermissions(
+            accounts=AccountsGrantedPermissions.from_instance(self).granted,
+            reports=ReportsGrantedPermissions.from_instance(self).granted,
+            shelters=SheltersGrantedPermissions.from_instance(self).granted,
         )
 
 
 @strawberry.type
-class OrgCapabilities:
+class OrgPermissions:
     accounts: List[UserOrganizationPermissions]
-    reports: List[Annotated["ReportPermissions", strawberry.lazy("reports.permissions")]]
-    shelters: List[Annotated["ShelterPermissions", strawberry.lazy("shelters.permissions")]]
+    reports: List[ReportPermissions]
+    shelters: List[ShelterPermissions]
 
 
 @strawberry_django.type(User)

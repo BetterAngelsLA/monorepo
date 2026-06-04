@@ -8,9 +8,10 @@ query currentOrgUser {
     organizations: organizationsOrganization {
       id
       name
-      capabilities {
+      permissions {
         accounts
         reports
+        shelters
       }
     }
   }

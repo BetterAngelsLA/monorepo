@@ -20,15 +20,16 @@ import { paths, reservationSegments } from '../../routing';
 import type { ReservationFormData } from './types';
 
 const MOCK_BED_DEFAULTS = {
-  maintenanceFlag: false,
   accessibility: [],
   b7: false,
   demographics: [],
   funders: [],
+  maintenanceFlag: false,
+  medicalNeeds: [],
   pets: [],
   shelter: {} as never,
   storage: false,
-  bedType: BedTypeChoices.Twin,
+  type: BedTypeChoices.Twin,
 };
 
 // TODO: Replace with real GraphQL query once rooms/beds query is available
@@ -40,25 +41,25 @@ const MOCK_ROOMS: BedRoomForList[] = [
       {
         ...MOCK_BED_DEFAULTS,
         id: 'bed-1a',
-        bedName: '1A',
+        name: '1A',
         status: BedStatusChoices.Available,
       },
       {
         ...MOCK_BED_DEFAULTS,
         id: 'bed-1b',
-        bedName: '1B',
+        name: '1B',
         status: BedStatusChoices.Available,
       },
       {
         ...MOCK_BED_DEFAULTS,
         id: 'bed-1c',
-        bedName: '1C',
+        name: '1C',
         status: BedStatusChoices.Available,
       },
       {
         ...MOCK_BED_DEFAULTS,
         id: 'bed-1d',
-        bedName: '1D',
+        name: '1D',
         status: BedStatusChoices.Available,
       },
     ],
@@ -70,19 +71,19 @@ const MOCK_ROOMS: BedRoomForList[] = [
       {
         ...MOCK_BED_DEFAULTS,
         id: 'bed-1e',
-        bedName: '1E',
+        name: '1E',
         status: BedStatusChoices.Available,
       },
       {
         ...MOCK_BED_DEFAULTS,
         id: 'bed-1f',
-        bedName: '1F',
+        name: '1F',
         status: BedStatusChoices.Available,
       },
       {
         ...MOCK_BED_DEFAULTS,
         id: 'bed-1g',
-        bedName: '1G',
+        name: '1G',
         status: BedStatusChoices.Available,
       },
     ],

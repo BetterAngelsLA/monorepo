@@ -2,7 +2,7 @@ query GetShelterRooms($shelterId: ID!) {
   rooms(filters: { shelterId: $shelterId }) {
     results {
       id
-      roomIdentifier
+      name
       status
       amenities
       medicalRespite
