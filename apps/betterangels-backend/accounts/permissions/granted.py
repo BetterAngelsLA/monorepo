@@ -8,7 +8,7 @@ from django.db.models import Exists, OuterRef, TextChoices
 
 
 class GrantedPermissionsType(Protocol):
-    """Protocol describing the type returned by GrantedPermissions()."""
+    """Protocol describing the type returned by make_granted_permissions()."""
 
     granted: list[TextChoices]
 
@@ -46,11 +46,11 @@ def granted_permissions(instance: object, permissions: Type[TextChoices]) -> lis
     return [perm for perm in permissions if getattr(instance, _annotation_key(perm), False)]
 
 
-def GrantedPermissions(permissions_enum: Type[TextChoices]) -> type[GrantedPermissionsType]:
+def make_granted_permissions(permissions_enum: Type[TextChoices]) -> type[GrantedPermissionsType]:
     """Create a strawberry type that resolves granted permissions for an enum.
 
     Usage:
-        AccountsGrantedPermissions = GrantedPermissions(UserOrganizationPermissions)
+        AccountsGrantedPermissions = make_granted_permissions(UserOrganizationPermissions)
 
     The generated class is a strawberry type with:
       - A ``granted`` field typed to ``List[permissions_enum]``

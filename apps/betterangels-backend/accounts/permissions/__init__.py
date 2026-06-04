@@ -5,7 +5,7 @@ from typing import Optional, Union
 import strawberry
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.db import models
-from django.db.models import QuerySet, TextChoices
+from django.db.models import TextChoices
 from django.utils.translation import gettext_lazy as _
 from organizations.models import Organization
 
@@ -21,30 +21,24 @@ class UserOrganizationPermissions(models.TextChoices):
     VIEW_ORG_MEMBERS = "organizations.view_org_members", _("Can view organization members")
 
 
-def get_user_permitted_orgs(
-    user: UserLike,
-) -> "QuerySet[Organization]":
-    """Return orgs the user belongs to."""
-    qs: QuerySet[Organization] = Organization.objects.filter(users=user)
-    return qs
-
-
 def get_user_permitted_org(
     user: UserLike,
     org_id: str,
-    permission: Optional[TextChoices] = None,
+    permission: TextChoices,
 ) -> Optional[Organization]:
-    """Return an org the user belongs to, optionally requiring a permission.
+    """Return an organization filtered by org_id, user membership in a
+    permission group, and the given permission.
 
-    *permission* should be a TextChoices enum member whose value is
+    *permission* should be a ``TextChoices`` enum member whose value is
     ``"app_label.codename"`` (e.g. ``ReportPermissions.VIEW_REPORTS``).
+
+    Returns ``None`` when the user does not belong to the organization
+    or does not hold the required permission.
     """
-    qs = get_user_permitted_orgs(user).filter(pk=org_id)
-    if permission:
-        app_label, codename = permission.value.split(".")
-        qs = qs.filter(
-            permission_groups__group__user=user,
-            permission_groups__group__permissions__content_type__app_label=app_label,
-            permission_groups__group__permissions__codename=codename,
-        )
-    return qs.first()
+    app_label, codename = permission.value.split(".", 1)
+    return Organization.objects.filter(
+        pk=org_id,
+        permission_groups__group__user=user,
+        permission_groups__group__permissions__content_type__app_label=app_label,
+        permission_groups__group__permissions__codename=codename,
+    ).first()
