@@ -13,6 +13,7 @@ from django.contrib.auth.models import (
 )
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
 from django_choices_field import TextChoicesField
@@ -221,6 +222,9 @@ class OrganizationProfile(BaseModel):
     )
 
     objects = models.Manager()
+
+    class Meta:
+        indexes = [GinIndex(fields=["org_types"])]
 
     def __str__(self) -> str:
         types = ", ".join(t.label for t in self.org_types)
