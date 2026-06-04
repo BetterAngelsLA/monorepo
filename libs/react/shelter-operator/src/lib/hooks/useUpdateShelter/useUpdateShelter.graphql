@@ -1,0 +1,14 @@
+mutation UpdateShelter($data: UpdateShelterInput!) {
+  updateShelter(data: $data) {
+    ... on ShelterType {
+      id
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

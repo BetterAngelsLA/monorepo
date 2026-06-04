@@ -137,7 +137,6 @@ export function ShelterBasicInfoForm(props: TProps) {
             control={control}
             render={({ field }) => (
               <Input
-                required
                 variant="paragraph"
                 inputClassName="min-h-auto"
                 rows={2}
