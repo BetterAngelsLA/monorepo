@@ -131,3 +131,88 @@ class TestGrantedPermissionsFactory:
 
         caps = CapType.from_instance(FakeInstance())
         assert caps.granted == [FakeAppPerms.VIEW]
+
+
+@pytest.mark.django_db
+class TestAsTextChoices:
+    """Tests for PermissionSet.as_text_choices()."""
+
+    def test_returns_text_choices_subclass(self) -> None:
+        from django.db.models import TextChoices
+        from notes.models import Note
+
+        enum = Note.perms.as_text_choices("NotePermissions")
+        assert issubclass(enum, TextChoices)
+
+    def test_includes_crud_permissions(self) -> None:
+        from notes.models import Note
+
+        enum = Note.perms.as_text_choices("NotePermissions")
+        expected = {
+            "ADD": Note.perms.ADD,
+            "CHANGE": Note.perms.CHANGE,
+            "DELETE": Note.perms.DELETE,
+            "VIEW": Note.perms.VIEW,
+        }
+        for name, value in expected.items():
+            member = getattr(enum, name)
+            assert member.value == value
+
+    def test_includes_custom_permissions(self) -> None:
+        from notes.models import Note
+
+        enum = Note.perms.as_text_choices("NotePermissions")
+        assert hasattr(enum, "CHANGE_PRIVATE_DETAILS")
+        member = enum.CHANGE_PRIVATE_DETAILS  # type: ignore[attr-defined]
+        assert member.value == "notes.change_private_details"
+
+    def test_works_with_granted_permissions(self) -> None:
+        from common.permissions.granted import GrantedPermissions
+        from notes.models import Note
+
+        enum = Note.perms.as_text_choices("NotePermissions")
+        CapType = GrantedPermissions(enum)
+        assert CapType.__name__ == "NotePermissionsGrantedPermissions"
+
+    def test_custom_name(self) -> None:
+        from notes.models import Note
+
+        enum = Note.perms.as_text_choices("CustomName")
+        assert enum.__name__ == "CustomName"
+
+    def test_repr_uses_label(self) -> None:
+        from notes.models import Note
+
+        enum = Note.perms.as_text_choices("NotePermissions")
+        view = enum.VIEW  # type: ignore[attr-defined]
+        assert view.label
+        assert "Can " in str(view.label)
+
+
+@pytest.mark.django_db
+class TestAsTextChoicesWithGrantedPermissionsIntegration:
+    """Integration test: as_text_choices() works end-to-end with GrantedPermissions."""
+
+    def test_resolves_granted_permissions(self) -> None:
+        from accounts.models import User
+        from common.permissions.granted import GrantedPermissions
+        from model_bakery import baker
+        from notes.models import Note
+        from organizations.models import Organization
+
+        enum = Note.perms.as_text_choices("NotePermissions")
+        CapType = GrantedPermissions(enum)
+
+        # This is a strawberry type — verify it works with annotations
+        assert hasattr(CapType, "get_annotations")
+        assert hasattr(CapType, "from_instance")
+
+        org = baker.make(Organization)
+        user = baker.make(User)
+        org.add_user(user)
+
+        annotations = CapType.get_annotations(user)
+        # Should have annotation keys for each CRUD perm + custom perms
+        assert len(annotations) > 0
+        for key in annotations:
+            assert key.startswith("_perm_")

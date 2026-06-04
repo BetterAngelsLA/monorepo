@@ -2321,10 +2321,18 @@ input ShelterOrder {
 }
 
 enum ShelterPermissions {
+  CHANGE_IS_REVIEWED
+  _CHANGE_IS_REVIEWED_label
+  VIEW_PRIVATE
+  _VIEW_PRIVATE_label
   ADD
+  _ADD_label
   CHANGE
+  _CHANGE_label
   DELETE
+  _DELETE_label
   VIEW
+  _VIEW_label
 }
 
 type ShelterPhotoType {

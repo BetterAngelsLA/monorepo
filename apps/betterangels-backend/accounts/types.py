@@ -129,7 +129,7 @@ class CurrentUserOrganizationType(OrganizationType):
 class OrgPermissions:
     accounts: List[UserOrganizationPermissions]
     reports: List[ReportPermissions]
-    shelters: List[ShelterPermissions]
+    shelters: List[ShelterPermissions]  # type: ignore[valid-type]
 
 
 @strawberry_django.type(User)
