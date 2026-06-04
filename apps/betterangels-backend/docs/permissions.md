@@ -6,32 +6,32 @@ Permission group templates define a **set of Django permissions** that can be as
 
 This composable model means you never need a single monolithic role — you combine templates to build the desired access level.
 
----
-
 ## Templates
 
-### Shared (app-agnostic)
+### Organization (app-agnostic)
 
-These templates handle **organization membership management** and are reused across all org types (outreach, shelter, etc.):
+| Template                   | Config source        | Permissions                                                                                              |
+| -------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Organization Superuser** | `accounts/groups.py` | `ACCESS_ORG_PORTAL`, `ADD_ORG_MEMBER`, `CHANGE_ORG_MEMBER_ROLE`, `REMOVE_ORG_MEMBER`, `VIEW_ORG_MEMBERS` |
+| **Organization Admin**     | `accounts/groups.py` | `ACCESS_ORG_PORTAL`, `ADD_ORG_MEMBER`, `REMOVE_ORG_MEMBER`, `VIEW_ORG_MEMBERS`                           |
 
-| Template                   | Permissions                                                                                                              | Purpose                                        |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
-| **Organization Superuser** | `access_org_portal`, `add_org_member`, `remove_org_member`, `view_org_members`, `change_org_member_role`, `view_reports` | Full org management — can promote/demote roles |
-| **Organization Admin**     | `access_org_portal`, `add_org_member`, `remove_org_member`, `view_org_members`, `view_reports`                           | Org management without role changes            |
+Both use the `UserOrganizationPermissions` enum directly — org-level permissions are not tied to a specific model's `model.perms`.
 
 ### Outreach
 
-| Template       | Permissions                                               | Purpose                                 |
-| -------------- | --------------------------------------------------------- | --------------------------------------- |
-| **Caseworker** | CRUD on notes, clients, tasks, attachments, HMIS profiles | Field work — manage client interactions |
+| Template       | Config source     | Permissions (via `model.perms`)                   |
+| -------------- | ----------------- | ------------------------------------------------- |
+| **Caseworker** | `notes/groups.py` | CRUD on `Note`, `ServiceRequest`, `ClientProfile` |
+
+Permissions use `Note.perms.*`, `ServiceRequest.perms.*`, `ClientProfile.perms.*` — the model is the source of truth.
 
 ### Shelter
 
-| Template             | Permissions                                                | Purpose                                                              |
-| -------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------- |
-| **Shelter Operator** | CRUD on shelter, bed, room, reservation, reservationclient | Day-to-day shelter operations — manage beds, rooms, and reservations |
+| Template             | Config source        | Permissions (via `model.perms`)                 |
+| -------------------- | -------------------- | ----------------------------------------------- |
+| **Shelter Operator** | `shelters/groups.py` | CRUD on `Shelter`, `Bed`, `Room`, `Reservation` |
 
----
+Permissions use `Shelter.perms.*`, `Bed.perms.*`, `Room.perms.*`, `Reservation.perms.*`.
 
 ## Composing Roles
 
@@ -53,31 +53,42 @@ Roles are built by assigning **one or more templates** to a user within an org:
 | Shelter Admin    | `Organization Admin` + `Shelter Operator`     |
 | Shelter Owner    | `Organization Superuser` + `Shelter Operator` |
 
----
+## Architecture
 
-## How it works
+### Template ownership
 
-1. Each `Organization` has `PermissionGroup` instances linking it to templates
-2. When a user is assigned a role, they're added to the Django `Group` backing each relevant `PermissionGroup`
-3. Django unions all group permissions — the user gets access to everything from all their assigned templates
-4. `strawberry_django` `HasPerm` checks and the frontend `hasPermission()` helper both resolve against this unified permission set
+Each app owns its template definitions using the `TemplateConfig` dataclass (`common/permissions/config.py`):
 
----
+```
+common/permissions/config.py  — TemplateConfig dataclass
+accounts/groups.py            — ORG_ADMIN, ORG_SUPERUSER
+notes/groups.py               — CASEWORKER
+shelters/groups.py            — SHELTER_OPERATOR
+```
 
-## Adding permissions later
+Each `groups.py` imports `TemplateConfig` and defines one or more template configs with a `name` and `permissions` list. The migration imports the config and creates the `PermissionGroupTemplate` in the database.
 
-- **New model perms for an existing template**: Write a data migration that calls `template.permissions.add(...)` for the new permissions
-- **New template**: Write a data migration that creates a `PermissionGroupTemplate` and assigns its permissions
-- **New org type role**: Just compose existing templates — no migration needed
+### Permission sources
 
----
+- **Django model CRUD**: `model.perms.ADD`, `model.perms.CHANGE`, etc. — auto-generated by `PermissionSet` via `BaseModel`
+- **GraphQL domain perms**: `UserOrganizationPermissions` enum (`@strawberry.enum`), resolved via `GrantedPermissions` factory
 
-## Frontend capabilities
+### Template ↔ permission binding
 
-The GraphQL `OrgCapabilities` type exposes granted permissions per domain:
+`TemplateConfig` is a frozen dataclass that binds a template name to its permission list in one place. This eliminates the risk of a template name and its permissions drifting apart.
+
+## Adding templates or permissions
+
+- **New template**: Add a `TemplateConfig` entry to the relevant app's `groups.py`, write a data migration that creates a `PermissionGroupTemplate`
+- **New model perms for an existing template**: Update the permission list in the app's `groups.py` config
+- **New org type role**: Compose existing templates — no migration needed
+
+## Frontend
+
+The GraphQL `OrgPermissions` type exposes granted permissions per domain:
 
 ```graphql
-type OrgCapabilities {
+type OrgPermissions {
   accounts: [UserOrganizationPermissions!]!
   reports: [ReportPermissions!]!
   shelters: [ShelterPermissions!]!
@@ -85,3 +96,8 @@ type OrgCapabilities {
 ```
 
 The frontend `hasPermission()` helper checks across all domains with O(1) lookup. See `libs/react/betterangels-admin/src/lib/providers/activeOrg/hasPermission.ts`.
+
+## Notes
+
+- `accounts/group_names.py` contains `GroupTemplateNames` — a registry of template name strings. This enum is intentionally thin and may eventually be replaced by each app registering its own names independently, removing the need for `accounts` to know about downstream apps.
+- `shelters/permissions.py` is a 3-line bridge that delegates to `Shelter.perms.as_text_choices()` for GraphQL schema generation — `model.perms` is the single source of truth.
