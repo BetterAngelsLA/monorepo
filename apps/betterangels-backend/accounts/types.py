@@ -3,9 +3,9 @@ from typing import List, Optional, Tuple
 import strawberry
 import strawberry_django
 from accounts.enums import OrgRoleEnum
+from accounts.permissions import make_granted_permissions
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
-from common.permissions.granted import GrantedPermissions
 from django.db.models import Q, QuerySet
 from organizations.models import Organization
 from reports.permissions import ReportPermissions
@@ -16,9 +16,9 @@ from strawberry_django.auth.utils import get_current_user
 from .models import User
 from .permissions import UserOrganizationPermissions
 
-AccountsGrantedPermissions = GrantedPermissions(UserOrganizationPermissions)
-ReportsGrantedPermissions = GrantedPermissions(ReportPermissions)
-SheltersGrantedPermissions = GrantedPermissions(ShelterPermissions)
+AccountsGrantedPermissions = make_granted_permissions(UserOrganizationPermissions)
+ReportsGrantedPermissions = make_granted_permissions(ReportPermissions)
+SheltersGrantedPermissions = make_granted_permissions(ShelterPermissions)
 
 
 @strawberry.input
@@ -104,8 +104,8 @@ class CurrentUserOrganizationType(OrganizationType):
         info: Info,
     ) -> QuerySet[Organization]:
         user = get_current_user(info)
-        if not user or not getattr(user, "pk", None):
-            return queryset
+        if not user or not user.is_authenticated:
+            return queryset.none()
 
         assert isinstance(user, User)
         qs: QuerySet[Organization] = queryset.filter(users=user).annotate(

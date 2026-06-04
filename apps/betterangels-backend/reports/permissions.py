@@ -33,7 +33,7 @@ class HasReportAccess(BasePermission):
     def has_permission(self, request: Request, view: APIView) -> bool:
         user = request.user
 
-        if not user or not user.is_authenticated:
+        if not user.is_authenticated:
             return False
 
         org_id = request.query_params.get("org_id")
