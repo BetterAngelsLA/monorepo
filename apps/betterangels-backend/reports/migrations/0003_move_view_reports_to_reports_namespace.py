@@ -52,5 +52,14 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AlterModelOptions(
+            name="scheduledreport",
+            options={
+                "ordering": ["-created_at"],
+                "permissions": (("view_reports", "Can view reports"),),
+                "verbose_name": "Scheduled Report",
+                "verbose_name_plural": "Scheduled Reports",
+            },
+        ),
         migrations.RunPython(migrate_view_reports_permission, migrations.RunPython.noop),
     ]
