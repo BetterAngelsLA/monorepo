@@ -1,4 +1,4 @@
-mutation UpdateShelter($data: UpdateShelterInput!) {
+mutation UpdateShelterProfile($data: UpdateShelterInput!) {
   updateShelter(data: $data) {
     ... on ShelterType {
       id

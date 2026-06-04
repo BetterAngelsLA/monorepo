@@ -1,3 +1,3 @@
 import { UpdateShelterInput } from '@monorepo/react/shelter';
 
-export type UseUpdateShelterInput = UpdateShelterInput;
+export type UseUpdateShelterProfileInput = UpdateShelterInput;

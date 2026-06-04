@@ -1,3 +1,4 @@
+export * from './useAdminShelterProfile';
 export * from './useShelterCities';
 export * from './useShelterSpas';
-export * from './useUpdateShelter';
+export * from './useUpdateShelterProfile';

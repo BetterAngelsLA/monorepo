@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useShelter } from '../../../../hooks/useShelter';
 import {
-  type UseUpdateShelterInput,
-  useUpdateShelter,
-} from '../../../../hooks/useUpdateShelter';
+  useAdminShelterProfile,
+  useUpdateShelterProfile,
+  UseUpdateShelterProfileInput,
+} from '../../../../hooks';
 import { useToast } from '../../../base-ui/toast';
 import { ShelterDetailsForm } from './ShelterDetailsForm';
 import { type DetailsFormData, toFormData } from './formSchema';
@@ -11,7 +11,7 @@ import { type DetailsFormData, toFormData } from './formSchema';
 function toUpdateInput(
   shelterId: string,
   data: DetailsFormData
-): UseUpdateShelterInput {
+): UseUpdateShelterProfileInput {
   return {
     id: shelterId,
     demographics: data.demographics,
@@ -34,8 +34,8 @@ export function ShelterDetails(props: TProps) {
 
   const [isEditMode, setEditMode] = useState<boolean>(false);
 
-  const { shelter } = useShelter(shelterId);
-  const { updateShelter } = useUpdateShelter();
+  const { shelter } = useAdminShelterProfile(shelterId);
+  const { updateShelter } = useUpdateShelterProfile();
   const { showToast } = useToast();
 
   async function onSubmit(data: DetailsFormData) {
