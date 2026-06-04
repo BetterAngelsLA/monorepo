@@ -78,6 +78,7 @@ type AdminShelterType {
   addNotesShelterDetails: String
   bedFees: String
   city: CityType
+  citiesServed: [CityType!]!
   cityCouncilDistrict: Int
   curfew: Time
   demographics: [DemographicType!]!
@@ -114,6 +115,7 @@ type AdminShelterType {
   shelterTypes: [ShelterTypeType!]!
   shelterTypesOther: String
   spa: SPAType
+  spasServed: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
   photos: [ShelterPhotoType!]!
   isPrivate: Boolean!
@@ -184,7 +186,7 @@ input BedFilter {
   OR: BedFilter
   NOT: BedFilter
   DISTINCT: Boolean
-  bedType: [BedTypeChoices!]
+  type: [BedTypeChoices!]
   medicalNeeds: [MedicalNeedChoices!]
   status: [BedStatusChoices!]
 }
@@ -198,23 +200,23 @@ enum BedStatusChoices {
 
 type BedType {
   id: ID!
-  shelter: ShelterType!
+  accessibility: [AccessibilityType!]!
+  b7: Boolean!
+  demographics: [DemographicType!]!
+  fees: Int
+  funders: [FunderType!]!
+  lastCleanedInspected: DateTime
+  maintenanceFlag: Boolean!
+  medicalNeeds: [MedicalNeedType!]!
+  name: String
+  occupantId: ID
+  pets: [PetType!]!
   room: RoomType
-  bedName: String
+  shelter: ShelterType!
   status: BedStatusChoices
   statusNotes: String
-  occupantId: ID
-  bedType: BedTypeChoices
-  demographics: [DemographicType!]!
-  accessibility: [AccessibilityType!]!
-  funders: [FunderType!]!
-  pets: [PetType!]!
   storage: Boolean!
-  maintenanceFlag: Boolean!
-  lastCleanedInspected: DateTime
-  medicalNeeds: MedicalNeedChoices
-  b7: Boolean!
-  fees: Int
+  type: BedTypeChoices
 }
 
 enum BedTypeChoices {
@@ -529,20 +531,20 @@ type ContactInfoType {
 input CreateBedInput {
   shelterId: ID!
   roomId: ID = null
-  status: BedStatusChoices = null
-  bedName: String = null
-  statusNotes: String = null
-  bedType: BedTypeChoices = null
-  demographics: [DemographicChoices!] = null
   accessibility: [AccessibilityChoices!] = null
-  funders: [FunderChoices!] = null
-  pets: [PetChoices!] = null
-  storage: Boolean = null
-  maintenanceFlag: Boolean = null
-  lastCleanedInspected: DateTime = null
-  medicalNeeds: MedicalNeedChoices = null
   b7: Boolean = null
+  demographics: [DemographicChoices!] = null
   fees: Int = null
+  funders: [FunderChoices!] = null
+  lastCleanedInspected: DateTime = null
+  maintenanceFlag: Boolean = null
+  medicalNeeds: [MedicalNeedChoices!] = null
+  name: String = null
+  pets: [PetChoices!] = null
+  status: BedStatusChoices = null
+  statusNotes: String = null
+  storage: Boolean = null
+  type: BedTypeChoices = null
 }
 
 union CreateBedPayload = BedType | OperationInfo
@@ -720,44 +722,52 @@ input CreateProfileDataImportInput {
   notes: String
 }
 
+input CreateReferralInput {
+  clientProfile: ID!
+  shelter: ID!
+  notes: String
+}
+
+union CreateReferralPayload = ReferralType | OperationInfo
+
 input CreateRoomInput {
   shelterId: ID!
-  roomIdentifier: String!
-  roomType: RoomStyleChoices = null
-  roomTypeOther: String = null
-  status: RoomStatusChoices = null
-  notes: String = null
+  accessibility: [AccessibilityChoices!] = null
   amenities: String = null
   demographics: [DemographicChoices!] = null
-  accessibility: [AccessibilityChoices!] = null
   funders: [FunderChoices!] = null
-  pets: [PetChoices!] = null
-  storage: Boolean = null
-  maintenanceFlag: Boolean = null
-  occupants: [ID!] = null
-  medicalRespite: Boolean = false
   lastCleanedInspected: DateTime = null
+  maintenanceFlag: Boolean = null
+  medicalRespite: Boolean = false
+  name: String!
+  notes: String = null
+  occupants: [ID!] = null
+  pets: [PetChoices!] = null
+  status: RoomStatusChoices = null
+  storage: Boolean = null
+  type: RoomStyleChoices = null
+  typeOther: String = null
 }
 
 union CreateRoomPayload = RoomType | OperationInfo
 
 input CreateShelterInput {
   name: String!
-  description: String!
-  accessibility: [AccessibilityChoices!]!
-  demographics: [DemographicChoices!]!
-  specialSituationRestrictions: [SpecialSituationRestrictionChoices!]!
-  shelterTypes: [ShelterChoices!]!
-  roomStyles: [RoomStyleChoices!]!
-  storage: [StorageChoices!]!
-  pets: [PetChoices!]!
-  parking: [ParkingChoices!]!
-  entryRequirements: [EntryRequirementChoices!]!
-  referralRequirement: [ReferralRequirementChoices!]!
-  vaccinationRequirement: [VaccinationRequirementChoices!]!
-  exitPolicy: [ExitPolicyChoices!]!
-  shelterPrograms: [ShelterProgramChoices!]!
-  funders: [FunderChoices!]!
+  description: String = null
+  accessibility: [AccessibilityChoices!] = null
+  demographics: [DemographicChoices!] = null
+  specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
+  shelterTypes: [ShelterChoices!] = null
+  roomStyles: [RoomStyleChoices!] = null
+  storage: [StorageChoices!] = null
+  pets: [PetChoices!] = null
+  parking: [ParkingChoices!] = null
+  entryRequirements: [EntryRequirementChoices!] = null
+  referralRequirement: [ReferralRequirementChoices!] = null
+  vaccinationRequirement: [VaccinationRequirementChoices!] = null
+  exitPolicy: [ExitPolicyChoices!] = null
+  shelterPrograms: [ShelterProgramChoices!] = null
+  funders: [FunderChoices!] = null
   organization: ID!
   location: ShelterLocationInput = null
   schedules: [ScheduleInput!] = null
@@ -872,6 +882,8 @@ union DeleteHmisNotePayload = DeletedObjectType | OperationInfo
 union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
 
 union DeleteNotePayload = NoteType | OperationInfo
+
+union DeleteReferralPayload = DeletedObjectType | OperationInfo
 
 union DeleteServiceRequestPayload = DeletedObjectType | OperationInfo
 
@@ -1484,6 +1496,10 @@ enum MedicalNeedChoices {
   DIALYSIS
 }
 
+type MedicalNeedType {
+  name: MedicalNeedChoices
+}
+
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
@@ -1540,8 +1556,12 @@ type Mutation {
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
+  updateShelter(data: UpdateShelterInput!): UpdateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
+  createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
+  updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
+  deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
 }
 
 type NameCountType {
@@ -1912,6 +1932,8 @@ type Query {
   shelterCities(pagination: OffsetPaginationInput): CityTypeOffsetPaginated!
   shelterSpas(pagination: OffsetPaginationInput): SPATypeOffsetPaginated!
   shelterMaxStay: Int
+  referral(pk: ID!): ReferralType! @hasRetvalPerm(permissions: [{app: "referrals", permission: "view_referral"}], any: true)
+  referrals(filters: ReferralFilter, ordering: [ReferralOrder!]! = [], pagination: OffsetPaginationInput): ReferralTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "referrals", permission: "view_referral"}], any: true)
 }
 
 enum RaceEnum {
@@ -1924,6 +1946,23 @@ enum RaceEnum {
   OTHER
 }
 
+input ReferralFilter {
+  clientProfile: ID
+  createdBy: ID
+  status: ReferralStatusEnum
+  AND: ReferralFilter
+  OR: ReferralFilter
+  NOT: ReferralFilter
+  DISTINCT: Boolean
+}
+
+input ReferralOrder {
+  id: Ordering
+  createdAt: Ordering
+  updatedAt: Ordering
+  status: Ordering
+}
+
 enum ReferralRequirementChoices {
   REFERRAL_MATCHED
   REFERRAL_NONMATCHED
@@ -1934,6 +1973,33 @@ enum ReferralRequirementChoices {
 
 type ReferralRequirementType {
   name: ReferralRequirementChoices
+}
+
+enum ReferralStatusEnum {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+type ReferralType {
+  id: ID!
+  clientProfile: ClientProfileType
+  shelter: ShelterType
+  createdAt: DateTime!
+  createdBy: UserType
+  status: ReferralStatusEnum
+  notes: String
+  updatedAt: DateTime!
+}
+
+type ReferralTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [ReferralType!]!
 }
 
 enum RelationshipTypeEnum {
@@ -2015,7 +2081,7 @@ input RoomFilter {
   NOT: RoomFilter
   DISTINCT: Boolean
   amenities: String
-  roomType: [RoomStyleChoices!]
+  type: [RoomStyleChoices!]
   status: [RoomStatusChoices!]
   numberOfBeds: Int
 }
@@ -2044,22 +2110,22 @@ type RoomStyleType {
 
 type RoomType {
   id: ID!
-  shelter: ShelterType!
-  roomIdentifier: String!
-  roomType: RoomStyleChoices
-  roomTypeOther: String
-  status: RoomStatusChoices
-  notes: String
-  amenities: String
-  demographics: [DemographicType!]!
   accessibility: [AccessibilityType!]!
+  amenities: String
+  beds(filters: BedFilter): [BedType!]!
+  demographics: [DemographicType!]!
   funders: [FunderType!]!
-  pets: [PetType!]!
-  storage: Boolean!
+  lastCleanedInspected: DateTime
   maintenanceFlag: Boolean!
   medicalRespite: Boolean!
-  lastCleanedInspected: DateTime
-  beds(filters: BedFilter): [BedType!]!
+  name: String!
+  notes: String
+  pets: [PetType!]!
+  shelter: ShelterType!
+  status: RoomStatusChoices
+  storage: Boolean!
+  type: RoomStyleChoices
+  typeOther: String
   occupantIds: [ID!]!
 }
 
@@ -2315,6 +2381,7 @@ type ShelterType {
   addNotesShelterDetails: String
   bedFees: String
   city: CityType
+  citiesServed: [CityType!]!
   cityCouncilDistrict: Int
   curfew: Time
   demographics: [DemographicType!]!
@@ -2351,6 +2418,7 @@ type ShelterType {
   shelterTypes: [ShelterTypeType!]!
   shelterTypesOther: String
   spa: SPAType
+  spasServed: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
   photos: [ShelterPhotoType!]!
   isPrivate: Boolean!
@@ -2670,6 +2738,52 @@ input UpdateNoteLocationInput {
 union UpdateNoteLocationPayload = NoteType | OperationInfo
 
 union UpdateNotePayload = NoteType | OperationInfo
+
+input UpdateReferralInput {
+  id: ID!
+  status: ReferralStatusEnum
+  notes: String
+}
+
+union UpdateReferralPayload = ReferralType | OperationInfo
+
+input UpdateShelterInput {
+  id: ID!
+  name: String
+  status: StatusChoices
+  description: String
+  email: String
+  website: String
+  isPrivate: Boolean
+  cityId: ID
+  spaId: ID
+  phone: PhoneNumber
+  addNotesSleepingDetails: String
+  addNotesShelterDetails: String
+  otherRules: String
+  otherServices: String
+  entryInfo: String
+  subjectiveReview: String
+  accessibility: [AccessibilityChoices!]
+  demographics: [DemographicChoices!]
+  specialSituationRestrictions: [SpecialSituationRestrictionChoices!]
+  shelterTypes: [ShelterChoices!]
+  roomStyles: [RoomStyleChoices!]
+  storage: [StorageChoices!]
+  pets: [PetChoices!]
+  parking: [ParkingChoices!]
+  entryRequirements: [EntryRequirementChoices!]
+  referralRequirement: [ReferralRequirementChoices!]
+  vaccinationRequirement: [VaccinationRequirementChoices!]
+  exitPolicy: [ExitPolicyChoices!]
+  shelterPrograms: [ShelterProgramChoices!]
+  funders: [FunderChoices!]
+  location: ShelterLocationInput
+  schedules: [ScheduleInput!]
+  services: [ServiceInput!]
+}
+
+union UpdateShelterPayload = ShelterType | OperationInfo
 
 union UpdateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 

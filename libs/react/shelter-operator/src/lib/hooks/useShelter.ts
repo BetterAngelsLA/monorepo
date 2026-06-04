@@ -4,6 +4,8 @@ import {
   GetShelterQuery,
 } from '../graphql/__generated__/getShelter.generated';
 
+export type UseShelterResultType = GetShelterQuery['adminShelter'];
+
 export function useShelter(shelterId: string) {
   const { data, loading, error } = useQuery(GetShelterDocument, {
     variables: { id: shelterId },
@@ -11,7 +13,7 @@ export function useShelter(shelterId: string) {
   });
 
   return {
-    shelter: data?.shelter as GetShelterQuery['shelter'] | undefined,
+    shelter: data?.adminShelter as UseShelterResultType | undefined,
     loading,
     error,
   };

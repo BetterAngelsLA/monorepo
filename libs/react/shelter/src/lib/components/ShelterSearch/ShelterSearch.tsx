@@ -1,28 +1,34 @@
-import { FilterIcon, LocationIcon, SearchIcon } from '@monorepo/react/icons';
-import { useAtom } from 'jotai';
+import { FilterIcon, SearchIcon } from '@monorepo/react/icons';
+import { useAtom, useSetAtom } from 'jotai';
 import { useResetAtom } from 'jotai/utils';
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { shelterPropertyFiltersAtom } from '../../atoms';
-import { shelterFiltersPath } from '../../constants';
-import { AddressAutocomplete, TPlaceResult } from '../AddressAutocomplete';
-import { Input } from '../Input';
+import {
+  shelterLocationSearchInputAtom,
+  shelterNameSearchAtom,
+  shelterNameSearchInputAtom,
+  shelterPropertyFiltersAtom,
+  shelterSearchAppliedLocationAtom,
+  shelterSearchRequestAtom,
+} from '../../atoms';
+import { shelterFiltersPath, shelterSearchPath } from '../../constants';
 import { TLatLng, TMapBounds } from '../Map';
 import { FilterPills } from '../ShelterFilters';
 import { SheltersDisplay } from './SheltersDisplay';
 
 type TProps = {
-  locationSearchInputKey?: number;
   mapBoundsFilter?: TMapBounds;
   nameSearchPinFitRequestId?: number;
   onShelterPinsReadyForMapFit?: (pinLocations: TLatLng[]) => void;
-  onNameSearch: () => void;
-  setLocation: (location: TLatLng) => void;
+  onNameSearch: (options?: {
+    preserveMapBounds?: boolean;
+    restoreMapBounds?: boolean;
+  }) => void;
+  setLocation: (location: TLatLng, mapBounds?: TMapBounds) => void;
 };
 
 export function ShelterSearch(props: TProps) {
   const {
-    locationSearchInputKey = 0,
     mapBoundsFilter,
     nameSearchPinFitRequestId = 0,
     onShelterPinsReadyForMapFit,
@@ -31,79 +37,92 @@ export function ShelterSearch(props: TProps) {
   } = props;
   const navigate = useNavigate();
   const [filters] = useAtom(shelterPropertyFiltersAtom);
-  const [nameFilter, setNameFilter] = useState<string>();
+  const setNameSearch = useSetAtom(shelterNameSearchAtom);
   const resetFilters = useResetAtom(shelterPropertyFiltersAtom);
-  const [nameSearchValue, setNameSearchValue] = useState('');
+  const setNameSearchInput = useSetAtom(shelterNameSearchInputAtom);
+  const setLocationSearchInput = useSetAtom(shelterLocationSearchInputAtom);
+  const [appliedLocation, setAppliedLocation] = useAtom(
+    shelterSearchAppliedLocationAtom
+  );
+  const [searchRequest, setSearchRequest] = useAtom(shelterSearchRequestAtom);
 
-  function onPlaceSelect(place: TPlaceResult | null) {
-    if (!place) {
-      return;
+  // React to search requests from SearchPage
+  useEffect(() => {
+    if (!searchRequest) return;
+
+    const { name, location, mapBounds, displayText } = searchRequest;
+    setSearchRequest(null);
+
+    const locationChanged =
+      !!location && !isSameLocation(location, appliedLocation);
+
+    if (location) {
+      setLocationSearchInput(displayText ?? '');
+      if (locationChanged) {
+        setLocation(location, mapBounds);
+        setAppliedLocation(location);
+      }
+    } else {
+      setAppliedLocation(null);
     }
 
-    const latitude = place.location?.lat;
-    const longitude = place.location?.lng;
-
-    if (!latitude || !longitude) {
-      return;
+    const trimmed = name.trim();
+    if (trimmed) {
+      resetFilters();
+      setNameSearch(trimmed);
+      setNameSearchInput(trimmed);
+      if (location && locationChanged) {
+        // Name + new location: wait for the map viewport fit to fire the search.
+        onNameSearch({ preserveMapBounds: true });
+      } else {
+        // Name only, or name added to an existing location: search now.
+        onNameSearch({ restoreMapBounds: !!location });
+      }
+    } else {
+      // Name cleared: reset name filter and re-fire with current map bounds.
+      setNameSearch(undefined);
+      setNameSearchInput('');
+      if (!location) {
+        onNameSearch({ restoreMapBounds: true });
+      } else if (!locationChanged) {
+        // Location kept but name removed: re-search without the name filter.
+        onNameSearch({ restoreMapBounds: true });
+      }
     }
-
-    onNameSearchChange('');
-
-    setLocation({
-      latitude,
-      longitude,
-    });
-  }
+  }, [
+    searchRequest,
+    setSearchRequest,
+    setLocation,
+    setAppliedLocation,
+    appliedLocation,
+    resetFilters,
+    setNameSearch,
+    setNameSearchInput,
+    setLocationSearchInput,
+    onNameSearch,
+  ]);
 
   function onFilterClick() {
     navigate(shelterFiltersPath);
   }
 
-  function onNameSearchChange(value: string) {
-    setNameSearchValue(value);
-    if (!value.trim()) {
-      setNameFilter(undefined);
-    }
-  }
-
   function onSearchClick() {
-    // Name search ignores any previously-selected property filters.
-    resetFilters();
-    setNameFilter(nameSearchValue.trim());
-    onNameSearch();
+    navigate(shelterSearchPath);
   }
 
   return (
     <>
       <div className="mt-4 flex flex-col items-center justify-between">
         <div className="flex items-center justify-between w-full">
-          <AddressAutocomplete
-            key={locationSearchInputKey}
-            className="w-full"
-            placeholder="Search by location"
-            onPlaceSelect={onPlaceSelect}
-            leftIcon={<LocationIcon className="text-neutral-70 w-4 h-4" />}
-          />
-          <button onClick={onFilterClick} className="self-start ml-4 mt-4">
-            <FilterIcon className="w-6 text-primary-20" />
+          <button
+            onClick={onSearchClick}
+            className="flex text-neutral-70 text-sm items-center border rounded-lg border-neutral-90 p-4 w-full cursor-pointer"
+          >
+            <SearchIcon className="text-neutral-70 w-4 h-4 mr-4" />
+            Search
           </button>
-        </div>
-        <div className="mt-2 flex items-center justify-between w-full">
-          <Input
-            value={nameSearchValue}
-            placeholder="Search by name"
-            className="w-full"
-            onChange={onNameSearchChange}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                onSearchClick();
-              }
-            }}
-            leftIcon={<SearchIcon className="text-neutral-70 w-4 h-4" />}
-          />
-          <button onClick={onSearchClick} className="self-start ml-4 mt-4">
-            <SearchIcon className="w-6 text-primary-20" />
+          <button onClick={onFilterClick} className="ml-4">
+            <FilterIcon className="w-6 text-primary-20" />
           </button>
         </div>
       </div>
@@ -113,10 +132,17 @@ export function ShelterSearch(props: TProps) {
         className="mt-8"
         mapBoundsFilter={mapBoundsFilter}
         propertyFilters={filters}
-        nameFilter={nameFilter}
         nameSearchPinFitRequestId={nameSearchPinFitRequestId}
         onShelterPinsReadyForMapFit={onShelterPinsReadyForMapFit}
       />
     </>
   );
+}
+
+function isSameLocation(a: TLatLng, b: TLatLng | null): boolean {
+  if (!b) {
+    return false;
+  }
+
+  return a.latitude === b.latitude && a.longitude === b.longitude;
 }
