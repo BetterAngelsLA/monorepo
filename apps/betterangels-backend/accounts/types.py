@@ -105,7 +105,7 @@ class CurrentUserOrganizationType(OrganizationType):
     ) -> QuerySet[Organization]:
         user = get_current_user(info)
         if not user or not user.is_authenticated:
-            return Organization.objects.none()
+            return queryset.none()
 
         assert isinstance(user, User)
         qs: QuerySet[Organization] = queryset.filter(users=user).annotate(
