@@ -1,7 +1,7 @@
-"""Tests for accounts.permissions.granted helper functions."""
+"""Tests for accounts.permissions helper functions."""
 
 import pytest
-from accounts.permissions.granted import (
+from accounts.permissions import (
     _annotation_key,
     granted_permissions,
     make_granted_permissions,

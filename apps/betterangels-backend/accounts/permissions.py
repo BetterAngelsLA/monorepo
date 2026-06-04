@@ -1,10 +1,57 @@
 from __future__ import annotations
 
-from typing import Any, List, Protocol, Type
+from typing import Any, List, Optional, Protocol, Type, Union
 
 import strawberry
 from accounts.models import PermissionGroup, User
+from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
+from django.db import models
 from django.db.models import Exists, OuterRef, TextChoices
+from django.utils.translation import gettext_lazy as _
+from organizations.models import Organization
+
+UserLike = Union[AbstractBaseUser, AnonymousUser]
+
+
+# ── Permission enums ──────────────────────────────────────────────────────────
+
+
+@strawberry.enum
+class UserOrganizationPermissions(models.TextChoices):
+    ACCESS_ORG_PORTAL = "organizations.access_org_portal", _("Can access organization management portal")
+    ADD_ORG_MEMBER = "organizations.add_org_member", _("Can add organization member")
+    CHANGE_ORG_MEMBER_ROLE = "organizations.change_org_member_role", _("Can change organization member role")
+    REMOVE_ORG_MEMBER = "organizations.remove_org_member", _("Can remove organization member")
+    VIEW_ORG_MEMBERS = "organizations.view_org_members", _("Can view organization members")
+
+
+# ── Organization permission check ─────────────────────────────────────────────
+
+
+def get_user_permitted_org(
+    user: UserLike,
+    org_id: str,
+    permission: TextChoices,
+) -> Optional[Organization]:
+    """Return an organization filtered by org_id, user membership in a
+    permission group, and the given permission.
+
+    *permission* should be a ``TextChoices`` enum member whose value is
+    ``"app_label.codename"`` (e.g. ``ReportPermissions.VIEW_REPORTS``).
+
+    Returns ``None`` when the user does not belong to the organization
+    or does not hold the required permission.
+    """
+    app_label, codename = permission.value.split(".", 1)
+    return Organization.objects.filter(
+        pk=org_id,
+        permission_groups__group__user=user,
+        permission_groups__group__permissions__content_type__app_label=app_label,
+        permission_groups__group__permissions__codename=codename,
+    ).first()
+
+
+# ── Granted permissions factory ────────────────────────────────────────────────
 
 
 class GrantedPermissionsType(Protocol):

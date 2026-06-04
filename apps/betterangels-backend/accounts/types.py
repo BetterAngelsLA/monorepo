@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 import strawberry
 import strawberry_django
 from accounts.enums import OrgRoleEnum
-from accounts.permissions.granted import make_granted_permissions
+from accounts.permissions import make_granted_permissions
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
 from django.db.models import Q, QuerySet
