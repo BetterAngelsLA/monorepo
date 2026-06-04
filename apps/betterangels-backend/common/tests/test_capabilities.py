@@ -1,10 +1,10 @@
-"""Tests for common.permissions.granted helper functions."""
+"""Tests for accounts.permissions helper functions."""
 
 import pytest
-from common.permissions.granted import (
-    GrantedPermissions,
+from accounts.permissions import (
     _annotation_key,
     granted_permissions,
+    make_granted_permissions,
     permission_annotations,
 )
 from django.db import models
@@ -41,6 +41,28 @@ class TestAnnotationKey:
         """When merging annotations from multiple domains, no collisions occur."""
         all_keys = [_annotation_key(p) for p in FakeAppPerms] + [_annotation_key(p) for p in AnotherAppPerms]
         assert len(all_keys) == len(set(all_keys))
+
+
+class TestSplitBehavior:
+    """Verify that permission value splitting is defensive against multi-dot values."""
+
+    def test_multi_dot_codename_is_preserved(self) -> None:
+        """Only the first dot splits app_label from codename; remaining dots stay."""
+
+        class MultiDotPerms(models.TextChoices):
+            DEEP = "myapp.deeply.nested.permission", "Can do deeply nested thing"
+
+        key = _annotation_key(MultiDotPerms.DEEP)
+        assert key == "_perm_myapp_deeply.nested.permission"
+
+    def test_single_dot_works_as_before(self) -> None:
+        """Single-dot values still split correctly."""
+
+        class SimplePerms(models.TextChoices):
+            DO = "app.do_stuff", "Can do stuff"
+
+        key = _annotation_key(SimplePerms.DO)
+        assert key == "_perm_app_do_stuff"
 
 
 class TestGrantedPermissions:
@@ -119,11 +141,11 @@ class TestPermissionAnnotationsWithRealEnums:
 
 class TestGrantedPermissionsFactory:
     def test_creates_type_with_derived_name(self) -> None:
-        CapType = GrantedPermissions(FakeAppPerms)
+        CapType = make_granted_permissions(FakeAppPerms)
         assert CapType.__name__ == "FakeAppPermsGrantedPermissions"
 
     def test_from_instance_returns_granted(self) -> None:
-        CapType = GrantedPermissions(FakeAppPerms)
+        CapType = make_granted_permissions(FakeAppPerms)
 
         class FakeInstance:
             _perm_myapp_view_thing = True
@@ -131,3 +153,75 @@ class TestGrantedPermissionsFactory:
 
         caps = CapType.from_instance(FakeInstance())
         assert caps.granted == [FakeAppPerms.VIEW]
+
+    def test_truly_values_are_granted(self) -> None:
+        """Truthy values beyond True (e.g. 1, non-empty string) should be granted."""
+
+        class FakeInstance:
+            _perm_myapp_view_thing = 1  # type: ignore[var-annotated]
+            _perm_myapp_add_thing = "yes"  # type: ignore[var-annotated]
+
+        result = granted_permissions(FakeInstance(), FakeAppPerms)
+        assert set(result) == set(FakeAppPerms)
+
+    def test_falsy_values_are_not_granted(self) -> None:
+        """Falsy values (0, None, empty string) should not be granted."""
+
+        class FakeInstance:
+            _perm_myapp_view_thing = 0  # type: ignore[var-annotated]
+            _perm_myapp_add_thing = None  # type: ignore[var-annotated]
+            # third hypothetical perm would be empty string
+            # but FakeAppPerms only has two; verify both are falsy
+
+        result = granted_permissions(FakeInstance(), FakeAppPerms)
+        assert result == []
+
+    def test_empty_enum_returns_empty(self) -> None:
+        """An enum with no members should produce an empty granted list."""
+
+        class EmptyPerms(models.TextChoices):
+            pass
+
+        result = granted_permissions(object(), EmptyPerms)
+        assert result == []
+
+    def test_no_matching_annotations_returns_empty(self) -> None:
+        """Instance with annotations but none matching the enum returns empty."""
+
+        class UnrelatedInstance:
+            _perm_otherapp_view_widget = True
+
+        result = granted_permissions(UnrelatedInstance(), FakeAppPerms)
+        assert result == []
+
+    def test_from_instance_with_no_annotations(self) -> None:
+        """Factory type's from_instance returns empty when no annotations match."""
+
+        CapType = make_granted_permissions(FakeAppPerms)
+
+        class BareInstance:
+            pass
+
+        caps = CapType.from_instance(BareInstance())
+        assert caps.granted == []
+
+    def test_from_instance_with_truthy_string_annotation(self) -> None:
+        """Factory resolves granted from truthy non-bool annotation values."""
+
+        CapType = make_granted_permissions(FakeAppPerms)
+
+        class FakeInstance:
+            _perm_myapp_view_thing = 1  # type: ignore[var-annotated]
+            _perm_myapp_add_thing = "nonempty"  # type: ignore[var-annotated]
+
+        caps = CapType.from_instance(FakeInstance())
+        assert set(caps.granted) == set(FakeAppPerms)
+
+    def test_factory_type_has_expected_shape(self) -> None:
+        """Generated type has get_annotations and from_instance classmethods."""
+
+        CapType = make_granted_permissions(FakeAppPerms)
+        assert hasattr(CapType, "get_annotations")
+        assert hasattr(CapType, "from_instance")
+        assert callable(CapType.get_annotations)
+        assert callable(CapType.from_instance)
