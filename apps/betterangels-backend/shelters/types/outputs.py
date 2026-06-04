@@ -97,6 +97,15 @@ class MediaLinkType:
     media_type: auto
 
 
+@strawberry_django.type(models.ShelterAvailability)
+class ShelterAvailabilityType:
+    id: ID
+    non_restricted_beds: auto
+    restricted_beds: auto
+    restriction_notes: auto
+    updated_at: auto
+
+
 @strawberry.type
 class BedsByStatusType:
     available: int = 0
@@ -172,6 +181,8 @@ class ShelterTypeMixin:
     visitors_allowed: auto
     website: auto
     media_links: List[MediaLinkType]
+
+    availability: Optional[ShelterAvailabilityType]
 
     _hero_photos: Optional[List[ShelterPhotoType]] = None
 
