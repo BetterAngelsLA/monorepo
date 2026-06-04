@@ -13,11 +13,11 @@ def create_shelter_operator_template(apps, schema_editor):
     PermissionGroupTemplate = apps.get_model("accounts", "PermissionGroupTemplate")
     Permission = apps.get_model("auth", "Permission")
 
-    from shelters.groups import SHELTER_OPERATOR, SHELTER_OPERATOR_PERMISSIONS
+    from shelters.groups import SHELTER_OPERATOR
 
-    template, _ = PermissionGroupTemplate.objects.get_or_create(name=SHELTER_OPERATOR)
+    template, _ = PermissionGroupTemplate.objects.get_or_create(name=SHELTER_OPERATOR.name)
 
-    for perm in SHELTER_OPERATOR_PERMISSIONS:
+    for perm in SHELTER_OPERATOR.permissions:
         app_label, codename = perm.split(".")
         db_perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
         template.permissions.add(db_perm)
@@ -28,7 +28,7 @@ def reverse(apps, schema_editor):
 
     from shelters.groups import SHELTER_OPERATOR
 
-    PermissionGroupTemplate.objects.filter(name=SHELTER_OPERATOR).delete()
+    PermissionGroupTemplate.objects.filter(name=SHELTER_OPERATOR.name).delete()
 
 
 class Migration(migrations.Migration):
