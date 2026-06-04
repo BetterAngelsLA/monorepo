@@ -2922,13 +2922,7 @@ export enum ShelterPermissions {
   ChangeIsReviewed = 'CHANGE_IS_REVIEWED',
   Delete = 'DELETE',
   View = 'VIEW',
-  ViewPrivate = 'VIEW_PRIVATE',
-  AddLabel = '_ADD_label',
-  ChangeIsReviewedLabel = '_CHANGE_IS_REVIEWED_label',
-  ChangeLabel = '_CHANGE_label',
-  DeleteLabel = '_DELETE_label',
-  ViewPrivateLabel = '_VIEW_PRIVATE_label',
-  ViewLabel = '_VIEW_label'
+  ViewPrivate = 'VIEW_PRIVATE'
 }
 
 export type ShelterPhotoType = {

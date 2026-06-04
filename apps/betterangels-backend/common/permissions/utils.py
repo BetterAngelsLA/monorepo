@@ -55,29 +55,16 @@ class PermissionSet:
         Strawberry GraphQL can resolve permissions without a separate enum
         class in ``{app}/permissions.py``.
         """
-        members: dict[str, str] = {}
         labels = getattr(cls, "_perm_labels", {})
+        members: list[tuple[str, tuple[str, str]]] = []
         for k, v in vars(cls).items():
             if k.startswith("_") or not isinstance(v, str) or "." not in v:
                 continue
             codename = v.rsplit(".", 1)[-1]
             label = labels.get(codename, k)
-            members[k] = v
-            members[f"_{k}_label"] = label
+            members.append((k, (v, label)))
         enum_name = name or (cls.__qualname__.replace(".", "_") + "Enum")
-
-        # Build class body and exec — Django enums need a real class body
-        # for EnumMeta.__prepare__; type() doesn't work.
-        member_lines = [f'    {k} = "{v}"' for k, v in members.items()]
-        class_body = f"""\
-from django.db.models import TextChoices as _TextChoices
-
-class {enum_name}(_TextChoices):
-{chr(10).join(member_lines)}
-"""
-        ns: dict = {}
-        exec(class_body, ns)
-        return ns[enum_name]  # type: ignore[no-any-return]
+        return TextChoices(enum_name, members)  # type: ignore[return-value, no-any-return, call-overload]
 
     @classmethod
     def contribute_to_class(cls, model: type[Model], name: str) -> None:
