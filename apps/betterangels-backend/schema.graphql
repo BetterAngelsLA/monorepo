@@ -753,21 +753,21 @@ union CreateRoomPayload = RoomType | OperationInfo
 
 input CreateShelterInput {
   name: String!
-  description: String!
-  accessibility: [AccessibilityChoices!]!
-  demographics: [DemographicChoices!]!
-  specialSituationRestrictions: [SpecialSituationRestrictionChoices!]!
-  shelterTypes: [ShelterChoices!]!
-  roomStyles: [RoomStyleChoices!]!
-  storage: [StorageChoices!]!
-  pets: [PetChoices!]!
-  parking: [ParkingChoices!]!
-  entryRequirements: [EntryRequirementChoices!]!
-  referralRequirement: [ReferralRequirementChoices!]!
-  vaccinationRequirement: [VaccinationRequirementChoices!]!
-  exitPolicy: [ExitPolicyChoices!]!
-  shelterPrograms: [ShelterProgramChoices!]!
-  funders: [FunderChoices!]!
+  description: String = null
+  accessibility: [AccessibilityChoices!] = null
+  demographics: [DemographicChoices!] = null
+  specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
+  shelterTypes: [ShelterChoices!] = null
+  roomStyles: [RoomStyleChoices!] = null
+  storage: [StorageChoices!] = null
+  pets: [PetChoices!] = null
+  parking: [ParkingChoices!] = null
+  entryRequirements: [EntryRequirementChoices!] = null
+  referralRequirement: [ReferralRequirementChoices!] = null
+  vaccinationRequirement: [VaccinationRequirementChoices!] = null
+  exitPolicy: [ExitPolicyChoices!] = null
+  shelterPrograms: [ShelterProgramChoices!] = null
+  funders: [FunderChoices!] = null
   organization: ID!
   location: ShelterLocationInput = null
   schedules: [ScheduleInput!] = null
@@ -1556,6 +1556,7 @@ type Mutation {
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
+  updateShelter(data: UpdateShelterInput!): UpdateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
   createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
@@ -2728,6 +2729,44 @@ input UpdateReferralInput {
 }
 
 union UpdateReferralPayload = ReferralType | OperationInfo
+
+input UpdateShelterInput {
+  id: ID!
+  name: String
+  status: StatusChoices
+  description: String
+  email: String
+  website: String
+  isPrivate: Boolean
+  cityId: ID
+  spaId: ID
+  phone: PhoneNumber
+  addNotesSleepingDetails: String
+  addNotesShelterDetails: String
+  otherRules: String
+  otherServices: String
+  entryInfo: String
+  subjectiveReview: String
+  accessibility: [AccessibilityChoices!]
+  demographics: [DemographicChoices!]
+  specialSituationRestrictions: [SpecialSituationRestrictionChoices!]
+  shelterTypes: [ShelterChoices!]
+  roomStyles: [RoomStyleChoices!]
+  storage: [StorageChoices!]
+  pets: [PetChoices!]
+  parking: [ParkingChoices!]
+  entryRequirements: [EntryRequirementChoices!]
+  referralRequirement: [ReferralRequirementChoices!]
+  vaccinationRequirement: [VaccinationRequirementChoices!]
+  exitPolicy: [ExitPolicyChoices!]
+  shelterPrograms: [ShelterProgramChoices!]
+  funders: [FunderChoices!]
+  location: ShelterLocationInput
+  schedules: [ScheduleInput!]
+  services: [ServiceInput!]
+}
+
+union UpdateShelterPayload = ShelterType | OperationInfo
 
 union UpdateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 

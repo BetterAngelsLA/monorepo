@@ -84,7 +84,7 @@ class Shelter(BaseModel):
     )
 
     # Summary Information
-    description = CKEditor5Field()
+    description = CKEditor5Field(blank=True, default="")
     demographics = models.ManyToManyField(Demographic)
     demographics_other = models.CharField(max_length=255, blank=True, null=True)
     special_situation_restrictions = models.ManyToManyField(SpecialSituationRestriction)

@@ -401,7 +401,7 @@ class ShelterForm(forms.ModelForm):
         if not self._pending_service_entries:
             return
 
-        from shelters.services import resolve_pending_service_entries
+        from shelters.services.shelter import resolve_pending_service_entries
 
         resolved = resolve_pending_service_entries(self._pending_service_entries)
         if resolved:

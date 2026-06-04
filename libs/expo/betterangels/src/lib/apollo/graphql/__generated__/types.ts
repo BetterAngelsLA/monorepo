@@ -763,23 +763,23 @@ export type CreateRoomInput = {
 export type CreateRoomPayload = OperationInfo | RoomType;
 
 export type CreateShelterInput = {
-  accessibility: Array<AccessibilityChoices>;
+  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   addNotesShelterDetails?: InputMaybe<Scalars['String']['input']>;
   addNotesSleepingDetails?: InputMaybe<Scalars['String']['input']>;
   bedFees?: InputMaybe<Scalars['String']['input']>;
   cityCouncilDistrict?: InputMaybe<Scalars['Int']['input']>;
   cityId?: InputMaybe<Scalars['ID']['input']>;
   curfew?: InputMaybe<Scalars['Time']['input']>;
-  demographics: Array<DemographicChoices>;
+  demographics?: InputMaybe<Array<DemographicChoices>>;
   demographicsOther?: InputMaybe<Scalars['String']['input']>;
-  description: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
   emergencySurge?: InputMaybe<Scalars['Boolean']['input']>;
   entryInfo?: InputMaybe<Scalars['String']['input']>;
-  entryRequirements: Array<EntryRequirementChoices>;
-  exitPolicy: Array<ExitPolicyChoices>;
+  entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
+  exitPolicy?: InputMaybe<Array<ExitPolicyChoices>>;
   exitPolicyOther?: InputMaybe<Scalars['String']['input']>;
-  funders: Array<FunderChoices>;
+  funders?: InputMaybe<Array<FunderChoices>>;
   fundersOther?: InputMaybe<Scalars['String']['input']>;
   instagram?: InputMaybe<Scalars['String']['input']>;
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
@@ -791,27 +791,27 @@ export type CreateShelterInput = {
   otherRules?: InputMaybe<Scalars['String']['input']>;
   otherServices?: InputMaybe<Scalars['String']['input']>;
   overallRating?: InputMaybe<Scalars['Int']['input']>;
-  parking: Array<ParkingChoices>;
-  pets: Array<PetChoices>;
+  parking?: InputMaybe<Array<ParkingChoices>>;
+  pets?: InputMaybe<Array<PetChoices>>;
   phone?: InputMaybe<Scalars['PhoneNumber']['input']>;
   programFees?: InputMaybe<Scalars['String']['input']>;
-  referralRequirement: Array<ReferralRequirementChoices>;
-  roomStyles: Array<RoomStyleChoices>;
+  referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
+  roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   roomStylesOther?: InputMaybe<Scalars['String']['input']>;
   schedules?: InputMaybe<Array<ScheduleInput>>;
   services?: InputMaybe<Array<ServiceInput>>;
-  shelterPrograms: Array<ShelterProgramChoices>;
+  shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;
   shelterProgramsOther?: InputMaybe<Scalars['String']['input']>;
-  shelterTypes: Array<ShelterChoices>;
+  shelterTypes?: InputMaybe<Array<ShelterChoices>>;
   shelterTypesOther?: InputMaybe<Scalars['String']['input']>;
   spaId?: InputMaybe<Scalars['ID']['input']>;
-  specialSituationRestrictions: Array<SpecialSituationRestrictionChoices>;
+  specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
   status?: InputMaybe<StatusChoices>;
-  storage: Array<StorageChoices>;
+  storage?: InputMaybe<Array<StorageChoices>>;
   subjectiveReview?: InputMaybe<Scalars['String']['input']>;
   supervisorialDistrict?: InputMaybe<Scalars['Int']['input']>;
   totalBeds?: InputMaybe<Scalars['Int']['input']>;
-  vaccinationRequirement: Array<VaccinationRequirementChoices>;
+  vaccinationRequirement?: InputMaybe<Array<VaccinationRequirementChoices>>;
   visitorsAllowed?: InputMaybe<Scalars['Boolean']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
 };
@@ -1584,6 +1584,7 @@ export type Mutation = {
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
   updateReferral: UpdateReferralPayload;
+  updateShelter: UpdateShelterPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
   updateUserProfile: UpdateUserProfilePayload;
@@ -1864,6 +1865,11 @@ export type MutationUpdateNoteLocationArgs = {
 
 export type MutationUpdateReferralArgs = {
   data: UpdateReferralInput;
+};
+
+
+export type MutationUpdateShelterArgs = {
+  data: UpdateShelterInput;
 };
 
 
@@ -3325,6 +3331,44 @@ export type UpdateReferralInput = {
 };
 
 export type UpdateReferralPayload = OperationInfo | ReferralType;
+
+export type UpdateShelterInput = {
+  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
+  addNotesShelterDetails?: InputMaybe<Scalars['String']['input']>;
+  addNotesSleepingDetails?: InputMaybe<Scalars['String']['input']>;
+  cityId?: InputMaybe<Scalars['ID']['input']>;
+  demographics?: InputMaybe<Array<DemographicChoices>>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
+  entryInfo?: InputMaybe<Scalars['String']['input']>;
+  entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
+  exitPolicy?: InputMaybe<Array<ExitPolicyChoices>>;
+  funders?: InputMaybe<Array<FunderChoices>>;
+  id: Scalars['ID']['input'];
+  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
+  location?: InputMaybe<ShelterLocationInput>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  otherRules?: InputMaybe<Scalars['String']['input']>;
+  otherServices?: InputMaybe<Scalars['String']['input']>;
+  parking?: InputMaybe<Array<ParkingChoices>>;
+  pets?: InputMaybe<Array<PetChoices>>;
+  phone?: InputMaybe<Scalars['PhoneNumber']['input']>;
+  referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
+  roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
+  schedules?: InputMaybe<Array<ScheduleInput>>;
+  services?: InputMaybe<Array<ServiceInput>>;
+  shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;
+  shelterTypes?: InputMaybe<Array<ShelterChoices>>;
+  spaId?: InputMaybe<Scalars['ID']['input']>;
+  specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
+  status?: InputMaybe<StatusChoices>;
+  storage?: InputMaybe<Array<StorageChoices>>;
+  subjectiveReview?: InputMaybe<Scalars['String']['input']>;
+  vaccinationRequirement?: InputMaybe<Array<VaccinationRequirementChoices>>;
+  website?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateShelterPayload = OperationInfo | ShelterType;
 
 export type UpdateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
