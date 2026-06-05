@@ -5,6 +5,23 @@ from django.test import TestCase
 from shelters.models import Reservation
 from shelters.tests.baker_recipes import shelter_recipe
 
+MUTATION = """
+    mutation DeleteReservation($data: DeleteDjangoObjectInput!) {
+        deleteReservation(data: $data) {
+            ... on ReservationType {
+                id
+            }
+            ... on OperationInfo {
+                messages {
+                    kind
+                    field
+                    message
+                }
+            }
+        }
+    }
+"""
+
 
 class DeleteReservationTestCase(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
@@ -20,18 +37,7 @@ class DeleteReservationTestCase(GraphQLBaseTestCase, TestCase):
         shelter = shelter_recipe.make(organization=self.org_1)
         reservation = Reservation.objects.create(shelter=shelter)
 
-        mutation = """
-            mutation DeleteReservation($data: DeleteDjangoObjectInput!) {
-                deleteReservation(data: $data) {
-                    ... on ReservationType {
-                        id
-                    }
-                }
-            }
-        """
-        variables = {"data": {"id": reservation.pk}}
-
-        response = self.execute_graphql(mutation, variables)
+        response = self.execute_graphql(MUTATION, {"data": {"id": reservation.pk}})
 
         self.assertIsNone(response.get("errors"))
         self.assertFalse(Reservation.objects.filter(pk=reservation.pk).exists())
@@ -43,22 +49,21 @@ class DeleteReservationTestCase(GraphQLBaseTestCase, TestCase):
         self.org_1_case_manager_1.user_permissions.clear()
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-        mutation = """
-            mutation DeleteReservation($data: DeleteDjangoObjectInput!) {
-                deleteReservation(data: $data) {
-                    ... on ReservationType {
-                        id
-                    }
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            message
-                        }
-                    }
-                }
-            }
-        """
-        variables = {"data": {"id": reservation.pk}}
+        response = self.execute_graphql(MUTATION, {"data": {"id": reservation.pk}})
 
-        self.execute_graphql(mutation, variables)
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["deleteReservation"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "PERMISSION")
+        self.assertTrue(Reservation.objects.filter(pk=reservation.pk).exists())
+
+    def test_delete_reservation_unauthenticated(self) -> None:
+        shelter = shelter_recipe.make(organization=self.org_1)
+        reservation = Reservation.objects.create(shelter=shelter)
+
+        self.graphql_client.logout()
+
+        response = self.execute_graphql(MUTATION, {"data": {"id": reservation.pk}})
+
+        self.assertGraphQLUnauthenticated(response)
         self.assertTrue(Reservation.objects.filter(pk=reservation.pk).exists())
