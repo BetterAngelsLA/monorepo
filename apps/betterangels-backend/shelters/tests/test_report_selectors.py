@@ -15,7 +15,7 @@ from clients.enums import GenderEnum
 from clients.models import ClientProfile
 from django.apps import apps
 from model_bakery import baker
-from shelters.enums import BedStatusChoices, DemographicChoices
+from shelters.enums import BedStatusChoices, BedTypeChoices, DemographicChoices
 from shelters.models import Bed, Demographic, Shelter
 from shelters.selectors import _report_date_range_to_utc, daily_occupancy
 from shelters.tests.baker_recipes import shelter_recipe
@@ -272,6 +272,69 @@ def test_client_filters_use_historical_state(shelter: Shelter, occupancy_dates: 
     )
     assert male_result[0]["occupied_count"] == 1
     assert female_result[0]["occupied_count"] == 0
+
+
+@pytest.mark.django_db
+def test_client_filters_exclude_client_without_history(shelter: Shelter, occupancy_dates: list[datetime.date]) -> None:
+    """A client with no profile events on/before the day is treated as non-matching."""
+    day0, _, _, day3 = occupancy_dates
+    client: ClientProfile = baker.make("clients.ClientProfile", gender=GenderEnum.FEMALE)
+    # The client's only event lands after the reported day, so there is no recorded
+    # state to read as of day0 — even though they are currently FEMALE.
+    _backdate_client_events(client.id, _at(day3, 1))
+
+    bed = Bed.objects.create(shelter=shelter)
+    _clear_events()
+    _bed_event(bed, label="bed.add", status=BedStatusChoices.OCCUPIED, when=_at(day0, 1), occupant=client)
+
+    result = daily_occupancy(
+        shelter_id=shelter.id, start_date=day0, end_date=day0, client_filters={"gender": GenderEnum.FEMALE}
+    )
+
+    # Bed stays in the denominator; the unknown-history occupant is not counted.
+    assert result[0]["total_beds"] == 1
+    assert result[0]["occupied_count"] == 0
+
+
+@pytest.mark.django_db
+def test_client_filters_exclude_occupied_bed_without_occupant(
+    shelter: Shelter, occupancy_dates: list[datetime.date]
+) -> None:
+    """An OCCUPIED bed with no recorded occupant is not counted under client_filters."""
+    day0, _, _, day3 = occupancy_dates
+    bed = Bed.objects.create(shelter=shelter)
+    _clear_events()
+    _bed_event(bed, label="bed.add", status=BedStatusChoices.OCCUPIED, when=_at(day0, 1))  # occupant is None
+
+    result = daily_occupancy(
+        shelter_id=shelter.id, start_date=day0, end_date=day3, client_filters={"gender": GenderEnum.FEMALE}
+    )
+
+    assert result[0]["total_beds"] == 1
+    assert result[0]["occupied_count"] == 0
+
+
+@pytest.mark.django_db
+def test_bed_filters_by_type_and_boolean_flag(shelter: Shelter, occupancy_dates: list[datetime.date]) -> None:
+    day0, _, _, day3 = occupancy_dates
+    twin_with_storage = Bed.objects.create(shelter=shelter, type=BedTypeChoices.TWIN, storage=True)
+    bunk_without_storage = Bed.objects.create(shelter=shelter, type=BedTypeChoices.BUNK, storage=False)
+    _clear_events()
+
+    _bed_event(twin_with_storage, label="bed.add", status=BedStatusChoices.OCCUPIED, when=_at(day0, 1))
+    _bed_event(bunk_without_storage, label="bed.add", status=BedStatusChoices.OCCUPIED, when=_at(day0, 1))
+
+    by_type = daily_occupancy(
+        shelter_id=shelter.id, start_date=day0, end_date=day3, bed_filters={"type": BedTypeChoices.TWIN}
+    )
+    assert by_type[0]["total_beds"] == 1
+    assert by_type[0]["occupied_count"] == 1
+
+    by_storage = daily_occupancy(
+        shelter_id=shelter.id, start_date=day0, end_date=day3, bed_filters={"storage": True}
+    )
+    assert by_storage[0]["total_beds"] == 1
+    assert by_storage[0]["occupied_count"] == 1
 
 
 @pytest.mark.django_db
