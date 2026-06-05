@@ -64,6 +64,16 @@ def _clear_events() -> None:
     apps.get_model("shelters", "BedEvent").objects.all().delete()
 
 
+def _backdate_client_events(client_id: int, when: datetime.datetime) -> None:
+    """Backdate all of a client's ClientProfileEvent rows to ``when``.
+
+    Client profiles created in a test fire their insert event at the real
+    ``NOW()``; reconstruction reads state as of the occupancy moment, so we move
+    the recorded state back before the (historical) bed events under test.
+    """
+    apps.get_model("clients", "ClientProfileEvent").objects.filter(pgh_obj_id=client_id).update(pgh_created_at=when)
+
+
 @pytest.fixture
 def shelter() -> Shelter:
     return shelter_recipe.make()
@@ -171,6 +181,9 @@ def test_bed_filters_restrict_considered_beds(shelter: Shelter) -> None:
 def test_client_filters_restrict_qualifying_events(shelter: Shelter) -> None:
     female_client: ClientProfile = baker.make("clients.ClientProfile", gender=GenderEnum.FEMALE)
     male_client: ClientProfile = baker.make("clients.ClientProfile", gender=GenderEnum.MALE)
+    _backdate_client_events(female_client.id, _utc(-30))
+    _backdate_client_events(male_client.id, _utc(-30))
+
     bed_f = Bed.objects.create(shelter=shelter)
     bed_m = Bed.objects.create(shelter=shelter)
     _clear_events()
@@ -182,3 +195,26 @@ def test_client_filters_restrict_qualifying_events(shelter: Shelter) -> None:
     _bed_event(bed_m, label="bed.status_change", status=BedStatusChoices.OCCUPIED, when=_utc(2), occupant=male_client)
 
     assert _avg(shelter, client_filters={"gender": GenderEnum.FEMALE}) == 6.0
+
+
+@pytest.mark.django_db
+def test_client_filters_use_historical_state(shelter: Shelter) -> None:
+    """Matching uses the client's state as of the occupancy moment, not 'now'."""
+    client: ClientProfile = baker.make("clients.ClientProfile", gender=GenderEnum.MALE)
+    client.gender = GenderEnum.FEMALE
+    client.save()  # records an update event carrying the new (current) gender
+
+    client_event_model = apps.get_model("clients", "ClientProfileEvent")
+    events = list(client_event_model.objects.filter(pgh_obj_id=client.id).order_by("pgh_id"))
+    client_event_model.objects.filter(pk=events[0].pgh_id).update(pgh_created_at=_utc(-30))  # insert (MALE)
+    client_event_model.objects.filter(pk=events[-1].pgh_id).update(pgh_created_at=_utc(10))  # update (FEMALE)
+
+    bed = Bed.objects.create(shelter=shelter)
+    _clear_events()
+    _bed_event(bed, label="bed.add", status=BedStatusChoices.AVAILABLE, when=_utc(0))
+    _bed_event(bed, label="bed.status_change", status=BedStatusChoices.OCCUPIED, when=_utc(5), occupant=client)
+
+    # On day +5 the recorded gender was MALE (the change to FEMALE is day +10),
+    # even though the client's current/live gender is FEMALE.
+    assert _avg(shelter, client_filters={"gender": GenderEnum.MALE}) == 5.0
+    assert _avg(shelter, client_filters={"gender": GenderEnum.FEMALE}) is None
