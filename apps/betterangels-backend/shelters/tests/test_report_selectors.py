@@ -84,9 +84,12 @@ def _avg(shelter: Shelter, **kwargs: Any) -> float | None:
 
 
 @pytest.mark.django_db
-def test_report_date_range_rejects_oversized() -> None:
+def test_report_date_range_inclusive_cap() -> None:
+    start = datetime.date(2025, 1, 1)
+    # 366 inclusive days is allowed; 367 is not.
+    _report_date_range_to_utc(start, start + datetime.timedelta(days=365))
     with pytest.raises(ValueError):
-        _report_date_range_to_utc(datetime.date(2024, 1, 1), datetime.date(2025, 12, 31))
+        _report_date_range_to_utc(start, start + datetime.timedelta(days=366))
 
 
 @pytest.mark.django_db

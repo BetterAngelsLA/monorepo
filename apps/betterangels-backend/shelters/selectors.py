@@ -153,8 +153,8 @@ def shelters_open_at(
 
 LA_TZ = ZoneInfo("America/Los_Angeles")
 
-# Acceptance criteria require ranges "up to a year in the past"; allow a full
-# inclusive year (plus a leap day of slack) and reject anything larger.
+# Acceptance criteria require ranges "up to a year in the past"; allow at most a
+# full (leap) year measured inclusively and reject anything larger.
 MAX_REPORT_RANGE_DAYS = 366
 
 
@@ -180,7 +180,7 @@ def _report_date_range_to_utc(
     """
     if start_date > end_date:
         raise ValueError("start_date must be on or before end_date")
-    if (end_date - start_date).days > MAX_REPORT_RANGE_DAYS:
+    if (end_date - start_date).days + 1 > MAX_REPORT_RANGE_DAYS:
         raise ValueError(f"Date range may not exceed {MAX_REPORT_RANGE_DAYS} days")
 
     start_local = datetime.datetime.combine(start_date, datetime.time.min, tzinfo=LA_TZ)
