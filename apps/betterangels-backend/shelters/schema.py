@@ -3,10 +3,12 @@ from typing import Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
+from common.graphql.types import DeleteDjangoObjectInput
 from common.permissions.utils import IsAuthenticated
 from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Room, Shelter
+from shelters.permissions import ReservationPermissions
 from shelters.services import bed_create, room_create, shelter_create
 from shelters.types import (
     AdminShelterType,
@@ -15,15 +17,17 @@ from shelters.types import (
     CreateBedInput,
     CreateRoomInput,
     CreateShelterInput,
+    ReservationType,
     RoomType,
     ServiceCategoryType,
     ShelterType,
     SPAType,
 )
 from strawberry.types import Info
+from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
-from strawberry_django.permissions import HasPerm
+from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
 
 @strawberry.type
@@ -84,3 +88,9 @@ class Mutation:
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
         return cast(RoomType, room_create(user=user, data=clean))
+
+    delete_reservation: ReservationType = mutations.delete(
+        DeleteDjangoObjectInput,
+        permission_classes=[IsAuthenticated],
+        extensions=[HasRetvalPerm(perms=ReservationPermissions.DELETE)],
+    )

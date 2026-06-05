@@ -211,3 +211,10 @@ class ServiceCategoryPermissions(models.TextChoices):
     CHANGE = "shelters.change_servicecategory", _("Can change service category")
     DELETE = "shelters.delete_servicecategory", _("Can delete service category")
     VIEW = "shelters.view_servicecategory", _("Can view service category")
+
+
+class ReservationPermissions(models.TextChoices):
+    ADD = "shelters.add_reservation", _("Can add reservation")
+    CHANGE = "shelters.change_reservation", _("Can change reservation")
+    DELETE = "shelters.delete_reservation", _("Can delete reservation")
+    VIEW = "shelters.view_reservation", _("Can view reservation")

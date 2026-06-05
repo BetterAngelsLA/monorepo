@@ -39,6 +39,7 @@ from shelters.types.lookups import (
 from shelters.types.outputs import (
     AdminShelterType,
     BedType,
+    ReservationType,
     RoomType,
     ShelterLocationType,
     ShelterPhotoType,
@@ -83,6 +84,7 @@ __all__ = [
     # outputs
     "AdminShelterType",
     "BedType",
+    "ReservationType",
     "RoomType",
     "ShelterLocationType",
     "ShelterPhotoType",

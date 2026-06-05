@@ -888,6 +888,8 @@ export type DeleteHmisProfilePayload = HmisProfileType | OperationInfo;
 
 export type DeleteNotePayload = NoteType | OperationInfo;
 
+export type DeleteReservationPayload = OperationInfo | ReservationType;
+
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
 
 export type DeleteSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
@@ -1537,6 +1539,7 @@ export type Mutation = {
   deleteHmisNote: DeleteHmisNotePayload;
   deleteHmisProfile: DeleteHmisProfilePayload;
   deleteNote: DeleteNotePayload;
+  deleteReservation: DeleteReservationPayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
@@ -1697,6 +1700,11 @@ export type MutationDeleteHmisProfileArgs = {
 
 
 export type MutationDeleteNoteArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteReservationArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -2522,6 +2530,11 @@ export type ReportSummaryType = {
   totalNotes: Scalars['Int']['output'];
   uniqueClients: Scalars['Int']['output'];
   uniqueClientsByDate: Array<DateCountType>;
+};
+
+export type ReservationType = {
+  __typename?: 'ReservationType';
+  id: Scalars['ID']['output'];
 };
 
 export type ResolveClientDocumentUploadsInput = {

@@ -290,6 +290,11 @@ class BedType:
     fees: Optional[int]
 
 
+@strawberry_django.type(models.Reservation)
+class ReservationType:
+    id: ID
+
+
 @strawberry_django.type(models.Room, filters=RoomFilter)
 class RoomType:
     @classmethod

@@ -17,7 +17,7 @@ from django.utils.text import slugify
 from organizations.models import Organization
 from places import Places
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
-from shelters.models import Bed, Room, Schedule, Service, ServiceCategory, Shelter
+from shelters.models import Bed, Reservation, Room, Schedule, Service, ServiceCategory, Shelter
 from shelters.selectors import shelter_get
 
 if TYPE_CHECKING:
@@ -381,3 +381,9 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
     if raw_occupants:
         room.occupants.set(raw_occupants)
     return room
+
+
+def reservation_delete(*, reservation: Reservation) -> int:
+    deleted_id = reservation.id
+    reservation.delete()
+    return deleted_id

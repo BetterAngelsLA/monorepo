@@ -873,6 +873,8 @@ union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
 
 union DeleteNotePayload = NoteType | OperationInfo
 
+union DeleteReservationPayload = ReservationType | OperationInfo
+
 union DeleteServiceRequestPayload = DeletedObjectType | OperationInfo
 
 union DeleteSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
@@ -1539,6 +1541,7 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
+  deleteReservation(data: DeleteDjangoObjectInput!): DeleteReservationPayload! @hasRetvalPerm(permissions: [{app: "shelters", permission: "delete_reservation"}], any: true)
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
@@ -1973,6 +1976,10 @@ type ReportSummaryType {
   uniqueClientsByDate: [DateCountType!]!
   topProvidedServices: [NameCountType!]!
   topRequestedServices: [NameCountType!]!
+}
+
+type ReservationType {
+  id: ID!
 }
 
 input ResolveClientDocumentUploadsInput {
