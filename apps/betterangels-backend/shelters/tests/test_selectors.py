@@ -6,7 +6,7 @@ from shelters.enums import ReservationStatusChoices
 from shelters.models import Reservation, Shelter
 from shelters.selectors import reservation_status_change_counts
 
-ReservationEvent = Reservation.pgh_event_model
+ReservationEvent = Reservation.pgh_event_model  # type: ignore[attr-defined]
 
 
 class ReservationStatusChangeCountsTestCase(TestCase):
@@ -21,7 +21,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
 
     # -- helpers -------------------------------------------------------------
 
-    def _make_reservation(self, shelter: Shelter, statuses: list[str]) -> Reservation:
+    def _make_reservation(self, shelter: Shelter, statuses: list[ReservationStatusChoices]) -> Reservation:
         """Create a reservation (defaults to CONFIRMED) then apply each status in order.
 
         Each ``save`` that changes ``status`` fires a ``reservation.status_change``
