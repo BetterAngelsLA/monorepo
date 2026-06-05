@@ -39,6 +39,16 @@ export function ShelterProfileLinks(props: IProps) {
           Basic Info
         </Sidebar.Link>
         <Sidebar.Link
+          to={shelterProfileRoute(shelterId, shelterProfileSegments.details)}
+          isActive={isShelterProfileRoute(pathname, {
+            segment: shelterProfileSegments.details,
+          })}
+          collapsed={!isOpen}
+          replace
+        >
+          Details
+        </Sidebar.Link>
+        <Sidebar.Link
           to={shelterProfileRoute(
             shelterId,
             shelterProfileSegments.operatingHours
@@ -62,16 +72,6 @@ export function ShelterProfileLinks(props: IProps) {
           Policies
         </Sidebar.Link>
         <Sidebar.Link
-          to={shelterProfileRoute(shelterId, shelterProfileSegments.details)}
-          isActive={isShelterProfileRoute(pathname, {
-            segment: shelterProfileSegments.details,
-          })}
-          collapsed={!isOpen}
-          replace
-        >
-          Details
-        </Sidebar.Link>
-        <Sidebar.Link
           to={shelterProfileRoute(shelterId, shelterProfileSegments.services)}
           isActive={isShelterProfileRoute(pathname, {
             segment: shelterProfileSegments.services,
@@ -80,6 +80,16 @@ export function ShelterProfileLinks(props: IProps) {
           replace
         >
           Services
+        </Sidebar.Link>
+        <Sidebar.Link
+          to={shelterProfileRoute(shelterId, shelterProfileSegments.ecosystem)}
+          isActive={isShelterProfileRoute(pathname, {
+            segment: shelterProfileSegments.ecosystem,
+          })}
+          collapsed={!isOpen}
+          replace
+        >
+          Ecosystem
         </Sidebar.Link>
       </Sidebar.Content>
     </Sidebar.NestedLinks>

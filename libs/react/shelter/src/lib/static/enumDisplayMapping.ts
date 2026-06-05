@@ -11,9 +11,17 @@ import {
   ShelterChoices,
   ShelterProgramChoices,
   SpecialSituationRestrictionChoices,
+  StatusChoices,
   StorageChoices,
   VaccinationRequirementChoices,
 } from '../apollo';
+
+export const enumStatusChoices: Record<StatusChoices, string> = {
+  [StatusChoices.Draft]: 'Draft',
+  [StatusChoices.Pending]: 'Pending',
+  [StatusChoices.Approved]: 'Approved',
+  [StatusChoices.Inactive]: 'Inactive',
+};
 
 export const enumDisplayAccessibilityChoices: {
   [key in AccessibilityChoices]: string;

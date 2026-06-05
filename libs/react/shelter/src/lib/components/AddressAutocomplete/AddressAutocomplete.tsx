@@ -1,5 +1,5 @@
 import { SearchIcon } from '@monorepo/react/icons';
-import { TPlacePrediction } from '@monorepo/shared/places';
+import { placeViewportToEdges, TPlacePrediction } from '@monorepo/shared/places';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePlacesClient } from '../../places';
 import { Input } from '../Input';
@@ -13,6 +13,7 @@ const BOUNDS_RADIUS_MILES = 25;
 type TProps = {
   className?: string;
   placeholder?: string;
+  initialValue?: string;
   onPlaceSelect: (place: TPlaceResult | null) => void;
   countryRestrictions?: ISO3166Alpha2 | ISO3166Alpha2[] | null;
   leftIcon?: React.ReactElement;
@@ -24,15 +25,20 @@ export function AddressAutocomplete(props: TProps) {
     onPlaceSelect,
     countryRestrictions = 'us',
     placeholder,
+    initialValue = '',
     className = '',
     leftIcon,
     inputClassname = '',
   } = props;
 
   const places = usePlacesClient();
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState(initialValue);
   const [predictions, setPredictions] = useState<TPlacePrediction[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setInputValue(initialValue);
+  }, [initialValue]);
 
   useEffect(() => {
     return () => {
@@ -72,6 +78,13 @@ export function AddressAutocomplete(props: TProps) {
   const handleInputChange = (value: string) => {
     setInputValue(value);
 
+    if (!value.trim()) {
+      onPlaceSelect(null);
+      setPredictions([]);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      return;
+    }
+
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(
       () => fetchPredictions(value),
@@ -83,7 +96,7 @@ export function AddressAutocomplete(props: TProps) {
     async (placeId: string) => {
       try {
         const result = await places.getDetails(placeId, {
-          fields: 'displayName,formattedAddress,location',
+          fields: 'displayName,formattedAddress,location,viewport',
         });
 
         onPlaceSelect({
@@ -93,6 +106,9 @@ export function AddressAutocomplete(props: TProps) {
           location: result.location
             ? { lat: result.location.latitude, lng: result.location.longitude }
             : null,
+          viewport: result.viewport
+            ? placeViewportToEdges(result.viewport)
+            : undefined,
         });
 
         setInputValue(result.formattedAddress || '');

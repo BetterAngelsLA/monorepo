@@ -1,9 +1,13 @@
 import { useQuery } from '@apollo/client/react';
 import { InfiniteList } from '@monorepo/react/components';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { MaxStayInput } from '../../apollo';
-import { sheltersAtom } from '../../atoms';
+import {
+  shelterSearchTriggerAtom,
+  shelterNameSearchAtom,
+  sheltersAtom,
+} from '../../atoms';
 import {
   ViewSheltersDocument,
   ViewSheltersQuery,
@@ -31,7 +35,6 @@ type TProps = {
   className?: string;
   mapBoundsFilter?: TMapBounds | null;
   propertyFilters?: TShelterPropertyFilters;
-  nameFilter?: string;
   /** Incremented on each name search submit; used to fit the map after fresh query results. */
   nameSearchPinFitRequestId?: number;
   onShelterPinsReadyForMapFit?: (pinLocations: TLatLng[]) => void;
@@ -42,11 +45,12 @@ export function SheltersDisplay(props: TProps) {
     mapBoundsFilter,
     propertyFilters,
     className = '',
-    nameFilter,
     nameSearchPinFitRequestId = 0,
     onShelterPinsReadyForMapFit,
   } = props;
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
+  const [searchTrigger] = useAtom(shelterSearchTriggerAtom);
+  const nameSearch = useAtomValue(shelterNameSearchAtom);
 
   const queryVariables = useMemo<ViewSheltersQueryVariables | undefined>(() => {
     let vars: ViewSheltersQueryVariables | undefined;
@@ -90,24 +94,35 @@ export function SheltersDisplay(props: TProps) {
       }
     }
 
-    if (nameFilter) {
+    if (nameSearch) {
       vars = vars || {};
       vars.filters = vars.filters || {};
-      vars.filters.name = nameFilter;
+      vars.filters.name = nameSearch;
     }
 
     return vars;
-  }, [mapBoundsFilter, nameFilter, propertyFilters]);
+  }, [mapBoundsFilter, nameSearch, propertyFilters]);
+
+  // Freeze query variables at the moment searchTrigger changes so that
+  // intermediate filter-state updates (e.g. name search set before the map
+  // settles) never fire a premature query.
+  const lastTriggerRef = useRef(-1);
+  const activeVarsRef = useRef<ViewSheltersQueryVariables | undefined>(undefined);
+
+  if (searchTrigger !== lastTriggerRef.current) {
+    lastTriggerRef.current = searchTrigger;
+    activeVarsRef.current = queryVariables;
+  }
 
   const { data, loading, error } = useQuery<
     ViewSheltersQuery,
     ViewSheltersQueryVariables
   >(ViewSheltersDocument, {
     variables: {
-      ...queryVariables,
+      ...activeVarsRef.current,
       pagination: { limit: 5000, offset: 0 },
     },
-    skip: !queryVariables,
+    skip: !activeVarsRef.current,
   });
 
   const shelters = useMemo(() => data?.shelters.results ?? [], [data]);
@@ -182,7 +197,7 @@ export function SheltersDisplay(props: TProps) {
         <div className="mb-4">
           <div className="text-xl font-semibold">{text}</div>
           <ResultsSource
-            nameFilter={nameFilter}
+            nameFilter={nameSearch}
             mapBoundsFilter={mapBoundsFilter}
             openNowFilter={propertyFilters?.openNow}
             propertyFilters={pruneFilters(propertyFilters)}
@@ -190,7 +205,7 @@ export function SheltersDisplay(props: TProps) {
         </div>
       );
     },
-    [queryVariables?.filters]
+    [nameSearch, mapBoundsFilter, propertyFilters]
   );
 
   return (

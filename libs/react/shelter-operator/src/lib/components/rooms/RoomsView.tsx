@@ -6,13 +6,13 @@ import {
   ShelterType,
   type RoomType,
 } from '../../apollo/graphql/__generated__/types';
+import { Button } from '../base-ui/buttons';
+import { RoomTable, type RoomRowObject } from '../RoomTable';
 import {
   GetShelterRoomsDocument,
   type GetShelterRoomsQuery,
   type GetShelterRoomsQueryVariables,
 } from './__generated__/rooms.generated';
-import { Button } from '../base-ui/buttons';
-import { RoomTable, type RoomRowObject } from '../RoomTable';
 import { EditRoomModal } from './EditRoomModal';
 
 export function RoomsView({ shelterId }: { shelterId: string }) {
@@ -26,7 +26,7 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
 
   const rows: RoomType[] = (data?.rooms.results ?? []).map((room) => ({
     id: room.id,
-    roomIdentifier: room.roomIdentifier,
+    name: room.name,
     status: room.status ?? RoomStatusChoices.Available,
     amenities: room.amenities ?? '',
     medicalRespite: room.medicalRespite,

@@ -13,7 +13,10 @@ import {
   shelterProfileSegments,
 } from '../../../routing/routePaths';
 import { useToast } from '../../base-ui/toast/state/useToast';
-import { BasicInfoForm, type BasicInfoFormData } from '../BasicInfo';
+import {
+  ShelterBasicInfoForm,
+  type BasicInfoFormData,
+} from '../segments/BasicInfo';
 
 function toCreateInput(
   formData: BasicInfoFormData,
@@ -117,7 +120,7 @@ export function CreateShelterProfile(props: TProps) {
   }
 
   return (
-    <BasicInfoForm
+    <ShelterBasicInfoForm
       onSubmit={handleSubmit}
       disabled={disabled}
       className={className}

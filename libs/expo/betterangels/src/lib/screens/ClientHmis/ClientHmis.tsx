@@ -31,6 +31,7 @@ const tabLabelsHmis: Record<ClientViewTabEnum, string> = {
   [ClientViewTabEnum.Interactions]: 'Notes',
   [ClientViewTabEnum.Locations]: ClientViewTabEnum.Locations,
   [ClientViewTabEnum.Tasks]: ClientViewTabEnum.Tasks,
+  [ClientViewTabEnum.Referrals]: ClientViewTabEnum.Referrals,
 };
 
 type TProps = {

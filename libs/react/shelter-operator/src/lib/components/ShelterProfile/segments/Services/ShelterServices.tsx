@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { useShelter } from '../../../hooks/useShelter';
-import { BasicInfoForm } from './BasicInfoForm';
-import { toBasicInfoFormData } from './formSchema';
+import { useShelter } from '../../../../hooks/useShelter';
+import { ShelterServicesForm } from './ShelterServicesForm';
+import { toFormData } from './formSchema';
 
 type TProps = {
   shelterId: string;
 };
 
-export function BasicInfo(props: TProps) {
+export function ShelterServices(props: TProps) {
   const { shelterId } = props;
 
   const [isEditMode, setEditMode] = useState<boolean>(false);
@@ -29,8 +29,8 @@ export function BasicInfo(props: TProps) {
   }
 
   return (
-    <BasicInfoForm
-      defaultValues={toBasicInfoFormData(shelter)}
+    <ShelterServicesForm
+      defaultValues={toFormData(shelter)}
       onSubmit={() => console.log('submit')}
       isViewMode={!isEditMode}
       onEditClick={() => setEditMode(true)}

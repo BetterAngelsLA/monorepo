@@ -19,6 +19,7 @@ import { extractOperationInfoMessage } from '../../apollo/graphql/response/extra
 import { AddUserFormDrawer } from '../../components';
 import { useOutsideClick } from '../../hooks';
 import { useActiveOrg } from '../../providers';
+import { hasPermission } from '../../providers/activeOrg/hasPermission';
 import {
   OrganizationMembersDocument,
   RemoveOrganizationMemberDocument,
@@ -89,7 +90,7 @@ function useOrganizationMembers(
 
 export default function Users(props: IProps) {
   const { className = '' } = props;
-  const { activeOrg, hasPermission } = useActiveOrg();
+  const { activeOrg } = useActiveOrg();
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
   const [search, setSearch] = useState('');
@@ -216,7 +217,7 @@ export default function Users(props: IProps) {
         <div>
           <SearchInput debounceMs={300} onChange={handleSearchChange} />
         </div>
-        {hasPermission(UserOrganizationPermissions.AddOrgMember) && (
+        {hasPermission(activeOrg, UserOrganizationPermissions.AddOrgMember) && (
           <button
             onClick={() =>
               showDrawer({
@@ -232,7 +233,10 @@ export default function Users(props: IProps) {
       </div>
 
       <div className={mergeCss(parentCss)}>
-        {hasPermission(UserOrganizationPermissions.ViewOrgMembers) ? (
+        {hasPermission(
+          activeOrg,
+          UserOrganizationPermissions.ViewOrgMembers
+        ) ? (
           <Table<OrganizationMemberType>
             action={(row) => {
               const isOpen = openMenuRowId === row.id;

@@ -1,3 +1,12 @@
-export function ServicesPage() {
-  return <div className="px-6">Services</div>;
+import { useParams } from 'react-router-dom';
+import { ShelterServices } from '../../components/ShelterProfile';
+
+export function ShelterServicesPage() {
+  const { shelterId } = useParams<{ shelterId: string }>();
+
+  if (!shelterId) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+
+  return <ShelterServices shelterId={shelterId} />;
 }

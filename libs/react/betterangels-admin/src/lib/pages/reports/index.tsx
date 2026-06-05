@@ -55,13 +55,13 @@ export default function Reports({ className = '' }: IProps) {
 
   const { data, loading } = useQuery(ReportSummaryDocument, {
     variables: {
-      organizationId: activeOrg?.id,
+      organizationId: activeOrg?.id ?? '',
       startDate: startStr,
       endDate: endStr,
     },
     skip: !activeOrg,
   });
-  const summary = data?.reportSummary ?? null;
+  const summary = data?.reportSummary;
 
   const orgName = activeOrg?.name ?? 'Your Organization';
 
@@ -75,7 +75,7 @@ export default function Reports({ className = '' }: IProps) {
   const handleDownload = () => download(startStr, endStr, activeOrg?.id);
 
   const totalServices =
-    summary?.topProvidedServices.reduce((s, x) => s + x.count, 0) ?? 0;
+    summary?.topProvidedServices?.reduce((s, x) => s + (x.count ?? 0), 0) ?? 0;
 
   return (
     <div className={`flex flex-col gap-6 ${className}`}>
@@ -146,7 +146,7 @@ export default function Reports({ className = '' }: IProps) {
               <Card>
                 <Statistic
                   title="Active Teams"
-                  value={summary.notesByTeam.length}
+                  value={summary.notesByTeam?.length ?? 0}
                 />
               </Card>
             </Col>
@@ -159,7 +159,7 @@ export default function Reports({ className = '' }: IProps) {
 
           {/* Charts */}
           <Row gutter={[16, 16]}>
-            {summary.notesByDate.length > 0 && (
+            {(summary.notesByDate?.length ?? 0) > 0 && (
               <Col xs={24} lg={12}>
                 <ChartCard title="Interactions Over Time">
                   <Column
@@ -183,7 +183,7 @@ export default function Reports({ className = '' }: IProps) {
               </Col>
             )}
 
-            {summary.uniqueClientsByDate.length > 0 && (
+            {(summary.uniqueClientsByDate?.length ?? 0) > 0 && (
               <Col xs={24} lg={12}>
                 <ChartCard title="Unique Clients Over Time">
                   <Column
@@ -207,7 +207,7 @@ export default function Reports({ className = '' }: IProps) {
               </Col>
             )}
 
-            {summary.notesByTeam.length > 0 && (
+            {(summary.notesByTeam?.length ?? 0) > 0 && (
               <Col xs={24} lg={12}>
                 <ChartCard title="Interactions by Team">
                   <Column
@@ -225,7 +225,7 @@ export default function Reports({ className = '' }: IProps) {
               </Col>
             )}
 
-            {summary.notesByPurpose.length > 0 && (
+            {(summary.notesByPurpose?.length ?? 0) > 0 && (
               <Col xs={24} lg={12}>
                 <ChartCard title="Top Purposes">
                   <Pie
@@ -242,7 +242,7 @@ export default function Reports({ className = '' }: IProps) {
               </Col>
             )}
 
-            {summary.topProvidedServices.length > 0 && (
+            {(summary.topProvidedServices?.length ?? 0) > 0 && (
               <Col xs={24} lg={12}>
                 <ChartCard title="Top Provided Services">
                   <Column
@@ -260,7 +260,7 @@ export default function Reports({ className = '' }: IProps) {
               </Col>
             )}
 
-            {summary.topRequestedServices.length > 0 && (
+            {(summary.topRequestedServices?.length ?? 0) > 0 && (
               <Col xs={24} lg={12}>
                 <ChartCard title="Top Requested Services">
                   <Column

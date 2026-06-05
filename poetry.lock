@@ -80,6 +80,7 @@ django-admin-interface = "^0.32.0"
 django-admin-rangefilter = "^0.13.5"
 django-admin-sortable2 = "^2.3.1"
 django-allauth = "^65.14.0"
+django-annoying = "^0.10.8"
 django-choices-field = "^4.0.0"
 django-ckeditor-5 = "^0.2.19"
 django-cleanup = "^9.0.0"
@@ -798,7 +799,7 @@ description = "Foreign Function Interface for Python calling C code."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "platform_python_implementation != \"PyPy\" or platform_python_implementation == \"CPython\" and sys_platform == \"win32\""
+markers = "platform_python_implementation == \"CPython\" and sys_platform == \"win32\" or platform_python_implementation != \"PyPy\""
 files = [
     {file = "cffi-2.0.0-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:0cf2d91ecc3fcc0625c2c530fe004f82c110405f101548512cce44322fa8ac44"},
     {file = "cffi-2.0.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:f73b96c41e3b2adedc34a7356e64c8eb96e03a3782b535e043a986276ce12a49"},
@@ -1394,6 +1395,22 @@ openid = ["python3-openid (>=3.0.8,<4)"]
 saml = ["python3-saml (>=1.15.0,<2.0.0)"]
 socialaccount = ["oauthlib (>=3.3.0,<4)", "pyjwt[crypto] (>=2.0,<3)", "requests (>=2.0.0,<3)"]
 steam = ["python3-openid (>=3.0.8,<4)"]
+
+[[package]]
+name = "django-annoying"
+version = "0.10.8"
+description = "This is a django application that tries to eliminate annoying things in the Django framework."
+optional = false
+python-versions = ">=3.0"
+groups = ["main"]
+files = [
+    {file = "django_annoying-0.10.8-py2.py3-none-any.whl", hash = "sha256:ed258ba8a100138515f6cdb8e9d1620a6e93e441ec1e10f0d02b7242b3b4efff"},
+    {file = "django_annoying-0.10.8.tar.gz", hash = "sha256:4166b55eff3f1296a64c12ee0e5cfe71a5aa4b81c2788c72529478c370ad8550"},
+]
+
+[package.dependencies]
+Django = ">=1.11"
+six = "*"
 
 [[package]]
 name = "django-appconf"
@@ -3209,7 +3226,7 @@ description = "C parser in Python"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "(platform_python_implementation != \"PyPy\" or platform_python_implementation == \"CPython\" and sys_platform == \"win32\") and implementation_name != \"PyPy\""
+markers = "(platform_python_implementation == \"CPython\" and sys_platform == \"win32\" or platform_python_implementation != \"PyPy\") and implementation_name != \"PyPy\""
 files = [
     {file = "pycparser-3.0-py3-none-any.whl", hash = "sha256:b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992"},
     {file = "pycparser-3.0.tar.gz", hash = "sha256:600f49d217304a5902ac3c37e1281c9fe94e4d0489de643a9504c5cdfdfc6b29"},

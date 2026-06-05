@@ -1,0 +1,8 @@
+query ShelterCities {
+  shelterCities {
+    results {
+      id
+      name
+    }
+  }
+}

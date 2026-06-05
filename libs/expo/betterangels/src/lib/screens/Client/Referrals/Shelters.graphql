@@ -1,0 +1,16 @@
+query Shelters {
+  shelters(pagination: { offset: 0, limit: 100 }) {
+    results {
+      id
+      name
+      location {
+        place
+        latitude
+        longitude
+      }
+      phone
+      status
+    }
+    totalCount
+  }
+}

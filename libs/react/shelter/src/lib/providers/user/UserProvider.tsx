@@ -1,6 +1,5 @@
 import { useQuery } from '@apollo/client/react';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { UserOrganizationPermissions } from '../../apollo/graphql/__generated__/types';
 import UserContext, { TUser } from './UserContext';
 import {
   CurrentOrgUserDocument,
@@ -22,23 +21,6 @@ const parseUser = (
     return undefined;
   }
 
-  const userPermissions = userOrganization.userPermissions ?? [];
-  const permissionMap: Record<UserOrganizationPermissions, string> = {
-    [UserOrganizationPermissions.AccessOrgPortal]: 'canAccessOrgPortal',
-    [UserOrganizationPermissions.AddOrgMember]: 'canAddOrgMember',
-    [UserOrganizationPermissions.ChangeOrgMemberRole]: 'canChangeOrgMemberRole',
-    [UserOrganizationPermissions.RemoveOrgMember]: 'canRemoveOrgMember',
-    [UserOrganizationPermissions.ViewOrgMembers]: 'canViewOrgMembers',
-    [UserOrganizationPermissions.ViewReports]: 'canViewReports',
-  };
-
-  const permFlags = Object.fromEntries(
-    Object.entries(permissionMap).map(([perm, key]) => [
-      key,
-      userPermissions.includes(perm as UserOrganizationPermissions),
-    ])
-  );
-
   return {
     id: user.id,
     organization: userOrganization,
@@ -47,7 +29,6 @@ const parseUser = (
     lastName: user.lastName ?? undefined,
     email: user.email,
     organizations: user.organizations ?? null,
-    ...permFlags,
   };
 };
 

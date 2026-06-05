@@ -1,13 +1,12 @@
-import { TOrganizationWithPermissions } from '@monorepo/react/shelter';
+import { TOrganization } from '@monorepo/react/shelter';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { UserOrganizationPermissions } from '../../apollo/graphql/__generated__/types';
 import ActiveOrgContext from './ActiveOrgContext';
 
 const STORAGE_KEY = 'shelter_operator_active_org_id';
 
 interface ActiveOrgProviderProps {
   children: ReactNode;
-  organizations: TOrganizationWithPermissions[];
+  organizations: TOrganization[];
 }
 
 export function ActiveOrgProvider({
@@ -67,15 +66,9 @@ export function ActiveOrgProvider({
     [organizations]
   );
 
-  const hasPermission = useCallback(
-    (perm: UserOrganizationPermissions): boolean =>
-      activeOrg?.userPermissions?.includes(perm) ?? false,
-    [activeOrg]
-  );
-
   const value = useMemo(
-    () => ({ activeOrg, organizations, setActiveOrgId, hasPermission }),
-    [activeOrg, organizations, setActiveOrgId, hasPermission]
+    () => ({ activeOrg, organizations, setActiveOrgId }),
+    [activeOrg, organizations, setActiveOrgId]
   );
 
   return (

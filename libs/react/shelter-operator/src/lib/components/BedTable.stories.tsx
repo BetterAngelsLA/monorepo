@@ -5,23 +5,22 @@ import { BedTable, type BedRoomForList } from './BedTable';
 
 const bed = (
   id: string,
-  bedName: string,
+  name: string,
   status: BedStatusChoices,
   maintenanceFlag = false
-) =>
-  ({
-    id,
-    bedName,
-    status,
-    maintenanceFlag,
-    accessibility: [],
-    b7: false,
-    demographics: [],
-    funders: [],
-    pets: [],
-    shelter: {} as never,
-    storage: false,
-  });
+) => ({
+  id,
+  name,
+  status,
+  maintenanceFlag,
+  accessibility: [],
+  b7: false,
+  demographics: [],
+  funders: [],
+  pets: [],
+  shelter: {} as never,
+  storage: false,
+});
 
 const mockRooms: BedRoomForList[] = [
   {
