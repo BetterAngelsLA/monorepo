@@ -10,7 +10,8 @@ import datetime
 from typing import TYPE_CHECKING
 
 import pghistory
-from django.db.models import Exists, OuterRef, Q, QuerySet
+from django.db.models import Exists, OuterRef, Q, QuerySet, TextField
+from django.db.models.functions import Cast
 from django.utils import timezone
 from organizations.models import Organization
 from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices, StatusChoices
@@ -134,7 +135,11 @@ def reservation_status_change_counts(
 
     from shelters.models import Reservation
 
-    reservation_ids = list(Reservation.objects.filter(shelter_id=shelter_id).values_list("pk", flat=True))
+    reservation_ids = (
+        Reservation.objects.filter(shelter_id=shelter_id)
+        .annotate(pk_text=Cast("pk", TextField()))
+        .values_list("pk_text", flat=True)
+    )
 
     events = pghistory.models.Events.objects.filter(
         pgh_obj_id__in=reservation_ids,
