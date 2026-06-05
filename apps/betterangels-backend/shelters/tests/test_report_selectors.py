@@ -10,13 +10,15 @@ whole numbers of days regardless of daylight-saving transitions.
 """
 
 import datetime
+from typing import Any
 
 import pytest
 from clients.enums import GenderEnum
+from clients.models import ClientProfile
 from django.apps import apps
 from model_bakery import baker
 from shelters.enums import BedStatusChoices, DemographicChoices
-from shelters.models import Bed, Demographic
+from shelters.models import Bed, Demographic, Shelter
 from shelters.selectors import _report_date_range_to_utc, avg_days_to_occupancy
 from shelters.tests.baker_recipes import shelter_recipe
 
@@ -33,7 +35,14 @@ def _utc(offset_days: float) -> datetime.datetime:
     return BASE + datetime.timedelta(days=offset_days)
 
 
-def _bed_event(bed: Bed, *, label: str, status, when: datetime.datetime, occupant=None):
+def _bed_event(
+    bed: Bed,
+    *,
+    label: str,
+    status: Any,
+    when: datetime.datetime,
+    occupant: ClientProfile | None = None,
+) -> Any:
     """Create a ``BedEvent`` row with a controlled ``pgh_created_at``."""
     bed_event_model = apps.get_model("shelters", "BedEvent")
     event = bed_event_model.objects.create(
@@ -56,24 +65,22 @@ def _clear_events() -> None:
 
 
 @pytest.fixture
-def shelter():
+def shelter() -> Shelter:
     return shelter_recipe.make()
 
 
-def _avg(shelter, **kwargs):
-    return avg_days_to_occupancy(
-        shelter_id=shelter.id, start_date=RANGE_START, end_date=RANGE_END, **kwargs
-    )
+def _avg(shelter: Shelter, **kwargs: Any) -> float | None:
+    return avg_days_to_occupancy(shelter_id=shelter.id, start_date=RANGE_START, end_date=RANGE_END, **kwargs)
 
 
 @pytest.mark.django_db
-def test_report_date_range_rejects_oversized():
+def test_report_date_range_rejects_oversized() -> None:
     with pytest.raises(ValueError):
         _report_date_range_to_utc(datetime.date(2024, 1, 1), datetime.date(2025, 12, 31))
 
 
 @pytest.mark.django_db
-def test_avg_days_matches_worked_example(shelter):
+def test_avg_days_matches_worked_example(shelter: Shelter) -> None:
     """Bed 1: 7d; Bed 2: 21d + 5d; Bed 3: 5d + 3d -> (7+21+5+5+3)/5 = 8.2."""
     bed1 = Bed.objects.create(shelter=shelter)
     bed2 = Bed.objects.create(shelter=shelter)
@@ -100,7 +107,7 @@ def test_avg_days_matches_worked_example(shelter):
 
 
 @pytest.mark.django_db
-def test_occupied_from_creation_is_excluded(shelter):
+def test_occupied_from_creation_is_excluded(shelter: Shelter) -> None:
     bed = Bed.objects.create(shelter=shelter)
     _clear_events()
 
@@ -112,7 +119,7 @@ def test_occupied_from_creation_is_excluded(shelter):
 
 
 @pytest.mark.django_db
-def test_occupancy_event_outside_range_is_excluded(shelter):
+def test_occupancy_event_outside_range_is_excluded(shelter: Shelter) -> None:
     bed = Bed.objects.create(shelter=shelter)
     _clear_events()
 
@@ -124,7 +131,7 @@ def test_occupancy_event_outside_range_is_excluded(shelter):
 
 
 @pytest.mark.django_db
-def test_preceding_unoccupied_event_may_predate_range(shelter):
+def test_preceding_unoccupied_event_may_predate_range(shelter: Shelter) -> None:
     bed = Bed.objects.create(shelter=shelter)
     _clear_events()
 
@@ -136,7 +143,7 @@ def test_preceding_unoccupied_event_may_predate_range(shelter):
 
 
 @pytest.mark.django_db
-def test_no_events_returns_none(shelter):
+def test_no_events_returns_none(shelter: Shelter) -> None:
     Bed.objects.create(shelter=shelter)
     _clear_events()
 
@@ -144,7 +151,7 @@ def test_no_events_returns_none(shelter):
 
 
 @pytest.mark.django_db
-def test_bed_filters_restrict_considered_beds(shelter):
+def test_bed_filters_restrict_considered_beds(shelter: Shelter) -> None:
     seniors, _ = Demographic.objects.get_or_create(name=DemographicChoices.SENIORS)
     senior_bed = Bed.objects.create(shelter=shelter)
     senior_bed.demographics.add(seniors)
@@ -161,9 +168,9 @@ def test_bed_filters_restrict_considered_beds(shelter):
 
 
 @pytest.mark.django_db
-def test_client_filters_restrict_qualifying_events(shelter):
-    female_client = baker.make("clients.ClientProfile", gender=GenderEnum.FEMALE)
-    male_client = baker.make("clients.ClientProfile", gender=GenderEnum.MALE)
+def test_client_filters_restrict_qualifying_events(shelter: Shelter) -> None:
+    female_client: ClientProfile = baker.make("clients.ClientProfile", gender=GenderEnum.FEMALE)
+    male_client: ClientProfile = baker.make("clients.ClientProfile", gender=GenderEnum.MALE)
     bed_f = Bed.objects.create(shelter=shelter)
     bed_m = Bed.objects.create(shelter=shelter)
     _clear_events()
