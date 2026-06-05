@@ -92,8 +92,11 @@ def test_report_date_range_to_utc_boundaries() -> None:
 def test_report_date_range_rejects_inverted_and_oversized() -> None:
     with pytest.raises(ValueError):
         _report_date_range_to_utc(datetime.date(2025, 2, 2), datetime.date(2025, 2, 1))
+    # 366 inclusive days is allowed; 367 is not.
+    start = datetime.date(2025, 1, 1)
+    _report_date_range_to_utc(start, start + datetime.timedelta(days=365))
     with pytest.raises(ValueError):
-        _report_date_range_to_utc(datetime.date(2024, 1, 1), datetime.date(2025, 12, 31))
+        _report_date_range_to_utc(start, start + datetime.timedelta(days=366))
 
 
 @pytest.mark.django_db
