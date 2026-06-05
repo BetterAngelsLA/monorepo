@@ -1,5 +1,5 @@
 query GetShelter($id: ID!) {
-  shelter(pk: $id) {
+  adminShelter(pk: $id) {
     bedFees
     cityCouncilDistrict
     curfew
@@ -50,6 +50,10 @@ query GetShelter($id: ID!) {
       contactNumber
     }
     city {
+      id
+      name
+    }
+    citiesServed {
       id
       name
     }
@@ -124,6 +128,11 @@ query GetShelter($id: ID!) {
     spa {
       id
       name
+    }
+    spasServed {
+      id
+      name
+      shortName
     }
     specialSituationRestrictions {
       name

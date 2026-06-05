@@ -1,0 +1,46 @@
+query ClientReferrals($clientId: ID!) {
+  referrals(filters: { clientProfile: $clientId }) {
+    results {
+      id
+      status
+      notes
+      createdAt
+      createdBy {
+        id
+        firstName
+        lastName
+      }
+      shelter {
+        id
+        name
+      }
+    }
+    totalCount
+  }
+}
+
+mutation CreateReferral($data: CreateReferralInput!) {
+  createReferral(data: $data) {
+    ... on ReferralType {
+      id
+      status
+      createdAt
+      shelter {
+        id
+        name
+      }
+      createdBy {
+        id
+        firstName
+        lastName
+      }
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

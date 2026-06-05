@@ -72,9 +72,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             organization = organization_recipe.make()
             baker.make(OrganizationUser, user=user, organization=organization)
             permission_group_recipe.make(organization=organization)
-            expected_organizations.append(
-                {"id": str(organization.pk), "name": organization.name, "userPermissions": ANY}
-            )
+            expected_organizations.append({"id": str(organization.pk), "name": organization.name})
 
         query = """
             query {
@@ -91,7 +89,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     organizations: organizationsOrganization {
                         id
                         name
-                        userPermissions
                     }
                 }
             }
@@ -181,7 +178,10 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
     @parametrize(
         ("user_role, expected_permissions"),
         [
-            (OrgRoleEnum.MEMBER, []),
+            (
+                OrgRoleEnum.MEMBER,
+                [],
+            ),
             (
                 OrgRoleEnum.ADMIN,
                 [
@@ -189,7 +189,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     UserOrganizationPermissions.ADD_ORG_MEMBER.name,
                     UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
                     UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
-                    UserOrganizationPermissions.VIEW_REPORTS.name,
                 ],
             ),
             (
@@ -197,17 +196,14 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                 [
                     UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
                     UserOrganizationPermissions.ADD_ORG_MEMBER.name,
+                    UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
                     UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
                     UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
-                    UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
-                    UserOrganizationPermissions.VIEW_REPORTS.name,
                 ],
             ),
         ],
     )
-    def test_logged_in_user_org_permissions_query(
-        self, user_role: OrgRoleEnum, expected_permissions: list[str]
-    ) -> None:
+    def test_logged_in_user_org_permissions_query(self, user_role: OrgRoleEnum, expected_permissions: list) -> None:
         user = baker.make(User)
         org_1 = organization_recipe.make(name="o1")
         org_2 = organization_recipe.make(name="o2")
@@ -224,7 +220,9 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     firstName
                     organizations: organizationsOrganization {
                         name
-                        userPermissions
+                        permissions {
+                            accounts
+                        }
                     }
                 }
             }
@@ -237,9 +235,14 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
-        user_perms = {o["name"]: o["userPermissions"] for o in response["data"]["currentUser"]["organizations"]}
-        self.assertCountEqual(user_perms["o1"], expected_permissions)
-        self.assertEqual(user_perms["o2"], [])
+        org_perms = {
+            o["name"]: sorted(o["permissions"]["accounts"]) for o in response["data"]["currentUser"]["organizations"]
+        }
+        self.assertEqual(org_perms["o1"], sorted(expected_permissions))
+        self.assertEqual(
+            org_perms["o2"],
+            [],
+        )
 
 
 class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
@@ -363,7 +366,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
             "userId": str(self.org_admin.pk),
         }
 
-        with self.assertNumQueriesWithoutCache(6):
+        with self.assertNumQueriesWithoutCache(5):
             response = self.execute_graphql(query, variables)
 
         expected_member = {
@@ -397,7 +400,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
 
         variables = {"organizationId": str(self.org.pk)}
 
-        with self.assertNumQueriesWithoutCache(7):
+        with self.assertNumQueriesWithoutCache(6):
             response = self.execute_graphql(query, variables)
 
         expected_members = zip(

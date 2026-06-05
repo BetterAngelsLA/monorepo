@@ -181,7 +181,7 @@ export function RoomTable({
         width: '1.5fr',
         render: (room) => (
           <Text variant="body" className="text-black">
-            {room.roomIdentifier}
+            {room.name}
           </Text>
         ),
       },
@@ -264,7 +264,7 @@ export function RoomTable({
     return rows.filter((room) => {
       const normalizedStatus =
         STATUS_LABEL[room.status ?? RoomStatusChoices.Available].toLowerCase();
-      const matchesName = room.roomIdentifier.toLowerCase().includes(query);
+      const matchesName = room.name.toLowerCase().includes(query);
       const matchesStatus = normalizedStatus.includes(query);
       const matchesTags = (
         room.amenities
@@ -355,7 +355,7 @@ export function RoomTable({
                   isOpen: true,
                   roomIds: undefined,
                   roomId: rowObject.id,
-                  roomName: rowObject.room.roomIdentifier,
+                  roomName: rowObject.room.name,
                 });
               }}
             />

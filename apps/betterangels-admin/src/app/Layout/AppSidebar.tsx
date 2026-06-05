@@ -1,6 +1,7 @@
 import {
-  UserOrganizationPermissions,
+  ReportPermissions,
   useActiveOrg,
+  UserOrganizationPermissions,
 } from '@monorepo/react/betterangels-admin';
 import { BetterAngelsLogoBadge, Sidebar } from '@monorepo/react/components';
 import { BarChartIcon, ChevronUpIcon, UsersIcon } from '@monorepo/react/icons';
@@ -112,7 +113,7 @@ export function AppSidebar(props: IProps) {
             Users
           </Sidebar.Link>
         )}
-        {hasPermission(UserOrganizationPermissions.ViewReports) && (
+        {hasPermission(ReportPermissions.ViewReports) && (
           <Sidebar.Link
             to="/reports"
             isActive={location.pathname === '/reports'}
