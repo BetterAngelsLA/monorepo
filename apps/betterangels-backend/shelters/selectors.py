@@ -9,7 +9,7 @@ managers (``managers.py``) and Strawberry ``get_queryset`` hooks
 import bisect
 import datetime
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
@@ -129,19 +129,23 @@ def shelters_open_at(
 # inserted, deleted, or has its ``status`` changed (see the ``@pghistory.track``
 # decorator on ``shelters.models.Bed``).
 #
-# Historical-fidelity caveat
+# Historical-fidelity notes
 # --------------------------
 # ``BedEvent`` snapshots only the Bed's own scalar columns plus foreign-key ids
-# (notably ``occupant_id``).  It does NOT snapshot the Bed's many-to-many fields
-# (``demographics``, ``accessibility`` ...) nor the occupant's attributes
-# (gender / race / date_of_birth).  Therefore:
-#   * the *identity* of a bed's occupant at any point in time is accurate, but
-#   * bed-attribute and client-demographic *filtering* must join to the LIVE
-#     ``Bed`` / ``ClientProfile`` rows — i.e. current state.  A bed deleted
-#     since its events were recorded will not match a bed-attribute filter, and
-#     a client whose demographics have since changed is matched on their
-#     current values.  Fully historical filtering would require reconstructing
-#     state from the respective event tables and is intentionally out of scope.
+# (notably ``occupant_id``); it does NOT snapshot the Bed's many-to-many fields
+# (``demographics`` ...) nor the occupant's attributes.  Therefore:
+#   * Occupant *identity* over time is accurate (``occupant_id`` is snapshotted).
+#   * Client-demographic filters are reconstructed historically from the
+#     ``ClientProfileEvent`` table: each occupant's attributes are read as of the
+#     relevant moment, so matching reflects the client's state at that time and
+#     still works for clients later deleted (their events persist).  Caveat:
+#     clients created before ``ClientProfile`` tracking began have no events and
+#     are therefore excluded from demographic-filtered counts.
+#   * Bed-attribute filters still join to the LIVE ``Bed`` row (current state),
+#     because pghistory does not snapshot the Bed's M2M fields.  A bed deleted
+#     since its events were recorded will not match a bed-attribute filter.
+#     Historical bed-attribute filtering would require tracking those M2M
+#     relations and is intentionally out of scope here.
 #
 # All Better Angels shelters operate in Los Angeles, so date boundaries are
 # interpreted in ``America/Los_Angeles`` and converted to UTC for querying
@@ -224,34 +228,88 @@ def _bed_ids_matching_filters(*, shelter_id: int | str, bed_filters: dict) -> se
     return set(qs.values_list("id", flat=True).distinct())
 
 
-def _client_ids_matching_filters(*, client_filters: dict) -> set[int]:
-    """Resolve client-demographic ``client_filters`` against LIVE ``ClientProfile``.
+def _client_state_matches(
+    client_filters: dict,
+    *,
+    gender: str | None,
+    race: str | None,
+    veteran_status: str | None,
+    date_of_birth: datetime.date | None,
+    as_of: datetime.date,
+) -> bool:
+    """Return whether a reconstructed client state satisfies ``client_filters``.
 
-    Supported keys: ``gender``, ``race``, ``veteran_status`` (each scalar or a
-    list of values) and ``age_min`` / ``age_max`` (inclusive ages, derived from
-    ``date_of_birth``).  Returns the set of matching client-profile ids.  See
-    the module caveat: matching uses each client's *current* attributes.
+    Supported keys: ``gender``, ``race``, ``veteran_status`` (scalar or list of
+    values) and ``age_min`` / ``age_max`` (inclusive ages computed against
+    ``as_of``).
     """
-    from clients.models import ClientProfile
-
-    qs = ClientProfile.objects.all()
-    today = datetime.date.today()
     for key, value in client_filters.items():
         if value is None or (isinstance(value, (list, tuple, set)) and not value):
             continue
         if key == "gender":
-            qs = qs.filter(gender__in=_as_list(value))
+            if gender not in _as_list(value):
+                return False
         elif key == "race":
-            qs = qs.filter(race__in=_as_list(value))
+            if race not in _as_list(value):
+                return False
         elif key == "veteran_status":
-            qs = qs.filter(veteran_status__in=_as_list(value))
+            if veteran_status not in _as_list(value):
+                return False
         elif key == "age_min":
-            qs = qs.filter(date_of_birth__lte=today - relativedelta(years=int(value)))
+            if date_of_birth is None or relativedelta(as_of, date_of_birth).years < int(value):
+                return False
         elif key == "age_max":
-            qs = qs.filter(date_of_birth__gt=today - relativedelta(years=int(value) + 1))
+            if date_of_birth is None or relativedelta(as_of, date_of_birth).years > int(value):
+                return False
         else:
             raise ValueError(f"Unsupported client filter: {key!r}")
-    return set(qs.values_list("id", flat=True))
+    return True
+
+
+def _build_client_demographic_matcher(client_filters: dict) -> Callable[[int | None, datetime.datetime], bool]:
+    """Build a ``matches(occupant_id, at_time)`` predicate over client history.
+
+    Demographic state is reconstructed from the pghistory ``ClientProfileEvent``
+    table: for a given moment we use the most recent event at or before that
+    time.  This reflects the client's attributes *as of* that moment and still
+    resolves for clients later deleted (their events persist).  Clients with no
+    events at or before the moment (e.g. created before tracking began) never
+    match.  Per-occupant timelines are cached for the life of the matcher.
+    """
+    client_event_model = apps.get_model("clients", "ClientProfileEvent")
+    # occupant_id -> (sorted event times, sorted event states)
+    timelines: dict[int, tuple[list[datetime.datetime], list[tuple]]] = {}
+
+    def _timeline(occupant_id: int) -> tuple[list[datetime.datetime], list[tuple]]:
+        cached = timelines.get(occupant_id)
+        if cached is None:
+            rows = list(
+                client_event_model.objects.filter(pgh_obj_id=occupant_id)
+                .order_by("pgh_created_at", "pgh_id")
+                .values_list("pgh_created_at", "gender", "race", "veteran_status", "date_of_birth")
+            )
+            cached = ([row[0] for row in rows], [row[1:] for row in rows])
+            timelines[occupant_id] = cached
+        return cached
+
+    def matches(occupant_id: int | None, at_time: datetime.datetime) -> bool:
+        if occupant_id is None:
+            return False
+        times, states = _timeline(occupant_id)
+        index = bisect.bisect_right(times, at_time) - 1
+        if index < 0:
+            return False  # no recorded state at or before this moment
+        gender, race, veteran_status, date_of_birth = states[index]
+        return _client_state_matches(
+            client_filters,
+            gender=gender,
+            race=race,
+            veteran_status=veteran_status,
+            date_of_birth=date_of_birth,
+            as_of=at_time.astimezone(LA_TZ).date(),
+        )
+
+    return matches
 
 
 def _build_daily_bed_snapshots(
@@ -332,7 +390,8 @@ def daily_occupancy(
             counted (see :func:`_bed_ids_matching_filters`).
         client_filters: Optional client-demographic filters; when supplied an
             occupied bed only counts toward ``occupied_count`` if its occupant
-            matches (see :func:`_client_ids_matching_filters`).
+            matched (as of that day) (see
+            :func:`_build_client_demographic_matcher`).
 
     Returns:
         One dict per day, ordered chronologically::
@@ -349,10 +408,14 @@ def daily_occupancy(
         end_date=end_date,
         bed_filters=bed_filters,
     )
-    allowed_client_ids = _client_ids_matching_filters(client_filters=client_filters) if client_filters else None
+    client_matcher = _build_client_demographic_matcher(client_filters) if client_filters else None
 
     results = []
     for day in _iter_days(start_date, end_date):
+        # End-of-day boundary (exclusive) in UTC — also used to read client state.
+        day_bound = datetime.datetime.combine(
+            day + datetime.timedelta(days=1), datetime.time.min, tzinfo=LA_TZ
+        ).astimezone(datetime.timezone.utc)
         beds = snapshots.get(day, {})
         total_beds = 0
         occupied_count = 0
@@ -361,7 +424,7 @@ def daily_occupancy(
                 continue  # unknown status — excluded from the percentage
             total_beds += 1
             if status == BedStatusChoices.OCCUPIED and (
-                allowed_client_ids is None or occupant_id in allowed_client_ids
+                client_matcher is None or client_matcher(occupant_id, day_bound)
             ):
                 occupied_count += 1
         occupancy_pct = round(occupied_count / total_beds * 100, 2) if total_beds else 0.0

@@ -58,6 +58,16 @@ def _clear_events() -> None:
     apps.get_model("shelters", "BedEvent").objects.all().delete()
 
 
+def _backdate_client_events(client_id: int, when: datetime.datetime) -> None:
+    """Backdate all of a client's ClientProfileEvent rows to ``when``.
+
+    Client profiles created in a test fire their insert event at the real
+    ``NOW()``; reconstruction reads state as of the occupancy moment, so we move
+    the recorded state back before the (historical) bed events under test.
+    """
+    apps.get_model("clients", "ClientProfileEvent").objects.filter(pgh_obj_id=client_id).update(pgh_created_at=when)
+
+
 @pytest.fixture
 def shelter() -> Shelter:
     return shelter_recipe.make()
@@ -204,8 +214,11 @@ def test_bed_filters_by_demographics(shelter: Shelter, occupancy_dates: list[dat
 @pytest.mark.django_db
 def test_client_filters_restrict_occupied_numerator(shelter: Shelter, occupancy_dates: list[datetime.date]) -> None:
     day0, _, _, day3 = occupancy_dates
+    before_window = datetime.datetime(2025, 1, 1, tzinfo=UTC)
     female_client: ClientProfile = baker.make("clients.ClientProfile", gender=GenderEnum.FEMALE)
     male_client: ClientProfile = baker.make("clients.ClientProfile", gender=GenderEnum.MALE)
+    _backdate_client_events(female_client.id, before_window)
+    _backdate_client_events(male_client.id, before_window)
 
     bed_f = Bed.objects.create(shelter=shelter)
     bed_m = Bed.objects.create(shelter=shelter)
@@ -225,6 +238,37 @@ def test_client_filters_restrict_occupied_numerator(shelter: Shelter, occupancy_
     assert result[0]["total_beds"] == 2
     assert result[0]["occupied_count"] == 1
     assert result[0]["occupancy_pct"] == 50.0
+
+
+@pytest.mark.django_db
+def test_client_filters_use_historical_state(shelter: Shelter, occupancy_dates: list[datetime.date]) -> None:
+    """Matching uses the client's state as of the reported day, not 'now'."""
+    day0, day1, _, day3 = occupancy_dates
+    client: ClientProfile = baker.make("clients.ClientProfile", gender=GenderEnum.MALE)
+    client.gender = GenderEnum.FEMALE
+    client.save()  # records an update event carrying the new (current) gender
+
+    client_event_model = apps.get_model("clients", "ClientProfileEvent")
+    events = list(client_event_model.objects.filter(pgh_obj_id=client.id).order_by("pgh_id"))
+    client_event_model.objects.filter(pk=events[0].pgh_id).update(  # insert (MALE)
+        pgh_created_at=datetime.datetime(2025, 1, 1, tzinfo=UTC)
+    )
+    client_event_model.objects.filter(pk=events[-1].pgh_id).update(pgh_created_at=_at(day3, 1))  # update (FEMALE)
+
+    bed = Bed.objects.create(shelter=shelter)
+    _clear_events()
+    _bed_event(bed, label="bed.add", status=BedStatusChoices.OCCUPIED, when=_at(day0, 1), occupant=client)
+
+    # On day0 the recorded gender was MALE (the change to FEMALE lands on day3),
+    # even though the client's current/live gender is FEMALE.
+    male_result = daily_occupancy(
+        shelter_id=shelter.id, start_date=day0, end_date=day1, client_filters={"gender": GenderEnum.MALE}
+    )
+    female_result = daily_occupancy(
+        shelter_id=shelter.id, start_date=day0, end_date=day1, client_filters={"gender": GenderEnum.FEMALE}
+    )
+    assert male_result[0]["occupied_count"] == 1
+    assert female_result[0]["occupied_count"] == 0
 
 
 @pytest.mark.django_db
