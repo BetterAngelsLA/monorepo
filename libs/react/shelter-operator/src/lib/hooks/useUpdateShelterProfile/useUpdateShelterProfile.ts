@@ -10,6 +10,16 @@ type TProps = {
   refetch?: boolean;
 };
 
+/**
+ * Mutation hook for updating the fairly static shelter profile data (name, address, general info).
+ *
+ * By default, automatically refetches {@link GetAdminShelterProfileDocument} after a
+ * successful update so the UI stays in sync. Pass `refetch: false` to suppress this
+ * if the caller manages cache updates itself.
+ *
+ * For mutations that affect dynamic operational data (e.g. bed/room inventory),
+ * use a separate dedicated hook rather than extending this one.
+ */
 export function useUpdateShelterProfile(props?: TProps) {
   const { refetch = true } = props || {};
 
