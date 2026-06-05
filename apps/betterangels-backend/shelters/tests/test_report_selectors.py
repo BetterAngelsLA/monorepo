@@ -7,14 +7,16 @@ directly, overriding the ``auto_now_add`` ``pgh_created_at`` via ``.update()``.
 """
 
 import datetime
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import pytest
 from clients.enums import GenderEnum
+from clients.models import ClientProfile
 from django.apps import apps
 from model_bakery import baker
 from shelters.enums import BedStatusChoices, DemographicChoices
-from shelters.models import Bed, Demographic
+from shelters.models import Bed, Demographic, Shelter
 from shelters.selectors import _report_date_range_to_utc, daily_occupancy
 from shelters.tests.baker_recipes import shelter_recipe
 
@@ -27,7 +29,14 @@ def _at(day: datetime.date, hour: int = 12, minute: int = 0) -> datetime.datetim
     return datetime.datetime(day.year, day.month, day.day, hour, minute, tzinfo=LA_TZ).astimezone(UTC)
 
 
-def _bed_event(bed: Bed, *, label: str, status, when: datetime.datetime, occupant=None):
+def _bed_event(
+    bed: Bed,
+    *,
+    label: str,
+    status: Any,
+    when: datetime.datetime,
+    occupant: ClientProfile | None = None,
+) -> Any:
     """Create a ``BedEvent`` row with a controlled ``pgh_created_at``."""
     bed_event_model = apps.get_model("shelters", "BedEvent")
     event = bed_event_model.objects.create(
@@ -50,19 +59,19 @@ def _clear_events() -> None:
 
 
 @pytest.fixture
-def shelter():
+def shelter() -> Shelter:
     return shelter_recipe.make()
 
 
 @pytest.fixture
-def occupancy_dates():
+def occupancy_dates() -> list[datetime.date]:
     """A small, fixed historical window: day0 .. day3 (LA-local)."""
     day0 = datetime.date(2025, 3, 10)
     return [day0 + datetime.timedelta(days=i) for i in range(4)]
 
 
 @pytest.mark.django_db
-def test_report_date_range_to_utc_boundaries():
+def test_report_date_range_to_utc_boundaries() -> None:
     start_utc, end_utc = _report_date_range_to_utc(datetime.date(2025, 1, 15), datetime.date(2025, 1, 15))
     # PST is UTC-8 in January, so local midnight == 08:00 UTC.
     assert start_utc == datetime.datetime(2025, 1, 15, 8, 0, tzinfo=UTC)
@@ -70,7 +79,7 @@ def test_report_date_range_to_utc_boundaries():
 
 
 @pytest.mark.django_db
-def test_report_date_range_rejects_inverted_and_oversized():
+def test_report_date_range_rejects_inverted_and_oversized() -> None:
     with pytest.raises(ValueError):
         _report_date_range_to_utc(datetime.date(2025, 2, 2), datetime.date(2025, 2, 1))
     with pytest.raises(ValueError):
@@ -78,7 +87,7 @@ def test_report_date_range_rejects_inverted_and_oversized():
 
 
 @pytest.mark.django_db
-def test_daily_occupancy_status_changes_across_days(shelter, occupancy_dates):
+def test_daily_occupancy_status_changes_across_days(shelter: Shelter, occupancy_dates: list[datetime.date]) -> None:
     day0, day1, day2, day3 = occupancy_dates
     bed1 = Bed.objects.create(shelter=shelter)
     bed2 = Bed.objects.create(shelter=shelter)
@@ -100,7 +109,7 @@ def test_daily_occupancy_status_changes_across_days(shelter, occupancy_dates):
 
 
 @pytest.mark.django_db
-def test_bed_added_mid_range_only_counts_after_creation(shelter, occupancy_dates):
+def test_bed_added_mid_range_only_counts_after_creation(shelter: Shelter, occupancy_dates: list[datetime.date]) -> None:
     day0, day1, day2, day3 = occupancy_dates
     bed = Bed.objects.create(shelter=shelter)
     _clear_events()
@@ -119,7 +128,7 @@ def test_bed_added_mid_range_only_counts_after_creation(shelter, occupancy_dates
 
 
 @pytest.mark.django_db
-def test_bed_removed_mid_range_drops_out(shelter, occupancy_dates):
+def test_bed_removed_mid_range_drops_out(shelter: Shelter, occupancy_dates: list[datetime.date]) -> None:
     day0, day1, day2, day3 = occupancy_dates
     bed = Bed.objects.create(shelter=shelter)
     _clear_events()
@@ -138,7 +147,7 @@ def test_bed_removed_mid_range_drops_out(shelter, occupancy_dates):
 
 
 @pytest.mark.django_db
-def test_no_events_in_range_returns_zero_rows(shelter, occupancy_dates):
+def test_no_events_in_range_returns_zero_rows(shelter: Shelter, occupancy_dates: list[datetime.date]) -> None:
     day0, _, _, day3 = occupancy_dates
     Bed.objects.create(shelter=shelter)
     _clear_events()  # leave no events at all
@@ -150,7 +159,7 @@ def test_no_events_in_range_returns_zero_rows(shelter, occupancy_dates):
 
 
 @pytest.mark.django_db
-def test_none_status_excluded_from_percentage(shelter, occupancy_dates):
+def test_none_status_excluded_from_percentage(shelter: Shelter, occupancy_dates: list[datetime.date]) -> None:
     day0, _, _, day3 = occupancy_dates
     bed_none = Bed.objects.create(shelter=shelter)
     bed_occupied = Bed.objects.create(shelter=shelter)
@@ -168,7 +177,7 @@ def test_none_status_excluded_from_percentage(shelter, occupancy_dates):
 
 
 @pytest.mark.django_db
-def test_bed_filters_by_demographics(shelter, occupancy_dates):
+def test_bed_filters_by_demographics(shelter: Shelter, occupancy_dates: list[datetime.date]) -> None:
     day0, _, _, day3 = occupancy_dates
     seniors, _ = Demographic.objects.get_or_create(name=DemographicChoices.SENIORS)
 
@@ -193,10 +202,10 @@ def test_bed_filters_by_demographics(shelter, occupancy_dates):
 
 
 @pytest.mark.django_db
-def test_client_filters_restrict_occupied_numerator(shelter, occupancy_dates):
+def test_client_filters_restrict_occupied_numerator(shelter: Shelter, occupancy_dates: list[datetime.date]) -> None:
     day0, _, _, day3 = occupancy_dates
-    female_client = baker.make("clients.ClientProfile", gender=GenderEnum.FEMALE)
-    male_client = baker.make("clients.ClientProfile", gender=GenderEnum.MALE)
+    female_client: ClientProfile = baker.make("clients.ClientProfile", gender=GenderEnum.FEMALE)
+    male_client: ClientProfile = baker.make("clients.ClientProfile", gender=GenderEnum.MALE)
 
     bed_f = Bed.objects.create(shelter=shelter)
     bed_m = Bed.objects.create(shelter=shelter)
@@ -219,7 +228,7 @@ def test_client_filters_restrict_occupied_numerator(shelter, occupancy_dates):
 
 
 @pytest.mark.django_db
-def test_timezone_late_night_change_attributed_to_local_day(shelter):
+def test_timezone_late_night_change_attributed_to_local_day(shelter: Shelter) -> None:
     day0 = datetime.date(2025, 3, 10)
     day1 = day0 + datetime.timedelta(days=1)
     bed = Bed.objects.create(shelter=shelter)
