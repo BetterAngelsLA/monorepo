@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.utils import timezone
 from shelters.enums import ReservationStatusChoices
 from shelters.models import Reservation, Shelter
-from shelters.selectors import reservation_status_change_counts
+from shelters.selectors import reservation_status_change_counts_by_day, reservation_status_change_counts
 
 ReservationEvent = Reservation.pgh_event_model  # type: ignore[attr-defined]
 
@@ -139,3 +139,31 @@ class ReservationStatusChangeCountsTestCase(TestCase):
                 "STATUS_OVERDUE_TO_CHECKED_IN": 0,
             },
         )
+
+    def test_counts_by_day_returns_iso_date_keys(self) -> None:
+        """Daily counts are keyed by JSON-friendly ISO date strings."""
+        first_day = datetime.date(2026, 1, 1)
+        second_day = datetime.date(2026, 1, 2)
+        checked_in = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECKED_IN])
+        cancelled = self._make_reservation(self.shelter, [ReservationStatusChoices.CANCELLED])
+        self._set_event_dates(checked_in, timezone.make_aware(datetime.datetime(2026, 1, 1, 12, 0)))
+        self._set_event_dates(cancelled, timezone.make_aware(datetime.datetime(2026, 1, 2, 12, 0)))
+
+        result = reservation_status_change_counts_by_day(self.shelter.pk, first_day, second_day)
+
+        self.assertEqual(list(result.keys()), ["2026-01-01", "2026-01-02"])
+        self.assertEqual(result["2026-01-01"]["STATUS_TO_CHECKED_IN"], 1)
+        self.assertEqual(result["2026-01-01"]["STATUS_TO_CANCELLED"], 0)
+        self.assertEqual(result["2026-01-02"]["STATUS_TO_CHECKED_IN"], 0)
+        self.assertEqual(result["2026-01-02"]["STATUS_TO_CANCELLED"], 1)
+
+    def test_counts_by_day_supports_same_start_and_end_date(self) -> None:
+        """A one-day range includes events on that date."""
+        day = datetime.date(2026, 1, 15)
+        reservation = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECK_IN_OVERDUE])
+        self._set_event_dates(reservation, timezone.make_aware(datetime.datetime(2026, 1, 15, 23, 0)))
+
+        result = reservation_status_change_counts_by_day(self.shelter.pk, day, day)
+
+        self.assertEqual(list(result.keys()), ["2026-01-15"])
+        self.assertEqual(result["2026-01-15"]["STATUS_TO_CHECK_IN_OVERDUE"], 1)
