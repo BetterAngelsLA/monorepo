@@ -2642,9 +2642,36 @@ export type ReportSummaryType = {
   uniqueClientsByDate: Array<DateCountType>;
 };
 
+export enum ReservationStatusChoices {
+  Cancelled = 'CANCELLED',
+  CheckedIn = 'CHECKED_IN',
+  CheckInOverdue = 'CHECK_IN_OVERDUE',
+  Completed = 'COMPLETED',
+  Confirmed = 'CONFIRMED',
+  Open = 'OPEN'
+}
+
 export type ReservationType = {
   __typename?: 'ReservationType';
+  bed?: Maybe<BedType>;
+  checkedInAt?: Maybe<Scalars['DateTime']['output']>;
+  checkedOutAt?: Maybe<Scalars['DateTime']['output']>;
+  clients: Array<ClientProfileType>;
+  createdBy?: Maybe<UserType>;
+  duration?: Maybe<Scalars['Int']['output']>;
   id: Scalars['ID']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  room?: Maybe<RoomType>;
+  shelter: ShelterType;
+  startDate?: Maybe<Scalars['Date']['output']>;
+  status: ReservationStatusChoices;
+};
+
+
+export type ReservationTypeClientsArgs = {
+  filters?: InputMaybe<ClientProfileFilter>;
+  ordering?: Array<ClientProfileOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type ResolveClientDocumentUploadsInput = {

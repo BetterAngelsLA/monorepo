@@ -1,12 +1,13 @@
 """Output types for shelter queries and mutations."""
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Optional, Type, cast
 
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.types import OrganizationType
+from accounts.types import OrganizationType, UserType
+from clients.types import ClientProfileType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.imgproxy import build_imgproxy_url
@@ -15,6 +16,7 @@ from shelters import models
 from shelters.enums import (
     BedStatusChoices,
     BedTypeChoices,
+    ReservationStatusChoices,
     RoomStatusChoices,
     RoomStyleChoices,
     ShelterPhotoTypeChoices,
@@ -295,6 +297,17 @@ class BedType:
 @strawberry_django.type(models.Reservation)
 class ReservationType:
     id: ID
+    bed: Optional["BedType"]
+    checked_in_at: Optional[datetime]
+    checked_out_at: Optional[datetime]
+    clients: List[ClientProfileType]
+    created_by: Optional[UserType]
+    duration: Optional[int]
+    notes: Optional[str]
+    room: Optional["RoomType"]
+    shelter: "ShelterType"
+    start_date: Optional[date]
+    status: ReservationStatusChoices
 
 
 @strawberry_django.type(models.Room, filters=RoomFilter)

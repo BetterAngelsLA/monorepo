@@ -2054,8 +2054,28 @@ type ReportSummaryType {
   topRequestedServices: [NameCountType!]!
 }
 
+enum ReservationStatusChoices {
+  OPEN
+  CONFIRMED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  CHECK_IN_OVERDUE
+}
+
 type ReservationType {
   id: ID!
+  bed: BedType
+  checkedInAt: DateTime
+  checkedOutAt: DateTime
+  clients(filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = [], pagination: OffsetPaginationInput): [ClientProfileType!]!
+  createdBy: UserType
+  duration: Int
+  notes: String
+  room: RoomType
+  shelter: ShelterType!
+  startDate: Date
+  status: ReservationStatusChoices!
 }
 
 input ResolveClientDocumentUploadsInput {
