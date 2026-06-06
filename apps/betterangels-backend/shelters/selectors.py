@@ -162,3 +162,28 @@ def reservation_status_change_counts(
         .distinct()
         .count(),
     }
+
+
+def reservation_status_change_counts_by_day(
+    shelter_id: int,
+    start_date: datetime.date,
+    end_date: datetime.date,
+) -> dict[str, dict[str, int]]:
+    """
+    Count daily reservation status changes for a shelter in a date range.
+
+    Each reservation is counted once per status.
+    """
+    results = {}
+
+    current_date = start_date
+    while current_date <= end_date:
+        # Convert date to string for easier json formatting
+        results[current_date.isoformat()] = reservation_status_change_counts(
+            shelter_id=shelter_id,
+            start_date=current_date,
+            end_date=current_date,
+        )
+        current_date += datetime.timedelta(days=1)
+
+    return results
