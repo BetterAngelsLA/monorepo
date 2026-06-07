@@ -1584,6 +1584,8 @@ export type Mutation = {
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
   updateReferral: UpdateReferralPayload;
+  updateReservation: UpdateReservationPayload;
+  updateReservationStatus: UpdateReservationStatusPayload;
   updateShelter: UpdateShelterPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
@@ -1865,6 +1867,16 @@ export type MutationUpdateNoteLocationArgs = {
 
 export type MutationUpdateReferralArgs = {
   data: UpdateReferralInput;
+};
+
+
+export type MutationUpdateReservationArgs = {
+  data: UpdateReservationInput;
+};
+
+
+export type MutationUpdateReservationStatusArgs = {
+  data: UpdateReservationStatusInput;
 };
 
 
@@ -2634,6 +2646,29 @@ export type ReportSummaryType = {
   uniqueClientsByDate: Array<DateCountType>;
 };
 
+export enum ReservationStatusChoices {
+  Cancelled = 'CANCELLED',
+  CheckedIn = 'CHECKED_IN',
+  CheckInOverdue = 'CHECK_IN_OVERDUE',
+  Completed = 'COMPLETED',
+  Confirmed = 'CONFIRMED',
+  Open = 'OPEN'
+}
+
+export type ReservationType = {
+  __typename?: 'ReservationType';
+  bedId?: Maybe<Scalars['ID']['output']>;
+  checkedInAt?: Maybe<Scalars['DateTime']['output']>;
+  checkedOutAt?: Maybe<Scalars['DateTime']['output']>;
+  duration?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['ID']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  roomId?: Maybe<Scalars['ID']['output']>;
+  shelterId: Scalars['ID']['output'];
+  startDate?: Maybe<Scalars['Date']['output']>;
+  status: ReservationStatusChoices;
+};
+
 export type ResolveClientDocumentUploadsInput = {
   clientProfileId: Scalars['ID']['input'];
   documents: Array<ClientDocumentFromUploadsInput>;
@@ -3349,6 +3384,26 @@ export type UpdateReferralInput = {
 };
 
 export type UpdateReferralPayload = OperationInfo | ReferralType;
+
+export type UpdateReservationInput = {
+  bedId?: InputMaybe<Scalars['ID']['input']>;
+  checkedInAt?: InputMaybe<Scalars['DateTime']['input']>;
+  checkedOutAt?: InputMaybe<Scalars['DateTime']['input']>;
+  duration?: InputMaybe<Scalars['Int']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  reservationId: Scalars['ID']['input'];
+  roomId?: InputMaybe<Scalars['ID']['input']>;
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+};
+
+export type UpdateReservationPayload = OperationInfo | ReservationType;
+
+export type UpdateReservationStatusInput = {
+  reservationId: Scalars['ID']['input'];
+  status: ReservationStatusChoices;
+};
+
+export type UpdateReservationStatusPayload = OperationInfo | ReservationType;
 
 export type UpdateShelterInput = {
   accessibility?: InputMaybe<Array<AccessibilityChoices>>;
