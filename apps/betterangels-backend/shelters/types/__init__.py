@@ -16,6 +16,8 @@ from shelters.types.inputs import (
     ScheduleInput,
     ServiceInput,
     ShelterLocationInput,
+    UpdateReservationInput,
+    UpdateReservationStatusInput,
     UpdateShelterInput,
 )
 from shelters.types.lookups import (
@@ -40,6 +42,7 @@ from shelters.types.lookups import (
 from shelters.types.outputs import (
     AdminShelterType,
     BedType,
+    ReservationType,
     RoomType,
     ShelterLocationType,
     ShelterPhotoType,

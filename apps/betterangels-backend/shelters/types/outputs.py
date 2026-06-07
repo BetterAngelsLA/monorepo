@@ -291,6 +291,18 @@ class BedType:
     storage: bool
     type: Optional[BedTypeChoices]
 
+@strawberry_django.type(models.Reservation)
+class ReservationType:
+    id: ID
+    status: auto
+    start_date: auto
+    duration: auto
+    notes: auto
+    checked_in_at: auto
+    checked_out_at: auto
+    shelter_id: auto
+    room_id: auto
+    bed_id: auto
 
 @strawberry_django.type(models.Room, filters=RoomFilter)
 class RoomType:

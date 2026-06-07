@@ -21,6 +21,7 @@ from shelters.enums import (
     ParkingChoices,
     PetChoices,
     ReferralRequirementChoices,
+    ReservationStatusChoices,
     RoomStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
@@ -210,3 +211,19 @@ class CreateRoomInput:
     storage: Optional[bool] = None
     type: Optional[RoomStyleChoices] = None
     type_other: Optional[str] = None
+
+@strawberry.input
+class UpdateReservationInput:
+    reservation_id: ID
+    room_id: Maybe[ID | None] = UNSET
+    bed_id: Maybe[ID | None] = UNSET
+    start_date: Maybe[Optional[date]] = UNSET
+    duration: Maybe[Optional[int]] = UNSET
+    notes: Maybe[Optional[str]] = UNSET
+    checked_in_at: Maybe[Optional[datetime]] = UNSET
+    checked_out_at: Maybe[Optional[datetime]] = UNSET
+
+@strawberry.input
+class UpdateReservationStatusInput:
+    reservation_id: ID
+    status: ReservationStatusChoices

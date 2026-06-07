@@ -6,9 +6,10 @@ from accounts.models import User
 from common.permissions.utils import IsAuthenticated
 from django.db.models import Max
 from shelters.enums import StatusChoices
-from shelters.models import Bed, Room, Shelter
+from shelters.models import Bed, Room, Shelter, Reservation
 from shelters.services.bed import bed_create
 from shelters.services.room import room_create
+from shelters.services.reservation import reservation_update, reservation_update_status
 from shelters.services.shelter import shelter_create, shelter_update
 from shelters.types import (
     AdminShelterType,
@@ -17,10 +18,13 @@ from shelters.types import (
     CreateBedInput,
     CreateRoomInput,
     CreateShelterInput,
+    ReservationType,
     RoomType,
     ServiceCategoryType,
     ShelterType,
     SPAType,
+    UpdateReservationInput,
+    UpdateReservationStatusInput,
     UpdateShelterInput,
 )
 from strawberry.types import Info
@@ -93,3 +97,15 @@ class Mutation:
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
         return cast(RoomType, room_create(user=user, data=clean))
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Reservation.perms.CHANGE)])
+    def update_reservation(self, info: Info, data: UpdateReservationInput) -> ReservationType:
+        user = cast(User, get_current_user(info))
+        clean = strawberry.asdict(data)
+        return cast(ReservationType, reservation_update(user=user, data=clean))
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Reservation.perms.CHANGE)])
+    def update_reservation_status(self, info: Info, data: UpdateReservationStatusInput) -> ReservationType:
+        user = cast(User, get_current_user(info))
+        clean = strawberry.asdict(data)
+        return cast(ReservationType, reservation_update_status(user=user, reservation_id=clean["reservation_id"], status=clean["status"]))
