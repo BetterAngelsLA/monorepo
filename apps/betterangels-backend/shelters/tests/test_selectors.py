@@ -2,9 +2,11 @@ import datetime
 
 from django.test import TestCase
 from django.utils import timezone
+
+# isort: split
 from shelters.enums import ReservationStatusChoices
 from shelters.models import Reservation, Shelter
-from shelters.selectors import reservation_status_change_counts_by_day, reservation_status_change_counts
+from shelters.selectors import reservation_status_change_counts, reservation_status_change_counts_by_day
 
 ReservationEvent = Reservation.pgh_event_model  # type: ignore[attr-defined]
 
@@ -164,6 +166,5 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         self._set_event_dates(reservation, timezone.make_aware(datetime.datetime(2026, 1, 15, 23, 0)))
 
         result = reservation_status_change_counts_by_day(self.shelter.pk, day, day)
-
         self.assertEqual(list(result.keys()), ["2026-01-15"])
         self.assertEqual(result["2026-01-15"]["STATUS_TO_CHECK_IN_OVERDUE"], 1)
