@@ -4,7 +4,7 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, ignore_warnings
-from shelters.models import Bed, City, Room, Service, ServiceCategory, Shelter
+from shelters.models import Bed, City, Reservation, Room, Service, ServiceCategory, Shelter
 from unittest_parametrize import ParametrizedTestCase
 
 
@@ -822,3 +822,199 @@ class UpdateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
         self.assertEqual(messages[0]["kind"], "ERROR")
         self.assertIsNone(messages[0]["field"])
         self.assertIn("matching query does not exist", messages[0]["message"])
+
+
+@ignore_warnings(category=UserWarning)
+class UpdateReservationTestCase(GraphQLBaseTestCase, TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        reservation_content_type = ContentType.objects.get_for_model(Reservation)
+        change_perm = Permission.objects.get(content_type=reservation_content_type, codename="change_reservation")
+        self.org_1_case_manager_1.user_permissions.add(change_perm)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        self.shelter = Shelter.objects.create(name="Test Shelter", organization=self.org_1)
+        self.reservation = Reservation.objects.create(shelter=self.shelter)
+
+    def test_update_reservation_fields(self) -> None:
+        """Updating scalar fields on a reservation persists the new values."""
+        mutation = """
+            mutation ($data: UpdateReservationInput!) {
+                updateReservation(data: $data) {
+                    ... on ReservationType {
+                        id
+                        notes
+                        duration
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "reservationId": str(self.reservation.pk),
+                "notes": "Updated notes",
+                "duration": 7,
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        result = response["data"]["updateReservation"]
+        self.assertEqual(result["notes"], "Updated notes")
+        self.assertEqual(result["duration"], 7)
+
+    def test_update_reservation_patch_semantics(self) -> None:
+        """Fields absent from UpdateReservationInput are not overwritten."""
+        self.reservation.notes = "Original notes"
+        self.reservation.save()
+
+        mutation = """
+            mutation ($data: UpdateReservationInput!) {
+                updateReservation(data: $data) {
+                    ... on ReservationType {
+                        id
+                        notes
+                        duration
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "reservationId": str(self.reservation.pk),
+                "duration": 3,
+                # notes intentionally omitted — should remain "Original notes"
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        result = response["data"]["updateReservation"]
+        self.assertEqual(result["notes"], "Original notes")
+        self.assertEqual(result["duration"], 3)
+
+    def test_update_reservation_status(self) -> None:
+        """Updating reservation status persists the new value."""
+        mutation = """
+            mutation ($data: UpdateReservationStatusInput!) {
+                updateReservationStatus(data: $data) {
+                    ... on ReservationType {
+                        id
+                        status
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "reservationId": str(self.reservation.pk),
+                "status": "CHECKED_IN",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        result = response["data"]["updateReservationStatus"]
+        self.assertEqual(result["status"], "CHECKED_IN")
+        self.reservation.refresh_from_db()
+        self.assertEqual(self.reservation.status, "checked_in")
+
+    def test_update_reservation_nonexistent_id_returns_operation_info(self) -> None:
+        """Updating a reservation that does not exist returns OperationInfo."""
+        mutation = """
+            mutation ($data: UpdateReservationInput!) {
+                updateReservation(data: $data) {
+                    ... on ReservationType {
+                        id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "reservationId": "999999",
+                "notes": "Should not work",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateReservation"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "ERROR")
+
+    def test_update_reservation_wrong_org_rejected(self) -> None:
+        """A user cannot update a reservation belonging to a shelter in a different org."""
+        other_shelter = Shelter.objects.create(name="Other Org Shelter", organization=self.org_2)
+        other_reservation = Reservation.objects.create(shelter=other_shelter)
+
+        mutation = """
+            mutation ($data: UpdateReservationInput!) {
+                updateReservation(data: $data) {
+                    ... on ReservationType {
+                        id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "reservationId": str(other_reservation.pk),
+                "notes": "Unauthorized update",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateReservation"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "ERROR")
+
+    def test_update_reservation_clear_nullable_field(self) -> None:
+        """Passing null for a nullable field clears it on the model."""
+        self.reservation.notes = "Some notes"
+        self.reservation.save()
+
+        mutation = """
+            mutation ($data: UpdateReservationInput!) {
+                updateReservation(data: $data) {
+                    ... on ReservationType {
+                        id
+                        notes
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "reservationId": str(self.reservation.pk),
+                "notes": None,
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        result = response["data"]["updateReservation"]
+        self.assertIsNone(result["notes"])
+        self.reservation.refresh_from_db()
+        self.assertIsNone(self.reservation.notes)
