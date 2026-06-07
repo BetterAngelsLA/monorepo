@@ -1559,6 +1559,8 @@ type Mutation {
   updateShelter(data: UpdateShelterInput!): UpdateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
+  updateReservation(data: UpdateReservationInput!): UpdateReservationPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_reservation"}], any: true)
+  updateReservationStatus(data: UpdateReservationStatusInput!): UpdateReservationStatusPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_reservation"}], any: true)
   createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
   updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
@@ -2049,6 +2051,28 @@ type ReportSummaryType {
   uniqueClientsByDate: [DateCountType!]!
   topProvidedServices: [NameCountType!]!
   topRequestedServices: [NameCountType!]!
+}
+
+enum ReservationStatusChoices {
+  OPEN
+  CONFIRMED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  CHECK_IN_OVERDUE
+}
+
+type ReservationType {
+  id: ID!
+  status: ReservationStatusChoices!
+  startDate: Date
+  duration: Int
+  notes: String
+  checkedInAt: DateTime
+  checkedOutAt: DateTime
+  shelterId: ID!
+  roomId: ID
+  bedId: ID
 }
 
 input ResolveClientDocumentUploadsInput {
@@ -2746,6 +2770,26 @@ input UpdateReferralInput {
 }
 
 union UpdateReferralPayload = ReferralType | OperationInfo
+
+input UpdateReservationInput {
+  reservationId: ID!
+  roomId: ID
+  bedId: ID
+  startDate: Date
+  duration: Int
+  notes: String
+  checkedInAt: DateTime
+  checkedOutAt: DateTime
+}
+
+union UpdateReservationPayload = ReservationType | OperationInfo
+
+input UpdateReservationStatusInput {
+  reservationId: ID!
+  status: ReservationStatusChoices!
+}
+
+union UpdateReservationStatusPayload = ReservationType | OperationInfo
 
 input UpdateShelterInput {
   id: ID!
