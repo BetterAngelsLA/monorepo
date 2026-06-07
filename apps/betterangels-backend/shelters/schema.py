@@ -6,10 +6,10 @@ from accounts.models import User
 from common.permissions.utils import IsAuthenticated
 from django.db.models import Max
 from shelters.enums import StatusChoices
-from shelters.models import Bed, Room, Shelter, Reservation
+from shelters.models import Bed, Reservation, Room, Shelter
 from shelters.services.bed import bed_create
-from shelters.services.room import room_create
 from shelters.services.reservation import reservation_update, reservation_update_status
+from shelters.services.room import room_create
 from shelters.services.shelter import shelter_create, shelter_update
 from shelters.types import (
     AdminShelterType,
@@ -108,4 +108,7 @@ class Mutation:
     def update_reservation_status(self, info: Info, data: UpdateReservationStatusInput) -> ReservationType:
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
-        return cast(ReservationType, reservation_update_status(user=user, reservation_id=clean["reservation_id"], status=clean["status"]))
+        return cast(
+            ReservationType,
+            reservation_update_status(user=user, reservation_id=clean["reservation_id"], status=clean["status"]),
+        )

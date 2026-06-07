@@ -29,6 +29,7 @@ def reservation_update(*, user: "User", data: Dict[str, Any]) -> Reservation:
     reservation.save()
     return reservation
 
+
 @transaction.atomic
 def reservation_update_status(*, user: "User", reservation_id: Any, status: Any) -> Reservation:
     try:

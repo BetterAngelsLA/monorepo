@@ -212,6 +212,7 @@ class CreateRoomInput:
     type: Optional[RoomStyleChoices] = None
     type_other: Optional[str] = None
 
+
 @strawberry.input
 class UpdateReservationInput:
     reservation_id: ID
@@ -222,6 +223,7 @@ class UpdateReservationInput:
     notes: Maybe[Optional[str]] = UNSET
     checked_in_at: Maybe[Optional[datetime]] = UNSET
     checked_out_at: Maybe[Optional[datetime]] = UNSET
+
 
 @strawberry.input
 class UpdateReservationStatusInput:
