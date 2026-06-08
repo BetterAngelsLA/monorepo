@@ -9,7 +9,7 @@ from common.graphql.types import NonBlankString, NonEmptyString
 from django.db.models import Q, QuerySet
 from organizations.models import Organization
 from reports.permissions import ReportPermissions
-from shelters.models.shelter import Shelter
+from shelters.permissions import ShelterPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
@@ -19,9 +19,7 @@ from .permissions import UserOrganizationPermissions
 AccountsGrantedPermissions = make_granted_permissions(UserOrganizationPermissions)
 ReportsGrantedPermissions = make_granted_permissions(ReportPermissions)
 
-_ShelterTextChoices = Shelter.perms.to_text_choices("shelters", "shelter", "ShelterPermissions")
-ShelterPermissions = strawberry.enum(_ShelterTextChoices)
-SheltersGrantedPermissions = make_granted_permissions(_ShelterTextChoices)
+SheltersGrantedPermissions = make_granted_permissions(ShelterPermissions)
 
 
 @strawberry.input

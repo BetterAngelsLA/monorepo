@@ -21,6 +21,34 @@ def perm(codename: str, description: str) -> str:
     return (codename, description)  # type: ignore[return-value]
 
 
+def perms_to_text_choices(model: type[Model]) -> type[TextChoices]:
+    """Build a TextChoices subclass from ``model.perms`` at import time.
+
+    Reads the raw ``perm()`` tuples from the PermissionSet class attributes
+    (no Django signals needed).  The name defaults to ``<Model>Permissions``.
+
+    Usage::
+
+        from shelters.models import Shelter
+        ShelterPermissions = perms_to_text_choices(Shelter)
+    """
+    perms_cls = model.perms
+    app_label = model._meta.app_label
+    model_name = model._meta.model_name
+    name = f"{model.__name__}Permissions"
+
+    members: list[tuple[str, tuple[str, str]]] = [
+        (action.upper(), (f"{app_label}.{action}_{model_name}", f"Can {action} {model_name}"))
+        for action in ("add", "change", "delete", "view")
+    ]
+    for attr_name in list(vars(perms_cls)):
+        value = vars(perms_cls)[attr_name]
+        if isinstance(value, tuple) and len(value) == 2 and all(isinstance(v, str) for v in value):
+            codename, description = value
+            members.append((attr_name, (f"{app_label}.{codename}", description)))
+    return TextChoices(name, members)  # type: ignore[return-value, no-any-return, call-overload]
+
+
 class PermissionSet:
     """Base class for typed model permission sets.
 
@@ -45,14 +73,19 @@ class PermissionSet:
     _perm_labels: dict[str, str]
 
     @classmethod
-    def to_text_choices(cls, app_label: str, model_name: str, name: str | None = None) -> type[TextChoices]:
+    def to_text_choices(cls, model: type[Model], name: str) -> type[TextChoices]:
         """Build a TextChoices subclass from the PermissionSet without requiring
         Django's class_prepared signal to have fired.
 
-        Works at module import time by reading the raw ``perm()`` tuples
-        (codename, description) still present as class attributes.
-        Standard CRUD perm names are derived from *model_name*.
+        ``model._meta.app_label`` and ``model._meta.model_name`` are always
+        available at import time (set by Django's ModelBase metaclass).
+
+        Works by reading the raw ``perm()`` tuples (codename, description)
+        still present as class attributes. Standard CRUD perm names are
+        derived from the model's ``_meta``.
         """
+        app_label = model._meta.app_label
+        model_name = model._meta.model_name
         members: list[tuple[str, tuple[str, str]]] = [
             (action.upper(), (f"{app_label}.{action}_{model_name}", f"Can {action} {model_name}"))
             for action in ("add", "change", "delete", "view")
@@ -62,8 +95,7 @@ class PermissionSet:
             if isinstance(value, tuple) and len(value) == 2 and all(isinstance(v, str) for v in value):
                 codename, description = value
                 members.append((attr_name, (f"{app_label}.{codename}", description)))
-        enum_name = name or f"{cls.__qualname__.replace('.', '_')}Enum"
-        return TextChoices(enum_name, members)  # type: ignore[return-value, no-any-return, call-overload]
+        return TextChoices(name, members)  # type: ignore[return-value, no-any-return, call-overload]
 
     @classmethod
     def contribute_to_class(cls, model: type[Model], name: str) -> None:
