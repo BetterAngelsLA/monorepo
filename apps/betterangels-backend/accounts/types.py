@@ -6,7 +6,7 @@ from accounts.enums import OrgRoleEnum
 from accounts.permissions import make_granted_permissions
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
-from django.db.models import Q, QuerySet
+from django.db.models import Q, QuerySet, TextChoices
 from organizations.models import Organization
 from reports.permissions import ReportPermissions
 from shelters.permissions import ShelterPermissions
@@ -129,7 +129,7 @@ class CurrentUserOrganizationType(OrganizationType):
 class OrgPermissions:
     accounts: List[UserOrganizationPermissions]
     reports: List[ReportPermissions]
-    shelters: List[ShelterPermissions]
+    shelters: List[TextChoices]
 
 
 @strawberry_django.type(User)

@@ -73,7 +73,8 @@ VideoPermissions = model_permissions(Video)
 
 # ── Strawberry-decorated ShelterPermissions (includes custom perms) ───────────
 
-ShelterPermissions = strawberry.enum(model_permissions(Shelter))
+ShelterPermissions: type[models.TextChoices] = model_permissions(Shelter)
+strawberry.enum(ShelterPermissions)  # register with Strawberry for GraphQL schema
 
 # ── Field-level permissions (no backing model) ────────────────────────────────
 
