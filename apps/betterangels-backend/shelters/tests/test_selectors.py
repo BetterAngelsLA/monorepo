@@ -135,7 +135,7 @@ class ReportBedStatusCountsTestCase(TestCase):
 
     def test_multiple_status_changes(self) -> None:
         """A bed changing status multiple times reflects each day correctly."""
-        day1, day2, day3 = datetime.date(2026, 1, 1), datetime.date(2026, 1, 2), datetime.date(2026, 1, 3)
+        day1, day3 = datetime.date(2026, 1, 1), datetime.date(2026, 1, 3)
 
         bed = baker.make(Bed, shelter=self.shelter, status=BedStatusChoices.AVAILABLE)
         self._backdate_events(bed, _dt(2026, 1, 1))
@@ -153,7 +153,7 @@ class ReportBedStatusCountsTestCase(TestCase):
 
     def test_bed_created_mid_range_not_counted_before(self) -> None:
         """A bed that didn't exist on earlier days is 0 before its creation."""
-        day1, day2, day3 = datetime.date(2026, 1, 1), datetime.date(2026, 1, 2), datetime.date(2026, 1, 3)
+        day1, day3 = datetime.date(2026, 1, 1), datetime.date(2026, 1, 3)
 
         bed = baker.make(Bed, shelter=self.shelter, status=BedStatusChoices.AVAILABLE)
         self._backdate_events(bed, _dt(2026, 1, 2))  # created on day 2
