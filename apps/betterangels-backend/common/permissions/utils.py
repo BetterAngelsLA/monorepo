@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Protocol, Sequence, Tuple, Type
+from typing import Any, Protocol, Sequence, Tuple, Type, cast
 
 import strawberry
 from common.errors import UnauthenticatedGQLError
@@ -56,7 +56,7 @@ def model_permissions(model: type[HasPerms]) -> type[TextChoices]:
         if isinstance(value, tuple) and len(value) == 2 and all(isinstance(v, str) for v in value):
             codename, description = value
             members.append((attr_name, (f"{app_label}.{codename}", description)))
-    return TextChoices(name, members)  # type: ignore[return-value, no-any-return, call-overload]
+    return cast(type[TextChoices], TextChoices(name, members))
 
 
 class PermissionSet:
@@ -81,31 +81,6 @@ class PermissionSet:
     DELETE: str
     VIEW: str
     _perm_labels: dict[str, str]
-
-    @classmethod
-    def to_text_choices(cls, model: type[Model], name: str) -> type[TextChoices]:
-        """Build a TextChoices subclass from the PermissionSet without requiring
-        Django's class_prepared signal to have fired.
-
-        ``model._meta.app_label`` and ``model._meta.model_name`` are always
-        available at import time (set by Django's ModelBase metaclass).
-
-        Works by reading the raw ``perm()`` tuples (codename, description)
-        still present as class attributes. Standard CRUD perm names are
-        derived from the model's ``_meta``.
-        """
-        app_label = model._meta.app_label
-        model_name = model._meta.model_name
-        members: list[tuple[str, tuple[str, str]]] = [
-            (action.upper(), (f"{app_label}.{action}_{model_name}", f"Can {action} {model_name}"))
-            for action in ("add", "change", "delete", "view")
-        ]
-        for attr_name in list(vars(cls)):
-            value = vars(cls)[attr_name]
-            if isinstance(value, tuple) and len(value) == 2 and all(isinstance(v, str) for v in value):
-                codename, description = value
-                members.append((attr_name, (f"{app_label}.{codename}", description)))
-        return TextChoices(name, members)  # type: ignore[return-value, no-any-return, call-overload]
 
     @classmethod
     def contribute_to_class(cls, model: type[Model], name: str) -> None:
