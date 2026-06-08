@@ -129,10 +129,11 @@ class TestPermissionAnnotationsWithRealEnums:
         from accounts.models import User
         from accounts.permissions import UserOrganizationPermissions
         from reports.permissions import ReportPermissions
-        from shelters.permissions import ShelterPermissions
+        from shelters.models.shelter import Shelter
 
         user = User.objects.create_user(username="realuser", password="pass")
         all_keys: list[str] = []
+        ShelterPermissions = Shelter.perms.as_text_choices("ShelterPermissions")
         for enum in (UserOrganizationPermissions, ReportPermissions, ShelterPermissions):
             all_keys.extend(permission_annotations(user, enum).keys())
 

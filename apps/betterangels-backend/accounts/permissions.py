@@ -4,6 +4,7 @@ from typing import Any, List, Optional, Protocol, Type, Union
 
 import strawberry
 from accounts.models import PermissionGroup, User
+from common.permissions.utils import PermissionSet
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.db import models
 from django.db.models import Exists, OuterRef, TextChoices
@@ -72,8 +73,10 @@ def _annotation_key(perm: TextChoices) -> str:
     return f"_perm_{app_label}_{codename}"
 
 
-def permission_annotations(user: User, permissions: Type[TextChoices]) -> dict[str, Exists]:
+def permission_annotations(user: User, permissions: Type[TextChoices] | type[PermissionSet]) -> dict[str, Exists]:
     """Return DB-level Exists annotations for organization permission checks."""
+    if issubclass(permissions, PermissionSet):
+        permissions = permissions.as_text_choices()
     annotations: dict[str, Exists] = {}
     for perm in permissions:
         app_label, codename = perm.value.split(".", 1)
@@ -88,12 +91,14 @@ def permission_annotations(user: User, permissions: Type[TextChoices]) -> dict[s
     return annotations
 
 
-def granted_permissions(instance: object, permissions: Type[TextChoices]) -> list[TextChoices]:
+def granted_permissions(instance: object, permissions: Type[TextChoices] | type[PermissionSet]) -> list[TextChoices]:
     """Return the list of permissions granted on the annotated instance."""
+    if issubclass(permissions, PermissionSet):
+        permissions = permissions.as_text_choices()
     return [perm for perm in permissions if getattr(instance, _annotation_key(perm), False)]
 
 
-def make_granted_permissions(permissions_enum: Type[TextChoices]) -> type[GrantedPermissionsType]:
+def make_granted_permissions(permissions_enum: Type[TextChoices] | type[PermissionSet]) -> type[GrantedPermissionsType]:
     """Create a strawberry type that resolves granted permissions for an enum.
 
     Usage:
@@ -107,6 +112,8 @@ def make_granted_permissions(permissions_enum: Type[TextChoices]) -> type[Grante
     The GraphQL type name defaults to ``<EnumName>GrantedPermissions``
     (e.g. ``UserOrganizationPermissionsGrantedPermissions``).
     """
+    if issubclass(permissions_enum, PermissionSet):
+        permissions_enum = permissions_enum.as_text_choices()
     name = f"{permissions_enum.__name__}GrantedPermissions"
 
     def get_annotations(klass: type, user: User) -> dict[str, Exists]:
