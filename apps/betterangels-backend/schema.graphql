@@ -2325,8 +2325,6 @@ enum ShelterPermissions {
   CHANGE
   DELETE
   VIEW
-  CHANGE_IS_REVIEWED
-  VIEW_PRIVATE
 }
 
 type ShelterPhotoType {

@@ -6,11 +6,10 @@ from accounts.enums import OrgRoleEnum
 from accounts.permissions import make_granted_permissions
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
-from django.db import models
 from django.db.models import Q, QuerySet
-from django.utils.translation import gettext_lazy as _
 from organizations.models import Organization
 from reports.permissions import ReportPermissions
+from shelters.models.shelter import Shelter
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
@@ -20,18 +19,9 @@ from .permissions import UserOrganizationPermissions
 AccountsGrantedPermissions = make_granted_permissions(UserOrganizationPermissions)
 ReportsGrantedPermissions = make_granted_permissions(ReportPermissions)
 
-
-@strawberry.enum
-class ShelterPermissions(models.TextChoices):
-    ADD = "shelters.add_shelter", _("Can add shelter")
-    CHANGE = "shelters.change_shelter", _("Can change shelter")
-    DELETE = "shelters.delete_shelter", _("Can delete shelter")
-    VIEW = "shelters.view_shelter", _("Can view shelter")
-    CHANGE_IS_REVIEWED = "shelters.change_shelter_is_reviewed", _("Can change shelter is reviewed")
-    VIEW_PRIVATE = "shelters.view_private_shelter", _("Can view private shelters")
-
-
-SheltersGrantedPermissions = make_granted_permissions(ShelterPermissions)
+_ShelterTextChoices = Shelter.perms.to_text_choices("shelters", "shelter", "ShelterPermissions")
+ShelterPermissions = strawberry.enum(_ShelterTextChoices)
+SheltersGrantedPermissions = make_granted_permissions(_ShelterTextChoices)
 
 
 @strawberry.input

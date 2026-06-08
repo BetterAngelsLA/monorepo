@@ -45,6 +45,27 @@ class PermissionSet:
     _perm_labels: dict[str, str]
 
     @classmethod
+    def to_text_choices(cls, app_label: str, model_name: str, name: str | None = None) -> type[TextChoices]:
+        """Build a TextChoices subclass from the PermissionSet without requiring
+        Django's class_prepared signal to have fired.
+
+        Works at module import time by reading the raw ``perm()`` tuples
+        (codename, description) still present as class attributes.
+        Standard CRUD perm names are derived from *model_name*.
+        """
+        members: list[tuple[str, tuple[str, str]]] = [
+            (action.upper(), (f"{app_label}.{action}_{model_name}", f"Can {action} {model_name}"))
+            for action in ("add", "change", "delete", "view")
+        ]
+        for attr_name in list(vars(cls)):
+            value = vars(cls)[attr_name]
+            if isinstance(value, tuple) and len(value) == 2 and all(isinstance(v, str) for v in value):
+                codename, description = value
+                members.append((attr_name, (f"{app_label}.{codename}", description)))
+        enum_name = name or f"{cls.__qualname__.replace('.', '_')}Enum"
+        return TextChoices(enum_name, members)  # type: ignore[return-value, no-any-return, call-overload]
+
+    @classmethod
     def contribute_to_class(cls, model: type[Model], name: str) -> None:
         if model._meta.abstract:
             setattr(model, name, cls)
