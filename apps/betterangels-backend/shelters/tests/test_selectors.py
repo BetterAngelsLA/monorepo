@@ -132,3 +132,63 @@ class ReportBedStatusCountsTestCase(TestCase):
             result = report_bed_status_counts(shelter=self.shelter, start_date=day, end_date=day)
 
         self._assert_result(result, [{"date": "2026-01-01", "available": 1}])
+
+    def test_multiple_status_changes(self) -> None:
+        """A bed changing status multiple times reflects each day correctly."""
+        day1, day2, day3 = datetime.date(2026, 1, 1), datetime.date(2026, 1, 2), datetime.date(2026, 1, 3)
+
+        bed = baker.make(Bed, shelter=self.shelter, status=BedStatusChoices.AVAILABLE)
+        self._backdate_events(bed, _dt(2026, 1, 1))
+        self._add_event(bed, "bed.status_change", BedStatusChoices.OCCUPIED, _dt(2026, 1, 2))
+        self._add_event(bed, "bed.status_change", BedStatusChoices.OUT_OF_SERVICE, _dt(2026, 1, 3))
+
+        with self.assertNumQueries(1):
+            result = report_bed_status_counts(shelter=self.shelter, start_date=day1, end_date=day3)
+
+        self._assert_result(result, [
+            {"date": "2026-01-01", "available": 1, "occupied": 0, "out_of_service": 0},
+            {"date": "2026-01-02", "available": 0, "occupied": 1, "out_of_service": 0},
+            {"date": "2026-01-03", "available": 0, "occupied": 0, "out_of_service": 1},
+        ])
+
+    def test_bed_created_mid_range_not_counted_before(self) -> None:
+        """A bed that didn't exist on earlier days is 0 before its creation."""
+        day1, day2, day3 = datetime.date(2026, 1, 1), datetime.date(2026, 1, 2), datetime.date(2026, 1, 3)
+
+        bed = baker.make(Bed, shelter=self.shelter, status=BedStatusChoices.AVAILABLE)
+        self._backdate_events(bed, _dt(2026, 1, 2))  # created on day 2
+
+        with self.assertNumQueries(1):
+            result = report_bed_status_counts(shelter=self.shelter, start_date=day1, end_date=day3)
+
+        self._assert_result(result, [
+            {"date": "2026-01-01", "available": 0},
+            {"date": "2026-01-02", "available": 1},
+            {"date": "2026-01-03", "available": 1},
+        ])
+
+    def test_empty_shelter_returns_all_zeros(self) -> None:
+        """A shelter with no beds returns zero counts for every day."""
+        start, end = datetime.date(2026, 1, 1), datetime.date(2026, 1, 3)
+
+        with self.assertNumQueries(1):
+            result = report_bed_status_counts(shelter=self.shelter, start_date=start, end_date=end)
+
+        self._assert_result(result, [
+            {"date": "2026-01-01"},
+            {"date": "2026-01-02"},
+            {"date": "2026-01-03"},
+        ])
+
+    def test_bed_removed_before_range_not_counted(self) -> None:
+        """A bed removed before the query range starts is excluded."""
+        bed = baker.make(Bed, shelter=self.shelter, status=BedStatusChoices.AVAILABLE)
+        self._backdate_events(bed, _dt(2025, 12, 1))
+        self._add_event(bed, "bed.remove", BedStatusChoices.AVAILABLE, _dt(2025, 12, 2))
+
+        day = datetime.date(2026, 1, 1)
+
+        with self.assertNumQueries(1):
+            result = report_bed_status_counts(shelter=self.shelter, start_date=day, end_date=day)
+
+        self._assert_result(result, [{"date": "2026-01-01"}])
