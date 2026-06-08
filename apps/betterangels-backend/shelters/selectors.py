@@ -8,7 +8,8 @@ managers (``managers.py``) and Strawberry ``get_queryset`` hooks
 
 import datetime
 from collections import Counter
-from typing import TYPE_CHECKING, Any
+from itertools import takewhile
+from typing import TYPE_CHECKING, Any, Iterator
 
 from django.db.models import Exists, OuterRef, Q, QuerySet, Subquery
 from organizations.models import Organization
@@ -60,35 +61,33 @@ def report_bed_status_counts(
         .values("pgh_obj_id", "status", "pgh_created_at", "next_event_at")
     )
 
-    res: list[dict[str, Any]] = []
-    curr = start_date
-    while curr <= end_date:
-        end_of_day = datetime.datetime.combine(curr, datetime.time.max, tzinfo=datetime.timezone.utc)
+    # Stream days from start_date to end_date (stdlib, zero-cost).
+    def _each_day() -> Iterator[datetime.date]:
+        for n in range((end_date - start_date).days + 1):
+            yield start_date + datetime.timedelta(days=n)
 
-        # For each bed, pick the latest event whose validity window covers end_of_day.
-        # Events are chronologically sorted — later events for the same bed replace
-        # earlier ones via simple dict assignment.
-        latest: dict[int, str] = {}
-        for e in events:
-            if e["pgh_created_at"] > end_of_day:
-                break
-            if e["next_event_at"] is None or e["next_event_at"] > end_of_day:
-                latest[e["pgh_obj_id"]] = e["status"]
+    def _counts(day: datetime.date) -> dict[str, Any]:
+        eod = datetime.datetime.combine(day, datetime.time.max, tzinfo=datetime.timezone.utc)
 
+        # Events are chronologically sorted — takewhile stops at the first
+        # event that starts *after* this day; dict comprehension naturally
+        # picks the latest status per bed (later events overwrite earlier).
+        valid = (
+            e for e in takewhile(lambda e: e["pgh_created_at"] <= eod, events)
+            if e["next_event_at"] is None or e["next_event_at"] > eod
+        )
+        latest = {e["pgh_obj_id"]: e["status"] for e in valid}
         counts = Counter(latest.values())
 
-        res.append(
-            {
-                "date": curr.isoformat(),
-                "available": counts.get(BedStatusChoices.AVAILABLE, 0),
-                "occupied": counts.get(BedStatusChoices.OCCUPIED, 0),
-                "reserved": counts.get(BedStatusChoices.RESERVED, 0),
-                "out_of_service": counts.get(BedStatusChoices.OUT_OF_SERVICE, 0),
-            }
-        )
-        curr += datetime.timedelta(days=1)
+        return {
+            "date": day.isoformat(),
+            "available": counts.get(BedStatusChoices.AVAILABLE, 0),
+            "occupied": counts.get(BedStatusChoices.OCCUPIED, 0),
+            "reserved": counts.get(BedStatusChoices.RESERVED, 0),
+            "out_of_service": counts.get(BedStatusChoices.OUT_OF_SERVICE, 0),
+        }
 
-    return res
+    return [_counts(d) for d in _each_day()]
 
 
 def shelter_list(
