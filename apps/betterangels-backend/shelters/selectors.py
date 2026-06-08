@@ -60,35 +60,22 @@ def report_bed_status_counts(
         .values("pgh_obj_id", "status", "pgh_created_at", "next_event_at")
     )
 
-    res = []
+    res: list[dict[str, Any]] = []
     curr = start_date
-    i = 0  # index into events: all events up to i have pgh_created_at <= end_of_day
-    # active maps obj_id -> (status, next_event_at) for currently active events
-    active: dict[int, tuple[str, datetime.datetime | None]] = {}
-
     while curr <= end_date:
         end_of_day = datetime.datetime.combine(curr, datetime.time.max, tzinfo=datetime.timezone.utc)
 
-        # Advance pointer: events that started by end_of_day activate (or replace
-        # a previous event for the same bed — chronologically later wins).
-        while i < len(events) and events[i]["pgh_created_at"] <= end_of_day:
-            e = events[i]
-            active[e["pgh_obj_id"]] = (e["status"], e["next_event_at"])
-            i += 1
+        # For each bed, pick the latest event whose validity window covers end_of_day.
+        # Events are chronologically sorted — later events for the same bed replace
+        # earlier ones via simple dict assignment.
+        latest: dict[int, str] = {}
+        for e in events:
+            if e["pgh_created_at"] > end_of_day:
+                break
+            if e["next_event_at"] is None or e["next_event_at"] > end_of_day:
+                latest[e["pgh_obj_id"]] = e["status"]
 
-        # Remove events whose validity window has closed.
-        expired_ids = [
-            obj_id
-            for obj_id, (_, next_at) in active.items()
-            if next_at is not None and next_at <= end_of_day
-        ]
-        for obj_id in expired_ids:
-            del active[obj_id]
-
-        # Count by status from active set.
-        counts: Counter[str] = Counter()
-        for status, _ in active.values():
-            counts[status] += 1
+        counts = Counter(latest.values())
 
         res.append(
             {
