@@ -1,41 +1,25 @@
+from common.permissions.utils import perms_to_text_choices
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from .models import (
+    ClientContact,
+    ClientHouseholdMember,
+    ClientProfile,
+    ClientProfileImportRecord,
+    HmisProfile,
+    SocialMediaProfile,
+)
 
-class ClientProfilePermissions(models.TextChoices):
-    VIEW = "clients.view_clientprofile", _("Can view clientprofile")
-    CHANGE = "clients.change_clientprofile", _("Can change clientprofile")
-    DELETE = "clients.delete_clientprofile", _("Can delete clientprofile")
-    ADD = "clients.add_clientprofile", _("Can add clientprofile")
+# ── Model-backed permissions ─────────────────────────────────────────────────
 
+ClientProfilePermissions = perms_to_text_choices(ClientProfile)
+ClientContactPermissions = perms_to_text_choices(ClientContact)
+ClientHouseholdMemberPermissions = perms_to_text_choices(ClientHouseholdMember)
+HmisProfilePermissions = perms_to_text_choices(HmisProfile)
+SocialMediaProfilePermissions = perms_to_text_choices(SocialMediaProfile)
 
-class ClientContactPermissions(models.TextChoices):
-    VIEW = "clients.view_clientcontact", _("Can view clientcontact")
-    CHANGE = "clients.change_clientcontact", _("Can change clientcontact")
-    DELETE = "clients.delete_clientcontact", _("Can delete clientcontact")
-    ADD = "clients.add_clientcontact", _("Can add clientcontact")
-
-
-class ClientHouseholdMemberPermissions(models.TextChoices):
-    VIEW = "clients.view_clienthouseholdmember", _("Can view clienthouseholdmember")
-    CHANGE = "clients.change_clienthouseholdmember", _("Can change clienthouseholdmember")
-    DELETE = "clients.delete_clienthouseholdmember", _("Can delete clienthouseholdmember")
-    ADD = "clients.add_clienthouseholdmember", _("Can add clienthouseholdmember")
-
-
-class HmisProfilePermissions(models.TextChoices):
-    VIEW = "clients.view_hmisprofile", _("Can view hmisprofile")
-    CHANGE = "clients.change_hmisprofile", _("Can change hmisprofile")
-    DELETE = "clients.delete_hmisprofile", _("Can delete hmisprofile")
-    ADD = "clients.add_hmisprofile", _("Can add hmisprofile")
-
-
-class SocialMediaProfilePermissions(models.TextChoices):
-    VIEW = "clients.view_socialmediaprofile", _("Can view socialmediaprofile")
-    CHANGE = "clients.change_socialmediaprofile", _("Can change socialmediaprofile")
-    DELETE = "clients.delete_socialmediaprofile", _("Can delete socialmediaprofile")
-    ADD = "clients.add_socialmediaprofile", _("Can add socialmediaprofile")
-
+# ── Non-BaseModel (no .perms available) ──────────────────────────────────────
 
 class ClientProfileImportRecordPermissions(models.TextChoices):
     VIEW = "clients.view_clientprofileimportrecord", _("Can view client profile import record")
