@@ -2919,10 +2919,8 @@ export type ShelterOrder = {
 export enum ShelterPermissions {
   Add = 'ADD',
   Change = 'CHANGE',
-  ChangeIsReviewed = 'CHANGE_IS_REVIEWED',
   Delete = 'DELETE',
-  View = 'VIEW',
-  ViewPrivate = 'VIEW_PRIVATE'
+  View = 'VIEW'
 }
 
 export type ShelterPhotoType = {
