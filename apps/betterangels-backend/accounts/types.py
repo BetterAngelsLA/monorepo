@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List, Optional, Tuple
 
 import strawberry
@@ -6,7 +8,7 @@ from accounts.enums import OrgRoleEnum
 from accounts.permissions import make_granted_permissions
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
-from django.db.models import Q, QuerySet, TextChoices
+from django.db.models import Q, QuerySet
 from organizations.models import Organization
 from reports.permissions import ReportPermissions
 from shelters.permissions import ShelterPermissions
@@ -129,7 +131,7 @@ class CurrentUserOrganizationType(OrganizationType):
 class OrgPermissions:
     accounts: List[UserOrganizationPermissions]
     reports: List[ReportPermissions]
-    shelters: List[TextChoices]
+    shelters: List[ShelterPermissions]  # type: ignore[valid-type]
 
 
 @strawberry_django.type(User)
