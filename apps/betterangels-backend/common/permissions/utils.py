@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Sequence, Tuple, Type
+from typing import Any, Protocol, Sequence, Tuple, Type, cast
 
 import strawberry
 from common.errors import UnauthenticatedGQLError
@@ -19,6 +19,46 @@ def perm(codename: str, description: str) -> str:
     enabling full IDE autocomplete.
     """
     return (codename, description)  # type: ignore[return-value]
+
+
+class HasPerms(Protocol):
+    """Protocol for models that define a ``perms`` PermissionSet.
+
+    Ensures type-checkers reject plain ``models.Model`` subclasses that
+    lack the ``.perms`` attribute.
+    """
+
+    perms: type  # PermissionSet subclass
+
+
+def model_permissions(model: type[Model]) -> type[TextChoices]:
+    """Build a TextChoices subclass from ``model.perms`` at import time.
+
+    Reads the raw ``perm()`` tuples from the PermissionSet class attributes
+    (no Django signals needed).  The name is ``<ModelName>Permissions``.
+
+    Usage::
+
+        from shelters.models import Shelter
+        ShelterPermissions = model_permissions(Shelter)
+    """
+    if not hasattr(model, "perms"):
+        raise TypeError(f"{model.__name__} does not have a 'perms' PermissionSet.")
+    perms_cls = model.perms
+    app_label = model._meta.app_label
+    model_name = model._meta.model_name
+    name = f"{model.__name__}Permissions"
+
+    members: list[tuple[str, tuple[str, str]]] = [
+        (action.upper(), (f"{app_label}.{action}_{model_name}", f"Can {action} {model_name}"))
+        for action in ("add", "change", "delete", "view")
+    ]
+    for attr_name in list(vars(perms_cls)):
+        value = vars(perms_cls)[attr_name]
+        if isinstance(value, tuple) and len(value) == 2 and all(isinstance(v, str) for v in value):
+            codename, description = value
+            members.append((attr_name, (f"{app_label}.{codename}", description)))
+    return cast(type[TextChoices], TextChoices(name, members))  # type: ignore[call-overload]  # django-stubs: ChoicesType metaclass not stubbed
 
 
 class PermissionSet:
