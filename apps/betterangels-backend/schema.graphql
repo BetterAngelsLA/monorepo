@@ -2757,13 +2757,25 @@ input UpdateShelterInput {
   isPrivate: Boolean
   cityId: ID
   spaId: ID
+  citiesServedIds: [ID!]
+  spasServedIds: [ID!]
   phone: PhoneNumber
   addNotesSleepingDetails: String
   addNotesShelterDetails: String
+  maxStay: Int
+  onSiteSecurity: Boolean
+  visitorsAllowed: Boolean
+  exitPolicyOther: String
+  emergencySurge: Boolean
   otherRules: String
   otherServices: String
   entryInfo: String
   subjectiveReview: String
+  demographicsOther: String
+  shelterTypesOther: String
+  cityCouncilDistrict: Int
+  supervisorialDistrict: Int
+  fundersOther: String
   accessibility: [AccessibilityChoices!]
   demographics: [DemographicChoices!]
   specialSituationRestrictions: [SpecialSituationRestrictionChoices!]
