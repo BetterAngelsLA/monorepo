@@ -14,7 +14,12 @@ function toUpdateInput(
 ): UseUpdateShelterProfileInput {
   return {
     id: shelterId,
+    maxStay: data.maxStay ?? null,
+    onSiteSecurity: data.onSiteSecurity ?? null,
+    visitorsAllowed: data.visitorsAllowed ?? null,
+    emergencySurge: data.emergencySurge ?? null,
     exitPolicy: data.exitPolicy,
+    exitPolicyOther: data.exitPolicyOther ?? null,
     otherRules: data.otherRules ?? null,
   };
 }

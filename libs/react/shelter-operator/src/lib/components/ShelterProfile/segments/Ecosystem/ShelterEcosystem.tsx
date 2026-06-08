@@ -16,8 +16,13 @@ function toUpdateInput(
     id: shelterId,
     cityId: data.city?.id ?? null,
     spaId: data.spa?.id ?? null,
+    citiesServedIds: data.citiesServed.map((city) => city.id),
+    spasServedIds: data.spasServed.map((spa) => spa.id),
+    cityCouncilDistrict: data.cityCouncilDistrict ?? null,
+    supervisorialDistrict: data.supervisorialDistrict ?? null,
     shelterPrograms: data.shelterPrograms,
     funders: data.funders,
+    fundersOther: data.fundersOther ?? null,
   };
 }
 

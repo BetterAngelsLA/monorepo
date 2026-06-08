@@ -181,6 +181,9 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     data = {k: v for k, v in data.items() if v is not UNSET}
     data.pop("organization", None)  # organization cannot be changed after creation
 
+    cities_served_ids = data.pop("cities_served_ids", None)
+    spas_served_ids = data.pop("spas_served_ids", None)
+
     shelter = Shelter.objects.get(pk=shelter_id)
 
     _assert_org_membership(user, shelter.organization_id, message="You do not have permission to update this shelter.")
@@ -204,5 +207,11 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     if has_schedules:
         shelter.schedules.all().delete()
         _create_schedules(shelter, schedules_data)
+
+    if cities_served_ids is not None:
+        shelter.cities_served.set(cities_served_ids)
+
+    if spas_served_ids is not None:
+        shelter.spas_served.set(spas_served_ids)
 
     return shelter
