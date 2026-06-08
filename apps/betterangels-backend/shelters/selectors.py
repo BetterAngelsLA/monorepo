@@ -9,7 +9,7 @@ managers (``managers.py``) and Strawberry ``get_queryset`` hooks
 import datetime
 from collections import Counter
 from itertools import takewhile
-from typing import TYPE_CHECKING, Any, Iterator
+from typing import TYPE_CHECKING, Any
 
 from django.db.models import Exists, OuterRef, Q, QuerySet, Subquery
 from organizations.models import Organization
@@ -33,6 +33,10 @@ def report_bed_status_counts(
     event ends the bed's lifecycle.  By annotating each event with its
     successor's timestamp we can answer "what was the status on day X?"
     with a single query — no per-day round-trips, no DISTINCT ON.
+
+    TODO: Add demographic filtering once pghistory tracks M2M through tables.
+    Bed.demographics is M2M and pghistory only tracks scalar fields so we cannot
+    reconstruct historically accurate demographic membership from BedEvent
     """
     from shelters.models import BedEvent  # type: ignore[attr-defined]
 
