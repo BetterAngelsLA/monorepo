@@ -1,4 +1,4 @@
-from common.permissions.utils import perms_to_text_choices
+from common.permissions.utils import model_permissions
 
 from .models import Task
 
@@ -10,4 +10,4 @@ from .models import Task
 #     Task.perms.VIEW    → "tasks.view_task"
 # ──────────────────────────────────────────────────────────────────────────────
 
-TaskPermissions = perms_to_text_choices(Task)
+TaskPermissions = model_permissions(Task)

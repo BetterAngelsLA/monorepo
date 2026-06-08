@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Sequence, Tuple, Type
+from typing import Any, Protocol, Sequence, Tuple, Type
 
 import strawberry
 from common.errors import UnauthenticatedGQLError
@@ -21,16 +21,26 @@ def perm(codename: str, description: str) -> str:
     return (codename, description)  # type: ignore[return-value]
 
 
-def perms_to_text_choices(model: type[Model]) -> type[TextChoices]:
+class HasPerms(Protocol):
+    """Protocol for models that define a ``perms`` PermissionSet.
+
+    Ensures type-checkers reject plain ``models.Model`` subclasses that
+    lack the ``.perms`` attribute.
+    """
+
+    perms: type  # PermissionSet subclass
+
+
+def model_permissions(model: type[HasPerms]) -> type[TextChoices]:
     """Build a TextChoices subclass from ``model.perms`` at import time.
 
     Reads the raw ``perm()`` tuples from the PermissionSet class attributes
-    (no Django signals needed).  The name defaults to ``<Model>Permissions``.
+    (no Django signals needed).  The name is ``<ModelName>Permissions``.
 
     Usage::
 
         from shelters.models import Shelter
-        ShelterPermissions = perms_to_text_choices(Shelter)
+        ShelterPermissions = model_permissions(Shelter)
     """
     perms_cls = model.perms
     app_label = model._meta.app_label

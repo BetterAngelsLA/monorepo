@@ -1,9 +1,10 @@
 import strawberry
-from common.permissions.utils import perms_to_text_choices
+from common.permissions.utils import model_permissions
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from .models import (
+    SPA,
     Accessibility,
     Bed,
     City,
@@ -23,7 +24,6 @@ from .models import (
     Schedule,
     Service,
     ServiceCategory,
-    SPA,
     Shelter,
     ShelterPhoto,
     ShelterProgram,
@@ -43,39 +43,40 @@ from .models import (
 #     Shelter.perms.VIEW_PRIVATE   → "shelters.view_private_shelter"
 # ──────────────────────────────────────────────────────────────────────────────
 
-AccessibilityPermissions = perms_to_text_choices(Accessibility)
-BedPermissions = perms_to_text_choices(Bed)
-CityPermissions = perms_to_text_choices(City)
-ContactInfoPermissions = perms_to_text_choices(ContactInfo)
-DemographicPermissions = perms_to_text_choices(Demographic)
-EntryRequirementPermissions = perms_to_text_choices(EntryRequirement)
-ExitPolicyPermissions = perms_to_text_choices(ExitPolicy)
-ExteriorShelterPhotoPermissions = perms_to_text_choices(ExteriorShelterPhoto)
-FunderPermissions = perms_to_text_choices(Funder)
-InteriorShelterPhotoPermissions = perms_to_text_choices(InteriorShelterPhoto)
-MedicalNeedPermissions = perms_to_text_choices(MedicalNeed)
-ParkingPermissions = perms_to_text_choices(Parking)
-PetPermissions = perms_to_text_choices(Pet)
-ReferralRequirementPermissions = perms_to_text_choices(ReferralRequirement)
-RoomPermissions = perms_to_text_choices(Room)
-RoomStylePermissions = perms_to_text_choices(RoomStyle)
-SchedulePermissions = perms_to_text_choices(Schedule)
-ServicePermissions = perms_to_text_choices(Service)
-ServiceCategoryPermissions = perms_to_text_choices(ServiceCategory)
-ShelterPhotoPermissions = perms_to_text_choices(ShelterPhoto)
-ShelterProgramPermissions = perms_to_text_choices(ShelterProgram)
-ShelterTypePermissions = perms_to_text_choices(ShelterType)
-SpaPermissions = perms_to_text_choices(SPA)
-SpecialSituationRestrictionPermissions = perms_to_text_choices(SpecialSituationRestriction)
-StoragePermissions = perms_to_text_choices(Storage)
-VaccinationRequirementPermissions = perms_to_text_choices(VaccinationRequirement)
-VideoPermissions = perms_to_text_choices(Video)
+AccessibilityPermissions = model_permissions(Accessibility)
+BedPermissions = model_permissions(Bed)
+CityPermissions = model_permissions(City)
+ContactInfoPermissions = model_permissions(ContactInfo)
+DemographicPermissions = model_permissions(Demographic)
+EntryRequirementPermissions = model_permissions(EntryRequirement)
+ExitPolicyPermissions = model_permissions(ExitPolicy)
+ExteriorShelterPhotoPermissions = model_permissions(ExteriorShelterPhoto)
+FunderPermissions = model_permissions(Funder)
+InteriorShelterPhotoPermissions = model_permissions(InteriorShelterPhoto)
+MedicalNeedPermissions = model_permissions(MedicalNeed)
+ParkingPermissions = model_permissions(Parking)
+PetPermissions = model_permissions(Pet)
+ReferralRequirementPermissions = model_permissions(ReferralRequirement)
+RoomPermissions = model_permissions(Room)
+RoomStylePermissions = model_permissions(RoomStyle)
+SchedulePermissions = model_permissions(Schedule)
+ServicePermissions = model_permissions(Service)
+ServiceCategoryPermissions = model_permissions(ServiceCategory)
+ShelterPhotoPermissions = model_permissions(ShelterPhoto)
+ShelterProgramPermissions = model_permissions(ShelterProgram)
+ShelterTypePermissions = model_permissions(ShelterType)
+SpaPermissions = model_permissions(SPA)
+SpecialSituationRestrictionPermissions = model_permissions(SpecialSituationRestriction)
+StoragePermissions = model_permissions(Storage)
+VaccinationRequirementPermissions = model_permissions(VaccinationRequirement)
+VideoPermissions = model_permissions(Video)
 
 # ── Strawberry-decorated ShelterPermissions (includes custom perms) ───────────
 
-ShelterPermissions = strawberry.enum(perms_to_text_choices(Shelter))
+ShelterPermissions = strawberry.enum(model_permissions(Shelter))
 
 # ── Field-level permissions (no backing model) ────────────────────────────────
+
 
 class ShelterPrivacyPermissions(models.TextChoices):
     VIEW_PRIVATE = "shelters.view_private_shelter", _("Can view private shelters")

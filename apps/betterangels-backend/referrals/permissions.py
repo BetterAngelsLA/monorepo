@@ -1,4 +1,4 @@
-from common.permissions.utils import perms_to_text_choices
+from common.permissions.utils import model_permissions
 
 from .models import Referral
 
@@ -10,4 +10,4 @@ from .models import Referral
 #     Referral.perms.VIEW    → "referrals.view_referral"
 # ──────────────────────────────────────────────────────────────────────────────
 
-ReferralPermissions = perms_to_text_choices(Referral)
+ReferralPermissions = model_permissions(Referral)

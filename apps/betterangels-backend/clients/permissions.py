@@ -1,4 +1,4 @@
-from common.permissions.utils import perms_to_text_choices
+from common.permissions.utils import model_permissions
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -6,7 +6,6 @@ from .models import (
     ClientContact,
     ClientHouseholdMember,
     ClientProfile,
-    ClientProfileImportRecord,
     HmisProfile,
     SocialMediaProfile,
 )
@@ -19,13 +18,15 @@ from .models import (
 #     ClientProfile.perms.VIEW     → "clients.view_clientprofile"
 # ──────────────────────────────────────────────────────────────────────────────
 
-ClientProfilePermissions = perms_to_text_choices(ClientProfile)
-ClientContactPermissions = perms_to_text_choices(ClientContact)
-ClientHouseholdMemberPermissions = perms_to_text_choices(ClientHouseholdMember)
-HmisProfilePermissions = perms_to_text_choices(HmisProfile)
-SocialMediaProfilePermissions = perms_to_text_choices(SocialMediaProfile)
+ClientProfilePermissions = model_permissions(ClientProfile)
+ClientContactPermissions = model_permissions(ClientContact)
+ClientHouseholdMemberPermissions = model_permissions(ClientHouseholdMember)
+HmisProfilePermissions = model_permissions(HmisProfile)
+SocialMediaProfilePermissions = model_permissions(SocialMediaProfile)
+
 
 # ── Non-BaseModel (no .perms available) ──────────────────────────────────────
+
 
 class ClientProfileImportRecordPermissions(models.TextChoices):
     VIEW = "clients.view_clientprofileimportrecord", _("Can view client profile import record")
