@@ -18,7 +18,6 @@ from .permissions import UserOrganizationPermissions
 
 AccountsGrantedPermissions = make_granted_permissions(UserOrganizationPermissions)
 ReportsGrantedPermissions = make_granted_permissions(ReportPermissions)
-
 SheltersGrantedPermissions = make_granted_permissions(ShelterPermissions)
 
 
