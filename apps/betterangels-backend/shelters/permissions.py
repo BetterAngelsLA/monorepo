@@ -1,3 +1,4 @@
+import strawberry
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -114,6 +115,7 @@ class RoomStylePermissions(models.TextChoices):
     VIEW = "shelters.view_roomstyle", _("Can view room style")
 
 
+@strawberry.enum
 class ShelterPermissions(models.TextChoices):
     ADD = "shelters.add_shelter", _("Can add shelter")
     CHANGE = "shelters.change_shelter", _("Can change shelter")

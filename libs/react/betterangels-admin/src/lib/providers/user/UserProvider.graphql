@@ -8,7 +8,11 @@ query currentOrgUser {
     organizations: organizationsOrganization {
       id
       name
-      userPermissions
+      permissions {
+        accounts
+        reports
+        shelters
+      }
     }
   }
 }

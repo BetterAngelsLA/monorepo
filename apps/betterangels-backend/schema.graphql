@@ -826,7 +826,7 @@ union CreateTaskPayload = TaskType | OperationInfo
 type CurrentUserOrganizationType {
   id: ID!
   name: String!
-  userPermissions: [UserOrganizationPermissions!]
+  permissions: OrgPermissions!
 }
 
 type CurrentUserType {
@@ -1701,6 +1701,12 @@ input OrgInvitationInput {
   organizationId: ID!
 }
 
+type OrgPermissions {
+  accounts: [UserOrganizationPermissions!]!
+  reports: [ReportPermissions!]!
+  shelters: [ShelterPermissions!]!
+}
+
 enum OrgRoleEnum {
   MEMBER
   ADMIN
@@ -1914,7 +1920,7 @@ type Query {
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  reportSummary(organizationId: ID = null, startDate: Date = null, endDate: Date = null): ReportSummaryType!
+  reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   adminShelter(pk: ID!): AdminShelterType! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
@@ -2028,6 +2034,10 @@ input RemoveOrganizationMemberInput {
 }
 
 union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo
+
+enum ReportPermissions {
+  VIEW_REPORTS
+}
 
 type ReportSummaryType {
   totalNotes: Int!
@@ -2318,6 +2328,13 @@ type ShelterLocationType {
 input ShelterOrder {
   name: Ordering
   createdAt: Ordering
+}
+
+enum ShelterPermissions {
+  ADD
+  CHANGE
+  DELETE
+  VIEW
 }
 
 type ShelterPhotoType {
@@ -2817,7 +2834,6 @@ enum UserOrganizationPermissions {
   CHANGE_ORG_MEMBER_ROLE
   REMOVE_ORG_MEMBER
   VIEW_ORG_MEMBERS
-  VIEW_REPORTS
 }
 
 type UserType {
