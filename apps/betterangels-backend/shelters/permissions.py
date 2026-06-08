@@ -34,7 +34,14 @@ from .models import (
     Video,
 )
 
-# ── Model-backed permissions ─────────────────────────────────────────────────
+# ── Model-backed permission enums ─────────────────────────────────────────────
+# These TextChoices classes exist solely to register types with Strawberry's
+# GraphQL type system (schema introspection, make_granted_permissions, etc.).
+#
+# For IDE autocomplete on individual permission values, use the model's .perms:
+#     Shelter.perms.ADD            → "shelters.add_shelter"
+#     Shelter.perms.VIEW_PRIVATE   → "shelters.view_private_shelter"
+# ──────────────────────────────────────────────────────────────────────────────
 
 AccessibilityPermissions = perms_to_text_choices(Accessibility)
 BedPermissions = perms_to_text_choices(Bed)

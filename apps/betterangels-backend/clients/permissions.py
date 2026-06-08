@@ -11,7 +11,13 @@ from .models import (
     SocialMediaProfile,
 )
 
-# ── Model-backed permissions ─────────────────────────────────────────────────
+# ── Model-backed permission enums ─────────────────────────────────────────────
+# These TextChoices classes exist solely to register types with Strawberry's
+# GraphQL type system (schema introspection, make_granted_permissions, etc.).
+#
+# For IDE autocomplete on individual permission values, use the model's .perms:
+#     ClientProfile.perms.VIEW     → "clients.view_clientprofile"
+# ──────────────────────────────────────────────────────────────────────────────
 
 ClientProfilePermissions = perms_to_text_choices(ClientProfile)
 ClientContactPermissions = perms_to_text_choices(ClientContact)
