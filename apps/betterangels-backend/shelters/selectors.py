@@ -61,23 +61,19 @@ def report_bed_status_counts(
         .values("pgh_obj_id", "status", "pgh_created_at", "next_event_at")
     )
 
-    # Stream days from start_date to end_date (stdlib, zero-cost).
-    def _each_day() -> Iterator[datetime.date]:
-        for n in range((end_date - start_date).days + 1):
-            yield start_date + datetime.timedelta(days=n)
+    n_days = (end_date - start_date).days + 1
 
     def _counts(day: datetime.date) -> dict[str, Any]:
         eod = datetime.datetime.combine(day, datetime.time.max, tzinfo=datetime.timezone.utc)
 
-        # Events are chronologically sorted — takewhile stops at the first
-        # event that starts *after* this day; dict comprehension naturally
-        # picks the latest status per bed (later events overwrite earlier).
-        valid = (
-            e for e in takewhile(lambda e: e["pgh_created_at"] <= eod, events)
+        # Dict comprehension over chronologically sorted events: takewhile
+        # limits to events <= end_of_day; later events for the same bed
+        # naturally overwrite earlier ones.
+        counts = Counter(
+            e["status"]
+            for e in takewhile(lambda e: e["pgh_created_at"] <= eod, events)
             if e["next_event_at"] is None or e["next_event_at"] > eod
         )
-        latest = {e["pgh_obj_id"]: e["status"] for e in valid}
-        counts = Counter(latest.values())
 
         return {
             "date": day.isoformat(),
@@ -87,7 +83,7 @@ def report_bed_status_counts(
             "out_of_service": counts.get(BedStatusChoices.OUT_OF_SERVICE, 0),
         }
 
-    return [_counts(d) for d in _each_day()]
+    return [_counts(start_date + datetime.timedelta(days=n)) for n in range(n_days)]
 
 
 def shelter_list(
