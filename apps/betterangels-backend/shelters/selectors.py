@@ -25,27 +25,70 @@ def report_bed_status_counts(
     *, shelter: "Shelter", start_date: datetime.date, end_date: datetime.date
 ) -> list[dict[str, Any]]:
     """
-    Returns daily bed status counts for each day in the range
-    TODO: Add demographic filtering once pghistory tracks M2M through tables.
-    Bed.demographics is M2M and pghistory only tracks scalar fields so we cannot
-    reconstruct historically accurate demographic membership from BedEvent
+    Returns daily bed status counts for each day in the range.
+
+    Each BedEvent is valid from its ``pgh_created_at`` until the *next*
+    event for the same bed (or forever if no next event).  A ``bed.remove``
+    event ends the bed's lifecycle.  By annotating each event with its
+    successor's timestamp we can answer "what was the status on day X?"
+    with a single query — no per-day round-trips, no DISTINCT ON.
     """
     from shelters.models import BedEvent  # type: ignore[attr-defined]
 
+    end_of_range = datetime.datetime.combine(end_date, datetime.time.max, tzinfo=datetime.timezone.utc)
+
+    # Subquery: the *next* BedEvent (by pgh_created_at) for the same bed.
+    next_event_subq = (
+        BedEvent.objects.filter(
+            pgh_obj_id=OuterRef("pgh_obj_id"),
+            pgh_created_at__gt=OuterRef("pgh_created_at"),
+        )
+        .order_by("pgh_created_at")
+        .values("pgh_created_at")[:1]
+    )
+
+    # One query: all events up to end_of_range, annotated with successor timestamp,
+    # sorted chronologically so the inner loop can break early.
+    events = list(
+        BedEvent.objects.filter(
+            shelter_id=shelter.pk,
+            pgh_created_at__lte=end_of_range,
+        )
+        .exclude(pgh_label="bed.remove")
+        .annotate(next_event_at=Subquery(next_event_subq))
+        .order_by("pgh_created_at")
+        .values("pgh_obj_id", "status", "pgh_created_at", "next_event_at")
+    )
+
     res = []
     curr = start_date
+    i = 0  # index into events: all events up to i have pgh_created_at <= end_of_day
+    # active maps obj_id -> (status, next_event_at) for currently active events
+    active: dict[int, tuple[str, datetime.datetime | None]] = {}
 
     while curr <= end_date:
         end_of_day = datetime.datetime.combine(curr, datetime.time.max, tzinfo=datetime.timezone.utc)
 
-        latest_event_ids = (
-            BedEvent.objects.filter(shelter_id=shelter.pk, pgh_created_at__lte=end_of_day)
-            .order_by("pgh_obj_id", "-pgh_created_at")
-            .distinct("pgh_obj_id")
-            .values("pgh_id")
-        )
-        snapshot = BedEvent.objects.filter(pgh_id__in=Subquery(latest_event_ids)).exclude(pgh_label="bed.remove")
-        counts = Counter(snapshot.values_list("status", flat=True))
+        # Advance pointer: events that started by end_of_day activate (or replace
+        # a previous event for the same bed — chronologically later wins).
+        while i < len(events) and events[i]["pgh_created_at"] <= end_of_day:
+            e = events[i]
+            active[e["pgh_obj_id"]] = (e["status"], e["next_event_at"])
+            i += 1
+
+        # Remove events whose validity window has closed.
+        expired_ids = [
+            obj_id
+            for obj_id, (_, next_at) in active.items()
+            if next_at is not None and next_at <= end_of_day
+        ]
+        for obj_id in expired_ids:
+            del active[obj_id]
+
+        # Count by status from active set.
+        counts: Counter[str] = Counter()
+        for status, _ in active.values():
+            counts[status] += 1
 
         res.append(
             {
@@ -56,8 +99,8 @@ def report_bed_status_counts(
                 "out_of_service": counts.get(BedStatusChoices.OUT_OF_SERVICE, 0),
             }
         )
-
         curr += datetime.timedelta(days=1)
+
     return res
 
 
