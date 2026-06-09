@@ -47,9 +47,11 @@ def remove_org_group_permissions_from_user(user: User, organization: Organizatio
 
 
 def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> PermissionGroup:
-    # WARNING: Temporary workaround for organization selection
-    # TODO: Update once organization selection is implemented. Currently selects
-    # the first organization with a default Caseworker role for the user.
+    """DEPRECATED: Use :func:`resolve_permission_group` instead.
+
+    Returns the first Caseworker permission group found for *user*.
+    Only works correctly for single-org users and outreach orgs.
+    """
     permission_group = (
         PermissionGroup.objects.select_related("organization", "group")
         .filter(
@@ -63,6 +65,22 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
         raise PermissionError("User lacks proper organization or permissions")
 
     return permission_group
+
+
+def resolve_permission_group(
+    user: Union[AbstractBaseUser, AnonymousUser],
+    org_id: str,
+) -> PermissionGroup:
+    """Return the permission group for *user* in the organization identified
+    by *org_id*.
+
+    Resolves the user's highest-priority group by looking at all groups
+    they belong to in that organization.  This is the multi-org-aware
+    replacement for :func:`get_user_permission_group`.
+    """
+    from accounts.services import get_user_permission_group_for_org
+
+    return get_user_permission_group_for_org(user, org_id)
 
 
 def get_outreach_authorized_users() -> QuerySet[User]:
