@@ -1,3 +1,5 @@
+from typing import Any
+
 from common.tests.utils import GraphQLBaseTestCase
 from shelters.enums import StatusChoices
 from shelters.tests.baker_recipes import shelter_recipe
@@ -63,7 +65,7 @@ class ShelterPrivacyPermissionTestCase(GraphQLBaseTestCase):
         response = self.execute_graphql(query, {"id": shelter.pk})
         self.assertEqual(response.get("errors") is not None, expect_error)
 
-    def _grant_view_private_shelter(self, user) -> None:
+    def _grant_view_private_shelter(self, user: Any) -> None:
         """Grant view_private_shelter permission to a user via their PermissionGroup."""
         from django.contrib.auth.models import Permission
         from django.contrib.contenttypes.models import ContentType
