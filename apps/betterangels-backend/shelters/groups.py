@@ -10,5 +10,7 @@ SHELTER_OPERATOR = TemplateConfig(
         Bed.perms.ADD,
         Room.perms.ADD,
         Reservation.perms.ADD,
+        # Custom perms
+        Shelter.perms.VIEW_PRIVATE,
     ],
 )
