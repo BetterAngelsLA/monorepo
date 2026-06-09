@@ -143,13 +143,25 @@ class UpdateShelterInput:
     is_private: Maybe[bool] = UNSET
     city_id: Maybe[ID | None] = UNSET
     spa_id: Maybe[ID | None] = UNSET
+    cities_served_ids: Maybe[Optional[List[ID]]] = UNSET
+    spas_served_ids: Maybe[Optional[List[ID]]] = UNSET
     phone: Maybe[Optional[PhoneNumberScalar]] = UNSET
     add_notes_sleeping_details: Maybe[Optional[str]] = UNSET
     add_notes_shelter_details: Maybe[Optional[str]] = UNSET
+    max_stay: Maybe[Optional[int]] = UNSET
+    on_site_security: Maybe[Optional[bool]] = UNSET
+    visitors_allowed: Maybe[Optional[bool]] = UNSET
+    exit_policy_other: Maybe[Optional[str]] = UNSET
+    emergency_surge: Maybe[Optional[bool]] = UNSET
     other_rules: Maybe[Optional[str]] = UNSET
     other_services: Maybe[Optional[str]] = UNSET
     entry_info: Maybe[Optional[str]] = UNSET
     subjective_review: Maybe[Optional[str]] = UNSET
+    demographics_other: Maybe[Optional[str]] = UNSET
+    shelter_types_other: Maybe[Optional[str]] = UNSET
+    city_council_district: Maybe[Optional[int]] = UNSET
+    supervisorial_district: Maybe[Optional[int]] = UNSET
+    funders_other: Maybe[Optional[str]] = UNSET
 
     # M2M enum fields
     accessibility: Maybe[List[AccessibilityChoices]] = UNSET
