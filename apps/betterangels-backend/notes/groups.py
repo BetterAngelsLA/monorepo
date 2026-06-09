@@ -46,6 +46,8 @@ CASEWORKER = TemplateConfig(
         # Attachment: ADD + VIEW
         Attachment.perms.ADD,
         Attachment.perms.VIEW,
+        # Legacy perm (deprecated Client model — kept for backward compatibility)
+        "accounts.add_client",
         # Custom perms
         Shelter.perms.VIEW_PRIVATE,
     ],
