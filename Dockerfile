@@ -134,8 +134,7 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && mkdir -p /home/betterangels/.config/gh \
     && mkdir -p /home/betterangels/.vscode-server/data/User \
-    && mkdir -p /home/betterangels/.cline/globalStorage/saoudrizwan.claude-dev/checkpoints \
-    && mkdir -p /home/betterangels/.cline/globalStorage/saoudrizwan.claude-dev/tasks \
+    && mkdir -p /home/betterangels/.cline \
     && chown -R betterangels:betterangels /home/betterangels/.config /home/betterangels/.vscode-server /home/betterangels/.cline
 USER betterangels
 RUN git config --global --add safe.directory "*"
