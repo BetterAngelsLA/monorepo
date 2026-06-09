@@ -3,6 +3,7 @@
 from accounts.group_names import GroupTemplateNames  # noqa: F401
 from accounts.permissions import UserOrganizationPermissions
 from common.permissions.config import TemplateConfig
+from reports.permissions import ReportPermissions
 
 ORG_ADMIN = TemplateConfig(
     name="Organization Admin",
@@ -11,6 +12,7 @@ ORG_ADMIN = TemplateConfig(
         UserOrganizationPermissions.ADD_ORG_MEMBER,
         UserOrganizationPermissions.REMOVE_ORG_MEMBER,
         UserOrganizationPermissions.VIEW_ORG_MEMBERS,
+        ReportPermissions.VIEW_REPORTS,
     ],
 )
 
@@ -22,5 +24,6 @@ ORG_SUPERUSER = TemplateConfig(
         UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE,
         UserOrganizationPermissions.REMOVE_ORG_MEMBER,
         UserOrganizationPermissions.VIEW_ORG_MEMBERS,
+        ReportPermissions.VIEW_REPORTS,
     ],
 )

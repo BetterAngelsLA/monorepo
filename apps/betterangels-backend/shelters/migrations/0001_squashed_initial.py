@@ -15,7 +15,7 @@ from django.conf import settings
 from django.db import migrations, models
 from django.utils import translation
 
-from common.migrations.utils import assign_permissions_to_group
+from common.migrations._utils import assign_permissions_to_group
 
 # ---------------------------------------------------------------------------
 # Service catalog seeding
