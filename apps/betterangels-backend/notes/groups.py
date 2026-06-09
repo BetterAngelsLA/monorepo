@@ -8,7 +8,6 @@ from clients.models import (
 from common.models import Attachment
 from common.permissions.config import TemplateConfig
 from notes.models import Note, ServiceRequest
-from shelters.models.shelter import Shelter
 from tasks.models import Task
 
 CASEWORKER = TemplateConfig(
@@ -46,7 +45,5 @@ CASEWORKER = TemplateConfig(
         # Attachment: ADD + VIEW
         Attachment.perms.ADD,
         Attachment.perms.VIEW,
-        # Custom perms
-        Shelter.perms.VIEW_PRIVATE,
     ],
 )

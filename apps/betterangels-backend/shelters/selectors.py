@@ -95,9 +95,9 @@ def shelter_list(
 ) -> "QuerySet[Shelter]":
     """Filter to shelters approved for public display.
 
-    If the user has the ``view_private_shelter`` permission (granted via the
-    Caseworker group template), private shelters are included.  Otherwise only
-    public (``is_private=False``) shelters are returned.
+    If the user has the ``view_private_shelter`` permission, private shelters
+    are included.  Otherwise only public (``is_private=False``) shelters are
+    returned.
     """
     from shelters.models import Shelter
 

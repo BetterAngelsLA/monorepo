@@ -17,7 +17,7 @@ class ShelterPrivacyPermissionTestCase(GraphQLBaseTestCase):
         [
             (None, False),
             ("non_case_manager_user", False),
-            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_1", False),
         ],
     )
     def test_shelters_query_privacy(self, user_label: str | None, expect_private_visible: bool) -> None:
@@ -43,7 +43,7 @@ class ShelterPrivacyPermissionTestCase(GraphQLBaseTestCase):
             (None, False, False),
             ("non_case_manager_user", True, True),
             ("non_case_manager_user", False, False),
-            ("org_1_case_manager_1", True, False),
+            ("org_1_case_manager_1", True, True),
             ("org_1_case_manager_1", False, False),
         ],
     )
