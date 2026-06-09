@@ -73,3 +73,7 @@ volumes:
   pgdata:
   minio_data:
   venv:
+  dev_tools:
+  gh_config:
+  cline_data:
+  vscode_user:

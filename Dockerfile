@@ -111,7 +111,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
     libpq5 \
     gdal-bin
 ENV PATH=/workspace/.venv/bin:$PATH:$HOME/.local/bin
-RUN mkdir -p /workspace/.venv mkdir -p /workspace/node_modules  \
+RUN mkdir -p /workspace/.venv && mkdir -p /workspace/node_modules  \
     && chown -R betterangels:betterangels /workspace
 WORKDIR /workspace
 USER betterangels
@@ -132,6 +132,11 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     && rm session-manager-plugin.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN mkdir -p /home/betterangels/.config/gh \
+    && mkdir -p /home/betterangels/.vscode-server/data/User \
+    && mkdir -p /home/betterangels/.cline/globalStorage/saoudrizwan.claude-dev/checkpoints \
+    && mkdir -p /home/betterangels/.cline/globalStorage/saoudrizwan.claude-dev/tasks \
+    && chown -R betterangels:betterangels /home/betterangels/.config /home/betterangels/.vscode-server /home/betterangels/.cline
 USER betterangels
 RUN git config --global --add safe.directory "*"
 

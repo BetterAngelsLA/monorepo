@@ -15,6 +15,11 @@ services:
       - AWS_CONFIG_FILE=/workspace/.aws/config
       - AWS_PROFILE=Development
 
+    volumes:
+      - gh_config:/home/betterangels/.config/gh
+      - cline_data:/home/betterangels/.cline
+      - vscode_user:/home/betterangels/.vscode-server/data/User
+
     # Uncomment the next four lines if you will use a ptrace-based debugger like C++, Go, and Rust.
     # cap_add:
     #   - SYS_PTRACE
