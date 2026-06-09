@@ -129,6 +129,7 @@ type AdminShelterType {
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
+  availability: ShelterAvailabilityType
   HeroPhotos: [ShelterPhotoType!]
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
@@ -2270,6 +2271,14 @@ type ServiceType {
   priority: Int!
 }
 
+type ShelterAvailabilityType {
+  id: ID!
+  nonRestrictedBeds: Int!
+  restrictedBeds: Int!
+  restrictionNotes: String!
+  updatedAt: DateTime!
+}
+
 enum ShelterChoices {
   ACCESS_CENTER
   BUILDING
@@ -2295,6 +2304,7 @@ input ShelterFilter {
   openNow: Boolean
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
+  hasAvailableBeds: Boolean
   spa: [ID!]
 }
 
@@ -2432,6 +2442,7 @@ type ShelterType {
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
+  availability: ShelterAvailabilityType
   HeroPhotos: [ShelterPhotoType!]
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
@@ -2757,13 +2768,25 @@ input UpdateShelterInput {
   isPrivate: Boolean
   cityId: ID
   spaId: ID
+  citiesServedIds: [ID!]
+  spasServedIds: [ID!]
   phone: PhoneNumber
   addNotesSleepingDetails: String
   addNotesShelterDetails: String
+  maxStay: Int
+  onSiteSecurity: Boolean
+  visitorsAllowed: Boolean
+  exitPolicyOther: String
+  emergencySurge: Boolean
   otherRules: String
   otherServices: String
   entryInfo: String
   subjectiveReview: String
+  demographicsOther: String
+  shelterTypesOther: String
+  cityCouncilDistrict: Int
+  supervisorialDistrict: Int
+  fundersOther: String
   accessibility: [AccessibilityChoices!]
   demographics: [DemographicChoices!]
   specialSituationRestrictions: [SpecialSituationRestrictionChoices!]

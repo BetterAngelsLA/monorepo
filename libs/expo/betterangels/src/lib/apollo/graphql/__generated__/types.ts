@@ -75,6 +75,7 @@ export type AdminShelterType = {
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
+  availability?: Maybe<ShelterAvailabilityType>;
   bedFees?: Maybe<Scalars['String']['output']>;
   bedsByStatus: BedsByStatusType;
   citiesServed: Array<CityType>;
@@ -2864,6 +2865,15 @@ export type ServiceType = {
   priority: Scalars['Int']['output'];
 };
 
+export type ShelterAvailabilityType = {
+  __typename?: 'ShelterAvailabilityType';
+  id: Scalars['ID']['output'];
+  nonRestrictedBeds: Scalars['Int']['output'];
+  restrictedBeds: Scalars['Int']['output'];
+  restrictionNotes: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
 export enum ShelterChoices {
   AccessCenter = 'ACCESS_CENTER',
   Building = 'BUILDING',
@@ -2881,6 +2891,7 @@ export type ShelterFilter = {
   NOT?: InputMaybe<ShelterFilter>;
   OR?: InputMaybe<ShelterFilter>;
   geolocation?: InputMaybe<GeolocationInput>;
+  hasAvailableBeds?: InputMaybe<Scalars['Boolean']['input']>;
   isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   mapBounds?: InputMaybe<MapBoundsInput>;
@@ -2978,6 +2989,7 @@ export type ShelterType = {
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
+  availability?: Maybe<ShelterAvailabilityType>;
   bedFees?: Maybe<Scalars['String']['output']>;
   bedsByStatus: BedsByStatusType;
   citiesServed: Array<CityType>;
@@ -3354,18 +3366,26 @@ export type UpdateShelterInput = {
   accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   addNotesShelterDetails?: InputMaybe<Scalars['String']['input']>;
   addNotesSleepingDetails?: InputMaybe<Scalars['String']['input']>;
+  citiesServedIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  cityCouncilDistrict?: InputMaybe<Scalars['Int']['input']>;
   cityId?: InputMaybe<Scalars['ID']['input']>;
   demographics?: InputMaybe<Array<DemographicChoices>>;
+  demographicsOther?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
+  emergencySurge?: InputMaybe<Scalars['Boolean']['input']>;
   entryInfo?: InputMaybe<Scalars['String']['input']>;
   entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
   exitPolicy?: InputMaybe<Array<ExitPolicyChoices>>;
+  exitPolicyOther?: InputMaybe<Scalars['String']['input']>;
   funders?: InputMaybe<Array<FunderChoices>>;
+  fundersOther?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<ShelterLocationInput>;
+  maxStay?: InputMaybe<Scalars['Int']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+  onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
   otherRules?: InputMaybe<Scalars['String']['input']>;
   otherServices?: InputMaybe<Scalars['String']['input']>;
   parking?: InputMaybe<Array<ParkingChoices>>;
@@ -3377,12 +3397,16 @@ export type UpdateShelterInput = {
   services?: InputMaybe<Array<ServiceInput>>;
   shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
+  shelterTypesOther?: InputMaybe<Scalars['String']['input']>;
   spaId?: InputMaybe<Scalars['ID']['input']>;
+  spasServedIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
   status?: InputMaybe<StatusChoices>;
   storage?: InputMaybe<Array<StorageChoices>>;
   subjectiveReview?: InputMaybe<Scalars['String']['input']>;
+  supervisorialDistrict?: InputMaybe<Scalars['Int']['input']>;
   vaccinationRequirement?: InputMaybe<Array<VaccinationRequirementChoices>>;
+  visitorsAllowed?: InputMaybe<Scalars['Boolean']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
 };
 

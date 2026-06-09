@@ -184,6 +184,16 @@ class ShelterFilter:
     is_private: auto
 
     @strawberry_django.filter_field
+    def has_available_beds(self, info: Info, value: Optional[bool], prefix: str) -> Q:
+        if value is None:
+            return Q()
+
+        has_beds = Q(**{f"{prefix}availability__non_restricted_beds__gt": 0}) | Q(
+            **{f"{prefix}availability__restricted_beds__gt": 0}
+        )
+        return has_beds if value else ~has_beds
+
+    @strawberry_django.filter_field
     def spa(self, queryset: QuerySet, value: Optional[List[ID]], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
         if not value:
             return queryset, Q()
