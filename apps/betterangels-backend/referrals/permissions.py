@@ -1,9 +1,13 @@
-from django.db import models
-from django.utils.translation import gettext_lazy as _
+from common.permissions.utils import model_permissions
 
+from .models import Referral
 
-class ReferralPermissions(models.TextChoices):
-    VIEW = "referrals.view_referral", _("Can view referral")
-    CHANGE = "referrals.change_referral", _("Can change referral")
-    DELETE = "referrals.delete_referral", _("Can delete referral")
-    ADD = "referrals.add_referral", _("Can add referral")
+# ── Model-backed permission enum ──────────────────────────────────────────────
+# This TextChoices class exists solely to register with Strawberry's GraphQL
+# type system (schema introspection, make_granted_permissions, etc.).
+#
+# For IDE autocomplete, use the model's .perms:
+#     Referral.perms.VIEW    → "referrals.view_referral"
+# ──────────────────────────────────────────────────────────────────────────────
+
+ReferralPermissions = model_permissions(Referral)

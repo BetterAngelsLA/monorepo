@@ -8,7 +8,6 @@ from django.db import IntegrityError
 from hmis.models import HmisClientProfile, HmisNote
 from notes.models import Note
 from tasks.models import Task
-from tasks.permissions import TaskPermissions
 
 # ---------------------------------------------------------------------------
 # Task
@@ -49,8 +48,8 @@ def task_create(
             permission_group.group,
             task,
             [
-                TaskPermissions.CHANGE,
-                TaskPermissions.DELETE,
+                Task.perms.CHANGE,
+                Task.perms.DELETE,
             ],
         )
 
