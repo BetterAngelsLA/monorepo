@@ -19,6 +19,7 @@ export const paths = {
   shelter: '/operator/shelter/:shelterId',
   shelterCreate: '/operator/shelter/create',
   shelterManage: '/operator/shelter/:shelterId/manage',
+  shelterReport: '/operator/shelter/:shelterId/report',
   shelterProfile: '/operator/shelter/:shelterId/profile',
   shelterReservation: '/operator/shelter/:shelterId/reservation',
   reservation: '/operator/reservation',
