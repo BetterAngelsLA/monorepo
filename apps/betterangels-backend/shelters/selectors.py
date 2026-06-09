@@ -10,7 +10,7 @@ import datetime
 from typing import TYPE_CHECKING
 
 import pghistory
-from django.db.models import Exists, OuterRef, Q, QuerySet, TextField
+from django.db.models import Count, Exists, OuterRef, Q, QuerySet, TextField
 from django.db.models.functions import Cast
 from django.utils import timezone
 from organizations.models import Organization
@@ -148,20 +148,16 @@ def reservation_status_change_counts(
         pgh_created_at__lt=end_date + datetime.timedelta(days=1),
     )
 
-    return {
-        "STATUS_TO_CHECK_IN_OVERDUE": events.filter(pgh_data__status="check_in_overdue")
-        .values("pgh_obj_id")
-        .distinct()
-        .count(),
-        "STATUS_TO_CANCELLED": events.filter(pgh_data__status="cancelled").values("pgh_obj_id").distinct().count(),
-        "STATUS_TO_CHECKED_IN": events.filter(pgh_data__status="checked_in").values("pgh_obj_id").distinct().count(),
-        "STATUS_OVERDUE_TO_CHECKED_IN": events.filter(
-            pgh_diff__status__0="check_in_overdue", pgh_diff__status__1="checked_in"
-        )
-        .values("pgh_obj_id")
-        .distinct()
-        .count(),
-    }
+    return events.aggregate(
+        STATUS_TO_CHECK_IN_OVERDUE=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="check_in_overdue")),
+        STATUS_TO_CANCELLED=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="cancelled")),
+        STATUS_TO_CHECKED_IN=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="checked_in")),
+        STATUS_OVERDUE_TO_CHECKED_IN=Count(
+            "pgh_obj_id",
+            distinct=True,
+            filter=Q(pgh_diff__status__0="check_in_overdue", pgh_diff__status__1="checked_in"),
+        ),
+    )
 
 
 def reservation_status_change_counts_by_day(
