@@ -1,4 +1,4 @@
-from common.permissions.utils import model_permissions
+from common.permissions.utils import permissions_enum_from_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -18,11 +18,11 @@ from .models import (
 #     ClientProfile.perms.VIEW     → "clients.view_clientprofile"
 # ──────────────────────────────────────────────────────────────────────────────
 
-ClientProfilePermissions = model_permissions(ClientProfile)
-ClientContactPermissions = model_permissions(ClientContact)
-ClientHouseholdMemberPermissions = model_permissions(ClientHouseholdMember)
-HmisProfilePermissions = model_permissions(HmisProfile)
-SocialMediaProfilePermissions = model_permissions(SocialMediaProfile)
+ClientProfilePermissions = permissions_enum_from_model(ClientProfile)
+ClientContactPermissions = permissions_enum_from_model(ClientContact)
+ClientHouseholdMemberPermissions = permissions_enum_from_model(ClientHouseholdMember)
+HmisProfilePermissions = permissions_enum_from_model(HmisProfile)
+SocialMediaProfilePermissions = permissions_enum_from_model(SocialMediaProfile)
 
 
 # ── Non-BaseModel (no .perms available) ──────────────────────────────────────

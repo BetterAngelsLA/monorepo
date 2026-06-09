@@ -1,5 +1,5 @@
 import strawberry
-from common.permissions.utils import model_permissions
+from common.permissions.utils import permissions_enum_from_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -43,37 +43,37 @@ from .models import (
 #     Shelter.perms.VIEW_PRIVATE   → "shelters.view_private_shelter"
 # ──────────────────────────────────────────────────────────────────────────────
 
-AccessibilityPermissions = model_permissions(Accessibility)
-BedPermissions = model_permissions(Bed)
-CityPermissions = model_permissions(City)
-ContactInfoPermissions = model_permissions(ContactInfo)
-DemographicPermissions = model_permissions(Demographic)
-EntryRequirementPermissions = model_permissions(EntryRequirement)
-ExitPolicyPermissions = model_permissions(ExitPolicy)
-ExteriorShelterPhotoPermissions = model_permissions(ExteriorShelterPhoto)
-FunderPermissions = model_permissions(Funder)
-InteriorShelterPhotoPermissions = model_permissions(InteriorShelterPhoto)
-MedicalNeedPermissions = model_permissions(MedicalNeed)
-ParkingPermissions = model_permissions(Parking)
-PetPermissions = model_permissions(Pet)
-ReferralRequirementPermissions = model_permissions(ReferralRequirement)
-RoomPermissions = model_permissions(Room)
-RoomStylePermissions = model_permissions(RoomStyle)
-SchedulePermissions = model_permissions(Schedule)
-ServicePermissions = model_permissions(Service)
-ServiceCategoryPermissions = model_permissions(ServiceCategory)
-ShelterPhotoPermissions = model_permissions(ShelterPhoto)
-ShelterProgramPermissions = model_permissions(ShelterProgram)
-ShelterTypePermissions = model_permissions(ShelterType)
-SpaPermissions = model_permissions(SPA)
-SpecialSituationRestrictionPermissions = model_permissions(SpecialSituationRestriction)
-StoragePermissions = model_permissions(Storage)
-VaccinationRequirementPermissions = model_permissions(VaccinationRequirement)
-VideoPermissions = model_permissions(Video)
+AccessibilityPermissions = permissions_enum_from_model(Accessibility)
+BedPermissions = permissions_enum_from_model(Bed)
+CityPermissions = permissions_enum_from_model(City)
+ContactInfoPermissions = permissions_enum_from_model(ContactInfo)
+DemographicPermissions = permissions_enum_from_model(Demographic)
+EntryRequirementPermissions = permissions_enum_from_model(EntryRequirement)
+ExitPolicyPermissions = permissions_enum_from_model(ExitPolicy)
+ExteriorShelterPhotoPermissions = permissions_enum_from_model(ExteriorShelterPhoto)
+FunderPermissions = permissions_enum_from_model(Funder)
+InteriorShelterPhotoPermissions = permissions_enum_from_model(InteriorShelterPhoto)
+MedicalNeedPermissions = permissions_enum_from_model(MedicalNeed)
+ParkingPermissions = permissions_enum_from_model(Parking)
+PetPermissions = permissions_enum_from_model(Pet)
+ReferralRequirementPermissions = permissions_enum_from_model(ReferralRequirement)
+RoomPermissions = permissions_enum_from_model(Room)
+RoomStylePermissions = permissions_enum_from_model(RoomStyle)
+SchedulePermissions = permissions_enum_from_model(Schedule)
+ServicePermissions = permissions_enum_from_model(Service)
+ServiceCategoryPermissions = permissions_enum_from_model(ServiceCategory)
+ShelterPhotoPermissions = permissions_enum_from_model(ShelterPhoto)
+ShelterProgramPermissions = permissions_enum_from_model(ShelterProgram)
+ShelterTypePermissions = permissions_enum_from_model(ShelterType)
+SpaPermissions = permissions_enum_from_model(SPA)
+SpecialSituationRestrictionPermissions = permissions_enum_from_model(SpecialSituationRestriction)
+StoragePermissions = permissions_enum_from_model(Storage)
+VaccinationRequirementPermissions = permissions_enum_from_model(VaccinationRequirement)
+VideoPermissions = permissions_enum_from_model(Video)
 
 # ── Strawberry-decorated ShelterPermissions (includes custom perms) ───────────
 
-ShelterPermissions: type[models.TextChoices] = model_permissions(Shelter)
+ShelterPermissions: type[models.TextChoices] = permissions_enum_from_model(Shelter)
 strawberry.enum(ShelterPermissions)  # register with Strawberry for GraphQL schema
 
 # ── Field-level permissions (no backing model) ────────────────────────────────

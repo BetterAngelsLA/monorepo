@@ -1,7 +1,7 @@
 from typing import Any, Dict, Iterable, Tuple
 
 import pghistory
-from accounts.groups import GroupTemplateNames
+from accounts.group_names import GroupTemplateNames
 from accounts.managers import UserManager
 from annoying.fields import AutoOneToOneField
 from common.models import BaseModel
