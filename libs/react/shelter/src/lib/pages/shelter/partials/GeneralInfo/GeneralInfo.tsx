@@ -60,7 +60,7 @@ export function GeneralInfo({
 }) {
   const contactInfo = [
     {
-      label: shelter?.website,
+      label: 'testing',
       key: 'website',
       icon: <GlobeIcon className="h-6 w-6 stroke-primary-20" />,
     },
