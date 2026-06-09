@@ -4,6 +4,7 @@ import {
   type ScheduleType,
 } from '@monorepo/react/shelter';
 import { useState } from 'react';
+import { Button } from '../base-ui/buttons';
 import {
   ScheduleExceptionsForm,
   buildDefaultExceptionEntry,
@@ -15,6 +16,8 @@ import {
 } from './WeeklyScheduleEditor';
 import { ORDERED_DAYS } from './WeeklyScheduleEditor/DayRow';
 
+export type { WeeklyFormState };
+
 // ─── State → GraphQL input ────────────────────────────────────────────────────
 
 function buildScheduleInputs(
@@ -24,28 +27,17 @@ function buildScheduleInputs(
 ): ScheduleInput[] {
   const inputs: ScheduleInput[] = [];
 
-  if (weekly.mode !== 'closed') {
-    for (const { value: day } of ORDERED_DAYS) {
-      const dayState = weekly.dayHours[day];
-      if (!dayState.open) continue;
+  for (const { value: day } of ORDERED_DAYS) {
+    const { open, startTime, endTime } = weekly[day];
+    if (!open || !startTime || !endTime) continue;
 
-      const startTime =
-        weekly.mode === 'same'
-          ? weekly.sameHours.startTime
-          : dayState.startTime;
-      const endTime =
-        weekly.mode === 'same' ? weekly.sameHours.endTime : dayState.endTime;
-
-      if (!startTime || !endTime) continue;
-
-      inputs.push({
-        scheduleType,
-        days: [day],
-        startTime: startTime.length === 5 ? `${startTime}:00` : startTime,
-        endTime: endTime.length === 5 ? `${endTime}:00` : endTime,
-        isException: false,
-      });
-    }
+    inputs.push({
+      scheduleType,
+      days: [day],
+      startTime: startTime.length === 5 ? `${startTime}:00` : startTime,
+      endTime: endTime.length === 5 ? `${endTime}:00` : endTime,
+      isException: false,
+    });
   }
 
   for (const ex of exceptions) {
@@ -77,12 +69,16 @@ function buildScheduleInputs(
 
 /** Strip seconds from "HH:MM:SS" → "HH:MM", pass through "HH:MM", return "" for nullish. */
 function toHHMM(time: string | null | undefined): string {
-  if (!time) return '';
+  if (!time) {
+    return '';
+  }
+
   return String(time).slice(0, 5);
 }
 
 function hydrateExceptions(schedules: ScheduleType[]): ExceptionEntry[] {
   let _id = 0;
+
   return schedules.map((s) => ({
     localId: s.id ?? String(++_id),
     startDate: s.startDate ?? '',
@@ -95,39 +91,16 @@ function hydrateExceptions(schedules: ScheduleType[]): ExceptionEntry[] {
 }
 
 function hydrateWeekly(schedules: ScheduleType[]): WeeklyFormState {
-  const defaults = buildDefaultWeeklyState();
-
-  if (schedules.length === 0) {
-    return { ...defaults, mode: 'closed' };
-  }
-
-  const dayHours = { ...defaults.dayHours };
+  const state = buildDefaultWeeklyState();
   for (const entry of schedules) {
     if (!entry.day) continue;
-    dayHours[entry.day] = {
+    state[entry.day] = {
       open: true,
       startTime: toHHMM(entry.startTime),
       endTime: toHHMM(entry.endTime),
     };
   }
-
-  // Detect 'same' mode: all entries share identical times
-  const uniqueTimes = new Set(
-    schedules.map((e) => `${e.startTime ?? ''}|${e.endTime ?? ''}`)
-  );
-  if (uniqueTimes.size === 1 && schedules.length > 0) {
-    const first = schedules[0];
-    return {
-      mode: 'same',
-      sameHours: {
-        startTime: toHHMM(first.startTime),
-        endTime: toHHMM(first.endTime),
-      },
-      dayHours,
-    };
-  }
-
-  return { mode: 'mixed', sameHours: defaults.sameHours, dayHours };
+  return state;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -175,13 +148,9 @@ export function ScheduleForm(props: TProps) {
       </section>
 
       <div className="flex gap-3 pt-2">
-        <button
-          type="button"
-          onClick={handleSave}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
-        >
+        <Button variant="floating" onClick={handleSave}>
           Save Schedule
-        </button>
+        </Button>
         {onCancel && (
           <button
             type="button"

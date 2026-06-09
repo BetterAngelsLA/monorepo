@@ -5,24 +5,13 @@ import type {
 
 // ─── Weekly editor ───────────────────────────────────────────────────────────
 
-export type HoursMode = 'same' | 'mixed' | 'closed';
-
-export type TimeRange = {
-  startTime: string; // "HH:MM"
-  endTime: string; // "HH:MM"
-};
-
 export type DayState = {
   open: boolean;
   startTime: string;
   endTime: string;
 };
 
-export type WeeklyFormState = {
-  mode: HoursMode;
-  sameHours: TimeRange;
-  dayHours: Record<DayOfWeekChoices, DayState>;
-};
+export type WeeklyFormState = Record<DayOfWeekChoices, DayState>;
 
 // ─── Exceptions ───────────────────────────────────────────────────────────────
 

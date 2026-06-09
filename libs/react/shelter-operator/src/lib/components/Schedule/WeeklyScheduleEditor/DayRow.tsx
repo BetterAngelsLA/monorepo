@@ -1,5 +1,7 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { DayOfWeekChoices } from '@monorepo/react/shelter';
+import { CopyIcon } from 'lucide-react';
+import { Button } from '../../base-ui/buttons';
 import type { DayState } from '../types';
 import { TimeRangeInput } from './TimeRangeInput';
 
@@ -8,37 +10,50 @@ type TProps = {
   label: string;
   state: DayState;
   onChange: (patch: Partial<DayState>) => void;
-  /** When true the time inputs are rendered but disabled (same-hours mode fills them) */
-  timeReadOnly?: boolean;
+  /** Called when the user wants to copy this row's times to all other open days */
+  onCopyToAll?: () => void;
 };
 
 export function DayRow(props: TProps) {
-  const { day: _day, label, state, onChange, timeReadOnly = false } = props;
+  const { day: _day, label, state, onChange, onCopyToAll } = props;
+
+  const canCopy = state.open && !!state.startTime && !!state.endTime;
 
   return (
     <div className="flex items-center gap-4 py-2">
       {/* Day toggle */}
-      <button
-        type="button"
+      <Button
+        variant="primary-sm"
         onClick={() => onChange({ open: !state.open })}
         className={mergeCss([
-          'w-28 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors text-left',
+          'w-28 text-xs',
           state.open
-            ? 'bg-blue-600 border-blue-600 text-white'
+            ? 'bg-[#008CEE] hover:bg-[#0071C0] border-[#008CEE] text-white'
             : 'bg-white border-gray-300 text-gray-500 hover:border-gray-400',
         ])}
         aria-pressed={state.open}
       >
         {label}
-      </button>
+      </Button>
 
       {state.open ? (
-        <TimeRangeInput
-          startTime={state.startTime}
-          endTime={state.endTime}
-          onChange={(field, value) => onChange({ [field]: value })}
-          disabled={timeReadOnly}
-        />
+        <>
+          <TimeRangeInput
+            startTime={state.startTime}
+            endTime={state.endTime}
+            onChange={(field, value) => onChange({ [field]: value })}
+          />
+          {canCopy && onCopyToAll && (
+            <button
+              type="button"
+              onClick={onCopyToAll}
+              title="Copy these hours to all open days"
+              className="text-gray-400 hover:text-blue-600 transition-colors"
+            >
+              <CopyIcon size={14} />
+            </button>
+          )}
+        </>
       ) : (
         <span className="text-sm text-gray-400 italic">Closed</span>
       )}

@@ -1,3 +1,25 @@
+type TimeInputProps = {
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  label: string;
+};
+
+function TimeInput(props: TimeInputProps) {
+  const { value, onChange, disabled = false, label } = props;
+
+  return (
+    <input
+      type="time"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      aria-label={label}
+      className="w-32 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
+    />
+  );
+}
+
 type TProps = {
   startTime: string;
   endTime: string;
@@ -10,22 +32,18 @@ export function TimeRangeInput(props: TProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <input
-        type="time"
+      <TimeInput
         value={startTime}
-        onChange={(e) => onChange('startTime', e.target.value)}
+        onChange={(value) => onChange('startTime', value)}
         disabled={disabled}
-        aria-label="Start time"
-        className="w-32 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
+        label="Start time"
       />
       <span className="text-gray-500 text-sm">–</span>
-      <input
-        type="time"
+      <TimeInput
         value={endTime}
-        onChange={(e) => onChange('endTime', e.target.value)}
+        onChange={(value) => onChange('endTime', value)}
         disabled={disabled}
-        aria-label="End time"
-        className="w-32 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
+        label="End time"
       />
     </div>
   );
