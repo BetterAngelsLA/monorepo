@@ -40,7 +40,7 @@ Follow the interactive prompts. Choose **HTTPS** when asked for your preferred p
 for Git operations (the repository already uses SSH for git remotes; the CLI token is
 used for API calls like creating PRs and issues).
 
-Your token is stored in `~/.config/gh/` which is mounted as the `gh_config` Docker volume.
+Your token is stored in `~/.config/gh/`, which is backed by the `dev_home` Docker volume.
 
 ### Verifying
 
@@ -55,41 +55,39 @@ Should show your GitHub username and confirm `repo` scope.
 All developer tooling state is stored in Docker named volumes and survives container
 rebuilds:
 
-| What                  | Volume         | Inside container             |
-| --------------------- | -------------- | ---------------------------- |
-| GitHub CLI auth       | `gh_config`    | `~/.config/gh/`              |
-| Cline settings & data | `cline_data`   | `~/.cline/`                  |
-| VS Code user data     | `vscode_user`  | `~/.vscode-server/data/User` |
-| Node modules          | `node_modules` | `/workspace/node_modules`    |
-| Python virtualenv     | `venv`         | `/workspace/.venv`           |
-| PostgreSQL data       | `pgdata`       | _(internal)_                 |
-| MinIO data            | `minio_data`   | _(internal)_                 |
+| What              | Volume         | Inside container          |
+| ----------------- | -------------- | ------------------------- |
+| Developer state   | `dev_home`     | `/home/betterangels/`     |
+| Node modules      | `node_modules` | `/workspace/node_modules` |
+| Python virtualenv | `venv`         | `/workspace/.venv`        |
+| PostgreSQL data   | `pgdata`       | _(internal)_              |
+| MinIO data        | `minio_data`   | _(internal)_              |
 
 ### Cline Data Details
 
-The `cline_data` volume backs `~/.cline/` which contains:
+The `dev_home` volume backs `/home/betterangels/`. Cline stores its data under
+`~/.cline/`, which includes:
 
-- **API keys & settings**: `~/.cline/cline_config.json`
-- **MCP server config**: `~/.cline/cline_mcp_settings.json`
-- **Task history**: `~/.cline/globalStorage/saoudrizwan.claude-dev/tasks/`
-- **Checkpoints**: `~/.cline/globalStorage/saoudrizwan.claude-dev/checkpoints/`
+- **MCP server config**: `~/.cline/cline_mcp_settings.json` (copy from
+  [cline_mcp_settings.example.json](./cline_mcp_settings.example.json))
+- **API keys, task history, checkpoints**: Managed automatically by Cline
 
-These paths are automatically backed by Docker named volumes, so all state survives
-container rebuilds — no manual setup required.
+Because `~/.cline/` is inside the `dev_home` volume, all Cline data survives container
+rebuilds — no manual setup required.
 
 ### Clearing Persisted State
 
 If you need to reset any persisted state, you can remove individual Docker volumes:
 
 ```bash
-# Clear Cline data (API keys, MCP config, task history, checkpoints)
-docker volume rm <project>_cline_data
+# Clear ALL developer state (gh config, Cline data, VS Code settings, etc.)
+docker volume rm <project>_dev_home
 
-# Clear GitHub CLI auth (requires re-running `gh auth login`)
-docker volume rm <project>_gh_config
+# Clear Node modules
+docker volume rm <project>_node_modules
 
-# Clear VS Code user data (extensions, settings) — useful if VS Code Server updates break things
-docker volume rm <project>_vscode_user
+# Clear Python virtualenv
+docker volume rm <project>_venv
 ```
 
 Replace `<project>` with the Compose project name (usually the directory name, e.g.

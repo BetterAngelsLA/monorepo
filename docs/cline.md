@@ -134,10 +134,10 @@ Once configured, Cline can use these tools directly (no shell commands needed):
 - `create_issue` — create a new issue
 - `create_pull_request` — create a new pull request
 - `create_branch` — create a new branch
-- `list_commits` — get list of commits in a branch
+- `list_commits` — get a list of commits in a branch
 - `list_issues` — list issues
 - `update_issue` — update an issue
-- `add_issue_comment` — add a comment to an issue or PR
+- `add_issue_comment` — add a comment to an issue or pull request
 - `search_code` — search for code across GitHub repositories
 - `search_issues` — search for issues and pull requests
 - `search_users` — search for users
