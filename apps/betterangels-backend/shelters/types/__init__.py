@@ -46,6 +46,12 @@ from shelters.types.outputs import (
     ShelterType,
     ShelterTypeMixin,
 )
+from shelters.types.reporting import (
+    DailyBedStatusMetricsType,
+    DailyOccupancyMetricsType,
+    ReservationMetricsType,
+    ShelterOccupancyMetricsType,
+)
 
 __all__ = [
     # lookups
@@ -90,4 +96,9 @@ __all__ = [
     "ShelterPhotoType",
     "ShelterType",
     "ShelterTypeMixin",
+    # reporting
+    "DailyBedStatusMetricsType",
+    "DailyOccupancyMetricsType",
+    "ReservationMetricsType",
+    "ShelterOccupancyMetricsType",
 ]
