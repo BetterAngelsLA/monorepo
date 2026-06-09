@@ -1,4 +1,4 @@
-from common.permissions.utils import model_permissions
+from common.permissions.utils import permissions_enum_from_model
 
 from .models import Task
 
@@ -10,4 +10,4 @@ from .models import Task
 #     Task.perms.VIEW    → "tasks.view_task"
 # ──────────────────────────────────────────────────────────────────────────────
 
-TaskPermissions = model_permissions(Task)
+TaskPermissions = permissions_enum_from_model(Task)

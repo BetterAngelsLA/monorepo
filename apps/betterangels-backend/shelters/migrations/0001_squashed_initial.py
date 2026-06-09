@@ -15,7 +15,7 @@ from django.conf import settings
 from django.db import migrations, models
 from django.utils import translation
 
-from common.permissions.utils import assign_permissions_to_group_in_migration
+from common.migrations.utils import assign_permissions_to_group
 
 # ---------------------------------------------------------------------------
 # Service catalog seeding
@@ -106,7 +106,7 @@ def unseed_services(apps, schema_editor):
 # ---------------------------------------------------------------------------
 def create_shelter_groups(apps, schema_editor):
     # Direct imports required: apps.get_model() returns historical models that
-    # lack the `.perms` class attribute needed by assign_permissions_to_group_in_migration.
+    # lack the `.perms` class attribute needed by assign_permissions_to_group.
     from shelters.models import (
         SPA,
         Accessibility,
@@ -181,12 +181,12 @@ def create_shelter_groups(apps, schema_editor):
             Shelter.perms.VIEW,
         ]
     ]
-    assign_permissions_to_group_in_migration(apps, "Shelter Data Entry", data_entry_permission_map)
+    assign_permissions_to_group(apps, "Shelter Data Entry", data_entry_permission_map)
 
     # Shelter Administration: CRUD + custom perms
     admin_permission_map = dict(shared_permission_map)
     admin_permission_map[Shelter] = [Shelter.perms]
-    assign_permissions_to_group_in_migration(apps, "Shelter Administration", admin_permission_map)
+    assign_permissions_to_group(apps, "Shelter Administration", admin_permission_map)
 
 
 def remove_shelter_groups(apps, schema_editor):

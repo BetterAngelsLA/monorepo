@@ -6,7 +6,7 @@ org-level permissions (add/remove members, portal access) — those come from
 composing with Organization Admin or Organization Superuser templates.
 """
 
-from common.permissions.utils import ensure_permissions
+from common.migrations.utils import ensure_permissions
 from django.db import migrations
 
 
