@@ -1,25 +1,18 @@
 import {
-  UserOrganizationPermissions,
+  PermissionEnum,
+  ReportPermissions,
   useActiveOrg,
+  UserOrganizationPermissions,
 } from '@monorepo/react/betterangels-admin';
 import { Navigate } from 'react-router-dom';
 
-const permissionRoutes: {
-  permission: UserOrganizationPermissions;
-  path: string;
-}[] = [
-  {
-    permission: UserOrganizationPermissions.ViewOrgMembers,
-    path: '/users',
-  },
-  {
-    permission: UserOrganizationPermissions.ViewReports,
-    path: '/reports',
-  },
+const permissionRoutes: { permission: PermissionEnum; path: string }[] = [
+  { permission: UserOrganizationPermissions.ViewOrgMembers, path: '/users' },
+  { permission: ReportPermissions.ViewReports, path: '/reports' },
 ];
 
 export default function Home() {
-  const { hasPermission, organizations, activeOrg } = useActiveOrg();
+  const { organizations, activeOrg, hasPermission } = useActiveOrg();
 
   if (organizations.length === 0 || !activeOrg) {
     return (

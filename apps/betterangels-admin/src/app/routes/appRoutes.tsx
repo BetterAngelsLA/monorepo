@@ -1,4 +1,7 @@
-import { UserOrganizationPermissions } from '@monorepo/react/betterangels-admin';
+import {
+  ReportPermissions,
+  UserOrganizationPermissions,
+} from '@monorepo/react/betterangels-admin';
 import { RouteObject } from 'react-router-dom';
 import Home from '../pages/home';
 import { ReportsPage } from '../pages/reports';
@@ -23,7 +26,7 @@ export const routeChildren: RouteObject[] = [
   {
     path: '/reports',
     element: (
-      <PermissionGuard permission={UserOrganizationPermissions.ViewReports}>
+      <PermissionGuard permission={ReportPermissions.ViewReports}>
         <ReportsPage />
       </PermissionGuard>
     ),

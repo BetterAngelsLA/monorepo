@@ -91,9 +91,7 @@ class Query:
     def organization_member(self, info: Info, organization_id: str, user_id: str) -> OrganizationMemberType:
         current_user = cast(User, get_current_user(info))
         organization = get_user_permitted_org(
-            current_user,
-            [UserOrganizationPermissions.VIEW_ORG_MEMBERS],
-            org_id=organization_id,
+            current_user, org_id=organization_id, permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS
         )
         if organization is None:
             raise PermissionError("You do not have permission to view this organization's members.")
@@ -120,9 +118,7 @@ class Query:
     ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
         organization = get_user_permitted_org(
-            current_user,
-            [UserOrganizationPermissions.VIEW_ORG_MEMBERS],
-            org_id=organization_id,
+            current_user, org_id=organization_id, permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS
         )
         if organization is None:
             raise PermissionError("You do not have permission to view this organization's members.")
@@ -200,9 +196,7 @@ class Mutation:
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)
         organization = get_user_permitted_org(
-            current_user,
-            [UserOrganizationPermissions.ADD_ORG_MEMBER],
-            org_id=str(data.organization_id),
+            current_user, org_id=str(data.organization_id), permission=UserOrganizationPermissions.ADD_ORG_MEMBER
         )
         if organization is None:
             raise PermissionDenied("You do not have permission to add members.")
@@ -251,9 +245,7 @@ class Mutation:
         user_id = int(data.id)
 
         organization = get_user_permitted_org(
-            current_user,
-            [UserOrganizationPermissions.REMOVE_ORG_MEMBER],
-            org_id=str(data.organization_id),
+            current_user, org_id=str(data.organization_id), permission=UserOrganizationPermissions.REMOVE_ORG_MEMBER
         )
         if organization is None:
             raise PermissionDenied("You do not have permission to remove members.")

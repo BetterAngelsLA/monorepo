@@ -1,4 +1,4 @@
-query ReportSummary($organizationId: ID, $startDate: Date, $endDate: Date) {
+query ReportSummary($organizationId: ID!, $startDate: Date, $endDate: Date) {
   reportSummary(
     organizationId: $organizationId
     startDate: $startDate

@@ -4,9 +4,11 @@ import { useResetAtom } from 'jotai/utils';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  shelterLocationSearchInputAtom,
   shelterNameSearchAtom,
   shelterNameSearchInputAtom,
   shelterPropertyFiltersAtom,
+  shelterSearchAppliedLocationAtom,
   shelterSearchRequestAtom,
 } from '../../atoms';
 import { shelterFiltersPath, shelterSearchPath } from '../../constants';
@@ -38,17 +40,30 @@ export function ShelterSearch(props: TProps) {
   const setNameSearch = useSetAtom(shelterNameSearchAtom);
   const resetFilters = useResetAtom(shelterPropertyFiltersAtom);
   const setNameSearchInput = useSetAtom(shelterNameSearchInputAtom);
+  const setLocationSearchInput = useSetAtom(shelterLocationSearchInputAtom);
+  const [appliedLocation, setAppliedLocation] = useAtom(
+    shelterSearchAppliedLocationAtom
+  );
   const [searchRequest, setSearchRequest] = useAtom(shelterSearchRequestAtom);
 
   // React to search requests from SearchPage
   useEffect(() => {
     if (!searchRequest) return;
 
-    const { name, location, mapBounds } = searchRequest;
+    const { name, location, mapBounds, displayText } = searchRequest;
     setSearchRequest(null);
 
+    const locationChanged =
+      !!location && !isSameLocation(location, appliedLocation);
+
     if (location) {
-      setLocation(location, mapBounds);
+      setLocationSearchInput(displayText ?? '');
+      if (locationChanged) {
+        setLocation(location, mapBounds);
+        setAppliedLocation(location);
+      }
+    } else {
+      setAppliedLocation(null);
     }
 
     const trimmed = name.trim();
@@ -56,14 +71,21 @@ export function ShelterSearch(props: TProps) {
       resetFilters();
       setNameSearch(trimmed);
       setNameSearchInput(trimmed);
-      onNameSearch({ preserveMapBounds: !!location });
+      if (location && locationChanged) {
+        // Name + new location: wait for the map viewport fit to fire the search.
+        onNameSearch({ preserveMapBounds: true });
+      } else {
+        // Name only, or name added to an existing location: search now.
+        onNameSearch({ restoreMapBounds: !!location });
+      }
     } else {
       // Name cleared: reset name filter and re-fire with current map bounds.
-      // If there's also a location, the map's location effect fires its own
-      // search; otherwise restore map bounds so results don't stay blank.
       setNameSearch(undefined);
       setNameSearchInput('');
       if (!location) {
+        onNameSearch({ restoreMapBounds: true });
+      } else if (!locationChanged) {
+        // Location kept but name removed: re-search without the name filter.
         onNameSearch({ restoreMapBounds: true });
       }
     }
@@ -71,9 +93,12 @@ export function ShelterSearch(props: TProps) {
     searchRequest,
     setSearchRequest,
     setLocation,
+    setAppliedLocation,
+    appliedLocation,
     resetFilters,
     setNameSearch,
     setNameSearchInput,
+    setLocationSearchInput,
     onNameSearch,
   ]);
 
@@ -112,4 +137,12 @@ export function ShelterSearch(props: TProps) {
       />
     </>
   );
+}
+
+function isSameLocation(a: TLatLng, b: TLatLng | null): boolean {
+  if (!b) {
+    return false;
+  }
+
+  return a.latitude === b.latitude && a.longitude === b.longitude;
 }

@@ -1,7 +1,6 @@
 export type {
   IUserProviderValue,
   TOrganization,
-  TOrganizationWithPermissions,
   TUser,
 } from './UserContext';
 export { UserProvider } from './UserProvider';
