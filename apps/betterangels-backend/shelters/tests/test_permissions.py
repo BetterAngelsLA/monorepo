@@ -67,13 +67,14 @@ class ShelterPrivacyPermissionTestCase(GraphQLBaseTestCase):
 
     def _grant_view_private_shelter(self, user: Any) -> None:
         """Grant view_private_shelter permission to a user via their PermissionGroup."""
+        from accounts.models import PermissionGroup
         from django.contrib.auth.models import Permission
         from django.contrib.contenttypes.models import ContentType
         from shelters.models import Shelter
 
         ct = ContentType.objects.get_for_model(Shelter)
         perm = Permission.objects.get(codename="view_private_shelter", content_type=ct)
-        # Use the first PermissionGroup for this user's org
-        pg = user.permission_groups.first()
+        # Use the first PermissionGroup for this user
+        pg = PermissionGroup.objects.filter(group__user=user).first()
         if pg:
             pg.group.permissions.add(perm)
