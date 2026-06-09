@@ -65,13 +65,21 @@ class MapBoundsInput:
 @strawberry.input
 class ShelterPropertyInput:
     pets: Optional[List[PetChoices]] = None
+    pets_include_null: Optional[bool] = False
     demographics: Optional[List[DemographicChoices]] = None
+    demographics_include_null: Optional[bool] = False
     entry_requirements: Optional[List[EntryRequirementChoices]] = None
+    entry_requirements_include_null: Optional[bool] = False
     referral_requirement: Optional[List[ReferralRequirementChoices]] = None
+    referral_requirement_include_null: Optional[bool] = False
     special_situation_restrictions: Optional[List[SpecialSituationRestrictionChoices]] = None
+    special_situation_restrictions_include_null: Optional[bool] = False
     shelter_types: Optional[List[ShelterChoices]] = None
+    shelter_types_include_null: Optional[bool] = False
     room_styles: Optional[List[RoomStyleChoices]] = None
+    room_styles_include_null: Optional[bool] = False
     parking: Optional[List[ParkingChoices]] = None
+    parking_include_null: Optional[bool] = False
 
 
 @strawberry.input
@@ -126,10 +134,33 @@ class ShelterFilter:
         if value is None:
             return queryset, Q()
 
-        value_dict = asdict(value)
-        filters = {f"{k}__name__in": v for k, v in value_dict.items() if v is not None}
+        # Fields that have corresponding include_null flags
+        property_fields = [
+            "pets",
+            "demographics",
+            "entry_requirements",
+            "referral_requirement",
+            "special_situation_restrictions",
+            "shelter_types",
+            "room_styles",
+            "parking",
+        ]
 
-        return queryset.filter(**filters).distinct(), Q()
+        value_dict = asdict(value)
+        combined_q = Q()
+
+        for field in property_fields:
+            values = value_dict.get(field)
+            include_null = value_dict.get(f"{field}_include_null", False)
+
+            if values and include_null:
+                combined_q &= Q(**{f"{field}__name__in": values}) | Q(**{f"{field}__isnull": True})
+            elif values:
+                combined_q &= Q(**{f"{field}__name__in": values})
+            elif include_null:
+                combined_q &= Q(**{f"{field}__isnull": True})
+
+        return queryset.filter(combined_q).distinct(), Q()
 
     @strawberry_django.filter_field
     def open_now(self, queryset: QuerySet, value: Optional[bool], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
