@@ -68,7 +68,7 @@ rebuilds:
 The `dev_home` volume backs `/home/betterangels/`. Cline stores its data under
 `~/.cline/`, which includes:
 
-- **MCP server config**: `~/.cline/cline_mcp_settings.json` (copy from
+- **MCP server config**: `~/.vscode-server/data/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` (copy from
   [cline_mcp_settings.example.json](./cline_mcp_settings.example.json))
 - **API keys, task history, checkpoints**: Managed automatically by Cline
 

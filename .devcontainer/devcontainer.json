@@ -29,7 +29,7 @@
   // "shutdownAction": "none",
 
   // Uncomment the next line to run commands after the container is created.
-  "postCreateCommand": "yarn install && poetry install && cp -n docs/cline_mcp_settings.example.json ~/.cline/cline_mcp_settings.json",
+  "postCreateCommand": "yarn install && poetry install && mkdir -p ~/.vscode-server/data/User/globalStorage/saoudrizwan.claude-dev/settings && cp -n docs/cline_mcp_settings.example.json ~/.vscode-server/data/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json",
 
   // Configure tool-specific properties.
   "customizations": {

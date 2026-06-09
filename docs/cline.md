@@ -120,7 +120,7 @@ was created before this automation was added, Cline's `.clinerules` will remind
 you to copy it:
 
 ```bash
-cp docs/cline_mcp_settings.example.json ~/.cline/cline_mcp_settings.json
+cp docs/cline_mcp_settings.example.json ~/.vscode-server/data/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json
 ```
 
 Reload the VS Code window to pick up the new MCP server.

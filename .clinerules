@@ -1,9 +1,9 @@
 ## GitHub MCP Auto-Bootstrap
 
-When starting work in this project, check if `~/.cline/cline_mcp_settings.json` exists. If it does not exist, copy it from `docs/cline_mcp_settings.example.json`:
+When starting work in this project, check if `~/.vscode-server/data/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` exists. If it does not exist, copy it from `docs/cline_mcp_settings.example.json`:
 
 ```
-cp docs/cline_mcp_settings.example.json ~/.cline/cline_mcp_settings.json
+cp docs/cline_mcp_settings.example.json ~/.vscode-server/data/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json
 ```
 
 Then reload the VS Code window. This enables the GitHub MCP server for creating PRs, managing issues, searching code, and other GitHub operations directly from Cline. The `postCreateCommand` in `.devcontainer/devcontainer.json` does this automatically on container creation — this rule is a fallback for existing containers.
