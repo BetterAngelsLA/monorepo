@@ -1597,6 +1597,19 @@ class ShelterAvailabilityAdmin(admin.ModelAdmin):
     search_fields = ("shelter__name",)
     autocomplete_fields = ["shelter"]
     readonly_fields = ("created_at", "updated_at")
+
+    def has_delete_permission(self, request: HttpRequest, obj: Optional[ShelterAvailability] = None) -> bool:
+        """Allow users who can delete shelters to also delete related availability records.
+
+        ShelterAvailability is a OneToOne child of Shelter with CASCADE delete.
+        Without this, users with shelter delete permission are blocked from
+        deleting shelters because Django requires delete permission on all
+        cascade-related models.
+        """
+        if request.user.has_perm("shelters.delete_shelter"):
+            return True
+        return super().has_delete_permission(request, obj)
+
     fieldsets = (
         (
             None,
