@@ -1,4 +1,3 @@
-from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from django.apps import AppConfig
 
 
@@ -7,6 +6,7 @@ class SheltersConfig(AppConfig):
     name = "shelters"
 
     def ready(self) -> None:
+        from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
         from accounts.org_type_registry import OrgTypePreset, OrgTypeRegistry
         from shelters.groups import SHELTER_OPERATOR
 
