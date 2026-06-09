@@ -330,9 +330,7 @@ def test_bed_filters_by_type_and_boolean_flag(shelter: Shelter, occupancy_dates:
     assert by_type[0]["total_beds"] == 1
     assert by_type[0]["occupied_count"] == 1
 
-    by_storage = daily_occupancy(
-        shelter_id=shelter.id, start_date=day0, end_date=day3, bed_filters={"storage": True}
-    )
+    by_storage = daily_occupancy(shelter_id=shelter.id, start_date=day0, end_date=day3, bed_filters={"storage": True})
     assert by_storage[0]["total_beds"] == 1
     assert by_storage[0]["occupied_count"] == 1
 
