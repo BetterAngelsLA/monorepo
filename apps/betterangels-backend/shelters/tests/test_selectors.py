@@ -65,9 +65,12 @@ class ReportBedStatusCountsTestCase(TestCase):
         with self.assertNumQueries(1):
             result = report_bed_status_counts(shelter=self.shelter, start_date=day, end_date=day)
 
-        self._assert_result(result, [
-            {"date": "2026-01-01", "available": 1, "occupied": 1, "reserved": 1, "out_of_service": 1},
-        ])
+        self._assert_result(
+            result,
+            [
+                {"date": "2026-01-01", "available": 1, "occupied": 1, "reserved": 1, "out_of_service": 1},
+            ],
+        )
 
     def test_status_change_reflected_on_correct_day(self) -> None:
         day1, day2 = datetime.date(2026, 1, 1), datetime.date(2026, 1, 2)
@@ -79,10 +82,13 @@ class ReportBedStatusCountsTestCase(TestCase):
         with self.assertNumQueries(1):
             result = report_bed_status_counts(shelter=self.shelter, start_date=day1, end_date=day2)
 
-        self._assert_result(result, [
-            {"date": "2026-01-01", "available": 1, "occupied": 0},
-            {"date": "2026-01-02", "available": 0, "occupied": 1},
-        ])
+        self._assert_result(
+            result,
+            [
+                {"date": "2026-01-01", "available": 1, "occupied": 0},
+                {"date": "2026-01-02", "available": 0, "occupied": 1},
+            ],
+        )
 
     def test_removed_bed_not_counted(self) -> None:
         day = datetime.date(2026, 1, 1)
@@ -91,7 +97,9 @@ class ReportBedStatusCountsTestCase(TestCase):
         self._backdate_events(bed, _dt(2026, 1, 1))
         # bed.add at noon; bed.remove at 13:00 — remove becomes latest event
         self._add_event(
-            bed, "bed.remove", BedStatusChoices.AVAILABLE,
+            bed,
+            "bed.remove",
+            BedStatusChoices.AVAILABLE,
             datetime.datetime(2026, 1, 1, 13, 0, 0, tzinfo=datetime.timezone.utc),
         )
 
@@ -145,11 +153,14 @@ class ReportBedStatusCountsTestCase(TestCase):
         with self.assertNumQueries(1):
             result = report_bed_status_counts(shelter=self.shelter, start_date=day1, end_date=day3)
 
-        self._assert_result(result, [
-            {"date": "2026-01-01", "available": 1, "occupied": 0, "out_of_service": 0},
-            {"date": "2026-01-02", "available": 0, "occupied": 1, "out_of_service": 0},
-            {"date": "2026-01-03", "available": 0, "occupied": 0, "out_of_service": 1},
-        ])
+        self._assert_result(
+            result,
+            [
+                {"date": "2026-01-01", "available": 1, "occupied": 0, "out_of_service": 0},
+                {"date": "2026-01-02", "available": 0, "occupied": 1, "out_of_service": 0},
+                {"date": "2026-01-03", "available": 0, "occupied": 0, "out_of_service": 1},
+            ],
+        )
 
     def test_bed_created_mid_range_not_counted_before(self) -> None:
         """A bed that didn't exist on earlier days is 0 before its creation."""
@@ -161,11 +172,14 @@ class ReportBedStatusCountsTestCase(TestCase):
         with self.assertNumQueries(1):
             result = report_bed_status_counts(shelter=self.shelter, start_date=day1, end_date=day3)
 
-        self._assert_result(result, [
-            {"date": "2026-01-01", "available": 0},
-            {"date": "2026-01-02", "available": 1},
-            {"date": "2026-01-03", "available": 1},
-        ])
+        self._assert_result(
+            result,
+            [
+                {"date": "2026-01-01", "available": 0},
+                {"date": "2026-01-02", "available": 1},
+                {"date": "2026-01-03", "available": 1},
+            ],
+        )
 
     def test_empty_shelter_returns_all_zeros(self) -> None:
         """A shelter with no beds returns zero counts for every day."""
@@ -174,11 +188,14 @@ class ReportBedStatusCountsTestCase(TestCase):
         with self.assertNumQueries(1):
             result = report_bed_status_counts(shelter=self.shelter, start_date=start, end_date=end)
 
-        self._assert_result(result, [
-            {"date": "2026-01-01"},
-            {"date": "2026-01-02"},
-            {"date": "2026-01-03"},
-        ])
+        self._assert_result(
+            result,
+            [
+                {"date": "2026-01-01"},
+                {"date": "2026-01-02"},
+                {"date": "2026-01-03"},
+            ],
+        )
 
     def test_bed_removed_before_range_not_counted(self) -> None:
         """A bed removed before the query range starts is excluded."""
