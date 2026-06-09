@@ -1,0 +1,14 @@
+/*
+ * Layout styles for the printable shelter report.
+ *
+ * For the client-side react-to-pdf (html2canvas) capture we only need a fixed,
+ * predictable width so the rasterized output fits one letter-size page. No
+ * @page / print-media rules are required here — those belong to the
+ * server-side Playwright approach, not this slice.
+ */
+.shelter-report-print {
+  width: 800px;
+  max-width: 800px;
+  margin: 0 auto;
+  background: #ffffff;
+}

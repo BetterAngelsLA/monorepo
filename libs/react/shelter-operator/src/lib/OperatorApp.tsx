@@ -5,6 +5,7 @@ import { OperatorLayout } from './components/layout/OperatorLayout';
 import { UsersPage } from './pages';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
+import { ShelterReportPage } from './pages/report/ShelterReportPage';
 import { CreateShelterForm } from './pages/dashboard/components/create-shelter-form';
 import { AddProfilePage } from './pages/reservation/AddProfilePage';
 import { CheckInByDate } from './pages/reservation/CheckInByDate';
@@ -98,6 +99,10 @@ export function OperatorApp() {
                 element={<ShelterDashboardPage tab="label" />}
               />
             </Route>
+            <Route
+              path={routePath(paths.shelterReport)}
+              element={<ShelterReportPage />}
+            />
             <Route
               path={`${routePath(paths.reservation)}/*`}
               element={<ReservationPage />}
