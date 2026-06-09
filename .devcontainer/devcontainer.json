@@ -29,7 +29,7 @@
   // "shutdownAction": "none",
 
   // Uncomment the next line to run commands after the container is created.
-  "postCreateCommand": "yarn install && poetry install",
+  "postCreateCommand": "yarn install && poetry install && cp -n docs/cline_mcp_settings.example.json ~/.cline/cline_mcp_settings.json",
 
   // Configure tool-specific properties.
   "customizations": {

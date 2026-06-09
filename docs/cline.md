@@ -114,7 +114,10 @@ Cline can read, submit, and comment on pull requests through a GitHub MCP server
 server auto-detects authentication from the `gh` CLI — no personal access token required.
 
 First, authenticate with GitHub (`gh auth login` — see
-[devcontainer.md](./devcontainer.md#github-cli)). Then copy the MCP server config:
+[devcontainer.md](./devcontainer.md#github-cli)). The MCP server config is
+bootstrapped automatically when the dev container is created. If your container
+was created before this automation was added, Cline's `.clinerules` will remind
+you to copy it:
 
 ```bash
 cp docs/cline_mcp_settings.example.json ~/.cline/cline_mcp_settings.json
