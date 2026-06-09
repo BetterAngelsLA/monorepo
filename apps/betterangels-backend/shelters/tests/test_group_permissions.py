@@ -36,3 +36,37 @@ class ShelterGroupPermissionsTestCase(TestCase):
             ),
             schedule_permissions,
         )
+
+    def test_shelter_data_entry_group_has_shelteravailability_permissions(self) -> None:
+        group = Group.objects.get(name="Shelter Data Entry")
+        availability_permissions = set(
+            Permission.objects.filter(
+                content_type__app_label="shelters", content_type__model="shelteravailability"
+            ).values_list("codename", flat=True)
+        )
+
+        self.assertSetEqual(
+            set(
+                group.permissions.filter(
+                    content_type__app_label="shelters", content_type__model="shelteravailability"
+                ).values_list("codename", flat=True)
+            ),
+            availability_permissions,
+        )
+
+    def test_shelter_administration_group_has_shelteravailability_permissions(self) -> None:
+        group = Group.objects.get(name="Shelter Administration")
+        availability_permissions = set(
+            Permission.objects.filter(
+                content_type__app_label="shelters", content_type__model="shelteravailability"
+            ).values_list("codename", flat=True)
+        )
+
+        self.assertSetEqual(
+            set(
+                group.permissions.filter(
+                    content_type__app_label="shelters", content_type__model="shelteravailability"
+                ).values_list("codename", flat=True)
+            ),
+            availability_permissions,
+        )
