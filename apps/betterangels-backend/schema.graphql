@@ -129,6 +129,7 @@ type AdminShelterType {
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
+  availability: ShelterAvailabilityType
   HeroPhotos: [ShelterPhotoType!]
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
@@ -2270,6 +2271,14 @@ type ServiceType {
   priority: Int!
 }
 
+type ShelterAvailabilityType {
+  id: ID!
+  nonRestrictedBeds: Int!
+  restrictedBeds: Int!
+  restrictionNotes: String!
+  updatedAt: DateTime!
+}
+
 enum ShelterChoices {
   ACCESS_CENTER
   BUILDING
@@ -2295,6 +2304,7 @@ input ShelterFilter {
   openNow: Boolean
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
+  hasAvailableBeds: Boolean
   spa: [ID!]
 }
 
@@ -2432,6 +2442,7 @@ type ShelterType {
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
+  availability: ShelterAvailabilityType
   HeroPhotos: [ShelterPhotoType!]
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float

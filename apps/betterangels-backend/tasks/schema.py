@@ -20,7 +20,6 @@ from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 from tasks.models import Task
-from tasks.permissions import TaskPermissions
 from tasks.services import task_create, task_delete, task_update
 
 from .types import CreateTaskInput, TaskOrder, TaskType, UpdateTaskInput
@@ -29,11 +28,11 @@ from .types import CreateTaskInput, TaskOrder, TaskType, UpdateTaskInput
 @strawberry.type
 class Query:
     task: TaskType = strawberry_django.field(
-        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(Task.perms.VIEW)]
     )
 
     @strawberry_django.offset_paginated(
-        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(Task.perms.VIEW)]
     )
     def tasks(self, info: Info, ordering: Optional[list[TaskOrder]] = None) -> OffsetPaginated[TaskType]:
         request = info.context["request"]
@@ -45,7 +44,7 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(TaskPermissions.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Task.perms.ADD)])
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         current_user = cast(User, get_current_user(info))
         permission_group = get_user_permission_group(current_user)
@@ -83,7 +82,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Task, perms=[TaskPermissions.CHANGE])],
+        extensions=[PermissionedQuerySet(model=Task, perms=[Task.perms.CHANGE])],
     )
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         qs: QuerySet[Task] = info.context.qs
@@ -102,7 +101,7 @@ class Mutation:
             task = filter_for_user(
                 Task.objects.all(),
                 current_user,
-                [TaskPermissions.DELETE],
+                [Task.perms.DELETE],
             ).get(id=data.id)
         except Task.DoesNotExist:
             raise PermissionDenied("You do not have permission to delete this task.")
