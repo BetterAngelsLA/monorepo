@@ -337,6 +337,9 @@ def avg_days_to_occupancy(
     start_utc, end_utc = _report_date_range_to_utc(start_date, end_date)
 
     bed_event_model = apps.get_model("shelters", "BedEvent")
+    # Upper bound only: the preceding non-occupied event we measure back to often
+    # pre-dates start_utc, so a lower bound would drop it. The occupancy event
+    # itself is constrained to the range in the loop below.
     event_qs = bed_event_model.objects.filter(shelter_id=shelter_id, pgh_created_at__lt=end_utc)
 
     if bed_filters:
