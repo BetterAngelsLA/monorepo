@@ -34,7 +34,8 @@ rebuilds:
 | Task history        | `~/.cline/globalStorage/`   | `~/.cline/globalStorage/saoudrizwan.claude-dev/tasks/`       |
 | Checkpoints         | `~/.cline/globalStorage/`   | `~/.cline/globalStorage/saoudrizwan.claude-dev/checkpoints/` |
 
-These paths are persisted via Docker named volumes, so no additional configuration is needed.
+These paths are automatically backed by Docker named volumes, so all state survives
+container rebuilds — no manual setup required.
 
 ## GitHub Integration
 

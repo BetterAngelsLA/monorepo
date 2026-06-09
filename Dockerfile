@@ -131,8 +131,8 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     && dpkg -i session-manager-plugin.deb \
     && rm session-manager-plugin.deb \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-RUN mkdir -p /home/betterangels/.config/gh \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && mkdir -p /home/betterangels/.config/gh \
     && mkdir -p /home/betterangels/.vscode-server/data/User \
     && mkdir -p /home/betterangels/.cline/globalStorage/saoudrizwan.claude-dev/checkpoints \
     && mkdir -p /home/betterangels/.cline/globalStorage/saoudrizwan.claude-dev/tasks \

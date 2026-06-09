@@ -18,6 +18,8 @@ services:
     volumes:
       - gh_config:/home/betterangels/.config/gh
       - cline_data:/home/betterangels/.cline
+      # Persist VS Code user data (extensions, settings) across rebuilds.
+      # If VS Code Server updates break things, clear with: docker volume rm <project>_vscode_user
       - vscode_user:/home/betterangels/.vscode-server/data/User
 
     # Uncomment the next four lines if you will use a ptrace-based debugger like C++, Go, and Rust.
@@ -28,3 +30,8 @@ services:
 
     # Overrides default command so things don't shut down after the process ends.
     command: /bin/sh -c "while sleep 1000; do :; done"
+
+volumes:
+  gh_config:
+  cline_data:
+  vscode_user:
