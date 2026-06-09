@@ -1,9 +1,13 @@
-from django.db import models
-from django.utils.translation import gettext_lazy as _
+from common.permissions.utils import model_permissions
 
+from .models import Task
 
-class TaskPermissions(models.TextChoices):
-    VIEW = "tasks.view_task", _("Can view task")
-    CHANGE = "tasks.change_task", _("Can change task")
-    DELETE = "tasks.delete_task", _("Can delete task")
-    ADD = "tasks.add_task", _("Can add task")
+# ── Model-backed permission enum ──────────────────────────────────────────────
+# This TextChoices class exists solely to register with Strawberry's GraphQL
+# type system (schema introspection, make_granted_permissions, etc.).
+#
+# For IDE autocomplete, use the model's .perms:
+#     Task.perms.VIEW    → "tasks.view_task"
+# ──────────────────────────────────────────────────────────────────────────────
+
+TaskPermissions = model_permissions(Task)
