@@ -120,8 +120,8 @@ def shelters_open_at(
 
 def reservation_status_change_counts(
     shelter_id: int,
-    start_date: datetime.date,
-    end_date: datetime.date,
+    start_date: datetime.datetime,
+    end_date: datetime.datetime,
 ) -> dict[str, int]:
     """
     Count how many reservations changed to given statuses for a shelter in a date range (end_date inclusive).
@@ -130,7 +130,7 @@ def reservation_status_change_counts(
     """
     now = timezone.now()
     furthest_date = now - datetime.timedelta(days=365)
-    if start_date < furthest_date.date() or end_date < furthest_date.date():
+    if start_date < furthest_date or end_date < furthest_date:
         return {}
 
     from shelters.models import Reservation
@@ -145,7 +145,7 @@ def reservation_status_change_counts(
         pgh_obj_id__in=reservation_ids,
         pgh_label="reservation.status_change",
         pgh_created_at__gte=start_date,
-        pgh_created_at__lt=end_date + datetime.timedelta(days=1),
+        pgh_created_at__lt=end_date,
     )
 
     return events.aggregate(
