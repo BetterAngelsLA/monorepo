@@ -6,6 +6,7 @@ import { UsersPage } from './pages';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
 import { CreateShelterForm } from './pages/dashboard/components/create-shelter-form';
+import { ShelterReportPage } from './pages/report/ShelterReportPage';
 import { AddProfilePage } from './pages/reservation/AddProfilePage';
 import { CheckInByDate } from './pages/reservation/CheckInByDate';
 import { ConfirmationPage } from './pages/reservation/ConfirmationPage';
@@ -79,6 +80,10 @@ export function OperatorApp() {
                 element={<ShelterEcosystemPage />}
               />
             </Route>
+            <Route
+              path={routePath(paths.shelterReport)}
+              element={<ShelterReportPage />}
+            />
             <Route path={routePath(paths.shelterManage)}>
               <Route index element={<ShelterDashboardPage tab="overview" />} />
               <Route
