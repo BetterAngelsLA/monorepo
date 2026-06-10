@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@apollo/client/react';
 import { Plus } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   RoomStatusChoices,
@@ -39,15 +39,10 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
     skip: !shelterId,
   });
 
-  const refetchQueries = useMemo(
-    () => [{ query: GetShelterRoomsDocument, variables: { shelterId } }],
-    [shelterId]
-  );
-
   const [duplicateRoom] = useMutation<
     DuplicateRoomMutation,
     DuplicateRoomMutationVariables
-  >(DuplicateRoomDocument, { refetchQueries });
+  >(DuplicateRoomDocument);
 
   const [deleteRoom] = useMutation<
     DeleteRoomMutation,

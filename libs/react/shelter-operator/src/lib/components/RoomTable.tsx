@@ -43,7 +43,7 @@ type RoomTableProps = {
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
   onCreateRoom?: () => void;
-  onDuplicate?: (rowObject: RoomRowObject, rowIndex: number) => void;
+  onDuplicate?: (rowObject: RoomRowObject) => void;
   onDeleteRoom?: (roomId: string) => void;
   onDeleteRooms?: (roomIds: string[]) => void;
 };
@@ -351,7 +351,7 @@ export function RoomTable({
               leftIcon={<CopyPlus />}
               onClick={(e) => {
                 e.stopPropagation();
-                onDuplicate?.(rowObject, 0);
+                onDuplicate?.(rowObject);
               }}
             />
             <Button

@@ -30,8 +30,9 @@ export function validateField<K extends keyof RoomFormData>(
   field: K,
   value: RoomFormData[K]
 ): string | undefined {
-  const result = formSchema.safeParse({ [field]: value });
+  if (!(field in formSchema.shape)) return undefined;
+  const fieldSchema = formSchema.shape[field as keyof typeof formSchema.shape];
+  const result = fieldSchema.safeParse(value);
   if (result.success) return undefined;
-  const issue = result.error.issues.find((i) => i.path[0] === field);
-  return issue?.message;
+  return result.error.issues[0]?.message;
 }
