@@ -91,7 +91,7 @@ def _duplicate_label(label: str | None) -> str | None:
 
 
 @transaction.atomic
-def bed_duplicate(*, user: "User", bed_id: str, shelter_id: str) -> Bed:
+def bed_clone(*, user: "User", bed_id: str, shelter_id: str) -> Bed:
     """Duplicate an existing bed on *shelter_id*, including all M2M relationships.
 
     Validates org access via ``shelter_get``. The source bed must belong to *shelter_id*.

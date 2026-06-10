@@ -514,6 +514,10 @@ input ClientSearchInput {
   middleName: String = null
 }
 
+union CloneBedPayload = BedType | OperationInfo
+
+union CloneRoomPayload = RoomType | OperationInfo
+
 enum ConditionChoices {
   HEAT
   FIRE
@@ -937,10 +941,6 @@ type DjangoImageType {
 type DjangoModelType {
   pk: ID!
 }
-
-union DuplicateBedPayload = BedType | OperationInfo
-
-union DuplicateRoomPayload = RoomType | OperationInfo
 
 enum EntryRequirementChoices {
   BACKGROUND
@@ -1570,10 +1570,10 @@ type Mutation {
   updateShelter(data: UpdateShelterInput!): UpdateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
   updateRoom(id: ID!, data: UpdateRoomInput!): UpdateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_room"}], any: true)
-  duplicateRoom(id: ID!, shelterId: ID!): DuplicateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
+  cloneRoom(id: ID!, shelterId: ID!): CloneRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   updateBed(id: ID!, data: UpdateBedInput!): UpdateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_bed"}], any: true)
-  duplicateBed(id: ID!, shelterId: ID!): DuplicateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
+  cloneBed(id: ID!, shelterId: ID!): CloneBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
   updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!

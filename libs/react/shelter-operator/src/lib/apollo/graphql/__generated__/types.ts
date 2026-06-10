@@ -524,6 +524,10 @@ export type ClientSearchInput = {
   middleName?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CloneBedPayload = BedType | OperationInfo;
+
+export type CloneRoomPayload = OperationInfo | RoomType;
+
 export enum ConditionChoices {
   AirQualitySmoke = 'AIR_QUALITY_SMOKE',
   EmergencyEvacuation = 'EMERGENCY_EVACUATION',
@@ -963,10 +967,6 @@ export type DjangoModelType = {
   __typename?: 'DjangoModelType';
   pk: Scalars['ID']['output'];
 };
-
-export type DuplicateBedPayload = BedType | OperationInfo;
-
-export type DuplicateRoomPayload = OperationInfo | RoomType;
 
 export enum EntryRequirementChoices {
   Background = 'BACKGROUND',
@@ -1537,6 +1537,8 @@ export type MedicalNeedType = {
 export type Mutation = {
   __typename?: 'Mutation';
   addOrganizationMember: AddOrganizationMemberPayload;
+  cloneBed: CloneBedPayload;
+  cloneRoom: CloneRoomPayload;
   createBed: CreateBedPayload;
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
@@ -1570,8 +1572,6 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
-  duplicateBed: DuplicateBedPayload;
-  duplicateRoom: DuplicateRoomPayload;
   generateClientDocumentUploads: GenerateClientDocumentUploadsPayload;
   generateClientProfilePhotoUpload: GenerateClientProfilePhotoUploadPayload;
   hmisLogin: HmisLoginSuccessHmisLoginError;
@@ -1608,6 +1608,18 @@ export type Mutation = {
 
 export type MutationAddOrganizationMemberArgs = {
   data: OrgInvitationInput;
+};
+
+
+export type MutationCloneBedArgs = {
+  id: Scalars['ID']['input'];
+  shelterId: Scalars['ID']['input'];
+};
+
+
+export type MutationCloneRoomArgs = {
+  id: Scalars['ID']['input'];
+  shelterId: Scalars['ID']['input'];
 };
 
 
@@ -1769,18 +1781,6 @@ export type MutationDeleteSocialMediaProfileArgs = {
 
 export type MutationDeleteTaskArgs = {
   data: DeleteDjangoObjectInput;
-};
-
-
-export type MutationDuplicateBedArgs = {
-  id: Scalars['ID']['input'];
-  shelterId: Scalars['ID']['input'];
-};
-
-
-export type MutationDuplicateRoomArgs = {
-  id: Scalars['ID']['input'];
-  shelterId: Scalars['ID']['input'];
 };
 
 

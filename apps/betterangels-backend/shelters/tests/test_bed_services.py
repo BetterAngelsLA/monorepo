@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.test import TestCase
 from shelters.enums import BedStatusChoices, BedTypeChoices, DemographicChoices, FunderChoices
 from shelters.models import Bed, Demographic, Funder, Room, Shelter
-from shelters.services.bed import bed_create, bed_duplicate, bed_update
+from shelters.services.bed import bed_clone, bed_create, bed_update
 from shelters.tests.baker_recipes import shelter_recipe
 
 
@@ -182,7 +182,7 @@ class BedUpdateTestCase(BedServiceTestCase):
 class BedDuplicateTestCase(BedServiceTestCase):
     def test_bed_not_found_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            bed_duplicate(user=self.user, bed_id="999999", shelter_id=str(self.shelter.pk))
+            bed_clone(user=self.user, bed_id="999999", shelter_id=str(self.shelter.pk))
         self.assertIn(
             f"Bed matching ID 999999 could not be found for shelter {self.shelter.pk}.",
             str(ctx.exception),
@@ -193,4 +193,4 @@ class BedDuplicateTestCase(BedServiceTestCase):
         bed = Bed.objects.create(shelter=other_shelter, name="Other bed")
 
         with self.assertRaises(ObjectDoesNotExist):
-            bed_duplicate(user=self.user, bed_id=str(bed.pk), shelter_id=str(self.shelter.pk))
+            bed_clone(user=self.user, bed_id=str(bed.pk), shelter_id=str(self.shelter.pk))

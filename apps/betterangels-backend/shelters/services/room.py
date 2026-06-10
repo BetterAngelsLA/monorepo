@@ -122,7 +122,7 @@ def _unique_duplicate_name(*, shelter_id: int | str, name: str | None) -> str:
 
 
 @transaction.atomic
-def room_duplicate(*, user: "User", room_id: str, shelter_id: str) -> Room:
+def room_clone(*, user: "User", room_id: str, shelter_id: str) -> Room:
     """Duplicate an existing room on *shelter_id*, including all M2M relationships.
 
     Validates org access via ``shelter_get``. The source room must belong to
