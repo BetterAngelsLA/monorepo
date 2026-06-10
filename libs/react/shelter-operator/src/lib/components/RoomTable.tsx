@@ -43,7 +43,7 @@ type RoomTableProps = {
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
   onCreateRoom?: () => void;
-  onDuplicate?: (rowObject: RoomRowObject) => void;
+  onClone?: (rowObject: RoomRowObject) => void;
   onDeleteRooms?: (roomIds: string[]) => void;
 };
 
@@ -82,7 +82,7 @@ export function RoomTable({
   tableStyle,
   headerStyle,
   rowStyle,
-  onDuplicate,
+  onClone,
   onDeleteRooms,
 }: RoomTableProps) {
   const [searchInput, setSearchInput] = useState('');
@@ -332,11 +332,11 @@ export function RoomTable({
             <Button
               variant="edit"
               className="text-[#747A82]"
-              aria-label="Duplicate room"
+              aria-label="Clone room"
               leftIcon={<CopyPlus />}
               onClick={(e) => {
                 e.stopPropagation();
-                onDuplicate?.(rowObject);
+                onClone?.(rowObject);
               }}
             />
             <Button

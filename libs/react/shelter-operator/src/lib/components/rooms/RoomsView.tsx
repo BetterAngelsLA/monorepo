@@ -71,7 +71,7 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
     [navigate, shelterId]
   );
 
-  const handleDuplicate = useCallback(
+  const handleClone = useCallback(
     async (rowObject: RoomRowObject) => {
       setActionError(null);
       try {
@@ -84,7 +84,7 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
         if (payload?.__typename === 'OperationInfo') {
           setActionError(
             payload.messages?.[0]?.message ||
-              'Unable to duplicate room. Please try again.'
+              'Unable to clone room. Please try again.'
           );
           return;
         }
@@ -129,7 +129,7 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
         <RoomTable
           rows={rows}
           onRowClick={handleEdit}
-          onDuplicate={handleDuplicate}
+          onClone={handleClone}
           onDeleteRooms={handleDeleteRooms}
           loading={loading}
         />

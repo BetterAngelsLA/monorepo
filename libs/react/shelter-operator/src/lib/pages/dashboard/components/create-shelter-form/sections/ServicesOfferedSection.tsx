@@ -29,7 +29,7 @@ const replaceCategoryServiceSelection = (
   return nextSelectedIds;
 };
 
-const removePendingDuplicates = (
+const removePendingClones = (
   pendingValues: string[],
   existingLabels: string[]
 ) => {
@@ -124,7 +124,7 @@ export const ServicesOfferedSection = memo(function ServicesOfferedSection({
             const selectedOtherLabels = otherServices
               .filter((service) => nextValues.includes(service.id))
               .map((service) => service.displayName);
-            const nextPendingServices = removePendingDuplicates(
+            const nextPendingServices = removePendingClones(
               pendingServices,
               selectedOtherLabels
             );
