@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.test import TestCase
 from shelters.enums import BedStatusChoices, BedTypeChoices, DemographicChoices, FunderChoices
 from shelters.models import Bed, Demographic, Funder, Room, Shelter
-from shelters.services.bed import bed_clone, bed_create, bed_update
+from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.tests.baker_recipes import shelter_recipe
 
 
@@ -177,6 +177,44 @@ class BedUpdateTestCase(BedServiceTestCase):
             User = get_user_model()
             outsider = User.objects.create_user(username="outsider", password="pw")
             bed_update(user=outsider, bed_id=self.bed.pk, data={"name": "Blocked"})
+
+
+class BedDeleteTestCase(BedServiceTestCase):
+    def test_deletes_single_bed(self) -> None:
+        bed = Bed.objects.create(shelter=self.shelter, name="Bed 1", status=BedStatusChoices.AVAILABLE)
+
+        deleted = bed_delete(ids=[bed.pk])
+
+        self.assertEqual(len(deleted), 1)
+        self.assertEqual(deleted[0].pk, bed.pk)
+        self.assertFalse(Bed.objects.filter(pk=bed.pk).exists())
+
+    def test_deletes_multiple_beds(self) -> None:
+        bed1 = Bed.objects.create(shelter=self.shelter, name="Bed 1", status=BedStatusChoices.AVAILABLE)
+        bed2 = Bed.objects.create(shelter=self.shelter, name="Bed 2", status=BedStatusChoices.AVAILABLE)
+
+        deleted = bed_delete(ids=[bed1.pk, bed2.pk])
+
+        self.assertEqual(len(deleted), 2)
+        self.assertFalse(Bed.objects.filter(pk__in=[bed1.pk, bed2.pk]).exists())
+
+    def test_missing_id_raises_object_does_not_exist(self) -> None:
+        with self.assertRaises(ObjectDoesNotExist) as ctx:
+            bed_delete(ids=[999999])
+        self.assertIn("999999", str(ctx.exception))
+
+    def test_partial_missing_ids_raises_object_does_not_exist(self) -> None:
+        bed = Bed.objects.create(shelter=self.shelter, name="Bed 1", status=BedStatusChoices.AVAILABLE)
+
+        with self.assertRaises(ObjectDoesNotExist):
+            bed_delete(ids=[bed.pk, 999999])
+
+        self.assertTrue(Bed.objects.filter(pk=bed.pk).exists())
+
+    def test_empty_list_returns_empty(self) -> None:
+        deleted = bed_delete(ids=[])
+
+        self.assertEqual(deleted, [])
 
 
 class BedDuplicateTestCase(BedServiceTestCase):

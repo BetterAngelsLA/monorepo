@@ -91,6 +91,23 @@ def _duplicate_label(label: str | None) -> str | None:
 
 
 @transaction.atomic
+def bed_delete(*, ids: list[int | str]) -> list[Bed]:
+    """Delete beds by their IDs and return the deleted instances.
+
+    Raises:
+        ``ObjectDoesNotExist`` when any of the given IDs does not match a bed.
+    """
+    beds = list(Bed.objects.filter(pk__in=ids))
+    found_ids = {bed.pk for bed in beds}
+    missing = [id for id in ids if int(id) not in found_ids]
+    if missing:
+        raise ObjectDoesNotExist(f"Bed(s) matching ID(s) {missing} could not be found.")
+    for bed in beds:
+        bed.delete()
+    return beds
+
+
+@transaction.atomic
 def bed_clone(*, user: "User", bed_id: str, shelter_id: str) -> Bed:
     """Duplicate an existing bed on *shelter_id*, including all M2M relationships.
 

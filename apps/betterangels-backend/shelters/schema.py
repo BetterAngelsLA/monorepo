@@ -3,12 +3,11 @@ from typing import Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from common.graphql.types import DeleteDjangoObjectInput
 from common.permissions.utils import IsAuthenticated
 from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Room, Shelter
-from shelters.services.bed import bed_clone, bed_create, bed_update
+from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.room import room_clone, room_create, room_delete, room_update
 from shelters.services.shelter import shelter_create, shelter_update
 from shelters.types import (
@@ -30,7 +29,7 @@ from strawberry import ID
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
-from strawberry_django.permissions import HasPerm, HasRetvalPerm
+from strawberry_django.permissions import HasPerm
 
 
 @strawberry.type
@@ -133,8 +132,6 @@ class Mutation:
         user = cast(User, get_current_user(info))
         return cast(BedType, bed_clone(user=user, bed_id=id, shelter_id=shelter_id))
 
-    delete_bed: BedType = strawberry_django.mutations.delete(
-        DeleteDjangoObjectInput,
-        permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=Bed.perms.DELETE)],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Bed.perms.DELETE)])
+    def delete_beds(self, info: Info, ids: list[ID]) -> list[BedType]:
+        return cast(list[BedType], bed_delete(ids=[str(id) for id in ids]))

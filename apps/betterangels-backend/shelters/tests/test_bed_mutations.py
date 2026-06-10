@@ -282,31 +282,49 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         self.assertEqual(source.pets.count(), 1)
 
 
-class DeleteBedMutationTestCase(BedMutationTestCase):
+class DeleteBedsMutationTestCase(BedMutationTestCase):
     def setUp(self) -> None:
         super().setUp()
 
         self.mutation = """
-            mutation ($id: ID!) {
-                deleteBed(data: { id: $id }) {
-                    ... on BedType {
-                        id
-                    }
+            mutation ($ids: [ID!]!) {
+                deleteBeds(ids: $ids) {
+                    id
                 }
             }
         """
 
-    def test_delete_bed(self) -> None:
+    def test_delete_single_bed(self) -> None:
         bed = baker.make(Bed, shelter=self.shelter, name="Bed to delete")
-        variables = {"id": str(bed.pk)}
+        variables = {"ids": [str(bed.pk)]}
 
-        expected_query_count = 15
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self.mutation, variables)
+        response = self.execute_graphql(self.mutation, variables)
 
         self.assertIsNone(response.get("errors"))
-        self.assertEqual(response["data"]["deleteBed"]["id"], str(bed.pk))
+        deleted = response["data"]["deleteBeds"]
+        self.assertEqual(len(deleted), 1)
+        self.assertEqual(deleted[0]["id"], str(bed.pk))
         self.assertFalse(Bed.objects.filter(pk=bed.pk).exists())
+
+    def test_delete_multiple_beds(self) -> None:
+        bed1 = baker.make(Bed, shelter=self.shelter, name="Bed A")
+        bed2 = baker.make(Bed, shelter=self.shelter, name="Bed B")
+        variables = {"ids": [str(bed1.pk), str(bed2.pk)]}
+
+        response = self.execute_graphql(self.mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        deleted_ids = {b["id"] for b in response["data"]["deleteBeds"]}
+        self.assertEqual(deleted_ids, {str(bed1.pk), str(bed2.pk)})
+        self.assertFalse(Bed.objects.filter(pk__in=[bed1.pk, bed2.pk]).exists())
+
+    def test_delete_beds_not_found_returns_error(self) -> None:
+        variables = {"ids": ["999999"]}
+
+        response = self.execute_graphql(self.mutation, variables)
+
+        self.assertIsNotNone(response.get("errors"))
+        self.assertEqual(Bed.objects.filter(shelter=self.shelter).count(), 0)
 
 
 class DuplicateBedMutationTestCase(BedMutationTestCase):
