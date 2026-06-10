@@ -1,3 +1,4 @@
+import { mergeCss } from '@monorepo/react/shared';
 import {
   ScheduleTypeChoices,
   type ScheduleInput,
@@ -18,10 +19,11 @@ type TProps = {
   initialSchedules?: ScheduleType[];
   onSave: (inputs: ScheduleInput[]) => void;
   onCancel?: () => void;
+  className?: string;
 };
 
 export function ScheduleForm(props: TProps) {
-  const { scheduleType, initialSchedules, onSave, onCancel } = props;
+  const { scheduleType, initialSchedules, onSave, onCancel, className } = props;
 
   const weeklySchedules = initialSchedules?.filter((s) => !s.isException) ?? [];
   const exceptionSchedules =
@@ -41,7 +43,7 @@ export function ScheduleForm(props: TProps) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className={mergeCss(['space-y-8', className])}>
       <section>
         <h3 className="text-base font-semibold text-gray-800 mb-4">
           Weekly Hours

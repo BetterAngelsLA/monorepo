@@ -3,23 +3,12 @@ import {
   type ScheduleInput,
 } from '@monorepo/react/shelter';
 import { useState } from 'react';
-import { useShelter } from '../../../../hooks/useShelter';
-import { Tabs } from '../../../base-ui/tabs';
-import { ScheduleForm } from '../../../Schedule/ScheduleForm';
-
-const SCHEDULE_TABS: ScheduleTypeChoices[] = [
-  ScheduleTypeChoices.Operating,
-  ScheduleTypeChoices.Intake,
-  ScheduleTypeChoices.MealService,
-  ScheduleTypeChoices.StaffAvailability,
-];
-
-const SCHEDULE_TAB_LABELS: Record<ScheduleTypeChoices, string> = {
-  [ScheduleTypeChoices.Operating]: 'Operating Hours',
-  [ScheduleTypeChoices.Intake]: 'Intake Hours',
-  [ScheduleTypeChoices.MealService]: 'Meal Service',
-  [ScheduleTypeChoices.StaffAvailability]: 'Staff Availability',
-};
+import {
+  useAdminShelterProfile,
+  useUpdateShelterProfile,
+} from '../../../../hooks';
+import { useToast } from '../../../base-ui/toast';
+import { ShelterSchedulesForm } from './ShelterSchedulesForm';
 
 type TProps = {
   shelterId: string;
@@ -30,36 +19,72 @@ export function ShelterSchedules(props: TProps) {
 
   const [currentTab, setCurrentTab] = useState(ScheduleTypeChoices.Operating);
 
-  const { shelter } = useShelter(shelterId);
+  const { shelter } = useAdminShelterProfile(shelterId);
+  const { updateShelter } = useUpdateShelterProfile();
+  const { showToast } = useToast();
+
+  async function onSave(
+    scheduleType: ScheduleTypeChoices,
+    inputs: ScheduleInput[]
+  ) {
+    if (!shelter) return;
+
+    const otherSchedules: ScheduleInput[] = shelter.schedules
+      .filter((s) => s.scheduleType !== scheduleType)
+      .map((s) => ({
+        scheduleType: s.scheduleType,
+        days: s.day ? [s.day] : undefined,
+        startTime: s.startTime ?? undefined,
+        endTime: s.endTime ?? undefined,
+        startDate: s.startDate ?? undefined,
+        endDate: s.endDate ?? undefined,
+        condition: s.condition ?? undefined,
+        isException: s.isException,
+      }));
+
+    try {
+      const response = await updateShelter({
+        variables: {
+          data: {
+            id: shelterId,
+            schedules: [...otherSchedules, ...inputs],
+          },
+        },
+      });
+
+      const result = response.data?.updateShelter;
+
+      if (result?.__typename === 'ShelterType') {
+        showToast({
+          status: 'success',
+          title: 'Schedule updated.',
+        });
+
+        return;
+      }
+
+      throw new Error('unexpected query error');
+    } catch (e) {
+      console.error(`[updateShelter error]: ${e}.`);
+
+      showToast({
+        status: 'error',
+        title: 'Update failed',
+        description: 'An unexpected error occurred.',
+      });
+    }
+  }
 
   if (!shelter) {
     return null;
   }
 
-  const handleSave = (inputs: ScheduleInput[]) => {
-    // TODO: wire up updateShelter mutation with the built inputs
-    console.log('schedule inputs to save', inputs);
-  };
-
   return (
-    <div>
-      <Tabs
-        tabs={SCHEDULE_TABS}
-        selectedTab={currentTab}
-        onTabPress={setCurrentTab}
-        getLabel={(tab) => SCHEDULE_TAB_LABELS[tab]}
-      />
-
-      <div className="p-8">
-        <ScheduleForm
-          key={currentTab}
-          scheduleType={currentTab}
-          initialSchedules={shelter.schedules.filter(
-            (s) => s.scheduleType === currentTab
-          )}
-          onSave={handleSave}
-        />
-      </div>
-    </div>
+    <ShelterSchedulesForm
+      schedules={shelter.schedules}
+      currentTab={currentTab}
+      onTabChange={setCurrentTab}
+      onSave={onSave}
+    />
   );
 }

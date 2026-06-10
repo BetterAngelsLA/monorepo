@@ -19,7 +19,7 @@ export function WeeklyScheduleEditor(props: TProps) {
     const sourceRanges = value[sourceDay].ranges;
     const next = { ...value };
     for (const d of Object.values(DayOfWeekChoices)) {
-      if (next[d].ranges.length > 0) {
+      if (d !== sourceDay) {
         next[d] = { ranges: sourceRanges.map((r) => ({ ...r })) };
       }
     }

@@ -84,7 +84,7 @@ export function DayRow(props: TProps) {
                 <button
                   type="button"
                   onClick={onCopyToAll}
-                  title="Copy these hours to all configured days"
+                  title="Copy these hours to all days"
                   className="text-gray-400 hover:text-blue-600 transition-colors"
                 >
                   <CopyIcon size={14} />
