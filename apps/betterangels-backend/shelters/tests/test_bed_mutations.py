@@ -287,7 +287,7 @@ class DeleteBedsMutationTestCase(BedMutationTestCase):
         super().setUp()
 
         self.mutation = """
-            mutation ($data: DeleteBedsInput!) {
+            mutation ($data: BulkDeleteInput!) {
                 deleteBeds(data: $data) {
                     ... on BulkDeleteResult {
                         ids

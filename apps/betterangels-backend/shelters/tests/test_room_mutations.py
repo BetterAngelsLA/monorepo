@@ -391,7 +391,7 @@ class DeleteRoomsMutationTestCase(RoomMutationTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.mutation = """
-            mutation ($data: DeleteRoomsInput!) {
+            mutation ($data: BulkDeleteInput!) {
                 deleteRooms(data: $data) {
                     ... on BulkDeleteResult {
                         ids

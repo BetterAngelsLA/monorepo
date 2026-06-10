@@ -297,6 +297,11 @@ class AuthorizedPresignedS3UploadsType:
     uploads: list[AuthorizedPresignedS3UploadType]
 
 
+@strawberry.input
+class BulkDeleteInput:
+    ids: list[ID]
+
+
 @strawberry.type
 class BulkDeleteResult:
     ids: list[ID]
