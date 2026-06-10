@@ -71,6 +71,10 @@ class Registry:
         """Return the ``TemplateConfig`` for *name* or ``None``."""
         return self._templates_by_name.get(name)
 
+    def template_names(self) -> list[str]:
+        """Return all registered template names (e.g. "Caseworker", "Shelter Operator")."""
+        return sorted(self._templates_by_name.keys())
+
     def template_names_for(self, org: Organization) -> list[str]:
         """All template names available for *org*, based on ``profile.org_types``."""
         org_types = org.profile.org_types if hasattr(org, "profile") else []

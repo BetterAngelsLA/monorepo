@@ -1,5 +1,5 @@
 """
-Organization services — higher-level operations per the Django Styleguide.
+Organization services -- higher-level operations per the Django Styleguide.
 
 Reference: https://github.com/HackSoftware/Django-Styleguide#services
 """
@@ -10,7 +10,7 @@ import uuid
 from typing import TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from organizations.models import Organization, OrganizationUser
 
 from .models import OrgTypeChoices, PermissionGroup, PermissionGroupTemplate
@@ -34,9 +34,15 @@ def member_add(
 ) -> User:
     """Add a new member to an organization.
 
-    Returns the :class:`~accounts.models.User` that was created or
-    retrieved.  Raises :class:`~django.core.exceptions.ValidationError`
-    if the user is already a member of *organization*.
+    Creates or retrieves a :class:`~accounts.models.User`, links them
+    to *organization* via ``OrganizationUser``, and assigns the
+    member-level permission group for the organization type (e.g.
+    "Caseworker" for outreach, "Shelter Operator" for shelters).
+
+    Returns the :class:`~accounts.models.User`.
+
+    Raises :class:`~django.core.exceptions.ValidationError` if the user
+    is already a member of *organization*.
     """
     user, created = UserModel.objects.get_or_create(
         email=email,
@@ -49,10 +55,21 @@ def member_add(
         user.set_unusable_password()
         user.save()
 
+    # Link user to organization.
     try:
         OrganizationUser.objects.create(user=user, organization=organization)
-    except Exception:
+    except IntegrityError:
         raise ValidationError(f"{first_name} {last_name} is already a member of {organization.name}.")
+
+    # Assign the member-level permission group based on org type.
+    # Falls back to legacy Caseworker default for orgs without org_types.
+    try:
+        member_group = get_member_permission_group(organization)
+        user.groups.add(member_group.group)
+    except ValidationError:
+        from accounts.utils import add_default_org_permissions_to_user
+
+        add_default_org_permissions_to_user(user, organization)
 
     return user
 
@@ -79,10 +96,9 @@ def create_organization_with_presets(
     from accounts.models import OrganizationProfile  # noqa: F811  (lazy to avoid circular)
     from accounts.template_registry import REGISTRY
 
-    # Validate preset names.
-    valid_names = {oc.name for oc in (REGISTRY.outreach, REGISTRY.shelter)}
+    # Validate preset names via the registry index.
     for pn in preset_names:
-        if pn not in valid_names:
+        if REGISTRY.org_type(pn) is None:
             raise ValidationError(f"Unknown org-type preset: {pn}")
 
     org = Organization.objects.create(name=name)
