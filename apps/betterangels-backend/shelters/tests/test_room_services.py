@@ -1,0 +1,281 @@
+import datetime
+
+from accounts.models import OrganizationProfile, OrgTypeChoices
+from accounts.tests.baker_recipes import organization_recipe
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.test import TestCase
+from model_bakery import baker
+from shelters.enums import (
+    AccessibilityChoices,
+    BedStatusChoices,
+    DemographicChoices,
+    FunderChoices,
+    PetChoices,
+    RoomStatusChoices,
+    RoomStyleChoices,
+)
+from shelters.models import Accessibility, Bed, Demographic, Funder, Pet, Room, Shelter
+from shelters.services.room import room_create, room_duplicate, room_update
+from shelters.tests.baker_recipes import shelter_recipe
+
+
+class RoomServiceTestCase(TestCase):
+    def setUp(self) -> None:
+        User = get_user_model()
+        self.org, self.other_org = organization_recipe.make(_quantity=2)
+        baker.make(OrganizationProfile, organization=self.org, org_types=[OrgTypeChoices.SHELTER])
+        baker.make(OrganizationProfile, organization=self.other_org, org_types=[OrgTypeChoices.SHELTER])
+        self.user = baker.make(User)
+        self.org.users.add(self.user)
+        self.shelter = shelter_recipe.make(organization=self.org)
+
+
+class RoomCreateTestCase(RoomServiceTestCase):
+    def test_creates_room_with_scalar_fields(self) -> None:
+        last_cleaned = datetime.datetime(2025, 1, 15, 10, 30, tzinfo=datetime.timezone.utc)
+
+        room = room_create(
+            user=self.user,
+            data={
+                "shelter_id": self.shelter.pk,
+                "amenities": "WiFi, AC",
+                "last_cleaned_inspected": last_cleaned,
+                "medical_respite": True,
+                "name": "Room-101",
+                "notes": "Corner room",
+                "status": RoomStatusChoices.AVAILABLE,
+                "type": RoomStyleChoices.SINGLE_ROOM,
+            },
+        )
+
+        self.assertEqual(room.shelter_id, self.shelter.pk)
+        self.assertEqual(room.name, "Room-101")
+        self.assertEqual(room.type, RoomStyleChoices.SINGLE_ROOM)
+        self.assertEqual(room.status, RoomStatusChoices.AVAILABLE)
+        self.assertEqual(room.notes, "Corner room")
+        self.assertEqual(room.amenities, "WiFi, AC")
+        self.assertTrue(room.medical_respite)
+        self.assertEqual(room.last_cleaned_inspected, last_cleaned)
+        self.assertTrue(Room.objects.filter(pk=room.pk).exists())
+
+    def test_creates_room_with_m2m_fields(self) -> None:
+        demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
+        funder, _ = Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)
+        accessibility, _ = Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)
+        pet, _ = Pet.objects.get_or_create(name=PetChoices.CATS)
+        self.shelter.demographics.add(demographic)
+        self.shelter.funders.add(funder)
+        self.shelter.accessibility.add(accessibility)
+        self.shelter.pets.add(pet)
+
+        room = room_create(
+            user=self.user,
+            data={
+                "shelter_id": self.shelter.pk,
+                "name": "Room-102",
+                "demographics": [DemographicChoices.SINGLE_MEN],
+                "funders": [FunderChoices.CITY_OF_LOS_ANGELES],
+                "accessibility": [AccessibilityChoices.WHEELCHAIR_ACCESSIBLE],
+                "pets": [PetChoices.CATS],
+            },
+        )
+
+        self.assertEqual(room.demographics.count(), 1)
+        self.assertEqual(room.funders.count(), 1)
+        self.assertEqual(room.accessibility.count(), 1)
+        self.assertEqual(room.pets.count(), 1)
+
+    def test_shelter_not_found_raises_object_does_not_exist(self) -> None:
+        with self.assertRaises(ObjectDoesNotExist) as ctx:
+            room_create(user=self.user, data={"shelter_id": 999999, "name": "Room-101"})
+        self.assertIn("Shelter matching ID 999999 could not be found.", str(ctx.exception))
+
+    def test_user_without_org_access_raises_object_does_not_exist(self) -> None:
+        other_shelter = shelter_recipe.make(organization=self.other_org)
+
+        with self.assertRaises(ObjectDoesNotExist):
+            room_create(user=self.user, data={"shelter_id": other_shelter.pk, "name": "Room-101"})
+
+    def test_duplicate_name_raises_validation_error(self) -> None:
+        Room.objects.create(shelter=self.shelter, name="Room-101")
+
+        with self.assertRaises(ValidationError):
+            room_create(user=self.user, data={"shelter_id": self.shelter.pk, "name": "Room-101"})
+
+    def test_invalid_m2m_subset_raises_validation_error(self) -> None:
+        shelter = Shelter.objects.create(organization=self.org)
+        demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
+        shelter.demographics.add(demographic)
+
+        with self.assertRaises(ValidationError) as ctx:
+            room_create(
+                user=self.user,
+                data={
+                    "shelter_id": shelter.pk,
+                    "name": "Room-103",
+                    "demographics": [DemographicChoices.FAMILIES],
+                },
+            )
+        self.assertIn("demographics", ctx.exception.message_dict)
+
+
+class RoomUpdateTestCase(RoomServiceTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.room = Room.objects.create(
+            shelter=self.shelter,
+            name="Room-101",
+            status=RoomStatusChoices.AVAILABLE,
+            type=RoomStyleChoices.SINGLE_ROOM,
+        )
+
+    def test_updates_scalar_fields(self) -> None:
+        updated = room_update(
+            user=self.user,
+            room_id=self.room.pk,
+            data={
+                "name": "Room-101 Updated",
+                "status": RoomStatusChoices.RESERVED,
+                "type": RoomStyleChoices.MOTEL_ROOM,
+                "notes": "Updated notes",
+            },
+        )
+
+        self.assertEqual(updated.pk, self.room.pk)
+        self.assertEqual(updated.name, "Room-101 Updated")
+        self.assertEqual(updated.status, RoomStatusChoices.RESERVED)
+        self.assertEqual(updated.type, RoomStyleChoices.MOTEL_ROOM)
+        self.assertEqual(updated.notes, "Updated notes")
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.name, "Room-101 Updated")
+
+    def test_none_scalar_values_are_skipped(self) -> None:
+        room_update(user=self.user, room_id=self.room.pk, data={"name": "Renamed", "status": None})
+
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.name, "Renamed")
+        self.assertEqual(self.room.status, RoomStatusChoices.AVAILABLE)
+
+    def test_updates_m2m_fields(self) -> None:
+        demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
+        self.shelter.demographics.add(demographic)
+
+        room_update(
+            user=self.user,
+            room_id=self.room.pk,
+            data={"demographics": [DemographicChoices.SINGLE_MEN]},
+        )
+
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.demographics.count(), 1)
+
+    def test_empty_m2m_list_clears_relations(self) -> None:
+        demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
+        self.shelter.demographics.add(demographic)
+        self.room.demographics.add(demographic)
+
+        room_update(user=self.user, room_id=self.room.pk, data={"demographics": []})
+
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.demographics.count(), 0)
+
+    def test_room_not_found_raises_object_does_not_exist(self) -> None:
+        with self.assertRaises(ObjectDoesNotExist) as ctx:
+            room_update(user=self.user, room_id=999999, data={"name": "Missing"})
+        self.assertIn("Room matching ID 999999 could not be found.", str(ctx.exception))
+
+    def test_user_without_org_access_raises_does_not_exist(self) -> None:
+        with self.assertRaises(Shelter.DoesNotExist):
+            User = get_user_model()
+            outsider = User.objects.create_user(username="outsider", password="pw")
+            room_update(user=outsider, room_id=self.room.pk, data={"name": "Blocked"})
+
+
+class RoomDuplicateTestCase(RoomServiceTestCase):
+    def test_duplicates_room_with_m2m_without_beds(self) -> None:
+        demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
+        funder, _ = Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)
+        accessibility, _ = Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)
+        pet, _ = Pet.objects.get_or_create(name=PetChoices.CATS)
+        self.shelter.demographics.add(demographic)
+        self.shelter.funders.add(funder)
+        self.shelter.accessibility.add(accessibility)
+        self.shelter.pets.add(pet)
+        source = Room.objects.create(
+            shelter=self.shelter,
+            name="Room-101",
+            status=RoomStatusChoices.AVAILABLE,
+            type=RoomStyleChoices.SINGLE_ROOM,
+            type_other="Custom style",
+            notes="Corner room",
+            amenities="WiFi, AC",
+            medical_respite=True,
+            storage=True,
+            maintenance_flag=True,
+        )
+        source.demographics.add(demographic)
+        source.funders.add(funder)
+        source.accessibility.add(accessibility)
+        source.pets.add(pet)
+        Bed.objects.create(shelter=self.shelter, room=source, name="Bed 1", status=BedStatusChoices.AVAILABLE)
+        Bed.objects.create(shelter=self.shelter, room=source, name="Bed 2", status=BedStatusChoices.AVAILABLE)
+
+        duplicate = room_duplicate(
+            user=self.user,
+            room_id=str(source.pk),
+            shelter_id=str(self.shelter.pk),
+        )
+
+        self.assertNotEqual(duplicate.pk, source.pk)
+        self.assertEqual(duplicate.name, "Room-101 (Copy)")
+        self.assertEqual(duplicate.status, RoomStatusChoices.AVAILABLE)
+        self.assertEqual(duplicate.type, RoomStyleChoices.SINGLE_ROOM)
+        self.assertEqual(duplicate.type_other, "Custom style")
+        self.assertEqual(duplicate.notes, "Corner room")
+        self.assertEqual(duplicate.amenities, "WiFi, AC")
+        self.assertTrue(duplicate.medical_respite)
+        self.assertTrue(duplicate.storage)
+        self.assertTrue(duplicate.maintenance_flag)
+        self.assertEqual(duplicate.beds.count(), 0)
+        self.assertEqual(source.beds.count(), 2)
+        self.assertEqual(
+            set(duplicate.demographics.values_list("name", flat=True)),
+            set(source.demographics.values_list("name", flat=True)),
+        )
+        self.assertEqual(
+            set(duplicate.funders.values_list("name", flat=True)),
+            set(source.funders.values_list("name", flat=True)),
+        )
+        self.assertEqual(
+            set(duplicate.accessibility.values_list("name", flat=True)),
+            set(source.accessibility.values_list("name", flat=True)),
+        )
+        self.assertEqual(
+            set(duplicate.pets.values_list("name", flat=True)),
+            set(source.pets.values_list("name", flat=True)),
+        )
+
+    def test_duplicate_same_room_twice_uses_incremented_name(self) -> None:
+        source = Room.objects.create(shelter=self.shelter, name="Room-101")
+
+        first = room_duplicate(user=self.user, room_id=str(source.pk), shelter_id=str(self.shelter.pk))
+        second = room_duplicate(user=self.user, room_id=str(source.pk), shelter_id=str(self.shelter.pk))
+
+        self.assertEqual(first.name, "Room-101 (Copy)")
+        self.assertEqual(second.name, "Room-101 (Copy 2)")
+
+    def test_room_not_found_raises_object_does_not_exist(self) -> None:
+        with self.assertRaises(ObjectDoesNotExist) as ctx:
+            room_duplicate(user=self.user, room_id="999999", shelter_id=str(self.shelter.pk))
+        self.assertIn(
+            f"Room matching ID 999999 could not be found for shelter {self.shelter.pk}.",
+            str(ctx.exception),
+        )
+
+    def test_room_on_different_shelter_raises_object_does_not_exist(self) -> None:
+        other_shelter = shelter_recipe.make(organization=self.org)
+        room = Room.objects.create(shelter=other_shelter, name="Other room")
+
+        with self.assertRaises(ObjectDoesNotExist):
+            room_duplicate(user=self.user, room_id=str(room.pk), shelter_id=str(self.shelter.pk))

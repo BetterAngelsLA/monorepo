@@ -219,6 +219,7 @@ class CommonBedRoomFilterMixin:
 
 @strawberry_django.filter_type(models.Bed)
 class BedFilter(CommonBedRoomFilterMixin):
+    id: Optional[ID]
     type = make_in_filter("type", BedTypeChoices)
     medical_needs = make_m2m_in_filter("medical_needs", "name", MedicalNeedChoices)
     status = make_in_filter("status", BedStatusChoices)
@@ -227,6 +228,7 @@ class BedFilter(CommonBedRoomFilterMixin):
 
 @strawberry_django.filter_type(models.Room)
 class RoomFilter(CommonBedRoomFilterMixin):
+    id: Optional[ID]
     amenities = make_icontains_filter("amenities")
     medical_respite: Optional[bool]
     type = make_in_filter("type", RoomStyleChoices)

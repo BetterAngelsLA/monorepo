@@ -162,6 +162,8 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     _apply_services(shelter, raw_services)
     _create_schedules(shelter, schedules_data)
 
+    # TODO: Assign perms here. See: SDB-178
+
     return shelter
 
 
