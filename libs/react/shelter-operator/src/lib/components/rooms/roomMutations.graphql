@@ -33,10 +33,10 @@ mutation UpdateRoom($id: ID!, $data: UpdateRoomInput!) {
   }
 }
 
-mutation DeleteRooms($ids: [ID!]!) {
-  deleteRooms(ids: $ids) {
-    ... on RoomType {
-      id
+mutation DeleteRooms($data: BulkDeleteInput!) {
+  deleteRooms(data: $data) {
+    ... on BulkDeleteResult {
+      ids
     }
     ... on OperationInfo {
       messages {

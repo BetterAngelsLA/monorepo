@@ -7,10 +7,7 @@ import {
   ShelterType,
   type RoomType,
 } from '../../apollo/graphql/__generated__/types';
-import {
-  shelterCreateRoomRoute,
-  shelterEditRoomRoute,
-} from '../../routing';
+import { shelterCreateRoomRoute, shelterEditRoomRoute } from '../../routing';
 import { Button } from '../base-ui/buttons';
 import { RoomTable, type RoomRowObject } from '../RoomTable';
 import {
@@ -104,7 +101,7 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
     async (roomIds: string[]) => {
       setActionError(null);
       try {
-        await deleteRooms({ variables: { ids: roomIds } });
+        await deleteRooms({ variables: { data: { ids: roomIds } } });
         await refetch();
       } catch (e) {
         setActionError(
