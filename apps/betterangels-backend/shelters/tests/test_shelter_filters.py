@@ -747,3 +747,97 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             result_ids,
             "Shelter with partial exception NOT covering current time must appear",
         )
+
+    def test_shelter_has_available_beds_filter_true(self) -> None:
+        """Only shelters with available beds (non_restricted or restricted > 0) are returned."""
+        from shelters.models import ShelterAvailability
+
+        shelter_with_non_restricted = shelter_recipe.make(status=StatusChoices.APPROVED)
+        shelter_with_restricted = shelter_recipe.make(status=StatusChoices.APPROVED)
+        shelter_no_available = shelter_recipe.make(status=StatusChoices.APPROVED)
+
+        ShelterAvailability.objects.filter(shelter=shelter_with_non_restricted).update(
+            non_restricted_beds=5, restricted_beds=0
+        )
+        ShelterAvailability.objects.filter(shelter=shelter_with_restricted).update(
+            non_restricted_beds=0, restricted_beds=3
+        )
+        ShelterAvailability.objects.filter(shelter=shelter_no_available).update(
+            non_restricted_beds=0, restricted_beds=0
+        )
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        response = self.execute_graphql(
+            query,
+            variables={"filters": {"hasAvailableBeds": True}},
+        )
+
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertIn(str(shelter_with_non_restricted.pk), result_ids)
+        self.assertIn(str(shelter_with_restricted.pk), result_ids)
+        self.assertNotIn(str(shelter_no_available.pk), result_ids)
+
+    def test_shelter_has_available_beds_filter_false(self) -> None:
+        """When hasAvailableBeds=false, only shelters WITHOUT available beds are returned."""
+        from shelters.models import ShelterAvailability
+
+        shelter_with_beds = shelter_recipe.make(status=StatusChoices.APPROVED)
+        shelter_no_beds = shelter_recipe.make(status=StatusChoices.APPROVED)
+
+        ShelterAvailability.objects.filter(shelter=shelter_with_beds).update(non_restricted_beds=2, restricted_beds=1)
+        ShelterAvailability.objects.filter(shelter=shelter_no_beds).update(non_restricted_beds=0, restricted_beds=0)
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        response = self.execute_graphql(
+            query,
+            variables={"filters": {"hasAvailableBeds": False}},
+        )
+
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertNotIn(str(shelter_with_beds.pk), result_ids)
+        self.assertIn(str(shelter_no_beds.pk), result_ids)
+
+    def test_shelter_has_available_beds_filter_null(self) -> None:
+        """When hasAvailableBeds is null/omitted, all shelters are returned regardless of availability."""
+        from shelters.models import ShelterAvailability
+
+        shelter_with_beds = shelter_recipe.make(status=StatusChoices.APPROVED)
+        shelter_no_beds = shelter_recipe.make(status=StatusChoices.APPROVED)
+
+        ShelterAvailability.objects.filter(shelter=shelter_with_beds).update(non_restricted_beds=3, restricted_beds=0)
+        ShelterAvailability.objects.filter(shelter=shelter_no_beds).update(non_restricted_beds=0, restricted_beds=0)
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        response = self.execute_graphql(
+            query,
+            variables={"filters": {"hasAvailableBeds": None}},
+        )
+
+        self.assertEqual(response["data"]["shelters"]["totalCount"], 2)
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertIn(str(shelter_with_beds.pk), result_ids)
+        self.assertIn(str(shelter_no_beds.pk), result_ids)
