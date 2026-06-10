@@ -5,13 +5,17 @@ import type {
 
 // ─── Weekly editor ───────────────────────────────────────────────────────────
 
-export type DayState = {
-  open: boolean;
-  startTime: string;
-  endTime: string;
+export type TimeRange = {
+  startTime: string; // "HH:MM"
+  endTime: string; // "HH:MM"
 };
 
-export type WeeklyFormState = Record<DayOfWeekChoices, DayState>;
+/** Per-day form state. Empty ranges = no hours configured (closed). */
+export type DaySchedule = {
+  ranges: TimeRange[];
+};
+
+export type WeeklyFormState = Record<DayOfWeekChoices, DaySchedule>;
 
 // ─── Exceptions ───────────────────────────────────────────────────────────────
 

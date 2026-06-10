@@ -19,11 +19,10 @@ export function hydrateWeekly(schedules: ScheduleType[]): WeeklyFormState {
   const state = buildDefaultWeeklyState();
   for (const entry of schedules) {
     if (!entry.day) continue;
-    state[entry.day] = {
-      open: true,
+    state[entry.day].ranges.push({
       startTime: toHHMM(entry.startTime),
       endTime: toHHMM(entry.endTime),
-    };
+    });
   }
   return state;
 }
@@ -55,16 +54,17 @@ export function buildScheduleInputs(
   const inputs: ScheduleInput[] = [];
 
   for (const { value: day } of ORDERED_DAYS) {
-    const { open, startTime, endTime } = weekly[day];
-    if (!open || !startTime || !endTime) continue;
-
-    inputs.push({
-      scheduleType,
-      days: [day],
-      startTime: toHHMMSS(startTime),
-      endTime: toHHMMSS(endTime),
-      isException: false,
-    });
+    const { ranges } = weekly[day];
+    for (const { startTime, endTime } of ranges) {
+      if (!startTime || !endTime) continue;
+      inputs.push({
+        scheduleType,
+        days: [day],
+        startTime: toHHMMSS(startTime),
+        endTime: toHHMMSS(endTime),
+        isException: false,
+      });
+    }
   }
 
   for (const ex of exceptions) {
