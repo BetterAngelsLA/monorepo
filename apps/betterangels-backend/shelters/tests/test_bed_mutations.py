@@ -315,7 +315,7 @@ class DuplicateBedMutationTestCase(BedMutationTestCase):
 
         self.mutation = f"""
             mutation DuplicateBed($id: ID!, $shelterId: ID!) {{
-                duplicateBed(id: $id, shelterId: $shelterId) {{
+                cloneBed(id: $id, shelterId: $shelterId) {{
                     ... on BedType {{
                         {self.bed_fields}
                     }}
@@ -323,7 +323,7 @@ class DuplicateBedMutationTestCase(BedMutationTestCase):
             }}
         """
 
-    def test_duplicate_bed(self) -> None:
+    def test_clone_bed(self) -> None:
         demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
         funder, _ = Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)
         accessibility, _ = Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)
@@ -361,7 +361,7 @@ class DuplicateBedMutationTestCase(BedMutationTestCase):
             response = self.execute_graphql(self.mutation, variables)
 
         self.assertIsNone(response.get("errors"))
-        data = response["data"]["duplicateBed"]
+        data = response["data"]["cloneBed"]
         self.assertNotEqual(data["id"], str(source.pk))
         self.assertEqual(data["b7"], True)
         self.assertEqual(data["fees"], 25)

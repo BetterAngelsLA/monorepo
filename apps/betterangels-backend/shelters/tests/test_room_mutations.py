@@ -99,7 +99,7 @@ class CreateRoomMutationTestCase(RoomMutationTestCase):
         self.assertEqual(room["shelter"], {"id": str(self.shelter.pk)})
         self.assertTrue(Room.objects.filter(pk=room["id"]).exists())
 
-    def test_create_room_duplicate_identifier(self) -> None:
+    def test_create_room_clone_identifier(self) -> None:
         Room.objects.create(shelter=self.shelter, name="Room-101")
 
         variables = {"data": {"shelterId": self.shelter.pk, "name": "Room-101"}}
@@ -245,7 +245,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
         room.refresh_from_db()
         self.assertEqual(room.demographics.count(), 1)
 
-    def test_update_room_duplicate_name_returns_operation_info(self) -> None:
+    def test_update_room_clone_name_returns_operation_info(self) -> None:
         baker.make(Room, shelter=self.shelter, name="Room-101")
         room = baker.make(Room, shelter=self.shelter, name="Room-102")
         variables = {"id": str(room.pk), "data": {"name": "Room-101"}}
@@ -306,7 +306,7 @@ class DuplicateRoomMutationTestCase(RoomMutationTestCase):
         super().setUp()
         self.mutation = f"""
             mutation ($id: ID!, $shelterId: ID!) {{
-                duplicateRoom(id: $id, shelterId: $shelterId) {{
+                cloneRoom(id: $id, shelterId: $shelterId) {{
                     ... on RoomType {{
                         {self.room_fields}
                     }}
@@ -321,7 +321,7 @@ class DuplicateRoomMutationTestCase(RoomMutationTestCase):
             }}
         """
 
-    def test_duplicate_room(self) -> None:
+    def test_clone_room(self) -> None:
         demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
         funder, _ = Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)
         accessibility, _ = Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)
@@ -357,7 +357,7 @@ class DuplicateRoomMutationTestCase(RoomMutationTestCase):
             response = self.execute_graphql(self.mutation, variables)
 
         self.assertIsNone(response.get("errors"))
-        data = response["data"]["duplicateRoom"]
+        data = response["data"]["cloneRoom"]
         self.assertNotEqual(data["id"], str(source.pk))
         self.assertEqual(data["name"], "Room-101 (Copy)")
         self.assertEqual(data["status"], RoomStatusChoices.AVAILABLE.name)

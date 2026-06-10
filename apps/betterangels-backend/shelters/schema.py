@@ -8,8 +8,8 @@ from common.permissions.utils import IsAuthenticated
 from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Room, Shelter
-from shelters.services.bed import bed_create, bed_duplicate, bed_update
-from shelters.services.room import room_create, room_duplicate, room_update
+from shelters.services.bed import bed_clone, bed_create, bed_update
+from shelters.services.room import room_clone, room_create, room_update
 from shelters.services.shelter import shelter_create, shelter_update
 from shelters.types import (
     AdminShelterType,
@@ -108,9 +108,9 @@ class Mutation:
         return cast(RoomType, room_update(user=user, room_id=id, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Room.perms.ADD)])
-    def duplicate_room(self, info: Info, id: ID, shelter_id: ID) -> RoomType:
+    def clone_room(self, info: Info, id: ID, shelter_id: ID) -> RoomType:
         user = cast(User, get_current_user(info))
-        return cast(RoomType, room_duplicate(user=user, room_id=id, shelter_id=shelter_id))
+        return cast(RoomType, room_clone(user=user, room_id=id, shelter_id=shelter_id))
 
     delete_room: RoomType = strawberry_django.mutations.delete(
         DeleteDjangoObjectInput,
@@ -131,9 +131,9 @@ class Mutation:
         return cast(BedType, bed_update(user=user, bed_id=id, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Bed.perms.ADD)])
-    def duplicate_bed(self, info: Info, id: ID, shelter_id: ID) -> BedType:
+    def clone_bed(self, info: Info, id: ID, shelter_id: ID) -> BedType:
         user = cast(User, get_current_user(info))
-        return cast(BedType, bed_duplicate(user=user, bed_id=id, shelter_id=shelter_id))
+        return cast(BedType, bed_clone(user=user, bed_id=id, shelter_id=shelter_id))
 
     delete_bed: BedType = strawberry_django.mutations.delete(
         DeleteDjangoObjectInput,

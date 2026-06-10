@@ -16,7 +16,7 @@ from shelters.enums import (
     RoomStyleChoices,
 )
 from shelters.models import Accessibility, Bed, Demographic, Funder, Pet, Room, Shelter
-from shelters.services.room import room_create, room_duplicate, room_update
+from shelters.services.room import room_clone, room_create, room_update
 from shelters.tests.baker_recipes import shelter_recipe
 
 
@@ -221,7 +221,7 @@ class RoomDuplicateTestCase(RoomServiceTestCase):
         Bed.objects.create(shelter=self.shelter, room=source, name="Bed 1", status=BedStatusChoices.AVAILABLE)
         Bed.objects.create(shelter=self.shelter, room=source, name="Bed 2", status=BedStatusChoices.AVAILABLE)
 
-        duplicate = room_duplicate(
+        duplicate = room_clone(
             user=self.user,
             room_id=str(source.pk),
             shelter_id=str(self.shelter.pk),
@@ -259,15 +259,15 @@ class RoomDuplicateTestCase(RoomServiceTestCase):
     def test_duplicate_same_room_twice_uses_incremented_name(self) -> None:
         source = Room.objects.create(shelter=self.shelter, name="Room-101")
 
-        first = room_duplicate(user=self.user, room_id=str(source.pk), shelter_id=str(self.shelter.pk))
-        second = room_duplicate(user=self.user, room_id=str(source.pk), shelter_id=str(self.shelter.pk))
+        first = room_clone(user=self.user, room_id=str(source.pk), shelter_id=str(self.shelter.pk))
+        second = room_clone(user=self.user, room_id=str(source.pk), shelter_id=str(self.shelter.pk))
 
         self.assertEqual(first.name, "Room-101 (Copy)")
         self.assertEqual(second.name, "Room-101 (Copy 2)")
 
     def test_room_not_found_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            room_duplicate(user=self.user, room_id="999999", shelter_id=str(self.shelter.pk))
+            room_clone(user=self.user, room_id="999999", shelter_id=str(self.shelter.pk))
         self.assertIn(
             f"Room matching ID 999999 could not be found for shelter {self.shelter.pk}.",
             str(ctx.exception),
@@ -278,4 +278,4 @@ class RoomDuplicateTestCase(RoomServiceTestCase):
         room = Room.objects.create(shelter=other_shelter, name="Other room")
 
         with self.assertRaises(ObjectDoesNotExist):
-            room_duplicate(user=self.user, room_id=str(room.pk), shelter_id=str(self.shelter.pk))
+            room_clone(user=self.user, room_id=str(room.pk), shelter_id=str(self.shelter.pk))
