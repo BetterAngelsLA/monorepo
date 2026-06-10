@@ -1,0 +1,52 @@
+mutation DuplicateBed($id: ID!, $shelterId: ID!) {
+  duplicateBed(id: $id, shelterId: $shelterId) {
+    ... on BedType {
+      id
+      name
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
+
+mutation UpdateBed($id: ID!, $data: UpdateBedInput!) {
+  updateBed(id: $id, data: $data) {
+    ... on BedType {
+      id
+      name
+      status
+      type
+      room {
+        id
+        name
+      }
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
+
+mutation DeleteBed($id: ID!) {
+  deleteBed(data: { id: $id }) {
+    ... on BedType {
+      id
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

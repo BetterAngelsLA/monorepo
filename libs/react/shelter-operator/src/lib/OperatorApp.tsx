@@ -5,6 +5,8 @@ import { OperatorLayout } from './components/layout/OperatorLayout';
 import { UsersPage } from './pages';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
+import { CreateBedPage } from './pages/beds/CreateBedPage';
+import { EditBedPage } from './pages/beds/EditBedPage';
 import { CreateRoomPage } from './pages/rooms/CreateRoomPage';
 import { EditRoomPage } from './pages/rooms/EditRoomPage';
 import { CreateShelterForm } from './pages/dashboard/components/create-shelter-form';
@@ -94,6 +96,14 @@ export function OperatorApp() {
               <Route
                 path={manageSegments.rooms}
                 element={<ShelterDashboardPage tab="rooms" />}
+              />
+              <Route
+                path={manageSegments.bedsCreate}
+                element={<CreateBedPage />}
+              />
+              <Route
+                path={manageSegments.bedsEdit}
+                element={<EditBedPage />}
               />
               <Route
                 path={manageSegments.beds}
