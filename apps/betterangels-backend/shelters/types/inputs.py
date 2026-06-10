@@ -28,11 +28,12 @@ from shelters.enums import (
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import (
     ShelterProgramChoices,
-    SPAChoices,
     SpecialSituationRestrictionChoices,
+    StatusChoices,
     StorageChoices,
+    VaccinationRequirementChoices,
 )
-from strawberry import ID, Maybe, auto
+from strawberry import ID, UNSET, Maybe, auto
 
 
 @strawberry.input
@@ -67,25 +68,24 @@ class ServiceInput:
 class CreateShelterInput:
     # Required scalars — derived from model via auto
     name: auto
-    description: str  # CKEditor5Field not supported by auto
+    description: Optional[str] = None  # CKEditor5Field not supported by auto
 
     # M2M enum fields — explicit types because we accept enum values directly
     # (get_or_create by name), not PKs as strawberry-django's ManyToManyInput expects.
-    accessibility: List[AccessibilityChoices]
-    demographics: List[DemographicChoices]
-    special_situation_restrictions: List[SpecialSituationRestrictionChoices]
-    shelter_types: List[ShelterTypeChoices]
-    room_styles: List[RoomStyleChoices]
-    storage: List[StorageChoices]
-    pets: List[PetChoices]
-    parking: List[ParkingChoices]
-    entry_requirements: List[EntryRequirementChoices]
-    referral_requirement: List[ReferralRequirementChoices]
-    exit_policy: List[ExitPolicyChoices]
-    cities: List[str]
-    spa: List[SPAChoices]
-    shelter_programs: List[ShelterProgramChoices]
-    funders: List[FunderChoices]
+    accessibility: Optional[List[AccessibilityChoices]] = None
+    demographics: Optional[List[DemographicChoices]] = None
+    special_situation_restrictions: Optional[List[SpecialSituationRestrictionChoices]] = None
+    shelter_types: Optional[List[ShelterTypeChoices]] = None
+    room_styles: Optional[List[RoomStyleChoices]] = None
+    storage: Optional[List[StorageChoices]] = None
+    pets: Optional[List[PetChoices]] = None
+    parking: Optional[List[ParkingChoices]] = None
+    entry_requirements: Optional[List[EntryRequirementChoices]] = None
+    referral_requirement: Optional[List[ReferralRequirementChoices]] = None
+    vaccination_requirement: Optional[List[VaccinationRequirementChoices]] = None
+    exit_policy: Optional[List[ExitPolicyChoices]] = None
+    shelter_programs: Optional[List[ShelterProgramChoices]] = None
+    funders: Optional[List[FunderChoices]] = None
 
     # Custom field types — can't be auto-derived from Django model fields
     organization: ID
@@ -126,42 +126,99 @@ class CreateShelterInput:
     overall_rating: auto = None
     is_private: Maybe[bool]
 
+    # FK lookups to single City / SPA — accept the model PK directly.
+    city_id: Maybe[ID | None]
+    spa_id: Maybe[ID | None]
+
+
+@strawberry_django.input(models.Shelter, partial=True)
+class UpdateShelterInput:
+    id: ID
+    name: Maybe[str] = UNSET
+    status: Maybe[StatusChoices] = UNSET
+    description: Maybe[str] = UNSET
+    email: Maybe[Optional[str]] = UNSET
+    website: Maybe[Optional[str]] = UNSET
+    is_private: Maybe[bool] = UNSET
+    city_id: Maybe[ID | None] = UNSET
+    spa_id: Maybe[ID | None] = UNSET
+    cities_served_ids: Maybe[Optional[List[ID]]] = UNSET
+    spas_served_ids: Maybe[Optional[List[ID]]] = UNSET
+    phone: Maybe[Optional[PhoneNumberScalar]] = UNSET
+    add_notes_sleeping_details: Maybe[Optional[str]] = UNSET
+    add_notes_shelter_details: Maybe[Optional[str]] = UNSET
+    max_stay: Maybe[Optional[int]] = UNSET
+    on_site_security: Maybe[Optional[bool]] = UNSET
+    visitors_allowed: Maybe[Optional[bool]] = UNSET
+    exit_policy_other: Maybe[Optional[str]] = UNSET
+    emergency_surge: Maybe[Optional[bool]] = UNSET
+    other_rules: Maybe[Optional[str]] = UNSET
+    other_services: Maybe[Optional[str]] = UNSET
+    entry_info: Maybe[Optional[str]] = UNSET
+    subjective_review: Maybe[Optional[str]] = UNSET
+    demographics_other: Maybe[Optional[str]] = UNSET
+    shelter_types_other: Maybe[Optional[str]] = UNSET
+    city_council_district: Maybe[Optional[int]] = UNSET
+    supervisorial_district: Maybe[Optional[int]] = UNSET
+    funders_other: Maybe[Optional[str]] = UNSET
+
+    # M2M enum fields
+    accessibility: Maybe[List[AccessibilityChoices]] = UNSET
+    demographics: Maybe[List[DemographicChoices]] = UNSET
+    special_situation_restrictions: Maybe[List[SpecialSituationRestrictionChoices]] = UNSET
+    shelter_types: Maybe[List[ShelterTypeChoices]] = UNSET
+    room_styles: Maybe[List[RoomStyleChoices]] = UNSET
+    storage: Maybe[List[StorageChoices]] = UNSET
+    pets: Maybe[List[PetChoices]] = UNSET
+    parking: Maybe[List[ParkingChoices]] = UNSET
+    entry_requirements: Maybe[List[EntryRequirementChoices]] = UNSET
+    referral_requirement: Maybe[List[ReferralRequirementChoices]] = UNSET
+    vaccination_requirement: Maybe[List[VaccinationRequirementChoices]] = UNSET
+    exit_policy: Maybe[List[ExitPolicyChoices]] = UNSET
+    shelter_programs: Maybe[List[ShelterProgramChoices]] = UNSET
+    funders: Maybe[List[FunderChoices]] = UNSET
+
+    # Nested input types
+    location: Maybe[Optional[ShelterLocationInput]] = UNSET
+    schedules: Maybe[Optional[List[ScheduleInput]]] = UNSET
+    services: Maybe[Optional[List[ServiceInput]]] = UNSET
+
 
 @strawberry.input
 class CreateBedInput:
     shelter_id: ID
     room_id: Optional[ID] = None
-    status: Optional[BedStatusChoices] = None
-    bed_name: Optional[str] = None
-    status_notes: Optional[str] = None
-    bed_type: Optional[BedTypeChoices] = None
-    demographics: Optional[List[DemographicChoices]] = None
     accessibility: Optional[List[AccessibilityChoices]] = None
-    funders: Optional[List[FunderChoices]] = None
-    pets: Optional[List[PetChoices]] = None
-    storage: Optional[bool] = None
-    maintenance_flag: Optional[bool] = None
-    last_cleaned_inspected: Optional[datetime] = None
-    medical_needs: Optional[MedicalNeedChoices] = None
     b7: Optional[bool] = None
+    demographics: Optional[List[DemographicChoices]] = None
     fees: Optional[int] = None
+    funders: Optional[List[FunderChoices]] = None
+    last_cleaned_inspected: Optional[datetime] = None
+    maintenance_flag: Optional[bool] = None
+    medical_needs: Optional[List[MedicalNeedChoices]] = None
+    name: Optional[str] = None
+    pets: Optional[List[PetChoices]] = None
+    status: Optional[BedStatusChoices] = None
+    status_notes: Optional[str] = None
+    storage: Optional[bool] = None
+    type: Optional[BedTypeChoices] = None
 
 
 @strawberry.input
 class CreateRoomInput:
     shelter_id: ID
-    room_identifier: str
-    room_type: Optional[RoomStyleChoices] = None
-    room_type_other: Optional[str] = None
-    status: Optional[RoomStatusChoices] = None
-    notes: Optional[str] = None
+    accessibility: Optional[List[AccessibilityChoices]] = None
     amenities: Optional[str] = None
     demographics: Optional[List[DemographicChoices]] = None
-    accessibility: Optional[List[AccessibilityChoices]] = None
     funders: Optional[List[FunderChoices]] = None
-    pets: Optional[List[PetChoices]] = None
-    storage: Optional[bool] = None
-    maintenance_flag: Optional[bool] = None
-    occupants: Optional[List[ID]] = None
-    medical_respite: Optional[bool] = False
     last_cleaned_inspected: Optional[datetime] = None
+    maintenance_flag: Optional[bool] = None
+    medical_respite: Optional[bool] = False
+    name: str
+    notes: Optional[str] = None
+    occupants: Optional[List[ID]] = None
+    pets: Optional[List[PetChoices]] = None
+    status: Optional[RoomStatusChoices] = None
+    storage: Optional[bool] = None
+    type: Optional[RoomStyleChoices] = None
+    type_other: Optional[str] = None

@@ -3,6 +3,7 @@
 External code should continue importing from ``shelters.models``.
 """
 
+from .availability import ShelterAvailability  # noqa: F401
 from .lookups import (  # noqa: F401
     SPA,
     Accessibility,
@@ -11,6 +12,7 @@ from .lookups import (  # noqa: F401
     EntryRequirement,
     ExitPolicy,
     Funder,
+    MedicalNeed,
     Parking,
     Pet,
     ReferralRequirement,
@@ -19,8 +21,9 @@ from .lookups import (  # noqa: F401
     ShelterType,
     SpecialSituationRestriction,
     Storage,
+    VaccinationRequirement,
 )
-from .media import ExteriorPhoto, InteriorPhoto, MediaLink, Video, upload_path  # noqa: F401
+from .media import ExteriorShelterPhoto, InteriorShelterPhoto, MediaLink, ShelterPhoto, Video, upload_path  # noqa: F401
 from .reservation import Reservation, ReservationClient  # noqa: F401
 from .schedule import Schedule  # noqa: F401
 from .service import Service, ServiceCategory  # noqa: F401
@@ -39,4 +42,5 @@ from .tracked import (  # noqa: F401
     TrackedSPA,
     TrackedSpecialSituationRestriction,
     TrackedStorage,
+    TrackedVaccinationRequirement,
 )

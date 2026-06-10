@@ -1,4 +1,6 @@
-from typing import Any, Sequence, Tuple, Type
+from __future__ import annotations
+
+from typing import Any, Protocol, Sequence, Tuple, Type, cast
 
 import strawberry
 from common.errors import UnauthenticatedGQLError
@@ -7,6 +9,146 @@ from django.db.models import Model, TextChoices
 from django.utils.encoding import force_str
 from guardian.shortcuts import assign_perm
 from strawberry_django.auth.utils import get_current_user
+
+
+def perm(codename: str, description: str) -> str:
+    """Declare a custom permission on a PermissionSet subclass.
+
+    Returns a tuple at runtime for ``contribute_to_class`` to process.
+    Typed as ``str`` so Pylance/mypy sees the attribute as a permission string,
+    enabling full IDE autocomplete.
+    """
+    return (codename, description)  # type: ignore[return-value]
+
+
+class HasPerms(Protocol):
+    """Protocol for models that define a ``perms`` PermissionSet.
+
+    Ensures type-checkers reject plain ``models.Model`` subclasses that
+    lack the ``.perms`` attribute.
+    """
+
+    perms: type  # PermissionSet subclass
+
+
+def permissions_enum_from_model(model: type[Model]) -> type[TextChoices]:
+    """Build a TextChoices subclass from ``model.perms`` at import time.
+
+    Reads the raw ``perm()`` tuples from the PermissionSet class attributes
+    (no Django signals needed).  The name is ``<ModelName>Permissions``.
+
+    Usage::
+
+        from shelters.models import Shelter
+        ShelterPermissions = permissions_enum_from_model(Shelter)
+    """
+    if not hasattr(model, "perms"):
+        raise TypeError(f"{model.__name__} does not have a 'perms' PermissionSet.")
+    perms_cls = model.perms
+    app_label = model._meta.app_label
+    model_name = model._meta.model_name
+    name = f"{model.__name__}Permissions"
+
+    members: list[tuple[str, tuple[str, str]]] = [
+        (action.upper(), (f"{app_label}.{action}_{model_name}", f"Can {action} {model_name}"))
+        for action in ("add", "change", "delete", "view")
+    ]
+    for attr_name in list(vars(perms_cls)):
+        value = vars(perms_cls)[attr_name]
+        if isinstance(value, tuple) and len(value) == 2 and all(isinstance(v, str) for v in value):
+            codename, description = value
+            members.append((attr_name, (f"{app_label}.{codename}", description)))
+    return cast(type[TextChoices], TextChoices(name, members))  # type: ignore[call-overload]  # django-stubs: ChoicesType metaclass not stubbed
+
+
+class PermissionSet:
+    """Base class for typed model permission sets.
+
+    Declare as an inner ``perms`` class on each model.  Standard CRUD
+    permissions (ADD, CHANGE, DELETE, VIEW) are populated automatically
+    from ``model._meta.default_permissions`` at class-creation time.
+
+    For custom permissions, use :func:`perm`::
+
+        class Shelter(BaseModel):
+            class perms(PermissionSet):
+                VIEW_PRIVATE = perm("view_private_shelter", "Can view private shelters")
+
+        Shelter.perms.VIEW          # "shelters.view_shelter"   (auto CRUD)
+        Shelter.perms.VIEW_PRIVATE  # "shelters.view_private_shelter" (custom)
+    """
+
+    ADD: str
+    CHANGE: str
+    DELETE: str
+    VIEW: str
+    _perm_labels: dict[str, str]
+
+    @classmethod
+    def contribute_to_class(cls, model: type[Model], name: str) -> None:
+        if model._meta.abstract:
+            setattr(model, name, cls)
+            return
+
+        app = model._meta.app_label
+        model_name = model._meta.model_name
+
+        # Labels mapping: codename -> human-readable name (used by migration utilities)
+        labels: dict[str, str] = {}
+
+        # Set standard CRUD permissions
+        for action in model._meta.default_permissions:
+            codename = f"{action}_{model_name}"
+            setattr(cls, action.upper(), f"{app}.{codename}")
+            labels[codename] = f"Can {action} {model._meta.verbose_name}"
+
+        # Process custom permissions declared via perm()
+        custom_perms: list[tuple[str, str]] = []
+        for attr_name in list(vars(cls)):
+            value = vars(cls)[attr_name]
+            if isinstance(value, tuple) and len(value) == 2 and all(isinstance(v, str) for v in value):
+                codename, description = value
+                setattr(cls, attr_name, f"{app}.{codename}")
+                custom_perms.append((codename, description))
+                labels[codename] = description
+
+        # Register custom permissions in Meta so Django creates them in the DB
+        if custom_perms:
+            existing = list(model._meta.permissions)
+            existing.extend(custom_perms)
+            model._meta.permissions = existing
+
+        cls._perm_labels = labels
+        setattr(model, name, cls)
+
+
+def _auto_create_perms(sender: type[Model], **kwargs: Any) -> None:
+    """Initialize PermissionSet on concrete models when class_prepared fires.
+
+    Handles two cases:
+    1. Model declares its own ``class perms(PermissionSet)`` — call contribute_to_class on it.
+    2. Model inherits perms from an abstract parent — create a new subclass and initialize.
+    """
+    if sender._meta.abstract:
+        return
+
+    # Case 1: model has its own perms declaration
+    own_perms = sender.__dict__.get("perms")
+    if own_perms is not None and isinstance(own_perms, type) and issubclass(own_perms, PermissionSet):
+        own_perms.contribute_to_class(sender, "perms")
+        return
+
+    # Case 2: model inherits perms from a parent (e.g. BaseModel)
+    inherited = getattr(sender, "perms", None)
+    if inherited is not None and isinstance(inherited, type) and issubclass(inherited, PermissionSet):
+        perms_cls: type[PermissionSet] = type(f"{sender.__name__}Perms", (PermissionSet,), {})
+        perms_cls.contribute_to_class(sender, "perms")
+
+
+# Connect at import time so it fires for all model class preparations.
+from django.db.models.signals import class_prepared  # noqa: E402
+
+class_prepared.connect(_auto_create_perms)
 
 
 def permission_enums_to_django_meta_permissions(

@@ -114,6 +114,9 @@
         "cwd": "apps/betterangels-backend"
       }
     },
+    "shell-plus": {
+      "command": "cd apps/betterangels-backend && poetry run python manage.py shell_plus"
+    },
     "install": {
       "executor": "@nxlv/python:install",
       "options": {

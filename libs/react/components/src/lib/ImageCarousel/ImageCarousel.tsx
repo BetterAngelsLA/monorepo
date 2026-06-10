@@ -15,10 +15,19 @@ export type TProps = {
   youtubeVideos?: TYouTubeVideo[];
   className?: string;
   imageClassName?: string;
+  onImageClick?: (imageSrc: string) => void;
+  onVideoClick?: (video: TYouTubeVideo) => void;
 };
 
 export function ImageCarousel(props: TProps) {
-  const { imageUrls, youtubeVideos = [], className, imageClassName } = props;
+  const {
+    imageUrls,
+    youtubeVideos = [],
+    className,
+    imageClassName,
+    onImageClick,
+    onVideoClick,
+  } = props;
 
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel();
@@ -67,7 +76,12 @@ export function ImageCarousel(props: TProps) {
     >
       <div className={mergeCss(slideContainerCss)}>
         {imageUrls.map((src, i) => (
-          <ImageSlide key={i} imageSrc={src} imgClassName={imageClassName} />
+          <ImageSlide
+            key={i}
+            imageSrc={src}
+            imgClassName={imageClassName}
+            onClick={onImageClick ? () => onImageClick(src) : undefined}
+          />
         ))}
         {youtubeVideos.map((video) => (
           <YouTubeSlide
@@ -76,6 +90,7 @@ export function ImageCarousel(props: TProps) {
             title={video.title}
             onPrev={() => emblaApi?.scrollPrev()}
             onNext={() => emblaApi?.scrollNext()}
+            onClick={onVideoClick ? () => onVideoClick(video) : undefined}
           />
         ))}
       </div>

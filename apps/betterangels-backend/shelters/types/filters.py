@@ -1,5 +1,3 @@
-from django.db.models import Count
-
 """Filter and ordering types for shelter queries."""
 
 import datetime
@@ -19,7 +17,7 @@ from common.graphql.types import (
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Q, QuerySet
+from django.db.models import Count, Q, QuerySet
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
@@ -36,7 +34,6 @@ from shelters.enums import (
     RoomStyleChoices,
     ScheduleTypeChoices,
     ShelterChoices,
-    SPAChoices,
     SpecialSituationRestrictionChoices,
 )
 from shelters.selectors import shelters_open_at
@@ -75,7 +72,6 @@ class ShelterPropertyInput:
     shelter_types: Optional[List[ShelterChoices]] = None
     room_styles: Optional[List[RoomStyleChoices]] = None
     parking: Optional[List[ParkingChoices]] = None
-    spa: Optional[List[SPAChoices]] = None
 
 
 @strawberry.input
@@ -187,6 +183,23 @@ class ShelterFilter:
 
     is_private: auto
 
+    @strawberry_django.filter_field
+    def has_available_beds(self, info: Info, value: Optional[bool], prefix: str) -> Q:
+        if value is None:
+            return Q()
+
+        has_beds = Q(**{f"{prefix}availability__non_restricted_beds__gt": 0}) | Q(
+            **{f"{prefix}availability__restricted_beds__gt": 0}
+        )
+        return has_beds if value else ~has_beds
+
+    @strawberry_django.filter_field
+    def spa(self, queryset: QuerySet, value: Optional[List[ID]], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
+        if not value:
+            return queryset, Q()
+
+        return queryset.filter(spa_id__in=value).select_related("spa"), Q()
+
 
 @strawberry_django.order_type(models.Shelter, one_of=False)
 class ShelterOrder:
@@ -206,17 +219,19 @@ class CommonBedRoomFilterMixin:
 
 @strawberry_django.filter_type(models.Bed)
 class BedFilter(CommonBedRoomFilterMixin):
-    bed_type = make_in_filter("bed_type", BedTypeChoices)
-    medical_needs = make_in_filter("medical_needs", MedicalNeedChoices)
+    type = make_in_filter("type", BedTypeChoices)
+    medical_needs = make_m2m_in_filter("medical_needs", "name", MedicalNeedChoices)
     status = make_in_filter("status", BedStatusChoices)
+    shelter_id: Optional[ID]
 
 
 @strawberry_django.filter_type(models.Room)
 class RoomFilter(CommonBedRoomFilterMixin):
     amenities = make_icontains_filter("amenities")
     medical_respite: Optional[bool]
-    room_type = make_in_filter("room_type", RoomStyleChoices)
+    type = make_in_filter("type", RoomStyleChoices)
     status = make_in_filter("status", RoomStatusChoices)
+    shelter_id: Optional[ID]
 
     @strawberry_django.filter_field
     def number_of_beds(self, queryset: QuerySet, value: Optional[int], prefix: str) -> Tuple[QuerySet, Q]:

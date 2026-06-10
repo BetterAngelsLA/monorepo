@@ -33,14 +33,13 @@ function makeShelter(overrides: Partial<ShelterData> = {}): ShelterData {
     emergencySurge: null,
     onSiteSecurity: null,
     otherRules: null,
-    cities: [],
-    spa: [],
+    city: null,
+    spa: null,
     cityCouncilDistrict: null,
     supervisorialDistrict: null,
     shelterPrograms: [],
     funders: [],
-    interiorPhotos: [],
-    exteriorPhotos: [],
+    photos: [],
     mediaLinks: [],
     ...overrides,
   };
@@ -174,15 +173,19 @@ describe('getShelterVisibility', () => {
       expect(result.media).toBe(false);
     });
 
-    it('is visible when interiorPhotos has items', () => {
+    it('is visible when photos has items', () => {
       const result = getShelterVisibility(
-        makeShelter({ interiorPhotos: [{ file: { url: 'http://example.com/photo.jpg' } }] })
+        makeShelter({
+          photos: [{ id: '1', file: { url: 'http://example.com/photo.jpg' } }],
+        })
       );
       expect(result.media).toBe(true);
     });
 
     it('is visible when mediaLinks has items', () => {
-      const result = getShelterVisibility(makeShelter({ mediaLinks: [{ id: '1' }] }));
+      const result = getShelterVisibility(
+        makeShelter({ mediaLinks: [{ id: '1' }] })
+      );
       expect(result.media).toBe(true);
     });
   });

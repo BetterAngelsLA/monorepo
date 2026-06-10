@@ -1,3 +1,5 @@
+import { ReactNode } from 'react';
+
 export interface DropdownOption<T extends string | number = string | number> {
   label: string;
   value: T;
@@ -6,12 +8,16 @@ export interface DropdownOption<T extends string | number = string | number> {
 interface DropdownBaseProps<T extends string | number = string | number> {
   label?: string;
   placeholder?: string;
-  options: DropdownOption<T>[];
+  options: ReadonlyArray<DropdownOption<T>>;
   isSearchable?: boolean;
+  onCreateOption?: (label: string) => void | Promise<void>;
+  createOptionLabel?: (label: string) => string;
+  isViewMode?: boolean;
   required?: boolean;
   disabled?: boolean;
   className?: string;
   onOtherTextChange?: (text: string) => void;
+  renderValue?: (selected: DropdownOption<T>[]) => ReactNode;
 }
 
 export type DropdownProps<T extends string | number = string | number> =
@@ -38,4 +44,5 @@ export type DropdownInternalProps<T extends string | number = string | number> =
     isMulti: boolean;
     value: DropdownOption<T> | DropdownOption<T>[] | null;
     onChange: (value: DropdownOption<T> | DropdownOption<T>[] | null) => void;
+    renderValue?: (selected: DropdownOption<T>[]) => React.ReactNode;
   };

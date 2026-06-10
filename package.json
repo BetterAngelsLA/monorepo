@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@ant-design/charts": "^2.6.7",
+    "@ant-design/icons": "6.x",
     "@ant-design/plots": "^2.6.8",
     "@apollo/client": "^4.0.9",
     "@config-plugins/react-native-blob-util": "^9.0.0",
@@ -33,6 +34,10 @@
     "@shopify/flash-list": "2.0.2",
     "@tanstack/react-query": "^5.64.2",
     "@teovilla/react-native-web-maps": "^0.9.5",
+    "@tiptap/extension-link": "^3.26.0",
+    "@tiptap/extension-placeholder": "^3.26.0",
+    "@tiptap/react": "^3.26.0",
+    "@tiptap/starter-kit": "^3.26.0",
     "@types/validator": "^13.15.0",
     "@vis.gl/react-google-maps": "^1.7.1",
     "antd": "^6.3.1",

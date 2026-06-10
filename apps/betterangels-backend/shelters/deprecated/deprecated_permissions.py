@@ -35,3 +35,17 @@ class MealServicePermissions(models.TextChoices):
     CHANGE = "shelters.change_mealservice", _("Can change meal service")
     DELETE = "shelters.delete_mealservice", _("Can delete meal service")
     VIEW = "shelters.view_mealservice", _("Can view meal service")
+
+
+class ExteriorPhotoPermissions(models.TextChoices):
+    ADD = "shelters.add_exteriorphoto", _("Can add exterior photo")
+    CHANGE = "shelters.change_exteriorphoto", _("Can change exterior photo")
+    DELETE = "shelters.delete_exteriorphoto", _("Can delete exterior photo")
+    VIEW = "shelters.view_exteriorphoto", _("Can view exterior photo")
+
+
+class InteriorPhotoPermissions(models.TextChoices):
+    ADD = "shelters.add_interiorphoto", _("Can add interior photo")
+    CHANGE = "shelters.change_interiorphoto", _("Can change interior photo")
+    DELETE = "shelters.delete_interiorphoto", _("Can delete interior photo")
+    VIEW = "shelters.view_interiorphoto", _("Can view interior photo")

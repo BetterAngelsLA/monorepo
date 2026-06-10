@@ -1,5 +1,5 @@
 import { useQuery } from '@apollo/client/react';
-import { operatorPath, reservationPathSegment } from '@monorepo/react/shelter';
+import { operatorPath } from '@monorepo/react/shelter';
 import { useAtomValue } from 'jotai';
 import { BookCheck, Search, Settings2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -21,6 +21,7 @@ import {
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
 import { useActiveOrg } from '../../providers/activeOrg';
+import { paths } from '../../routing';
 import type { Shelter } from '../../types/shelter';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -37,10 +38,7 @@ const loadingState = (
 const emptyState = (
   <div className="px-6 py-8 text-center text-sm text-gray-500">
     No shelters yet.{' '}
-    <Link
-      to="/operator/dashboard/create"
-      className="text-blue-600 hover:underline"
-    >
+    <Link to={paths.dashboardCreate} className="text-blue-600 hover:underline">
       Create your first shelter
     </Link>
     .
@@ -50,7 +48,8 @@ const emptyState = (
 export function Dashboard() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const isOperatorRoot = pathname === '/operator' || pathname === '/operator/';
+  const isOperatorRoot =
+    pathname === operatorPath || pathname === `${operatorPath}/`;
 
   const { activeOrg } = useActiveOrg();
   const selectedOrganizationId = activeOrg?.id ?? '';
@@ -132,6 +131,7 @@ export function Dashboard() {
           totalBeds: s.totalBeds ?? null,
           availableBeds: null,
           tags: null,
+          status: s.status,
         })) ?? []
     );
   }, [activeData?.adminShelters?.results]);
@@ -141,7 +141,7 @@ export function Dashboard() {
 
   const handleRowClick = useCallback(
     (row: ShelterRowObject) => {
-      navigate(`shelter/${row.id}`);
+      navigate(`shelter/${row.id}/manage`);
     },
     [navigate]
   );
@@ -236,9 +236,7 @@ export function Dashboard() {
             leftIcon={<BookCheck size={24} />}
             rightIcon={false}
             variant="floating"
-            onClick={() =>
-              navigate(`${operatorPath}/${reservationPathSegment}`)
-            }
+            onClick={() => navigate(paths.reservation)}
           >
             Reserve
           </Button>

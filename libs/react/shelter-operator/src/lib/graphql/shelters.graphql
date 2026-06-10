@@ -21,6 +21,7 @@ query ViewSheltersByOrganization(
       location {
         place
       }
+      status
       totalBeds
       bedsByStatus {
         available
@@ -37,7 +38,11 @@ query ViewSheltersByOrganization(
       shelterTypes {
         name
       }
+      city {
+        name
+      }
       spa {
+        id
         name
       }
     }

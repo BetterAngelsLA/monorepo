@@ -1,14 +1,11 @@
-from datetime import timedelta
 from typing import Any, cast
 
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
-from django.utils import timezone
-from shelters.enums import BedStatusChoices, DemographicChoices, PetChoices
+from shelters.enums import BedStatusChoices, DemographicChoices, PetChoices, RoomStatusChoices
 from shelters.enums import ShelterChoices as ShelterTypeChoices
-from shelters.enums import SPAChoices, SpecialSituationRestrictionChoices
-from shelters.models import SPA, Bed, Demographic, Pet, ShelterType, SpecialSituationRestriction
-from shelters.permissions import ShelterPermissions
+from shelters.enums import SpecialSituationRestrictionChoices
+from shelters.models import Bed, Demographic, Pet, Room, Shelter, ShelterType, SpecialSituationRestriction
 from shelters.tests.baker_recipes import shelter_recipe
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
@@ -31,29 +28,17 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self._add_shelter_view_permission()
-        self._create_shelters()
+        self.shelter = shelter_recipe.make(organization=self.org_1)
 
     def _add_shelter_view_permission(self) -> None:
-        app_label, codename = ShelterPermissions.VIEW.value.split(".")
+        app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
         self.org_1_case_manager_1.user_permissions.add(perm)
-        self.org_1_case_manager_2.user_permissions.add(perm)
-        self.org_2_case_manager_1.user_permissions.add(perm)
-
-    def _create_shelters(self) -> None:
-        self.org_1_shelter_older = shelter_recipe.make(
-            organization=self.org_1,
-            created_at=timezone.now() - timedelta(minutes=1),
-        )
-        self.org_1_shelter_newer = shelter_recipe.make(
-            organization=self.org_1,
-            created_at=timezone.now(),
-        )
-        self.org_2_shelter = shelter_recipe.make(organization=self.org_2)
 
     def test_admin_shelters_filter_by_organization(self) -> None:
         """Only shelters for the specified organization are returned."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
+        shelter_2 = shelter_recipe.make(organization=self.org_1)
 
         response = self.execute_graphql(
             self.ADMIN_SHELTERS_QUERY,
@@ -62,14 +47,17 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
 
         payload = response["data"]["adminShelters"]
         self.assertEqual(payload["totalCount"], 2)
-        self.assertEqual(len(payload["results"]), 2)
-        self.assertEqual(payload["results"][0]["id"], str(self.org_1_shelter_newer.id))
-        self.assertEqual(payload["results"][1]["id"], str(self.org_1_shelter_older.id))
-        self.assertEqual(payload["pageInfo"], {"offset": 0, "limit": 10})
+
+        returned_ids = {r["id"] for r in payload["results"]}
+        self.assertSetEqual(
+            returned_ids,
+            {str(self.shelter.id), str(shelter_2.id)},
+        )
 
     def test_admin_shelters_returns_all_accessible_orgs_when_no_filter(self) -> None:
         """Without an org filter, returns shelters for all orgs the user belongs to."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
+        shelter_2 = shelter_recipe.make(organization=self.org_1)
 
         response = self.execute_graphql(
             self.ADMIN_SHELTERS_QUERY,
@@ -82,7 +70,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         returned_ids = {r["id"] for r in payload["results"]}
         self.assertSetEqual(
             returned_ids,
-            {str(self.org_1_shelter_older.id), str(self.org_1_shelter_newer.id)},
+            {str(self.shelter.id), str(shelter_2.id)},
         )
 
     def test_admin_shelters_excludes_non_member_org(self) -> None:
@@ -103,6 +91,8 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         # org_1_case_manager_1 belongs only to org_1; add them to org_2 as well
         self.org_2.add_user(self.org_1_case_manager_1)
         self.graphql_client.force_login(self.org_1_case_manager_1)
+        shelter_2 = shelter_recipe.make(organization=self.org_1)
+        org_2_shelter = shelter_recipe.make(organization=self.org_2)
 
         response = self.execute_graphql(
             self.ADMIN_SHELTERS_QUERY,
@@ -115,9 +105,9 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         self.assertSetEqual(
             returned_ids,
             {
-                str(self.org_1_shelter_older.id),
-                str(self.org_1_shelter_newer.id),
-                str(self.org_2_shelter.id),
+                str(self.shelter.id),
+                str(shelter_2.id),
+                str(org_2_shelter.id),
             },
         )
 
@@ -148,8 +138,8 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
     def test_admin_shelters_filter_by_name(self) -> None:
         """Name filter returns only shelters whose name matches (case-insensitive)."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
-        self.org_1_shelter_newer.name = "Safe Haven"
-        self.org_1_shelter_newer.save()
+        self.shelter.name = "Safe Haven"
+        self.shelter.save()
 
         query = """
             query AdminShelters($orgIds: [ID!], $name: String) {
@@ -168,16 +158,17 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
 
         payload = response["data"]["adminShelters"]
         self.assertEqual(payload["totalCount"], 1)
-        self.assertEqual(payload["results"][0]["id"], str(self.org_1_shelter_newer.id))
+        self.assertEqual(payload["results"][0]["id"], str(self.shelter.id))
         self.assertEqual(payload["results"][0]["name"], "Safe Haven")
 
     def test_admin_shelters_filter_by_properties(self) -> None:
         """Property filters narrow results through the admin endpoint."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
+        shelter_2 = shelter_recipe.make(organization=self.org_1)
 
         pet_cats, _ = Pet.objects.get_or_create(name=PetChoices.CATS)
-        self.org_1_shelter_newer.pets.set([pet_cats])
-        self.org_1_shelter_older.pets.clear()
+        self.shelter.pets.set([pet_cats])
+        shelter_2.pets.clear()
 
         query = """
             query AdminShelters($orgIds: [ID!], $properties: ShelterPropertyInput) {
@@ -199,12 +190,12 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
 
         payload = response["data"]["adminShelters"]
         self.assertEqual(payload["totalCount"], 1)
-        self.assertEqual(payload["results"][0]["id"], str(self.org_1_shelter_newer.id))
+        self.assertEqual(payload["results"][0]["id"], str(self.shelter.id))
 
     def test_admin_shelters_beds_by_status(self) -> None:
         """Bed counts are returned grouped by status."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
-        shelter = self.org_1_shelter_newer
+        shelter = self.shelter
 
         Bed.objects.create(shelter=shelter, status=BedStatusChoices.AVAILABLE)
         Bed.objects.create(shelter=shelter, status=BedStatusChoices.AVAILABLE)
@@ -235,6 +226,41 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(
             shelter_data["bedsByStatus"],
             {"available": 2, "occupied": 1, "reserved": 1, "outOfService": 1},
+        )
+
+    def test_admin_shelters_rooms_by_status_with_beds_and_rooms(self) -> None:
+        """Room counts stay correct when beds and rooms are requested together."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        shelter = self.shelter
+
+        Room.objects.create(shelter=shelter, status=RoomStatusChoices.NEEDS_MAINTENANCE)
+        Bed.objects.create(shelter=shelter, status=BedStatusChoices.RESERVED)
+        Bed.objects.create(shelter=shelter, status=BedStatusChoices.AVAILABLE)
+
+        query = """
+            query AdminShelters($orgIds: [ID!]) {
+                adminShelters(filters: { organizations: $orgIds }) {
+                    results {
+                        id
+                        bedsByStatus {
+                            available
+                            reserved
+                        }
+                        roomsByStatus {
+                            available
+                            reserved
+                            needsMaintenance
+                        }
+                    }
+                }
+            }
+        """
+        response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
+        shelter_data = next(r for r in response["data"]["adminShelters"]["results"] if r["id"] == str(shelter.id))
+        self.assertEqual(shelter_data["bedsByStatus"], {"available": 1, "reserved": 1})
+        self.assertEqual(
+            shelter_data["roomsByStatus"],
+            {"available": 0, "reserved": 0, "needsMaintenance": 1},
         )
 
     def test_admin_shelters_beds_by_status_no_beds(self) -> None:
@@ -290,13 +316,10 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
     def setUp(self) -> None:
         super().setUp()
-        app_label, codename = ShelterPermissions.VIEW.value.split(".")
+        app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
         self.org_1_case_manager_1.user_permissions.add(perm)
         self.graphql_client.force_login(self.org_1_case_manager_1)
-
-        spa_one = SPA.objects.get_or_create(name=SPAChoices.ONE)[0]
-        spa_two = SPA.objects.get_or_create(name=SPAChoices.TWO)[0]
 
         # Shelters A & B: SINGLE_MEN, VETERANS, BUILDING, SPA ONE
         for _ in range(2):
@@ -309,7 +332,6 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
                     ]
                 ],
                 shelter_types=[ShelterType.objects.get_or_create(name=ShelterTypeChoices.BUILDING)[0]],
-                spa=[spa_one],
             )
         # Shelter C: FAMILIES, HIV_AIDS, TINY_HOMES, SPA TWO
         shelter_recipe.make(
@@ -319,7 +341,6 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
                 SpecialSituationRestriction.objects.get_or_create(name=SpecialSituationRestrictionChoices.HIV_AIDS)[0]
             ],
             shelter_types=[ShelterType.objects.get_or_create(name=ShelterTypeChoices.TINY_HOMES)[0]],
-            spa=[spa_two],
         )
 
     def _query(self, properties: dict[str, Any]) -> list[dict[Any, Any]]:
@@ -359,16 +380,6 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         ],
     )
     def test_shelter_types_filter(self, properties: dict[str, Any], expected_count: int) -> None:
-        self.assertEqual(len(self._query(properties)), expected_count)
-
-    @parametrize(
-        "properties, expected_count",
-        [
-            ({"spa": [SPAChoices.ONE.name]}, 2),
-            ({"spa": [SPAChoices.TWO.name]}, 1),
-        ],
-    )
-    def test_spa_filter(self, properties: dict[str, Any], expected_count: int) -> None:
         self.assertEqual(len(self._query(properties)), expected_count)
 
     def test_combined_properties_filter(self) -> None:

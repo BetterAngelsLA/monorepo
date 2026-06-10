@@ -31,6 +31,13 @@
         "cwd": "libs/react/shelter-operator",
         "command": "tsc --noEmit -p tsconfig.lib.json"
       }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/react/shelter-operator"],
+      "options": {
+        "jestConfig": "libs/react/shelter-operator/jest.config.ts"
+      }
     }
   }
 }

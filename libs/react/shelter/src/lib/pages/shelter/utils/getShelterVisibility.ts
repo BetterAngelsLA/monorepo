@@ -1,3 +1,4 @@
+import { CityType, SpaType } from '../../../apollo';
 import { hasWysiwygContent } from './hasWysiwygContent';
 
 type NameItem = { name?: string | null };
@@ -30,14 +31,13 @@ export type ShelterData = {
   emergencySurge?: boolean | null;
   onSiteSecurity?: boolean | null;
   otherRules?: string | null;
-  cities?: NameItem[];
-  spa?: NameItem[];
+  city?: CityType | null;
+  spa?: SpaType | null;
   cityCouncilDistrict?: number | null;
   supervisorialDistrict?: number | null;
   shelterPrograms?: NameItem[];
   funders?: NameItem[];
-  interiorPhotos?: { file: { url: string } }[];
-  exteriorPhotos?: { file: { url: string } }[];
+  photos?: { id: string; file: { url: string } }[];
   mediaLinks?: { id: string }[];
 };
 
@@ -98,16 +98,13 @@ export function getShelterVisibility(shelter: ShelterData): ShelterVisibility {
       shelter.onSiteSecurity != null ||
       hasWysiwygContent(shelter.otherRules),
     ecosystemInfo:
-      !!shelter.cities?.length ||
-      !!shelter.spa?.length ||
+      !!shelter.city ||
+      !!shelter.spa ||
       !!shelter.cityCouncilDistrict ||
       !!shelter.supervisorialDistrict ||
       !!shelter.shelterPrograms?.length ||
       !!shelter.funders?.length,
-    media:
-      !!shelter.interiorPhotos?.length ||
-      !!shelter.exteriorPhotos?.length ||
-      !!shelter.mediaLinks?.length,
+    media: !!shelter.photos?.length || !!shelter.mediaLinks?.length,
   };
 }
 

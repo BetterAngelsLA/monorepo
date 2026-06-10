@@ -19,8 +19,8 @@ from shelters.enums import (
     ReferralRequirementChoices,
     RoomStyleChoices,
     ShelterChoices,
+    ShelterPhotoTypeChoices,
     ShelterProgramChoices,
-    SPAChoices,
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
@@ -32,9 +32,7 @@ from shelters.models import (
     Demographic,
     EntryRequirement,
     ExitPolicy,
-    ExteriorPhoto,
     Funder,
-    InteriorPhoto,
     Parking,
     Pet,
     ReferralRequirement,
@@ -42,6 +40,7 @@ from shelters.models import (
     Service,
     ServiceCategory,
     Shelter,
+    ShelterPhoto,
     ShelterProgram,
     ShelterType,
     SpecialSituationRestriction,
@@ -110,7 +109,8 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             website="shelter.com",
             location=shelter_location,
             accessibility=[Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)[0]],
-            cities=[
+            city=City.objects.get_or_create(name="Agoura Hills")[0],
+            cities_served=[
                 City.objects.get_or_create(
                     name="Agoura Hills",
                 )[0]
@@ -128,7 +128,8 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             room_styles=[RoomStyle.objects.get_or_create(name=RoomStyleChoices.CONGREGATE)[0]],
             shelter_programs=[ShelterProgram.objects.get_or_create(name=ShelterProgramChoices.BRIDGE_HOME)[0]],
             shelter_types=[ShelterType.objects.get_or_create(name=ShelterChoices.BUILDING)[0]],
-            spa=[SPA.objects.get_or_create(name=SPAChoices.ONE)[0]],
+            spa=SPA.objects.get_or_create(short_name="1", long_name="1 - Antelope Valley")[0],
+            spas_served=[SPA.objects.get_or_create(short_name="1", long_name="1 - Antelope Valley")[0]],
             special_situation_restrictions=[
                 SpecialSituationRestriction.objects.get_or_create(
                     name=SpecialSituationRestrictionChoices.NONE,
@@ -146,34 +147,31 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         )
         shelter.additional_contacts.set(shelter_contacts)
 
-        exterior_photo = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
-        interior_photo = InteriorPhoto.objects.create(shelter=shelter, file=self.file)
+        exterior_photo = ShelterPhoto.objects.create(
+            shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR
+        )
+        interior_photo = ShelterPhoto.objects.create(
+            shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.INTERIOR
+        )
 
         query = f"""
             query ($id: ID!) {{
                 shelter(pk: $id) {{
                     {self.shelter_fields}
-                    exteriorPhotos {{
+                    photos {{
                         id
                         createdAt
+                        type
                         file {{
                             name
                             url (preset: ORIGINAL)
-                        }}
-                    }}
-                    interiorPhotos {{
-                        id
-                        createdAt
-                        file {{
-                            name
-                            url
                         }}
                     }}
                 }}
             }}
         """
         variables = {"id": shelter.pk}
-        expected_query_count = 20
+        expected_query_count = 19
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -212,7 +210,8 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             "totalBeds": 1,
             "website": "shelter.com",
             "accessibility": [{"name": AccessibilityChoices.WHEELCHAIR_ACCESSIBLE.name}],
-            "cities": [{"name": "Agoura Hills"}],
+            "city": {"id": ANY, "name": "Agoura Hills"},
+            "citiesServed": [{"id": ANY, "name": "Agoura Hills"}],
             "demographics": [{"name": DemographicChoices.ALL.name}],
             "entryRequirements": [{"name": EntryRequirementChoices.PHOTO_ID.name}],
             "funders": [{"name": FunderChoices.CITY_OF_LOS_ANGELES.name}],
@@ -232,7 +231,8 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             ],
             "shelterPrograms": [{"name": ShelterProgramChoices.BRIDGE_HOME.name}],
             "shelterTypes": [{"name": ShelterChoices.BUILDING.name}],
-            "spa": [{"name": SPAChoices.ONE.name}],
+            "spa": {"id": ANY, "shortName": "1", "name": "1 - Antelope Valley"},
+            "spasServed": [{"id": ANY, "shortName": "1", "name": "1 - Antelope Valley"}],
             "specialSituationRestrictions": [{"name": SpecialSituationRestrictionChoices.NONE.name}],
             "storage": [{"name": StorageChoices.AMNESTY_LOCKERS.name}],
             "visitorsAllowed": True,
@@ -240,25 +240,25 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
                 {"id": ANY, "contactName": "shelter contact 1", "contactNumber": "2125551211"},
                 {"id": ANY, "contactName": "shelter contact 2", "contactNumber": "2125551212"},
             ],
-            "exteriorPhotos": [
+            "photos": [
                 {
-                    "id": ANY,
+                    "id": str(exterior_photo.pk),
                     "createdAt": ANY,
+                    "type": ShelterPhotoTypeChoices.EXTERIOR.name,
                     "file": {
                         "name": exterior_photo.file.name,
                         "url": exterior_photo.file.url,
                     },
-                }
-            ],
-            "interiorPhotos": [
+                },
                 {
-                    "id": ANY,
+                    "id": str(interior_photo.pk),
                     "createdAt": ANY,
+                    "type": ShelterPhotoTypeChoices.INTERIOR.name,
                     "file": {
                         "name": interior_photo.file.name,
                         "url": interior_photo.file.url,
                     },
-                }
+                },
             ],
             "location": {
                 "latitude": 34.0549,
@@ -337,9 +337,14 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         # create shelter in draft state that should not be included in query results
         shelter_recipe.make(status=StatusChoices.DRAFT)
 
-        exterior_photo_0 = ExteriorPhoto.objects.create(shelter=shelters[0], file=self.file)
-        InteriorPhoto.objects.create(shelter=shelters[0], file=self.file)
-        interior_photo_1 = InteriorPhoto.objects.create(shelter=shelters[1], file=self.file)
+        exterior_photo_0 = ShelterPhoto.objects.create(
+            shelter=shelters[0], file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR
+        )
+        ShelterPhoto.objects.create(shelter=shelters[0], file=self.file, type=ShelterPhotoTypeChoices.INTERIOR)
+
+        interior_photo_1 = ShelterPhoto.objects.create(
+            shelter=shelters[1], file=self.file, type=ShelterPhotoTypeChoices.INTERIOR
+        )
 
         query = f"""
             query ($offset: Int, $limit: Int, $ordering: [ShelterOrder!]! = []) {{
@@ -351,13 +356,16 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
                     }}
                     results {{
                         {self.shelter_fields}
-                        heroImage
+                        heroImage {{
+                            id
+                            url
+                        }}
                     }}
                 }}
             }}
         """
 
-        expected_query_count = 21
+        expected_query_count = 20
 
         variables = {"ordering": {"name": "ASC"}}
 
@@ -367,8 +375,8 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         shelters = response["data"]["shelters"]["results"]
         self.assertEqual(len(shelters), shelter_count)
         self.assertEqual(Shelter.objects.count(), shelter_count + 1)
-        self.assertEqual(shelters[0]["heroImage"], exterior_photo_0.file.url)
-        self.assertEqual(shelters[1]["heroImage"], interior_photo_1.file.url)
+        self.assertEqual(shelters[0]["heroImage"]["id"], str(exterior_photo_0.pk))
+        self.assertEqual(shelters[1]["heroImage"]["id"], str(interior_photo_1.pk))
 
 
 class ShelterMaxStayQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):

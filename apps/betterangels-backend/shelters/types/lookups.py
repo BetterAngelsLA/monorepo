@@ -8,7 +8,7 @@ and resolves them to the corresponding strawberry enum type.
 import strawberry_django
 from common.graphql.types import PhoneNumberScalar
 from shelters import models
-from strawberry import ID, auto
+from strawberry import ID, Maybe, auto
 
 
 @strawberry_django.type(models.ContactInfo)
@@ -37,8 +37,18 @@ class DemographicType:
     name: auto
 
 
+@strawberry_django.type(models.MedicalNeed)
+class MedicalNeedType:
+    name: auto
+
+
 @strawberry_django.type(models.EntryRequirement)
 class EntryRequirementType:
+    name: auto
+
+
+@strawberry_django.type(models.VaccinationRequirement)
+class VaccinationRequirementType:
     name: auto
 
 
@@ -117,7 +127,12 @@ class ShelterTypeType:
 
 @strawberry_django.type(models.SPA)
 class SPAType:
-    name: auto
+    id: ID
+    short_name: Maybe[str]
+
+    @strawberry_django.field(only=["long_name"])
+    def name(self, root: models.SPA) -> str:
+        return root.long_name
 
 
 @strawberry_django.type(models.SpecialSituationRestriction)

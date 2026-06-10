@@ -83,7 +83,7 @@ export function DropdownMenu<T extends string | number>({
         <div
           ref={listRef}
           role="listbox"
-          className="max-h-352 space-y-1 overflow-y-auto px-2 py-2"
+          className="max-h-[400px] space-y-1 overflow-y-auto px-2 py-2"
         >
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option, index) => {

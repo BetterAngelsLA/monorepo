@@ -1,15 +1,11 @@
+// static routes
 export const privacyPolicyPath = '/privacy-policy';
 export const shelterFiltersPath = '/filters';
 export const shelterHomePath = '/';
+export const shelterSearchPath = '/search';
 export const signInPath = '/sign-in';
 export const shelterDetailsPath = '/shelter/:id';
 export const shelterGalleryPath = '/shelter/:id/gallery';
 export const shelterVideoPath = '/video';
 export const aboutUsPath = 'https://www.betterangels.la/pillars/shelter';
 export const operatorPath = '/operator';
-export const reservationPathSegment = 'reservation';
-export const reservationAddProfileSegment = 'add-profile';
-export const reservationSelectShelterSegment = 'select-shelter';
-export const reservationSelectRoomSegment = 'select-room';
-export const reservationCheckInByDateSegment = 'check-in-by-date';
-export const reservationConfirmationSegment = 'confirmation';

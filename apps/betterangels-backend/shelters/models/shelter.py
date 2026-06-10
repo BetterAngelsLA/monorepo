@@ -6,9 +6,7 @@ from typing import Any
 
 import pghistory
 from common.models import BaseModel
-from common.permissions.utils import permission_enums_to_django_meta_permissions
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
+from common.permissions.utils import PermissionSet, perm
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.db import models
@@ -23,14 +21,12 @@ from shelters.enums import (
     SUPERVISORIAL_DISTRICT_CHOICES,
     BedStatusChoices,
     BedTypeChoices,
-    MedicalNeedChoices,
     RoomStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
     StatusChoices,
 )
 from shelters.managers import AdminShelterManager, ShelterManager
-from shelters.permissions import ShelterFieldPermissions, ShelterPrivacyPermissions
 from shelters.selectors import shelters_open_at
 
 from .lookups import (
@@ -41,6 +37,7 @@ from .lookups import (
     EntryRequirement,
     ExitPolicy,
     Funder,
+    MedicalNeed,
     Parking,
     Pet,
     ReferralRequirement,
@@ -49,6 +46,7 @@ from .lookups import (
     ShelterType,
     SpecialSituationRestriction,
     Storage,
+    VaccinationRequirement,
 )
 from .service import Service
 
@@ -59,6 +57,10 @@ from .service import Service
     pghistory.DeleteEvent("shelter.remove"),
 )
 class Shelter(BaseModel):
+    class perms(PermissionSet):
+        CHANGE_IS_REVIEWED = perm("change_shelter_is_reviewed", "Can change shelter is reviewed")
+        VIEW_PRIVATE = perm("view_private_shelter", "Can view private shelters")
+
     objects: ShelterManager = ShelterManager()
     admin_objects: AdminShelterManager = AdminShelterManager()
 
@@ -72,13 +74,17 @@ class Shelter(BaseModel):
     website = models.URLField(blank=True, null=True)
     instagram = models.URLField(blank=True, null=True)
 
-    # Hero Image
-    hero_image_content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True)
-    hero_image_object_id = models.PositiveIntegerField(null=True, blank=True)
-    hero_image = GenericForeignKey("hero_image_content_type", "hero_image_object_id")
+    # Hero Image (explicit pick from this shelter's gallery photos)
+    hero_image = models.ForeignKey(
+        "ShelterPhoto",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
 
     # Summary Information
-    description = CKEditor5Field()
+    description = CKEditor5Field(blank=True, default="")
     demographics = models.ManyToManyField(Demographic)
     demographics_other = models.CharField(max_length=255, blank=True, null=True)
     special_situation_restrictions = models.ManyToManyField(SpecialSituationRestriction)
@@ -116,13 +122,28 @@ class Shelter(BaseModel):
     entry_info = CKEditor5Field(null=True, blank=True)
     entry_requirements = models.ManyToManyField(EntryRequirement)
     referral_requirement = models.ManyToManyField(ReferralRequirement)
+    vaccination_requirement = models.ManyToManyField(VaccinationRequirement)
     bed_fees = models.CharField(max_length=255, blank=True, null=True)
     program_fees = models.CharField(max_length=255, blank=True, null=True)
 
     # Ecosystem Information
-    cities = models.ManyToManyField(City)
+    city = models.ForeignKey(
+        City,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shelters",
+    )
+    cities_served = models.ManyToManyField(City, related_name="serving_shelters")
 
-    spa = models.ManyToManyField(SPA)
+    spa = models.ForeignKey(
+        SPA,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shelters",
+    )
+    spas_served = models.ManyToManyField(SPA, related_name="serving_shelters")
     city_council_district = models.PositiveSmallIntegerField(
         choices=CITY_COUNCIL_DISTRICT_CHOICES,
         null=True,
@@ -157,7 +178,6 @@ class Shelter(BaseModel):
 
     class Meta:
         indexes = [models.Index(fields=["status", "is_private"])]
-        permissions = permission_enums_to_django_meta_permissions([ShelterFieldPermissions, ShelterPrivacyPermissions])
 
     def __str__(self) -> str:
         return self.name
@@ -188,12 +208,21 @@ class Shelter(BaseModel):
         super().save(*args, **kwargs)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("bed.add"),
+    pghistory.DeleteEvent("bed.remove"),
+    pghistory.UpdateEvent("bed.status_change", condition=pghistory.AnyChange("status")),
+)
 class Bed(BaseModel):
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="beds")
-    room = models.ForeignKey("Room", on_delete=models.SET_NULL, blank=True, null=True, related_name="beds")
-    bed_name = models.CharField(max_length=255, blank=True, null=True)
-    status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
-    status_notes = models.TextField(blank=True, null=True)
+    accessibility = models.ManyToManyField(Accessibility, blank=True)
+    b7 = models.BooleanField(default=False, blank=True)
+    demographics = models.ManyToManyField(Demographic, blank=True)
+    fees = models.PositiveIntegerField(blank=True, null=True)
+    funders = models.ManyToManyField(Funder, blank=True)
+    last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
+    maintenance_flag = models.BooleanField(default=False, blank=True)
+    medical_needs = models.ManyToManyField(MedicalNeed, blank=True)
+    name = models.CharField(max_length=255, blank=True, null=True)
     occupant = models.ForeignKey(
         "clients.ClientProfile",
         on_delete=models.SET_NULL,
@@ -201,17 +230,13 @@ class Bed(BaseModel):
         null=True,
         related_name="occupied_beds",
     )
-    bed_type = TextChoicesField(choices_enum=BedTypeChoices, blank=True, null=True)
-    demographics = models.ManyToManyField(Demographic, blank=True)
-    accessibility = models.ManyToManyField(Accessibility, blank=True)
-    funders = models.ManyToManyField(Funder, blank=True)
     pets = models.ManyToManyField(Pet, blank=True)
+    room = models.ForeignKey("Room", on_delete=models.SET_NULL, blank=True, null=True, related_name="beds")
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="beds")
+    status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
+    status_notes = models.TextField(blank=True, null=True)
     storage = models.BooleanField(default=False, blank=True)
-    maintenance_flag = models.BooleanField(default=False, blank=True)
-    last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
-    medical_needs = TextChoicesField(choices_enum=MedicalNeedChoices, blank=True, null=True)
-    b7 = models.BooleanField(default=False, blank=True)
-    fees = models.PositiveIntegerField(blank=True, null=True)
+    type = TextChoicesField(choices_enum=BedTypeChoices, blank=True, null=True)
 
     class Meta:
         indexes = [
@@ -220,27 +245,27 @@ class Bed(BaseModel):
 
 
 class Room(BaseModel):
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="rooms")
-    room_identifier = models.CharField(max_length=255)
-    room_type = TextChoicesField(choices_enum=RoomStyleChoices, blank=True, null=True)
-    room_type_other = models.CharField(max_length=255, blank=True, null=True)
-    status = TextChoicesField(choices_enum=RoomStatusChoices, blank=True, null=True)
-    notes = models.TextField(blank=True, null=True)
+    accessibility = models.ManyToManyField(Accessibility, blank=True)
     amenities = models.TextField(blank=True, null=True)
     demographics = models.ManyToManyField(Demographic, blank=True)
-    accessibility = models.ManyToManyField(Accessibility, blank=True)
     funders = models.ManyToManyField(Funder, blank=True)
-    pets = models.ManyToManyField(Pet, blank=True)
-    storage = models.BooleanField(default=False, blank=True)
-    maintenance_flag = models.BooleanField(default=False, blank=True)
-    occupants = models.ManyToManyField("clients.ClientProfile", blank=True, related_name="occupied_rooms")
-    medical_respite = models.BooleanField(default=False, blank=True)
     last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
+    maintenance_flag = models.BooleanField(default=False, blank=True)
+    medical_respite = models.BooleanField(default=False, blank=True)
+    name = models.CharField(max_length=255)
+    notes = models.TextField(blank=True, null=True)
+    occupants = models.ManyToManyField("clients.ClientProfile", blank=True, related_name="occupied_rooms")
+    pets = models.ManyToManyField(Pet, blank=True)
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="rooms")
+    status = TextChoicesField(choices_enum=RoomStatusChoices, blank=True, null=True)
+    storage = models.BooleanField(default=False, blank=True)
+    type = TextChoicesField(choices_enum=RoomStyleChoices, blank=True, null=True)
+    type_other = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         constraints = [
             UniqueConstraint(
-                fields=["shelter", "room_identifier"],
+                fields=["shelter", "name"],
                 name="unique_room_per_shelter",
             )
         ]
@@ -249,7 +274,7 @@ class Room(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.shelter.name} - {self.room_identifier}"
+        return f"{self.shelter.name} - {self.name}"
 
 
 @pghistory.track(
@@ -258,6 +283,9 @@ class Room(BaseModel):
     pghistory.DeleteEvent("shelter.contact_info.remove"),
 )
 class ContactInfo(models.Model):
+    class perms(PermissionSet):
+        pass
+
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="additional_contacts")
     contact_name = models.CharField(max_length=255, verbose_name="Contact Name")
     contact_number = PhoneNumberField(verbose_name="Contact Number")

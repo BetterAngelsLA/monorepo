@@ -9,7 +9,6 @@ django.setup()
 
 from accounts.groups import GroupTemplateNames
 from common.models import Attachment
-from common.permissions.enums import AttachmentPermissions
 from django.contrib.auth.models import Group
 from django.db import transaction
 from guardian.shortcuts import assign_perm
@@ -38,14 +37,14 @@ def grant_missing_perms(dry_run: bool = True) -> None:
         )
 
         print(
-            f"{'[DRY RUN] Would assign' if dry_run else 'Assigning'} {AttachmentPermissions.CHANGE}"
+            f"{'[DRY RUN] Would assign' if dry_run else 'Assigning'} {Attachment.perms.CHANGE}"
             f"to group {group.name} on {docs.count()} documents uploaded on or before {CUTOFF_DATE}."
         )
 
         for doc in docs:
             print(f" - Attachment ID {doc.id}")
             if not dry_run:
-                assign_perm(AttachmentPermissions.CHANGE, group, doc)
+                assign_perm(Attachment.perms.CHANGE, group, doc)
 
 
 grant_missing_perms(dry_run=True)

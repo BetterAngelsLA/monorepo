@@ -1,5 +1,6 @@
 """Reservation-related shelter models."""
 
+import pghistory
 from common.models import BaseModel
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -10,6 +11,11 @@ from shelters.enums import ReservationStatusChoices
 from .shelter import Bed, Room, Shelter
 
 
+@pghistory.track(
+    pghistory.InsertEvent("reservation.add"),
+    pghistory.DeleteEvent("reservation.remove"),
+    pghistory.UpdateEvent("reservation.status_change", condition=pghistory.AnyChange("status")),
+)
 class Reservation(BaseModel):
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="reservations")
     room = models.ForeignKey(Room, on_delete=models.SET_NULL, blank=True, null=True, related_name="reservations")
