@@ -72,7 +72,7 @@ class OrgTypePreset:
 
 
 class OrgTypeRegistry:
-    """Thread-safe registry of :class:`OrgTypePreset` instances.
+    """Registry of :class:`OrgTypePreset` instances.
 
     Typical usage::
 
