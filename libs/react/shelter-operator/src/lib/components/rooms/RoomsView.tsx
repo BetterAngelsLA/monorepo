@@ -1,28 +1,58 @@
-import { useQuery } from '@apollo/client/react';
+import { useMutation, useQuery } from '@apollo/client/react';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   RoomStatusChoices,
   ShelterType,
   type RoomType,
 } from '../../apollo/graphql/__generated__/types';
+import {
+  shelterCreateRoomRoute,
+  shelterEditRoomRoute,
+} from '../../routing';
 import { Button } from '../base-ui/buttons';
 import { RoomTable, type RoomRowObject } from '../RoomTable';
+import {
+  DeleteRoomDocument,
+  DuplicateRoomDocument,
+  type DeleteRoomMutation,
+  type DeleteRoomMutationVariables,
+  type DuplicateRoomMutation,
+  type DuplicateRoomMutationVariables,
+} from './__generated__/roomMutations.generated';
 import {
   GetShelterRoomsDocument,
   type GetShelterRoomsQuery,
   type GetShelterRoomsQueryVariables,
 } from './__generated__/rooms.generated';
-import { EditRoomModal } from './EditRoomModal';
 
 export function RoomsView({ shelterId }: { shelterId: string }) {
-  const { data, loading } = useQuery<
+  const navigate = useNavigate();
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const { data, loading, refetch } = useQuery<
     GetShelterRoomsQuery,
     GetShelterRoomsQueryVariables
   >(GetShelterRoomsDocument, {
     variables: { shelterId },
     skip: !shelterId,
   });
+
+  const refetchQueries = useMemo(
+    () => [{ query: GetShelterRoomsDocument, variables: { shelterId } }],
+    [shelterId]
+  );
+
+  const [duplicateRoom] = useMutation<
+    DuplicateRoomMutation,
+    DuplicateRoomMutationVariables
+  >(DuplicateRoomDocument, { refetchQueries });
+
+  const [deleteRoom] = useMutation<
+    DeleteRoomMutation,
+    DeleteRoomMutationVariables
+  >(DeleteRoomDocument);
 
   const rows: RoomType[] = (data?.rooms.results ?? []).map((room) => ({
     id: room.id,
@@ -42,35 +72,130 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
     storage: false,
   }));
 
-  const [selectedRoom, setSelectedRoom] = useState<RoomType | null>(null);
+  const handleEdit = useCallback(
+    (rowObject: RoomRowObject) => {
+      navigate(shelterEditRoomRoute(shelterId, rowObject.id));
+    },
+    [navigate, shelterId]
+  );
 
-  const handleRowClick = (rowObject: RoomRowObject) => {
-    setSelectedRoom(rowObject.room);
-  };
+  const handleDuplicate = useCallback(
+    async (rowObject: RoomRowObject) => {
+      setActionError(null);
+      try {
+        const { data: result } = await duplicateRoom({
+          variables: { id: rowObject.id, shelterId },
+          errorPolicy: 'all',
+        });
 
-  const handleSaveRoom = (updatedRoom: RoomType) => {
-    console.log('Saving room:', updatedRoom);
-    setSelectedRoom(null);
-  };
+        const payload = result?.duplicateRoom;
+        if (payload?.__typename === 'OperationInfo') {
+          setActionError(
+            payload.messages?.[0]?.message ||
+              'Unable to duplicate room. Please try again.'
+          );
+          return;
+        }
+
+        await refetch();
+      } catch {
+        setActionError('A network error occurred. Please try again.');
+      }
+    },
+    [duplicateRoom, refetch, shelterId]
+  );
+
+  const deleteOneRoom = useCallback(
+    async (roomId: string) => {
+      const { data: result } = await deleteRoom({
+        variables: { id: roomId },
+        errorPolicy: 'all',
+        refetchQueries: [],
+      });
+
+      const payload = result?.deleteRoom;
+      if (payload?.__typename === 'OperationInfo') {
+        return (
+          payload.messages?.[0]?.message ||
+          'Unable to delete room. Please try again.'
+        );
+      }
+
+      return null;
+    },
+    [deleteRoom]
+  );
+
+  const handleDeleteRoom = useCallback(
+    async (roomId: string) => {
+      setActionError(null);
+      try {
+        const error = await deleteOneRoom(roomId);
+        if (error) {
+          setActionError(error);
+          return;
+        }
+
+        await refetch();
+      } catch {
+        setActionError('A network error occurred. Please try again.');
+      }
+    },
+    [deleteOneRoom, refetch]
+  );
+
+  const handleDeleteRooms = useCallback(
+    async (roomIds: string[]) => {
+      setActionError(null);
+      try {
+        for (const roomId of roomIds) {
+          const error = await deleteOneRoom(roomId);
+          if (error) {
+            setActionError(error);
+            await refetch();
+            return;
+          }
+        }
+
+        await refetch();
+      } catch {
+        setActionError('A network error occurred. Please try again.');
+      }
+    },
+    [deleteOneRoom, refetch]
+  );
 
   return (
     <>
+      {actionError ? (
+        <div
+          className="mx-4 mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          role="alert"
+        >
+          {actionError}
+        </div>
+      ) : null}
+
       <div>
-        <RoomTable rows={rows} onRowClick={handleRowClick} loading={loading} />
+        <RoomTable
+          rows={rows}
+          onRowClick={handleEdit}
+          onDuplicate={handleDuplicate}
+          onDeleteRoom={handleDeleteRoom}
+          onDeleteRooms={handleDeleteRooms}
+          loading={loading}
+        />
       </div>
       <div className="fixed bottom-6 right-6 text-sm z-20 ">
-        <Button leftIcon={<Plus />} rightIcon={false} variant="floating">
+        <Button
+          leftIcon={<Plus />}
+          rightIcon={false}
+          variant="floating"
+          onClick={() => navigate(shelterCreateRoomRoute(shelterId))}
+        >
           Create Room
         </Button>
       </div>
-      {selectedRoom && (
-        <EditRoomModal
-          isOpen={true}
-          onClose={() => setSelectedRoom(null)}
-          room={selectedRoom}
-          onSave={handleSaveRoom}
-        />
-      )}
     </>
   );
 }

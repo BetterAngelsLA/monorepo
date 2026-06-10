@@ -2,7 +2,7 @@ import { useMutation } from '@apollo/client/react';
 import { Button } from '@monorepo/react/components';
 import { operatorPath } from '@monorepo/react/shelter';
 import { APIProvider } from '@vis.gl/react-google-maps';
-import { FormEvent, useCallback, useState } from 'react';
+import { type SubmitEvent, useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useActiveOrg } from '../../../../providers/activeOrg';
 import type { ShelterFormData } from '../../formTypes';
@@ -59,7 +59,7 @@ export function CreateShelterForm() {
     [updateField]
   );
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmissionError(null);
 

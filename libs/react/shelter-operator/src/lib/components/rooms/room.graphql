@@ -1,0 +1,30 @@
+query GetRoom($id: ID!) {
+  room(pk: $id) {
+    id
+    amenities
+    lastCleanedInspected
+    maintenanceFlag
+    medicalRespite
+    name
+    notes
+    status
+    storage
+    type
+    typeOther
+    accessibility {
+      name
+    }
+    demographics {
+      name
+    }
+    funders {
+      name
+    }
+    shelter {
+      id
+    }
+    pets {
+      name
+    }
+  }
+}

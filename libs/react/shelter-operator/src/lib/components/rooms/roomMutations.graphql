@@ -1,0 +1,49 @@
+mutation DuplicateRoom($id: ID!, $shelterId: ID!) {
+  duplicateRoom(id: $id, shelterId: $shelterId) {
+    ... on RoomType {
+      id
+      name
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
+
+mutation UpdateRoom($id: ID!, $data: UpdateRoomInput!) {
+  updateRoom(id: $id, data: $data) {
+    ... on RoomType {
+      id
+      name
+      status
+      type
+      typeOther
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
+
+mutation DeleteRoom($id: ID!) {
+  deleteRoom(data: { id: $id }) {
+    ... on RoomType {
+      id
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

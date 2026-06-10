@@ -1,0 +1,18 @@
+mutation CreateRoom($data: CreateRoomInput!) {
+  createRoom(data: $data) {
+    ... on RoomType {
+      id
+      name
+      status
+      type
+      typeOther
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
