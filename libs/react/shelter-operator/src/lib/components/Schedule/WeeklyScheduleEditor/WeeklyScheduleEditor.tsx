@@ -1,6 +1,6 @@
 import { DayOfWeekChoices } from '@monorepo/react/shelter';
 import { ORDERED_DAYS } from '../constants';
-import type { DayState, WeeklyFormState } from '../types';
+import type { DaySchedule, WeeklyFormState } from '../types';
 import { DayRow } from './DayRow';
 
 type TProps = {
@@ -11,20 +11,18 @@ type TProps = {
 export function WeeklyScheduleEditor(props: TProps) {
   const { value, onChange } = props;
 
-  const setDay = (day: DayOfWeekChoices, patch: Partial<DayState>) => {
-    onChange({ ...value, [day]: { ...value[day], ...patch } });
+  const setDay = (day: DayOfWeekChoices, schedule: DaySchedule) => {
+    onChange({ ...value, [day]: schedule });
   };
 
   const copyToAll = (sourceDay: DayOfWeekChoices) => {
-    const { startTime, endTime } = value[sourceDay];
+    const sourceRanges = value[sourceDay].ranges;
     const next = { ...value };
-
     for (const d of Object.values(DayOfWeekChoices)) {
-      if (next[d].open) {
-        next[d] = { ...next[d], startTime, endTime };
+      if (next[d].ranges.length > 0) {
+        next[d] = { ranges: sourceRanges.map((r) => ({ ...r })) };
       }
     }
-
     onChange(next);
   };
 
@@ -35,8 +33,8 @@ export function WeeklyScheduleEditor(props: TProps) {
           key={day}
           day={day}
           label={label}
-          state={value[day]}
-          onChange={(patch) => setDay(day, patch)}
+          schedule={value[day]}
+          onChange={(schedule) => setDay(day, schedule)}
           onCopyToAll={() => copyToAll(day)}
         />
       ))}
