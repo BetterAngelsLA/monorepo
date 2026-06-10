@@ -31,7 +31,7 @@ class HasPerms(Protocol):
     perms: type  # PermissionSet subclass
 
 
-def model_permissions(model: type[Model]) -> type[TextChoices]:
+def permissions_enum_from_model(model: type[Model]) -> type[TextChoices]:
     """Build a TextChoices subclass from ``model.perms`` at import time.
 
     Reads the raw ``perm()`` tuples from the PermissionSet class attributes
@@ -40,7 +40,7 @@ def model_permissions(model: type[Model]) -> type[TextChoices]:
     Usage::
 
         from shelters.models import Shelter
-        ShelterPermissions = model_permissions(Shelter)
+        ShelterPermissions = permissions_enum_from_model(Shelter)
     """
     if not hasattr(model, "perms"):
         raise TypeError(f"{model.__name__} does not have a 'perms' PermissionSet.")
