@@ -253,6 +253,11 @@ export type BedsByStatusType = {
   reserved: Scalars['Int']['output'];
 };
 
+export type BulkDeleteResult = {
+  __typename?: 'BulkDeleteResult';
+  ids: Array<Scalars['ID']['output']>;
+};
+
 export type CityType = {
   __typename?: 'CityType';
   id: Scalars['ID']['output'];
@@ -883,7 +888,11 @@ export enum DayOfWeekChoices {
   Wednesday = 'WEDNESDAY'
 }
 
-export type DeleteBedsPayload = BedType | OperationInfo;
+export type DeleteBedsInput = {
+  ids: Array<Scalars['ID']['input']>;
+};
+
+export type DeleteBedsPayload = BulkDeleteResult | OperationInfo;
 
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
@@ -907,7 +916,11 @@ export type DeleteNotePayload = NoteType | OperationInfo;
 
 export type DeleteReferralPayload = DeletedObjectType | OperationInfo;
 
-export type DeleteRoomsPayload = OperationInfo | RoomType;
+export type DeleteRoomsInput = {
+  ids: Array<Scalars['ID']['input']>;
+};
+
+export type DeleteRoomsPayload = BulkDeleteResult | OperationInfo;
 
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
 
@@ -1720,7 +1733,7 @@ export type MutationCreateTaskArgs = {
 
 
 export type MutationDeleteBedsArgs = {
-  ids: Array<Scalars['ID']['input']>;
+  data: DeleteBedsInput;
 };
 
 
@@ -1765,7 +1778,7 @@ export type MutationDeleteReferralArgs = {
 
 
 export type MutationDeleteRoomsArgs = {
-  ids: Array<Scalars['ID']['input']>;
+  data: DeleteRoomsInput;
 };
 
 

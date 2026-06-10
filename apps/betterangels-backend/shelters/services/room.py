@@ -122,20 +122,23 @@ def _unique_duplicate_name(*, shelter_id: int | str, name: str | None) -> str:
 
 
 @transaction.atomic
-def room_delete(*, ids: list[int | str]) -> list[Room]:
+def room_delete(*, data: Dict[str, Any]) -> list[int]:
     """Delete rooms by their IDs and return the deleted instances.
 
     Raises:
         ``ObjectDoesNotExist`` when any of the given IDs does not match a room.
     """
-    rooms = list(Room.objects.filter(pk__in=ids))
+    rooms = list(Room.objects.filter(pk__in=data["ids"]))
     found_ids = {room.pk for room in rooms}
-    missing = [id for id in ids if int(id) not in found_ids]
+    missing = [id for id in data["ids"] if int(id) not in found_ids]
+    deleted_ids = []
     if missing:
         raise ObjectDoesNotExist(f"Room(s) matching ID(s) {missing} could not be found.")
     for room in rooms:
+        deleted_ids.append(room.pk)
         room.delete()
-    return rooms
+
+    return deleted_ids
 
 
 @transaction.atomic
