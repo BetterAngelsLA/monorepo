@@ -6,7 +6,6 @@ from common.permissions.utils import assign_object_permissions
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from referrals.models import Referral
-from referrals.permissions import ReferralPermissions
 from shelters.models import Shelter
 
 REFERRAL_UPDATE_FIELDS = ("status", "notes")
@@ -38,7 +37,7 @@ def referral_create(
     assign_object_permissions(
         permission_group.group,
         referral,
-        [ReferralPermissions.VIEW, ReferralPermissions.CHANGE, ReferralPermissions.DELETE],
+        [Referral.perms.VIEW, Referral.perms.CHANGE, Referral.perms.DELETE],
     )
     return referral
 
