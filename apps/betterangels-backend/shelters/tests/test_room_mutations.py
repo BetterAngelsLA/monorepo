@@ -391,41 +391,52 @@ class DeleteRoomsMutationTestCase(RoomMutationTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.mutation = """
-            mutation ($ids: [ID!]!) {
-                deleteRooms(ids: $ids) {
-                    id
+            mutation ($data: DeleteRoomsInput!) {
+                deleteRooms(data: $data) {
+                    ... on BulkDeleteResult {
+                        ids
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
                 }
             }
         """
 
     def test_delete_single_room(self) -> None:
         room = baker.make(Room, shelter=self.shelter, name="Room to delete")
-        variables = {"ids": [str(room.pk)]}
+        variables = {"data": {"ids": [str(room.pk)]}}
 
         response = self.execute_graphql(self.mutation, variables)
 
         self.assertIsNone(response.get("errors"))
-        deleted = response["data"]["deleteRooms"]
-        self.assertEqual(len(deleted), 1)
-        self.assertEqual(deleted[0]["id"], str(room.pk))
+        deleted_ids = response["data"]["deleteRooms"]["ids"]
+        self.assertEqual(len(deleted_ids), 1)
+        self.assertEqual(deleted_ids[0], str(room.pk))
         self.assertFalse(Room.objects.filter(pk=room.pk).exists())
 
     def test_delete_multiple_rooms(self) -> None:
         room1 = baker.make(Room, shelter=self.shelter, name="Room A")
         room2 = baker.make(Room, shelter=self.shelter, name="Room B")
-        variables = {"ids": [str(room1.pk), str(room2.pk)]}
+        variables = {"data": {"ids": [str(room1.pk), str(room2.pk)]}}
 
         response = self.execute_graphql(self.mutation, variables)
 
         self.assertIsNone(response.get("errors"))
-        deleted_ids = {r["id"] for r in response["data"]["deleteRooms"]}
-        self.assertEqual(deleted_ids, {str(room1.pk), str(room2.pk)})
+        deleted_ids = response["data"]["deleteRooms"]["ids"]
+        self.assertEqual(deleted_ids, [str(room1.pk), str(room2.pk)])
         self.assertFalse(Room.objects.filter(pk__in=[room1.pk, room2.pk]).exists())
 
     def test_delete_rooms_not_found_returns_error(self) -> None:
-        variables = {"ids": ["999999"]}
+        variables = {"data": {"ids": ["999999"]}}
 
         response = self.execute_graphql(self.mutation, variables)
 
-        self.assertIsNotNone(response.get("errors"))
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["deleteRooms"]["messages"]
+        self.assertTrue(len(messages) > 0)
         self.assertTrue(Room.objects.filter(shelter=self.shelter).count() == 0)

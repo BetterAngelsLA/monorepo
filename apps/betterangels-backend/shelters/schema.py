@@ -3,6 +3,7 @@ from typing import Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
+from common.graphql.types import BulkDeleteResult
 from common.permissions.utils import IsAuthenticated
 from django.db.models import Max
 from shelters.enums import StatusChoices
@@ -17,6 +18,8 @@ from shelters.types import (
     CreateBedInput,
     CreateRoomInput,
     CreateShelterInput,
+    DeleteBedsInput,
+    DeleteRoomsInput,
     RoomType,
     ServiceCategoryType,
     ShelterType,
@@ -112,8 +115,9 @@ class Mutation:
         return cast(RoomType, room_clone(user=user, room_id=id, shelter_id=shelter_id))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Room.perms.DELETE)])
-    def delete_rooms(self, info: Info, ids: list[ID]) -> list[RoomType]:
-        return cast(list[RoomType], room_delete(ids=[str(id) for id in ids]))
+    def delete_rooms(self, info: Info, data: DeleteRoomsInput) -> BulkDeleteResult:
+        deleted_ids = room_delete(data=strawberry.asdict(data))
+        return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Bed.perms.ADD)])
     def create_bed(self, info: Info, data: CreateBedInput) -> BedType:
@@ -133,5 +137,6 @@ class Mutation:
         return cast(BedType, bed_clone(user=user, bed_id=id, shelter_id=shelter_id))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Bed.perms.DELETE)])
-    def delete_beds(self, info: Info, ids: list[ID]) -> list[BedType]:
-        return cast(list[BedType], bed_delete(ids=[str(id) for id in ids]))
+    def delete_beds(self, info: Info, data: DeleteBedsInput) -> BulkDeleteResult:
+        deleted_ids = bed_delete(data=strawberry.asdict(data))
+        return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])

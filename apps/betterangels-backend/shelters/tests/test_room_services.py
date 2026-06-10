@@ -196,36 +196,36 @@ class RoomDeleteTestCase(RoomServiceTestCase):
     def test_deletes_single_room(self) -> None:
         room = Room.objects.create(shelter=self.shelter, name="Room-101")
 
-        deleted = room_delete(ids=[room.pk])
+        deleted = room_delete(data={"ids": [room.pk]})
 
         self.assertEqual(len(deleted), 1)
-        self.assertEqual(deleted[0].pk, room.pk)
+        self.assertEqual(deleted[0], room.pk)
         self.assertFalse(Room.objects.filter(pk=room.pk).exists())
 
     def test_deletes_multiple_rooms(self) -> None:
         room1 = Room.objects.create(shelter=self.shelter, name="Room-101")
         room2 = Room.objects.create(shelter=self.shelter, name="Room-102")
 
-        deleted = room_delete(ids=[room1.pk, room2.pk])
+        deleted = room_delete(data={"ids": [room1.pk, room2.pk]})
 
         self.assertEqual(len(deleted), 2)
         self.assertFalse(Room.objects.filter(pk__in=[room1.pk, room2.pk]).exists())
 
     def test_missing_id_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            room_delete(ids=[999999])
+            room_delete(data={"ids": [999999]})
         self.assertIn("999999", str(ctx.exception))
 
     def test_partial_missing_ids_raises_object_does_not_exist(self) -> None:
         room = Room.objects.create(shelter=self.shelter, name="Room-101")
 
         with self.assertRaises(ObjectDoesNotExist):
-            room_delete(ids=[room.pk, 999999])
+            room_delete(data={"ids": [room.pk, 999999]})
 
         self.assertTrue(Room.objects.filter(pk=room.pk).exists())
 
     def test_empty_list_returns_empty(self) -> None:
-        deleted = room_delete(ids=[])
+        deleted = room_delete(data={"ids": []})
 
         self.assertEqual(deleted, [])
 

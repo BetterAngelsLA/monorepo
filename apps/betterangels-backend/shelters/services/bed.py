@@ -91,20 +91,23 @@ def _duplicate_label(label: str | None) -> str | None:
 
 
 @transaction.atomic
-def bed_delete(*, ids: list[int | str]) -> list[Bed]:
+def bed_delete(*, data: Dict[str, Any]) -> list[int]:
     """Delete beds by their IDs and return the deleted instances.
 
     Raises:
         ``ObjectDoesNotExist`` when any of the given IDs does not match a bed.
     """
-    beds = list(Bed.objects.filter(pk__in=ids))
+    beds = list(Bed.objects.filter(pk__in=data["ids"]))
     found_ids = {bed.pk for bed in beds}
-    missing = [id for id in ids if int(id) not in found_ids]
+    missing = [id for id in data["ids"] if int(id) not in found_ids]
+    deleted_ids = []
     if missing:
         raise ObjectDoesNotExist(f"Bed(s) matching ID(s) {missing} could not be found.")
     for bed in beds:
+        deleted_ids.append(bed.pk)
         bed.delete()
-    return beds
+
+    return deleted_ids
 
 
 @transaction.atomic
