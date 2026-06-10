@@ -1,3 +1,5 @@
+import { Input } from '../../base-ui/input';
+
 type TimeInputProps = {
   value: string;
   onChange: (value: string) => void;
@@ -9,13 +11,13 @@ function TimeInput(props: TimeInputProps) {
   const { value, onChange, disabled = false, label } = props;
 
   return (
-    <input
-      type="time"
+    <Input
+      dataType="time"
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
       aria-label={label}
-      className="w-32 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
+      className="min-w-36"
     />
   );
 }
@@ -38,7 +40,9 @@ export function TimeRangeInput(props: TProps) {
         disabled={disabled}
         label="Start time"
       />
+
       <span className="text-gray-500 text-sm">–</span>
+
       <TimeInput
         value={endTime}
         onChange={(value) => onChange('endTime', value)}
