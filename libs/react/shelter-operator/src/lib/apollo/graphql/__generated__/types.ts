@@ -907,7 +907,7 @@ export type DeleteNotePayload = NoteType | OperationInfo;
 
 export type DeleteReferralPayload = DeletedObjectType | OperationInfo;
 
-export type DeleteRoomPayload = OperationInfo | RoomType;
+export type DeleteRoomsPayload = OperationInfo | RoomType;
 
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
 
@@ -1568,7 +1568,7 @@ export type Mutation = {
   deleteHmisProfile: DeleteHmisProfilePayload;
   deleteNote: DeleteNotePayload;
   deleteReferral: DeleteReferralPayload;
-  deleteRoom: DeleteRoomPayload;
+  deleteRooms: DeleteRoomsPayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
@@ -1764,8 +1764,8 @@ export type MutationDeleteReferralArgs = {
 };
 
 
-export type MutationDeleteRoomArgs = {
-  data: DeleteDjangoObjectInput;
+export type MutationDeleteRoomsArgs = {
+  ids: Array<Scalars['ID']['input']>;
 };
 
 

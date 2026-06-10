@@ -892,7 +892,7 @@ union DeleteNotePayload = NoteType | OperationInfo
 
 union DeleteReferralPayload = DeletedObjectType | OperationInfo
 
-union DeleteRoomPayload = RoomType | OperationInfo
+union DeleteRoomsPayload = RoomType | OperationInfo
 
 union DeleteServiceRequestPayload = DeletedObjectType | OperationInfo
 
@@ -1564,13 +1564,13 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
-  deleteRoom(data: DeleteDjangoObjectInput!): DeleteRoomPayload! @hasRetvalPerm(permissions: [{app: "shelters", permission: "delete_room"}], any: true)
   deleteBed(data: DeleteDjangoObjectInput!): DeleteBedPayload! @hasRetvalPerm(permissions: [{app: "shelters", permission: "delete_bed"}], any: true)
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
   updateShelter(data: UpdateShelterInput!): UpdateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
   updateRoom(id: ID!, data: UpdateRoomInput!): UpdateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_room"}], any: true)
   cloneRoom(id: ID!, shelterId: ID!): CloneRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
+  deleteRooms(ids: [ID!]!): DeleteRoomsPayload! @hasPerm(permissions: [{app: "shelters", permission: "delete_room"}], any: true)
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   updateBed(id: ID!, data: UpdateBedInput!): UpdateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_bed"}], any: true)
   cloneBed(id: ID!, shelterId: ID!): CloneBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
