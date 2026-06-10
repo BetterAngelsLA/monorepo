@@ -22,7 +22,16 @@ function renderLabel(
 
   if (isEmail(label)) {
     return (
-      <a href={`mailto:${label}`} className="underline">
+      <a
+        href={`mailto:${label}`}
+        className="
+    underline
+    rounded-lg
+    px-2 py-1
+    active:bg-[#E8ECF2]
+    transition-colors
+  "
+      >
         {label}
       </a>
     );
@@ -30,7 +39,16 @@ function renderLabel(
 
   if (key === 'phone') {
     return (
-      <a className="underline" href={`tel:${label}`}>
+      <a
+        href={`tel:${label}`}
+        className="
+    underline
+    rounded-lg
+    px-2 py-1
+    active:bg-[#E8ECF2]
+    transition-colors
+  "
+      >
         {label}
       </a>
     );
@@ -43,7 +61,13 @@ function renderLabel(
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="underline"
+        className="
+    underline
+    rounded-lg
+    px-2 py-1
+    active:bg-[#E8ECF2]
+    transition-colors
+  "
       >
         {key === 'instagram' ? 'Instagram' : 'Website'}
       </a>
@@ -60,7 +84,7 @@ export function GeneralInfo({
 }) {
   const contactInfo = [
     {
-      label: 'testing',
+      label: shelter?.website,
       key: 'website',
       icon: <GlobeIcon className="h-6 w-6 stroke-primary-20" />,
     },
