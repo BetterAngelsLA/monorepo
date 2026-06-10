@@ -14,12 +14,12 @@ import {
 import { Button } from '../base-ui/buttons';
 import { RoomTable, type RoomRowObject } from '../RoomTable';
 import {
-  DeleteRoomDocument,
-  DuplicateRoomDocument,
-  type DeleteRoomMutation,
-  type DeleteRoomMutationVariables,
-  type DuplicateRoomMutation,
-  type DuplicateRoomMutationVariables,
+  CloneRoomDocument,
+  DeleteRoomsDocument,
+  type CloneRoomMutation,
+  type CloneRoomMutationVariables,
+  type DeleteRoomsMutation,
+  type DeleteRoomsMutationVariables,
 } from './__generated__/roomMutations.generated';
 import {
   GetShelterRoomsDocument,
@@ -39,15 +39,15 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
     skip: !shelterId,
   });
 
-  const [duplicateRoom] = useMutation<
-    DuplicateRoomMutation,
-    DuplicateRoomMutationVariables
-  >(DuplicateRoomDocument);
+  const [cloneRoom] = useMutation<
+    CloneRoomMutation,
+    CloneRoomMutationVariables
+  >(CloneRoomDocument);
 
-  const [deleteRoom] = useMutation<
-    DeleteRoomMutation,
-    DeleteRoomMutationVariables
-  >(DeleteRoomDocument);
+  const [deleteRooms] = useMutation<
+    DeleteRoomsMutation,
+    DeleteRoomsMutationVariables
+  >(DeleteRoomsDocument);
 
   const rows: RoomType[] = (data?.rooms.results ?? []).map((room) => ({
     id: room.id,
@@ -78,12 +78,12 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
     async (rowObject: RoomRowObject) => {
       setActionError(null);
       try {
-        const { data: result } = await duplicateRoom({
+        const { data: result } = await cloneRoom({
           variables: { id: rowObject.id, shelterId },
           errorPolicy: 'all',
         });
 
-        const payload = result?.duplicateRoom;
+        const payload = result?.cloneRoom;
         if (payload?.__typename === 'OperationInfo') {
           setActionError(
             payload.messages?.[0]?.message ||
@@ -97,67 +97,24 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
         setActionError('A network error occurred. Please try again.');
       }
     },
-    [duplicateRoom, refetch, shelterId]
-  );
-
-  const deleteOneRoom = useCallback(
-    async (roomId: string) => {
-      const { data: result } = await deleteRoom({
-        variables: { id: roomId },
-        errorPolicy: 'all',
-        refetchQueries: [],
-      });
-
-      const payload = result?.deleteRoom;
-      if (payload?.__typename === 'OperationInfo') {
-        return (
-          payload.messages?.[0]?.message ||
-          'Unable to delete room. Please try again.'
-        );
-      }
-
-      return null;
-    },
-    [deleteRoom]
-  );
-
-  const handleDeleteRoom = useCallback(
-    async (roomId: string) => {
-      setActionError(null);
-      try {
-        const error = await deleteOneRoom(roomId);
-        if (error) {
-          setActionError(error);
-          return;
-        }
-
-        await refetch();
-      } catch {
-        setActionError('A network error occurred. Please try again.');
-      }
-    },
-    [deleteOneRoom, refetch]
+    [cloneRoom, refetch, shelterId]
   );
 
   const handleDeleteRooms = useCallback(
     async (roomIds: string[]) => {
       setActionError(null);
       try {
-        for (const roomId of roomIds) {
-          const error = await deleteOneRoom(roomId);
-          if (error) {
-            setActionError(error);
-            await refetch();
-            return;
-          }
-        }
-
+        await deleteRooms({ variables: { ids: roomIds } });
         await refetch();
-      } catch {
-        setActionError('A network error occurred. Please try again.');
+      } catch (e) {
+        setActionError(
+          e instanceof Error
+            ? e.message
+            : 'Unable to delete room(s). Please try again.'
+        );
       }
     },
-    [deleteOneRoom, refetch]
+    [deleteRooms, refetch]
   );
 
   return (
@@ -176,7 +133,6 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
           rows={rows}
           onRowClick={handleEdit}
           onDuplicate={handleDuplicate}
-          onDeleteRoom={handleDeleteRoom}
           onDeleteRooms={handleDeleteRooms}
           loading={loading}
         />
