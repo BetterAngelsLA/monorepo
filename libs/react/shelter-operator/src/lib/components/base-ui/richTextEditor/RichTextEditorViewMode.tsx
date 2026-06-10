@@ -13,11 +13,6 @@ const viewContentCss = [
   'pl-5',
   'text-sm',
   'text-gray-900',
-  '[&_blockquote]:border-l-4',
-  '[&_blockquote]:border-gray-300',
-  '[&_blockquote]:pl-4',
-  '[&_blockquote]:italic',
-  '[&_blockquote]:text-gray-500',
 ];
 
 type TProps = {
