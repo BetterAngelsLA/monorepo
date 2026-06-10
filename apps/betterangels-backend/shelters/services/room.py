@@ -122,6 +122,23 @@ def _unique_duplicate_name(*, shelter_id: int | str, name: str | None) -> str:
 
 
 @transaction.atomic
+def room_delete(*, ids: list[int | str]) -> list[Room]:
+    """Delete rooms by their IDs and return the deleted instances.
+
+    Raises:
+        ``ObjectDoesNotExist`` when any of the given IDs does not match a room.
+    """
+    rooms = list(Room.objects.filter(pk__in=ids))
+    found_ids = {room.pk for room in rooms}
+    missing = [id for id in ids if int(id) not in found_ids]
+    if missing:
+        raise ObjectDoesNotExist(f"Room(s) matching ID(s) {missing} could not be found.")
+    for room in rooms:
+        room.delete()
+    return rooms
+
+
+@transaction.atomic
 def room_clone(*, user: "User", room_id: str, shelter_id: str) -> Room:
     """Duplicate an existing room on *shelter_id*, including all M2M relationships.
 

@@ -16,7 +16,7 @@ from shelters.enums import (
     RoomStyleChoices,
 )
 from shelters.models import Accessibility, Bed, Demographic, Funder, Pet, Room, Shelter
-from shelters.services.room import room_clone, room_create, room_update
+from shelters.services.room import room_clone, room_create, room_delete, room_update
 from shelters.tests.baker_recipes import shelter_recipe
 
 
@@ -190,6 +190,44 @@ class RoomUpdateTestCase(RoomServiceTestCase):
             User = get_user_model()
             outsider = User.objects.create_user(username="outsider", password="pw")
             room_update(user=outsider, room_id=self.room.pk, data={"name": "Blocked"})
+
+
+class RoomDeleteTestCase(RoomServiceTestCase):
+    def test_deletes_single_room(self) -> None:
+        room = Room.objects.create(shelter=self.shelter, name="Room-101")
+
+        deleted = room_delete(ids=[room.pk])
+
+        self.assertEqual(len(deleted), 1)
+        self.assertEqual(deleted[0].pk, room.pk)
+        self.assertFalse(Room.objects.filter(pk=room.pk).exists())
+
+    def test_deletes_multiple_rooms(self) -> None:
+        room1 = Room.objects.create(shelter=self.shelter, name="Room-101")
+        room2 = Room.objects.create(shelter=self.shelter, name="Room-102")
+
+        deleted = room_delete(ids=[room1.pk, room2.pk])
+
+        self.assertEqual(len(deleted), 2)
+        self.assertFalse(Room.objects.filter(pk__in=[room1.pk, room2.pk]).exists())
+
+    def test_missing_id_raises_object_does_not_exist(self) -> None:
+        with self.assertRaises(ObjectDoesNotExist) as ctx:
+            room_delete(ids=[999999])
+        self.assertIn("999999", str(ctx.exception))
+
+    def test_partial_missing_ids_raises_object_does_not_exist(self) -> None:
+        room = Room.objects.create(shelter=self.shelter, name="Room-101")
+
+        with self.assertRaises(ObjectDoesNotExist):
+            room_delete(ids=[room.pk, 999999])
+
+        self.assertTrue(Room.objects.filter(pk=room.pk).exists())
+
+    def test_empty_list_returns_empty(self) -> None:
+        deleted = room_delete(ids=[])
+
+        self.assertEqual(deleted, [])
 
 
 class RoomDuplicateTestCase(RoomServiceTestCase):
