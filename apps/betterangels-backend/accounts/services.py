@@ -9,7 +9,11 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
+from organizations.models import OrganizationUser
+
+from .models import User as UserModel
 
 if TYPE_CHECKING:
     from organizations.models import Organization
@@ -32,11 +36,6 @@ def member_add(
     retrieved.  Raises :class:`~django.core.exceptions.ValidationError`
     if the user is already a member of *organization*.
     """
-    from django.core.exceptions import ValidationError
-    from organizations.models import OrganizationUser
-
-    from .models import User as UserModel
-
     user, created = UserModel.objects.get_or_create(
         email=email,
         defaults={"username": str(uuid.uuid4()), "is_active": True},

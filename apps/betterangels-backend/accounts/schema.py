@@ -24,6 +24,7 @@ from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
 from .models import PermissionGroup, User
+from .services import member_add
 from .types import (
     AuthResponse,
     CurrentUserType,
@@ -199,8 +200,6 @@ class Mutation:
         )
         if organization is None:
             raise PermissionDenied("You do not have permission to add members.")
-
-        from accounts.services import member_add
 
         user = member_add(
             email=data.email,
