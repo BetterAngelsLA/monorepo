@@ -1,5 +1,4 @@
 import logging
-import uuid
 from typing import Optional, Union, cast
 
 import strawberry
@@ -25,6 +24,7 @@ from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
 from .models import PermissionGroup, User
+from .services import member_add
 from .types import (
     AuthResponse,
     CurrentUserType,
@@ -201,26 +201,17 @@ class Mutation:
         if organization is None:
             raise PermissionDenied("You do not have permission to add members.")
 
-        with transaction.atomic():
-            user, created = User.objects.get_or_create(
-                email=data.email,
-                defaults={"username": str(uuid.uuid4()), "is_active": True},
-            )
-            if created:
-                user.first_name = data.first_name
-                user.last_name = data.last_name
-                user.middle_name = data.middle_name
-                user.set_unusable_password()
-                user.save()
+        user = member_add(
+            email=data.email,
+            first_name=data.first_name,
+            last_name=data.last_name,
+            middle_name=data.middle_name,
+            organization=organization,
+        )
 
-            try:
-                OrganizationUser.objects.create(user=user, organization=organization)
-            except Exception:
-                raise ValidationError(f"{data.first_name} {data.last_name} is already a member of {organization.name}.")
-
-            invitation_backend().create_organization_invite(
-                organization=organization, invited_by_user=current_user, invitee_user=user
-            )
+        invitation_backend().create_organization_invite(
+            organization=organization, invited_by_user=current_user, invitee_user=user
+        )
 
         site = Site.objects.get(pk=settings.SITE_ID)
         invitation_backend().send_invitation(

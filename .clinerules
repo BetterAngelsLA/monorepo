@@ -8,6 +8,16 @@ cp docs/cline_mcp_settings.example.json ~/.vscode-server/data/User/globalStorage
 
 Then reload the VS Code window. This enables the GitHub MCP server for creating PRs, managing issues, searching code, and other GitHub operations directly from Cline. The `postCreateCommand` in `.devcontainer/devcontainer.json` does this automatically on container creation — this rule is a fallback for existing containers.
 
+## Django Style Guide
+
+The backend follows the [HackSoftware Django-Styleguide](https://github.com/HackSoftware/Django-Styleguide). During code reviews, reference this guide for conventions around:
+
+- **Services** — business logic in `services.py` (not fat models or views)
+- **Selectors** — read-only queries in `selectors.py`
+- **APIs / serializers** — thin views, logic delegated to services
+- **Permission checks** — DRF permission classes + strawberry-django extensions
+- **Model structure** — keep models lean; push logic to services, queries to selectors
+
 ## Project-Specific Conventions
 
 - This is the BetterAngels monorepo. It contains multiple apps (`betterangels`, `betterangels-backend`, `betterangels-admin`, `shelter-web`, `wildfires`) and shared libraries.
