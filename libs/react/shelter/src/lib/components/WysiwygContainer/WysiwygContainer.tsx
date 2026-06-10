@@ -1,6 +1,11 @@
 import { mergeCss, sanitizeHtml } from '@monorepo/react/shared';
 import styles from './wysiwyg.module.css';
 
+const SANITIZE_OPTIONS = {
+  allowedTags: ['p', 'strong', 'em', 'ul', 'ol', 'li', 'br', 'a', 'blockquote'],
+  allowedAttributes: { a: ['href', 'target', 'rel'] },
+};
+
 type TProps = {
   content?: string | null;
   className?: string;
@@ -9,7 +14,7 @@ type TProps = {
 export function WysiwygContainer(props: TProps) {
   const { content, className } = props;
 
-  const sanitizedContent = sanitizeHtml(content);
+  const sanitizedContent = sanitizeHtml(content, SANITIZE_OPTIONS);
 
   if (!sanitizedContent.length) {
     return null;
