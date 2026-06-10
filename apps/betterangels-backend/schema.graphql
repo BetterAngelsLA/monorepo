@@ -245,6 +245,10 @@ type BedsByStatusType {
   outOfService: Int!
 }
 
+input BulkDeleteInput {
+  ids: [ID!]!
+}
+
 type BulkDeleteResult {
   ids: [ID!]!
 }
@@ -872,10 +876,6 @@ enum DayOfWeekChoices {
   SUNDAY
 }
 
-input DeleteBedsInput {
-  ids: [ID!]!
-}
-
 union DeleteBedsPayload = BulkDeleteResult | OperationInfo
 
 union DeleteClientContactPayload = ClientContactType | OperationInfo
@@ -899,10 +899,6 @@ union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
 union DeleteNotePayload = NoteType | OperationInfo
 
 union DeleteReferralPayload = DeletedObjectType | OperationInfo
-
-input DeleteRoomsInput {
-  ids: [ID!]!
-}
 
 union DeleteRoomsPayload = BulkDeleteResult | OperationInfo
 
@@ -1581,11 +1577,11 @@ type Mutation {
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
   updateRoom(id: ID!, data: UpdateRoomInput!): UpdateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_room"}], any: true)
   cloneRoom(id: ID!, shelterId: ID!): CloneRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
-  deleteRooms(data: DeleteRoomsInput!): DeleteRoomsPayload! @hasPerm(permissions: [{app: "shelters", permission: "delete_room"}], any: true)
+  deleteRooms(data: BulkDeleteInput!): DeleteRoomsPayload! @hasPerm(permissions: [{app: "shelters", permission: "delete_room"}], any: true)
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   updateBed(id: ID!, data: UpdateBedInput!): UpdateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_bed"}], any: true)
   cloneBed(id: ID!, shelterId: ID!): CloneBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
-  deleteBeds(data: DeleteBedsInput!): DeleteBedsPayload! @hasPerm(permissions: [{app: "shelters", permission: "delete_bed"}], any: true)
+  deleteBeds(data: BulkDeleteInput!): DeleteBedsPayload! @hasPerm(permissions: [{app: "shelters", permission: "delete_bed"}], any: true)
   createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
   updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!

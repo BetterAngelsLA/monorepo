@@ -258,13 +258,3 @@ class UpdateRoomInput:
     storage: Maybe[bool]
     type: Maybe[RoomStyleChoices | None]
     type_other: Maybe[str | None]
-
-
-@strawberry.input
-class DeleteRoomsInput:
-    ids: list[ID]
-
-
-@strawberry.input
-class DeleteBedsInput:
-    ids: list[ID]
