@@ -25,12 +25,13 @@ function renderLabel(
       <a
         href={`mailto:${label}`}
         className="
-    underline
-    rounded-lg
-    px-2 py-1
-    active:bg-[#E8ECF2]
-    transition-colors
-  "
+  underline
+  rounded-lg
+  px-2 py-1
+  transition-all
+  active:bg-[#E8ECF2]
+  active:opacity-70
+"
       >
         {label}
       </a>
