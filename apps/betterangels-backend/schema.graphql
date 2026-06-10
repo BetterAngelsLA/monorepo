@@ -868,7 +868,7 @@ enum DayOfWeekChoices {
   SUNDAY
 }
 
-union DeleteBedPayload = BedType | OperationInfo
+union DeleteBedsPayload = BedType | OperationInfo
 
 union DeleteClientContactPayload = ClientContactType | OperationInfo
 
@@ -1564,7 +1564,6 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
-  deleteBed(data: DeleteDjangoObjectInput!): DeleteBedPayload! @hasRetvalPerm(permissions: [{app: "shelters", permission: "delete_bed"}], any: true)
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
   updateShelter(data: UpdateShelterInput!): UpdateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
@@ -1574,6 +1573,7 @@ type Mutation {
   createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   updateBed(id: ID!, data: UpdateBedInput!): UpdateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_bed"}], any: true)
   cloneBed(id: ID!, shelterId: ID!): CloneBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
+  deleteBeds(ids: [ID!]!): DeleteBedsPayload! @hasPerm(permissions: [{app: "shelters", permission: "delete_bed"}], any: true)
   createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
   updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!

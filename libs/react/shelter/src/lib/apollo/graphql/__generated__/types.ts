@@ -883,7 +883,7 @@ export enum DayOfWeekChoices {
   Wednesday = 'WEDNESDAY'
 }
 
-export type DeleteBedPayload = BedType | OperationInfo;
+export type DeleteBedsPayload = BedType | OperationInfo;
 
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
@@ -1558,7 +1558,7 @@ export type Mutation = {
   createShelter: CreateShelterPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
   createTask: CreateTaskPayload;
-  deleteBed: DeleteBedPayload;
+  deleteBeds: DeleteBedsPayload;
   deleteClientContact: DeleteClientContactPayload;
   deleteClientDocument: DeleteClientDocumentPayload;
   deleteClientHouseholdMember: DeleteClientHouseholdMemberPayload;
@@ -1719,8 +1719,8 @@ export type MutationCreateTaskArgs = {
 };
 
 
-export type MutationDeleteBedArgs = {
-  data: DeleteDjangoObjectInput;
+export type MutationDeleteBedsArgs = {
+  ids: Array<Scalars['ID']['input']>;
 };
 
 
