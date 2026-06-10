@@ -12,13 +12,13 @@ const locationSchema = z
   .optional();
 
 export const formSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().trim().min(1, 'Name is required'),
   status: z.enum(StatusChoices).refine(Boolean, 'Status is required'),
-  description: z.string().min(1, 'Description is required'),
+  description: z.string().trim().optional(),
   location: locationSchema,
-  email: z.email('Invalid email address').optional().or(z.literal('')),
-  phone: z.string().optional().or(z.literal('')),
-  website: z.url('Invalid URL').optional().or(z.literal('')),
+  email: z.email('Invalid email address').trim().optional().or(z.literal('')),
+  phone: z.string().trim().optional().or(z.literal('')),
+  website: z.url('Invalid URL').trim().optional().or(z.literal('')),
   isPrivate: z.boolean(),
 });
 

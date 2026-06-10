@@ -42,12 +42,8 @@ const replaceCategoryServiceSelection = (
 
 const normalize = (value: string) => value.trim().toLowerCase();
 
-const createCustomServiceId = (categoryId: string, label: string) => {
-  const slug = normalize(label)
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-  return `custom:${categoryId}:${slug}`;
-};
+const createCustomServiceId = (categoryId: string, label: string) =>
+  `custom:${categoryId}:${encodeURIComponent(label.trim())}`;
 
 const ServiceCategoryRow = memo(function ServiceCategoryRow({
   category,
