@@ -28,14 +28,15 @@ Welcome to the BetterAngels Monorepo! This repository contains the codebases for
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
-2. [Connecting to the Repo](#connecting-to-the-repo)
-3. [Frontend Development](#frontend-development)
-4. [Backend Development](#backend-development)
-5. [Seed Data](#seed-data)
-6. [Development Workflow](#development-workflow)
-7. [Shelter LA](#shelter-la)
-8. [Licensing Details](#licensing-details)
-9. [Contributing](#contributing)
+2. [Dev Container](#dev-container)
+3. [Connecting to the Repo](#connecting-to-the-repo)
+4. [Frontend Development](#frontend-development)
+5. [Backend Development](#backend-development)
+6. [Seed Data](#seed-data)
+7. [Development Workflow](#development-workflow)
+8. [Shelter LA](#shelter-la)
+9. [Licensing Details](#licensing-details)
+10. [Contributing](#contributing)
 
 ## Project Overview
 
@@ -46,6 +47,13 @@ BetterAngels is a nonprofit organization focused on addressing the homelessness 
 Setting up SSH on GitHub allows you to securely connect to your repositories without needing to enter your password each time, providing a more streamlined and secure way to interact with your code
 
 - **[Setting up your SSH key for GitHub](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)**: This guide will walk you through the steps needed to set up a SSH on your machine then configuring your GitHub account to accept the connection.
+## Dev Container
+
+This project uses a VS Code Dev Container for a consistent, zero-config development environment.
+
+- **[Dev Container Guide](docs/devcontainer.md)**: SSH setup, GitHub CLI auth, state persistence, and container architecture.
+- **[Cline AI Assistant](docs/cline.md)**: Setup, browser control, and GitHub MCP integration for the built-in AI coding assistant.
+
 
 ## Frontend Development
 
