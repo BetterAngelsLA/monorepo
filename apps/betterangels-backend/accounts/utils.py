@@ -47,6 +47,13 @@ def remove_org_group_permissions_from_user(user: User, organization: Organizatio
 
 
 def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> PermissionGroup:
+    """Return the first Caseworker ``PermissionGroup`` for *user*.
+
+    .. deprecated::
+        Use :func:`resolve_permission_group` instead.  This function
+        hardcodes the Caseworker role and only works for users who
+        belong to a single outreach-type organization.
+    """
     # WARNING: Temporary workaround for organization selection
     # TODO: Update once organization selection is implemented. Currently selects
     # the first organization with a default Caseworker role for the user.
@@ -63,6 +70,24 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
         raise PermissionError("User lacks proper organization or permissions")
 
     return permission_group
+
+
+def resolve_permission_group(user: User, org_id: str) -> PermissionGroup:
+    """Return the member-level ``PermissionGroup`` for *user* in *org_id*.
+
+    This is the multi-org-aware replacement for
+    :func:`get_user_permission_group`.  It reads the organization's
+    ``org_types`` from the registry to determine the correct member
+    role (e.g. "Caseworker" for outreach, "Shelter Operator" for
+    shelters).
+
+    Raises :class:`~django.core.exceptions.ValidationError` if the
+    organization doesn't exist, the user is not a member, the org has
+    no ``org_types``, or no matching ``PermissionGroup`` is found.
+    """
+    from accounts.services import get_user_permission_group_for_org
+
+    return get_user_permission_group_for_org(user, org_id)
 
 
 def get_outreach_authorized_users() -> QuerySet[User]:
