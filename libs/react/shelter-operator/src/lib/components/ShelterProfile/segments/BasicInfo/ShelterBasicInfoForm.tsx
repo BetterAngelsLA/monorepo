@@ -9,7 +9,7 @@ import {
   toDropdownValue,
 } from '../../../base-ui/dropdown';
 import { Input } from '../../../base-ui/input';
-import { RichTextEditor } from '../../../base-ui/rich-text-editor';
+import { RichTextEditor } from '../../../base-ui/richTextEditor';
 import { Switch } from '../../../base-ui/switch';
 import { Form } from '../../../form/Form';
 import { STATUS_COLOR_MAP, STATUS_OPTIONS } from '../../constants';
@@ -138,7 +138,6 @@ export function ShelterBasicInfoForm(props: TProps) {
             control={control}
             render={({ field }) => (
               <RichTextEditor
-                required
                 label="Description"
                 value={field.value}
                 onChange={field.onChange}
