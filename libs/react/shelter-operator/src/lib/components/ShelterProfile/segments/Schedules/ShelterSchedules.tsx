@@ -117,7 +117,7 @@ export function ShelterSchedules(props: TProps) {
         />
       )}
 
-      <div className="px-6 flex-col flex-1 pb-48">
+      <div className="px-6 flex-col flex-1 pb-72">
         <Form.Header title="Shelter Schedule" className="pl-5" />
 
         <Tabs
