@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { Controller } from 'react-hook-form';
 import {
   ACCESSIBILITY_OPTIONS,
   DEMOGRAPHICS_OPTIONS,
@@ -13,74 +14,128 @@ import { BOOLEAN_OPTIONS } from '../constants/bedFormOptions';
 import type { SectionProps } from '../types';
 
 export const BedDetailsSection = memo(function BedDetailsSection({
-  data,
-  onChange,
+  control,
   errors,
 }: SectionProps) {
   return (
     <FormSection title="Bed Details">
-      <CheckboxGroup
+      <Controller
         name="demographics"
-        label="Demographics"
-        options={DEMOGRAPHICS_OPTIONS}
-        values={data.demographics}
-        onChange={(values) => onChange('demographics', values)}
-        error={errors.demographics}
+        control={control}
+        render={({ field }) => (
+          <CheckboxGroup
+            name="demographics"
+            label="Demographics"
+            options={DEMOGRAPHICS_OPTIONS}
+            values={field.value}
+            onChange={field.onChange}
+            error={errors.demographics?.message}
+          />
+        )}
       />
-      <CheckboxGroup
+
+      <Controller
         name="accessibility"
-        label="Accessibility"
-        options={ACCESSIBILITY_OPTIONS}
-        values={data.accessibility}
-        onChange={(values) => onChange('accessibility', values)}
-        error={errors.accessibility}
+        control={control}
+        render={({ field }) => (
+          <CheckboxGroup
+            name="accessibility"
+            label="Accessibility"
+            options={ACCESSIBILITY_OPTIONS}
+            values={field.value}
+            onChange={field.onChange}
+            error={errors.accessibility?.message}
+          />
+        )}
       />
-      <CheckboxGroup
+
+      <Controller
         name="funders"
-        label="Funders"
-        options={FUNDERS_OPTIONS}
-        values={data.funders}
-        onChange={(values) => onChange('funders', values)}
-        error={errors.funders}
+        control={control}
+        render={({ field }) => (
+          <CheckboxGroup
+            name="funders"
+            label="Funders"
+            options={FUNDERS_OPTIONS}
+            values={field.value}
+            onChange={field.onChange}
+            error={errors.funders?.message}
+          />
+        )}
       />
-      <CheckboxGroup
+
+      <Controller
         name="pets"
-        label="Pets"
-        options={PETS_OPTIONS}
-        values={data.pets}
-        onChange={(values) => onChange('pets', values)}
-        error={errors.pets}
+        control={control}
+        render={({ field }) => (
+          <CheckboxGroup
+            name="pets"
+            label="Pets"
+            options={PETS_OPTIONS}
+            values={field.value}
+            onChange={field.onChange}
+            error={errors.pets?.message}
+          />
+        )}
       />
-      <RadioGroup
+
+      <Controller
         name="storage"
-        label="Storage Available"
-        options={BOOLEAN_OPTIONS}
-        value={data.storage}
-        onChange={(value) => onChange('storage', value)}
+        control={control}
+        render={({ field }) => (
+          <RadioGroup
+            name="storage"
+            label="Storage Available"
+            options={BOOLEAN_OPTIONS}
+            value={field.value}
+            onChange={field.onChange}
+          />
+        )}
       />
-      <RadioGroup
+
+      <Controller
         name="maintenanceFlag"
-        label="Maintenance Flag"
-        options={BOOLEAN_OPTIONS}
-        value={data.maintenanceFlag}
-        onChange={(value) => onChange('maintenanceFlag', value)}
+        control={control}
+        render={({ field }) => (
+          <RadioGroup
+            name="maintenanceFlag"
+            label="Maintenance Flag"
+            options={BOOLEAN_OPTIONS}
+            value={field.value}
+            onChange={field.onChange}
+          />
+        )}
       />
-      <RadioGroup
+
+      <Controller
         name="b7"
-        label="B7"
-        options={BOOLEAN_OPTIONS}
-        value={data.b7}
-        onChange={(value) => onChange('b7', value)}
+        control={control}
+        render={({ field }) => (
+          <RadioGroup
+            name="b7"
+            label="B7"
+            options={BOOLEAN_OPTIONS}
+            value={field.value}
+            onChange={field.onChange}
+          />
+        )}
       />
-      <NumberField
-        id="bed-fees"
+
+      <Controller
         name="fees"
-        label="Fees"
-        value={data.fees}
-        onChange={(value) => onChange('fees', value)}
-        min={0}
-        step={1}
-        error={errors.fees}
+        control={control}
+        render={({ field }) => (
+          <NumberField
+            id="bed-fees"
+            name="fees"
+            label="Fees"
+            value={field.value}
+            onChange={field.onChange}
+            min={0}
+            step={1}
+            error={errors.fees?.message}
+          />
+        )}
       />
     </FormSection>
   );

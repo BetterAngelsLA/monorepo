@@ -1,42 +1,31 @@
 import { z } from 'zod';
-import type { BedFormData } from '../formTypes';
+import {
+  AccessibilityChoices,
+  BedStatusChoices,
+  BedTypeChoices,
+  DemographicChoices,
+  FunderChoices,
+  MedicalNeedChoices,
+  PetChoices,
+} from '../../../../apollo/graphql/__generated__/types';
 
-const formSchema = z.object({
+export const formSchema = z.object({
+  name: z.string(),
+  roomId: z.string().nullable(),
+  status: z.enum(BedStatusChoices),
+  statusNotes: z.string(),
+  type: z.enum(BedTypeChoices).nullable(),
+  medicalNeeds: z.array(z.enum(MedicalNeedChoices)),
+  demographics: z.array(z.enum(DemographicChoices)),
+  accessibility: z.array(z.enum(AccessibilityChoices)),
+  funders: z.array(z.enum(FunderChoices)),
+  pets: z.array(z.enum(PetChoices)),
+  storage: z.boolean(),
+  maintenanceFlag: z.boolean(),
+  b7: z.boolean(),
   fees: z
     .number()
     .int('Fees must be a whole number')
     .min(0, 'Fees must be zero or greater')
-    .optional()
     .nullable(),
 });
-
-export type FormErrors = Partial<Record<keyof BedFormData, string>>;
-
-export function validateBedForm(data: BedFormData): {
-  isValid: boolean;
-  errors: FormErrors;
-} {
-  const result = formSchema.safeParse(data);
-  if (result.success) {
-    return { isValid: true, errors: {} };
-  }
-
-  const errors: FormErrors = {};
-  for (const issue of result.error.issues) {
-    const field = issue.path[0];
-    if (typeof field === 'string' && !errors[field as keyof BedFormData]) {
-      errors[field as keyof BedFormData] = issue.message;
-    }
-  }
-  return { isValid: false, errors };
-}
-
-export function validateField<K extends keyof BedFormData>(
-  field: K,
-  value: BedFormData[K]
-): string | undefined {
-  const result = formSchema.safeParse({ [field]: value });
-  if (result.success) return undefined;
-  const issue = result.error.issues.find((i) => i.path[0] === field);
-  return issue?.message;
-}

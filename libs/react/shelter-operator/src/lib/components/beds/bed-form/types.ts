@@ -1,15 +1,9 @@
+import type { Control, FieldErrors } from 'react-hook-form';
 import type { DropdownOption } from '../../base-ui/dropdown';
 import type { BedFormData } from './formTypes';
-import type { FormErrors } from './constants/validation';
-
-export type BedFormFieldUpdater = <K extends keyof BedFormData>(
-  field: K,
-  value: BedFormData[K]
-) => void;
 
 export interface SectionProps {
-  data: BedFormData;
-  onChange: BedFormFieldUpdater;
-  errors: FormErrors;
+  control: Control<BedFormData>;
+  errors: FieldErrors<BedFormData>;
   roomOptions: DropdownOption<string>[];
 }

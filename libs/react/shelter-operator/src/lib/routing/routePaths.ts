@@ -67,7 +67,10 @@ export function shelterCreateRoomRoute(shelterId: string): string {
   return `${shelterManageRoute(shelterId)}/${manageSegments.roomsCreate}`;
 }
 
-export function shelterEditRoomRoute(shelterId: string, roomId: string): string {
+export function shelterEditRoomRoute(
+  shelterId: string,
+  roomId: string
+): string {
   return generatePath(`${paths.shelterManage}/${manageSegments.roomsEdit}`, {
     shelterId,
     roomId,
@@ -83,7 +86,10 @@ export function shelterCreateBedRoute(shelterId: string): string {
 }
 
 export function shelterEditBedRoute(shelterId: string, bedId: string): string {
-  return `${shelterManageRoute(shelterId)}/beds/${bedId}/edit`;
+  return generatePath(`${paths.shelterManage}/${manageSegments.bedsEdit}`, {
+    shelterId,
+    bedId,
+  });
 }
 
 export function shelterProfileRoute(

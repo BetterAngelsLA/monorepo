@@ -1,26 +1,4 @@
-import type {
-  AccessibilityChoices,
-  BedStatusChoices,
-  BedTypeChoices,
-  DemographicChoices,
-  FunderChoices,
-  MedicalNeedChoices,
-  PetChoices,
-} from '../../../apollo/graphql/__generated__/types';
+import type { z } from 'zod';
+import type { formSchema } from './constants/validation';
 
-export interface BedFormData {
-  accessibility: AccessibilityChoices[];
-  b7: boolean;
-  demographics: DemographicChoices[];
-  fees: number | null;
-  funders: FunderChoices[];
-  maintenanceFlag: boolean;
-  medicalNeeds: MedicalNeedChoices[];
-  name: string;
-  pets: PetChoices[];
-  roomId: string | null;
-  status: BedStatusChoices;
-  statusNotes: string;
-  storage: boolean;
-  type: BedTypeChoices | null;
-}
+export type BedFormData = z.infer<typeof formSchema>;
