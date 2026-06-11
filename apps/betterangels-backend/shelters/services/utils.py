@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, overload
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -17,6 +17,20 @@ _SHELTER_M2M_FIELDS = _get_m2m_field_names(Shelter)
 _BED_M2M_FIELDS = _get_m2m_field_names(Bed)
 _ROOM_M2M_FIELDS = _get_m2m_field_names(Room)
 _COMMON_M2M_FIELDS = (_SHELTER_M2M_FIELDS & _BED_M2M_FIELDS) | (_SHELTER_M2M_FIELDS & _ROOM_M2M_FIELDS)
+
+
+@overload
+def _clone_label(label: str | None, *, default: str) -> str: ...
+
+
+@overload
+def _clone_label(label: str | None, *, default: None = None) -> str | None: ...
+
+
+def _clone_label(label: str | None, *, default: str | None = None) -> str | None:
+    if not label:
+        return default
+    return f"{label} (Copy)"
 
 
 def _set_m2m_from_enums(instance: models.Model, data: Dict[str, List[Any]]) -> None:
@@ -130,14 +144,15 @@ def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) ->
 
 def _validate_subset_attributes(shelter: Shelter, m2m_data: Dict[str, List[Any]]) -> None:
     """Ensure room/bed attributes are a strict subset of the shelter's attributes."""
-    for field_name in _COMMON_M2M_FIELDS:
-        if field_name not in m2m_data:
-            continue
-        provided_values = [getattr(v, "value", v) for v in m2m_data[field_name]]
-        if not provided_values:
-            continue
+    from django.db.models import prefetch_related_objects
 
-        shelter_allowed = set(getattr(shelter, field_name).values_list("name", flat=True))
+    fields_to_check = [f for f in _COMMON_M2M_FIELDS if f in m2m_data and m2m_data[f]]
+    if fields_to_check:
+        prefetch_related_objects([shelter], *fields_to_check)
+
+    for field_name in fields_to_check:
+        provided_values = [getattr(v, "value", v) for v in m2m_data[field_name]]
+        shelter_allowed = {obj.name for obj in getattr(shelter, field_name).all()}
         invalid = set(provided_values) - shelter_allowed
         if invalid:
             raise ValidationError(

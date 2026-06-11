@@ -121,6 +121,7 @@ INSTALLED_APPS = [
     "django_ckeditor_5",
     "django_structlog",
     "guardian",
+    "model_clone",
     "places",
     "post_office",
     "rest_framework",
