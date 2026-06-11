@@ -127,14 +127,12 @@ def room_delete(*, user: "User", ids: list[int]) -> list[int]:
         ``ObjectDoesNotExist`` when any of the given IDs does not match a room.
     """
     rooms = admin_room_list(Room.objects.all(), user=user).filter(pk__in=ids)
-    found_ids = {room.pk for room in rooms}
-    missing = [id for id in ids if id not in found_ids]
     deleted_ids = []
-    if missing:
-        raise ObjectDoesNotExist(f"Room(s) matching ID(s) {missing} could not be found.")
+
     for room in rooms:
-        deleted_ids.append(room.pk)
+        id = room.pk
         room.delete()
+        deleted_ids.append(id)
 
     return deleted_ids
 

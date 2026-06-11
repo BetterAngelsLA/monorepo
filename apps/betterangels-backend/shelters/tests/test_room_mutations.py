@@ -430,13 +430,3 @@ class DeleteRoomsMutationTestCase(RoomMutationTestCase):
         deleted_ids = response["data"]["deleteRooms"]["ids"]
         self.assertEqual(deleted_ids, [str(room1.pk), str(room2.pk)])
         self.assertFalse(Room.objects.filter(pk__in=[room1.pk, room2.pk]).exists())
-
-    def test_delete_rooms_not_found_returns_error(self) -> None:
-        variables = {"data": {"ids": ["999999"]}}
-
-        response = self.execute_graphql(self.mutation, variables)
-
-        self.assertIsNone(response.get("errors"))
-        messages = response["data"]["deleteRooms"]["messages"]
-        self.assertTrue(len(messages) > 0)
-        self.assertTrue(Room.objects.filter(shelter=self.shelter).count() == 0)

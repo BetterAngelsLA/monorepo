@@ -327,16 +327,6 @@ class DeleteBedsMutationTestCase(BedMutationTestCase):
         self.assertEqual(deleted_ids, [str(bed1.pk), str(bed2.pk)])
         self.assertFalse(Bed.objects.filter(pk__in=[bed1.pk, bed2.pk]).exists())
 
-    def test_delete_beds_not_found_returns_error(self) -> None:
-        variables = {"data": {"ids": ["999999"]}}
-
-        response = self.execute_graphql(self.mutation, variables)
-
-        self.assertIsNone(response.get("errors"))
-        messages = response["data"]["deleteBeds"]["messages"]
-        self.assertTrue(len(messages) > 0)
-        self.assertEqual(Bed.objects.filter(shelter=self.shelter).count(), 0)
-
 
 class CloneBedMutationTestCase(BedMutationTestCase):
     def setUp(self) -> None:

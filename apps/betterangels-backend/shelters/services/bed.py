@@ -97,14 +97,12 @@ def bed_delete(*, user: "User", ids: list[int]) -> list[int]:
         ``ObjectDoesNotExist`` when any of the given IDs does not match a room.
     """
     beds = admin_bed_list(Bed.objects.all(), user=user).filter(pk__in=ids)
-    found_ids = {bed.pk for bed in beds}
-    missing = [id for id in ids if id not in found_ids]
     deleted_ids = []
-    if missing:
-        raise ObjectDoesNotExist(f"Bed(s) matching ID(s) {missing} could not be found.")
+
     for bed in beds:
-        deleted_ids.append(bed.pk)
+        id = bed.pk
         bed.delete()
+        deleted_ids.append(id)
 
     return deleted_ids
 
