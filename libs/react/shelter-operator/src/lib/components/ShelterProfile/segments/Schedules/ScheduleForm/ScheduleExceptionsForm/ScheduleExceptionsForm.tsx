@@ -3,6 +3,7 @@ import {
   Controller,
   type Control,
   type FieldArrayWithId,
+  type UseFormTrigger,
 } from 'react-hook-form';
 import type { ScheduleFormData } from '../formSchema';
 import { ExceptionRow, type ExceptionErrors } from './ExceptionRow';
@@ -13,11 +14,14 @@ type TProps = {
   control: Control<ScheduleFormData>;
   onAdd: (entry: ScheduleFormData['exceptions'][number]) => void;
   onRemove: (index: number) => void;
+  trigger: UseFormTrigger<ScheduleFormData>;
+  isSubmitted: boolean;
   disabled?: boolean;
 };
 
 export function ScheduleExceptionsForm(props: TProps) {
-  const { fields, control, onAdd, onRemove, disabled } = props;
+  const { fields, control, onAdd, onRemove, trigger, isSubmitted, disabled } =
+    props;
 
   return (
     <div className="space-y-3">
@@ -37,7 +41,13 @@ export function ScheduleExceptionsForm(props: TProps) {
           render={({ field: { value, onChange }, fieldState }) => (
             <ExceptionRow
               entry={value}
-              onChange={(patch) => onChange({ ...value, ...patch })}
+              onChange={(patch) => {
+                onChange({ ...value, ...patch });
+
+                if (isSubmitted) {
+                  trigger(`exceptions.${index}`);
+                }
+              }}
               onRemove={() => onRemove(index)}
               errors={fieldState.error as ExceptionErrors | undefined}
               disabled={disabled}

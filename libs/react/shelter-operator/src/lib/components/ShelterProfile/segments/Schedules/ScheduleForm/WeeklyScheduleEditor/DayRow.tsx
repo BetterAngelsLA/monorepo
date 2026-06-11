@@ -5,7 +5,9 @@ import { Button } from '../../../../../base-ui/buttons';
 import type { DaySchedule, TimeRange, TimeRangeError } from '../types';
 import { TimeRangeInput } from './TimeRangeInput';
 
-const EMPTY_RANGE: TimeRange = { startTime: '', endTime: '' };
+function newRange(): TimeRange {
+  return { _id: crypto.randomUUID(), startTime: '', endTime: '' };
+}
 
 type TProps = {
   day: DayOfWeekChoices;
@@ -19,26 +21,18 @@ type TProps = {
 };
 
 export function DayRow(props: TProps) {
-  const {
-    day: _day,
-    label,
-    schedule,
-    onChange,
-    onCopyToAll,
-    errors,
-    disabled,
-  } = props;
+  const { label, schedule, onChange, onCopyToAll, errors, disabled } = props;
 
   const hasRanges = schedule.ranges.length > 0;
   const canCopy =
     hasRanges && schedule.ranges.some((r) => r.startTime && r.endTime);
 
   const toggleDay = () => {
-    onChange({ ranges: hasRanges ? [] : [{ ...EMPTY_RANGE }] });
+    onChange({ ranges: hasRanges ? [] : [newRange()] });
   };
 
   const addRange = () => {
-    onChange({ ranges: [...schedule.ranges, { ...EMPTY_RANGE }] }, false);
+    onChange({ ranges: [...schedule.ranges, newRange()] }, false);
   };
 
   const updateRange = (index: number, patch: Partial<TimeRange>) => {
@@ -76,7 +70,7 @@ export function DayRow(props: TProps) {
       {hasRanges && (
         <div className="flex flex-col gap-1.5">
           {schedule.ranges.map((range, index) => (
-            <div key={index} className="flex flex-col gap-1">
+            <div key={range._id} className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <TimeRangeInput
                   startTime={range.startTime}

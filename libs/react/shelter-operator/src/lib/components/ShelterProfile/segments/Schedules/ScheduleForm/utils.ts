@@ -24,6 +24,7 @@ export function hydrateWeekly(schedules: ScheduleType[]): WeeklyFormState {
     }
 
     state[entry.day].ranges.push({
+      _id: entry.id ?? `${entry.day}-${state[entry.day].ranges.length}`,
       startTime: toHHMM(entry.startTime),
       endTime: toHHMM(entry.endTime),
     });
@@ -33,10 +34,8 @@ export function hydrateWeekly(schedules: ScheduleType[]): WeeklyFormState {
 }
 
 export function hydrateExceptions(schedules: ScheduleType[]): ExceptionEntry[] {
-  let _id = 0;
-
   return schedules.map((s) => ({
-    localId: s.id ?? String(++_id),
+    localId: s.id ?? crypto.randomUUID(),
     startDate: s.startDate ?? '',
     endDate: s.endDate ?? s.startDate ?? '',
     closedAllDay: !s.startTime && !s.endTime,

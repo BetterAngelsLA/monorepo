@@ -219,7 +219,7 @@ export function Dropdown<T extends string | number = string | number>(
         emitChange(next);
       } else {
         if (selectedSet.has(option.value)) {
-          onChange(null);
+          emitChange([]);
         } else {
           emitChange([option]);
         }

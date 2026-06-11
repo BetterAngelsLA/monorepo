@@ -4,6 +4,7 @@ import type {
 } from '@monorepo/react/shelter';
 
 export type TimeRange = {
+  _id: string;
   startTime: string; // "HH:MM"
   endTime: string; // "HH:MM"
 };

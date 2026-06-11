@@ -128,6 +128,8 @@ export function ScheduleForm(props: TProps) {
           control={control}
           onAdd={append}
           onRemove={remove}
+          trigger={trigger}
+          isSubmitted={isSubmitted}
           disabled={disabled}
         />
       </section>

@@ -14,6 +14,7 @@ const dateField = z
 
 export const timeRangeSchema = z
   .object({
+    _id: z.string(),
     startTime: timeField,
     endTime: timeField,
   })

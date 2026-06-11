@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Input } from '../../../../../base-ui/input';
 
 type TProps = {
@@ -12,10 +13,17 @@ export function DateOrRangePicker(props: TProps) {
 
   const isSingleDay = !endDate || endDate === startDate;
 
+  // Remembers the last end date before collapsing to single day,
+  // so toggling back to range can restore it instead of recomputing startDate + 1.
+  const savedEndDateRef = useRef<string>('');
+
   const handleSingleToggle = () => {
     if (isSingleDay) {
-      // Switch to range: set endDate to the day after startDate
-      if (startDate) {
+      // Restore saved end date if still after startDate, otherwise startDate + 1
+      const saved = savedEndDateRef.current;
+      if (saved && saved > startDate) {
+        onChange('endDate', saved);
+      } else if (startDate) {
         const next = new Date(startDate);
         next.setDate(next.getDate() + 1);
         onChange('endDate', next.toISOString().slice(0, 10));
@@ -23,7 +31,8 @@ export function DateOrRangePicker(props: TProps) {
         onChange('endDate', '');
       }
     } else {
-      // Collapse back to single day
+      // Save current end date before collapsing
+      savedEndDateRef.current = endDate;
       onChange('endDate', startDate);
     }
   };
