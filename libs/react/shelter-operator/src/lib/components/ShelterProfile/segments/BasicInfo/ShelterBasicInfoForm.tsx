@@ -9,6 +9,7 @@ import {
   toDropdownValue,
 } from '../../../base-ui/dropdown';
 import { Input } from '../../../base-ui/input';
+import { RichTextEditor } from '../../../base-ui/richTextEditor';
 import { Switch } from '../../../base-ui/switch';
 import { Form } from '../../../form/Form';
 import { STATUS_COLOR_MAP, STATUS_OPTIONS } from '../../constants';
@@ -136,13 +137,8 @@ export function ShelterBasicInfoForm(props: TProps) {
             name="description"
             control={control}
             render={({ field }) => (
-              <Input
-                required
-                variant="paragraph"
-                inputClassName="min-h-auto"
-                rows={2}
+              <RichTextEditor
                 label="Description"
-                dataType="string"
                 value={field.value}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
@@ -226,6 +222,7 @@ export function ShelterBasicInfoForm(props: TProps) {
               onSecondaryClick={handleCancel}
               primaryDisabled={disabled || !isValid}
               secondaryDisabled={disabled}
+              className="z-99"
             />
           )}
         </form>

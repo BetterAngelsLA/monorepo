@@ -1,19 +1,21 @@
 import { mergeCss } from '@monorepo/react/shared';
 import type { Editor } from '@tiptap/react';
-import { Bold, Italic, Link, List, ListOrdered } from 'lucide-react';
+import { Bold, Italic, Link, List, ListOrdered, Quote } from 'lucide-react';
 
 export type ToolbarButtonKey =
   | 'bold'
   | 'italic'
   | 'bulletList'
   | 'orderedList'
-  | 'link';
+  | 'link'
+  | 'blockquote';
 
 export const DEFAULT_TOOLBAR_BUTTONS: ToolbarButtonKey[] = [
   'bold',
   'italic',
   'bulletList',
   'orderedList',
+  'blockquote',
   'link',
 ];
 
@@ -48,6 +50,12 @@ const TOOLBAR_BUTTON_CONFIG: Record<ToolbarButtonKey, ToolbarButtonConfig> = {
     icon: <ListOrdered size={14} />,
     isActive: (editor) => editor.isActive('orderedList'),
     onClick: (editor) => editor.chain().focus().toggleOrderedList().run(),
+  },
+  blockquote: {
+    ariaLabel: 'Blockquote',
+    icon: <Quote size={14} />,
+    isActive: (editor) => editor.isActive('blockquote'),
+    onClick: (editor) => editor.chain().focus().toggleBlockquote().run(),
   },
   link: {
     ariaLabel: 'Link',

@@ -8,6 +8,10 @@ This is the single source of truth for:
 
 Every ``TemplateConfig`` defined in an app's ``groups.py`` must be listed
 here under its org type.  No ``ready()`` side-effects needed.
+
+NOTE: This file is the original legacy registry.  The canonical registry
+is ``common.org_types.REGISTRY``.  This file is kept for backward
+compatibility only; new code should import from ``common.org_types``.
 """
 
 from __future__ import annotations

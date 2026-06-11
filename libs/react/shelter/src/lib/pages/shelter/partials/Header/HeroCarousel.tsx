@@ -18,6 +18,7 @@ type TProps = {
 export function HeroCarousel(props: TProps) {
   const { shelter, className } = props;
   const heroImage = shelter.heroImage;
+  const heroImageFull = shelter.heroImageFull;
   const heroId = heroImage?.id;
 
   const nonHeroPhotos = shelter.photos.filter((p) => p.id !== heroId);
@@ -32,6 +33,16 @@ export function HeroCarousel(props: TProps) {
       (p) => p.file.url
     ),
   ].filter((u): u is string => Boolean(u));
+
+  const fullUrlMap = new Map<string, string>();
+  if (heroImage?.url && heroImageFull?.url) {
+    fullUrlMap.set(heroImage.url, heroImageFull.url);
+  }
+  for (const photo of nonHeroPhotos) {
+    if (photo.file.url && photo.file.fullUrl) {
+      fullUrlMap.set(photo.file.url, photo.file.fullUrl);
+    }
+  }
 
   const youtubeVideos = mapMediaLinksToVideos(shelter.mediaLinks || []);
 
@@ -53,7 +64,7 @@ export function HeroCarousel(props: TProps) {
         imageUrls={imageUrls}
         youtubeVideos={youtubeVideos}
         className={mergeCss(parentCss)}
-        onImageClick={(src) => setSelectedImage(src)}
+        onImageClick={(src) => setSelectedImage(fullUrlMap.get(src) || src)}
         onVideoClick={(video) => setSelectedVideo(video)}
       />
 
