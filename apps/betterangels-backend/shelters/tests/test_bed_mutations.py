@@ -338,12 +338,12 @@ class DeleteBedsMutationTestCase(BedMutationTestCase):
         self.assertEqual(Bed.objects.filter(shelter=self.shelter).count(), 0)
 
 
-class DuplicateBedMutationTestCase(BedMutationTestCase):
+class CloneBedMutationTestCase(BedMutationTestCase):
     def setUp(self) -> None:
         super().setUp()
 
         self.mutation = f"""
-            mutation DuplicateBed($id: ID!, $shelterId: ID!) {{
+            mutation CloneBed($id: ID!, $shelterId: ID!) {{
                 cloneBed(id: $id, shelterId: $shelterId) {{
                     ... on BedType {{
                         {self.bed_fields}
@@ -414,33 +414,33 @@ class DuplicateBedMutationTestCase(BedMutationTestCase):
         self.assertEqual(len(data["pets"]), 1)
         self.assertEqual(data["pets"][0]["name"], PetChoices.CATS.name)
 
-        duplicate = Bed.objects.get(pk=data["id"])
-        self.assertEqual(duplicate.b7, source.b7)
-        self.assertEqual(duplicate.fees, source.fees)
-        self.assertEqual(duplicate.last_cleaned_inspected, source.last_cleaned_inspected)
-        self.assertEqual(duplicate.maintenance_flag, source.maintenance_flag)
-        self.assertEqual(duplicate.status, source.status)
-        self.assertEqual(duplicate.status_notes, source.status_notes)
-        self.assertEqual(duplicate.storage, source.storage)
-        self.assertEqual(duplicate.type, source.type)
-        self.assertEqual(duplicate.room_id, source.room_id)
+        clone = Bed.objects.get(pk=data["id"])
+        self.assertEqual(clone.b7, source.b7)
+        self.assertEqual(clone.fees, source.fees)
+        self.assertEqual(clone.last_cleaned_inspected, source.last_cleaned_inspected)
+        self.assertEqual(clone.maintenance_flag, source.maintenance_flag)
+        self.assertEqual(clone.status, source.status)
+        self.assertEqual(clone.status_notes, source.status_notes)
+        self.assertEqual(clone.storage, source.storage)
+        self.assertEqual(clone.type, source.type)
+        self.assertEqual(clone.room_id, source.room_id)
         self.assertEqual(
-            set(duplicate.accessibility.values_list("name", flat=True)),
+            set(clone.accessibility.values_list("name", flat=True)),
             set(source.accessibility.values_list("name", flat=True)),
         )
         self.assertEqual(
-            set(duplicate.demographics.values_list("name", flat=True)),
+            set(clone.demographics.values_list("name", flat=True)),
             set(source.demographics.values_list("name", flat=True)),
         )
         self.assertEqual(
-            set(duplicate.funders.values_list("name", flat=True)),
+            set(clone.funders.values_list("name", flat=True)),
             set(source.funders.values_list("name", flat=True)),
         )
         self.assertEqual(
-            set(duplicate.medical_needs.values_list("name", flat=True)),
+            set(clone.medical_needs.values_list("name", flat=True)),
             set(source.medical_needs.values_list("name", flat=True)),
         )
         self.assertEqual(
-            set(duplicate.pets.values_list("name", flat=True)),
+            set(clone.pets.values_list("name", flat=True)),
             set(source.pets.values_list("name", flat=True)),
         )

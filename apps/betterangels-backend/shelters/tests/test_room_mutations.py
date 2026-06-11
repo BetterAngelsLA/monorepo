@@ -301,7 +301,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
         )
 
 
-class DuplicateRoomMutationTestCase(RoomMutationTestCase):
+class CloneRoomMutationTestCase(RoomMutationTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.mutation = f"""
@@ -378,11 +378,11 @@ class DuplicateRoomMutationTestCase(RoomMutationTestCase):
         self.assertEqual(len(data["pets"]), 1)
         self.assertEqual(data["pets"][0]["name"], PetChoices.CATS.name)
 
-        duplicate = Room.objects.get(pk=data["id"])
-        self.assertEqual(duplicate.beds.count(), 0)
+        clone = Room.objects.get(pk=data["id"])
+        self.assertEqual(clone.beds.count(), 0)
         self.assertEqual(source.beds.count(), 2)
         self.assertEqual(
-            set(duplicate.demographics.values_list("name", flat=True)),
+            set(clone.demographics.values_list("name", flat=True)),
             set(source.demographics.values_list("name", flat=True)),
         )
 

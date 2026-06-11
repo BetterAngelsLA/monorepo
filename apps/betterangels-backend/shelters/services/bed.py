@@ -84,7 +84,7 @@ def bed_update(*, user: "User", bed_id: int | str, data: Dict[str, Any]) -> Bed:
     return bed
 
 
-def _duplicate_label(label: str | None) -> str | None:
+def _clone_label(label: str | None) -> str | None:
     if not label:
         return None
     return f"{label} (Copy)"
@@ -112,7 +112,7 @@ def bed_delete(*, data: Dict[str, Any]) -> list[int]:
 
 @transaction.atomic
 def bed_clone(*, user: "User", bed_id: str, shelter_id: str) -> Bed:
-    """Duplicate an existing bed on *shelter_id*, including all M2M relationships.
+    """Clone an existing bed on *shelter_id*, including all M2M relationships.
 
     Validates org access via ``shelter_get``. The source bed must belong to *shelter_id*.
 
@@ -126,12 +126,12 @@ def bed_clone(*, user: "User", bed_id: str, shelter_id: str) -> Bed:
     except Bed.DoesNotExist:
         raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found for shelter {shelter_id}.")
 
-    duplicate = Bed(
+    clone = Bed(
         b7=source.b7,
         fees=source.fees,
         last_cleaned_inspected=source.last_cleaned_inspected,
         maintenance_flag=source.maintenance_flag,
-        name=_duplicate_label(source.name),
+        name=_clone_label(source.name),
         room=source.room,
         shelter=shelter,
         status=source.status,
@@ -139,10 +139,10 @@ def bed_clone(*, user: "User", bed_id: str, shelter_id: str) -> Bed:
         storage=source.storage,
         type=source.type,
     )
-    duplicate.full_clean()
-    duplicate.save()
+    clone.full_clean()
+    clone.save()
 
     for field_name in _BED_M2M_FIELDS:
-        getattr(duplicate, field_name).set(getattr(source, field_name).all())
+        getattr(clone, field_name).set(getattr(source, field_name).all())
 
-    return duplicate
+    return clone

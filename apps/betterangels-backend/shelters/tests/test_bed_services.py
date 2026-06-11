@@ -217,7 +217,7 @@ class BedDeleteTestCase(BedServiceTestCase):
         self.assertEqual(deleted, [])
 
 
-class BedDuplicateTestCase(BedServiceTestCase):
+class BedCloneTestCase(BedServiceTestCase):
     def test_bed_not_found_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
             bed_clone(user=self.user, bed_id="999999", shelter_id=str(self.shelter.pk))

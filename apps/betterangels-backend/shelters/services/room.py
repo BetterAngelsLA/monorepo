@@ -88,7 +88,7 @@ def room_update(*, user: "User", room_id: int | str, data: Dict[str, Any]) -> Ro
     return room
 
 
-def _duplicate_label(label: str | None) -> str:
+def _clone_label(label: str | None) -> str:
     if not label:
         return "(Copy)"
     return f"{label} (Copy)"
@@ -100,9 +100,9 @@ def _copy_number_pattern(name: str | None) -> re.Pattern[str]:
     return re.compile(r"^\(Copy(?: (\d+))?\)$")
 
 
-def _unique_duplicate_name(*, shelter_id: int | str, name: str | None) -> str:
-    """Return a duplicate name that is unique within the shelter."""
-    primary = _duplicate_label(name)
+def _unique_clone_name(*, shelter_id: int | str, name: str | None) -> str:
+    """Return a clone name that is unique within the shelter."""
+    primary = _clone_label(name)
     prefix = f"{name} (Copy" if name else "(Copy"
     pattern = _copy_number_pattern(name)
 
@@ -143,7 +143,7 @@ def room_delete(*, data: Dict[str, Any]) -> list[int]:
 
 @transaction.atomic
 def room_clone(*, user: "User", room_id: str, shelter_id: str) -> Room:
-    """Duplicate an existing room on *shelter_id*, including all M2M relationships.
+    """Clone an existing room on *shelter_id*, including all M2M relationships.
 
     Validates org access via ``shelter_get``. The source room must belong to
     *shelter_id*. Beds are not copied.
@@ -158,12 +158,12 @@ def room_clone(*, user: "User", room_id: str, shelter_id: str) -> Room:
     except Room.DoesNotExist:
         raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found for shelter {shelter_id}.")
 
-    duplicate = Room(
+    clone = Room(
         amenities=source.amenities,
         last_cleaned_inspected=source.last_cleaned_inspected,
         maintenance_flag=source.maintenance_flag,
         medical_respite=source.medical_respite,
-        name=_unique_duplicate_name(shelter_id=shelter.pk, name=source.name),
+        name=_unique_clone_name(shelter_id=shelter.pk, name=source.name),
         notes=source.notes,
         shelter=shelter,
         status=source.status,
@@ -171,10 +171,10 @@ def room_clone(*, user: "User", room_id: str, shelter_id: str) -> Room:
         type=source.type,
         type_other=source.type_other,
     )
-    duplicate.full_clean()
-    duplicate.save()
+    clone.full_clean()
+    clone.save()
 
     for field_name in _ROOM_M2M_FIELDS:
-        getattr(duplicate, field_name).set(getattr(source, field_name).all())
+        getattr(clone, field_name).set(getattr(source, field_name).all())
 
-    return duplicate
+    return clone

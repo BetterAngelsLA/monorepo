@@ -230,8 +230,8 @@ class RoomDeleteTestCase(RoomServiceTestCase):
         self.assertEqual(deleted, [])
 
 
-class RoomDuplicateTestCase(RoomServiceTestCase):
-    def test_duplicates_room_with_m2m_without_beds(self) -> None:
+class RoomCloneTestCase(RoomServiceTestCase):
+    def test_clones_room_with_m2m_without_beds(self) -> None:
         demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
         funder, _ = Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)
         accessibility, _ = Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)
@@ -259,42 +259,42 @@ class RoomDuplicateTestCase(RoomServiceTestCase):
         Bed.objects.create(shelter=self.shelter, room=source, name="Bed 1", status=BedStatusChoices.AVAILABLE)
         Bed.objects.create(shelter=self.shelter, room=source, name="Bed 2", status=BedStatusChoices.AVAILABLE)
 
-        duplicate = room_clone(
+        clone = room_clone(
             user=self.user,
             room_id=str(source.pk),
             shelter_id=str(self.shelter.pk),
         )
 
-        self.assertNotEqual(duplicate.pk, source.pk)
-        self.assertEqual(duplicate.name, "Room-101 (Copy)")
-        self.assertEqual(duplicate.status, RoomStatusChoices.AVAILABLE)
-        self.assertEqual(duplicate.type, RoomStyleChoices.SINGLE_ROOM)
-        self.assertEqual(duplicate.type_other, "Custom style")
-        self.assertEqual(duplicate.notes, "Corner room")
-        self.assertEqual(duplicate.amenities, "WiFi, AC")
-        self.assertTrue(duplicate.medical_respite)
-        self.assertTrue(duplicate.storage)
-        self.assertTrue(duplicate.maintenance_flag)
-        self.assertEqual(duplicate.beds.count(), 0)
+        self.assertNotEqual(clone.pk, source.pk)
+        self.assertEqual(clone.name, "Room-101 (Copy)")
+        self.assertEqual(clone.status, RoomStatusChoices.AVAILABLE)
+        self.assertEqual(clone.type, RoomStyleChoices.SINGLE_ROOM)
+        self.assertEqual(clone.type_other, "Custom style")
+        self.assertEqual(clone.notes, "Corner room")
+        self.assertEqual(clone.amenities, "WiFi, AC")
+        self.assertTrue(clone.medical_respite)
+        self.assertTrue(clone.storage)
+        self.assertTrue(clone.maintenance_flag)
+        self.assertEqual(clone.beds.count(), 0)
         self.assertEqual(source.beds.count(), 2)
         self.assertEqual(
-            set(duplicate.demographics.values_list("name", flat=True)),
+            set(clone.demographics.values_list("name", flat=True)),
             set(source.demographics.values_list("name", flat=True)),
         )
         self.assertEqual(
-            set(duplicate.funders.values_list("name", flat=True)),
+            set(clone.funders.values_list("name", flat=True)),
             set(source.funders.values_list("name", flat=True)),
         )
         self.assertEqual(
-            set(duplicate.accessibility.values_list("name", flat=True)),
+            set(clone.accessibility.values_list("name", flat=True)),
             set(source.accessibility.values_list("name", flat=True)),
         )
         self.assertEqual(
-            set(duplicate.pets.values_list("name", flat=True)),
+            set(clone.pets.values_list("name", flat=True)),
             set(source.pets.values_list("name", flat=True)),
         )
 
-    def test_duplicate_same_room_twice_uses_incremented_name(self) -> None:
+    def test_clone_same_room_twice_uses_incremented_name(self) -> None:
         source = Room.objects.create(shelter=self.shelter, name="Room-101")
 
         first = room_clone(user=self.user, room_id=str(source.pk), shelter_id=str(self.shelter.pk))
