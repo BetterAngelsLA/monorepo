@@ -1,9 +1,11 @@
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-from accounts.models import User
+from accounts.models import PermissionGroup, User
 from accounts.utils import OrgRoleManager
+from django.contrib.auth.models import Group
 from django.test import TestCase
 from model_bakery import baker
 from notes.groups import CASEWORKER
+from organizations.models import Organization
 from unittest_parametrize import ParametrizedTestCase
 
 from .baker_recipes import organization_recipe
@@ -22,10 +24,8 @@ class OrgRoleManagerTestCase(ParametrizedTestCase, TestCase):
 
         self.omb_2.add_roles(self.user, CASEWORKER, ORG_SUPERUSER)
 
-    def _get_org_group(self, org, template_name):
+    def _get_org_group(self, org: Organization, template_name: str) -> Group:
         """Helper: fetch the actual Group object for (org, template_name)."""
-        from accounts.models import PermissionGroup
-
         pg = PermissionGroup.objects.get(organization=org, template__name=template_name)
         return pg.group
 

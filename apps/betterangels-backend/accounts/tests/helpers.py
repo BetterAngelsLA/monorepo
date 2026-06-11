@@ -1,13 +1,16 @@
 """Test helpers for creating orgs via the service layer."""
 
+from typing import Any
+
 from accounts.groups import ORG_ADMIN
 from accounts.models import User
 from accounts.services import create_organization_with_presets
 from model_bakery import baker
 from notes.groups import CASEWORKER
+from organizations.models import Organization
 
 
-def make_org_with_presets(**attrs):
+def make_org_with_presets(**attrs: Any) -> Organization:
     """Create an organization through create_organization_with_presets.
 
     Generates an owner and sensible defaults if not provided, then
