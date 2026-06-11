@@ -1,5 +1,5 @@
-mutation CloneBed($id: ID!, $shelterId: ID!) {
-  cloneBed(id: $id, shelterId: $shelterId) {
+mutation CloneBed($id: ID!) {
+  cloneBed(id: $id) {
     ... on BedType {
       id
       name

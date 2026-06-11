@@ -106,7 +106,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
       setActionError(null);
       try {
         const { data: result } = await cloneBed({
-          variables: { id: rowObject.bedId, shelterId },
+          variables: { id: rowObject.bedId },
           errorPolicy: 'all',
         });
 
@@ -124,7 +124,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         setActionError('A network error occurred. Please try again.');
       }
     },
-    [cloneBed, refetch, shelterId]
+    [cloneBed, refetch]
   );
 
   const closeDeleteConfirmation = () => {
