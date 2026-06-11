@@ -43,7 +43,7 @@ export function ExceptionRow(props: TProps) {
           aria-label="Remove exception"
           disabled={disabled}
         >
-          <Trash2 size={16} />
+          <Trash2 size={20} />
         </button>
       </div>
 
