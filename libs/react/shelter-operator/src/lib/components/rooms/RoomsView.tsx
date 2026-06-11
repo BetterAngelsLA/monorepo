@@ -76,7 +76,7 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
       setActionError(null);
       try {
         const { data: result } = await cloneRoom({
-          variables: { id: rowObject.id, shelterId },
+          variables: { id: rowObject.id },
           errorPolicy: 'all',
         });
 
@@ -94,7 +94,7 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
         setActionError('A network error occurred. Please try again.');
       }
     },
-    [cloneRoom, refetch, shelterId]
+    [cloneRoom, refetch]
   );
 
   const handleDeleteRooms = useCallback(

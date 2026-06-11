@@ -51,8 +51,8 @@ mutation DeleteRooms($data: BulkDeleteInput!) {
   }
 }
 
-mutation CloneRoom($id: ID!, $shelterId: ID!) {
-  cloneRoom(id: $id, shelterId: $shelterId) {
+mutation CloneRoom($id: ID!) {
+  cloneRoom(id: $id) {
     ... on RoomType {
       id
       name

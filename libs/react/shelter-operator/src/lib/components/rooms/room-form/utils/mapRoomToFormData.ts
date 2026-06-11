@@ -3,27 +3,10 @@ import type {
   DemographicChoices,
   FunderChoices,
   PetChoices,
-  RoomType,
 } from '../../../../apollo/graphql/__generated__/types';
+import type { UseRoomResultType } from '../../../../hooks/useRoom';
 import { createEmptyRoomFormData } from '../constants/defaultRoomFormData';
 import type { RoomFormData } from '../formTypes';
-
-type RoomQueryResult = Pick<
-  RoomType,
-  | 'accessibility'
-  | 'amenities'
-  | 'demographics'
-  | 'funders'
-  | 'maintenanceFlag'
-  | 'medicalRespite'
-  | 'name'
-  | 'notes'
-  | 'pets'
-  | 'status'
-  | 'storage'
-  | 'type'
-  | 'typeOther'
->;
 
 function toChoiceNames<T extends string>(
   items: ReadonlyArray<{ name?: T | null }> | undefined
@@ -34,7 +17,7 @@ function toChoiceNames<T extends string>(
   );
 }
 
-export function mapRoomToFormData(room: RoomQueryResult): RoomFormData {
+export function mapRoomToFormData(room: UseRoomResultType): RoomFormData {
   const defaults = createEmptyRoomFormData();
 
   return {
