@@ -1622,13 +1622,11 @@ export type MutationAddOrganizationMemberArgs = {
 
 export type MutationCloneBedArgs = {
   id: Scalars['ID']['input'];
-  shelterId: Scalars['ID']['input'];
 };
 
 
 export type MutationCloneRoomArgs = {
   id: Scalars['ID']['input'];
-  shelterId: Scalars['ID']['input'];
 };
 
 

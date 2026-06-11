@@ -175,7 +175,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             },
         }
 
-        expected_query_count = 19
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -214,7 +214,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             "data": {"notes": "New notes"},
         }
 
-        expected_query_count = 19
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -234,7 +234,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             "data": {"demographics": [DemographicChoices.SINGLE_MEN.name]},
         }
 
-        expected_query_count = 23
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -250,7 +250,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
         room = baker.make(Room, shelter=self.shelter, name="Room-102")
         variables = {"id": str(room.pk), "data": {"name": "Room-101"}}
 
-        expected_query_count = 15
+        expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -277,14 +277,14 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
 
         variables = {"id": str(room.pk), "data": {"name": "Unauthorized update"}}
 
-        expected_query_count = 13
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
         self.assertIsNone(response.get("errors"))
         messages = response["data"]["updateRoom"]["messages"]
         self.assertEqual(len(messages), 1)
-        self.assertIn("matching query does not exist", messages[0]["message"])
+        self.assertIn(f"Room matching ID {room.pk} could not be found.", messages[0]["message"])
 
     def test_update_room_invalid_status(self) -> None:
         room = baker.make(Room, shelter=self.shelter)
@@ -301,12 +301,12 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
         )
 
 
-class DuplicateRoomMutationTestCase(RoomMutationTestCase):
+class CloneRoomMutationTestCase(RoomMutationTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.mutation = f"""
-            mutation ($id: ID!, $shelterId: ID!) {{
-                cloneRoom(id: $id, shelterId: $shelterId) {{
+            mutation ($id: ID!) {{
+                cloneRoom(id: $id) {{
                     ... on RoomType {{
                         {self.room_fields}
                     }}
@@ -350,9 +350,9 @@ class DuplicateRoomMutationTestCase(RoomMutationTestCase):
         Bed.objects.create(shelter=self.shelter, room=source, name="Bed 1", status=BedStatusChoices.AVAILABLE)
         Bed.objects.create(shelter=self.shelter, room=source, name="Bed 2", status=BedStatusChoices.AVAILABLE)
 
-        variables = {"id": str(source.pk), "shelterId": str(self.shelter.pk)}
+        variables = {"id": str(source.pk)}
 
-        expected_query_count = 29
+        expected_query_count = 28
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -378,11 +378,11 @@ class DuplicateRoomMutationTestCase(RoomMutationTestCase):
         self.assertEqual(len(data["pets"]), 1)
         self.assertEqual(data["pets"][0]["name"], PetChoices.CATS.name)
 
-        duplicate = Room.objects.get(pk=data["id"])
-        self.assertEqual(duplicate.beds.count(), 0)
+        clone = Room.objects.get(pk=data["id"])
+        self.assertEqual(clone.beds.count(), 0)
         self.assertEqual(source.beds.count(), 2)
         self.assertEqual(
-            set(duplicate.demographics.values_list("name", flat=True)),
+            set(clone.demographics.values_list("name", flat=True)),
             set(source.demographics.values_list("name", flat=True)),
         )
 
@@ -430,13 +430,3 @@ class DeleteRoomsMutationTestCase(RoomMutationTestCase):
         deleted_ids = response["data"]["deleteRooms"]["ids"]
         self.assertEqual(deleted_ids, [str(room1.pk), str(room2.pk)])
         self.assertFalse(Room.objects.filter(pk__in=[room1.pk, room2.pk]).exists())
-
-    def test_delete_rooms_not_found_returns_error(self) -> None:
-        variables = {"data": {"ids": ["999999"]}}
-
-        response = self.execute_graphql(self.mutation, variables)
-
-        self.assertIsNone(response.get("errors"))
-        messages = response["data"]["deleteRooms"]["messages"]
-        self.assertTrue(len(messages) > 0)
-        self.assertTrue(Room.objects.filter(shelter=self.shelter).count() == 0)

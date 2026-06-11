@@ -166,7 +166,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             },
         }
 
-        expected_query_count = 40
+        expected_query_count = 35
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -236,7 +236,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             "data": {"statusNotes": "New notes"},
         }
 
-        expected_query_count = 21
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -327,24 +327,14 @@ class DeleteBedsMutationTestCase(BedMutationTestCase):
         self.assertEqual(deleted_ids, [str(bed1.pk), str(bed2.pk)])
         self.assertFalse(Bed.objects.filter(pk__in=[bed1.pk, bed2.pk]).exists())
 
-    def test_delete_beds_not_found_returns_error(self) -> None:
-        variables = {"data": {"ids": ["999999"]}}
 
-        response = self.execute_graphql(self.mutation, variables)
-
-        self.assertIsNone(response.get("errors"))
-        messages = response["data"]["deleteBeds"]["messages"]
-        self.assertTrue(len(messages) > 0)
-        self.assertEqual(Bed.objects.filter(shelter=self.shelter).count(), 0)
-
-
-class DuplicateBedMutationTestCase(BedMutationTestCase):
+class CloneBedMutationTestCase(BedMutationTestCase):
     def setUp(self) -> None:
         super().setUp()
 
         self.mutation = f"""
-            mutation DuplicateBed($id: ID!, $shelterId: ID!) {{
-                cloneBed(id: $id, shelterId: $shelterId) {{
+            mutation CloneBed($id: ID!) {{
+                cloneBed(id: $id) {{
                     ... on BedType {{
                         {self.bed_fields}
                     }}
@@ -383,9 +373,9 @@ class DuplicateBedMutationTestCase(BedMutationTestCase):
         source.medical_needs.add(medical_need)
         source.pets.add(pet)
 
-        variables = {"id": str(source.pk), "shelterId": str(self.shelter.pk)}
+        variables = {"id": str(source.pk)}
 
-        expected_query_count = 31
+        expected_query_count = 30
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -414,33 +404,33 @@ class DuplicateBedMutationTestCase(BedMutationTestCase):
         self.assertEqual(len(data["pets"]), 1)
         self.assertEqual(data["pets"][0]["name"], PetChoices.CATS.name)
 
-        duplicate = Bed.objects.get(pk=data["id"])
-        self.assertEqual(duplicate.b7, source.b7)
-        self.assertEqual(duplicate.fees, source.fees)
-        self.assertEqual(duplicate.last_cleaned_inspected, source.last_cleaned_inspected)
-        self.assertEqual(duplicate.maintenance_flag, source.maintenance_flag)
-        self.assertEqual(duplicate.status, source.status)
-        self.assertEqual(duplicate.status_notes, source.status_notes)
-        self.assertEqual(duplicate.storage, source.storage)
-        self.assertEqual(duplicate.type, source.type)
-        self.assertEqual(duplicate.room_id, source.room_id)
+        clone = Bed.objects.get(pk=data["id"])
+        self.assertEqual(clone.b7, source.b7)
+        self.assertEqual(clone.fees, source.fees)
+        self.assertEqual(clone.last_cleaned_inspected, source.last_cleaned_inspected)
+        self.assertEqual(clone.maintenance_flag, source.maintenance_flag)
+        self.assertEqual(clone.status, source.status)
+        self.assertEqual(clone.status_notes, source.status_notes)
+        self.assertEqual(clone.storage, source.storage)
+        self.assertEqual(clone.type, source.type)
+        self.assertEqual(clone.room_id, source.room_id)
         self.assertEqual(
-            set(duplicate.accessibility.values_list("name", flat=True)),
+            set(clone.accessibility.values_list("name", flat=True)),
             set(source.accessibility.values_list("name", flat=True)),
         )
         self.assertEqual(
-            set(duplicate.demographics.values_list("name", flat=True)),
+            set(clone.demographics.values_list("name", flat=True)),
             set(source.demographics.values_list("name", flat=True)),
         )
         self.assertEqual(
-            set(duplicate.funders.values_list("name", flat=True)),
+            set(clone.funders.values_list("name", flat=True)),
             set(source.funders.values_list("name", flat=True)),
         )
         self.assertEqual(
-            set(duplicate.medical_needs.values_list("name", flat=True)),
+            set(clone.medical_needs.values_list("name", flat=True)),
             set(source.medical_needs.values_list("name", flat=True)),
         )
         self.assertEqual(
-            set(duplicate.pets.values_list("name", flat=True)),
+            set(clone.pets.values_list("name", flat=True)),
             set(source.pets.values_list("name", flat=True)),
         )

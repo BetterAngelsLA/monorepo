@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Dict
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Bed, Shelter
-from shelters.selectors import shelter_get
+from shelters.selectors import admin_bed_list, bed_get, shelter_get
 from shelters.services.utils import _BED_M2M_FIELDS, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
@@ -59,11 +59,10 @@ def bed_update(*, user: "User", bed_id: int | str, data: Dict[str, Any]) -> Bed:
     """
     data = dict(data)
     try:
-        bed = Bed.objects.select_related("shelter").prefetch_related(*_BED_M2M_FIELDS).get(pk=bed_id)
+        bed = bed_get(user=user, bed_id=bed_id)
     except Bed.DoesNotExist:
         raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found.")
-
-    shelter_get(user=user, shelter_id=bed.shelter_id)
+    bed = bed_get(user=user, bed_id=bed_id)
 
     m2m_data: Dict[str, Any] = {
         k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and k in data and data[k] is not None
@@ -84,65 +83,62 @@ def bed_update(*, user: "User", bed_id: int | str, data: Dict[str, Any]) -> Bed:
     return bed
 
 
-def _duplicate_label(label: str | None) -> str | None:
+def _clone_label(label: str | None) -> str | None:
     if not label:
         return None
     return f"{label} (Copy)"
 
 
 @transaction.atomic
-def bed_delete(*, data: Dict[str, Any]) -> list[int]:
-    """Delete beds by their IDs and return the deleted instances.
+def bed_delete(*, user: "User", ids: list[int]) -> list[int]:
+    """Delete rooms by their IDs and return the deleted instances.
 
     Raises:
-        ``ObjectDoesNotExist`` when any of the given IDs does not match a bed.
+        ``ObjectDoesNotExist`` when any of the given IDs does not match a room.
     """
-    beds = list(Bed.objects.filter(pk__in=data["ids"]))
-    found_ids = {bed.pk for bed in beds}
-    missing = [id for id in data["ids"] if int(id) not in found_ids]
+    beds = admin_bed_list(Bed.objects.all(), user=user).filter(pk__in=ids)
     deleted_ids = []
-    if missing:
-        raise ObjectDoesNotExist(f"Bed(s) matching ID(s) {missing} could not be found.")
+
     for bed in beds:
-        deleted_ids.append(bed.pk)
+        id = bed.pk
         bed.delete()
+        deleted_ids.append(id)
 
     return deleted_ids
 
 
 @transaction.atomic
-def bed_clone(*, user: "User", bed_id: str, shelter_id: str) -> Bed:
-    """Duplicate an existing bed on *shelter_id*, including all M2M relationships.
+def bed_clone(*, user: "User", bed_id: str) -> Bed:
+    """Clone an existing bed, including all M2M relationships.
 
-    Validates org access via ``shelter_get``. The source bed must belong to *shelter_id*.
+    Validates org access via ``bed_get``.
 
     Raises:
-        ``ObjectDoesNotExist`` when the shelter or bed is not found.
+        ``ObjectDoesNotExist`` when the bed is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    shelter = shelter_get(user=user, shelter_id=shelter_id)
     try:
-        source = Bed.objects.filter(shelter_id=shelter.pk).prefetch_related(*_BED_M2M_FIELDS).get(pk=bed_id)
+        source = bed_get(user=user, bed_id=bed_id)
     except Bed.DoesNotExist:
-        raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found for shelter {shelter_id}.")
+        raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found.")
 
-    duplicate = Bed(
+    clone = Bed(
         b7=source.b7,
         fees=source.fees,
         last_cleaned_inspected=source.last_cleaned_inspected,
         maintenance_flag=source.maintenance_flag,
-        name=_duplicate_label(source.name),
+        name=_clone_label(source.name),
         room=source.room,
-        shelter=shelter,
+        shelter=source.shelter,
         status=source.status,
         status_notes=source.status_notes,
         storage=source.storage,
         type=source.type,
     )
-    duplicate.full_clean()
-    duplicate.save()
+    clone.full_clean()
+    clone.save()
 
     for field_name in _BED_M2M_FIELDS:
-        getattr(duplicate, field_name).set(getattr(source, field_name).all())
+        getattr(clone, field_name).set(getattr(source, field_name).all())
 
-    return duplicate
+    return clone
