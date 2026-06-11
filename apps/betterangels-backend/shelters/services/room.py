@@ -1,16 +1,11 @@
 import re
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, cast
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Room, Shelter
 from shelters.selectors import admin_room_list, room_get, shelter_get
-from shelters.services.utils import (
-    _ROOM_M2M_FIELDS,
-    _clone_label,
-    _set_m2m_from_enums,
-    _validate_subset_attributes,
-)
+from shelters.services.utils import _ROOM_M2M_FIELDS, _clone_label, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
     from accounts.models import User
@@ -150,23 +145,7 @@ def room_clone(*, user: "User", room_id: str) -> Room:
     except Room.DoesNotExist:
         raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found.")
 
-    clone = Room(
-        amenities=source.amenities,
-        last_cleaned_inspected=source.last_cleaned_inspected,
-        maintenance_flag=source.maintenance_flag,
-        medical_respite=source.medical_respite,
-        name=_unique_clone_name(shelter_id=source.shelter.pk, name=source.name),
-        notes=source.notes,
-        shelter=source.shelter,
-        status=source.status,
-        storage=source.storage,
-        type=source.type,
-        type_other=source.type_other,
+    return cast(
+        Room,
+        source.make_clone(attrs={"name": _unique_clone_name(shelter_id=source.shelter.pk, name=source.name)}),
     )
-    clone.full_clean()
-    clone.save()
-
-    for field_name in _ROOM_M2M_FIELDS:
-        getattr(clone, field_name).set(getattr(source, field_name).all())
-
-    return clone

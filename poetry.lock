@@ -799,7 +799,7 @@ description = "Foreign Function Interface for Python calling C code."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "platform_python_implementation == \"CPython\" and sys_platform == \"win32\" or platform_python_implementation != \"PyPy\""
+markers = "platform_python_implementation != \"PyPy\" or platform_python_implementation == \"CPython\" and sys_platform == \"win32\""
 files = [
     {file = "cffi-2.0.0-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:0cf2d91ecc3fcc0625c2c530fe004f82c110405f101548512cce44322fa8ac44"},
     {file = "cffi-2.0.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:f73b96c41e3b2adedc34a7356e64c8eb96e03a3782b535e043a986276ce12a49"},
@@ -1104,6 +1104,23 @@ files = [
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
 ]
 markers = {main = "platform_system == \"Windows\""}
+
+[[package]]
+name = "conditional"
+version = "2.0"
+description = "Conditionally enter a context manager"
+optional = false
+python-versions = ">=3.5"
+groups = ["main"]
+files = [
+    {file = "conditional-2.0-py3-none-any.whl", hash = "sha256:8c98299df54486f6e8db36ddfecbc441d0b0bda92d394f2e32b7dd10d63db7f3"},
+    {file = "conditional-2.0.tar.gz", hash = "sha256:7e6745ca293976bf1bde5e993180aa0bb095814c7af9c517ecc6d0ed0b841096"},
+]
+
+[package.extras]
+docs = ["sphinx (==5.3.0)", "sphinx-rtd-theme (==1.0.0)"]
+mypy = ["mypy"]
+testing = ["flexmock"]
 
 [[package]]
 name = "cross-web"
@@ -1473,6 +1490,28 @@ files = [
     {file = "django_cleanup-9.0.0-py3-none-any.whl", hash = "sha256:19f8b0e830233f9f0f683b17181f414672a0f48afe3ea3cc80ba47ae40ad880c"},
     {file = "django_cleanup-9.0.0.tar.gz", hash = "sha256:bb9fb560aaf62959c81e31fa40885c36bbd5854d5aa21b90df2c7e4ba633531e"},
 ]
+
+[[package]]
+name = "django-clone"
+version = "5.5.0"
+description = "Create a clone of a django model instance."
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+files = [
+    {file = "django_clone-5.5.0-py3-none-any.whl", hash = "sha256:707aac2ebc3962690b6f6f6866833c8ab36798257d7f36221cf52296fbf3f0e0"},
+    {file = "django_clone-5.5.0.tar.gz", hash = "sha256:93c991dc81d67b762f46362e09b2521c54d93662637bd5f862c7adaf9f80897a"},
+]
+
+[package.dependencies]
+conditional = ">=1.3"
+django = "*"
+six = "*"
+
+[package.extras]
+deploy = ["bump2version", "git-changelog", "readme_renderer[md]"]
+development = ["bump2version", "check-manifest", "codacy-coverage", "conditional (>=1.3)", "django", "django-migration-fixer", "git-changelog", "mock", "pip-tools", "pluggy (>=0.7)", "readme_renderer[md]", "six", "tox", "tox-gh-actions", "unittest-xml-reporting"]
+test = ["codacy-coverage", "django-migration-fixer", "mock", "pluggy (>=0.7)", "tox", "tox-gh-actions", "unittest-xml-reporting"]
 
 [[package]]
 name = "django-colorfield"
@@ -3226,7 +3265,7 @@ description = "C parser in Python"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "(platform_python_implementation == \"CPython\" and sys_platform == \"win32\" or platform_python_implementation != \"PyPy\") and implementation_name != \"PyPy\""
+markers = "(platform_python_implementation != \"PyPy\" or platform_python_implementation == \"CPython\" and sys_platform == \"win32\") and implementation_name != \"PyPy\""
 files = [
     {file = "pycparser-3.0-py3-none-any.whl", hash = "sha256:b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992"},
     {file = "pycparser-3.0.tar.gz", hash = "sha256:600f49d217304a5902ac3c37e1281c9fe94e4d0489de643a9504c5cdfdfc6b29"},
@@ -4414,4 +4453,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = "3.14.2"
-content-hash = "c5599c214c3e919a11373a10c396344afc1a3c15021ed30515fdc9cb02131eba"
+content-hash = "ce3e60ab52efacf9ed2af463b9f28d26459aa015da8463a67375038c352199d4"

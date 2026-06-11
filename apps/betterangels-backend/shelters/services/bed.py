@@ -1,15 +1,10 @@
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, cast
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Bed, Shelter
 from shelters.selectors import admin_bed_list, bed_get, shelter_get
-from shelters.services.utils import (
-    _BED_M2M_FIELDS,
-    _clone_label,
-    _set_m2m_from_enums,
-    _validate_subset_attributes,
-)
+from shelters.services.utils import _BED_M2M_FIELDS, _clone_label, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
     from accounts.models import User
@@ -118,23 +113,4 @@ def bed_clone(*, user: "User", bed_id: str) -> Bed:
     except Bed.DoesNotExist:
         raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found.")
 
-    clone = Bed(
-        b7=source.b7,
-        fees=source.fees,
-        last_cleaned_inspected=source.last_cleaned_inspected,
-        maintenance_flag=source.maintenance_flag,
-        name=_clone_label(source.name),
-        room=source.room,
-        shelter=source.shelter,
-        status=source.status,
-        status_notes=source.status_notes,
-        storage=source.storage,
-        type=source.type,
-    )
-    clone.full_clean()
-    clone.save()
-
-    for field_name in _BED_M2M_FIELDS:
-        getattr(clone, field_name).set(getattr(source, field_name).all())
-
-    return clone
+    return cast(Bed, source.make_clone(attrs={"name": _clone_label(source.name)}))

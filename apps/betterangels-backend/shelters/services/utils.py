@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, overload
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -17,6 +17,14 @@ _SHELTER_M2M_FIELDS = _get_m2m_field_names(Shelter)
 _BED_M2M_FIELDS = _get_m2m_field_names(Bed)
 _ROOM_M2M_FIELDS = _get_m2m_field_names(Room)
 _COMMON_M2M_FIELDS = (_SHELTER_M2M_FIELDS & _BED_M2M_FIELDS) | (_SHELTER_M2M_FIELDS & _ROOM_M2M_FIELDS)
+
+
+@overload
+def _clone_label(label: str | None, *, default: str) -> str: ...
+
+
+@overload
+def _clone_label(label: str | None, *, default: None = None) -> str | None: ...
 
 
 def _clone_label(label: str | None, *, default: str | None = None) -> str | None:
