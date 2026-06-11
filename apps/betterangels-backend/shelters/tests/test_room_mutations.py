@@ -175,7 +175,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             },
         }
 
-        expected_query_count = 19
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -214,7 +214,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             "data": {"notes": "New notes"},
         }
 
-        expected_query_count = 19
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -234,7 +234,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             "data": {"demographics": [DemographicChoices.SINGLE_MEN.name]},
         }
 
-        expected_query_count = 23
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -250,7 +250,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
         room = baker.make(Room, shelter=self.shelter, name="Room-102")
         variables = {"id": str(room.pk), "data": {"name": "Room-101"}}
 
-        expected_query_count = 15
+        expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -277,7 +277,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
 
         variables = {"id": str(room.pk), "data": {"name": "Unauthorized update"}}
 
-        expected_query_count = 13
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -352,7 +352,7 @@ class CloneRoomMutationTestCase(RoomMutationTestCase):
 
         variables = {"id": str(source.pk), "shelterId": str(self.shelter.pk)}
 
-        expected_query_count = 29
+        expected_query_count = 28
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 

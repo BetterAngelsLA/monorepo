@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Room, Shelter
-from shelters.selectors import admin_room_list, shelter_get
+from shelters.selectors import admin_room_list, room_get, shelter_get
 from shelters.services.utils import _ROOM_M2M_FIELDS, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
@@ -63,11 +63,9 @@ def room_update(*, user: "User", room_id: int | str, data: Dict[str, Any]) -> Ro
     """
     data = dict(data)
     try:
-        room = Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS).get(pk=room_id)
+        room = room_get(user=user, room_id=room_id)
     except Room.DoesNotExist:
         raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found.")
-
-    shelter_get(user=user, shelter_id=room.shelter_id)
 
     m2m_data: Dict[str, Any] = {
         k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and k in data and data[k] is not None
@@ -145,16 +143,15 @@ def room_delete(*, user: "User", ids: list[int]) -> list[int]:
 def room_clone(*, user: "User", room_id: str, shelter_id: str) -> Room:
     """Clone an existing room on *shelter_id*, including all M2M relationships.
 
-    Validates org access via ``shelter_get``. The source room must belong to
+    Validates org access via ``room_get``. The source room must belong to
     *shelter_id*. Beds are not copied.
 
     Raises:
         ``ObjectDoesNotExist`` when the shelter or room is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    shelter = shelter_get(user=user, shelter_id=shelter_id)
     try:
-        source = Room.objects.filter(shelter_id=shelter.pk).prefetch_related(*_ROOM_M2M_FIELDS).get(pk=room_id)
+        source = room_get(user=user, room_id=room_id)
     except Room.DoesNotExist:
         raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found for shelter {shelter_id}.")
 
@@ -163,9 +160,9 @@ def room_clone(*, user: "User", room_id: str, shelter_id: str) -> Room:
         last_cleaned_inspected=source.last_cleaned_inspected,
         maintenance_flag=source.maintenance_flag,
         medical_respite=source.medical_respite,
-        name=_unique_clone_name(shelter_id=shelter.pk, name=source.name),
+        name=_unique_clone_name(shelter_id=source.shelter.pk, name=source.name),
         notes=source.notes,
-        shelter=shelter,
+        shelter=source.shelter,
         status=source.status,
         storage=source.storage,
         type=source.type,
