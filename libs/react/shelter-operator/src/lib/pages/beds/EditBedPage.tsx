@@ -4,7 +4,7 @@ import {
   GetBedDocument,
   type GetBedQuery,
   type GetBedQueryVariables,
-} from '../../components/beds/__generated__/getBed.generated';
+} from '../../components/beds/api/__generated__/bedQueries.generated';
 import { BedForm } from '../../components/beds/bed-form/BedForm';
 import { mapBedToFormData } from '../../components/beds/bed-form/utils/mapBedToFormData';
 import { shelterManageBedsRoute } from '../../routing';

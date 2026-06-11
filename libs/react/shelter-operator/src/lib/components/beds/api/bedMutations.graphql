@@ -1,5 +1,5 @@
-mutation DuplicateBed($id: ID!, $shelterId: ID!) {
-  duplicateBed(id: $id, shelterId: $shelterId) {
+mutation CloneBed($id: ID!, $shelterId: ID!) {
+  cloneBed(id: $id, shelterId: $shelterId) {
     ... on BedType {
       id
       name
@@ -36,10 +36,10 @@ mutation UpdateBed($id: ID!, $data: UpdateBedInput!) {
   }
 }
 
-mutation DeleteBed($id: ID!) {
-  deleteBed(data: { id: $id }) {
-    ... on BedType {
-      id
+mutation DeleteBeds($data: BulkDeleteInput!) {
+  deleteBeds(data: $data) {
+    ... on BulkDeleteResult {
+      ids
     }
     ... on OperationInfo {
       messages {

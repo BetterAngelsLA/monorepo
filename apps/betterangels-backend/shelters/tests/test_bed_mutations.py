@@ -338,12 +338,12 @@ class DeleteBedsMutationTestCase(BedMutationTestCase):
         self.assertEqual(Bed.objects.filter(shelter=self.shelter).count(), 0)
 
 
-class DuplicateBedMutationTestCase(BedMutationTestCase):
+class CloneBedMutationTestCase(BedMutationTestCase):
     def setUp(self) -> None:
         super().setUp()
 
         self.mutation = f"""
-            mutation DuplicateBed($id: ID!, $shelterId: ID!) {{
+            mutation CloneBed($id: ID!, $shelterId: ID!) {{
                 cloneBed(id: $id, shelterId: $shelterId) {{
                     ... on BedType {{
                         {self.bed_fields}

@@ -1,14 +1,13 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@apollo/client/react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@monorepo/react/components';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import {
-  GetShelterRoomsDocument,
-  type GetShelterRoomsQuery,
-  type GetShelterRoomsQueryVariables,
-} from '../../rooms/__generated__/rooms.generated';
-import { GetShelterBedsDocument } from '../__generated__/beds.generated';
+  GetRoomsDocument,
+  type GetRoomsQuery,
+  type GetRoomsQueryVariables,
+} from '../../rooms/api/__generated__/roomQueries.generated';
 import {
   CREATE_BED_MUTATION,
   buildCreateBedInput,
@@ -26,6 +25,7 @@ import { formSchema } from './constants/validation';
 import type { BedFormData } from './formTypes';
 import { BasicInformationSection } from './sections/BasicInformationSection';
 import { BedDetailsSection } from './sections/BedDetailsSection';
+import { GetBedsDocument } from '../api/__generated__/bedQueries.generated';
 
 export type BedFormProps = {
   shelterId: string;
@@ -57,13 +57,13 @@ export function BedForm({
     formState: { errors, isValid },
   } = methods;
 
-  const { data: roomsData } = useQuery<
-    GetShelterRoomsQuery,
-    GetShelterRoomsQueryVariables
-  >(GetShelterRoomsDocument, {
-    variables: { shelterId },
-    skip: !shelterId,
-  });
+  const { data: roomsData } = useQuery<GetRoomsQuery, GetRoomsQueryVariables>(
+    GetRoomsDocument,
+    {
+      variables: { shelterId },
+      skip: !shelterId,
+    }
+  );
 
   const roomOptions = useMemo(
     () =>
@@ -75,7 +75,7 @@ export function BedForm({
   );
 
   const refetchQueries = useMemo(
-    () => [{ query: GetShelterBedsDocument, variables: { shelterId } }],
+    () => [{ query: GetBedsDocument, variables: { shelterId } }],
     [shelterId]
   );
 
@@ -149,11 +149,7 @@ export function BedForm({
           </div>
         ) : null}
 
-        <form
-          onSubmit={onSubmit}
-          className="space-y-6"
-          data-testid="bed-form"
-        >
+        <form onSubmit={onSubmit} className="space-y-6" data-testid="bed-form">
           <BasicInformationSection
             control={control}
             errors={errors}

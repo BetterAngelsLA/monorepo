@@ -8,18 +8,18 @@ import { Button } from '../base-ui/buttons';
 import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
 import { BedTable, type BedRoomForList, type BedRowObject } from '../BedTable';
 import {
-  DeleteBedDocument,
-  DuplicateBedDocument,
-  type DeleteBedMutation,
-  type DeleteBedMutationVariables,
-  type DuplicateBedMutation,
-  type DuplicateBedMutationVariables,
-} from './__generated__/bedMutations.generated';
+  CloneBedDocument,
+  DeleteBedsDocument,
+  type CloneBedMutation,
+  type CloneBedMutationVariables,
+  type DeleteBedsMutation,
+  type DeleteBedsMutationVariables,
+} from './api/__generated__/bedMutations.generated';
 import {
-  GetShelterBedsDocument,
-  type GetShelterBedsQuery,
-  type GetShelterBedsQueryVariables,
-} from './__generated__/beds.generated';
+  GetBedsDocument,
+  type GetBedsQuery,
+  type GetBedsQueryVariables,
+} from './api/__generated__/bedQueries.generated';
 
 const UNASSIGNED_ROOM_ID = 'unassigned-room';
 const UNASSIGNED_ROOM_LABEL = 'Unassigned';
@@ -37,27 +37,27 @@ export function BedsView({ shelterId }: { shelterId: string }) {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const { data, loading, refetch } = useQuery<
-    GetShelterBedsQuery,
-    GetShelterBedsQueryVariables
-  >(GetShelterBedsDocument, {
+    GetBedsQuery,
+    GetBedsQueryVariables
+  >(GetBedsDocument, {
     variables: { shelterId },
     skip: !shelterId,
   });
 
   const refetchQueries = useMemo(
-    () => [{ query: GetShelterBedsDocument, variables: { shelterId } }],
+    () => [{ query: GetBedsDocument, variables: { shelterId } }],
     [shelterId]
   );
 
-  const [duplicateBed] = useMutation<
-    DuplicateBedMutation,
-    DuplicateBedMutationVariables
-  >(DuplicateBedDocument, { refetchQueries });
+  const [cloneBed] = useMutation<CloneBedMutation, CloneBedMutationVariables>(
+    CloneBedDocument,
+    { refetchQueries }
+  );
 
   const [deleteBed] = useMutation<
-    DeleteBedMutation,
-    DeleteBedMutationVariables
-  >(DeleteBedDocument, { refetchQueries });
+    DeleteBedsMutation,
+    DeleteBedsMutationVariables
+  >(DeleteBedsDocument, { refetchQueries });
 
   const rooms = useMemo<BedRoomForList[]>(() => {
     const grouped = new Map<string, BedRoomForList>();
@@ -101,16 +101,16 @@ export function BedsView({ shelterId }: { shelterId: string }) {
     [navigate, shelterId]
   );
 
-  const handleDuplicate = useCallback(
+  const handleClone = useCallback(
     async (rowObject: BedRowObject) => {
       setActionError(null);
       try {
-        const { data: result } = await duplicateBed({
+        const { data: result } = await cloneBed({
           variables: { id: rowObject.bedId, shelterId },
           errorPolicy: 'all',
         });
 
-        const payload = result?.duplicateBed;
+        const payload = result?.cloneBed;
         if (payload?.__typename === 'OperationInfo') {
           setActionError(
             payload.messages?.[0]?.message ||
@@ -124,7 +124,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         setActionError('A network error occurred. Please try again.');
       }
     },
-    [duplicateBed, refetch, shelterId]
+    [cloneBed, refetch, shelterId]
   );
 
   const closeDeleteConfirmation = () => {
@@ -138,11 +138,11 @@ export function BedsView({ shelterId }: { shelterId: string }) {
     setActionError(null);
     try {
       const { data: result } = await deleteBed({
-        variables: { id: bedId },
+        variables: { data: { ids: [bedId] } },
         errorPolicy: 'all',
       });
 
-      const payload = result?.deleteBed;
+      const payload = result?.deleteBeds;
       if (payload?.__typename === 'OperationInfo') {
         setActionError(
           payload.messages?.[0]?.message ||
@@ -173,7 +173,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         rooms={rooms}
         loading={loading}
         onEdit={handleEdit}
-        onDuplicate={handleDuplicate}
+        onClone={handleClone}
         onDelete={(rowObject) => {
           setDeleteConfirmation({
             isOpen: true,
