@@ -3,8 +3,6 @@ import type {
   DayOfWeekChoices,
 } from '@monorepo/react/shelter';
 
-// ─── Weekly editor ───────────────────────────────────────────────────────────
-
 export type TimeRange = {
   startTime: string; // "HH:MM"
   endTime: string; // "HH:MM"
@@ -17,8 +15,6 @@ export type DaySchedule = {
 
 export type WeeklyFormState = Record<DayOfWeekChoices, DaySchedule>;
 
-// ─── Exceptions ───────────────────────────────────────────────────────────────
-
 export type ExceptionEntry = {
   /** Local-only key for React list rendering */
   localId: string;
@@ -28,4 +24,13 @@ export type ExceptionEntry = {
   startTime: string; // "HH:MM" — ignored when closedAllDay
   endTime: string; // "HH:MM" — ignored when closedAllDay
   condition?: ConditionChoices;
+};
+
+export type TimeRangeError = {
+  startTime?: { message?: string };
+  endTime?: { message?: string };
+};
+
+export type DayErrors = {
+  ranges?: TimeRangeError[];
 };

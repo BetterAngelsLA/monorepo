@@ -2,12 +2,17 @@ import {
   ScheduleTypeChoices,
   type ScheduleInput,
 } from '@monorepo/react/shelter';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import {
   useAdminShelterProfile,
   useUpdateShelterProfile,
 } from '../../../../hooks';
+import { ButtonDropdown } from '../../../base-ui/buttonDropdown';
+import { Tabs } from '../../../base-ui/tabs';
 import { useToast } from '../../../base-ui/toast';
+import { SCHEDULE_TABS, SCHEDULE_TAB_LABELS } from './constants';
+import { DeleteScheduleModal } from './DeleteScheduleModal';
 import { ShelterSchedulesForm } from './ShelterSchedulesForm';
 
 type TProps = {
@@ -18,6 +23,7 @@ export function ShelterSchedules(props: TProps) {
   const { shelterId } = props;
 
   const [currentTab, setCurrentTab] = useState(ScheduleTypeChoices.Operating);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const { shelter } = useAdminShelterProfile(shelterId);
   const { updateShelter } = useUpdateShelterProfile();
@@ -28,6 +34,8 @@ export function ShelterSchedules(props: TProps) {
     inputs: ScheduleInput[]
   ) {
     if (!shelter) return;
+
+    const isDelete = inputs.length === 0;
 
     const otherSchedules: ScheduleInput[] = shelter.schedules
       .filter((s) => s.scheduleType !== scheduleType)
@@ -57,7 +65,7 @@ export function ShelterSchedules(props: TProps) {
       if (result?.__typename === 'ShelterType') {
         showToast({
           status: 'success',
-          title: 'Schedule updated.',
+          title: isDelete ? 'Schedule deleted.' : 'Schedule updated.',
         });
 
         return;
@@ -69,7 +77,7 @@ export function ShelterSchedules(props: TProps) {
 
       showToast({
         status: 'error',
-        title: 'Update failed',
+        title: isDelete ? 'Delete failed' : 'Update failed',
         description: 'An unexpected error occurred.',
       });
     }
@@ -79,12 +87,62 @@ export function ShelterSchedules(props: TProps) {
     return null;
   }
 
+  const existingTypes = SCHEDULE_TABS.filter((type) =>
+    shelter.schedules.some((s) => s.scheduleType === type)
+  );
+
+  const missingTypes = SCHEDULE_TABS.filter((t) => !existingTypes.includes(t));
+  const missingItems = missingTypes.map((t) => ({
+    value: t,
+    label: SCHEDULE_TAB_LABELS[t],
+  }));
+
+  const displayedTabs = existingTypes.includes(currentTab)
+    ? existingTypes
+    : [...existingTypes, currentTab];
+
   return (
-    <ShelterSchedulesForm
-      schedules={shelter.schedules}
-      currentTab={currentTab}
-      onTabChange={setCurrentTab}
-      onSave={onSave}
-    />
+    <>
+      {deleteModalVisible && (
+        <DeleteScheduleModal
+          scheduleType={currentTab}
+          onConfirm={() => {
+            onSave(currentTab, []);
+            setDeleteModalVisible(false);
+          }}
+          onClose={() => setDeleteModalVisible(false)}
+        />
+      )}
+
+      <div className="border-2 border-red-500">
+        <div className="flex items-center justify-end px-6 py-4">
+          <ButtonDropdown
+            items={missingItems}
+            disabled={missingTypes.length === 0}
+            onSelect={(item) =>
+              setCurrentTab(item.value as ScheduleTypeChoices)
+            }
+            leftIcon={<Plus size={20} />}
+            menuAlign="right"
+          >
+            Add Schedule
+          </ButtonDropdown>
+        </div>
+
+        <Tabs
+          tabs={displayedTabs}
+          selectedTab={currentTab}
+          onTabPress={setCurrentTab}
+          getLabel={(tab) => SCHEDULE_TAB_LABELS[tab]}
+        />
+
+        <ShelterSchedulesForm
+          scheduleType={currentTab}
+          schedules={shelter.schedules}
+          onSave={(inputs) => onSave(currentTab, inputs)}
+          onDelete={() => setDeleteModalVisible(true)}
+        />
+      </div>
+    </>
   );
 }

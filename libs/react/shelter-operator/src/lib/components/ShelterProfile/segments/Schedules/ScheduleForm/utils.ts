@@ -7,9 +7,6 @@ import { ORDERED_DAYS } from './constants';
 import type { ExceptionEntry, WeeklyFormState } from './types';
 import { buildDefaultWeeklyState } from './WeeklyScheduleEditor';
 
-// ─── GraphQL → form (hydration) ──────────────────────────────────────────────
-
-/** Strip seconds from "HH:MM:SS" → "HH:MM", pass through "HH:MM", return "" for nullish. */
 export function toHHMM(time: string | null | undefined): string {
   if (!time) return '';
   return String(time).slice(0, 5);
@@ -39,8 +36,6 @@ export function hydrateExceptions(schedules: ScheduleType[]): ExceptionEntry[] {
     condition: s.condition ?? undefined,
   }));
 }
-
-// ─── form → GraphQL (serialization) ──────────────────────────────────────────
 
 function toHHMMSS(time: string): string {
   return time.length === 5 ? `${time}:00` : time;

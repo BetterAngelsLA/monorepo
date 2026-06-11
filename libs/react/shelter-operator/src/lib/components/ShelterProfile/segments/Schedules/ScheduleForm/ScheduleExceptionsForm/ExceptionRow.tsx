@@ -14,14 +14,22 @@ const CONDITION_LABELS: Record<ConditionChoices, string> = {
   [ConditionChoices.PublicHealthEmergency]: 'Public Health Emergency',
 };
 
+export type ExceptionErrors = {
+  startDate?: { message?: string };
+  endDate?: { message?: string };
+  startTime?: { message?: string };
+  endTime?: { message?: string };
+};
+
 type TProps = {
   entry: ExceptionEntry;
   onChange: (patch: Partial<ExceptionEntry>) => void;
   onRemove: () => void;
+  errors?: ExceptionErrors;
 };
 
 export function ExceptionRow(props: TProps) {
-  const { entry, onChange, onRemove } = props;
+  const { entry, onChange, onRemove, errors } = props;
 
   return (
     <div className="border border-amber-200 bg-amber-50 rounded-lg p-4 space-y-4">
@@ -43,6 +51,12 @@ export function ExceptionRow(props: TProps) {
         endDate={entry.endDate}
         onChange={(field, value) => onChange({ [field]: value })}
       />
+
+      {(errors?.startDate || errors?.endDate) && (
+        <span className="text-xs text-red-600">
+          {errors?.startDate?.message || errors?.endDate?.message}
+        </span>
+      )}
 
       {/* Closed all day toggle */}
       <div className="flex items-center gap-2">
@@ -69,6 +83,7 @@ export function ExceptionRow(props: TProps) {
             startTime={entry.startTime}
             endTime={entry.endTime}
             onChange={(field, value) => onChange({ [field]: value })}
+            error={errors?.startTime?.message || errors?.endTime?.message}
           />
         </div>
       )}

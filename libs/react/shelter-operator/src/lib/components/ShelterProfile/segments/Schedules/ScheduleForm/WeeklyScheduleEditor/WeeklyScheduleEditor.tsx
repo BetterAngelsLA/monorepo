@@ -1,18 +1,23 @@
 import { DayOfWeekChoices } from '@monorepo/react/shelter';
 import { ORDERED_DAYS } from '../constants';
-import type { DaySchedule, WeeklyFormState } from '../types';
+import type { DayErrors, DaySchedule, WeeklyFormState } from '../types';
 import { DayRow } from './DayRow';
 
 type TProps = {
   value: WeeklyFormState;
-  onChange: (next: WeeklyFormState) => void;
+  onChange: (next: WeeklyFormState, validate?: boolean) => void;
+  errors?: Record<string, DayErrors>;
 };
 
 export function WeeklyScheduleEditor(props: TProps) {
-  const { value, onChange } = props;
+  const { value, onChange, errors } = props;
 
-  const setDay = (day: DayOfWeekChoices, schedule: DaySchedule) => {
-    onChange({ ...value, [day]: schedule });
+  const setDay = (
+    day: DayOfWeekChoices,
+    schedule: DaySchedule,
+    validate?: boolean
+  ) => {
+    onChange({ ...value, [day]: schedule }, validate);
   };
 
   const copyToAll = (sourceDay: DayOfWeekChoices) => {
@@ -34,8 +39,9 @@ export function WeeklyScheduleEditor(props: TProps) {
           day={day}
           label={label}
           schedule={value[day]}
-          onChange={(schedule) => setDay(day, schedule)}
+          onChange={(schedule, validate) => setDay(day, schedule, validate)}
           onCopyToAll={() => copyToAll(day)}
+          errors={errors?.[day]?.ranges}
         />
       ))}
     </div>

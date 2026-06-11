@@ -1,8 +1,8 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { DayOfWeekChoices } from '@monorepo/react/shelter';
 import { CopyIcon, Plus, X } from 'lucide-react';
-import { Button } from '../../base-ui/buttons';
-import type { DaySchedule, TimeRange } from '../types';
+import { Button } from '../../../../../base-ui/buttons';
+import type { DaySchedule, TimeRange, TimeRangeError } from '../types';
 import { TimeRangeInput } from './TimeRangeInput';
 
 const EMPTY_RANGE: TimeRange = { startTime: '', endTime: '' };
@@ -11,13 +11,14 @@ type TProps = {
   day: DayOfWeekChoices;
   label: string;
   schedule: DaySchedule;
-  onChange: (schedule: DaySchedule) => void;
+  onChange: (schedule: DaySchedule, validate?: boolean) => void;
   /** Called when the user wants to copy this day's ranges to all other configured days */
   onCopyToAll?: () => void;
+  errors?: TimeRangeError[];
 };
 
 export function DayRow(props: TProps) {
-  const { day: _day, label, schedule, onChange, onCopyToAll } = props;
+  const { day: _day, label, schedule, onChange, onCopyToAll, errors } = props;
 
   const hasRanges = schedule.ranges.length > 0;
   const canCopy =
@@ -28,7 +29,7 @@ export function DayRow(props: TProps) {
   };
 
   const addRange = () => {
-    onChange({ ranges: [...schedule.ranges, { ...EMPTY_RANGE }] });
+    onChange({ ranges: [...schedule.ranges, { ...EMPTY_RANGE }] }, false);
   };
 
   const updateRange = (index: number, patch: Partial<TimeRange>) => {
@@ -64,32 +65,38 @@ export function DayRow(props: TProps) {
       {hasRanges ? (
         <div className="flex flex-col gap-1.5">
           {schedule.ranges.map((range, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <TimeRangeInput
-                startTime={range.startTime}
-                endTime={range.endTime}
-                onChange={(field, value) =>
-                  updateRange(index, { [field]: value })
-                }
-              />
-              <button
-                type="button"
-                onClick={() => removeRange(index)}
-                title="Remove time range"
-                className="text-gray-400 hover:text-red-500 transition-colors"
-              >
-                <X size={14} />
-              </button>
-              {index === 0 && canCopy && onCopyToAll && (
+            <div key={index} className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <TimeRangeInput
+                  startTime={range.startTime}
+                  endTime={range.endTime}
+                  onChange={(field, value) =>
+                    updateRange(index, { [field]: value })
+                  }
+                  error={
+                    errors?.[index]?.startTime?.message ||
+                    errors?.[index]?.endTime?.message
+                  }
+                />
                 <button
                   type="button"
-                  onClick={onCopyToAll}
-                  title="Copy these hours to all days"
-                  className="text-gray-400 hover:text-blue-600 transition-colors"
+                  onClick={() => removeRange(index)}
+                  title="Remove time range"
+                  className="text-gray-400 hover:text-red-500 transition-colors"
                 >
-                  <CopyIcon size={14} />
+                  <X size={14} />
                 </button>
-              )}
+                {index === 0 && canCopy && onCopyToAll && (
+                  <button
+                    type="button"
+                    onClick={onCopyToAll}
+                    title="Copy these hours to all days"
+                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                  >
+                    <CopyIcon size={14} />
+                  </button>
+                )}
+              </div>
             </div>
           ))}
           <button
@@ -102,7 +109,9 @@ export function DayRow(props: TProps) {
           </button>
         </div>
       ) : (
-        <span className="text-sm text-gray-400 italic mt-0.5">Closed</span>
+        <span className="text-sm text-gray-400 italic mt-0.5 self-center">
+          Closed
+        </span>
       )}
     </div>
   );
