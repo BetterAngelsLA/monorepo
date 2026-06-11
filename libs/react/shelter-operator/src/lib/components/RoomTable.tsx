@@ -324,19 +324,19 @@ export function RoomTable({
             <Button
               variant="edit"
               className="text-[#747A82]"
+              aria-label="Clone room"
+              leftIcon={<CopyPlus size={22} stroke="black" />}
               onClick={(e) => {
                 e.stopPropagation();
-                onRowClick?.(rowObject, 0);
+                onClone?.(rowObject);
               }}
             />
             <Button
               variant="edit"
               className="text-[#747A82]"
-              aria-label="Clone room"
-              leftIcon={<CopyPlus />}
               onClick={(e) => {
                 e.stopPropagation();
-                onClone?.(rowObject);
+                onRowClick?.(rowObject, 0);
               }}
             />
             <Button
