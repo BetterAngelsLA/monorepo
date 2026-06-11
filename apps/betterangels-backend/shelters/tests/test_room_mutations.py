@@ -284,7 +284,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
         self.assertIsNone(response.get("errors"))
         messages = response["data"]["updateRoom"]["messages"]
         self.assertEqual(len(messages), 1)
-        self.assertIn("matching query does not exist", messages[0]["message"])
+        self.assertIn(f"Room matching ID {room.pk} could not be found.", messages[0]["message"])
 
     def test_update_room_invalid_status(self) -> None:
         room = baker.make(Room, shelter=self.shelter)
@@ -305,8 +305,8 @@ class CloneRoomMutationTestCase(RoomMutationTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.mutation = f"""
-            mutation ($id: ID!, $shelterId: ID!) {{
-                cloneRoom(id: $id, shelterId: $shelterId) {{
+            mutation ($id: ID!) {{
+                cloneRoom(id: $id) {{
                     ... on RoomType {{
                         {self.room_fields}
                     }}
@@ -350,7 +350,7 @@ class CloneRoomMutationTestCase(RoomMutationTestCase):
         Bed.objects.create(shelter=self.shelter, room=source, name="Bed 1", status=BedStatusChoices.AVAILABLE)
         Bed.objects.create(shelter=self.shelter, room=source, name="Bed 2", status=BedStatusChoices.AVAILABLE)
 
-        variables = {"id": str(source.pk), "shelterId": str(self.shelter.pk)}
+        variables = {"id": str(source.pk)}
 
         expected_query_count = 28
         with self.assertNumQueriesWithoutCache(expected_query_count):

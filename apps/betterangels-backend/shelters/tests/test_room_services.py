@@ -186,7 +186,7 @@ class RoomUpdateTestCase(RoomServiceTestCase):
         self.assertIn("Room matching ID 999999 could not be found.", str(ctx.exception))
 
     def test_user_without_org_access_raises_does_not_exist(self) -> None:
-        with self.assertRaises(Shelter.DoesNotExist):
+        with self.assertRaises(ObjectDoesNotExist):
             User = get_user_model()
             outsider = User.objects.create_user(username="outsider", password="pw")
             room_update(user=outsider, room_id=self.room.pk, data={"name": "Blocked"})
@@ -259,11 +259,7 @@ class RoomCloneTestCase(RoomServiceTestCase):
         Bed.objects.create(shelter=self.shelter, room=source, name="Bed 1", status=BedStatusChoices.AVAILABLE)
         Bed.objects.create(shelter=self.shelter, room=source, name="Bed 2", status=BedStatusChoices.AVAILABLE)
 
-        clone = room_clone(
-            user=self.user,
-            room_id=str(source.pk),
-            shelter_id=str(self.shelter.pk),
-        )
+        clone = room_clone(user=self.user, room_id=str(source.pk))
 
         self.assertNotEqual(clone.pk, source.pk)
         self.assertEqual(clone.name, "Room-101 (Copy)")
@@ -297,23 +293,16 @@ class RoomCloneTestCase(RoomServiceTestCase):
     def test_clone_same_room_twice_uses_incremented_name(self) -> None:
         source = Room.objects.create(shelter=self.shelter, name="Room-101")
 
-        first = room_clone(user=self.user, room_id=str(source.pk), shelter_id=str(self.shelter.pk))
-        second = room_clone(user=self.user, room_id=str(source.pk), shelter_id=str(self.shelter.pk))
+        first = room_clone(user=self.user, room_id=str(source.pk))
+        second = room_clone(user=self.user, room_id=str(source.pk))
 
         self.assertEqual(first.name, "Room-101 (Copy)")
         self.assertEqual(second.name, "Room-101 (Copy 2)")
 
     def test_room_not_found_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            room_clone(user=self.user, room_id="999999", shelter_id=str(self.shelter.pk))
+            room_clone(user=self.user, room_id="999999")
         self.assertIn(
-            f"Room matching ID 999999 could not be found for shelter {self.shelter.pk}.",
+            "Room matching ID 999999 could not be found.",
             str(ctx.exception),
         )
-
-    def test_room_on_different_shelter_raises_object_does_not_exist(self) -> None:
-        other_shelter = shelter_recipe.make(organization=self.org)
-        room = Room.objects.create(shelter=other_shelter, name="Other room")
-
-        with self.assertRaises(ObjectDoesNotExist):
-            room_clone(user=self.user, room_id=str(room.pk), shelter_id=str(self.shelter.pk))

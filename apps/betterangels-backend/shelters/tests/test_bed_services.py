@@ -2,8 +2,15 @@ from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.test import TestCase
-from shelters.enums import BedStatusChoices, BedTypeChoices, DemographicChoices, FunderChoices
-from shelters.models import Bed, Demographic, Funder, Room, Shelter
+from shelters.enums import (
+    AccessibilityChoices,
+    BedStatusChoices,
+    BedTypeChoices,
+    DemographicChoices,
+    FunderChoices,
+    PetChoices,
+)
+from shelters.models import Accessibility, Bed, Demographic, Funder, Pet, Room, Shelter
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.tests.baker_recipes import shelter_recipe
 
@@ -218,17 +225,69 @@ class BedDeleteTestCase(BedServiceTestCase):
 
 
 class BedCloneTestCase(BedServiceTestCase):
-    def test_bed_not_found_raises_object_does_not_exist(self) -> None:
-        with self.assertRaises(ObjectDoesNotExist) as ctx:
-            bed_clone(user=self.user, bed_id="999999", shelter_id=str(self.shelter.pk))
-        self.assertIn(
-            f"Bed matching ID 999999 could not be found for shelter {self.shelter.pk}.",
-            str(ctx.exception),
+    def test_clones_bed_with_scalar_and_m2m_fields(self) -> None:
+        demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
+        funder, _ = Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)
+        accessibility, _ = Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)
+        pet, _ = Pet.objects.get_or_create(name=PetChoices.CATS)
+        self.shelter.demographics.add(demographic)
+        self.shelter.funders.add(funder)
+        self.shelter.accessibility.add(accessibility)
+        self.shelter.pets.add(pet)
+
+        room = Room.objects.create(shelter=self.shelter, name="Room-A1")
+        source = Bed.objects.create(
+            shelter=self.shelter,
+            room=room,
+            name="Bed 1",
+            status=BedStatusChoices.AVAILABLE,
+            type=BedTypeChoices.TWIN,
+            b7=True,
+            storage=True,
+            maintenance_flag=True,
+            status_notes="All good",
+            fees=10,
+        )
+        source.demographics.add(demographic)
+        source.funders.add(funder)
+        source.accessibility.add(accessibility)
+        source.pets.add(pet)
+
+        clone = bed_clone(user=self.user, bed_id=str(source.pk))
+
+        self.assertNotEqual(clone.pk, source.pk)
+        self.assertEqual(clone.name, "Bed 1 (Copy)")
+        self.assertEqual(clone.shelter, source.shelter)
+        self.assertEqual(clone.room, source.room)
+        self.assertEqual(clone.status, BedStatusChoices.AVAILABLE)
+        self.assertEqual(clone.type, BedTypeChoices.TWIN)
+        self.assertTrue(clone.b7)
+        self.assertTrue(clone.storage)
+        self.assertTrue(clone.maintenance_flag)
+        self.assertEqual(clone.status_notes, "All good")
+        self.assertEqual(clone.fees, 10)
+        self.assertTrue(Bed.objects.filter(pk=clone.pk).exists())
+        self.assertEqual(
+            set(clone.demographics.values_list("name", flat=True)),
+            set(source.demographics.values_list("name", flat=True)),
+        )
+        self.assertEqual(
+            set(clone.funders.values_list("name", flat=True)),
+            set(source.funders.values_list("name", flat=True)),
+        )
+        self.assertEqual(
+            set(clone.accessibility.values_list("name", flat=True)),
+            set(source.accessibility.values_list("name", flat=True)),
+        )
+        self.assertEqual(
+            set(clone.pets.values_list("name", flat=True)),
+            set(source.pets.values_list("name", flat=True)),
         )
 
-    def test_bed_on_different_shelter_raises_object_does_not_exist(self) -> None:
-        other_shelter = shelter_recipe.make(organization=self.org)
-        bed = Bed.objects.create(shelter=other_shelter, name="Other bed")
-
-        with self.assertRaises(ObjectDoesNotExist):
-            bed_clone(user=self.user, bed_id=str(bed.pk), shelter_id=str(self.shelter.pk))
+    def test_bed_not_found_raises_object_does_not_exist(self) -> None:
+        with self.assertRaises(ObjectDoesNotExist) as ctx:
+            bed_clone(user=self.user, bed_id="999999")
+        self.assertIn(
+            "Bed matching ID 999999 could not be found.",
+            str(ctx.exception),
+        )

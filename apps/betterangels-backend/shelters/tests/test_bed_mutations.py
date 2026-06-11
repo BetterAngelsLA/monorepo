@@ -343,8 +343,8 @@ class CloneBedMutationTestCase(BedMutationTestCase):
         super().setUp()
 
         self.mutation = f"""
-            mutation CloneBed($id: ID!, $shelterId: ID!) {{
-                cloneBed(id: $id, shelterId: $shelterId) {{
+            mutation CloneBed($id: ID!) {{
+                cloneBed(id: $id) {{
                     ... on BedType {{
                         {self.bed_fields}
                     }}
@@ -383,7 +383,7 @@ class CloneBedMutationTestCase(BedMutationTestCase):
         source.medical_needs.add(medical_need)
         source.pets.add(pet)
 
-        variables = {"id": str(source.pk), "shelterId": str(self.shelter.pk)}
+        variables = {"id": str(source.pk)}
 
         expected_query_count = 30
         with self.assertNumQueriesWithoutCache(expected_query_count):

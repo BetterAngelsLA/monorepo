@@ -110,19 +110,19 @@ def bed_delete(*, user: "User", ids: list[int]) -> list[int]:
 
 
 @transaction.atomic
-def bed_clone(*, user: "User", bed_id: str, shelter_id: str) -> Bed:
-    """Clone an existing bed on *shelter_id*, including all M2M relationships.
+def bed_clone(*, user: "User", bed_id: str) -> Bed:
+    """Clone an existing bed, including all M2M relationships.
 
-    Validates org access via ``bed_get``. The source bed must belong to *shelter_id*.
+    Validates org access via ``bed_get``.
 
     Raises:
-        ``ObjectDoesNotExist`` when the shelter or bed is not found.
+        ``ObjectDoesNotExist`` when the bed is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     try:
         source = bed_get(user=user, bed_id=bed_id)
     except Bed.DoesNotExist:
-        raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found for shelter {shelter_id}.")
+        raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found.")
 
     clone = Bed(
         b7=source.b7,

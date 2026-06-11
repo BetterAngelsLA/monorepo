@@ -108,9 +108,9 @@ class Mutation:
         return cast(RoomType, room_update(user=user, room_id=id, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Room.perms.ADD)])
-    def clone_room(self, info: Info, id: ID, shelter_id: ID) -> RoomType:
+    def clone_room(self, info: Info, id: ID) -> RoomType:
         user = cast(User, get_current_user(info))
-        return cast(RoomType, room_clone(user=user, room_id=id, shelter_id=shelter_id))
+        return cast(RoomType, room_clone(user=user, room_id=id))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Room.perms.DELETE)])
     def delete_rooms(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
@@ -132,9 +132,9 @@ class Mutation:
         return cast(BedType, bed_update(user=user, bed_id=id, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Bed.perms.ADD)])
-    def clone_bed(self, info: Info, id: ID, shelter_id: ID) -> BedType:
+    def clone_bed(self, info: Info, id: ID) -> BedType:
         user = cast(User, get_current_user(info))
-        return cast(BedType, bed_clone(user=user, bed_id=id, shelter_id=shelter_id))
+        return cast(BedType, bed_clone(user=user, bed_id=id))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Bed.perms.DELETE)])
     def delete_beds(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:

@@ -140,7 +140,7 @@ def room_delete(*, user: "User", ids: list[int]) -> list[int]:
 
 
 @transaction.atomic
-def room_clone(*, user: "User", room_id: str, shelter_id: str) -> Room:
+def room_clone(*, user: "User", room_id: str) -> Room:
     """Clone an existing room on *shelter_id*, including all M2M relationships.
 
     Validates org access via ``room_get``. The source room must belong to
@@ -153,7 +153,7 @@ def room_clone(*, user: "User", room_id: str, shelter_id: str) -> Room:
     try:
         source = room_get(user=user, room_id=room_id)
     except Room.DoesNotExist:
-        raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found for shelter {shelter_id}.")
+        raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found.")
 
     clone = Room(
         amenities=source.amenities,
