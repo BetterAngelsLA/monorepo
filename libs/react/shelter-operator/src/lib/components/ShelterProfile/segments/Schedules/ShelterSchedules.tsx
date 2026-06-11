@@ -25,6 +25,7 @@ export function ShelterSchedules(props: TProps) {
 
   const [currentTab, setCurrentTab] = useState(ScheduleTypeChoices.Operating);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
 
   const { shelter } = useAdminShelterProfile(shelterId);
   const { updateShelter } = useUpdateShelterProfile();
@@ -61,6 +62,7 @@ export function ShelterSchedules(props: TProps) {
             schedules: [...otherSchedules, ...scheduleInputs],
           },
         },
+        awaitRefetchQueries: true, // after refetch setResetKey will retrigger render
       });
 
       const result = response.data?.updateShelter;
@@ -71,6 +73,7 @@ export function ShelterSchedules(props: TProps) {
           title: isDelete ? 'Schedule deleted.' : 'Schedule updated.',
         });
 
+        setResetKey((k) => k + 1); // used to force remount to update stale RHF state
         return;
       }
 
@@ -142,6 +145,7 @@ export function ShelterSchedules(props: TProps) {
         />
 
         <ShelterSchedulesForm
+          key={`${currentTab}-${resetKey}`}
           scheduleType={currentTab}
           schedules={shelter.schedules}
           onSave={(schedules) => onSave(currentTab, schedules)}
