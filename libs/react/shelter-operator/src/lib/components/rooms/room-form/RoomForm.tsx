@@ -1,21 +1,21 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@apollo/client/react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@monorepo/react/components';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { GetShelterRoomsDocument } from '../__generated__/rooms.generated';
+import { GetRoomsDocument } from '../api/__generated__/roomQueries.generated';
 import {
   CREATE_ROOM_MUTATION,
   buildCreateRoomInput,
   type CreateRoomMutationResult,
   type CreateRoomMutationVariables,
-} from './api/createRoomMutation';
+} from '../api/createRoomMutation';
 import {
   UPDATE_ROOM_MUTATION,
   buildUpdateRoomInput,
   type UpdateRoomMutationResult,
   type UpdateRoomMutationVariables,
-} from './api/updateRoomMutation';
+} from '../api/updateRoomMutation';
 import { createEmptyRoomFormData } from './constants/defaultRoomFormData';
 import { formSchema } from './constants/validation';
 import type { RoomFormData } from './formTypes';
@@ -53,7 +53,7 @@ export function RoomForm({
   } = methods;
 
   const refetchQueries = useMemo(
-    () => [{ query: GetShelterRoomsDocument, variables: { shelterId } }],
+    () => [{ query: GetRoomsDocument, variables: { shelterId } }],
     [shelterId]
   );
 
@@ -127,11 +127,7 @@ export function RoomForm({
           </div>
         ) : null}
 
-        <form
-          onSubmit={onSubmit}
-          className="space-y-6"
-          data-testid="room-form"
-        >
+        <form onSubmit={onSubmit} className="space-y-6" data-testid="room-form">
           <BasicInformationSection control={control} errors={errors} />
           <RoomDetailsSection control={control} errors={errors} />
 

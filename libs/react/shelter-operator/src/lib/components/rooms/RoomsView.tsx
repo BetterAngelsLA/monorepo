@@ -17,21 +17,21 @@ import {
   type CloneRoomMutationVariables,
   type DeleteRoomsMutation,
   type DeleteRoomsMutationVariables,
-} from './__generated__/roomMutations.generated';
+} from './api/__generated__/roomMutations.generated';
 import {
-  GetShelterRoomsDocument,
-  type GetShelterRoomsQuery,
-  type GetShelterRoomsQueryVariables,
-} from './__generated__/rooms.generated';
+  GetRoomsDocument,
+  type GetRoomsQuery,
+  type GetRoomsQueryVariables,
+} from './api/__generated__/roomQueries.generated';
 
 export function RoomsView({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
   const [actionError, setActionError] = useState<string | null>(null);
 
   const { data, loading, refetch } = useQuery<
-    GetShelterRoomsQuery,
-    GetShelterRoomsQueryVariables
-  >(GetShelterRoomsDocument, {
+    GetRoomsQuery,
+    GetRoomsQueryVariables
+  >(GetRoomsDocument, {
     variables: { shelterId },
     skip: !shelterId,
   });

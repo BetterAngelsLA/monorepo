@@ -4,7 +4,7 @@ import {
   GetRoomDocument,
   type GetRoomQuery,
   type GetRoomQueryVariables,
-} from '../../components/rooms/__generated__/room.generated';
+} from '../../components/rooms/api/__generated__/roomQueries.generated';
 import { RoomForm } from '../../components/rooms/room-form/RoomForm';
 import { mapRoomToFormData } from '../../components/rooms/room-form/utils/mapRoomToFormData';
 import { shelterManageRoomsRoute } from '../../routing';
