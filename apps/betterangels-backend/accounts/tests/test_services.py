@@ -3,11 +3,14 @@ Integration tests for ``accounts.services`` and ``accounts.selectors``.
 """
 
 import pytest
-from accounts.models import OrganizationProfile, PermissionGroupTemplate, User
+from accounts.groups import ORG_ADMIN
+from accounts.models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
 from accounts.selectors import permission_group_for_user
-from accounts.services import create_organization_with_presets
+from accounts.services import create_organization_with_presets, member_add
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from model_bakery import baker
+from notes.groups import CASEWORKER
 from organizations.models import OrganizationUser
 
 # ── create_organization_with_presets ──────────────────────────────────
@@ -63,6 +66,32 @@ def test_create_org_invalid_preset() -> None:
 
 
 @pytest.mark.django_db(transaction=True)
+def test_create_org_with_owner_roles() -> None:
+    """Owner gets explicitly specified roles (not just defaults)."""
+    owner = baker.make(User, email="owner@example.com")
+    org = create_organization_with_presets(
+        "Roleful Org", ["outreach"], owner=owner, owner_roles=(CASEWORKER, ORG_ADMIN)
+    )
+
+    # Owner should be a member and own the org.
+    assert OrganizationUser.objects.filter(user=owner, organization=org).exists()
+
+    caseworker_group = Group.objects.get(
+        permissiongroup__organization=org, permissiongroup__template__name="Caseworker"
+    )
+    admin_group = Group.objects.get(
+        permissiongroup__organization=org, permissiongroup__template__name="Organization Admin"
+    )
+    superuser_group = Group.objects.get(
+        permissiongroup__organization=org, permissiongroup__template__name="Organization Superuser"
+    )
+
+    assert caseworker_group in owner.groups.all()
+    assert admin_group in owner.groups.all()
+    assert superuser_group not in owner.groups.all()
+
+
+@pytest.mark.django_db(transaction=True)
 def test_create_org_atomic() -> None:
     """If a preset throws mid-creation, nothing is persisted."""
     from organizations.models import Organization as OrgModel
@@ -70,6 +99,139 @@ def test_create_org_atomic() -> None:
     with pytest.raises(ValidationError):
         create_organization_with_presets("Atomic Org", ["outreach", "invalid"], owner=baker.make(User))
     assert not OrgModel.objects.filter(name="Atomic Org").exists()
+
+
+# ── member_add ─────────────────────────────────────────────────────────
+
+
+@pytest.mark.django_db(transaction=True)
+def test_member_add_new_user() -> None:
+    """member_add creates a new user and assigns them to the org with roles."""
+    org = create_organization_with_presets("Member Org", ["outreach"], owner=baker.make(User))
+
+    email = "new_guy@example.com"
+    user = member_add(
+        email=email,
+        first_name="New",
+        last_name="Guy",
+        middle_name=None,
+        organization=org,
+        permission_templates=(CASEWORKER,),
+    )
+
+    assert user.email == email
+    assert user.first_name == "New"
+    assert user.last_name == "Guy"
+    assert not user.has_usable_password()
+    assert OrganizationUser.objects.filter(user=user, organization=org).exists()
+
+    caseworker_group = Group.objects.get(
+        permissiongroup__organization=org, permissiongroup__template__name="Caseworker"
+    )
+    assert caseworker_group in user.groups.all()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_member_add_existing_user_different_org() -> None:
+    """Adding an existing user to a new org assigns them that org's roles."""
+    user = baker.make(User, email="dual_citizen@example.com")
+    org_1 = create_organization_with_presets("Org 1", ["outreach"], owner=baker.make(User))
+    org_2 = create_organization_with_presets("Org 2", ["outreach"], owner=baker.make(User))
+
+    # User is not yet in either org.
+    member_add(
+        email=user.email,
+        first_name="Dual",
+        last_name="Citizen",
+        middle_name=None,
+        organization=org_1,
+        permission_templates=(CASEWORKER,),
+    )
+
+    cw_org1 = Group.objects.get(permissiongroup__organization=org_1, permissiongroup__template__name="Caseworker")
+    assert cw_org1 in user.groups.all()
+
+    # Add to second org — should not duplicate the User record.
+    member_add(
+        email=user.email,
+        first_name="Dual",
+        last_name="Citizen",
+        middle_name=None,
+        organization=org_2,
+        permission_templates=(CASEWORKER,),
+    )
+
+    assert User.objects.filter(email=user.email).count() == 1
+    cw_org2 = Group.objects.get(permissiongroup__organization=org_2, permissiongroup__template__name="Caseworker")
+    assert cw_org2 in user.groups.all()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_member_add_already_member() -> None:
+    """member_add raises ValidationError when user is already in the org."""
+    org = create_organization_with_presets("Already Org", ["outreach"], owner=baker.make(User))
+
+    member_add(
+        email="already@here.com",
+        first_name="Already",
+        last_name="Here",
+        middle_name=None,
+        organization=org,
+        permission_templates=(CASEWORKER,),
+    )
+
+    with pytest.raises(ValidationError, match="is already a member"):
+        member_add(
+            email="already@here.com",
+            first_name="Already",
+            last_name="Here",
+            middle_name=None,
+            organization=org,
+            permission_templates=(CASEWORKER,),
+        )
+
+
+@pytest.mark.django_db(transaction=True)
+def test_member_add_multiple_templates() -> None:
+    """member_add can assign multiple permission templates at once."""
+    owner = baker.make(User)
+    org = create_organization_with_presets("Multi Template Org", ["outreach"], owner=owner)
+
+    user = member_add(
+        email="multi@example.com",
+        first_name="Multi",
+        last_name="Template",
+        middle_name="M",
+        organization=org,
+        permission_templates=(CASEWORKER, ORG_ADMIN),
+    )
+
+    cw = Group.objects.get(permissiongroup__organization=org, permissiongroup__template__name="Caseworker")
+    admin = Group.objects.get(permissiongroup__organization=org, permissiongroup__template__name="Organization Admin")
+
+    assert cw in user.groups.all()
+    assert admin in user.groups.all()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_member_add_persists_new_name() -> None:
+    """When an existing user (by email) is added with different name fields,
+    the new name values are NOT overwritten (the old user record is reused)."""
+    org = create_organization_with_presets("Name Org", ["outreach"], owner=baker.make(User))
+    baker.make(User, email="keep_my_name@example.com", first_name="Original", last_name="Name")
+
+    user = member_add(
+        email="keep_my_name@example.com",
+        first_name="Ignored",
+        last_name="AlsoIgnored",
+        middle_name="X",
+        organization=org,
+        permission_templates=(CASEWORKER,),
+    )
+
+    # Name should stay as the original (existing user is reused, new data not applied).
+    assert user.first_name == "Original"
+    assert user.last_name == "Name"
 
 
 # ── permission_group_for_user ─────────────────────────────────────────

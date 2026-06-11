@@ -48,7 +48,11 @@ class OrgRoleManager:
 
     @transaction.atomic
     def remove_roles(self, user: User, *templates: TemplateConfig) -> None:
-        """Remove specific permission groups from *user*."""
+        """Remove specific permission groups from *user*.
+
+        Raises :class:`~django.core.exceptions.ObjectDoesNotExist` if no
+        ``PermissionGroup`` exists for a given template on this organization.
+        """
         for template_config in templates:
             permission_group = PermissionGroup.objects.get(
                 organization=self.organization,

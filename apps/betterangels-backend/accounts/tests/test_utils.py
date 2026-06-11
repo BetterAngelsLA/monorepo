@@ -46,6 +46,22 @@ class OrgRoleManagerTestCase(ParametrizedTestCase, TestCase):
         self.assertNotIn(org_admin_group, self.user.groups.all())
         self.assertIn(org_superuser_group, self.user.groups.all())
 
+    def test_remove_roles(self) -> None:
+        """remove_roles should remove only the specified templates, leaving others."""
+        omb = OrgRoleManager(self.org_2)
+        caseworker_group = self._get_org_group(self.org_2, "Caseworker")
+        org_superuser_group = self._get_org_group(self.org_2, "Organization Superuser")
+
+        self.assertIn(caseworker_group, self.user.groups.all())
+        self.assertIn(org_superuser_group, self.user.groups.all())
+
+        omb.remove_roles(self.user, ORG_SUPERUSER)
+        self.assertIn(caseworker_group, self.user.groups.all())
+        self.assertNotIn(org_superuser_group, self.user.groups.all())
+
+        omb.remove_roles(self.user, CASEWORKER)
+        self.assertNotIn(caseworker_group, self.user.groups.all())
+
     def test_clear_roles(self) -> None:
         org_superuser_group = self._get_org_group(self.org_2, "Organization Superuser")
 
