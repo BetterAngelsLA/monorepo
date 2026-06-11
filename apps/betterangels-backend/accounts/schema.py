@@ -7,6 +7,8 @@ from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
 from common.graphql.types import DeletedObjectType
+from common.org_types import REGISTRY
+from common.permissions.config import TemplateConfig
 from common.permissions.utils import IsAuthenticated
 from django.conf import settings
 from django.contrib import auth
@@ -25,6 +27,7 @@ from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
 from .models import PermissionGroup, User
+from .role_manager import OrgRoleManager
 from .services import member_add
 from .types import (
     AuthResponse,
@@ -202,13 +205,21 @@ class Mutation:
         if organization is None:
             raise PermissionDenied("You do not have permission to add members.")
 
+        # Derive the default member template from the org's primary type.
+        # Outreach orgs → Caseworker; shelter orgs → Shelter Operator.
+        default_template: TemplateConfig = CASEWORKER  # fallback
+        if hasattr(organization, "profile") and organization.profile.org_types:
+            org_config = REGISTRY.org_type(organization.profile.org_types[0].value)
+            if org_config and org_config.templates:
+                default_template = org_config.templates[0]
+
         user = member_add(
             email=data.email,
             first_name=data.first_name,
             last_name=data.last_name,
             middle_name=data.middle_name,
             organization=organization,
-            permission_templates=(CASEWORKER,),
+            permission_templates=(default_template,),
         )
 
         invitation_backend().create_organization_invite(
@@ -261,6 +272,7 @@ class Mutation:
             raise ValidationError("You cannot remove yourself from the organization.")
 
         with transaction.atomic():
+            OrgRoleManager(organization).clear_roles(org_user.user)
             org_user.delete()
 
         return DeletedObjectType(id=user_id)

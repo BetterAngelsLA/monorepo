@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from organizations.models import Organization
 
 from .models import OrganizationProfile, OrgTypeChoices, PermissionGroup, PermissionGroupTemplate
@@ -61,7 +61,10 @@ def member_add(
 
     # Link user to organization via the django-organizations helper
     # so that the framework's owner auto-assignment fires.
-    organization.add_user(user)
+    try:
+        organization.add_user(user)
+    except IntegrityError:
+        raise ValidationError(f"{first_name} {last_name} is already a member of {organization.name}.")
 
     # Delegate permission assignment to the manager.
     OrgRoleManager(organization).add_roles(user, *permission_templates)
@@ -88,7 +91,7 @@ def create_organization_with_presets(
     *owner* is linked via ``organization.add_user`` (which auto-creates
     an ``OrganizationOwner``).  If *owner_roles* is provided, those roles
     are assigned to the owner explicitly via
-    :class:`~accounts.utils.OrgRoleManager`.  The caller decides which
+    :class:`~accounts.role_manager.OrgRoleManager`.  The caller decides which
     roles the owner gets — no implicit derivation from org type order.
 
     Returns the new :class:`~organizations.models.Organization`.

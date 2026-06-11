@@ -47,7 +47,7 @@ def update_group_permissions(sender: Any, **kwargs: Any) -> None:
     are automatically included -- no need to manually update a hardcoded
     list.
     """
-    from accounts.template_registry import REGISTRY
+    from common.org_types import REGISTRY
 
     template_names = REGISTRY.template_names()
 
