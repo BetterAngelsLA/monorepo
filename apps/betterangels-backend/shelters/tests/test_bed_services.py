@@ -188,22 +188,26 @@ class BedUpdateTestCase(BedServiceTestCase):
 
 class BedDeleteTestCase(BedServiceTestCase):
     def test_deletes_single_bed(self) -> None:
-        bed = Bed.objects.create(shelter=self.shelter, name="Bed 1", status=BedStatusChoices.AVAILABLE)
+        bed_to_delete = Bed.objects.create(shelter=self.shelter, name="Bed 1", status=BedStatusChoices.AVAILABLE)
+        other_bed = Bed.objects.create(shelter=self.shelter, name="Bed 2", status=BedStatusChoices.AVAILABLE)
 
-        deleted = bed_delete(user=self.user, ids=[bed.pk])
+        deleted = bed_delete(user=self.user, ids=[bed_to_delete.pk])
 
         self.assertEqual(len(deleted), 1)
-        self.assertEqual(deleted[0], bed.pk)
-        self.assertFalse(Bed.objects.filter(pk=bed.pk).exists())
+        self.assertEqual(deleted[0], bed_to_delete.pk)
+        self.assertFalse(Bed.objects.filter(pk=bed_to_delete.pk).exists())
+        self.assertTrue(Bed.objects.filter(pk=other_bed.pk).exists())
 
     def test_deletes_multiple_beds(self) -> None:
-        bed1 = Bed.objects.create(shelter=self.shelter, name="Bed 1", status=BedStatusChoices.AVAILABLE)
-        bed2 = Bed.objects.create(shelter=self.shelter, name="Bed 2", status=BedStatusChoices.AVAILABLE)
+        bed_to_delete_1 = Bed.objects.create(shelter=self.shelter, name="Bed 1", status=BedStatusChoices.AVAILABLE)
+        bed_to_delete_2 = Bed.objects.create(shelter=self.shelter, name="Bed 2", status=BedStatusChoices.AVAILABLE)
+        other_bed = Bed.objects.create(shelter=self.shelter, name="Bed 3", status=BedStatusChoices.AVAILABLE)
 
-        deleted = bed_delete(user=self.user, ids=[bed1.pk, bed2.pk])
+        deleted = bed_delete(user=self.user, ids=[bed_to_delete_1.pk, bed_to_delete_2.pk])
 
         self.assertEqual(len(deleted), 2)
-        self.assertFalse(Bed.objects.filter(pk__in=[bed1.pk, bed2.pk]).exists())
+        self.assertFalse(Bed.objects.filter(pk__in=[bed_to_delete_1.pk, bed_to_delete_2.pk]).exists())
+        self.assertTrue(Bed.objects.filter(pk=other_bed.pk).exists())
 
     def test_empty_list_returns_empty(self) -> None:
         deleted = bed_delete(user=self.user, ids=[])

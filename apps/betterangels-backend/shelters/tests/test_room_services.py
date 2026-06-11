@@ -194,22 +194,39 @@ class RoomUpdateTestCase(RoomServiceTestCase):
 
 class RoomDeleteTestCase(RoomServiceTestCase):
     def test_deletes_single_room(self) -> None:
-        room = Room.objects.create(shelter=self.shelter, name="Room-101")
+        room_to_delete = Room.objects.create(shelter=self.shelter, name="Room-101")
+        other_room = Room.objects.create(shelter=self.shelter, name="Room-102")
+        bed_in_room = Bed.objects.create(
+            shelter=self.shelter, room=room_to_delete, name="Bed 1", status=BedStatusChoices.AVAILABLE
+        )
+        other_bed = Bed.objects.create(
+            shelter=self.shelter, room=other_room, name="Bed 2", status=BedStatusChoices.AVAILABLE
+        )
 
-        deleted = room_delete(user=self.user, ids=[room.pk])
+        deleted = room_delete(user=self.user, ids=[room_to_delete.pk])
 
         self.assertEqual(len(deleted), 1)
-        self.assertEqual(deleted[0], room.pk)
-        self.assertFalse(Room.objects.filter(pk=room.pk).exists())
+        self.assertEqual(deleted[0], room_to_delete.pk)
+        self.assertFalse(Room.objects.filter(pk=room_to_delete.pk).exists())
+        self.assertTrue(Room.objects.filter(pk=other_room.pk).exists())
+        bed_in_room.refresh_from_db()
+        self.assertIsNone(bed_in_room.room_id)
+        self.assertTrue(Bed.objects.filter(pk=other_bed.pk).exists())
 
     def test_deletes_multiple_rooms(self) -> None:
-        room1 = Room.objects.create(shelter=self.shelter, name="Room-101")
-        room2 = Room.objects.create(shelter=self.shelter, name="Room-102")
+        room_to_delete_1 = Room.objects.create(shelter=self.shelter, name="Room-101")
+        room_to_delete_2 = Room.objects.create(shelter=self.shelter, name="Room-102")
+        other_room = Room.objects.create(shelter=self.shelter, name="Room-103")
+        other_bed = Bed.objects.create(
+            shelter=self.shelter, room=other_room, name="Bed 1", status=BedStatusChoices.AVAILABLE
+        )
 
-        deleted = room_delete(user=self.user, ids=[room1.pk, room2.pk])
+        deleted = room_delete(user=self.user, ids=[room_to_delete_1.pk, room_to_delete_2.pk])
 
         self.assertEqual(len(deleted), 2)
-        self.assertFalse(Room.objects.filter(pk__in=[room1.pk, room2.pk]).exists())
+        self.assertFalse(Room.objects.filter(pk__in=[room_to_delete_1.pk, room_to_delete_2.pk]).exists())
+        self.assertTrue(Room.objects.filter(pk=other_room.pk).exists())
+        self.assertTrue(Bed.objects.filter(pk=other_bed.pk).exists())
 
     def test_empty_list_returns_empty(self) -> None:
         deleted = room_delete(user=self.user, ids=[])
