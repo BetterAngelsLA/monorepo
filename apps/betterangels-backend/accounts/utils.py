@@ -1,10 +1,9 @@
-from typing import TYPE_CHECKING, Union
+from typing import Union
 
 import waffle
 from accounts.groups import GroupTemplateNames
 from django.apps.registry import Apps
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
-from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
 
@@ -13,18 +12,6 @@ from .models import PermissionGroup, PermissionGroupTemplate, User
 
 def remove_organization_permission_group(organization: Organization) -> None:
     Group.objects.filter(permissiongroup__organization=organization).delete()
-
-
-def add_default_org_permissions_to_user(user: User, organization: Organization) -> None:
-    caseworker_permission_group, _ = PermissionGroupTemplate.objects.get_or_create(
-        # TODO: This is a hack for MVP. Not all orgs will default to caseworkers
-        # we will want to have a default template selected for orgs on the org model.
-        name=GroupTemplateNames.CASEWORKER
-    )
-    org_caseworker_group, _ = PermissionGroup.objects.get_or_create(
-        organization=organization, template=caseworker_permission_group
-    )
-    user.groups.add(org_caseworker_group.group)
 
 
 def create_default_org_permission_groups(organization: Organization) -> None:
@@ -70,24 +57,6 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
     return permission_group
 
 
-def resolve_permission_group(user: User, org_id: str) -> PermissionGroup:
-    """Return the member-level ``PermissionGroup`` for *user* in *org_id*.
-
-    This is the multi-org-aware replacement for
-    :func:`get_user_permission_group`.  It reads the organization's
-    ``org_types`` from the registry to determine the correct member
-    role (e.g. "Caseworker" for outreach, "Shelter Operator" for
-    shelters).
-
-    Raises :class:`~django.core.exceptions.ValidationError` if the
-    organization doesn't exist, the user is not a member, the org has
-    no ``org_types``, or no matching ``PermissionGroup`` is found.
-    """
-    from accounts.services import get_user_permission_group_for_org
-
-    return get_user_permission_group_for_org(user, org_id)
-
-
 def get_outreach_authorized_users() -> QuerySet[User]:
     # TODO: Make unit test for this function
     authorized_permission_groups = [template.value for template in GroupTemplateNames]
@@ -102,61 +71,9 @@ def get_outreach_authorized_users() -> QuerySet[User]:
     return User.objects.filter(Exists(permission_group_exists))
 
 
-if TYPE_CHECKING:
-    from common.permissions.config import TemplateConfig
-
-
-class OrgPermissionManager:
-    """Manage org-scoped permission groups for a user.
-
-    Provides mechanical operations — adding, removing, and replacing
-    permission groups.  Business rules (e.g. "cannot remove the org
-    owner") belong in the calling layer, not here.
-    """
-
-    def __init__(self, organization: Organization) -> None:
-        self.organization: Organization = organization
-
-    # ── Public API ──────────────────────────────────────────────────────
-
-    @transaction.atomic
-    def add_permissions(self, user: User, *templates: TemplateConfig) -> None:
-        """Add one or more permission groups to *user*.
-
-        ``templates`` are :class:`~common.permissions.config.TemplateConfig`
-        objects such as :data:`~notes.groups.CASEWORKER`.
-
-        Raises :class:`~django.core.exceptions.ObjectDoesNotExist` if no
-        ``PermissionGroup`` exists for a given template on this organization.
-        """
-        for template_config in templates:
-            permission_group = PermissionGroup.objects.get(
-                organization=self.organization,
-                template__name=template_config.name,
-            )
-            user.groups.add(permission_group.group)
-
-    @transaction.atomic
-    def remove_permissions(self, user: User, *templates: TemplateConfig) -> None:
-        """Remove specific permission groups from *user*."""
-        for template_config in templates:
-            permission_group = PermissionGroup.objects.get(
-                organization=self.organization,
-                template__name=template_config.name,
-            )
-            user.groups.remove(permission_group.group)
-
-    @transaction.atomic
-    def clear_permissions(self, user: User) -> None:
-        """Remove **all** org-scoped permission groups from *user*."""
-        groups = Group.objects.filter(permissiongroup__organization=self.organization)
-        user.groups.remove(*groups)
-
-    @transaction.atomic
-    def replace_permissions(self, user: User, *templates: TemplateConfig) -> None:
-        """Replace all org-scoped groups.  Convenience: clear + add."""
-        self.clear_permissions(user)
-        self.add_permissions(user, *templates)
+# OrgRoleManager lives in accounts.role_manager to avoid circular imports.
+# Re-exported here for backward compatibility with callers that import from accounts.utils.
+from accounts.role_manager import OrgRoleManager  # noqa: F401, E402  -- re-export
 
 
 # migration utils

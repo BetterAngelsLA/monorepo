@@ -14,6 +14,7 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
+from notes.groups import CASEWORKER
 from notes.permissions import NotePermissions
 from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
@@ -207,6 +208,7 @@ class Mutation:
             last_name=data.last_name,
             middle_name=data.middle_name,
             organization=organization,
+            permission_templates=(CASEWORKER,),
         )
 
         invitation_backend().create_organization_invite(

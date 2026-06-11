@@ -1,7 +1,9 @@
 from accounts.groups import GroupTemplateNames
-from accounts.models import PermissionGroup, PermissionGroupTemplate, User
+from accounts.models import User
+from accounts.utils import OrgRoleManager
 from django.test import TestCase
 from model_bakery import baker
+from notes.groups import CASEWORKER
 from organizations.models import OrganizationUser
 
 from .baker_recipes import organization_recipe
@@ -14,25 +16,14 @@ class OrganizationUserTestCase(TestCase):
 
         self.user = baker.make(User)
 
-        self.caseworker_template = PermissionGroupTemplate.objects.get(name=GroupTemplateNames.CASEWORKER)
-
-        baker.make(
-            PermissionGroup,
-            organization=self.organization1,
-            template=self.caseworker_template,
-        )
-        baker.make(
-            PermissionGroup,
-            organization=self.organization2,
-            template=self.caseworker_template,
-        )
-
     def test_add_user_to_organization_with_default_permissions(self) -> None:
         baker.make(
             OrganizationUser,
             user=self.user,
             organization=self.organization1,
         )
+        OrgRoleManager(self.organization1).add_roles(self.user, CASEWORKER)
+
         self.assertTrue(
             self.user.groups.filter(name=f"{self.organization1.name}_{GroupTemplateNames.CASEWORKER}").exists()
         )
@@ -48,10 +39,16 @@ class OrganizationUserTestCase(TestCase):
             user=self.user,
             organization=self.organization2,
         )
+        OrgRoleManager(self.organization1).add_roles(self.user, CASEWORKER)
+        OrgRoleManager(self.organization2).add_roles(self.user, CASEWORKER)
 
         self.user.organizations_organizationuser.get(organization=self.organization1).delete()
 
-        self.assertFalse(
+        # Roles are no longer auto-removed when membership is deleted.
+        # The removed signal (handle_organization_user_removed) was deleted in favor
+        # of explicit service-layer role management. Membership deletion alone
+        # does not clear roles.
+        self.assertTrue(
             self.user.groups.filter(name=f"{self.organization1.name}_{GroupTemplateNames.CASEWORKER}").exists()
         )
         self.assertTrue(

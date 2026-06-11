@@ -1,15 +1,13 @@
 from unittest.mock import ANY, patch
 
 from accounts.enums import OrgRoleEnum
-from accounts.groups import ORG_ADMIN, GroupTemplateNames
+from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from accounts.tests.utils import CurrentUserGraphQLBaseTestCase
-from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Group
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
-from notes.groups import CASEWORKER
 from organizations.models import OrganizationInvitation, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase
 
@@ -146,11 +144,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
         self.org_admin = baker.make(User, first_name="admin")
 
-        self.org = organization_recipe.make(name="org")
-        self.org.add_user(self.org_admin)
-
-        omb = OrgPermissionManager(self.org)
-        omb.add_permissions(self.org_admin, CASEWORKER, ORG_ADMIN)
+        self.org = organization_recipe.make(name="org", owner=self.org_admin)
 
         self.graphql_client.force_login(self.org_admin)
 
@@ -193,7 +187,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         }
 
         with patch("accounts.backends.CustomInvitations.send_invitation") as mock_send_invitation:
-            with self.assertNumQueriesWithoutCache(24):
+            with self.assertNumQueriesWithoutCache(22):
                 response = self.execute_graphql(mutation, {"data": variables})
 
             mock_send_invitation.assert_called_once()

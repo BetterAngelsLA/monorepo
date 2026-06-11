@@ -15,8 +15,9 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from organizations.models import Organization
 
-from .models import OrgTypeChoices, PermissionGroup, PermissionGroupTemplate
+from .models import OrganizationProfile, OrgTypeChoices, PermissionGroup, PermissionGroupTemplate
 from .models import User as UserModel
+from .role_manager import OrgRoleManager
 
 if TYPE_CHECKING:
     from .models import User
@@ -53,14 +54,17 @@ def member_add(
         user.set_unusable_password()
         user.save()
 
+    # Reject re-invites to avoid IntegrityError from django-organizations
+    # unique_together constraint on (user, organization).
+    if organization.users.filter(pk=user.pk).exists():
+        raise ValidationError(f"{first_name} {last_name} is already a member of {organization.name}.")
+
     # Link user to organization via the django-organizations helper
     # so that the framework's owner auto-assignment fires.
     organization.add_user(user)
 
     # Delegate permission assignment to the manager.
-    from .utils import OrgPermissionManager  # inline — avoids circular import
-
-    OrgPermissionManager(organization).add_permissions(user, *permission_templates)
+    OrgRoleManager(organization).add_roles(user, *permission_templates)
 
     return user
 
@@ -73,6 +77,7 @@ def create_organization_with_presets(
     name: str,
     preset_names: list[str],
     owner: UserModel,
+    owner_roles: tuple[TemplateConfig, ...] = (),
 ) -> Organization:
     """Create an organization preloaded with permission groups and an owner.
 
@@ -81,13 +86,13 @@ def create_organization_with_presets(
     ``["outreach", "shelter"]``).
 
     *owner* is linked via ``organization.add_user`` (which auto-creates
-    an ``OrganizationOwner``).  Permission group assignment is handled
-    separately by :class:`~accounts.utils.OrgPermissionManager`.
+    an ``OrganizationOwner``).  If *owner_roles* is provided, those roles
+    are assigned to the owner explicitly via
+    :class:`~accounts.utils.OrgRoleManager`.  The caller decides which
+    roles the owner gets — no implicit derivation from org type order.
 
     Returns the new :class:`~organizations.models.Organization`.
     """
-    from accounts.models import OrganizationProfile  # inline — avoids circular import
-
     for preset_name in preset_names:
         if REGISTRY.org_type(preset_name) is None:
             raise ValidationError(f"Unknown org-type preset: {preset_name}")
@@ -122,40 +127,7 @@ def create_organization_with_presets(
     # Link the owner (django-organizations auto-creates OrganizationOwner).
     org.add_user(owner)
 
+    if owner_roles:
+        OrgRoleManager(org).add_roles(owner, *owner_roles)
+
     return org
-
-
-# ── Permission resolution ─────────────────────────────────────────────
-
-
-def get_member_permission_group(org: Organization) -> PermissionGroup:
-    """Return the default member-level ``PermissionGroup`` for *org*."""
-    if not hasattr(org, "profile") or not org.profile.org_types:
-        raise ValidationError(f"Organization '{org.name}' has no org_types.")
-
-    primary_type = org.profile.org_types[0].value
-    org_config = REGISTRY.org_type(primary_type)
-    if org_config is None:
-        raise ValidationError(f"Unknown org type '{primary_type}' for organization '{org.name}'.")
-
-    member_template = org_config.templates[0]
-    try:
-        return PermissionGroup.objects.get(organization=org, template__name=member_template.name)
-    except PermissionGroup.DoesNotExist:
-        raise ValidationError(
-            f"Member permission group '{member_template.name}' not found "
-            f"for org '{org.name}'. Has create_organization_with_presets been called?"
-        )
-
-
-def get_user_permission_group_for_org(user: User, org_id: str) -> PermissionGroup:
-    """Return the member-level ``PermissionGroup`` for *user* within *org_id*."""
-    try:
-        org = Organization.objects.get(pk=org_id)
-    except Organization.DoesNotExist:
-        raise ValidationError(f"Organization with id '{org_id}' not found.")
-
-    if not org.users.filter(pk=user.pk).exists():
-        raise ValidationError(f"User '{user}' is not a member of organization '{org.name}'.")
-
-    return get_member_permission_group(org)

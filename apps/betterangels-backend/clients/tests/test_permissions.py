@@ -1,7 +1,6 @@
 from typing import Optional
 from unittest.mock import patch
 
-from accounts.tests.baker_recipes import permission_group_recipe
 from clients.enums import ClientDocumentNamespaceEnum, GenderEnum, HmisAgencyEnum, LanguageEnum
 from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile
 from clients.tests.utils import (
@@ -1040,10 +1039,6 @@ class OrganizationPermissionTestCase(GraphQLBaseTestCase):
     )
     def test_view_caseworker_organizations_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
-
-        # This recipe creates an organization in the process. Including this here because even though
-        # Caseworker orgs are created elsewhere in the test suite, this test should be self-contained.
-        permission_group_recipe.make(name="Caseworker")
 
         query = """
             query CaseworkerOrganizations($pagination: OffsetPaginationInput) {

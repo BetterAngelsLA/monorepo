@@ -4,11 +4,19 @@ from model_bakery.random_gen import gen_string
 from model_bakery.recipe import Recipe, foreign_key
 from organizations.models import Organization
 
-organization_recipe: Recipe[Organization] = Recipe(
-    Organization,
-    name=lambda: gen_string(20),
-    slug=lambda: gen_string(20),
-)
+from .helpers import make_org_with_presets
+
+
+class OrgRecipe(Recipe[Organization]):
+    """Recipe that delegates to create_organization_with_presets via the helper."""
+
+    _model = Organization
+
+    def make(self, **attrs):
+        return make_org_with_presets(**attrs)
+
+
+organization_recipe = OrgRecipe(Organization)
 
 permission_group_template_recipe = Recipe(
     PermissionGroupTemplate,

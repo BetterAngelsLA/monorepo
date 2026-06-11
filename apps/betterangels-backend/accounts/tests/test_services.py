@@ -1,16 +1,14 @@
 """
-Integration tests for ``accounts.services``.
+Integration tests for ``accounts.services`` and ``accounts.selectors``.
 """
 
 import pytest
-from accounts.models import OrganizationProfile, OrgTypeChoices, PermissionGroupTemplate, User
-from accounts.services import (
-    create_organization_with_presets,
-    get_member_permission_group,
-    get_user_permission_group_for_org,
-)
+from accounts.models import OrganizationProfile, PermissionGroupTemplate, User
+from accounts.selectors import permission_group_for_user
+from accounts.services import create_organization_with_presets
 from django.core.exceptions import ValidationError
 from model_bakery import baker
+from organizations.models import OrganizationUser
 
 # ── create_organization_with_presets ──────────────────────────────────
 
@@ -74,112 +72,75 @@ def test_create_org_atomic() -> None:
     assert not OrgModel.objects.filter(name="Atomic Org").exists()
 
 
-# ── get_member_permission_group ───────────────────────────────────────
+# ── permission_group_for_user ─────────────────────────────────────────
 
 
 @pytest.mark.django_db(transaction=True)
-def test_member_group_outreach() -> None:
-    """get_member_permission_group returns Caseworker for outreach org."""
+def test_permission_group_caseworker() -> None:
+    """Returns the Caseworker PermissionGroup for a user in their outreach org."""
     org = create_organization_with_presets("Outreach PM", ["outreach"], owner=baker.make(User))
-    pg = get_member_permission_group(org)
-    assert pg.template is not None
-    assert pg.template.name == "Caseworker"
-
-
-@pytest.mark.django_db(transaction=True)
-def test_member_group_shelter() -> None:
-    """get_member_permission_group returns Shelter Operator for shelter org."""
-    org = create_organization_with_presets("Shelter PM", ["shelter"], owner=baker.make(User))
-    pg = get_member_permission_group(org)
-    assert pg.template is not None
-    assert pg.template.name == "Shelter Operator"
-
-
-@pytest.mark.django_db(transaction=True)
-def test_member_group_dual_type() -> None:
-    """Dual-type org uses first org_type (outreach → Caseworker)."""
-    org = create_organization_with_presets("Dual PM", ["outreach", "shelter"], owner=baker.make(User))
-    pg = get_member_permission_group(org)
-    assert pg.template is not None
-    assert pg.template.name == "Caseworker"
-
-
-@pytest.mark.django_db(transaction=True)
-def test_member_group_no_profile() -> None:
-    """Org without OrganizationProfile raises ValidationError."""
-    from organizations.models import Organization as OrgModel
-
-    org = OrgModel.objects.create(name="No Profile Org")
-    with pytest.raises(ValidationError, match="has no org_types"):
-        get_member_permission_group(org)
-
-
-@pytest.mark.django_db(transaction=True)
-def test_member_group_no_org_types() -> None:
-    """Org with empty org_types raises ValidationError."""
-    from organizations.models import Organization as OrgModel
-
-    org = OrgModel.objects.create(name="Empty Types Org")
-    OrganizationProfile.objects.create(organization=org, org_types=[])
-    with pytest.raises(ValidationError, match="has no org_types"):
-        get_member_permission_group(org)
-
-
-@pytest.mark.django_db(transaction=True)
-def test_member_group_unknown_type() -> None:
-    """Org with org_type not in registry raises ValidationError."""
-    from organizations.models import Organization as OrgModel
-
-    org = OrgModel.objects.create(name="Unknown Type Org")
-    OrganizationProfile.objects.create(organization=org, org_types=[OrgTypeChoices.SHELTER])
-
-    # Delete the shelter PermissionGroups so the lookup fails
-    from accounts.models import PermissionGroup
-
-    PermissionGroup.objects.filter(organization=org).delete()
-    with pytest.raises(ValidationError, match="not found"):
-        get_member_permission_group(org)
-
-
-# ── get_user_permission_group_for_org ─────────────────────────────────
-
-
-@pytest.mark.django_db(transaction=True)
-def test_user_permission_group() -> None:
-    """Returns the member group for a user in their outreach org."""
-    from accounts.models import User
-    from model_bakery import baker
-    from organizations.models import OrganizationUser
-
-    org = create_organization_with_presets("User PM Org", ["outreach"], owner=baker.make(User))
     user = baker.make(User, username="pmuser", email="pm@example.com")
     baker.make(OrganizationUser, user=user, organization=org)
 
-    pg = get_user_permission_group_for_org(user, str(org.pk))
+    pg = permission_group_for_user(user, str(org.pk), "Caseworker")
     assert pg.template is not None
     assert pg.template.name == "Caseworker"
     assert pg.organization == org
 
 
 @pytest.mark.django_db(transaction=True)
-def test_user_permission_group_not_member() -> None:
-    """Raises if user doesn't belong to the org."""
-    from accounts.models import User
-    from model_bakery import baker
+def test_permission_group_shelter_operator() -> None:
+    """Returns the Shelter Operator PermissionGroup for a user in their shelter org."""
+    org = create_organization_with_presets("Shelter PM", ["shelter"], owner=baker.make(User))
+    user = baker.make(User, username="spmuser", email="spm@example.com")
+    baker.make(OrganizationUser, user=user, organization=org)
 
+    pg = permission_group_for_user(user, str(org.pk), "Shelter Operator")
+    assert pg.template is not None
+    assert pg.template.name == "Shelter Operator"
+    assert pg.organization == org
+
+
+@pytest.mark.django_db(transaction=True)
+def test_permission_group_dual_type() -> None:
+    """User in a dual-type org can look up both member templates."""
+    org = create_organization_with_presets("Dual PM", ["outreach", "shelter"], owner=baker.make(User))
+    user = baker.make(User, username="dualuser", email="dual@example.com")
+    baker.make(OrganizationUser, user=user, organization=org)
+
+    pg = permission_group_for_user(user, str(org.pk), "Caseworker")
+    assert pg.template is not None
+    assert pg.template.name == "Caseworker"
+
+    pg2 = permission_group_for_user(user, str(org.pk), "Shelter Operator")
+    assert pg2.template is not None
+    assert pg2.template.name == "Shelter Operator"
+
+
+@pytest.mark.django_db(transaction=True)
+def test_permission_group_org_not_found() -> None:
+    """Raises ValidationError if org_id doesn't exist."""
+    user = baker.make(User, username="ghost", email="ghost@example.com")
+    with pytest.raises(ValidationError, match="not found"):
+        permission_group_for_user(user, "99999", "Caseworker")
+
+
+@pytest.mark.django_db(transaction=True)
+def test_permission_group_user_not_member() -> None:
+    """Raises ValidationError if user doesn't belong to the org."""
     org = create_organization_with_presets("Not Member Org", ["outreach"], owner=baker.make(User))
     user = baker.make(User, username="outsider", email="outsider@example.com")
 
     with pytest.raises(ValidationError, match="is not a member"):
-        get_user_permission_group_for_org(user, str(org.pk))
+        permission_group_for_user(user, str(org.pk), "Caseworker")
 
 
 @pytest.mark.django_db(transaction=True)
-def test_user_permission_group_org_not_found() -> None:
-    """Raises if org_id doesn't exist."""
-    from accounts.models import User
-    from model_bakery import baker
+def test_permission_group_template_not_found() -> None:
+    """Raises ValidationError if the requested template doesn't exist on the org."""
+    org = create_organization_with_presets("Outreach Only", ["outreach"], owner=baker.make(User))
+    user = baker.make(User, username="oo_user", email="oo@example.com")
+    baker.make(OrganizationUser, user=user, organization=org)
 
-    user = baker.make(User, username="ghost", email="ghost@example.com")
     with pytest.raises(ValidationError, match="not found"):
-        get_user_permission_group_for_org(user, "99999")
+        permission_group_for_user(user, str(org.pk), "Shelter Operator")
