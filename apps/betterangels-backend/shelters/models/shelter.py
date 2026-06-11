@@ -13,6 +13,7 @@ from django.db import models
 from django.db.models import UniqueConstraint
 from django_choices_field import TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
+from model_clone import CloneMixin
 from organizations.models import Organization
 from phonenumber_field.modelfields import PhoneNumberField
 from places.fields import PlacesField
@@ -213,7 +214,16 @@ class Shelter(BaseModel):
     pghistory.DeleteEvent("bed.remove"),
     pghistory.UpdateEvent("bed.status_change", condition=pghistory.AnyChange("status")),
 )
-class Bed(BaseModel):
+class Bed(CloneMixin, BaseModel):
+    _clone_linked_m2m_fields = [
+        "accessibility",
+        "demographics",
+        "funders",
+        "medical_needs",
+        "pets",
+    ]
+    _clone_excluded_fields = ["occupant"]
+
     accessibility = models.ManyToManyField(Accessibility, blank=True)
     b7 = models.BooleanField(default=False, blank=True)
     demographics = models.ManyToManyField(Demographic, blank=True)
@@ -244,7 +254,14 @@ class Bed(BaseModel):
         ]
 
 
-class Room(BaseModel):
+class Room(CloneMixin, BaseModel):
+    _clone_linked_m2m_fields = [
+        "accessibility",
+        "demographics",
+        "funders",
+        "pets",
+    ]
+
     accessibility = models.ManyToManyField(Accessibility, blank=True)
     amenities = models.TextField(blank=True, null=True)
     demographics = models.ManyToManyField(Demographic, blank=True)

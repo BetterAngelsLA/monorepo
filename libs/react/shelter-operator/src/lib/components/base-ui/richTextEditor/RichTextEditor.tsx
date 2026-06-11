@@ -1,4 +1,4 @@
-import { mergeCss, sanitizeHtml } from '@monorepo/react/shared';
+import { mergeCss } from '@monorepo/react/shared';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import { EditorContent, useEditor } from '@tiptap/react';
@@ -12,11 +12,7 @@ import {
   RichTextEditorToolbar,
   type ToolbarButtonKey,
 } from './RichTextEditorToolbar';
-
-const RICH_TEXT_SANITIZE_OPTIONS = {
-  allowedTags: ['p', 'strong', 'em', 'ul', 'ol', 'li', 'br', 'a'],
-  allowedAttributes: { a: ['href', 'target', 'rel'] },
-};
+import { RichTextEditorViewMode } from './RichTextEditorViewMode';
 
 /** Tiptap returns `<p></p>` for an empty editor. Treat that as empty. */
 function htmlToFormValue(html: string): string {
@@ -105,26 +101,16 @@ export function RichTextEditor(props: TProps) {
 
   if (isViewMode) {
     return (
-      <div className={mergeCss(['flex flex-col gap-1 font-sans', className])}>
-        {label && (
-          <Label
-            label={label}
-            variant={isViewEditMode ? 'offset' : undefined}
-            required={required}
-            className="mb-3"
-          />
-        )}
-        <div
-          className="prose prose-sm max-w-none pl-5 text-sm text-gray-900"
-          dangerouslySetInnerHTML={{
-            __html: sanitizeHtml(value, RICH_TEXT_SANITIZE_OPTIONS),
-          }}
-        />
-      </div>
+      <RichTextEditorViewMode
+        value={value}
+        label={label}
+        required={required}
+        className={className}
+      />
     );
   }
 
-  const contentCss = [
+  const editorContentCss = [
     'px-5',
     'py-3',
     'text-sm',
@@ -140,6 +126,11 @@ export function RichTextEditor(props: TProps) {
     '[&_.tiptap_ul]:pl-5',
     '[&_.tiptap_ol]:list-decimal',
     '[&_.tiptap_ol]:pl-5',
+    '[&_.tiptap_blockquote]:border-l-4',
+    '[&_.tiptap_blockquote]:border-gray-300',
+    '[&_.tiptap_blockquote]:pl-4',
+    '[&_.tiptap_blockquote]:text-gray-500',
+    '[&_.tiptap_blockquote]:italic',
   ];
 
   return (
@@ -173,7 +164,7 @@ export function RichTextEditor(props: TProps) {
           editor={editor}
           aria-invalid={shouldShowError ? true : undefined}
           aria-describedby={shouldShowError ? messageId : undefined}
-          className={mergeCss(contentCss)}
+          className={mergeCss(editorContentCss)}
         />
 
         {shouldShowError && (

@@ -1,0 +1,1 @@
+{% extends "account/messages/email_invite_organization.txt" %}
