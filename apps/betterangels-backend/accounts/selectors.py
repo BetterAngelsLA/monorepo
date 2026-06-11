@@ -3,16 +3,10 @@
 Reference: https://github.com/HackSoftware/Django-Styleguide#selectors
 """
 
-from typing import TYPE_CHECKING
-
-from common.org_types import REGISTRY
 from django.core.exceptions import ValidationError
 from organizations.models import Organization
 
 from .models import PermissionGroup, User
-
-if TYPE_CHECKING:
-    from common.permissions.config import TemplateConfig
 
 
 def permission_group_for_user(user: User, org_id: str, template_name: str) -> PermissionGroup:
