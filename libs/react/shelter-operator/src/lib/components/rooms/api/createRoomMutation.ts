@@ -1,13 +1,13 @@
 import type {
   CreateRoomInput,
   UpdateRoomInput,
-} from '../../../../apollo/graphql/__generated__/types';
-import type { RoomFormData } from '../formTypes';
+} from '../../../apollo/graphql/__generated__/types';
+import type { RoomFormData } from '../room-form/formTypes';
 import {
   CreateRoomDocument,
   type CreateRoomMutation,
   type CreateRoomMutationVariables,
-} from './__generated__/createRoomMutation.generated';
+} from './__generated__/roomMutations.generated';
 
 export { CreateRoomDocument as CREATE_ROOM_MUTATION };
 export type {
