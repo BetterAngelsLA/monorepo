@@ -2032,6 +2032,7 @@ export type OrgInvitationInput = {
   lastName: Scalars['String']['input'];
   middleName?: InputMaybe<Scalars['String']['input']>;
   organizationId: Scalars['ID']['input'];
+  permissionTemplate: PermissionTemplateEnum;
 };
 
 export type OrgPermissions = {
@@ -2185,6 +2186,11 @@ export type PermDefinition = {
   /** The permission itself. If this is empty that means that we are checking for any permission for the given app. */
   permission?: InputMaybe<Scalars['String']['input']>;
 };
+
+export enum PermissionTemplateEnum {
+  Caseworker = 'CASEWORKER',
+  ShelterOperator = 'SHELTER_OPERATOR'
+}
 
 export enum PetChoices {
   Cats = 'CATS',

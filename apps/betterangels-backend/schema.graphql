@@ -1699,6 +1699,7 @@ input OrgInvitationInput {
   middleName: String = null
   lastName: String!
   organizationId: ID!
+  permissionTemplate: PermissionTemplateEnum!
 }
 
 type OrgPermissions {
@@ -1835,6 +1836,11 @@ enum ParkingChoices {
 
 type ParkingType {
   name: ParkingChoices
+}
+
+enum PermissionTemplateEnum {
+  CASEWORKER
+  SHELTER_OPERATOR
 }
 
 enum PetChoices {
