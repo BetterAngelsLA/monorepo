@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Room, Shelter
-from shelters.selectors import shelter_get
+from shelters.selectors import admin_room_list, room_get, shelter_get
 from shelters.services.utils import _ROOM_M2M_FIELDS, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
@@ -63,11 +63,9 @@ def room_update(*, user: "User", room_id: int | str, data: Dict[str, Any]) -> Ro
     """
     data = dict(data)
     try:
-        room = Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS).get(pk=room_id)
+        room = room_get(user=user, room_id=room_id)
     except Room.DoesNotExist:
         raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found.")
-
-    shelter_get(user=user, shelter_id=room.shelter_id)
 
     m2m_data: Dict[str, Any] = {
         k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and k in data and data[k] is not None
@@ -88,7 +86,7 @@ def room_update(*, user: "User", room_id: int | str, data: Dict[str, Any]) -> Ro
     return room
 
 
-def _duplicate_label(label: str | None) -> str:
+def _clone_label(label: str | None) -> str:
     if not label:
         return "(Copy)"
     return f"{label} (Copy)"
@@ -100,9 +98,9 @@ def _copy_number_pattern(name: str | None) -> re.Pattern[str]:
     return re.compile(r"^\(Copy(?: (\d+))?\)$")
 
 
-def _unique_duplicate_name(*, shelter_id: int | str, name: str | None) -> str:
-    """Return a duplicate name that is unique within the shelter."""
-    primary = _duplicate_label(name)
+def _unique_clone_name(*, shelter_id: int | str, name: str | None) -> str:
+    """Return a clone name that is unique within the shelter."""
+    primary = _clone_label(name)
     prefix = f"{name} (Copy" if name else "(Copy"
     pattern = _copy_number_pattern(name)
 
@@ -122,59 +120,56 @@ def _unique_duplicate_name(*, shelter_id: int | str, name: str | None) -> str:
 
 
 @transaction.atomic
-def room_delete(*, data: Dict[str, Any]) -> list[int]:
+def room_delete(*, user: "User", ids: list[int]) -> list[int]:
     """Delete rooms by their IDs and return the deleted instances.
 
     Raises:
         ``ObjectDoesNotExist`` when any of the given IDs does not match a room.
     """
-    rooms = list(Room.objects.filter(pk__in=data["ids"]))
-    found_ids = {room.pk for room in rooms}
-    missing = [id for id in data["ids"] if int(id) not in found_ids]
+    rooms = admin_room_list(Room.objects.all(), user=user).filter(pk__in=ids)
     deleted_ids = []
-    if missing:
-        raise ObjectDoesNotExist(f"Room(s) matching ID(s) {missing} could not be found.")
+
     for room in rooms:
-        deleted_ids.append(room.pk)
+        id = room.pk
         room.delete()
+        deleted_ids.append(id)
 
     return deleted_ids
 
 
 @transaction.atomic
-def room_clone(*, user: "User", room_id: str, shelter_id: str) -> Room:
-    """Duplicate an existing room on *shelter_id*, including all M2M relationships.
+def room_clone(*, user: "User", room_id: str) -> Room:
+    """Clone an existing room on *shelter_id*, including all M2M relationships.
 
-    Validates org access via ``shelter_get``. The source room must belong to
+    Validates org access via ``room_get``. The source room must belong to
     *shelter_id*. Beds are not copied.
 
     Raises:
         ``ObjectDoesNotExist`` when the shelter or room is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    shelter = shelter_get(user=user, shelter_id=shelter_id)
     try:
-        source = Room.objects.filter(shelter_id=shelter.pk).prefetch_related(*_ROOM_M2M_FIELDS).get(pk=room_id)
+        source = room_get(user=user, room_id=room_id)
     except Room.DoesNotExist:
-        raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found for shelter {shelter_id}.")
+        raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found.")
 
-    duplicate = Room(
+    clone = Room(
         amenities=source.amenities,
         last_cleaned_inspected=source.last_cleaned_inspected,
         maintenance_flag=source.maintenance_flag,
         medical_respite=source.medical_respite,
-        name=_unique_duplicate_name(shelter_id=shelter.pk, name=source.name),
+        name=_unique_clone_name(shelter_id=source.shelter.pk, name=source.name),
         notes=source.notes,
-        shelter=shelter,
+        shelter=source.shelter,
         status=source.status,
         storage=source.storage,
         type=source.type,
         type_other=source.type_other,
     )
-    duplicate.full_clean()
-    duplicate.save()
+    clone.full_clean()
+    clone.save()
 
     for field_name in _ROOM_M2M_FIELDS:
-        getattr(duplicate, field_name).set(getattr(source, field_name).all())
+        getattr(clone, field_name).set(getattr(source, field_name).all())
 
-    return duplicate
+    return clone

@@ -186,7 +186,7 @@ class RoomUpdateTestCase(RoomServiceTestCase):
         self.assertIn("Room matching ID 999999 could not be found.", str(ctx.exception))
 
     def test_user_without_org_access_raises_does_not_exist(self) -> None:
-        with self.assertRaises(Shelter.DoesNotExist):
+        with self.assertRaises(ObjectDoesNotExist):
             User = get_user_model()
             outsider = User.objects.create_user(username="outsider", password="pw")
             room_update(user=outsider, room_id=self.room.pk, data={"name": "Blocked"})
@@ -194,44 +194,48 @@ class RoomUpdateTestCase(RoomServiceTestCase):
 
 class RoomDeleteTestCase(RoomServiceTestCase):
     def test_deletes_single_room(self) -> None:
-        room = Room.objects.create(shelter=self.shelter, name="Room-101")
+        room_to_delete = Room.objects.create(shelter=self.shelter, name="Room-101")
+        other_room = Room.objects.create(shelter=self.shelter, name="Room-102")
+        bed_in_room = Bed.objects.create(
+            shelter=self.shelter, room=room_to_delete, name="Bed 1", status=BedStatusChoices.AVAILABLE
+        )
+        other_bed = Bed.objects.create(
+            shelter=self.shelter, room=other_room, name="Bed 2", status=BedStatusChoices.AVAILABLE
+        )
 
-        deleted = room_delete(data={"ids": [room.pk]})
+        deleted = room_delete(user=self.user, ids=[room_to_delete.pk])
 
         self.assertEqual(len(deleted), 1)
-        self.assertEqual(deleted[0], room.pk)
-        self.assertFalse(Room.objects.filter(pk=room.pk).exists())
+        self.assertEqual(deleted[0], room_to_delete.pk)
+        self.assertFalse(Room.objects.filter(pk=room_to_delete.pk).exists())
+        self.assertTrue(Room.objects.filter(pk=other_room.pk).exists())
+        bed_in_room.refresh_from_db()
+        self.assertIsNone(bed_in_room.room_id)
+        self.assertTrue(Bed.objects.filter(pk=other_bed.pk).exists())
 
     def test_deletes_multiple_rooms(self) -> None:
-        room1 = Room.objects.create(shelter=self.shelter, name="Room-101")
-        room2 = Room.objects.create(shelter=self.shelter, name="Room-102")
+        room_to_delete_1 = Room.objects.create(shelter=self.shelter, name="Room-101")
+        room_to_delete_2 = Room.objects.create(shelter=self.shelter, name="Room-102")
+        other_room = Room.objects.create(shelter=self.shelter, name="Room-103")
+        other_bed = Bed.objects.create(
+            shelter=self.shelter, room=other_room, name="Bed 1", status=BedStatusChoices.AVAILABLE
+        )
 
-        deleted = room_delete(data={"ids": [room1.pk, room2.pk]})
+        deleted = room_delete(user=self.user, ids=[room_to_delete_1.pk, room_to_delete_2.pk])
 
         self.assertEqual(len(deleted), 2)
-        self.assertFalse(Room.objects.filter(pk__in=[room1.pk, room2.pk]).exists())
-
-    def test_missing_id_raises_object_does_not_exist(self) -> None:
-        with self.assertRaises(ObjectDoesNotExist) as ctx:
-            room_delete(data={"ids": [999999]})
-        self.assertIn("999999", str(ctx.exception))
-
-    def test_partial_missing_ids_raises_object_does_not_exist(self) -> None:
-        room = Room.objects.create(shelter=self.shelter, name="Room-101")
-
-        with self.assertRaises(ObjectDoesNotExist):
-            room_delete(data={"ids": [room.pk, 999999]})
-
-        self.assertTrue(Room.objects.filter(pk=room.pk).exists())
+        self.assertFalse(Room.objects.filter(pk__in=[room_to_delete_1.pk, room_to_delete_2.pk]).exists())
+        self.assertTrue(Room.objects.filter(pk=other_room.pk).exists())
+        self.assertTrue(Bed.objects.filter(pk=other_bed.pk).exists())
 
     def test_empty_list_returns_empty(self) -> None:
-        deleted = room_delete(data={"ids": []})
+        deleted = room_delete(user=self.user, ids=[])
 
         self.assertEqual(deleted, [])
 
 
-class RoomDuplicateTestCase(RoomServiceTestCase):
-    def test_duplicates_room_with_m2m_without_beds(self) -> None:
+class RoomCloneTestCase(RoomServiceTestCase):
+    def test_clones_room_with_m2m_without_beds(self) -> None:
         demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
         funder, _ = Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)
         accessibility, _ = Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)
@@ -259,61 +263,50 @@ class RoomDuplicateTestCase(RoomServiceTestCase):
         Bed.objects.create(shelter=self.shelter, room=source, name="Bed 1", status=BedStatusChoices.AVAILABLE)
         Bed.objects.create(shelter=self.shelter, room=source, name="Bed 2", status=BedStatusChoices.AVAILABLE)
 
-        duplicate = room_clone(
-            user=self.user,
-            room_id=str(source.pk),
-            shelter_id=str(self.shelter.pk),
-        )
+        clone = room_clone(user=self.user, room_id=str(source.pk))
 
-        self.assertNotEqual(duplicate.pk, source.pk)
-        self.assertEqual(duplicate.name, "Room-101 (Copy)")
-        self.assertEqual(duplicate.status, RoomStatusChoices.AVAILABLE)
-        self.assertEqual(duplicate.type, RoomStyleChoices.SINGLE_ROOM)
-        self.assertEqual(duplicate.type_other, "Custom style")
-        self.assertEqual(duplicate.notes, "Corner room")
-        self.assertEqual(duplicate.amenities, "WiFi, AC")
-        self.assertTrue(duplicate.medical_respite)
-        self.assertTrue(duplicate.storage)
-        self.assertTrue(duplicate.maintenance_flag)
-        self.assertEqual(duplicate.beds.count(), 0)
+        self.assertNotEqual(clone.pk, source.pk)
+        self.assertEqual(clone.name, "Room-101 (Copy)")
+        self.assertEqual(clone.status, RoomStatusChoices.AVAILABLE)
+        self.assertEqual(clone.type, RoomStyleChoices.SINGLE_ROOM)
+        self.assertEqual(clone.type_other, "Custom style")
+        self.assertEqual(clone.notes, "Corner room")
+        self.assertEqual(clone.amenities, "WiFi, AC")
+        self.assertTrue(clone.medical_respite)
+        self.assertTrue(clone.storage)
+        self.assertTrue(clone.maintenance_flag)
+        self.assertEqual(clone.beds.count(), 0)
         self.assertEqual(source.beds.count(), 2)
         self.assertEqual(
-            set(duplicate.demographics.values_list("name", flat=True)),
+            set(clone.demographics.values_list("name", flat=True)),
             set(source.demographics.values_list("name", flat=True)),
         )
         self.assertEqual(
-            set(duplicate.funders.values_list("name", flat=True)),
+            set(clone.funders.values_list("name", flat=True)),
             set(source.funders.values_list("name", flat=True)),
         )
         self.assertEqual(
-            set(duplicate.accessibility.values_list("name", flat=True)),
+            set(clone.accessibility.values_list("name", flat=True)),
             set(source.accessibility.values_list("name", flat=True)),
         )
         self.assertEqual(
-            set(duplicate.pets.values_list("name", flat=True)),
+            set(clone.pets.values_list("name", flat=True)),
             set(source.pets.values_list("name", flat=True)),
         )
 
-    def test_duplicate_same_room_twice_uses_incremented_name(self) -> None:
+    def test_clone_same_room_twice_uses_incremented_name(self) -> None:
         source = Room.objects.create(shelter=self.shelter, name="Room-101")
 
-        first = room_clone(user=self.user, room_id=str(source.pk), shelter_id=str(self.shelter.pk))
-        second = room_clone(user=self.user, room_id=str(source.pk), shelter_id=str(self.shelter.pk))
+        first = room_clone(user=self.user, room_id=str(source.pk))
+        second = room_clone(user=self.user, room_id=str(source.pk))
 
         self.assertEqual(first.name, "Room-101 (Copy)")
         self.assertEqual(second.name, "Room-101 (Copy 2)")
 
     def test_room_not_found_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            room_clone(user=self.user, room_id="999999", shelter_id=str(self.shelter.pk))
+            room_clone(user=self.user, room_id="999999")
         self.assertIn(
-            f"Room matching ID 999999 could not be found for shelter {self.shelter.pk}.",
+            "Room matching ID 999999 could not be found.",
             str(ctx.exception),
         )
-
-    def test_room_on_different_shelter_raises_object_does_not_exist(self) -> None:
-        other_shelter = shelter_recipe.make(organization=self.org)
-        room = Room.objects.create(shelter=other_shelter, name="Other room")
-
-        with self.assertRaises(ObjectDoesNotExist):
-            room_clone(user=self.user, room_id=str(room.pk), shelter_id=str(self.shelter.pk))
