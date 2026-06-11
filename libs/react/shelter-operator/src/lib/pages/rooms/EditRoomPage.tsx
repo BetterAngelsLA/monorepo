@@ -1,12 +1,7 @@
-import { useQuery } from '@apollo/client/react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import {
-  GetRoomDocument,
-  type GetRoomQuery,
-  type GetRoomQueryVariables,
-} from '../../components/rooms/api/__generated__/roomQueries.generated';
 import { RoomForm } from '../../components/rooms/room-form/RoomForm';
 import { mapRoomToFormData } from '../../components/rooms/room-form/utils/mapRoomToFormData';
+import { useRoom } from '../../hooks/useRoom';
 import { shelterManageRoomsRoute } from '../../routing';
 
 export function EditRoomPage() {
@@ -15,18 +10,11 @@ export function EditRoomPage() {
   const shelterIdValue = shelterId ?? '';
   const roomIdValue = roomId ?? '';
 
-  const { data, loading, error } = useQuery<
-    GetRoomQuery,
-    GetRoomQueryVariables
-  >(GetRoomDocument, {
-    variables: { id: roomIdValue },
-    skip: !roomIdValue,
-  });
+  const { room, loading, error } = useRoom(roomIdValue);
 
   if (!shelterIdValue || !roomIdValue) return null;
 
   const roomsPath = shelterManageRoomsRoute(shelterIdValue);
-  const room = data?.room ?? null;
 
   if (loading) {
     return (
