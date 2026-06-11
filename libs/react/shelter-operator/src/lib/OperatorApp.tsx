@@ -101,10 +101,7 @@ export function OperatorApp() {
                 path={manageSegments.bedsCreate}
                 element={<CreateBedPage />}
               />
-              <Route
-                path={manageSegments.bedsEdit}
-                element={<EditBedPage />}
-              />
+              <Route path={manageSegments.bedsEdit} element={<EditBedPage />} />
               <Route
                 path={manageSegments.beds}
                 element={<ShelterDashboardPage tab="beds" />}

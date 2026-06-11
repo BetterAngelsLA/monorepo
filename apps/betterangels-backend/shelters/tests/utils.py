@@ -13,7 +13,6 @@ SHELTER_OPERATOR_PERMISSIONS = (
     (Bed, "delete_bed"),
     (Bed, "view_bed"),
     (Room, "add_room"),
-    (Room, "add_room"),
     (Room, "change_room"),
     (Room, "delete_room"),
     (Room, "view_room"),

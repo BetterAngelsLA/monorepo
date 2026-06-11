@@ -352,7 +352,7 @@ class CloneRoomMutationTestCase(RoomMutationTestCase):
 
         variables = {"id": str(source.pk)}
 
-        expected_query_count = 28
+        expected_query_count = 30
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 

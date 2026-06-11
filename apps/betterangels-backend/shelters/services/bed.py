@@ -1,10 +1,10 @@
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, cast
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Bed, Shelter
 from shelters.selectors import admin_bed_list, bed_get, shelter_get
-from shelters.services.utils import _BED_M2M_FIELDS, _set_m2m_from_enums, _validate_subset_attributes
+from shelters.services.utils import _BED_M2M_FIELDS, _clone_label, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
     from accounts.models import User
@@ -62,7 +62,6 @@ def bed_update(*, user: "User", bed_id: int | str, data: Dict[str, Any]) -> Bed:
         bed = bed_get(user=user, bed_id=bed_id)
     except Bed.DoesNotExist:
         raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found.")
-    bed = bed_get(user=user, bed_id=bed_id)
 
     m2m_data: Dict[str, Any] = {
         k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and k in data and data[k] is not None
@@ -83,27 +82,16 @@ def bed_update(*, user: "User", bed_id: int | str, data: Dict[str, Any]) -> Bed:
     return bed
 
 
-def _clone_label(label: str | None) -> str | None:
-    if not label:
-        return None
-    return f"{label} (Copy)"
-
-
 @transaction.atomic
 def bed_delete(*, user: "User", ids: list[int]) -> list[int]:
-    """Delete rooms by their IDs and return the deleted instances.
+    """Delete beds by their IDs and return the deleted IDs.
 
     Raises:
-        ``ObjectDoesNotExist`` when any of the given IDs does not match a room.
+        ``ObjectDoesNotExist`` when any of the given IDs does not match a bed.
     """
     beds = admin_bed_list(Bed.objects.all(), user=user).filter(pk__in=ids)
-    deleted_ids = []
-
-    for bed in beds:
-        id = bed.pk
-        bed.delete()
-        deleted_ids.append(id)
-
+    deleted_ids = list(beds.values_list("pk", flat=True))
+    beds.delete()
     return deleted_ids
 
 
@@ -118,27 +106,11 @@ def bed_clone(*, user: "User", bed_id: str) -> Bed:
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     try:
-        source = bed_get(user=user, bed_id=bed_id)
+        source = admin_bed_list(
+            Bed.objects.select_related("shelter").prefetch_related(*_BED_M2M_FIELDS),
+            user=user,
+        ).get(pk=bed_id)
     except Bed.DoesNotExist:
         raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found.")
 
-    clone = Bed(
-        b7=source.b7,
-        fees=source.fees,
-        last_cleaned_inspected=source.last_cleaned_inspected,
-        maintenance_flag=source.maintenance_flag,
-        name=_clone_label(source.name),
-        room=source.room,
-        shelter=source.shelter,
-        status=source.status,
-        status_notes=source.status_notes,
-        storage=source.storage,
-        type=source.type,
-    )
-    clone.full_clean()
-    clone.save()
-
-    for field_name in _BED_M2M_FIELDS:
-        getattr(clone, field_name).set(getattr(source, field_name).all())
-
-    return clone
+    return cast(Bed, source.make_clone(attrs={"name": _clone_label(source.name)}))
