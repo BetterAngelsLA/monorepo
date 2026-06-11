@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Room, Shelter
-from shelters.selectors import shelter_get
+from shelters.selectors import admin_room_list, shelter_get
 from shelters.services.utils import _ROOM_M2M_FIELDS, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
@@ -122,15 +122,15 @@ def _unique_clone_name(*, shelter_id: int | str, name: str | None) -> str:
 
 
 @transaction.atomic
-def room_delete(*, data: Dict[str, Any]) -> list[int]:
+def room_delete(*, user: "User", ids: list[int]) -> list[int]:
     """Delete rooms by their IDs and return the deleted instances.
 
     Raises:
         ``ObjectDoesNotExist`` when any of the given IDs does not match a room.
     """
-    rooms = list(Room.objects.filter(pk__in=data["ids"]))
+    rooms = admin_room_list(Room.objects.all(), user=user).filter(pk__in=ids)
     found_ids = {room.pk for room in rooms}
-    missing = [id for id in data["ids"] if int(id) not in found_ids]
+    missing = [id for id in ids if id not in found_ids]
     deleted_ids = []
     if missing:
         raise ObjectDoesNotExist(f"Room(s) matching ID(s) {missing} could not be found.")

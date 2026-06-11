@@ -114,7 +114,9 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Room.perms.DELETE)])
     def delete_rooms(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
-        deleted_ids = room_delete(data=strawberry.asdict(data))
+        user = cast(User, get_current_user(info))
+        ids = [int(id) for id in data.ids]
+        deleted_ids = room_delete(user=user, ids=ids)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Bed.perms.ADD)])
@@ -136,5 +138,7 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Bed.perms.DELETE)])
     def delete_beds(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
-        deleted_ids = bed_delete(data=strawberry.asdict(data))
+        user = cast(User, get_current_user(info))
+        ids = [int(id) for id in data.ids]
+        deleted_ids = bed_delete(user=user, ids=ids)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])

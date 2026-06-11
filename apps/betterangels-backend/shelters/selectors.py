@@ -129,31 +129,27 @@ def shelter_get(*, user: "User", shelter_id: int | str) -> "Shelter":
 
 
 def admin_room_list(queryset: "QuerySet[Room]", *, user: "User") -> "QuerySet[Room]":
+    from shelters.models import Shelter
+
     return queryset.filter(shelter__in=admin_shelter_list(Shelter.objects.all(), user=user))
 
 
 def room_get(*, user: "User", room_id: int | str) -> "Room":
     from shelters.models import Room
-    from shelters.services.utils import _ROOM_M2M_FIELDS
 
-    return admin_room_list(
-        Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS),
-        user=user,
-    ).get(pk=room_id)
+    return admin_room_list(Room.objects.select_related("shelter"), user=user).get(pk=room_id)
 
 
 def admin_bed_list(queryset: "QuerySet[Bed]", *, user: "User") -> "QuerySet[Bed]":
+    from shelters.models import Shelter
+
     return queryset.filter(shelter__in=admin_shelter_list(Shelter.objects.all(), user=user))
 
 
 def bed_get(*, user: "User", bed_id: int | str) -> "Bed":
     from shelters.models import Bed
-    from shelters.services.utils import _BED_M2M_FIELDS
 
-    return admin_bed_list(
-        Bed.objects.select_related("shelter").prefetch_related(*_BED_M2M_FIELDS),
-        user=user,
-    ).get(pk=bed_id)
+    return admin_bed_list(Bed.objects.select_related("shelter"), user=user).get(pk=bed_id)
 
 
 def shelters_open_at(

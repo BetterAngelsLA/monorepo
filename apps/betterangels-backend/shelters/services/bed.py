@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Dict
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Bed, Shelter
-from shelters.selectors import shelter_get
+from shelters.selectors import admin_bed_list, shelter_get
 from shelters.services.utils import _BED_M2M_FIELDS, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
@@ -91,15 +91,15 @@ def _clone_label(label: str | None) -> str | None:
 
 
 @transaction.atomic
-def bed_delete(*, data: Dict[str, Any]) -> list[int]:
-    """Delete beds by their IDs and return the deleted instances.
+def bed_delete(*, user: "User", ids: list[int]) -> list[int]:
+    """Delete rooms by their IDs and return the deleted instances.
 
     Raises:
-        ``ObjectDoesNotExist`` when any of the given IDs does not match a bed.
+        ``ObjectDoesNotExist`` when any of the given IDs does not match a room.
     """
-    beds = list(Bed.objects.filter(pk__in=data["ids"]))
+    beds = admin_bed_list(Bed.objects.all(), user=user).filter(pk__in=ids)
     found_ids = {bed.pk for bed in beds}
-    missing = [id for id in data["ids"] if int(id) not in found_ids]
+    missing = [id for id in ids if id not in found_ids]
     deleted_ids = []
     if missing:
         raise ObjectDoesNotExist(f"Bed(s) matching ID(s) {missing} could not be found.")
