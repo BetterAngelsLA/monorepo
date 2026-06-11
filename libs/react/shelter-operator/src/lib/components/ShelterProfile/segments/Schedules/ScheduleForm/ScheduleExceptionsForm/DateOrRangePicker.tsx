@@ -2,10 +2,11 @@ type TProps = {
   startDate: string; // "YYYY-MM-DD"
   endDate: string; // "YYYY-MM-DD"
   onChange: (field: 'startDate' | 'endDate', value: string) => void;
+  disabled?: boolean;
 };
 
 export function DateOrRangePicker(props: TProps) {
-  const { startDate, endDate, onChange } = props;
+  const { startDate, endDate, onChange, disabled } = props;
 
   const isSingleDay = !endDate || endDate === startDate;
 
@@ -41,6 +42,7 @@ export function DateOrRangePicker(props: TProps) {
               if (isSingleDay) onChange('endDate', e.target.value);
             }}
             className="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={disabled}
           />
         </div>
 
@@ -53,6 +55,7 @@ export function DateOrRangePicker(props: TProps) {
               min={startDate}
               onChange={(e) => onChange('endDate', e.target.value)}
               className="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={disabled}
             />
           </div>
         )}
@@ -62,6 +65,7 @@ export function DateOrRangePicker(props: TProps) {
         type="button"
         onClick={handleSingleToggle}
         className="text-xs text-blue-600 hover:text-blue-800 underline"
+        disabled={disabled}
       >
         {isSingleDay
           ? '+ Add end date (date range)'

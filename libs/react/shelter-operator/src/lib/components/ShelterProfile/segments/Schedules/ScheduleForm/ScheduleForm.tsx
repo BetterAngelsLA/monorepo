@@ -8,6 +8,7 @@ import {
 import { Trash } from 'lucide-react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { Button } from '../../../../base-ui/buttons';
+import { Form } from '../../../../form/Form';
 import { scheduleFormSchema, type ScheduleFormData } from './formSchema';
 import { ScheduleExceptionsForm } from './ScheduleExceptionsForm';
 import type { DayErrors, WeeklyFormState } from './types';
@@ -23,6 +24,7 @@ type TProps = {
   onSave: (inputs: ScheduleInput[]) => void;
   onCancel?: () => void;
   onDelete?: () => void;
+  disabled?: boolean;
   className?: string;
 };
 
@@ -49,6 +51,7 @@ export function ScheduleForm(props: TProps) {
     onSave,
     onCancel,
     onDelete,
+    disabled,
     className,
   } = props;
 
@@ -58,7 +61,8 @@ export function ScheduleForm(props: TProps) {
     watch,
     setValue,
     trigger,
-    formState: { errors, isSubmitted },
+    formState: { errors, isSubmitted, isValid },
+    reset,
   } = useForm<ScheduleFormData>({
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: buildDefaultValues(initialSchedules),
@@ -77,12 +81,17 @@ export function ScheduleForm(props: TProps) {
     setValue('weekly', next);
 
     if (isSubmitted && validate) {
-      void trigger('weekly');
+      trigger('weekly');
     }
   }
 
   function onSubmit(data: ScheduleFormData) {
     onSave(buildScheduleInputs(scheduleType, data.weekly, data.exceptions));
+  }
+
+  function handleCancel() {
+    reset();
+    onCancel?.();
   }
 
   return (
@@ -94,6 +103,7 @@ export function ScheduleForm(props: TProps) {
             <Button
               variant="primary-sm"
               onClick={onDelete}
+              disabled={disabled || initialSchedules?.length === 0}
               aria-label="Remove schedule"
               leftIcon={<Trash size={14} />}
             >
@@ -106,6 +116,7 @@ export function ScheduleForm(props: TProps) {
           value={weekly}
           onChange={onSetWeekly}
           errors={errors.weekly as Record<string, DayErrors> | undefined}
+          disabled={disabled}
         />
       </section>
 
@@ -117,23 +128,19 @@ export function ScheduleForm(props: TProps) {
           control={control}
           onAdd={append}
           onRemove={remove}
+          disabled={disabled}
         />
       </section>
 
       <div className="flex gap-3 pt-2">
-        <Button variant="floating" onClick={handleSubmit(onSubmit)}>
-          Save Schedule
-        </Button>
-
-        {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-        )}
+        <Form.Actions
+          primaryLabel="Save Schedule"
+          onPrimaryClick={handleSubmit(onSubmit)}
+          onSecondaryClick={handleCancel}
+          primaryDisabled={disabled || !isValid}
+          secondaryDisabled={disabled}
+          className="z-99"
+        />
       </div>
     </div>
   );

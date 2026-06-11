@@ -1,5 +1,5 @@
 import { mergeCss } from '@monorepo/react/shared';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { ReactNode, useLayoutEffect, useRef, useState } from 'react';
 import { Tab } from './Tab';
 
 type TabsProps<T extends string | number> = {
@@ -8,6 +8,7 @@ type TabsProps<T extends string | number> = {
   onTabPress: (tab: T) => void;
   getLabel?: (tab: T) => string;
   className?: string;
+  endContent?: ReactNode;
 };
 
 export function Tabs<T extends string | number>({
@@ -16,6 +17,7 @@ export function Tabs<T extends string | number>({
   onTabPress,
   getLabel = (t) => String(t),
   className,
+  endContent,
 }: TabsProps<T>) {
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [sliderStyle, setSliderStyle] = useState({ left: 0, width: 0 });
@@ -73,6 +75,8 @@ export function Tabs<T extends string | number>({
               onPress={onTabPress}
             />
           ))}
+
+          {endContent}
         </div>
       </div>
     </div>

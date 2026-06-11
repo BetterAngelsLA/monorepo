@@ -13,10 +13,11 @@ type TProps = {
   control: Control<ScheduleFormData>;
   onAdd: (entry: ScheduleFormData['exceptions'][number]) => void;
   onRemove: (index: number) => void;
+  disabled?: boolean;
 };
 
 export function ScheduleExceptionsForm(props: TProps) {
-  const { fields, control, onAdd, onRemove } = props;
+  const { fields, control, onAdd, onRemove, disabled } = props;
 
   return (
     <div className="space-y-3">
@@ -39,6 +40,7 @@ export function ScheduleExceptionsForm(props: TProps) {
               onChange={(patch) => onChange({ ...value, ...patch })}
               onRemove={() => onRemove(index)}
               errors={fieldState.error as ExceptionErrors | undefined}
+              disabled={disabled}
             />
           )}
         />
@@ -48,6 +50,7 @@ export function ScheduleExceptionsForm(props: TProps) {
         type="button"
         onClick={() => onAdd(buildDefaultExceptionEntry())}
         className="flex items-center gap-1.5 text-sm text-amber-700 hover:text-amber-900 font-medium"
+        disabled={disabled}
       >
         <Plus size={15} />
         Add exception

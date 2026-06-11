@@ -1,3 +1,4 @@
+import { mergeCss } from '@monorepo/react/shared';
 import {
   ButtonHTMLAttributes,
   ReactNode,
@@ -24,6 +25,7 @@ type TProps<T extends string | number = string> = Omit<
   children: ReactNode;
   items: ButtonDropdownItem<T>[];
   onSelect: (item: ButtonDropdownItem<T>) => void;
+  buttonClassName?: string;
   variant?: ButtonVariant;
   color?: ButtonColor;
   leftIcon?: ReactNode;
@@ -43,6 +45,7 @@ export function ButtonDropdown<T extends string | number = string>(
     color,
     disabled,
     className,
+    buttonClassName,
     leftIcon,
     rightIcon,
     menuAlign = 'left',
@@ -63,12 +66,12 @@ export function ButtonDropdown<T extends string | number = string>(
   }
 
   return (
-    <div ref={anchorRef} className="relative w-fit">
+    <div ref={anchorRef} className={mergeCss(['relative w-fit', className])}>
       <Button
         variant={variant}
         color={color}
         disabled={disabled}
-        className={className}
+        className={buttonClassName}
         leftIcon={leftIcon}
         rightIcon={rightIcon}
         aria-haspopup="menu"

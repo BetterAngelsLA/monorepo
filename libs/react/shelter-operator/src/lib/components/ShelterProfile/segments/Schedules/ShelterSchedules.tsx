@@ -11,6 +11,7 @@ import {
 import { ButtonDropdown } from '../../../base-ui/buttonDropdown';
 import { Tabs } from '../../../base-ui/tabs';
 import { useToast } from '../../../base-ui/toast';
+import { Form } from '../../../form/Form';
 import { SCHEDULE_TABS, SCHEDULE_TAB_LABELS } from './constants';
 import { DeleteScheduleModal } from './DeleteScheduleModal';
 import { ShelterSchedulesForm } from './ShelterSchedulesForm';
@@ -31,11 +32,13 @@ export function ShelterSchedules(props: TProps) {
 
   async function onSave(
     scheduleType: ScheduleTypeChoices,
-    inputs: ScheduleInput[]
+    scheduleInputs: ScheduleInput[]
   ) {
-    if (!shelter) return;
+    if (!shelter) {
+      return;
+    }
 
-    const isDelete = inputs.length === 0;
+    const isDelete = scheduleInputs.length === 0;
 
     const otherSchedules: ScheduleInput[] = shelter.schedules
       .filter((s) => s.scheduleType !== scheduleType)
@@ -55,7 +58,7 @@ export function ShelterSchedules(props: TProps) {
         variables: {
           data: {
             id: shelterId,
-            schedules: [...otherSchedules, ...inputs],
+            schedules: [...otherSchedules, ...scheduleInputs],
           },
         },
       });
@@ -114,32 +117,34 @@ export function ShelterSchedules(props: TProps) {
         />
       )}
 
-      <div className="border-2 border-red-500">
-        <div className="flex items-center justify-end px-6 py-4">
-          <ButtonDropdown
-            items={missingItems}
-            disabled={missingTypes.length === 0}
-            onSelect={(item) =>
-              setCurrentTab(item.value as ScheduleTypeChoices)
-            }
-            leftIcon={<Plus size={20} />}
-            menuAlign="right"
-          >
-            Add Schedule
-          </ButtonDropdown>
-        </div>
+      <div className="px-6 flex-col flex-1 pb-48">
+        <Form.Header title="Shelter Schedule" className="pl-5" />
 
         <Tabs
           tabs={displayedTabs}
           selectedTab={currentTab}
           onTabPress={setCurrentTab}
           getLabel={(tab) => SCHEDULE_TAB_LABELS[tab]}
+          endContent={
+            <ButtonDropdown
+              className="ml-auto"
+              items={missingItems}
+              disabled={missingTypes.length === 0}
+              onSelect={(item) =>
+                setCurrentTab(item.value as ScheduleTypeChoices)
+              }
+              leftIcon={<Plus size={20} />}
+              menuAlign="right"
+            >
+              Add Schedule
+            </ButtonDropdown>
+          }
         />
 
         <ShelterSchedulesForm
           scheduleType={currentTab}
           schedules={shelter.schedules}
-          onSave={(inputs) => onSave(currentTab, inputs)}
+          onSave={(schedules) => onSave(currentTab, schedules)}
           onDelete={() => setDeleteModalVisible(true)}
         />
       </div>

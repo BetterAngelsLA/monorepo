@@ -15,10 +15,19 @@ type TProps = {
   /** Called when the user wants to copy this day's ranges to all other configured days */
   onCopyToAll?: () => void;
   errors?: TimeRangeError[];
+  disabled?: boolean;
 };
 
 export function DayRow(props: TProps) {
-  const { day: _day, label, schedule, onChange, onCopyToAll, errors } = props;
+  const {
+    day: _day,
+    label,
+    schedule,
+    onChange,
+    onCopyToAll,
+    errors,
+    disabled,
+  } = props;
 
   const hasRanges = schedule.ranges.length > 0;
   const canCopy =
@@ -58,6 +67,7 @@ export function DayRow(props: TProps) {
             : 'bg-white border-gray-300 text-gray-500 hover:border-gray-400',
         ])}
         aria-pressed={hasRanges}
+        disabled={disabled}
       >
         {label}
       </Button>
@@ -77,12 +87,14 @@ export function DayRow(props: TProps) {
                     errors?.[index]?.startTime?.message ||
                     errors?.[index]?.endTime?.message
                   }
+                  disabled={disabled}
                 />
                 <button
                   type="button"
                   onClick={() => removeRange(index)}
                   title="Remove time range"
                   className="text-gray-400 hover:text-red-500 transition-colors"
+                  disabled={disabled}
                 >
                   <X size={14} />
                 </button>
@@ -92,6 +104,7 @@ export function DayRow(props: TProps) {
                     onClick={onCopyToAll}
                     title="Copy these hours to all days"
                     className="text-gray-400 hover:text-blue-600 transition-colors"
+                    disabled={disabled}
                   >
                     <CopyIcon size={14} />
                   </button>
@@ -103,6 +116,7 @@ export function DayRow(props: TProps) {
             type="button"
             onClick={addRange}
             className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 transition-colors self-start"
+            disabled={disabled}
           >
             <Plus size={12} />
             Add range

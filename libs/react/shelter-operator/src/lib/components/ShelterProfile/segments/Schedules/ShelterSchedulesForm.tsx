@@ -1,3 +1,4 @@
+import { mergeCss } from '@monorepo/react/shared';
 import {
   type ScheduleInput,
   type ScheduleType,
@@ -8,15 +9,16 @@ import { ScheduleForm } from './ScheduleForm';
 type TProps = {
   scheduleType: ScheduleTypeChoices;
   schedules: ScheduleType[];
-  onSave: (inputs: ScheduleInput[]) => void;
+  onSave: (schedules: ScheduleInput[]) => void;
   onDelete?: () => void;
+  className?: string;
 };
 
 export function ShelterSchedulesForm(props: TProps) {
-  const { scheduleType, schedules, onSave, onDelete } = props;
+  const { scheduleType, schedules, onSave, onDelete, className } = props;
 
   return (
-    <div className="p-8 border-2 border-blue-500">
+    <div className={mergeCss(['p-8', className])}>
       <ScheduleForm
         key={scheduleType}
         scheduleType={scheduleType}

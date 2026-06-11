@@ -26,10 +26,11 @@ type TProps = {
   onChange: (patch: Partial<ExceptionEntry>) => void;
   onRemove: () => void;
   errors?: ExceptionErrors;
+  disabled?: boolean;
 };
 
 export function ExceptionRow(props: TProps) {
-  const { entry, onChange, onRemove, errors } = props;
+  const { entry, onChange, onRemove, errors, disabled } = props;
 
   return (
     <div className="border border-amber-200 bg-amber-50 rounded-lg p-4 space-y-4">
@@ -40,6 +41,7 @@ export function ExceptionRow(props: TProps) {
           onClick={onRemove}
           className="text-amber-600 hover:text-red-600 transition-colors"
           aria-label="Remove exception"
+          disabled={disabled}
         >
           <Trash2 size={16} />
         </button>
@@ -50,6 +52,7 @@ export function ExceptionRow(props: TProps) {
         startDate={entry.startDate}
         endDate={entry.endDate}
         onChange={(field, value) => onChange({ [field]: value })}
+        disabled={disabled}
       />
 
       {(errors?.startDate || errors?.endDate) && (
@@ -66,6 +69,7 @@ export function ExceptionRow(props: TProps) {
           checked={entry.closedAllDay}
           onChange={(e) => onChange({ closedAllDay: e.target.checked })}
           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          disabled={disabled}
         />
         <label
           htmlFor={`closed-${entry.localId}`}
@@ -84,6 +88,7 @@ export function ExceptionRow(props: TProps) {
             endTime={entry.endTime}
             onChange={(field, value) => onChange({ [field]: value })}
             error={errors?.startTime?.message || errors?.endTime?.message}
+            disabled={disabled}
           />
         </div>
       )}
@@ -99,6 +104,7 @@ export function ExceptionRow(props: TProps) {
             })
           }
           className="w-56 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={disabled}
         >
           <option value="">None</option>
           {Object.entries(CONDITION_LABELS).map(([value, label]) => (

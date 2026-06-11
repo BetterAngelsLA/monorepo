@@ -7,10 +7,11 @@ type TProps = {
   value: WeeklyFormState;
   onChange: (next: WeeklyFormState, validate?: boolean) => void;
   errors?: Record<string, DayErrors>;
+  disabled?: boolean;
 };
 
 export function WeeklyScheduleEditor(props: TProps) {
-  const { value, onChange, errors } = props;
+  const { value, onChange, errors, disabled } = props;
 
   const setDay = (
     day: DayOfWeekChoices,
@@ -42,6 +43,7 @@ export function WeeklyScheduleEditor(props: TProps) {
           onChange={(schedule, validate) => setDay(day, schedule, validate)}
           onCopyToAll={() => copyToAll(day)}
           errors={errors?.[day]?.ranges}
+          disabled={disabled}
         />
       ))}
     </div>
