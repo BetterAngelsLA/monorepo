@@ -173,7 +173,7 @@ class BedUpdateTestCase(BedServiceTestCase):
         self.assertIn("Bed matching ID 999999 could not be found.", str(ctx.exception))
 
     def test_user_without_org_access_raises_does_not_exist(self) -> None:
-        with self.assertRaises(Shelter.DoesNotExist):
+        with self.assertRaises(ObjectDoesNotExist):
             User = get_user_model()
             outsider = User.objects.create_user(username="outsider", password="pw")
             bed_update(user=outsider, bed_id=self.bed.pk, data={"name": "Blocked"})

@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Dict
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Bed, Shelter
-from shelters.selectors import admin_bed_list, shelter_get
+from shelters.selectors import admin_bed_list, bed_get, shelter_get
 from shelters.services.utils import _BED_M2M_FIELDS, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
@@ -59,11 +59,10 @@ def bed_update(*, user: "User", bed_id: int | str, data: Dict[str, Any]) -> Bed:
     """
     data = dict(data)
     try:
-        bed = Bed.objects.select_related("shelter").prefetch_related(*_BED_M2M_FIELDS).get(pk=bed_id)
+        bed = bed_get(user=user, bed_id=bed_id)
     except Bed.DoesNotExist:
         raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found.")
-
-    shelter_get(user=user, shelter_id=bed.shelter_id)
+    bed = bed_get(user=user, bed_id=bed_id)
 
     m2m_data: Dict[str, Any] = {
         k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and k in data and data[k] is not None
@@ -114,15 +113,14 @@ def bed_delete(*, user: "User", ids: list[int]) -> list[int]:
 def bed_clone(*, user: "User", bed_id: str, shelter_id: str) -> Bed:
     """Clone an existing bed on *shelter_id*, including all M2M relationships.
 
-    Validates org access via ``shelter_get``. The source bed must belong to *shelter_id*.
+    Validates org access via ``bed_get``. The source bed must belong to *shelter_id*.
 
     Raises:
         ``ObjectDoesNotExist`` when the shelter or bed is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    shelter = shelter_get(user=user, shelter_id=shelter_id)
     try:
-        source = Bed.objects.filter(shelter_id=shelter.pk).prefetch_related(*_BED_M2M_FIELDS).get(pk=bed_id)
+        source = bed_get(user=user, bed_id=bed_id)
     except Bed.DoesNotExist:
         raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found for shelter {shelter_id}.")
 
@@ -133,7 +131,7 @@ def bed_clone(*, user: "User", bed_id: str, shelter_id: str) -> Bed:
         maintenance_flag=source.maintenance_flag,
         name=_clone_label(source.name),
         room=source.room,
-        shelter=shelter,
+        shelter=source.shelter,
         status=source.status,
         status_notes=source.status_notes,
         storage=source.storage,

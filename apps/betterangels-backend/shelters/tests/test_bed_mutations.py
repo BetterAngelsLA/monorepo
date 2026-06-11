@@ -166,7 +166,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             },
         }
 
-        expected_query_count = 40
+        expected_query_count = 34
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -236,7 +236,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             "data": {"statusNotes": "New notes"},
         }
 
-        expected_query_count = 21
+        expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -385,7 +385,7 @@ class CloneBedMutationTestCase(BedMutationTestCase):
 
         variables = {"id": str(source.pk), "shelterId": str(self.shelter.pk)}
 
-        expected_query_count = 31
+        expected_query_count = 30
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
