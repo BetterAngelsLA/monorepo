@@ -14,6 +14,7 @@ ORG_ADMIN = TemplateConfig(
         UserOrganizationPermissions.VIEW_ORG_MEMBERS,
         ReportPermissions.VIEW_REPORTS,
     ],
+    is_invitable=False,
 )
 
 ORG_SUPERUSER = TemplateConfig(
@@ -26,4 +27,5 @@ ORG_SUPERUSER = TemplateConfig(
         UserOrganizationPermissions.VIEW_ORG_MEMBERS,
         ReportPermissions.VIEW_REPORTS,
     ],
+    is_invitable=False,
 )

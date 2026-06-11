@@ -157,6 +157,7 @@ class AddOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedT
             "firstName": "new",
             "lastName": "guy",
             "organizationId": self.org_1.pk,
+            "permissionTemplate": "CASEWORKER",
         }
 
         response = self.execute_graphql(mutation, {"data": variables})

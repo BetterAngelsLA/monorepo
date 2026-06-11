@@ -18,20 +18,20 @@ def permission_group_for_user(user: User, org_id: str, template_name: str) -> Pe
     Raises :class:`~django.core.exceptions.ValidationError` on any of
     these conditions.
     """
+    # Single query to find the PermissionGroup with org + user membership + template
+    # all validated at once. Falls back to disambiguation queries only on failure.
     try:
-        org = Organization.objects.get(pk=org_id)
-    except Organization.DoesNotExist:
-        raise ValidationError(f"Organization with id '{org_id}' not found.")
-
-    if not org.users.filter(pk=user.pk).exists():
-        raise ValidationError(f"User '{user}' is not a member of organization '{org.name}'.")
-
-    try:
-        return PermissionGroup.objects.get(
-            organization=org,
+        return PermissionGroup.objects.select_related("organization").get(
+            organization_id=org_id,
+            organization__users=user,
             template__name=template_name,
         )
     except PermissionGroup.DoesNotExist:
+        # Disambiguate which condition failed.
+        if not Organization.objects.filter(pk=org_id).exists():
+            raise ValidationError(f"Organization with id '{org_id}' not found.")
+        if not Organization.objects.filter(pk=org_id, users=user).exists():
+            raise ValidationError(f"User '{user}' is not a member of organization with id '{org_id}'.")
         raise ValidationError(
-            f"Permission group for template '{template_name}' not found " f"in organization '{org.name}'."
+            f"Permission group for template '{template_name}' not found in organization with id '{org_id}'."
         )

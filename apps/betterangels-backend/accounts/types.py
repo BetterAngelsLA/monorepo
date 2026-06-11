@@ -15,6 +15,7 @@ from shelters.permissions import ShelterPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
+from .enums import PermissionTemplateEnum
 from .models import User
 from .permissions import UserOrganizationPermissions
 
@@ -231,6 +232,7 @@ class OrgInvitationInput:
     middle_name: Optional[str] = None
     last_name: str
     organization_id: ID
+    permission_template: PermissionTemplateEnum
 
 
 @strawberry.input

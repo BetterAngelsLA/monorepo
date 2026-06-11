@@ -8,7 +8,6 @@ from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
 from common.graphql.types import DeletedObjectType
 from common.org_types import REGISTRY
-from common.permissions.config import TemplateConfig
 from common.permissions.utils import IsAuthenticated
 from django.conf import settings
 from django.contrib import auth
@@ -16,7 +15,6 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
-from notes.groups import CASEWORKER
 from notes.permissions import NotePermissions
 from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
@@ -205,13 +203,13 @@ class Mutation:
         if organization is None:
             raise PermissionDenied("You do not have permission to add members.")
 
-        # Derive the default member template from the org's primary type.
-        # Outreach orgs → Caseworker; shelter orgs → Shelter Operator.
-        default_template: TemplateConfig = CASEWORKER  # fallback
-        if hasattr(organization, "profile") and organization.profile.org_types:
-            org_config = REGISTRY.org_type(organization.profile.org_types[0].value)
-            if org_config and org_config.templates:
-                default_template = org_config.templates[0]
+        template = REGISTRY.template(data.permission_template.value)  # type: ignore[union-attr]
+        if template is None:
+            valid = REGISTRY.invitable_template_names_for(organization)
+            raise ValidationError(
+                f"Invalid permission template '{data.permission_template.value}'. "  # type: ignore[union-attr]
+                f"Available: {', '.join(valid)}"
+            )
 
         user = member_add(
             email=data.email,
@@ -219,7 +217,7 @@ class Mutation:
             last_name=data.last_name,
             middle_name=data.middle_name,
             organization=organization,
-            permission_templates=(default_template,),
+            permission_templates=(template,),
         )
 
         invitation_backend().create_organization_invite(

@@ -10,3 +10,7 @@ class TemplateConfig:
 
     name: str
     permissions: list[str] = field(default_factory=list)
+    is_invitable: bool = True
+    """Whether a user can be invited directly into this role.
+
+    Set ``False`` for promotion-only roles (e.g. Org Admin, Org Superuser)."""

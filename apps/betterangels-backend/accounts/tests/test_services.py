@@ -4,7 +4,7 @@ Integration tests for ``accounts.services`` and ``accounts.selectors``.
 
 import pytest
 from accounts.groups import ORG_ADMIN
-from accounts.models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
+from accounts.models import OrganizationProfile, PermissionGroupTemplate, User
 from accounts.selectors import permission_group_for_user
 from accounts.services import create_organization_with_presets, member_add
 from django.contrib.auth.models import Group
@@ -138,6 +138,7 @@ def test_member_add_existing_user_different_org() -> None:
     org_1 = create_organization_with_presets("Org 1", ["outreach"], owner=baker.make(User))
     org_2 = create_organization_with_presets("Org 2", ["outreach"], owner=baker.make(User))
 
+    assert user.email is not None
     # User is not yet in either org.
     member_add(
         email=user.email,
@@ -151,6 +152,7 @@ def test_member_add_existing_user_different_org() -> None:
     cw_org1 = Group.objects.get(permissiongroup__organization=org_1, permissiongroup__template__name="Caseworker")
     assert cw_org1 in user.groups.all()
 
+    assert user.email is not None
     # Add to second org — should not duplicate the User record.
     member_add(
         email=user.email,

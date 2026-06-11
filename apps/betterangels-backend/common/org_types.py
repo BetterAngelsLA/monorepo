@@ -48,16 +48,21 @@ class Registry:
 
     _by_name: dict[str, OrgTypeConfig] = field(init=False, repr=False)
     _templates_by_name: dict[str, TemplateConfig] = field(init=False, repr=False)
+    _invitable_templates_by_name: dict[str, TemplateConfig] = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         by_name: dict[str, OrgTypeConfig] = {}
         templates_by_name: dict[str, TemplateConfig] = {}
+        invitable_templates_by_name: dict[str, TemplateConfig] = {}
         for org_config in (self.outreach, self.shelter):
             by_name[org_config.name] = org_config
             for template_config in org_config.templates:
                 templates_by_name[template_config.name] = template_config
+                if template_config.is_invitable:
+                    invitable_templates_by_name[template_config.name] = template_config
         object.__setattr__(self, "_by_name", by_name)
         object.__setattr__(self, "_templates_by_name", templates_by_name)
+        object.__setattr__(self, "_invitable_templates_by_name", invitable_templates_by_name)
 
     # ── Queries ────────────────────────────────────────────────────────
 
@@ -81,6 +86,22 @@ class Registry:
             org_config = self._by_name.get(org_type.value)
             if org_config:
                 names.extend(template_config.name for template_config in org_config.templates)
+        return sorted(set(names))
+
+    def invitable_template_names(self) -> list[str]:
+        """Return invitable-only template names (is_invitable=True)."""
+        return sorted(self._invitable_templates_by_name.keys())
+
+    def invitable_template_names_for(self, org: Organization) -> list[str]:
+        """Invitable template names available for *org*, based on ``profile.org_types``."""
+        org_types = org.profile.org_types if hasattr(org, "profile") else []
+        names: list[str] = []
+        for org_type in org_types:
+            org_config = self._by_name.get(org_type.value)
+            if org_config:
+                names.extend(
+                    template_config.name for template_config in org_config.templates if template_config.is_invitable
+                )
         return sorted(set(names))
 
 
