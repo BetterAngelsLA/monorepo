@@ -1,6 +1,8 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@apollo/client/react';
 import { Button } from '@monorepo/react/components';
-import { useCallback, useMemo, useState, type SubmitEvent } from 'react';
+import { useMemo, useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import { GetShelterRoomsDocument } from '../__generated__/rooms.generated';
 import {
   CREATE_ROOM_MUTATION,
@@ -14,13 +16,9 @@ import {
   type UpdateRoomMutationResult,
   type UpdateRoomMutationVariables,
 } from './api/updateRoomMutation';
-import {
-  validateField,
-  validateRoomForm,
-  type FormErrors,
-} from './constants/validation';
+import { createEmptyRoomFormData } from './constants/defaultRoomFormData';
+import { formSchema } from './constants/validation';
 import type { RoomFormData } from './formTypes';
-import { useRoomForm } from './hooks/useRoomForm';
 import { BasicInformationSection } from './sections/BasicInformationSection';
 import { RoomDetailsSection } from './sections/RoomDetailsSection';
 
@@ -40,9 +38,19 @@ export function RoomForm({
   onCancel,
 }: RoomFormProps) {
   const isEditMode = Boolean(roomId);
-  const { formData, updateField, resetForm } = useRoomForm(initialData);
-  const [errors, setErrors] = useState<FormErrors>({});
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+
+  const methods = useForm<RoomFormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: initialData ?? createEmptyRoomFormData(),
+  });
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors, isValid },
+  } = methods;
 
   const refetchQueries = useMemo(
     () => [{ query: GetShelterRoomsDocument, variables: { shelterId } }],
@@ -61,65 +69,36 @@ export function RoomForm({
 
   const isSubmitting = isCreating || isUpdating;
 
-  const handleFieldChange = useCallback(
-    <K extends keyof RoomFormData>(field: K, value: RoomFormData[K]) => {
-      updateField(field, value);
-      const fieldError = validateField(field, value);
-      setErrors((prev) => {
-        if (fieldError) {
-          return { ...prev, [field]: fieldError };
-        }
-        if (prev[field]) {
-          const { [field]: _omit, ...rest } = prev;
-          return rest;
-        }
-        return prev;
-      });
-    },
-    [updateField]
-  );
-
-  const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const onSubmit = handleSubmit(async (data: RoomFormData) => {
     setSubmissionError(null);
-
-    const validation = validateRoomForm(formData);
-    setErrors(validation.errors);
-    if (!validation.isValid) {
-      return;
-    }
 
     try {
       if (isEditMode && roomId) {
-        const { data } = await updateRoom({
+        const { data: result } = await updateRoom({
           variables: {
             id: roomId,
-            data: buildUpdateRoomInput(formData),
+            data: buildUpdateRoomInput(data),
           },
           errorPolicy: 'all',
         });
 
-        const result = data?.updateRoom;
-
-        if (result?.__typename === 'OperationInfo') {
-          const firstMessage = result.messages?.[0]?.message;
+        if (result?.updateRoom?.__typename === 'OperationInfo') {
+          const firstMessage = result.updateRoom.messages?.[0]?.message;
           setSubmissionError(
             firstMessage || 'Unable to update room. Please try again.'
           );
           return;
         }
       } else {
-        const { data } = await createRoom({
+        const { data: result } = await createRoom({
           variables: {
-            data: buildCreateRoomInput(formData, shelterId),
+            data: buildCreateRoomInput(data, shelterId),
           },
           errorPolicy: 'all',
         });
 
-        const result = data?.createRoom;
-
-        if (result?.__typename === 'OperationInfo') {
-          const firstMessage = result.messages?.[0]?.message;
+        if (result?.createRoom?.__typename === 'OperationInfo') {
+          const firstMessage = result.createRoom.messages?.[0]?.message;
           setSubmissionError(
             firstMessage || 'Unable to create room. Please try again.'
           );
@@ -128,66 +107,61 @@ export function RoomForm({
       }
 
       if (!isEditMode) {
-        resetForm();
+        reset();
       }
-      setErrors({});
       onSuccess?.();
     } catch {
       setSubmissionError('A network error occurred. Please try again.');
     }
-  };
-
-  const sectionProps = {
-    data: formData,
-    onChange: handleFieldChange,
-    errors,
-  };
+  });
 
   return (
-    <div className="space-y-4">
-      {submissionError ? (
-        <div
-          className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-          role="alert"
-        >
-          {submissionError}
-        </div>
-      ) : null}
-
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-6"
-        data-testid="room-form"
-      >
-        <BasicInformationSection {...sectionProps} />
-        <RoomDetailsSection {...sectionProps} />
-
-        <div className="flex justify-end gap-3 pt-2">
-          {onCancel ? (
-            <Button
-              type="button"
-              size="xl"
-              className="h-auto! px-6 py-3"
-              onClick={onCancel}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-          ) : null}
-          <Button
-            size="xl"
-            type="submit"
-            className="h-auto! bg-green-600! text-black! px-6 py-3 hover:bg-green-700! transition-colors disabled:opacity-50"
-            disabled={isSubmitting}
+    <FormProvider {...methods}>
+      <div className="space-y-4">
+        {submissionError ? (
+          <div
+            className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            role="alert"
           >
-            {isSubmitting
-              ? 'Submitting…'
-              : isEditMode
-              ? 'Save Room'
-              : 'Create Room'}
-          </Button>
-        </div>
-      </form>
-    </div>
+            {submissionError}
+          </div>
+        ) : null}
+
+        <form
+          onSubmit={onSubmit}
+          className="space-y-6"
+          data-testid="room-form"
+        >
+          <BasicInformationSection control={control} errors={errors} />
+          <RoomDetailsSection control={control} errors={errors} />
+
+          <div className="flex justify-end gap-3 pt-2">
+            {onCancel ? (
+              <Button
+                type="button"
+                size="xl"
+                className="h-auto! px-6 py-3"
+                onClick={onCancel}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+            ) : null}
+            <Button
+              size="xl"
+              type="submit"
+              className="h-auto! bg-green-600! text-black! px-6 py-3 hover:bg-green-700! transition-colors disabled:opacity-50"
+              disabled={isSubmitting || !isValid}
+            >
+              {isSubmitting
+                ? 'Submitting…'
+                : isEditMode
+                ? 'Save Room'
+                : 'Create Room'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </FormProvider>
   );
 }

@@ -68,7 +68,10 @@ export function shelterCreateRoomRoute(shelterId: string): string {
 }
 
 export function shelterEditRoomRoute(shelterId: string, roomId: string): string {
-  return `${shelterManageRoute(shelterId)}/rooms/${roomId}/edit`;
+  return generatePath(`${paths.shelterManage}/${manageSegments.roomsEdit}`, {
+    shelterId,
+    roomId,
+  });
 }
 
 export function shelterManageBedsRoute(shelterId: string): string {

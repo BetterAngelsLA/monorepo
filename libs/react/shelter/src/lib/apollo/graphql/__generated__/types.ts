@@ -253,6 +253,15 @@ export type BedsByStatusType = {
   reserved: Scalars['Int']['output'];
 };
 
+export type BulkDeleteInput = {
+  ids: Array<Scalars['ID']['input']>;
+};
+
+export type BulkDeleteResult = {
+  __typename?: 'BulkDeleteResult';
+  ids: Array<Scalars['ID']['output']>;
+};
+
 export type CityType = {
   __typename?: 'CityType';
   id: Scalars['ID']['output'];
@@ -523,6 +532,10 @@ export type ClientSearchInput = {
   lastName?: InputMaybe<Scalars['String']['input']>;
   middleName?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type CloneBedPayload = BedType | OperationInfo;
+
+export type CloneRoomPayload = OperationInfo | RoomType;
 
 export enum ConditionChoices {
   AirQualitySmoke = 'AIR_QUALITY_SMOKE',
@@ -879,7 +892,7 @@ export enum DayOfWeekChoices {
   Wednesday = 'WEDNESDAY'
 }
 
-export type DeleteBedPayload = BedType | OperationInfo;
+export type DeleteBedsPayload = BulkDeleteResult | OperationInfo;
 
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
@@ -903,7 +916,7 @@ export type DeleteNotePayload = NoteType | OperationInfo;
 
 export type DeleteReferralPayload = DeletedObjectType | OperationInfo;
 
-export type DeleteRoomPayload = OperationInfo | RoomType;
+export type DeleteRoomsPayload = BulkDeleteResult | OperationInfo;
 
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
 
@@ -963,10 +976,6 @@ export type DjangoModelType = {
   __typename?: 'DjangoModelType';
   pk: Scalars['ID']['output'];
 };
-
-export type DuplicateBedPayload = BedType | OperationInfo;
-
-export type DuplicateRoomPayload = OperationInfo | RoomType;
 
 export enum EntryRequirementChoices {
   Background = 'BACKGROUND',
@@ -1537,6 +1546,8 @@ export type MedicalNeedType = {
 export type Mutation = {
   __typename?: 'Mutation';
   addOrganizationMember: AddOrganizationMemberPayload;
+  cloneBed: CloneBedPayload;
+  cloneRoom: CloneRoomPayload;
   createBed: CreateBedPayload;
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
@@ -1556,7 +1567,7 @@ export type Mutation = {
   createShelter: CreateShelterPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
   createTask: CreateTaskPayload;
-  deleteBed: DeleteBedPayload;
+  deleteBeds: DeleteBedsPayload;
   deleteClientContact: DeleteClientContactPayload;
   deleteClientDocument: DeleteClientDocumentPayload;
   deleteClientHouseholdMember: DeleteClientHouseholdMemberPayload;
@@ -1566,12 +1577,10 @@ export type Mutation = {
   deleteHmisProfile: DeleteHmisProfilePayload;
   deleteNote: DeleteNotePayload;
   deleteReferral: DeleteReferralPayload;
-  deleteRoom: DeleteRoomPayload;
+  deleteRooms: DeleteRoomsPayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
-  duplicateBed: DuplicateBedPayload;
-  duplicateRoom: DuplicateRoomPayload;
   generateClientDocumentUploads: GenerateClientDocumentUploadsPayload;
   generateClientProfilePhotoUpload: GenerateClientProfilePhotoUploadPayload;
   hmisLogin: HmisLoginSuccessHmisLoginError;
@@ -1608,6 +1617,18 @@ export type Mutation = {
 
 export type MutationAddOrganizationMemberArgs = {
   data: OrgInvitationInput;
+};
+
+
+export type MutationCloneBedArgs = {
+  id: Scalars['ID']['input'];
+  shelterId: Scalars['ID']['input'];
+};
+
+
+export type MutationCloneRoomArgs = {
+  id: Scalars['ID']['input'];
+  shelterId: Scalars['ID']['input'];
 };
 
 
@@ -1707,8 +1728,8 @@ export type MutationCreateTaskArgs = {
 };
 
 
-export type MutationDeleteBedArgs = {
-  data: DeleteDjangoObjectInput;
+export type MutationDeleteBedsArgs = {
+  data: BulkDeleteInput;
 };
 
 
@@ -1752,8 +1773,8 @@ export type MutationDeleteReferralArgs = {
 };
 
 
-export type MutationDeleteRoomArgs = {
-  data: DeleteDjangoObjectInput;
+export type MutationDeleteRoomsArgs = {
+  data: BulkDeleteInput;
 };
 
 
@@ -1769,18 +1790,6 @@ export type MutationDeleteSocialMediaProfileArgs = {
 
 export type MutationDeleteTaskArgs = {
   data: DeleteDjangoObjectInput;
-};
-
-
-export type MutationDuplicateBedArgs = {
-  id: Scalars['ID']['input'];
-  shelterId: Scalars['ID']['input'];
-};
-
-
-export type MutationDuplicateRoomArgs = {
-  id: Scalars['ID']['input'];
-  shelterId: Scalars['ID']['input'];
 };
 
 

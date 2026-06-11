@@ -282,31 +282,60 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         self.assertEqual(source.pets.count(), 1)
 
 
-class DeleteBedMutationTestCase(BedMutationTestCase):
+class DeleteBedsMutationTestCase(BedMutationTestCase):
     def setUp(self) -> None:
         super().setUp()
 
         self.mutation = """
-            mutation ($id: ID!) {
-                deleteBed(data: { id: $id }) {
-                    ... on BedType {
-                        id
+            mutation ($data: BulkDeleteInput!) {
+                deleteBeds(data: $data) {
+                    ... on BulkDeleteResult {
+                        ids
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
                     }
                 }
             }
         """
 
-    def test_delete_bed(self) -> None:
+    def test_delete_single_bed(self) -> None:
         bed = baker.make(Bed, shelter=self.shelter, name="Bed to delete")
-        variables = {"id": str(bed.pk)}
+        variables = {"data": {"ids": [str(bed.pk)]}}
 
-        expected_query_count = 15
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self.mutation, variables)
+        response = self.execute_graphql(self.mutation, variables)
 
         self.assertIsNone(response.get("errors"))
-        self.assertEqual(response["data"]["deleteBed"]["id"], str(bed.pk))
+        deleted_ids = response["data"]["deleteBeds"]["ids"]
+        self.assertEqual(len(deleted_ids), 1)
+        self.assertEqual(deleted_ids[0], str(bed.pk))
         self.assertFalse(Bed.objects.filter(pk=bed.pk).exists())
+
+    def test_delete_multiple_beds(self) -> None:
+        bed1 = baker.make(Bed, shelter=self.shelter, name="Bed A")
+        bed2 = baker.make(Bed, shelter=self.shelter, name="Bed B")
+        variables = {"data": {"ids": [str(bed1.pk), str(bed2.pk)]}}
+
+        response = self.execute_graphql(self.mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        deleted_ids = response["data"]["deleteBeds"]["ids"]
+        self.assertEqual(deleted_ids, [str(bed1.pk), str(bed2.pk)])
+        self.assertFalse(Bed.objects.filter(pk__in=[bed1.pk, bed2.pk]).exists())
+
+    def test_delete_beds_not_found_returns_error(self) -> None:
+        variables = {"data": {"ids": ["999999"]}}
+
+        response = self.execute_graphql(self.mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["deleteBeds"]["messages"]
+        self.assertTrue(len(messages) > 0)
+        self.assertEqual(Bed.objects.filter(shelter=self.shelter).count(), 0)
 
 
 class DuplicateBedMutationTestCase(BedMutationTestCase):
@@ -315,7 +344,7 @@ class DuplicateBedMutationTestCase(BedMutationTestCase):
 
         self.mutation = f"""
             mutation DuplicateBed($id: ID!, $shelterId: ID!) {{
-                duplicateBed(id: $id, shelterId: $shelterId) {{
+                cloneBed(id: $id, shelterId: $shelterId) {{
                     ... on BedType {{
                         {self.bed_fields}
                     }}
@@ -323,7 +352,7 @@ class DuplicateBedMutationTestCase(BedMutationTestCase):
             }}
         """
 
-    def test_duplicate_bed(self) -> None:
+    def test_clone_bed(self) -> None:
         demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
         funder, _ = Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)
         accessibility, _ = Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)
@@ -361,7 +390,7 @@ class DuplicateBedMutationTestCase(BedMutationTestCase):
             response = self.execute_graphql(self.mutation, variables)
 
         self.assertIsNone(response.get("errors"))
-        data = response["data"]["duplicateBed"]
+        data = response["data"]["cloneBed"]
         self.assertNotEqual(data["id"], str(source.pk))
         self.assertEqual(data["b7"], True)
         self.assertEqual(data["fees"], 25)

@@ -122,7 +122,27 @@ def _unique_duplicate_name(*, shelter_id: int | str, name: str | None) -> str:
 
 
 @transaction.atomic
-def room_duplicate(*, user: "User", room_id: str, shelter_id: str) -> Room:
+def room_delete(*, data: Dict[str, Any]) -> list[int]:
+    """Delete rooms by their IDs and return the deleted instances.
+
+    Raises:
+        ``ObjectDoesNotExist`` when any of the given IDs does not match a room.
+    """
+    rooms = list(Room.objects.filter(pk__in=data["ids"]))
+    found_ids = {room.pk for room in rooms}
+    missing = [id for id in data["ids"] if int(id) not in found_ids]
+    deleted_ids = []
+    if missing:
+        raise ObjectDoesNotExist(f"Room(s) matching ID(s) {missing} could not be found.")
+    for room in rooms:
+        deleted_ids.append(room.pk)
+        room.delete()
+
+    return deleted_ids
+
+
+@transaction.atomic
+def room_clone(*, user: "User", room_id: str, shelter_id: str) -> Room:
     """Duplicate an existing room on *shelter_id*, including all M2M relationships.
 
     Validates org access via ``shelter_get``. The source room must belong to
