@@ -1,12 +1,7 @@
-import { useQuery } from '@apollo/client/react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import {
-  GetBedDocument,
-  type GetBedQuery,
-  type GetBedQueryVariables,
-} from '../../components/beds/api/__generated__/bedQueries.generated';
 import { BedForm } from '../../components/beds/bed-form/BedForm';
 import { mapBedToFormData } from '../../components/beds/bed-form/utils/mapBedToFormData';
+import { useBed } from '../../hooks/useBed';
 import { shelterManageBedsRoute } from '../../routing';
 
 export function EditBedPage() {
@@ -15,18 +10,11 @@ export function EditBedPage() {
   const shelterIdValue = shelterId ?? '';
   const bedIdValue = bedId ?? '';
 
-  const { data, loading, error } = useQuery<GetBedQuery, GetBedQueryVariables>(
-    GetBedDocument,
-    {
-      variables: { id: bedIdValue },
-      skip: !bedIdValue,
-    }
-  );
+  const { bed, loading, error } = useBed(bedIdValue);
 
   if (!shelterIdValue || !bedIdValue) return null;
 
   const bedsPath = shelterManageBedsRoute(shelterIdValue);
-  const bed = data?.beds.results?.[0];
 
   if (loading) {
     return (

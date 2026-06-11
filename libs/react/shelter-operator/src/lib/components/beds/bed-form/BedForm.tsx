@@ -1,8 +1,8 @@
 import { useMutation, useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@monorepo/react/components';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { Form } from '../../form/Form';
 import {
   GetRoomsDocument,
   type GetRoomsQuery,
@@ -91,7 +91,7 @@ export function BedForm({
 
   const isSubmitting = isCreating || isUpdating;
 
-  const onSubmit = handleSubmit(async (data: BedFormData) => {
+  async function submitBed(data: BedFormData) {
     setSubmissionError(null);
 
     try {
@@ -135,11 +135,16 @@ export function BedForm({
     } catch {
       setSubmissionError('A network error occurred. Please try again.');
     }
-  });
+  }
+
+  function handleCancel() {
+    reset();
+    onCancel?.();
+  }
 
   return (
     <FormProvider {...methods}>
-      <div className="space-y-4">
+      <div className="space-y-4 pb-48">
         {submissionError ? (
           <div
             className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
@@ -149,7 +154,11 @@ export function BedForm({
           </div>
         ) : null}
 
-        <form onSubmit={onSubmit} className="space-y-6" data-testid="bed-form">
+        <form
+          onSubmit={handleSubmit(submitBed)}
+          className="space-y-6"
+          data-testid="bed-form"
+        >
           <BasicInformationSection
             control={control}
             errors={errors}
@@ -161,31 +170,19 @@ export function BedForm({
             roomOptions={roomOptions}
           />
 
-          <div className="flex justify-end gap-3 pt-2">
-            {onCancel ? (
-              <Button
-                type="button"
-                size="xl"
-                className="h-auto! px-6 py-3"
-                onClick={onCancel}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-            ) : null}
-            <Button
-              size="xl"
-              type="submit"
-              className="h-auto! bg-green-600! text-black! px-6 py-3 hover:bg-green-700! transition-colors disabled:opacity-50"
-              disabled={isSubmitting || !isValid}
-            >
-              {isSubmitting
+          <Form.Actions
+            onPrimaryClick={() => handleSubmit(submitBed)()}
+            onSecondaryClick={onCancel ? handleCancel : undefined}
+            primaryDisabled={isSubmitting || !isValid}
+            secondaryDisabled={isSubmitting}
+            primaryLabel={
+              isSubmitting
                 ? 'Submitting…'
                 : isEditMode
-                ? 'Save Bed'
-                : 'Create Bed'}
-            </Button>
-          </div>
+                  ? 'Save Bed'
+                  : 'Create Bed'
+            }
+          />
         </form>
       </div>
     </FormProvider>
