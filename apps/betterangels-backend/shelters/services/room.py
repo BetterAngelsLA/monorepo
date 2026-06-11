@@ -5,7 +5,12 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Room, Shelter
 from shelters.selectors import admin_room_list, room_get, shelter_get
-from shelters.services.utils import _ROOM_M2M_FIELDS, _set_m2m_from_enums, _validate_subset_attributes
+from shelters.services.utils import (
+    _ROOM_M2M_FIELDS,
+    _clone_label,
+    _set_m2m_from_enums,
+    _validate_subset_attributes,
+)
 
 if TYPE_CHECKING:
     from accounts.models import User
@@ -86,12 +91,6 @@ def room_update(*, user: "User", room_id: int | str, data: Dict[str, Any]) -> Ro
     return room
 
 
-def _clone_label(label: str | None) -> str:
-    if not label:
-        return "(Copy)"
-    return f"{label} (Copy)"
-
-
 def _copy_number_pattern(name: str | None) -> re.Pattern[str]:
     if name:
         return re.compile(rf"^{re.escape(name)} \(Copy(?: (\d+))?\)$")
@@ -100,7 +99,7 @@ def _copy_number_pattern(name: str | None) -> re.Pattern[str]:
 
 def _unique_clone_name(*, shelter_id: int | str, name: str | None) -> str:
     """Return a clone name that is unique within the shelter."""
-    primary = _clone_label(name)
+    primary = _clone_label(name, default="(Copy)")
     prefix = f"{name} (Copy" if name else "(Copy"
     pattern = _copy_number_pattern(name)
 
@@ -127,13 +126,8 @@ def room_delete(*, user: "User", ids: list[int]) -> list[int]:
         ``ObjectDoesNotExist`` when any of the given IDs does not match a room.
     """
     rooms = admin_room_list(Room.objects.all(), user=user).filter(pk__in=ids)
-    deleted_ids = []
-
-    for room in rooms:
-        id = room.pk
-        room.delete()
-        deleted_ids.append(id)
-
+    deleted_ids = list(rooms.values_list("pk", flat=True))
+    rooms.delete()
     return deleted_ids
 
 
@@ -149,7 +143,10 @@ def room_clone(*, user: "User", room_id: str) -> Room:
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     try:
-        source = room_get(user=user, room_id=room_id)
+        source = admin_room_list(
+            Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS),
+            user=user,
+        ).get(pk=room_id)
     except Room.DoesNotExist:
         raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found.")
 
