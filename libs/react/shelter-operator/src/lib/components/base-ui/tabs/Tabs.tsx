@@ -30,7 +30,9 @@ export function Tabs<T extends string | number>({
       );
       const activeTab = tabRefs.current[activeIndex];
 
-      if (!activeTab) return;
+      if (!activeTab) {
+        return;
+      }
 
       setSliderStyle({
         left: activeTab.offsetLeft,

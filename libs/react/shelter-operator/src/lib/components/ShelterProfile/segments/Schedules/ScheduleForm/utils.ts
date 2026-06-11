@@ -8,24 +8,33 @@ import type { ExceptionEntry, WeeklyFormState } from './types';
 import { buildDefaultWeeklyState } from './WeeklyScheduleEditor';
 
 export function toHHMM(time: string | null | undefined): string {
-  if (!time) return '';
+  if (!time) {
+    return '';
+  }
+
   return String(time).slice(0, 5);
 }
 
 export function hydrateWeekly(schedules: ScheduleType[]): WeeklyFormState {
   const state = buildDefaultWeeklyState();
+
   for (const entry of schedules) {
-    if (!entry.day) continue;
+    if (!entry.day) {
+      continue;
+    }
+
     state[entry.day].ranges.push({
       startTime: toHHMM(entry.startTime),
       endTime: toHHMM(entry.endTime),
     });
   }
+
   return state;
 }
 
 export function hydrateExceptions(schedules: ScheduleType[]): ExceptionEntry[] {
   let _id = 0;
+
   return schedules.map((s) => ({
     localId: s.id ?? String(++_id),
     startDate: s.startDate ?? '',
@@ -50,8 +59,12 @@ export function buildScheduleInputs(
 
   for (const { value: day } of ORDERED_DAYS) {
     const { ranges } = weekly[day];
+
     for (const { startTime, endTime } of ranges) {
-      if (!startTime || !endTime) continue;
+      if (!startTime || !endTime) {
+        continue;
+      }
+
       inputs.push({
         scheduleType,
         days: [day],
@@ -63,7 +76,9 @@ export function buildScheduleInputs(
   }
 
   for (const ex of exceptions) {
-    if (!ex.startDate) continue;
+    if (!ex.startDate) {
+      continue;
+    }
 
     inputs.push({
       scheduleType,

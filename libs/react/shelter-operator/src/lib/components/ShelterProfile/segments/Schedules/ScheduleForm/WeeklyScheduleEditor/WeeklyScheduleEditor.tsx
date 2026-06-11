@@ -24,11 +24,13 @@ export function WeeklyScheduleEditor(props: TProps) {
   const copyToAll = (sourceDay: DayOfWeekChoices) => {
     const sourceRanges = value[sourceDay].ranges;
     const next = { ...value };
+
     for (const d of Object.values(DayOfWeekChoices)) {
       if (d !== sourceDay) {
         next[d] = { ranges: sourceRanges.map((r) => ({ ...r })) };
       }
     }
+
     onChange(next);
   };
 

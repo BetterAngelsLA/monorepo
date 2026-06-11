@@ -51,6 +51,7 @@ export function DayRow(props: TProps) {
 
   const removeRange = (index: number) => {
     const next = schedule.ranges.filter((_, i) => i !== index);
+
     onChange({ ranges: next });
   };
 
@@ -72,7 +73,7 @@ export function DayRow(props: TProps) {
         {label}
       </Button>
 
-      {hasRanges ? (
+      {hasRanges && (
         <div className="flex flex-col gap-1.5">
           {schedule.ranges.map((range, index) => (
             <div key={index} className="flex flex-col gap-1">
@@ -122,7 +123,9 @@ export function DayRow(props: TProps) {
             Add range
           </button>
         </div>
-      ) : (
+      )}
+
+      {!hasRanges && (
         <span className="text-sm text-gray-400 italic mt-0.5 self-center">
           Closed
         </span>
