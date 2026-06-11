@@ -10,7 +10,10 @@ import { CheckboxGroup } from '../../../form/CheckboxGroup';
 import { FormSection } from '../../../form/FormSection';
 import { NumberField } from '../../../form/NumberField';
 import { RadioGroup } from '../../../form/RadioGroup';
-import { BOOLEAN_OPTIONS } from '../constants/bedFormOptions';
+import {
+  BOOLEAN_OPTIONS,
+  MEDICAL_NEED_OPTIONS,
+} from '../constants/bedFormOptions';
 import type { SectionProps } from '../types';
 
 export const BedDetailsSection = memo(function BedDetailsSection({
@@ -33,7 +36,6 @@ export const BedDetailsSection = memo(function BedDetailsSection({
           />
         )}
       />
-
       <Controller
         name="accessibility"
         control={control}
@@ -48,7 +50,20 @@ export const BedDetailsSection = memo(function BedDetailsSection({
           />
         )}
       />
-
+      <Controller
+        name="medicalNeeds"
+        control={control}
+        render={({ field }) => (
+          <CheckboxGroup
+            name="medicalNeeds"
+            label="Medical Needs"
+            options={MEDICAL_NEED_OPTIONS}
+            values={field.value}
+            onChange={field.onChange}
+            error={errors.medicalNeeds?.message}
+          />
+        )}
+      />
       <Controller
         name="funders"
         control={control}
@@ -63,7 +78,6 @@ export const BedDetailsSection = memo(function BedDetailsSection({
           />
         )}
       />
-
       <Controller
         name="pets"
         control={control}
@@ -78,7 +92,6 @@ export const BedDetailsSection = memo(function BedDetailsSection({
           />
         )}
       />
-
       <Controller
         name="storage"
         control={control}
@@ -92,7 +105,6 @@ export const BedDetailsSection = memo(function BedDetailsSection({
           />
         )}
       />
-
       <Controller
         name="maintenanceFlag"
         control={control}
@@ -106,7 +118,6 @@ export const BedDetailsSection = memo(function BedDetailsSection({
           />
         )}
       />
-
       <Controller
         name="b7"
         control={control}
@@ -120,7 +131,6 @@ export const BedDetailsSection = memo(function BedDetailsSection({
           />
         )}
       />
-
       <Controller
         name="fees"
         control={control}

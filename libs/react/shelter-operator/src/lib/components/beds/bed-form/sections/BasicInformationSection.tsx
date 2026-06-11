@@ -7,7 +7,6 @@ import { TextField } from '../../../form/TextField';
 import {
   BED_STATUS_OPTIONS,
   BED_TYPE_OPTIONS,
-  MEDICAL_NEED_OPTIONS,
 } from '../constants/bedFormOptions';
 import type { SectionProps } from '../types';
 
@@ -64,7 +63,9 @@ export const BasicInformationSection = memo(function BasicInformationSection({
             label="Status"
             placeholder="Select a status"
             options={BED_STATUS_OPTIONS}
-            value={BED_STATUS_OPTIONS.find((o) => o.value === field.value) ?? null}
+            value={
+              BED_STATUS_OPTIONS.find((o) => o.value === field.value) ?? null
+            }
             onChange={(option) => {
               if (option) field.onChange(option.value);
             }}
@@ -96,28 +97,6 @@ export const BasicInformationSection = memo(function BasicInformationSection({
       />
       {errors.type ? (
         <p className="text-sm text-red-600">{errors.type.message}</p>
-      ) : null}
-
-      <Controller
-        name="medicalNeeds"
-        control={control}
-        render={({ field }) => (
-          <Dropdown
-            label="Medical Needs"
-            placeholder="Select medical needs"
-            isMulti={true}
-            options={MEDICAL_NEED_OPTIONS}
-            value={MEDICAL_NEED_OPTIONS.filter((o) =>
-              field.value.includes(o.value)
-            )}
-            onChange={(options) => {
-              field.onChange(options ? options.map((o) => o.value) : []);
-            }}
-          />
-        )}
-      />
-      {errors.medicalNeeds ? (
-        <p className="text-sm text-red-600">{errors.medicalNeeds.message}</p>
       ) : null}
 
       <Controller
