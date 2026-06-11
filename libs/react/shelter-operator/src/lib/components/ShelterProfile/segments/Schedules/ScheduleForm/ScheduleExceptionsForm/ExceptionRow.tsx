@@ -1,5 +1,6 @@
 import { ConditionChoices } from '@monorepo/react/shelter';
 import { Trash2 } from 'lucide-react';
+import { Dropdown, type DropdownOption } from '../../../../../base-ui/dropdown';
 import type { ExceptionEntry } from '../types';
 import { TimeRangeInput } from '../WeeklyScheduleEditor/TimeRangeInput';
 import { DateOrRangePicker } from './DateOrRangePicker';
@@ -13,6 +14,10 @@ const CONDITION_LABELS: Record<ConditionChoices, string> = {
   [ConditionChoices.EmergencyEvacuation]: 'Emergency Evacuation',
   [ConditionChoices.PublicHealthEmergency]: 'Public Health Emergency',
 };
+
+const CONDITION_OPTIONS: DropdownOption<ConditionChoices>[] = Object.entries(
+  CONDITION_LABELS
+).map(([value, label]) => ({ value: value as ConditionChoices, label }));
 
 export type ExceptionErrors = {
   startDate?: { message?: string };
@@ -94,26 +99,19 @@ export function ExceptionRow(props: TProps) {
       )}
 
       {/* Optional condition */}
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-gray-500">Condition (optional)</label>
-        <select
-          value={entry.condition ?? ''}
-          onChange={(e) =>
-            onChange({
-              condition: (e.target.value as ConditionChoices) || undefined,
-            })
-          }
-          className="w-56 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={disabled}
-        >
-          <option value="">None</option>
-          {Object.entries(CONDITION_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <Dropdown
+        label="Condition (optional)"
+        options={CONDITION_OPTIONS}
+        value={
+          entry.condition
+            ? CONDITION_OPTIONS.find((o) => o.value === entry.condition) ?? null
+            : null
+        }
+        onChange={(opt) => onChange({ condition: opt?.value ?? undefined })}
+        placeholder="None"
+        disabled={disabled}
+        className="w-56"
+      />
     </div>
   );
 }

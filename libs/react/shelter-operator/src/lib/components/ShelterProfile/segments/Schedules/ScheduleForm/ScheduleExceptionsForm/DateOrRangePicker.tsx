@@ -1,3 +1,5 @@
+import { Input } from '../../../../../base-ui/input';
+
 type TProps = {
   startDate: string; // "YYYY-MM-DD"
   endDate: string; // "YYYY-MM-DD"
@@ -29,35 +31,28 @@ export function DateOrRangePicker(props: TProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-500">
-            {isSingleDay ? 'Date' : 'Start date'}
-          </label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => {
-              onChange('startDate', e.target.value);
-              // Keep single-day end in sync
-              if (isSingleDay) onChange('endDate', e.target.value);
-            }}
-            className="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={disabled}
-          />
-        </div>
+        <Input
+          dataType="date"
+          label={isSingleDay ? 'Date' : 'Start date'}
+          value={startDate}
+          onChange={(e) => {
+            onChange('startDate', e.target.value);
+            if (isSingleDay) onChange('endDate', e.target.value);
+          }}
+          disabled={disabled}
+          className="w-44"
+        />
 
         {!isSingleDay && (
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">End date</label>
-            <input
-              type="date"
-              value={endDate}
-              min={startDate}
-              onChange={(e) => onChange('endDate', e.target.value)}
-              className="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={disabled}
-            />
-          </div>
+          <Input
+            dataType="date"
+            label="End date"
+            value={endDate}
+            min={startDate}
+            onChange={(e) => onChange('endDate', e.target.value)}
+            disabled={disabled}
+            className="w-44"
+          />
         )}
       </div>
 

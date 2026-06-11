@@ -61,7 +61,7 @@ export function ScheduleForm(props: TProps) {
     watch,
     setValue,
     trigger,
-    formState: { errors, isSubmitted, isValid },
+    formState: { errors, isSubmitted },
     reset,
   } = useForm<ScheduleFormData>({
     resolver: zodResolver(scheduleFormSchema),
@@ -137,7 +137,7 @@ export function ScheduleForm(props: TProps) {
           primaryLabel="Save Schedule"
           onPrimaryClick={handleSubmit(onSubmit)}
           onSecondaryClick={handleCancel}
-          primaryDisabled={disabled || !isValid}
+          primaryDisabled={disabled}
           secondaryDisabled={disabled}
           className="z-99"
         />
