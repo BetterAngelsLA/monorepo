@@ -14,5 +14,5 @@ export const FormSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   email: z.email('Invalid email address.'),
-  permissionTemplate: z.nativeEnum(PermissionTemplateEnum),
+  permissionTemplate: z.enum(PermissionTemplateEnum),
 });
