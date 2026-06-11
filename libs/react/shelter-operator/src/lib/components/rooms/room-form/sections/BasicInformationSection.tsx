@@ -3,6 +3,7 @@ import { memo } from 'react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { ROOM_STYLES_OPTIONS } from '../../../../pages/dashboard/formOptions';
 import { Dropdown } from '../../../base-ui/dropdown';
+import { Input } from '../../../base-ui/input';
 import { FormSection } from '../../../form/FormSection';
 import { RadioGroup } from '../../../form/RadioGroup';
 import { TextAreaField } from '../../../form/TextAreaField';
@@ -47,7 +48,9 @@ export const BasicInformationSection = memo(function BasicInformationSection({
             label="Status"
             placeholder="Select a status"
             options={ROOM_STATUS_OPTIONS}
-            value={ROOM_STATUS_OPTIONS.find((o) => o.value === field.value) ?? null}
+            value={
+              ROOM_STATUS_OPTIONS.find((o) => o.value === field.value) ?? null
+            }
             onChange={(option) => {
               if (option) field.onChange(option.value);
             }}
@@ -68,7 +71,8 @@ export const BasicInformationSection = memo(function BasicInformationSection({
             options={ROOM_STYLES_OPTIONS}
             value={
               field.value
-                ? ROOM_STYLES_OPTIONS.find((o) => o.value === field.value) ?? null
+                ? ROOM_STYLES_OPTIONS.find((o) => o.value === field.value) ??
+                  null
                 : null
             }
             onChange={(option) => {
@@ -87,12 +91,12 @@ export const BasicInformationSection = memo(function BasicInformationSection({
           name="typeOther"
           control={control}
           render={({ field }) => (
-            <TextField
-              id="room-type-other"
+            <Input
               name="typeOther"
               label="Other Room Type"
               value={field.value}
               onChange={field.onChange}
+              variant="paragraph"
             />
           )}
         />
