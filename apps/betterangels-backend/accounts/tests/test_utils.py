@@ -1,6 +1,6 @@
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.models import PermissionGroup, User
-from accounts.utils import OrgRoleManager
+from accounts.role_manager import OrgRoleManager
 from django.contrib.auth.models import Group
 from django.test import TestCase
 from model_bakery import baker

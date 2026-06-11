@@ -35,13 +35,14 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
     """Return the first Caseworker ``PermissionGroup`` for *user*.
 
     .. deprecated::
-        Use :func:`resolve_permission_group` instead.  This function
-        hardcodes the Caseworker role and only works for users who
-        belong to a single outreach-type organization.
+        Use :func:`accounts.selectors.permission_group_for_user` instead.
+        This function hardcodes the Caseworker role and implicitly resolves
+        the first matching organization — callers should migrate to pass
+        an explicit ``organization_id``.
+
+    This is kept as a migration helper until React Native (expo/betterangels)
+    callers can be updated to pass explicit organization IDs.
     """
-    # WARNING: Temporary workaround for organization selection
-    # TODO: Update once organization selection is implemented. Currently selects
-    # the first organization with a default Caseworker role for the user.
     permission_group = (
         PermissionGroup.objects.select_related("organization", "group")
         .filter(
@@ -69,11 +70,6 @@ def get_outreach_authorized_users() -> QuerySet[User]:
 
     # Use Exists to avoid duplicate users without `distinct()`
     return User.objects.filter(Exists(permission_group_exists))
-
-
-# OrgRoleManager lives in accounts.role_manager to avoid circular imports.
-# Re-exported here for backward compatibility with callers that import from accounts.utils.
-from accounts.role_manager import OrgRoleManager  # noqa: F401, E402  -- re-export
 
 
 # migration utils

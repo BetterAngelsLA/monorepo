@@ -1,6 +1,6 @@
 from accounts.groups import GroupTemplateNames
 from accounts.models import User
-from accounts.utils import OrgRoleManager
+from accounts.role_manager import OrgRoleManager
 from django.test import TestCase
 from model_bakery import baker
 from notes.groups import CASEWORKER

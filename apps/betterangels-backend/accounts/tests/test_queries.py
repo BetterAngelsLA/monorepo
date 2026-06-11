@@ -6,7 +6,7 @@ from accounts.enums import OrgRoleEnum
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER, GroupTemplateNames
 from accounts.models import User
 from accounts.permissions import UserOrganizationPermissions
-from accounts.utils import OrgRoleManager
+from accounts.role_manager import OrgRoleManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.test import ignore_warnings, override_settings
