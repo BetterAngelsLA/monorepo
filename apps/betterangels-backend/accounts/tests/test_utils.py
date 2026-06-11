@@ -6,6 +6,8 @@ from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase
 
 from .baker_recipes import organization_recipe
+from notes.groups import CASEWORKER
+from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 
 
 class OrgPermissionManagerTestCase(ParametrizedTestCase, TestCase):
@@ -19,7 +21,7 @@ class OrgPermissionManagerTestCase(ParametrizedTestCase, TestCase):
         self.org_2.add_user(self.user)
         self.omb_2 = OrgPermissionManager(self.org_2)
 
-        self.omb_2.set_role(self.user, OrgRoleEnum.SUPERUSER)
+        self.omb_2.add_permissions(self.user, CASEWORKER, ORG_SUPERUSER)
 
     def test_set_role(self) -> None:
         omb = OrgPermissionManager(self.org_1)
@@ -27,11 +29,11 @@ class OrgPermissionManagerTestCase(ParametrizedTestCase, TestCase):
         self.assertNotIn(omb._org_admin_group.group, self.user.groups.all())
         self.assertNotIn(omb._org_superuser_group.group, self.user.groups.all())
 
-        omb.set_role(self.user, OrgRoleEnum.ADMIN)
+        omb.add_permissions(self.user, CASEWORKER, ORG_ADMIN)
         self.assertIn(omb._org_admin_group.group, self.user.groups.all())
         self.assertNotIn(omb._org_superuser_group.group, self.user.groups.all())
 
-        omb.set_role(self.user, OrgRoleEnum.SUPERUSER)
+        omb.add_permissions(self.user, CASEWORKER, ORG_SUPERUSER)
         self.assertNotIn(omb._org_admin_group.group, self.user.groups.all())
         self.assertIn(omb._org_superuser_group.group, self.user.groups.all())
 

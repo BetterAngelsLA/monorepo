@@ -1,7 +1,7 @@
 from unittest.mock import ANY, patch
 
 from accounts.enums import OrgRoleEnum
-from accounts.groups import GroupTemplateNames
+from accounts.groups import ORG_ADMIN, GroupTemplateNames
 from accounts.models import User
 from accounts.tests.utils import CurrentUserGraphQLBaseTestCase
 from accounts.utils import OrgPermissionManager
@@ -9,6 +9,7 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Group
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
+from notes.groups import CASEWORKER
 from organizations.models import OrganizationInvitation, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase
 
@@ -149,7 +150,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         self.org.add_user(self.org_admin)
 
         omb = OrgPermissionManager(self.org)
-        omb.set_role(self.org_admin, OrgRoleEnum.ADMIN)
+        omb.add_permissions(self.org_admin, CASEWORKER, ORG_ADMIN)
 
         self.graphql_client.force_login(self.org_admin)
 

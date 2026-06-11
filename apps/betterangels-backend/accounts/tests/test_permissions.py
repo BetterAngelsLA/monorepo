@@ -9,6 +9,8 @@ from organizations.models import OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 from .baker_recipes import organization_recipe
+from notes.groups import CASEWORKER
+from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 
 
 class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
@@ -27,9 +29,9 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
         self.org_2.add_user(self.org_2_admin)
 
         self.omb_1 = OrgPermissionManager(self.org_1)
-        self.omb_1.set_role(self.org_1_admin, OrgRoleEnum.ADMIN)
+        self.omb_1.add_permissions(self.org_1_admin, CASEWORKER, ORG_ADMIN)
         self.omb_2 = OrgPermissionManager(self.org_2)
-        self.omb_2.set_role(self.org_2_admin, OrgRoleEnum.ADMIN)
+        self.omb_2.add_permissions(self.org_2_admin, CASEWORKER, ORG_ADMIN)
 
     @parametrize(
         "user, expected_error",
@@ -134,9 +136,9 @@ class AddOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedT
         self.org_2.add_user(self.org_2_admin)
 
         self.omb_1 = OrgPermissionManager(self.org_1)
-        self.omb_1.set_role(self.org_1_admin, OrgRoleEnum.ADMIN)
+        self.omb_1.add_permissions(self.org_1_admin, CASEWORKER, ORG_ADMIN)
         self.omb_2 = OrgPermissionManager(self.org_2)
-        self.omb_2.set_role(self.org_2_admin, OrgRoleEnum.ADMIN)
+        self.omb_2.add_permissions(self.org_2_admin, CASEWORKER, ORG_ADMIN)
 
     @parametrize(
         "user, expected_error",
@@ -207,9 +209,9 @@ class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, Parametriz
         self.org_2.add_user(self.org_2_admin)
 
         self.omb_1 = OrgPermissionManager(self.org_1)
-        self.omb_1.set_role(self.org_1_admin, OrgRoleEnum.ADMIN)
+        self.omb_1.add_permissions(self.org_1_admin, CASEWORKER, ORG_ADMIN)
         self.omb_2 = OrgPermissionManager(self.org_2)
-        self.omb_2.set_role(self.org_2_admin, OrgRoleEnum.ADMIN)
+        self.omb_2.add_permissions(self.org_2_admin, CASEWORKER, ORG_ADMIN)
 
     @parametrize(
         "user, expected_error",

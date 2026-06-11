@@ -16,6 +16,8 @@ from organizations.models import Organization, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 from .baker_recipes import organization_recipe, permission_group_recipe
+from notes.groups import CASEWORKER
+from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 
 
 @ignore_warnings(category=UserWarning)
@@ -230,7 +232,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
 
         expected_query_count = 2
 
-        omb.set_role(user, user_role)
+        omb.add_permissions(user, CASEWORKER, ORG_ADMIN)
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
@@ -335,8 +337,8 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
         self.org.add_user(self.org_superuser)
 
         omb = OrgPermissionManager(self.org)
-        omb.set_role(self.org_admin, OrgRoleEnum.ADMIN)
-        omb.set_role(self.org_superuser, OrgRoleEnum.SUPERUSER)
+        omb.add_permissions(self.org_admin, CASEWORKER, ORG_ADMIN)
+        omb.add_permissions(self.org_superuser, CASEWORKER, ORG_SUPERUSER)
 
         another_org = organization_recipe.make(name="another_org")
         another_org.add_user(baker.make(User))

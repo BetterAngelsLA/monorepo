@@ -1,8 +1,6 @@
-from functools import cached_property
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import waffle
-from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from django.apps.registry import Apps
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
@@ -104,56 +102,61 @@ def get_outreach_authorized_users() -> QuerySet[User]:
     return User.objects.filter(Exists(permission_group_exists))
 
 
+if TYPE_CHECKING:
+    from common.permissions.config import TemplateConfig
+
+
 class OrgPermissionManager:
-    """Manage org-specific user permissions."""
+    """Manage org-scoped permission groups for a user.
+
+    Provides mechanical operations — adding, removing, and replacing
+    permission groups.  Business rules (e.g. "cannot remove the org
+    owner") belong in the calling layer, not here.
+    """
 
     def __init__(self, organization: Organization) -> None:
         self.organization: Organization = organization
 
-    @cached_property
-    def _admin_template(self) -> PermissionGroupTemplate:
-        template, _ = PermissionGroupTemplate.objects.get_or_create(name=GroupTemplateNames.ORG_ADMIN)
-
-        return template
-
-    @cached_property
-    def _superuser_template(self) -> PermissionGroupTemplate:
-        template, _ = PermissionGroupTemplate.objects.get_or_create(name=GroupTemplateNames.ORG_SUPERUSER)
-
-        return template
-
-    @cached_property
-    def _org_admin_group(self) -> PermissionGroup:
-        group, _ = PermissionGroup.objects.get_or_create(
-            organization=self.organization,
-            template=self._admin_template,
-        )
-
-        return group
-
-    @cached_property
-    def _org_superuser_group(self) -> PermissionGroup:
-        group, _ = PermissionGroup.objects.get_or_create(
-            organization=self.organization,
-            template=self._superuser_template,
-        )
-
-        return group
+    # ── Public API ──────────────────────────────────────────────────────
 
     @transaction.atomic
-    def set_role(self, user: User, role: OrgRoleEnum) -> None:
-        self.clear_permissions(user)
+    def add_permissions(self, user: User, *templates: TemplateConfig) -> None:
+        """Add one or more permission groups to *user*.
 
-        if role == OrgRoleEnum.ADMIN:
-            user.groups.add(self._org_admin_group.group)
+        ``templates`` are :class:`~common.permissions.config.TemplateConfig`
+        objects such as :data:`~notes.groups.CASEWORKER`.
 
-        if role == OrgRoleEnum.SUPERUSER:
-            user.groups.add(self._org_superuser_group.group)
+        Raises :class:`~django.core.exceptions.ObjectDoesNotExist` if no
+        ``PermissionGroup`` exists for a given template on this organization.
+        """
+        for template_config in templates:
+            permission_group = PermissionGroup.objects.get(
+                organization=self.organization,
+                template__name=template_config.name,
+            )
+            user.groups.add(permission_group.group)
 
+    @transaction.atomic
+    def remove_permissions(self, user: User, *templates: TemplateConfig) -> None:
+        """Remove specific permission groups from *user*."""
+        for template_config in templates:
+            permission_group = PermissionGroup.objects.get(
+                organization=self.organization,
+                template__name=template_config.name,
+            )
+            user.groups.remove(permission_group.group)
+
+    @transaction.atomic
     def clear_permissions(self, user: User) -> None:
-        """Remove both admin and superuser perms."""
-        user.groups.remove(self._org_admin_group.group)
-        user.groups.remove(self._org_superuser_group.group)
+        """Remove **all** org-scoped permission groups from *user*."""
+        groups = Group.objects.filter(permissiongroup__organization=self.organization)
+        user.groups.remove(*groups)
+
+    @transaction.atomic
+    def replace_permissions(self, user: User, *templates: TemplateConfig) -> None:
+        """Replace all org-scoped groups.  Convenience: clear + add."""
+        self.clear_permissions(user)
+        self.add_permissions(user, *templates)
 
 
 # migration utils
