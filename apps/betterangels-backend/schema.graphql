@@ -2827,25 +2827,6 @@ input UpdateReferralInput {
 
 union UpdateReferralPayload = ReferralType | OperationInfo
 
-input UpdateRoomInput {
-  accessibility: [AccessibilityChoices!]
-  amenities: String
-  demographics: [DemographicChoices!]
-  funders: [FunderChoices!]
-  lastCleanedInspected: DateTime
-  maintenanceFlag: Boolean
-  medicalRespite: Boolean
-  name: String
-  notes: String
-  pets: [PetChoices!]
-  status: RoomStatusChoices
-  storage: Boolean
-  type: RoomStyleChoices
-  typeOther: String
-}
-
-union UpdateRoomPayload = RoomType | OperationInfo
-
 input UpdateReservationInput {
   reservationId: ID!
   roomId: ID
@@ -2865,6 +2846,25 @@ input UpdateReservationStatusInput {
 }
 
 union UpdateReservationStatusPayload = ReservationType | OperationInfo
+
+input UpdateRoomInput {
+  accessibility: [AccessibilityChoices!]
+  amenities: String
+  demographics: [DemographicChoices!]
+  funders: [FunderChoices!]
+  lastCleanedInspected: DateTime
+  maintenanceFlag: Boolean
+  medicalRespite: Boolean
+  name: String
+  notes: String
+  pets: [PetChoices!]
+  status: RoomStatusChoices
+  storage: Boolean
+  type: RoomStyleChoices
+  typeOther: String
+}
+
+union UpdateRoomPayload = RoomType | OperationInfo
 
 input UpdateShelterInput {
   id: ID!
