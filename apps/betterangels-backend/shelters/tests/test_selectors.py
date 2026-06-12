@@ -2,11 +2,13 @@ import datetime
 
 from django.test import TestCase
 from django.utils import timezone
+from model_bakery import baker
 
 # isort: split
-from shelters.enums import ReservationStatusChoices
-from shelters.models import Reservation, Shelter
-from shelters.selectors import reservation_status_change_counts_by_day
+from shelters.enums import BedStatusChoices, ReservationStatusChoices
+from shelters.models import Bed, BedEvent, Reservation, Shelter  # type: ignore[attr-defined]
+from shelters.selectors import report_bed_status_counts, reservation_status_change_counts_by_day
+from shelters.tests.baker_recipes import shelter_recipe
 
 ReservationEvent = Reservation.pgh_event_model  # type: ignore[attr-defined]
 
@@ -175,11 +177,6 @@ class ReservationStatusChangeCountsByDayTestCase(TestCase):
         )
         self.assertEqual([row["day"] for row in result], [day])
         self.assertEqual(result[0]["STATUS_TO_CHECK_IN_OVERDUE"], 1)
-from model_bakery import baker
-from shelters.enums import BedStatusChoices
-from shelters.models import Bed, BedEvent  # type: ignore[attr-defined]
-from shelters.selectors import report_bed_status_counts
-from shelters.tests.baker_recipes import shelter_recipe
 
 
 def _dt(y: int, m: int, d: int) -> datetime.datetime:

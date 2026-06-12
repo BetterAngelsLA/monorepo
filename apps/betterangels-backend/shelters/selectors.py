@@ -7,10 +7,12 @@ managers (``managers.py``) and Strawberry ``get_queryset`` hooks
 """
 
 import datetime
+from collections import Counter
+from itertools import takewhile
 from typing import TYPE_CHECKING, Any
 
 import pghistory
-from django.db.models import Count, Exists, OuterRef, Q, QuerySet, TextField
+from django.db.models import Count, Exists, OuterRef, Q, QuerySet, Subquery, TextField
 from django.db.models.functions import Cast, TruncDate
 from django.utils import timezone
 from organizations.models import Organization
