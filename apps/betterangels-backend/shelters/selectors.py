@@ -7,11 +7,11 @@ managers (``managers.py``) and Strawberry ``get_queryset`` hooks
 """
 
 import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pghistory
 from django.db.models import Count, Exists, OuterRef, Q, QuerySet, TextField
-from django.db.models.functions import Cast
+from django.db.models.functions import Cast, TruncDate
 from django.utils import timezone
 from organizations.models import Organization
 from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices, StatusChoices
@@ -118,20 +118,20 @@ def shelters_open_at(
     return queryset.filter(is_open).exclude(has_active_exception)
 
 
-def reservation_status_change_counts(
+def reservation_status_change_counts_by_day(
     shelter_id: int,
     start_date: datetime.datetime,
     end_date: datetime.datetime,
-) -> dict[str, int]:
+) -> list[dict[str, Any]]:
     """
-    Count how many reservations changed to given statuses for a shelter in a date range (end_date inclusive).
+    Count how many reservations changed to given statuses for a shelter in a date range.
 
     Each reservation is counted once per status.
     """
     now = timezone.now()
     furthest_date = now - datetime.timedelta(days=365)
     if start_date < furthest_date or end_date < furthest_date:
-        return {}
+        return []
 
     from shelters.models import Reservation
 
@@ -148,38 +148,20 @@ def reservation_status_change_counts(
         pgh_created_at__lt=end_date,
     )
 
-    return events.aggregate(
-        STATUS_TO_CHECK_IN_OVERDUE=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="check_in_overdue")),
-        STATUS_TO_CANCELLED=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="cancelled")),
-        STATUS_TO_CHECKED_IN=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="checked_in")),
-        STATUS_OVERDUE_TO_CHECKED_IN=Count(
-            "pgh_obj_id",
-            distinct=True,
-            filter=Q(pgh_diff__status__0="check_in_overdue", pgh_diff__status__1="checked_in"),
-        ),
-    )
-
-
-def reservation_status_change_counts_by_day(
-    shelter_id: int,
-    start_date: datetime.date,
-    end_date: datetime.date,
-) -> dict[str, dict[str, int]]:
-    """
-    Count daily reservation status changes for a shelter in a date range.
-
-    Each reservation is counted once per status.
-    """
-    results = {}
-
-    current_date = start_date
-    while current_date <= end_date:
-        # Convert date to string for easier json formatting
-        results[current_date.isoformat()] = reservation_status_change_counts(
-            shelter_id=shelter_id,
-            start_date=current_date,
-            end_date=current_date,
+    return list(
+        events.annotate(day=TruncDate("pgh_created_at"))
+        .values("day")
+        .annotate(
+            STATUS_TO_CHECK_IN_OVERDUE=Count(
+                "pgh_obj_id", distinct=True, filter=Q(pgh_data__status="check_in_overdue")
+            ),
+            STATUS_TO_CANCELLED=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="cancelled")),
+            STATUS_TO_CHECKED_IN=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="checked_in")),
+            STATUS_OVERDUE_TO_CHECKED_IN=Count(
+                "pgh_obj_id",
+                distinct=True,
+                filter=Q(pgh_diff__status__0="check_in_overdue", pgh_diff__status__1="checked_in"),
+            ),
         )
-        current_date += datetime.timedelta(days=1)
-
-    return results
+        .order_by("day")
+    )
