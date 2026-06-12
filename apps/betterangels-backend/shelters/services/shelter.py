@@ -162,6 +162,8 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     _apply_services(shelter, raw_services)
     _create_schedules(shelter, schedules_data)
 
+    # TODO: Assign perms here. See: SDB-178
+
     return shelter
 
 
@@ -180,6 +182,9 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     shelter_id = data.pop("id")
     data = {k: v for k, v in data.items() if v is not UNSET}
     data.pop("organization", None)  # organization cannot be changed after creation
+
+    cities_served_ids = data.pop("cities_served_ids", None)
+    spas_served_ids = data.pop("spas_served_ids", None)
 
     shelter = Shelter.objects.get(pk=shelter_id)
 
@@ -204,5 +209,11 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     if has_schedules:
         shelter.schedules.all().delete()
         _create_schedules(shelter, schedules_data)
+
+    if cities_served_ids is not None:
+        shelter.cities_served.set(cities_served_ids)
+
+    if spas_served_ids is not None:
+        shelter.spas_served.set(spas_served_ids)
 
     return shelter

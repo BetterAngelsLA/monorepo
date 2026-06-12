@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List, Optional, Tuple
 
 import strawberry
@@ -129,7 +131,7 @@ class CurrentUserOrganizationType(OrganizationType):
 class OrgPermissions:
     accounts: List[UserOrganizationPermissions]
     reports: List[ReportPermissions]
-    shelters: List[ShelterPermissions]
+    shelters: List[ShelterPermissions]  # type: ignore[valid-type]
 
 
 @strawberry_django.type(User)

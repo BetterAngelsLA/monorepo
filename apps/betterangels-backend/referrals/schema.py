@@ -11,7 +11,6 @@ from common.permissions.utils import IsAuthenticated
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import QuerySet
 from referrals.models import Referral
-from referrals.permissions import ReferralPermissions
 from referrals.selectors import referral_list
 from referrals.services import referral_create, referral_delete, referral_update
 from shelters.models import Shelter
@@ -33,12 +32,12 @@ from .types import (
 class Query:
     referral: ReferralType = strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(ReferralPermissions.VIEW)],
+        extensions=[HasRetvalPerm(Referral.perms.VIEW)],
     )
 
     @strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(ReferralPermissions.VIEW)],
+        extensions=[HasRetvalPerm(Referral.perms.VIEW)],
     )
     def referrals(
         self,
@@ -52,7 +51,7 @@ class Query:
 class Mutation:
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(ReferralPermissions.ADD)],
+        extensions=[HasPerm(Referral.perms.ADD)],
     )
     def create_referral(self, info: Info, data: CreateReferralInput) -> ReferralType:
         current_user = cast(User, get_current_user(info))
@@ -80,7 +79,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Referral, perms=[ReferralPermissions.CHANGE])],
+        extensions=[PermissionedQuerySet(model=Referral, perms=[Referral.perms.CHANGE])],
     )
     def update_referral(self, info: Info, data: UpdateReferralInput) -> ReferralType:
         qs: QuerySet[Referral] = info.context.qs
@@ -96,7 +95,7 @@ class Mutation:
             referral = filter_for_user(
                 Referral.objects.all(),
                 current_user,
-                [ReferralPermissions.DELETE],
+                [Referral.perms.DELETE],
             ).get(id=data.id)
         except Referral.DoesNotExist:
             raise PermissionDenied("You do not have permission to delete this referral.")

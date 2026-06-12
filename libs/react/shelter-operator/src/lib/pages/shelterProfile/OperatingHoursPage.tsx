@@ -1,3 +1,12 @@
+import { useParams } from 'react-router-dom';
+import { ShelterSchedules } from '../../components/ShelterProfile';
+
 export function ShelterOperatingHoursPage() {
-  return <div className="px-6">Operating Hours</div>;
+  const { shelterId } = useParams<{ shelterId: string }>();
+
+  if (!shelterId) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+
+  return <ShelterSchedules shelterId={shelterId} />;
 }

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { BedStatusChoices } from '../apollo/graphql/__generated__/types';
 import { BedTable, type BedRoomForList } from './BedTable';
 
@@ -65,7 +65,7 @@ export const Default: Story = {
         rooms={mockRooms}
         selectedBedIds={selected}
         onSelectedBedIdsChange={setSelected}
-        onDuplicate={() => undefined}
+        onClone={() => undefined}
         onEdit={() => undefined}
         onDelete={() => undefined}
       />
@@ -77,7 +77,7 @@ export const WithoutRowSelection: Story = {
   render: () => (
     <BedTable
       rooms={mockRooms}
-      onDuplicate={() => undefined}
+      onClone={() => undefined}
       onEdit={() => undefined}
       onDelete={() => undefined}
     />

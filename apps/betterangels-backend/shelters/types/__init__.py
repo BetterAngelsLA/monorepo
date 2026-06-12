@@ -16,6 +16,8 @@ from shelters.types.inputs import (
     ScheduleInput,
     ServiceInput,
     ShelterLocationInput,
+    UpdateBedInput,
+    UpdateRoomInput,
     UpdateShelterInput,
 )
 from shelters.types.lookups import (
@@ -41,6 +43,7 @@ from shelters.types.outputs import (
     AdminShelterType,
     BedType,
     RoomType,
+    ShelterAvailabilityType,
     ShelterLocationType,
     ShelterPhotoType,
     ShelterType,
@@ -78,6 +81,8 @@ __all__ = [
     "CreateBedInput",
     "CreateRoomInput",
     "CreateShelterInput",
+    "UpdateBedInput",
+    "UpdateRoomInput",
     "UpdateShelterInput",
     "ServiceInput",
     "ScheduleInput",
@@ -86,6 +91,7 @@ __all__ = [
     "AdminShelterType",
     "BedType",
     "RoomType",
+    "ShelterAvailabilityType",
     "ShelterLocationType",
     "ShelterPhotoType",
     "ShelterType",

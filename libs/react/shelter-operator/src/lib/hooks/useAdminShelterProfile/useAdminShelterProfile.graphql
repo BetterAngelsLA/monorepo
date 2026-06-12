@@ -1,4 +1,4 @@
-query GetShelter($id: ID!) {
+query GetAdminShelterProfile($id: ID!) {
   adminShelter(pk: $id) {
     bedFees
     cityCouncilDistrict

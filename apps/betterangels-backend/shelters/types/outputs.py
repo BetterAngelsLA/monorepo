@@ -19,7 +19,7 @@ from shelters.enums import (
     RoomStyleChoices,
     ShelterPhotoTypeChoices,
 )
-from shelters.selectors import admin_shelter_list, shelter_list
+from shelters.selectors import admin_bed_list, admin_room_list, admin_shelter_list, shelter_list
 from shelters.types.lookups import (
     AccessibilityType,
     CityType,
@@ -97,6 +97,15 @@ class MediaLinkType:
     media_type: auto
 
 
+@strawberry_django.type(models.ShelterAvailability)
+class ShelterAvailabilityType:
+    id: ID
+    non_restricted_beds: auto
+    restricted_beds: auto
+    restriction_notes: auto
+    updated_at: auto
+
+
 @strawberry.type
 class BedsByStatusType:
     available: int = 0
@@ -172,6 +181,8 @@ class ShelterTypeMixin:
     visitors_allowed: auto
     website: auto
     media_links: List[MediaLinkType]
+
+    availability: Optional[ShelterAvailabilityType]
 
     _hero_photos: Optional[List[ShelterPhotoType]] = None
 
@@ -270,7 +281,7 @@ class BedType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Bed]:
         user = cast(User, get_current_user(info))
-        return queryset.filter(shelter__in=admin_shelter_list(models.Shelter.objects.all(), user=user))
+        return admin_bed_list(queryset, user=user)
 
     id: ID
     accessibility: List[AccessibilityType]
@@ -297,7 +308,7 @@ class RoomType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Room]:
         user = cast(User, get_current_user(info))
-        return queryset.filter(shelter__in=admin_shelter_list(models.Shelter.objects.all(), user=user))
+        return admin_room_list(queryset, user=user)
 
     id: ID
     accessibility: List[AccessibilityType]
