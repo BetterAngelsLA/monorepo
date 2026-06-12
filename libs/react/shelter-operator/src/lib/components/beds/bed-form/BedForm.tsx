@@ -13,13 +13,13 @@ import {
   buildCreateBedInput,
   type CreateBedMutationResult,
   type CreateBedMutationVariables,
-} from './api/createBedMutation';
+} from '../api/createBedMutation';
 import {
   UPDATE_BED_MUTATION,
   buildUpdateBedInput,
   type UpdateBedMutationResult,
   type UpdateBedMutationVariables,
-} from './api/updateBedMutation';
+} from '../api/updateBedMutation';
 import { createEmptyBedFormData } from './constants/defaultBedFormData';
 import { formSchema } from './constants/validation';
 import type { BedFormData } from './formTypes';
@@ -164,11 +164,7 @@ export function BedForm({
             errors={errors}
             roomOptions={roomOptions}
           />
-          <BedDetailsSection
-            control={control}
-            errors={errors}
-            roomOptions={roomOptions}
-          />
+          <BedDetailsSection control={control} errors={errors} />
 
           <Form.Actions
             onPrimaryClick={() => handleSubmit(submitBed)()}

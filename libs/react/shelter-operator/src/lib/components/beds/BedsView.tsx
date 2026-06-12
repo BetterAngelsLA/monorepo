@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { type BedType } from '../../apollo/graphql/__generated__/types';
 import { shelterCreateBedRoute, shelterEditBedRoute } from '../../routing';
 import { Button } from '../base-ui/buttons';
-import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
 import { BedTable, type BedRoomForList, type BedRowObject } from '../BedTable';
 import {
   CloneBedDocument,
@@ -24,16 +23,8 @@ import {
 const UNASSIGNED_ROOM_ID = 'unassigned-room';
 const UNASSIGNED_ROOM_LABEL = 'Unassigned';
 
-type DeleteConfirmationState = {
-  isOpen: boolean;
-  bedId?: string;
-  name?: string;
-};
-
 export function BedsView({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
-  const [deleteConfirmation, setDeleteConfirmation] =
-    useState<DeleteConfirmationState>({ isOpen: false });
   const [actionError, setActionError] = useState<string | null>(null);
 
   const { data, loading, refetch } = useQuery<
@@ -44,20 +35,14 @@ export function BedsView({ shelterId }: { shelterId: string }) {
     skip: !shelterId,
   });
 
-  const refetchQueries = useMemo(
-    () => [{ query: GetBedsDocument, variables: { shelterId } }],
-    [shelterId]
-  );
-
   const [cloneBed] = useMutation<CloneBedMutation, CloneBedMutationVariables>(
-    CloneBedDocument,
-    { refetchQueries }
+    CloneBedDocument
   );
 
-  const [deleteBed] = useMutation<
+  const [deleteBeds] = useMutation<
     DeleteBedsMutation,
     DeleteBedsMutationVariables
-  >(DeleteBedsDocument, { refetchQueries });
+  >(DeleteBedsDocument);
 
   const rooms = useMemo<BedRoomForList[]>(() => {
     const grouped = new Map<string, BedRoomForList>();
@@ -114,7 +99,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         if (payload?.__typename === 'OperationInfo') {
           setActionError(
             payload.messages?.[0]?.message ||
-              'Unable to duplicate bed. Please try again.'
+              'Unable to clone bed. Please try again.'
           );
           return;
         }
@@ -127,36 +112,22 @@ export function BedsView({ shelterId }: { shelterId: string }) {
     [cloneBed, refetch]
   );
 
-  const closeDeleteConfirmation = () => {
-    setDeleteConfirmation({ isOpen: false });
-  };
-
-  const confirmDelete = async () => {
-    const bedId = deleteConfirmation.bedId;
-    if (!bedId) return;
-
-    setActionError(null);
-    try {
-      const { data: result } = await deleteBed({
-        variables: { data: { ids: [bedId] } },
-        errorPolicy: 'all',
-      });
-
-      const payload = result?.deleteBeds;
-      if (payload?.__typename === 'OperationInfo') {
+  const handleDeleteBeds = useCallback(
+    async (bedIds: string[]) => {
+      setActionError(null);
+      try {
+        await deleteBeds({ variables: { data: { ids: bedIds } } });
+        await refetch();
+      } catch (e) {
         setActionError(
-          payload.messages?.[0]?.message ||
-            'Unable to delete bed. Please try again.'
+          e instanceof Error
+            ? e.message
+            : 'Unable to delete bed(s). Please try again.'
         );
-        return;
       }
-
-      closeDeleteConfirmation();
-      await refetch();
-    } catch {
-      setActionError('A network error occurred. Please try again.');
-    }
-  };
+    },
+    [deleteBeds, refetch]
+  );
 
   return (
     <>
@@ -169,21 +140,16 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         </div>
       ) : null}
 
-      <BedTable
-        rooms={rooms}
-        loading={loading}
-        onEdit={handleEdit}
-        onClone={handleClone}
-        onDelete={(rowObject) => {
-          setDeleteConfirmation({
-            isOpen: true,
-            bedId: rowObject.bedId,
-            name: rowObject.name || rowObject.bedId,
-          });
-        }}
-      />
-
-      <div className="fixed bottom-6 right-6 z-20 text-sm">
+      <div>
+        <BedTable
+          rooms={rooms}
+          loading={loading}
+          onEdit={handleEdit}
+          onClone={handleClone}
+          onDeleteBeds={handleDeleteBeds}
+        />
+      </div>
+      <div className="fixed bottom-6 right-6 text-sm z-20 ">
         <Button
           leftIcon={<Plus />}
           rightIcon={false}
@@ -193,24 +159,6 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           Create Bed
         </Button>
       </div>
-
-      <ConfirmationModal
-        isOpen={deleteConfirmation.isOpen}
-        onClose={closeDeleteConfirmation}
-        variant="danger"
-        title={`Are you sure you want to delete ${
-          deleteConfirmation.name || 'this bed'
-        }?`}
-        description="This action cannot be undone."
-        primaryAction={{
-          label: 'Delete',
-          onClick: confirmDelete,
-        }}
-        secondaryAction={{
-          label: 'Cancel',
-          onClick: closeDeleteConfirmation,
-        }}
-      />
     </>
   );
 }

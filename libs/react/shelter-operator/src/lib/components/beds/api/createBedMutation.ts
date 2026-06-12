@@ -1,13 +1,13 @@
 import type {
   CreateBedInput,
   UpdateBedInput,
-} from '../../../../apollo/graphql/__generated__/types';
-import type { BedFormData } from '../formTypes';
+} from '../../../apollo/graphql/__generated__/types';
+import type { BedFormData } from '../bed-form/formTypes';
 import {
   CreateBedDocument,
   type CreateBedMutation,
   type CreateBedMutationVariables,
-} from './__generated__/createBedMutation.generated';
+} from './__generated__/bedMutations.generated';
 
 export { CreateBedDocument as CREATE_BED_MUTATION };
 export type {

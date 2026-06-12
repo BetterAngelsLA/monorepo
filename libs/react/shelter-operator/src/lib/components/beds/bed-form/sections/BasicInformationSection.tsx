@@ -4,17 +4,22 @@ import { Dropdown } from '../../../base-ui/dropdown';
 import { FormSection } from '../../../form/FormSection';
 import { TextAreaField } from '../../../form/TextAreaField';
 import { TextField } from '../../../form/TextField';
+import type { DropdownOption } from '../../../base-ui/dropdown';
 import {
   BED_STATUS_OPTIONS,
   BED_TYPE_OPTIONS,
 } from '../constants/bedFormOptions';
 import type { SectionProps } from '../types';
 
+export type BasicInformationSectionProps = SectionProps & {
+  roomOptions: DropdownOption<string>[];
+};
+
 export const BasicInformationSection = memo(function BasicInformationSection({
   control,
   errors,
   roomOptions,
-}: SectionProps) {
+}: BasicInformationSectionProps) {
   return (
     <FormSection title="Basic Information">
       <Controller

@@ -3,15 +3,7 @@ import {
   BedTypeChoices,
   MedicalNeedChoices,
 } from '../../../../apollo/graphql/__generated__/types';
-import type { DropdownOption } from '../../../base-ui/dropdown';
-
-const toOptions = <T extends string>(
-  labels: Record<T, string>
-): DropdownOption<T>[] =>
-  (Object.entries(labels) as [T, string][]).map(([value, label]) => ({
-    value,
-    label,
-  }));
+import { toDropdownOptions } from '../../../base-ui/dropdown';
 
 const BED_STATUS_LABELS: Record<BedStatusChoices, string> = {
   [BedStatusChoices.Available]: 'Available',
@@ -34,9 +26,9 @@ const MEDICAL_NEED_LABELS: Record<MedicalNeedChoices, string> = {
   [MedicalNeedChoices.Dialysis]: 'Dialysis',
 };
 
-export const BED_STATUS_OPTIONS = toOptions(BED_STATUS_LABELS);
-export const BED_TYPE_OPTIONS = toOptions(BED_TYPE_LABELS);
-export const MEDICAL_NEED_OPTIONS = toOptions(MEDICAL_NEED_LABELS);
+export const BED_STATUS_OPTIONS = toDropdownOptions(BED_STATUS_LABELS);
+export const BED_TYPE_OPTIONS = toDropdownOptions(BED_TYPE_LABELS);
+export const MEDICAL_NEED_OPTIONS = toDropdownOptions(MEDICAL_NEED_LABELS);
 
 export const BOOLEAN_OPTIONS = [
   { value: true, label: 'Yes' },
