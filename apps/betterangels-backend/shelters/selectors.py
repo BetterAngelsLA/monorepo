@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from accounts.models import User
     from django.contrib.auth.base_user import AbstractBaseUser
     from django.contrib.auth.models import AnonymousUser
-    from shelters.models import Shelter
+    from shelters.models import Bed, Room, Shelter
 
 
 def report_bed_status_counts(
@@ -95,9 +95,9 @@ def shelter_list(
 ) -> "QuerySet[Shelter]":
     """Filter to shelters approved for public display.
 
-    If the user has the ``view_private_shelter`` permission (granted via the
-    Caseworker group template), private shelters are included.  Otherwise only
-    public (``is_private=False``) shelters are returned.
+    If the user has the ``view_private_shelter`` permission, private shelters
+    are included.  Otherwise only public (``is_private=False``) shelters are
+    returned.
     """
     from shelters.models import Shelter
 
@@ -126,6 +126,30 @@ def shelter_get(*, user: "User", shelter_id: int | str) -> "Shelter":
     from shelters.models import Shelter
 
     return admin_shelter_list(Shelter.objects.all(), user=user).get(pk=shelter_id)
+
+
+def admin_room_list(queryset: "QuerySet[Room]", *, user: "User") -> "QuerySet[Room]":
+    from shelters.models import Shelter
+
+    return queryset.filter(shelter__in=admin_shelter_list(Shelter.objects.all(), user=user))
+
+
+def room_get(*, user: "User", room_id: int | str) -> "Room":
+    from shelters.models import Room
+
+    return admin_room_list(Room.objects.select_related("shelter"), user=user).get(pk=room_id)
+
+
+def admin_bed_list(queryset: "QuerySet[Bed]", *, user: "User") -> "QuerySet[Bed]":
+    from shelters.models import Shelter
+
+    return queryset.filter(shelter__in=admin_shelter_list(Shelter.objects.all(), user=user))
+
+
+def bed_get(*, user: "User", bed_id: int | str) -> "Bed":
+    from shelters.models import Bed
+
+    return admin_bed_list(Bed.objects.select_related("shelter"), user=user).get(pk=bed_id)
 
 
 def shelters_open_at(

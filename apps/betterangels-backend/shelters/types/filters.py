@@ -184,6 +184,16 @@ class ShelterFilter:
     is_private: auto
 
     @strawberry_django.filter_field
+    def has_available_beds(self, info: Info, value: Optional[bool], prefix: str) -> Q:
+        if value is None:
+            return Q()
+
+        has_beds = Q(**{f"{prefix}availability__non_restricted_beds__gt": 0}) | Q(
+            **{f"{prefix}availability__restricted_beds__gt": 0}
+        )
+        return has_beds if value else ~has_beds
+
+    @strawberry_django.filter_field
     def spa(self, queryset: QuerySet, value: Optional[List[ID]], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
         if not value:
             return queryset, Q()
@@ -209,6 +219,7 @@ class CommonBedRoomFilterMixin:
 
 @strawberry_django.filter_type(models.Bed)
 class BedFilter(CommonBedRoomFilterMixin):
+    id: Optional[ID]
     type = make_in_filter("type", BedTypeChoices)
     medical_needs = make_m2m_in_filter("medical_needs", "name", MedicalNeedChoices)
     status = make_in_filter("status", BedStatusChoices)
@@ -217,6 +228,7 @@ class BedFilter(CommonBedRoomFilterMixin):
 
 @strawberry_django.filter_type(models.Room)
 class RoomFilter(CommonBedRoomFilterMixin):
+    id: Optional[ID]
     amenities = make_icontains_filter("amenities")
     medical_respite: Optional[bool]
     type = make_in_filter("type", RoomStyleChoices)

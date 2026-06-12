@@ -43,7 +43,7 @@ type RoomTableProps = {
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
   onCreateRoom?: () => void;
-  onDeleteRoom?: (roomId: string) => void;
+  onClone?: (rowObject: RoomRowObject) => void;
   onDeleteRooms?: (roomIds: string[]) => void;
 };
 
@@ -82,17 +82,16 @@ export function RoomTable({
   tableStyle,
   headerStyle,
   rowStyle,
-  onDeleteRoom,
+  onClone,
   onDeleteRooms,
 }: RoomTableProps) {
   const [searchInput, setSearchInput] = useState('');
   const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>([]);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
-    roomIds?: string[];
-    roomId?: string;
+    roomIds: string[];
     roomName?: string;
-  }>({ isOpen: false });
+  }>({ isOpen: false, roomIds: [] });
 
   useEffect(() => {
     onSearchChange?.(searchInput);
@@ -119,30 +118,18 @@ export function RoomTable({
     setDeleteConfirmation({
       isOpen: true,
       roomIds: selectedRoomIds,
-      roomId: undefined,
-      roomName: undefined,
     });
   };
 
   const closeDeleteConfirmation = () => {
-    setDeleteConfirmation({
-      isOpen: false,
-      roomIds: undefined,
-      roomId: undefined,
-      roomName: undefined,
-    });
+    setDeleteConfirmation({ isOpen: false, roomIds: [] });
   };
 
-  const deleteConfirmationCount =
-    deleteConfirmation.roomIds?.length ?? (deleteConfirmation.roomId ? 1 : 0);
-
-  const deleteConfirmationTitle = deleteConfirmation.roomIds
-    ? deleteConfirmationCount === 1
-      ? 'Are you sure you want to delete the selected room?'
-      : `Are you sure you want to delete the ${deleteConfirmationCount} selected rooms?`
-    : `Are you sure you want to delete ${
-        deleteConfirmation.roomName || 'this room'
-      }?`;
+  const deleteConfirmationTitle = deleteConfirmation.roomName
+    ? `Are you sure you want to delete ${deleteConfirmation.roomName}?`
+    : deleteConfirmation.roomIds.length === 1
+    ? 'Are you sure you want to delete the selected room?'
+    : `Are you sure you want to delete the ${deleteConfirmation.roomIds.length} selected rooms?`;
 
   const columns: TableColumn<Room>[] = useMemo(
     () => [
@@ -337,15 +324,20 @@ export function RoomTable({
             <Button
               variant="edit"
               className="text-[#747A82]"
+              aria-label="Clone room"
+              leftIcon={<CopyPlus size={22} stroke="black" />}
               onClick={(e) => {
                 e.stopPropagation();
-                onRowClick?.(rowObject, 0);
+                onClone?.(rowObject);
               }}
             />
             <Button
               variant="edit"
               className="text-[#747A82]"
-              leftIcon={<CopyPlus />}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRowClick?.(rowObject, 0);
+              }}
             />
             <Button
               variant="trash"
@@ -353,8 +345,7 @@ export function RoomTable({
                 e.stopPropagation();
                 setDeleteConfirmation({
                   isOpen: true,
-                  roomIds: undefined,
-                  roomId: rowObject.id,
+                  roomIds: [rowObject.id],
                   roomName: rowObject.room.name,
                 });
               }}
@@ -381,16 +372,9 @@ export function RoomTable({
         primaryAction={{
           label: 'Delete',
           onClick: () => {
-            if (deleteConfirmation.roomIds) {
-              if (deleteConfirmation.roomIds.length === 1) {
-                const [roomId] = deleteConfirmation.roomIds;
-                if (roomId) onDeleteRoom?.(roomId);
-              } else {
-                onDeleteRooms?.(deleteConfirmation.roomIds);
-              }
+            if (deleteConfirmation.roomIds.length > 0) {
+              onDeleteRooms?.(deleteConfirmation.roomIds);
               setSelectedRoomIds([]);
-            } else if (deleteConfirmation.roomId) {
-              onDeleteRoom?.(deleteConfirmation.roomId);
             }
             closeDeleteConfirmation();
           },

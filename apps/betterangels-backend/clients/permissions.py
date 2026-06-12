@@ -1,40 +1,31 @@
+from common.permissions.utils import permissions_enum_from_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from .models import (
+    ClientContact,
+    ClientHouseholdMember,
+    ClientProfile,
+    HmisProfile,
+    SocialMediaProfile,
+)
 
-class ClientProfilePermissions(models.TextChoices):
-    VIEW = "clients.view_clientprofile", _("Can view clientprofile")
-    CHANGE = "clients.change_clientprofile", _("Can change clientprofile")
-    DELETE = "clients.delete_clientprofile", _("Can delete clientprofile")
-    ADD = "clients.add_clientprofile", _("Can add clientprofile")
+# ── Model-backed permission enums ─────────────────────────────────────────────
+# These TextChoices classes exist solely to register types with Strawberry's
+# GraphQL type system (schema introspection, make_granted_permissions, etc.).
+#
+# For IDE autocomplete on individual permission values, use the model's .perms:
+#     ClientProfile.perms.VIEW     → "clients.view_clientprofile"
+# ──────────────────────────────────────────────────────────────────────────────
 
-
-class ClientContactPermissions(models.TextChoices):
-    VIEW = "clients.view_clientcontact", _("Can view clientcontact")
-    CHANGE = "clients.change_clientcontact", _("Can change clientcontact")
-    DELETE = "clients.delete_clientcontact", _("Can delete clientcontact")
-    ADD = "clients.add_clientcontact", _("Can add clientcontact")
-
-
-class ClientHouseholdMemberPermissions(models.TextChoices):
-    VIEW = "clients.view_clienthouseholdmember", _("Can view clienthouseholdmember")
-    CHANGE = "clients.change_clienthouseholdmember", _("Can change clienthouseholdmember")
-    DELETE = "clients.delete_clienthouseholdmember", _("Can delete clienthouseholdmember")
-    ADD = "clients.add_clienthouseholdmember", _("Can add clienthouseholdmember")
-
-
-class HmisProfilePermissions(models.TextChoices):
-    VIEW = "clients.view_hmisprofile", _("Can view hmisprofile")
-    CHANGE = "clients.change_hmisprofile", _("Can change hmisprofile")
-    DELETE = "clients.delete_hmisprofile", _("Can delete hmisprofile")
-    ADD = "clients.add_hmisprofile", _("Can add hmisprofile")
+ClientProfilePermissions = permissions_enum_from_model(ClientProfile)
+ClientContactPermissions = permissions_enum_from_model(ClientContact)
+ClientHouseholdMemberPermissions = permissions_enum_from_model(ClientHouseholdMember)
+HmisProfilePermissions = permissions_enum_from_model(HmisProfile)
+SocialMediaProfilePermissions = permissions_enum_from_model(SocialMediaProfile)
 
 
-class SocialMediaProfilePermissions(models.TextChoices):
-    VIEW = "clients.view_socialmediaprofile", _("Can view socialmediaprofile")
-    CHANGE = "clients.change_socialmediaprofile", _("Can change socialmediaprofile")
-    DELETE = "clients.delete_socialmediaprofile", _("Can delete socialmediaprofile")
-    ADD = "clients.add_socialmediaprofile", _("Can add socialmediaprofile")
+# ── Non-BaseModel (no .perms available) ──────────────────────────────────────
 
 
 class ClientProfileImportRecordPermissions(models.TextChoices):

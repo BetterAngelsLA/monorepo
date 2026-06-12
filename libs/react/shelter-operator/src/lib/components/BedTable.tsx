@@ -232,7 +232,7 @@ type BedTableProps = {
   onRowClick?: (rowObject: BedRowObject, rowIndex: number) => void;
   selectedBedIds?: string[];
   onSelectedBedIdsChange?: (ids: string[]) => void;
-  onDuplicate?: (rowObject: BedRowObject, rowIndex: number) => void;
+  onClone?: (rowObject: BedRowObject, rowIndex: number) => void;
   onEdit?: (rowObject: BedRowObject, rowIndex: number) => void;
   onDelete?: (rowObject: BedRowObject, rowIndex: number) => void;
   loading?: boolean;
@@ -282,7 +282,7 @@ export function BedTable({
   onRowClick,
   selectedBedIds,
   onSelectedBedIdsChange,
-  onDuplicate,
+  onClone,
   onEdit,
   onDelete,
   loading,
@@ -324,7 +324,7 @@ export function BedTable({
     [onSelectedBedIdsChange, selectedSet]
   );
 
-  const hasActionSlot = !!(onDuplicate || onEdit || onDelete);
+  const hasActionSlot = !!(onClone || onEdit || onDelete);
   const isReservation = variant === 'reservation';
   const showCheckboxColumn = !!onSelectedBedIdsChange && !isReservation;
 
@@ -610,13 +610,13 @@ export function BedTable({
                 role="group"
                 aria-label="Bed actions"
               >
-                {onDuplicate && (
+                {onClone && (
                   <Button
                     type="button"
                     variant="edit"
-                    aria-label="Duplicate bed"
+                    aria-label="Clone bed"
                     leftIcon={<CopyPlus size={22} stroke="black" />}
-                    onClick={() => onDuplicate(rowObject, rowIndex)}
+                    onClick={() => onClone(rowObject, rowIndex)}
                   />
                 )}
                 {onEdit && (

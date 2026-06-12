@@ -157,16 +157,9 @@ git remote set-url origin git@github.com:org/repo.git
 git push origin main
 ```
 
-## Using Cline / AI Coding Assistants
+## Using AI Coding Assistants
 
-Cline (and similar AI-powered coding tools) can run fully inside the dev container. Since
-the SSH agent is forwarded in, Cline can:
-
-- Push branches to GitHub
-- Create pull requests
-- Clone repositories
-- Perform any git operation that requires SSH authentication
-
-**Adding Cline to the dev container:** The Cline extension
-(`saoudrizwan.claude-dev`) is included in `devcontainer.json` so it's installed
-automatically for all developers using this project's dev container.
+With the SSH agent forwarded, AI coding assistants like Cline can perform git operations
+(commit, push, create PRs, clone repos) directly from inside the dev container. The Cline
+extension is pre-installed — see [cline.md](./cline.md) for setup and
+[devcontainer.md](./devcontainer.md) for overall dev container configuration.

@@ -36,6 +36,8 @@ export const shelterProfileSegments = {
 
 export const manageSegments = {
   rooms: 'rooms',
+  roomsCreate: 'rooms/create',
+  roomsEdit: 'rooms/:roomId/edit',
   beds: 'beds',
   occupancy: 'occupancy',
   label: 'label',
@@ -53,6 +55,21 @@ export const reservationSegments = {
 
 export function shelterManageRoute(shelterId: string): string {
   return generatePath(paths.shelterManage, { shelterId });
+}
+
+export function shelterManageRoomsRoute(shelterId: string): string {
+  return `${shelterManageRoute(shelterId)}/${manageSegments.rooms}`;
+}
+
+export function shelterCreateRoomRoute(shelterId: string): string {
+  return `${shelterManageRoute(shelterId)}/${manageSegments.roomsCreate}`;
+}
+
+export function shelterEditRoomRoute(shelterId: string, roomId: string): string {
+  return generatePath(`${paths.shelterManage}/${manageSegments.roomsEdit}`, {
+    shelterId,
+    roomId,
+  });
 }
 
 export function shelterProfileRoute(

@@ -5,6 +5,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { ComboBox } from '../../../base-ui/combo-box';
 import { Dropdown } from '../../../base-ui/dropdown';
 import { Input } from '../../../base-ui/input';
+import { RichTextEditor } from '../../../base-ui/richTextEditor';
 import { Form } from '../../../form/Form';
 import {
   BOOLEAN_OPTIONS_WITH_UNKNOWN,
@@ -204,16 +205,11 @@ export function ShelterPoliciesForm(props: TProps) {
             name="otherRules"
             control={control}
             render={({ field }) => (
-              <Input
+              <RichTextEditor
                 label="Other Rules"
-                variant="paragraph"
-                inputClassName="min-h-auto"
-                rows={2}
-                dataType="string"
                 value={field.value ?? ''}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  field.onChange(value === '' ? null : value);
+                onChange={(val) => {
+                  field.onChange(val === '' ? null : val);
                 }}
                 onBlur={field.onBlur}
                 disabled={disabled}

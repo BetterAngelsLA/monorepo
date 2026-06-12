@@ -4,7 +4,7 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, ignore_warnings
-from shelters.models import Bed, City, Reservation, Room, Service, ServiceCategory, Shelter
+from shelters.models import SPA, Bed, City, Reservation, Room, Service, ServiceCategory, Shelter
 from unittest_parametrize import ParametrizedTestCase
 
 
@@ -823,8 +823,124 @@ class UpdateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
         self.assertIsNone(messages[0]["field"])
         self.assertIn("matching query does not exist", messages[0]["message"])
 
+    def test_update_shelter_cities_served_ids(self) -> None:
+        """Providing citiesServedIds replaces the shelter's citiesServed M2M relation."""
+        shelter = Shelter.objects.create(
+            name="Cities Served Shelter",
+            organization=self.org_1,
+        )
+        city_a, _ = City.objects.get_or_create(name="Los Angeles")
+        city_b, _ = City.objects.get_or_create(name="Long Beach")
 
-@ignore_warnings(category=UserWarning)
+        mutation = """
+            mutation ($data: UpdateShelterInput!) {
+                updateShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                        citiesServed {
+                            id
+                            name
+                        }
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "citiesServedIds": [str(city_a.pk), str(city_b.pk)],
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        result = response["data"]["updateShelter"]
+        city_names = {c["name"] for c in result["citiesServed"]}
+        self.assertEqual(city_names, {"Los Angeles", "Long Beach"})
+
+        # Verify patch semantics — omitting citiesServedIds leaves the field unchanged.
+        variables2: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "description": "Updated description",
+            }
+        }
+        response2 = self.execute_graphql(mutation, variables2)
+        self.assertIsNone(response2.get("errors"))
+        city_names2 = {c["name"] for c in response2["data"]["updateShelter"]["citiesServed"]}
+        self.assertEqual(city_names2, {"Los Angeles", "Long Beach"})
+
+        # Verify full replacement — sending an empty list clears the relation.
+        variables3: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "citiesServedIds": [],
+            }
+        }
+        response3 = self.execute_graphql(mutation, variables3)
+        self.assertIsNone(response3.get("errors"))
+        self.assertEqual(response3["data"]["updateShelter"]["citiesServed"], [])
+
+    def test_update_shelter_spas_served_ids(self) -> None:
+        """Providing spasServedIds replaces the shelter's spasServed M2M relation."""
+        shelter = Shelter.objects.create(
+            name="SPAs Served Shelter",
+            organization=self.org_1,
+        )
+        spa_a, _ = SPA.objects.get_or_create(short_name="1", defaults={"long_name": "1 - Antelope Valley"})
+        spa_b, _ = SPA.objects.get_or_create(short_name="2", defaults={"long_name": "2 - San Fernando Valley"})
+
+        mutation = """
+            mutation ($data: UpdateShelterInput!) {
+                updateShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                        spasServed {
+                            id
+                        }
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "spasServedIds": [str(spa_a.pk), str(spa_b.pk)],
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        result = response["data"]["updateShelter"]
+        spa_ids = {s["id"] for s in result["spasServed"]}
+        self.assertEqual(spa_ids, {str(spa_a.pk), str(spa_b.pk)})
+
+        # Verify patch semantics — omitting spasServedIds leaves the field unchanged.
+        variables2: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "description": "Updated description",
+            }
+        }
+        response2 = self.execute_graphql(mutation, variables2)
+        self.assertIsNone(response2.get("errors"))
+        spa_ids2 = {s["id"] for s in response2["data"]["updateShelter"]["spasServed"]}
+        self.assertEqual(spa_ids2, {str(spa_a.pk), str(spa_b.pk)})
+
+        # Verify full replacement — sending an empty list clears the relation.
+        variables3: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "spasServedIds": [],
+            }
+        }
+        response3 = self.execute_graphql(mutation, variables3)
+        self.assertIsNone(response3.get("errors"))
+        self.assertEqual(response3["data"]["updateShelter"]["spasServed"], [])
+
+
 class UpdateReservationTestCase(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
