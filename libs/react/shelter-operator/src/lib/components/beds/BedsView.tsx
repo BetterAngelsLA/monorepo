@@ -1,24 +1,65 @@
-import { useQuery } from '@apollo/client/react';
-import { useMemo } from 'react';
+import { useMutation, useQuery } from '@apollo/client/react';
+import { Plus } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { type BedType } from '../../apollo/graphql/__generated__/types';
-import { BedTable, type BedRoomForList } from '../BedTable';
+import { shelterCreateBedRoute, shelterEditBedRoute } from '../../routing';
+import { Button } from '../base-ui/buttons';
+import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
+import { BedTable, type BedRoomForList, type BedRowObject } from '../BedTable';
 import {
-  GetShelterBedsDocument,
-  type GetShelterBedsQuery,
-  type GetShelterBedsQueryVariables,
-} from './__generated__/beds.generated';
+  CloneBedDocument,
+  DeleteBedsDocument,
+  type CloneBedMutation,
+  type CloneBedMutationVariables,
+  type DeleteBedsMutation,
+  type DeleteBedsMutationVariables,
+} from './api/__generated__/bedMutations.generated';
+import {
+  GetBedsDocument,
+  type GetBedsQuery,
+  type GetBedsQueryVariables,
+} from './api/__generated__/bedQueries.generated';
 
 const UNASSIGNED_ROOM_ID = 'unassigned-room';
 const UNASSIGNED_ROOM_LABEL = 'Unassigned';
 
 export function BedsView({ shelterId }: { shelterId: string }) {
-  const { data, loading } = useQuery<
-    GetShelterBedsQuery,
-    GetShelterBedsQueryVariables
-  >(GetShelterBedsDocument, {
+  const navigate = useNavigate();
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const { data, loading, refetch } = useQuery<
+    GetBedsQuery,
+    GetBedsQueryVariables
+  >(GetBedsDocument, {
     variables: { shelterId },
     skip: !shelterId,
   });
+
+  const [cloneBed] = useMutation<CloneBedMutation, CloneBedMutationVariables>(
+    CloneBedDocument
+  );
+
+  const [deleteBeds] = useMutation<
+    DeleteBedsMutation,
+    DeleteBedsMutationVariables
+  >(DeleteBedsDocument);
+
+  // ---- Delete confirmation state (owned by the parent, not the table) ----
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    bedIds: string[];
+  }>({ isOpen: false, bedIds: [] });
+
+  const closeDeleteConfirmation = useCallback(() => {
+    setDeleteConfirmation({ isOpen: false, bedIds: [] });
+  }, []);
+
+  const deleteConfirmationTitle =
+    deleteConfirmation.bedIds.length === 1
+      ? 'Are you sure you want to delete the selected bed?'
+      : `Are you sure you want to delete the ${deleteConfirmation.bedIds.length} selected beds?`;
+  // ---- end delete confirmation state ----
 
   const rooms = useMemo<BedRoomForList[]>(() => {
     const grouped = new Map<string, BedRoomForList>();
@@ -55,5 +96,121 @@ export function BedsView({ shelterId }: { shelterId: string }) {
     return Array.from(grouped.values());
   }, [data?.beds.results]);
 
-  return <BedTable rooms={rooms} loading={loading} />;
+  const handleEdit = useCallback(
+    (rowObject: BedRowObject) => {
+      navigate(shelterEditBedRoute(shelterId, rowObject.bedId));
+    },
+    [navigate, shelterId]
+  );
+
+  const handleClone = useCallback(
+    async (rowObject: BedRowObject) => {
+      setActionError(null);
+      try {
+        const { data: result } = await cloneBed({
+          variables: { id: rowObject.bedId },
+          errorPolicy: 'all',
+        });
+
+        const payload = result?.cloneBed;
+        if (payload?.__typename === 'OperationInfo') {
+          setActionError(
+            payload.messages?.[0]?.message ||
+              'Unable to clone bed. Please try again.'
+          );
+          return;
+        }
+
+        await refetch();
+      } catch {
+        setActionError('A network error occurred. Please try again.');
+      }
+    },
+    [cloneBed, refetch]
+  );
+
+  const handleDeleteBedsRequest = useCallback((bedIds: string[]) => {
+    setDeleteConfirmation({ isOpen: true, bedIds });
+  }, []);
+
+  const handleDeleteBeds = useCallback(
+    async (bedIds: string[]) => {
+      setActionError(null);
+      try {
+        const { data: result } = await deleteBeds({
+          variables: { data: { ids: bedIds } },
+          errorPolicy: 'all',
+        });
+
+        const payload = result?.deleteBeds;
+        if (payload?.__typename === 'OperationInfo') {
+          setActionError(
+            payload.messages?.[0]?.message ||
+              'Unable to delete bed(s). Please try again.'
+          );
+          return;
+        }
+
+        await refetch();
+      } catch {
+        setActionError('Unable to delete bed(s). Please try again.');
+      }
+    },
+    [deleteBeds, refetch]
+  );
+
+  return (
+    <>
+      {actionError ? (
+        <div
+          className="mx-4 mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          role="alert"
+        >
+          {actionError}
+        </div>
+      ) : null}
+
+      <div>
+        <BedTable
+          rooms={rooms}
+          loading={loading}
+          onEdit={handleEdit}
+          onClone={handleClone}
+          onDeleteBeds={handleDeleteBedsRequest}
+        />
+      </div>
+
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={closeDeleteConfirmation}
+        variant="danger"
+        title={deleteConfirmationTitle}
+        description="This action cannot be undone."
+        primaryAction={{
+          label: 'Delete',
+          onClick: () => {
+            if (deleteConfirmation.bedIds.length > 0) {
+              handleDeleteBeds(deleteConfirmation.bedIds);
+            }
+            closeDeleteConfirmation();
+          },
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: closeDeleteConfirmation,
+        }}
+      />
+
+      <div className="fixed bottom-6 right-6 text-sm z-20 ">
+        <Button
+          leftIcon={<Plus />}
+          rightIcon={false}
+          variant="floating"
+          onClick={() => navigate(shelterCreateBedRoute(shelterId))}
+        >
+          Create Bed
+        </Button>
+      </div>
+    </>
+  );
 }

@@ -10,15 +10,16 @@ const bed = (
   maintenanceFlag = false
 ) => ({
   id,
-  name,
-  status,
-  maintenanceFlag,
   accessibility: [],
   b7: false,
   demographics: [],
   funders: [],
+  maintenanceFlag,
+  medicalNeeds: [],
+  name,
   pets: [],
   shelter: {} as never,
+  status,
   storage: false,
 });
 
@@ -67,7 +68,7 @@ export const Default: Story = {
         onSelectedBedIdsChange={setSelected}
         onClone={() => undefined}
         onEdit={() => undefined}
-        onDelete={() => undefined}
+        onDeleteBeds={() => undefined}
       />
     );
   },
@@ -79,7 +80,7 @@ export const WithoutRowSelection: Story = {
       rooms={mockRooms}
       onClone={() => undefined}
       onEdit={() => undefined}
-      onDelete={() => undefined}
+      onDeleteBeds={() => undefined}
     />
   ),
 };
