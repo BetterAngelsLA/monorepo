@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { type BedType } from '../../apollo/graphql/__generated__/types';
 import { shelterCreateBedRoute, shelterEditBedRoute } from '../../routing';
 import { Button } from '../base-ui/buttons';
+import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
 import { BedTable, type BedRoomForList, type BedRowObject } from '../BedTable';
 import {
   CloneBedDocument,
@@ -43,6 +44,22 @@ export function BedsView({ shelterId }: { shelterId: string }) {
     DeleteBedsMutation,
     DeleteBedsMutationVariables
   >(DeleteBedsDocument);
+
+  // ---- Delete confirmation state (owned by the parent, not the table) ----
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    bedIds: string[];
+  }>({ isOpen: false, bedIds: [] });
+
+  const closeDeleteConfirmation = useCallback(() => {
+    setDeleteConfirmation({ isOpen: false, bedIds: [] });
+  }, []);
+
+  const deleteConfirmationTitle =
+    deleteConfirmation.bedIds.length === 1
+      ? 'Are you sure you want to delete the selected bed?'
+      : `Are you sure you want to delete the ${deleteConfirmation.bedIds.length} selected beds?`;
+  // ---- end delete confirmation state ----
 
   const rooms = useMemo<BedRoomForList[]>(() => {
     const grouped = new Map<string, BedRoomForList>();
@@ -112,18 +129,31 @@ export function BedsView({ shelterId }: { shelterId: string }) {
     [cloneBed, refetch]
   );
 
+  const handleDeleteBedsRequest = useCallback((bedIds: string[]) => {
+    setDeleteConfirmation({ isOpen: true, bedIds });
+  }, []);
+
   const handleDeleteBeds = useCallback(
     async (bedIds: string[]) => {
       setActionError(null);
       try {
-        await deleteBeds({ variables: { data: { ids: bedIds } } });
+        const { data: result } = await deleteBeds({
+          variables: { data: { ids: bedIds } },
+          errorPolicy: 'all',
+        });
+
+        const payload = result?.deleteBeds;
+        if (payload?.__typename === 'OperationInfo') {
+          setActionError(
+            payload.messages?.[0]?.message ||
+              'Unable to delete bed(s). Please try again.'
+          );
+          return;
+        }
+
         await refetch();
-      } catch (e) {
-        setActionError(
-          e instanceof Error
-            ? e.message
-            : 'Unable to delete bed(s). Please try again.'
-        );
+      } catch {
+        setActionError('Unable to delete bed(s). Please try again.');
       }
     },
     [deleteBeds, refetch]
@@ -146,9 +176,31 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           loading={loading}
           onEdit={handleEdit}
           onClone={handleClone}
-          onDeleteBeds={handleDeleteBeds}
+          onDeleteBeds={handleDeleteBedsRequest}
         />
       </div>
+
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={closeDeleteConfirmation}
+        variant="danger"
+        title={deleteConfirmationTitle}
+        description="This action cannot be undone."
+        primaryAction={{
+          label: 'Delete',
+          onClick: () => {
+            if (deleteConfirmation.bedIds.length > 0) {
+              handleDeleteBeds(deleteConfirmation.bedIds);
+            }
+            closeDeleteConfirmation();
+          },
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: closeDeleteConfirmation,
+        }}
+      />
+
       <div className="fixed bottom-6 right-6 text-sm z-20 ">
         <Button
           leftIcon={<Plus />}

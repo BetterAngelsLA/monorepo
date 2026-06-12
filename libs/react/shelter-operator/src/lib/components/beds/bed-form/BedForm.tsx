@@ -9,15 +9,15 @@ import {
   type GetRoomsQueryVariables,
 } from '../../rooms/api/__generated__/roomQueries.generated';
 import {
-  CREATE_BED_MUTATION,
+  CreateBedDocument,
   buildCreateBedInput,
-  type CreateBedMutationResult,
+  buildUpdateBedInput,
+  type CreateBedMutation,
   type CreateBedMutationVariables,
 } from '../api/createBedMutation';
 import {
-  UPDATE_BED_MUTATION,
-  buildUpdateBedInput,
-  type UpdateBedMutationResult,
+  UpdateBedDocument,
+  type UpdateBedMutation,
   type UpdateBedMutationVariables,
 } from '../api/updateBedMutation';
 import { createEmptyBedFormData } from './constants/defaultBedFormData';
@@ -80,14 +80,14 @@ export function BedForm({
   );
 
   const [createBed, { loading: isCreating }] = useMutation<
-    CreateBedMutationResult,
+    CreateBedMutation,
     CreateBedMutationVariables
-  >(CREATE_BED_MUTATION, { refetchQueries });
+  >(CreateBedDocument, { refetchQueries });
 
   const [updateBed, { loading: isUpdating }] = useMutation<
-    UpdateBedMutationResult,
+    UpdateBedMutation,
     UpdateBedMutationVariables
-  >(UPDATE_BED_MUTATION, { refetchQueries });
+  >(UpdateBedDocument, { refetchQueries });
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -175,8 +175,8 @@ export function BedForm({
               isSubmitting
                 ? 'Submitting…'
                 : isEditMode
-                  ? 'Save Bed'
-                  : 'Create Bed'
+                ? 'Save Bed'
+                : 'Create Bed'
             }
           />
         </form>

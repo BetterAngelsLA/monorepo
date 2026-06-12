@@ -1,12 +1,8 @@
-import {
-  UpdateBedDocument,
-  type UpdateBedMutation,
-  type UpdateBedMutationVariables,
-} from './__generated__/bedMutations.generated';
-import { buildUpdateBedInput } from './createBedMutation';
+import { UpdateBedDocument } from './__generated__/bedMutations.generated';
+import { buildUpdateBedInput } from './bedFormInput';
 
-export { buildUpdateBedInput, UpdateBedDocument as UPDATE_BED_MUTATION };
 export type {
-  UpdateBedMutation as UpdateBedMutationResult,
+  UpdateBedMutation,
   UpdateBedMutationVariables,
-};
+} from './__generated__/bedMutations.generated';
+export { buildUpdateBedInput, UpdateBedDocument };

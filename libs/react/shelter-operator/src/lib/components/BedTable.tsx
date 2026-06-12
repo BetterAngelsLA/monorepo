@@ -1,14 +1,13 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { CopyPlus, Minus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
   BedStatusChoices,
   BedTypeChoices,
   type BedType,
 } from '../apollo/graphql/__generated__/types';
 import { Button } from './base-ui/buttons';
-import { ConfirmationModal } from './base-ui/modal/ConfirmationModal';
 import { Table, type TableColumn } from './Table';
 
 export type BedRoomForList = {
@@ -299,12 +298,6 @@ export function BedTable({
   rowStyle,
   trailingColumnWidth = '140px',
 }: BedTableProps) {
-  const [deleteConfirmation, setDeleteConfirmation] = useState<{
-    isOpen: boolean;
-    bedIds: string[];
-    bedName?: string;
-  }>({ isOpen: false, bedIds: [] });
-
   const flatBedRows = useMemo(() => flattenRooms(rooms), [rooms]);
 
   const reservationRows: ReservationTableRow[] = useMemo(() => {
@@ -332,16 +325,6 @@ export function BedTable({
   );
 
   const hasActionSlot = !!(onClone || onEdit || onDeleteBeds);
-
-  const closeDeleteConfirmation = () => {
-    setDeleteConfirmation({ isOpen: false, bedIds: [] });
-  };
-
-  const deleteConfirmationTitle = deleteConfirmation.bedName
-    ? `Are you sure you want to delete ${deleteConfirmation.bedName}?`
-    : deleteConfirmation.bedIds.length === 1
-      ? 'Are you sure you want to delete the selected bed?'
-      : `Are you sure you want to delete the ${deleteConfirmation.bedIds.length} selected beds?`;
   const isReservation = variant === 'reservation';
   const showCheckboxColumn = !!onSelectedBedIdsChange && !isReservation;
 
@@ -611,82 +594,54 @@ export function BedTable({
   }
 
   return (
-    <>
-      <Table<FlatBedRow, BedRowObject>
-        columns={defaultColumns}
-        rows={flatBedRows}
-        getRowKey={getRowKeyFlat ?? ((row) => row.bed.id)}
-        getRowObject={(row) =>
-          toRowObject(row.bed, row.roomId, row.roomAssignment)
-        }
-        getRowSlot={
-          hasActionSlot
-            ? (rowObject, _item, rowIndex) => (
-                <div
-                  className="flex items-center justify-end gap-1"
-                  onClick={(e) => e.stopPropagation()}
-                  role="group"
-                  aria-label="Bed actions"
-                >
-                  {onClone && (
-                    <Button
-                      type="button"
-                      variant="edit"
-                      aria-label="Clone bed"
-                      leftIcon={<CopyPlus size={22} stroke="black" />}
-                      onClick={() => onClone(rowObject, rowIndex)}
-                    />
-                  )}
-                  {onEdit && (
-                    <Button
-                      type="button"
-                      variant="edit"
-                      aria-label="Edit bed"
-                      onClick={() => onEdit(rowObject, rowIndex)}
-                    />
-                  )}
-                  {onDeleteBeds && (
-                    <Button
-                      type="button"
-                      variant="trash"
-                      aria-label="Delete bed"
-                      onClick={() => {
-                        setDeleteConfirmation({
-                          isOpen: true,
-                          bedIds: [rowObject.bedId],
-                          bedName: rowObject.name || rowObject.bedId,
-                        });
-                      }}
-                    />
-                  )}
-                </div>
-              )
-            : undefined
-        }
-        trailingColumnWidth={hasActionSlot ? trailingColumnWidth : undefined}
-        onRowClick={onRowClick}
-        {...sharedTableProps}
-      />
-      <ConfirmationModal
-        isOpen={deleteConfirmation.isOpen}
-        onClose={closeDeleteConfirmation}
-        variant="danger"
-        title={deleteConfirmationTitle}
-        description="This action cannot be undone."
-        primaryAction={{
-          label: 'Delete',
-          onClick: () => {
-            if (deleteConfirmation.bedIds.length > 0) {
-              onDeleteBeds?.(deleteConfirmation.bedIds);
-            }
-            closeDeleteConfirmation();
-          },
-        }}
-        secondaryAction={{
-          label: 'Cancel',
-          onClick: closeDeleteConfirmation,
-        }}
-      />
-    </>
+    <Table<FlatBedRow, BedRowObject>
+      columns={defaultColumns}
+      rows={flatBedRows}
+      getRowKey={getRowKeyFlat ?? ((row) => row.bed.id)}
+      getRowObject={(row) =>
+        toRowObject(row.bed, row.roomId, row.roomAssignment)
+      }
+      getRowSlot={
+        hasActionSlot
+          ? (rowObject, _item, rowIndex) => (
+              <div
+                className="flex items-center justify-end gap-1"
+                onClick={(e) => e.stopPropagation()}
+                role="group"
+                aria-label="Bed actions"
+              >
+                {onClone && (
+                  <Button
+                    type="button"
+                    variant="edit"
+                    aria-label="Clone bed"
+                    leftIcon={<CopyPlus size={22} stroke="black" />}
+                    onClick={() => onClone(rowObject, rowIndex)}
+                  />
+                )}
+                {onEdit && (
+                  <Button
+                    type="button"
+                    variant="edit"
+                    aria-label="Edit bed"
+                    onClick={() => onEdit(rowObject, rowIndex)}
+                  />
+                )}
+                {onDeleteBeds && (
+                  <Button
+                    type="button"
+                    variant="trash"
+                    aria-label="Delete bed"
+                    onClick={() => onDeleteBeds([rowObject.bedId])}
+                  />
+                )}
+              </div>
+            )
+          : undefined
+      }
+      trailingColumnWidth={hasActionSlot ? trailingColumnWidth : undefined}
+      onRowClick={onRowClick}
+      {...sharedTableProps}
+    />
   );
 }
