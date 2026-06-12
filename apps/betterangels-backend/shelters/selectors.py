@@ -9,7 +9,7 @@ managers (``managers.py``) and Strawberry ``get_queryset`` hooks
 import datetime
 from collections import Counter
 from itertools import takewhile
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pghistory
 from django.db.models import Count, Exists, OuterRef, Q, QuerySet, Subquery, TextField
