@@ -9,11 +9,11 @@ managers (``managers.py``) and Strawberry ``get_queryset`` hooks
 import datetime
 from collections import Counter
 from itertools import takewhile
-from typing import TYPE_CHECKING, Any
+from typing import Any, TYPE_CHECKING
 
 import pghistory
 from django.db.models import Count, Exists, OuterRef, Q, QuerySet, Subquery, TextField
-from django.db.models.functions import Cast, TruncDate
+from django.db.models.functions import Cast
 from django.utils import timezone
 from organizations.models import Organization
 from shelters.enums import BedStatusChoices, DayOfWeekChoices, ScheduleTypeChoices, StatusChoices
@@ -216,7 +216,7 @@ def reservation_status_change_counts_by_day(
     shelter_id: int,
     start_date: datetime.datetime,
     end_date: datetime.datetime,
-) -> list[dict[str, Any]]:
+) -> dict[str, int]:
     """
     Count how many reservations changed to given statuses for a shelter in a date range.
 
@@ -225,7 +225,7 @@ def reservation_status_change_counts_by_day(
     now = timezone.now()
     furthest_date = now - datetime.timedelta(days=365)
     if start_date < furthest_date or end_date < furthest_date:
-        return []
+        return {}
 
     from shelters.models import Reservation
 
@@ -242,20 +242,17 @@ def reservation_status_change_counts_by_day(
         pgh_created_at__lt=end_date,
     )
 
-    return list(
-        events.annotate(day=TruncDate("pgh_created_at"))
-        .values("day")
-        .annotate(
-            STATUS_TO_CHECK_IN_OVERDUE=Count(
-                "pgh_obj_id", distinct=True, filter=Q(pgh_data__status="check_in_overdue")
-            ),
-            STATUS_TO_CANCELLED=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="cancelled")),
-            STATUS_TO_CHECKED_IN=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="checked_in")),
-            STATUS_OVERDUE_TO_CHECKED_IN=Count(
-                "pgh_obj_id",
-                distinct=True,
-                filter=Q(pgh_diff__status__0="check_in_overdue", pgh_diff__status__1="checked_in"),
-            ),
-        )
-        .order_by("day")
+    return events.aggregate(
+        STATUS_TO_CHECK_IN_OVERDUE=Count(
+            "pgh_obj_id",
+            distinct=True,
+            filter=Q(pgh_data__status="check_in_overdue"),
+        ),
+        STATUS_TO_CANCELLED=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="cancelled")),
+        STATUS_TO_CHECKED_IN=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="checked_in")),
+        STATUS_OVERDUE_TO_CHECKED_IN=Count(
+            "pgh_obj_id",
+            distinct=True,
+            filter=Q(pgh_diff__status__0="check_in_overdue", pgh_diff__status__1="checked_in"),
+        ),
     )
