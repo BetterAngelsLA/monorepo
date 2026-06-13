@@ -13,7 +13,7 @@ from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from organizations.models import Organization
+from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
 from .models import OrganizationProfile, OrgTypeChoices, PermissionGroup, PermissionGroupTemplate
 from .models import User as UserModel
@@ -134,3 +134,44 @@ def create_organization_with_presets(
         OrgRoleManager(org).add_roles(owner, *owner_roles)
 
     return org
+
+
+# ── Member removal ───────────────────────────────────────────────────
+
+
+@transaction.atomic
+def organization_remove_member(
+    *,
+    organization: Organization,
+    user_id: int,
+    removed_by: UserModel,
+) -> int:
+    """Remove a user from an organization.
+
+    Clears all org-scoped roles before deleting the membership.
+    Returns the removed user's id.
+
+    Raises :class:`~django.core.exceptions.ValidationError` if the user is
+    not a member, is the organization owner, or is *removed_by*.
+    """
+    try:
+        org_user = OrganizationUser.objects.get(
+            organization=organization,
+            user_id=user_id,
+        )
+    except OrganizationUser.DoesNotExist:
+        raise ValidationError("User is not a member of this organization.")
+
+    if OrganizationOwner.objects.filter(
+        organization=organization,
+        organization_user=org_user,
+    ).exists():
+        raise ValidationError("You cannot remove the organization owner. Transfer ownership first.")
+
+    if user_id == removed_by.pk:
+        raise ValidationError("You cannot remove yourself from the organization.")
+
+    OrgRoleManager(organization).clear_roles(org_user.user)
+    org_user.delete()
+
+    return user_id

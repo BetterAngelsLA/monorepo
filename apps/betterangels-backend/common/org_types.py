@@ -104,6 +104,43 @@ class Registry:
                 )
         return sorted(set(names))
 
+    # ── Typed query methods ─────────────────────────────────────────────
+
+    def templates_for(self, org: Organization) -> list[TemplateConfig]:
+        """Return the full ``TemplateConfig`` objects for *org*.
+
+        Used by utilities that need the complete config (permissions,
+        invite paths, etc.) rather than just the template name.
+        """
+        org_types = org.profile.org_types if hasattr(org, "profile") else []
+        result: list[TemplateConfig] = []
+        seen: set[str] = set()
+        for org_type in org_types:
+            org_config = self._by_name.get(org_type.value)
+            if org_config:
+                for template_config in org_config.templates:
+                    if template_config.name not in seen:
+                        seen.add(template_config.name)
+                        result.append(template_config)
+        return result
+
+    def invitable_templates_for(self, org: Organization) -> list[TemplateConfig]:
+        """Return the invitable ``TemplateConfig`` objects for *org*."""
+        return [t for t in self.templates_for(org) if t.is_invitable]
+
+    # ── Invite email template ───────────────────────────────────────────
+
+    def invite_template(self, template: TemplateConfig) -> dict[str, str]:
+        """Return ``{html, txt}`` template paths for *template*.
+
+        Raises ``ValueError`` if the template is invitable but has no
+        ``invite_html`` or ``invite_txt`` defined — every invitable
+        role must explicitly specify its invite email templates.
+        """
+        if template.invite_html and template.invite_txt:
+            return {"html": template.invite_html, "txt": template.invite_txt}
+        raise ValueError(f"Template '{template.name}' is invitable but has no invite_html/invite_txt.")
+
 
 # ---------------------------------------------------------------------------
 # Singleton

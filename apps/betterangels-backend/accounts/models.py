@@ -1,7 +1,6 @@
 from typing import Any, Dict, Iterable, Tuple
 
 import pghistory
-from accounts.group_names import GroupTemplateNames
 from accounts.managers import UserManager
 from annoying.fields import AutoOneToOneField
 from common.models import BaseModel
@@ -75,22 +74,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     def full_name(self: "User") -> str:
         name_parts = filter(None, [self.first_name, self.middle_name, self.last_name])
         return " ".join(name_parts).strip()
-
-    @model_property
-    def is_outreach_authorized(self: "User") -> bool:
-        user_organizations = self.organizations_organization.all()
-
-        if not user_organizations:
-            return False
-
-        # TODO: This is a temporary approach while we have just one permission group.
-        # Once this list grows, we'll need to create an actual list of authorized groups.
-        authorized_permission_groups = [template.value for template in GroupTemplateNames]
-
-        # TODO: we can actually make this a permission check vs having to check if they are in a permission group.
-        return PermissionGroup.objects.filter(
-            organization__in=user_organizations, template__name__in=authorized_permission_groups
-        ).exists()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.email:

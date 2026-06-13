@@ -14,3 +14,13 @@ class TemplateConfig:
     """Whether a user can be invited directly into this role.
 
     Set ``False`` for promotion-only roles (e.g. Org Admin, Org Superuser)."""
+    invite_html: str | None = None
+    """Path to the HTML invitation email template.
+
+    Required when ``is_invitable`` is ``True``.  The template receives
+    ``invitee_email``, ``organization_name``, ``invited_by_name``, and
+    ``accept_url`` in its context."""
+    invite_txt: str | None = None
+    """Path to the plain-text invitation email template.
+
+    Required when ``is_invitable`` is ``True``."""

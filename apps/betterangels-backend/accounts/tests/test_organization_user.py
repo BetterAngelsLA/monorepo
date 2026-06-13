@@ -1,4 +1,3 @@
-from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from accounts.role_manager import OrgRoleManager
 from django.test import TestCase
@@ -24,9 +23,7 @@ class OrganizationUserTestCase(TestCase):
         )
         OrgRoleManager(self.organization1).add_roles(self.user, CASEWORKER)
 
-        self.assertTrue(
-            self.user.groups.filter(name=f"{self.organization1.name}_{GroupTemplateNames.CASEWORKER}").exists()
-        )
+        self.assertTrue(self.user.groups.filter(name=f"{self.organization1.name}_{CASEWORKER.name}").exists())
 
     def test_user_with_multiple_organizations_retains_access(self) -> None:
         baker.make(
@@ -48,9 +45,5 @@ class OrganizationUserTestCase(TestCase):
         # The removed signal (handle_organization_user_removed) was deleted in favor
         # of explicit service-layer role management. Membership deletion alone
         # does not clear roles.
-        self.assertTrue(
-            self.user.groups.filter(name=f"{self.organization1.name}_{GroupTemplateNames.CASEWORKER}").exists()
-        )
-        self.assertTrue(
-            self.user.groups.filter(name=f"{self.organization2.name}_{GroupTemplateNames.CASEWORKER}").exists()
-        )
+        self.assertTrue(self.user.groups.filter(name=f"{self.organization1.name}_{CASEWORKER.name}").exists())
+        self.assertTrue(self.user.groups.filter(name=f"{self.organization2.name}_{CASEWORKER.name}").exists())

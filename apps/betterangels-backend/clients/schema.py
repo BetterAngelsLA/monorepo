@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_user_permission_group
+from accounts.utils import resolve_permission_group
 from clients.enums import ErrorCodeEnum
 from clients.models import (
     ClientContact,
@@ -600,7 +600,7 @@ class Mutation:
                 [ClientProfile.perms.CHANGE],
             ).get(id=data.client_profile)
 
-            permission_group = get_user_permission_group(user)
+            permission_group = resolve_permission_group(user)
 
             content_type = ContentType.objects.get_for_model(ClientProfile)
             client_document = Attachment.objects.create(

@@ -3,7 +3,7 @@ from typing import cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_user_permission_group
+from accounts.utils import resolve_permission_group
 from clients.models import ClientProfile
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
@@ -55,7 +55,7 @@ class Mutation:
     )
     def create_referral(self, info: Info, data: CreateReferralInput) -> ReferralType:
         current_user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(current_user)
+        permission_group = resolve_permission_group(current_user)
         referral_data = asdict(data)
 
         try:

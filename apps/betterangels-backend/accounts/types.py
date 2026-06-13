@@ -5,6 +5,7 @@ from typing import List, Optional, Tuple
 import strawberry
 import strawberry_django
 from accounts.enums import OrgRoleEnum
+from accounts.models import PermissionGroup
 from accounts.permissions import make_granted_permissions
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
@@ -149,7 +150,6 @@ class UserType(UserBaseType):
     organizations_organization: Optional[List[OrganizationType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
-    is_outreach_authorized: Optional[bool]
     username: Optional[str]
 
     @strawberry_django.field
@@ -158,6 +158,23 @@ class UserType(UserBaseType):
         session = request.session
 
         return bool(session.get(HMIS_SESSION_KEY_NAME, None))
+
+    @strawberry_django.field(deprecation_reason="Use userPermissions check instead.")
+    def is_outreach_authorized(self, info: Info) -> bool:
+        """Backwards-compatible field for old mobile clients.
+
+        Returns True if the user belongs to a Caseworker permission group
+        in any organization (i.e., they are an outreach worker).
+
+        TODO: Remove this field once mobile clients have migrated.
+        """
+        user = get_current_user(info)
+        if not user or not user.is_authenticated:
+            return False
+        return PermissionGroup.objects.filter(
+            group__user=user.pk,
+            template__name="Caseworker",
+        ).exists()
 
 
 @strawberry_django.type(User)
@@ -166,7 +183,6 @@ class CurrentUserType(UserBaseType):
     organizations_organization: Optional[List[CurrentUserOrganizationType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
-    is_outreach_authorized: Optional[bool]
     username: Optional[str]
 
     @strawberry_django.field
@@ -175,6 +191,23 @@ class CurrentUserType(UserBaseType):
         session = request.session
 
         return bool(session.get(HMIS_SESSION_KEY_NAME, None))
+
+    @strawberry_django.field(deprecation_reason="Use userPermissions check instead.")
+    def is_outreach_authorized(self, info: Info) -> bool:
+        """Backwards-compatible field for old clients.
+
+        Returns True if the user belongs to a Caseworker permission group
+        in any organization (i.e., they are an outreach worker).
+
+        TODO: Remove this field once mobile clients have migrated.
+        """
+        user = get_current_user(info)
+        if not user or not user.is_authenticated:
+            return False
+        return PermissionGroup.objects.filter(
+            group__user=user.pk,
+            template__name="Caseworker",
+        ).exists()
 
 
 @strawberry_django.order_type(User, one_of=False)

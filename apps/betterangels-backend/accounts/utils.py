@@ -1,13 +1,15 @@
-from typing import Union
+import logging
+from typing import Optional, Union
 
 import waffle
-from accounts.groups import GroupTemplateNames
+from common.org_types import REGISTRY
 from django.apps.registry import Apps
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
-from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
 
 from .models import PermissionGroup, PermissionGroupTemplate, User
+
+logger = logging.getLogger(__name__)
 
 
 def remove_organization_permission_group(organization: Organization) -> None:
@@ -15,15 +17,26 @@ def remove_organization_permission_group(organization: Organization) -> None:
 
 
 def create_default_org_permission_groups(organization: Organization) -> None:
-    default_templates = [
-        GroupTemplateNames.CASEWORKER,
-        GroupTemplateNames.ORG_ADMIN,
-        GroupTemplateNames.ORG_SUPERUSER,
-    ]
+    """Create ``PermissionGroup`` rows for every template in *organization*.
 
-    for temp in default_templates:
-        template, _ = PermissionGroupTemplate.objects.get_or_create(name=temp)
+    Uses :meth:`Registry.templates_for` so the result is org-type-aware —
+    an outreach org gets Caseworker, Org Admin, Org Superuser; a shelter org
+    gets Shelter Operator, Org Admin, Org Superuser.
+    """
+    for template_config in REGISTRY.templates_for(organization):
+        template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_config.name)
         PermissionGroup.objects.get_or_create(organization=organization, template=template)
+
+
+def add_default_org_permissions_to_user(user: User, organization: Organization) -> None:
+    """Add *user* to the (first) invitable member role group for *organization*."""
+    invitable = REGISTRY.invitable_templates_for(organization)
+    if not invitable:
+        return
+    member_config = invitable[0]
+    member_template, _ = PermissionGroupTemplate.objects.get_or_create(name=member_config.name)
+    member_group, _ = PermissionGroup.objects.get_or_create(organization=organization, template=member_template)
+    user.groups.add(member_group.group)
 
 
 def remove_org_group_permissions_from_user(user: User, organization: Organization) -> None:
@@ -31,24 +44,26 @@ def remove_org_group_permissions_from_user(user: User, organization: Organizatio
     user.groups.remove(*groups)
 
 
+# ── Permission group resolvers ────────────────────────────────────────────
+
+
 def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> PermissionGroup:
-    """Return the first Caseworker ``PermissionGroup`` for *user*.
+    """DEPRECATED — use :func:`get_permission_group_for_org` with an explicit org.
 
-    .. deprecated::
-        Use :func:`accounts.selectors.permission_group_for_user` instead.
-        This function hardcodes the Caseworker role and implicitly resolves
-        the first matching organization — callers should migrate to pass
-        an explicit ``organization_id``.
-
-    This is kept as a migration helper until React Native (expo/betterangels)
-    callers can be updated to pass explicit organization IDs.
+    Legacy fallback that selects the first organization where the user has a
+    member (non-admin, non-superuser) permission group.  Excludes Org Admin
+    and Org Superuser templates so the returned group is always a member role.
     """
+    logger.warning(
+        "get_user_permission_group() is deprecated. Pass organization_id explicitly.",
+        stacklevel=2,
+    )
+    from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
+
     permission_group = (
         PermissionGroup.objects.select_related("organization", "group")
-        .filter(
-            organization__users=user.pk,
-            name=GroupTemplateNames.CASEWORKER,
-        )
+        .filter(organization__users=user.pk)
+        .exclude(template__name__in=[ORG_ADMIN.name, ORG_SUPERUSER.name])
         .first()
     )
 
@@ -58,25 +73,60 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
     return permission_group
 
 
-def get_outreach_authorized_users() -> QuerySet[User]:
-    # TODO: Make unit test for this function
-    authorized_permission_groups = [template.value for template in GroupTemplateNames]
+def get_permission_group_for_org(
+    user: Union[AbstractBaseUser, AnonymousUser], organization: Organization
+) -> PermissionGroup:
+    """Return the user's member permission group for *organization*.
 
-    # Subquery to check if the user has any related permission group in an authorized group
-    permission_group_exists = PermissionGroup.objects.filter(
-        organization__users=OuterRef("pk"),  # Matches `User` to `Organization`
-        template__name__in=authorized_permission_groups,
+    Validates that the organization has a member role and that *user*
+    belongs to that group.
+    """
+    invitable = REGISTRY.invitable_templates_for(organization)
+    if not invitable:
+        raise PermissionError("Organization has no member role defined.")
+
+    member_role = invitable[0]
+    permission_group = (
+        PermissionGroup.objects.select_related("organization", "group")
+        .filter(organization=organization, template__name=member_role.name)
+        .first()
     )
 
-    # Use Exists to avoid duplicate users without `distinct()`
-    return User.objects.filter(Exists(permission_group_exists))
+    if not (permission_group and permission_group.group):
+        raise PermissionError("Organization does not have the expected permission group")
+
+    if not hasattr(user, "groups") or not user.groups.filter(id=permission_group.group_id).exists():  # type: ignore[union-attr]
+        raise PermissionError("User is not a member of this organization's permission group")
+
+    return permission_group
 
 
-# migration utils
+def resolve_permission_group(
+    user: Union[AbstractBaseUser, AnonymousUser],
+    organization_id: Optional[str] = None,
+) -> PermissionGroup:
+    """Resolve the correct PermissionGroup for a mutation.
+
+    If *organization_id* is provided, validates membership against that org.
+    Otherwise falls back to the deprecated first-org heuristic.
+
+    TODO(SDB-178): Remove fallback once mobile can pass organization_id.
+    """
+    if organization_id:
+        from organizations.models import Organization
+
+        organization = Organization.objects.get(id=organization_id)
+        return get_permission_group_for_org(user, organization)
+    return get_user_permission_group(user)
+
+
+# ── Migration utilities ───────────────────────────────────────────────────
+
+
 def create_missing_groups_for_org(
     apps: Apps,
-    current_perm_group_templates: list[GroupTemplateNames],
-    new_perm_group_templates: list[GroupTemplateNames],
+    current_perm_group_templates: list[str],
+    new_perm_group_templates: list[str],
 ) -> None:
     """Creates Groups and PermissionGroups for organizations.
 
@@ -84,10 +134,10 @@ def create_missing_groups_for_org(
 
     Args:
       apps: django app registry (django.apps)
-      current_perm_group_templates: List of PermissionGroupTemplates. Organizations belonging to
-        any matching permission group will be updated.
-      new_perm_group_templates: List of PermissionGroupTemplates. A Group and PermissionGroup will
-        be created for all provided templates.
+      current_perm_group_templates: List of template name strings. Organizations
+        belonging to any matching permission group will be updated.
+      new_perm_group_templates: List of template name strings. A Group and
+        PermissionGroup will be created for all provided templates.
     """
 
     Organization = apps.get_model("organizations", "Organization")

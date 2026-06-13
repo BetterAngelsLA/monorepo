@@ -3,7 +3,6 @@ from typing import List, Optional
 
 import strawberry
 import strawberry_django
-from accounts.groups import GroupTemplateNames
 from accounts.models import PermissionGroup, User
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
@@ -14,6 +13,7 @@ from common.graphql.types import (
     NonBlankString,
     make_in_filter,
 )
+from common.org_types import REGISTRY
 from django.db.models import (
     BooleanField,
     Case,
@@ -328,7 +328,7 @@ class InteractionAuthorType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet[User], info: Info) -> QuerySet[User]:
         # TODO: Make unit test for this function
-        authorized_permission_groups = [template.value for template in GroupTemplateNames]
+        authorized_permission_groups = REGISTRY.template_names()
 
         # Subquery to check if the user has any related permission group in an authorized group
         permission_group_exists = PermissionGroup.objects.filter(

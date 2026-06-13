@@ -1,9 +1,5 @@
-# GroupTemplateNames lives in its own module to avoid circular imports.
-# Re-exported here for backward compatibility.
-from accounts.group_names import GroupTemplateNames  # noqa: F401
-from accounts.permissions import UserOrganizationPermissions
+from accounts.permissions import ReportOrgPermissions, UserOrganizationPermissions
 from common.permissions.config import TemplateConfig
-from reports.permissions import ReportPermissions
 
 ORG_ADMIN = TemplateConfig(
     name="Organization Admin",
@@ -12,7 +8,7 @@ ORG_ADMIN = TemplateConfig(
         UserOrganizationPermissions.ADD_ORG_MEMBER,
         UserOrganizationPermissions.REMOVE_ORG_MEMBER,
         UserOrganizationPermissions.VIEW_ORG_MEMBERS,
-        ReportPermissions.VIEW_REPORTS,
+        ReportOrgPermissions.VIEW_REPORTS,
     ],
     is_invitable=False,
 )
@@ -25,7 +21,7 @@ ORG_SUPERUSER = TemplateConfig(
         UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE,
         UserOrganizationPermissions.REMOVE_ORG_MEMBER,
         UserOrganizationPermissions.VIEW_ORG_MEMBERS,
-        ReportPermissions.VIEW_REPORTS,
+        ReportOrgPermissions.VIEW_REPORTS,
     ],
     is_invitable=False,
 )
