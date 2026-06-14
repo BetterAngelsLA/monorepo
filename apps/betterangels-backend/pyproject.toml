@@ -45,7 +45,7 @@ django-ckeditor-5 = "^0.2.19"
 # (ExecutionContext.errors -> collected_errors in graphql-core >= 3.2.10).
 # The main branch HEAD does not yet include this PR — pin to the merge commit.
 # TODO: switch back to branch = "main" or PyPI when >= 13.2 is released.
-newrelic = { git = "https://github.com/newrelic/newrelic-python-agent.git", rev = "825d7bd3dd56b86576324d6e3f07dd2e7008e6cf" }
+newrelic = "==11.4.0"
 dj-places = "^5.2.1"
 python-magic = "^0.4.27"
 django-admin-async-upload = { git = "https://github.com/BetterAngelsLA/django-admin-async-upload", rev = "cfa824d7d390c9b500ea735ecfd5aa546c8165cd" }
