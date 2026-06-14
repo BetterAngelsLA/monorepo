@@ -107,7 +107,7 @@ psycopg = "^3.3.2"
 pyjwt = "^2.11.0"
 python-magic = "^0.4.27"
 requests = "^2.32.5"
-strawberry-graphql-django = "^0.79.1"
+strawberry-graphql-django = "^0.86.1"
 whitenoise = "^6.9.0"
 
 [package.source]
@@ -3939,24 +3939,25 @@ sanic = ["sanic (>=20.12.2)"]
 
 [[package]]
 name = "strawberry-graphql-django"
-version = "0.79.2"
+version = "0.86.1"
 description = "Strawberry GraphQL Django extension"
 optional = false
 python-versions = "<4.0,>=3.10"
 groups = ["main"]
 files = [
-    {file = "strawberry_graphql_django-0.79.2-py3-none-any.whl", hash = "sha256:e85824cd79c05f205c2b6b21f20e9e6dfa8a0e01bfea99476986a679fe034c1f"},
-    {file = "strawberry_graphql_django-0.79.2.tar.gz", hash = "sha256:80a4f0e650114fe4e750566b29edfb379bb8424fcf1ab2b09f5f0006ede19af5"},
+    {file = "strawberry_graphql_django-0.86.1-py3-none-any.whl", hash = "sha256:b6091b2c36ea230c354926148bdd75ea3685d467856b6842954692252af6a18e"},
+    {file = "strawberry_graphql_django-0.86.1.tar.gz", hash = "sha256:2b15e87b57162e4a214e6bcc55baebadfe58b1efb65bccd5f5eead933416a99a"},
 ]
 
 [package.dependencies]
 asgiref = ">=3.8"
-django = ">=4.2"
-strawberry-graphql = ">=0.303.0"
+django = ">=5.2"
+strawberry-graphql = ">=0.310.1"
 
 [package.extras]
 debug-toolbar = ["django-debug-toolbar (>=6.0.0)"]
 enum = ["django-choices-field (>=2.2.2)"]
+polymorphic = ["django-polymorphic (>=4.0.0)"]
 
 [[package]]
 name = "structlog"
