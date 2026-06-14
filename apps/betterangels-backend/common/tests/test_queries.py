@@ -103,3 +103,33 @@ class FeatureControlsAccessTestCase(GraphQLBaseTestCase):
             new_feature_flag["isActive"],
             "Feature flag should not be active for user without access.",
         )
+
+
+class NewRelicGraphQLSmokeTestCase(GraphQLBaseTestCase):
+    """Smoke test for newrelic/newrelic-python-agent#1756.
+
+    Sends a real HTTP POST to ``/graphql`` through Django's full middleware
+    chain where New Relic's ``wrap_execute_operation`` hook fires.  The
+    ``featureControls`` query bypasses authentication so no database setup
+    is required — it hits the exact graphql-core execution path that
+    crashes with newrelic 11.4.0 + graphql-core >= 3.2.10.
+
+    If newrelic's ``_execution_context_has_errors`` fix is NOT present,
+    this test fails with::
+
+        AttributeError: 'StrawberryGraphQLCoreExecutionContext' object
+        has no attribute 'errors'
+    """
+
+    def test_anonymous_feature_controls_no_crash(self) -> None:
+        """Anonymous query reaches graphql-core execution without crash."""
+        result = self.execute_graphql("""
+        query {
+            featureControls {
+                flags { name isActive }
+            }
+        }
+        """)
+        self.assertIn("data", result)
+        self.assertIsNotNone(result["data"])
+        self.assertIsInstance(result["data"]["featureControls"]["flags"], list)
