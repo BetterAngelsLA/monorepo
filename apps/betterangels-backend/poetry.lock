@@ -1521,7 +1521,7 @@ zookeeper = ["kazoo (>=2.8.0)"]
 
 [[package]]
 name = "newrelic"
-version = "13.1.2.dev9+g1f2b421ca"
+version = "13.1.2.dev1+g825d7bd3d"
 description = "New Relic Python Agent"
 optional = false
 python-versions = ">=3.9"
@@ -1536,8 +1536,8 @@ infinite-tracing = ["grpcio", "protobuf"]
 [package.source]
 type = "git"
 url = "https://github.com/newrelic/newrelic-python-agent.git"
-reference = "main"
-resolved_reference = "1f2b421cad8b06f6648784caabea891d8fb331e7"
+reference = "825d7bd3dd56b86576324d6e3f07dd2e7008e6cf"
+resolved_reference = "825d7bd3dd56b86576324d6e3f07dd2e7008e6cf"
 
 [[package]]
 name = "nh3"
@@ -2225,4 +2225,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = "3.14.2"
-content-hash = "b2a97bedb28e7d2008bbc4056f221cf79fbda507f8953aee1d55b0aeb14e9748"
+content-hash = "c9557dff9a293cf5a486cb0b5972794d090fec4ece638948560e5e122d22a6b9"
