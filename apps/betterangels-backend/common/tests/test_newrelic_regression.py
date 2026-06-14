@@ -34,19 +34,24 @@ class _CaptureExecutionContext(SchemaExtension):
 
 
 class NewRelicFixVerificationTestCase(SimpleTestCase):
-    """Prove the break and verify the fix without any app queries or DB."""
+    """Prove the break and verify the fix without any app queries or DB.
+
+    The actual crash path (NR's ``wrap_execute_operation`` accessing
+    ``execution_context.errors`` inside a web transaction) requires Django's
+    full ``GraphQLView`` middleware chain and cannot be triggered from a
+    ``SimpleTestCase``.  These tests instead prove:
+
+    1. The underlying cause — ``ctx.errors`` raises ``AttributeError``
+       because graphql-core >= 3.2.10 moved errors to ``collected_errors``.
+
+    2. The fix is present — ``_execution_context_has_errors`` exists and
+       ``wrap_execute_operation`` calls it.
+    """
 
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
         cls._synthetic_schema = strawberry.Schema(query=_Query, extensions=[_CaptureExecutionContext])
-        # Initialize NewRelic so its graphql-core hooks are active.
-        try:
-            import newrelic.agent
-
-            newrelic.agent.initialize()
-        except Exception:
-            pass
 
     def _has_nr_fix(self) -> bool:
         """Return True if the _execution_context_has_errors fix is present."""
@@ -84,19 +89,3 @@ class NewRelicFixVerificationTestCase(SimpleTestCase):
 
         src = inspect.getsource(fg.wrap_execute_operation)
         self.assertIn("_execution_context_has_errors", src)
-
-    def test_04_background_task_graphql_no_crash(self) -> None:
-        """A strawberry query inside an NR background_task must not crash."""
-        if not self._has_nr_fix():
-            self.skipTest("NewRelic not installed or initialized")
-        import newrelic.agent
-
-        schema = strawberry.Schema(query=_Query)
-
-        @newrelic.agent.background_task(name="test_graphql")
-        def run():
-            return schema.execute_sync("query { noop { ok } }")
-
-        result = run()
-        self.assertIsNone(result.errors)
-        self.assertEqual(result.data, {"noop": {"ok": True}})
