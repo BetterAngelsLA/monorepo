@@ -102,7 +102,7 @@ django-waffle = "^5.0.0"
 djangorestframework = "^3.16.0"
 gunicorn = {version = "25.1.0", extras = ["gevent"]}
 hiredis = "^3.3.0"
-newrelic = "^11.2.0"
+newrelic = {git = "https://github.com/newrelic/newrelic-python-agent.git", rev = "825d7bd3dd56b86576324d6e3f07dd2e7008e6cf"}
 psycopg = "^3.3.2"
 pyjwt = "^2.11.0"
 python-magic = "^0.4.27"
@@ -179,18 +179,18 @@ uvloop = ["uvloop (>=0.15.2) ; sys_platform != \"win32\"", "winloop (>=0.5.0) ; 
 
 [[package]]
 name = "boto3"
-version = "1.43.28"
+version = "1.43.29"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "boto3-1.43.28-py3-none-any.whl", hash = "sha256:4fe6df2163aea02b561eca0d685e2f41a059d71f03721a3e79c3b522e79a3b56"},
-    {file = "boto3-1.43.28.tar.gz", hash = "sha256:8391fdcc4d8e1d4e0bf96575a7e5610964a4d401dafa4dccb0a5bade8dd3fbb0"},
+    {file = "boto3-1.43.29-py3-none-any.whl", hash = "sha256:77c27ada27cdbf619a3bbc41fa9e991caef818d3a2988cf92ea722e107d90108"},
+    {file = "boto3-1.43.29.tar.gz", hash = "sha256:354006c512cdb87ef8214a095f2ade961c8145734475cd7a7e6b39260ff5494a"},
 ]
 
 [package.dependencies]
-botocore = ">=1.43.28,<1.44.0"
+botocore = ">=1.43.29,<1.44.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.18.0,<0.19.0"
 
@@ -199,14 +199,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.43.28"
-description = "Type annotations for boto3 1.43.28 generated with mypy-boto3-builder 8.12.0"
+version = "1.43.29"
+description = "Type annotations for boto3 1.43.29 generated with mypy-boto3-builder 8.12.0"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "boto3_stubs-1.43.28-py3-none-any.whl", hash = "sha256:b37193c65fbbbf95cf7e05c4725f82836cac559ba1d041f6310462520e8786b5"},
-    {file = "boto3_stubs-1.43.28.tar.gz", hash = "sha256:1b826a522e477fbd12169acb6851f799a9879863441ca85f6c1166bcd471e45b"},
+    {file = "boto3_stubs-1.43.29-py3-none-any.whl", hash = "sha256:6c4d1766c3b310d23c107a4bd437e139181c17492a468f62cc2a89dbcd7becf3"},
+    {file = "boto3_stubs-1.43.29.tar.gz", hash = "sha256:4d7829eca11f02a652d72b353fbd81a5192ae55d9f7425b81d102a51f01d8e58"},
 ]
 
 [package.dependencies]
@@ -273,7 +273,7 @@ bedrock-data-automation-runtime = ["mypy-boto3-bedrock-data-automation-runtime (
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.43.0,<1.44.0)"]
 billing = ["mypy-boto3-billing (>=1.43.0,<1.44.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.43.0,<1.44.0)"]
-boto3 = ["boto3 (==1.43.28)"]
+boto3 = ["boto3 (==1.43.29)"]
 braket = ["mypy-boto3-braket (>=1.43.0,<1.44.0)"]
 budgets = ["mypy-boto3-budgets (>=1.43.0,<1.44.0)"]
 ce = ["mypy-boto3-ce (>=1.43.0,<1.44.0)"]
@@ -653,14 +653,14 @@ xray = ["mypy-boto3-xray (>=1.43.0,<1.44.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.43.28"
+version = "1.43.29"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "botocore-1.43.28-py3-none-any.whl", hash = "sha256:8147adea89b4c9324e842cd8c01ea1a0e17c92cb6ebeaa8cb774f821cb5a7629"},
-    {file = "botocore-1.43.28.tar.gz", hash = "sha256:9bbad501a68e4ffdbeff76a382507f5d7827abc316f34a218ab76f5293e6c78d"},
+    {file = "botocore-1.43.29-py3-none-any.whl", hash = "sha256:5d62f2a03ed279a50207ca2824e009313df15f082b6bb591a095a4f04c7faef3"},
+    {file = "botocore-1.43.29.tar.gz", hash = "sha256:dce39d33b707aa162aa3820975f99d7f8f746d46576169fb42ce4f2b3b56b261"},
 ]
 
 [package.dependencies]
@@ -1298,14 +1298,14 @@ dev = ["attribution (==1.8.0)", "black (==24.8.0)", "build (>=1)", "flit (==3.9.
 
 [[package]]
 name = "distlib"
-version = "0.4.2"
+version = "0.4.3"
 description = "Distribution utilities"
 optional = false
 python-versions = "*"
 groups = ["dev"]
 files = [
-    {file = "distlib-0.4.2-py2.py3-none-any.whl", hash = "sha256:ca4cb11e5d746b5ec13c199cbf19ae27a241f89702b54e153a74332955446067"},
-    {file = "distlib-0.4.2.tar.gz", hash = "sha256:baeb401c90f27acd15c4861ae0847d1e731c27ac3dbf4210643ba61fa1e813db"},
+    {file = "distlib-0.4.3-py2.py3-none-any.whl", hash = "sha256:4b0ce306c966eb73bc3a7b6abad017c556dadd92c44701562cd528ac7fde4d5b"},
+    {file = "distlib-0.4.3.tar.gz", hash = "sha256:f152097224a0ae24be5a0f6bae1b9359af82133bce63f98a95f86cae1aede9ed"},
 ]
 
 [[package]]
@@ -2055,14 +2055,14 @@ tzdata = ["tzdata"]
 
 [[package]]
 name = "filelock"
-version = "3.29.3"
+version = "3.29.4"
 description = "A platform independent file lock."
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "filelock-3.29.3-py3-none-any.whl", hash = "sha256:e58333029cc9b925f39aad59b1d8f0a1ad836af4e60d7217f4a4dba87461261d"},
-    {file = "filelock-3.29.3.tar.gz", hash = "sha256:7fc1b3f39cf172fd8203812043c57b8a65aef9969f38b6704f628b881f761a84"},
+    {file = "filelock-3.29.4-py3-none-any.whl", hash = "sha256:dac1648087d5115554850d113e7dd8c83ab2d38e3435dde2d4f163847e57b767"},
+    {file = "filelock-3.29.4.tar.gz", hash = "sha256:10cdb3656fc44541cdf30652a93fb10ec6b05325620eb316bd26893e4201538a"},
 ]
 
 [[package]]
@@ -2932,45 +2932,23 @@ files = [
 
 [[package]]
 name = "newrelic"
-version = "11.5.0"
+version = "13.1.2.dev9+g1f2b421ca"
 description = "New Relic Python Agent"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
-files = [
-    {file = "newrelic-11.5.0-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:77667ad34ff3f4d4aaaee5e8bbb8f36fa87fab523e625f3cc2c8901f22bd7d6f"},
-    {file = "newrelic-11.5.0-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1d2fded7d3055191e5e55a4bb2820eb032ee2549a2170dc5efd6f3ba7b1bb7f9"},
-    {file = "newrelic-11.5.0-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:44f0a2f2faba07262a8cc08f2c629039a0dbe63092c35be032957581382b20fe"},
-    {file = "newrelic-11.5.0-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:19565ccdfd5e0bda2292b24036a804172d595f49cebe66c6a7855f54060437bd"},
-    {file = "newrelic-11.5.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:b3adbe17625cb62495b108b3ed9ecb3f2ed248e024c1f07e6fce8dd86d8394d1"},
-    {file = "newrelic-11.5.0-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:de40cb14a0dea7c29d9d0155c2a3aebd56c2fa12c9066692bf38a8df90f3d6a6"},
-    {file = "newrelic-11.5.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:6616b785a2deccb74ae7313799dcba4929ee9c707fbf1f15bc7ef0364facf7f4"},
-    {file = "newrelic-11.5.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:07b0dce0d4d55679a80f617e03d8292b1dc1e8b4391f5b76cf13dc0768ed5eeb"},
-    {file = "newrelic-11.5.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:6d47ba87b86d49b977e96add31c0d41fa2cf7044622e49080d5fb1b0a5715799"},
-    {file = "newrelic-11.5.0-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:710bc92d0a74ca429b19d39d04b3e619f789547f25f2c160da2844de8d5cc688"},
-    {file = "newrelic-11.5.0-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:445293bd72050f04eb15385327903a2d2e339e42b1d284c850cf0686c37eec4a"},
-    {file = "newrelic-11.5.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:0c48016cb9ed11e5dbf9ffd41ed4b2e0e3223a94677574ab9f892d2c2010f181"},
-    {file = "newrelic-11.5.0-cp313-cp313-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:b0dd6bc4518c40dd93b00d39fbb6fbe73db0baa7bc78c5ffab8fac645467f818"},
-    {file = "newrelic-11.5.0-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:e2ad2f2d5edb209c64ad68055ac41ae5e40a644a29729eb9fb3f564b8ee07974"},
-    {file = "newrelic-11.5.0-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:884c789ab4850dfae8d6cfc9441ff4ab0b82636a6e6564d04a30392ae6c23bdc"},
-    {file = "newrelic-11.5.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:dc8f15350f75eed04b64a4258038d7b33fdc568e3c4ef2dad4088302d20126ff"},
-    {file = "newrelic-11.5.0-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:051227445ab789128a490eb9cb3fe50af271488c9f15012e3eb937c46c4c5a1c"},
-    {file = "newrelic-11.5.0-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:e7085cbe9e2fd2c98fbcd67e82b245a9924522373033d80a712bb68b534fffa8"},
-    {file = "newrelic-11.5.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:799c7c7b1cfa0e7a69982ef4f356eba6063f234d49c2f66e01205220768b89c8"},
-    {file = "newrelic-11.5.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:c2d61a523a5fcdaee58c547081b81d61ae613dd64a1c4c781c715c6e4bf5a54a"},
-    {file = "newrelic-11.5.0-cp38-cp38-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:74fccac9b1c8f2acb1404398db0c16f5667d1dba367741e2fd96213331fe7156"},
-    {file = "newrelic-11.5.0-cp38-cp38-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:3be6a9658e0ddc13618af0cf5c7ead7fa736ee186d53101cba7bff1cfb6c099a"},
-    {file = "newrelic-11.5.0-cp38-cp38-musllinux_1_2_aarch64.whl", hash = "sha256:9dd4b9071de77bba039d6cab19955ec08f412d81d6940958466de8568fc90c49"},
-    {file = "newrelic-11.5.0-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:ce85b77e9bef15c69a1c8b65c31aa3c4631abe9966ba2664d6fb26e8ea7dc064"},
-    {file = "newrelic-11.5.0-cp39-cp39-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:d8a14e1f237e8354fbf76b834eaf3ee044753738be0759465b68912e55a164f1"},
-    {file = "newrelic-11.5.0-cp39-cp39-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1c2ccf9b4e9dab20f4c520275390fcae8fbd5dbc770468941d132b3933ccaba1"},
-    {file = "newrelic-11.5.0-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:4c5dd59ce7fe88bed49c568f587f93303d4856119fb91850ddc052d727a18ee2"},
-    {file = "newrelic-11.5.0-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:1f91ff780bc552dac1e5f05dcf7d37952971cbe5ef048156c67670a6903e3275"},
-    {file = "newrelic-11.5.0.tar.gz", hash = "sha256:39607be7a43d1bff59119039b0e9c145bf27debbc2075ec24549817a8faf5a5c"},
-]
+files = []
+develop = false
 
 [package.extras]
+certificates = ["certifi"]
 infinite-tracing = ["grpcio", "protobuf"]
+
+[package.source]
+type = "git"
+url = "https://github.com/newrelic/newrelic-python-agent.git"
+reference = "825d7bd3dd56b86576324d6e3f07dd2e7008e6cf"
+resolved_reference = "825d7bd3dd56b86576324d6e3f07dd2e7008e6cf"
 
 [[package]]
 name = "nh3"
@@ -3440,14 +3418,14 @@ crypto = ["cryptography (>=3.4.0)"]
 
 [[package]]
 name = "pytest"
-version = "9.0.3"
+version = "9.1.0"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "pytest-9.0.3-py3-none-any.whl", hash = "sha256:2c5efc453d45394fdd706ade797c0a81091eccd1d6e4bccfcd476e2b8e0ab5d9"},
-    {file = "pytest-9.0.3.tar.gz", hash = "sha256:b86ada508af81d19edeb213c681b1d48246c1a91d304c6c81a427674c17eb91c"},
+    {file = "pytest-9.1.0-py3-none-any.whl", hash = "sha256:8ebb0e7888bdf2bdfc602ec51f8f62d50200af37356c74e503c79a94f5c81f32"},
+    {file = "pytest-9.1.0.tar.gz", hash = "sha256:41dd9148c08072446394cefd3d79701701335a9f4cae69ba92e39f6c7f5c061c"},
 ]
 
 [package.dependencies]
@@ -4380,14 +4358,14 @@ files = [
 
 [[package]]
 name = "virtualenv"
-version = "21.4.3"
+version = "21.5.0"
 description = "Virtual Python Environment builder"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "virtualenv-21.4.3-py3-none-any.whl", hash = "sha256:75f4127d4067397c64f38579ce918fec6bf9ca2cd4f48685e82952cc3c035840"},
-    {file = "virtualenv-21.4.3.tar.gz", hash = "sha256:938ff0fd3f4e0f0d3a025f67a3d2f25e3c3aabbcd5857ea6170619138d72d141"},
+    {file = "virtualenv-21.5.0-py3-none-any.whl", hash = "sha256:8f7c38605023688c89789f566959006af6d61c99eeeb9e58342eb780c5761e5e"},
+    {file = "virtualenv-21.5.0.tar.gz", hash = "sha256:98847aadf5e2037e0e4d2e19528eb3aca6f23906422e59a510bff231a6d32fce"},
 ]
 
 [package.dependencies]
