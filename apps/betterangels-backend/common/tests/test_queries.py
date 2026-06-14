@@ -52,6 +52,39 @@ class FeatureControlDataTestCase(GraphQLBaseTestCase):
         self.assertEqual(len(result["data"]["featureControls"]["samples"]), 1)
 
 
+class FeatureControlsUnauthenticatedTestCase(GraphQLBaseTestCase):
+    """Regression test: anonymous GraphQL queries hitting the New Relic agent's
+    ``wrap_execute_operation`` hook.
+
+    See newrelic/newrelic-python-agent#1756 — as of graphql-core 3.2.10,
+    ``ExecutionContext.errors`` was removed, and New Relic < 13.2 crashed with
+    ``AttributeError: 'StrawberryGraphQLCoreExecutionContext' object has no
+    attribute 'errors'``.  We pin newrelic to its ``main`` branch until a fixed
+    release is published.
+
+    This test ensures anonymous GraphQL queries (which bypass
+    ``IsAuthenticated`` early-return and reach full execution) complete
+    without a 500 caused by the New Relic hook.
+    """
+
+    def test_feature_controls_unauthenticated(self) -> None:
+        """Anonymous featureControls query must return data without crashing."""
+        query = """
+        query {
+            featureControls {
+                flags {
+                    name
+                    isActive
+                }
+            }
+        }
+        """
+        result = self.execute_graphql(query)
+        self.assertIn("data", result)
+        self.assertIsNotNone(result["data"])
+        self.assertIsInstance(result["data"]["featureControls"]["flags"], list)
+
+
 class FeatureControlsAccessTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
