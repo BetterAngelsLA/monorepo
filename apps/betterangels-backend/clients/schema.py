@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import resolve_permission_group
+from accounts.selectors import resolve_permission_group
 from clients.enums import ErrorCodeEnum
 from clients.models import (
     ClientContact,

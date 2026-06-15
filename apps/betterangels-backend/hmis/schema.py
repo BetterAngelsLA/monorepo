@@ -3,7 +3,7 @@ from typing import Any, Dict, Iterable, cast
 import strawberry
 import strawberry_django
 from accounts.types import CurrentUserType
-from accounts.utils import resolve_permission_group
+from accounts.selectors import resolve_permission_group
 from betterangels_backend import settings
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError

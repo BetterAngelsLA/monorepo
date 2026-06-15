@@ -11,10 +11,8 @@ from typing import TYPE_CHECKING
 
 from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
-from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import QuerySet
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
 from .models import (
@@ -198,60 +196,39 @@ def organization_remove_member(
     return user_id
 
 
-# ── Permission group resolution ───────────────────────────────────────
+# ── Organization-level permission group management ────────────────────
 
 
-def get_permission_groups_for_org(org: Organization) -> QuerySet[PermissionGroup]:
-    """Return all :class:`~accounts.models.PermissionGroup` rows belonging to
-    *org*."""
-    return PermissionGroup.objects.filter(organization=org)
+def create_default_org_permission_groups(organization: Organization) -> None:
+    """Create ``PermissionGroup`` rows for every template in *organization*.
 
-
-def get_member_permission_group(org: Organization) -> PermissionGroup:
-    """Return the default member-level ``PermissionGroup`` for *org*.
-
-    The member group is defined by the *first* template of the *first*
-    org type on the org's profile.  This is the group that
-    non-admin/non-superuser members are placed in by default.
+    Uses :meth:`Registry.templates_for` so the result is org-type-aware —
+    an outreach org gets Caseworker, Org Admin, Org Superuser; a shelter org
+    gets Shelter Operator, Org Admin, Org Superuser.
     """
-    profile = org.profile
-    org_types = profile.org_types
+    from common.org_types import REGISTRY
 
-    if not org_types:
-        raise ValueError(f"Organization '{org.name}' has no org_types set on its profile.")
-
-    primary_config = REGISTRY.org_type(org_types[0].value)
-    if primary_config is None:
-        raise LookupError(f"Org type '{org_types[0].value}' is not registered.")
-
-    first_template = primary_config.templates[0]
-
-    return PermissionGroup.objects.get(
-        organization=org,
-        template__name=first_template.name,
-    )
+    for template_config in REGISTRY.templates_for(organization):
+        template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_config.name)
+        PermissionGroup.objects.get_or_create(organization=organization, template=template)
 
 
-def get_user_permission_group_for_org(
-    user: AbstractBaseUser | AnonymousUser,
-    org_id: str,
-) -> PermissionGroup:
-    """Return the highest-priority ``PermissionGroup`` the *user* belongs to in
-    *org_id*.  Raises :exc:`PermissionError` when the user has no group in
-    that organization.
-    """
-    # Prefer non-member groups first; if none, fall back to member group.
-    permission_group = (
-        PermissionGroup.objects.select_related("organization", "group", "template")
-        .filter(
-            organization_id=org_id,
-            group__user=user,
-        )
-        .order_by("-group__permissions")  # crude priority by permission count
-        .first()
-    )
+def add_default_org_permissions_to_user(user: UserModel, organization: Organization) -> None:
+    """Add *user* to the (first) invitable member role group for *organization*."""
+    from common.org_types import REGISTRY
 
-    if not (permission_group and permission_group.group):
-        raise PermissionError("User lacks proper organization or permissions")
+    invitable = REGISTRY.invitable_templates_for(organization)
+    if not invitable:
+        return
+    member_config = invitable[0]
+    member_template, _ = PermissionGroupTemplate.objects.get_or_create(name=member_config.name)
+    member_group, _ = PermissionGroup.objects.get_or_create(organization=organization, template=member_template)
+    user.groups.add(member_group.group)
 
-    return permission_group
+
+def remove_org_group_permissions_from_user(user: UserModel, organization: Organization) -> None:
+    """Remove all org-scoped permission groups from *user*."""
+    from django.contrib.auth.models import Group
+
+    groups = Group.objects.filter(permissiongroup__organization=organization)
+    user.groups.remove(*groups)

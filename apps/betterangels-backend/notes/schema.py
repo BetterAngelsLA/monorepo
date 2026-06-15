@@ -3,7 +3,7 @@ from typing import cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import resolve_permission_group
+from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType

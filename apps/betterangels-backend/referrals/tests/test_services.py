@@ -1,4 +1,4 @@
-from accounts.utils import resolve_permission_group
+from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
