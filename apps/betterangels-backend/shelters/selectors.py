@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING, Any
 import pghistory
 from django.db.models import Count, Exists, OuterRef, Q, QuerySet, Subquery, TextField
 from django.db.models.functions import Cast
-from django.utils import timezone
 from organizations.models import Organization
 from shelters.enums import BedStatusChoices, DayOfWeekChoices, ScheduleTypeChoices, StatusChoices
 
@@ -212,7 +211,7 @@ def shelters_open_at(
     return queryset.filter(is_open).exclude(has_active_exception)
 
 
-def reservation_status_change_counts_by_day(
+def reservation_status_change_counts(
     shelter_id: int,
     start_date: datetime.datetime,
     end_date: datetime.datetime,
@@ -222,21 +221,12 @@ def reservation_status_change_counts_by_day(
 
     Each reservation is counted once per status.
     """
-    now = timezone.now()
-    furthest_date = now - datetime.timedelta(days=365)
-    if start_date < furthest_date or end_date < furthest_date:
-        return {}
-
     from shelters.models import Reservation
 
-    reservation_ids = (
-        Reservation.objects.filter(shelter_id=shelter_id)
-        .annotate(pk_text=Cast("pk", TextField()))
-        .values_list("pk_text", flat=True)
-    )
-
     events = pghistory.models.Events.objects.filter(
-        pgh_obj_id__in=reservation_ids,
+        pgh_obj_id__in=Reservation.objects.filter(shelter_id=shelter_id)
+        .annotate(pk_text=Cast("pk", TextField()))
+        .values("pk_text"),
         pgh_label="reservation.status_change",
         pgh_created_at__gte=start_date,
         pgh_created_at__lt=end_date,
