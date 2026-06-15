@@ -24,13 +24,19 @@ from strawberry_django.permissions import HasPerm
 
 from .models import PermissionGroup, User
 from .services import member_add, organization_remove_member
+from notes.groups import CASEWORKER
+from organizations.models import Organization
+
 from .types import (
     AuthResponse,
     CurrentUserType,
     LoginInput,
+    OrganizationFilter,
     OrganizationMemberFilter,
     OrganizationMemberOrdering,
     OrganizationMemberType,
+    OrganizationOrder,
+    OrganizationType,
     OrgInvitationInput,
     RemoveOrganizationMemberInput,
     UpdateUserInput,
@@ -70,6 +76,21 @@ class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
     def current_user(self, info: Info) -> CurrentUserType:
         return get_current_user(info)  # type: ignore
+
+    @strawberry_django.offset_paginated(
+        OffsetPaginated[OrganizationType],
+        permission_classes=[IsAuthenticated],
+    )
+    def caseworker_organizations(
+        self,
+        info: Info,
+        ordering: Optional[list[OrganizationOrder]] = None,
+        filters: Optional[OrganizationFilter] = None,
+    ) -> QuerySet[Organization]:
+        queryset: QuerySet[Organization] = Organization.objects.filter(
+            permission_groups__template__name=CASEWORKER.name
+        ).distinct()
+        return queryset
 
     @strawberry_django.field(
         permission_classes=[IsAuthenticated], extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)]

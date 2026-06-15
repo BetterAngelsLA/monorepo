@@ -862,7 +862,8 @@ export type CurrentUserType = {
   hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
   isHmisUser?: Maybe<Scalars['Boolean']['output']>;
-  isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
+  /** @deprecated Use userPermissions check instead. */
+  isOutreachAuthorized: Scalars['Boolean']['output'];
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
   organizationsOrganization?: Maybe<Array<CurrentUserOrganizationType>>;
@@ -3570,7 +3571,8 @@ export type UserType = {
   hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
   isHmisUser?: Maybe<Scalars['Boolean']['output']>;
-  isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
+  /** @deprecated Use userPermissions check instead. */
+  isOutreachAuthorized: Scalars['Boolean']['output'];
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
   organizationsOrganization?: Maybe<Array<OrganizationType>>;
