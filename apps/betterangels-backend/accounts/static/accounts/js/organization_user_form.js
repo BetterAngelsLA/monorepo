@@ -3,30 +3,21 @@
 
   /**
    * Dynamically filter permission_template checkboxes based on the
-   * selected organization.  Reads the mapping from a data-org-templates
-   * attribute on the permission_templates widget.
+   * selected organization.  Reads the org→templates mapping from a
+   * data-org-templates attribute embedded on the widget container.
    */
   document.addEventListener("DOMContentLoaded", function () {
     var orgSelect = document.querySelector("#id_organization");
-    var templateField = document.querySelector(
-      ".field-permission_templates .checkbox-select-multiple, #id_permission_templates"
-    );
+    var widgetContainer = document.querySelector("#id_permission_templates");
 
-    if (!orgSelect || !templateField) return;
+    if (!orgSelect || !widgetContainer) return;
 
-    var widgetContainer = templateField.closest(".field-permission_templates");
-    if (!widgetContainer) return;
-
-    // The mapping is embedded on the checkboxes container.
-    var allCheckboxes = widgetContainer.querySelectorAll(
-      'input[type="checkbox"]'
-    );
+    var allCheckboxes = widgetContainer.querySelectorAll('input[type="checkbox"]');
     if (!allCheckboxes.length) return;
 
-    var mappingEl = allCheckboxes[0];
     var orgTemplates;
     try {
-      orgTemplates = JSON.parse(mappingEl.getAttribute("data-org-templates") || "{}");
+      orgTemplates = JSON.parse(widgetContainer.getAttribute("data-org-templates") || "{}");
     } catch (e) {
       return;
     }
@@ -37,7 +28,7 @@
       var allowedSet = new Set(allowed);
 
       allCheckboxes.forEach(function (cb) {
-        var row = cb.closest("li, label");
+        var row = cb.closest("label, div");
         if (!row) return;
         if (allowedSet.has(cb.value)) {
           row.style.display = "";

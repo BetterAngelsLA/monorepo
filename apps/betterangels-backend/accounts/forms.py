@@ -12,7 +12,8 @@ from django.core.exceptions import ValidationError
 from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationUser
 
-from .models import User
+from .models import PermissionGroup, User
+from .role_manager import OrgRoleManager
 
 # isort: off
 # We ignore this type check because there's an issue with django-stubs not recognizing
@@ -53,16 +54,15 @@ class OrganizationUserForm(forms.ModelForm):
        ``invite_html``/``invite_txt`` paths.
     3. Creates an ``OrganizationInvitation`` record.
 
-    The ``permission_templates`` field is a multi-select of all invitable
-    templates available in the registry.  Validation ensures the chosen
-    templates are valid for the selected organization.
+    When editing an existing member, the selected templates are diffed
+    against the current set — roles are added or removed as needed.
     """
 
     email = forms.EmailField()
     permission_templates = forms.MultipleChoiceField(
-        required=True,
+        required=False,
         widget=forms.CheckboxSelectMultiple,
-        help_text="Select one or more roles. Only roles available for the chosen organization will be accepted.",
+        help_text="Select one or more invitable roles. Deselecting a role removes it.",
     )
 
     class Meta:
@@ -89,6 +89,8 @@ class OrganizationUserForm(forms.ModelForm):
 
         if self.instance.pk is not None:
             self.fields["email"].initial = self.instance.user.email
+            # Pre-select templates the user already holds.
+            self.fields["permission_templates"].initial = list(self._get_current_template_names())
 
     def clean_permission_templates(self) -> list[str]:
         """Validate that the selected templates are valid for the org."""
@@ -106,6 +108,27 @@ class OrganizationUserForm(forms.ModelForm):
                 )
         return template_names
 
+    # ── Helpers ───────────────────────────────────────────────────────
+
+    def _get_current_template_names(self) -> list[str]:
+        """Return invitable template names the user currently holds."""
+        return list(
+            PermissionGroup.objects.filter(
+                organization=self.instance.organization,
+                group__user=self.instance.user,
+                template__name__in=REGISTRY.invitable_template_names(),
+            ).values_list("template__name", flat=True)
+        )
+
+    def _get_current_invitable_templates(self) -> tuple[TemplateConfig, ...]:
+        """Return the TemplateConfigs the user currently holds (invitable only)."""
+        selected: list[TemplateConfig] = []
+        for name in self._get_current_template_names():
+            template = REGISTRY.template(name)
+            if template is not None:
+                selected.append(template)
+        return tuple(selected)
+
     def _get_selected_templates(self) -> tuple[TemplateConfig, ...]:
         """Resolve selected template names to TemplateConfig objects."""
         template_names: list[str] = self.cleaned_data["permission_templates"]
@@ -116,12 +139,14 @@ class OrganizationUserForm(forms.ModelForm):
                 selected.append(template)
         return tuple(selected)
 
+    # ── Save ──────────────────────────────────────────────────────────
+
     def save(self, *args: Any, **kwargs: Any) -> User:
         """Create or update the linked user model and assign roles."""
         organization = self.cleaned_data["organization"]
 
         if self.instance.pk is None:
-            # New member — use member_add for create + link + roles.
+            # ── New member ────────────────────────────────────────────
             templates = self._get_selected_templates()
             if not templates:
                 raise ValidationError("At least one permission template must be selected.")
@@ -162,6 +187,21 @@ class OrganizationUserForm(forms.ModelForm):
             self.instance.user.email = self.cleaned_data["email"]
             self.instance.user.save()
             return cast(User, super().save(*args, **kwargs))
+
+        # ── Update existing member ────────────────────────────────────
+        role_manager = OrgRoleManager(organization)
+        current = self._get_current_invitable_templates()
+        selected = self._get_selected_templates()
+
+        # Remove deselected roles.
+        for t in current:
+            if t not in selected:
+                role_manager.remove_roles(self.instance.user, t)
+
+        # Add newly selected roles.
+        for t in selected:
+            if t not in current:
+                role_manager.add_roles(self.instance.user, t)
 
         self.instance.user.email = self.cleaned_data["email"]
         self.instance.user.save()
