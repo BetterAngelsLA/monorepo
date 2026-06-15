@@ -170,7 +170,8 @@ def test_member_add_existing_user_different_org() -> None:
 
 @pytest.mark.django_db(transaction=True)
 def test_member_add_already_member() -> None:
-    """member_add raises ValidationError when user is already in the org."""
+    """member_add does NOT raise when user is already in the org — it skips
+    duplicate templates."""
     org = create_organization_with_presets("Already Org", ["outreach"], owner=baker.make(User))
 
     member_add(
@@ -182,15 +183,60 @@ def test_member_add_already_member() -> None:
         permission_templates=(CASEWORKER,),
     )
 
-    with pytest.raises(ValidationError, match="is already a member"):
-        member_add(
-            email="already@here.com",
-            first_name="Already",
-            last_name="Here",
-            middle_name=None,
-            organization=org,
-            permission_templates=(CASEWORKER,),
-        )
+    # Adding the same templates is a no-op, not an error.
+    user = member_add(
+        email="already@here.com",
+        first_name="Already",
+        last_name="Here",
+        middle_name=None,
+        organization=org,
+        permission_templates=(CASEWORKER,),
+    )
+    assert user.email == "already@here.com"
+
+
+@pytest.mark.django_db(transaction=True)
+def test_member_add_cross_portal_reinvite() -> None:
+    """Adding an existing member through a different portal adds the new
+    permission template without raising an error.
+
+    Simulates: a user is already an outreach Caseworker; later an admin
+    tries to add them as a Shelter Operator through the shelter portal.
+    """
+    from shelters.groups import SHELTER_OPERATOR
+
+    # Create a dual-type org (outreach + shelter) so both templates exist.
+    org = create_organization_with_presets("Portal Org", ["outreach", "shelter"], owner=baker.make(User))
+
+    # First call — outreach portal adds Caseworker.
+    user = member_add(
+        email="portal_user@example.com",
+        first_name="Portal",
+        last_name="User",
+        middle_name=None,
+        organization=org,
+        permission_templates=(CASEWORKER,),
+    )
+    assert OrganizationUser.objects.filter(user=user, organization=org).exists()
+    cw_group = Group.objects.get(permissiongroup__organization=org, permissiongroup__template__name="Caseworker")
+    assert cw_group in user.groups.all()
+
+    # Second call — shelter portal adds Shelter Operator for same user.
+    user2 = member_add(
+        email="portal_user@example.com",
+        first_name="Portal",
+        last_name="User",
+        middle_name=None,
+        organization=org,
+        permission_templates=(SHELTER_OPERATOR,),
+    )
+    assert user2.pk == user.pk  # same user, no duplicate
+    so_group = Group.objects.get(
+        permissiongroup__organization=org,
+        permissiongroup__template__name="Shelter Operator",
+    )
+    assert so_group in user2.groups.all()
+    assert cw_group in user2.groups.all()  # still has original role
 
 
 @pytest.mark.django_db(transaction=True)

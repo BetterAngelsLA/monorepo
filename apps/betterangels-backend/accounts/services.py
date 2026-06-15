@@ -40,9 +40,13 @@ def member_add(
 
     Returns the :class:`~accounts.models.User`.
 
-    Raises :class:`~django.core.exceptions.ValidationError` if the user
-    is already a member of *organization*.
+    When *user* is already a member of *organization*, only
+    *permission_templates* the user does **not** already hold are
+    assigned.  This allows the same user to be added through different
+    portals (e.g. outreach and shelter operator) without raising an error.
     """
+    from accounts.models import PermissionGroup
+
     user, created = UserModel.objects.get_or_create(
         email=email,
         defaults={"username": str(uuid.uuid4()), "is_active": True},
@@ -54,20 +58,30 @@ def member_add(
         user.set_unusable_password()
         user.save()
 
-    # Reject re-invites to avoid IntegrityError from django-organizations
-    # unique_together constraint on (user, organization).
-    if organization.users.filter(pk=user.pk).exists():
-        raise ValidationError(f"{first_name} {last_name} is already a member of {organization.name}.")
+    is_existing_member = organization.users.filter(pk=user.pk).exists()
 
-    # Link user to organization via the django-organizations helper
-    # so that the framework's owner auto-assignment fires.
-    try:
-        organization.add_user(user)
-    except IntegrityError:
-        raise ValidationError(f"{first_name} {last_name} is already a member of {organization.name}.")
+    if not is_existing_member:
+        # Fast path: new user — avoid the PermissionGroup query below.
+        try:
+            organization.add_user(user)
+        except IntegrityError:
+            raise ValidationError(f"{first_name} {last_name} is already a member of {organization.name}.")
+        OrgRoleManager(organization).add_roles(user, *permission_templates)
+        return user
 
-    # Delegate permission assignment to the manager.
-    OrgRoleManager(organization).add_roles(user, *permission_templates)
+    # Existing member: only assign templates they do not already hold.
+    existing_template_names: set[str] = set(
+        PermissionGroup.objects.filter(
+            organization=organization,
+            group__user=user,
+            template__name__in=[t.name for t in permission_templates],
+        ).values_list("template__name", flat=True)
+    )
+
+    new_templates = tuple(t for t in permission_templates if t.name not in existing_template_names)
+
+    if new_templates:
+        OrgRoleManager(organization).add_roles(user, *new_templates)
 
     return user
 
