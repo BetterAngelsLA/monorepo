@@ -1,9 +1,13 @@
 from typing import Any, cast
 
+from accounts.services import member_add
+from common.org_types import REGISTRY
+from common.permissions.config import TemplateConfig
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
 from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
 from organizations.backends import invitation_backend
 
 from .models import User
@@ -37,38 +41,107 @@ class UserChangeForm(BaseUserChangeForm):
 
 
 class OrganizationUserForm(forms.ModelForm):
-    """
-    Form class for editing OrganizationUsers *and* the linked user model.
+    """Form class for editing OrganizationUsers *and* the linked user model.
+
+    When creating a new member (pk is None), this form:
+
+    1. Creates or retrieves a user via ``member_add()``, linking them
+       to the organization with the selected permission templates.
+    2. Sends the appropriate invitation email via the template's
+       ``invite_html``/``invite_txt`` paths.
+    3. Creates an ``OrganizationInvitation`` record.
+
+    The ``permission_templates`` field is a multi-select of all invitable
+    templates available in the registry.  Validation ensures the chosen
+    templates are valid for the selected organization.
     """
 
     email = forms.EmailField()
+    permission_templates = forms.MultipleChoiceField(
+        required=True,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Assign one or more invitable roles to this member.",
+    )
 
     class Meta:
         exclude = ("user", "is_admin")
 
-    def __init__(self, *args: Any, **kwargs: Any):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
+
+        # Populate template choices from the registry.
+        self.fields["permission_templates"].choices = [  # type: ignore[attr-defined]
+            (t.name, t.name) for t in REGISTRY.invitable_templates_for(None)
+        ]
+
         if self.instance.pk is not None:
             self.fields["email"].initial = self.instance.user.email
 
+    def clean_permission_templates(self) -> list[str]:
+        """Validate that the selected templates are valid for the org."""
+        template_names: list[str] = self.cleaned_data["permission_templates"]
+        organization = self.cleaned_data.get("organization")
+        if organization is None:
+            raise ValidationError("Organization is required.")
+
+        valid = set(REGISTRY.invitable_template_names_for(organization))
+        for name in template_names:
+            if name not in valid:
+                raise ValidationError(
+                    f"'{name}' is not an invitable template for {organization.name}. "
+                    f"Available: {', '.join(sorted(valid))}"
+                )
+        return template_names
+
+    def _get_selected_templates(self) -> tuple[TemplateConfig, ...]:
+        """Resolve selected template names to TemplateConfig objects."""
+        template_names: list[str] = self.cleaned_data["permission_templates"]
+        selected: list[TemplateConfig] = []
+        for name in template_names:
+            template = REGISTRY.template(name)
+            if template is not None:
+                selected.append(template)
+        return tuple(selected)
+
     def save(self, *args: Any, **kwargs: Any) -> User:
-        """
-        This method saves changes to the linked user model.
-        """
+        """Create or update the linked user model and assign roles."""
+        organization = self.cleaned_data["organization"]
 
         if self.instance.pk is None:
+            # New member — use member_add for create + link + roles.
+            templates = self._get_selected_templates()
+            if not templates:
+                raise ValidationError("At least one permission template must be selected.")
+
+            user = member_add(
+                email=self.cleaned_data["email"],
+                first_name="",
+                last_name="",
+                middle_name=None,
+                organization=organization,
+                permission_templates=templates,
+            )
+
+            # First selected template drives the invite email.
+            role_template = templates[0]
+
             site = Site.objects.get(pk=settings.SITE_ID)
-            self.instance.user = invitation_backend().invite_by_email(
-                self.cleaned_data["email"],
-                **{
-                    "organization": self.cleaned_data["organization"],
-                    "domain": site,
-                },
-            )
             invitation_backend().create_organization_invite(
-                self.cleaned_data["organization"], self.request.user, self.instance.user
+                organization=organization,
+                invited_by_user=self.request.user,
+                invitee_user=user,
             )
+            invitation_backend().send_invitation(
+                user=user,
+                sender=self.request.user,
+                organization=organization,
+                domain=site,
+                role_template=role_template,
+            )
+
+            self.instance.user = user
+
         self.instance.user.email = self.cleaned_data["email"]
         self.instance.user.save()
 
