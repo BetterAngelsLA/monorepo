@@ -107,8 +107,28 @@ def shelter_list(
     return queryset.filter(is_private=False)
 
 
-def admin_shelter_list(queryset: "QuerySet[Shelter]", *, user: "User") -> "QuerySet[Shelter]":
-    """Filter to shelters whose organization the *user* belongs to."""
+def admin_shelter_list(
+    queryset: "QuerySet[Shelter]",
+    *,
+    user: "User",
+    organization_id: str | None = None,
+) -> "QuerySet[Shelter]":
+    """Filter to shelters whose organization the *user* belongs to.
+
+    If *organization_id* is provided, scopes to that org.  Otherwise uses
+    the user's :class:`~accounts.models.UserOrganizationPreference` if set.
+    Falls back to all orgs the user belongs to.
+    """
+    from accounts.models import UserOrganizationPreference
+
+    if organization_id is None:
+        pref = UserOrganizationPreference.objects.filter(user=user).first()
+        if pref and pref.current_organization_id:
+            organization_id = str(pref.current_organization_id)
+
+    if organization_id:
+        return queryset.filter(organization_id=organization_id)
+
     user_orgs = Organization.objects.filter(pk=OuterRef("organization_id"), users=user)
     return queryset.filter(Exists(user_orgs))
 

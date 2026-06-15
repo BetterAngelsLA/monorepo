@@ -1,0 +1,14 @@
+mutation ShelterOperatorSignup($data: ShelterOperatorSignupInput!) {
+  shelterOperatorSignup(data: $data) {
+    user {
+      id
+      email
+      firstName
+      lastName
+    }
+    organization {
+      id
+      name
+    }
+  }
+}
