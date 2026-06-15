@@ -187,11 +187,11 @@ class Mutation:
         if organization is None:
             raise PermissionDenied("You do not have permission to add members.")
 
-        template = REGISTRY.template(data.permission_template.value)  # type: ignore[union-attr]
+        template = REGISTRY.template(data.permission_template.value)  # type: ignore[attr-defined, union-attr]
         if template is None:
             valid = REGISTRY.invitable_template_names_for(organization)
             raise ValidationError(
-                f"Invalid permission template '{data.permission_template.value}'. "  # type: ignore[union-attr]
+                f"Invalid permission template '{data.permission_template.value}'. "  # type: ignore[attr-defined, union-attr]
                 f"Available: {', '.join(valid)}"
             )
 
