@@ -74,9 +74,7 @@ def get_permission_group_for_org(
     )
 
     if not (permission_group and permission_group.group):
-        raise PermissionError(
-            f"Organization does not have a '{template_name}' permission group"
-        )
+        raise PermissionError(f"Organization does not have a '{template_name}' permission group")
 
     if not hasattr(user, "groups") or not user.groups.filter(id=permission_group.group_id).exists():  # type: ignore[union-attr]
         raise PermissionError("User is not a member of this organization's permission group")
@@ -112,8 +110,6 @@ def resolve_permission_group(
     )
 
     if not (permission_group and permission_group.group):
-        raise PermissionError(
-            f"User does not hold a '{template_name}' permission group in any organization"
-        )
+        raise PermissionError(f"User does not hold a '{template_name}' permission group in any organization")
 
     return permission_group

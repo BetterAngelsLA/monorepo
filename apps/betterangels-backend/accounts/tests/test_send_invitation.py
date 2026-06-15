@@ -110,18 +110,14 @@ class SendInvitationTestCase(TestCase):
         """send_invitation raises ValueError if user has no email."""
         user = baker.make(User, email="")
         with self.assertRaisesRegex(ValueError, r"Cannot send invitation"):
-            self.invitation_backend.send_invitation(
-                user, organization=self.organization, domain="localhost:8000"
-            )
+            self.invitation_backend.send_invitation(user, organization=self.organization, domain="localhost:8000")
 
     # ── invite_by_email ────────────────────────────────────────────────
 
     @patch("accounts.backends.CustomInvitations.send_invitation")
     def test_invite_by_email_creates_user(self, mock_send: Mock) -> None:
         """invite_by_email creates a new user and sends invitation."""
-        abstract_user = self.invitation_backend.invite_by_email(
-            self.email, domain="localhost:8000"
-        )
+        abstract_user = self.invitation_backend.invite_by_email(self.email, domain="localhost:8000")
         assert isinstance(abstract_user, User)
         self.assertEqual(abstract_user.email, self.email)
         self.assertFalse(abstract_user.has_usable_password())
@@ -131,9 +127,7 @@ class SendInvitationTestCase(TestCase):
     def test_invite_by_email_existing_user(self, mock_send: Mock) -> None:
         """invite_by_email reuses existing user by email."""
         existing = baker.make(User, email=self.email, username="existing")
-        abstract_user = self.invitation_backend.invite_by_email(
-            self.email, domain="localhost:8000"
-        )
+        abstract_user = self.invitation_backend.invite_by_email(self.email, domain="localhost:8000")
         assert isinstance(abstract_user, User)
         self.assertEqual(abstract_user.pk, existing.pk)  # reused
         mock_send.assert_called_once_with(abstract_user, None, domain="localhost:8000")
