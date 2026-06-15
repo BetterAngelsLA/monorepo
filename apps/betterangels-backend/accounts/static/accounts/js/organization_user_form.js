@@ -24,6 +24,15 @@
 
     function filterTemplates() {
       var selectedOrgId = orgSelect.value;
+      if (!selectedOrgId) {
+        // No org selected yet — show everything.
+        allCheckboxes.forEach(function (cb) {
+          var row = cb.closest("label, div");
+          if (row) row.style.display = "";
+        });
+        return;
+      }
+
       var allowed = orgTemplates[selectedOrgId] || [];
       var allowedSet = new Set(allowed);
 
