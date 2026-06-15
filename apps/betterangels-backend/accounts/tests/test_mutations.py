@@ -3,11 +3,11 @@ from unittest.mock import ANY, patch
 from accounts.enums import OrgRoleEnum
 from accounts.models import User
 from accounts.tests.utils import CurrentUserGraphQLBaseTestCase
+from accounts.types import PermissionTemplateEnum
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Group
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
-from accounts.types import PermissionTemplateEnum
 from notes.groups import CASEWORKER
 from organizations.models import OrganizationInvitation, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase

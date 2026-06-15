@@ -2,8 +2,8 @@ from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
-from referrals.models import Referral
 from notes.groups import CASEWORKER
+from referrals.models import Referral
 from referrals.selectors import referral_list
 from referrals.services import referral_create, referral_delete, referral_update
 from shelters.tests.baker_recipes import shelter_recipe

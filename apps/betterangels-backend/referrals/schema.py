@@ -4,13 +4,13 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.selectors import resolve_permission_group
-from notes.groups import CASEWORKER
 from clients.models import ClientProfile
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import QuerySet
+from notes.groups import CASEWORKER
 from referrals.models import Referral
 from referrals.selectors import referral_list
 from referrals.services import referral_create, referral_delete, referral_update

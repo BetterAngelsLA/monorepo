@@ -4,7 +4,6 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.selectors import resolve_permission_group
-from notes.groups import CASEWORKER
 from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
@@ -13,6 +12,7 @@ from common.permissions.utils import IsAuthenticated
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from hmis.models import HmisClientProfile, HmisNote
+from notes.groups import CASEWORKER
 from notes.models import Note
 from strawberry import asdict
 from strawberry.types import Info

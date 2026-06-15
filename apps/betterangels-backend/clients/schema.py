@@ -16,7 +16,6 @@ from clients.models import (
     SocialMediaProfile,
 )
 from clients.permissions import ClientProfileImportRecordPermissions
-from notes.groups import CASEWORKER
 from clients.services import client_document, client_profile_photo
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.types import (
@@ -33,6 +32,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import ForeignKey, Prefetch
 from graphql import GraphQLError
+from notes.groups import CASEWORKER
 from phonenumber_field.validators import validate_international_phonenumber
 from strawberry.scalars import JSON
 from strawberry.types import Info

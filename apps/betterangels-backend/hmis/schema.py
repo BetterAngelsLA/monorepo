@@ -2,9 +2,8 @@ from typing import Any, Dict, Iterable, cast
 
 import strawberry
 import strawberry_django
-from accounts.types import CurrentUserType
 from accounts.selectors import resolve_permission_group
-from notes.groups import CASEWORKER
+from accounts.types import CurrentUserType
 from betterangels_backend import settings
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
@@ -21,6 +20,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from hmis.models import HmisClientProfile, HmisNote
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
+from notes.groups import CASEWORKER
 from notes.models import ServiceRequest
 from notes.types import ServiceRequestType
 from notes.utils.note_utils import get_service_args
