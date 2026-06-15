@@ -11,11 +11,18 @@ from typing import TYPE_CHECKING
 
 from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
+from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from django.db.models import QuerySet
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
-from .models import OrganizationProfile, OrgTypeChoices, PermissionGroup, PermissionGroupTemplate
+from .models import (
+    OrganizationProfile,
+    OrgTypeChoices,
+    PermissionGroup,
+    PermissionGroupTemplate,
+)
 from .models import User as UserModel
 from .role_manager import OrgRoleManager
 
@@ -189,3 +196,62 @@ def organization_remove_member(
     org_user.delete()
 
     return user_id
+
+
+# ── Permission group resolution ───────────────────────────────────────
+
+
+def get_permission_groups_for_org(org: Organization) -> QuerySet[PermissionGroup]:
+    """Return all :class:`~accounts.models.PermissionGroup` rows belonging to
+    *org*."""
+    return PermissionGroup.objects.filter(organization=org)
+
+
+def get_member_permission_group(org: Organization) -> PermissionGroup:
+    """Return the default member-level ``PermissionGroup`` for *org*.
+
+    The member group is defined by the *first* template of the *first*
+    org type on the org's profile.  This is the group that
+    non-admin/non-superuser members are placed in by default.
+    """
+    profile = org.profile
+    org_types = profile.org_types
+
+    if not org_types:
+        raise ValueError(f"Organization '{org.name}' has no org_types set on its profile.")
+
+    primary_config = REGISTRY.org_type(org_types[0].value)
+    if primary_config is None:
+        raise LookupError(f"Org type '{org_types[0].value}' is not registered.")
+
+    first_template = primary_config.templates[0]
+
+    return PermissionGroup.objects.get(
+        organization=org,
+        template__name=first_template.name,
+    )
+
+
+def get_user_permission_group_for_org(
+    user: AbstractBaseUser | AnonymousUser,
+    org_id: str,
+) -> PermissionGroup:
+    """Return the highest-priority ``PermissionGroup`` the *user* belongs to in
+    *org_id*.  Raises :exc:`PermissionError` when the user has no group in
+    that organization.
+    """
+    # Prefer non-member groups first; if none, fall back to member group.
+    permission_group = (
+        PermissionGroup.objects.select_related("organization", "group", "template")
+        .filter(
+            organization_id=org_id,
+            group__user=user,
+        )
+        .order_by("-group__permissions")  # crude priority by permission count
+        .first()
+    )
+
+    if not (permission_group and permission_group.group):
+        raise PermissionError("User lacks proper organization or permissions")
+
+    return permission_group
