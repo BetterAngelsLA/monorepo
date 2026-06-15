@@ -15,7 +15,6 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
-from notes.groups import CASEWORKER
 from organizations.backends import invitation_backend
 from organizations.models import Organization
 from strawberry.types import Info
@@ -75,21 +74,6 @@ class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
     def current_user(self, info: Info) -> CurrentUserType:
         return get_current_user(info)  # type: ignore
-
-    @strawberry_django.offset_paginated(
-        OffsetPaginated[OrganizationType],
-        permission_classes=[IsAuthenticated],
-    )
-    def caseworker_organizations(
-        self,
-        info: Info,
-        ordering: Optional[list[OrganizationOrder]] = None,
-        filters: Optional[OrganizationFilter] = None,
-    ) -> QuerySet[Organization]:
-        queryset: QuerySet[Organization] = Organization.objects.filter(
-            permission_groups__template__name=CASEWORKER.name
-        ).distinct()
-        return queryset
 
     @strawberry_django.field(
         permission_classes=[IsAuthenticated], extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)]

@@ -1,9 +1,10 @@
-from typing import cast
+from typing import Optional, cast
 
 import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.selectors import resolve_permission_group
+from accounts.types import OrganizationFilter, OrganizationOrder, OrganizationType
 from clients.models import ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
@@ -13,6 +14,7 @@ from django.db import transaction
 from django.db.models import QuerySet
 from notes.groups import CASEWORKER
 from notes.models import Note, NoteDataImport, NoteImportRecord, ServiceRequest
+from organizations.models import Organization
 from notes.permissions import (
     NoteImportRecordPermissions,
     NotePermissions,
@@ -77,6 +79,24 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(NotePermissions.ADD)],
     )
+
+    @strawberry_django.offset_paginated(
+        OffsetPaginated[OrganizationType],
+        permission_classes=[IsAuthenticated],
+    )
+    def caseworker_organizations(
+        self,
+        info: Info,
+        ordering: Optional[list[OrganizationOrder]] = None,
+        filters: Optional[OrganizationFilter] = None,
+    ) -> QuerySet[Organization]:
+        """Return organizations where the current user is a caseworker."""
+        user = cast(User, get_current_user(info))
+        queryset: QuerySet[Organization] = Organization.objects.filter(
+            permission_groups__template__name=CASEWORKER.name,
+            users=user,
+        ).distinct()
+        return queryset
 
 
 @strawberry.type
