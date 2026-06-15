@@ -182,6 +182,7 @@ type AuthorizedPresignedS3UploadsType {
 }
 
 input BedFilter {
+  id: ID
   shelterId: ID
   AND: BedFilter
   OR: BedFilter
@@ -242,6 +243,14 @@ type BedsByStatusType {
   occupied: Int!
   reserved: Int!
   outOfService: Int!
+}
+
+input BulkDeleteInput {
+  ids: [ID!]!
+}
+
+type BulkDeleteResult {
+  ids: [ID!]!
 }
 
 type CityType {
@@ -513,6 +522,10 @@ input ClientSearchInput {
   middleName: String = null
 }
 
+union CloneBedPayload = BedType | OperationInfo
+
+union CloneRoomPayload = RoomType | OperationInfo
+
 enum ConditionChoices {
   HEAT
   FIRE
@@ -742,7 +755,6 @@ input CreateRoomInput {
   medicalRespite: Boolean = false
   name: String!
   notes: String = null
-  occupants: [ID!] = null
   pets: [PetChoices!] = null
   status: RoomStatusChoices = null
   storage: Boolean = null
@@ -864,6 +876,8 @@ enum DayOfWeekChoices {
   SUNDAY
 }
 
+union DeleteBedsPayload = BulkDeleteResult | OperationInfo
+
 union DeleteClientContactPayload = ClientContactType | OperationInfo
 
 union DeleteClientDocumentPayload = ClientDocumentType | OperationInfo
@@ -885,6 +899,8 @@ union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
 union DeleteNotePayload = NoteType | OperationInfo
 
 union DeleteReferralPayload = DeletedObjectType | OperationInfo
+
+union DeleteRoomsPayload = BulkDeleteResult | OperationInfo
 
 union DeleteServiceRequestPayload = DeletedObjectType | OperationInfo
 
@@ -1558,8 +1574,14 @@ type Mutation {
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
   updateShelter(data: UpdateShelterInput!): UpdateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
-  createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
+  updateRoom(id: ID!, data: UpdateRoomInput!): UpdateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_room"}], any: true)
+  cloneRoom(id: ID!): CloneRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
+  deleteRooms(data: BulkDeleteInput!): DeleteRoomsPayload! @hasPerm(permissions: [{app: "shelters", permission: "delete_room"}], any: true)
+  createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
+  updateBed(id: ID!, data: UpdateBedInput!): UpdateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_bed"}], any: true)
+  cloneBed(id: ID!): CloneBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
+  deleteBeds(data: BulkDeleteInput!): DeleteBedsPayload! @hasPerm(permissions: [{app: "shelters", permission: "delete_bed"}], any: true)
   createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
   updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
@@ -1933,7 +1955,9 @@ type Query {
   adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
+  bed(pk: ID!): BedType! @hasPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
   beds(pagination: OffsetPaginationInput, filters: BedFilter): BedTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
+  room(pk: ID!): RoomType! @hasPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
   rooms(pagination: OffsetPaginationInput, filters: RoomFilter): RoomTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
   shelterCities(pagination: OffsetPaginationInput): CityTypeOffsetPaginated!
@@ -2081,6 +2105,7 @@ input RevertNoteInput {
 union RevertNotePayload = NoteType | OperationInfo
 
 input RoomFilter {
+  id: ID
   medicalRespite: Boolean
   shelterId: ID
   AND: RoomFilter
@@ -2609,6 +2634,26 @@ scalar Time
 
 scalar UUID
 
+input UpdateBedInput {
+  roomId: ID
+  accessibility: [AccessibilityChoices!]
+  b7: Boolean
+  demographics: [DemographicChoices!]
+  fees: Int
+  funders: [FunderChoices!]
+  lastCleanedInspected: DateTime
+  maintenanceFlag: Boolean
+  medicalNeeds: [MedicalNeedChoices!]
+  name: String
+  pets: [PetChoices!]
+  status: BedStatusChoices
+  statusNotes: String
+  storage: Boolean
+  type: BedTypeChoices
+}
+
+union UpdateBedPayload = BedType | OperationInfo
+
 union UpdateClientContactPayload = ClientContactType | OperationInfo
 
 input UpdateClientDocumentInput {
@@ -2763,6 +2808,25 @@ input UpdateReferralInput {
 }
 
 union UpdateReferralPayload = ReferralType | OperationInfo
+
+input UpdateRoomInput {
+  accessibility: [AccessibilityChoices!]
+  amenities: String
+  demographics: [DemographicChoices!]
+  funders: [FunderChoices!]
+  lastCleanedInspected: DateTime
+  maintenanceFlag: Boolean
+  medicalRespite: Boolean
+  name: String
+  notes: String
+  pets: [PetChoices!]
+  status: RoomStatusChoices
+  storage: Boolean
+  type: RoomStyleChoices
+  typeOther: String
+}
+
+union UpdateRoomPayload = RoomType | OperationInfo
 
 input UpdateShelterInput {
   id: ID!

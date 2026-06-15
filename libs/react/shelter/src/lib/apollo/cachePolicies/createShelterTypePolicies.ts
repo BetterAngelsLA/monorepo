@@ -50,5 +50,8 @@ export function createShelterTypePolicies(isDevEnv: boolean): TypePolicies {
     OrganizationType: {
       keyFields: ['id'],
     },
+    AdminShelterType: {
+      keyFields: ['id'],
+    },
   };
 }

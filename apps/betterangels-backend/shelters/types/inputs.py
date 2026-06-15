@@ -205,6 +205,25 @@ class CreateBedInput:
 
 
 @strawberry.input
+class UpdateBedInput:
+    room_id: Maybe[ID | None]
+    accessibility: Maybe[List[AccessibilityChoices] | None]
+    b7: Maybe[bool]
+    demographics: Maybe[List[DemographicChoices] | None]
+    fees: Maybe[int]
+    funders: Maybe[List[FunderChoices] | None]
+    last_cleaned_inspected: Maybe[datetime | None]
+    maintenance_flag: Maybe[bool]
+    medical_needs: Maybe[List[MedicalNeedChoices] | None]
+    name: Maybe[str | None]
+    pets: Maybe[List[PetChoices] | None]
+    status: Maybe[BedStatusChoices | None]
+    status_notes: Maybe[str | None]
+    storage: Maybe[bool]
+    type: Maybe[BedTypeChoices | None]
+
+
+@strawberry.input
 class CreateRoomInput:
     shelter_id: ID
     accessibility: Optional[List[AccessibilityChoices]] = None
@@ -216,9 +235,26 @@ class CreateRoomInput:
     medical_respite: Optional[bool] = False
     name: str
     notes: Optional[str] = None
-    occupants: Optional[List[ID]] = None
     pets: Optional[List[PetChoices]] = None
     status: Optional[RoomStatusChoices] = None
     storage: Optional[bool] = None
     type: Optional[RoomStyleChoices] = None
     type_other: Optional[str] = None
+
+
+@strawberry.input
+class UpdateRoomInput:
+    accessibility: Maybe[List[AccessibilityChoices] | None]
+    amenities: Maybe[str | None]
+    demographics: Maybe[List[DemographicChoices] | None]
+    funders: Maybe[List[FunderChoices] | None]
+    last_cleaned_inspected: Maybe[datetime | None]
+    maintenance_flag: Maybe[bool]
+    medical_respite: Maybe[bool]
+    name: Maybe[str | None]
+    notes: Maybe[str | None]
+    pets: Maybe[List[PetChoices] | None]
+    status: Maybe[RoomStatusChoices | None]
+    storage: Maybe[bool]
+    type: Maybe[RoomStyleChoices | None]
+    type_other: Maybe[str | None]

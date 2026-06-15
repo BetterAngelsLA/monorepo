@@ -15,6 +15,7 @@ const validationPatterns: Record<InputDataType, RegExp> = {
   'phone-number': /^[\d\s\-+()]*\d[\d\s\-+()]*$/,
   number: /^-?\d+(\.\d+)?$/,
   time: /^([01]\d|2[0-3]):([0-5]\d)$/,
+  date: /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/,
   // Match any non-empty string, including multiline textarea values.
   string: /[\s\S]+/,
 };
@@ -44,6 +45,7 @@ const dataTypeLabels: Partial<Record<InputDataType, string>> = {
   email: 'email',
   number: 'number',
   time: 'time',
+  date: 'date',
   string: 'value',
 };
 
@@ -53,6 +55,7 @@ const inputTypeByDataType: Partial<Record<InputDataType, string>> = {
   email: 'email',
   'phone-number': 'tel',
   time: 'time',
+  date: 'date',
 };
 
 const isValueValid = (

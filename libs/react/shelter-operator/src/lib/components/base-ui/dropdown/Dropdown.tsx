@@ -218,7 +218,11 @@ export function Dropdown<T extends string | number = string | number>(
           : [...selectedValues, option];
         emitChange(next);
       } else {
-        emitChange([option]);
+        if (selectedSet.has(option.value)) {
+          emitChange([]);
+        } else {
+          emitChange([option]);
+        }
         close();
       }
     },
