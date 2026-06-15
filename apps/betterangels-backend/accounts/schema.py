@@ -370,7 +370,7 @@ def _send_welcome_email(user: User, organization: Organization) -> None:
         "user_email": user.email,
         "user_first_name": user.first_name,
         "organization_name": organization.name,
-        "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",  # TODO: make configurable
+        "dashboard_url": "http://localhost:4200/dashboard",  # TODO: make configurable
     }
 
     msg = EmailMultiAlternatives(

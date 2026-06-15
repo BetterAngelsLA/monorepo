@@ -1,18 +1,29 @@
-{% extends "../_base_email.html" %}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    h1 { color: #1a56db; }
+    .button { display: inline-block; padding: 12px 24px; background-color: #1a56db; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+    ul { padding-left: 20px; }
+    li { margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <h1>Welcome to BetterAngels, {{ user_first_name }}!</h1>
 
-{% block title %}Welcome to BetterAngels, {{ user_first_name }}!{% endblock %}
+  <p>You're all set! Your organization <strong>{{ organization_name }}</strong> has been created and you've been assigned as the Shelter Operator.</p>
 
-{% block content %}
-<p>You're all set! Your organization <strong>{{ organization_name }}</strong> has been created and you've been assigned as the Shelter Operator.</p>
+  <p>As a Shelter Operator you can:</p>
+  <ul>
+    <li>Create and manage shelters, rooms, and beds</li>
+    <li>Invite other staff members to join your organization</li>
+    <li>View shelter availability and occupancy</li>
+  </ul>
 
-<p>As a Shelter Operator you can:</p>
-<ul>
-  <li>Create and manage shelters, rooms, and beds</li>
-  <li>Invite other staff members to join your organization</li>
-  <li>View shelter availability and occupancy</li>
-</ul>
+  <p><a href="{{ dashboard_url }}" class="button">Go to your Dashboard</a></p>
 
-<p><a href="{{ dashboard_url }}" class="button">Go to your Dashboard</a></p>
-
-<p>If you have any questions, reply to this email — our team is here to help.</p>
-{% endblock %}
+  <p>If you have any questions, reply to this email — our team is here to help.</p>
+</body>
+</html>
