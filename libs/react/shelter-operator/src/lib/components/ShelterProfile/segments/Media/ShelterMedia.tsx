@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAdminShelterProfile } from '../../../../hooks';
 import { Tabs } from '../../../base-ui/tabs';
 import { Form } from '../../../form/Form';
 import { MEDIA_TABS, MEDIA_TAB_LABELS, MediaTab } from './constants';
@@ -11,9 +12,22 @@ type TProps = {
 };
 
 export function ShelterMedia(props: TProps) {
-  const { shelterId: _shelterId } = props;
+  const { shelterId } = props;
 
   const [currentTab, setCurrentTab] = useState<MediaTab>('photos');
+
+  const { shelter } = useAdminShelterProfile(shelterId);
+
+  if (!shelter) {
+    return null;
+  }
+
+  console.log();
+  console.log('| -------------  shelter  ------------- |');
+  console.log(shelter);
+  console.log();
+
+  const { photos } = shelter;
 
   return (
     <div className="px-6 flex-col flex-1 pb-72">
@@ -27,7 +41,7 @@ export function ShelterMedia(props: TProps) {
       />
 
       {currentTab === 'photos' && (
-        <ShelterPhotosForm onSave={() => undefined} />
+        <ShelterPhotosForm photos={photos || []} onSave={() => undefined} />
       )}
       {currentTab === 'videos' && (
         <ShelterVideosForm onSave={() => undefined} />
