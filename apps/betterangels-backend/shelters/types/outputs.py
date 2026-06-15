@@ -84,6 +84,11 @@ class ShelterPhotoType:
 
 
 @strawberry.type
+class ShelterPhotoUploadsType:
+    photos: list[ShelterPhotoType]
+
+
+@strawberry.type
 class ShelterHeroImageType:
     id: ID
     url: str

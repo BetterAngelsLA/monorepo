@@ -1039,6 +1039,13 @@ input GenerateClientProfilePhotoUploadInput {
 
 union GenerateClientProfilePhotoUploadPayload = AuthorizedPresignedS3UploadType | OperationInfo
 
+input GenerateShelterPhotoUploadsInput {
+  shelterId: ID!
+  uploads: [ShelterPhotoUploadItemInput!]!
+}
+
+union GenerateShelterPhotoUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo
+
 input GeolocationInput {
   latitude: Float!
   longitude: Float!
@@ -1582,6 +1589,8 @@ type Mutation {
   updateBed(id: ID!, data: UpdateBedInput!): UpdateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_bed"}], any: true)
   cloneBed(id: ID!): CloneBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   deleteBeds(data: BulkDeleteInput!): DeleteBedsPayload! @hasPerm(permissions: [{app: "shelters", permission: "delete_bed"}], any: true)
+  generateShelterPhotoUploads(data: GenerateShelterPhotoUploadsInput!): GenerateShelterPhotoUploadsPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
+  resolveShelterPhotoUploads(data: ResolveShelterPhotoUploadsInput!): ResolveShelterPhotoUploadsPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
   updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
@@ -2091,6 +2100,13 @@ input ResolveClientProfilePhotoUploadInput {
 
 union ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo
 
+input ResolveShelterPhotoUploadsInput {
+  shelterId: ID!
+  photos: [ShelterPhotoFromUploadInput!]!
+}
+
+union ResolveShelterPhotoUploadsPayload = ShelterPhotoUploadsType | OperationInfo
+
 input RevertNoteInput {
   id: ID!
   revertBeforeTimestamp: DateTime!
@@ -2362,6 +2378,12 @@ enum ShelterPermissions {
   VIEW
 }
 
+input ShelterPhotoFromUploadInput {
+  presignedKey: String!
+  uploadToken: String!
+  photoType: ShelterPhotoTypeChoices!
+}
+
 type ShelterPhotoType {
   id: ID!
   type: ShelterPhotoTypeChoices!
@@ -2372,6 +2394,16 @@ type ShelterPhotoType {
 enum ShelterPhotoTypeChoices {
   INTERIOR
   EXTERIOR
+}
+
+input ShelterPhotoUploadItemInput {
+  refId: String!
+  filename: String!
+  contentType: String!
+}
+
+type ShelterPhotoUploadsType {
+  photos: [ShelterPhotoType!]!
 }
 
 enum ShelterProgramChoices {
