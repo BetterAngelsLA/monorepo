@@ -1,3 +1,4 @@
+import json
 from typing import Any, cast
 
 from accounts.services import member_add
@@ -9,6 +10,7 @@ from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from organizations.backends import invitation_backend
+from organizations.models import Organization, OrganizationUser
 
 from .models import User
 
@@ -66,17 +68,24 @@ class OrganizationUserForm(forms.ModelForm):
     class Meta:
         exclude = ("user", "is_admin")
 
+    class Media:
+        js = ("accounts/js/organization_user_form.js",)
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
-        # Populate template choices from the registry.  We use the
-        # static list here because the organization may not be known
-        # at form-init time.  Validation in clean_permission_templates()
-        # restricts the selection to templates valid for the chosen org.
+        # Seed choices with the full set — JavaScript filters them
+        # client-side based on the selected organization.
         self.fields["permission_templates"].choices = [  # type: ignore[attr-defined]
             (name, name) for name in REGISTRY.invitable_template_names()
         ]
+
+        # Provide org→template mapping for client-side filtering.
+        org_templates: dict[str, list[str]] = {}
+        for org in Organization.objects.prefetch_related("profile").all():
+            org_templates[str(org.pk)] = REGISTRY.invitable_template_names_for(org)
+        self.fields["permission_templates"].widget.attrs["data-org-templates"] = json.dumps(org_templates)
 
         if self.instance.pk is not None:
             self.fields["email"].initial = self.instance.user.email
@@ -145,7 +154,15 @@ class OrganizationUserForm(forms.ModelForm):
 
             self.instance.user = user
 
+            # member_add already created the OrganizationUser row via
+            # organization.add_user().  Point the form instance at it so
+            # super().save() sees an existing record (update, not insert).
+            org_user = OrganizationUser.objects.get(organization=organization, user=user)
+            self.instance.pk = org_user.pk
+            self.instance.user.email = self.cleaned_data["email"]
+            self.instance.user.save()
+            return cast(User, super().save(*args, **kwargs))
+
         self.instance.user.email = self.cleaned_data["email"]
         self.instance.user.save()
-
         return cast(User, super().save(*args, **kwargs))
