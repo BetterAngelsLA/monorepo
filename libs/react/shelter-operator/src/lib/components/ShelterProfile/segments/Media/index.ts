@@ -1,0 +1,1 @@
+export { ShelterMedia } from './ShelterMedia';

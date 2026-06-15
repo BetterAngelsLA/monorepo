@@ -32,6 +32,7 @@ export const shelterProfileSegments = {
   details: 'details',
   services: 'services',
   ecosystem: 'ecosystem',
+  media: 'media',
 } as const;
 
 export const manageSegments = {
