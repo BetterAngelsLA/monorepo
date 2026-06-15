@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import List, Optional, Tuple
 
 import strawberry
@@ -9,14 +10,15 @@ from accounts.models import PermissionGroup
 from accounts.permissions import make_granted_permissions
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
+from common.org_types import REGISTRY
 from django.db.models import Q, QuerySet
+from notes.groups import CASEWORKER
 from organizations.models import Organization
 from reports.permissions import ReportPermissions
 from shelters.permissions import ShelterPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
-from .enums import PermissionTemplateEnum
 from .models import User
 from .permissions import UserOrganizationPermissions
 
@@ -173,7 +175,7 @@ class UserType(UserBaseType):
             return False
         return PermissionGroup.objects.filter(
             group__user=user.pk,
-            template__name="Caseworker",
+            template__name=CASEWORKER.name,
         ).exists()
 
 
@@ -206,7 +208,7 @@ class CurrentUserType(UserBaseType):
             return False
         return PermissionGroup.objects.filter(
             group__user=user.pk,
-            template__name="Caseworker",
+            template__name=CASEWORKER.name,
         ).exists()
 
 
@@ -256,6 +258,16 @@ class UpdateUserInput(UserBaseType):
     id: ID
     has_accepted_tos: auto
     has_accepted_privacy_policy: auto
+
+
+# Dynamically built from the registry — adding a template to
+# common.org_types.REGISTRY automatically exposes it here.
+PermissionTemplateEnum = strawberry.enum(  # type: ignore[call-overload]
+    Enum(
+        "PermissionTemplateEnum",  # type: ignore[arg-type]
+        {name.upper().replace(" ", "_"): name for name in REGISTRY.invitable_template_names()},
+    )
+)
 
 
 @strawberry.input

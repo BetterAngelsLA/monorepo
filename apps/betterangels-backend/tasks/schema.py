@@ -4,6 +4,7 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.selectors import resolve_permission_group
+from notes.groups import CASEWORKER
 from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
@@ -47,7 +48,7 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Task.perms.ADD)])
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         current_user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(current_user)
+        permission_group = resolve_permission_group(current_user, template_name=CASEWORKER.name)
 
         task_data = asdict(data)
 

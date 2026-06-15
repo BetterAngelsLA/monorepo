@@ -4,6 +4,7 @@ import strawberry
 import strawberry_django
 from accounts.types import CurrentUserType
 from accounts.selectors import resolve_permission_group
+from notes.groups import CASEWORKER
 from betterangels_backend import settings
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
@@ -379,7 +380,7 @@ class Mutation:
     ) -> ServiceRequestType:
         with transaction.atomic():
             user = get_current_user(info)
-            permission_group = resolve_permission_group(user)
+            permission_group = resolve_permission_group(user, template_name=CASEWORKER.name)
 
             service_request_data = asdict(data)
             service_request_type = str(service_request_data.pop("service_request_type"))

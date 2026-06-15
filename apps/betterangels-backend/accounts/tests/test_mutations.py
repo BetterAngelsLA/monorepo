@@ -7,6 +7,7 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Group
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
+from accounts.types import PermissionTemplateEnum
 from notes.groups import CASEWORKER
 from organizations.models import OrganizationInvitation, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase
@@ -183,7 +184,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         variables = {
             **new_member,
             "organizationId": self.org.pk,
-            "permissionTemplate": "CASEWORKER",
+            "permissionTemplate": PermissionTemplateEnum.CASEWORKER.name,
         }
 
         with patch("accounts.backends.CustomInvitations.send_invitation") as mock_send_invitation:
@@ -246,7 +247,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         variables = {
             **new_member,
             "organizationId": self.org.pk,
-            "permissionTemplate": "CASEWORKER",
+            "permissionTemplate": PermissionTemplateEnum.CASEWORKER.name,
         }
 
         response = self.execute_graphql(mutation, {"data": variables})

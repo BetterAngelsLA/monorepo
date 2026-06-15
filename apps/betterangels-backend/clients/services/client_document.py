@@ -2,6 +2,7 @@ from typing import Iterable
 
 from accounts.models import User
 from accounts.selectors import resolve_permission_group
+from notes.groups import CASEWORKER
 from clients.models import ClientProfile
 from clients.types import ClientDocumentFromUploadsInput, ClientDocumentUploadsInputItem
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
@@ -80,7 +81,7 @@ def resolve_upload(
     client_profile: ClientProfile,
     documents: Iterable[ClientDocumentFromUploadsInput],
 ) -> list[Attachment]:
-    permission_group = resolve_permission_group(user)
+    permission_group = resolve_permission_group(user, template_name=CASEWORKER.name)
     content_type = ContentType.objects.get_for_model(ClientProfile)
 
     # Validate the entire batch before any DB writes.

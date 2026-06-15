@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
@@ -50,8 +51,6 @@ def member_add(
     assigned.  This allows the same user to be added through different
     portals (e.g. outreach and shelter operator) without raising an error.
     """
-    from accounts.models import PermissionGroup
-
     user, created = UserModel.objects.get_or_create(
         email=email,
         defaults={"username": str(uuid.uuid4()), "is_active": True},
@@ -206,8 +205,6 @@ def create_default_org_permission_groups(organization: Organization) -> None:
     an outreach org gets Caseworker, Org Admin, Org Superuser; a shelter org
     gets Shelter Operator, Org Admin, Org Superuser.
     """
-    from common.org_types import REGISTRY
-
     for template_config in REGISTRY.templates_for(organization):
         template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_config.name)
         PermissionGroup.objects.get_or_create(organization=organization, template=template)
@@ -215,8 +212,6 @@ def create_default_org_permission_groups(organization: Organization) -> None:
 
 def add_default_org_permissions_to_user(user: UserModel, organization: Organization) -> None:
     """Add *user* to the (first) invitable member role group for *organization*."""
-    from common.org_types import REGISTRY
-
     invitable = REGISTRY.invitable_templates_for(organization)
     if not invitable:
         return
@@ -228,7 +223,5 @@ def add_default_org_permissions_to_user(user: UserModel, organization: Organizat
 
 def remove_org_group_permissions_from_user(user: UserModel, organization: Organization) -> None:
     """Remove all org-scoped permission groups from *user*."""
-    from django.contrib.auth.models import Group
-
     groups = Group.objects.filter(permissiongroup__organization=organization)
     user.groups.remove(*groups)

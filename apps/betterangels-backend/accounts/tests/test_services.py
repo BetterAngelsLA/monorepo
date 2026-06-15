@@ -3,7 +3,7 @@ Integration tests for ``accounts.services`` and ``accounts.selectors``.
 """
 
 import pytest
-from accounts.groups import ORG_ADMIN
+from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.models import OrganizationProfile, PermissionGroupTemplate, User
 from accounts.selectors import permission_group_for_user
 from accounts.services import (
@@ -16,6 +16,7 @@ from django.core.exceptions import ValidationError
 from model_bakery import baker
 from notes.groups import CASEWORKER
 from organizations.models import OrganizationUser
+from shelters.groups import SHELTER_OPERATOR
 
 # ── create_organization_with_presets ──────────────────────────────────
 
@@ -31,7 +32,7 @@ def test_create_outreach_org() -> None:
     names = set(
         PermissionGroupTemplate.objects.filter(permissiongroup__organization=org).values_list("name", flat=True)
     )
-    assert names == {"Caseworker", "Organization Admin", "Organization Superuser"}
+    assert names == {CASEWORKER.name, ORG_ADMIN.name, ORG_SUPERUSER.name}
 
 
 @pytest.mark.django_db(transaction=True)
@@ -45,7 +46,7 @@ def test_create_shelter_org() -> None:
     names = set(
         PermissionGroupTemplate.objects.filter(permissiongroup__organization=org).values_list("name", flat=True)
     )
-    assert names == {"Shelter Operator", "Organization Admin", "Organization Superuser"}
+    assert names == {SHELTER_OPERATOR.name, ORG_ADMIN.name, ORG_SUPERUSER.name}
 
 
 @pytest.mark.django_db(transaction=True)
@@ -59,7 +60,7 @@ def test_create_dual_type_org() -> None:
     names = set(
         PermissionGroupTemplate.objects.filter(permissiongroup__organization=org).values_list("name", flat=True)
     )
-    assert names == {"Caseworker", "Shelter Operator", "Organization Admin", "Organization Superuser"}
+    assert names == {CASEWORKER.name, SHELTER_OPERATOR.name, ORG_ADMIN.name, ORG_SUPERUSER.name}
 
 
 @pytest.mark.django_db(transaction=True)
@@ -81,13 +82,11 @@ def test_create_org_with_owner_roles() -> None:
     assert OrganizationUser.objects.filter(user=owner, organization=org).exists()
 
     caseworker_group = Group.objects.get(
-        permissiongroup__organization=org, permissiongroup__template__name="Caseworker"
+        permissiongroup__organization=org, permissiongroup__template__name=CASEWORKER.name
     )
-    admin_group = Group.objects.get(
-        permissiongroup__organization=org, permissiongroup__template__name="Organization Admin"
-    )
+    admin_group = Group.objects.get(permissiongroup__organization=org, permissiongroup__template__name=ORG_ADMIN.name)
     superuser_group = Group.objects.get(
-        permissiongroup__organization=org, permissiongroup__template__name="Organization Superuser"
+        permissiongroup__organization=org, permissiongroup__template__name=ORG_SUPERUSER.name
     )
 
     assert caseworker_group in owner.groups.all()
@@ -130,7 +129,7 @@ def test_member_add_new_user() -> None:
     assert OrganizationUser.objects.filter(user=user, organization=org).exists()
 
     caseworker_group = Group.objects.get(
-        permissiongroup__organization=org, permissiongroup__template__name="Caseworker"
+        permissiongroup__organization=org, permissiongroup__template__name=CASEWORKER.name
     )
     assert caseworker_group in user.groups.all()
 
@@ -153,7 +152,7 @@ def test_member_add_existing_user_different_org() -> None:
         permission_templates=(CASEWORKER,),
     )
 
-    cw_org1 = Group.objects.get(permissiongroup__organization=org_1, permissiongroup__template__name="Caseworker")
+    cw_org1 = Group.objects.get(permissiongroup__organization=org_1, permissiongroup__template__name=CASEWORKER.name)
     assert cw_org1 in user.groups.all()
 
     assert user.email is not None
@@ -168,7 +167,7 @@ def test_member_add_existing_user_different_org() -> None:
     )
 
     assert User.objects.filter(email=user.email).count() == 1
-    cw_org2 = Group.objects.get(permissiongroup__organization=org_2, permissiongroup__template__name="Caseworker")
+    cw_org2 = Group.objects.get(permissiongroup__organization=org_2, permissiongroup__template__name=CASEWORKER.name)
     assert cw_org2 in user.groups.all()
 
 
@@ -222,7 +221,7 @@ def test_member_add_cross_portal_reinvite() -> None:
         permission_templates=(CASEWORKER,),
     )
     assert OrganizationUser.objects.filter(user=user, organization=org).exists()
-    cw_group = Group.objects.get(permissiongroup__organization=org, permissiongroup__template__name="Caseworker")
+    cw_group = Group.objects.get(permissiongroup__organization=org, permissiongroup__template__name=CASEWORKER.name)
     assert cw_group in user.groups.all()
 
     # Second call — shelter portal adds Shelter Operator for same user.
@@ -237,7 +236,7 @@ def test_member_add_cross_portal_reinvite() -> None:
     assert user2.pk == user.pk  # same user, no duplicate
     so_group = Group.objects.get(
         permissiongroup__organization=org,
-        permissiongroup__template__name="Shelter Operator",
+        permissiongroup__template__name=SHELTER_OPERATOR.name,
     )
     assert so_group in user2.groups.all()
     assert cw_group in user2.groups.all()  # still has original role
@@ -258,8 +257,8 @@ def test_member_add_multiple_templates() -> None:
         permission_templates=(CASEWORKER, ORG_ADMIN),
     )
 
-    cw = Group.objects.get(permissiongroup__organization=org, permissiongroup__template__name="Caseworker")
-    admin = Group.objects.get(permissiongroup__organization=org, permissiongroup__template__name="Organization Admin")
+    cw = Group.objects.get(permissiongroup__organization=org, permissiongroup__template__name=CASEWORKER.name)
+    admin = Group.objects.get(permissiongroup__organization=org, permissiongroup__template__name=ORG_ADMIN.name)
 
     assert cw in user.groups.all()
     assert admin in user.groups.all()
@@ -296,9 +295,9 @@ def test_permission_group_caseworker() -> None:
     user = baker.make(User, username="pmuser", email="pm@example.com")
     baker.make(OrganizationUser, user=user, organization=org)
 
-    pg = permission_group_for_user(user, str(org.pk), "Caseworker")
+    pg = permission_group_for_user(user, str(org.pk), CASEWORKER.name)
     assert pg.template is not None
-    assert pg.template.name == "Caseworker"
+    assert pg.template.name == CASEWORKER.name
     assert pg.organization == org
 
 
@@ -309,9 +308,9 @@ def test_permission_group_shelter_operator() -> None:
     user = baker.make(User, username="spmuser", email="spm@example.com")
     baker.make(OrganizationUser, user=user, organization=org)
 
-    pg = permission_group_for_user(user, str(org.pk), "Shelter Operator")
+    pg = permission_group_for_user(user, str(org.pk), SHELTER_OPERATOR.name)
     assert pg.template is not None
-    assert pg.template.name == "Shelter Operator"
+    assert pg.template.name == SHELTER_OPERATOR.name
     assert pg.organization == org
 
 
@@ -322,13 +321,13 @@ def test_permission_group_dual_type() -> None:
     user = baker.make(User, username="dualuser", email="dual@example.com")
     baker.make(OrganizationUser, user=user, organization=org)
 
-    pg = permission_group_for_user(user, str(org.pk), "Caseworker")
+    pg = permission_group_for_user(user, str(org.pk), CASEWORKER.name)
     assert pg.template is not None
-    assert pg.template.name == "Caseworker"
+    assert pg.template.name == CASEWORKER.name
 
-    pg2 = permission_group_for_user(user, str(org.pk), "Shelter Operator")
+    pg2 = permission_group_for_user(user, str(org.pk), SHELTER_OPERATOR.name)
     assert pg2.template is not None
-    assert pg2.template.name == "Shelter Operator"
+    assert pg2.template.name == SHELTER_OPERATOR.name
 
 
 @pytest.mark.django_db(transaction=True)
@@ -336,7 +335,7 @@ def test_permission_group_org_not_found() -> None:
     """Raises ValidationError if org_id doesn't exist."""
     user = baker.make(User, username="ghost", email="ghost@example.com")
     with pytest.raises(ValidationError, match="not found"):
-        permission_group_for_user(user, "99999", "Caseworker")
+        permission_group_for_user(user, "99999", CASEWORKER.name)
 
 
 @pytest.mark.django_db(transaction=True)
@@ -346,7 +345,7 @@ def test_permission_group_user_not_member() -> None:
     user = baker.make(User, username="outsider", email="outsider@example.com")
 
     with pytest.raises(ValidationError, match="is not a member"):
-        permission_group_for_user(user, str(org.pk), "Caseworker")
+        permission_group_for_user(user, str(org.pk), CASEWORKER.name)
 
 
 @pytest.mark.django_db(transaction=True)
@@ -357,7 +356,7 @@ def test_permission_group_template_not_found() -> None:
     baker.make(OrganizationUser, user=user, organization=org)
 
     with pytest.raises(ValidationError, match="not found"):
-        permission_group_for_user(user, str(org.pk), "Shelter Operator")
+        permission_group_for_user(user, str(org.pk), SHELTER_OPERATOR.name)
 
 
 # ── organization_remove_member ────────────────────────────────────────
@@ -385,7 +384,7 @@ class TestOrganizationRemoveMember:
 
         cw_group = Group.objects.get(
             permissiongroup__organization=org,
-            permissiongroup__template__name="Caseworker",
+            permissiongroup__template__name=CASEWORKER.name,
         )
         assert cw_group in member.groups.all()
 

@@ -16,6 +16,7 @@ from clients.models import (
     SocialMediaProfile,
 )
 from clients.permissions import ClientProfileImportRecordPermissions
+from notes.groups import CASEWORKER
 from clients.services import client_document, client_profile_photo
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.types import (
@@ -600,7 +601,7 @@ class Mutation:
                 [ClientProfile.perms.CHANGE],
             ).get(id=data.client_profile)
 
-            permission_group = resolve_permission_group(user)
+            permission_group = resolve_permission_group(user, template_name=CASEWORKER.name)
 
             content_type = ContentType.objects.get_for_model(ClientProfile)
             client_document = Attachment.objects.create(

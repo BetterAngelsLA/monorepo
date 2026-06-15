@@ -4,6 +4,7 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.selectors import resolve_permission_group
+from notes.groups import CASEWORKER
 from clients.models import ClientProfile
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
@@ -55,7 +56,7 @@ class Mutation:
     )
     def create_referral(self, info: Info, data: CreateReferralInput) -> ReferralType:
         current_user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(current_user)
+        permission_group = resolve_permission_group(current_user, template_name=CASEWORKER.name)
         referral_data = asdict(data)
 
         try:

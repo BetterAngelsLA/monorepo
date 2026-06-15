@@ -1,7 +1,6 @@
 import uuid
 from typing import Any, Optional
 
-from common.org_types import REGISTRY
 from django.contrib.auth.models import AbstractBaseUser
 from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
@@ -19,6 +18,8 @@ from .utils import demo_email_context
 
 class CustomInvitations(InvitationBackend):
     form_class = UserCreationForm
+    invitation_body_html = "account/email/email_invite_organization.html"
+    invitation_body_txt = "account/messages/email_invite_organization.txt"
     user_model = User
 
     def invite_by_email(
@@ -40,44 +41,43 @@ class CustomInvitations(InvitationBackend):
         if not user.email:
             raise ValueError("Cannot send invitation to a user without an email address")
 
-        organization = kwargs.get("organization")
-        role_template = kwargs.get("role_template")  # TemplateConfig
-        templates = REGISTRY.invite_template(role_template) if role_template else None
-
-        if templates is None:
-            # No TemplateConfig passed — fallback to the default outreach template.
-            # This path is used by the legacy invite_by_email flow which doesn't
-            # go through the GraphQL mutation.
-            from common.org_types import REGISTRY as _REGISTRY
-            from notes.groups import CASEWORKER
-
-            templates = _REGISTRY.invite_template(CASEWORKER)
-
-        invitation = kwargs.get("invitation")
-        domain = kwargs.get("domain")
-        accept_url = ""
-        if invitation and domain:
-            accept_url = f"https://{domain.domain}/operator/accept-invite/{invitation.guid}"
-
-        context = {
-            "invitee_email": user.email,
-            "organization_name": organization.name if organization else "",
-            "invited_by_name": sender.full_name if sender else "",
-            "accept_url": accept_url,
-            **demo_email_context(user.email),
-            **kwargs,
-        }
+        html_template, txt_template = self._resolve_invite_templates(kwargs)
+        context = {"invitee_email": user.email, **demo_email_context(user.email), **kwargs}
         msg = self.email_message(
-            user,
-            self.invitation_subject,
-            templates["txt"],
-            sender,
-            message_class=EmailMultiAlternatives,
-            **context,
+            user, self.invitation_subject, txt_template, sender, message_class=EmailMultiAlternatives, **context
         )
-        html_body = render_to_string(templates["html"], context)
+        html_body = render_to_string(html_template, context)
         msg.attach_alternative(html_body, "text/html")
         return int(msg.send())
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _resolve_invite_templates(kwargs: dict) -> tuple[str, str]:
+        """Resolve (html_template, txt_template) for an invitation email.
+
+        If the caller passes a ``role_template`` kwarg (a
+        :class:`~common.permissions.config.TemplateConfig`), returns the
+        template's custom ``invite_html`` and ``invite_txt`` if set,
+        falling back to the class-level defaults.
+
+        Otherwise uses the class-level defaults.
+        """
+        role_template = kwargs.get("role_template")
+        if role_template is not None:
+            from common.permissions.config import TemplateConfig
+
+            if isinstance(role_template, TemplateConfig):
+                html = getattr(role_template, "invite_html", None) or CustomInvitations.invitation_body_html
+                txt = getattr(role_template, "invite_txt", None) or CustomInvitations.invitation_body_txt
+                return html, txt
+
+        return (
+            CustomInvitations.invitation_body_html,
+            CustomInvitations.invitation_body_txt,
+        )
 
     def create_organization_invite(
         self, organization: Organization, invited_by_user: User, invitee_user: User
