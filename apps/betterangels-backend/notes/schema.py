@@ -90,7 +90,7 @@ class Mutation:
         callers that only send core note fields.
         """
         user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(user, template_name=CASEWORKER.name)
+        permission_group = resolve_permission_group(user, template=CASEWORKER)
 
         location_dict = asdict(data.location) if data.location else None
         provided_list = [asdict(s) for s in data.provided_services] if data.provided_services else None
@@ -123,7 +123,7 @@ class Mutation:
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
         user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(user, template_name=CASEWORKER.name)
+        permission_group = resolve_permission_group(user, template=CASEWORKER)
 
         qs: QuerySet[Note] = info.context.qs
         clean = asdict(data)
@@ -184,7 +184,7 @@ class Mutation:
     )
     def create_note_service_request(self, info: Info, data: CreateNoteServiceRequestInput) -> ServiceRequestType:
         user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(user, template_name=CASEWORKER.name)
+        permission_group = resolve_permission_group(user, template=CASEWORKER)
 
         qs: QuerySet[Note] = info.context.qs
         note = get_object_or_permission_error(
@@ -276,7 +276,7 @@ class Mutation:
 
         import_job = NoteDataImport.objects.get(id=data.import_job_id)
         user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(user, template_name=CASEWORKER.name)
+        permission_group = resolve_permission_group(user, template=CASEWORKER)
         try:
             with transaction.atomic():
                 note = note_create(

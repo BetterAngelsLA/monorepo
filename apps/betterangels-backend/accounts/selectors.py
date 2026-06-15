@@ -7,6 +7,7 @@ import logging
 from typing import Optional, Union
 
 from common.org_types import REGISTRY
+from common.permissions.config import TemplateConfig
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
@@ -58,14 +59,15 @@ def get_permission_group_for_org(
     user: Union[AbstractBaseUser, AnonymousUser],
     organization: Organization,
     *,
-    template_name: str,
+    template: TemplateConfig,
 ) -> PermissionGroup:
-    """Return the PermissionGroup for *template_name* in *organization*
+    """Return the PermissionGroup for *template* in *organization*
     that *user* belongs to.
 
     Validates that the organization has the requested template and that
     *user* is a member of that group.
     """
+    template_name = template.name
     permission_group = (
         PermissionGroup.objects.select_related("organization", "group")
         .filter(organization=organization, template__name=template_name)
@@ -86,21 +88,22 @@ def get_permission_group_for_org(
 def resolve_permission_group(
     user: Union[AbstractBaseUser, AnonymousUser],
     *,
-    template_name: str,
+    template: TemplateConfig,
     organization_id: Optional[str] = None,
 ) -> PermissionGroup:
     """Resolve the correct PermissionGroup for a mutation.
 
     If *organization_id* is provided, validates membership against that org.
     Otherwise finds the first organization where the user holds a
-    *template_name* group.
+    *template* group.
 
-    Callers should always specify *template_name* explicitly (e.g.
-    ``CASEWORKER.name`` for outreach operations).
+    Callers should always specify *template* explicitly (e.g.
+    ``CASEWORKER`` for outreach operations).
     """
+    template_name = template.name
     if organization_id:
         organization = Organization.objects.get(id=organization_id)
-        return get_permission_group_for_org(user, organization, template_name=template_name)
+        return get_permission_group_for_org(user, organization, template=template)
 
     # No organization_id — find the first org where the user holds this template.
     permission_group = (

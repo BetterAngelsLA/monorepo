@@ -56,7 +56,7 @@ class Mutation:
     )
     def create_referral(self, info: Info, data: CreateReferralInput) -> ReferralType:
         current_user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(current_user, template_name=CASEWORKER.name)
+        permission_group = resolve_permission_group(current_user, template=CASEWORKER)
         referral_data = asdict(data)
 
         try:

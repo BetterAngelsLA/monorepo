@@ -1,6 +1,7 @@
 import uuid
 from typing import Any, Optional
 
+from common.permissions.config import TemplateConfig
 from django.contrib.auth.models import AbstractBaseUser
 from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
@@ -66,13 +67,10 @@ class CustomInvitations(InvitationBackend):
         Otherwise uses the class-level defaults.
         """
         role_template = kwargs.get("role_template")
-        if role_template is not None:
-            from common.permissions.config import TemplateConfig
-
-            if isinstance(role_template, TemplateConfig):
-                html = getattr(role_template, "invite_html", None) or CustomInvitations.invitation_body_html
-                txt = getattr(role_template, "invite_txt", None) or CustomInvitations.invitation_body_txt
-                return html, txt
+        if role_template is not None and isinstance(role_template, TemplateConfig):
+            html = getattr(role_template, "invite_html", None) or CustomInvitations.invitation_body_html
+            txt = getattr(role_template, "invite_txt", None) or CustomInvitations.invitation_body_txt
+            return html, txt
 
         return (
             CustomInvitations.invitation_body_html,

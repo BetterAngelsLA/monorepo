@@ -601,7 +601,7 @@ class Mutation:
                 [ClientProfile.perms.CHANGE],
             ).get(id=data.client_profile)
 
-            permission_group = resolve_permission_group(user, template_name=CASEWORKER.name)
+            permission_group = resolve_permission_group(user, template=CASEWORKER)
 
             content_type = ContentType.objects.get_for_model(ClientProfile)
             client_document = Attachment.objects.create(

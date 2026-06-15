@@ -380,7 +380,7 @@ class Mutation:
     ) -> ServiceRequestType:
         with transaction.atomic():
             user = get_current_user(info)
-            permission_group = resolve_permission_group(user, template_name=CASEWORKER.name)
+            permission_group = resolve_permission_group(user, template=CASEWORKER)
 
             service_request_data = asdict(data)
             service_request_type = str(service_request_data.pop("service_request_type"))

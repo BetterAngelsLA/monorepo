@@ -81,7 +81,7 @@ def resolve_upload(
     client_profile: ClientProfile,
     documents: Iterable[ClientDocumentFromUploadsInput],
 ) -> list[Attachment]:
-    permission_group = resolve_permission_group(user, template_name=CASEWORKER.name)
+    permission_group = resolve_permission_group(user, template=CASEWORKER)
     content_type = ContentType.objects.get_for_model(ClientProfile)
 
     # Validate the entire batch before any DB writes.

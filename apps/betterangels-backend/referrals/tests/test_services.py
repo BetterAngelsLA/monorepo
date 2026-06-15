@@ -14,7 +14,7 @@ class ReferralCreateTests(GraphQLBaseTestCase):
         super().setUp()
         self.client_profile = baker.make(ClientProfile)
         self.shelter = shelter_recipe.make(organization=self.org_1)
-        self.permission_group = resolve_permission_group(self.org_1_case_manager_1, template_name=CASEWORKER.name)
+        self.permission_group = resolve_permission_group(self.org_1_case_manager_1, template=CASEWORKER)
 
     def test_creates_referral_with_pending_status(self) -> None:
         referral = referral_create(
@@ -58,7 +58,7 @@ class ReferralUpdateTests(GraphQLBaseTestCase):
         super().setUp()
         self.client_profile = baker.make(ClientProfile)
         self.shelter = shelter_recipe.make(organization=self.org_1)
-        self.permission_group = resolve_permission_group(self.org_1_case_manager_1, template_name=CASEWORKER.name)
+        self.permission_group = resolve_permission_group(self.org_1_case_manager_1, template=CASEWORKER)
         self.referral = referral_create(
             user=self.org_1_case_manager_1,
             permission_group=self.permission_group,
@@ -110,7 +110,7 @@ class ReferralDeleteTests(GraphQLBaseTestCase):
         super().setUp()
         self.client_profile = baker.make(ClientProfile)
         self.shelter = shelter_recipe.make(organization=self.org_1)
-        self.permission_group = resolve_permission_group(self.org_1_case_manager_1, template_name=CASEWORKER.name)
+        self.permission_group = resolve_permission_group(self.org_1_case_manager_1, template=CASEWORKER)
         self.referral = referral_create(
             user=self.org_1_case_manager_1,
             permission_group=self.permission_group,
@@ -131,8 +131,8 @@ class ReferralListSelectorTests(GraphQLBaseTestCase):
         super().setUp()
         self.client_profile = baker.make(ClientProfile)
         self.shelter = shelter_recipe.make(organization=self.org_1)
-        self.permission_group_1 = resolve_permission_group(self.org_1_case_manager_1, template_name=CASEWORKER.name)
-        self.permission_group_2 = resolve_permission_group(self.org_2_case_manager_1, template_name=CASEWORKER.name)
+        self.permission_group_1 = resolve_permission_group(self.org_1_case_manager_1, template=CASEWORKER)
+        self.permission_group_2 = resolve_permission_group(self.org_2_case_manager_1, template=CASEWORKER)
 
     def test_returns_only_referrals_created_by_user(self) -> None:
         referral_create(

@@ -48,7 +48,7 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Task.perms.ADD)])
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         current_user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(current_user, template_name=CASEWORKER.name)
+        permission_group = resolve_permission_group(current_user, template=CASEWORKER)
 
         task_data = asdict(data)
 
