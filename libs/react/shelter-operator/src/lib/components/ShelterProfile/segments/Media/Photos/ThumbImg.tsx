@@ -1,4 +1,6 @@
 import { mergeCss } from '@monorepo/react/shared';
+import { useState } from 'react';
+import { Modal } from '../../../../base-ui/modal';
 
 type TProps = {
   src?: string | null;
@@ -31,11 +33,36 @@ function Placeholder() {
 
 export function ThumbImg(props: TProps) {
   const { src, alt = '', className } = props;
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   return (
-    <Wrapper className={className}>
+    <Wrapper
+      className={mergeCss([src ? 'cursor-pointer' : undefined, className])}
+    >
       {src && (
-        <img src={src} alt={alt} className="w-full h-full object-cover" />
+        <>
+          <img
+            src={src}
+            alt={alt}
+            className="w-full h-full object-cover"
+            onClick={() => setLightboxOpen(true)}
+          />
+
+          <Modal
+            isOpen={lightboxOpen}
+            onClose={() => setLightboxOpen(false)}
+            size="full"
+            showCloseButton
+          >
+            <div className="relative w-full h-full flex items-center justify-center p-6 bg-black/80">
+              <img
+                src={src}
+                alt={alt}
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+          </Modal>
+        </>
       )}
 
       {!src && <Placeholder />}

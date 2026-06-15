@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Form } from '../../../../form/Form';
 import { Table, type TableColumn } from '../../../../Table';
 import { ShelterProfilePhotoType } from '../../../types';
 import { defaultFormValues, formSchema, PhotosFormData } from './formSchema';
@@ -14,7 +13,7 @@ const columns: TableColumn<ShelterProfilePhotoType>[] = [
     render: (photo) => (
       <ThumbImg
         src={photo.file.url}
-        alt={photo.file.name}
+        alt={`${photo.type.toLowerCase()} shelter photo`}
         className="w-24 h-24"
       />
     ),
@@ -22,7 +21,8 @@ const columns: TableColumn<ShelterProfilePhotoType>[] = [
   {
     key: 'name',
     label: 'File Name',
-    render: (photo) => photo.file.name.toLowerCase(),
+    render: (photo) =>
+      photo.file.name.replace(/^shelters?\//, '').toLowerCase(),
   },
   {
     key: 'type',
@@ -55,7 +55,7 @@ export function ShelterPhotosForm(props: TProps) {
         headerClassName="px-0"
         rowClassName="mx-0 px-0"
       />
-      <Form.Actions onPrimaryClick={handleSubmit(onSave)} />
+      {/* <Form.Actions onPrimaryClick={handleSubmit(onSave)} /> */}
     </form>
   );
 }
