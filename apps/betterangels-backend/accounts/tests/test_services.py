@@ -6,7 +6,11 @@ import pytest
 from accounts.groups import ORG_ADMIN
 from accounts.models import OrganizationProfile, PermissionGroupTemplate, User
 from accounts.selectors import permission_group_for_user
-from accounts.services import create_organization_with_presets, member_add
+from accounts.services import (
+    create_organization_with_presets,
+    member_add,
+    organization_remove_member,
+)
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from model_bakery import baker
@@ -354,3 +358,75 @@ def test_permission_group_template_not_found() -> None:
 
     with pytest.raises(ValidationError, match="not found"):
         permission_group_for_user(user, str(org.pk), "Shelter Operator")
+
+
+# ── organization_remove_member ────────────────────────────────────────
+
+
+@pytest.mark.django_db(transaction=True)
+class TestOrganizationRemoveMember:
+    """Tests for organization_remove_member."""
+
+    def test_removes_member_and_clears_roles(self) -> None:
+        """Removing a member deletes their OrganizationUser and clears roles."""
+        owner = baker.make(User)
+        org = create_organization_with_presets("Remove Org", ["outreach"], owner=owner)
+
+        member = member_add(
+            email="remove_me@example.com",
+            first_name="Remove",
+            last_name="Me",
+            middle_name=None,
+            organization=org,
+            permission_templates=(CASEWORKER,),
+        )
+
+        assert OrganizationUser.objects.filter(user=member, organization=org).exists()
+
+        cw_group = Group.objects.get(
+            permissiongroup__organization=org,
+            permissiongroup__template__name="Caseworker",
+        )
+        assert cw_group in member.groups.all()
+
+        removed_id = organization_remove_member(organization=org, user_id=member.pk, removed_by=owner)
+
+        assert removed_id == member.pk
+        assert not OrganizationUser.objects.filter(user=member, organization=org).exists()
+        assert cw_group not in member.groups.all()
+
+    def test_cannot_remove_owner(self) -> None:
+        """Raises ValidationError when trying to remove the org owner."""
+        owner = baker.make(User)
+        org = create_organization_with_presets("Owner Org", ["outreach"], owner=owner)
+
+        with pytest.raises(ValidationError, match="cannot remove the organization owner"):
+            organization_remove_member(organization=org, user_id=owner.pk, removed_by=owner)
+
+    def test_cannot_remove_self(self) -> None:
+        """Raises ValidationError when trying to remove yourself."""
+        owner = baker.make(User)
+        org = create_organization_with_presets("Self Org", ["outreach"], owner=owner)
+
+        member = member_add(
+            email="self@example.com",
+            first_name="Self",
+            last_name="Removal",
+            middle_name=None,
+            organization=org,
+            permission_templates=(CASEWORKER,),
+        )
+
+        # A non-owner member cannot remove themselves.
+        with pytest.raises(ValidationError, match="You cannot remove yourself"):
+            organization_remove_member(organization=org, user_id=member.pk, removed_by=member)
+
+    def test_remove_nonexistent_member(self) -> None:
+        """Raises ValidationError when the user is not a member."""
+        owner = baker.make(User)
+        org = create_organization_with_presets("Ghost Org", ["outreach"], owner=owner)
+
+        ghost = baker.make(User)
+
+        with pytest.raises(ValidationError, match="not a member"):
+            organization_remove_member(organization=org, user_id=ghost.pk, removed_by=owner)

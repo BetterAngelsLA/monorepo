@@ -94,7 +94,7 @@ def get_user_permission_group_for_org(
             organization_id=org_id,
             group__user=user,
         )
-        .order_by("-group__permissions")  # crude priority by permission count
+        .order_by("template__is_invitable", "-group__permissions")
         .first()
     )
 
@@ -102,9 +102,6 @@ def get_user_permission_group_for_org(
         raise PermissionError("User lacks proper organization or permissions")
 
     return permission_group
-
-
-# ── Multi-step resolvers ──────────────────────────────────────────────
 
 
 def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> PermissionGroup:
