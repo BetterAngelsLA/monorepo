@@ -274,7 +274,7 @@ class Mutation:
         )
 
         # Log the user into the current session.
-        auth.login(info.context.request, user)
+        auth.login(info.context.request, user, backend="django.contrib.auth.backends.ModelBackend")
 
         # Send welcome email (after transaction commits).
         _send_welcome_email(user, organization)
