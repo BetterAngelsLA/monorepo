@@ -60,7 +60,7 @@ class OrganizationUserForm(forms.ModelForm):
     permission_templates = forms.MultipleChoiceField(
         required=True,
         widget=forms.CheckboxSelectMultiple,
-        help_text="Assign one or more invitable roles to this member.",
+        help_text="Select one or more roles. Only roles available for the chosen organization will be accepted.",
     )
 
     class Meta:
@@ -70,9 +70,12 @@ class OrganizationUserForm(forms.ModelForm):
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
-        # Populate template choices from the registry.
+        # Populate template choices from the registry.  We use the
+        # static list here because the organization may not be known
+        # at form-init time.  Validation in clean_permission_templates()
+        # restricts the selection to templates valid for the chosen org.
         self.fields["permission_templates"].choices = [  # type: ignore[attr-defined]
-            (t.name, t.name) for t in REGISTRY.invitable_templates_for(None)
+            (name, name) for name in REGISTRY.invitable_template_names()
         ]
 
         if self.instance.pk is not None:
