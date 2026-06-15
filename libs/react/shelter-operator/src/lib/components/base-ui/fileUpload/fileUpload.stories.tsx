@@ -1,3 +1,4 @@
+import { MimeTypes } from '@monorepo/react/shared';
 import type { Meta } from '@storybook/react';
 import { useState } from 'react';
 import { FileUploadInput } from './FileUploadInput';
@@ -25,7 +26,7 @@ export const Default = () => {
         label="Field Label"
         value={files}
         onChange={setFiles}
-        accept=".png,.jpg,.jpeg,.pdf"
+        acceptedMimeTypes={[MimeTypes.PNG, MimeTypes.JPEG, MimeTypes.PDF]}
         supportedFilesText="Files supported: PNG, JPEG, PDF"
       />
     </div>
@@ -42,7 +43,7 @@ export const MultipleFiles = () => {
         value={files}
         onChange={setFiles}
         multiple
-        accept=".png,.jpg,.jpeg,.pdf"
+        acceptedMimeTypes={[MimeTypes.PNG, MimeTypes.JPEG, MimeTypes.PDF]}
         supportedFilesText="Files supported: PNG, JPEG, PDF"
       />
     </div>
@@ -58,7 +59,7 @@ export const WithError = () => {
         label="Field Label"
         value={files}
         onChange={setFiles}
-        accept=".png,.jpg,.jpeg,.pdf"
+        acceptedMimeTypes={[MimeTypes.PNG, MimeTypes.JPEG, MimeTypes.PDF]}
         error="Please upload a supported file"
         isTouched
       />
