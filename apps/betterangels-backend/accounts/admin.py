@@ -53,6 +53,7 @@ class CustomOrganizationAdmin(admin.ModelAdmin):
 @admin.register(OrganizationUser)
 class CustomOrganizationUserAdmin(AdminRequestMixin, ModelAdmin[User]):
     form = OrganizationUserForm
+    fields = ("organization", "email", "permission_templates")
 
 
 @admin.register(ExtendedOrganizationInvitation)
