@@ -6,7 +6,6 @@ Reference: https://github.com/HackSoftware/Django-Styleguide#selectors
 import logging
 from typing import Optional, Union
 
-from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.core.exceptions import ValidationError
@@ -108,7 +107,7 @@ def resolve_permission_group(
     # No organization_id — find the first org where the user holds this template.
     permission_group = (
         PermissionGroup.objects.select_related("organization", "group")
-        .filter(template__name=template_name, group__user=user)
+        .filter(template__name=template_name, group__user=user.pk)  # type: ignore[union-attr]
         .first()
     )
 

@@ -277,7 +277,7 @@ class OrgInvitationInput:
     middle_name: Optional[str] = None
     last_name: str
     organization_id: ID
-    permission_template: PermissionTemplateEnum
+    permission_template: PermissionTemplateEnum  # type: ignore[valid-type]
 
 
 @strawberry.input

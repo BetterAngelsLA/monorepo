@@ -119,22 +119,24 @@ class SendInvitationTestCase(TestCase):
     @patch("accounts.backends.CustomInvitations.send_invitation")
     def test_invite_by_email_creates_user(self, mock_send: Mock) -> None:
         """invite_by_email creates a new user and sends invitation."""
-        user = self.invitation_backend.invite_by_email(
+        abstract_user = self.invitation_backend.invite_by_email(
             self.email, domain="localhost:8000"
         )
-        self.assertEqual(user.email, self.email)
-        self.assertFalse(user.has_usable_password())
-        mock_send.assert_called_once_with(user, None, domain="localhost:8000")
+        assert isinstance(abstract_user, User)
+        self.assertEqual(abstract_user.email, self.email)
+        self.assertFalse(abstract_user.has_usable_password())
+        mock_send.assert_called_once_with(abstract_user, None, domain="localhost:8000")
 
     @patch("accounts.backends.CustomInvitations.send_invitation")
     def test_invite_by_email_existing_user(self, mock_send: Mock) -> None:
         """invite_by_email reuses existing user by email."""
         existing = baker.make(User, email=self.email, username="existing")
-        user = self.invitation_backend.invite_by_email(
+        abstract_user = self.invitation_backend.invite_by_email(
             self.email, domain="localhost:8000"
         )
-        self.assertEqual(user.pk, existing.pk)  # reused
-        mock_send.assert_called_once_with(user, None, domain="localhost:8000")
+        assert isinstance(abstract_user, User)
+        self.assertEqual(abstract_user.pk, existing.pk)  # reused
+        mock_send.assert_called_once_with(abstract_user, None, domain="localhost:8000")
 
     def test_send_invitation_case(self) -> None:
         """Original smoke test — invite_by_email creates an Email record."""
