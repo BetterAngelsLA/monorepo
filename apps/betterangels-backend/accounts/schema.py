@@ -13,9 +13,10 @@ from django.conf import settings
 from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
-from notes.groups import CASEWORKER
+from django.template.loader import render_to_string
 from organizations.backends import invitation_backend
 from organizations.models import Organization
 from strawberry.types import Info
@@ -24,10 +25,15 @@ from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
-from .models import PermissionGroup, User
-from .services import member_add, organization_remove_member
+from .models import PermissionGroup, User, UserOrganizationPreference
+from .services import (
+    member_add,
+    organization_remove_member,
+    shelter_operator_signup_service,
+)
 from .types import (
     AuthResponse,
+    ChangeOrganizationMemberRoleInput,
     CurrentUserType,
     LoginInput,
     OrganizationFilter,
@@ -38,6 +44,8 @@ from .types import (
     OrganizationType,
     OrgInvitationInput,
     RemoveOrganizationMemberInput,
+    ShelterOperatorSignupInput,
+    SignupResponse,
     UpdateUserInput,
     UpdateUserProfileInput,
     UserType,
@@ -75,21 +83,6 @@ class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
     def current_user(self, info: Info) -> CurrentUserType:
         return get_current_user(info)  # type: ignore
-
-    @strawberry_django.offset_paginated(
-        OffsetPaginated[OrganizationType],
-        permission_classes=[IsAuthenticated],
-    )
-    def caseworker_organizations(
-        self,
-        info: Info,
-        ordering: Optional[list[OrganizationOrder]] = None,
-        filters: Optional[OrganizationFilter] = None,
-    ) -> QuerySet[Organization]:
-        queryset: QuerySet[Organization] = Organization.objects.filter(
-            permission_groups__template__name=CASEWORKER.name
-        ).distinct()
-        return queryset
 
     @strawberry_django.field(
         permission_classes=[IsAuthenticated], extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)]
@@ -263,3 +256,131 @@ class Mutation:
         )
 
         return DeletedObjectType(id=removed_id)
+
+    # ── Self-Signup ─────────────────────────────────────────────────
+
+    @strawberry.mutation
+    def shelter_operator_signup(
+        self, info: Info, data: ShelterOperatorSignupInput
+    ) -> SignupResponse:
+        """Public mutation — unauthenticated users can create a shelter org.
+
+        Creates (or retrieves) a User, creates a new Organization with the
+        ``shelter`` preset, assigns the owner the Shelter Operator role,
+        logs the user in, and sends a welcome email.
+        """
+        user, organization = shelter_operator_signup_service(
+            email=data.email,
+            first_name=data.first_name,
+            last_name=data.last_name,
+            middle_name=data.middle_name,
+            organization_name=data.organization_name,
+        )
+
+        # Log the user into the current session.
+        auth.login(info.context.request, user)
+
+        # Send welcome email (after transaction commits).
+        _send_welcome_email(user, organization)
+
+        return SignupResponse(user=cast(UserType, user), organization=cast(OrganizationType, organization))
+
+    # ── Default Organization Preference ─────────────────────────────
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def set_current_organization(self, info: Info, organization_id: strawberry.ID) -> CurrentUserType:
+        """Set the user's preferred (current) organization.
+
+        Shelter queries (``adminShelter``, ``shelter``, etc.) auto-scope
+        to this preference when no explicit organization filter is passed.
+        """
+        user = cast(User, get_current_user(info))
+
+        org = get_user_permitted_org(user, org_id=str(organization_id))
+        if org is None:
+            raise PermissionDenied("You are not a member of this organization.")
+
+        UserOrganizationPreference.objects.update_or_create(
+            user=user,
+            defaults={"current_organization": org},
+        )
+
+        return cast(CurrentUserType, user)
+
+    # ── Role Change ────────────────────────────────────────────────
+
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE)],
+    )
+    def change_organization_member_role(
+        self, info: Info, data: ChangeOrganizationMemberRoleInput
+    ) -> OrganizationMemberType:
+        """Promote or demote a member within an organization.
+
+        Replaces all of the member's current org-scoped roles with the
+        single requested template.  Requires the ``CHANGE_ORG_MEMBER_ROLE``
+        permission.
+        """
+        current_user = cast(User, get_current_user(info))
+
+        organization = get_user_permitted_org(
+            current_user, org_id=str(data.organization_id), permission=UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE
+        )
+        if organization is None:
+            raise PermissionDenied("You do not have permission to change member roles.")
+
+        template = REGISTRY.template(data.permission_template.value)  # type: ignore[attr-defined, union-attr]
+        if template is None:
+            valid = REGISTRY.invitable_template_names_for(organization)
+            raise ValidationError(
+                f"Invalid permission template '{data.permission_template.value}'. "  # type: ignore[attr-defined, union-attr]
+                f"Available: {', '.join(valid)}"
+            )
+
+        target_user = User.objects.filter(
+            id=data.user_id,
+            organizations_organization=organization,
+        ).first()
+        if not target_user:
+            raise PermissionDenied("Target user is not a member of this organization.")
+
+        from .role_manager import OrgRoleManager
+
+        OrgRoleManager(organization).replace_roles(target_user, template)
+
+        target_user._member_role = None  # type: ignore[attr-defined]
+        return cast(OrganizationMemberType, target_user)
+
+
+# ── Email helpers ────────────────────────────────────────────────────
+
+
+def _send_welcome_email(user: User, organization: Organization) -> None:
+    """Send a welcome email to a self-signed-up shelter operator."""
+    from common.org_types import REGISTRY
+    from shelters.groups import SHELTER_OPERATOR
+
+    template_config = SHELTER_OPERATOR
+    html_template = template_config.welcome_html or template_config.invite_html
+    txt_template = template_config.welcome_txt or template_config.invite_txt
+
+    if not html_template or not txt_template:
+        logger.warning("No welcome email templates configured for Shelter Operator — skipping.")
+        return
+
+    context = {
+        "user_email": user.email,
+        "user_first_name": user.first_name,
+        "organization_name": organization.name,
+        "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",  # TODO: make configurable
+    }
+
+    msg = EmailMultiAlternatives(
+        subject=f"Welcome to BetterAngels, {user.first_name}!",
+        body=render_to_string(txt_template, context),
+        to=[user.email],
+    )
+    html_body = render_to_string(html_template, context)
+    msg.attach_alternative(html_body, "text/html")
+    msg.send(fail_silently=True)

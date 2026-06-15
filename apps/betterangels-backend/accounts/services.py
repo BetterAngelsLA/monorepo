@@ -207,3 +207,49 @@ def create_default_org_permission_groups(organization: Organization) -> None:
     for template_config in REGISTRY.templates_for(organization):
         template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_config.name)
         PermissionGroup.objects.get_or_create(organization=organization, template=template)
+
+
+# ── Self-signup ───────────────────────────────────────────────────────
+
+
+@transaction.atomic
+def shelter_operator_signup_service(
+    *,
+    email: str,
+    first_name: str,
+    last_name: str,
+    middle_name: str | None,
+    organization_name: str,
+) -> tuple[UserModel, Organization]:
+    """Create a user and shelter organization in a self-signup flow.
+
+    Returns ``(user, organization)``.  The user is linked as the
+    organization owner and assigned the Shelter Operator role.
+
+    Does **not** send a welcome email — callers (mutations) are
+    responsible for triggering email delivery after the transaction
+    commits successfully.
+    """
+    from shelters.groups import SHELTER_OPERATOR
+
+    user, _created = UserModel.objects.get_or_create(
+        email=email,
+        defaults={
+            "username": str(uuid.uuid4()),
+            "is_active": True,
+        },
+    )
+    user.first_name = first_name
+    user.last_name = last_name
+    user.middle_name = middle_name
+    user.set_unusable_password()
+    user.save()
+
+    organization = create_organization_with_presets(
+        name=organization_name,
+        preset_names=["shelter"],
+        owner=user,
+        owner_roles=(SHELTER_OPERATOR,),
+    )
+
+    return user, organization

@@ -262,6 +262,14 @@ export type BulkDeleteResult = {
   ids: Array<Scalars['ID']['output']>;
 };
 
+export type ChangeOrganizationMemberRoleInput = {
+  organizationId: Scalars['ID']['input'];
+  permissionTemplate: PermissionTemplateEnum;
+  userId: Scalars['ID']['input'];
+};
+
+export type ChangeOrganizationMemberRolePayload = OperationInfo | OrganizationMemberType;
+
 export type CityType = {
   __typename?: 'CityType';
   id: Scalars['ID']['output'];
@@ -1547,6 +1555,7 @@ export type MedicalNeedType = {
 export type Mutation = {
   __typename?: 'Mutation';
   addOrganizationMember: AddOrganizationMemberPayload;
+  changeOrganizationMemberRole: ChangeOrganizationMemberRolePayload;
   cloneBed: CloneBedPayload;
   cloneRoom: CloneRoomPayload;
   createBed: CreateBedPayload;
@@ -1594,6 +1603,8 @@ export type Mutation = {
   resolveClientDocumentUploads: ResolveClientDocumentUploadsPayload;
   resolveClientProfilePhotoUpload: ResolveClientProfilePhotoUploadPayload;
   revertNote: RevertNotePayload;
+  setCurrentOrganization: CurrentUserType;
+  shelterOperatorSignup: SignupResponse;
   updateBed: UpdateBedPayload;
   updateClientContact: UpdateClientContactPayload;
   updateClientDocument: UpdateClientDocumentPayload;
@@ -1618,6 +1629,11 @@ export type Mutation = {
 
 export type MutationAddOrganizationMemberArgs = {
   data: OrgInvitationInput;
+};
+
+
+export type MutationChangeOrganizationMemberRoleArgs = {
+  data: ChangeOrganizationMemberRoleInput;
 };
 
 
@@ -1845,6 +1861,16 @@ export type MutationResolveClientProfilePhotoUploadArgs = {
 
 export type MutationRevertNoteArgs = {
   data: RevertNoteInput;
+};
+
+
+export type MutationSetCurrentOrganizationArgs = {
+  organizationId: Scalars['ID']['input'];
+};
+
+
+export type MutationShelterOperatorSignupArgs = {
+  data: ShelterOperatorSignupInput;
 };
 
 
@@ -2997,6 +3023,14 @@ export type ShelterLocationType = {
   place: Scalars['String']['output'];
 };
 
+export type ShelterOperatorSignupInput = {
+  email: Scalars['String']['input'];
+  firstName: Scalars['String']['input'];
+  lastName: Scalars['String']['input'];
+  middleName?: InputMaybe<Scalars['String']['input']>;
+  organizationName: Scalars['NonEmptyString']['input'];
+};
+
 export type ShelterOrder = {
   createdAt?: InputMaybe<Ordering>;
   name?: InputMaybe<Ordering>;
@@ -3143,6 +3177,12 @@ export type ShelterTypeOffsetPaginated = {
 export type ShelterTypeType = {
   __typename?: 'ShelterTypeType';
   name?: Maybe<ShelterChoices>;
+};
+
+export type SignupResponse = {
+  __typename?: 'SignupResponse';
+  organization: OrganizationType;
+  user: UserType;
 };
 
 export enum SocialMediaEnum {

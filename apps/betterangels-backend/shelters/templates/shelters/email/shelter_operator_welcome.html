@@ -1,0 +1,18 @@
+{% extends "../_base_email.html" %}
+
+{% block title %}Welcome to BetterAngels, {{ user_first_name }}!{% endblock %}
+
+{% block content %}
+<p>You're all set! Your organization <strong>{{ organization_name }}</strong> has been created and you've been assigned as the Shelter Operator.</p>
+
+<p>As a Shelter Operator you can:</p>
+<ul>
+  <li>Create and manage shelters, rooms, and beds</li>
+  <li>Invite other staff members to join your organization</li>
+  <li>View shelter availability and occupancy</li>
+</ul>
+
+<p><a href="{{ dashboard_url }}" class="button">Go to your Dashboard</a></p>
+
+<p>If you have any questions, reply to this email — our team is here to help.</p>
+{% endblock %}

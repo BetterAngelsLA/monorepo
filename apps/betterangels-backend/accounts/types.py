@@ -290,3 +290,31 @@ class UpdateUserProfileInput:
 class RemoveOrganizationMemberInput:
     id: ID
     organization_id: ID
+
+
+# ── Self-Signup ───────────────────────────────────────────────────────
+
+
+@strawberry.input
+class ShelterOperatorSignupInput:
+    email: str
+    first_name: str
+    last_name: str
+    middle_name: Optional[str] = None
+    organization_name: NonEmptyString
+
+
+@strawberry.type
+class SignupResponse:
+    user: UserType
+    organization: OrganizationType
+
+
+# ── Role Change ───────────────────────────────────────────────────────
+
+
+@strawberry.input
+class ChangeOrganizationMemberRoleInput:
+    user_id: ID
+    organization_id: ID
+    permission_template: PermissionTemplateEnum  # type: ignore[valid-type]

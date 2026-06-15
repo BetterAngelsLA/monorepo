@@ -15,4 +15,6 @@ SHELTER_OPERATOR = TemplateConfig(
     ],
     invite_html="account/email/shelter_operator_invite.html",
     invite_txt="account/messages/shelter_operator_invite.txt",
+    welcome_html="shelters/email/shelter_operator_welcome.html",
+    welcome_txt="shelters/email/shelter_operator_welcome.txt",
 )

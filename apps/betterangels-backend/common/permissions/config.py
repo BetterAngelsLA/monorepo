@@ -24,3 +24,11 @@ class TemplateConfig:
     """Path to the plain-text invitation email template.
 
     Required when ``is_invitable`` is ``True``."""
+    welcome_html: str | None = None
+    """Path to the HTML welcome email template for self-signup flows.
+
+    Used instead of ``invite_html`` when a user creates their own
+    organization (no inviter).  The template receives ``user_email``,
+    ``organization_name``, and ``user_first_name`` in its context."""
+    welcome_txt: str | None = None
+    """Path to the plain-text welcome email template for self-signup flows."""

@@ -253,6 +253,14 @@ type BulkDeleteResult {
   ids: [ID!]!
 }
 
+input ChangeOrganizationMemberRoleInput {
+  userId: ID!
+  organizationId: ID!
+  permissionTemplate: PermissionTemplateEnum!
+}
+
+union ChangeOrganizationMemberRolePayload = OrganizationMemberType | OperationInfo
+
 type CityType {
   id: ID!
   name: String!
@@ -1525,6 +1533,9 @@ type Mutation {
   deleteCurrentUser: DeleteCurrentUserPayload!
   addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
   removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "remove_org_member"}], any: true)
+  shelterOperatorSignup(data: ShelterOperatorSignupInput!): SignupResponse!
+  setCurrentOrganization(organizationId: ID!): CurrentUserType!
+  changeOrganizationMemberRole(data: ChangeOrganizationMemberRoleInput!): ChangeOrganizationMemberRolePayload! @hasPerm(permissions: [{app: "organizations", permission: "change_org_member_role"}], any: true)
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
   updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
   deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
@@ -1921,7 +1932,6 @@ enum PronounEnum {
 
 type Query {
   currentUser: CurrentUserType!
-  caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter = null, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
@@ -1948,6 +1958,7 @@ type Query {
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter = null, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
   reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
@@ -2356,6 +2367,14 @@ type ShelterLocationType {
   longitude: Float!
 }
 
+input ShelterOperatorSignupInput {
+  email: String!
+  firstName: String!
+  lastName: String!
+  middleName: String = null
+  organizationName: NonEmptyString!
+}
+
 input ShelterOrder {
   name: Ordering
   createdAt: Ordering
@@ -2493,6 +2512,11 @@ type ShelterTypeOffsetPaginated {
 
 type ShelterTypeType {
   name: ShelterChoices
+}
+
+type SignupResponse {
+  user: UserType!
+  organization: OrganizationType!
 }
 
 enum SocialMediaEnum {
