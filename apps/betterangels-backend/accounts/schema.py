@@ -16,7 +16,6 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
 from organizations.backends import invitation_backend
-from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
@@ -29,12 +28,9 @@ from .types import (
     AuthResponse,
     CurrentUserType,
     LoginInput,
-    OrganizationFilter,
     OrganizationMemberFilter,
     OrganizationMemberOrdering,
     OrganizationMemberType,
-    OrganizationOrder,
-    OrganizationType,
     OrgInvitationInput,
     RemoveOrganizationMemberInput,
     UpdateUserInput,
