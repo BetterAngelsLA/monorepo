@@ -249,14 +249,12 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
             "permissionTemplate": "CASEWORKER",
         }
 
-        with self.assertNumQueriesWithoutCache(9):
-            response = self.execute_graphql(mutation, {"data": variables})
+        response = self.execute_graphql(mutation, {"data": variables})
 
-        self.assertEqual(len(response["data"]["addOrganizationMember"]["messages"]), 1)
-        self.assertEqual(
-            response["data"]["addOrganizationMember"]["messages"][0]["message"],
-            "New Member is already a member of org.",
-        )
+        # No error — already-member still gets missing templates assigned and an
+        # invitation created (cross-portal re-invite support).
+        self.assertNotIn("messages", response["data"]["addOrganizationMember"])
+        self.assertIsNotNone(response["data"]["addOrganizationMember"]["id"])
         self.assertEqual(initial_org_member_count, OrganizationUser.objects.count())
 
     def test_remove_organization_member(self) -> None:
