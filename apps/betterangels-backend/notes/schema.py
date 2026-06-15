@@ -11,7 +11,7 @@ from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.graphql.utils import get_object_or_permission_error
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import Exists, OuterRef, QuerySet
 from notes.groups import CASEWORKER
 from notes.models import Note, NoteDataImport, NoteImportRecord, ServiceRequest
 from notes.permissions import (
@@ -92,10 +92,16 @@ class Query:
     ) -> QuerySet[Organization]:
         """Return organizations where the current user is a caseworker."""
         user = cast(User, get_current_user(info))
-        queryset: QuerySet[Organization] = Organization.objects.filter(
-            permission_groups__template__name=CASEWORKER.name,
-            users=user,
-        ).distinct()
+        from accounts.models import PermissionGroup
+
+        has_caseworker_group = Exists(
+            PermissionGroup.objects.filter(
+                organization=OuterRef("pk"),
+                template__name=CASEWORKER.name,
+                group__user=user,
+            )
+        )
+        queryset: QuerySet[Organization] = Organization.objects.filter(has_caseworker_group)
         return queryset
 
 

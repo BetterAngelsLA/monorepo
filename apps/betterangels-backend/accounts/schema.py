@@ -36,11 +36,9 @@ from .types import (
     ChangeOrganizationMemberRoleInput,
     CurrentUserType,
     LoginInput,
-    OrganizationFilter,
     OrganizationMemberFilter,
     OrganizationMemberOrdering,
     OrganizationMemberType,
-    OrganizationOrder,
     OrganizationType,
     OrgInvitationInput,
     RemoveOrganizationMemberInput,
@@ -260,9 +258,7 @@ class Mutation:
     # ── Self-Signup ─────────────────────────────────────────────────
 
     @strawberry.mutation
-    def shelter_operator_signup(
-        self, info: Info, data: ShelterOperatorSignupInput
-    ) -> SignupResponse:
+    def shelter_operator_signup(self, info: Info, data: ShelterOperatorSignupInput) -> SignupResponse:
         """Public mutation — unauthenticated users can create a shelter org.
 
         Creates (or retrieves) a User, creates a new Organization with the
@@ -325,7 +321,9 @@ class Mutation:
         current_user = cast(User, get_current_user(info))
 
         organization = get_user_permitted_org(
-            current_user, org_id=str(data.organization_id), permission=UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE
+            current_user,
+            org_id=str(data.organization_id),
+            permission=UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE,
         )
         if organization is None:
             raise PermissionDenied("You do not have permission to change member roles.")
@@ -358,7 +356,6 @@ class Mutation:
 
 def _send_welcome_email(user: User, organization: Organization) -> None:
     """Send a welcome email to a self-signed-up shelter operator."""
-    from common.org_types import REGISTRY
     from shelters.groups import SHELTER_OPERATOR
 
     template_config = SHELTER_OPERATOR
