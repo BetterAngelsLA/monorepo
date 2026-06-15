@@ -15,7 +15,9 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
+from notes.groups import CASEWORKER
 from organizations.backends import invitation_backend
+from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
@@ -24,9 +26,6 @@ from strawberry_django.permissions import HasPerm
 
 from .models import PermissionGroup, User
 from .services import member_add, organization_remove_member
-from notes.groups import CASEWORKER
-from organizations.models import Organization
-
 from .types import (
     AuthResponse,
     CurrentUserType,
