@@ -35,11 +35,6 @@ export function ShelterPage({ id }: { id: string }) {
 
   const shelter = data?.shelter;
 
-  console.log();
-  console.log('| -------------  shelter  ------------- |');
-  console.log(shelter);
-  console.log();
-
   if (!shelter) {
     return null;
   }

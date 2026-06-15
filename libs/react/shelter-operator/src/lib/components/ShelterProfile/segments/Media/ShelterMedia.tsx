@@ -20,11 +20,6 @@ export function ShelterMedia(props: TProps) {
     return null;
   }
 
-  console.log();
-  console.log('| -------------  shelter  ------------- |');
-  console.log(shelter);
-  console.log();
-
   const { photos } = shelter;
 
   return (
