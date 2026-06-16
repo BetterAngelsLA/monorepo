@@ -63,8 +63,8 @@ class HasOrgPerm(HasPerm):
 
         # Resolve the first perm's codename for org-scoped check
         perm_def = self.perms[0]
-        app_label = perm_def.app_label or ""
-        codename = perm_def.perm
+        app_label = perm_def.app or ""
+        codename = perm_def.permission
 
         org = get_user_permitted_org(
             user,

@@ -1,10 +1,8 @@
 """Tests for the HasOrgPerm Strawberry extension."""
 
 from accounts.extensions import HasOrgPerm
-from accounts.models import User
-from accounts.tests.baker_recipes import organization_recipe
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
+from accounts.models import PermissionGroup, User
+from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory, TestCase
 from model_bakery import baker
@@ -17,13 +15,29 @@ from unittest.mock import MagicMock
 class HasOrgPermTestCase(TestCase):
     def setUp(self) -> None:
         self.factory = RequestFactory()
-        self.org: Organization = organization_recipe.make()
+        self.org: Organization = Organization.objects.create(name="Test Org")
         self.user: User = baker.make(User, email="test@example.com")
         self.org.add_user(self.user)
 
+        # Create a PermissionGroup for the org. The save() method auto-creates
+        # a Group (named "{org.name}_{name}") and links it to the PermissionGroup.
+        # Passing group= is ignored — save() always creates its own.
+        self.perm_group = PermissionGroup.objects.create(
+            organization=self.org,
+            name="test-perm-group",
+        )
+
+        # Use the auto-created group (NOT a pre-created one).
+        self.group = self.perm_group.group
+        assert self.group is not None, "save() should have auto-created a group"
+
+        # Grant the shelter view permission through this group.
         app_label, codename = Shelter.perms.VIEW.split(".")
-        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        self.user.user_permissions.add(perm)
+        self.perm: Permission = Permission.objects.get(
+            codename=codename, content_type__app_label=app_label
+        )
+        self.group.permissions.add(self.perm)
+        self.group.user_set.add(self.user)
 
     def _make_extension(self, perm: str = Shelter.perms.VIEW) -> HasOrgPerm:
         return HasOrgPerm(perm, fail_silently=False)
@@ -64,7 +78,7 @@ class HasOrgPermTestCase(TestCase):
 
     def test_user_not_member_of_org_raises(self) -> None:
         """Non-member org raises PermissionDenied even if header is present."""
-        other_org: Organization = organization_recipe.make()  # user is NOT a member
+        other_org: Organization = Organization.objects.create(name="Other Org")  # user is NOT a member
         extension = self._make_extension()
         info = self._make_info(org_id=str(other_org.id))
 
@@ -75,7 +89,8 @@ class HasOrgPermTestCase(TestCase):
 
     def test_user_member_but_lacks_permission_raises(self) -> None:
         """User is org member but doesn't hold the required Django perm."""
-        self.user.user_permissions.clear()
+        # Remove the group's permission so user no longer has it
+        self.group.permissions.clear()
         extension = self._make_extension()
         info = self._make_info(org_id=str(self.org.id))
 
