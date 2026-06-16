@@ -71,6 +71,17 @@ class ShelterTestCase(GraphQLBaseTestCase):
             shelter { id }
         """
 
+        self.reservation_fields = """
+            id
+            status
+            startDate
+            duration
+            notes
+            bed { id }
+            room { id }
+            shelter { id }
+        """
+
     def setup_org_with_user(self) -> None:
         self.org = organization_recipe.make(name="Shelter Org")
         OrganizationProfile.objects.update_or_create(

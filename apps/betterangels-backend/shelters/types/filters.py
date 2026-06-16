@@ -463,10 +463,15 @@ class RoomFilter(CommonBedRoomFilterMixin):
 @strawberry_django.filter_type(models.Reservation)
 class ReservationFilter:
     id: Optional[ID]
-    shelter_id: Optional[ID]
     room_id: Optional[ID]
     bed_id: Optional[ID]
     status = make_in_filter("status", ReservationStatusChoices)
+
+    @strawberry_django.filter_field
+    def shelter_id(self, info: Info, value: Optional[ID], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}bed__shelter_id": value}) | Q(**{f"{prefix}room__shelter_id": value})
 
 
 @strawberry_django.order_type(models.Reservation, one_of=False)
