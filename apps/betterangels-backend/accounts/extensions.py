@@ -105,16 +105,16 @@ class HasOrgPerm(HasPerm):
                     permission_groups__group__permissions__content_type__app_label=perm_def.app or "",
                     permission_groups__group__permissions__codename=perm_def.permission,
                 )
-            org = org_filter.filter(q).first()
+            has_perm = org_filter.filter(q).exists()
         else:
             for perm_def in self.perms:
                 org_filter = org_filter.filter(
                     permission_groups__group__permissions__content_type__app_label=perm_def.app or "",
                     permission_groups__group__permissions__codename=perm_def.permission,
                 )
-            org = org_filter.first()
+            has_perm = org_filter.exists()
 
-        if org is None:
+        if not has_perm:
             raise DjangoNoPermission(
                 "You do not have permission to perform this action "
                 "in this organization."
