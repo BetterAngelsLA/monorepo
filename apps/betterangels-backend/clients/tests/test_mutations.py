@@ -4,6 +4,7 @@ from unittest.mock import ANY, patch
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
+    ClientStatusEnum,
     ErrorCodeEnum,
     EyeColorEnum,
     GenderEnum,
@@ -127,6 +128,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "phoneNumbers": expected_phone_numbers,
             "profilePhoto": None,
             "socialMediaProfiles": expected_social_media_profiles,
+            "status": ClientStatusEnum.CHECKED_OUT.name,
             "veteranStatus": VeteranStatusEnum.YES.name,
         }
         client_differences = DeepDiff(
@@ -243,6 +245,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "displayGender": "Female",
             "displayPronouns": "she/her/theirs",
             "profilePhoto": {"url": self.client_profile_1_photo_url},
+            "status": ClientStatusEnum.CHECKED_OUT.name,
             "veteranStatus": VeteranStatusEnum.YES.name,
         }
         client_differences = DeepDiff(
@@ -257,6 +260,19 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         expected_photo_url = self.client_profile_1_photo_url.split("?")[0]
         actual_photo_url = client_profile["profilePhoto"]["url"].split("?")[0]
         self.assertEqual(expected_photo_url, actual_photo_url)
+
+    def test_update_client_profile_status_mutation(self) -> None:
+        # New client profiles default to CHECKED_OUT.
+        self.assertEqual(self.client_profile_1["status"], ClientStatusEnum.CHECKED_OUT.name)
+
+        variables = {
+            "id": self.client_profile_1["id"],
+            "status": ClientStatusEnum.RESERVED.name,
+        }
+        response = self._update_client_profile_fixture(variables)
+        client_profile = response["data"]["updateClientProfile"]
+
+        self.assertEqual(client_profile["status"], ClientStatusEnum.RESERVED.name)
 
     def test_client_profile_mutation_validation(self) -> None:
         contact = {

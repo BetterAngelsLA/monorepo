@@ -7,6 +7,7 @@ from betterangels_backend import settings
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
+    ClientStatusEnum,
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
@@ -131,6 +132,7 @@ class AbstractClientProfile(BaseModel):
     residence_address = models.TextField(blank=True, null=True)
     residence_geolocation = PointField(srid=4326, geography=True, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
+    status = TextChoicesField(choices_enum=ClientStatusEnum, default=ClientStatusEnum.CHECKED_OUT)
     unhoused_start_date = models.DateField(blank=True, null=True)
 
     class Meta:

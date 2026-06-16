@@ -488,6 +488,7 @@ type ClientProfileType {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  status: ClientStatusEnum!
   unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   id: ID!
@@ -520,6 +521,12 @@ input ClientSearchInput {
   firstName: String = null
   lastName: String = null
   middleName: String = null
+}
+
+enum ClientStatusEnum {
+  RESERVED
+  CHECKED_IN
+  CHECKED_OUT
 }
 
 union CloneBedPayload = BedType | OperationInfo
@@ -609,6 +616,7 @@ input CreateClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  status: ClientStatusEnum = null
   unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   contacts: [ClientContactInput!]
@@ -2697,6 +2705,7 @@ input UpdateClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  status: ClientStatusEnum = null
   unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   id: ID!

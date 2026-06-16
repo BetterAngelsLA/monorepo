@@ -62,6 +62,7 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
             residenceAddress
             residenceGeolocation
             spokenLanguages
+            status
             unhousedStartDate
             veteranStatus
             displayCaseManager
