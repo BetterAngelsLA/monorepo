@@ -84,9 +84,7 @@ const TableRowBase = <TRowObject,>({
         <div
           role="cell"
           key={cell.key}
-          className={['text-left justify-self-start', cell.className ?? '']
-            .join(' ')
-            .trim()}
+          className={mergeCss(['text-left justify-self-start', cell.className])}
         >
           {cell.content}
         </div>
