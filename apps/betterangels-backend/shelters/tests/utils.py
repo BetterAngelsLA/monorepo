@@ -5,13 +5,17 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from model_bakery import baker
 from shelters.groups import SHELTER_OPERATOR
-from shelters.models import Bed, Room, Shelter
+from shelters.models import Bed, Reservation, Room, Shelter
 
 SHELTER_OPERATOR_PERMISSIONS = (
     (Bed, "add_bed"),
     (Bed, "change_bed"),
     (Bed, "delete_bed"),
     (Bed, "view_bed"),
+    (Reservation, "add_reservation"),
+    (Reservation, "change_reservation"),
+    (Reservation, "delete_reservation"),
+    (Reservation, "view_reservation"),
     (Room, "add_room"),
     (Room, "change_room"),
     (Room, "delete_room"),

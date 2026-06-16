@@ -5,7 +5,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 from model_bakery import baker
-from shelters.enums import BedStatusChoices, ReservationStatusChoices
+from shelters.enums import BedStatusChoices, ReservationStatusChoices, RoomStatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
 
 
@@ -140,3 +140,60 @@ class BedComputedStatusTestCase(TestCase):
         )
         self._make_completed_reservation(bed, checkout)
         self.assertEqual(bed.computed_status, BedStatusChoices.OUT_OF_SERVICE)
+
+    def test_bed_maintenance_flag_rejects_reservation(self) -> None:
+        """Regression: reservation clean() uses maintenance_flag, not out_of_service."""
+        bed = self._make_bed(maintenance_flag=True)
+        with self.assertRaises(ValidationError) as ctx:
+            Reservation(
+                shelter=self.shelter,
+                bed=bed,
+                status=ReservationStatusChoices.CONFIRMED,
+            ).clean()
+        self.assertIn("bed", ctx.exception.message_dict)
+
+
+class RoomComputedStatusTestCase(TestCase):
+    """
+    Tests for Room.computed_status based on Reservation checked_out_at / last_cleaned.
+    """
+
+    def setUp(self) -> None:
+        self.shelter = Shelter.objects.create(name="Test Shelter")
+
+    def _make_room(self, **kwargs: object) -> Room:
+        return Room.objects.create(shelter=self.shelter, name="Room-Test", **kwargs)
+
+    def _make_completed_reservation(self, room: Room, checked_out_at: datetime.datetime) -> Reservation:
+        return Reservation.objects.create(
+            shelter=self.shelter,
+            room=room,
+            bed=None,
+            status=ReservationStatusChoices.COMPLETED,
+            checked_out_at=checked_out_at,
+        )
+
+    def test_room_with_checkout_after_last_cleaned_returns_in_turnaround(self) -> None:
+        last_cleaned = datetime.datetime(2026, 1, 1, 12, 0, tzinfo=datetime.timezone.utc)
+        checkout = datetime.datetime(2026, 1, 2, 12, 0, tzinfo=datetime.timezone.utc)
+        room = self._make_room(last_cleaned=last_cleaned)
+        self._make_completed_reservation(room, checkout)
+        self.assertEqual(room.computed_status, RoomStatusChoices.IN_TURNAROUND)
+
+    def test_room_with_checkout_before_last_cleaned_returns_available(self) -> None:
+        last_cleaned = datetime.datetime(2026, 1, 2, 12, 0, tzinfo=datetime.timezone.utc)
+        checkout = datetime.datetime(2026, 1, 1, 12, 0, tzinfo=datetime.timezone.utc)
+        room = self._make_room(last_cleaned=last_cleaned)
+        self._make_completed_reservation(room, checkout)
+        self.assertEqual(room.computed_status, RoomStatusChoices.AVAILABLE)
+
+    def test_room_with_checkout_and_maintenance_flag_returns_out_of_service(self) -> None:
+        last_cleaned = datetime.datetime(2026, 1, 2, 12, 0, tzinfo=datetime.timezone.utc)
+        checkout = datetime.datetime(2026, 1, 1, 12, 0, tzinfo=datetime.timezone.utc)
+        room = self._make_room(last_cleaned=last_cleaned, maintenance_flag=True)
+        self._make_completed_reservation(room, checkout)
+        self.assertEqual(room.computed_status, RoomStatusChoices.OUT_OF_SERVICE)
+
+    def test_room_with_no_checkout_and_no_maintenance_returns_available(self) -> None:
+        room = self._make_room()
+        self.assertEqual(room.computed_status, RoomStatusChoices.AVAILABLE)

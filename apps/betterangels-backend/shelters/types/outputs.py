@@ -47,7 +47,16 @@ from shelters.types.lookups import (
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
-from .filters import BedFilter, BedOrder, ReservationFilter, RoomFilter, RoomOrder, ShelterFilter, ShelterOrder
+from .filters import (
+    BedFilter,
+    BedOrder,
+    ReservationFilter,
+    ReservationOrder,
+    RoomFilter,
+    RoomOrder,
+    ShelterFilter,
+    ShelterOrder,
+)
 
 
 def _beds_occupied_subquery() -> Subquery:
@@ -568,7 +577,7 @@ class ReservationClientAssignmentType:
     is_primary: bool
 
 
-@strawberry_django.type(models.Reservation, filters=ReservationFilter)
+@strawberry_django.type(models.Reservation, filters=ReservationFilter, ordering=ReservationOrder)
 class ReservationType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Reservation]:

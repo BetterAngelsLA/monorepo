@@ -17,7 +17,7 @@ from common.graphql.types import (
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Count, DateTimeField, Exists, F, OuterRef, Q, QuerySet, Subquery
+from django.db.models import Count, DateTimeField, Exists, OuterRef, Q, QuerySet, Subquery
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
@@ -467,3 +467,12 @@ class ReservationFilter:
     room_id: Optional[ID]
     bed_id: Optional[ID]
     status = make_in_filter("status", ReservationStatusChoices)
+
+
+@strawberry_django.order_type(models.Reservation, one_of=False)
+class ReservationOrder:
+    start_date: auto
+    checked_in_at: auto
+    checked_out_at: auto
+    created_at: auto
+    updated_at: auto
