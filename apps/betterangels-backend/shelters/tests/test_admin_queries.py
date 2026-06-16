@@ -150,7 +150,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         self.assertGraphQLUnauthenticated(response)
 
     def test_admin_shelters_without_permission(self) -> None:
-        """Users without shelter view permission see no results (HasPerm filters silently)."""
+        """Users without shelter view permission are rejected."""
         self.graphql_client.force_login(self.non_case_manager_user)
 
         response = self.execute_graphql(
@@ -158,9 +158,12 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
             variables={"offset": 0, "limit": 10},
         )
 
-        payload = response["data"]["adminShelters"]
-        self.assertEqual(payload["totalCount"], 0)
-        self.assertEqual(payload["results"], [])
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertIn(
+            "You do not have permission to perform this action in this organization.",
+            response["errors"][0]["message"],
+        )
 
     def test_admin_shelters_filter_by_name(self) -> None:
         """Name filter returns only shelters whose name matches (case-insensitive)."""

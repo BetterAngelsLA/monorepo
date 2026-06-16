@@ -5,11 +5,26 @@ from shelters.models.shelter import Bed, Room, Shelter
 SHELTER_OPERATOR = TemplateConfig(
     name="Shelter Operator",
     permissions=[
-        # ADD only — CHANGE, DELETE, and VIEW granted per-object at creation
+        # Shelter: full CRUD
         Shelter.perms.ADD,
+        Shelter.perms.CHANGE,
+        Shelter.perms.DELETE,
+        Shelter.perms.VIEW,
+        # Bed: full CRUD
         Bed.perms.ADD,
+        Bed.perms.CHANGE,
+        Bed.perms.DELETE,
+        Bed.perms.VIEW,
+        # Room: full CRUD
         Room.perms.ADD,
+        Room.perms.CHANGE,
+        Room.perms.DELETE,
+        Room.perms.VIEW,
+        # Reservation: full CRUD
         Reservation.perms.ADD,
+        Reservation.perms.CHANGE,
+        Reservation.perms.DELETE,
+        Reservation.perms.VIEW,
         # Custom perms
         Shelter.perms.VIEW_PRIVATE,
     ],
