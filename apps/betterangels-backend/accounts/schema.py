@@ -34,6 +34,7 @@ from .services import (
 from .types import (
     AuthResponse,
     ChangeOrganizationMemberRoleInput,
+    CreateOrganizationInput,
     CurrentUserType,
     LoginInput,
     OrganizationMemberFilter,
@@ -42,7 +43,6 @@ from .types import (
     OrganizationType,
     OrgInvitationInput,
     RemoveOrganizationMemberInput,
-    ShelterOperatorSignupInput,
     SignupResponse,
     UpdateUserInput,
     UpdateUserProfileInput,
@@ -258,7 +258,7 @@ class Mutation:
     # ── Organization Creation ──────────────────────────────────────
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def create_organization(self, info: Info, data: ShelterOperatorSignupInput) -> SignupResponse:
+    def create_organization(self, info: Info, data: CreateOrganizationInput) -> SignupResponse:
         """Create a shelter organization for the authenticated user.
 
         Creates a new Organization with the ``shelter`` preset, links the
@@ -289,7 +289,7 @@ class Mutation:
         """
         user = cast(User, get_current_user(info))
 
-        org = get_user_permitted_org(user, org_id=str(organization_id))
+        org = get_user_permitted_org(user, org_id=str(organization_id), permission=UserOrganizationPermissions.VIEW_ORG)
         if org is None:
             raise PermissionDenied("You are not a member of this organization.")
 
@@ -373,7 +373,7 @@ def _send_welcome_email(user: User, organization: Organization) -> None:
     msg = EmailMultiAlternatives(
         subject=f"Welcome to BetterAngels, {user.first_name}!",
         body=render_to_string(txt_template, context),
-        to=[user.email],
+        to=[user.email or ""],
     )
     html_body = render_to_string(html_template, context)
     msg.attach_alternative(html_body, "text/html")

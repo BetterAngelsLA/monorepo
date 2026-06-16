@@ -739,6 +739,10 @@ input CreateNoteTaskInput {
   team: SelahTeamEnum = null
 }
 
+input CreateOrganizationInput {
+  organizationName: NonEmptyString!
+}
+
 input CreateProfileDataImportInput {
   sourceFile: String!
   notes: String
@@ -1533,7 +1537,7 @@ type Mutation {
   deleteCurrentUser: DeleteCurrentUserPayload!
   addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
   removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "remove_org_member"}], any: true)
-  createOrganization(data: ShelterOperatorSignupInput!): SignupResponse!
+  createOrganization(data: CreateOrganizationInput!): SignupResponse!
   setCurrentOrganization(organizationId: ID!): CurrentUserType!
   changeOrganizationMemberRole(data: ChangeOrganizationMemberRoleInput!): ChangeOrganizationMemberRolePayload! @hasPerm(permissions: [{app: "organizations", permission: "change_org_member_role"}], any: true)
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
@@ -2365,14 +2369,6 @@ type ShelterLocationType {
   place: String!
   latitude: Float!
   longitude: Float!
-}
-
-input ShelterOperatorSignupInput {
-  email: String!
-  firstName: String!
-  lastName: String!
-  middleName: String = null
-  organizationName: NonEmptyString!
 }
 
 input ShelterOrder {

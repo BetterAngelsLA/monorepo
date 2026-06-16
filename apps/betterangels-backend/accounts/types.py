@@ -296,11 +296,7 @@ class RemoveOrganizationMemberInput:
 
 
 @strawberry.input
-class ShelterOperatorSignupInput:
-    email: str
-    first_name: str
-    last_name: str
-    middle_name: Optional[str] = None
+class CreateOrganizationInput:
     organization_name: NonEmptyString
 
 
