@@ -61,7 +61,6 @@ export const WithError = () => {
         onChange={setFiles}
         acceptedMimeTypes={[MimeTypes.PNG, MimeTypes.JPEG, MimeTypes.PDF]}
         error="Please upload a supported file"
-        isTouched
       />
     </div>
   );

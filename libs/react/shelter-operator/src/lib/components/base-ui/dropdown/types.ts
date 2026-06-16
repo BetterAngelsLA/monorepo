@@ -21,6 +21,7 @@ interface DropdownBaseProps<T extends string | number = string | number> {
   labelClassname?: string;
   onOtherTextChange?: (text: string) => void;
   renderValue?: (selected: DropdownOption<T>[]) => ReactNode;
+  error?: string;
 }
 
 export type DropdownProps<T extends string | number = string | number> =

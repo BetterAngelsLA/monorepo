@@ -58,7 +58,7 @@ export function ShelterPhotos(props: TProps) {
           leftIcon={<Upload size={20} />}
           onClick={() => setUploadModalOpen(true)}
         >
-          Upload Image x
+          Upload Image
         </Button>
       </SectionHeader>
 
@@ -78,6 +78,7 @@ export function ShelterPhotos(props: TProps) {
           <ShelterImagesUpload
             shelterId={shelterId}
             onSuccess={() => setUploadModalOpen(false)}
+            onCancel={() => setUploadModalOpen(false)}
           />
         </ModalBody>
       </Modal>

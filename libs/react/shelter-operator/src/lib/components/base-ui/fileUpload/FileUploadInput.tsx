@@ -23,7 +23,6 @@ export interface FileUploadInputProps {
   disabled?: boolean;
   className?: string;
   labelClassname?: string;
-  isTouched?: boolean;
   isViewMode?: boolean;
 }
 
@@ -43,13 +42,12 @@ export function FileUploadInput({
   disabled = false,
   className,
   labelClassname,
-  isTouched,
 }: FileUploadInputProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const messageId = `${inputId}-message`;
 
-  const shouldShowError = Boolean(error && isTouched);
+  const shouldShowError = Boolean(error);
   const selectedFiles = value ?? [];
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({

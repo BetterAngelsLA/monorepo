@@ -22,10 +22,11 @@ const PHOTO_TYPE_OPTIONS: DropdownOption<ShelterPhotoTypeChoices>[] = [
 type TProps = {
   shelterId: string;
   onSuccess?: () => void;
+  onCancel?: () => void;
 };
 
 export function ShelterImagesUpload(props: TProps) {
-  const { shelterId, onSuccess } = props;
+  const { shelterId, onSuccess, onCancel } = props;
 
   const { uploadPhotos } = useShelterPhotoUpload();
   const { showToast } = useToast();
@@ -64,11 +65,17 @@ export function ShelterImagesUpload(props: TProps) {
   const {
     control,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<ShelterImagesUploadFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: defaultFormValues,
   });
+
+  function handleOnCancel() {
+    reset();
+    onCancel?.();
+  }
 
   return (
     <form
@@ -84,12 +91,14 @@ export function ShelterImagesUpload(props: TProps) {
             labelVariant="offset"
             labelClassname="mb-2"
             required
+            disabled={isSubmitting}
             options={PHOTO_TYPE_OPTIONS}
             value={
               PHOTO_TYPE_OPTIONS.find((o) => o.value === field.value) ?? null
             }
             onChange={(option) => field.onChange(option?.value ?? null)}
             placeholder="Select photo type"
+            error={errors.photoType?.message}
           />
         )}
       />
@@ -102,12 +111,17 @@ export function ShelterImagesUpload(props: TProps) {
             label="Images"
             labelVariant="offset"
             labelClassname="mb-2"
-            acceptedMimeTypes={[MimeTypes.PNG, MimeTypes.JPEG, MimeTypes.WEBP]}
+            acceptedMimeTypes={[
+              MimeTypes.JPEG,
+              MimeTypes.PNG,
+              MimeTypes.WEBP,
+              MimeTypes.GIF,
+            ]}
             multiple
+            disabled={isSubmitting}
             value={field.value}
             onChange={field.onChange}
             error={errors.files?.message}
-            isTouched={!!errors.files}
             required
           />
         )}
@@ -120,7 +134,7 @@ export function ShelterImagesUpload(props: TProps) {
           onPrimaryClick={handleSubmit(onSubmit)}
           primaryLabel={isSubmitting ? 'Uploading...' : 'Upload'}
           primaryDisabled={isSubmitting}
-          onSecondaryClick={() => undefined}
+          onSecondaryClick={handleOnCancel}
           secondaryDisabled={isSubmitting}
         />
       </div>

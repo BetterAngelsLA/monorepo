@@ -44,8 +44,8 @@ export function Dropdown<T extends string | number = string | number>(
     className,
     onOtherTextChange,
     renderValue,
+    error,
   } = props as DropdownInternalProps<T>;
-
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [focusedIndex, setFocusedIndex] = useState(-1);
@@ -373,6 +373,7 @@ export function Dropdown<T extends string | number = string | number>(
               ? 'min-h-12 items-start rounded-2xl px-4 py-3'
               : 'h-12 items-center rounded-full px-4 overflow-hidden',
             isOpen ? 'border-[#008CEE]' : 'border-gray-200',
+            !!error && 'border-red-500',
             isViewMode && 'border-transparent',
             disabled && 'opacity-50 cursor-not-allowed',
           ])}
@@ -443,6 +444,12 @@ export function Dropdown<T extends string | number = string | number>(
           // so the menu isn't clipped behind the top-layer stacking context.
           menuAnchorRef.current?.closest('dialog') ?? document.body
         )}
+
+      {!!error && (
+        <Text variant="caption" className="text-red-500">
+          {error}
+        </Text>
+      )}
     </div>
   );
 }

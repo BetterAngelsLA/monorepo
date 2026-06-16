@@ -42,7 +42,7 @@ def create_presigned_uploads(
                 "ref_id": upload.ref_id,
                 "filename": upload.filename,
                 "content_type": upload.content_type,
-                "upload_path": f"{UPLOAD_PATH}/{shelter_id}",
+                "upload_path": UPLOAD_PATH,
             }
         )
 
