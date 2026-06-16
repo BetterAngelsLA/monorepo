@@ -591,9 +591,16 @@ class ReservationType:
     duration: Optional[int]
     notes: Optional[str]
     room: Optional["RoomType"]
-    shelter: "AdminShelterType"
     start_date: Optional[date]
     status: ReservationStatusChoices
+
+    @strawberry_django.field(select_related=["bed__shelter", "room__shelter"])
+    def shelter(self, root: models.Reservation) -> "AdminShelterType":
+        if root.bed:
+            return cast("AdminShelterType", root.bed.shelter)
+
+        assert root.room is not None
+        return cast("AdminShelterType", root.room.shelter)
 
     @strawberry_django.field(only=["created_by_id"])
     def created_by_id(self, root: models.Reservation) -> Optional[ID]:

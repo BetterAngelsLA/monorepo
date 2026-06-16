@@ -58,9 +58,11 @@ class ReservationQueryTestCase(ReservationQueriesTestCase):
             notes="Test reservation",
         )
 
-        expected_query_count = 6
+        expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self.reservation_query, variables={"id": str(reservation.pk)})
+            response = self.execute_graphql(
+                self.reservation_query, variables={"id": str(reservation.pk)}
+            )
         self.assertIsNone(response.get("errors"))
 
         data = response["data"]["reservation"]
@@ -73,7 +75,7 @@ class ReservationQueryTestCase(ReservationQueriesTestCase):
 
 
 class ReservationsQueryTestCase(ReservationQueriesTestCase):
-    def test_reservations_query_returns_org_reservations(self) -> None:
+    def test_reservations_query(self) -> None:
         baker.make(
             Reservation,
             shelter=self.shelter,
@@ -88,7 +90,7 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
             status=ReservationStatusChoices.CHECKED_IN,
         )
 
-        expected_query_count = 8
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.reservations_query,
@@ -117,7 +119,7 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
             status=ReservationStatusChoices.CONFIRMED,
         )
 
-        expected_query_count = 7
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.reservations_query,
@@ -146,7 +148,7 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
             status=ReservationStatusChoices.CONFIRMED,
         )
 
-        expected_query_count = 7
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.reservations_query,
@@ -171,7 +173,7 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
             status=ReservationStatusChoices.CONFIRMED,
         )
 
-        expected_query_count = 8
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.reservations_query,
@@ -203,7 +205,7 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
             status=ReservationStatusChoices.CONFIRMED,
         )
 
-        expected_query_count = 7
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.reservations_query,
