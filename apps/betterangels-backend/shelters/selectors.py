@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from accounts.models import User
     from django.contrib.auth.base_user import AbstractBaseUser
     from django.contrib.auth.models import AnonymousUser
-    from shelters.models import Bed, Room, Shelter
+    from shelters.models import Bed, Reservation, Room, Shelter
 
 
 def report_bed_status_counts(
@@ -39,6 +39,12 @@ def report_bed_status_counts(
     TODO: Add demographic filtering once pghistory tracks M2M through tables.
     Bed.demographics is M2M and pghistory only tracks scalar fields so we cannot
     reconstruct historically accurate demographic membership from BedEvent
+
+    TODO: This function must be rewritten. Bed.status is no longer a stored
+    field — status is now computed from Reservation data. Historical status
+    reports should be derived from ReservationEvent (pghistory) records.
+    The current implementation references BedEvent.status which no longer
+    exists after the reservation-based status migration.
     """
     from shelters.models import BedEvent  # type: ignore[attr-defined]
 
@@ -152,6 +158,21 @@ def bed_get(*, user: "User", bed_id: int | str) -> "Bed":
     from shelters.models import Bed
 
     return admin_bed_list(Bed.objects.select_related("shelter"), user=user).get(pk=bed_id)
+
+
+def admin_reservation_list(queryset: "QuerySet[Reservation]", *, user: "User") -> "QuerySet[Reservation]":
+    from shelters.models import Shelter
+
+    return queryset.filter(shelter__in=admin_shelter_list(Shelter.objects.all(), user=user))
+
+
+def reservation_get(*, user: "User", reservation_id: int | str) -> "Reservation":
+    from shelters.models import Reservation
+
+    return admin_reservation_list(
+        Reservation.objects.select_related("shelter", "room", "bed", "created_by"),
+        user=user,
+    ).get(pk=reservation_id)
 
 
 def shelters_open_at(

@@ -33,7 +33,6 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
     m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and data[k] is not None}
 
     _validate_subset_attributes(shelter, m2m_data)
-    raw_occupants = m2m_data.pop("occupants", [])
 
     # Drop None values so model defaults apply
     scalar_data = {k: v for k, v in data.items() if v is not None}
@@ -42,11 +41,6 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
     room.full_clean()
     room.save()
     _set_m2m_from_enums(room, m2m_data)
-    if raw_occupants:
-        room.occupants.set(raw_occupants)
-
-    # TODO: Assign perms here. See: SDB-178
-
     return room
 
 

@@ -2,21 +2,26 @@
 
 from shelters.types.filters import (
     BedFilter,
+    BedOrder,
     GeolocationInput,
     MapBoundsInput,
+    ReservationFilter,
     RoomFilter,
+    RoomOrder,
     ShelterFilter,
     ShelterOrder,
     ShelterPropertyInput,
 )
 from shelters.types.inputs import (
     CreateBedInput,
+    CreateReservationInput,
     CreateRoomInput,
     CreateShelterInput,
     ScheduleInput,
     ServiceInput,
     ShelterLocationInput,
     UpdateBedInput,
+    UpdateReservationInput,
     UpdateRoomInput,
     UpdateShelterInput,
 )
@@ -42,6 +47,7 @@ from shelters.types.lookups import (
 from shelters.types.outputs import (
     AdminShelterType,
     BedType,
+    ReservationType,
     RoomType,
     ShelterAvailabilityType,
     ShelterLocationType,
@@ -71,17 +77,23 @@ __all__ = [
     "StorageType",
     # filters
     "BedFilter",
+    "BedOrder",
+    "ReservationFilter",
     "GeolocationInput",
     "MapBoundsInput",
+    "ReservationFilter",
     "RoomFilter",
+    "RoomOrder",
     "ShelterFilter",
     "ShelterOrder",
     "ShelterPropertyInput",
     # inputs
     "CreateBedInput",
     "CreateRoomInput",
+    "CreateReservationInput",
     "CreateShelterInput",
     "UpdateBedInput",
+    "UpdateReservationInput",
     "UpdateRoomInput",
     "UpdateShelterInput",
     "ServiceInput",
@@ -90,6 +102,7 @@ __all__ = [
     # outputs
     "AdminShelterType",
     "BedType",
+    "ReservationType",
     "RoomType",
     "ShelterAvailabilityType",
     "ShelterLocationType",

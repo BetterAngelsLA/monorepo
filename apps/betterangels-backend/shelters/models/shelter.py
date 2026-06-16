@@ -22,6 +22,7 @@ from shelters.enums import (
     SUPERVISORIAL_DISTRICT_CHOICES,
     BedStatusChoices,
     BedTypeChoices,
+    ReservationStatusChoices,
     RoomStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
@@ -50,6 +51,12 @@ from .lookups import (
     VaccinationRequirement,
 )
 from .service import Service
+
+ACTIVE_RESERVATION_STATUSES = {
+    ReservationStatusChoices.CONFIRMED,
+    ReservationStatusChoices.CHECKED_IN,
+    ReservationStatusChoices.CHECK_IN_OVERDUE,
+}
 
 
 @pghistory.track(
@@ -212,7 +219,7 @@ class Shelter(BaseModel):
 @pghistory.track(
     pghistory.InsertEvent("bed.add"),
     pghistory.DeleteEvent("bed.remove"),
-    pghistory.UpdateEvent("bed.status_change", condition=pghistory.AnyChange("status")),
+    pghistory.UpdateEvent("bed.maintenance_flag_change", condition=pghistory.AnyChange("maintenance_flag")),
 )
 class Bed(CloneMixin, BaseModel):
     _clone_linked_m2m_fields = [
@@ -222,7 +229,12 @@ class Bed(CloneMixin, BaseModel):
         "medical_needs",
         "pets",
     ]
-    _clone_excluded_fields = ["occupant"]
+    _clone_excluded_fields = [
+        "last_cleaned",
+        "last_cleaned_inspected",
+        "maintenance_flag",
+        "status_notes",
+    ]
 
     accessibility = models.ManyToManyField(Accessibility, blank=True)
     b7 = models.BooleanField(default=False, blank=True)
@@ -230,28 +242,65 @@ class Bed(CloneMixin, BaseModel):
     fees = models.PositiveIntegerField(blank=True, null=True)
     funders = models.ManyToManyField(Funder, blank=True)
     last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
+    last_cleaned = models.DateTimeField(blank=True, null=True)
     maintenance_flag = models.BooleanField(default=False, blank=True)
     medical_needs = models.ManyToManyField(MedicalNeed, blank=True)
     name = models.CharField(max_length=255, blank=True, null=True)
-    occupant = models.ForeignKey(
-        "clients.ClientProfile",
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name="occupied_beds",
-    )
     pets = models.ManyToManyField(Pet, blank=True)
     room = models.ForeignKey("Room", on_delete=models.SET_NULL, blank=True, null=True, related_name="beds")
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="beds")
-    status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
     status_notes = models.TextField(blank=True, null=True)
     storage = models.BooleanField(default=False, blank=True)
     type = TextChoicesField(choices_enum=BedTypeChoices, blank=True, null=True)
 
     class Meta:
         indexes = [
-            models.Index(fields=["shelter", "status"]),
+            models.Index(fields=["shelter"]),
         ]
+
+    @property
+    def computed_status(self) -> BedStatusChoices:
+        from shelters.enums import ReservationStatusChoices
+
+        if self.maintenance_flag:
+            return BedStatusChoices.OUT_OF_SERVICE
+
+        last_checkout = self._get_last_completed_checkout()
+        if last_checkout and (self.last_cleaned is None or self.last_cleaned <= last_checkout):
+            return BedStatusChoices.IN_TURNAROUND
+
+        if hasattr(self, "_active_reservations"):
+            active = self._active_reservations
+        else:
+            active = self.reservations.filter(status__in=ACTIVE_RESERVATION_STATUSES)
+
+        statuses = {r.status for r in active}
+
+        if ReservationStatusChoices.CHECKED_IN in statuses:
+            return BedStatusChoices.OCCUPIED
+        if statuses & {ReservationStatusChoices.CONFIRMED, ReservationStatusChoices.CHECK_IN_OVERDUE}:
+            return BedStatusChoices.RESERVED
+        return BedStatusChoices.AVAILABLE
+
+    def _get_last_completed_checkout(self) -> datetime.datetime | None:
+        """Return the ``checked_out_at`` of the most recent completed reservation for this bed.
+
+        Uses prefetched data from ``_completed_reservations`` when available
+        (set by the GraphQL ``BedType.status`` resolver via ``Prefetch``).
+        Falls back to a DB query only when the attribute is not present.
+        """
+        if hasattr(self, "_completed_reservations"):
+            reservations: list = getattr(self, "_completed_reservations")  # noqa: B009
+            if reservations:
+                return max(r.checked_out_at for r in reservations if r.checked_out_at)
+            return None
+
+        from shelters.models.reservation import Reservation
+
+        completed = self.reservations.filter(
+            status=ReservationStatusChoices.COMPLETED,
+        ).order_by("-checked_out_at").only("checked_out_at").first()
+        return completed.checked_out_at if completed else None
 
 
 class Room(CloneMixin, BaseModel):
@@ -261,20 +310,25 @@ class Room(CloneMixin, BaseModel):
         "funders",
         "pets",
     ]
-
+    _clone_excluded_fields = [
+        "last_cleaned",
+        "last_cleaned_inspected",
+        "maintenance_flag",
+        "notes",
+        "status_notes",
+    ]
     accessibility = models.ManyToManyField(Accessibility, blank=True)
     amenities = models.TextField(blank=True, null=True)
     demographics = models.ManyToManyField(Demographic, blank=True)
     funders = models.ManyToManyField(Funder, blank=True)
+    last_cleaned = models.DateTimeField(blank=True, null=True)
     last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
     maintenance_flag = models.BooleanField(default=False, blank=True)
     medical_respite = models.BooleanField(default=False, blank=True)
     name = models.CharField(max_length=255)
     notes = models.TextField(blank=True, null=True)
-    occupants = models.ManyToManyField("clients.ClientProfile", blank=True, related_name="occupied_rooms")
     pets = models.ManyToManyField(Pet, blank=True)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="rooms")
-    status = TextChoicesField(choices_enum=RoomStatusChoices, blank=True, null=True)
     storage = models.BooleanField(default=False, blank=True)
     type = TextChoicesField(choices_enum=RoomStyleChoices, blank=True, null=True)
     type_other = models.CharField(max_length=255, blank=True, null=True)
@@ -286,12 +340,53 @@ class Room(CloneMixin, BaseModel):
                 name="unique_room_per_shelter",
             )
         ]
-        indexes = [
-            models.Index(fields=["shelter", "status"]),
-        ]
 
     def __str__(self) -> str:
         return f"{self.shelter.name} - {self.name}"
+
+    @property
+    def computed_status(self) -> RoomStatusChoices:
+        from shelters.enums import ReservationStatusChoices
+
+        if self.maintenance_flag:
+            return RoomStatusChoices.OUT_OF_SERVICE
+
+        last_checkout = self._get_last_completed_checkout()
+        if last_checkout and (self.last_cleaned is None or self.last_cleaned <= last_checkout):
+            return RoomStatusChoices.IN_TURNAROUND
+
+        if hasattr(self, "_active_reservations"):
+            active = self._active_reservations
+        else:
+            active = self.reservations.filter(status__in=ACTIVE_RESERVATION_STATUSES)
+
+        statuses = {r.status for r in active}
+
+        if ReservationStatusChoices.CHECKED_IN in statuses:
+            return RoomStatusChoices.OCCUPIED
+        if statuses & {ReservationStatusChoices.CONFIRMED, ReservationStatusChoices.CHECK_IN_OVERDUE}:
+            return RoomStatusChoices.RESERVED
+        return RoomStatusChoices.AVAILABLE
+
+    def _get_last_completed_checkout(self) -> datetime.datetime | None:
+        """Return the ``checked_out_at`` of the most recent completed reservation for this room.
+
+        Uses prefetched data from ``_completed_reservations`` when available
+        (set by the GraphQL ``RoomType.status`` resolver via ``Prefetch``).
+        Falls back to a DB query only when the attribute is not present.
+        """
+        if hasattr(self, "_completed_reservations"):
+            reservations: list = getattr(self, "_completed_reservations")  # noqa: B009
+            if reservations:
+                return max(r.checked_out_at for r in reservations if r.checked_out_at)
+            return None
+
+        from shelters.models.reservation import Reservation
+
+        completed = self.reservations.filter(
+            status=ReservationStatusChoices.COMPLETED,
+        ).order_by("-checked_out_at").only("checked_out_at").first()
+        return completed.checked_out_at if completed else None
 
 
 @pghistory.track(

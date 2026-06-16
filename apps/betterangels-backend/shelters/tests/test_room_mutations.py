@@ -60,19 +60,18 @@ class CreateRoomMutationTestCase(RoomMutationTestCase):
                 "demographics": [DemographicChoices.SINGLE_MEN.name],
                 "funders": [FunderChoices.CITY_OF_LOS_ANGELES.name],
                 "lastCleanedInspected": "2025-01-15T10:30:00Z",
-                "maintenanceFlag": True,
+                "maintenanceFlag": False,
                 "medicalRespite": True,
                 "name": "Room-101",
                 "notes": "Corner room",
                 "pets": [PetChoices.CATS.name],
-                "status": RoomStatusChoices.AVAILABLE.name,
                 "storage": True,
                 "type": RoomStyleChoices.SINGLE_ROOM.name,
                 "typeOther": "Custom style",
             }
         }
 
-        expected_query_count = 29
+        expected_query_count = 31
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -80,11 +79,10 @@ class CreateRoomMutationTestCase(RoomMutationTestCase):
         room = response["data"]["createRoom"]
         self.assertEqual(room["amenities"], "WiFi, AC")
         self.assertEqual(room["lastCleanedInspected"], "2025-01-15T10:30:00+00:00")
-        self.assertEqual(room["maintenanceFlag"], True)
+        self.assertEqual(room["maintenanceFlag"], False)
         self.assertEqual(room["medicalRespite"], True)
         self.assertEqual(room["name"], "Room-101")
         self.assertEqual(room["notes"], "Corner room")
-        self.assertEqual(room["status"], RoomStatusChoices.AVAILABLE.name)
         self.assertTrue(room["storage"])
         self.assertEqual(room["type"], RoomStyleChoices.SINGLE_ROOM.name)
         self.assertEqual(room["typeOther"], "Custom style")
@@ -123,19 +121,6 @@ class CreateRoomMutationTestCase(RoomMutationTestCase):
         self.assertEqual(len(messages), 1)
         self.assertIn("Shelter matching ID 999999 could not be found.", messages[0]["message"])
 
-    def test_create_room_invalid_status(self) -> None:
-        variables = {"data": {"shelterId": self.shelter.pk, "name": "Room-101", "status": "INVALID_STATUS"}}
-
-        expected_query_count = 1
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self.mutation, variables)
-
-        self.assertIsNone(response["data"])
-        self.assertEqual(len(response["errors"]), 1)
-        self.assertIn(
-            "Value 'INVALID_STATUS' does not exist in 'RoomStatusChoices' enum.", response["errors"][0]["message"]
-        )
-
 
 class UpdateRoomMutationTestCase(RoomMutationTestCase):
     def setUp(self) -> None:
@@ -162,14 +147,14 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             Room,
             shelter=self.shelter,
             name="Room-101",
-            status=RoomStatusChoices.AVAILABLE,
+            maintenance_flag=False,
             type=RoomStyleChoices.SINGLE_ROOM,
         )
         variables = {
             "id": str(room.pk),
             "data": {
                 "name": "Room-101 Updated",
-                "status": RoomStatusChoices.RESERVED.name,
+                "maintenanceFlag": True,
                 "type": RoomStyleChoices.MOTEL_ROOM.name,
                 "notes": "Updated notes",
             },
@@ -184,11 +169,11 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
         self.assertEqual(updated_room["id"], str(room.pk))
         self.assertEqual(updated_room["amenities"], None)
         self.assertEqual(updated_room["lastCleanedInspected"], None)
-        self.assertEqual(updated_room["maintenanceFlag"], False)
+        self.assertTrue(updated_room["maintenanceFlag"])
         self.assertEqual(updated_room["medicalRespite"], False)
         self.assertEqual(updated_room["name"], "Room-101 Updated")
         self.assertEqual(updated_room["notes"], "Updated notes")
-        self.assertEqual(updated_room["status"], RoomStatusChoices.RESERVED.name)
+        self.assertEqual(updated_room["status"], RoomStatusChoices.OUT_OF_SERVICE.name)
         self.assertEqual(updated_room["storage"], False)
         self.assertEqual(updated_room["type"], RoomStyleChoices.MOTEL_ROOM.name)
         self.assertEqual(updated_room["typeOther"], None)
@@ -205,7 +190,6 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             Room,
             shelter=self.shelter,
             name="Room-101",
-            status=RoomStatusChoices.AVAILABLE,
             type=RoomStyleChoices.SINGLE_ROOM,
             notes="Original notes",
         )
@@ -214,7 +198,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             "data": {"notes": "New notes"},
         }
 
-        expected_query_count = 13
+        expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -234,7 +218,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             "data": {"demographics": [DemographicChoices.SINGLE_MEN.name]},
         }
 
-        expected_query_count = 17
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -286,20 +270,6 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
         self.assertEqual(len(messages), 1)
         self.assertIn(f"Room matching ID {room.pk} could not be found.", messages[0]["message"])
 
-    def test_update_room_invalid_status(self) -> None:
-        room = baker.make(Room, shelter=self.shelter)
-        variables = {"id": str(room.pk), "data": {"status": "INVALID_STATUS"}}
-
-        expected_query_count = 1
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self.mutation, variables)
-
-        self.assertIsNone(response["data"])
-        self.assertEqual(len(response["errors"]), 1)
-        self.assertIn(
-            "Value 'INVALID_STATUS' does not exist in 'RoomStatusChoices' enum.", response["errors"][0]["message"]
-        )
-
 
 class CloneRoomMutationTestCase(RoomMutationTestCase):
     def setUp(self) -> None:
@@ -334,7 +304,6 @@ class CloneRoomMutationTestCase(RoomMutationTestCase):
             Room,
             shelter=self.shelter,
             name="Room-101",
-            status=RoomStatusChoices.AVAILABLE,
             type=RoomStyleChoices.SINGLE_ROOM,
             type_other="Custom style",
             notes="Corner room",
@@ -347,12 +316,12 @@ class CloneRoomMutationTestCase(RoomMutationTestCase):
         source.funders.add(funder)
         source.accessibility.add(accessibility)
         source.pets.add(pet)
-        Bed.objects.create(shelter=self.shelter, room=source, name="Bed 1", status=BedStatusChoices.AVAILABLE)
-        Bed.objects.create(shelter=self.shelter, room=source, name="Bed 2", status=BedStatusChoices.AVAILABLE)
+        Bed.objects.create(shelter=self.shelter, room=source, name="Bed 1")
+        Bed.objects.create(shelter=self.shelter, room=source, name="Bed 2")
 
         variables = {"id": str(source.pk)}
 
-        expected_query_count = 30
+        expected_query_count = 31
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -363,11 +332,11 @@ class CloneRoomMutationTestCase(RoomMutationTestCase):
         self.assertEqual(data["status"], RoomStatusChoices.AVAILABLE.name)
         self.assertEqual(data["type"], RoomStyleChoices.SINGLE_ROOM.name)
         self.assertEqual(data["typeOther"], "Custom style")
-        self.assertEqual(data["notes"], "Corner room")
+        self.assertIsNone(data["notes"])
         self.assertEqual(data["amenities"], "WiFi, AC")
         self.assertTrue(data["medicalRespite"])
         self.assertTrue(data["storage"])
-        self.assertTrue(data["maintenanceFlag"])
+        self.assertFalse(data["maintenanceFlag"])
         self.assertEqual(data["shelter"], {"id": str(self.shelter.pk)})
         self.assertEqual(len(data["demographics"]), 1)
         self.assertEqual(data["demographics"][0]["name"], DemographicChoices.SINGLE_MEN.name)

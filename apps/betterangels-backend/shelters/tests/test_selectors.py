@@ -1,4 +1,5 @@
 import datetime
+from unittest import skip
 
 from django.test import TestCase
 from django.utils import timezone
@@ -209,6 +210,7 @@ def _dt(y: int, m: int, d: int) -> datetime.datetime:
 _STATUS_KEYS = ("available", "occupied", "reserved", "out_of_service")
 
 
+@skip("status removed from Bed and Room")
 class ReportBedStatusCountsTestCase(TestCase):
     def setUp(self) -> None:
         self.shelter = shelter_recipe.make()

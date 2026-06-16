@@ -486,13 +486,7 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
             }
         """
 
-        variables: dict[str, Any] = {
-            "data": {
-                "shelterId": str(other_org_shelter.pk),
-                "status": "AVAILABLE",
-            }
-        }
-
+        variables: dict[str, Any] = {"data": {"shelterId": str(other_org_shelter.pk)}}
         response = self.execute_graphql(mutation, variables)
 
         self.assertIsNone(response.get("errors"))

@@ -66,17 +66,16 @@ class CreateBedMutationTestCase(BedMutationTestCase):
                 "fees": 25,
                 "funders": [FunderChoices.CITY_OF_LOS_ANGELES.name],
                 "lastCleanedInspected": "2025-01-15T10:30:00Z",
-                "maintenanceFlag": True,
+                "maintenanceFlag": False,
                 "medicalNeeds": [MedicalNeedChoices.DMH.name],
                 "name": "Bed 1",
                 "pets": [PetChoices.CATS.name],
-                "status": BedStatusChoices.AVAILABLE.name,
                 "statusNotes": "Ready for occupancy",
                 "storage": True,
                 "type": BedTypeChoices.TWIN.name,
             }
         }
-        expected_query_count = 34
+        expected_query_count = 36
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -85,7 +84,7 @@ class CreateBedMutationTestCase(BedMutationTestCase):
         self.assertEqual(data["b7"], True)
         self.assertEqual(data["fees"], 25)
         self.assertEqual(data["lastCleanedInspected"], "2025-01-15T10:30:00+00:00")
-        self.assertEqual(data["maintenanceFlag"], True)
+        self.assertEqual(data["maintenanceFlag"], False)
         self.assertEqual(data["name"], "Bed 1")
         self.assertEqual(data["status"], BedStatusChoices.AVAILABLE.name)
         self.assertEqual(data["statusNotes"], "Ready for occupancy")
@@ -142,7 +141,6 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             Bed,
             shelter=self.shelter,
             name="Bed 1",
-            status=BedStatusChoices.AVAILABLE,
             type=BedTypeChoices.TWIN,
         )
         variables = {
@@ -155,18 +153,17 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
                 "fees": 25,
                 "funders": [FunderChoices.CITY_OF_LOS_ANGELES.name],
                 "lastCleanedInspected": "2025-01-15T10:30:00Z",
-                "maintenanceFlag": True,
+                "maintenanceFlag": False,
                 "medicalNeeds": [MedicalNeedChoices.DMH.name],
                 "name": "Bed 1 Updated",
                 "pets": [PetChoices.CATS.name],
-                "status": BedStatusChoices.RESERVED.name,
                 "statusNotes": "Updated notes",
                 "storage": True,
                 "type": BedTypeChoices.BUNK.name,
             },
         }
 
-        expected_query_count = 34
+        expected_query_count = 36
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -176,9 +173,9 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         self.assertEqual(data["b7"], True)
         self.assertEqual(data["fees"], 25)
         self.assertEqual(data["lastCleanedInspected"], "2025-01-15T10:30:00+00:00")
-        self.assertEqual(data["maintenanceFlag"], True)
+        self.assertEqual(data["maintenanceFlag"], False)
         self.assertEqual(data["name"], "Bed 1 Updated")
-        self.assertEqual(data["status"], BedStatusChoices.RESERVED.name)
+        self.assertEqual(data["status"], BedStatusChoices.AVAILABLE.name)
         self.assertEqual(data["statusNotes"], "Updated notes")
         self.assertTrue(data["storage"])
         self.assertEqual(data["type"], BedTypeChoices.BUNK.name)
@@ -218,10 +215,8 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             b7=True,
             fees=25,
             last_cleaned_inspected=datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
-            maintenance_flag=True,
+            maintenance_flag=False,
             name="Bed 1",
-            status=BedStatusChoices.AVAILABLE,
-            status_notes="Ready for occupancy",
             storage=True,
             type=BedTypeChoices.TWIN,
         )
@@ -236,23 +231,23 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             "data": {"statusNotes": "New notes"},
         }
 
-        expected_query_count = 15
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
         self.assertIsNone(response.get("errors"))
         data = response["data"]["updateBed"]
-        self.assertEqual(data["statusNotes"], "New notes")
-        self.assertEqual(data["name"], "Bed 1")
-        self.assertEqual(data["status"], BedStatusChoices.AVAILABLE.name)
-        self.assertEqual(data["type"], BedTypeChoices.TWIN.name)
         self.assertEqual(data["b7"], True)
         self.assertEqual(data["fees"], 25)
         self.assertEqual(data["lastCleanedInspected"], "2025-01-15T10:30:00+00:00")
-        self.assertEqual(data["maintenanceFlag"], True)
-        self.assertTrue(data["storage"])
+        self.assertFalse(data["maintenanceFlag"])
+        self.assertEqual(data["name"], "Bed 1")
+        self.assertEqual(data["status"], BedStatusChoices.AVAILABLE.name)
+        self.assertEqual(data["statusNotes"], "New notes")
+        self.assertEqual(data["type"], BedTypeChoices.TWIN.name)
         self.assertEqual(data["room"]["id"], str(self.room.pk))
         self.assertEqual(data["shelter"]["id"], str(self.shelter.pk))
+        self.assertTrue(data["storage"])
         self.assertEqual(len(data["accessibility"]), 1)
         self.assertEqual(data["accessibility"][0]["name"], AccessibilityChoices.WHEELCHAIR_ACCESSIBLE.name)
         self.assertEqual(len(data["demographics"]), 1)
@@ -267,12 +262,12 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         source.refresh_from_db()
         self.assertEqual(source.status_notes, "New notes")
         self.assertEqual(source.name, "Bed 1")
-        self.assertEqual(source.status, BedStatusChoices.AVAILABLE)
+        self.assertEqual(source.computed_status, BedStatusChoices.AVAILABLE)
         self.assertEqual(source.type, BedTypeChoices.TWIN)
         self.assertTrue(source.b7)
         self.assertEqual(source.fees, 25)
         self.assertEqual(source.last_cleaned_inspected, datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc))
-        self.assertTrue(source.maintenance_flag)
+        self.assertFalse(source.maintenance_flag)
         self.assertTrue(source.storage)
         self.assertEqual(source.room_id, self.room.pk)
         self.assertEqual(source.accessibility.count(), 1)
@@ -280,6 +275,45 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         self.assertEqual(source.funders.count(), 1)
         self.assertEqual(source.medical_needs.count(), 1)
         self.assertEqual(source.pets.count(), 1)
+
+    def test_out_of_service_bed_status_change(self) -> None:
+        bed = baker.make(
+            Bed,
+            shelter=self.shelter,
+            room=self.room,
+            maintenance_flag=False,
+            name="Bed 1",
+            type=BedTypeChoices.TWIN,
+        )
+
+        query = """
+            query ($id: ID!) {
+                bed(pk: $id) {
+                    id
+                    status
+                }
+            }
+        """
+
+        response = self.execute_graphql(query, variables={"id": str(bed.pk)})
+
+        self.assertIsNone(response.get("errors"))
+        data = response["data"]["bed"]
+        self.assertEqual(data["id"], str(bed.pk))
+        self.assertEqual(data["status"], BedStatusChoices.AVAILABLE.name)
+
+        variables = {
+            "id": str(bed.pk),
+            "data": {"maintenanceFlag": True},
+        }
+
+        expected_query_count = 15
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(self.mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        data = response["data"]["updateBed"]
+        self.assertEqual(data["status"], BedStatusChoices.OUT_OF_SERVICE.name)
 
 
 class DeleteBedsMutationTestCase(BedMutationTestCase):
@@ -358,7 +392,6 @@ class CloneBedMutationTestCase(BedMutationTestCase):
             shelter=self.shelter,
             room=self.room,
             name="Bed 1",
-            status=BedStatusChoices.AVAILABLE,
             type=BedTypeChoices.TWIN,
             b7=True,
             fees=25,
@@ -375,7 +408,7 @@ class CloneBedMutationTestCase(BedMutationTestCase):
 
         variables = {"id": str(source.pk)}
 
-        expected_query_count = 31
+        expected_query_count = 33
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -384,12 +417,10 @@ class CloneBedMutationTestCase(BedMutationTestCase):
         self.assertNotEqual(data["id"], str(source.pk))
         self.assertEqual(data["b7"], True)
         self.assertEqual(data["fees"], 25)
-        self.assertEqual(data["lastCleanedInspected"], "2025-01-15T10:30:00+00:00")
-        self.assertEqual(data["maintenanceFlag"], True)
         self.assertEqual(data["name"], "Bed 1 (Copy)")
         self.assertEqual(data["status"], BedStatusChoices.AVAILABLE.name)
-        self.assertEqual(data["statusNotes"], "Ready for occupancy")
         self.assertTrue(data["storage"])
+        self.assertFalse(data["maintenanceFlag"])
         self.assertEqual(data["type"], BedTypeChoices.TWIN.name)
         self.assertEqual(data["room"]["id"], str(self.room.pk))
         self.assertEqual(data["shelter"]["id"], str(self.shelter.pk))
@@ -407,10 +438,7 @@ class CloneBedMutationTestCase(BedMutationTestCase):
         clone = Bed.objects.get(pk=data["id"])
         self.assertEqual(clone.b7, source.b7)
         self.assertEqual(clone.fees, source.fees)
-        self.assertEqual(clone.last_cleaned_inspected, source.last_cleaned_inspected)
-        self.assertEqual(clone.maintenance_flag, source.maintenance_flag)
-        self.assertEqual(clone.status, source.status)
-        self.assertEqual(clone.status_notes, source.status_notes)
+        self.assertEqual(source.computed_status, BedStatusChoices.OUT_OF_SERVICE)
         self.assertEqual(clone.storage, source.storage)
         self.assertEqual(clone.type, source.type)
         self.assertEqual(clone.room_id, source.room_id)

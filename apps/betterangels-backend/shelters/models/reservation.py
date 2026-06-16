@@ -1,14 +1,17 @@
 """Reservation-related shelter models."""
 
+from typing import Any
+
 import pghistory
 from common.models import BaseModel
-from django.core.exceptions import ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
+from django.utils import timezone
 from django_choices_field import TextChoicesField
 from shelters.enums import ReservationStatusChoices
 
-from .shelter import Bed, Room, Shelter
+from .shelter import ACTIVE_RESERVATION_STATUSES, Bed, Room, Shelter
 
 
 @pghistory.track(
@@ -37,17 +40,98 @@ class Reservation(BaseModel):
         indexes = [
             models.Index(fields=["shelter", "status"]),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["bed"],
+                condition=models.Q(status__in=ACTIVE_RESERVATION_STATUSES),
+                name="unique_active_reservation_per_bed",
+            ),
+            models.UniqueConstraint(
+                fields=["room"],
+                condition=models.Q(status__in=ACTIVE_RESERVATION_STATUSES, bed__isnull=True),
+                name="unique_active_reservation_per_room",
+            ),
+        ]
 
     def clean(self) -> None:
         super().clean()
-        errors = {}
-        shelter_pk = self.shelter.pk
-        if self.room and shelter_pk is not None and self.room.shelter_id != shelter_pk:
-            errors["room"] = "The selected room must belong to the same shelter as the reservation."
-        if self.bed and shelter_pk is not None and self.bed.shelter_id != shelter_pk:
-            errors["bed"] = "The selected bed must belong to the same shelter as the reservation."
+
+        errors: dict[str, str] = {}
+
+        if not self.bed and not self.room:
+            errors[NON_FIELD_ERRORS] = "A reservation must have a bed or room assigned."
+
+        # If bed is assigned, validate bed
+        if self.bed and not errors:
+            if self.bed.out_of_service:
+                errors["bed"] = "The selected bed is out of service."
+            elif self._is_bed_in_turnaround():
+                errors["bed"] = "The selected bed is currently in turnaround."
+            else:
+                # Check for conflicting active reservations on this bed.
+                conflicting_qs = Reservation.objects.filter(
+                    bed_id=self.bed.pk,
+                    status__in=ACTIVE_RESERVATION_STATUSES,
+                )
+                if self.pk:
+                    conflicting_qs = conflicting_qs.exclude(pk=self.pk)
+                if conflicting_qs.exists():
+                    errors["bed"] = "This bed already has an active reservation."
+
+        # If room is assigned but bed is not (room-only), validate room
+        if self.room and not self.bed and not errors:
+            if self.room.maintenance_flag:
+                errors["room"] = "The selected room is out of service."
+            elif self._is_room_in_turnaround():
+                errors["room"] = "The selected room is currently in turnaround."
+            else:
+                # Check for conflicting active room-only reservations.
+                conflicting_qs = Reservation.objects.filter(
+                    room_id=self.room.pk,
+                    bed__isnull=True,
+                    status__in=ACTIVE_RESERVATION_STATUSES,
+                )
+                if self.pk:
+                    conflicting_qs = conflicting_qs.exclude(pk=self.pk)
+                if conflicting_qs.exists():
+                    errors["room"] = "This room already has an active room-only reservation."
+
         if errors:
             raise ValidationError(errors)
+
+    def _is_bed_in_turnaround(self) -> bool:
+        """Return True if the assigned bed is in turnaround (last checkout after last cleaned)."""
+        if not self.bed:
+            return False
+        last_checkout = self.bed._get_last_completed_checkout()
+        if not last_checkout:
+            return False
+        return self.bed.last_cleaned is None or self.bed.last_cleaned <= last_checkout
+
+    def _is_room_in_turnaround(self) -> bool:
+        """Return True if the assigned room is in turnaround (last checkout after last cleaned)."""
+        if not self.room:
+            return False
+        last_checkout = self.room._get_last_completed_checkout()
+        if not last_checkout:
+            return False
+        return self.room.last_cleaned is None or self.room.last_cleaned <= last_checkout
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if self.pk:
+            try:
+                previous = Reservation.objects.get(pk=self.pk)
+
+                if self.status == ReservationStatusChoices.COMPLETED and previous.status != ReservationStatusChoices.COMPLETED:
+                    self.checked_out_at = timezone.now()
+
+                if self.status == ReservationStatusChoices.CHECKED_IN and previous.status != ReservationStatusChoices.CHECKED_IN:
+                    self.checked_in_at = timezone.now()
+
+            except Reservation.DoesNotExist:
+                pass
+
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"Reservation #{self.pk} at {self.shelter} ({self.status})"
