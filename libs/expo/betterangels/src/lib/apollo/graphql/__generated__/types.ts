@@ -755,6 +755,12 @@ export type CreateOrganizationInput = {
   organizationName: Scalars['NonEmptyString']['input'];
 };
 
+export type CreateOrganizationResponse = {
+  __typename?: 'CreateOrganizationResponse';
+  organization: OrganizationType;
+  user: UserType;
+};
+
 export type CreateProfileDataImportInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
   sourceFile: Scalars['String']['input'];
@@ -1576,7 +1582,7 @@ export type Mutation = {
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
-  createOrganization: SignupResponse;
+  createOrganization: CreateOrganizationResponse;
   createReferral: CreateReferralPayload;
   createRoom: CreateRoomPayload;
   createShelter: CreateShelterPayload;
@@ -1608,7 +1614,6 @@ export type Mutation = {
   resolveClientDocumentUploads: ResolveClientDocumentUploadsPayload;
   resolveClientProfilePhotoUpload: ResolveClientProfilePhotoUploadPayload;
   revertNote: RevertNotePayload;
-  setCurrentOrganization: CurrentUserType;
   updateBed: UpdateBedPayload;
   updateClientContact: UpdateClientContactPayload;
   updateClientDocument: UpdateClientDocumentPayload;
@@ -1870,11 +1875,6 @@ export type MutationResolveClientProfilePhotoUploadArgs = {
 
 export type MutationRevertNoteArgs = {
   data: RevertNoteInput;
-};
-
-
-export type MutationSetCurrentOrganizationArgs = {
-  organizationId: Scalars['ID']['input'];
 };
 
 
@@ -3173,12 +3173,6 @@ export type ShelterTypeOffsetPaginated = {
 export type ShelterTypeType = {
   __typename?: 'ShelterTypeType';
   name?: Maybe<ShelterChoices>;
-};
-
-export type SignupResponse = {
-  __typename?: 'SignupResponse';
-  organization: OrganizationType;
-  user: UserType;
 };
 
 export enum SocialMediaEnum {

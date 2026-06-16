@@ -743,6 +743,11 @@ input CreateOrganizationInput {
   organizationName: NonEmptyString!
 }
 
+type CreateOrganizationResponse {
+  user: UserType!
+  organization: OrganizationType!
+}
+
 input CreateProfileDataImportInput {
   sourceFile: String!
   notes: String
@@ -1537,8 +1542,7 @@ type Mutation {
   deleteCurrentUser: DeleteCurrentUserPayload!
   addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
   removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "remove_org_member"}], any: true)
-  createOrganization(data: CreateOrganizationInput!): SignupResponse!
-  setCurrentOrganization(organizationId: ID!): CurrentUserType!
+  createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
   changeOrganizationMemberRole(data: ChangeOrganizationMemberRoleInput!): ChangeOrganizationMemberRolePayload! @hasPerm(permissions: [{app: "organizations", permission: "change_org_member_role"}], any: true)
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
   updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
@@ -2508,11 +2512,6 @@ type ShelterTypeOffsetPaginated {
 
 type ShelterTypeType {
   name: ShelterChoices
-}
-
-type SignupResponse {
-  user: UserType!
-  organization: OrganizationType!
 }
 
 enum SocialMediaEnum {

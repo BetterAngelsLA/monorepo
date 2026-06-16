@@ -212,34 +212,3 @@ class OrganizationProfile(BaseModel):
     def __str__(self) -> str:
         types = ", ".join(t.label for t in self.org_types)
         return f"{self.organization.name} ({types or 'no type'})"
-
-
-class UserOrganizationPreference(models.Model):
-    """Per-user preference for the currently-active organization.
-
-    Shelter queries auto-scope to this preference when no explicit
-    organization filter is passed.
-    """
-
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name="organization_preference",
-    )
-    current_organization = models.ForeignKey(
-        Organization,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="+",
-    )
-
-    objects = models.Manager()
-
-    class Meta:
-        verbose_name = "User Organization Preference"
-        verbose_name_plural = "User Organization Preferences"
-
-    def __str__(self) -> str:
-        org_name = self.current_organization.name if self.current_organization else "None"
-        return f"{self.user.full_name} → {org_name}"

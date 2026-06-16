@@ -117,17 +117,9 @@ def admin_shelter_list(
 ) -> "QuerySet[Shelter]":
     """Filter to shelters whose organization the *user* belongs to.
 
-    If *organization_id* is provided, scopes to that org.  Otherwise uses
-    the user's :class:`~accounts.models.UserOrganizationPreference` if set.
-    Falls back to all orgs the user belongs to.
+    If *organization_id* is provided, scopes to that org.  Otherwise
+    returns all orgs the user belongs to.
     """
-    from accounts.models import UserOrganizationPreference
-
-    if organization_id is None:
-        pref = UserOrganizationPreference.objects.filter(user=user).first()
-        if pref and pref.current_organization_id:
-            organization_id = str(pref.current_organization_id)
-
     if organization_id:
         return queryset.filter(organization_id=organization_id)
 

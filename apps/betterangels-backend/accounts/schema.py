@@ -3,9 +3,11 @@ from typing import Optional, Union, cast
 
 import strawberry
 import strawberry_django
+from accounts.emails import send_welcome_email
 from accounts.enums import OrgRoleEnum
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
+from accounts.role_manager import OrgRoleManager
 from common.graphql.types import DeletedObjectType
 from common.org_types import REGISTRY
 from common.permissions.utils import IsAuthenticated
@@ -13,19 +15,16 @@ from django.conf import settings
 from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
-from django.template.loader import render_to_string
 from organizations.backends import invitation_backend
-from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
-from .models import PermissionGroup, User, UserOrganizationPreference
+from .models import PermissionGroup, User
 from .services import (
     member_add,
     organization_remove_member,
@@ -35,6 +34,7 @@ from .types import (
     AuthResponse,
     ChangeOrganizationMemberRoleInput,
     CreateOrganizationInput,
+    CreateOrganizationResponse,
     CurrentUserType,
     LoginInput,
     OrganizationMemberFilter,
@@ -43,7 +43,6 @@ from .types import (
     OrganizationType,
     OrgInvitationInput,
     RemoveOrganizationMemberInput,
-    SignupResponse,
     UpdateUserInput,
     UpdateUserProfileInput,
     UserType,
@@ -258,7 +257,7 @@ class Mutation:
     # ── Organization Creation ──────────────────────────────────────
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def create_organization(self, info: Info, data: CreateOrganizationInput) -> SignupResponse:
+    def create_organization(self, info: Info, data: CreateOrganizationInput) -> CreateOrganizationResponse:
         """Create a shelter organization for the authenticated user.
 
         Creates a new Organization with the ``shelter`` preset, links the
@@ -267,38 +266,15 @@ class Mutation:
         """
         current_user = cast(User, get_current_user(info))
         user, organization = shelter_operator_signup_service(
-            email=current_user.email or "",
-            first_name=current_user.first_name or "",
-            last_name=current_user.last_name or "",
-            middle_name=current_user.middle_name,
+            user=current_user,
             organization_name=data.organization_name,
         )
 
-        _send_welcome_email(user, organization)
+        send_welcome_email(user, organization)
 
-        return SignupResponse(user=cast(UserType, user), organization=cast(OrganizationType, organization))
-
-    # ── Default Organization Preference ─────────────────────────────
-
-    @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def set_current_organization(self, info: Info, organization_id: strawberry.ID) -> CurrentUserType:
-        """Set the user's preferred (current) organization.
-
-        Shelter queries (``adminShelter``, ``shelter``, etc.) auto-scope
-        to this preference when no explicit organization filter is passed.
-        """
-        user = cast(User, get_current_user(info))
-
-        org = get_user_permitted_org(user, org_id=str(organization_id), permission=UserOrganizationPermissions.VIEW_ORG)
-        if org is None:
-            raise PermissionDenied("You are not a member of this organization.")
-
-        UserOrganizationPreference.objects.update_or_create(
-            user=user,
-            defaults={"current_organization": org},
+        return CreateOrganizationResponse(
+            user=cast(UserType, user), organization=cast(OrganizationType, organization)
         )
-
-        return cast(CurrentUserType, user)
 
     # ── Role Change ────────────────────────────────────────────────
 
@@ -340,41 +316,7 @@ class Mutation:
         if not target_user:
             raise PermissionDenied("Target user is not a member of this organization.")
 
-        from .role_manager import OrgRoleManager
-
         OrgRoleManager(organization).replace_roles(target_user, template)
 
         target_user._member_role = None  # type: ignore[attr-defined]
         return cast(OrganizationMemberType, target_user)
-
-
-# ── Email helpers ────────────────────────────────────────────────────
-
-
-def _send_welcome_email(user: User, organization: Organization) -> None:
-    """Send a welcome email to a self-signed-up shelter operator."""
-    from shelters.groups import SHELTER_OPERATOR
-
-    template_config = SHELTER_OPERATOR
-    html_template = template_config.welcome_html or template_config.invite_html
-    txt_template = template_config.welcome_txt or template_config.invite_txt
-
-    if not html_template or not txt_template:
-        logger.warning("No welcome email templates configured for Shelter Operator — skipping.")
-        return
-
-    context = {
-        "user_email": user.email,
-        "user_first_name": user.first_name,
-        "organization_name": organization.name,
-        "dashboard_url": "http://localhost:4200/dashboard",  # TODO: make configurable
-    }
-
-    msg = EmailMultiAlternatives(
-        subject=f"Welcome to BetterAngels, {user.first_name}!",
-        body=render_to_string(txt_template, context),
-        to=[user.email or ""],
-    )
-    html_body = render_to_string(html_template, context)
-    msg.attach_alternative(html_body, "text/html")
-    msg.send(fail_silently=True)

@@ -301,7 +301,7 @@ class CreateOrganizationInput:
 
 
 @strawberry.type
-class SignupResponse:
+class CreateOrganizationResponse:
     user: UserType
     organization: OrganizationType
 

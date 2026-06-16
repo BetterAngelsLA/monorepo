@@ -23,7 +23,7 @@ const parseUser = (
     firstName: user.firstName ?? undefined,
     lastName: user.lastName ?? undefined,
     email: user.email,
-    organizations: user.organizations ?? null,
+    organizations: user.organizations ?? [],
   };
 };
 
