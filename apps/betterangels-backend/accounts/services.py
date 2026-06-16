@@ -229,17 +229,19 @@ def shelter_operator_signup_service(
     responsible for triggering email delivery after the transaction
     commits successfully.
     """
-    from shelters.groups import SHELTER_OPERATOR
-
     org_config = REGISTRY.org_type("shelter")
     if not org_config or not org_config.allow_public_signup:
         raise ValidationError("This org type does not support self-signup.")
+
+    # The first template of the configured org type is the member-level
+    # role (Shelter Operator for shelters, Caseworker for outreach).
+    member_template = org_config.templates[0]
 
     organization = create_organization_with_presets(
         name=organization_name,
         preset_names=["shelter"],
         owner=user,
-        owner_roles=(SHELTER_OPERATOR,),
+        owner_roles=(member_template,),
     )
 
     return user, organization

@@ -1,5 +1,7 @@
 """Tests for the HasOrgPerm Strawberry extension."""
 
+from unittest.mock import MagicMock
+
 from accounts.extensions import HasOrgPerm
 from accounts.models import PermissionGroup, User
 from django.contrib.auth.models import Group, Permission
@@ -9,7 +11,6 @@ from model_bakery import baker
 from organizations.models import Organization
 from shelters.models import Shelter
 from strawberry.types import Info
-from unittest.mock import MagicMock
 
 
 class HasOrgPermTestCase(TestCase):

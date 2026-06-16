@@ -17,5 +17,5 @@ SHELTER_OPERATOR = TemplateConfig(
     invite_txt="account/messages/shelter_operator_invite.txt",
     welcome_html="shelters/email/shelter_operator_welcome.html",
     welcome_txt="shelters/email/shelter_operator_welcome.txt",
-    welcome_dashboard_url="/operator",
+    base_url_setting="SHELTER_WEB_BASE_URL",
 )

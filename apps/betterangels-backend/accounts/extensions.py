@@ -3,7 +3,8 @@
 Replaces the ``@HasPerm(global)`` + ``get_user_permitted_org()`` pattern
 with a single ``@HasOrgPerm`` decorator that reads the active
 organization from ``request.organization_id`` (set by
-``OrganizationMiddleware``) and validates the user's permission in that org.
+``OrganizationMiddleware`` from the ``X-Organization-ID`` header) and
+validates the user's permission in that org via a single DB query.
 
 Usage::
 
@@ -21,8 +22,8 @@ Or with django-codename strings::
 
 from typing import Any
 
-from accounts.permissions import get_user_permitted_org
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from strawberry.types import Info
 from strawberry_django.permissions import (
     HasPerm,
@@ -31,20 +32,27 @@ from strawberry_django.permissions import (
 
 
 class HasOrgPerm(HasPerm):
-    """Validates a permission on the request's active organization.
+    """Validates permissions on the request's active organization.
 
     Reads ``info.context.request.organization_id`` (set by
-    ``OrganizationMiddleware``) and checks that the authenticated
-    user holds *permission* in that organization via
-    :func:`~accounts.permissions.get_user_permitted_org`.
+    ``OrganizationMiddleware`` from the ``X-Organization-ID`` header)
+    and checks that the authenticated user holds the requested
+    permission(s) within that organization via a single query.
+
+    If no organization header is present, ``PermissionDenied`` is
+    raised — there is no fallback to global permission checks.
 
     Extends ``HasPerm`` so the schema directive includes the same
     permission metadata (e.g. ``@hasOrgPerm(permissions: [{app: "shelters",
     permission: "view_shelter"}])``).
+
+    Honors the parent ``any_perm`` flag:
+    - ``any_perm=True`` (default): user must hold at least one of the given perms.
+    - ``any_perm=False``: user must hold **all** of the given perms.
     """
 
     SCHEMA_DIRECTIVE_DESCRIPTION: str = (
-        "Requires the user to have the specified permission in the "
+        "Requires the user to have the specified permission(s) in the "
         "organization set via X-Organization-ID header."
     )
 
@@ -61,18 +69,35 @@ class HasOrgPerm(HasPerm):
         if not user or not user.is_authenticated:
             raise PermissionDenied("Authentication required.")
 
-        # Resolve the first perm's codename for org-scoped check
-        perm_def = self.perms[0]
-        app_label = perm_def.app or ""
-        codename = perm_def.permission
+        if not self.perms:
+            raise PermissionDenied("No permissions specified for this operation.")
 
-        org = get_user_permitted_org(
-            user,
-            org_id=org_id,
-            permission=f"{app_label}.{codename}",
+        from accounts.models import Organization
+
+        # Build a single query that checks all requested permissions.
+        org_filter = Organization.objects.filter(
+            pk=org_id,
+            permission_groups__group__user=user,
         )
+
+        if self.any_perm:
+            q = Q()
+            for perm_def in self.perms:
+                q |= Q(
+                    permission_groups__group__permissions__content_type__app_label=perm_def.app or "",
+                    permission_groups__group__permissions__codename=perm_def.permission,
+                )
+            org = org_filter.filter(q).first()
+        else:
+            for perm_def in self.perms:
+                org_filter = org_filter.filter(
+                    permission_groups__group__permissions__content_type__app_label=perm_def.app or "",
+                    permission_groups__group__permissions__codename=perm_def.permission,
+                )
+            org = org_filter.first()
 
         if org is None:
             raise PermissionDenied(
-                f"You do not have permission to perform this action in this organization."
+                "You do not have permission to perform this action "
+                "in this organization."
             )

@@ -410,8 +410,10 @@ POST_OFFICE = {
 EMAIL_FILE_PATH = str(BASE_DIR / "tmp" / "app-emails")
 INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 
-# Welcome email dashboard URL (default for local dev — overridden per-org-type via TemplateConfig)
-SHELTER_OPERATOR_DASHBOARD_URL = "http://localhost:4200/dashboard"
+# Base URLs for frontend apps, used by send_welcome_email to build
+# absolute dashboard links.  Each TemplateConfig references one of these
+# via its base_url_setting field.
+SHELTER_WEB_BASE_URL = env("SHELTER_WEB_BASE_URL", default="http://localhost:4200")
 
 # Django Guardian
 # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_user_obj_perms_model

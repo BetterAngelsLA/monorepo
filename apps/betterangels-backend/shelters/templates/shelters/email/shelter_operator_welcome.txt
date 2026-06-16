@@ -7,6 +7,6 @@ As a Shelter Operator you can:
 - Invite other staff members to join your organization
 - View shelter availability and occupancy
 
-Go to your Dashboard: {{ dashboard_url }}
+Go to your Dashboard: {{ base_url }}/operator
 
 If you have any questions, reply to this email — our team is here to help.

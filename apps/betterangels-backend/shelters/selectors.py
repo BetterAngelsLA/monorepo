@@ -115,20 +115,15 @@ def admin_shelter_list(
     user: "User",
     organization_id: str | None = None,
 ) -> "QuerySet[Shelter]":
-    """Filter to shelters whose organization the *user* belongs to.
+    """Filter to shelters in *organization_id* that *user* belongs to.
 
-    If *organization_id* is provided, only returns shelters in that org
-    if *user* is a member.  Otherwise returns shelters across all orgs
-    *user* belongs to.
+    ``organization_id`` is required — the ``HasOrgPerm`` extension on
+    the query ensures a header org is always present.
     """
-    if organization_id:
-        return queryset.filter(
-            organization_id=organization_id,
-            organization__in=Organization.objects.filter(pk=organization_id, users=user),
-        )
-
-    user_orgs = Organization.objects.filter(users=user)
-    return queryset.filter(Exists(Organization.objects.filter(pk=OuterRef("organization_id"), pk__in=user_orgs)))
+    return queryset.filter(
+        organization_id=organization_id,
+        organization__in=Organization.objects.filter(pk=organization_id, users=user),
+    )
 
 
 def shelter_get(*, user: "User", shelter_id: int | str) -> "Shelter":

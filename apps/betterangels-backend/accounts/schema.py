@@ -5,6 +5,7 @@ import strawberry
 import strawberry_django
 from accounts.emails import send_welcome_email
 from accounts.enums import OrgRoleEnum
+from accounts.extensions import HasOrgPerm
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
 from accounts.role_manager import OrgRoleManager
@@ -187,7 +188,7 @@ class Mutation:
         return DeletedObjectType(id=user_id)
 
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)]
+        permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)]
     )
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)
@@ -231,7 +232,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(UserOrganizationPermissions.REMOVE_ORG_MEMBER)],
+        extensions=[HasOrgPerm(UserOrganizationPermissions.REMOVE_ORG_MEMBER)],
     )
     def remove_organization_member(
         self,
@@ -274,15 +275,13 @@ class Mutation:
         for template in templates:
             send_welcome_email(user, organization, template)
 
-        return CreateOrganizationResponse(
-            user=cast(UserType, user), organization=cast(OrganizationType, organization)
-        )
+        return CreateOrganizationResponse(user=cast(UserType, user), organization=cast(OrganizationType, organization))
 
     # ── Role Change ────────────────────────────────────────────────
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE)],
+        extensions=[HasOrgPerm(UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE)],
     )
     def change_organization_member_role(
         self, info: Info, data: ChangeOrganizationMemberRoleInput
@@ -320,5 +319,6 @@ class Mutation:
 
         OrgRoleManager(organization).replace_roles(target_user, template)
 
-        target_user._member_role = None  # type: ignore[attr-defined]
+        if hasattr(target_user, "_member_role"):
+            delattr(target_user, "_member_role")
         return cast(OrganizationMemberType, target_user)
