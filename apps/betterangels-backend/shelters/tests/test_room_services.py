@@ -24,8 +24,12 @@ class RoomServiceTestCase(TestCase):
     def setUp(self) -> None:
         User = get_user_model()
         self.org, self.other_org = organization_recipe.make(_quantity=2)
-        baker.make(OrganizationProfile, organization=self.org, org_types=[OrgTypeChoices.SHELTER])
-        baker.make(OrganizationProfile, organization=self.other_org, org_types=[OrgTypeChoices.SHELTER])
+        OrganizationProfile.objects.update_or_create(
+            organization=self.org, defaults={"org_types": [OrgTypeChoices.SHELTER]}
+        )
+        OrganizationProfile.objects.update_or_create(
+            organization=self.other_org, defaults={"org_types": [OrgTypeChoices.SHELTER]}
+        )
         self.user = baker.make(User)
         self.org.users.add(self.user)
         self.shelter = shelter_recipe.make(organization=self.org)

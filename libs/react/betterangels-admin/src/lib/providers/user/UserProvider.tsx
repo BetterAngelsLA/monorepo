@@ -17,10 +17,6 @@ const parseUser = (
   if (!user) {
     return undefined;
   }
-  if (!user.organizations?.length) {
-    return undefined;
-  }
-
   return {
     id: user.id,
     username: user.username ?? undefined,
