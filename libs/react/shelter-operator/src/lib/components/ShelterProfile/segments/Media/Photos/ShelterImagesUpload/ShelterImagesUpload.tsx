@@ -1,15 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { MimeTypes } from '@monorepo/react/shared';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { ShelterPhotoTypeChoices } from '../../../../../../apollo/graphql/__generated__/types';
 import { Dropdown, type DropdownOption } from '../../../../../base-ui/dropdown';
 import { FileUploadInput } from '../../../../../base-ui/fileUpload';
+import { useToast } from '../../../../../base-ui/toast';
 import { Form } from '../../../../../form/Form';
 import {
   defaultFormValues,
   formSchema,
   ShelterImagesUploadFormData,
 } from './formSchema';
+import { useShelterPhotoUpload } from './useShelterPhotoUpload/useShelterPhotoUpload';
 
 const PHOTO_TYPE_OPTIONS: DropdownOption<ShelterPhotoTypeChoices>[] = [
   { label: 'Interior', value: ShelterPhotoTypeChoices.Interior },
@@ -17,11 +20,46 @@ const PHOTO_TYPE_OPTIONS: DropdownOption<ShelterPhotoTypeChoices>[] = [
 ];
 
 type TProps = {
-  onSubmit: (data: ShelterImagesUploadFormData) => void;
+  shelterId: string;
+  onSuccess?: () => void;
 };
 
 export function ShelterImagesUpload(props: TProps) {
-  const { onSubmit } = props;
+  const { shelterId, onSuccess } = props;
+
+  const { uploadPhotos } = useShelterPhotoUpload();
+  const { showToast } = useToast();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function onSubmit(data: ShelterImagesUploadFormData) {
+    try {
+      setIsSubmitting(true);
+
+      await uploadPhotos({
+        shelterId,
+        files: data.files,
+        photoType: data.photoType,
+      });
+
+      showToast({
+        status: 'success',
+        title: 'Images uploaded.',
+      });
+
+      onSuccess?.();
+    } catch (err) {
+      console.error(`[ShelterImagesUpload error]: ${err}.`);
+
+      showToast({
+        status: 'error',
+        title: 'Update failed',
+        description: 'An unexpected error occurred.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   const {
     control,
@@ -79,9 +117,11 @@ export function ShelterImagesUpload(props: TProps) {
         <Form.Actions
           className="p-0"
           variant="relative"
-          onPrimaryClick={() => undefined}
-          primaryLabel="Upload"
+          onPrimaryClick={handleSubmit(onSubmit)}
+          primaryLabel={isSubmitting ? 'Uploading...' : 'Upload'}
+          primaryDisabled={isSubmitting}
           onSecondaryClick={() => undefined}
+          secondaryDisabled={isSubmitting}
         />
       </div>
     </form>

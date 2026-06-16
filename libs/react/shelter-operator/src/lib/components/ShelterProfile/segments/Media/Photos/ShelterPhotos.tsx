@@ -1,13 +1,10 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Upload } from 'lucide-react';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
 import { Button } from '../../../../base-ui/buttons';
 import { Modal, ModalBody, ModalHeader } from '../../../../base-ui/modal';
 import { Table, type TableColumn } from '../../../../Table';
 import { ShelterProfilePhotoType } from '../../../types';
 import { SectionHeader } from '../shared/SectionHeader';
-import { defaultFormValues, formSchema, PhotosFormData } from './formSchema';
 import { ShelterImagesUpload } from './ShelterImagesUpload';
 import { ThumbImg } from './ThumbImg';
 
@@ -40,22 +37,17 @@ const columns: TableColumn<ShelterProfilePhotoType>[] = [
 ];
 
 type TProps = {
-  onSave: (data: PhotosFormData) => void;
   photos: ShelterProfilePhotoType[];
+  shelterId: string;
 };
 
-export function ShelterPhotosForm(props: TProps) {
-  const { onSave, photos = [] } = props;
+export function ShelterPhotos(props: TProps) {
+  const { photos = [], shelterId } = props;
 
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
-  const { handleSubmit } = useForm<PhotosFormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: defaultFormValues,
-  });
-
   return (
-    <form onSubmit={handleSubmit(onSave)} className="p-8 flex flex-col gap-6">
+    <div className="p-8 flex flex-col gap-6">
       <SectionHeader>
         <Button
           className="ml-auto"
@@ -63,7 +55,7 @@ export function ShelterPhotosForm(props: TProps) {
           leftIcon={<Upload size={20} />}
           onClick={() => setUploadModalOpen(true)}
         >
-          Upload Image
+          Upload Image x
         </Button>
       </SectionHeader>
 
@@ -80,7 +72,10 @@ export function ShelterPhotosForm(props: TProps) {
           <div className="font-medium text-2xl">Upload Images</div>
         </ModalHeader>
         <ModalBody className="px-0">
-          <ShelterImagesUpload onSubmit={(data) => console.log(data)} />
+          <ShelterImagesUpload
+            shelterId={shelterId}
+            onSuccess={() => setUploadModalOpen(false)}
+          />
         </ModalBody>
       </Modal>
 
@@ -91,7 +86,6 @@ export function ShelterPhotosForm(props: TProps) {
         headerClassName="px-0"
         rowClassName="mx-0 px-0"
       />
-      {/* <Form.Actions onPrimaryClick={handleSubmit(onSave)} /> */}
-    </form>
+    </div>
   );
 }

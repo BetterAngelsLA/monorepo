@@ -3,7 +3,7 @@ import { useAdminShelterProfile } from '../../../../hooks';
 import { Tabs } from '../../../base-ui/tabs';
 import { Form } from '../../../form/Form';
 import { MEDIA_TABS, MEDIA_TAB_LABELS, MediaTab } from './constants';
-import { ShelterPhotosForm } from './Photos/ShelterPhotosForm';
+import { ShelterPhotos } from './Photos/ShelterPhotos';
 
 type TProps = {
   shelterId: string;
@@ -34,7 +34,7 @@ export function ShelterMedia(props: TProps) {
       />
 
       {currentTab === 'photos' && (
-        <ShelterPhotosForm photos={photos || []} onSave={() => undefined} />
+        <ShelterPhotos shelterId={shelterId} photos={photos || []} />
       )}
       {/* {currentTab === 'videos' && (
         <ShelterVideosForm onSave={() => undefined} />
