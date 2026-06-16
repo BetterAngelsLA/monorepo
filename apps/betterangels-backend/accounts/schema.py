@@ -7,11 +7,11 @@ from accounts.emails import send_welcome_email
 from accounts.enums import OrgRoleEnum
 from accounts.extensions import HasOrgPerm
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
 from accounts.role_manager import OrgRoleManager
 from common.graphql.types import DeletedObjectType
 from common.org_types import REGISTRY
-from common.permissions.utils import IsAuthenticated
+from accounts.permissions import UserOrganizationPermissions
+from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.sites.models import Site
@@ -25,7 +25,7 @@ from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
-from .models import PermissionGroup, User
+from .models import Organization, PermissionGroup, User
 from .services import (
     member_add,
     organization_remove_member,
@@ -82,6 +82,7 @@ class Query:
     def current_user(self, info: Info) -> CurrentUserType:
         return get_current_user(info)  # type: ignore
 
+    # TODO(SDB-178): migrate to HasOrgPerm — drop organization_id arg, read org from header
     @strawberry_django.field(
         permission_classes=[IsAuthenticated], extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)]
     )
@@ -101,6 +102,7 @@ class Query:
 
         return cast(OrganizationMemberType, user)
 
+    # TODO(SDB-178): migrate to HasOrgPerm — drop organization_id arg, read org from header
     @strawberry_django.offset_paginated(
         OffsetPaginated[OrganizationMemberType],
         permission_classes=[IsAuthenticated],
@@ -192,11 +194,8 @@ class Mutation:
     )
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)
-        organization = get_user_permitted_org(
-            current_user, org_id=str(data.organization_id), permission=UserOrganizationPermissions.ADD_ORG_MEMBER
-        )
-        if organization is None:
-            raise PermissionDenied("You do not have permission to add members.")
+        org_id = get_current_organization(info)
+        organization = Organization.objects.get(pk=org_id)
 
         template = REGISTRY.template(data.permission_template.value)  # type: ignore[attr-defined, union-attr]
         if template is None:
@@ -240,12 +239,8 @@ class Mutation:
         data: RemoveOrganizationMemberInput,
     ) -> DeletedObjectType:
         current_user = cast(User, get_current_user(info))
-
-        organization = get_user_permitted_org(
-            current_user, org_id=str(data.organization_id), permission=UserOrganizationPermissions.REMOVE_ORG_MEMBER
-        )
-        if organization is None:
-            raise PermissionDenied("You do not have permission to remove members.")
+        org_id = get_current_organization(info)
+        organization = Organization.objects.get(pk=org_id)
 
         removed_id = organization_remove_member(
             organization=organization,
@@ -293,14 +288,8 @@ class Mutation:
         permission.
         """
         current_user = cast(User, get_current_user(info))
-
-        organization = get_user_permitted_org(
-            current_user,
-            org_id=str(data.organization_id),
-            permission=UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE,
-        )
-        if organization is None:
-            raise PermissionDenied("You do not have permission to change member roles.")
+        org_id = get_current_organization(info)
+        organization = Organization.objects.get(pk=org_id)
 
         template = REGISTRY.template(data.permission_template.value)  # type: ignore[attr-defined, union-attr]
         if template is None:

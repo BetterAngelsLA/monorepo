@@ -167,9 +167,11 @@ class GraphQLBaseTestCase(
         OrgRoleManager(self.org_2).add_roles(self.org_2_case_manager_1, CASEWORKER)
 
         # Default organization for @HasOrgPerm-scoped mutations/queries.
-        # Tests that need a different org can override with:
-        #   self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(self.org_2.id)
         self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(self.org_1.id)
+
+    def _set_active_org(self, org: object) -> None:
+        """Set the X-Organization-ID header for the current test client."""
+        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(org.id)
 
     def _setup_hmis_session(self) -> None:
         """
