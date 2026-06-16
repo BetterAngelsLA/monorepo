@@ -172,8 +172,6 @@ MIDDLEWARE = [
 ACCOUNT_ADAPTER = "accounts.adapters.AccountAdapter"
 ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
 ACCOUNT_EMAIL_VERIFICATION = "optional"
-ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = False
-ACCOUNT_EMAIL_VERIFICATION_BY_CODE_TIMEOUT = 300
 ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_RESEND = True
 ACCOUNT_LOGIN_BY_CODE_ENABLED = env("ACCOUNT_LOGIN_BY_CODE_ENABLED")
 ACCOUNT_LOGIN_BY_CODE_TIMEOUT = env.int("ACCOUNT_LOGIN_BY_CODE_TIMEOUT", default=300)
@@ -411,6 +409,9 @@ POST_OFFICE = {
 }
 EMAIL_FILE_PATH = str(BASE_DIR / "tmp" / "app-emails")
 INVITATION_BACKEND = "accounts.backends.CustomInvitations"
+
+# Welcome email dashboard URL (default for local dev — overridden per-org-type via TemplateConfig)
+SHELTER_OPERATOR_DASHBOARD_URL = "http://localhost:4200/dashboard"
 
 # Django Guardian
 # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_user_obj_perms_model

@@ -92,15 +92,12 @@ class HasOrgPermTestCase(TestCase):
         with self.assertRaises(PermissionDenied):
             extension.resolve_for_user(None, info)  # type: ignore[arg-type]
 
-    # ── Fallback: no header, fail_silently ─────────────────────────────
+    # ── No header always denied ────────────────────────────────────────
 
-    def test_fail_silently_no_header(self) -> None:
-        """fail_silently=True + no header skips the check (standard HasPerm fallback)."""
+    def test_no_header_denied_even_with_fail_silently(self) -> None:
+        """Missing X-Organization-ID header is always denied, even with fail_silently=True."""
         extension = HasOrgPerm(Shelter.perms.VIEW, fail_silently=True)
         info = self._make_info(org_id=None)
 
-        # Should not raise — default HasPerm behavior
-        try:
+        with self.assertRaises(PermissionDenied):
             extension.resolve_for_user(self.user, info)
-        except PermissionDenied:
-            self.fail("fail_silently HasOrgPerm should not raise when header is absent")
