@@ -69,7 +69,9 @@ class ShelterTestCase(GraphQLBaseTestCase):
 
     def setup_org_with_user(self) -> None:
         self.org = organization_recipe.make(name="Shelter Org")
-        baker.make(OrganizationProfile, organization=self.org, org_types=[OrgTypeChoices.SHELTER])
+        OrganizationProfile.objects.update_or_create(
+            organization=self.org, defaults={"org_types": [OrgTypeChoices.SHELTER]}
+        )
         self.operator = baker.make(User)
         self.org.users.add(self.operator)
         # TODO: temporary solution until operator template implemented. See: SDB-178
