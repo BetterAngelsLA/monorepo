@@ -28,6 +28,8 @@ export function Dropdown<T extends string | number = string | number>(
 ) {
   const {
     label,
+    labelVariant,
+    labelClassname,
     placeholder = 'Please select',
     options,
     value,
@@ -349,8 +351,9 @@ export function Dropdown<T extends string | number = string | number>(
       {label && (
         <Label
           label={label}
+          className={labelClassname}
           inputId={labelId}
-          variant={isViewEditMode ? 'offset' : undefined}
+          variant={labelVariant || (isViewEditMode ? 'offset' : undefined)}
           required={required}
         />
       )}
@@ -436,7 +439,9 @@ export function Dropdown<T extends string | number = string | number>(
             listRef={listRef}
             menuRef={menuRef}
           />,
-          document.body
+          // When inside a <dialog> (showModal top-layer), portal into the dialog
+          // so the menu isn't clipped behind the top-layer stacking context.
+          menuAnchorRef.current?.closest('dialog') ?? document.body
         )}
     </div>
   );

@@ -1,15 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { MimeTypes } from '@monorepo/react/shared';
 import { Upload } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '../../../../base-ui/buttons';
-import { FileUploadInput } from '../../../../base-ui/fileUpload';
 import { Modal, ModalBody, ModalHeader } from '../../../../base-ui/modal';
 import { Table, type TableColumn } from '../../../../Table';
 import { ShelterProfilePhotoType } from '../../../types';
 import { SectionHeader } from '../shared/SectionHeader';
 import { defaultFormValues, formSchema, PhotosFormData } from './formSchema';
+import { ShelterImagesUpload } from './ShelterImagesUpload';
 import { ThumbImg } from './ThumbImg';
 
 const columns: TableColumn<ShelterProfilePhotoType>[] = [
@@ -56,10 +55,7 @@ export function ShelterPhotosForm(props: TProps) {
   });
 
   return (
-    <form
-      onSubmit={handleSubmit(onSave)}
-      className="p-8 flex flex-col gap-6 border-red-500 border--x"
-    >
+    <form onSubmit={handleSubmit(onSave)} className="p-8 flex flex-col gap-6">
       <SectionHeader>
         <Button
           className="ml-auto"
@@ -74,17 +70,17 @@ export function ShelterPhotosForm(props: TProps) {
       <Modal
         isOpen={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
-        size="lg"
+        size="2xl"
+        contentClassname="pl-0 px-6 pb-4"
       >
-        <ModalHeader onClose={() => setUploadModalOpen(false)}>
-          Upload Image
+        <ModalHeader
+          className="pl-5 mb-3"
+          onClose={() => setUploadModalOpen(false)}
+        >
+          <div className="font-medium text-2xl">Upload Images</div>
         </ModalHeader>
-        <ModalBody>
-          <FileUploadInput
-            acceptedMimeTypes={[MimeTypes.PNG, MimeTypes.JPEG, MimeTypes.WEBP]}
-            multiple
-            onChange={(files) => console.log(files)}
-          />
+        <ModalBody className="px-0">
+          <ShelterImagesUpload onSubmit={(data) => console.log(data)} />
         </ModalBody>
       </Modal>
 

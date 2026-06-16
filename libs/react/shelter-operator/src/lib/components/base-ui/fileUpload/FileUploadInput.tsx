@@ -3,12 +3,14 @@ import { AlertCircle, FileUp } from 'lucide-react';
 import { useId } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Label } from '../label';
+import { LabelVariant } from '../label/label';
 import { Text } from '../text/text';
 import { getSupportedFilesText } from './utils/getSupportedFilesText';
 
 export interface FileUploadInputProps {
   id?: string;
   label?: string;
+  labelVariant?: LabelVariant;
   value?: File[];
   onChange: (files: File[]) => void;
   acceptedMimeTypes?: TMimeType[];
@@ -20,6 +22,7 @@ export interface FileUploadInputProps {
   required?: boolean;
   disabled?: boolean;
   className?: string;
+  labelClassname?: string;
   isTouched?: boolean;
   isViewMode?: boolean;
 }
@@ -27,6 +30,7 @@ export interface FileUploadInputProps {
 export function FileUploadInput({
   id,
   label,
+  labelVariant,
   value,
   onChange,
   acceptedMimeTypes,
@@ -37,8 +41,8 @@ export function FileUploadInput({
   error,
   required = false,
   disabled = false,
-  isViewMode,
   className,
+  labelClassname,
   isTouched,
 }: FileUploadInputProps) {
   const generatedId = useId();
@@ -47,8 +51,6 @@ export function FileUploadInput({
 
   const shouldShowError = Boolean(error && isTouched);
   const selectedFiles = value ?? [];
-
-  const isViewEditMode = typeof isViewMode === 'boolean';
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     accept: acceptedMimeTypes
@@ -66,8 +68,9 @@ export function FileUploadInput({
       {label && (
         <Label
           label={label}
+          variant={labelVariant}
+          className={labelClassname}
           inputId={inputId}
-          variant={isViewEditMode ? 'offset' : undefined}
           required={required}
         />
       )}
