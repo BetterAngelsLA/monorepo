@@ -751,6 +751,10 @@ export type CreateNoteTaskInput = {
   team?: InputMaybe<SelahTeamEnum>;
 };
 
+export type CreateOrganizationInput = {
+  organizationName: Scalars['NonEmptyString']['input'];
+};
+
 export type CreateProfileDataImportInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
   sourceFile: Scalars['String']['input'];
@@ -1719,7 +1723,7 @@ export type MutationCreateNoteServiceRequestArgs = {
 
 
 export type MutationCreateOrganizationArgs = {
-  data: ShelterOperatorSignupInput;
+  data: CreateOrganizationInput;
 };
 
 
@@ -3021,14 +3025,6 @@ export type ShelterLocationType = {
   latitude: Scalars['Float']['output'];
   longitude: Scalars['Float']['output'];
   place: Scalars['String']['output'];
-};
-
-export type ShelterOperatorSignupInput = {
-  email: Scalars['String']['input'];
-  firstName: Scalars['String']['input'];
-  lastName: Scalars['String']['input'];
-  middleName?: InputMaybe<Scalars['String']['input']>;
-  organizationName: Scalars['NonEmptyString']['input'];
 };
 
 export type ShelterOrder = {
