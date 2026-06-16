@@ -264,7 +264,8 @@ class AdminShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
-        return admin_shelter_list(queryset, user=user)
+        organization_id: str | None = getattr(info.context.request, "organization_id", None)
+        return admin_shelter_list(queryset, user=user, organization_id=organization_id)
 
 
 def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:

@@ -2,6 +2,7 @@ from typing import Optional, cast
 
 import strawberry
 import strawberry_django
+from accounts.extensions import HasOrgPerm
 from accounts.models import User
 from common.graphql.types import BulkDeleteInput, BulkDeleteResult
 from common.permissions.utils import IsAuthenticated
@@ -37,11 +38,11 @@ from strawberry_django.permissions import HasPerm
 class Query:
     admin_shelter: AdminShelterType = strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(Shelter.perms.VIEW)],
+        extensions=[HasOrgPerm(Shelter.perms.VIEW)],
     )
     admin_shelters: OffsetPaginated[AdminShelterType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(Shelter.perms.VIEW)],
+        extensions=[HasOrgPerm(Shelter.perms.VIEW)],
     )
 
     shelter: ShelterType = strawberry_django.field()

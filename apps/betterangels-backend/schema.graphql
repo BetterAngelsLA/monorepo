@@ -34,6 +34,8 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+directive @hasOrgPerm repeatable on FIELD_DEFINITION
+
 directive @hmisDirective on FIELD_DEFINITION
 
 directive @isHmisAuthenticated on FIELD_DEFINITION
@@ -1970,8 +1972,8 @@ type Query {
   reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
-  adminShelter(pk: ID!): AdminShelterType! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
-  adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
+  adminShelter(pk: ID!): AdminShelterType! @hasOrgPerm
+  adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasOrgPerm
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
   bed(pk: ID!): BedType! @hasPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
