@@ -11,7 +11,9 @@ from collections import Counter
 from itertools import takewhile
 from typing import TYPE_CHECKING, Any
 
-from django.db.models import Exists, OuterRef, Q, QuerySet, Subquery
+import pghistory
+from django.db.models import Count, Exists, OuterRef, Q, QuerySet, Subquery, TextField
+from django.db.models.functions import Cast
 from organizations.models import Organization
 from shelters.enums import BedStatusChoices, DayOfWeekChoices, ScheduleTypeChoices, StatusChoices
 
@@ -207,3 +209,40 @@ def shelters_open_at(
     )
 
     return queryset.filter(is_open).exclude(has_active_exception)
+
+
+def reservation_status_change_counts(
+    shelter_id: int,
+    start_date: datetime.datetime,
+    end_date: datetime.datetime,
+) -> dict[str, int]:
+    """
+    Count how many reservations changed to given statuses for a shelter in a date range.
+
+    Each reservation is counted once per status.
+    """
+    from shelters.models import Reservation
+
+    events = pghistory.models.Events.objects.filter(
+        pgh_obj_id__in=Reservation.objects.filter(shelter_id=shelter_id)
+        .annotate(pk_text=Cast("pk", TextField()))
+        .values("pk_text"),
+        pgh_label="reservation.status_change",
+        pgh_created_at__gte=start_date,
+        pgh_created_at__lt=end_date,
+    )
+
+    return events.aggregate(
+        STATUS_TO_CHECK_IN_OVERDUE=Count(
+            "pgh_obj_id",
+            distinct=True,
+            filter=Q(pgh_data__status="check_in_overdue"),
+        ),
+        STATUS_TO_CANCELLED=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="cancelled")),
+        STATUS_TO_CHECKED_IN=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="checked_in")),
+        STATUS_OVERDUE_TO_CHECKED_IN=Count(
+            "pgh_obj_id",
+            distinct=True,
+            filter=Q(pgh_diff__status__0="check_in_overdue", pgh_diff__status__1="checked_in"),
+        ),
+    )

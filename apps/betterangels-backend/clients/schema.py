@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_user_permission_group
+from accounts.selectors import resolve_permission_group
 from clients.enums import ErrorCodeEnum
 from clients.models import (
     ClientContact,
@@ -32,6 +32,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import ForeignKey, Prefetch
 from graphql import GraphQLError
+from notes.groups import CASEWORKER
 from phonenumber_field.validators import validate_international_phonenumber
 from strawberry.scalars import JSON
 from strawberry.types import Info
@@ -600,7 +601,7 @@ class Mutation:
                 [ClientProfile.perms.CHANGE],
             ).get(id=data.client_profile)
 
-            permission_group = get_user_permission_group(user)
+            permission_group = resolve_permission_group(user, template=CASEWORKER)
 
             content_type = ContentType.objects.get_for_model(ClientProfile)
             client_document = Attachment.objects.create(

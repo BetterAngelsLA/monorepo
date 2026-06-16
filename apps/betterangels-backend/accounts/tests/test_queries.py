@@ -1,18 +1,18 @@
-from typing import Any
 from unittest.mock import ANY, patch
 
 import time_machine
 from accounts.enums import OrgRoleEnum
-from accounts.groups import GroupTemplateNames
+from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.models import User
 from accounts.permissions import UserOrganizationPermissions
-from accounts.utils import OrgPermissionManager
+from accounts.role_manager import OrgRoleManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.test import ignore_warnings, override_settings
 from hmis.tests.test_mutations import LOGIN_MUTATION
 from model_bakery import baker
-from organizations.models import Organization, OrganizationUser
+from notes.groups import CASEWORKER
+from organizations.models import OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 from .baker_recipes import organization_recipe, permission_group_recipe
@@ -43,8 +43,8 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         ("organization_count, is_outreach_authorized, expected_query_count"),
         [
             (0, False, 3),
-            (1, True, 4),
-            (2, True, 4),
+            (1, False, 3),
+            (2, False, 3),
         ],
     )
     def test_logged_in_user_query(
@@ -210,7 +210,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         org_1.add_user(user)
         org_2.add_user(user)
 
-        omb = OrgPermissionManager(org_1)
+        omb = OrgRoleManager(org_1)
 
         self.graphql_client.force_login(user)
 
@@ -230,7 +230,12 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
 
         expected_query_count = 2
 
-        omb.set_role(user, user_role)
+        if user_role == OrgRoleEnum.MEMBER:
+            pass  # no roles assigned
+        elif user_role == OrgRoleEnum.ADMIN:
+            omb.add_roles(user, CASEWORKER, ORG_ADMIN)
+        elif user_role == OrgRoleEnum.SUPERUSER:
+            omb.add_roles(user, CASEWORKER, ORG_SUPERUSER)
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
@@ -245,98 +250,21 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         )
 
 
-class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
-    def test_caseworker_organizations_query(self) -> None:
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-
-        # This recipe creates an organization in the process. Including this here because even though
-        # Caseworker orgs are created elsewhere in the test suite, this test should be self-contained.
-        permission_group_recipe.make(name="Caseworker")
-
-        non_cw_org = organization_recipe.make()
-
-        query = """
-            query ($pagination: OffsetPaginationInput) {
-                caseworkerOrganizations(pagination: $pagination) {
-                    totalCount
-                    results {
-                        id
-                        name
-                    }
-                    pageInfo {
-                        offset
-                        limit
-                    }
-                }
-            }
-        """
-        variables = {"pagination": {"offset": 0, "limit": 10}}
-        response = self.execute_graphql(query, variables=variables)
-
-        caseworker_orgs = response["data"]["caseworkerOrganizations"]["results"]
-        expected_caseworker_org_ids = list(
-            Organization.objects.filter(permission_groups__name__icontains=GroupTemplateNames.CASEWORKER).values_list(
-                "id", flat=True
-            )
-        )
-        actual_caseworker_org_ids = [int(org["id"]) for org in caseworker_orgs]
-
-        self.assertCountEqual(expected_caseworker_org_ids, actual_caseworker_org_ids)
-        self.assertNotIn(non_cw_org.pk, actual_caseworker_org_ids)
-
-    @parametrize(
-        "search_term, expected_orgs",
-        [
-            (None, ["org_1", "org_2", "test_org"]),
-            ("org_", ["org_1", "org_2"]),
-            ("org_1", ["org_1"]),
-            ("org 2", ["org_2"]),
-            ("nonexistent org", []),
-        ],
-    )
-    def test_caseworker_organizations_query_filter(self, search_term: str | None, expected_orgs: list[str]) -> None:
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-
-        query = """
-            query ($pagination: OffsetPaginationInput, $filters: OrganizationFilter) {
-                caseworkerOrganizations(pagination: $pagination, filters: $filters) {
-                    totalCount
-                    results {
-                        id
-                        name
-                    }
-                    pageInfo {
-                        offset
-                        limit
-                    }
-                }
-            }
-        """
-
-        filters: dict[str, Any] = {"search": search_term}
-
-        response = self.execute_graphql(query, variables={"filters": filters})
-
-        actual_orgs = [org["name"] for org in response["data"]["caseworkerOrganizations"]["results"]]
-        self.assertCountEqual(actual_orgs, expected_orgs)
-
-
 class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.org = organization_recipe.make(name="org")
         self.org_member = baker.make(User, first_name="member")
         self.org_admin = baker.make(User, first_name="ad", last_name="min", email="ad@org.co")
         self.org_superuser = baker.make(User, first_name="superuser")
 
+        self.org = organization_recipe.make(name="org", owner=self.org_admin)
+
         self.org.add_user(self.org_member)
-        self.org.add_user(self.org_admin)
         self.org.add_user(self.org_superuser)
 
-        omb = OrgPermissionManager(self.org)
-        omb.set_role(self.org_admin, OrgRoleEnum.ADMIN)
-        omb.set_role(self.org_superuser, OrgRoleEnum.SUPERUSER)
+        omb = OrgRoleManager(self.org)
+        omb.add_roles(self.org_superuser, CASEWORKER, ORG_SUPERUSER)
 
         another_org = organization_recipe.make(name="another_org")
         another_org.add_user(baker.make(User))

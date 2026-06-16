@@ -3,6 +3,7 @@ import uuid
 from typing import Any, Dict, List, Optional, Protocol, Tuple, Union
 
 from accounts.models import User
+from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.models import Address, Location
@@ -150,13 +151,20 @@ class GraphQLBaseTestCase(
         self.non_case_manager_user = self.user_map["non_case_manager_user"]
 
     def _setup_groups_and_permissions(self) -> None:
+        from notes.groups import CASEWORKER
+
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")
-        # A "caseworker" permission group is automatically created for an org when its first user is added
-        # see: apps/betterangels-backend/accounts/signals.py -> handle_organization_user_added
+        # Permission groups are created by create_organization_with_presets
+        # (via the recipe helper). Roles are assigned explicitly instead of
+        # relying on the deleted handle_organization_user_added signal.
         self.org_1.add_user(self.org_1_case_manager_1)
         self.org_1.add_user(self.org_1_case_manager_2)
         self.org_2.add_user(self.org_2_case_manager_1)
+
+        OrgRoleManager(self.org_1).add_roles(self.org_1_case_manager_1, CASEWORKER)
+        OrgRoleManager(self.org_1).add_roles(self.org_1_case_manager_2, CASEWORKER)
+        OrgRoleManager(self.org_2).add_roles(self.org_2_case_manager_1, CASEWORKER)
 
     def _setup_hmis_session(self) -> None:
         """

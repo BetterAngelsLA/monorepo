@@ -850,9 +850,9 @@ type CurrentUserType {
   organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): [CurrentUserOrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
-  isOutreachAuthorized: Boolean
   username: String
   isHmisUser: Boolean
+  isOutreachAuthorized: Boolean @deprecated(reason: "Use userPermissions check instead.")
 }
 
 """Date (isoformat)"""
@@ -1721,6 +1721,7 @@ input OrgInvitationInput {
   middleName: String = null
   lastName: String!
   organizationId: ID!
+  permissionTemplate: PermissionTemplateEnum!
 }
 
 type OrgPermissions {
@@ -1859,6 +1860,11 @@ type ParkingType {
   name: ParkingChoices
 }
 
+enum PermissionTemplateEnum {
+  CASEWORKER
+  SHELTER_OPERATOR
+}
+
 enum PetChoices {
   CATS
   DOGS_UNDER_25_LBS
@@ -1915,7 +1921,6 @@ enum PronounEnum {
 
 type Query {
   currentUser: CurrentUserType!
-  caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
@@ -1942,6 +1947,7 @@ type Query {
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter = null, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
   reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
@@ -2921,9 +2927,9 @@ type UserType {
   organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = []): [OrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
-  isOutreachAuthorized: Boolean
   username: String
   isHmisUser: Boolean
+  isOutreachAuthorized: Boolean @deprecated(reason: "Use userPermissions check instead.")
 }
 
 enum VaccinationRequirementChoices {

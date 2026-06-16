@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
 from accounts.enums import OrgRoleEnum
+from accounts.models import PermissionGroup
 from accounts.permissions import make_granted_permissions
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
+from common.org_types import REGISTRY
 from django.db.models import Q, QuerySet
+from notes.groups import CASEWORKER
 from organizations.models import Organization
 from reports.permissions import ReportPermissions
 from shelters.permissions import ShelterPermissions
@@ -148,7 +152,6 @@ class UserType(UserBaseType):
     organizations_organization: Optional[List[OrganizationType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
-    is_outreach_authorized: Optional[bool]
     username: Optional[str]
 
     @strawberry_django.field
@@ -157,6 +160,23 @@ class UserType(UserBaseType):
         session = request.session
 
         return bool(session.get(HMIS_SESSION_KEY_NAME, None))
+
+    @strawberry_django.field(deprecation_reason="Use userPermissions check instead.")
+    def is_outreach_authorized(self, info: Info) -> Optional[bool]:
+        """Backwards-compatible field for old mobile clients.
+
+        Returns True if the user belongs to a Caseworker permission group
+        in any organization (i.e., they are an outreach worker).
+
+        TODO: Remove this field once mobile clients have migrated.
+        """
+        user = get_current_user(info)
+        if not user or not user.is_authenticated:
+            return False
+        return PermissionGroup.objects.filter(
+            group__user=user.pk,
+            template__name=CASEWORKER.name,
+        ).exists()
 
 
 @strawberry_django.type(User)
@@ -165,7 +185,6 @@ class CurrentUserType(UserBaseType):
     organizations_organization: Optional[List[CurrentUserOrganizationType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
-    is_outreach_authorized: Optional[bool]
     username: Optional[str]
 
     @strawberry_django.field
@@ -174,6 +193,23 @@ class CurrentUserType(UserBaseType):
         session = request.session
 
         return bool(session.get(HMIS_SESSION_KEY_NAME, None))
+
+    @strawberry_django.field(deprecation_reason="Use userPermissions check instead.")
+    def is_outreach_authorized(self, info: Info) -> Optional[bool]:
+        """Backwards-compatible field for old clients.
+
+        Returns True if the user belongs to a Caseworker permission group
+        in any organization (i.e., they are an outreach worker).
+
+        TODO: Remove this field once mobile clients have migrated.
+        """
+        user = get_current_user(info)
+        if not user or not user.is_authenticated:
+            return False
+        return PermissionGroup.objects.filter(
+            group__user=user.pk,
+            template__name=CASEWORKER.name,
+        ).exists()
 
 
 @strawberry_django.order_type(User, one_of=False)
@@ -224,6 +260,16 @@ class UpdateUserInput(UserBaseType):
     has_accepted_privacy_policy: auto
 
 
+# Dynamically built from the registry — adding a template to
+# common.org_types.REGISTRY automatically exposes it here.
+PermissionTemplateEnum = strawberry.enum(  # type: ignore[call-overload]
+    Enum(
+        "PermissionTemplateEnum",  # type: ignore[arg-type]
+        {name.upper().replace(" ", "_"): name for name in REGISTRY.invitable_template_names()},
+    )
+)
+
+
 @strawberry.input
 class OrgInvitationInput:
     email: str
@@ -231,6 +277,7 @@ class OrgInvitationInput:
     middle_name: Optional[str] = None
     last_name: str
     organization_id: ID
+    permission_template: PermissionTemplateEnum  # type: ignore[valid-type]
 
 
 @strawberry.input
