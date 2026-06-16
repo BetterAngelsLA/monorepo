@@ -270,7 +270,9 @@ class Mutation:
             organization_name=data.organization_name,
         )
 
-        send_welcome_email(user, organization)
+        templates = [t for t in REGISTRY.templates_for(organization) if t.welcome_html]
+        for template in templates:
+            send_welcome_email(user, organization, template)
 
         return CreateOrganizationResponse(
             user=cast(UserType, user), organization=cast(OrganizationType, organization)

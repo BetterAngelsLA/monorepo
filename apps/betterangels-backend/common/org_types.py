@@ -33,6 +33,8 @@ class OrgTypeConfig:
     name: str  # "outreach"
     label: str  # "Outreach"
     templates: tuple[TemplateConfig, ...]  # (CASEWORKER, ORG_ADMIN, ORG_SUPERUSER)
+    allow_public_signup: bool = False
+    """Whether this org type supports public self-signup (e.g., shelter operator onboarding)."""
 
 
 @dataclass(frozen=True)
@@ -156,5 +158,6 @@ REGISTRY = Registry(
         name="shelter",
         label="Shelter",
         templates=(SHELTER_OPERATOR, ORG_ADMIN, ORG_SUPERUSER),
+        allow_public_signup=True,
     ),
 )

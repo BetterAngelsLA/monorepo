@@ -32,3 +32,5 @@ class TemplateConfig:
     ``organization_name``, and ``user_first_name`` in its context."""
     welcome_txt: str | None = None
     """Path to the plain-text welcome email template for self-signup flows."""
+    welcome_dashboard_url: str | None = None
+    """Dashboard URL used in welcome emails. Role-specific (e.g. /operator for Shelter Operator)."""
