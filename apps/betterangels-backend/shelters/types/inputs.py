@@ -141,6 +141,7 @@ class UpdateShelterInput:
     email: Maybe[Optional[str]] = UNSET
     website: Maybe[Optional[str]] = UNSET
     is_private: Maybe[bool] = UNSET
+    hero_image_id: Maybe[ID | None] = UNSET
     city_id: Maybe[ID | None] = UNSET
     spa_id: Maybe[ID | None] = UNSET
     cities_served_ids: Maybe[Optional[List[ID]]] = UNSET

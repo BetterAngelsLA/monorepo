@@ -1,4 +1,5 @@
 import { mergeCss } from '@monorepo/react/shared';
+import { ReactNode } from 'react';
 import { Button } from '../../base-ui/buttons';
 
 type FormActionsVariant = 'fixed' | 'relative';
@@ -9,6 +10,8 @@ type TProps = {
   onPrimaryClick: () => void;
   primaryLabel?: string;
   primaryClassName?: string;
+  primaryLeftIcon?: ReactNode;
+  primaryRightIcon?: ReactNode;
   onSecondaryClick?: () => void;
   secondaryLabel?: string;
   secondaryClassName?: string;
@@ -22,6 +25,8 @@ export function FormActions(props: TProps) {
     onPrimaryClick,
     primaryLabel = 'Save',
     primaryClassName,
+    primaryLeftIcon,
+    primaryRightIcon,
     onSecondaryClick,
     secondaryLabel = 'Cancel',
     secondaryClassName,
@@ -54,6 +59,8 @@ export function FormActions(props: TProps) {
         onClick={onPrimaryClick}
         className={mergeCss([primaryClassName])}
         disabled={primaryDisabled}
+        leftIcon={primaryLeftIcon}
+        rightIcon={primaryRightIcon}
       >
         {primaryLabel}
       </Button>

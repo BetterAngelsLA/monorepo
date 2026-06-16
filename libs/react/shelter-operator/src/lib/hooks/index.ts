@@ -1,5 +1,6 @@
 export * from './useAdminShelterProfile';
 export * from './useBed';
+export * from './useDeleteShelterPhoto';
 export * from './useRoom';
 export * from './useShelterCities';
 export * from './useShelterSpas';

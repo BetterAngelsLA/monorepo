@@ -20,7 +20,7 @@ export function ShelterMedia(props: TProps) {
     return null;
   }
 
-  const { photos } = shelter;
+  const { photos, heroImage } = shelter;
 
   return (
     <div className="px-6 flex-col flex-1 pb-72">
@@ -34,7 +34,11 @@ export function ShelterMedia(props: TProps) {
       />
 
       {currentTab === 'photos' && (
-        <ShelterPhotos shelterId={shelterId} photos={photos || []} />
+        <ShelterPhotos
+          shelterId={shelterId}
+          photos={photos || []}
+          heroImageId={heroImage?.id}
+        />
       )}
       {/* {currentTab === 'videos' && (
         <ShelterVideosForm onSave={() => undefined} />

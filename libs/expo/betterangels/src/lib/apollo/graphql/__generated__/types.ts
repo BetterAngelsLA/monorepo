@@ -3535,6 +3535,7 @@ export type UpdateShelterInput = {
   citiesServedIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   cityCouncilDistrict?: InputMaybe<Scalars['Int']['input']>;
   cityId?: InputMaybe<Scalars['ID']['input']>;
+  heroImageId?: InputMaybe<Scalars['ID']['input']>;
   demographics?: InputMaybe<Array<DemographicChoices>>;
   demographicsOther?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
