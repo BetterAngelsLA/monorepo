@@ -187,7 +187,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
     def test_beds_query_without_permission_returns_empty(self) -> None:
         self.operator.user_permissions.clear()
 
-        expected_query_count = 4
+        K
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.beds_query, variables={"pagination": {"offset": 0, "limit": 10}})
 

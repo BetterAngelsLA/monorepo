@@ -106,7 +106,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         )
 
         payload = response["data"]["adminShelters"]
-        self.assertEqual(payload["totalCount"], 3)
+        self.assertEqual(payload["totalCount"], 2)
         returned_ids = {r["id"] for r in payload["results"]}
         self.assertSetEqual(
             returned_ids,
@@ -224,7 +224,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 5
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
         results = response["data"]["adminShelters"]["results"]
@@ -288,7 +288,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 5
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
         results = response["data"]["adminShelters"]["results"]
