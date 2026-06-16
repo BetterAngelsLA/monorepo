@@ -145,7 +145,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         self.org_admin = baker.make(User, first_name="admin")
 
         self.org = organization_recipe.make(name="org", owner=self.org_admin)
-        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(self.org.id)
+        self._set_active_org(self.org)
 
         self.graphql_client.force_login(self.org_admin)
 

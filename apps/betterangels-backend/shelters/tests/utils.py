@@ -74,7 +74,7 @@ class ShelterTestCase(GraphQLBaseTestCase):
         )
         self.operator = baker.make(User)
         self.org.users.add(self.operator)
-        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(self.org.id)
+        self._set_active_org(self.org)
         # TODO: temporary solution until operator template implemented. See: SDB-178
         self.grant_operator_permissions(self.operator)
 
