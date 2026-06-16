@@ -1,11 +1,204 @@
 import datetime
 
 from django.test import TestCase
+from django.utils import timezone
 from model_bakery import baker
-from shelters.enums import BedStatusChoices
-from shelters.models import Bed, BedEvent  # type: ignore[attr-defined]
-from shelters.selectors import report_bed_status_counts
+
+# isort: split
+from shelters.enums import BedStatusChoices, ReservationStatusChoices
+from shelters.models import Bed, BedEvent, Reservation, Shelter  # type: ignore[attr-defined]
+from shelters.selectors import (
+    report_bed_status_counts,
+    reservation_status_change_counts,
+)
 from shelters.tests.baker_recipes import shelter_recipe
+
+ReservationEvent = Reservation.pgh_event_model  # type: ignore[attr-defined]
+
+
+class ReservationStatusChangeCountsTestCase(TestCase):
+    """Tests for ``reservation_status_change_counts``."""
+
+    def setUp(self) -> None:
+        self.shelter = Shelter.objects.create(name="Test Shelter")
+        self.other_shelter = Shelter.objects.create(name="Other Shelter")
+        # A range comfortably inside the one-year look-back window.
+        self.start = timezone.make_aware(datetime.datetime(2026, 1, 1))
+        self.end = timezone.make_aware(datetime.datetime(2026, 2, 1))
+
+    # -- helpers -------------------------------------------------------------
+
+    def _make_reservation(self, shelter: Shelter, statuses: list[ReservationStatusChoices]) -> Reservation:
+        """Create a reservation (defaults to CONFIRMED) then apply each status in order.
+
+        Each ``save`` that changes ``status`` fires a ``reservation.status_change``
+        event via the pghistory trigger.
+        """
+        reservation = Reservation.objects.create(shelter=shelter)
+        for status in statuses:
+            reservation.status = status
+            reservation.save()
+        return reservation
+
+    def _set_event_dates(self, reservation: Reservation, dt: datetime.datetime) -> None:
+        """Pin all of a reservation's status-change events to ``dt`` (timezone-aware)."""
+        ReservationEvent.objects.filter(
+            pgh_obj_id=reservation.pk,
+            pgh_label="reservation.status_change",
+        ).update(pgh_created_at=dt)
+
+    def _in_range(self) -> datetime.datetime:
+        return timezone.make_aware(datetime.datetime(2026, 1, 15, 12, 0))
+
+    # -- tests ---------------------------------------------------------------
+
+    def test_counts_each_transition_type(self) -> None:
+        """One reservation per status produces a count of 1 in each bucket."""
+        overdue = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECK_IN_OVERDUE])
+        cancelled = self._make_reservation(self.shelter, [ReservationStatusChoices.CANCELLED])
+        checked_in = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECKED_IN])
+        for r in (overdue, cancelled, checked_in):
+            self._set_event_dates(r, self._in_range())
+
+        with self.assertNumQueries(1):
+            result = reservation_status_change_counts(self.shelter.pk, self.start, self.end)
+
+        self.assertEqual(result["STATUS_TO_CHECK_IN_OVERDUE"], 1)
+        self.assertEqual(result["STATUS_TO_CANCELLED"], 1)
+        self.assertEqual(result["STATUS_TO_CHECKED_IN"], 1)
+
+    def test_overdue_to_checked_in_transition(self) -> None:
+        """A check_in_overdue -> checked_in transition is counted via pgh_diff."""
+        reservation = self._make_reservation(
+            self.shelter,
+            [ReservationStatusChoices.CHECK_IN_OVERDUE, ReservationStatusChoices.CHECKED_IN],
+        )
+        self._set_event_dates(reservation, self._in_range())
+
+        result = reservation_status_change_counts(self.shelter.pk, self.start, self.end)
+
+        self.assertEqual(result["STATUS_OVERDUE_TO_CHECKED_IN"], 1)
+        # The same reservation also landed on checked_in, counted once there too.
+        self.assertEqual(result["STATUS_TO_CHECKED_IN"], 1)
+
+    def test_each_reservation_counted_once_per_status(self) -> None:
+        """Two transitions to checked_in on one reservation count as one (distinct)."""
+        reservation = self._make_reservation(
+            self.shelter,
+            [
+                ReservationStatusChoices.CHECKED_IN,
+                ReservationStatusChoices.CANCELLED,
+                ReservationStatusChoices.CHECKED_IN,
+            ],
+        )
+        self._set_event_dates(reservation, self._in_range())
+
+        result = reservation_status_change_counts(self.shelter.pk, self.start, self.end)
+
+        self.assertEqual(result["STATUS_TO_CHECKED_IN"], 1)
+
+    def test_events_before_end_datetime_are_included(self) -> None:
+        """An event before the exclusive end datetime is counted."""
+        reservation = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECKED_IN])
+        self._set_event_dates(
+            reservation,
+            timezone.make_aware(datetime.datetime(2026, 1, 31, 23, 0)),
+        )
+
+        result = reservation_status_change_counts(self.shelter.pk, self.start, self.end)
+
+        self.assertEqual(result["STATUS_TO_CHECKED_IN"], 1)
+
+    def test_events_outside_range_excluded(self) -> None:
+        """Events before start or at the exclusive end datetime are not counted."""
+        before = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECKED_IN])
+        after = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECKED_IN])
+        self._set_event_dates(
+            before,
+            timezone.make_aware(datetime.datetime(2025, 12, 31, 12, 0)),
+        )
+        self._set_event_dates(
+            after,
+            timezone.make_aware(datetime.datetime(2026, 2, 1, 0, 0)),
+        )
+
+        result = reservation_status_change_counts(self.shelter.pk, self.start, self.end)
+
+        self.assertEqual(result["STATUS_TO_CHECKED_IN"], 0)
+
+    def test_other_shelter_events_excluded(self) -> None:
+        """Events belonging to a different shelter are not counted."""
+        reservation = self._make_reservation(self.other_shelter, [ReservationStatusChoices.CHECKED_IN])
+        self._set_event_dates(reservation, self._in_range())
+
+        result = reservation_status_change_counts(self.shelter.pk, self.start, self.end)
+
+        self.assertEqual(result["STATUS_TO_CHECKED_IN"], 0)
+
+    def test_returns_zero_when_end_date_before_start_date(self) -> None:
+        """An end_datetime before start_datetime returns zero in every bucket."""
+        result = reservation_status_change_counts(self.shelter.pk, self.end, self.start)
+
+        self.assertEqual(
+            result,
+            {
+                "STATUS_TO_CHECK_IN_OVERDUE": 0,
+                "STATUS_TO_CANCELLED": 0,
+                "STATUS_TO_CHECKED_IN": 0,
+                "STATUS_OVERDUE_TO_CHECKED_IN": 0,
+            },
+        )
+
+    def test_no_events_returns_zero_counts(self) -> None:
+        """A shelter with no status changes returns zero in every bucket."""
+        result = reservation_status_change_counts(self.shelter.pk, self.start, self.end)
+
+        self.assertEqual(
+            result,
+            {
+                "STATUS_TO_CHECK_IN_OVERDUE": 0,
+                "STATUS_TO_CANCELLED": 0,
+                "STATUS_TO_CHECKED_IN": 0,
+                "STATUS_OVERDUE_TO_CHECKED_IN": 0,
+            },
+        )
+
+    def test_counts_across_date_range(self) -> None:
+        """Counts are aggregated across the whole datetime range."""
+        checked_in = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECKED_IN])
+        cancelled = self._make_reservation(self.shelter, [ReservationStatusChoices.CANCELLED])
+        self._set_event_dates(
+            checked_in,
+            timezone.make_aware(datetime.datetime(2026, 1, 1, 12, 0)),
+        )
+        self._set_event_dates(
+            cancelled,
+            timezone.make_aware(datetime.datetime(2026, 1, 2, 12, 0)),
+        )
+
+        result = reservation_status_change_counts(
+            self.shelter.pk,
+            timezone.make_aware(datetime.datetime(2026, 1, 1)),
+            timezone.make_aware(datetime.datetime(2026, 1, 3)),
+        )
+
+        self.assertEqual(result["STATUS_TO_CHECKED_IN"], 1)
+        self.assertEqual(result["STATUS_TO_CANCELLED"], 1)
+
+    def test_counts_support_one_day_datetime_range(self) -> None:
+        """A one-day datetime range includes events on that date."""
+        reservation = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECK_IN_OVERDUE])
+        self._set_event_dates(
+            reservation,
+            timezone.make_aware(datetime.datetime(2026, 1, 15, 23, 0)),
+        )
+
+        result = reservation_status_change_counts(
+            self.shelter.pk,
+            timezone.make_aware(datetime.datetime(2026, 1, 15)),
+            timezone.make_aware(datetime.datetime(2026, 1, 16)),
+        )
+        self.assertEqual(result["STATUS_TO_CHECK_IN_OVERDUE"], 1)
 
 
 def _dt(y: int, m: int, d: int) -> datetime.datetime:
@@ -68,7 +261,13 @@ class ReportBedStatusCountsTestCase(TestCase):
         self._assert_result(
             result,
             [
-                {"date": "2026-01-01", "available": 1, "occupied": 1, "reserved": 1, "out_of_service": 1},
+                {
+                    "date": "2026-01-01",
+                    "available": 1,
+                    "occupied": 1,
+                    "reserved": 1,
+                    "out_of_service": 1,
+                },
             ],
         )
 
@@ -156,9 +355,24 @@ class ReportBedStatusCountsTestCase(TestCase):
         self._assert_result(
             result,
             [
-                {"date": "2026-01-01", "available": 1, "occupied": 0, "out_of_service": 0},
-                {"date": "2026-01-02", "available": 0, "occupied": 1, "out_of_service": 0},
-                {"date": "2026-01-03", "available": 0, "occupied": 0, "out_of_service": 1},
+                {
+                    "date": "2026-01-01",
+                    "available": 1,
+                    "occupied": 0,
+                    "out_of_service": 0,
+                },
+                {
+                    "date": "2026-01-02",
+                    "available": 0,
+                    "occupied": 1,
+                    "out_of_service": 0,
+                },
+                {
+                    "date": "2026-01-03",
+                    "available": 0,
+                    "occupied": 0,
+                    "out_of_service": 1,
+                },
             ],
         )
 

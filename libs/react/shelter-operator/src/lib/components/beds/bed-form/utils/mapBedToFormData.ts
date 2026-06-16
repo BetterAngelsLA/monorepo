@@ -1,32 +1,13 @@
 import type {
   AccessibilityChoices,
-  BedType,
   DemographicChoices,
   FunderChoices,
   MedicalNeedChoices,
   PetChoices,
 } from '../../../../apollo/graphql/__generated__/types';
+import type { UseBedResultType } from '../../../../hooks/useBed';
 import { createEmptyBedFormData } from '../constants/defaultBedFormData';
 import type { BedFormData } from '../formTypes';
-
-type BedQueryResult = Pick<
-  BedType,
-  | 'accessibility'
-  | 'b7'
-  | 'demographics'
-  | 'fees'
-  | 'funders'
-  | 'maintenanceFlag'
-  | 'medicalNeeds'
-  | 'name'
-  | 'pets'
-  | 'status'
-  | 'statusNotes'
-  | 'storage'
-  | 'type'
-> & {
-  room?: Pick<NonNullable<BedType['room']>, 'id'> | null;
-};
 
 function toChoiceNames<T extends string>(
   items: ReadonlyArray<{ name?: T | null }> | undefined
@@ -37,7 +18,7 @@ function toChoiceNames<T extends string>(
   );
 }
 
-export function mapBedToFormData(bed: BedQueryResult): BedFormData {
+export function mapBedToFormData(bed: UseBedResultType): BedFormData {
   const defaults = createEmptyBedFormData();
 
   return {
