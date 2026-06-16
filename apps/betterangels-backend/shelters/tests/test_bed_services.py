@@ -23,12 +23,15 @@ class BedServiceTestCase(TestCase):
         self.user = User.objects.create_user(username="bed-service-user", password="pw")
         self.org.users.add(self.user)
         self.shelter = shelter_recipe.make(organization=self.org)
+        self.org_id = str(self.org.id)
+        self.org_id = str(self.org.id)
 
 
 class BedCreateTestCase(BedServiceTestCase):
     def test_creates_bed_with_scalar_fields(self) -> None:
         bed = bed_create(
             user=self.user,
+            organization_id=self.org_id,
             data={
                 "shelter_id": self.shelter.pk,
                 "status": BedStatusChoices.AVAILABLE,
@@ -49,6 +52,7 @@ class BedCreateTestCase(BedServiceTestCase):
 
         bed = bed_create(
             user=self.user,
+            organization_id=self.org_id,
             data={
                 "shelter_id": self.shelter.pk,
                 "room_id": room.pk,
@@ -66,6 +70,7 @@ class BedCreateTestCase(BedServiceTestCase):
 
         bed = bed_create(
             user=self.user,
+            organization_id=self.org_id,
             data={
                 "shelter_id": self.shelter.pk,
                 "demographics": [DemographicChoices.SINGLE_MEN],
@@ -85,14 +90,14 @@ class BedCreateTestCase(BedServiceTestCase):
 
     def test_shelter_not_found_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            bed_create(user=self.user, data={"shelter_id": 999999, "name": "Bed 1"})
+            bed_create(user=self.user, organization_id=self.org_id, data={"shelter_id": 999999, "name": "Bed 1"})
         self.assertIn("Shelter matching ID 999999 could not be found.", str(ctx.exception))
 
     def test_user_without_org_access_raises_object_does_not_exist(self) -> None:
         other_shelter = shelter_recipe.make(organization=self.other_org)
 
         with self.assertRaises(ObjectDoesNotExist):
-            bed_create(user=self.user, data={"shelter_id": other_shelter.pk, "name": "Bed 1"})
+            bed_create(user=self.user, organization_id=self.org_id, data={"shelter_id": other_shelter.pk, "name": "Bed 1"})
 
     def test_invalid_m2m_subset_raises_validation_error(self) -> None:
         shelter = Shelter.objects.create(organization=self.org)
@@ -102,6 +107,7 @@ class BedCreateTestCase(BedServiceTestCase):
         with self.assertRaises(ValidationError) as ctx:
             bed_create(
                 user=self.user,
+                organization_id=self.org_id,
                 data={
                     "shelter_id": shelter.pk,
                     "demographics": [DemographicChoices.FAMILIES],
@@ -123,6 +129,7 @@ class BedUpdateTestCase(BedServiceTestCase):
     def test_updates_scalar_fields(self) -> None:
         updated = bed_update(
             user=self.user,
+            organization_id=self.org_id,
             bed_id=self.bed.pk,
             data={
                 "name": "Bed 1 Updated",
@@ -139,7 +146,7 @@ class BedUpdateTestCase(BedServiceTestCase):
         self.assertEqual(self.bed.name, "Bed 1 Updated")
 
     def test_none_scalar_values_are_skipped(self) -> None:
-        bed_update(user=self.user, bed_id=self.bed.pk, data={"name": "Renamed", "status": None})
+        bed_update(user=self.user, organization_id=self.org_id, bed_id=self.bed.pk, data={"name": "Renamed", "status": None})
 
         self.bed.refresh_from_db()
         self.assertEqual(self.bed.name, "Renamed")
@@ -153,6 +160,7 @@ class BedUpdateTestCase(BedServiceTestCase):
 
         bed_update(
             user=self.user,
+            organization_id=self.org_id,
             bed_id=self.bed.pk,
             data={
                 "demographics": [DemographicChoices.SINGLE_MEN],
@@ -169,21 +177,21 @@ class BedUpdateTestCase(BedServiceTestCase):
         self.shelter.demographics.add(demographic)
         self.bed.demographics.add(demographic)
 
-        bed_update(user=self.user, bed_id=self.bed.pk, data={"demographics": []})
+        bed_update(user=self.user, organization_id=self.org_id, bed_id=self.bed.pk, data={"demographics": []})
 
         self.bed.refresh_from_db()
         self.assertEqual(self.bed.demographics.count(), 0)
 
     def test_bed_not_found_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            bed_update(user=self.user, bed_id=999999, data={"name": "Missing"})
+            bed_update(user=self.user, organization_id=self.org_id, bed_id=999999, data={"name": "Missing"})
         self.assertIn("Bed matching ID 999999 could not be found.", str(ctx.exception))
 
     def test_user_without_org_access_raises_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist):
             User = get_user_model()
             outsider = User.objects.create_user(username="outsider", password="pw")
-            bed_update(user=outsider, bed_id=self.bed.pk, data={"name": "Blocked"})
+            bed_update(user=outsider, organization_id=self.org_id, bed_id=self.bed.pk, data={"name": "Blocked"})
 
 
 class BedDeleteTestCase(BedServiceTestCase):
@@ -191,7 +199,7 @@ class BedDeleteTestCase(BedServiceTestCase):
         bed_to_delete = Bed.objects.create(shelter=self.shelter, name="Bed 1", status=BedStatusChoices.AVAILABLE)
         other_bed = Bed.objects.create(shelter=self.shelter, name="Bed 2", status=BedStatusChoices.AVAILABLE)
 
-        deleted = bed_delete(user=self.user, ids=[bed_to_delete.pk])
+        deleted = bed_delete(user=self.user, organization_id=self.org_id, ids=[bed_to_delete.pk])
 
         self.assertEqual(len(deleted), 1)
         self.assertEqual(deleted[0], bed_to_delete.pk)
@@ -203,14 +211,14 @@ class BedDeleteTestCase(BedServiceTestCase):
         bed_to_delete_2 = Bed.objects.create(shelter=self.shelter, name="Bed 2", status=BedStatusChoices.AVAILABLE)
         other_bed = Bed.objects.create(shelter=self.shelter, name="Bed 3", status=BedStatusChoices.AVAILABLE)
 
-        deleted = bed_delete(user=self.user, ids=[bed_to_delete_1.pk, bed_to_delete_2.pk])
+        deleted = bed_delete(user=self.user, organization_id=self.org_id, ids=[bed_to_delete_1.pk, bed_to_delete_2.pk])
 
         self.assertEqual(len(deleted), 2)
         self.assertFalse(Bed.objects.filter(pk__in=[bed_to_delete_1.pk, bed_to_delete_2.pk]).exists())
         self.assertTrue(Bed.objects.filter(pk=other_bed.pk).exists())
 
     def test_empty_list_returns_empty(self) -> None:
-        deleted = bed_delete(user=self.user, ids=[])
+        deleted = bed_delete(user=self.user, organization_id=self.org_id, ids=[])
 
         self.assertEqual(deleted, [])
 
@@ -244,7 +252,7 @@ class BedCloneTestCase(BedServiceTestCase):
         source.accessibility.add(accessibility)
         source.pets.add(pet)
 
-        clone = bed_clone(user=self.user, bed_id=str(source.pk))
+        clone = bed_clone(user=self.user, organization_id=self.org_id, bed_id=str(source.pk))
 
         self.assertNotEqual(clone.pk, source.pk)
         self.assertEqual(clone.name, "Bed 1 (Copy)")
@@ -277,7 +285,7 @@ class BedCloneTestCase(BedServiceTestCase):
 
     def test_bed_not_found_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            bed_clone(user=self.user, bed_id="999999")
+            bed_clone(user=self.user, organization_id=self.org_id, bed_id="999999")
         self.assertIn(
             "Bed matching ID 999999 could not be found.",
             str(ctx.exception),

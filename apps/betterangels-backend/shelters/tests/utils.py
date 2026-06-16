@@ -86,4 +86,4 @@ class ShelterTestCase(GraphQLBaseTestCase):
         for model, codename in SHELTER_OPERATOR_PERMISSIONS:
             content_type = ContentType.objects.get_for_model(model)
             permission = Permission.objects.get(content_type=content_type, codename=codename)
-            user.user_permissions.add(permission)
+            pg.group.permissions.add(permission)

@@ -122,10 +122,8 @@ def admin_shelter_list(
     extension on queries) or from ``request.organization_id`` (for mutations
     that use ``HasOrgPerm``).
     """
-    return queryset.filter(
-        organization_id=organization_id,
-        organization__in=Organization.objects.filter(pk=organization_id, users=user),
-    )
+    user_orgs = Organization.objects.filter(pk=OuterRef("organization_id"), users=user)
+    return queryset.filter(Exists(user_orgs), organization_id=organization_id)
 
 
 def shelter_get(*, user: "User", shelter_id: int | str, organization_id: str) -> "Shelter":

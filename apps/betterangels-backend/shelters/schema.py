@@ -99,47 +99,55 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Room.perms.ADD)])
     def create_room(self, info: Info, data: CreateRoomInput) -> RoomType:
         user = cast(User, get_current_user(info))
+        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(RoomType, room_create(user=user, data=clean, organization_id=get_current_organization(info)))
+        return cast(RoomType, room_create(user=user, data=clean, organization_id=org_id))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Room.perms.CHANGE)])
     def update_room(self, info: Info, id: ID, data: UpdateRoomInput) -> RoomType:
         user = cast(User, get_current_user(info))
+        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(RoomType, room_update(user=user, room_id=id, data=clean, organization_id=get_current_organization(info)))
+        return cast(RoomType, room_update(user=user, room_id=id, data=clean, organization_id=org_id))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Room.perms.ADD)])
     def clone_room(self, info: Info, id: ID) -> RoomType:
         user = cast(User, get_current_user(info))
-        return cast(RoomType, room_clone(user=user, room_id=id, organization_id=get_current_organization(info)))
+        org_id = get_current_organization(info)
+        return cast(RoomType, room_clone(user=user, room_id=id, organization_id=org_id))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Room.perms.DELETE)])
     def delete_rooms(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
         user = cast(User, get_current_user(info))
+        org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
-        deleted_ids = room_delete(user=user, ids=ids, organization_id=get_current_organization(info))
+        deleted_ids = room_delete(user=user, ids=ids, organization_id=org_id)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.ADD)])
     def create_bed(self, info: Info, data: CreateBedInput) -> BedType:
         user = cast(User, get_current_user(info))
+        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(BedType, bed_create(user=user, data=clean, organization_id=get_current_organization(info)))
+        return cast(BedType, bed_create(user=user, data=clean, organization_id=org_id))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.CHANGE)])
     def update_bed(self, info: Info, id: ID, data: UpdateBedInput) -> BedType:
         user = cast(User, get_current_user(info))
+        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(BedType, bed_update(user=user, bed_id=id, data=clean, organization_id=get_current_organization(info)))
+        return cast(BedType, bed_update(user=user, bed_id=id, data=clean, organization_id=org_id))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.ADD)])
     def clone_bed(self, info: Info, id: ID) -> BedType:
         user = cast(User, get_current_user(info))
-        return cast(BedType, bed_clone(user=user, bed_id=id, organization_id=get_current_organization(info)))
+        org_id = get_current_organization(info)
+        return cast(BedType, bed_clone(user=user, bed_id=id, organization_id=org_id))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.DELETE)])
     def delete_beds(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
         user = cast(User, get_current_user(info))
+        org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
-        deleted_ids = bed_delete(user=user, ids=ids, organization_id=get_current_organization(info))
+        deleted_ids = bed_delete(user=user, ids=ids, organization_id=org_id)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])

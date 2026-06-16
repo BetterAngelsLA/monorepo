@@ -72,7 +72,7 @@ class CreateRoomMutationTestCase(RoomMutationTestCase):
             }
         }
 
-        expected_query_count = 30
+        expected_query_count = 28
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -104,7 +104,7 @@ class CreateRoomMutationTestCase(RoomMutationTestCase):
 
         variables = {"data": {"shelterId": self.shelter.pk, "name": "Room-101"}}
 
-        expected_query_count = 10
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -126,7 +126,7 @@ class CreateRoomMutationTestCase(RoomMutationTestCase):
     def test_create_room_invalid_status(self) -> None:
         variables = {"data": {"shelterId": self.shelter.pk, "name": "Room-101", "status": "INVALID_STATUS"}}
 
-        expected_query_count = 2
+        expected_query_count = 1
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -175,7 +175,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             },
         }
 
-        expected_query_count = 14
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -214,7 +214,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             "data": {"notes": "New notes"},
         }
 
-        expected_query_count = 14
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -234,7 +234,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             "data": {"demographics": [DemographicChoices.SINGLE_MEN.name]},
         }
 
-        expected_query_count = 18
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -250,7 +250,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
         room = baker.make(Room, shelter=self.shelter, name="Room-102")
         variables = {"id": str(room.pk), "data": {"name": "Room-101"}}
 
-        expected_query_count = 10
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -290,7 +290,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
         room = baker.make(Room, shelter=self.shelter)
         variables = {"id": str(room.pk), "data": {"status": "INVALID_STATUS"}}
 
-        expected_query_count = 2
+        expected_query_count = 1
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -352,7 +352,7 @@ class CloneRoomMutationTestCase(RoomMutationTestCase):
 
         variables = {"id": str(source.pk)}
 
-        expected_query_count = 31
+        expected_query_count = 29
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
