@@ -5,7 +5,7 @@ from typing import Any, Protocol, Sequence, Tuple, Type, cast
 import strawberry
 from common.errors import UnauthenticatedGQLError
 from django.contrib.auth.models import Group
-from django.db.models import Model, TextChoices
+from django.db.models import Model, Q, TextChoices
 from django.utils.encoding import force_str
 from guardian.shortcuts import assign_perm
 from strawberry.types import Info
@@ -180,6 +180,26 @@ class IsAuthenticated(strawberry.BasePermission):
             raise UnauthenticatedGQLError()
 
         return True
+
+
+def _perm_q(app_label: str, codename: str) -> Q:
+    """Return a Q object matching a specific Django permission.
+
+    The full permission path is ``permission_groups__group__permissions``
+    joined through PermissionGroup → Group → Permission → ContentType.
+
+    Used by ``HasOrgPerm`` and permission annotators to avoid duplicating
+    the nested ORM path.
+    """
+    return Q(
+        permission_groups__group__permissions__content_type__app_label=app_label,
+        permission_groups__group__permissions__codename=codename,
+    )
+
+
+def perm_filter(app_label: str, codename: str) -> Q:
+    """Public alias for ``_perm_q`` — Q for a single permission."""
+    return _perm_q(app_label, codename)
 
 
 def get_current_organization(info: Info) -> str:

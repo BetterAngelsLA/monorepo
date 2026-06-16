@@ -23,7 +23,7 @@ Or with django-codename strings::
 from collections.abc import Callable
 from typing import Any
 
-from django.db.models import Q
+from common.permissions.utils import _perm_q
 from strawberry.types import Info
 from strawberry_django.permissions import (
     DjangoNoPermission,
@@ -91,6 +91,7 @@ class HasOrgPerm(HasPerm):
             raise DjangoNoPermission("No permissions specified for this operation.")
 
         from accounts.models import Organization
+        from django.db.models import Q
 
         # Build a single query that checks all requested permissions.
         org_filter = Organization.objects.filter(
@@ -101,16 +102,12 @@ class HasOrgPerm(HasPerm):
         if self.any_perm:
             q = Q()
             for perm_def in self.perms:
-                q |= Q(
-                    permission_groups__group__permissions__content_type__app_label=perm_def.app or "",
-                    permission_groups__group__permissions__codename=perm_def.permission,
-                )
+                q |= _perm_q(perm_def.app or "", perm_def.permission)
             has_perm = org_filter.filter(q).exists()
         else:
             for perm_def in self.perms:
                 org_filter = org_filter.filter(
-                    permission_groups__group__permissions__content_type__app_label=perm_def.app or "",
-                    permission_groups__group__permissions__codename=perm_def.permission,
+                    _perm_q(perm_def.app or "", perm_def.permission)
                 )
             has_perm = org_filter.exists()
 

@@ -142,9 +142,10 @@ def shelter_get(*, user: "User", shelter_id: int | str, organization_id: str) ->
 
 
 def admin_room_list(queryset: "QuerySet[Room]", *, user: "User", organization_id: str) -> "QuerySet[Room]":
-    from shelters.models import Shelter
-
-    return queryset.filter(shelter__in=admin_shelter_list(Shelter.objects.all(), user=user, organization_id=organization_id))
+    return queryset.select_related("shelter").filter(
+        Exists(Organization.objects.filter(pk=OuterRef("shelter__organization_id"), users=user)),
+        shelter__organization_id=organization_id,
+    )
 
 
 def room_get(*, user: "User", room_id: int | str, organization_id: str) -> "Room":
@@ -154,9 +155,10 @@ def room_get(*, user: "User", room_id: int | str, organization_id: str) -> "Room
 
 
 def admin_bed_list(queryset: "QuerySet[Bed]", *, user: "User", organization_id: str) -> "QuerySet[Bed]":
-    from shelters.models import Shelter
-
-    return queryset.filter(shelter__in=admin_shelter_list(Shelter.objects.all(), user=user, organization_id=organization_id))
+    return queryset.select_related("shelter").filter(
+        Exists(Organization.objects.filter(pk=OuterRef("shelter__organization_id"), users=user)),
+        shelter__organization_id=organization_id,
+    )
 
 
 def bed_get(*, user: "User", bed_id: int | str, organization_id: str) -> "Bed":
