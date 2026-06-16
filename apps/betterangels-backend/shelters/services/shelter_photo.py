@@ -11,8 +11,10 @@ from common.services.s3 import (
 )
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from common.services.upload_token import create_upload_token, validate_upload_token
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Shelter, ShelterPhoto
+from shelters.selectors import shelter_get
 from shelters.types.inputs import ShelterPhotoFromUploadInput, ShelterPhotoUploadItemInput
 
 UPLOAD_PATH = "shelters"
@@ -26,12 +28,21 @@ def _validate_content_type(content_type: str, filename: str) -> None:
         raise ValueError(f"Unsupported content_type: {content_type} for filename={filename}.")
 
 
+def _get_shelter(*, user: User, shelter_id: int | str) -> Shelter:
+    try:
+        return shelter_get(user=user, shelter_id=shelter_id)
+    except Shelter.DoesNotExist:
+        raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
+
+
 def create_presigned_uploads(
     *,
     user: User,
-    shelter_id: str,
+    shelter_id: int | str,
     uploads: Iterable[ShelterPhotoUploadItemInput],
 ) -> AuthorizedPresignedUploadBatch:
+    _get_shelter(user=user, shelter_id=shelter_id)
+
     mapped_uploads: list[PresignedS3UploadInput] = []
 
     for upload in uploads:
@@ -74,7 +85,7 @@ def create_presigned_uploads(
 def resolve_uploads(
     *,
     user: User,
-    shelter: Shelter,
+    shelter_id: int | str,
     photos: Iterable[ShelterPhotoFromUploadInput],
 ) -> list[ShelterPhoto]:
     # Validate the entire batch before any DB writes.
@@ -96,6 +107,8 @@ def resolve_uploads(
 
     # Validations passed — persist photos.
     created: list[ShelterPhoto] = []
+
+    shelter = _get_shelter(user=user, shelter_id=shelter_id)
 
     with transaction.atomic():
         for photo in photo_list:

@@ -162,10 +162,8 @@ class Mutation:
     ) -> AuthorizedPresignedS3UploadsType:
         user = cast(User, get_current_user(info))
 
-        Shelter.objects.filter(pk=data.shelter_id).get()
-
         presigned_uploads = shelter_photo.create_presigned_uploads(
-            user=user, shelter_id=str(data.shelter_id), uploads=data.uploads
+            user=user, shelter_id=data.shelter_id, uploads=data.uploads
         )
 
         return AuthorizedPresignedS3UploadsType(
@@ -189,11 +187,9 @@ class Mutation:
     ) -> ShelterPhotoUploadsType:
         user = cast(User, get_current_user(info))
 
-        shelter = Shelter.objects.get(pk=data.shelter_id)
-
         photos = shelter_photo.resolve_uploads(
             user=user,
-            shelter=shelter,
+            shelter_id=data.shelter_id,
             photos=data.photos,
         )
 

@@ -60,3 +60,30 @@ class GraphQLAssertionsMixin:
             self.assertEqual(error.get("message"), message)
         else:
             self.assertIn(message, error.get("message", ""))
+
+    def assertGraphQLOperationInfo(
+        self: _AssertionsProto,
+        response: dict[str, Any],
+        field: str,
+        message: str,
+        *,
+        kind: str | None = None,
+        num_messages: int = 1,
+        message_index: int = 0,
+        exact: bool = False,
+    ) -> None:
+        messages = response["data"][field]["messages"]
+
+        self.assertIsInstance(messages, list)
+        self.assertEqual(len(messages), num_messages)
+
+        msg = messages[message_index]
+        actual = msg.get("message", "")
+
+        if exact:
+            self.assertEqual(actual, message)
+        else:
+            self.assertIn(message, actual)
+
+        if kind is not None:
+            self.assertEqual(msg.get("kind"), kind)
