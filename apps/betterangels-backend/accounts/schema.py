@@ -255,28 +255,25 @@ class Mutation:
 
         return DeletedObjectType(id=removed_id)
 
-    # ── Self-Signup ─────────────────────────────────────────────────
+    # ── Organization Creation ──────────────────────────────────────
 
-    @strawberry.mutation
-    def shelter_operator_signup(self, info: Info, data: ShelterOperatorSignupInput) -> SignupResponse:
-        """Public mutation — unauthenticated users can create a shelter org.
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def create_organization(self, info: Info, data: ShelterOperatorSignupInput) -> SignupResponse:
+        """Create a shelter organization for the authenticated user.
 
-        Creates (or retrieves) a User, creates a new Organization with the
-        ``shelter`` preset, assigns the owner the Shelter Operator role,
-        logs the user in, and sends a welcome email.
+        Creates a new Organization with the ``shelter`` preset, links the
+        current user as owner, assigns the Shelter Operator role, and
+        sends a welcome email.
         """
+        current_user = cast(User, get_current_user(info))
         user, organization = shelter_operator_signup_service(
-            email=data.email,
-            first_name=data.first_name,
-            last_name=data.last_name,
-            middle_name=data.middle_name,
+            email=current_user.email or "",
+            first_name=current_user.first_name or "",
+            last_name=current_user.last_name or "",
+            middle_name=current_user.middle_name,
             organization_name=data.organization_name,
         )
 
-        # Log the user into the current session.
-        auth.login(info.context.request, user, backend="django.contrib.auth.backends.ModelBackend")
-
-        # Send welcome email (after transaction commits).
         _send_welcome_email(user, organization)
 
         return SignupResponse(user=cast(UserType, user), organization=cast(OrganizationType, organization))

@@ -16,7 +16,6 @@ import { PolicyRoute } from '../routes/policy.route';
 import { SearchRoute } from '../routes/search.route';
 import { ShelterRoute } from '../routes/shelter.route';
 import { SignInRoute } from '../routes/signin.route';
-import { SignupRoute } from '../routes/signup.route';
 import { VideoRoute } from '../routes/video.route';
 
 export function buildShelterRoutes() {
@@ -52,7 +51,6 @@ export function buildShelterRoutes() {
         element={<VideoRoute />}
       />
       <Route key={signInPath} path={signInPath} element={<SignInRoute />} />
-      <Route key="signup" path="/signup" element={<SignupRoute />} />
     </>
   );
 }

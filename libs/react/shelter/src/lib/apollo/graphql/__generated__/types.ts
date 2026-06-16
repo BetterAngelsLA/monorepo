@@ -1572,6 +1572,7 @@ export type Mutation = {
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
+  createOrganization: SignupResponse;
   createReferral: CreateReferralPayload;
   createRoom: CreateRoomPayload;
   createShelter: CreateShelterPayload;
@@ -1604,7 +1605,6 @@ export type Mutation = {
   resolveClientProfilePhotoUpload: ResolveClientProfilePhotoUploadPayload;
   revertNote: RevertNotePayload;
   setCurrentOrganization: CurrentUserType;
-  shelterOperatorSignup: SignupResponse;
   updateBed: UpdateBedPayload;
   updateClientContact: UpdateClientContactPayload;
   updateClientDocument: UpdateClientDocumentPayload;
@@ -1715,6 +1715,11 @@ export type MutationCreateNoteDataImportArgs = {
 
 export type MutationCreateNoteServiceRequestArgs = {
   data: CreateNoteServiceRequestInput;
+};
+
+
+export type MutationCreateOrganizationArgs = {
+  data: ShelterOperatorSignupInput;
 };
 
 
@@ -1866,11 +1871,6 @@ export type MutationRevertNoteArgs = {
 
 export type MutationSetCurrentOrganizationArgs = {
   organizationId: Scalars['ID']['input'];
-};
-
-
-export type MutationShelterOperatorSignupArgs = {
-  data: ShelterOperatorSignupInput;
 };
 
 
