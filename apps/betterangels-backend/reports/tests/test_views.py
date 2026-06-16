@@ -281,8 +281,8 @@ class TestExportInteractionDataView:
 
 
 REPORT_SUMMARY_QUERY = """
-    query ReportSummary($organizationId: ID!, $startDate: Date, $endDate: Date) {
-        reportSummary(organizationId: $organizationId, startDate: $startDate, endDate: $endDate) {
+    query ReportSummary($startDate: Date, $endDate: Date) {
+        reportSummary(startDate: $startDate, endDate: $endDate) {
             totalNotes
             uniqueClients
             startDate
@@ -332,10 +332,10 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
 
     def test_unauthenticated_returns_error(self) -> None:
         org = baker.make(Organization, name="Test Org")
+        self._set_active_org(org)
         response = self.execute_graphql(
             REPORT_SUMMARY_QUERY,
             {
-                "organizationId": str(org.id),
                 "startDate": "2025-01-01",
                 "endDate": "2025-01-31",
             },
@@ -348,11 +348,11 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         user.set_password("testpass")
         user.save()
         org.add_user(user)
+        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(
             REPORT_SUMMARY_QUERY,
             {
-                "organizationId": str(org.id),
                 "startDate": "2025-01-01",
                 "endDate": "2025-01-31",
             },
@@ -377,11 +377,11 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
             team="hollywood_outreach",
             _quantity=2,
         )
+        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(
             REPORT_SUMMARY_QUERY,
             {
-                "organizationId": str(org.id),
                 "startDate": "2025-01-01",
                 "endDate": "2025-01-31",
             },
@@ -401,11 +401,11 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
 
     def test_summary_empty_range(self) -> None:
         org, user = self._setup_org_user_with_access()
+        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(
             REPORT_SUMMARY_QUERY,
             {
-                "organizationId": str(org.id),
                 "startDate": "2024-06-01",
                 "endDate": "2024-06-30",
             },
@@ -433,11 +433,11 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
             interacted_at=timezone.make_aware(datetime(2025, 1, 15, 12, 0, 0)),
             _quantity=5,
         )
+        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(
             REPORT_SUMMARY_QUERY,
             {
-                "organizationId": str(org.id),
                 "startDate": "2025-01-01",
                 "endDate": "2025-01-31",
             },
@@ -448,8 +448,9 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
 
     def test_summary_defaults_when_no_dates(self) -> None:
         org, user = self._setup_org_user_with_access()
+        self._set_active_org(org)
         self.graphql_client.force_login(user)
-        response = self.execute_graphql(REPORT_SUMMARY_QUERY, {"organizationId": str(org.id)})
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, {})
         self.assertIsNone(response.get("errors"))
         data = response["data"]["reportSummary"]
         self.assertIsNotNone(data["startDate"])
@@ -457,7 +458,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         self.assertIsInstance(data["totalNotes"], int)
 
     def test_user_targets_org_without_view_reports_gets_error(self) -> None:
-        """User belongs to two orgs but only has view_reports on one; querying the other should fail."""
+        """User belongs to two orgs but only has view_reports on one; HasOrgPerm rejects the other."""
         org_with_access = baker.make(Organization, name="Authorized Org")
         org_without_access = baker.make(Organization, name="Unauthorized Org")
         user = baker.make(User)
@@ -468,13 +469,14 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         grant_view_reports(user, org_with_access)
         # No view_reports on org_without_access
 
+        self._set_active_org(org_without_access)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(
             REPORT_SUMMARY_QUERY,
             {
-                "organizationId": str(org_without_access.id),
                 "startDate": "2025-01-01",
                 "endDate": "2025-01-31",
             },
         )
-        self.assertTrue(response.get("errors") is not None or response["data"]["reportSummary"] is None)
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
