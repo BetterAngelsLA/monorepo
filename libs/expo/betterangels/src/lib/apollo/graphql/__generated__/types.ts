@@ -862,6 +862,7 @@ export type CurrentUserType = {
   hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
   isHmisUser?: Maybe<Scalars['Boolean']['output']>;
+  /** @deprecated Use userPermissions check instead. */
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
@@ -2087,6 +2088,7 @@ export type OrgInvitationInput = {
   lastName: Scalars['String']['input'];
   middleName?: InputMaybe<Scalars['String']['input']>;
   organizationId: Scalars['ID']['input'];
+  permissionTemplate: PermissionTemplateEnum;
 };
 
 export type OrgPermissions = {
@@ -2240,6 +2242,11 @@ export type PermDefinition = {
   /** The permission itself. If this is empty that means that we are checking for any permission for the given app. */
   permission?: InputMaybe<Scalars['String']['input']>;
 };
+
+export enum PermissionTemplateEnum {
+  Caseworker = 'CASEWORKER',
+  ShelterOperator = 'SHELTER_OPERATOR'
+}
 
 export enum PetChoices {
   Cats = 'CATS',
@@ -3564,6 +3571,7 @@ export type UserType = {
   hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
   isHmisUser?: Maybe<Scalars['Boolean']['output']>;
+  /** @deprecated Use userPermissions check instead. */
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;

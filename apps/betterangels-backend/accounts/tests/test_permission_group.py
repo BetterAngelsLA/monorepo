@@ -2,9 +2,9 @@ from accounts.models import PermissionGroup
 from django.contrib.auth.models import Group, Permission
 from django.test import TestCase
 from model_bakery import baker
+from organizations.models import Organization
 
 from .baker_recipes import (
-    organization_recipe,
     permission_group_recipe,
     permission_group_template_recipe,
 )
@@ -37,7 +37,7 @@ class PermissionGroupTestCase(TestCase):
     def test_deleting_organization_deletes_permission_groups_and_associated_groups(
         self,
     ) -> None:
-        organization = organization_recipe.make()
+        organization = Organization.objects.create(name="Plain Org")
         _ = permission_group_recipe.make(_quantity=3, organization=organization)
 
         organization_pk = organization.pk

@@ -46,4 +46,6 @@ CASEWORKER = TemplateConfig(
         Attachment.perms.ADD,
         Attachment.perms.VIEW,
     ],
+    invite_html="account/email/email_invite_organization.html",
+    invite_txt="account/messages/email_invite_organization.txt",
 )
